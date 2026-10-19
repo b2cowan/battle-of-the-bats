@@ -228,9 +228,85 @@
   color: var(--home-live);
 }
 
-/* Invite-guard recognition panel — olive-tint, one lime CTA. */
+/* The plan picked on the pricing page, riding on the account (Account-First Sign-up A6; the hub's drawing, with a
+   solid edge — design review D10: dashed reads as a placeholder). */
+.pricingChip {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  margin: 0 0 1.1rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid rgba(var(--home-olive-rgb), 0.32);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-card);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--home-ink-soft);
+}
+.pricingChip svg { flex: none; margin-top: 0.125rem; color: var(--home-olive); }
+.pricingChip strong { color: var(--home-ink); font-weight: 700; }
+
+/* Invite-guard recognition panel — olive-tint, one lime CTA (Run a tournament's step 1 for an address that already has
+   an invitation; its words are the organization sign-up's own). */
+.invitePanel {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(var(--home-olive-rgb), 0.25);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-olive-soft);
+}
+.inviteOrg { margin: 0; font-size: 0.95rem; font-weight: 700; line-height: 1.35; color: var(--home-ink); }
+.inviteBody { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--home-ink-soft); }
+.inviteSent {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(var(--home-olive-rgb), 0.32);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-card);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--home-ink);
+}
+.inviteEscape {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+}
+.inviteEscape p { margin: 0; }
 
 /* Ghost/outlined secondary — reserves the lime submit for the recommended path. */
+.ghostBtn {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 10px;
+  background: var(--home-card);
+  color: var(--home-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ghostBtn:hover { border-color: var(--home-olive); }
+/* A quiet way out under the primary action — never the lime, so it doesn't compete with it. 44px row (D6). */
+.textBtn {
+  align-self: center;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: none;
+  background: none;
+  color: var(--home-dim);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.textBtn:hover { color: var(--home-ink); }
 
 .footer {
   margin-top: 1.5rem;

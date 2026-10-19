@@ -378,6 +378,23 @@ export function isFoundingSeasonActive(): boolean {
   return Date.now() < FOUNDING_SEASON_END_MS;
 }
 
+/**
+ * THE OFFER AT A CREATION — may an organization, a league or a Premium Coaches Portal made NOW get the Founding Season
+ * comp? (Account-First Sign-up: A5 Decided 2026-10-18, edges (a) and (b) ratified by the owner 2026-10-19,
+ * BUSINESS_DECISIONS.md.) While the sign-up window is open, yes, exactly as before. After it closes, only when the
+ * ACCOUNT was made by the close AND this creation is the one its start sign-up came for — the account step and the
+ * creation now fall on different days, and "free … when you sign up by December 31" has to hold for someone who signs
+ * up on the 31st and names their organization on January 2. The end date is the same for everyone, so a late creation
+ * gains nothing. Both inputs are server facts (the auth user's `created_at`, the locked start door on `app_metadata`)
+ * — never `user_metadata`, which the account holder can edit. The one rule every creation path reads, through
+ * `foundingSeasonOfferFor` (lib/founding-season.ts).
+ */
+export function isFoundingSeasonOpenFor(accountCreatedAt: string | null | undefined, cameToStart: boolean, now = Date.now()): boolean {
+  if (now < FOUNDING_SEASON_SIGNUP_CLOSE_MS) return true;
+  if (now >= FOUNDING_SEASON_END_MS || !cameToStart || !accountCreatedAt) return false;
+  return Date.parse(accountCreatedAt) < FOUNDING_SEASON_SIGNUP_CLOSE_MS;
+}
+
 /** True during the summer card window: the comp is running and the "add a payment method" ask is open. */
 export function isFoundingSeasonCardWindowOpen(): boolean {
   const now = Date.now();

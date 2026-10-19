@@ -112,11 +112,14 @@ export const GET = withObservability(async () => {
   // Account-First Sign-up (A4, revised 2026-10-19): an account that came from a start sign-up keeps a workspace waiting
   // for its name until that team, league or organization is made — beside any other workspace (owner: "otherwise they
   // lose that team"), with no Not now. Never one whose step would not open: /start/league shows a waitlist while the
-  // League Starter beta is off, and turns away a pending invite and an account already in a real organization (the
-  // page's and /api/league/create's own gates). The finish card's no-workspace rule used to hide those last two.
+  // League Starter beta is off, and /start/league and /start/tournament both turn away a pending invite and an account
+  // already in a real organization (the pages' and /api/league/create's and /api/org/create's own gates). The finish
+  // card's no-workspace rule used to hide those last two.
   const start = readStartDoor(user.user_metadata);
-  const stepOpens = start?.door !== 'league' || (
-    process.env.LEAGUE_STARTER_BETA === 'true' && pendingInvites.length === 0 && !(await userBelongsToOtherRealOrg(user.id))
+  const makesAnOrganization = start?.door === 'league' || start?.door === 'organization';
+  const leagueBetaOff = start?.door === 'league' && process.env.LEAGUE_STARTER_BETA !== 'true';
+  const stepOpens = !makesAnOrganization || (
+    !leagueBetaOff && pendingInvites.length === 0 && !(await userBelongsToOtherRealOrg(user.id))
   );
   const waitingWorkspace = start && stepOpens ? { door: start.door } : null;
 

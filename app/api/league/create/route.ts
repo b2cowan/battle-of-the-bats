@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL, isFoundingSeasonSignupOpen } from '@/lib/plan-config';
+import { FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { ensureFoundingSeasonCompPeriod, foundingSeasonOfferFor } from '@/lib/founding-season';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
@@ -11,6 +12,7 @@ import { captureError, withObservability } from '@/lib/observability';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { clearStartDoor } from '@/lib/start-door-server';
+import { slugifyOrgName } from '@/lib/utils';
 
 // Abuse controls (Phase 6.6): blunt scripted mass-creation of free workspaces before the beta flag
 // is turned on for real users. Best-effort, per-Lambda-instance (no external store wired). Legit use
@@ -20,14 +22,6 @@ const MINUTE = 60_000;
 const identityLimiter = new FixedWindowRateLimiter(15 * MINUTE, 3); // per signed-in account (id + email)
 const ipLimiter = new FixedWindowRateLimiter(60 * MINUTE, 8);       // per source IP (spoofable → global backstop)
 const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 30);   // spoofing-proof ceiling across all callers
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
@@ -140,7 +134,7 @@ export const POST = withObservability(async (req: Request) => {
 
     let slug: string;
     if (typeof orgSlug === 'string' && orgSlug.trim()) {
-      slug = slugify(orgSlug);
+      slug = slugifyOrgName(orgSlug);
       if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
         return NextResponse.json({ error: 'Public URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
       }
@@ -187,18 +181,15 @@ export const POST = withObservability(async (req: Request) => {
       });
     }
 
-    // Founding Season comp parity with /api/org/create. Harmless for the floor: comp_period is
-    // billing-only and grants no modules, so it can't widen the free-floor scope.
-    if (isFoundingSeasonSignupOpen()) {
-      const { error: compErr } = await supabaseAdmin.from('org_overrides').insert({
-        org_id: org.id,
-        type: 'comp_period',
-        value: null,
-        expires_at: FOUNDING_SEASON_END,
-        reason: `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`,
-        created_by: 'system',
-      });
-      if (compErr) console.error('[league/create] Founding season comp_period insert error:', compErr);
+    // Founding Season comp parity with /api/org/create, on the one rule (lib/founding-season.ts): after the close, only
+    // for an account made by then whose Start a league sign-up came for this league (A5 + edge (a), 2026-10-19).
+    // Harmless for the floor: comp_period is billing-only and grants no modules, so it can't widen the free-floor scope.
+    if (foundingSeasonOfferFor(user, 'league')) {
+      try {
+        await ensureFoundingSeasonCompPeriod(org.id, 'system', `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`);
+      } catch (compErr) {
+        console.error('[league/create] Founding season comp_period insert error:', compErr);
+      }
     }
 
     // Account-first: the league is made, so Home's waiting workspace has done its job.

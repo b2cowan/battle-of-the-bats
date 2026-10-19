@@ -2,13 +2,14 @@
 import { useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarDays, Check, Eye, EyeOff, Mail, Users } from 'lucide-react';
+import { CalendarDays, Check, Eye, EyeOff, Mail, MailCheck, Tag, Trophy, Users } from 'lucide-react';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
-import { START_DOOR_PATH, startDoorLinkPath, type StartStepViewer } from '@/lib/start-door';
+import { PLAN_CONFIG } from '@/lib/plan-config';
+import { START_DOOR_PATH, startDoorLinkPath, type StartPricing, type StartStepViewer } from '@/lib/start-door';
 import styles from './startForm.module.css';
 
-/** The doors this form serves (the organization door keeps its own form until Part 2; Coach Premium its card). */
-type FormDoor = 'team' | 'league';
+/** The doors this form serves (Coach Premium keeps its own card until Part 3). */
+type FormDoor = 'team' | 'league' | 'organization';
 
 /** Each door's words, step 1 and step 2 (the hub's drawings). */
 const DOOR_COPY: Record<FormDoor, {
@@ -48,7 +49,35 @@ const DOOR_COPY: Record<FormDoor, {
     empty: 'Enter a league name.',
     failed: 'Could not create your league.',
   },
+  organization: {
+    icon: <Trophy size={20} strokeWidth={1.6} aria-hidden />,
+    title: 'Create Your Organization',
+    sub: 'Run your tournament, league or club',
+    step: 'Your organization',
+    nextStep: 'naming your organization',
+    accountSmallPrint: 'No credit card required.',
+    adding: 'Adding an organization to',
+    label: 'Organization Name',
+    placeholder: 'e.g. Milton Softball Association',
+    autoComplete: 'organization',
+    submit: 'Create Organization',
+    nameSmallPrint: 'Starts on the free Tournament plan. No credit card required.',
+    empty: 'Enter an organization name.',
+    failed: 'Could not create your organization.',
+  },
 };
+
+/** Where each door's account is made: the coach sign-up for a team or a league, the organization sign-up for Run a tournament (it keeps the Sign-up Invite Guard). */
+const SIGNUP_ROUTE: Record<FormDoor, string> = {
+  team: '/api/auth/coach-signup',
+  league: '/api/auth/coach-signup',
+  organization: '/api/auth/signup',
+};
+
+/** A door's create step, carrying the pricing page's plan for an account that signs in instead of signing up. */
+function stepHref(door: FormDoor, pricing: StartPricing | null | undefined): string {
+  return pricing ? `${START_DOOR_PATH[door]}?${new URLSearchParams({ plan: pricing.plan, billing: pricing.billing })}` : START_DOOR_PATH[door];
+}
 
 /**
  * The two-step line (owner A2, design review D2, 2026-10-18): "1 Your account · 2 Your team". It says the naming step
@@ -98,20 +127,27 @@ export default function StartDoorForm({ door, viewer, initialName = '', confirme
   confirmed?: boolean;
   /** Makes the thing, and answers where to go next. */
   create: (name: string) => Promise<string>;
-  /** The line under the name field (the league's public address). */
+  /** The line under the name field (the public address). */
   help?: (name: string) => ReactNode;
 }) {
   return viewer
     ? <NameStep door={door} viewer={viewer} initialName={initialName} confirmed={confirmed} create={create} help={help} />
-    : <AccountStep door={door} />;
+    : <StartAccountStep door={door} />;
 }
 
-/** Step 1: first name, last name, email, password, under the door's own heading. */
-function AccountStep({ door }: { door: FormDoor }) {
+/**
+ * Step 1: first name, last name, email, password, under the door's own heading. Run a tournament's step 1 is rendered
+ * by the sign-up page (/auth/signup, where the pricing page and every "create your free account" link point), with the
+ * plan picked on the pricing page when there was one (A6).
+ */
+export function StartAccountStep({ door, pricing = null }: { door: FormDoor; pricing?: StartPricing | null }) {
   const copy = DOOR_COPY[door];
   const router = useRouter();
   // Verify every sign-up (owner 2026-10-16): the address the link went to, while this card says "check your email".
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  // Sign-up Invite Guard (Run a tournament only): this address already has an invitation, so it is pointed at that
+  // instead of starting an organization of its own. The organization's name, when the server gave it.
+  const [invitedTo, setInvitedTo] = useState<{ orgName: string | null } | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -119,7 +155,7 @@ function AccountStep({ door }: { door: FormDoor }) {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const stepPath = START_DOOR_PATH[door];
+  const nextStep = stepHref(door, pricing);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -133,13 +169,14 @@ function AccountStep({ door }: { door: FormDoor }) {
 
     let signupRes: Response;
     try {
-      signupRes = await fetch('/api/auth/coach-signup', {
+      signupRes = await fetch(SIGNUP_ROUTE[door], {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim(),
           // The account remembers its door; the server points the link at that door's step 2.
           startDoor: door,
+          ...(pricing ? { plan: pricing.plan, billing: pricing.billing } : {}),
         }),
       });
     } catch {
@@ -148,18 +185,24 @@ function AccountStep({ door }: { door: FormDoor }) {
       return;
     }
 
+    const created = await signupRes.json().catch(() => ({})) as {
+      error?: string; requiresEmailVerification?: boolean; inviteBranch?: 'invited'; orgName?: string | null;
+    };
     if (signupRes.status === 409) {
       // Email already has an account — sign in, then name the thing (the page's signed-in step takes over).
-      router.push(`/auth/login?next=${encodeURIComponent(stepPath)}&email=${encodeURIComponent(emailNorm)}`);
+      router.push(`/auth/login?next=${encodeURIComponent(nextStep)}&email=${encodeURIComponent(emailNorm)}`);
       return;
     }
-    if (!signupRes.ok) {
-      const data = await signupRes.json().catch(() => ({})) as { error?: string };
-      setError(data.error ?? 'Account could not be created. Please try again.');
+    if (created.inviteBranch === 'invited') {
+      setInvitedTo({ orgName: created.orgName ?? null });
       setLoading(false);
       return;
     }
-    const created = await signupRes.json().catch(() => ({})) as { requiresEmailVerification?: boolean };
+    if (!signupRes.ok) {
+      setError(created.error ?? 'Account could not be created. Please try again.');
+      setLoading(false);
+      return;
+    }
     if (created.requiresEmailVerification) {
       // The account waits until the person opens the email; the entries stay for "Use a different email" (the
       // password is cleared).
@@ -177,7 +220,19 @@ function AccountStep({ door }: { door: FormDoor }) {
       setLoading(false);
       return;
     }
+    // The team and league pages render step 2 themselves; Run a tournament's step 1 lives at /auth/signup, so it goes there.
+    if (door === 'organization') router.replace(START_DOOR_PATH[door]);
     router.refresh();
+  }
+
+  if (invitedTo) {
+    return (
+      <InvitedInstead
+        email={signupEmail.trim().toLowerCase()}
+        orgName={invitedTo.orgName}
+        onUseDifferentEmail={() => { setInvitedTo(null); setSignupEmail(''); }}
+      />
+    );
   }
 
   return (
@@ -198,10 +253,20 @@ function AccountStep({ door }: { door: FormDoor }) {
             after={<>Open it on any phone or computer.</>}
             resendNext={startDoorLinkPath(door)}
             onChangeEmail={() => setVerifyEmail(null)}
-            signInHref={`/auth/login?next=${encodeURIComponent(stepPath)}&email=${encodeURIComponent(verifyEmail)}`}
+            signInHref={`/auth/login?next=${encodeURIComponent(nextStep)}&email=${encodeURIComponent(verifyEmail)}`}
           />
         ) : (
           <>
+            {pricing && (
+              // A6 (design review D10: a solid edge — dashed reads as a placeholder): the plan rides on the account.
+              <p className={styles.pricingChip}>
+                <Tag size={18} strokeWidth={1.8} aria-hidden />
+                <span>
+                  <strong>{PLAN_CONFIG[pricing.plan].label}, billed {pricing.billing === 'annual' ? 'annually' : 'monthly'}</strong>, from
+                  the pricing page. You&apos;ll confirm it after naming your organization.
+                </span>
+              </p>
+            )}
             <form onSubmit={handleSubmit} className={styles.form}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div className="form-group">
@@ -278,11 +343,85 @@ function AccountStep({ door }: { door: FormDoor }) {
             <div className={styles.footer}>
               <p className={styles.footerText}>
                 Already have an account?
-                <Link href={`/auth/login?next=${encodeURIComponent(stepPath)}`} className={styles.footerLink}>Sign in</Link>
+                <Link href={`/auth/login?next=${encodeURIComponent(nextStep)}`} className={styles.footerLink}>Sign in</Link>
               </p>
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Sign-up Invite Guard (SIGNUP_INVITE_GUARD_PLAN.md): an address that already has an invitation is pointed at it rather
+ * than walked into an organization of its own. Its words and controls are the organization sign-up's own, unchanged;
+ * Account-First Part 2 (2026-10-19) moved them into the start look with the rest of Run a tournament's step 1.
+ */
+function InvitedInstead({ email, orgName, onUseDifferentEmail }: { email: string; orgName: string | null; onUseDifferentEmail: () => void }) {
+  const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [showEscape, setShowEscape] = useState(false);
+
+  async function emailInvitation() {
+    setSendState('sending');
+    try {
+      // Always answers the same — the screen says "check your inbox" whatever happened.
+      await fetch('/api/auth/resend-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // A network hiccup still sends them to their inbox; they can retry the link there.
+    }
+    setSendState('sent');
+  }
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <StartHeader
+          icon={<MailCheck size={20} strokeWidth={1.6} aria-hidden />}
+          title="You've Been Invited"
+          sub="FieldLogicHQ — accept your invitation"
+        />
+        <div className={styles.form}>
+          <div className={styles.invitePanel}>
+            <p className={styles.inviteOrg}>You&apos;ve been invited to {orgName ?? 'this organization'}</p>
+            <p className={styles.inviteBody}>You don&apos;t need to create an organization — just accept your invitation to get started.</p>
+          </div>
+
+          {sendState === 'sent' ? (
+            <p className={styles.inviteSent} role="status">
+              Check your inbox — open the email from FieldLogicHQ and click &ldquo;Accept Invitation&rdquo;.
+            </p>
+          ) : (
+            <button type="button" className={styles.submitBtn} onClick={emailInvitation} disabled={sendState === 'sending'}>
+              {sendState === 'sending' ? 'Sending…' : 'Email me my invitation link'}
+            </button>
+          )}
+
+          {showEscape ? (
+            <div className={styles.inviteEscape}>
+              <p>
+                This email already has an invitation to {orgName ?? 'an organization'}. To finish, accept it above. If
+                you&apos;re setting up a different organization, use a different email address.
+              </p>
+              <button type="button" className={styles.ghostBtn} onClick={onUseDifferentEmail}>Use a different email</button>
+            </div>
+          ) : (
+            <button type="button" className={styles.textBtn} onClick={() => setShowEscape(true)}>
+              Not you? Create a new organization instead
+            </button>
+          )}
+        </div>
+
+        <div className={styles.footer}>
+          <p className={styles.footerText}>
+            Already have an account?
+            <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

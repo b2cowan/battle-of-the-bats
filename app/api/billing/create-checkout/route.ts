@@ -2,8 +2,8 @@ import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth'
 import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
-import { normalizeBillingCycle, PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
-import { ensureFoundingSeasonCompPeriod } from '@/lib/founding-season';
+import { normalizeBillingCycle, PLAN_CONFIG, FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { ensureFoundingSeasonCompPeriod, foundingSeasonOfferOnPlanChoice } from '@/lib/founding-season';
 import { hadSubscriptionBefore, hasLiveSubscription, moveDirection } from '@/lib/plan-move';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
@@ -207,12 +207,14 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   // Founding Season: Tournament plan owners get Tournament Plus without Stripe — while the SIGNUP
-  // window is open (a free org upgrading after the close pays the list price through Stripe).
+  // window is open. After the close, only an organization that holds the Founding comp (given when it
+  // was made) and is making its FIRST plan choice (owner 2026-10-19, lib/founding-season.ts); a free
+  // org upgrading after that pays the list price through Stripe.
   const isFoundingSeasonTournamentUpgrade =
     !shouldApplyDirectly &&
     planKey === 'tournament_plus' &&
     auth.org.planId === 'tournament' &&
-    isFoundingSeasonSignupOpen();
+    (await foundingSeasonOfferOnPlanChoice(auth.org));
 
   if (isFoundingSeasonTournamentUpgrade) {
     const { error: orgError } = await supabaseAdmin

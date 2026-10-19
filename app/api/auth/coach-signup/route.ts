@@ -10,6 +10,7 @@ import {
   sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect, verificationReturnPath,
 } from '@/lib/signup-verification';
 import { parseStartDoor } from '@/lib/start-door';
+import { lockStartDoorOrUndo } from '@/lib/founding-season';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -125,6 +126,10 @@ export const POST = withObservability(async (req: NextRequest) => {
       });
       return json({ error: 'Account could not be created. Please try again.' }, 500);
     }
+    // The league door's Founding Season offer after the close reads a locked copy of the door (edge (a), 2026-10-19).
+    if (linkData.user && !(await lockStartDoorOrUndo(linkData.user.id, startDoor))) {
+      return json({ error: 'Account could not be created. Please try again.' }, 500);
+    }
     await sendSignupVerificationEmail({
       to: email, origin, actionLink: linkData.properties.action_link, firstName, continueName: continueName || null,
     });
@@ -132,7 +137,7 @@ export const POST = withObservability(async (req: NextRequest) => {
   }
 
   // ── Instant: verification off (dev), or a live invitation already proved the inbox ──
-  const { error } = await supabaseAdmin.auth.admin.createUser({
+  const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -166,5 +171,8 @@ export const POST = withObservability(async (req: NextRequest) => {
     return json({ error: 'Account could not be created. Please try again.' }, 500);
   }
 
+  if (created.user && !(await lockStartDoorOrUndo(created.user.id, startDoor))) {
+    return json({ error: 'Account could not be created. Please try again.' }, 500);
+  }
   return json({ ok: true, requiresEmailVerification: false });
 }, { route: '/api/auth/coach-signup' });

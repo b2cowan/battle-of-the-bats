@@ -1,34 +1,36 @@
 'use client';
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, MailCheck } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
 import { safeNextPath } from '@/lib/safe-redirect';
+import { parseStartPricing } from '@/lib/start-door';
 import styles from '../auth.module.css';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
+import { StartAccountStep } from '../../start/StartDoorForm';
 
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+/**
+ * /auth/signup — two sign-ups share this address.
+ *  - The default is Run a tournament's step 1 (Account-First Sign-up Part 2, owner A1–A7 2026-10-18): the account
+ *    alone, in the start look, with the plan picked on the pricing page riding on it (A6). The organization is named
+ *    on step 2 (/start/tournament), after the email link. The pricing page and every "create your free account" link
+ *    point here, so the address stays.
+ *  - `?account=1` is the account-only sign-up (fans, the follow nudge, "I was invited"), unchanged.
+ */
+function SignupRoute() {
+  const searchParams = useSearchParams();
+  if (searchParams.get('account') === '1') return <AccountOnlyForm />;
+  return <StartAccountStep door="organization" pricing={parseStartPricing(searchParams.get('plan'), searchParams.get('billing'))} />;
 }
 
-function SignupForm() {
+function AccountOnlyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Account-only mode (signup/org decoupling): reached as /auth/signup?account=1 from the
-  // "I was invited / joining a team" option on /start. No org is created — the user makes
-  // an account, verifies, lands on /home, and accepts their pending invite there. The
-  // default (no ?account) is the owner path: org name field + org created at signup.
-  const accountOnly = searchParams.get('account') === '1';
   // Fan / account-only signups can carry a return path (e.g. /discover or /following) so they
   // don't land on the org-oriented /home. Validated to a same-origin relative path so it can
   // never become an open redirect (safeNextPath handles tab/backslash/protocol-relative smuggling).
   const safeNext = safeNextPath(searchParams.get('next'), null);
-  const [orgName, setOrgName]   = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');
   const [email, setEmail]       = useState('');
@@ -37,27 +39,12 @@ function SignupForm() {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
-  // Where the verification link returns — the same place for "Send the link again" (owner V3, 2026-10-16).
-  const [verificationNext, setVerificationNext] = useState('/discover');
-  // Sign-up Invite Guard: the server detects (at submit) whether this email was already
-  // invited or already has an account, and returns a branch instead of creating an org.
-  const [inviteBranch, setInviteBranch] = useState<null | 'invited' | 'account_exists'>(null);
-  const [inviteOrgName, setInviteOrgName] = useState<string | null>(null);
-  const [inviteRole, setInviteRole] = useState<string | null>(null);
-  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
-  const [showEscape, setShowEscape] = useState(false);
-
-  // The public URL is auto-generated server-side from the org name; this is just a
-  // friendly preview (the final slug may get a number suffix if the name is taken).
-  const previewSlug = slugify(orgName) || 'your-org';
+  // An existing account answers with a tappable Sign-in notice instead of a bare error string.
+  const [accountExists, setAccountExists] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!accountOnly && !orgName.trim()) {
-      setError('Enter an organization name.');
-      return;
-    }
     if (!firstName.trim() || !lastName.trim()) {
       setError('Enter your first and last name.');
       return;
@@ -67,46 +54,26 @@ function SignupForm() {
       return;
     }
 
-    await submitSignup();
-  }
-
-  async function submitSignup() {
     setError('');
     setLoading(true);
 
+    // No organization name and no door: the server makes the account alone.
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Account-only mode omits orgName — the server creates no org. The owner path
-      // sends the org name and gets an org created in one shot.
       body: JSON.stringify({
         email,
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        ...(accountOnly ? (safeNext ? { next: safeNext } : {}) : { orgName }),
+        ...(safeNext ? { next: safeNext } : {}),
       }),
     });
 
     const json = await res.json();
 
-    // Sign-up Invite Guard (owner mode only): the server recognized this email before creating
-    // anything. Adapt the screen instead of proceeding into org creation. The `!accountOnly`
-    // guard is defensive — the server only returns inviteBranch on the owner path.
-    if (!accountOnly && json.inviteBranch === 'invited') {
-      setInviteBranch('invited');
-      setInviteOrgName(json.orgName ?? null);
-      setInviteRole(json.role ?? null);
-      setResendState('idle');
-      setShowEscape(false);
-      setLoading(false);
-      return;
-    }
-    // Account-exists parity: the owner path signals via inviteBranch; the account-only
-    // ("I was invited") path returns a plain 409 for the same situation. Both render
-    // the inline notice with its tappable Sign-in link instead of a bare error string.
-    if (json.inviteBranch === 'account_exists' || (accountOnly && res.status === 409)) {
-      setInviteBranch('account_exists');
+    if (res.status === 409) {
+      setAccountExists(true);
       setLoading(false);
       return;
     }
@@ -118,7 +85,6 @@ function SignupForm() {
     }
 
     if (json.requiresEmailVerification) {
-      setVerificationNext(accountOnly ? (safeNext ?? '/discover') : (json.orgSlug ? `/${json.orgSlug}/admin/onboarding?choosePlan=1` : '/home'));
       setVerificationEmail(json.email ?? email);
       setLoading(false);
       return;
@@ -131,194 +97,40 @@ function SignupForm() {
       return;
     }
 
-    // Account-only (dev / verification-off): land on Home (/discover), where reconciliation +
-    // the pending-invitations card take over.
-    if (accountOnly) {
-      router.push(safeNext ?? '/discover');
-      router.refresh();
-      return;
-    }
-
-    const plan = searchParams.get('plan');
-    const billing = searchParams.get('billing') === 'annual' ? 'annual' : searchParams.get('billing') === 'monthly' ? 'monthly' : null;
-    const onboardingParams = new URLSearchParams({ choosePlan: '1' });
-    if (plan) onboardingParams.set('plan', plan);
-    if (billing) onboardingParams.set('billing', billing);
-    const dest = json.orgSlug ? `/${json.orgSlug}/admin/onboarding?${onboardingParams.toString()}` : '/admin';
-    router.push(dest);
+    // Dev / verification-off: land on Home (/discover), where reconciliation + the
+    // pending-invitations card take over.
+    router.push(safeNext ?? '/discover');
     router.refresh();
   }
-
-  async function handleResendInvite() {
-    setResendState('sending');
-    try {
-      // Always returns neutral — we surface the same "check your inbox" regardless.
-      await fetch('/api/auth/resend-invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-    } catch {
-      // Network hiccup — still guide them to their inbox; they can retry the link there.
-    }
-    setResendState('sent');
-  }
-
-  // Escape hatch: an already-invited email can't cleanly spin up its own org (it's tied to the
-  // invite). Route them back to the form with a cleared email so a genuinely different org can
-  // be created under a different address — never clobbering the pending account.
-  function handleUseDifferentEmail() {
-    setInviteBranch(null);
-    setShowEscape(false);
-    setResendState('idle');
-    setEmail('');
-  }
-
-  const ROLE_LABELS: Record<string, string> = {
-    admin: 'Administrator',
-    staff: 'Staff',
-    official: 'Volunteer',
-    league_admin: 'League Administrator',
-    league_registrar: 'League Registrar',
-    treasurer: 'Treasurer',
-    coach: 'Coach',
-  };
-  const roleDisplay = inviteRole ? (ROLE_LABELS[inviteRole] ?? inviteRole) : null;
-  const isInvited = inviteBranch === 'invited';
 
   return (
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <div
-            className={styles.iconWrap}
-            style={isInvited ? { color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.4)', background: 'rgba(var(--logic-lime-rgb),0.06)' } : undefined}
-          >
-            {isInvited ? (
-              <MailCheck size={20} strokeWidth={1.6} aria-hidden />
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M3 21h18M9 21V7l3-3 3 3v14M9 12h6" />
-              </svg>
-            )}
+          <div className={styles.iconWrap}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M3 21h18M9 21V7l3-3 3 3v14M9 12h6" />
+            </svg>
           </div>
-          <h1 className={styles.title}>
-            {isInvited ? "You've Been Invited" : accountOnly ? 'Create your account' : 'Create Your Organization'}
-          </h1>
-          <p className={styles.sub}>
-            {isInvited
-              ? 'FieldLogicHQ — accept your invitation'
-              : accountOnly
-                // Fans are this mode's main audience now (conversion sweep 2026-07-14,
-                // Journey B finding 3) — no invitation is implied.
-                ? 'FieldLogicHQ — your teams, scores & alerts in one place'
-                : 'FieldLogicHQ — run your tournament, league, or club'}
-          </p>
+          <h1 className={styles.title}>Create your account</h1>
+          {/* Fans are this mode's main audience now (conversion sweep 2026-07-14, Journey B finding 3) — no
+              invitation is implied. */}
+          <p className={styles.sub}>FieldLogicHQ — your teams, scores &amp; alerts in one place</p>
         </div>
 
-        {isInvited ? (
-          <>
-            <div className={styles.invitePanel}>
-              <div className={styles.inviteOrg}>
-                You&apos;ve been invited to {inviteOrgName ?? 'this organization'}
-              </div>
-              {roleDisplay && <span className={styles.inviteRole}>{roleDisplay}</span>}
-              <p className={styles.inviteBody}>
-                You don&apos;t need to create an organization — just accept your invitation to get started.
-              </p>
-            </div>
-
-            {resendState === 'sent' ? (
-              <div className={styles.inviteSent}>
-                <MailCheck size={16} strokeWidth={1.8} aria-hidden style={{ flexShrink: 0, marginTop: '0.1rem' }} />
-                <span>Check your inbox — open the email from FieldLogicHQ and click &ldquo;Accept Invitation&rdquo;.</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className={styles.submitBtn}
-                onClick={handleResendInvite}
-                disabled={resendState === 'sending'}
-              >
-                {resendState === 'sending' ? 'Sending…' : 'Email me my invitation link'}
-              </button>
-            )}
-
-            {!showEscape && (
-              <div style={{ textAlign: 'center', marginTop: '0.25rem' }}>
-                <button type="button" className={styles.linkMuted} onClick={() => setShowEscape(true)}>
-                  Not you? Create a new organization instead
-                </button>
-              </div>
-            )}
-
-            {showEscape && (
-              <div className={styles.confirmBox}>
-                <span>
-                  This email already has an invitation to {inviteOrgName ?? 'an organization'}. To finish, accept it
-                  above. If you&apos;re setting up a different organization, use a different email address.
-                </span>
-                <div className={styles.confirmActions}>
-                  <button type="button" className={styles.btnGhost} onClick={handleUseDifferentEmail}>
-                    Use a different email
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className={styles.footer}>
-              <p className={styles.footerText}>
-                Already have an account?{' '}
-                <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
-              </p>
-            </div>
-          </>
-        ) : verificationEmail ? (
-          <>
-            <VerifyEmailSent
-              tone="auth"
-              email={verificationEmail}
-              lead={accountOnly
-                ? 'Your account is almost ready. For security, verify your email to finish.'
-                : 'Your organization has been created. For security, verify your email before choosing a plan and opening onboarding.'}
-              after={accountOnly
-                // Neutral for both audiences of account-only signup: fans (the common
-                // case) and invited users — /home surfaces any pending invitation.
-                ? 'After you confirm, FieldLogicHQ signs you in and takes you to your home screen — any pending invitations will be waiting there.'
-                : 'After you confirm, FieldLogicHQ will bring you back to start on the free Tournament plan or choose an upgrade.'}
-              resendNext={verificationNext}
-              signInHref="/auth/login"
-            />
-            {/* Install nudge now comes from the consumer shell layout (auth pages
-                live inside it) — no page-level duplicate. */}
-          </>
+        {verificationEmail ? (
+          <VerifyEmailSent
+            tone="auth"
+            email={verificationEmail}
+            lead="Your account is almost ready. For security, verify your email to finish."
+            // Neutral for both audiences of account-only signup: fans (the common case) and invited users — /home
+            // surfaces any pending invitation.
+            after="After you confirm, FieldLogicHQ signs you in and takes you to your home screen — any pending invitations will be waiting there."
+            resendNext={safeNext ?? '/discover'}
+            signInHref="/auth/login"
+          />
         ) : (
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Account-only mode (invited users) creates no org, so there's no org-name
-              field. The owner path collects it and creates the org at signup. */}
-          {!accountOnly && (
-            <>
-              <div className="form-group">
-                <label className="form-label" htmlFor="signup-org">Organization Name</label>
-                <input
-                  id="signup-org"
-                  type="text"
-                  className="form-input"
-                  value={orgName}
-                  onChange={e => setOrgName(e.target.value)}
-                  placeholder="e.g. Milton Softball Association"
-                  required
-                  autoComplete="organization"
-                />
-                <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.35rem' }}>
-                  Your public address: <span style={{ color: 'var(--logic-lime)' }}>fieldlogichq.ca/{previewSlug}</span> — you can change this later.
-                </p>
-              </div>
-
-              <div className={styles.divider}>account credentials</div>
-            </>
-          )}
-
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div className="form-group">
               <label className="form-label" htmlFor="signup-first-name">First Name</label>
@@ -355,12 +167,12 @@ function SignupForm() {
               type="email"
               className="form-input"
               value={email}
-              onChange={e => { setEmail(e.target.value); if (inviteBranch) setInviteBranch(null); }}
+              onChange={e => { setEmail(e.target.value); if (accountExists) setAccountExists(false); }}
               placeholder="you@example.com"
               required
               autoComplete="email"
             />
-            {inviteBranch === 'account_exists' && (
+            {accountExists && (
               <div className={styles.inlineNotice}>
                 An account already exists for this email.{' '}
                 <Link href="/auth/login" className={styles.footerLink}>Sign in</Link> instead.
@@ -393,21 +205,19 @@ function SignupForm() {
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={loading || inviteBranch === 'account_exists'}
+            disabled={loading || accountExists}
             id="signup-submit"
           >
-            {loading ? 'Creating…' : accountOnly ? 'Create account' : 'Create Organization'}
+            {loading ? 'Creating…' : 'Create account'}
           </button>
 
           <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', textAlign: 'center' }}>
-            {accountOnly
-              ? 'Free to join. No credit card required.'
-              : 'Start on the free Tournament plan. No credit card required.'}
+            Free to join. No credit card required.
           </p>
         </form>
         )}
 
-        {!verificationEmail && !isInvited && (
+        {!verificationEmail && (
         <div className={styles.footer}>
           <p className={styles.footerText}>
             Already have an account?{' '}
@@ -423,7 +233,7 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={<div className={styles.page} />}>
-      <SignupForm />
+      <SignupRoute />
     </Suspense>
   );
 }

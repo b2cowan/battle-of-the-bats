@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { foundingCompAppliesToPlan } from '@/lib/founding-season';
+import { foundingCompAppliesToPlan, foundingSeasonOfferOnPlanChoice } from '@/lib/founding-season';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -35,6 +35,12 @@ export const GET = withObservability(async (req: Request) => {
   const compOnly = url.searchParams.get('compOnly') === '1';
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
+
+  // `planChoice=1`: the plan step asks only whether Tournament Plus is still $0 for this organization's choice — the
+  // same answer the checkout applies (owner 2026-10-19), so the card never shows a price the checkout won't charge.
+  if (url.searchParams.get('planChoice') === '1') {
+    return NextResponse.json({ offerOnPlanChoice: await foundingSeasonOfferOnPlanChoice(ctx.org) });
+  }
 
   const canReadBilling = !compOnly && hasCapability(ctx.role, ctx.capabilities ?? null, 'billing');
 

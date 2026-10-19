@@ -1,14 +1,7 @@
 'use client';
 import type { StartStepViewer } from '@/lib/start-door';
 import StartDoorForm from '../StartDoorForm';
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+import { slugifyOrgName } from '@/lib/utils';
 
 /** Make the league workspace and answer the existing house-league onboarding wizard. */
 async function createLeague(orgName: string): Promise<string> {
@@ -25,7 +18,7 @@ async function createLeague(orgName: string): Promise<string> {
 }
 
 /** The public address, in olive rather than the pale lime it wore on cream (the drawing; the same fix as F08). */
-const publicPage = (name: string) => <>Your public page: <strong>fieldlogichq.ca/{slugify(name) || 'your-league'}</strong></>;
+const publicPage = (name: string) => <>Your public page: <strong>fieldlogichq.ca/{slugifyOrgName(name) || 'your-league'}</strong></>;
 
 /** Free League Starter create form (capped beta), account first (Account-First Sign-up, owner 2026-10-18). */
 export default function StartLeagueForm(props: { viewer: StartStepViewer | null; initialName?: string; confirmed?: boolean }) {

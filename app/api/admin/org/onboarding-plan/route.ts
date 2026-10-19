@@ -6,8 +6,7 @@ import { tournamentPlusUpsellHtml, SITE_URL } from '@/lib/email';
 import { sendMarketingEmail } from '@/lib/email-sender';
 import { getBillingHref } from '@/lib/billing-urls';
 import { withObservability } from '@/lib/observability';
-
-const STARTUP_TASK_IDS = ['tournament', 'divisions', 'welcome', 'venues', 'contacts'];
+import { hasSavedSetupWork } from '@/lib/first-run-plan';
 
 /** Free-tier → Tournament Plus upsell fires this many days after choosing the free plan. */
 const UPSELL_DELAY_DAYS = 7;
@@ -16,15 +15,6 @@ function isMissingStartupTasksColumn(error: { code?: string; message?: string } 
   if (!error) return false;
   const message = error.message ?? '';
   return error.code === '42703' || error.code === 'PGRST204' || message.includes('startup_tasks');
-}
-
-function hasStoredSavedStartupWork(value: unknown) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const tasks = value as Record<string, { status?: unknown } | undefined>;
-  return STARTUP_TASK_IDS.some(taskId => {
-    const status = tasks[taskId]?.status;
-    return status === 'complete';
-  });
 }
 
 export const POST = withObservability(async (req: Request) => {
@@ -67,7 +57,7 @@ export const POST = withObservability(async (req: Request) => {
 
   const hasStartupTasksStorage = !startupRead.error;
 
-  if ((tournamentCount ?? 0) > 0 || hasStoredSavedStartupWork(startupRead.data?.startup_tasks)) {
+  if ((tournamentCount ?? 0) > 0 || hasSavedSetupWork(startupRead.data?.startup_tasks)) {
     return NextResponse.json({ error: 'Plan selection is locked after setup has started.' }, { status: 409 });
   }
 

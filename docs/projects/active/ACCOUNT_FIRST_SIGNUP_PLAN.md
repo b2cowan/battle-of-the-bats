@@ -110,9 +110,12 @@ Send the link again on sign-in for a waiting account.
 - **A5** The Founding Season offer counts from the day the **account** was made: an account created before the
   sign-up close (`FOUNDING_SEASON_SIGNUP_CLOSE`, end of 2026-12-31) still gets the comp when its organization is created
   after it. The comp's end date is fixed for everyone (`FOUNDING_SEASON_END`), so a late organization gains nothing.
-  Logged in `BUSINESS_DECISIONS.md` 2026-10-18 (refines 2026-09-07 part 2). Two edges are **Proposed** there: (a) after
-  the close only the start sign-up's own creation counts, not further organizations; (b) the same rule for Coach Premium.
-  Eligibility reads the auth user's `created_at`, never `user_metadata` (the user can edit that).
+  Logged in `BUSINESS_DECISIONS.md` 2026-10-18 (refines 2026-09-07 part 2). **Edges Decided 2026-10-19** (owner, Part 2
+  build session, each as recommended): (a) after the close only the creation the account's start sign-up came for
+  counts — read from a **locked copy** of the door on `app_metadata`, since the remembered door is the account holder's
+  to edit; (b) the same rule for Coach Premium (Part 3); (c) the plan step honours it — after the close, an organization
+  that got the comp when it was made picks Tournament Plus at $0 on its **first plan choice** only. Eligibility reads the
+  auth user's `created_at` and the locked door, never `user_metadata`.
 - **A6** The pricing page's plan and billing ride on the account and open the plan step with that plan chosen; the
   person can still change it.
 - **A7** Sign-in offers Send the link again to a waiting account, in this project, with the resend's existing limit.
@@ -261,3 +264,81 @@ the new step 2), or the organization door's card stays beside the real organizat
 - R1 (pre-hijack by password, accepted 2026-10-17): a door makes a squatted account's link more convincing; the root
   cause is unchanged and still accepted.
 - Two open tabs can each create a team (as before: the create API has no one-team check).
+
+## As built, Part 2 (2026-10-19)
+
+**Run a tournament, account first.** `/api/auth/signup` makes the auth account and nothing else for both of its callers:
+the organization door (`startDoor: 'organization'`, or a page loaded before the release that still sends a name) and the
+account-only sign-up (no door). The door is remembered with the pricing page's plan and billing
+(`user_metadata.start = { door, plan?, billing? }`, read as `pricing` by `readStartDoor`), the link lands on
+`/start/tournament?confirmed=1`, and the email no longer names an organization. The Sign-up Invite Guard and the staff
+refusal stay. The route joins the no-create guard (mutation-checked 2026-10-19: `createOrganization(`, an
+`.from('organizations')` read and an `org_overrides` insert put back each fail it).
+
+- **Step 1** is `StartAccountStep` (exported from `StartDoorForm`) at `/auth/signup`, where the pricing page and every
+  "create your free account" link already point: "Create Your Organization", "Run your tournament, league or club", the
+  step line, the pricing chip (A6, D10 solid edge), Create Account, "No credit card required.". `?account=1` keeps its
+  own form (the organization-only parts taken out). The invited branch keeps its words in the start look
+  (`InvitedInstead`); the inline "account already exists" notice gives way to the start forms' rule (sign in, then
+  step 2) — one rule for every start door.
+- **Step 2** is the shared name step (`StartTournamentForm`), "Adding an organization to …", the address in olive (F08),
+  Not now on a first day (F07). `AddOrgForm` is gone. `/api/org/create` clears the organization door. The plan step
+  opens with the pricing page's plan featured and its billing chosen (`planStepPath`); an existing account that signs
+  in from step 1 carries the plan through sign-in (`?plan=&billing=` on `/start/tournament`).
+- **Home:** the organization door's waiting card carries `/start/tournament`'s two gates (a pending invite, already in
+  a real organization), as the league's does.
+- The signed-out `/start/tournament` heads-up keeps its screen; its sentence "…and your organization's name. That's the
+  whole form." was untrue after this and now says the name comes after the account (build call, told to the owner).
+
+**The Founding Season rule (A5 + edges ratified 2026-10-19).** One rule, `isFoundingSeasonOpenFor(accountCreatedAt,
+cameToStart)` in `lib/plan-config.ts`, read through `foundingSeasonOfferFor(user, creates)` in `lib/founding-season.ts`
+by `/api/org/create` and `/api/league/create` (Part 3 adds `create-team-checkout`). The locked door is
+`app_metadata.start_door`, written by `lockStartDoorOrUndo` at sign-up for the doors that carry an offer (organization,
+league, premium) — a failed lock undoes the account — and cleared by `clearStartDoor` with the remembered door. The plan
+step after the close: `foundingSeasonOfferOnPlanChoice(org)` (a live Founding comp row while the plan is still the
+**first-run choice** — no tournament, no saved setup work, onboarding not finished, `lib/first-run-plan.ts`, the same
+lock the free-plan route applies; server facts only; fails closed) gates `create-checkout`'s no-Stripe Tournament Plus and, through `founding-season-status?planChoice=1`, the
+plan card's $0 (`PricingSection` `foundingOfferHeld`, Tournament Plus only). The onboarding plan route is not a grant path
+(census 2026-10-19: it only schedules the upsell email), so it was left on the window. The Club exclusion holds: every
+creation makes a `tournament` org, and the plan-step rule checks `foundingCompAppliesToPlan`.
+
+**Production count (owner-approved read, 2026-10-19):** 5 organizations; **1** made by a sign-up that never confirmed
+(made 2026-08-29, free Tournament plan, no tournaments, owner never signed in, holds a Founding comp). Cleaning it is a
+separate owner call. Probe: `.probe/account-first/prod-unconfirmed-orgs.mjs` (read-only; slugs to a local file only).
+
+**How "first plan choice" (ruling (c)) is read — flagged to the owner 2026-10-19, not a ruling.** The plan step's own
+"plan chosen" mark is written by the browser and wiped by every first-run plan change (the free-plan route, an
+abandoned checkout), so /review showed an owner could reopen $0 by starting a checkout and walking away. The build reads
+the first plan choice as **the first-run choice**: while the plan is still editable on the plan step (before setup
+starts) Tournament Plus stays $0 for an organization holding the comp, even if it picked free a minute earlier; once a
+tournament or setup work exists, an upgrade pays the list price. A strictly-first-click reading needs a server-side
+record of the first choice (a schema change) — the owner's call.
+
+**/simplify (2026-10-19, four lenses):** one `lockStartDoorOrUndo` for both sign-up routes; the org sign-up answers an
+existing account one way (409, as account-only always did) and has one response shape; `ensureFoundingSeasonCompPeriod`
+writes the comp at organization and league creation (idempotent; same row); one `slugifyOrgName` (lib/utils) for both
+start forms and both create routes; the leftover invited-panel and divider rules in `auth.module.css` removed; Home's
+gate reads plainly. Skipped on purpose: one copy of the door instead of two (Part 1's storage is on production); a
+per-plan promo callback on `PricingSection`; a shared "would the step open" helper across Home, the two pages and the
+two create routes; a server-component split of `/auth/signup`; merging the account-only form into the start form.
+
+**/review (2026-10-19, high risk, five lenses; gate green for this scope, `check:layout` admin-onboarding ✓ at four
+widths; the start and sign-up forms are not in the layout registry):**
+- Fixed (Medium): the plan-step rule keyed on the browser-written plan mark — now server facts (above); mutation-checked
+  (the plan mark or the tournament check put back each fail the guard).
+- Fixed (Low): the plan card's $0 could go stale after a choice on the same page — it is asked again whenever the
+  chooser appears and shown only for the state it was asked in; a newer pricing-page plan in the address beats the one
+  remembered at sign-up; a second submit that races past the account check gets the same 409; the lock-or-undo also
+  catches a thrown error; the team and league pages keep Part 1's localhost behaviour; Club is ruled out before the
+  window in the plan-step rule; the data dictionary no longer names the sign-up as a comp writer.
+- Accepted: two tabs on step 2 at once can each make an organization (the single-organization check is not atomic — as
+  before); a failed comp write at creation still clears the lock (logged, as before); an undo that itself fails leaves
+  an unconfirmed account behind (two admin failures in a row); for an account that chose the dark look, step 1 shows
+  the warm card on the dark sign-in ground; the add-organization route has no rate limit (as before); the startup-tasks
+  route lets any member mark a task (pre-existing — it can only close the first run, never reopen it).
+
+**Accepted, left as they are:**
+- League door accounts made between Part 1's release and this one carry no locked copy; League self-sign-up is off
+  everywhere but localhost, so nobody is affected.
+- The plan step's "Welcome to your Founding Season" banner still reads the window, so an organization that gets
+  Tournament Plus free on its first choice after the close does not see it (a neighbour, not built here).

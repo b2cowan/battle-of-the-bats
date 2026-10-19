@@ -200,3 +200,17 @@ export function relativeDayLabel(date: string, today: string): string {
   if (date === tomorrow.toISOString().slice(0, 10)) return 'Tomorrow';
   return new Date(`${date}T12:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
 }
+
+/**
+ * An organization's public-address segment from its name: lowercase, every run of other characters one hyphen, no
+ * hyphen at either end. The add-organization and league create routes build an explicit address with it, and the start
+ * forms preview the address with it, so the preview reads what the server makes (`generateUniqueOrgSlug` in lib/db.ts
+ * starts from the same rule, then adds -2, -3 … when the address is taken).
+ */
+export function slugifyOrgName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}

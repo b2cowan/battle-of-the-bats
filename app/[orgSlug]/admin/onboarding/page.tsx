@@ -21,6 +21,7 @@ import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/l
 import type { FreeFloor, OrgPlan } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
+import { parseStartPricing } from '@/lib/start-door';
 import styles from './onboarding.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -266,6 +267,29 @@ function OnboardingPageLegacy() {
   const planChoiceRequired = searchParams.get('choosePlan') === '1';
   const continueSetup = searchParams.get('continueSetup') === '1';
   const planSelectionSucceeded = searchParams.get('success') === '1';
+  // The plan picked on the pricing page rides here from Run a tournament's step 2 and is the one the chooser features
+  // (Account-First Sign-up A6, 2026-10-18). A preselection the person can change, never a price.
+  const pricingPlan = parseStartPricing(searchParams.get('plan'), searchParams.get('billing'))?.plan ?? null;
+  // After the sign-up window closes, an organization that holds the Founding comp still picks Tournament Plus at $0 on
+  // its FIRST plan choice (owner 2026-10-19). The server answers, the same rule the checkout applies, so the card never
+  // shows a price the checkout won't charge. Before the close the window itself shows the offer.
+  // Only a free organization can be offered it, so no other plan asks. It is asked again each time the chooser appears
+  // (the answer ends once setup starts), and an answer is only ever shown for the state it was asked in (/review).
+  const offerSlug = currentOrg?.planId === 'tournament' && !isFoundingSeasonSignupOpen() ? currentOrg.slug : null;
+  const offerKey = offerSlug ? [offerSlug, planChoiceRequired, planChooserOpen, activeModal].join(':') : null;
+  const [offerAnswer, setOfferAnswer] = useState<{ key: string; held: boolean } | null>(null);
+  useEffect(() => {
+    if (!offerKey || !offerSlug) return;
+    let live = true;
+    fetch(`/api/admin/org/founding-season-status?orgSlug=${encodeURIComponent(offerSlug)}&planChoice=1`)
+      .then(res => (res.ok ? res.json() : null))
+      .then((data: { offerOnPlanChoice?: boolean } | null) => {
+        if (live) setOfferAnswer({ key: offerKey, held: data?.offerOnPlanChoice === true });
+      })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [offerKey, offerSlug]);
+  const foundingOfferHeld = !!offerKey && offerAnswer?.key === offerKey && offerAnswer.held;
 
   function isFirstRunPlanEditable(progress: StartupProgress | null = startupProgress) {
     if (!currentOrg || currentOrg.onboardingCompletedAt) return false;
@@ -947,7 +971,8 @@ function OnboardingPageLegacy() {
           initialBilling={searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'}
           compact={embedded}
           order={['tournament_plus', 'tournament', 'league', 'club']}
-          featuredPlan="tournament_plus"
+          featuredPlan={pricingPlan ?? 'tournament_plus'}
+          foundingOfferHeld={foundingOfferHeld}
           ctaLabel={(planKey) => {
             if (required && planKey === 'tournament') return 'Start with Tournament';
             if (!required && planKey === 'tournament' && planKey !== activePlanId) return 'Continue free';

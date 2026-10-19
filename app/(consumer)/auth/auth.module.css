@@ -116,27 +116,6 @@
 
 .pwToggle:hover { color: var(--fl-text); }
 
-/* ── Divider ─────────────────────────────────────────────────────────────── */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  opacity: 0.5;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: rgba(var(--primary-rgb), 0.3);
-}
-
 /* ── Submit button ───────────────────────────────────────────────────────── */
 .submitBtn {
   width: 100%;
@@ -207,62 +186,13 @@
 }
 .errorNote { margin: 0.5rem 0 0; }
 
-/* ── Sign-up Invite Guard — "You've been invited" branch ─────────────────────
-   Positive recognition moment (not an error): blueprint-framed panel + a single
-   lime CTA, grey secondaries. See design_decisions.md 2026-07-06. No new tokens. */
-.invitePanel {
-  background: rgba(var(--primary-rgb), 0.06);
-  border: 1px solid rgba(var(--primary-rgb), 0.4);
-  border-radius: 0;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin-bottom: 1.25rem;
-}
-
-.inviteOrg {
-  font-family: var(--font-data);
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--fl-text);
-}
-
-/* Outlined role pill (NOT a lime fill — keeps the panel calm + sidesteps the
-   dark-ink-on-lime rule). */
-.inviteRole {
-  align-self: flex-start;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  border: 1px solid rgba(var(--primary-rgb), 0.5);
-  padding: 0.2rem 0.5rem;
-}
-
+/* ── Invitation copy (the accept-invite form). The org sign-up's "You've been invited" branch moved to the start
+   look with Run a tournament's step 1 (Account-First Sign-up Part 2, 2026-10-19; startForm.module.css). */
 .inviteBody {
   font-family: var(--font-data);
   font-size: 0.78rem;
   line-height: 1.5;
   color: var(--data-gray);
-}
-
-/* Reuses the existing verification-success visual (lime-tinted confirmation). */
-.inviteSent {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  border-radius: 0;
-  padding: 0.75rem 1rem;
-  font-family: var(--font-data);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--logic-lime);
 }
 
 /* Field-level, corrective-not-error notice (existing-account case). */
@@ -277,23 +207,6 @@
   line-height: 1.45;
   color: var(--data-gray);
 }
-
-/* De-emphasized secondary action — deliberately NOT the lime footerLink, so it
-   never competes with the lime primary CTA. */
-.linkMuted {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.15s;
-}
-
-.linkMuted:hover { color: var(--fl-text); }
 
 .confirmBox {
   margin-top: 0.75rem;
@@ -426,11 +339,6 @@
   opacity: 1;
 }
 
-:global(html[data-user-theme="warm"]) .authSurface .divider::before,
-:global(html[data-user-theme="warm"]) .authSurface .divider::after {
-  background: var(--home-line);
-}
-
 /* Warm primary = ink-on-lime (the ONE warm primary language, design_decisions
    2026-07-22) — re-pinned to the captured true lime, not the olive remap. */
 :global(html[data-user-theme="warm"]) .authSurface .submitBtn {
@@ -463,19 +371,10 @@
 }
 
 /* Navy-tint panels → white cards on paper (the warm card convention). */
-:global(html[data-user-theme="warm"]) .authSurface .invitePanel,
 :global(html[data-user-theme="warm"]) .authSurface .inlineNotice,
 :global(html[data-user-theme="warm"]) .authSurface .confirmBox {
   background: var(--home-card);
   border-color: var(--home-line-strong);
-}
-
-:global(html[data-user-theme="warm"]) .authSurface .inviteRole { border-color: var(--home-line-strong); }
-
-/* Lime-tint confirmation → olive family (text auto-darkens via the remap). */
-:global(html[data-user-theme="warm"]) .authSurface .inviteSent {
-  background: var(--home-olive-soft);
-  border-color: rgba(var(--home-olive-rgb), 0.3);
 }
 
 :global(html[data-user-theme="warm"]) .authSurface .btnGhost { border-color: var(--home-line-strong); }

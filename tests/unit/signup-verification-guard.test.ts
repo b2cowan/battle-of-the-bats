@@ -152,9 +152,12 @@ describe('the screens', () => {
     assert.equal([...src.matchAll(/new FormData\(\)/g)].length, 1, 'one registration post, shared by both paths');
   });
   it('the org sign-up shows the same block, with resend (V3)', () => {
+    // Run a tournament is the shared start form since Account-First Part 2 (2026-10-19) — the block above, tone
+    // "start". The account-only sign-up on the same address keeps its own, returning where it was going.
     const src = readCode('app/(consumer)/auth/signup/page.tsx');
+    assert.match(src, /return <StartAccountStep door="organization"/);
     assert.match(src, /<VerifyEmailSent\s+tone="auth"/);
-    assert.match(src, /resendNext=\{verificationNext\}/);
+    assert.match(src, /resendNext=\{safeNext \?\? '\/discover'\}/);
   });
 });
 

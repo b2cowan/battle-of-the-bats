@@ -282,6 +282,13 @@ interface PricingSectionProps {
   /** Optional plan key to visually feature (highlighted border). */
   featuredPlan?: OrgPlan;
   /**
+   * This organization still holds the Founding Season offer for the choice it is making, whatever the sign-up window
+   * says — the plan step after the close, for an organization given the comp when it was made (owner 2026-10-19). The
+   * caller asks the server (the same rule the checkout applies); the Tournament Plus card then reads as it does in the
+   * window. Tournament Plus only: that is the one plan the checkout applies it to.
+   */
+  foundingOfferHeld?: boolean;
+  /**
    * The "live products lead" layout (owner-ratified 2026-08-08), for the marketing surfaces only:
    * plans whose gate is CLOSED collapse from full cards into one compact coming-soon strip below
    * the grid, and the Premium Coaches Portal joins the grid as a real card while its checkout is
@@ -292,7 +299,7 @@ interface PricingSectionProps {
   marketingLayout?: boolean;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, currentPlanComped, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', compact = false, order, featuredPlan, marketingLayout = false }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, currentPlanComped, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', compact = false, order, featuredPlan, foundingOfferHeld = false, marketingLayout = false }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
   const orderedPlans = order
@@ -373,7 +380,9 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           // account's comp still running?), not the signup window — supplied by the caller when it
           // knows; the window is the fallback until it answers (/review 2026-09-07).
           const promoActive = !!plan.promoNote && (
-            isCurrent && currentPlanComped !== undefined ? currentPlanComped : isFoundingSeasonPromoActive(plan.key)
+            isCurrent && currentPlanComped !== undefined
+              ? currentPlanComped
+              : (foundingOfferHeld && plan.key === 'tournament_plus') || isFoundingSeasonPromoActive(plan.key)
           );
           const displayNote = isGated
             ? GATED_PLAN_INTEREST_LINE

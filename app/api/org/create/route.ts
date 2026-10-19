@@ -1,21 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL, isFoundingSeasonSignupOpen } from '@/lib/plan-config';
+import { FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { ensureFoundingSeasonCompPeriod, foundingSeasonOfferFor } from '@/lib/founding-season';
+import { clearStartDoor } from '@/lib/start-door-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+import { slugifyOrgName } from '@/lib/utils';
 
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
@@ -34,8 +29,8 @@ async function isSlugAvailable(slug: string) {
 }
 
 /**
- * Create an additional free Tournament organization for an ALREADY signed-in user —
- * the Phase-2 existing-user "add a workspace" path. Deliberately separate from
+ * Create a free Tournament organization for an ALREADY signed-in user — step 2 of Run a tournament
+ * since Account-First Sign-up Part 2 (2026-10-19), and the existing-user "add a workspace" path. Deliberately separate from
  * /api/auth/signup: that route creates the auth user (and rejects existing emails);
  * this one operates on the live session, so an existing user adds a second workspace
  * without re-signing-up. New org lands on the free `tournament` plan (migration-050
@@ -94,7 +89,7 @@ export const POST = withObservability(async (req: Request) => {
     // settings). Honor + validate an explicit orgSlug if one is ever passed.
     let slug: string;
     if (typeof orgSlug === 'string' && orgSlug.trim()) {
-      slug = slugify(orgSlug);
+      slug = slugifyOrgName(orgSlug);
       if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
         return NextResponse.json({ error: 'Public URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
       }
@@ -121,20 +116,20 @@ export const POST = withObservability(async (req: Request) => {
       );
     }
 
-    // Founding Season: each new free org created while the SIGNUP window is open gets Tournament
-    // Plus comped through FOUNDING_SEASON_END, matching /api/auth/signup. Non-fatal — creation
+    // Founding Season: a new free org gets Tournament Plus comped through FOUNDING_SEASON_END while the sign-up window
+    // is open — and after it, when the ACCOUNT was made by the close and this is the organization its Run a tournament
+    // sign-up came for (A5 + edge (a), 2026-10-19; the one rule, lib/founding-season.ts). Non-fatal — creation
     // succeeds even if this insert fails.
-    if (isFoundingSeasonSignupOpen()) {
-      const { error: compErr } = await supabaseAdmin.from('org_overrides').insert({
-        org_id: org.id,
-        type: 'comp_period',
-        value: null,
-        expires_at: FOUNDING_SEASON_END,
-        reason: `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`,
-        created_by: 'system',
-      });
-      if (compErr) console.error('[org/create] Founding season comp_period insert error:', compErr);
+    if (foundingSeasonOfferFor(user, 'organization')) {
+      try {
+        await ensureFoundingSeasonCompPeriod(org.id, 'system', `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`);
+      } catch (compErr) {
+        console.error('[org/create] Founding season comp_period insert error:', compErr);
+      }
     }
+
+    // Account-first (Part 2): the organization is made, so Home's waiting workspace has done its job.
+    await clearStartDoor(user.id, ['organization']);
 
     return NextResponse.json({ ok: true, orgSlug: org.slug });
   } catch (err) {

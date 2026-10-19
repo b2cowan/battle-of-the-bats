@@ -4,16 +4,19 @@
  * the door's step 2. The account remembers its door (lib/start-door.ts) so the link, every resend and Home's waiting
  * workspace (A4, revised 2026-10-19) all lead back there, wherever the link is opened.
  *
- * Part 1 (shared pieces + Start a team + Start a league). The rules are exercised directly; the wiring is pinned by
- * source scans, as signup-verification-guard.test.ts does for the verify-by-link rule this builds on.
+ * Part 1 (shared pieces + Start a team + Start a league) and Part 2 (Run a tournament, the pricing plan, the Founding
+ * Season rule). The rules are exercised directly; the wiring is pinned by source scans, as
+ * signup-verification-guard.test.ts does for the verify-by-link rule this builds on.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { readCode } from './_source-code.ts';
 import {
-  readStartDoor, parseStartDoor, startDoorLinkPath, START_DOOR_PATH, WAITING_WORKSPACE,
+  readStartDoor, parseStartDoor, parseStartPricing, planStepPath, startDoorLinkPath, START_DOOR_PATH, WAITING_WORKSPACE,
 } from '../../lib/start-door.ts';
+import { FOUNDING_SEASON_END, FOUNDING_SEASON_SIGNUP_CLOSE, isFoundingSeasonOpenFor } from '../../lib/plan-config.ts';
+import { hasSavedSetupWork } from '../../lib/first-run-plan.ts';
 
 describe('the remembered door', () => {
   it('reads only a well-formed record; anything else is no door', () => {
@@ -25,6 +28,23 @@ describe('the remembered door', () => {
     assert.deepEqual(readStartDoor({ start: { door: 'league', notNow: 2, notNowAt: '2026-10-18T12:00:00.000Z' } }), { door: 'league' });
   });
 
+  it('the organization door carries the pricing page’s plan and billing (A6); nothing else does', () => {
+    assert.deepEqual(
+      readStartDoor({ start: { door: 'organization', plan: 'tournament_plus', billing: 'annual' } }),
+      { door: 'organization', pricing: { plan: 'tournament_plus', billing: 'annual' } },
+    );
+    assert.deepEqual(readStartDoor({ start: { door: 'organization' } }), { door: 'organization' });
+    assert.deepEqual(readStartDoor({ start: { door: 'team', plan: 'league', billing: 'monthly' } }), { door: 'team' });
+    // only the paid plans the pricing cards send; billing defaults to monthly
+    assert.deepEqual(parseStartPricing('league', undefined), { plan: 'league', billing: 'monthly' });
+    for (const plan of ['tournament', 'team', 'bogus', 7, null]) assert.equal(parseStartPricing(plan, 'annual'), null, String(plan));
+  });
+
+  it('the plan step opens with that plan, or as it always has', () => {
+    assert.equal(planStepPath('milton', { plan: 'tournament_plus', billing: 'monthly' }), '/milton/admin/onboarding?choosePlan=1&plan=tournament_plus&billing=monthly');
+    assert.equal(planStepPath('milton', null), '/milton/admin/onboarding?choosePlan=1');
+  });
+
   it('a route takes only the doors it serves', () => {
     assert.equal(parseStartDoor('team', ['team', 'league']), 'team');
     assert.equal(parseStartDoor('organization', ['team', 'league']), null);
@@ -34,6 +54,7 @@ describe('the remembered door', () => {
   it('the link lands on the door’s create step, marked as just confirmed', () => {
     assert.equal(startDoorLinkPath('team'), '/start/team?confirmed=1');
     assert.equal(startDoorLinkPath('league'), '/start/league?confirmed=1');
+    assert.equal(startDoorLinkPath('organization'), '/start/tournament?confirmed=1');
     assert.equal(START_DOOR_PATH.organization, '/start/tournament');
     assert.equal(START_DOOR_PATH.premium, '/coaches/start');
   });
@@ -49,9 +70,84 @@ describe('the remembered door', () => {
   it('steers screens only: no entitlement, price or Founding Season rule reads it', () => {
     const lib = readCode('lib/start-door.ts');
     assert.deepEqual([...lib.matchAll(/from '([^']+)'/g)].map(m => m[1]), ['./coaches-portal-routes'], 'framework-free: route constants only');
-    for (const f of ['lib/plan-config.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/billing/create-team-checkout/route.ts']) {
+    for (const f of ['lib/plan-config.ts', 'lib/founding-season.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/billing/create-team-checkout/route.ts']) {
       assert.doesNotMatch(readCode(f), /start-door/, `${f} never reads the remembered door`);
     }
+    // the offer reads the LOCKED copy on app_metadata, which only the service role can write — never user_metadata
+    assert.doesNotMatch(readCode('lib/founding-season.ts'), /user_metadata/);
+  });
+});
+
+/**
+ * THE FOUNDING SEASON OFFER AT A CREATION (A5 Decided 2026-10-18; edges (a) and (b) ratified by the owner 2026-10-19).
+ * The account step and the creation now fall on different days, so "free … when you sign up by December 31" is read
+ * against the account. After the close, only the start the account came for counts — and that is read from a locked
+ * copy of the door, because the remembered door is the account holder's to edit.
+ */
+describe('the first-run plan choice ends when setup starts', () => {
+  it('saved setup work ends it; the plan task does not', () => {
+    assert.equal(hasSavedSetupWork({ venues: { status: 'complete' } }), true);
+    assert.equal(hasSavedSetupWork({ plan: { status: 'complete' } }), false);
+    assert.equal(hasSavedSetupWork({ tournament: { status: 'skipped' } }), false);
+    for (const v of [null, undefined, [], 'x', {}]) assert.equal(hasSavedSetupWork(v), false);
+  });
+});
+
+describe('the Founding Season offer at a creation', () => {
+  const close = Date.parse(FOUNDING_SEASON_SIGNUP_CLOSE);
+  const end = Date.parse(FOUNDING_SEASON_END);
+  const day = 86_400_000;
+  const before = new Date(close - day).toISOString();
+  const after = new Date(close + day).toISOString();
+  it('while the window is open, every creation gets it, as before', () => {
+    assert.equal(isFoundingSeasonOpenFor(null, false, close - 1), true);
+  });
+  it('after the close: an account made by then, finishing the start it came for', () => {
+    assert.equal(isFoundingSeasonOpenFor(before, true, close + 2 * day), true, 'signed up on the 31st, named it on the 2nd');
+    assert.equal(isFoundingSeasonOpenFor(before, false, close + 2 * day), false, 'edge (a): any other creation follows the window');
+    assert.equal(isFoundingSeasonOpenFor(after, true, close + 2 * day), false, 'an account made after the close');
+    assert.equal(isFoundingSeasonOpenFor(null, true, close + 2 * day), false, 'no creation date is no offer');
+    assert.equal(isFoundingSeasonOpenFor(before, true, end), false, 'nothing once the season has ended');
+  });
+  it('one rule for every creation path, read off the signed-in account', () => {
+    const lib = readCode('lib/founding-season.ts');
+    assert.match(lib, /return isFoundingSeasonOpenFor\(user\.created_at, lockedStartDoorOf\(user\.app_metadata\) === creates\);/);
+    assert.match(readCode('app/api/org/create/route.ts'), /if \(foundingSeasonOfferFor\(user, 'organization'\)\) \{/);
+    assert.match(readCode('app/api/league/create/route.ts'), /if \(foundingSeasonOfferFor\(user, 'league'\)\) \{/);
+    for (const f of ['app/api/org/create/route.ts', 'app/api/league/create/route.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/auth/signup/route.ts']) {
+      assert.doesNotMatch(readCode(f), /isFoundingSeasonSignupOpen\(\)/, `${f} reads the one rule, not the bare window`);
+    }
+  });
+  it('the start doors that carry an offer lock their door, and a failed lock undoes the account', () => {
+    assert.match(readCode('lib/founding-season.ts'), /const OFFER_DOORS = \['organization', 'league', 'premium'\] as const;/);
+    const signup = readCode('app/api/auth/signup/route.ts');
+    // one lock-or-undo for every sign-up route that makes a start door's account
+    assert.match(readCode('lib/founding-season.ts'), /if \(!failure\) return true;[\s\S]{0,300}?await supabaseAdmin\.auth\.admin\.deleteUser\(userId\);[\s\S]{0,300}?return false;/);
+    assert.match(signup, /if \(organizationDoor && !\(await lockStartDoorOrUndo\(userId, 'organization'\)\)\) \{/);
+    const coach = readCode('app/api/auth/coach-signup/route.ts');
+    assert.match(coach, /if \(linkData\.user && !\(await lockStartDoorOrUndo\(linkData\.user\.id, startDoor\)\)\) \{/);
+    assert.match(coach, /if \(created\.user && !\(await lockStartDoorOrUndo\(created\.user\.id, startDoor\)\)\) \{/);
+  });
+  it('the plan step after the close: $0 Tournament Plus while an organization holding the comp makes its FIRST-RUN plan choice', () => {
+    const lib = readCode('lib/founding-season.ts');
+    const rule = lib.slice(lib.indexOf('export async function foundingSeasonOfferOnPlanChoice('));
+    assert.match(rule, /if \(!foundingCompAppliesToPlan\(org\.planId\)\) return false;\s*if \(isFoundingSeasonSignupOpen\(\)\) return true;/, 'Club never (2026-09-25), even in the window');
+    assert.match(rule, /\.is\('revoked_at', null\)/);
+    assert.match(rule, /if \(comp\.error \|\| tournaments\.error \|\| row\.error \|\| !row\.data\) return false;/, 'fails closed: a read error is the list price');
+    // server facts only — the first run ends when setup starts, as the free-plan route's own lock reads it
+    assert.match(rule, /&& \(tournaments\.count \?\? 0\) === 0\s*&& !row\.data\.onboarding_completed_at\s*&& !hasSavedSetupWork\(row\.data\.startup_tasks\);/);
+    // ⚠ never the browser-written plan task: every first-run plan change wipes it, so an abandoned checkout reopened $0 (/review)
+    assert.doesNotMatch(rule, /\.plan\b|planTask/);
+    assert.match(readCode('app/api/admin/org/onboarding-plan/route.ts'), /hasSavedSetupWork\(startupRead\.data\?\.startup_tasks\)/, 'one rule for when the first run ends');
+    assert.match(readCode('app/api/billing/create-checkout/route.ts'), /auth\.org\.planId === 'tournament' &&\s*\(await foundingSeasonOfferOnPlanChoice\(auth\.org\)\);/);
+    // the card shows what the checkout will charge
+    assert.match(readCode('app/api/admin/org/founding-season-status/route.ts'), /return NextResponse\.json\(\{ offerOnPlanChoice: await foundingSeasonOfferOnPlanChoice\(ctx\.org\) \}\);/);
+    assert.match(readCode('components/PricingSection.tsx'), /: \(foundingOfferHeld && plan\.key === 'tournament_plus'\) \|\| isFoundingSeasonPromoActive\(plan\.key\)/);
+    const onboarding = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
+    assert.match(onboarding, /foundingOfferHeld=\{foundingOfferHeld\}/);
+    // asked again each time the chooser appears, and shown only for the state it was asked in (/review)
+    assert.match(onboarding, /const offerKey = offerSlug \? \[offerSlug, planChoiceRequired, planChooserOpen, activeModal\]\.join\(':'\) : null;/);
+    assert.match(onboarding, /const foundingOfferHeld = !!offerKey && offerAnswer\?\.key === offerKey && offerAnswer\.held;/);
   });
 });
 
@@ -72,13 +168,51 @@ describe('the coach sign-up remembers the door', () => {
   });
 });
 
+describe('Run a tournament: the organization sign-up makes the account alone (Part 2, F01)', () => {
+  const route = readCode('app/api/auth/signup/route.ts');
+  it('remembers the organization door with the pricing page’s plan, and the link lands on step 2', () => {
+    assert.match(route, /const organizationDoor = parseStartDoor\(startDoor, \['organization'\] as const\) !== null\s*\|\| \(orgName !== undefined && orgName !== null\);/, 'a page loaded before the release still sends a name: it is the door');
+    assert.match(route, /const pricing = organizationDoor \? parseStartPricing\(plan, billing\) : null;/);
+    assert.match(route, /\.\.\.\(organizationDoor \? \{ start: \{ door: 'organization', \.\.\.\(pricing \?\? \{\}\) \} \} : \{\}\),/);
+    assert.match(route, /const returnPath = organizationDoor \? startDoorLinkPath\('organization'\) : safeNextPath\(next, '\/discover'\);/);
+    assert.match(route, /redirectTo: verificationRedirect\(origin, returnPath\),/);
+    assert.match(route, /user_metadata: userMetadata,/, 'the instant path (localhost) remembers it too');
+    // no name in the email: it is asked on step 2
+    assert.match(route, /await sendSignupVerificationEmail\(\{ to: normalizedEmail, origin, actionLink, firstName: normalizedFirstName \}\);/);
+  });
+  it('keeps the Sign-up Invite Guard and the staff refusal', () => {
+    assert.match(route, /return NextResponse\.json\(\{ inviteBranch: 'invited', orgName: pendingInvite\.orgName \}\);/);
+    // an existing account answers both forms the same way: sign in (the organization door's step 2 follows)
+    assert.match(route, /if \(await authAccountExistsForEmail\(normalizedEmail\)\) \{\s*return NextResponse\.json\(\s*\{ error: 'An account already exists for this email\. Please sign in instead\.' \},\s*\{ status: 409 \},/);
+    // and a second submit that raced past it gets the same answer, never the auth service's own text (/review)
+    assert.match(route, /if \(linkError\?\.status === 422\) \{\s*return NextResponse\.json\(\{ error: 'An account already exists for this email\. Please sign in instead\.' \}, \{ status: 409 \}\);/);
+  });
+  it('step 2 is the shared name step: the add-organization form, its address in olive, then the plan step', () => {
+    const page = readCode('app/(consumer)/start/tournament/page.tsx');
+    // the newer choice (in the address, carried through sign-in) wins over the one remembered at sign-up (/review)
+    assert.match(page, /const pricing = parseStartPricing\(first\(sp\.plan\), first\(sp\.billing\)\) \?\? readStartDoor\(user\.user_metadata\)\?\.pricing \?\? null;/);
+    const form = readCode('app/(consumer)/start/tournament/StartTournamentForm.tsx');
+    assert.match(form, /return planStepPath\(data\.orgSlug, pricing\);/);
+    assert.match(form, /Your public address: <strong>fieldlogichq\.ca\/\{slugifyOrgName\(name\) \|\| 'your-org'\}<\/strong> — you can change this later\./, 'F08: olive (.fieldHelp strong), not pale lime');
+    assert.equal(existsSync(new URL('../../app/(consumer)/start/tournament/AddOrgForm.tsx', import.meta.url)), false, 'the old form is gone');
+    // the plan step features the plan from the pricing page (A6)
+    assert.match(readCode('app/[orgSlug]/admin/onboarding/page.tsx'), /featuredPlan=\{pricingPlan \?\? 'tournament_plus'\}/);
+  });
+  it('step 1 lives where the pricing page and every "create your free account" link point; account-only is unchanged', () => {
+    const page = readCode('app/(consumer)/auth/signup/page.tsx');
+    assert.match(page, /if \(searchParams\.get\('account'\) === '1'\) return <AccountOnlyForm \/>;\s*return <StartAccountStep door="organization" pricing=\{parseStartPricing\(searchParams\.get\('plan'\), searchParams\.get\('billing'\)\)\} \/>;/);
+    assert.doesNotMatch(page, /orgName|Create Organization|inviteBranch/, 'the account-only form makes no organization');
+  });
+});
+
 /**
  * ⚠ THE NEW GUARD: a signed-out sign-up route makes the auth account and nothing else. An organization, team or league
  * built before the email is proven outlives an abandoned sign-up and lets anyone claim a club's name and address (F01).
- * The org sign-up (app/api/auth/signup/route.ts) still builds its organization before the link and joins this list in
- * Part 2, when that moves to step 2. Mutation-checked 2026-10-18: an `.insert(` added to the coach sign-up fails it.
+ * The org sign-up (app/api/auth/signup/route.ts) joined the list in Part 2 (2026-10-19), when its organization moved to
+ * step 2. Mutation-checked 2026-10-18 (an `.insert(` added to the coach sign-up fails it) and 2026-10-19 (the old
+ * `createOrganization(` and an `.from('organizations')` read put back in the org sign-up each fail it).
  */
-const SIGNED_OUT_SIGNUP_ROUTES = ['app/api/auth/coach-signup/route.ts', 'app/api/auth/team-signup/route.ts'];
+const SIGNED_OUT_SIGNUP_ROUTES = ['app/api/auth/coach-signup/route.ts', 'app/api/auth/team-signup/route.ts', 'app/api/auth/signup/route.ts'];
 describe('no signed-out sign-up creates an organization, team or league', () => {
   for (const f of SIGNED_OUT_SIGNUP_ROUTES) {
     it(f, () => {
@@ -93,12 +227,30 @@ describe('no signed-out sign-up creates an organization, team or league', () => 
 describe('the start forms', () => {
   const form = readCode('app/(consumer)/start/StartDoorForm.tsx');
   it('step 1 is the account alone, and says what comes next (A1, A2)', () => {
-    const step1 = form.slice(form.indexOf('function AccountStep('), form.indexOf('function NameStep('));
+    const step1 = form.slice(form.indexOf('export function StartAccountStep('), form.indexOf('function InvitedInstead('));
     assert.doesNotMatch(step1, /copy\.label|continueName/, 'no name field, no name in the email');
     assert.match(step1, /startDoor: door,/);
     assert.match(step1, /\{loading \? 'Creating…' : 'Create Account'\}/, 'D7');
     assert.match(step1, /steps=\{<StartSteps current=\{1\} second=\{copy\.step\} \/>\}/);
     assert.match(step1, /It brings you straight to \{copy\.nextStep\}\./);
+  });
+  it('Run a tournament’s step 1: its own words, the organization sign-up, the pricing plan riding along (A6)', () => {
+    assert.match(form, /title: 'Create Your Organization',\s*sub: 'Run your tournament, league or club',\s*step: 'Your organization',/);
+    assert.match(form, /organization: '\/api\/auth\/signup',/, 'it keeps the Sign-up Invite Guard');
+    assert.match(form, /\.\.\.\(pricing \? \{ plan: pricing\.plan, billing: pricing\.billing \} : \{\}\),/);
+    assert.match(form, /<strong>\{PLAN_CONFIG\[pricing\.plan\]\.label\}, billed \{pricing\.billing === 'annual' \? 'annually' : 'monthly'\}<\/strong>, from\s+the pricing page\. You&apos;ll confirm it after naming your organization\./);
+    // an account that signs in instead keeps the plan through the sign-in
+    assert.match(form, /router\.push\(`\/auth\/login\?next=\$\{encodeURIComponent\(nextStep\)\}&email=\$\{encodeURIComponent\(emailNorm\)\}`\);/);
+    // on localhost the team and league pages render step 2 themselves; only Run a tournament moves to its step 2
+    assert.match(form, /if \(door === 'organization'\) router\.replace\(START_DOOR_PATH\[door\]\);\s*router\.refresh\(\);/);
+    // the invited branch keeps its words
+    assert.match(form, /You don&apos;t need to create an organization — just accept your invitation to get started\./);
+    assert.match(form, /'Email me my invitation link'/);
+    assert.match(form, /Not you\? Create a new organization instead/);
+    // D10: the plan chip's edge is solid; D6: the quiet way out is a 44px row
+    const css = readCode('app/(consumer)/start/startForm.module.css');
+    assert.match(css, /\.pricingChip \{[^}]*border: 1px solid/);
+    assert.match(css, /\.textBtn \{[^}]*min-height: 44px;/);
   });
   it('keeps the Verify Every Sign-up block: check your email, resend, keep entries, sign in', () => {
     assert.match(form, /if \(created\.requiresEmailVerification\) \{\s*setPassword\(''\);\s*setVerifyEmail\(emailNorm\);/);
@@ -127,13 +279,14 @@ describe('the start forms', () => {
   for (const [f, door] of [
     ['app/(consumer)/start/team/StartTeamForm.tsx', 'team'],
     ['app/(consumer)/start/league/StartLeagueForm.tsx', 'league'],
+    ['app/(consumer)/start/tournament/StartTournamentForm.tsx', 'organization'],
   ] as const) {
     it(`${door} is the shared form, with only its create call`, () => {
       assert.match(readCode(f), new RegExp(`<StartDoorForm door="${door}" create=\\{create\\w+\\}`));
     });
   }
   it('the pages pass who is looking, and whether it is their first day', () => {
-    for (const f of ['app/(consumer)/start/team/page.tsx', 'app/(consumer)/start/league/page.tsx']) {
+    for (const f of ['app/(consumer)/start/team/page.tsx', 'app/(consumer)/start/league/page.tsx', 'app/(consumer)/start/tournament/page.tsx']) {
       assert.match(readCode(f), /viewer=\{await startStepViewer\(user\)\}/, f);
     }
     assert.match(readCode('lib/start-door-server.ts'), /firstRun: workspaces\.length === 0/);
@@ -146,15 +299,17 @@ describe('the start forms', () => {
  * team. The finish card hid itself once there was any workspace, so before the revision only two paths cleared it.
  * Census 2026-10-19: Premium makes every team through one provisioner (checkout comp + mock paths, both Stripe
  * webhook events); a registration claim creates or adopts a free team in one helper (the join page, a signed-in
- * tournament registration). Not cleared on purpose: a staff seat, a season rollover, a tournament organization
- * (not the team or league the door came to start; the organization door, and its clear, are Part 2's).
+ * tournament registration). Not cleared on purpose: a staff seat, a season rollover, a team moved into a club.
+ * Part 2 (2026-10-19): the add-organization route clears the organization door — the one place an account makes its
+ * own tournament organization.
  * Each clear names the doors it fulfils (/review 2026-10-19): a team never finishes a waiting league, or the other way
  * round, because the card shows only while the thing "truly is" still owed.
  */
 describe('a creation clears the door it fulfils', () => {
-  it('the free team and the free league', () => {
+  it('the free team, the free league and the organization', () => {
     assert.match(readCode('app/api/coaches/teams/route.ts'), /await Promise\.all\(\[welcome, clearStartDoor\(user\.id, \['team'\]\)\]\);\s*return json\(\{ ok: true, id \}\);/);
     assert.match(readCode('app/api/league/create/route.ts'), /await clearStartDoor\(user\.id, \['league'\]\);\s*return NextResponse\.json\(\{ ok: true, orgSlug: org\.slug \}\);/);
+    assert.match(readCode('app/api/org/create/route.ts'), /await clearStartDoor\(user\.id, \['organization'\]\);\s*return NextResponse\.json\(\{ ok: true, orgSlug: org\.slug \}\);/);
   });
   it('a Coach Premium team, once its provisioning is committed', () => {
     assert.match(readCode('lib/team-workspace-provisioning.ts'), /createdOrgId = null;[\s\S]{0,500}?await clearStartDoor\(ownerUserId, \['team', 'premium'\]\);/);
@@ -164,10 +319,12 @@ describe('a creation clears the door it fulfils', () => {
     assert.match(lib, /status: 'active' \}\);[\s\S]{0,500}?await clearStartDoor\(params\.userId, \['team'\]\);\s*return \{ basicCoachTeamId: foreignLink, createdTeam: false \};/, 'adopting an orphaned team');
     assert.match(lib, /if \(createdTeam\) await clearStartDoor\(params\.userId, \['team'\]\);\s*return \{ basicCoachTeamId, createdTeam \};/, 'a team made for the claim');
   });
-  it('only a matching door clears', () => {
+  it('only a matching door clears, and the locked copy goes with it (edge (a): only the start’s own creation counts)', () => {
     const lib = readCode('lib/start-door-server.ts');
     assert.match(lib, /export async function clearStartDoor\(userId: string, fulfils: readonly StartDoor\[\]\)/);
-    assert.match(lib, /if \(!start \|\| !fulfils\.includes\(start\.door\)\) return;/);
+    assert.match(lib, /const clearDoor = !!start && fulfils\.includes\(start\.door\);/);
+    assert.match(lib, /const clearLock = !!locked && fulfils\.includes\(locked\);/);
+    assert.match(lib, /\.\.\.\(clearLock \? \{ app_metadata: \{ \[START_DOOR_LOCK_KEY\]: null \} \} : \{\}\),/);
   });
 });
 
@@ -181,11 +338,17 @@ describe('Home’s waiting workspace (A4 revised 2026-10-19)', () => {
     assert.equal(existsSync(new URL('../../app/api/account/start-door/route.ts', import.meta.url)), false, 'the Not now route is gone');
     assert.doesNotMatch(home, /Not now|api\/account\/start-door/);
   });
-  it('never leads to a step that would not open: the league door carries /start/league’s three gates', () => {
-    // an account already in a real organization is turned away by the page and by /api/league/create (/review)
-    assert.match(route, /const stepOpens = start\?\.door !== 'league' \|\| \(\s*process\.env\.LEAGUE_STARTER_BETA === 'true' && pendingInvites\.length === 0 && !\(await userBelongsToOtherRealOrg\(user\.id\)\)\s*\);/);
-    const page = readCode('app/(consumer)/start/league/page.tsx');
-    assert.match(page, /if \(user\?\.id && \(await userBelongsToOtherRealOrg\(user\.id\)\)\) \{/, 'the page gate this mirrors');
+  it('never leads to a step that would not open: the league and organization doors carry their pages’ gates', () => {
+    // an account already in a real organization is turned away by both pages and both create routes (/review)
+    assert.match(route, /const makesAnOrganization = start\?\.door === 'league' \|\| start\?\.door === 'organization';/);
+    assert.match(route, /const leagueBetaOff = start\?\.door === 'league' && process\.env\.LEAGUE_STARTER_BETA !== 'true';/);
+    assert.match(route, /const stepOpens = !makesAnOrganization \|\| \(\s*!leagueBetaOff && pendingInvites\.length === 0 && !\(await userBelongsToOtherRealOrg\(user\.id\)\)\s*\);/);
+    assert.match(readCode('app/(consumer)/start/league/page.tsx'), /if \(user\?\.id && \(await userBelongsToOtherRealOrg\(user\.id\)\)\) \{/, 'the page gate this mirrors');
+    const tournament = readCode('app/(consumer)/start/tournament/page.tsx');
+    assert.match(tournament, /userBelongsToOtherRealOrg\(user\.id\),/);
+    assert.match(tournament, /if \(inRealOrg\) \{/);
+    assert.match(tournament, /\.eq\('status', 'invited'\),/);
+    assert.match(tournament, /if \(\(pendingInvites \?\? 0\) > 0\) \{\s*redirect\('\/discover'\);/);
   });
   it('sits in Workspaces after the workspaces in use, and Home is not empty while it shows', () => {
     assert.match(home, /\{workspaces\.map\(ws => <WorkspaceCard key=\{ws\.id\} ctx=\{ws\} \/>\)\}\s*\{waiting && <WaitingWorkspaceCard door=\{waiting\.door\} \/>\}/);

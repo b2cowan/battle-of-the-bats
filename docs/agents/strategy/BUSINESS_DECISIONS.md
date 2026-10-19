@@ -10,8 +10,10 @@
 
 ### 2026-10-18 — Founding Season eligibility is the ACCOUNT's sign-up date: an account made by December 31, 2026 keeps the offer for the organization it came to start, even when that organization is created after the close
 **Status:** **Decided** (owner, 2026-10-18 — Account-First Sign-up ask A5, *"Count from the day the account was made
-(recommended)"*, pasted back from the hub https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx). Two edges below are
-**Proposed**. Delivered by Account-First Sign-up Part 2 — the plan records its build state.
+(recommended)"*, pasted back from the hub https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx). Edges (a) and (b) below
+**Decided 2026-10-19** as recommended, with a third point (c) ruled the same day (owner, in the Part 2 build session).
+Delivered by Account-First Sign-up Part 2 (organizations, leagues, the plan step) and Part 3 (Premium) — the plan records
+the build state.
 
 **Decision:** Account-first sign-up (owner direction 2026-10-18) makes the account first and the organization after the
 email link, so the two can now fall on different days. **An organization created after the link is eligible for the
@@ -21,13 +23,23 @@ unchanged and the same for everyone (`FOUNDING_SEASON_END`, September 30, 2027),
 Scope and price are unchanged: Tournament Plus (+ the Premium Coaches Portal, edge b); Club still carries no offer
 (2026-09-25 stands).
 
-**Open edges (Proposed, owner to ratify):**
-- **(a) Which creation counts after the close — recommended: only the one the account came to start** (the start
-  sign-up the account remembers: the organization from Run a tournament). A further organization the same account adds
-  after December 31 gets no comp, exactly as today once the window shuts. Otherwise an account made in December could
-  bank the offer for any number of organizations created through 2027.
-- **(b) The same rule for the Premium Coaches Portal — recommended: yes.** Its comp is also granted at setup, which
-  account-first moves after the link (Part 3), and every offer surface promises both products on the same terms.
+**Edges (Decided 2026-10-19, owner — each as recommended):**
+- **(a) Which creation counts after the close — only the one the account came to start** (Run a tournament → its
+  organization; Start a league → its league). Every other account made by the close (fans, parents, free-team coaches,
+  invited staff) follows the closed window when it starts an organization in 2027. Owner's answer: *"Only the start they
+  came for (Recommended)"*. Asked with the build session's correction on the record: the stated risk ("any number of
+  organizations") is already blocked — an account can self-serve only one real organization (single-org, 2026-06-19) —
+  so the edge's real effect is on that other population. Because the remembered door is the account holder's to edit,
+  the build saves a **locked copy** of the door that only the server can write, and the offer reads that.
+- **(b) The same rule for the Premium Coaches Portal — yes** (*"Same rule for Premium (Recommended)"*). An account made by
+  the close through Coach Premium (or its claim link) keeps the free Premium Coaches Portal when it finishes setup after
+  the close. Built in Part 3.
+- **(c) The plan step after the close honours it — $0 on the first plan choice** (*"$0 on its first plan choice
+  (Recommended)"*). Raised by the build session: the comp written when an organization is made is a marker; Tournament
+  Plus becomes free when it is picked on the plan step, which read the window alone — so a January organization would
+  have been charged $39. After the close, an organization that got the comp when it was made picks Tournament Plus at $0
+  **on its first plan choice only**; one that chose free and upgrades later pays the list price, as "the free season is
+  yours if you upgrade by December 31" already says.
 
 **Rationale:** Every offer surface already says *"free through September 30, 2027 when you **sign up** by December 31,
 2026"* (pricing FAQ and cards, `/for-coaches`, the offer bar, `lib/plan-config.ts` offer sentence). Under account-first,
@@ -47,7 +59,7 @@ HANDOFF → /plan       — done: ACCOUNT_FIRST_SIGNUP_PLAN.md § Rulings A5; Pa
 HANDOFF → /billing    — review the comp-granting change inside the build: one shared eligibility check for all
                         six granting paths; the Club exclusion (2026-09-25) must survive the move.
 HANDOFF → /marketing  — none: "when you sign up by December 31, 2026" stays true, and is what this protects.
-HANDOFF → owner       — ratify edges (a) and (b).
+HANDOFF → owner       — done 2026-10-19: edges (a) and (b) ratified, (c) ruled.
 ```
 **Refines:** 2026-09-07 Founding Season 2027, part 2 ("every comp-granting path keys off the signup window") — the
 window is now read against the account's creation for the start sign-up's own creation. **Supersedes:** nothing.
