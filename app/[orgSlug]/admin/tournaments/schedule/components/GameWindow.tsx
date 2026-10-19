@@ -7,9 +7,10 @@
  * score lived on another page (F74). Now ONE window — the kit's form window (KitDialog): full screen with ← on a
  * phone, 640 at a desk — opened from a row of the day, a timeline block or a bracket card, and from Add game to create.
  *
- *   READS FIRST: when and where (day, start, length by THE chain, the venue and its diamond); the score, with ONE door
- *   to Results' editor (one score editor in the product); the bracket slots it sits in, or its pool and Keep; who sees
- *   it. ONE PENCIL turns the whole game into its form and ✓ turns it back (owner, 1 October).
+ *   READS FIRST: when and where (day, start, length by THE chain, the venue and its diamond); the score, whose ONE door
+ *   opens Results' own editor in its place (one score editor in the product — owner 2026-10-19: in the window, never
+ *   a trip to Results); the bracket slots it sits in, or its pool and Keep; who sees it. ONE PENCIL turns the whole
+ *   game into its form and ✓ turns it back (owner, 1 October).
  *
  *   SAVING (24 September; S2): an unpublished game saves as it is edited. A PUBLISHED game holds a change to when or
  *   where until ✓, which asks once — its teams are told (the coaches portal keeps that save for the same reason). Its
@@ -23,7 +24,6 @@
  * The window holds no data of its own beyond the form: the page reads, writes and decides who may.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import Link from 'next/link';
 import { Info } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout, NoticePill, RecordDelete, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
@@ -46,7 +46,7 @@ import type { ClashLine } from '@/lib/venue-clash-words';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { formatTime } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
-import { GameTeams } from '../../results/ResultsList';
+import { GameTeams, ScoreEditor, bandFor, type EditorActions } from '../../results/ResultsList';
 import { useOverlapLine } from './useOverlapLine';
 import gw from './GameWindow.module.css';
 
@@ -70,8 +70,9 @@ export interface GameWindowContext {
   today: string;
   nowMs: number;
   orgSlug: string;
-  /** Results, with this game's editor open (the board's rows' own link). */
-  resultsHref: (gameId: string) => string;
+  /** The score editor's four writes (Results' own), and whether this person may finalize or change a final score. */
+  scoreActions: EditorActions;
+  canFinalize: boolean;
   canAlertFollowers: boolean;
   canBuildBracket: boolean;
   hasRoundRobinStage: boolean;
@@ -317,6 +318,19 @@ export default function GameWindow({
 
   const playedOrWaiting = !!game && ['completed', 'submitted', 'forfeit'].includes(game.status);
 
+  // ── The score, edited in place (owner 2026-10-19): Results' own editor opens in the Score section. It is tied to the
+  // game AS READ — its score and state — so a save, a revert, another admin's finalize or a step to another game closes
+  // it, and the window reads the new result. The pencil waits while it is open: one editor at a time. ──
+  const scoreBand = game ? bandFor(game, ctx.divisions, ctx.tournament, ctx.nowMs, ctx.today) : null;
+  const scoreSig = game ? [game.id, game.status, game.homeScore, game.awayScore].join(':') : '';
+  const [scoringSig, setScoringSig] = useState<string | null>(null);
+  // Forgotten the moment the game moves on (React's reset-while-rendering): a step to the next game and back, or a
+  // revert followed by the same score finalized again, never reopens an editor nobody asked for (/review 2026-10-19).
+  if (scoringSig !== null && scoringSig !== scoreSig) setScoringSig(null);
+  const scoring = !!scoreBand && scoringSig === scoreSig;
+  // A typed score is words typed: ×, Escape and the phone's Back ask before they drop it (One Window Q7).
+  const [scoreEdited, setScoreEdited] = useState(false);
+
   // ── Read first ──
   const readBody = game && (
     <>
@@ -330,7 +344,18 @@ export default function GameWindow({
       </RecordSection>
 
       <RecordSection title={G.sections.score}>
-        {state === 'cancelled' ? (
+        {scoring && scoreBand ? (
+          <ScoreEditor
+            inWindow
+            ctx={{ teams: ctx.teams, divisions: ctx.divisions, venues: ctx.venues, today: ctx.today }}
+            g={game}
+            band={scoreBand}
+            canFinalize={ctx.canFinalize}
+            actions={ctx.scoreActions}
+            onClose={() => setScoringSig(null)}
+            onEditedChange={setScoreEdited}
+          />
+        ) : state === 'cancelled' ? (
           <p className={gw.whoText}>{W.states.cancelled}</p>
         ) : state === 'final' || state === 'forfeit' || state === 'pendingReview' ? (
           <>
@@ -348,11 +373,11 @@ export default function GameWindow({
             </div>
           </dl>
         )}
-        {state !== 'cancelled' && (
-          <Link className={gw.door} href={ctx.resultsHref(game.id)}>
+        {state !== 'cancelled' && scoreBand && !scoring && (
+          <button type="button" className={gw.door} onClick={() => leave(() => setScoringSig(scoreSig))}>
             {state === 'final' || state === 'forfeit' ? G.doors.edit : state === 'pendingReview' ? G.doors.review : G.doors.enter}
             <span aria-hidden>›</span>
-          </Link>
+          </button>
         )}
       </RecordSection>
 
@@ -392,7 +417,9 @@ export default function GameWindow({
           one question never sit in two sections (owner, 2026-10-12, §294; the venue's Archive beside Delete). */}
       {canWrite && (
         <RecordSection>
-          <div className={gw.actions}>
+          {/* data-record-doors: the read body can hold no long held reason, so the save pill rides on this line at a desk
+              (KitDialog.module.css) rather than reserving ~60px of nothing under it (owner, 2026-10-19). */}
+          <div className={gw.actions} data-record-doors="">
             {game.status === 'scheduled' && <button type="button" className={`${screenParts.plainButton} ${gw.amber}`} onClick={() => leave(() => onCancelGame(game))}>{G.cancelGame}</button>}
             {game.status === 'cancelled' && <button type="button" className={screenParts.plainButton} onClick={() => leave(() => onReinstate(game))}>{G.reinstateGame}</button>}
             <RecordDelete onClick={() => leave(() => onDelete(game))}>{G.deleteGame}</RecordDelete>
@@ -573,7 +600,8 @@ export default function GameWindow({
           : <SavePill inline saving={saving} dirty={dirty || movePending || !!heldWords} error={leaveError || saveError || null}
               held={heldWords} onRetry={() => void handleSave()} />
       ) : undefined}
-      edit={canWrite ? { editing, onToggle: toggleEdit, label: G.editGame } : undefined}
+      edit={canWrite && !scoring ? { editing, onToggle: toggleEdit, label: G.editGame } : undefined}
+      dirty={scoring && scoreEdited}
       onClose={() => leave(onClose)}
       steps={steps ? {
         prev: steps.prev ? { name: steps.prev.name, onStep: () => leave(steps.prev!.onStep) } : null,

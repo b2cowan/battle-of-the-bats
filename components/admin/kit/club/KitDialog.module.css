@@ -279,6 +279,14 @@
      short of the half. */
   .bodyWrap[data-has-status]:has(> .body > :last-child > [data-record-door]:only-child) > .status { max-width: 50%; }
 }
+/* …and where it ends with a ROW of doors that marks itself (`data-record-doors`) because its body can never show a long
+   held reason — the game window READ first: Cancel game · Delete game, ~250px of a 592px line. The only words its pill
+   says there are Saved, Couldn't save · Retry and the page's notice ("Moved to 5:30 p.m. · Diamond 3 · Undo"), which
+   fit the right half (owner, 2026-10-19: ~60px of nothing under the two doors). The phone keeps the reserve. */
+@media (min-width: 769px) {
+  .bodyWrap[data-has-status] > .body:has(> :last-child > [data-record-doors]:only-child) { padding-bottom: 1rem; }
+  .bodyWrap[data-has-status]:has(> .body > :last-child > [data-record-doors]:only-child) > .status { max-width: 50%; }
+}
 .status {
   position: absolute;
   /* Just inside the text edge, wherever the side padding is. */

@@ -136,6 +136,12 @@
 @media (max-width: 640px) {
   .editor { padding: 0.7rem 0.85rem 0.8rem; }
 }
+/* Open in the schedule's game window (owner 2026-10-19): the window is the frame, so no outline and no padding of its
+   own; a name left, its stepper at the right edge (the window's facts rhythm). At a desk the lime keeps its own width. */
+.editor.editorInWindow { padding: 0; border-bottom: 0; box-shadow: none; }
+@media (min-width: 769px) {
+  .editor.editorInWindow .editorActions .editorPrimary { flex: 0 0 auto; }
+}
 
 /* ── What the list says when no band has a game ── */
 .empty {

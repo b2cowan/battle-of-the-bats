@@ -196,7 +196,7 @@ function ResultRow({ ctx, g, band, canFinalize, onOpen, onFinalize, finalizing }
   );
 }
 
-type EditorActions = {
+export type EditorActions = {
   onSaveScore: (id: string, home: number, away: number) => Promise<void>;
   onForfeit: (id: string, winningSide: 'home' | 'away') => Promise<void>;
   onFinalize: (id: string) => Promise<void>;
@@ -209,12 +209,20 @@ type EditorActions = {
  * while the scores are level, and today's actions. The lime is ONE: Save score — or, on a score a
  * scorekeeper submitted and the organizer hasn't changed, Finalize (the board's two taps: the row,
  * then Finalize). Forfeit keeps its red (§245).
+ *
+ * The schedule's game window opens this same editor in its Score section (`inWindow`, owner 2026-10-19): one score
+ * editor in the product, now reached without leaving the schedule.
  */
-function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose, inTable = false }: {
+export function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose, inTable = false, inWindow = false, onEditedChange }: {
   ctx: Ctx; g: Game; band: ResultsBand; canFinalize: boolean; actions: EditorActions; onClose: () => void;
   /** Open inside the desk's game table (`GameTable` wraps it in its row): the names and the actions keep their own
    *  width rather than running the whole row wide. */
   inTable?: boolean;
+  /** Open in the game window's Score section: no row outline (the window is the frame) and no when line (the window's
+   *  When and where already says it). */
+  inWindow?: boolean;
+  /** Told whether a score has been typed, so a window can ask before closing loses it (One Window Q7). */
+  onEditedChange?: (edited: boolean) => void;
 }) {
   const initialAway = g.awayScore != null ? String(g.awayScore) : '';
   const initialHome = g.homeScore != null ? String(g.homeScore) : '';
@@ -234,6 +242,7 @@ function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose, inTable = fa
   const hasScore = g.status === 'completed' || g.status === 'submitted';
   const canForfeit = !!g.homeTeamId && !!g.awayTeamId && g.status === 'scheduled';
   const edited = away !== initialAway || home !== initialHome;
+  useEffect(() => { onEditedChange?.(edited); }, [edited, onEditedChange]);
   // A pending forfeit too: Finalize promotes it to a forfeit, where Save score would record the nominal
   // margin as a played result (and lose the forfeit — its chip, and its exclusion from the tie-breakers).
   const finalizeFirst = band === 'toFinalize' && !edited && canFinalize;
@@ -307,10 +316,10 @@ function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose, inTable = fa
   }
 
   const when = [gameWhen(g.date, g.time, ctx.today), whereLine(ctx, g)].filter(Boolean).join(' · ');
-  const Shell = inTable ? 'div' : 'li';
+  const Shell = inTable || inWindow ? 'div' : 'li';
   return (
-    <Shell className={`${styles.editor}${inTable ? ` ${styles.editorWide}` : ''}`} data-game-id={g.id} data-row-list-row>
-      {when && <div className={styles.editorWhen}>{when}</div>}
+    <Shell className={`${styles.editor}${inTable ? ` ${styles.editorWide}` : ''}${inWindow ? ` ${styles.editorInWindow}` : ''}`} data-game-id={g.id} data-row-list-row={inWindow ? undefined : ''}>
+      {when && !inWindow && <div className={styles.editorWhen}>{when}</div>}
       {teamLine('away', g.awayTeamId, g.awayPlaceholder, away, awayName, homeName)}
       {teamLine('home', g.homeTeamId, g.homePlaceholder, home, homeName, awayName)}
       {level && !forfeitMode && !locked && (

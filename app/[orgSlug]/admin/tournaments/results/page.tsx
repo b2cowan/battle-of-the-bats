@@ -41,6 +41,7 @@ import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
 import s from '../../admin-common.module.css';
 import styles from './results-admin.module.css';
+import { emitScorePublished, sendScoreAction, type ScoreAction } from './score-actions';
 import ResultsList, { ALL_BANDS, NEEDS_YOU_BANDS, bandFor, gameStateWord, type ResultsBand } from './ResultsList';
 import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import { SCHEDULE_DAY_WORDS as SW } from '@/lib/schedule-words';
@@ -51,17 +52,6 @@ import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/com
 import ScheduleToolbar from '../schedule/components/ScheduleToolbar';
 import LoadingState from '@/components/shared/LoadingState';
 import ViewPills from '@/components/shared/ViewPills';
-
-/**
- * Signal that a game's score just became public (finalize / forfeit) so the mobile AdminContextStrip
- * can offer a one-tap "See it live" nudge to that game on the public schedule (The Flip). The event
- * carries the game's OWN tournament context so the deep-link can't drift if the admin switches
- * tournaments or navigates away before the save resolves and this fires.
- */
-function emitScorePublished(detail: { gameId: string; orgSlug: string; tournamentSlug: string; isDraft: boolean }) {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent('flhq:score-published', { detail }));
-}
 
 // ── Export column definitions ─────────────────────────────────────────────
 // Admin-only export includes score submission audit metadata for review.
@@ -266,18 +256,9 @@ export default function AdminResultsPage() {
     return divisions.find(g => g.id === id)?.name ?? '—';
   }
 
-  async function patchGame(body: Record<string, unknown>) {
+  async function patchGame(body: ScoreAction) {
     loadSeqRef.current++; // a read already in flight predates this write — it must not paint
-    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    const res = await fetch(`/api/admin/games${orgQuery}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(typeof data?.error === 'string' ? data.error : 'Score update failed');
-    }
+    await sendScoreAction(orgSlug, body);
   }
 
   const published = (id: string) => emitScorePublished({

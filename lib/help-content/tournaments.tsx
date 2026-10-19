@@ -1030,7 +1030,7 @@ const tournamentsHelp: HelpPageContent = {
               <ul>
                 <li><strong>A game in a division that isn&apos;t published</strong> saves as you go. Nobody has seen those times, so nobody is told.</li>
                 <li><strong>A game in a published division</strong> holds your change to when or where until you press <strong>✓</strong>, then asks once (<em>&ldquo;Move it? Its teams are told.&rdquo;</em>). The window&apos;s <strong>Who sees it</strong> part says who that is before you start.</li>
-                <li>The score is entered on <strong>Results</strong>. The window&apos;s <strong>Enter the score</strong> opens that game there.</li>
+                <li><strong>Enter the score</strong> opens the score right in the window: the same score boxes, Save score and Finalize as on <strong>Results</strong>. Save or Discard, and the window reads the game again.</li>
                 <li><strong>Cancel game</strong> keeps the game on the schedule as cancelled, and <strong>Delete game</strong> removes it. Delete asks first, and names any playoff games that depend on it.</li>
               </ul>
             </>

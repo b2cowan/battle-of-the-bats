@@ -179,9 +179,16 @@ describe('the window wears what it promises', () => {
     // It holds only what THIS edit places (a legacy double-booking never traps ✓ over a notes edit).
     assert.match(win, /const refused = overlaps && \(creating \|\| movePending \|\| form\.durationMinutes !== saved\.durationMinutes\);/);
   });
-  test('one score editor in the product: the window\'s Score is a door to Results', () => {
-    assert.match(win, /ctx\.resultsHref\(game\.id\)/);
+  test('one score editor in the product: the window\'s Score opens Results\' own editor in place (owner 2026-10-19)', () => {
+    assert.match(win, /import \{[^}]*\bScoreEditor\b[^}]*\} from '\.\.\/\.\.\/results\/ResultsList';/);
+    assert.match(win, /<ScoreEditor\s+inWindow/);
+    // The writes are Results' own (the shared score-actions), never a second copy in the window.
     assert.doesNotMatch(win, /submit-score|homeScore\s*:/);
+    assert.doesNotMatch(win, /resultsHref/);
+    const page = readFileSync(new URL('../../app/[orgSlug]/admin/tournaments/schedule/page.tsx', import.meta.url), 'utf8');
+    assert.match(page, /from '\.\.\/results\/score-actions'/);
+    // One editor at a time: the pencil waits while the score is open.
+    assert.match(win, /edit=\{canWrite && !scoring \?/);
   });
 });
 

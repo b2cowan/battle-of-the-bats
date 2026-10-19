@@ -30,6 +30,8 @@ import { buildScheduleMetrics, getScheduleHealthRules } from '@/lib/schedule-met
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
+import { emitScorePublished, sendScoreAction } from '../results/score-actions';
+import type { EditorActions } from '../results/ResultsList';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import HelpCallout from '@/components/help/HelpCallout';
 import AddVenuesWindow from '@/components/admin/tournament/AddVenuesWindow';
@@ -714,6 +716,48 @@ export default function AdminSchedulePage() {
     }
     await reloadGames();
   }
+
+  // ── The score, from the game window (owner 2026-10-19): Results' own editor and Results' own four writes, so a score
+  // entered here is the score entered there. Each write re-reads the games before the editor closes, so the window
+  // reads the new result; the server advances the bracket. Revert asks first, as it does on Results. ──
+  const canFinalize = !!userRole && hasCapability(userRole, userCapabilities, 'seal_tournaments');
+  const scorePublished = (id: string) => emitScorePublished({
+    gameId: id, orgSlug: orgSlug ?? '', tournamentSlug: currentTournament?.slug ?? '', isDraft: currentTournament?.status === 'draft',
+  });
+  // The write has landed: a re-read that fails is never the editor's error (the score saved; a retry would send it twice).
+  const rereadAfterScore = () => reloadGames().catch(() => {});
+  const scoreActions: EditorActions = {
+    onSaveScore: async (id, homeScore, awayScore) => {
+      await sendScoreAction(orgSlug, { action: 'submit-score', id, homeScore, awayScore });
+      await rereadAfterScore();
+    },
+    onForfeit: async (id, winningSide) => {
+      await sendScoreAction(orgSlug, { action: 'forfeit', id, winningSide });
+      scorePublished(id);
+      await rereadAfterScore();
+    },
+    onFinalize: async id => {
+      await sendScoreAction(orgSlug, { action: 'finalize', id });
+      scorePublished(id);
+      await rereadAfterScore();
+    },
+    onRevert: id => {
+      setFeedback({
+        isOpen: true,
+        title: 'Revert score?',
+        message: 'This will clear the score and mark the game as scheduled. This action cannot be undone.',
+        type: 'warning',
+        onConfirm: async () => {
+          try {
+            await sendScoreAction(orgSlug, { action: 'revert-score', id });
+            await rereadAfterScore();
+          } catch (e) {
+            setFeedback({ isOpen: true, title: 'Revert failed', message: e instanceof Error ? e.message : 'Revert failed — please try again.', type: 'danger' });
+          }
+        },
+      });
+    },
+  };
 
   function handleDeleteRequest(id: string) {
     const game = games.find(g => g.id === id);
@@ -1627,7 +1671,8 @@ export default function AdminSchedulePage() {
           ctx={{
             tournament: currentTournament, divisions, teams, venues, games: scheduled, days, today, nowMs,
             orgSlug: orgSlug ?? '',
-            resultsHref: id => `/${orgSlug}/admin/tournaments/results?tournamentId=${encodeURIComponent(currentTournament.id)}&gameId=${encodeURIComponent(id)}`,
+            scoreActions,
+            canFinalize,
             canAlertFollowers,
             canBuildBracket: canBuildPlayoffsManually,
             hasRoundRobinStage,

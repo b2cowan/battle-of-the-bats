@@ -81,4 +81,14 @@ describe('an admin record’s Delete', () => {
     assert.match(dialog, /\.bodyWrap\[data-has-status\]:has\(> \.body > :last-child > \[data-record-door\]:only-child\) > \.status \{ max-width: 50%; \}\s*\}/,
       'the pill’s right-half cap sits inside the same desk-only block');
   });
+
+  it('a row of doors that can show no held reason opts in by marking itself — the game window read first (owner 2026-10-19)', () => {
+    const dialog = readCode('components/admin/kit/club/KitDialog.module.css');
+    assert.match(dialog, /@media \(min-width: 769px\) \{\s*\.bodyWrap\[data-has-status\] > \.body:has\(> :last-child > \[data-record-doors\]:only-child\) \{ padding-bottom: 1rem; \}\s*\.bodyWrap\[data-has-status\]:has\(> \.body > :last-child > \[data-record-doors\]:only-child\) > \.status \{ max-width: 50%; \}\s*\}/,
+      'desk only, and the pill keeps to the right half');
+    const windowCode = readCode('app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx');
+    assert.match(windowCode, /className=\{gw\.actions\} data-record-doors=""/);
+    // Only the READ body ends with that row: the form the pencil opens (where a held reason lives) never does.
+    assert.equal((windowCode.match(/data-record-doors=""/g) ?? []).length, 1);
+  });
 });
