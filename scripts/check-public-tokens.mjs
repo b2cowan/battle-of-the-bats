@@ -140,6 +140,10 @@ const SCOPES = {
       // tokens: the /start forms' and sign-in screens' warm paper, and the public register form's
       // success card. Consumer because most of its hosts are, and so is the account it makes.
       'components/auth/VerifyEmailSent.module.css',
+      // Account-First Sign-up Part 3 (2026-10-19) — the two-step line ("1 Your account · 2 Your team"), shared by the
+      // /start forms and Coach Premium's card. Consumer for the same reason as the block above: it wears its hosts' warm
+      // tokens, and the account it is part of is a consumer account.
+      'components/auth/StartSteps.module.css',
     ],
     excludeSegments: new Set(),
     excludeFiles: new Set(['components/consumer/ConsumerShell.module.css']),
