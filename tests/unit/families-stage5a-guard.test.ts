@@ -26,9 +26,11 @@ const sample = (): FamilyFile => ({
     contact: { name: 'Alex Reyes', phone: '555-0100', addresses: [{ email: 'alex.reyes@example.com', current: true, firstSeen: '2026-05-02T00:00:00Z', lastSeen: '2026-10-01T00:00:00Z' }], clubEmail: 'on', optOuts: [], otherGuardians: [] },
     children: [{ name: 'Riley Reyes', birthDate: '2014-03-03', registrations: [{ kind: 'rep', where: 'Fixture Falcons U13', season: '2026 Season', status: 'active', since: null, medicalNotes: 'Asthma', emergencyContact: 'Sam Reyes · 555-0101', notes: [] }] }],
     tryouts: [],
-    money: { dues: [{ child: 'Riley Reyes', season: '2026 Season', where: 'Fixture Falcons U13', dues: 450, fundraising: 0, otherCredits: 0, paid: 350, handedBack: 0, balance: 100 }], payments: [], credits: [], reminders: [], leagueFees: [] },
+    money: { dues: [{ child: 'Riley Reyes', season: '2026 Season', where: 'Fixture Falcons U13', dues: 450, fundraising: 0, otherCredits: 0, paid: 350, handedBack: 0, balance: 100 }], payments: [], credits: [], reminders: [], leagueFees: [],
+      handoffs: [{ child: 'Riley Reyes', sentAt: '2026-10-19T14:00:00Z', amount: 100, receivedDate: '2026-10-18', method: 'cheque', to: ['Pat Moreau'], by: 'Fixture Owner', outcome: 'waiting', answeredBy: null, answeredAt: null }] },
     forms: { documents: [], waivers: [], consents: [] },
     messages: [{ at: '2026-10-14T15:00:00Z', by: 'Fixture Owner' }],
+    notes: [{ at: '2026-10-18T15:00:00Z', by: 'Fixture Owner', editedAt: null, text: 'Paying the last installment in two parts.' }],
     merges: [],
   },
 });
@@ -61,6 +63,29 @@ describe('E04 — the family file says what it holds, from ONE list, and holds i
     for (const table of ['rep_player_evaluations', 'rep_development', 'rep_attendance', 'rep_event_attendance', 'rep_player_stats', 'rep_game_stats', 'rep_lineups', 'player_observations', 'rep_player_goals']) {
       assert.doesNotMatch(src, new RegExp(`from\\('${table}`), `the family file reads ${table} — a coaching record it says stays with the team`);
     }
+  });
+
+  it('(Stage 5c, Ask 29) the coach’s pinned note about a player leaves the file, and the statement says so', () => {
+    const src = readCode('lib/families-export.ts');
+    const rosterRead = /from\('rep_roster_players'\)\s*\.select\('([^']*)'\)/.exec(src)?.[1] ?? '';
+    assert.ok(rosterRead, 'the export’s roster read moved — re-point this test');
+    assert.doesNotMatch(rosterRead, /(^|,\s*)notes(\s*,|$)/, 'the family file selects rep_roster_players.notes — the coach’s private pinned note (S5C-03)');
+    assert.doesNotMatch(src, /note\('Notes', d\.notes\)/);
+    assert.ok(FAMILY_FILE_EXCLUDES.some(x => x.includes('pinned note')), 'the excludes list names the coach’s pinned note');
+    assert.ok(familyFileStatement().notInThisFile.includes('a coach’s pinned note about a player'));
+  });
+
+  it('(Stage 5c, Ask 29) the file holds the family’s notes, before Records joined, and the statement names them', () => {
+    const ids = FAMILY_FILE_SECTIONS.map(s => s.id) as string[];
+    assert.ok(ids.includes('notes'), 'no notes section');
+    assert.equal(ids.indexOf('notes'), ids.indexOf('merges') - 1, 'Notes about the family sits just before Records joined');
+    assert.ok(familyFileStatement().holds.some(h => h.title === 'Notes about the family' && /who wrote each and when/.test(h.holds)));
+    assert.match(readCode('lib/families-export.ts'), /from\('family_notes'\)/);
+    const lines = familyFileLines(sample());
+    assert.deepEqual(lines.find(l => l.id === 'notes')!.lines.map(l => l.text), ['Oct 18, 2026 · Fixture Owner', 'Paying the last installment in two parts.']);
+    assert.ok(lines.find(l => l.id === 'money')!.lines.some(l => /^Sent to Pat Moreau Oct 19, 2026 · Riley Reyes · \$100\.00 · Cheque · received Oct 18, 2026 by Fixture Owner/.test(l.text) && /waiting for the coach$/.test(l.text)));
+    assert.ok(FAMILY_FILE_SECTIONS.find(s => s.id === 'money')!.holds.includes('a payment the club sent to a coach'));
+    assert.ok(FAMILY_FILE_SECTIONS.find(s => s.id === 'children')!.holds.includes('any staff note on the registration'));
   });
 
   it('the export reaches the audit log with its format, never its contents', () => {

@@ -55,6 +55,8 @@ export const EVENT_ICONS: Record<string, string> = {
   club_schedule_changes:             '🔁',
   club_bill_arrived:                 '🧾',
   club_guardians_asked:              '👪',
+  club_payment_handed_off:           '💵',
+  club_payment_not_received:         '💵',
   club_schedule_reply:               '💬',
   club_schedule_handed_back:         '↩️',
   club_schedule_taken_back:          '↪️',
@@ -365,8 +367,17 @@ function adminDestination(rest: string, query: URLSearchParams): string | null {
   // A club schedule; `?answer=` opens a waiting ask's Answer over it (Stage 11d part B). It said a bare "Open" — the
   // gap the 2026-10-05 D4 rule names (found 2026-10-16, Needs attention clears itself).
   if (/^\/schedules\/[^/]+\/?$/.test(rest)) return opens('answer') ? 'Open the ask' : 'Open the schedule';
+  // A family's record (Club Tier Stage 5c: a coach says a payment the club passed on never arrived).
+  if (/^\/families\/[^/]+\/?$/.test(rest)) return 'Open the family';
   return null;
 }
+
+/**
+ * THE CLUB'S HAND-OFF, WAITING (Club Tier Stage 5c, Ask 28): its way on is Record it (the notification's own link — the
+ * coach's Record money, filled in), and Not received is the same door asking once. Both are links: the bell posts nothing.
+ */
+export const HANDOFF_ACTIONS = { recordIt: 'Record it', notReceived: 'Not received' } as const;
+export const handoffNotReceivedLink = (link: string): string => `${link}${link.includes('?') ? '&' : '?'}handoffAnswer=not-received`;
 
 /**
  * The onward button, named for where it goes: "Open Insights", "Open the practice plan", "Open

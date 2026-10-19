@@ -1,4 +1,5 @@
 import type { HelpPageContent } from './index';
+import { HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
 
 /**
  * Families — club-admin household records (Families Book P2, 2026-08-17; redrawn as one page with two tabs and a record
@@ -163,9 +164,9 @@ const familiesHelp: HelpPageContent = {
       id: 'families-family-page',
       group: 'Working the book',
       heading: 'A family’s record',
-      summary: 'Opens over the list: money, children, contact, forms and history — and Next to the next family.',
-      keywords: ['family page', 'family record', 'household', 'balance', 'dues', 'rep dues', 'registration fee', 'opted out', 'club email', 'former address', 'named on', 'history', 'last messaged', 'previous', 'next'],
-      searchText: 'open a family record window over the list previous next step through owes money one of five rep dues paid balance band children dues paid balance fundraising other credits handed back league fee paid not paid contact email former phone club email switch opt out unsubscribe named on where to change details no edit forms and consent history show all record a payment',
+      summary: 'Opens over the list: money, children, notes, contact, forms and history — Record a payment, Message, Export, and Next to the next family.',
+      keywords: ['family page', 'family record', 'household', 'balance', 'dues', 'rep dues', 'registration fee', 'opted out', 'club email', 'former address', 'named on', 'history', 'last messaged', 'previous', 'next', 'record a payment', 'payment', 'cheque', 'house-league fee', 'fee paid', 'sent to coach', 'not received', 'hand off', 'notes', 'family notes', 'staff notes', 'family file'],
+      searchText: 'open a family record window over the list previous next step through owes money one of five rep dues paid balance band children dues paid balance fundraising other credits handed back league fee paid not paid contact email former phone club email switch opt out unsubscribe named on where to change details no edit forms and consent history show all record a payment amount received placed left to place whole fee mark a house league fee paid send a rep payment to the head coach to record date received how note cheque number sent to coach not received record it the coach records it money figures move person who sent it is told in their notifications correct a payment where it was written nothing is sent to the family fee permission league registrar league admin owner season is closed no head coach you are the head coach more than a child owes becomes a credit add a note notes staff only signed dated newest first show all edit a note pencil delete a note owner keeps who deleted it never the words a note belongs to the guardian record merged records carry both people notes the family file includes notes',
       content: (
         <p>
           A family opens over the list it came from. Its heading names that list and the family&rsquo;s place in
@@ -210,7 +211,7 @@ const familiesHelp: HelpPageContent = {
                 <strong> Named on</strong>: the roster rows and registrations that name this parent.
               </p>
               <p>
-                The record reads only. A parent&rsquo;s details are typed on those rows, so that is where they are
+                A parent&rsquo;s details are read-only here. They are typed on those rows, so that is where they are
                 changed &mdash; a rep roster by the team&rsquo;s coaches, a registration by the club.
               </p>
               <p>
@@ -229,9 +230,84 @@ const familiesHelp: HelpPageContent = {
               <ul>
                 <li><strong>Forms</strong> are each rep child&rsquo;s required team documents, On file or Missing. House league keeps no forms, so a league child has no form rows &mdash; nothing is missing for them.</li>
                 <li><strong>Consent</strong> lists what the club has recorded, including a house-league waiver accepted at registration. <em>None on file</em> is a fact about the club&rsquo;s records, not about the family: most consent is captured by rep tryouts and house-league waivers, so a family the club never asked shows none.</li>
-                <li><strong>History</strong> shows the five newest things recorded &mdash; registrations, payments as the team recorded them, address changes, consents &mdash; and <strong>Show all</strong>. What a message said is never kept.</li>
+                <li><strong>History</strong> shows the five newest things recorded &mdash; registrations, payments as the team recorded them, payments the club sent to a coach and what came of them, address changes, consents &mdash; and <strong>Show all</strong>. What a message said is never kept.</li>
               </ul>
-              <p>Recording a payment from a family isn&rsquo;t here yet; payments are recorded in the money screens.</p>
+            </>
+          ),
+        },
+        {
+          id: 'families-family-page-payment',
+          title: 'Record a payment',
+          content: (
+            <>
+              <p>
+                <strong>Record a payment</strong> (on a phone, <strong>Record payment</strong>) sits beside
+                <strong> Message this family</strong> and <strong>Export</strong>. It is there only when the family owes
+                something and you can do at least one of its lines.
+              </p>
+              <HelpSteps>
+                <li>Type the <strong>Amount received</strong>. It is placed down the children who owe, in the record&rsquo;s order, and two figures keep count: <strong>Placed</strong> and <strong>Left to place</strong>.</li>
+                <li>A house-league child: tick <strong>Whole fee</strong>. The fee is marked paid in the club&rsquo;s books now, the same as the tick on House league &rsaquo; Registrations.</li>
+                <li>A rep child: the amount goes to the team&rsquo;s head coach to record. The club never records into a team&rsquo;s own book.</li>
+                <li>Set the <strong>Date received</strong> (not after today) and <strong>How</strong>. Add a <strong>Note</strong> if you want one &mdash; a cheque number goes there.</li>
+                <li>Read the line at the bottom. It says what pressing will do, child by child. All of the amount must be placed before the button appears.</li>
+              </HelpSteps>
+              <p>
+                The note travels to the coach. The family never sees it, and nothing is ever sent to the family.
+              </p>
+            </>
+          ),
+        },
+        {
+          id: 'families-family-page-payment-limits',
+          title: 'Who can record a payment, and why a line can’t go',
+          content: (
+            <>
+              <p>Anyone given <strong>Families</strong> can open Record a payment. A treasurer without Families sees nothing new, and a member limited to some teams never has Families.</p>
+              <ul>
+                <li>A <strong>house-league line</strong> also needs the fee permission: only the owner, a league admin or a league registrar marks a house-league fee paid.</li>
+                <li>A line that can&rsquo;t go stays on the list and says why: the team&rsquo;s season is closed, the team has no head coach to send it to, you are that team&rsquo;s head coach (record it on the team&rsquo;s Player dues), or you lack the fee permission.</li>
+                <li>More than a child owes is allowed. The team&rsquo;s book turns the extra into a credit when the coach records it.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'families-family-page-payment-after',
+          title: 'After you send a payment to a coach',
+          content: (
+            <>
+              <p>
+                A rep child shows an amber <strong>Sent to coach</strong> tag until the head coach answers. The coach gets a notice and an email with <strong>Record it</strong> and <strong>Not received</strong>.
+              </p>
+              <ul>
+                <li><strong>The coach records it:</strong> the tag goes, and the money figures move, because they read the team&rsquo;s book.</li>
+                <li><strong>The coach says Not received:</strong> the tag turns to a red <strong>Not received</strong>, and the person who sent it is told in their notifications. Nothing is recorded.</li>
+                <li><strong>History</strong> lists the send and what came of it.</li>
+              </ul>
+              <HelpNote variant="info" title="Corrections happen where the payment was written">
+                A mistake is corrected where it was written: the coach corrects the receipt on the team&rsquo;s Player dues, and a house-league tick is changed on Registrations.
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'families-family-page-notes',
+          title: 'Notes about a family',
+          content: (
+            <>
+              <p>
+                <strong>Notes</strong> is a section after Children: what the club&rsquo;s staff wrote about the family itself, each note signed and dated, newest first.
+              </p>
+              <ul>
+                <li><strong>Add a note</strong> asks before it saves. A note can be up to 1,000 characters.</li>
+                <li>The newest two show; <strong>Show all</strong> lists the rest. Open a note to read it.</li>
+                <li>The person who wrote a note can edit it with the pencil; it saves as you type.</li>
+                <li>The author or the owner can delete it. It asks once, and the club keeps who deleted it and when &mdash; never the words.</li>
+              </ul>
+              <p>
+                Notes are staff only: they are never on a family&rsquo;s screen, and a family&rsquo;s file includes them. A note belongs to the guardian record it was written on; merging two duplicate records carries both people&rsquo;s notes.
+              </p>
             </>
           ),
         },
@@ -251,6 +327,22 @@ const familiesHelp: HelpPageContent = {
           answerText:
             'Like any other child: Dues, Paid and Balance. Dues is the season registration fee. The club marks a registration paid or not paid, so Paid is the whole fee or nothing and a part payment cannot be shown. An unpaid fee counts in the family Balance and puts the family on Owes money.',
           keywords: ['house league', 'fee', 'registration fee', 'balance', 'paid', 'not paid', 'dues'],
+        },
+        {
+          id: 'faq-family-cheque',
+          question: 'A family handed the club a cheque for their child’s dues. Where do I record it?',
+          answer: (
+            <p>
+              On the family&rsquo;s record, with <strong>Record a payment</strong>. A house-league fee is marked paid
+              in the club&rsquo;s books straight away. A rep child&rsquo;s amount is sent to the team&rsquo;s head
+              coach to record &mdash; the club never writes into a team&rsquo;s book. Put the cheque number in the
+              <strong> Note</strong>; it goes to the coach, and the family never sees it.
+            </p>
+          ),
+          answerText:
+            'On the family record, use Record a payment. A house-league fee is marked paid in the club books straight away. A rep child amount is sent to the team head coach to record; the club never writes into a team book. Put the cheque number in the Note; it goes to the coach and the family never sees it.',
+          keywords: ['cheque', 'record a payment', 'payment', 'sent to coach', 'house-league fee', 'fee paid', 'hand off'],
+          popular: true,
         },
         {
           id: 'faq-optout-old-address',
@@ -321,8 +413,8 @@ const familiesHelp: HelpPageContent = {
       group: 'Working the book',
       heading: 'Messaging a household and exporting their data',
       summary: 'One message to every guardian, replies to you, three a day — and one file answering "what do you hold about me".',
-      keywords: ['message family', 'email household', 'export', 'export their data', 'family file', 'privacy request', 'data request', 'data transfer', 'move their data', 'portability', 'what do you hold', 'reply', 'three a day', 'pdf', 'json'],
-      searchText: 'send email guardians unsubscribe footer reply to sender limit three messages a day last messaged download pdf json structured file for a data transfer move data elsewhere portability family file privacy answer subject access request administrative file coaching records top of the record',
+      keywords: ['message family', 'email household', 'export', 'export their data', 'family file', 'privacy request', 'data request', 'data transfer', 'move their data', 'portability', 'what do you hold', 'reply', 'three a day', 'pdf', 'json', 'family notes', 'staff notes', 'notes about the family', 'pinned note'],
+      searchText: 'send email guardians unsubscribe footer reply to sender limit three messages a day last messaged download pdf json structured file for a data transfer move data elsewhere portability family file privacy answer subject access request administrative file coaching records top of the record notes about the family a payment the club sent to a coach a coach pinned note about a player is not in the file not in this file',
       content: (
         <>
           <p>
@@ -343,9 +435,10 @@ const familiesHelp: HelpPageContent = {
             another system. Most requests only need the PDF. Its first page lists what it
             holds &mdash; contact and every address used, the club-email setting and how it was recorded, each
             child&rsquo;s registrations with birth date, medical notes and emergency contact, tryout applications
-            and their consent, every dues line and payment, documents, waivers and consents, the dates the club
-            messaged them, and records joined &mdash; and what it doesn&rsquo;t: coaching records stay with each
-            team. Every export is recorded in the club&rsquo;s audit log.
+            and their consent, every dues line and payment (including a payment the club sent to a coach), documents,
+            waivers and consents, the dates the club messaged them, <strong>Notes about the family</strong>, and
+            records joined &mdash; and what it doesn&rsquo;t, under <em>Not in this file</em>: coaching records stay
+            with each team, including a coach&rsquo;s pinned note about a player. Every export is recorded in the club&rsquo;s audit log.
           </p>
         </>
       ),

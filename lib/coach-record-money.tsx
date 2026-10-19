@@ -146,6 +146,15 @@ export interface RecordMoneyIntent {
   };
   /** A suggested amount the door already knows (what a family is holding, what a bill has left). */
   amount?: string;
+  /** Pre-answers the door already knows beside the amount — the day it came, how, a note. Each stays the coach's to
+   *  change; a method outside the dues list is ignored. */
+  prefill?: { receivedDate?: string; method?: string; note?: string };
+  /**
+   * A record the save settles with the payment: a payment the CLUB received and handed to this team's head coach (Club
+   * Tier Stage 5c, Ask 26 — the bell's Record it). The save carries its id, so the club's record learns it was recorded;
+   * the coach's save is still the only writer.
+   */
+  claims?: { handoffId: string };
 }
 
 /* ⚰ `PledgeCarry` WAS DELETED HERE (owner ruling, §135 walk 2026-09-03). It carried a sponsor's

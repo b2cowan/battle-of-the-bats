@@ -242,6 +242,8 @@ export interface EmailWords {
   /** Bulleted lists, each with an optional heading line. */
   lists: { title: string | null; items: string[] }[];
   link: { label: string; path: string } | null;
+  /** A second way on, after the first (Families' hand-off: Record it, then Not received — Club Tier Stage 5c). */
+  alsoLink?: { label: string; path: string } | null;
   outro: string | null;
 }
 

@@ -8,6 +8,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import HubTabBar from '@/components/shared/HubTabBar';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
+import ClubHandoffDoor from '@/components/coaches/ClubHandoffDoor';
 import { MoneyRefreshProvider, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
   RecordMoneyProvider, type RecordMoneyIntent, type ConversationBranch,
@@ -249,7 +250,9 @@ export default function CoachesAccountingPage({
      rides the URL exactly as `bill` and `fundraiser` do, and for the same reason it is scrubbed off
      every other tab's address. ⚠ Every room key is registered here in the SAME COMMIT that adds the
      room; `tests/unit/room-address-keys-guard.test.ts` fails the build otherwise. */
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from', 'clubBill'];
+  /* ⚠ `handoff` / `handoffAnswer` (Club Tier Stage 5c): the club's hand-off, from its bell or email — `ClubHandoffDoor` opens it
+     and scrubs both at once; listed so no other tab's address can ever carry one. */
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from', 'clubBill', 'handoff', 'handoffAnswer'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());
@@ -507,6 +510,8 @@ export default function CoachesAccountingPage({
         every one of those writes has to reach the hints the next open reads. */}
     <MoneySummaryRevisionBridge onBump={quietReload} />
     <RecordMoneyProvider value={recordSignal}>
+    {/* The club's hand-off (Stage 5c): Record it opens this hub's own Record money, filled in. */}
+    <ClubHandoffDoor orgSlug={orgSlug} teamId={teamId} canWrite={canWrite} onNotice={setDataNotice} />
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Page-header ruling 2026-08-11: title + archive chip + help, nothing under the title —
           the masthead above owns the season. The old in-header breadcrumb repeated the masthead's

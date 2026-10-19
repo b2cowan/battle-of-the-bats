@@ -5683,7 +5683,9 @@ revoked claim mints nobody, aliases nothing (its claimed_email is the claimant's
 coach decides), its link attaches by the invited address, and a link re-points (E02) only when verified. Before, a claim
 a coach DECLINED could make the invited guardian's address a former address of the claimant, who then became the
 family's person — its messages and its file. `families_merge_people` was revised by mig 334 to carry `family_messages`
-and open `org_person_reattachments` to the keeper.
+and open `org_person_reattachments` to the keeper, and by **mig 338** (Club Tier Stage 5c) to carry `family_notes` and
+`family_payment_handoffs` too — its search_path pinned in the definition (mig 336's ALTER would be reset by the CREATE OR
+REPLACE). Anything else keyed to a person is FORGOTTEN by a merge unless this function moves it.
 
 **Gotchas:**
 
@@ -6011,6 +6013,122 @@ Indexed with `sent_at DESC` (`family_messages_person_sent_idx`): the cap's count
 
 <!-- dict:col:family_messages.sent_at -->
 **`sent_at`** (timestamptz NOT NULL, default now()) — the claim's time, which is the send's.
+
+## `family_payment_handoffs`
+<!-- dict:table:family_payment_handoffs -->
+
+**Purpose:** a payment the club received for a **rep** child, handed to the team's head coach to record (Club Tier Stage
+5c, Ask 26, **mig 338**). The family record's **Record a payment** records only the club's own money (a house-league fee,
+through `setLeagueFeePaid`, `lib/league-fee-paid.ts`) and creates one of these per rep line; the coach's own Record money
+writes the payment. **Service-role only** (RLS enabled, no policies).
+
+**Gotchas:**
+
+1. **It writes NO book, ever.** Recording a rep payment is one write with two effects (the child's dues and an income line
+   in the TEAM's ledger), and the club's books refuse a team's book (D1/D3). The coach's ordinary dues-payments POST
+   (`app/api/coaches/[orgSlug]/teams/[teamId]/players/[playerId]/dues-payments`) takes the row's id as `handoffId`,
+   chooses the payment's id up front, **claims** the hand-off (`state` sent → recorded in one conditional update, so two
+   coaches pressing Record it record once), records the payment the ordinary way WITH that id, then stamps `payment_id`.
+   If the record throws, the release looks for exactly that payment id: found (the write landed before a later step
+   threw), it stamps it and stays `recorded`; not found, it goes back to `sent`. A crash between the claim and the stamp
+   leaves `recorded` with `payment_id` null (the coach's book then has no receipt for it) — the one gap; the dues write's
+   own pre-existing gap (an income line posted, then the payment insert fails) is not closed by this. No
+   `app/api/admin/**` file may write `rep_dues_payments` (build guard).
+   The coach's Record money is editable: the receipt's amount may differ from the hand-off's; History and the family file
+   then say both ("recorded as $50.00").
+2. **The family record's chip**: a child's hand-off still `sent` → amber "Sent to coach" (whatever came after it);
+   otherwise the newest — `not_received` → red "Not received", `recorded` → no chip (the band has moved, since it reads
+   the team's book).
+3. **`payment_id` goes NULL when the coach corrects or removes that receipt** (a correction is remove-then-record, a new
+   payment id). The row stays `recorded`: the hand-off happened; the receipt is the coach's to correct.
+4. **`program_year_id` is the team's live season when sent.** The coach's record refuses a row whose season is no longer
+   the live one (`getActiveRepProgramYear`), as it refuses any write on a closed season.
+5. **A merge moves it** (`families_merge_people`, mig 338). The coach's notification (`club_payment_handed_off`, a
+   Needs-attention kind) reads this row to know whether it still waits — and treats a claim in flight (`recorded`, no
+   `payment_id`, `resolved_at` in the last five minutes) as still waiting, so a save that is then released never leaves
+   the ask cleared for good.
+
+<!-- dict:col:family_payment_handoffs.id -->
+<!-- dict:col:family_payment_handoffs.org_id -->
+**`id`** / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed `family_payment_handoffs_org_idx`).
+
+<!-- dict:col:family_payment_handoffs.person_id -->
+**`person_id`** (uuid NOT NULL, FK → `org_people` CASCADE) — the guardian record it was sent from. Indexed with `sent_at
+DESC` (`family_payment_handoffs_person_idx`): the record's chips and History.
+
+<!-- dict:col:family_payment_handoffs.roster_player_id -->
+**`roster_player_id`** (uuid, FK → `rep_roster_players` ON DELETE SET NULL) — the child's roster row this season. Partial
+index `family_payment_handoffs_player_sent_idx` WHERE state = 'sent'.
+
+<!-- dict:col:family_payment_handoffs.player_name -->
+**`player_name`** (text NOT NULL) — the child's name when sent, so the record and the file still name the child if the
+roster row goes.
+
+<!-- dict:col:family_payment_handoffs.team_id -->
+<!-- dict:col:family_payment_handoffs.program_year_id -->
+**`team_id`** / **`program_year_id`** (uuid NOT NULL, FK → `rep_teams` / `rep_program_years` CASCADE; each indexed) — the
+team and the live season it was handed to.
+
+<!-- dict:col:family_payment_handoffs.amount -->
+<!-- dict:col:family_payment_handoffs.received_date -->
+<!-- dict:col:family_payment_handoffs.method -->
+<!-- dict:col:family_payment_handoffs.note -->
+**`amount`** (numeric(10,2) NOT NULL, > 0), **`received_date`** (date NOT NULL — never after today, checked by the route),
+**`method`** (text, `DUES_PAYMENT_METHODS`: etransfer · cash · cheque · card · other — the coach's list; null when the club
+did not say, and the coach's form then asks),
+**`note`** (text, ≤ 500 — the club's note; a cheque number travels here, there is no reference field). All four prefill the
+coach's Record money; the note arrives as "Received by the club ({sender}): …".
+
+<!-- dict:col:family_payment_handoffs.sent_by -->
+<!-- dict:col:family_payment_handoffs.sent_at -->
+<!-- dict:col:family_payment_handoffs.sent_to -->
+**`sent_by`** (uuid, FK → `auth.users` SET NULL), **`sent_at`** (timestamptz NOT NULL, default now()), **`sent_to`**
+(uuid[] NOT NULL, default '{}' — the head coaches it went to; not FK-checked, a record of a send). History and the family
+file name them through `resolvePersonNamer`. A Not received tells `sent_by` (admin bell, `club_payment_not_received`).
+
+<!-- dict:col:family_payment_handoffs.state -->
+<!-- dict:col:family_payment_handoffs.resolved_by -->
+<!-- dict:col:family_payment_handoffs.resolved_at -->
+**`state`** (text NOT NULL, default 'sent': sent | recorded | not_received), **`resolved_by`** (uuid, FK → `auth.users`
+SET NULL — the coach who answered), **`resolved_at`** (timestamptz). CHECK `(state = 'sent') = (resolved_at IS NULL)`.
+
+<!-- dict:col:family_payment_handoffs.payment_id -->
+**`payment_id`** (uuid, FK → `rep_dues_payments` ON DELETE SET NULL; UNIQUE partial index
+`family_payment_handoffs_payment_uniq` WHERE NOT NULL — one hand-off per receipt) — the payment it became (gotcha 3).
+
+## `family_notes`
+<!-- dict:table:family_notes -->
+
+**Purpose:** what the club's staff wrote about a family — a signed, dated list on the guardian record (Club Tier Stage 5c,
+Ask 29, **mig 338**), copying the coaches' player notes, never the club's unsigned single boxes. **Service-role only**
+(RLS enabled, no policies); every route sits behind `requireFamiliesAccess`.
+
+**Gotchas:**
+
+1. **Who:** anyone who can open Families reads and adds; the author (`created_by`) edits; the author or the **owner**
+   deletes. A deletion removes the row and writes an org audit line (`families_note_deleted`: who and when, **never the
+   words**).
+2. **Never on a family's screen.** The family file includes them ("Notes about the family", `FAMILY_FILE_SECTIONS`), and
+   its statement says so.
+3. **Per guardian record, not per household** (no household inferred before Stage 5d): a co-guardian's record does not
+   show it. **A merge moves it** to the person kept (`families_merge_people`, mig 338).
+
+<!-- dict:col:family_notes.id -->
+<!-- dict:col:family_notes.org_id -->
+**`id`** / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed `family_notes_org_idx`).
+
+<!-- dict:col:family_notes.person_id -->
+**`person_id`** (uuid NOT NULL, FK → `org_people` CASCADE) — the guardian record. Indexed with `created_at DESC`
+(`family_notes_person_idx`): the record's list, newest first.
+
+<!-- dict:col:family_notes.body -->
+**`body`** (text NOT NULL, 1–1,000 characters after trimming — the coach's pinned note's limit).
+
+<!-- dict:col:family_notes.created_by -->
+<!-- dict:col:family_notes.created_at -->
+<!-- dict:col:family_notes.edited_at -->
+**`created_by`** (uuid, FK → `auth.users` SET NULL — the author), **`created_at`** (timestamptz NOT NULL, default now()),
+**`edited_at`** (timestamptz — when the words last changed; null = never edited, shown as "edited Oct 3").
 
 ## `family_recap_views`
 <!-- dict:table:family_recap_views -->

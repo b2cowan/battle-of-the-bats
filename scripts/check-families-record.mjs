@@ -10,9 +10,11 @@
  *
  * The functions under test are INSTALLED inside the block from the migrations' own text (never a copy), so the check
  * runs the same before and after the migrations reach dev:
- *   (default)  migs 333 + 334 — must PASS.
- *   --old      migs 333 + 334, then 252's attach and 254's merge over them — must FAIL T1 and T2 (and T7): the proof
+ *   (default)  migs 333 + 334 + 338 — must PASS.
+ *   --old      the same, then 252's attach and 254's merge over them — must FAIL T1 and T2 (and T7): the proof
  *              that the E01 / E02 tests bite on the code they replace.
+ *   --before-338  the same, then 334's merge over 338's (Club Tier Stage 5c) — must FAIL T11: the proof that "a merge
+ *              carries the family's notes and hand-offs" bites on the function it replaces.
  *   --mutate   the real run, then once per MUTATION (each removes one rule from a copy) — every one must be CAUGHT.
  *
  * ⚠ DEV ONLY, and NOT in `verify:changed`: it needs the network and the dev database. It never touches prod.
@@ -37,6 +39,7 @@ const PASSED = 'FAMILIES_RECORD_PASSED';
 const body = f => read(`supabase/migrations/${f}`).replace(/^BEGIN;\s*$/m, '').replace(/^COMMIT;\s*$/m, '');
 const M333 = body('333_a_merge_holds_and_an_edited_email_follows_the_child.sql');
 const M334 = body('334_a_family_message_keeps_its_date_and_sender.sql');
+const M338 = body('338_the_club_hands_a_payment_to_the_coach_and_keeps_notes.sql');
 
 /** One CREATE OR REPLACE FUNCTION, as a migration writes it. */
 function fn(sql, name) {
@@ -59,7 +62,7 @@ const MUTATIONS = [
     /\n\s+WHERE NOT EXISTS \(\n\s+SELECT 1 FROM held k[\s\S]*?\n\s+\)\n\s+ON CONFLICT/, '\n  ON CONFLICT'],
   ['E02: re-point an unapproved link', M333, 'families_attach_people',
     /\n\s+WHERE h\.movable AND pe\.person_id <> h\.from_person/, '\n     WHERE pe.person_id <> h.from_person'],
-  ['merge: lose a proposal to a third person', M334, 'families_merge_people',
+  ['merge: lose a proposal to a third person', M338, 'families_merge_people',
     /\n\s+UPDATE org_person_reattachments SET to_person_id = p_keep_id[\s\S]*?source_id\);\n/, '\n'],
   ['alias: a declined claim aliases', M333, 'families_attach_people',
     /\n\s+AND f\.status = 'verified'   -- \(mig 333\) a pending, declined or revoked claim never aliases/, ''],
@@ -67,8 +70,12 @@ const MUTATIONS = [
   ['cap: another club\'s person', M334, 'family_message_claim',
     /IF NOT EXISTS \(SELECT 1 FROM org_people WHERE id = p_person_id AND org_id = p_org_id\) THEN/,
     'IF NOT EXISTS (SELECT 1 FROM org_people WHERE id = p_person_id) THEN'],
-  ['merge: lose the message dates', M334, 'families_merge_people',
+  ['merge: lose the message dates', M338, 'families_merge_people',
     /\n\s+UPDATE family_messages\s+SET person_id = p_keep_id[^\n]*\n/, '\n'],
+  ['merge: lose the family\'s notes', M338, 'families_merge_people',
+    /\n\s+UPDATE family_notes\s+SET person_id = p_keep_id[^\n]*\n/, '\n'],
+  ['merge: lose the payments handed to a coach', M338, 'families_merge_people',
+    /\n\s+UPDATE family_payment_handoffs\s+SET person_id = p_keep_id[^\n]*\n/, '\n'],
 ];
 
 function run(install, mutations = '') {
@@ -86,7 +93,18 @@ function run(install, mutations = '') {
   return { outcome: 'error', text: text.slice(0, 600) };
 }
 
-const NEW = exec(M333) + '\n  ' + exec(M334);
+const NEW = exec(M333) + '\n  ' + exec(M334) + '\n  ' + exec(M338);
+
+if (process.argv.includes('--before-338')) {
+  const r = run(NEW + '\n  ' + exec(fn(M334, 'families_merge_people')));
+  if (!(r.outcome === 'caught' && /FAIL T11/.test(r.text))) {
+    console.error(`✗ check:families-record --before-338 — the notes test did NOT fail on mig 334's merge (${r.outcome}):\n  ${r.text}`);
+    process.exit(1);
+  }
+  console.log('✓ check:families-record --before-338 — on the merge it replaces, the notes test fails as it should:');
+  for (const f of r.text.split(' | ')) console.log(`  · ${f}`);
+  process.exit(0);
+}
 
 if (process.argv.includes('--old')) {
   const r = run(NEW + '\n  ' + exec(OLD_ATTACH) + '\n  ' + exec(OLD_MERGE));
@@ -105,7 +123,7 @@ if (real.outcome !== 'passed') {
   console.error(`✗ check:families-record — the family record is not true:\n  ${real.text}`);
   process.exit(1);
 }
-console.log('✓ check:families-record — a merge holds, an edited email follows the child (recorded once), the cap holds at three, a merge keeps the message dates (dev, rolled back).');
+console.log('✓ check:families-record — a merge holds, an edited email follows the child (recorded once), the cap holds at three, a merge keeps the message dates, the notes and the hand-offs (dev, rolled back).');
 
 if (process.argv.includes('--mutate')) {
   let survived = 0;

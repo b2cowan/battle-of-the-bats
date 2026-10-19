@@ -69,7 +69,8 @@ async function lastAsk(orgId: string): Promise<CoachAskPreview['lastSent']> {
   return { at: row.sent_at, by: nameOf(row.sent_by) };
 }
 
-async function senderName(ctx: AuthContextWithRole): Promise<string> {
+/** The person sending, by the club's name for them (their address, then the club, when it holds none). */
+export async function senderName(ctx: AuthContextWithRole): Promise<string> {
   return (await resolvePersonNamer(ctx.org.id, [ctx.user.id]))(ctx.user.id) ?? ctx.user.email ?? ctx.org.name;
 }
 

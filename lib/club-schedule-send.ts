@@ -666,7 +666,8 @@ export function emailHtml(w: EmailWords): string {
   const p = (t: string) => `<p style="margin:0 0 0.75rem;">${escapeHtml(t)}</p>`;
   const lists = w.lists.map(l => `${l.title ? `<p style="margin:0 0 0.35rem;font-weight:700;">${escapeHtml(l.title)}</p>` : ''}<ul style="margin:0 0 0.75rem;padding-left:1.25rem;">${l.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`).join('');
   const link = w.link ? `<p style="margin:1rem 0;"><a href="${escapeHtml(`${SITE_URL}${w.link.path}`)}" style="color:#D9F99D;font-weight:700;">${escapeHtml(w.link.label)}</a></p>` : '';
-  return wrap(`${p(w.greeting)}${w.paragraphs.map(p).join('')}${lists}${link}${w.outro ? p(w.outro) : ''}`);
+  const also = w.alsoLink ? `<p style="margin:0 0 1rem;"><a href="${escapeHtml(`${SITE_URL}${w.alsoLink.path}`)}" style="color:#cbd5e1;">${escapeHtml(w.alsoLink.label)}</a></p>` : '';
+  return wrap(`${p(w.greeting)}${w.paragraphs.map(p).join('')}${lists}${link}${also}${w.outro ? p(w.outro) : ''}`);
 }
 
 /** The notices: a review, the final schedule (and its bill), the changes — to each team's people who see the schedule. */

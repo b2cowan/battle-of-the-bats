@@ -4,7 +4,8 @@ import { ArrowRight, Check, Trash2 } from 'lucide-react';
 import type { AppNotification, NotificationEventType } from '@/lib/types';
 import { NOTIFICATION_EVENT_LABELS, notificationCategory } from '@/lib/notification-labels';
 import {
-  BUNDLE_NOUN, entryMembers, iconFor, notificationDestination, notificationStamp, type ActivityEntry,
+  BUNDLE_NOUN, HANDOFF_ACTIONS, entryMembers, handoffNotReceivedLink, iconFor, notificationDestination, notificationStamp,
+  type ActivityEntry,
 } from '@/lib/notification-view';
 import buttons from './notification-buttons.module.css';
 import styles from './NotificationMessage.module.css';
@@ -71,7 +72,10 @@ export default function NotificationMessage({
   const own = members.find(m => m.link)?.link ?? null;
   const onward = settled && settled.link !== undefined ? settled.link : own;
   const link = settled && onward && isThisPage(onward) ? null : onward;
-  const goLabel = notificationDestination(link, portal);
+  // The club's hand-off (Club Tier Stage 5c, Ask 28): while it waits, the way on is "Record it" (the coach's own Record
+  // money, filled in) and Not received is the same door asking once — two links, nothing posted from the bell.
+  const handoff = entry.kind === 'item' && !settled && !lead.clearedAt && lead.eventType === 'club_payment_handed_off' ? link : null;
+  const goLabel = handoff ? HANDOFF_ACTIONS.recordIt : notificationDestination(link, portal);
   const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';
   const title = entry.kind === 'bundle'
     ? `${members.length} ${BUNDLE_NOUN[entry.eventType] ?? 'notifications'}`
@@ -121,6 +125,7 @@ export default function NotificationMessage({
             {goLabel} <ArrowRight size={16} aria-hidden />
           </a>
         )}
+        {handoff && <a href={handoffNotReceivedLink(handoff)} className={buttons.btn}>{HANDOFF_ACTIONS.notReceived}</a>}
         {doneable && (
           <button
             type="button"

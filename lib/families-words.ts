@@ -8,6 +8,7 @@
  */
 import { formatStoredDate, orgDayKey, tournamentToday, utcToZonedInputs } from './timezone';
 import { formatTime, joinWithAnd, pluralize, possessive } from './utils';
+import { HANDOFF_ACTIONS } from './notification-view';
 
 /** ⚠ Three messages for one family in any rolling 24 hours (Ask 9). The SAME number is `v_cap` in
  *  family_message_claim (mig 334) — tests/unit/families-stage5a-guard.test.ts holds the two equal. */
@@ -81,7 +82,7 @@ export const FAMILY_FILE_WORDS = {
   exportedBy: (name: string | null) => (name ? `by ${name}` : ''),
   holdsHead: 'What this file holds',
   notHead: 'Not in this file.',
-  notBody: 'Coaching records (evaluations, development notes, attendance, statistics, lineups) are kept by each team. '
+  notBody: 'Coaching records (evaluations, development notes, a coach’s pinned note about a player, attendance, statistics, lineups) are kept by each team. '
     + 'Ask the team’s head coach, or the club, for those.',
   foot: (orgName: string, name: string, at: string) =>
     `Everything ${orgName} holds in its family records about ${name}, as of ${day(at)}.`,
@@ -325,3 +326,166 @@ export const FAMILIES_GRANT_REFUSAL =
 /** The Members screen's "what they can open" row for a member limited to some teams (Ask 12, drawn in 5b): why
  *  Families is not theirs to be given, said where the row is. */
 export const FAMILIES_LIMITED_ROW = 'Can’t be given to a member limited to some teams: a family’s record spans every team its children play on.';
+
+/**
+ * RECORD A PAYMENT (Club Tier Stage 5c, P2 — Asks 26–28; hub K4MPu4ni53Ct7yrDcmWJd9 v121). The club records only its own
+ * money (a house-league fee, now) and HANDS a rep payment to the team's head coach, whose own Record money writes it. The
+ * drawing's words, for /marketing's pass on exactly these. Who is told is said ONCE, in the foot's sentence (/design D2).
+ */
+export const FAMILY_PAYMENT_WORDS = {
+  door: 'Record a payment',
+  doorShort: 'Record payment',
+  title: 'Record a payment',
+  statement: 'A payment the club received, put where it belongs: a house-league fee in the club’s books now, rep dues with the team, whose head coach records them.',
+  amount: 'Amount received',
+  placed: 'Placed',
+  leftToPlace: 'Left to place',
+  placedCaption: (n: number) => pluralize(n, 'child', 'children'),
+  linesLabel: 'Where the payment goes',
+  /** A house-league line: "Summer 2026 · U11 · house league · Fee $150.00" (on a phone, "House league · Fee $150.00"). */
+  leagueWhat: (where: string, fee: string, short: boolean) => (short ? `House league · Fee ${fee}` : `${where} · house league · Fee ${fee}`),
+  /** A rep line: "Fixture Falcons U13 · 2026 · Balance $100.00" (on a phone, without the year). */
+  repWhat: (team: string, year: number | null, balance: string, short: boolean) =>
+    `${team}${year && !short ? ` · ${year}` : ''} · Balance ${balance}`,
+  /** After a rep line's balance when part of it is already with the coach. */
+  alreadySent: (amount: string) => `${amount} already sent to the coach`,
+  wholeFee: 'Whole fee',
+  wholeFeeLabel: (child: string) => `${possessive(child)} whole fee`,
+  repAmountLabel: (child: string) => `Amount for ${child}`,
+  leagueGoes: 'In the club’s books, now',
+  /** "To Pat Moreau, the head coach, to record" (on a phone, "To Pat Moreau, to record"). */
+  repGoes: (coaches: readonly string[], short: boolean) =>
+    short ? `To ${joinWithAnd(coaches)}, to record`
+      : `To ${joinWithAnd(coaches)}, the head ${coaches.length === 1 ? 'coach' : 'coaches'}, to record`,
+  /** A line that cannot go: its reason in quiet ink, no input (Ask 28). */
+  reasonClosed: (team: string) => `${possessive(team)} season is closed, so its book takes no payment here. Speak to the coach.`,
+  reasonNoHead: (team: string) => `${team} has no head coach to send it to.`,
+  reasonOnlyYou: (team: string) => `You are ${possessive(team)} head coach: record it on the team’s Player dues.`,
+  reasonNoFeePermission: 'Only the owner, a league admin or a league registrar marks a house-league fee paid.',
+  /** More than a child owes: explained, not refused. */
+  over: (extra: string, child: string) => `That is ${extra} more than ${child} owes. The team’s book turns it into a credit when the coach records it.`,
+  date: 'Date received',
+  dateFuture: 'A payment can’t be received after today.',
+  how: 'How',
+  note: 'Note',
+  /** Under Note: where it goes, and that the family never sees it. */
+  noteHint: (repChildren: readonly string[]) => repChildren.length
+    ? `Goes to the coach with ${joinWithAnd(repChildren.map(possessive))} ${repChildren.length === 1 ? 'payment' : 'payments'}. The family never sees it, and nothing is sent to them.`
+    : 'The family never sees it, and nothing is sent to them.',
+  /** The foot's sentence, child by child: "Records Milan’s fee. Sends Riley’s $100.00 to Pat Moreau." */
+  footFee: (child: string) => `Records ${possessive(child)} fee.`,
+  footSend: (child: string, amount: string, coaches: readonly string[]) => `Sends ${possessive(child)} ${amount} to ${joinWithAnd(coaches)}.`,
+  /** The standing reasons in the act's place. */
+  leftReason: (left: string) => `Place the last ${left}, or change the amount received.`,
+  overPlaced: (over: string) => `You placed ${over} more than was received. Change a line or the amount received.`,
+  nothingYet: 'Type the amount received, then place it on a child.',
+  actRecordAndSend: 'Record and send',
+  actRecord: 'Record',
+  actSend: (coaches: number) => (coaches === 1 ? 'Send to the coach' : 'Send to the coaches'),
+  working: 'Recording…',
+  cancel: 'Cancel',
+  /** The record's notice afterwards: what was done, child by child. */
+  done: (fees: readonly string[], sends: readonly { child: string; amount: string; coaches: readonly string[] }[]) => [
+    ...fees.map(c => `Recorded ${possessive(c)} fee.`),
+    ...sends.map(s => `Sent ${possessive(s.child)} ${s.amount} to ${joinWithAnd(s.coaches)}.`),
+  ].join(' '),
+  /** Refusals the server returns. */
+  changed: 'Something changed since this window opened. Close it and open it again.',
+  justSent: 'This was just sent. Check the record before sending it again.',
+  partly: (done: string) => `${done} The rest wasn’t recorded or sent. Please try again.`,
+  failed: 'The payment couldn’t be recorded. Please try again.',
+  /** On the record. */
+  chipSent: 'Sent to coach',
+  chipNotReceived: 'Not received',
+  /** History. */
+  historySent: (amount: string, child: string, coaches: readonly string[], by: string | null) =>
+    `Sent ${amount} for ${child} to ${coaches.length ? joinWithAnd(coaches) : 'the head coach'}${by ? ` · by ${by}` : ''}`,
+  historyRecorded: (amount: string, child: string, by: string | null) => `${possessive(child)} ${amount} recorded by ${by ?? 'the coach'}`,
+  historyNotReceived: (amount: string, child: string, by: string | null) => `${by ?? 'The coach'} said ${possessive(child)} ${amount} never reached the team`,
+} as const;
+
+/**
+ * THE HEAD COACH'S SIDE OF A HAND-OFF (Ask 28): a "Your club" bell and an email with Record it and Not received; Record it
+ * opens the coach's own Record money, filled in. The only coach-side change in 5c.
+ */
+export const FAMILY_HANDOFF_COACH_WORDS = {
+  bellTitle: (amount: string, child: string) => `The club received ${amount} for ${child}`,
+  bellBody: (method: string | null, receivedDay: string) => `${method ? `${method}, ${receivedDay}` : `Received ${receivedDay}`}. Record it in the team’s book when it reaches you.`,
+  /** The email's two links say what the bell's two buttons say (lib/notification-view.ts, one spelling). */
+  recordIt: HANDOFF_ACTIONS.recordIt,
+  notReceived: HANDOFF_ACTIONS.notReceived,
+  /** The note Record money opens with. */
+  coachNote: (sender: string, note: string | null) => `Received by the club (${sender})${note ? `: ${note}` : ''}`,
+  /** The quiet line under "A family paid their dues — Riley Reyes". */
+  lockDetail: (owes: string | null, sentDay: string) => (owes ? `Owes ${owes} · sent by the club · ${sentDay}` : `Sent by the club · ${sentDay}`),
+  /** The coach's email. */
+  emailSubject: (team: string, child: string) => `${team}: the club received a payment for ${child}`,
+  emailLead: (org: string, amount: string, child: string, method: string | null, receivedDay: string) =>
+    `${org} received ${amount} for ${child}${method ? `: ${method.toLowerCase()}, ${receivedDay}` : ` on ${receivedDay}`}.`,
+  emailNote: (note: string) => `Note from the club: “${note}”`,
+  emailAsk: 'Record it in the team’s book when the money reaches you. If it never does, use Not received to tell the club.',
+  emailOutro: (sender: string) => `Reply to this email to reach ${sender}.`,
+  /** Not received, asked once (the bell's link and the email's). */
+  askTitle: 'Not received?',
+  askBody: (amount: string, child: string) => `Tell the club that ${possessive(child)} ${amount} never reached the team? Nothing is recorded, and the person who sent it on is told.`,
+  askAct: 'Not received',
+  askCancel: 'Cancel',
+  /** When the link is opened after the payment was answered. */
+  alreadyRecorded: 'This payment is already recorded.',
+  alreadyNotReceived: 'The club was already told this payment never arrived.',
+  gone: 'The club’s record of this payment is gone.',
+  wrongSeason: 'This payment was for a season that is closed.',
+  saidNotReceived: 'The club was told it never arrived.',
+  failed: 'That couldn’t be saved. Please try again.',
+  /** The club person who sent it hears a Not received (their bell). */
+  adminTitle: (coach: string, child: string, amount: string) => `${coach} says ${possessive(child)} ${amount} never arrived`,
+  adminBody: (team: string, method: string | null, receivedDay: string) =>
+    `${possessive(team)} head coach says the payment you sent (${method ? `${method.toLowerCase()}, ` : ''}${receivedDay}) never reached the team. Nothing was recorded.`,
+  /** A coach's save that names a hand-off which no longer waits. */
+  refusedAnswered: 'The club’s payment was already answered: recorded, or marked not received.',
+  refusedOther: 'That payment from the club isn’t for this player.',
+} as const;
+
+/**
+ * A FAMILY'S NOTES (Club Tier Stage 5c, P3 — Ask 29): a signed, dated list after Children. The once-line and the hint are
+ * /marketing's to polish.
+ */
+export const FAMILY_NOTE_WORDS = {
+  heading: 'Notes',
+  add: 'Add a note',
+  once: 'Staff only. The family never sees them here; a family’s file includes them.',
+  none: 'No notes yet.',
+  addTitle: 'Add a note',
+  field: 'Note',
+  hint: 'Only people who can open Families see it. A family’s file includes it.',
+  save: 'Save note',
+  saving: 'Saving…',
+  cancel: 'Cancel',
+  eyebrow: (family: string) => `${family} · note`,
+  signed: (author: string | null, at: string, editedAt: string | null) =>
+    `${author ?? 'A former member'} · ${day(at)}${editedAt ? ` · edited ${day(editedAt)}` : ''}`,
+  edit: 'Edit note',
+  done: 'Done editing',
+  delete: 'Delete note',
+  deleteTitle: 'Delete this note?',
+  deleteAsk: 'It can’t be brought back. The record keeps who deleted it and when, never the words.',
+  deleting: 'Deleting…',
+  deleteYes: 'Delete note',
+  deleteNo: 'Keep it',
+  tooLong: (max: number) => `A note can be up to ${max.toLocaleString('en-CA')} characters.`,
+  empty: 'Type the note first.',
+  deleted: 'Note deleted.',
+  failed: 'The note couldn’t be saved. Please try again.',
+  deleteFailed: 'The note couldn’t be deleted. Please try again.',
+  notYours: 'Only the person who wrote a note can change it.',
+  notAllowedDelete: 'Only the person who wrote a note, or the club’s owner, can delete it.',
+  gone: 'This note was deleted.',
+  openNote: (date: string) => `Open the note from ${date}`,
+} as const;
+
+/** A note's length limit — the coach's pinned note's; the SAME number is mig 338's CHECK on family_notes.body. */
+export const FAMILY_NOTE_MAX = 1000;
+
+/** Why a note's words cannot be saved, or null — the server and both note windows ask this one rule. */
+export const noteProblem = (text: string): string | null =>
+  !text.trim() ? FAMILY_NOTE_WORDS.empty : text.trim().length > FAMILY_NOTE_MAX ? FAMILY_NOTE_WORDS.tooLong(FAMILY_NOTE_MAX) : null;

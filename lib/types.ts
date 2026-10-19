@@ -3359,6 +3359,9 @@ export type NotificationEventType =
   | 'club_bill_arrived'          // the club billed the team for the time it got (on Money › Club)
   // Club Tier Stage 5b (Families, Ask 4) — to a team's head coach. TS-union only (no DB CHECK on event_type).
   | 'club_guardians_asked'       // the club asked for the guardians of players with no family on file (on the Roster)
+  // Club Tier Stage 5c (Families, Ask 26; mig 338) — a payment the club received for a rep child, handed to the head coach.
+  | 'club_payment_handed_off'    // to the head coaches: Record it (their Record money, filled in) / Not received — Needs attention
+  | 'club_payment_not_received'  // to the club person who sent it: the coach says it never reached the team
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
   | 'club_schedule_handed_back'  // a team handed a club practice back

@@ -61,7 +61,9 @@ describe('2. every club money write checks the lock first, and maps the database
     'app/api/admin/accounting/ledgers/[ledgerId]/entries/route.ts': [/refuseIfClosedFor\(/, /isClosedYearError\(/],
     'app/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]/route.ts': [/refuseIfClosed\(setting, \[existing\.entry_date\]/, /refuseIfClosedFor\(ctx!\.org\.id, \[existing\.entry_date\], 'recorded'\)/, /isClosedYearError\(/],
     'app/api/admin/accounting/transfers/route.ts': [/refuseIfClosedFor\(/, /isClosedYearError\(/],
-    'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts': [/refuseIfClosed\(setting, \[line\.entry_date\]/],
+    // The fee tick's one write moved out of the route (Club Tier Stage 5c, Part A); the route calls it.
+    'lib/league-fee-paid.ts': [/refuseIfClosed\(setting, \[line\.entry_date\]/, /isClosedYearError\(/],
+    'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts': [/await setLeagueFeePaid\(/],
     'app/api/admin/accounting/budget-plan/lines/[lineId]/route.ts': [/lineYearRefusal\(/],
     'app/api/admin/accounting/budget-plan/lines/[lineId]/periods/route.ts': [/lineYearRefusal\(/],
   };

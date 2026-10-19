@@ -70,6 +70,8 @@ const STAYS: Record<string, string> = {
   org_person_reattachments: 'the org’s duplicate-review proposals about its own people (mig 333) — the club’s own attach makes its own',
   family_messages: 'the org’s Message this family dates about its own people (mig 334) — a coach portal has no Families area (League and Club bands only), so none exist to move',
   family_coach_asks: 'the club’s own Ask the coaches log (mig 335) — sent from Families, which a coach portal does not have (League and Club bands only), so none exist to move',
+  family_notes: 'the club’s own notes about its own people (mig 338) — written in Families, which a coach portal does not have, so none exist to move',
+  family_payment_handoffs: 'a payment the CLUB received and passed to one of its teams (mig 338) — sent from Families, which a coach portal does not have, so none exist to move',
   // ── The coach's OWN tournament (a Premium portal includes one) — the org's, not the team's ────
   tournaments: 'the coach org’s hosted tournament does not move (an open one refuses the move)',
   tournament_archives: 'belongs to the coach org’s tournament',

@@ -920,6 +920,56 @@
     "indexdef": "CREATE UNIQUE INDEX family_messages_pkey ON public.family_messages USING btree (id)"
   },
   {
+    "tablename": "family_notes",
+    "indexname": "family_notes_org_idx",
+    "indexdef": "CREATE INDEX family_notes_org_idx ON public.family_notes USING btree (org_id)"
+  },
+  {
+    "tablename": "family_notes",
+    "indexname": "family_notes_person_idx",
+    "indexdef": "CREATE INDEX family_notes_person_idx ON public.family_notes USING btree (person_id, created_at DESC)"
+  },
+  {
+    "tablename": "family_notes",
+    "indexname": "family_notes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_notes_pkey ON public.family_notes USING btree (id)"
+  },
+  {
+    "tablename": "family_payment_handoffs",
+    "indexname": "family_payment_handoffs_org_idx",
+    "indexdef": "CREATE INDEX family_payment_handoffs_org_idx ON public.family_payment_handoffs USING btree (org_id)"
+  },
+  {
+    "tablename": "family_payment_handoffs",
+    "indexname": "family_payment_handoffs_payment_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_payment_handoffs_payment_uniq ON public.family_payment_handoffs USING btree (payment_id) WHERE (payment_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_payment_handoffs",
+    "indexname": "family_payment_handoffs_person_idx",
+    "indexdef": "CREATE INDEX family_payment_handoffs_person_idx ON public.family_payment_handoffs USING btree (person_id, sent_at DESC)"
+  },
+  {
+    "tablename": "family_payment_handoffs",
+    "indexname": "family_payment_handoffs_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_payment_handoffs_pkey ON public.family_payment_handoffs USING btree (id)"
+  },
+  {
+    "tablename": "family_payment_handoffs",
+    "indexname": "family_payment_handoffs_player_sent_idx",
+    "indexdef": "CREATE INDEX family_payment_handoffs_player_sent_idx ON public.family_payment_handoffs USING btree (roster_player_id) WHERE (state = 'sent'::text)"
+  },
+  {
+    "tablename": "family_payment_handoffs",
+    "indexname": "family_payment_handoffs_team_idx",
+    "indexdef": "CREATE INDEX family_payment_handoffs_team_idx ON public.family_payment_handoffs USING btree (team_id)"
+  },
+  {
+    "tablename": "family_payment_handoffs",
+    "indexname": "family_payment_handoffs_year_idx",
+    "indexdef": "CREATE INDEX family_payment_handoffs_year_idx ON public.family_payment_handoffs USING btree (program_year_id)"
+  },
+  {
     "tablename": "family_recap_views",
     "indexname": "family_recap_views_link_season_uniq",
     "indexdef": "CREATE UNIQUE INDEX family_recap_views_link_season_uniq ON public.family_recap_views USING btree (link_id, program_year_id)"
@@ -1352,7 +1402,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_org_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",
@@ -1362,7 +1412,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_user_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",

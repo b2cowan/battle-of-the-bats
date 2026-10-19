@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { resolvePersonNamer } from './db';
 import { clubMoneyLinks } from './club-money-notify';
+import { moneySectionHref } from './coach-money-links';
 import { requestWaitsOnClub } from './club-money-figures';
 import { NEEDS_ATTENTION_KINDS, isTeamCoachEvent, type NeedsAttentionKind } from './notification-labels';
 import { bellReadFilter, type BellSource } from './notification-bell-scope';
@@ -418,6 +419,31 @@ const noShow: Resolver = async rows => {
   return out;
 };
 
+/** A family's payment the club passed to the head coach (Club Tier Stage 5c, Ask 28) — waits while the hand-off is
+ *  `sent`. Record it (the coach's save) or Not received settles it, for every head coach it reached. */
+const paymentHandedOff: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const ids = uniq(rows.map(r => meta(r, 'handoffId')));
+  if (!ids.length) return out;
+  type H = { id: string; team_id: string; state: string; resolved_by: string | null; resolved_at: string | null; payment_id: string | null };
+  const byId = new Map((await rowsIn<H>('family_payment_handoffs', 'id, team_id, state, resolved_by, resolved_at, payment_id', 'id', ids)).map(h => [h.id, h]));
+  // A Record it in flight: claimed (recorded) but its payment not yet stamped, within the last few minutes. It may still
+  // be released back to waiting, so it is not settled yet — clearing it then would lose the ask for good (review 2026-10-19).
+  const inFlight = (h: H) => h.state === 'recorded' && !h.payment_id && !!h.resolved_at && Date.parse(h.resolved_at) > Date.now() - 5 * 60_000;
+  for (const r of rows) {
+    const id = meta(r, 'handoffId');
+    if (!id) continue; // names no hand-off: malformed, so never cleared on doubt
+    const h = byId.get(id);
+    const slug = slugOf(r.link);
+    const dues = h && slug ? moneySectionHref(`/${slug}/coaches/teams/${h.team_id}`, 'dues') : null;
+    if (h?.state === 'sent' || (h && inFlight(h))) out.set(r.id, 'waiting');
+    else if (h?.state === 'recorded') out.set(r.id, { by: h.resolved_by, at: h.resolved_at, link: dues, words: (who, you) => ({ outcome: W.handOffRecorded(who, you) }) });
+    else if (h?.state === 'not_received') out.set(r.id, { by: h.resolved_by, at: h.resolved_at, link: dues, words: (who, you) => ({ outcome: W.handOffNotReceived(who, you), then: W.handOffNotReceivedThen }) });
+    else out.set(r.id, said(W.handOffGone, { link: null }));
+  }
+  return out;
+};
+
 /** THE RULEBOOK — one entry per Needs-attention kind (`NeedsAttentionKind` makes it total). */
 export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   club_hand_back_asked: handBackAsked,
@@ -431,6 +457,7 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   team_coach_payment_reminder: paymentReminder,
   payment_failed: paymentFailed,
   team_no_show: noShow,
+  club_payment_handed_off: paymentHandedOff,
 };
 
 const isNeedsAttention = (eventType: string): eventType is NeedsAttentionKind => (NEEDS_ATTENTION_KINDS as readonly string[]).includes(eventType);

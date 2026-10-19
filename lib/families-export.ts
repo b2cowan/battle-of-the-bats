@@ -2,8 +2,9 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { loadOrgFamilyWorld, householdOf, fullName, personDisplayName, readRepMoney } from './families-read';
-import { resolvePersonNamer } from './db';
 import { familyFileStatement, type FamilyFile, type FamilyFileChild } from './family-file';
+import { readHandoffs, handoffNamer } from './families-payment';
+import { NOTE_COLUMNS } from './families-notes';
 
 /**
  * THE FAMILY FILE'S ASSEMBLER (Club Tier Stage 5a, E04; Ask 10 A — "the administrative file"). Everything the club's
@@ -15,7 +16,9 @@ import { familyFileStatement, type FamilyFile, type FamilyFileChild } from './fa
  * ⚠ The sections are `FAMILY_FILE_SECTIONS` (lib/family-file.ts) — the statement on the file's first page is built
  * from the same list, so the two cannot drift. ⚠ NOT here, by the ruling: coaching records (evaluations, development
  * notes, attendance, statistics, lineups) stay with each team — `tests/unit/families-stage5a-guard.test.ts` refuses a
- * read of their tables in this file.
+ * read of their tables in this file. ⚖ Nor the coach's pinned note about a player (`rep_roster_players.notes`, typed under
+ * "never shown to families" — Club Tier Stage 5c, Ask 29, S5C-03): never selected here, and the statement names it.
+ * Stage 5c adds the club's notes about the family (`family_notes`) and the payments it passed to a coach.
  *
  * The household rule is the family page's (`householdOf`): the file is about THIS person — other
  * guardians are named, their own contact details are in their own file. Org-scoped like every Families read.
@@ -35,9 +38,9 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
   const addressSet = new Set(myAddresses.map((a: any) => a.email_normalized));
   const rosterIds = roster.map(r => r.id);
 
-  const [details, leagueDetails, tryouts, docs, templates, money, messages, merges] = await Promise.all([
+  const [details, leagueDetails, tryouts, docs, templates, money, messages, merges, familyNotes, handoffs] = await Promise.all([
     fetchAllIn<any>(rosterIds, (chunk, from, to) => supabaseAdmin.from('rep_roster_players')
-      .select('id, player_date_of_birth, medical_notes, emergency_contact_name, emergency_contact_phone, notes, admin_notes, status')
+      .select('id, player_date_of_birth, medical_notes, emergency_contact_name, emergency_contact_phone, admin_notes, status')
       .eq('org_id', orgId).in('id', chunk).order('id').range(from, to)),
     fetchAllIn<any>(league.map(r => r.id), (chunk, from, to) => supabaseAdmin.from('league_registrations')
       .select('id, player_date_of_birth, player_notes, admin_notes, status, registered_at, waiver_accepted_at')
@@ -55,9 +58,13 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
       .select('id, sent_at, sent_by').eq('org_id', orgId).eq('person_id', p.id).order('sent_at').order('id').range(from, to)),
     fetchAll<any>((from, to) => supabaseAdmin.from('org_person_merges')
       .select('id, merged_at, merged_snapshot').eq('org_id', orgId).eq('kept_person_id', p.id).order('merged_at').order('id').range(from, to)),
+    fetchAll<any>((from, to) => supabaseAdmin.from('family_notes')
+      .select(NOTE_COLUMNS).eq('org_id', orgId).eq('person_id', p.id).order('created_at').order('id').range(from, to)),
+    readHandoffs(orgId, p.id),
   ]);
   // The exporter and every sender, named in one lookup.
-  const nameOf = await resolvePersonNamer(orgId, [exportedById, ...messages.map(m => m.sent_by)]);
+  // The exporter, every sender, every note's author and everyone the hand-offs name — one lookup.
+  const nameOf = await handoffNamer(orgId, handoffs, [exportedById, ...messages.map(m => m.sent_by), ...familyNotes.map(n => n.created_by)]);
   const detailById = new Map(details.map(d => [d.id, d]));
   const leagueById = new Map(leagueDetails.map(d => [d.id, d]));
   const templateName = new Map(templates.map(t => [t.id, t.name]));
@@ -78,7 +85,8 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
       status: d.status ?? r.status ?? 'active', since: r.created_at ?? null,
       medicalNotes: d.medical_notes ?? null,
       emergencyContact: [d.emergency_contact_name, d.emergency_contact_phone].filter(Boolean).join(' · ') || null,
-      notes: [...note('Notes', d.notes), ...note('Staff notes', d.admin_notes)],
+      // The club's staff note only — the coach's pinned note stays with the team (Stage 5c, Ask 29).
+      notes: note('Staff note', d.admin_notes),
     });
     children.set(key, c);
   }
@@ -90,7 +98,7 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
         kind: 'league' as const, where: r.league_divisions?.name ?? 'House league', season: r.league_seasons?.name ?? 'House league',
         status: d.status ?? r.status, since: d.registered_at ?? r.registered_at ?? null,
         medicalNotes: null, emergencyContact: null,
-        notes: [...note('Notes from the family', d.player_notes), ...note('Staff notes', d.admin_notes)],
+        notes: [...note('Notes from the family', d.player_notes), ...note('Staff note', d.admin_notes)],
       }],
     });
   }
@@ -142,7 +150,7 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
           dataCollection: t.consent_data_collection ?? null, emailComms: t.consent_email_comms ?? null,
           eligibility: t.consent_eligibility ?? null, at: t.consent_at ?? null, connection: t.consent_ip ?? null,
         },
-        notes: [...note('Notes from the family', t.player_notes), ...note('Staff notes', t.admin_notes)],
+        notes: [...note('Notes from the family', t.player_notes), ...note('Staff note', t.admin_notes)],
       })),
       money: {
         dues,
@@ -156,6 +164,13 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
           fee: r.league_seasons?.registration_fee != null ? Number(r.league_seasons.registration_fee) : null,
           paid: r.registration_fee_paid === true,
         })),
+        handoffs: [...handoffs].reverse().map(h => ({
+          child: h.player_name, sentAt: h.sent_at, amount: h.amount, receivedDate: h.received_date, method: h.method,
+          to: h.sent_to.map(id => nameOf(id)).filter((n): n is string => !!n),
+          by: h.sent_by ? nameOf(h.sent_by) : null,
+          outcome: h.state === 'sent' ? 'waiting' as const : h.state,
+          answeredBy: h.resolved_by ? nameOf(h.resolved_by) : null, answeredAt: h.resolved_at, recordedAmount: h.recorded_amount,
+        })),
       },
       forms: {
         documents: docs.map(d => ({ child: childOf(d.player_id), type: templateName.get(d.template_id) ?? d.document_type, fileName: d.file_name ?? null, receivedAt: d.created_at }))
@@ -167,6 +182,7 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
         consents,
       },
       messages: messages.map(m => ({ at: m.sent_at, by: nameOf(m.sent_by) })),
+      notes: familyNotes.map(n => ({ at: n.created_at, by: n.created_by ? nameOf(n.created_by) : null, editedAt: n.edited_at ?? null, text: n.body })),
       merges: merges.map(m => {
         const snap = (m.merged_snapshot ?? {}) as Record<string, string | null>;
         const who = [snap.first_name, snap.last_name].filter(Boolean).join(' ');

@@ -51,6 +51,12 @@ export const SETTLED_WORDS = {
   receivedUndone: (who: string | null, you: boolean) => (you ? 'You recorded it, then undid it' : who ? `Recorded, then undone by ${who}` : 'Recorded, then undone'),
   coachTookBack: 'The coach took it back.',
 
+  // A family's payment the club passed to the head coach (club_payment_handed_off — Club Tier Stage 5c)
+  handOffRecorded: (who: string | null, you: boolean) => (you ? 'You recorded it' : who ? `Recorded by ${who}` : 'Recorded'),
+  handOffNotReceived: (who: string | null, you: boolean) => (you ? 'You said it never arrived' : who ? `${who} said it never arrived` : 'Marked as never arrived'),
+  handOffNotReceivedThen: 'The club was told. Nothing was recorded.',
+  handOffGone: 'The club’s record of this payment is gone.',
+
   // Requests holding a coach's payout (team_request_holding_payout)
   allSettled: (n: number) => (n === 1 ? 'The request is settled.' : n === 2 ? 'Both requests are settled.' : `All ${n} requests are settled.`),
 

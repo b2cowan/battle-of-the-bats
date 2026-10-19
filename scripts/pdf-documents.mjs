@@ -1411,7 +1411,7 @@ export async function buildDocuments() {
         clubEmail: 'on', optOuts: [], otherGuardians: ['Sam Reyes'],
       },
       children: [
-        { name: 'Morgan Reyes', birthDate: '2013-06-14', registrations: [{ kind: 'rep', where: TEAM, season: '2026 Season', status: 'active', since: '2026-04-20T12:00:00Z', medicalNotes: 'Peanut allergy — EpiPen in the bag', emergencyContact: 'Sam Reyes · 555-0101', notes: [{ label: 'Notes', text: 'Prefers catcher.' }] }] },
+        { name: 'Morgan Reyes', birthDate: '2013-06-14', registrations: [{ kind: 'rep', where: TEAM, season: '2026 Season', status: 'active', since: '2026-04-20T12:00:00Z', medicalNotes: 'Peanut allergy — EpiPen in the bag', emergencyContact: 'Sam Reyes · 555-0101', notes: [{ label: 'Staff note', text: 'Carpools with the Okafors.' }] }] },
         { name: 'Riley Reyes', birthDate: '2015-02-03', registrations: [{ kind: 'rep', where: TEAM, season: '2026 Season', status: 'active', since: '2026-04-20T12:00:00Z', medicalNotes: null, emergencyContact: 'Sam Reyes · 555-0101', notes: [] }] },
         { name: 'Milan Reyes', birthDate: '2018-09-21', registrations: [{ kind: 'league', where: 'U11', season: 'Summer 2026', status: 'approved', since: '2026-05-01T12:00:00Z', medicalNotes: null, emergencyContact: null, notes: [{ label: 'Notes from the family', text: 'First season.' }] }] },
       ],
@@ -1426,6 +1426,7 @@ export async function buildDocuments() {
         credits: [{ child: 'Riley Reyes', date: '2026-06-01', kind: 'fundraiser', amount: 40, description: 'Bottle drive' }],
         reminders: [{ child: 'Riley Reyes', installment: 3, dueDate: '2026-10-07', sentAt: '2026-10-03T13:00:00Z' }],
         leagueFees: [{ child: 'Milan Reyes', season: 'Summer 2026', fee: 120, paid: true }],
+        handoffs: [{ child: 'Riley Reyes', sentAt: '2026-10-19T14:00:00Z', amount: 100, receivedDate: '2026-10-18', method: 'cheque', to: ['Pat Moreau'], by: 'Fixture Owner', outcome: 'recorded', answeredBy: 'Pat Moreau', answeredAt: '2026-10-19T18:00:00Z', recordedAmount: 100 }],
       },
       forms: {
         documents: [{ child: 'Morgan Reyes', type: 'Medical form', fileName: 'medical-morgan.pdf', receivedAt: '2026-04-22T12:00:00Z' }],
@@ -1433,6 +1434,7 @@ export async function buildDocuments() {
         consents: [{ email: 'alex.reyes@example.com', basis: 'league_registration', scope: 'club_email', startedAt: '2026-05-01T12:00:00Z', withdrawnAt: null }],
       },
       messages: [{ at: '2026-10-14T15:00:00Z', by: 'Fixture Owner' }],
+      notes: [{ at: '2026-10-18T15:00:00Z', by: 'Fixture Owner', editedAt: null, text: 'Paying Riley’s last installment in two parts; the second cheque is promised for November 1.' }],
       merges: extra ? [{ at: '2026-09-02T12:00:00Z', record: 'A. Reyes (a.reyes@oldmail.example)' }] : [],
     },
   });

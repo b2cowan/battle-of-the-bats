@@ -45,7 +45,7 @@ export type NotificationCard = {
 
 /** The club scheduler's notices to a club team's staff who see the schedule (Club Tier 11a) — "Your club" lists them:
  *  a schedule sent for review, a final one, its changes, and the bill it made. */
-const CLUB_SCHEDULE_EVENTS: NotificationEventType[] = ['club_schedule_review', 'club_schedule_final', 'club_schedule_changes', 'club_bill_arrived', 'club_guardians_asked'];
+const CLUB_SCHEDULE_EVENTS: NotificationEventType[] = ['club_schedule_review', 'club_schedule_final', 'club_schedule_changes', 'club_bill_arrived', 'club_guardians_asked', 'club_payment_handed_off'];
 
 /** The five notices a club sends a team's money people (Stage 3a) — "Your club" lists them. */
 const CLUB_MONEY_EVENTS: NotificationEventType[] = [

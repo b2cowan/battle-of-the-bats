@@ -111,6 +111,8 @@ describe('undo guard — completeness is acknowledged, not assumed', () => {
     // SET NULL, not CASCADE — the row survives, it just loses a pointer.
     rep_team_game_moments: 'ON DELETE SET NULL by design — a player leaving must not erase the coach\'s memory of the night.',
     rep_team_expenses:     'paid_by_player_id is SET NULL — loses a provenance pointer, not the expense.',
+    family_payment_handoffs: 'roster_player_id is SET NULL (mig 338) — a payment the club passed to the coach keeps player_name, so '
+      + 'the club’s record and the family file still name the child; removing the player must never erase what the club handed over.',
     rep_payable_payments:  'paid_by_player_id is SET NULL (mig 267) — the same treatment, one level down: '
       + 'losing who fronted a payment must never delete the record of money that moved. ⚠ The REAL '
       + 'protection is elsewhere and is why SET NULL is safe here — rep_dues_credits.player_id is NOT '

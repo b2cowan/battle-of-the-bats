@@ -11169,6 +11169,9 @@ export async function recordRepDuesPayment(opts: {
   preloadedInstallments?: RepPlayerDuesInstallment[];
   /** The player's existing payments, same idea. */
   preloadedPayments?: RepDuesPayment[];
+  /** The payment row's id, chosen by the caller (Club Tier Stage 5c: Record it holds a club hand-off against exactly
+   *  this payment, so a failed write is settled by looking for THIS row, never by a guess). Absent: the database picks. */
+  paymentId?: string;
 }): Promise<{ payment: RepDuesPayment; overpaymentCredit: number }> {
   // Three independent reads — parallel. (On the NO_SCHEDULE error path this may have created
   // the team's empty ledger a moment early; get-or-create is idempotent and the ledger is
@@ -11214,6 +11217,7 @@ export async function recordRepDuesPayment(opts: {
       accounting_entry_id: entry.id,
       source: 'recorded',
       created_by: opts.createdBy,
+      ...(opts.paymentId ? { id: opts.paymentId } : {}),
     })
     .select()
     .single();

@@ -109,6 +109,10 @@ export interface FamilyChildMoney {
   childName: string;
   where: string;
   year: number | null;
+  /** The season's roster row, team and season — where a payment for this line is handed (Stage 5c, Record a payment). */
+  rosterRowId: string;
+  teamId: string;
+  programYearId: string;
   duesCents: number;
   fundraisingCents: number;
   otherCreditsCents: number;
@@ -143,6 +147,8 @@ export interface FamilyChildLine {
   money: FamilyChildMoney | null;
   /** A house-league fee as a dues line; null figures when the season sets no fee. */
   league: LeagueFeeLine | null;
+  /** The registration a house-league line is (Stage 5c: Record a payment marks its fee paid). */
+  leagueReg: { id: string; seasonId: string } | null;
 }
 
 export interface FamilyPagePayload {
@@ -445,6 +451,7 @@ function childMoney(rows: readonly any[], figures: Map<string, PlayerDuesFigures
     const m = out.get(key) ?? {
       childKey: key, childName: fullName(r.player_first_name, r.player_last_name), where: r.rep_teams?.name ?? 'Rep team',
       year: r.rep_program_years?.year ?? null,
+      rosterRowId: r.id, teamId: r.team_id, programYearId: r.program_year_id,
       duesCents: 0, fundraisingCents: 0, otherCreditsCents: 0, paidCents: 0, handedBackCents: 0, balanceCents: 0,
     };
     m.duesCents += toCents(f.ladder.dues);
@@ -740,20 +747,20 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   const shown = new Set<string>();
   const childKeyOfLine = (k: string) => k.split('|')[0];
   for (const m of moneyChildren) {
-    childLines.push({ key: m.childKey, childName: m.childName, source: 'rep_roster', where: m.where, year: m.year, current: true, money: m, league: null });
+    childLines.push({ key: m.childKey, childName: m.childName, source: 'rep_roster', where: m.where, year: m.year, current: true, money: m, league: null, leagueReg: null });
     shown.add(childKeyOfLine(m.childKey));
   }
   for (const c of children.filter(x => x.current && x.source === 'rep_roster')) {
     if (shown.has(c.childKey)) continue;
     shown.add(c.childKey);
-    childLines.push({ key: c.childKey, childName: c.childName, source: 'rep_roster', where: c.where, year: c.year, current: true, money: null, league: null });
+    childLines.push({ key: c.childKey, childName: c.childName, source: 'rep_roster', where: c.where, year: c.year, current: true, money: null, league: null, leagueReg: null });
   }
   for (const r of myLeague.filter(isCurrentLeagueSeason)) {
     const c = childRowFromLeague(r);
     shown.add(c.childKey);
     childLines.push({
       key: c.childKey, childName: c.childName, source: 'league', where: c.where, year: null, current: true, money: null,
-      league: leagueFeeLine(r),
+      league: leagueFeeLine(r), leagueReg: { id: r.id, seasonId: r.season_id },
     });
   }
   // This season's house-league fees — the band adds them to the rep figures (owner 2026-10-18).
@@ -767,7 +774,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   for (const c of children) {
     if (c.current || shown.has(c.childKey) || currentNames.has(c.childName.trim().toLowerCase())) continue;
     shown.add(c.childKey);
-    childLines.push({ key: c.childKey, childName: c.childName, source: c.source, where: c.where, year: c.year, current: false, money: null, league: null });
+    childLines.push({ key: c.childKey, childName: c.childName, source: c.source, where: c.where, year: c.year, current: false, money: null, league: null, leagueReg: null });
   }
   childLines.sort((a, b) => Number(b.current) - Number(a.current) || a.childName.localeCompare(b.childName));
 

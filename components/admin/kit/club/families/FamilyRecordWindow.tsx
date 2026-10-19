@@ -25,13 +25,22 @@
  *                  cannot infer — an opt-out under a former address — keeps its line.
  *   Forms and consent — a table with the one chip, then Consent.
  *   History      — five lines and "Show all N".
+ * Club Tier Stage 5c (P1–P3, owner Asks 26–29 + 32, 2026-10-19) adds three things and moves nothing above them:
+ *   Record a payment — the top line's third act, between Message and Export, the same white outline (each opens a window;
+ *                  the record has no lime). Absent when nothing is owed or the member can do none of its lines; on a phone
+ *                  "Record payment", 44 px, the three in one row. It opens RecordPaymentWindow, raised over the record.
+ *   the chips    — an amber "Sent to coach" beside a rep child while a payment the club passed on waits for the coach; a
+ *                  red "Not received" if the coach says so (a status in a row is a chip; amounts and dates are in History).
+ *   Notes        — after Children: a signed, dated list (FamilyNotes.tsx). The record still keeps no pencil.
  */
 import { useCallback, useState } from 'react';
-import { Mail } from 'lucide-react';
+import { DollarSign, Mail } from 'lucide-react';
 import KitDialog, { type KitStep } from '../KitDialog';
 import { ClubRow, ClubRowFrame, ClubRowList, LoadFailed, NoticePill, RepChip, repKit, useDeferredLoad, useLatestRead } from '../RepKit';
 import { money, moneyFetch, moneyKit } from '../money/MoneyKit';
 import MessageFamilyWindow from './MessageFamilyWindow';
+import RecordPaymentWindow from './RecordPaymentWindow';
+import { AddNoteWindow, NoteWindow, NotesSection } from './FamilyNotes';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import ExportMenu from '@/components/admin/ExportMenu';
 import LoadingState from '@/components/shared/LoadingState';
@@ -40,10 +49,12 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatStoredDate } from '@/lib/timezone';
 import { joinWithAnd } from '@/lib/utils';
 import {
-  FAMILY_FILE_WORDS as FW, FAMILY_MESSAGE_WORDS as MW, FAMILY_PAGE_WORDS as PW, FAMILY_RECORD_WORDS as W,
+  FAMILY_FILE_WORDS as FW, FAMILY_MESSAGE_WORDS as MW, FAMILY_PAGE_WORDS as PW, FAMILY_PAYMENT_WORDS as PayW,
+  FAMILY_RECORD_WORDS as W,
 } from '@/lib/families-words';
+import { planOpens, type FamilyRecordPayload } from '@/lib/families-payment-plan';
 import type { FamilyFile } from '@/lib/family-file';
-import type { FamilyChildLine, FamilyPagePayload } from '@/lib/families-read';
+import type { FamilyChildLine } from '@/lib/families-read';
 import { fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, downloadFamilyFile } from '@/lib/export/pdf';
 import fam from './Families.module.css';
 
@@ -64,9 +75,12 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
 }) {
   const { currentOrg } = useOrg();
   const isPhone = useIsPhone();
-  const [read, setRead] = useState<FamilyPagePayload | null>(null);
+  const [read, setRead] = useState<FamilyRecordPayload | null>(null);
   const [failed, setFailed] = useState<{ notFound: boolean } | null>(null);
   const [messaging, setMessaging] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [addingNote, setAddingNote] = useState(false);
+  const [noteOpen, setNoteOpen] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const [allHistory, setAllHistory] = useState(false);
   // org-slug-ok: `q` IS the org ("orgSlug=…", passed by the Families tab — every fetch in this window carries it).
@@ -75,7 +89,7 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     const current = beginRead();
-    const r = await moneyFetch<FamilyPagePayload>(url).catch(() => null);
+    const r = await moneyFetch<FamilyRecordPayload>(url).catch(() => null);
     if (!current()) return;
     if (!r?.ok) { setFailed({ notFound: r?.status === 404 }); return; }
     setFailed(null);
@@ -151,6 +165,8 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
   const liveConsents = consents.filter(c => !c.withdrawnAt);
   const showForms = forms.length > 0 || liveConsents.length > 0;
   const hasMoney = m.children.length > 0 || m.leagueFeeCount > 0;
+  const canPay = planOpens(read.payment);
+  const openNote = noteOpen ? read.notes.find(n => n.id === noteOpen) ?? null : null;
 
   const exportMenu = (
     <ExportMenu
@@ -180,6 +196,12 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
                 <Mail size={14} aria-hidden />{isPhone ? W.messageShort : MW.door}
               </button>
             )}
+          {canPay && (
+            <button type="button" className={`btn btn-outline ${fam.topPay}`} aria-haspopup="dialog"
+              onClick={() => { setSaid(null); setPaying(true); }}>
+              <DollarSign size={14} aria-hidden />{isPhone ? PayW.doorShort : PayW.door}
+            </button>
+          )}
           {exportMenu}
         </div>
 
@@ -199,7 +221,9 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
         <h3 className={fam.h}>{W.children}</h3>
         {read.childLines.length === 0
           ? <p className={repKit.dim}>{W.historyNone}</p>
-          : isPhone ? <ChildCards lines={read.childLines} /> : <ChildTable lines={read.childLines} />}
+          : isPhone ? <ChildCards lines={read.childLines} chips={read.handoffChips} /> : <ChildTable lines={read.childLines} chips={read.handoffChips} />}
+
+        <NotesSection notes={read.notes} onAdd={() => { setSaid(null); setAddingNote(true); }} onOpen={id => { setSaid(null); setNoteOpen(id); }} />
 
         <h3 className={fam.h}>{W.contact}</h3>
         <dl className={fam.read}>
@@ -283,6 +307,37 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
           onSent={text => { setMessaging(false); setSaid(text); void load(); }}
         />
       )}
+      {paying && (
+        <RecordPaymentWindow
+          q={q}
+          personId={personId}
+          familyName={person.name}
+          plan={read.payment}
+          onClose={() => setPaying(false)}
+          onDone={text => { setPaying(false); setSaid(text); void load(); }}
+          onChanged={() => void load()}
+        />
+      )}
+      {addingNote && (
+        <AddNoteWindow
+          q={q}
+          personId={personId}
+          familyName={person.name}
+          onClose={() => setAddingNote(false)}
+          onSaved={() => { setAddingNote(false); void load(); }}
+        />
+      )}
+      {openNote && (
+        <NoteWindow
+          key={openNote.id}
+          q={q}
+          personId={personId}
+          familyName={person.name}
+          note={openNote}
+          onClose={() => setNoteOpen(null)}
+          onChanged={text => { if (text) setSaid(text); void load(); }}
+        />
+      )}
     </>
   );
 }
@@ -324,13 +379,25 @@ const figuresOf = (l: FamilyChildLine) =>
     : l.league?.feeCents != null ? { dues: l.league.feeCents, paid: l.league.paidCents, balance: l.league.balanceCents }
       : null;
 
-function ChildTable({ lines }: { lines: readonly FamilyChildLine[] }) {
+/** The hand-off's chip beside a rep child (Stage 5c): amber while the coach has it, red when they say it never came. */
+function HandoffChip({ state }: { state: 'sent' | 'not_received' | undefined }) {
+  if (!state) return null;
+  return (
+    <span className={fam.inlineChip}>
+      <RepChip tone={state === 'sent' ? 'warn' : 'bad'}>{state === 'sent' ? PayW.chipSent : PayW.chipNotReceived}</RepChip>
+    </span>
+  );
+}
+
+type Chips = FamilyRecordPayload['handoffChips'];
+
+function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips: Chips }) {
   return (
     <div className={repKit.tableFrame}>
       <table className={repKit.table}>
         <thead>
           <tr>
-            <th scope="col" style={{ width: '24%' }}>{W.colChild}</th>
+            <th scope="col" style={{ width: '28%' }}>{W.colChild}</th>
             <th scope="col">{W.colWhere}</th>
             <th scope="col" className={repKit.num} style={{ width: '13%' }}>{W.colDues}</th>
             <th scope="col" className={repKit.num} style={{ width: '13%' }}>{W.colPaid}</th>
@@ -342,7 +409,7 @@ function ChildTable({ lines }: { lines: readonly FamilyChildLine[] }) {
             const f = figuresOf(l);
             return (
               <tr key={l.key}>
-                <td><span className={fam.childName}>{l.childName}</span><LadderLines line={l} /></td>
+                <td><span className={fam.nameRow}><span className={fam.childName}>{l.childName}</span><HandoffChip state={chips[l.key]} /></span><LadderLines line={l} /></td>
                 <td className={l.current ? undefined : repKit.dim}>{whereOf(l)}</td>
                 {f ? (
                   <>
@@ -362,7 +429,7 @@ function ChildTable({ lines }: { lines: readonly FamilyChildLine[] }) {
   );
 }
 
-function ChildCards({ lines }: { lines: readonly FamilyChildLine[] }) {
+function ChildCards({ lines, chips }: { lines: readonly FamilyChildLine[]; chips: Chips }) {
   return (
     <ClubRowFrame><ClubRowList inset label={W.children}>
       {lines.map(l => {
@@ -372,7 +439,7 @@ function ChildCards({ lines }: { lines: readonly FamilyChildLine[] }) {
             key={l.key}
             title={(
               <span className={fam.cardTitle}>
-                <span>{l.childName}</span>
+                <span>{l.childName}<HandoffChip state={chips[l.key]} /></span>
                 {f && <span className={fam.cardFigure}>{cents(f.balance)}</span>}
               </span>
             )}

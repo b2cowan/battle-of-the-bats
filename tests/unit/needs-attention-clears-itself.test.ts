@@ -22,9 +22,9 @@ import { registrationAmountDue, registrationFee } from '../../lib/registration-a
 const LIB = readCode('lib/needs-attention.ts');
 
 describe('1 · the rulebook is total over the Needs-attention kinds', () => {
-  it('names exactly the eleven kinds that wait on someone', () => {
+  it('names exactly the twelve kinds that wait on someone', () => {
     assert.deepEqual([...NEEDS_ATTENTION_KINDS].sort(), [
-      'assistant_coach_approval_requested', 'club_hand_back_asked', 'club_hand_back_unasked', 'club_schedule_review',
+      'assistant_coach_approval_requested', 'club_hand_back_asked', 'club_hand_back_unasked', 'club_payment_handed_off', 'club_schedule_review',
       'payment_failed', 'team_coach_payment_reminder', 'team_money_sent', 'team_move_requested', 'team_no_show',
       'team_request_filed', 'team_request_holding_payout',
     ]);
@@ -92,8 +92,9 @@ describe('1 · the rulebook is total over the Needs-attention kinds', () => {
 });
 
 describe('the /review fixes (2026-10-16)', () => {
-  it('mig 332’s two indexes cover exactly the Needs-attention kinds (a new kind needs a new migration)', () => {
-    const sql = readCode('supabase/migrations/332_needs_attention_clears_itself.sql');
+  it('the two Needs-attention indexes cover exactly the Needs-attention kinds (a new kind needs a new migration)', () => {
+    // The NEWEST definition: mig 332 made them, mig 338 re-made them with Families' hand-off (Club Tier Stage 5c).
+    const sql = readCode('supabase/migrations/338_the_club_hands_a_payment_to_the_coach_and_keeps_notes.sql');
     const lists = [...sql.matchAll(/on public\.notifications \([a-z_]+, event_type\)\s+where cleared_at is null\s+and event_type in \(([^)]*)\)/g)].map(m => m[1]);
     assert.equal(lists.length, 2);
     for (const list of lists) {

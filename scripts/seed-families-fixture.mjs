@@ -48,6 +48,37 @@
  *      after the first attach: the second attach moves Tatum and records the re-attachment (E02), so the
  *      duplicate queue proposes the pair.
  *
+ * Club Tier Stage 5c, Part F (Record a payment, the hand-off to the head coach, notes). Every password below is
+ * the standing UAT password, re-asserted each run; every address is @qa-families-fixture.local:
+ *  15. A HEAD COACH WHO CAN SIGN IN — Pat Moreau, head coach of Fixture Falcons U13 (org membership role `coach` +
+ *      `rep_team_staff_memberships` head_coach + the `rep_team_coaches` projection on the live 2026 season, capabilities
+ *      null = a head coach holds everything, so Money › Player dues writes). pat.moreau@…
+ *      → the Reyes window's Riley line ($100.00 on a $450.00 schedule) is USABLE and goes to Pat.
+ *  16. A SECOND REP TEAM — Fixture Hawks U15 (live 2026) with its own head coach, Jordan Blake (jordan.blake@…), and
+ *      the BRANDT family: Emi on Falcons ($450.00 owing, Pat) and Kit on Hawks ($300.00 owing, Jordan), one guardian
+ *      (taylor.brandt@example.com) → "one cheque across two children on two teams", each coach getting their own line.
+ *  17. MILAN REYES'S HOUSE-LEAGUE FEE IS UNPAID (re-asserted EVERY run: a walk that ticked it is reset, its ledger line,
+ *      if any, put back to pending) so the Reyes window shows Milan's fee line beside Riley's rep line. And the NAIR
+ *      family (Priya, Summer 2026 · U11): fee PAID and carrying its ledger line (a posted `registration_fee` entry on the
+ *      league season's ledger, `fee_entry_id` set — what the app writes), the walk's "the line is already there" case.
+ *  18. A TEAM WITH NO HEAD COACH — Fixture Owls U11 (live 2026, nobody coaching it). The VARGA family (mira.varga@…):
+ *      Teo on Owls owes $240.00 → his line shows "has no head coach to send it to"; sister Lena's house-league fee
+ *      ($150.00) is the usable line beside it.
+ *  19. A TEAM WITH NO LIVE SEASON — Fixture Herons U17 (its only season, 2025, `completed`). The KOWAL family
+ *      (pia.kowal@…): Zed had $150.00 owing on it; Anya is on Hawks 2026 and owes $360.00 (usable, Jordan).
+ *      ⚠ The CLOSED-SEASON refusal will NOT appear in the window: the Families record reads money for `active` seasons
+ *      only, so Zed is a past-seasons child with no line. The refusal fires only if a season closes while the window
+ *      is open (the press re-reads the plan); Kowal is the family to close one under.
+ *  20. A MEMBER GIVEN FAMILIES WITHOUT HOUSE-LEAGUE RIGHTS — Robin Treasurer (robin.treasurer@…, role `treasurer`,
+ *      capabilities { module_families: true, module_house_league: false }, no team limit). On the Reyes window Milan's
+ *      fee line is refused (no permission) and Riley's rep line is usable; on Varga, Lena's fee is refused.
+ *  21. TWO PEOPLE WHO EACH HAVE A NOTE, PROPOSED AS DUPLICATES — the OKAFOR pair: "Sam Okafor"
+ *      (sam.okafor@example.com, Jamie on the Hawks roster) and "S. Okafor" (s.okafor@outlook.example, Jamie again on the
+ *      Summer 2026 · U11 house league), the same child by birth date and the same phone — different addresses, so the
+ *      attach never joins them. One `family_notes` row each (author: the fixture owner); merge them on the Duplicates
+ *      tab and both notes are carried. (A merge is not undone by a re-run — the Ionescu rule.)
+ *  22. A NOTE ON ALEX REYES — "Paying Riley’s last installment in two parts; …" (author: the fixture owner).
+ *
  * Idempotent: every insert is keyed on a natural lookup first. Ends by calling
  * families_attach_people(org) — the same attach the area runs — and printing
  * a summary. Run: node scripts/seed-families-fixture.mjs
@@ -405,7 +436,7 @@ async function ensureLeagueReg(seasonId, divisionId, first, last, gFirst, gLast,
 }
 // THE cross-programme households (0 occurrences in real data — the whole premise):
 await ensureLeagueReg(seasonNow.id, divNow.id, 'Milan', 'Reyes', 'Alex', 'Reyes', 'alex.reyes@example.com', '555-0100',
-  { paid: true, waiverAccepted: true, dob: '2016-04-12' });
+  { paid: false, waiverAccepted: true, dob: '2016-04-12' }); // UNPAID since 5c (case 17): the Reyes window shows both kinds of line
 await ensureLeagueReg(seasonNow.id, divNow.id, 'Ari', 'Sharma', 'Lee', 'Aoki', 'family.aoki.sharma@example.com', '555-0102',
   { paid: false, waiverAccepted: true, dob: '2015-09-03' }); // shared inbox, two surnames
 await ensureLeagueReg(seasonNow.id, divNow.id, 'Nico', 'Tran', 'Thuy', 'Tran', 'thuy.tran@example.com', '555-0107',
@@ -414,6 +445,183 @@ await ensureLeagueReg(seasonNow.id, divNow.id, 'Nico', 'Tran', 'Thuy', 'Tran', '
 await ensureLeagueReg(seasonPast.id, divPast.id, 'Ola', 'Femi', 'Bisi', 'Femi', 'bisi.femi@example.com', '555-0108',
   { paid: true });
 ok('league: Reyes + Aoki-Sharma span BOTH programmes · Tran unpaid · Femi not back');
+
+// ── 9b. Stage 5c cases (Part F, cases 15–21) ──────────────────────────────────
+const COACH_PASSWORD = OWNER_PASSWORD;
+const PAT_EMAIL = 'pat.moreau@qa-families-fixture.local';
+const JORDAN_EMAIL = 'jordan.blake@qa-families-fixture.local';
+const ROBIN_EMAIL = 'robin.treasurer@qa-families-fixture.local';
+
+/** An auth user with the standing password, re-asserted each run (the owner's recipe, 1b). */
+async function ensureSignIn(email, fullName) {
+  let u = await findUserByEmail(email);
+  if (u) {
+    const r = await db.auth.admin.updateUserById(u.id, { password: COACH_PASSWORD });
+    if (r.error) die(`password ${email}`, r.error);
+  } else {
+    const r = await db.auth.admin.createUser({ email, password: COACH_PASSWORD, email_confirm: true, user_metadata: { full_name: fullName } });
+    if (r.error) die(`createUser ${email}`, r.error);
+    u = r.data.user;
+  }
+  return u;
+}
+/** The org membership row, re-asserted (role, name, capabilities) so a tester's edit never leaves the walk card false. */
+async function ensureOrgMember(userId, role, displayName, capabilities) {
+  const { data: m } = await db.from('organization_members').select('id').eq('organization_id', org.id).eq('user_id', userId).maybeSingle();
+  const now = new Date().toISOString();
+  const row = { role, status: 'active', display_name: displayName, capabilities: capabilities ?? null };
+  const w = m
+    ? await db.from('organization_members').update(row).eq('id', m.id)
+    : await db.from('organization_members').insert({ organization_id: org.id, user_id: userId, invited_at: now, accepted_at: now, ...row });
+  if (w.error) die(`member ${displayName}`, w.error);
+}
+/** A head coach the way the app reads one: the capability-less `coach` member + the team staff membership (access truth,
+ *  mig 245; what loadHeadCoaches reads) + the season projection on the LIVE year (what the coach's portal lists). */
+async function ensureHeadCoach(teamId, programYearId, userId, displayName) {
+  await ensureOrgMember(userId, 'coach', displayName, null);
+  const mem = await db.from('rep_team_staff_memberships').upsert({
+    org_id: org.id, team_id: teamId, user_id: userId, coach_role: 'head_coach', capabilities: null,
+    status: 'active', revoked_at: null, revoked_by: null,
+  }, { onConflict: 'team_id,user_id' });
+  if (mem.error) die(`staff membership ${displayName}`, mem.error);
+  const { data: c } = await db.from('rep_team_coaches').select('id').eq('program_year_id', programYearId).eq('user_id', userId).maybeSingle();
+  if (!c) {
+    const ins = await db.from('rep_team_coaches').insert({
+      program_year_id: programYearId, team_id: teamId, org_id: org.id, user_id: userId, coach_role: 'head_coach', capabilities: null,
+    });
+    if (ins.error) die(`rep_team_coaches ${displayName}`, ins.error);
+  }
+}
+async function ensureRosterChild(teamId, programYearId, c) {
+  const { data: r } = await db.from('rep_roster_players').select('id')
+    .eq('program_year_id', programYearId).eq('player_first_name', c.first).eq('player_last_name', c.last).maybeSingle();
+  if (r) return r.id;
+  const ins = await db.from('rep_roster_players').insert({
+    program_year_id: programYearId, team_id: teamId, org_id: org.id,
+    player_first_name: c.first, player_last_name: c.last, player_number: c.number, player_date_of_birth: c.dob ?? null,
+    guardian_first_name: c.gFirst, guardian_last_name: c.gLast, guardian_email: c.email, guardian_phone: c.phone,
+    status: 'active', source: 'admin_manual', display_order: Number(c.number),
+  }).select('id').single();
+  if (ins.error) die(`roster ${c.first} ${c.last}`, ins.error);
+  return ins.data.id;
+}
+/** A dues schedule of unpaid installments ([amount, daysAgo due] each) — no payment behind any of them. */
+async function ensureDuesPlan(teamId, programYearId, playerId, installments) {
+  const { data: sched } = await db.from('rep_player_dues_schedules').select('id').eq('program_year_id', programYearId).eq('player_id', playerId).maybeSingle();
+  if (sched) return;
+  const ins = await db.from('rep_player_dues_schedules').insert({
+    org_id: org.id, team_id: teamId, program_year_id: programYearId, player_id: playerId,
+    total_amount: installments.reduce((s, [amount]) => s + amount, 0),
+  }).select('id').single();
+  if (ins.error) die('dues schedule ' + playerId, ins.error);
+  const ii = await db.from('rep_player_dues_installments').insert(installments.map(([amount, daysAgo], i) => ({
+    schedule_id: ins.data.id, player_id: playerId, org_id: org.id, team_id: teamId,
+    installment_number: i + 1, amount, due_date: dueDay(daysAgo), paid_at: null, reminder_sent_at: null,
+  })));
+  if (ii.error) die('dues installments ' + playerId, ii.error);
+}
+const leagueRegRow = async (seasonId, first, last) => (await db.from('league_registrations')
+  .select('id, fee_entry_id, registration_fee_paid').eq('season_id', seasonId).eq('player_first_name', first).eq('player_last_name', last).maybeSingle()).data;
+
+// 15 · The head coaches who can sign in (Pat on Falcons; Jordan on Hawks, case 16).
+const pat = await ensureSignIn(PAT_EMAIL, 'Pat Moreau');
+await ensureHeadCoach(team.id, py.id, pat.id, 'Pat Moreau');
+const teamHawks = await ensureTeam('Fixture Hawks U15', 'fixture-hawks-u15');
+const pyHawks = await ensureProgramYear(teamHawks.id, YEAR, 'active');
+const jordan = await ensureSignIn(JORDAN_EMAIL, 'Jordan Blake');
+await ensureHeadCoach(teamHawks.id, pyHawks.id, jordan.id, 'Jordan Blake');
+ok(`head coaches who can sign in: Pat Moreau (Falcons U13) · Jordan Blake (Hawks U15) — ${PAT_EMAIL} / ${JORDAN_EMAIL}`);
+
+// 16 · The Brandt family: one guardian, a child on each team, each owing.
+const brandt = { gFirst: 'Taylor', gLast: 'Brandt', email: 'taylor.brandt@example.com', phone: '555-0122' };
+const emiId = await ensureRosterChild(team.id, py.id, { first: 'Emi', last: 'Brandt', number: '20', ...brandt });
+const kitId = await ensureRosterChild(teamHawks.id, pyHawks.id, { first: 'Kit', last: 'Brandt', number: '8', ...brandt });
+await ensureDuesPlan(team.id, py.id, emiId, [[150, 90], [150, 45], [150, 10]]);   // owes $450.00 (Pat)
+await ensureDuesPlan(teamHawks.id, pyHawks.id, kitId, [[100, 60], [100, 30], [100, -20]]); // owes $300.00 (Jordan)
+{ // Emi is on a team that holds a waiver template: give her the signed one (Falcons' missing-forms lens stays as it was).
+  const { data: doc } = await db.from('rep_player_documents').select('id').eq('player_id', emiId).eq('document_type', 'waiver').maybeSingle();
+  if (!doc) {
+    const ins = await db.from('rep_player_documents').insert({
+      player_id: emiId, team_id: team.id, org_id: org.id, document_type: 'waiver', template_id: waiverTpl,
+      storage_path: `fixtures/${ORG_SLUG}/signed/${emiId}.pdf`, file_name: 'waiver-signed.pdf', file_size: 2048,
+    });
+    if (ins.error) die('player doc Emi', ins.error);
+  }
+}
+ok('Brandt: Emi (Falcons, owes $450.00) + Kit (Hawks, owes $300.00) under taylor.brandt@example.com');
+
+// 17 · Milan's fee UNPAID every run; the Nair family's fee PAID with its ledger line.
+{
+  const milan = await leagueRegRow(seasonNow.id, 'Milan', 'Reyes');
+  if (milan?.registration_fee_paid) {
+    const up = await db.from('league_registrations').update({ registration_fee_paid: false, updated_at: new Date().toISOString() }).eq('id', milan.id);
+    if (up.error) die('Milan unpaid', up.error);
+    // What the product does on "unpaid": the line stays linked, back to pending.
+    if (milan.fee_entry_id) {
+      const e = await db.from('accounting_entries').update({ status: 'pending', updated_at: new Date().toISOString() }).eq('id', milan.fee_entry_id);
+      if (e.error) die('Milan fee line pending', e.error);
+    }
+  }
+  await ensureLeagueReg(seasonNow.id, divNow.id, 'Priya', 'Nair', 'Anil', 'Nair', 'anil.nair@example.com', '555-0123',
+    { paid: true, waiverAccepted: true, dob: '2015-11-02' });
+  const priya = await leagueRegRow(seasonNow.id, 'Priya', 'Nair');
+  if (!priya.fee_entry_id) {
+    // createLeagueRegistrationFeeEntry (lib/db.ts), by hand: the season's ledger, a posted income line, the link back.
+    let { data: ledger } = await db.from('accounting_ledgers').select('id').eq('org_id', org.id).eq('entity_type', 'league_season').eq('entity_id', seasonNow.id).maybeSingle();
+    if (!ledger) {
+      const l = await db.from('accounting_ledgers').insert({ org_id: org.id, entity_type: 'league_season', entity_id: seasonNow.id, name: seasonNow.name }).select('id').single();
+      if (l.error) die('league season ledger', l.error);
+      ledger = l.data;
+    }
+    let { data: line } = await db.from('accounting_entries').select('id').eq('ledger_id', ledger.id)
+      .eq('source_module', 'league_registration').eq('source_entity_id', priya.id).maybeSingle();
+    if (!line) {
+      const e = await db.from('accounting_entries').insert({
+        ledger_id: ledger.id, entry_date: dueDay(1), description: 'Priya Nair — registration fee', amount: 150,
+        entry_type: 'income', status: 'posted', category: 'registration_fee',
+        source_module: 'league_registration', source_entity_id: priya.id, created_by: owner.id,
+      }).select('id').single();
+      if (e.error) die('Priya fee line', e.error);
+      line = e.data;
+    }
+    const link = await db.from('league_registrations').update({ fee_entry_id: line.id, updated_at: new Date().toISOString() }).eq('id', priya.id);
+    if (link.error) die('Priya fee link', link.error);
+  }
+}
+ok('house league: Milan Reyes fee UNPAID (no ledger line) · Nair fee PAID with its posted ledger line');
+
+// 18 · A team with no head coach, and the Varga family (a child on it + a sibling's fee to record).
+const teamOwls = await ensureTeam('Fixture Owls U11', 'fixture-owls-u11');
+const pyOwls = await ensureProgramYear(teamOwls.id, YEAR, 'active');
+const teoId = await ensureRosterChild(teamOwls.id, pyOwls.id, { first: 'Teo', last: 'Varga', number: '5', gFirst: 'Mira', gLast: 'Varga', email: 'mira.varga@example.com', phone: '555-0120' });
+await ensureDuesPlan(teamOwls.id, pyOwls.id, teoId, [[120, 40], [120, -14]]); // owes $240.00, nobody to send it to
+await ensureLeagueReg(seasonNow.id, divNow.id, 'Lena', 'Varga', 'Mira', 'Varga', 'mira.varga@example.com', '555-0120',
+  { paid: false, waiverAccepted: true, dob: '2016-08-21' });
+ok('Varga: Teo on Fixture Owls U11 (no head coach, owes $240.00) + Lena in house league (fee unpaid)');
+
+// 19 · A team with no live season (its only season closed), and the Kowal family.
+const teamHerons = await ensureTeam('Fixture Herons U17', 'fixture-herons-u17');
+const pyHerons = await ensureProgramYear(teamHerons.id, YEAR - 1, 'completed');
+const kowal = { gFirst: 'Pia', gLast: 'Kowal', email: 'pia.kowal@example.com', phone: '555-0121' };
+const zedId = await ensureRosterChild(teamHerons.id, pyHerons.id, { first: 'Zed', last: 'Kowal', number: '3', ...kowal });
+await ensureDuesPlan(teamHerons.id, pyHerons.id, zedId, [[150, 330]]); // $150.00 never paid, on a season that closed
+const anyaId = await ensureRosterChild(teamHawks.id, pyHawks.id, { first: 'Anya', last: 'Kowal', number: '11', ...kowal });
+await ensureDuesPlan(teamHawks.id, pyHawks.id, anyaId, [[180, 50], [180, 5]]); // owes $360.00 (Jordan)
+ok('Kowal: Zed on Fixture Herons U17 (only season 2025 closed, $150.00 left) + Anya on Hawks (owes $360.00)');
+
+// 20 · A member given Families without house-league rights (no team limit: no rep group scope rows).
+{
+  const robin = await ensureSignIn(ROBIN_EMAIL, 'Robin Treasurer');
+  await ensureOrgMember(robin.id, 'treasurer', 'Robin Treasurer', { module_families: true, module_house_league: false });
+}
+ok(`member: Robin Treasurer (Families yes, house league no) — ${ROBIN_EMAIL}`);
+
+// 21 · The Okafor pair — same surname, "Sam"/"S.", the same child by birth date and the same phone, two addresses.
+await ensureRosterChild(teamHawks.id, pyHawks.id, { first: 'Jamie', last: 'Okafor', number: '14', dob: '2013-05-09',
+  gFirst: 'Sam', gLast: 'Okafor', email: 'sam.okafor@example.com', phone: '555-0111' });
+await ensureLeagueReg(seasonNow.id, divNow.id, 'Jamie', 'Okafor', 'S.', 'Okafor', 's.okafor@outlook.example', '555-0111',
+  { paid: false, waiverAccepted: true, dob: '2013-05-09' });
+ok('Okafor: Sam Okafor (Hawks) and S. Okafor (house league) — proposed as one parent');
 
 // ── 10. Attach — the same call the Families area makes ───────────────────────
 const attach = async () => {
@@ -463,6 +671,24 @@ ok('merged pair: Ilie Ionescu (' + ILIE_OLD + ' merged into ilie.ionescu@example
   if (!proposals) die('E02', 'the edited email did not record a re-attachment for Tatum');
 }
 ok('edited email: Tatum Whitehall val.whitehall@example.com → v.whitehall@newmail.example — Tatum moved, the pair proposed');
+
+// ── 13. Notes (cases 21–22): one on each Okafor record, one on Alex Reyes — authored by the fixture owner ──
+{
+  const personByEmail = async (email) => (await db.from('org_people').select('id').eq('org_id', org.id).eq('email_normalized', email).maybeSingle()).data;
+  const ensureNote = async (email, body) => {
+    const person = await personByEmail(email);
+    if (!person) return false; // merged away (the Okafor pair, after a walk): nothing to re-add
+    const { data: have } = await db.from('family_notes').select('id').eq('org_id', org.id).eq('person_id', person.id).eq('body', body).maybeSingle();
+    if (have) return true;
+    const ins = await db.from('family_notes').insert({ org_id: org.id, person_id: person.id, body, created_by: owner.id });
+    if (ins.error) die('family note ' + email, ins.error);
+    return true;
+  };
+  await ensureNote('sam.okafor@example.com', 'Pays by e-transfer, usually the first of the month. Prefers a reminder the week before.');
+  await ensureNote('s.okafor@outlook.example', 'Registered Jamie for house league under this address; says it is the same family as Sam Okafor.');
+  await ensureNote('alex.reyes@example.com', 'Paying Riley’s last installment in two parts; the second cheque is promised for November 1.');
+}
+ok('notes: one on each Okafor record (to merge and carry) · one on Alex Reyes');
 const { count: people } = await db.from('org_people').select('id', { count: 'exact', head: true }).eq('org_id', org.id);
 const { count: addresses } = await db.from('org_person_emails').select('id', { count: 'exact', head: true }).eq('org_id', org.id);
 ok(`attached: ${people} people, ${addresses} addresses`);
@@ -473,4 +699,10 @@ console.log('  · 2 cross-programme households (Reyes, Aoki-Sharma) · 1 duplica
 console.log('  · opt-out under a FORMER address (Petit) · 2 not-back families (Grant, Femi)');
 console.log('  · Stage 5a: payments recorded (Reyes $800.00 paid, Riley part-paid $50.00 of $150.00; Ionescu $150.00)');
 console.log('  · a merged pair (Ionescu) that stays merged · an edited email (Whitehall) proposed as a duplicate');
+console.log('  · Stage 5c: Reyes window = Milan\'s fee + Riley $100.00 (Pat Moreau) · Brandt = Emi (Pat) + Kit (Jordan Blake) · Nair fee paid WITH its ledger line');
+console.log('  · Varga = Teo on Owls (no head coach) + Lena\'s fee · Kowal = Zed on Herons (no live season; not in the window) + Anya (Jordan)');
+console.log('  · Robin Treasurer: Families without house league · Okafor pair (Sam / S.) each with a note, proposed as duplicates · a note on Alex Reyes');
 console.log('\nSign in: ' + OWNER_EMAIL + ' / ' + OWNER_PASSWORD + ' → /' + ORG_SLUG + '/admin/families');
+console.log('  Head coach (Falcons U13):  ' + PAT_EMAIL + ' / ' + COACH_PASSWORD + ' → /' + ORG_SLUG + '/coaches');
+console.log('  Head coach (Hawks U15):    ' + JORDAN_EMAIL + ' / ' + COACH_PASSWORD + ' → /' + ORG_SLUG + '/coaches');
+console.log('  Families, no house league: ' + ROBIN_EMAIL + ' / ' + COACH_PASSWORD + ' → /' + ORG_SLUG + '/admin/families');

@@ -1,12 +1,245 @@
 {
   "generated": "2026-10-19",
-  "total": 0,
+  "total": 58,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "tables": 2,
+    "columns": 25,
+    "indexes": 12,
+    "constraints": 13,
+    "rls": 6
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:family_notes.family_notes_body_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_payment_handoffs.family_payment_handoffs_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_payment_handoffs.family_payment_handoffs_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_payment_handoffs.family_payment_handoffs_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_payment_handoffs.family_payment_handoffs_resolved_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_payment_handoffs.family_payment_handoffs_state_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_notes.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_notes.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_notes.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_notes.edited_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_notes.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_notes.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_notes.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.player_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.received_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.resolved_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.resolved_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.roster_player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.sent_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.sent_to",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.state",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_payment_handoffs.team_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_notes.family_notes_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_notes.family_notes_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_notes.family_notes_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_notes.family_notes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_resolved_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_roster_player_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_sent_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_payment_handoffs.family_payment_handoffs_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:changed:notifications_org_needs_attention_idx",
+      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    },
+    {
+      "key": "index:changed:notifications_user_needs_attention_idx",
+      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    },
+    {
+      "key": "index:only-dev:family_notes_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_notes_person_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_notes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_payment_handoffs_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_payment_handoffs_payment_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_payment_handoffs_person_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_payment_handoffs_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_payment_handoffs_player_sent_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_payment_handoffs_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_payment_handoffs_year_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_notes",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_payment_handoffs",
+      "sig": ""
+    }
+  ]
 }

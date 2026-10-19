@@ -1003,6 +1003,49 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 - [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
+> **🔨 5c BUILT 2026-10-19** (from `CLUB_TIER_STAGE5C_BUILD_PROMPT.md`, to hub v121 → Stage 5c; walk **Owner QA §345**). **What:**
+> Part A — the house-league fee tick is ONE write (`lib/league-fee-paid.ts`), called by House league › Registrations and the
+> family's Record a payment (a conditional flip, so two presses make one fee line). Part B — `family_payment_handoffs`
+> (mig 338): a rep line is handed to the team's head coaches (colleague mail + a "Your club" Needs-attention bell
+> `club_payment_handed_off`); Record it opens the coach's own Record money filled in (`RecordMoneyIntent.prefill` +
+> `claims`) and saves through the ordinary dues-payments POST with `handoffId` — claimed first (sent → recorded, one
+> conditional update), recorded with a payment id chosen up front, stamped; a failed write is settled by that id alone (found:
+> stays recorded; not found: back to sent); the bell treats a claim in flight as still waiting. Not received
+> (`club-handoffs/[handoffId]` POST) marks not_received and tells the sender (`club_payment_not_received`, only if still a
+> member). Part C — `RecordPaymentWindow` (640, raised): the plan is computed server-side per line with its reason; one route
+> validates every line before writing; a press that fails after its fees says which went in. The record: Record a payment on
+> the top line (absent unless a line can go), amber Sent to coach / red Not received chips (a waiting one wins), History lines
+> with what the coach actually recorded. Part D — `family_notes`: Notes after Children, Add a note (520), a note window
+> (read first, author's pencil, autosave, Delete note ends the body, author or owner, audit who/when never the words);
+> `families_merge_people` redefined in mig 338 to carry notes and hand-offs (`check:families-record` T11, `--before-338`
+> fails on mig 334's merge, `--mutate` 11/11). Part E — the family file adds "Notes about the family" (before Records
+> joined), Money's hand-offs, "Staff note" on a registration, and drops the coach's pinned note (named under Not in this
+> file). Part F — `seed-families-fixture.mjs` cases 15–22 (Pat Moreau / Jordan Blake head coaches, Brandt two teams,
+> Varga no head coach, Kowal closed season, Milan unpaid, Nair paid with its line, Robin Treasurer, the Okafor pair with
+> notes), reseeded on dev 2026-10-19. **Gates:** typecheck ✓, `verify:changed` ✓ but for two other sessions' failures
+> (coach-semantic-ink, club-stage6c dark months) and the expected prod-behind-dev parity, `check:families-record` ✓,
+> `check:pdf` ✓, stage guard `club-stage5c-families-guard.test.ts`; `check:layout --changed` OWED (the dev server needs a
+> restart first). **/simplify** (4 lenses) and **/review high-risk** (5 lenses: 15 fixed — the release by exact payment id,
+> the in-flight bell, the double fee line, the part-way press, the door's one-shot ref, the waiting chip, the recorded amount,
+> a blank How kept blank, Not received to members only, body guards, the PDF fixture, the drawer's Done, one spelling of
+> "Staff note"); **/design** (no high findings; the chip column, the delete question, the phone note box); **/marketing** (17
+> of 19 applied: "sent" everywhere, "Note from the club", the Not received question); **/docs** (Families "A family's
+> record": payment, limits, afterwards, notes, the cheque FAQ, the file; coaches' "When the club sends on a family's
+> payment"). **Departures (not silently):** (1) a single note opens at **640**, not the drawn 520 — a read-first record
+> window is 640 on every path (One Window S4, build-guarded); (2) on a phone the payment window's foot sentence may sit
+> beside the buttons — the shared window frame wraps only its own ask; widening that rule is a shared-chrome change
+> (`KitDialog.module.css`, another session's hunks in flight); (3) a date after today shows the red line, not a red field
+> border (the kit has no invalid-field style); (4) the closed-season refusal never shows in the window — the record reads
+> only live seasons' money — it fires only if a season closes while the window is open. **Owner calls raised, not
+> ruled:** /marketing's "Sent to the coach" for the chip and a three-sentence statement (drawing words kept); whether the
+> hub's QA tab carries §345 (the walk is its own page for now — the hub is one 4 MB page). **Found, not fixed:** the dues
+> write's own gap (an income line posted, then the payment insert fails — pre-5c); two presses in the same instant can both
+> send a hand-off (the duplicate check is a read before the write; a unique index would also refuse a genuine second
+> same-day cheque); a coach's Record money opened while another form is open drops the request (pre-existing); a request
+> body of `null` was a 500 (fixed); mig 338 re-makes two notifications indexes inside its transaction (a brief write lock —
+> fine at today's size). **Counsel:** the family file's statement changed (owed with the rest). **Old walks:** after the
+> reseed, Stage 5a/5b walk steps that expect Milan paid, Balance $100.00 or "Nobody to send to" on Falcons no longer hold.
+
 > **⚖ 5c RATIFIED 2026-10-19 — all ten asks (26–35) as recommended** (the owner pasted the answers instrument, 10 of 10;
 > Ask 29 with both recommended options; hub **v121**, every 5c Decisions row Accepted). Ruled: **26** the club records only
 > its own house-league fee from the record and hands a rep payment to the head coach, whose own Record money writes it

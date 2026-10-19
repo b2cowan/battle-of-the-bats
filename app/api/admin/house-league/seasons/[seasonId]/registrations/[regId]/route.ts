@@ -1,20 +1,17 @@
 import { NextResponse } from 'next/server';
-import { tournamentToday } from '@/lib/timezone';
-import { moveRefused } from '@/lib/club-money-route';
-import { closedYearFromError, isClosedYearError, loadFiscalSetting, refuseIfClosed } from '@/lib/club-fiscal-year-server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { LEAGUE_FEE_ROLES, canMarkLeagueFeePaid, setLeagueFeePaid } from '@/lib/league-fee-paid';
+import { moveRefused } from '@/lib/club-money-route';
 import {
   getLeagueSeasonById,
   updateRegistrationStatus,
   promoteFromWaitlist,
   getWaitlistForDivision,
   createLeagueRegistrationFeeEntry,
-  updateEntry,
   voidEntry,
   getLedgerEntries,
-  getLeagueSeasonLedger,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason, teamsInSeason } from '@/lib/league-season-scope';
@@ -128,65 +125,15 @@ export const PATCH = withObservability(async (req: Request,
   const body = await req.json();
   const role = ctx!.role;
   const isAdminOrOwner = role === 'owner' || role === 'league_admin';
-  const canManageRegs  = isAdminOrOwner || role === 'league_registrar';
+  const canManageRegs  = (LEAGUE_FEE_ROLES as readonly string[]).includes(role);
 
   // ── feePaid ──────────────────────────────────────────────────────────────────
+  // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c, Part A — lib/league-fee-paid.ts):
+  // who may, the fiscal year's lock, the flip and the fee line all live there.
   if ('feePaid' in body) {
-    if (!canManageRegs) return forbidden();
-    const paid = Boolean(body.feePaid);
-
-    /* ⚖ THE CLUB'S FISCAL YEAR LOCKS THE HOUSE LEAGUE'S BOOK TOO (Club Tier Stage 3c, call 2) — checked BEFORE the
-       registration changes, so the two never disagree. A fee line dated in a closed year: marking it paid CLEARS
-       it into the open year, dated today (it counted nowhere while pending; the database keeps the day it was
-       written); marking it unpaid would change a closed year, so it is refused in words (reopen the year). A
-       line already in the state asked for is left as it is (nothing to write). The line moves FIRST, so a close
-       that races this request refuses before the registration has changed. */
-    let clearOn: string | null = null;
-    let lineMoves = !!reg.feeEntryId;
-    let lineDate: string | null = null;
-    if (reg.feeEntryId) {
-      const { data: line, error: lineError } = await supabaseAdmin.from('accounting_entries')
-        .select('entry_date, status').eq('id', reg.feeEntryId).maybeSingle();
-      if (lineError) throw lineError;
-      if (line) {
-        lineMoves = line.status !== (paid ? 'posted' : 'pending');
-        lineDate = line.entry_date as string;
-        const setting = await loadFiscalSetting(ctx!.org.id);
-        const closed = lineMoves ? refuseIfClosed(setting, [line.entry_date], { canMove: true, kind: 'recorded' }) : null;
-        if (closed) {
-          if (!(paid && line.status === 'pending')) return moveRefused(closed);
-          clearOn = tournamentToday();
-        }
-      }
-    }
-
-    // Sync ledger entry if one is linked
-    if (reg.feeEntryId && lineMoves) {
-      const ledger = await getLeagueSeasonLedger(ctx!.org.id, seasonId);
-      if (ledger) {
-        try {
-          await updateEntry(reg.feeEntryId, ledger.id, { status: paid ? 'posted' : 'pending', ...(clearOn ? { entryDate: clearOn } : {}) });
-        } catch (e) {
-          if (isClosedYearError(e)) return moveRefused(await closedYearFromError(ctx!.org.id, [lineDate, clearOn]));
-          throw e;
-        }
-      }
-    }
-
-    await supabaseAdmin
-      .from('league_registrations')
-      .update({ registration_fee_paid: paid, updated_at: new Date().toISOString() })
-      .eq('id', regId);
-
-    if (!reg.feeEntryId && paid && season.registrationFee) {
-      // No entry yet — create one as posted immediately (manual/retroactive)
-      const playerName = `${reg.playerFirstName} ${reg.playerLastName}`;
-      await createLeagueRegistrationFeeEntry(
-        ctx!.org.id, seasonId, season.name, regId, playerName,
-        season.registrationFee, 'posted', ctx!.user.id,
-      );
-    }
-
+    if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
+    const refused = await setLeagueFeePaid(ctx!, { season, reg }, Boolean(body.feePaid));
+    if (refused) return moveRefused(refused);
     const updated = await fetchReg(regId, seasonId);
     return NextResponse.json({ registration: updated });
   }

@@ -1700,6 +1700,136 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "family_notes",
+    "constraint_name": "family_notes_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_notes",
+    "constraint_name": "family_notes_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_notes",
+    "constraint_name": "family_notes_person_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "person_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_notes",
+    "constraint_name": "family_notes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "payment_id",
+    "foreign_table": "rep_dues_payments",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_person_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "person_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_resolved_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "resolved_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_roster_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "roster_player_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_sent_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_payment_handoffs",
+    "constraint_name": "family_payment_handoffs_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "family_recap_views",
     "constraint_name": "family_recap_views_link_id_fkey",
     "constraint_type": "FOREIGN KEY",

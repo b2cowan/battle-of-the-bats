@@ -8,6 +8,8 @@ import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { DUES_PAYMENT_METHODS } from '@/lib/types';
+import { randomUUID } from 'node:crypto';
+import { claimHandoffForPayment } from '@/lib/families-payment';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -38,6 +40,10 @@ const METHODS = DUES_PAYMENT_METHODS;
 // Record a dues payment FACT (mig 232): what arrived, when, how much. Posts one income entry to
 // the team ledger dated the day the money ARRIVED (owner ruling 3), allocates oldest-first, and
 // auto-credits any amount beyond everything left on the schedule (ruling 5 — no prompt).
+// ⚖ `handoffId` (Club Tier Stage 5c, Ask 26): a payment the CLUB received and handed to this team's head coach. Record it
+// opens Record money filled in and saves HERE — the coach's save stays the only writer of team money. The hand-off must be
+// this team's, this player's, on the live season and still waiting; it is claimed first (two coaches record it once),
+// released if the record fails, and stamped with the payment when it lands (lib/families-payment.ts).
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string }> },) => {
   const { orgSlug, teamId, playerId } = await params;
@@ -48,7 +54,7 @@ export const POST = withObservability(async (req: Request,
   if (denied) return denied;
 
   const body = await req.json();
-  const { amount, receivedDate = tournamentToday(), method = 'other', note = null } = body;
+  const { amount, receivedDate = tournamentToday(), method = 'other', note = null, handoffId = null } = body;
 
   if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
     return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });
@@ -70,6 +76,9 @@ export const POST = withObservability(async (req: Request,
   if (!METHODS.includes(method)) {
     return NextResponse.json({ error: 'Invalid method' }, { status: 400 });
   }
+  if (handoffId !== null && typeof handoffId !== 'string') {
+    return NextResponse.json({ error: 'handoffId must be a string' }, { status: 400 });
+  }
 
   // Verify the player belongs to this program year (and get the name the ledger line carries —
   // the old mark-paid entries said only "installment #2" and were untraceable in the books).
@@ -90,6 +99,13 @@ export const POST = withObservability(async (req: Request,
   }
   const playerName = [playerRow.player_first_name, playerRow.player_last_name].filter(Boolean).join(' ') || 'player';
 
+  // The payment's id is chosen HERE, so a failed write is settled by looking for exactly this row (review 2026-10-19).
+  const paymentId = handoffId ? randomUUID() : undefined;
+  const claim = handoffId && paymentId
+    ? await claimHandoffForPayment({ orgId: ctx!.org.id, teamId, playerId, programYearId: programYear.id, handoffId, paymentId, userId: ctx!.user.id })
+    : null;
+  if (claim && !claim.ok) return NextResponse.json({ error: claim.error, code: claim.code }, { status: claim.status });
+
   try {
     const result = await recordRepDuesPayment({
       team: { id: team.id, orgId: team.orgId, name: team.name },
@@ -101,9 +117,12 @@ export const POST = withObservability(async (req: Request,
       method,
       note: typeof note === 'string' ? note : null,
       createdBy: ctx!.user.id,
+      paymentId,
     });
+    if (claim?.ok) await claim.stamp(result.payment.id);
     return NextResponse.json(result, { status: 201 });
   } catch (e) {
+    if (claim?.ok) await claim.release();
     if (e instanceof Error && e.message === 'NO_SCHEDULE') {
       return NextResponse.json(
         { error: 'This player has no dues schedule yet — set their dues first, then record what arrived.' },

@@ -1404,6 +1404,8 @@ function MoneyRecordsPanel({
    * neither. The full argument lives on `RecordMoneyIntent.lock`; the gate is `identityField`.
    */
   const [convLock, setConvLock] = useState<{ subject: string; detail?: string; asks?: IdentityQuestion } | null>(null);
+  /** What the save settles with the payment (Club Tier Stage 5c: the club's hand-off) — set only by a door that names it. */
+  const [convClaims, setConvClaims] = useState<RecordMoneyIntent['claims'] | null>(null);
   const [whatOpen, setWhatOpen] = useState(false);
   /** The "What happened?" field + its open list — outside-press closes the list. */
   const whatWrapRef = useRef<HTMLDivElement>(null);
@@ -1720,6 +1722,7 @@ function MoneyRecordsPanel({
     // not persist into the next (this function's standing rule, restated below).
     setConvBranch(null);
     setConvLock(null);
+    setConvClaims(null);
     setWhatOpen(false);
     setConv(BLANK_CONV);
     setConvOpenedWith(BLANK_CONV);
@@ -2088,6 +2091,18 @@ function MoneyRecordsPanel({
       setForm(f => ({ ...f, amount: intent.amount! }));
       setFormOpenedWith(f => ({ ...f, amount: intent.amount! }));
     }
+    /* A door's other pre-answers (the club's hand-off, Stage 5c: the day it came, how, a note) go in like the amount —
+       into the baseline too, so a form nobody touched never asks "discard this?". */
+    if (intent.prefill) {
+      const { receivedDate, method, note } = intent.prefill;
+      const seed = { ...(receivedDate ? { receivedDate } : {}), ...(note !== undefined ? { notes: note } : {}) };
+      setForm(f => ({ ...f, ...seed }));
+      setFormOpenedWith(f => ({ ...f, ...seed }));
+      if (method && (DUES_PAYMENT_METHODS as readonly string[]).includes(method)) {
+        prefillConv(c => ({ ...c, duesMethod: method as DuesPaymentMethod }));
+      }
+    }
+    if (intent.claims) setConvClaims(intent.claims);
     /* ⚖⚖ A DOOR THAT NAMES A BILL DOES **NOT** SUGGEST AN AMOUNT, and this was built the other way
        first and taken back out (2026-08-27). The idea was to mirror `spendLeadGroup.onPick`, which
        fills the bill's whole remaining when a coach picks it by hand. Two things killed it:
@@ -2581,6 +2596,9 @@ function MoneyRecordsPanel({
             receivedDate: form.receivedDate,
             method: conv.duesMethod,
             note: form.notes.trim() || null,
+            // The club's hand-off this receipt settles (Stage 5c). The door's lock keeps the player the one it named; the
+            // server checks the hand-off's team, player, season and state again.
+            ...(convClaims?.handoffId ? { handoffId: convClaims.handoffId } : {}),
           }),
         });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');

@@ -3,7 +3,7 @@
 -- Run by scripts/check-families-record.mjs against DEV only. The whole block ALWAYS ends in an exception —
 -- 'FAMILIES_RECORD_PASSED' when every assertion held, else 'FAIL T…' naming EVERY assertion that failed — so nothing
 -- it writes survives. The INSTALL placeholder is replaced by the runner with the functions under test (the migrations' own text,
--- never a copy): migs 333 + 334 for the real run; migs 252 + 254 with --old, which must FAIL T1 and T2 (E01, E02 —
+-- never a copy): migs 333 + 334 + 338 for the real run (--before-338 lays 334's merge back over 338's: T11 must FAIL); migs 252 + 254 with --old, which must FAIL T1 and T2 (E01, E02 —
 -- the proof the tests bite on today's code). The MUTATIONS placeholder is empty, or one EXECUTE swapping in a mutated function.
 -- ════════════════════════════════════════════════════════════════════════════════════════════════
 DO $test$
@@ -180,6 +180,29 @@ BEGIN
   IF n <> 1 THEN fails := fails || ' | FAIL T10: a declined claim took the family (the child is not on the invited guardian)'; END IF;
   SELECT count(*) INTO n FROM org_person_emails WHERE org_id = v_org AND email_normalized = 'stranger@example.com';
   IF n <> 0 THEN fails := fails || ' | FAIL T10: a declined claimant was filed in the address book'; END IF;
+
+  -- ── T11 · (mig 338, Club Tier Stage 5c) a merge carries BOTH people's notes and the payments the club handed to a coach,
+  --          each still signed — none forgotten the way remembered pairs are (S5C-05) ──
+  INSERT INTO rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, guardian_first_name, guardian_last_name, guardian_email)
+  VALUES (v_py, v_team, v_org, 'Indy', 'Moss', 'Kai', 'Moss', 'kai.moss@example.com') RETURNING id INTO r1;
+  INSERT INTO rep_tryout_registrations (program_year_id, team_id, org_id, player_first_name, player_last_name, guardian_first_name, guardian_last_name, guardian_email)
+  VALUES (v_py, v_team, v_org, 'Indy', 'Moss', 'K.', 'Moss', 'k.moss@work.example') RETURNING id INTO r2;
+  PERFORM families_attach_people(v_org);
+  SELECT person_id INTO v_keep FROM rep_roster_players WHERE id = r1;
+  SELECT person_id INTO v_merge FROM rep_tryout_registrations WHERE id = r2;
+  IF v_keep IS NULL OR v_merge IS NULL OR v_keep = v_merge THEN
+    fails := fails || format(' | FAIL T11: SETUP — two people expected before the merge (%s / %s)', v_keep, v_merge);
+  ELSE
+    INSERT INTO family_notes (org_id, person_id, body, created_by) VALUES (v_org, v_keep, 'Kept person''s note', v_user);
+    INSERT INTO family_notes (org_id, person_id, body, created_by) VALUES (v_org, v_merge, 'Merged person''s note', v_user);
+    INSERT INTO family_payment_handoffs (org_id, person_id, roster_player_id, player_name, team_id, program_year_id, amount, received_date, method, sent_by)
+    VALUES (v_org, v_merge, r1, 'Indy Moss', v_team, v_py, 100, current_date, 'cheque', v_user);
+    PERFORM families_merge_people(v_org, v_keep, v_merge, v_user);
+    SELECT count(*) INTO n FROM family_notes WHERE org_id = v_org AND person_id = v_keep AND created_by = v_user;
+    IF n <> 2 THEN fails := fails || format(' | FAIL T11: a merge lost a note — %s on the person kept, want 2 (each still signed)', n); END IF;
+    SELECT count(*) INTO n FROM family_payment_handoffs WHERE org_id = v_org AND person_id = v_keep;
+    IF n <> 1 THEN fails := fails || format(' | FAIL T11: a merge lost a payment handed to a coach — %s on the person kept, want 1', n); END IF;
+  END IF;
 
   IF fails <> '' THEN RAISE EXCEPTION '%', substr(fails, 4); END IF;
   RAISE EXCEPTION 'FAMILIES_RECORD_PASSED';

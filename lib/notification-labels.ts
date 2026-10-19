@@ -60,6 +60,9 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   club_bill_arrived:                 'The club billed your team',
   // Club Tier Stage 5b — Families' Ask the coaches. Words are /marketing's drafts.
   club_guardians_asked:              'The club needs guardian emails',
+  // Club Tier Stage 5c — a payment the club passed to a coach (mig 338). Words are /marketing's drafts.
+  club_payment_handed_off:           'The club received a family’s payment',
+  club_payment_not_received:         'A coach says a payment never arrived',
   club_schedule_reply:               'A team replied to a schedule',
   club_schedule_handed_back:         'A team handed back club time',
   club_schedule_taken_back:          'A team took back club time',
@@ -124,6 +127,8 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_schedule_changes:             'Your club sent changes to your team’s slots on one of its schedules.',
   club_bill_arrived:                 'Your club billed your team for the time it got, with its payments on Money › Club.',
   club_guardians_asked:              'Your club asked you to add guardian emails for some of your players, on your Roster.',
+  club_payment_handed_off:           'Your club received a family’s dues payment for one of your players. Record it in the team’s book when the money reaches you.',
+  club_payment_not_received:         'A head coach says a family’s payment you sent them never reached the team.',
   club_schedule_reply:               'A team answered a schedule you sent for review.',
   club_schedule_handed_back:         'A team handed back a practice from a schedule you built: the time is open for another team.',
   club_schedule_taken_back:          'A team took back practices it had handed back on a schedule you built: the time is the team’s again.',
@@ -193,6 +198,13 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     module: 'module_accounting',
     // Stage 11d: a hand-back's ask is a payment request the money movers answer (the builders hear it too).
     eventTypes: ['team_money_sent', 'team_request_filed', 'team_request_holding_payout', 'club_hand_back_asked', 'club_hand_back_withdrawn'],
+  },
+  // Club Tier Stage 5c (Ask 28): the person who passed a family's payment to a coach hears a "never arrived" — only ever
+  // someone who could open Families (it is sent to the sender alone).
+  {
+    label: 'Families',
+    module: 'module_families',
+    eventTypes: ['club_payment_not_received'],
   },
   // Club Tier Stage 11a (part B): the club scheduler's builders hear a team's review answer and a hand-back — the club's
   // owner and admins only (`resolveScheduler`), so the row shows only where its notices can arrive.
@@ -288,6 +300,10 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'club_bill_arrived',
   // Families' Ask the coaches (Stage 5b): rare, and only ever sent because the club pressed Send.
   'club_guardians_asked',
+  // A family's payment the club passed to a coach (Stage 5c), and the coach's "never arrived": rare, and each waits on,
+  // or answers, the other side.
+  'club_payment_handed_off',
+  'club_payment_not_received',
   'club_schedule_reply',
   'club_schedule_handed_back',
   'club_schedule_taken_back',
@@ -384,6 +400,9 @@ export const NOTIFICATION_CATEGORY = {
   club_bill_arrived:                  'know',
   // Families' Ask the coaches (Stage 5b): news, not Needs attention (the build prompt's default — the owner may rule 'act').
   club_guardians_asked:               'know',
+  // Families' payment hand-off (Stage 5c, Ask 28): the coach's Record it / Not received waits; the answer is news.
+  club_payment_handed_off:            'act',
+  club_payment_not_received:          'know',
   club_schedule_reply:                'know',
   club_schedule_handed_back:          'know',
   club_schedule_taken_back:           'know',
