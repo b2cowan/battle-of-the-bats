@@ -25073,7 +25073,7 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 
 **The walk instrument:** the hub's **QA walk** section (§330: W1.1–W1.9), https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza.
 
-## §332 · Admin, phone and small tablet · an open form covers the bar — **every admin form window opens over the phone bar, so a missed tap never leaves a half-filled form; a menu (More) still sits on top of the bar**
+## §332 ✅ · Admin, phone and small tablet · an open form covers the bar — **every admin form window opens over the phone bar, so a missed tap never leaves a half-filled form; a menu (More) still sits on top of the bar**
 
 **Built 2026-10-18** (Admin bar behind forms; plan `docs/projects/active/ADMIN_BAR_BEHIND_FORMS_PLAN.md`, brief `ADMIN_BAR_BEHIND_FORMS_PM_BRIEF.md`). The owner re-cut the scope the same day to "fix the real gaps": every admin form already covered the bar but three, now lifted — Chat's New room (whose rooms list also stood over it), and on 641–900 wide Budget vs. Actual's two windows and the shared library's award icon picker. The coaches portal's windows gain the same clearance at 641–900. Not built, deliberately: hiding the bar and freezing the page as the coaches portal does — W5 decides whether the page freeze is needed.
 
@@ -25087,6 +25087,10 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 - **W7 · The coaches portal on a small tablet — the same change's other side.** The Premium coach, `uat-coach@uat-test-org.local`; a window about 800 wide: the team's **Practices**, any practice, then its plan. (1) Open a block and change a word in it. **Expect:** The window covers the bar (the bar is under its dimming), and **Saved** shows at the bottom right OVER the dimming, then fades. (2) Close the window. **Expect:** The bar is back; nothing else moved.
 
 **The walk instrument:** a checkable walk (§332: W1–W7, Pass / Fail and a note per step, Copy results to paste back), https://claude.ai/artifact/TWQ1rZRJRw51PFnRAkZ7Xm.
+
+**Committed `8fbfa25f` 2026-10-18** (with /review; not pushed).
+
+**✅ PASSED 2026-10-19, 14 of 14 walked steps** (owner paste-back: W2–W7 all Passed, no notes). **§332 CLOSED.** **W1 (Chat's New room) was not walked:** chat is paused, so its door is hidden and the steps pass only by default — recorded as not walked, not as passed; the fix stays in the code, and W1 is walked again on the day chat returns. **W5 answered:** the members list behind an open form did not move (owner marked it Pass), so no scroll lock is built.
 
 ---
 

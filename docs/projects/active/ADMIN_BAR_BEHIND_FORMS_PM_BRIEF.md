@@ -1,6 +1,6 @@
 # Admin bar behind forms — PM brief
 
-**Status:** built 2026-10-18; owner walk owed (Owner QA Ledger). Plan: `ADMIN_BAR_BEHIND_FORMS_PLAN.md`.
+**Status:** built 2026-10-18; owner walk §332 passed 2026-10-19 — closed (the Chat step waits for chat to return). Plan: `ADMIN_BAR_BEHIND_FORMS_PLAN.md`.
 
 ## What changes
 

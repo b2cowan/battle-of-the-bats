@@ -1,7 +1,7 @@
 # Admin bar behind forms — plan and as-built
 
 > Owner call 2026-10-17 (Nav Consistency build start): the admin's phone bar and an open form are their own unit of
-> work. Build prompt `ADMIN_BAR_BEHIND_FORMS_BUILD_PROMPT.md`. Built 2026-10-18; scope re-cut by the owner the same day
+> work. Build prompt `ADMIN_BAR_BEHIND_FORMS_BUILD_PROMPT.md`. Built 2026-10-18, committed `8fbfa25f`; walk §332 passed 2026-10-19 (W1 not walked while chat is paused). Scope re-cut by the owner on 2026-10-18
 > (below). PM brief: `ADMIN_BAR_BEHIND_FORMS_PM_BRIEF.md`. The rule is the drawer-layers ruling of 2026-09-23 — *a FORM
 > covers the nav, a MENU sits on top of it* — and nothing new was ruled.
 
@@ -77,8 +77,8 @@ Layer column = what clears the bar (300). Guard: `tests/unit/admin-overlay-guard
    drawer closes on New room and then opens the window.
 
 **Not built, by the owner's scope:** `CoachesOverlayProvider` in the admin shell, the bar reading the signal, `KitDialog`
-registering. **Owed:** the phone check in the walk — if a swipe on an open form moves the page behind, the fix is a lock
-on `.adminMain` (the admin's real scroller), not the body, and it is its own small change.
+registering. **Answered 2026-10-19 (walk §332 W5):** a swipe on an open form does not move the page behind, so no lock is built.
+If that ever changes, the fix is a lock on `.adminMain` (the admin's real scroller), not the body.
 
 ## 4. Gates (2026-10-18)
 
