@@ -1,0 +1,447 @@
+<title>Schedule Health Button</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&family=IBM+Plex+Mono:wght@500;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a review sheet on a cool ground; every product frame sits on the product's own warm/dark tokens as a specimen. */
+:root {
+  /* document chrome */
+  --doc-bg: #EEF0F2; --doc-ink: #1C2228; --doc-muted: #59636E; --doc-line: #D5DAE0; --doc-panel: #F8F9FA;
+  --tag-new: #1F6FEB; --tag-restyled: #8A5A00; --tag-unchanged: #6B7280;
+  /* product (warm theme) */
+  --ground: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-2: #4A4235; --ink-3: #615A54;
+  --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #D9F99D; --lime-ink: #241E15;
+  --amber: #835006; --amber-bg: rgba(131,80,6,.11); --amber-line: rgba(131,80,6,.32);
+  --danger: #B03A22; --danger-ink: #9A2E17; --danger-bg: rgba(176,58,34,.08); --danger-line: rgba(176,58,34,.3);
+  --pill-bg: rgba(36,30,21,.05); --pill-line: rgba(70,55,30,.12);
+  --scrim: rgba(36,30,21,.38); --win-edge: rgba(30,58,138,.3);
+  --hl: #FFE45C;
+  --f-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --f-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #15191E; --doc-ink: #E6E9ED; --doc-muted: #9AA4AF; --doc-line: #2A3038; --doc-panel: #1B2027;
+  --tag-new: #6CA6FF; --tag-restyled: #E0A84A; --tag-unchanged: #9AA0A8;
+  --ground: #0A0A0A; --card: #111827; --ink: rgba(255,255,255,.9); --ink-2: rgba(255,255,255,.7); --ink-3: #94A3B8;
+  --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.16);
+  --olive: #D9F99D; --olive-soft: rgba(217,249,157,.12); --lime: #D9F99D; --lime-ink: #0A0A0A;
+  --amber: #F59E0B; --amber-bg: rgba(245,158,11,.12); --amber-line: rgba(245,158,11,.34);
+  --danger: #F87171; --danger-ink: #F87171; --danger-bg: rgba(239,68,68,.1); --danger-line: rgba(239,68,68,.35);
+  --pill-bg: rgba(241,245,249,.05); --pill-line: rgba(255,255,255,.08);
+  --scrim: rgba(0,0,0,.6); --win-edge: rgba(96,130,220,.35); --hl: #8A7A12;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --doc-bg: #15191E; --doc-ink: #E6E9ED; --doc-muted: #9AA4AF; --doc-line: #2A3038; --doc-panel: #1B2027;
+  --tag-new: #6CA6FF; --tag-restyled: #E0A84A; --tag-unchanged: #9AA0A8;
+  --ground: #0A0A0A; --card: #111827; --ink: rgba(255,255,255,.9); --ink-2: rgba(255,255,255,.7); --ink-3: #94A3B8;
+  --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.16);
+  --olive: #D9F99D; --olive-soft: rgba(217,249,157,.12); --lime: #D9F99D; --lime-ink: #0A0A0A;
+  --amber: #F59E0B; --amber-bg: rgba(245,158,11,.12); --amber-line: rgba(245,158,11,.34);
+  --danger: #F87171; --danger-ink: #F87171; --danger-bg: rgba(239,68,68,.1); --danger-line: rgba(239,68,68,.35);
+  --pill-bg: rgba(241,245,249,.05); --pill-line: rgba(255,255,255,.08);
+  --scrim: rgba(0,0,0,.6); --win-edge: rgba(96,130,220,.35); --hl: #8A7A12;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--f-sans); font-size: 15px; line-height: 1.5; margin: 0; }
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; display: flex; flex-direction: column; gap: 44px; }
+header.doc h1 { font-size: 28px; line-height: 1.15; margin: 0 0 8px; text-wrap: balance; letter-spacing: -0.01em; }
+header.doc p { margin: 0; max-width: 68ch; color: var(--doc-muted); }
+.eyebrow { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--doc-muted); margin-bottom: 6px; }
+section.spec { display: flex; flex-direction: column; gap: 14px; }
+section.spec h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+section.spec > p, .note { margin: 0; max-width: 72ch; color: var(--doc-muted); }
+.tag { display: inline-block; font-family: var(--f-mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 1px 7px; border-radius: 4px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 2px; }
+.tag.new { color: var(--tag-new); } .tag.restyled { color: var(--tag-restyled); } .tag.unchanged { color: var(--tag-unchanged); }
+.pair { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.cap { font-size: 13px; color: var(--doc-muted); margin: 0 0 6px; }
+.cap b { color: var(--doc-ink); }
+.scroll { overflow-x: auto; border-radius: 10px; border: 1px solid var(--doc-line); }
+.row-specs { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.row-specs > div { min-width: 0; }
+
+/* ── product: shell ── */
+.app { width: 1180px; background: var(--ground); color: var(--ink); font-size: 14px; display: grid; grid-template-columns: 56px 1fr; position: relative; }
+.rail { background: var(--card); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 16px; }
+.rail i { width: 22px; height: 22px; border-radius: 6px; background: var(--line-strong); display: block; }
+.rail i.on { background: var(--olive-soft); outline: 1px solid var(--olive); }
+.main { min-width: 0; }
+.evhead { background: var(--card); border-bottom: 1px solid var(--line); padding: 11px 32px; display: flex; align-items: center; gap: 16px; }
+.evhead .t { flex: 1; min-width: 0; }
+.evbrow { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+.chip-danger { font-family: var(--f-mono); font-size: 10px; font-weight: 700; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px; color: var(--danger-ink); background: var(--danger-bg); border: 1px solid var(--danger-line); display: inline-flex; align-items: center; gap: 5px; }
+.chip-danger::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.evtitle { font-size: 20px; font-weight: 700; line-height: 1.2; margin-top: 2px; }
+.flip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--pill-line); background: var(--pill-bg); font-size: 12px; font-weight: 650; color: var(--ink); white-space: nowrap; }
+.flip .g { color: var(--ink-3); }
+.body { padding: 18px 32px 24px; display: flex; flex-direction: column; gap: 14px; }
+.phead { display: flex; align-items: center; gap: 10px; }
+.phead .ic { width: 20px; height: 20px; border: 2px solid var(--ink-2); border-radius: 4px; }
+.phead h3 { font-family: var(--f-sans); font-size: 20px; font-weight: 700; margin: 0; flex: 1; }
+.acts { display: flex; align-items: center; gap: 8px; }
+.btn { height: 38px; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); font-size: 14px; font-weight: 600; white-space: nowrap; font-family: var(--f-sans); }
+.btn.lime { background: var(--lime); color: var(--lime-ink); border-color: transparent; font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+.btn.sq { width: 38px; padding: 0; justify-content: center; }
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.viewpill { height: 30px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 999px; background: var(--olive-soft); border: 1px solid color-mix(in srgb, var(--olive) 45%, transparent); color: var(--olive); font-size: 12px; font-weight: 700; }
+.daynav { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; margin-left: 6px; }
+.daynav span { color: var(--ink-3); }
+.grow { flex: 1; }
+
+/* health button (NEW) */
+.hb { height: 38px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.hb .sc { font-size: 16px; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--olive); min-width: 1.4em; text-align: center; }
+.hb[data-tone="warning"] .sc { color: var(--amber); }
+.hb[data-tone="danger"] .sc { color: var(--danger); }
+.hb[data-tone="none"] .sc { color: var(--ink-3); }
+.hb .w { color: var(--ink-2); font-weight: 600; }
+.count { height: 18px; min-width: 18px; padding: 0 5px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-family: var(--f-mono); font-size: 10px; font-weight: 700; color: var(--amber); background: var(--amber-bg); border: 1px solid var(--amber-line); }
+.hb.mark { box-shadow: 0 0 0 3px var(--hl); }
+
+/* bracket sketch */
+.canvas { border-radius: 10px; padding: 16px 20px; display: grid; grid-template-columns: repeat(4, 280px); gap: 40px; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 50px 50px; }
+.rt { font-family: var(--f-sans); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); text-align: center; margin-bottom: 10px; }
+.col { display: flex; flex-direction: column; gap: 14px; justify-content: space-around; }
+.bc { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px 10px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+.bc .wh { color: var(--ink-2); font-size: 12px; line-height: 1.45; }
+.bc .gl { display: flex; align-items: center; gap: 6px; }
+.chipn { font-family: var(--f-mono); font-size: 10px; font-weight: 700; letter-spacing: .05em; padding: 1px 8px; border-radius: 999px; color: var(--ink-2); background: var(--pill-bg); border: 1px solid var(--line-strong); text-transform: uppercase; }
+.bc .sd { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
+.bc .sd.slot { font-weight: 400; font-style: italic; color: var(--ink-2); }
+.bc .sd.lost { font-weight: 500; color: var(--ink-2); }
+.bc hr { border: 0; border-top: 1px solid var(--line); margin: 2px 0; width: 100%; }
+.champ { border: 1px dashed var(--line-strong); border-radius: 8px; padding: 14px; background: var(--card); font-weight: 700; }
+
+/* health row (today) */
+.hrow { background: var(--card); border: 1px solid var(--line); border-radius: 8px; min-height: 52px; padding: 8px 13px; display: flex; align-items: center; gap: 14px; }
+.hrow .sc { font-size: 16px; font-weight: 750; color: var(--olive); }
+.hrow .tt { font-weight: 650; }
+.hrow .cp { font-size: 12px; color: var(--ink-3); }
+.hrow .chev { margin-left: auto; color: var(--ink-3); }
+.hrow.mark { box-shadow: 0 0 0 3px var(--hl); }
+
+/* window */
+.dim { position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: flex-start; justify-content: center; padding-top: 70px; }
+.win { width: 640px; background: var(--card); border: 1px solid var(--win-edge); border-radius: 12px; color: var(--ink); display: flex; flex-direction: column; }
+.win .wh { display: flex; align-items: flex-start; gap: 10px; padding: 20px 24px 6px; }
+.win .wh .tx { flex: 1; }
+.win .wb { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
+.win h4 { font-family: var(--f-display); font-size: 20px; font-weight: 700; margin: 2px 0 0; letter-spacing: .01em; }
+.x { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; color: var(--ink-3); font-size: 18px; }
+.win .wbody { padding: 10px 24px 22px; display: flex; flex-direction: column; gap: 16px; }
+.sumline { display: flex; align-items: baseline; gap: 10px; }
+.sumline .big { font-size: 28px; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--amber); }
+.sumline .big small { font-size: 14px; color: var(--ink-3); font-weight: 600; }
+.sumline .lab { color: var(--ink-2); font-size: 14px; }
+.band { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.band > div { padding: 10px 12px; border-left: 1px solid var(--line); }
+.band > div:first-child { border-left: 0; }
+.band .k { font-size: 11px; font-family: var(--f-mono); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.band .v { font-size: 18px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.band .s { font-size: 12px; color: var(--ink-3); }
+.issues { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.iss { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.iss .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; background: var(--amber); }
+.iss .dot.err { background: var(--danger); }
+.iss b { font-weight: 650; }
+.iss .d { color: var(--ink-2); font-size: 13px; }
+.door { color: var(--olive); font-weight: 650; font-size: 13px; white-space: nowrap; }
+.more { font-size: 13px; color: var(--ink-3); }
+.expander { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px; padding: 4px 0; }
+.expander span { color: var(--ink-3); }
+.rare { border-top: 1px solid var(--line); padding-top: 12px; font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.rare .door { font-size: 13px; }
+
+/* phone */
+.phone { width: 390px; height: 760px; border-radius: 26px; border: 8px solid #2B2F35; overflow: hidden; background: var(--ground); color: var(--ink); position: relative; display: flex; flex-direction: column; font-size: 14px; }
+.ph-ev { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+.ph-ev .t { flex: 1; min-width: 0; }
+.ph-ev .evtitle { font-size: 16px; }
+.icon44 { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--pill-line); background: var(--pill-bg); display: inline-flex; align-items: center; justify-content: center; color: var(--ink-3); }
+.ph-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow: hidden; }
+.ph-head { display: flex; align-items: center; gap: 8px; }
+.ph-head h3 { margin: 0; font-size: 18px; font-weight: 700; flex: 1; }
+.ib { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: var(--ink-2); font-size: 15px; }
+.ib.lime { background: var(--lime); color: var(--lime-ink); border-color: transparent; font-size: 20px; }
+.ib.score { font-size: 16px; font-weight: 750; color: var(--amber); width: auto; padding: 0 9px; gap: 5px; }
+.ib.hicon { position: relative; color: var(--olive); }
+.ib.hicon[data-tone="warning"] { color: var(--amber); }
+.ib.hicon[data-tone="danger"] { color: var(--danger); }
+.count.badge { position: absolute; top: -6px; right: -6px; background: var(--card); box-shadow: inset 0 0 0 20px var(--amber-bg); }
+.rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.rules label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.rules .in { height: 34px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); display: flex; align-items: center; padding: 0 10px; font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.rules .in.ph { color: var(--ink-3); }
+.rulebar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rulebar .hint { flex: 1; min-width: 200px; font-size: 12px; color: var(--ink-3); }
+.btn.sm { height: 34px; font-size: 13px; }
+.btn.prim { background: var(--olive); color: var(--card); border-color: transparent; }
+.ph-bar { display: flex; gap: 8px; align-items: center; }
+.ph-sheet { position: absolute; inset: 0; background: var(--card); display: flex; flex-direction: column; }
+.ph-sheet .top { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.ph-sheet .top h4 { margin: 0; font-family: var(--f-display); font-size: 20px; font-weight: 700; }
+.ph-sheet .in { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.ph-sheet .band { grid-template-columns: repeat(2, 1fr); }
+.ph-sheet .band > div:nth-child(3) { border-left: 0; }
+.ph-sheet .band > div:nth-child(n+3) { border-top: 1px solid var(--line); }
+
+.asks { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 22px; }
+.asks h2 { margin: 0 0 10px; font-size: 19px; }
+.asks ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; max-width: 80ch; }
+.asks li b { color: var(--doc-ink); }
+.asks li { color: var(--doc-muted); }
+.rec { font-family: var(--f-mono); font-size: 10px; font-weight: 700; letter-spacing: .05em; color: var(--tag-new); border: 1px solid currentColor; border-radius: 4px; padding: 0 6px; margin-left: 4px; }
+@media (max-width: 640px) { .page { padding-inline: 16px; } header.doc h1 { font-size: 23px; } }
+</style>
+
+<div class="page">
+  <header class="doc">
+    <div class="eyebrow">Tournament admin · Schedule · drawing round 1 · 2026-10-19</div>
+    <h1>Schedule health moves from the foot of the page to a button in the header</h1>
+    <p>Today the health row sits under the whole day or the whole bracket, so a warning only shows if you scroll to the end. These drawings move it into the schedule's own header, beside Export, as a small button that opens the same panel in a window. The game-day board keeps its row. Team names, scores and issues are examples drawn from the UAT playoffs tournament.</p>
+  </header>
+
+  <!-- 1 · whole screen -->
+  <section class="spec">
+    <h2>1 · The whole screen, before and after</h2>
+    <p>Same screen, same bracket. The highlighted element is the only thing that moves: it leaves the foot, and the header gains one button.</p>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="tag unchanged">TODAY</span><b>Health is a full-width row under the bracket</b>, reached only by scrolling past every game.</p>
+        <div class="scroll"><div class="app">
+          <div class="rail"><i></i><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="main">
+            <div class="evhead"><div class="t"><div class="evbrow">UAT Plus Org · Oct 17–18, 2026 <span class="chip-danger">Game day</span></div><div class="evtitle">UAT Stage 3 Playoffs Only</div></div><span class="flip"><span class="g">⇄</span> Public site</span></div>
+            <div class="body">
+              <div class="phead"><span class="ic"></span><h3>Schedule</h3><div class="acts"><span class="btn">⤓ Export</span><span class="btn lime">+ Add game</span><span class="btn sq">?</span></div></div>
+              <div class="toolbar"><span class="viewpill">Bracket ▾</span><span class="daynav"><span>‹</span> Sunday, Oct 18 <span>›</span></span><span class="grow"></span><span class="btn">⌕ Search</span><span class="btn">Filter</span><span class="btn">Tools ⋯</span></div>
+              <div class="canvas" id="bracket-before"></div>
+              <div class="hrow mark"><span class="sc">98</span><span><div class="tt">Schedule health</div><div class="cp">Healthy · no issues</div></span><span class="chev">⌄</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <p class="cap"><span class="tag new">PROPOSED</span><b>Health is a button in the schedule's header</b>. The foot row is gone, so the bracket is the last thing on the page.</p>
+        <div class="scroll"><div class="app">
+          <div class="rail"><i></i><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="main">
+            <div class="evhead"><div class="t"><div class="evbrow">UAT Plus Org · Oct 17–18, 2026 <span class="chip-danger">Game day</span></div><div class="evtitle">UAT Stage 3 Playoffs Only</div></div><span class="flip"><span class="g">⇄</span> Public site</span></div>
+            <div class="body">
+              <div class="phead"><span class="ic"></span><h3>Schedule</h3><div class="acts"><span class="hb mark" data-tone="good"><span class="sc">98</span><span class="w">Schedule health</span></span><span class="btn">⤓ Export</span><span class="btn lime">+ Add game</span><span class="btn sq">?</span></div></div>
+              <div class="toolbar"><span class="viewpill">Bracket ▾</span><span class="daynav"><span>‹</span> Sunday, Oct 18 <span>›</span></span><span class="grow"></span><span class="btn">⌕ Search</span><span class="btn">Filter</span><span class="btn">Tools ⋯</span></div>
+              <div class="canvas" id="bracket-after"></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <p class="note">The schedule's header scrolls with the page; only the event header above it stays put. So the button is where you land, not always in view. Specimen 5 draws the always-in-view alternative and what it costs.</p>
+  </section>
+
+  <!-- 2 · states -->
+  <section class="spec">
+    <h2>2 · The button in each state <span class="tag new">NEW</span></h2>
+    <p>The score keeps the colours the row uses today: olive at 85 and up, amber from 70 to 84, red under 70. When there are issues, their count rides beside the words in the amber count pill the product already uses for a waiting count. A healthy schedule shows no count at all.</p>
+    <div class="row-specs">
+      <div><p class="cap"><b>Healthy</b> · 98, no issues</p><span class="hb" data-tone="good"><span class="sc">98</span><span class="w">Schedule health</span></span></div>
+      <div><p class="cap"><b>Review</b> · 78, 3 issues</p><span class="hb" data-tone="warning"><span class="sc">78</span><span class="w">Schedule health</span><span class="count">3</span></span></div>
+      <div><p class="cap"><b>Needs work</b> · 62, 5 issues</p><span class="hb" data-tone="danger"><span class="sc">62</span><span class="w">Schedule health</span><span class="count">5</span></span></div>
+      <div><p class="cap"><b>No timed schedule yet</b></p><span class="hb" data-tone="none"><span class="sc">—</span><span class="w">Schedule health</span></span></div>
+    </div>
+    <p class="note">The button is an ordinary outlined button at the admin's one control height, the same as Export. The caption the row shows today ("Review · 3 issues") moves into the window's first line (specimen 3) and into the button's spoken name ("Schedule health, 78 out of 100, 3 issues"). The score stays bare on the button, as on today's row; the window shows it with its scale. The issue count wears the amber pill under the club calendar's precedent: a count that is a status, not work waiting, may wear it. On a red score the pill stays amber. That is deliberate: the pill is a count, the colour of the score is the verdict.</p>
+  </section>
+
+  <!-- 3 · window -->
+  <section class="spec">
+    <h2>3 · Tapping it opens the panel in the product's standard window</h2>
+    <p>This is the panel that opens under the row today, in the 640-wide window the product uses for a form, over the dimmed schedule. Close it with the ×, Esc or the phone's Back. A tap outside does nothing, because the window holds the rules form, and a tap outside a form never closes it. Its content is the same. Two things move: the score and caption become its first line, and "Adjust the rules" moves from the top to the end of the body.</p>
+    <p class="cap"><span class="tag restyled">RESTYLED</span><b>Same panel, new container.</b> Review state, two issues shown, one more summarized. Example issues.</p>
+    <div class="scroll"><div class="app" style="min-height: 720px">
+      <div class="rail"><i></i><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="main">
+        <div class="evhead"><div class="t"><div class="evbrow">UAT Plus Org · Oct 17–18, 2026 <span class="chip-danger">Game day</span></div><div class="evtitle">UAT Stage 3 Playoffs Only</div></div><span class="flip"><span class="g">⇄</span> Public site</span></div>
+        <div class="body">
+          <div class="phead"><span class="ic"></span><h3>Schedule</h3><div class="acts"><span class="hb" data-tone="warning"><span class="sc">78</span><span class="w">Schedule health</span><span class="count">3</span></span><span class="btn">⤓ Export</span><span class="btn lime">+ Add game</span><span class="btn sq">?</span></div></div>
+          <div class="toolbar"><span class="viewpill">Bracket ▾</span><span class="daynav"><span>‹</span> Sunday, Oct 18 <span>›</span></span><span class="grow"></span><span class="btn">⌕ Search</span><span class="btn">Filter</span><span class="btn">Tools ⋯</span></div>
+        </div>
+      </div>
+      <div class="dim">
+        <div class="win" role="img" aria-label="The schedule health window">
+          <div class="wh"><div class="tx"><div class="wb">UAT Stage 3 Playoffs Only</div><h4>Schedule health</h4></div><span class="x">✕</span></div>
+          <div class="wbody">
+            <div class="sumline"><span class="big">78<small>/100</small></span><span class="lab">Review · 3 issues</span></div>
+            <div class="band">
+              <div><div class="k">Teams</div><div class="v">8</div><div class="s">in the bracket</div></div>
+              <div><div class="k">Back-to-back</div><div class="v">2</div><div class="s">Rest 45 min</div></div>
+              <div><div class="k">Max/day</div><div class="v">3</div><div class="s">1 venue move</div></div>
+              <div><div class="k">Warnings</div><div class="v">3</div><div class="s">to review</div></div>
+            </div>
+            <div class="issues">
+              <div class="iss"><span class="dot err"></span><span><b>Venue or facility overlaps</b><div class="d">Lions Diamond has two games at 12:30 p.m. on Sunday.</div></span><span class="door">Show them ›</span></div>
+              <div class="iss"><span class="dot"></span><span><b>Back-to-back games</b><div class="d">2 teams play twice in a row with less than 45 minutes' rest.</div></span><span></span></div>
+            </div>
+            <div class="more">1 more schedule health item detected.</div>
+            <div class="expander"><span>›</span> Team detail</div>
+            <div class="rare"><span>⚙</span><span>The score uses this tournament's rules.</span><span class="door">Adjust the rules</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <p class="note">"Show them ›" appears on a clash a game still to play is part of. It closes the window and filters the schedule to those games, the way the panel's links behave today. Opening "Adjust the rules" grows its fields in place at the end of the window, with its own Save rules and Discard. Leaving with unsaved rules asks first, the way every window does.</p>
+    <p class="cap"><span class="tag unchanged">UNCHANGED</span><b>The window's end with the rules open.</b> The same three fields, buttons and hint the panel has today, now at the end of the body instead of the top. Hidden on a locked tournament, as today.</p>
+    <div class="scroll"><div class="win" style="margin: 16px">
+      <div class="wbody">
+        <div class="expander"><span>›</span> Team detail</div>
+        <div class="rare"><span>⚙</span><span>The score uses this tournament's rules.</span><span class="door">Adjust the rules</span></div>
+        <div class="rules">
+          <label>Max games / day<span class="in">3</span></label>
+          <label>Min rest between games (min)<span class="in">45</span></label>
+          <label>Target games / team<span class="in ph">No target</span></label>
+        </div>
+        <div class="rulebar"><span class="hint">The score and warnings below update live as you adjust. Saved per tournament.</span><span class="btn sm">Restore defaults</span><span class="btn sm">Discard</span><span class="btn sm prim">Save rules</span></div>
+      </div>
+    </div></div>
+    <p class="note">One wording follows the move: the hint says "below" because the rules sit above the score today. At the end of the window it would read "The score and warnings above update live as you adjust."</p>
+  </section>
+
+  <!-- 4 · phone -->
+  <section class="spec">
+    <h2>4 · On a phone</h2>
+    <p>Header actions on a phone are icon-only, with the name spoken to screen readers. The button becomes a pulse icon in a 44-pixel square, coloured by the score's tone, with the issue count as a badge. The score itself is read in the window. A bare "78" beside a "3" would be two numbers with nothing to say which is which. The window fills the screen with a back arrow, as every form window does on a phone.</p>
+    <div class="row-specs">
+      <div>
+        <p class="cap"><span class="tag new">NEW</span><b>The header, 390 wide</b></p>
+        <div class="phone">
+          <div class="ph-ev"><div class="t"><div class="evbrow">Oct 17–18 <span class="chip-danger">Game day</span></div><div class="evtitle">UAT Stage 3 Playoffs Only</div></div><span class="icon44">⇄</span></div>
+          <div class="ph-body">
+            <div class="ph-head"><h3>Schedule</h3><span class="ib hicon" data-tone="warning" aria-label="Schedule health, 78 out of 100, 3 issues"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg><span class="count badge">3</span></span><span class="ib">⤓</span><span class="ib lime">+</span><span class="ib">?</span></div>
+            <div class="ph-bar"><span class="viewpill">Bracket ▾</span><span class="daynav"><span>‹</span> Sun, Oct 18 <span>›</span></span></div>
+            <div class="bc"><div class="wh">Sun 9:00 a.m. · Maple Field 1<div class="gl">Quarterfinal 1</div></div><div class="sd lost"><span>Storm U13 Boys</span><span>2</span></div><hr><div class="sd"><span>Aces U13 Boys ✓</span><span>7</span></div></div>
+            <div class="bc"><div class="wh">Sun 9:00 a.m. · Lions Diamond<div class="gl">Quarterfinal 2 <span class="chipn">Needs a score</span></div></div><div class="sd"><span>Freeze U13 Boys</span><span></span></div><hr><div class="sd"><span>Falcons U13 Boys</span><span></span></div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="cap"><span class="tag restyled">RESTYLED</span><b>The window, full screen</b></p>
+        <div class="phone">
+          <div class="ph-sheet">
+            <div class="top"><span class="x">←</span><h4>Schedule health</h4></div>
+            <div class="in">
+              <div class="sumline"><span class="big">78<small>/100</small></span><span class="lab">Review · 3 issues</span></div>
+              <div class="band">
+                <div><div class="k">Teams</div><div class="v">8</div></div>
+                <div><div class="k">Back-to-back</div><div class="v">2</div></div>
+                <div><div class="k">Max/day</div><div class="v">3</div></div>
+                <div><div class="k">Warnings</div><div class="v">3</div></div>
+              </div>
+              <div class="issues">
+                <div class="iss"><span class="dot err"></span><span><b>Venue or facility overlaps</b><div class="d">Lions Diamond has two games at 12:30 p.m. on Sunday.</div><div class="door" style="margin-top:4px">Show them ›</div></span><span></span></div>
+                <div class="iss"><span class="dot"></span><span><b>Back-to-back games</b><div class="d">2 teams play twice in a row with less than 45 minutes' rest.</div></span><span></span></div>
+              </div>
+              <div class="more">1 more schedule health item detected.</div>
+              <div class="expander"><span>›</span> Team detail</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · dashboard -->
+  <section class="spec">
+    <h2>6 · The dashboard reads the same number and opens the same window</h2>
+    <p><b>Why they differ today.</b> The dashboard works out its own health score and leaves playoff games out. The schedule counts every game. On a playoffs-only tournament the dashboard finds no games at all and says "No timed schedule generated yet", while the schedule scores the bracket. On a pool-and-playoff tournament the two give different numbers. The dashboard also leaves out the venues, so its venue-move figures can differ too. And it opens its own copy of the panel, with different tiles and only the top issue.</p>
+    <p><b>The fix.</b> One calculation and one window. The dashboard counts the same games with the same rules and shows the same number as the schedule. Tapping its health row opens the same window as the schedule's button, specimen 3. The row stays a card on the board, where you can still hide or reorder it. It only stops opening in place.</p>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="tag unchanged">TODAY</span><b>Game-day board</b>: "—" and "No timed schedule generated yet" beside a bracket of seven games. It opens its own panel in place.</p>
+        <div class="row-specs"><div style="width:420px;max-width:100%">
+          <div class="hrow mark"><span class="sc" style="color:var(--ink-3)">—</span><span><div class="tt">Schedule health</div><div class="cp">No timed schedule generated yet.</div></span><span class="chev">⌄</span></div>
+        </div></div>
+      </div>
+      <div>
+        <p class="cap"><span class="tag restyled">PROPOSED</span><b>Game-day board</b>: the schedule's number and caption. The chevron turns from "opens here" to "opens a window".</p>
+        <div class="row-specs"><div style="width:420px;max-width:100%">
+          <div class="hrow"><span class="sc">98</span><span><div class="tt">Schedule health</div><div class="cp">Healthy · no issues</div></span><span class="chev">›</span></div>
+        </div></div>
+      </div>
+      <div>
+        <p class="cap"><span class="tag restyled">PROPOSED</span><b>Before the event</b>: the board's Schedule card counts playoff games too. Today it says there are no times yet on a playoffs-only tournament. It opens the same window instead of jumping to the Schedule page.</p>
+        <div class="row-specs"><div style="width:420px;max-width:100%">
+          <div class="hrow"><span><div class="tt">7 of 7 games timed</div><div class="cp">Healthy · no issues</div></span><span class="chev">›</span></div>
+        </div></div>
+      </div>
+    </div>
+    <p class="note">Whatever you rule for the window (A2, A3) applies here too, because it is the same window. The number fix doesn't wait on the design: it is a bug, and it can ship on its own first.</p>
+  </section>
+
+  <!-- demo + edges -->
+  <section class="spec">
+    <h2>What moves with it</h2>
+    <p><b>The demo.</b> The public demo's tour has a step that rings the health row and asks a visitor to drag a game onto a busy slot and "watch this score react". With the panel in a window, the schedule is dimmed and can't be dragged while it is open. The button fixes that rather than breaking it: its score sits in the header and changes as the game is dragged. The tour's ring moves to the button, the "Try it" line moves out of the window into that tour step, and "Put it back" goes with it. The tour's words are for the next demo pass.</p>
+    <p><b>While you edit a bracket</b> the button hides, as the row does today. <b>On a locked tournament</b> the window opens but "Adjust the rules" is not there, as today.</p>
+  </section>
+
+  <!-- 5 · alternative -->
+  <section class="spec">
+    <h2>5 · The alternative: in the event header, always in view</h2>
+    <p>The only header that stays put while you scroll is the event header, beside Public site. Putting health there keeps it in view down the longest day. The cost is that this header is on every tournament page (Overview, Teams, Results and the rest), so health would sit beside Public site on all of them. And the Overview's board already has its own health row, so that page would show it twice.</p>
+    <p class="cap"><span class="tag new">ALTERNATIVE</span><b>Health beside Public site</b> (every tournament page)</p>
+    <div class="scroll"><div class="app">
+      <div class="rail"><i></i><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="main">
+        <div class="evhead"><div class="t"><div class="evbrow">UAT Plus Org · Oct 17–18, 2026 <span class="chip-danger">Game day</span></div><div class="evtitle">UAT Stage 3 Playoffs Only</div></div><span class="hb mark" data-tone="warning" style="height:28px;border-radius:999px;font-size:12px"><span class="sc" style="font-size:13px">78</span><span class="w">Schedule health</span><span class="count">3</span></span><span class="flip"><span class="g">⇄</span> Public site</span></div>
+        <div class="body">
+          <div class="phead"><span class="ic"></span><h3>Schedule</h3><div class="acts"><span class="btn">⤓ Export</span><span class="btn lime">+ Add game</span><span class="btn sq">?</span></div></div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="asks">
+    <h2>Asks · all seven ruled as recommended (owner, 2026-10-19)</h2>
+    <p class="note" style="margin-bottom:10px">The number fix (A7) is committed on its own. The button, the window and the dashboard's window are building next.</p>
+    <ol>
+      <li><b>A1 · Where the button lives.</b> In the schedule's own header beside Export (specimens 1–4) <span class="rec">RECOMMENDED</span>, or in the event header on every tournament page (specimen 5). I recommend the schedule header: health belongs to the schedule, and the clash labels on each game already warn you while you scroll.</li>
+      <li><b>A2 · The container.</b> The product's standard 640-wide window <span class="rec">RECOMMENDED</span>. The written window rules cover questions and forms and have no side drawer. A drawer would be a new shape for this one panel.</li>
+      <li><b>A3 · "Adjust the rules" moves to the end of the window.</b> It is the rare door, and a rare door ends the body. Today it sits at the top of the panel <span class="rec">RECOMMENDED</span>.</li>
+      <li><b>⚠ Correction, after the ruling:</b> the house league schedule has no health score and no health row. It shows only a clash warning box, from its own check. A4 below rested on a wrong fact and is held for a fresh call.</li>
+      <li><b>A4 · The house league schedule follows.</b> It wears the same health row at its foot and would get the same button, so the two schedules stay the same <span class="rec">RECOMMENDED</span>.</li>
+      <li><b>A5 · The dashboard keeps its row but shares everything else</b> (specimen 6) <span class="rec">RECOMMENDED</span>. It shows the same number as the schedule and opens the same window, before the event and on game day. The row stays because the board is made of cards you can hide and reorder. A header button there would be a second way to show the same thing.</li>
+      <li><b>A7 · Ship the number fix first, on its own</b> <span class="rec">RECOMMENDED</span>. The dashboard is wrong today on any tournament with playoff games. That doesn't need the button or the window to be ruled.</li>
+      <li><b>A6 · On a phone, a pulse icon with the count as a badge</b> <span class="rec">RECOMMENDED</span>, or the bare score with its count. The icon keeps the phone header's icon-only rule; the score would be the one header action that is a number.</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function () {
+  var cards = {
+    qf: [
+      ['Sun 9:00 a.m. · Maple Field 1', 'Quarterfinal 1', '', [['Storm U13 Boys','2','lost'],['Aces U13 Boys ✓','7','']]],
+      ['Sun 9:00 a.m. · Lions Diamond', 'Quarterfinal 2', 'Needs a score', [['Freeze U13 Boys','',''],['Falcons U13 Boys','','']]],
+      ['Sun 9:00 a.m. · Maple Field 2', 'Quarterfinal 3', 'Needs a score', [['Ravens U13 Boys','',''],['Comets U13 Boys','','']]]
+    ],
+    sf: [
+      ['Sun 12:30 p.m. · Lions Diamond', 'Semifinal 1', 'Needs a score', [['Aces U13 Boys','',''],['Quarterfinal 2 winner','','slot']]],
+      ['Sun 12:30 p.m. · Maple Field 1', 'Semifinal 2', 'Needs a score', [['Quarterfinal 3 winner','','slot'],['Quarterfinal 4 winner','','slot']]]
+    ],
+    f: [
+      ['Sun 5:45 p.m. · Lions Diamond', 'Final', 'Needs a score', [['Semifinal 1 winner','','slot'],['Semifinal 2 winner','','slot']]]
+    ]
+  };
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function card(c) {
+    var chip = c[2] ? ' <span class="chipn">' + esc(c[2]) + '</span>' : '';
+    var sides = c[3].map(function (s) { return '<div class="sd ' + s[2] + '"><span>' + esc(s[0]) + '</span><span>' + esc(s[1]) + '</span></div>'; }).join('<hr>');
+    return '<div class="bc"><div class="wh">' + esc(c[0]) + '<div class="gl">' + esc(c[1]) + chip + '</div></div>' + sides + '</div>';
+  }
+  function col(title, list) { return '<div><div class="rt">' + title + '</div><div class="col">' + list.map(card).join('') + '</div></div>'; }
+  var html = col('Quarterfinals', cards.qf) + col('Semifinals', cards.sf) + col('Finals', cards.f) +
+    '<div><div class="rt">Champion</div><div class="col"><div class="champ">Decided by the final</div></div></div>';
+  ['bracket-before', 'bracket-after'].forEach(function (id) { var el = document.getElementById(id); if (el) el.innerHTML = html; });
+})();
+</script>
