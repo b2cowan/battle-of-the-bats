@@ -127,11 +127,11 @@
      cannot separate these two roles at all; case can. Navigation now reads as sentence-case body
      text and column headings stay uppercase support — different KINDS of thing, no competition.
 
-     ⚠ The tab LABELS are still Title Case as their callers write them ("Budget Plan", "Playing
-     Time") while the tryout flow writes sentence case ("Tryout day", "Build team"). The uppercase
-     transform was hiding that split. Normalising it is a COPY change that also reaches foot
-     links, rail links and help content, so it is deliberately NOT done here — half of it would
-     leave one thing wearing two names, which the spelling ruling forbids. */
+     ✓ The tab LABELS are sentence case as their callers write them (owner, 2026-10-18): the
+     uppercase transform had been hiding a split between Title Case ("Budget Plan", "Player Dues")
+     and the tryout flow's sentence case ("Tryout day"). It was settled as the COPY change it is —
+     the tab and every foot link, rail row, export and help article that names it, in one sweep —
+     and `check:spelling` holds it. "Budget vs. Actual" is the one label that keeps a capital. */
   font-family: var(--font-sans);
   font-size: var(--type-body);
   font-weight: 600;

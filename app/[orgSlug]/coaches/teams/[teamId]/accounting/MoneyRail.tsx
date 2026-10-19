@@ -67,12 +67,12 @@ const danger = (text: string) => <span className={kit.railStatDanger}>{text}</sp
 const ROWS: Record<RowKey, { dot: CoachRailDot; name: string; stat: (s: MoneySummary) => ReactNode }> = {
   budget: {
     dot: 'plum',
-    name: 'Season Budget Plan',
+    name: 'Budget',
     stat: s => (s.budget.effectiveTotal > 0 ? <><b>{fmt(s.budget.effectiveTotal)}</b> set</> : 'Not started'),
   },
   dues: {
     dot: 'good',
-    name: 'Player Dues',
+    name: 'Player dues',
     // The alert rides ALONGSIDE the money, never instead of it — the drill-in cards this
     // replaced showed the amount and the overdue chip together, and a row that swaps
     // "$400 of $900" for a bare "2 overdue" answers a question nobody asked while

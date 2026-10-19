@@ -33,7 +33,7 @@ export function RecordFacts({ rows }: { rows: ReadonlyArray<RecordFact> }) {
 
 /**
  * The body of a ledger line's READ window: the facts, then the one sentence saying where the line is
- * changed ("Recorded on Player Dues. Change it there, and the Ledger follows."). The door to that
+ * changed ("Recorded on Player dues. Change it there, and the Ledger follows."). The door to that
  * place is the window's foot button — each portal's own window draws it.
  */
 export function LedgerLineRead({ lead, facts, where }: {

@@ -39,9 +39,10 @@ function walk(dir: string): string[] {
   });
 }
 
-describe('1 · Teams is the second tab and lights on a team’s account', () => {
-  it('second, and only where the club runs rep teams', () => {
-    assert.deepEqual(accountingTabs(BASE, REP).map(t => t.id).slice(0, 2), ['overview', 'teams']);
+describe('1 · Teams is near the front and lights on a team’s account', () => {
+  // Third since 2026-10-18 (Budget second, one row shape with the coach's Money tabs); second from 2026-10-16.
+  it('third, after the Budget, and only where the club runs rep teams', () => {
+    assert.deepEqual(accountingTabs(BASE, REP).map(t => t.id).slice(0, 3), ['overview', 'budget', 'teams']);
     assert.ok(!accountingTabs(BASE, { runsRepTeams: false }).some(t => t.id === 'teams'));
   });
   it('lit on the list and on a team; nothing else takes a prefix', () => {

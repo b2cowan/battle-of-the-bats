@@ -13,7 +13,7 @@ import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import { resolveClubListExtras } from '@/lib/coach-club-book-server';
 
 /**
- * Opponent Scouting Book — the grouped book list (owner-approved plan
+ * Opponent Scouting book — the grouped book list (owner-approved plan
  * COACH_OPPONENT_SCOUTING_BOOK_PLAN.md, ratified 2026-08-04).
  *
  * ⚠ INSTRUMENT, not record: reads game events from EVERY season (team-scoped, the
@@ -31,7 +31,7 @@ export const GET = withObservability(async (_req: Request,
    * WEAKER gate than the pooled read: the schedule's per-row record chip (win/loss vs an
    * opponent — the same fact already on that row) reads this list too, for any schedule
    * holder. Only a viewer with the full `scoutingBook` grant gets the pooled fields below —
-   * the Insights hub's Scouting Book tab is the only OTHER caller, and its own tab gate
+   * the Insights hub's Scouting book tab is the only OTHER caller, and its own tab gate
    * already keeps a reduced viewer from reaching it.
    */
   const denied = denyUnless(canLogScoutingObservation(assignment.capabilities), 'You do not have access to the scouting book.');

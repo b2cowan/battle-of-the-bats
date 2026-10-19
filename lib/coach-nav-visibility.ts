@@ -205,14 +205,14 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      *
      * ⚠ Widened 2026-09-11 to also admit `canViewScoutingBook`, matching the page's own front-door
      * gate: a schedule-holder with the pooled scouting grant now has a real tab waiting inside
-     * (Scouting Book), so the nav entry that opens the hub must not stay hidden from exactly the
+     * (Scouting book), so the nav entry that opens the hub must not stay hidden from exactly the
      * person the deep link from the schedule already lets in.
      */
     case 'Insights':      return hasNonMoneyRecordAccess(caps) || canViewScoutingBook(caps);
     // Player Development (3B): the hub is useful with EITHER goals (notes) or measurables, and both
     // ride record access since A1; all writes stay head-coach-only server-side (D1).
     /**
-     * ⚠⚠ **RENAMED TO "Skills & Goals" (owner ruling 5, 2026-08-18) — AND `'Development'` STAYS AS A
+     * ⚠⚠ **RENAMED TO "Skills & goals" (owner ruling 5, 2026-08-18) — AND `'Development'` STAYS AS A
      * FALLTHROUGH, WHICH IS THE LOAD-BEARING HALF.** This switch is keyed by DISPLAY LABEL over
      * `default: return true`, so any surface that still asks by the old name — a test, the portal
      * tour, a future caller a rename misses — would fall through and hand an ungranted assistant the
@@ -226,11 +226,14 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * ⚠ SINCE 2026-09-14 (re-evaluation stage 0, owner ruling D5) THE DOOR IS THE DEVELOPMENT
      * GRANT, NOT RECORD ACCESS. "Either they can see and update everything in there or they
      * cannot" — the read-only face this door used to open (kept after the Phase 1 walk, §178) is
-     * gone with it. What is NOT behind this switch: the player's own Skills & Goals tab on the
+     * gone with it. What is NOT behind this switch: the player's own Skills & goals tab on the
      * roster page and the Insights → Development reports, which keep their own duties until the
      * re-evaluation's station 9 rules on them.
      */
-    case 'Skills & Goals':
+    case 'Skills & goals':
+    // The Title Case label it wore until 2026-10-18 (tab names went sentence case) — kept for the
+    // same reason as 'Development': a caller that still asks by it must not fall through to `true`.
+    case 'Skills & Goals': // spelling-ok
     case 'Development':   return canWriteDevelopment(caps);
     case 'Documents':     return caps.documents !== 'off';
     // A head coach, or anyone holding the Manage staff grant (owner ruling 2026-09-13) — the

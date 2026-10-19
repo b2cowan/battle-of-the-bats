@@ -44,7 +44,7 @@ export const GET = withObservability(async (_req: Request,
   if ('error' in resolved) return resolved.error;
   const { programYear, capabilities, isReadOnly } = resolved;
 
-  // The sessions list is Skills & Goals' own room: it opens with the Development grant only
+  // The sessions list is Skills & goals' own room: it opens with the Development grant only
   // (stage 0, D5, 2026-09-14) — the read-only listing record access used to get is gone with the door.
   const denied = denyUnless(canWriteDevelopment(capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;

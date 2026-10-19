@@ -3,7 +3,7 @@
  * **THE COACH KIT IS THE ONE HOME FOR A DASHBOARD CARD, A LIST TOOLBAR, A RAIL ROW AND THE PHONE
  * LINE** (owner rulings A–H, 2026-09-16; COACH_SHARED_STYLE_KIT_PLAN.md §8).
  *
- * Why a guard and not a comment: Skills & Goals' Overview was given Money's dashboard grammar by
+ * Why a guard and not a comment: Skills & goals' Overview was given Money's dashboard grammar by
  * copying the stylesheet — with a docblock saying "a shared kit is the right extraction if a third
  * Overview appears" — and it had drifted in three places three days later. A kit nothing can find
  * drifts by Christmas. This scan is the "no thirtieth branch" pattern of

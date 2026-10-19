@@ -74,7 +74,7 @@ export function duesRemainingByInstallment(input: {
  * this build, caught by the UAT fixture rather than by reading. Credits are applied to what is
  * still OUTSTANDING, so a family who has already paid every bill in cash has no bill left for a
  * write-off to cancel: the walk finds nothing, and a total derived from it would say $0.00 while
- * the Player Dues band said $17.00. **Two figures for one concept, on the two screens this whole
+ * the Player dues band said $17.00. **Two figures for one concept, on the two screens this whole
  * project exists to reconcile.** The authoritative total is the band's (standing write-offs, in
  * `lib/coach-dues-actual.ts`); what this function contributes is WHERE those dollars fall.
  *

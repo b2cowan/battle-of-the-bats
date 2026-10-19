@@ -454,14 +454,14 @@ export function resolveCoachingPair(caps: CoachCapabilities): TileKey[] {
   // Playing time reads the season's saved lineups; without that access it falls back to
   // Development, then to a shorter board. A documented chain, never a ranked list.
   if (caps.lineups) pair.push('playingTime');
-  // The tile is a DOOR to Skills & Goals, so it needs the door (the Development grant, since the
+  // The tile is a DOOR to Skills & goals, so it needs the door (the Development grant, since the
   // re-evaluation's stage 0, D5, 2026-09-14 — before that the section opened on any record duty,
   // and this tile was gated on notes alone; /review caught the notes-only assistant being handed
   // a live goal count that landed on the not-granted block). AND its value is a GOAL COUNT, and
   // goals are notes-gated — the route redacts them without that grant, so a granted coach without
   // notes would read a confident "No goals yet". A tile is only offered when its number is real
   // AND its door opens.
-  else if (isCoachNavItemVisible(caps, 'Skills & Goals') && canViewDevelopmentGoals(caps)) pair.push('development');
+  else if (isCoachNavItemVisible(caps, 'Skills & goals') && canViewDevelopmentGoals(caps)) pair.push('development');
   return pair;
 }
 

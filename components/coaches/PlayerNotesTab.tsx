@@ -29,7 +29,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *      came from and who wrote it, the chip opening its source. Written once, read here. A general
  *      note is edited or removed on this tab's own form; an OBSERVATION opens in its sheet from its
  *      row — this tab is its home (re-evaluation stage 3, E2, 2026-09-15; the Observations view on
- *      Skills & Goals is gone) — and the sheet carries Remove; a moment and a review are edited
+ *      Skills & goals is gone) — and the sheet carries Remove; a moment and a review are edited
  *      where they were written.
  *
  * Who can read it: coaches with Internal notes, the same as goals (the route 403s the rest and
@@ -151,7 +151,7 @@ export default function PlayerNotesTab({
     setObsErr('');
     setObs(record);
   }
-  // The save and the remove are the host module's (shared with the Skills & Goals tab); the timeline
+  // The save and the remove are the host module's (shared with the Skills & goals tab); the timeline
   // is re-read after either because the server shapes its entries (labels, month groups) — the same
   // reason the general note's form reloads.
   async function submitObservation(v: { measurableTypeId: string; observedOn: string; note: string; descriptor: string; goalId: string | null }) {
@@ -293,7 +293,7 @@ export default function PlayerNotesTab({
           <CoachPageSection sectionId="notes" title="Notes" meta={data.entries.length > 0 ? `${data.entries.length} ${data.entries.length === 1 ? 'entry' : 'entries'}` : undefined}>
             {months.length === 0 ? (
               <p className={styles.detailPlaceholder} style={{ margin: 0 }}>
-                Nothing written about {first} yet. A line from the bench on game day, an observation or a goal review on Skills &amp; Goals, or a note here — they all read here.
+                Nothing written about {first} yet. A line from the bench on game day, an observation or a goal review on Skills &amp; goals, or a note here — they all read here.
               </p>
             ) : months.map(m => (
               <div key={m.month} className={styles.notesMonthGroup}>

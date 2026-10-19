@@ -878,7 +878,7 @@ console.log('\nMid-season — Riverdale Ridge 12U');
          families the guided tour narrates by name. An overdue club instalment on a neighbouring tab
          competes with it for the prospect's attention. */
       check(!rows2.some(i => !i.paid_at && i.due_date < today),
-        'and NOTHING here is overdue — the demo keeps its one red thing on Player Dues, where the tour points');
+        'and NOTHING here is overdue — the demo keeps its one red thing on Player dues, where the tour points');
     }
 
     const { data: reqs } = await db.from('rep_team_payment_requests')

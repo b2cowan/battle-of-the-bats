@@ -95,11 +95,11 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
     // Permanent, no longer conditional — see the Explore note above.
     { label: 'Tournaments', href: '/tournaments', icon: Trophy },
   ] },
-  /** New group. Skills & Goals and Insights are both "how are we doing?" surfaces read on a quiet
+  /** New group. Skills & goals and Insights are both "how are we doing?" surfaces read on a quiet
    *  evening — the workbench is closer to Insights than Schedule ever was. Attendance is INSIDE
    *  Insights (a tab of it since the reports portal, 2026-08-18) rather than being an item here.
    *
-   *  ⚠ **"Development" → "Skills & Goals"** (owner ruling 5, 2026-08-18). The route is unchanged —
+   *  ⚠ **"Development" → "Skills & goals"** (owner ruling 5, 2026-08-18). The route is unchanged —
    *  renamed labels keep their old routes, house precedent. Two doors were called Development: this
    *  workbench, and the coverage REPORT inside Insights that measures how well it is being used. A
    *  coach who read "no active focus" on the report went looking for "Development" and could land
@@ -107,7 +107,7 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
    *  ⚠ The capability gate is keyed by LABEL — `isCoachNavItemVisible` has a case for the new name
    *  AND keeps the old one as a fallthrough. Renaming without that hands the door to a helper. */
   { label: 'Progress', items: [
-    { label: 'Skills & Goals', href: '/development', icon: TrendingUp },
+    { label: 'Skills & goals', href: '/development', icon: TrendingUp },
     { label: 'Insights',       href: '/history',     icon: BarChart3 },
   ] },
   { label: 'Money', items: [

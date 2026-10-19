@@ -187,7 +187,7 @@ export async function resolveArrangements(args: {
     const fam = schedules.get(share.playerId);
     const who = args.familyName?.(share.playerId) ?? 'That family';
     if (!fam || fam.installments.length === 0) {
-      return { error: `${who} has no dues schedule yet — set it up on Player Dues before naming payments.` };
+      return { error: `${who} has no dues schedule yet — set it up on Player dues before naming payments.` };
     }
     const byN = new Map(fam.installments.map(i => [i.n, i]));
     const missing = positions.filter(n => !byN.has(n));

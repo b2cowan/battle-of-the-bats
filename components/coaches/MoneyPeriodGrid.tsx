@@ -177,7 +177,7 @@ export function PeriodGrid({
   /**
    * The CLUB's lead revenue row (Club Tier Stage 3b): "From the teams", read from the allocations the
    * club billed, spread by its installments' due dates — the view's `installments` row, renamed, with no
-   * tag, opening the allocations it adds up rather than Player Dues. Absent = the coach's Player
+   * tag, opening the allocations it adds up rather than Player dues. Absent = the coach's Player
    * installments row exactly as it was.
    */
   leadRow?: { name: string; title: string; onOpen: () => void };
@@ -190,10 +190,10 @@ export function PeriodGrid({
   /** One more sentence at the foot of the notes (the club's: how From the teams spreads). */
   closingNote?: ReactNode;
   /**
-   * Where the Player installments row goes: the Player Dues tab — the schedule's own room (owner
+   * Where the Player installments row goes: the Player dues tab — the schedule's own room (owner
    * ruling F, 2026-09-13, mockup round 2 option A). ⚠ NOT the Set-dues sheet. A schedule that has
    * gone out to families stays all year; the whole-roster re-run is the rare, disruptive act, and it
-   * lives on Player Dues with its own warning — available, never the plan's default tap. A READ
+   * lives on Player dues with its own warning — available, never the plan's default tap. A READ
    * door, so it is offered to every coach who can read money.
    */
   duesHref: string;
@@ -351,7 +351,7 @@ export function PeriodGrid({
    * whenever a schedule is lowered after its instalments were generated — abs()ed, the overshoot
    * printed as a positive and the row stopped summing to its own Total).
    *
-   * The installments row's control is a LINK to Player Dues (owner ruling F, 2026-09-13) — the
+   * The installments row's control is a LINK to Player dues (owner ruling F, 2026-09-13) — the
    * same shape a line row uses one level down: the row is the pointer shortcut, the link is the
    * keyboard's. The trial row carries no door: there is no record to open.
    */
@@ -369,7 +369,7 @@ export function PeriodGrid({
             href={href}
             className={shared.moneyGridToggle}
             onClick={e => { e.stopPropagation(); if (window.getSelection()?.toString()) e.preventDefault(); }}
-            title="Open Player Dues"
+            title="Open Player dues"
           >
             <span className={shared.moneyGridChevronSpacer} aria-hidden />
             <span className={shared.wrap640}>{name}</span>

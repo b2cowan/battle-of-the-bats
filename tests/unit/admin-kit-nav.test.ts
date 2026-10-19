@@ -153,10 +153,11 @@ describe('the admin kit nav — where you are', () => {
     assert.deepEqual(acct.pages, [], 'no rail pages under Accounting — and so no phone "In Accounting" row');
     const [rep] = kitPrograms({ base: BASE, canUse: c => c === 'module_rep_teams' });
     assert.ok(!rep.pages.some(p => /allocations|payment-requests/.test(p.href)), 'the two money pages left Rep Teams');
-    // The tabs: the loop's three only where the club runs rep teams — Teams SECOND (Club Accounting · Teams, Ask 1).
+    // The tabs: the loop's three only where the club runs rep teams — Budget SECOND, Teams THIRD (one row shape with the
+    // coach's Money tabs, owner 2026-10-18).
     assert.deepEqual(accountingTabs(BASE, { runsRepTeams: true }).map(t => t.label),
-      ['Overview', 'Teams', 'Ledger', 'Allocations', 'Payment requests', 'Budget', 'Budget vs. Actual']);
-    assert.deepEqual(accountingTabs(BASE, { runsRepTeams: false }).map(t => t.id), ['overview', 'ledger', 'budget', 'budget-vs-actual']);
+      ['Overview', 'Budget', 'Teams', 'Ledger', 'Allocations', 'Payment requests', 'Budget vs. Actual']);
+    assert.deepEqual(accountingTabs(BASE, { runsRepTeams: false }).map(t => t.id), ['overview', 'budget', 'ledger', 'budget-vs-actual']);
     // A tab lights on its own address; a page one level down is no tab (back arrow, no tab row).
     const REP = { runsRepTeams: true };
     assert.equal(accountingTabFor(`${BASE}/accounting`, BASE, REP), 'overview');

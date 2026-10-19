@@ -73,7 +73,7 @@ const AttendancePanel = dynamic(() => import('./attendance/panel').then(m => m.A
 const PlayingTimePanel = dynamic(() => import('./playing-time/panel').then(m => m.PlayingTimePanel), { ssr: false });
 const DevelopmentPanel = dynamic(() => import('./development/panel').then(m => m.DevelopmentPanel), { ssr: false });
 const AwardsPanel = dynamic(() => import('./awards/panel').then(m => m.AwardsPanel), { ssr: false });
-/* ⚠ The folder is `opponents`; the tab is `scouting`. The owner named the report "Scouting Book"
+/* ⚠ The folder is `opponents`; the tab is `scouting`. The owner named the report "Scouting book"
    over "Opponents", and its drill-in book keeps `history/opponents/[opponentKey]`. */
 const ScoutingPanel = dynamic(() => import('./opponents/panel').then(m => m.ScoutingPanel), { ssr: false });
 
@@ -109,7 +109,7 @@ const PANELS: { id: CoachInsightsSection; Component: ComponentType<PanelProps> }
  * topics. The array the drawer wants is built from `helpAnchor` at the single call site.
  *
  * ⚠ Why help lives here at all: each report PAGE used to carry its own "?" pointing at its own guide
- * section. A portal has one header, so without this the Scouting Book and Attendance would have
+ * section. A portal has one header, so without this the Scouting book and Attendance would have
  * silently inherited the generic Insights guide and their two written topics would have become
  * unreachable from the screens they describe.
  *
@@ -130,12 +130,12 @@ const TABS: readonly TabDef[] = [
   { id: 'playing-time', label: 'Playing time', gate: c => c.lineups, helpLabel: 'Insights', helpAnchor: 'premium-insights' },
   { id: 'development', label: 'Development', gate: canViewMeasurables, helpLabel: 'Development', helpAnchor: 'premium-development' },
   { id: 'awards', label: 'Awards', gate: canManageAwards, helpLabel: 'Awards', helpAnchor: 'recipe-game-day-details' },
-  /* ⚠ "Scouting Book", not "Opponents" — the owner picked the name for what it IS over the name for
+  /* ⚠ "Scouting book", not "Opponents" — the owner picked the name for what it IS over the name for
      what it lists (mockup session 2026-08-18). Gated on the `scoutingBook` grant (narrowed
      2026-09-11), not record access: the book is open-contribution and Helpers read it too by
      default (owner, 2026-08-04) — a head coach may since turn pooled reading off per person while
      leaving logging alone, and this tab follows that same grant, not bare `schedule`. */
-  { id: 'scouting', label: 'Scouting Book', gate: canViewScoutingBook, helpLabel: 'Scouting Book', helpAnchor: 'premium-scouting' },
+  { id: 'scouting', label: 'Scouting book', gate: canViewScoutingBook, helpLabel: 'Scouting book', helpAnchor: 'premium-scouting' },
 ];
 
 
@@ -413,7 +413,7 @@ export default function CoachesInsightsPage({
    * the game console's review mode. Rendered after every hook above; the fetches skip with it.
    *
    * ⚠ Widened 2026-09-11 to also admit `canViewScoutingBook` — a schedule-holder with the pooled
-   * scouting grant now has a real reason to be here (the Scouting Book tab), so the front door
+   * scouting grant now has a real reason to be here (the Scouting book tab), so the front door
    * must not be stricter than the one room behind it that already lets them in. Without this, the
    * schedule drawer's "Everything we know" / "All opponents" links sent that person here only to
    * be turned away (§168 walk finding, 2026-09-11) — a dead end wearing a back button.
@@ -432,7 +432,7 @@ export default function CoachesInsightsPage({
           section="Insights"
           plural
           what="The season’s reports — results, attendance, playing time, development and awards — read off the games and practices the team has recorded."
-          blocker="Insights opens for anyone with a player duty — attendance, lineups, notes, documents, tryouts or Scouting Book access. Ask your head coach to grant one."
+          blocker="Insights opens for anyone with a player duty — attendance, lineups, notes, documents, tryouts or Scouting book access. Ask your head coach to grant one."
         />
       </div>
     );

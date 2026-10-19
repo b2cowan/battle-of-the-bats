@@ -710,7 +710,7 @@ export default function SeasonEndPage({
                         <EventTypeMark type={COMPETITION_MARK[r.key]} />
                         <span className={styles.seasonSplitName}>{r.label}</span>
                         <strong>{formatRecord(r.tally)}</strong>
-                        {/* Listed, never counted — the same rule the Scouting Book's EXH follows. */}
+                        {/* Listed, never counted — the same rule the Scouting book's EXH follows. */}
                         {!r.counted && <span className={styles.seasonSplitName}> · not counted</span>}
                       </span>
                     ))}

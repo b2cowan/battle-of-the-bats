@@ -4,7 +4,7 @@ import type { RepPlayerObservation, RepTeamMeasurableType } from '@/lib/types';
 
 /**
  * What a HOST of the observation sheet shares (development lifecycle re-evaluation stage 3, E2,
- * 2026-09-15): the player's Skills & Goals tab and the Notes tab both open `RecordObservationDialog`
+ * 2026-09-15): the player's Skills & goals tab and the Notes tab both open `RecordObservationDialog`
  * on a saved observation, send only what changed, and remove it behind one confirm. The wording,
  * the "fixed by its session" shape and the two requests live here once — the session page keeps
  * its own host (its sheet is fixed by the SESSION, and a twin there is a 409 it answers by

@@ -256,7 +256,7 @@ export interface DuesLadder {
    * What this family is billed — **net of anything written off it** when the caller supplies
    * `billLowered` (owner R1, 2026-09-09).
    *
-   * The Player Dues route and roster summary both supply `billLowered` (QA §160, 2026-09-12).
+   * The Player dues route and roster summary both supply `billLowered` (QA §160, 2026-09-12).
    * Callers omitting it retain a gross ladder; any figure beside the dues band must supply the
    * same reduction. Original charges remain available from the schedule.
    */

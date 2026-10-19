@@ -50,7 +50,7 @@ import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
  *
  * ⚠⚠ THE SHARED MAP, NOT THE STORED TOKEN (owner-found 2026-08-25). The drill-in shipped the raw
  * value straight to the screen, so a coach read "other" and "etransfer" in lower case beside
- * figures — while Player Dues, the payout sheet and the recording conversation all printed
+ * figures — while Player dues, the payout sheet and the recording conversation all printed
  * "E-Transfer" from `DUES_PAYMENT_METHOD_LABEL`. That map's own header records it being written to
  * stop a THIRD copy; this was worse than a copy, it was no lookup at all.
  *
@@ -908,7 +908,7 @@ export const GET = withObservability(async (req: Request,
   /* ⚠⚠ THE DUES-COLLECTION SUMMARY IS GONE FROM THIS PAYLOAD (owner ruling 2026-08-26). It fed
      one thing — the four-tile `Dues Collection` card at the top of Budget vs. Actual — and that
      card was deleted: dues are money IN, this report measures spending against plan, and all
-     four of its figures are already told on the Money hub's Overview card and on Player Dues'
+     four of its figures are already told on the Money hub's Overview card and on Player dues'
      own footer. The report states dues month by month in its own income band besides.
      ⚠ Removed rather than left computed-and-unread: the payload's own contract note (below, at
      `unbudgetedActuals`) is that a field nothing sends or nothing reads is how the next reader
@@ -1562,7 +1562,7 @@ export const GET = withObservability(async (req: Request,
 
   /* ── Revenue · BUDGET: what the season PLANNED to bring in.
      Two feeds, and they are genuinely different animals:
-       · the dues INSTALMENT SCHEDULE — dated amounts a coach set on Player Dues, the only income
+       · the dues INSTALMENT SCHEDULE — dated amounts a coach set on Player dues, the only income
          with a schedule and never a budget line;
        · the plan's own funding lines, each under the CATEGORY it was filed in (owner ruling
          2026-09-09) — the same identity the Statement gives the same line, so "Tournaments" reads
@@ -1602,7 +1602,7 @@ export const GET = withObservability(async (req: Request,
 
      ⚠ IT IS DERIVED HERE, ABOVE THE BUDGET FEED, because the feed now needs its `billLowered`
      total (2026-09-09) — the authoritative figure for what came off the bills, shared with the
-     Player Dues band so the two screens cannot reach different answers. */
+     Player dues band so the two screens cannot reach different answers. */
   /* ⚠⚠ PER FAMILY FIRST, SEASON SECOND — ONE PASS, AND THAT ORDER IS THE RULING (2026-09-10).
      Player dues folds to one row per family on the Statement now, so the report needs each
      family's own reading AND the season's total. Computing them separately would run `duesActual`
@@ -1653,7 +1653,7 @@ export const GET = withObservability(async (req: Request,
   /* ⚠⚠ THE REST OF THE WRITE-OFF HAS NO MONTH, AND IT STILL HAS TO COME OFF (2026-09-09). A family
      who has already paid every bill in cash has none left for a write-off to cancel — Avery on the
      UAT fixture is exactly that, and her $17.00 adjustment lands on no instalment at all. Taking
-     the season total from the walk above would have read $0.00 here while the Player Dues band read
+     the season total from the walk above would have read $0.00 here while the Player dues band read
      $17.00: two figures for one concept, on the two screens this ruling exists to reconcile. So the
      TOTAL is the band's and only the PLACEMENT is the walk's, with the unplaceable remainder landing
      undated — where this feed already puts planned money with no month.

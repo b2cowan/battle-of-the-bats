@@ -8,7 +8,7 @@ import kit from './CoachKit.module.css';
  *
  *   report (default) — flat; it REPORTS. Its doors are in its foot band (`kit.foot` +
  *                      `kit.footLink`), never on the card (the 2026-08-11 "reports, doesn't shout"
- *                      ruling). Money's three story cards, Skills & Goals' three, the two rails.
+ *                      ruling). Money's three story cards, Skills & goals' three, the two rails.
  *   door             — the WHOLE card is a link (`CoachDoorCard`). Lifted, a hover step, and an
  *                      arrow in its eyebrow (`<CoachEyebrow arrow>`). The team Overview's six
  *                      "at a glance" tiles.

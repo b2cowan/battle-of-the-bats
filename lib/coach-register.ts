@@ -104,14 +104,14 @@ export const REGISTER_KIND_LABEL: Record<RegisterKind, string> = {
   expense:     'Expense',
   income:      'Income',
   refund:      'Refund',
-  dues:        'Player Dues',
+  dues:        'Player dues',
   fundraising: 'Fundraising',
   club:        'Club',
 };
 
 /** What a row is called in its own chip. Only DERIVED rows carry one. */
 export const REGISTER_SOURCE_LABEL: Record<'dues' | 'fundraising' | 'club', string> = {
-  dues:        'Player Dues',
+  dues:        'Player dues',
   fundraising: 'Fundraising',
   club:        'Club',
 };

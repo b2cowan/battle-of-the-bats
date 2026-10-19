@@ -172,7 +172,7 @@ export default function ScheduleEventSheet({
   moved: MovedGame | null;
   /** The public game page for a mirrored game, when the tournament is publicly visible. */
   mirroredGameHref: string | null;
-  /** The Scouting Book's entry for this game's opponent, when the book has one. */
+  /** The Scouting book's entry for this game's opponent, when the book has one. */
   bookEntry: OpponentBookEntry | null;
   /** The game-day window holds right now — Game day runs live, not as a recap. */
   gameDayLive: boolean;
@@ -246,7 +246,7 @@ export default function ScheduleEventSheet({
   const [awardActionError, setAwardActionError] = useState('');
 
   const isGameEvent = GAME_EVENT_TYPES.includes(ev.eventType);
-  // Scouting Book glance (owner-approved 2026-08-04): games with a real opponent name only —
+  // Scouting book glance (owner-approved 2026-08-04): games with a real opponent name only —
   // a TBD bracket slot gets no Scouting row, never a dead end. Read gates on `schedule`, which is
   // everyone who can open this page — helpers included, by ruling.
   const scoutingKey = drawerDoors.scoutingTab && ev.opponent
@@ -854,7 +854,7 @@ export default function ScheduleEventSheet({
           <button className={styles.eventScoreEdit} onClick={() => setScoreForm({ teamScore: String(ev.teamScore ?? ''), opponentScore: String(ev.opponentScore ?? '') })}>
             Edit score
           </button>
-          {/* The Scouting Book's capture door — a quiet link at the one moment every
+          {/* The Scouting book's capture door — a quiet link at the one moment every
               coach reliably visits after every game (score entry), never a modal
               (owner ruling). It opens the book's panel, the same view the Scouting row opens. */}
           {scoutingKey && (
@@ -873,7 +873,7 @@ export default function ScheduleEventSheet({
     <div className={styles.eventScoreLine}>
       <div className={styles.eventScore}>
         {scoreline(ev)}
-        {/* The Scouting Book's capture door stays open to every schedule-holder — the
+        {/* The Scouting book's capture door stays open to every schedule-holder — the
             bench observes, by ruling — even when the score itself is read-only. */}
         {scoutingKey && (
           <button type="button" className={styles.scoutToastDoor} onClick={() => setView('scouting')}>

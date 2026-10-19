@@ -3,7 +3,7 @@
  *
  * Three senders used to carry this byte-for-byte (the coach "Send Due Reminders" route, the
  * org-admin wave route, and the nightly sweep), each with a comment promising it matched the
- * others. The fourth reader is why the copies finally merged: the Player Dues screen shows a
+ * others. The fourth reader is why the copies finally merged: the Player dues screen shows a
  * coach a SAMPLE of this email ("See an example" beside the Automatic Dues Reminders toggle),
  * and a preview rendered from its own copy of the words would drift from the real send the
  * first time anyone edited one of them.

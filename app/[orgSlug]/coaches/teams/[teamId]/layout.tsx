@@ -88,7 +88,7 @@ export default async function CoachTeamLayout({
 
   // Two independent quiet additions to the masthead, fetched IN PARALLEL — this is the
   // busiest day for this code path (an actual game), so their reads must not queue.
-  //  · Game-week scouting nudge (Scouting Book P2): only when the masthead is already talking
+  //  · Game-week scouting nudge (Scouting book P2): only when the masthead is already talking
   //    about a live season's game — the nudge can never outlive the status that justifies it.
   //  · Game-Day Mode (P1): on game day, the status line itself links to the bench console —
   //    but only inside the game's live window (the feature module owns that clock).

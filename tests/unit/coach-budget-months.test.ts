@@ -655,7 +655,7 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
   it('a dues panel offers the ledger and the family’s own screen', () => {
     assert.deepEqual(
       labels(cellPanelSpec({ group: 'dues' }, 'actual', null)),
-      ['Open Player Dues', 'Open the Ledger']);
+      ['Open Player dues', 'Open the Ledger']);
   });
 
   /* ⚠ "Here is the ledger entry" and "here is the thing that earned it" are different answers, and a
@@ -712,10 +712,10 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
     assert.deepEqual(labels(cellPanelSpec({ group: 'moneyback' }, 'scheduled', null)), ['Open Club']);
   });
 
-  it('dues still to come read “Still to come”, and go to Player Dues alone', () => {
+  it('dues still to come read “Still to come”, and go to Player dues alone', () => {
     const spec = cellPanelSpec({ group: 'dues' }, 'scheduled', { id: 'p1', name: 'Bo Ledger' });
     assert.equal(spec.totalLabel, 'Still to come');
-    assert.deepEqual(labels(spec), ['Open Player Dues']);
+    assert.deepEqual(labels(spec), ['Open Player dues']);
   });
 
   /* ⚠ Dues answers who is owed; this answers who was repaid; Transactions is the book both settle
@@ -724,7 +724,7 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
   it('money paid back to a family answers to dues and to the ledger', () => {
     assert.deepEqual(
       labels(cellPanelSpec({ group: null, payout: true }, 'actual', { id: 'p1', name: 'Maya Ledger' })),
-      ['Open Player Dues', 'Open the Ledger']);
+      ['Open Player dues', 'Open the Ledger']);
   });
 
   /* ⚠ THE EXPENSE BAND'S OWN TWO ANSWERS LIVE IN THE SAME FUNCTION, and that is deliberate: they are

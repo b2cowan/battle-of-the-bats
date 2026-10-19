@@ -545,7 +545,7 @@ export function FundraisersPanel({
   return (
     /* ⚠ WIDE, like every other Money tab (owner, §135 walk 2026-09-03). This panel was the ONE
        money surface still on the 960px reading column while the hub around it, Budget Plan,
-       Budget vs. Actual, Player Dues, Ledger and Club were all on the 1200px data column — so it
+       Budget vs. Actual, Player dues, Ledger and Club were all on the 1200px data column — so it
        re-narrowed itself INSIDE a wide shell and read as a mis-set page rather than a choice. It
        qualifies on the stylesheet's own terms (`pageWide` is for table surfaces) and on the
        Budget↔BvA drift rule written beside it: sibling surfaces sharing a grid shape share a

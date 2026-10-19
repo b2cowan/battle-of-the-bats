@@ -439,7 +439,7 @@ export function CoachToolbarMenuItem({
    * ⚠ A ROW THAT GOES TO ANOTHER PAGE IS A LINK (Sheet Frame step 5, 2026-10-06). On a phone the menu is a
    * sheet that stands a history step (the frame's Back), and a step can only tell that a tap left the page
    * when the tap was a link: a `router.push` from a button was cancelled by the step's own `history.back()`,
-   * the §258 "Open Player Dues just closes the window" failure. A link also opens in a new tab on a long
+   * the §258 "Open Player dues just closes the window" failure. A link also opens in a new tab on a long
    * press or a middle click, as every other way to another page does.
    */
   | { href: string; onSelect?: undefined }

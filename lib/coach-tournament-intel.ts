@@ -1,6 +1,6 @@
 /**
  * lib/coach-tournament-intel.ts
- * Opponent Scouting Book P3 — "Their tournament so far", the moat block. Pure logic, no I/O
+ * Opponent Scouting book P3 — "Their tournament so far", the moat block. Pure logic, no I/O
  * (unit tests: tests/unit/coach-tournament-intel.test.ts).
  *
  * For a MIRRORED tournament game, assemble the opponent's OTHER results in that SAME

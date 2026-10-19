@@ -7,7 +7,7 @@
  * club's one difference — billing teams — built into the line:
  *   · REVENUE FIRST (owner decisions A–E, 2026-09-12), From the teams leading it: nobody types it, it is the
  *     Allocated column's total read as income, and it opens the allocations it adds up (as the coach's
- *     Player installments row opens Player Dues). Below it the club's own income, ONE SECTION PER CATEGORY
+ *     Player installments row opens Player dues). Below it the club's own income, ONE SECTION PER CATEGORY
  *     (the category is the shelf, 2026-09-09), in the coach's money-in green.
  *   · Planned · Allocated · Collected — Allocated and Collected BLANK on a line the club pays itself and on
  *     the whole revenue band (the blank money cell, 3a's Ask 5d): what the teams were billed and have paid

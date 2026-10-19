@@ -343,7 +343,7 @@ export async function startNextRepSeason(params: {
 
   // ── Continuity links (Player Development 3D): the roll copied each row itself, so the
   // (new, old) pair is factual provenance — mint the history links CONFIRMED so every
-  // carried player's Skills & Goals tab carries its Previous seasons fold without a
+  // carried player's Skills & goals tab carries its Previous seasons fold without a
   // "possible returning player — verify" step. (The per-player "bring forward last season's
   // goals?" offer that used to ride this link left the player's page — owner ruling
   // 2026-09-16: linking and what follows it are decided for the TEAM, never one profile at a
@@ -362,7 +362,7 @@ export async function startNextRepSeason(params: {
         { status: 'confirmed', decidedBy: initiatorUserId },
       );
       if (minted.length > 0) {
-        summary.notes.push('Each carried player’s history is linked to last season — it reads under Previous seasons on their Skills & Goals tab.');
+        summary.notes.push('Each carried player’s history is linked to last season — it reads under Previous seasons on their Skills & goals tab.');
       }
     } catch (e) {
       summary.warnings.push('Player development history could not be linked automatically — last season’s goals and results will not show under Previous seasons for the carried players.');

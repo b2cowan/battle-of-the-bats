@@ -17,7 +17,7 @@ export type CoachBarLegendItem = {
 
 /**
  * A ratio as geometry: the 12px track, its segments with a 2px gap, and — when given — the legend
- * under it that says what each slice is. Money's "Bills settled", Skills & Goals' "Players
+ * under it that says what each slice is. Money's "Bills settled", Skills & goals' "Players
  * measured", the Overview's Dues tile all draw this one bar (the tile drew a 5px lime pill).
  *
  * Without `label` the bar is `aria-hidden`: the words live in the figure above it and the legend

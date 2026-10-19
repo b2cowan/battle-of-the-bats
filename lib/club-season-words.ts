@@ -56,7 +56,7 @@ export function rosterCarryDetail(players: number): string {
 
 export const START_CARRIES = {
   roster: { title: 'The roster', note: 'The coach adds and removes players after.' },
-  budget: { title: 'The budget plan', note: (from: string) => `The planned lines only. What was spent stays with the ${from}.` },
+  budget: { title: 'The budget', note: (from: string) => `The planned lines only. What was spent stays with the ${from}.` },
   fees: { title: 'The fee plan', note: (from: string) => `Amounts and installments, with due dates a year later. Paid history stays with the ${from}.` },
   balance: { title: 'The opening balance', note: (from: string) => `Whatever the team’s books hold when the ${from} closes. The coach can change it in Team settings.` },
   history: { title: 'Each returning player’s history', note: 'Linked to last season, so a player’s development record reads straight through.' },

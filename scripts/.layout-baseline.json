@@ -8533,7 +8533,7 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-payables|361|tap-floor|a·Player Dues": {
+    "coach-payables|361|tap-floor|a·Player dues": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "15px tall (floor 44)"
     },
@@ -8541,7 +8541,7 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-payables-schedule|361|tap-floor|a·Player Dues": {
+    "coach-payables-schedule|361|tap-floor|a·Player dues": {
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
       "detail": "15px tall (floor 44)"
     },
@@ -8553,7 +8553,7 @@
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
       "detail": "16px tall (floor 44)"
     },
-    "coach-commitment|361|tap-floor|a·Player Dues": {
+    "coach-commitment|361|tap-floor|a·Player dues": {
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
       "detail": "15px tall (floor 44)"
     },
@@ -8677,7 +8677,7 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-payables|390|tap-floor|a·Player Dues": {
+    "coach-payables|390|tap-floor|a·Player dues": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "15px tall (floor 44)"
     },
@@ -8685,7 +8685,7 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-payables-schedule|390|tap-floor|a·Player Dues": {
+    "coach-payables-schedule|390|tap-floor|a·Player dues": {
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
       "detail": "15px tall (floor 44)"
     },
@@ -8697,7 +8697,7 @@
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
       "detail": "16px tall (floor 44)"
     },
-    "coach-commitment|390|tap-floor|a·Player Dues": {
+    "coach-commitment|390|tap-floor|a·Player dues": {
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
       "detail": "15px tall (floor 44)"
     },
@@ -8829,7 +8829,7 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-payables|768|tap-floor|a·Player Dues": {
+    "coach-payables|768|tap-floor|a·Player dues": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "15px tall (floor 44)"
     },
@@ -8845,7 +8845,7 @@
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
     },
-    "coach-payables-schedule|768|tap-floor|a·Player Dues": {
+    "coach-payables-schedule|768|tap-floor|a·Player dues": {
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
       "detail": "15px tall (floor 44)"
     },
@@ -8865,7 +8865,7 @@
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
       "detail": "16px tall (floor 44)"
     },
-    "coach-commitment|768|tap-floor|a·Player Dues": {
+    "coach-commitment|768|tap-floor|a·Player dues": {
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
       "detail": "15px tall (floor 44)"
     },

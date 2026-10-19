@@ -164,7 +164,7 @@ export const GET = withObservability(async (_req: Request,
      `dues − billLowered.total`, both out of `duesActual`.
 
      ⚠⚠ IT IS THE *SAME FUNCTION*, CALLED ONCE FOR THE SEASON, AND THAT IS DELIBERATE RATHER THAN
-     TIDY. The payoff this ruling buys is that Player Dues' `Collected` and Budget vs. Actual's
+     TIDY. The payoff this ruling buys is that Player dues' `Collected` and Budget vs. Actual's
      `Player dues` are ONE number — so the moment this screen re-derives it, the two can part
      company again and nothing would catch it. `buildFamilyDuesInputs` is what the report calls;
      calling anything else here would silently reintroduce the disagreement the ruling closed.

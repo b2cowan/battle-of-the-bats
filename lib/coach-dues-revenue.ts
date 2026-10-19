@@ -2,7 +2,7 @@
  * PLAYER DUES AS A ROW ON THE STATEMENT (owner ruling 2026-09-04).
  *
  * ⚠⚠ DUES ARE NOT BUDGET LINES, AND THAT IS THE WHOLE REASON THIS MODULE EXISTS. What a season
- * plans to collect in dues is its INSTALMENT SCHEDULE, set on Player Dues — never a row in the
+ * plans to collect in dues is its INSTALMENT SCHEDULE, set on Player dues — never a row in the
  * budget planner. The Months view already plots those instalments as dated events in its revenue
  * band; the Statement's rollup groups by category + item and has no home for them, so the report
  * counted every cost and left out the largest money coming in. One report answered "what is
@@ -368,7 +368,7 @@ export function buildDuesFamilyRows(input: {
          · `lines` empty ⇒ the screen's existing predicate gives a family's BUDGETED no door. A
            family's bill is one assessed figure, not a pile of records, and the report's standing
            rule is that a figure with an empty list behind it stays a plain number. Their
-           installment dates live on Player Dues, which is where a coach goes to chase.
+           installment dates live on Player dues, which is where a coach goes to chase.
          · `costs` empty ⇒ the ordinary records panel never opens on a family row. What opens
            instead is the dues composition panel, moved DOWN from the category figure onto each
            family's Actual and keyed on `duesParts`. */

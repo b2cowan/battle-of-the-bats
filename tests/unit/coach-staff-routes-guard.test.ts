@@ -149,7 +149,7 @@ test('every plan, drill and template write gates on canWritePracticePlans and no
   for (const { route, method } of PLAN_WRITES) {
     const body = handler(read(route), method);
     assert.match(body, /denyUnless\(\s*canWritePracticePlans\(/, `${route} ${method}`);
-    assert.doesNotMatch(body, /canWriteDevelopment\(/, `${route} ${method} must not borrow the Skills & Goals gate any more`);
+    assert.doesNotMatch(body, /canWriteDevelopment\(/, `${route} ${method} must not borrow the Skills & goals gate any more`);
   }
 });
 
@@ -161,7 +161,7 @@ test('the past-season library imports need BOTH the library write and the look-b
   }
 });
 
-test('Skills & Goals writes gate on the Development grant predicate — the seam R7 did not cross', () => {
+test('Skills & goals writes gate on the Development grant predicate — the seam R7 did not cross', () => {
   for (const route of [
     `${TEAM_API}/roster/[playerId]/development/goals/route.ts`,
     `${TEAM_API}/roster/[playerId]/development/measurables/route.ts`,

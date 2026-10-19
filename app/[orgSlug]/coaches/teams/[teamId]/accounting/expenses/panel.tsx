@@ -544,7 +544,7 @@ const BLANK_RECORD = {
   paidByPlayerId: '',
   /* ⚖ `dueDate` AND THE FOUR DEPOSIT/BALANCE FIELDS ARE GONE (Payables Rebuild P4). A commitment's
      schedule is 1..n dated pieces now and lives in `formPlan`, edited by `InstallmentPlanEditor` —
-     the same numbered list Player Dues has used since 2026-08-13. The two-piece vocabulary was
+     the same numbered list Player dues has used since 2026-08-13. The two-piece vocabulary was
      never a data shape; it was the shape of the editor, which is why the plan was capped at two
      until this phase could replace it. A one-payment commitment is simply a one-row plan, so the
      "one due date" field it used to need has nothing left to do. */
@@ -5043,7 +5043,7 @@ function MoneyRecordsPanel({
             error: duesBookError,
             items: duesBook,
             loading: 'Loading the dues book…',
-            empty: <>No dues schedules yet — set them up on <strong>Player Dues</strong> first.</>,
+            empty: <>No dues schedules yet — set them up on <strong>Player dues</strong> first.</>,
             select: (
               <select
                 className={styles.select}
@@ -6691,7 +6691,7 @@ function MoneyRecordsPanel({
    * ONE ROW OF THE REGISTER.
    *
    * ⚖⚖ EVERY ROW OPENS, AND THE LAST COLUMN IS ONE CHEVRON (Ledger Parity D3, owner 2026-10-02). The
-   * pencil (a second door to what the row already opened) and the worded "Player Dues →" / "Club →"
+   * pencil (a second door to what the row already opened) and the worded "Player dues →" / "Club →"
    * buttons are GONE from the cell — the written standard allows neither (K-08), and the club's Ledger,
    * built to it, already read this way. The one control a cell keeps is **Record** beside the chevron on
    * an unpaid installment (ruled 2026-09-04).
@@ -7768,7 +7768,7 @@ function MoneyRecordsPanel({
             <p className={styles.mutedInline} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
               Money going out only — each bill’s installments{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
               Player dues are money coming in and live on{' '}
-              <Link href={moneySectionHref(base, 'dues', undefined)} className={styles.linkBtn}>Player Dues</Link>.
+              <Link href={moneySectionHref(base, 'dues', undefined)} className={styles.linkBtn}>Player dues</Link>.
             </p>
           </>
         )

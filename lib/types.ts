@@ -1775,7 +1775,7 @@ export interface PracticePlan {
   templateName?: string;
   /**
    * Whether this plan carries "What everyone's working on" — the roster's focus areas, read from
-   * Skills & Goals — as a section of the sheet (owner ruling 2026-09-14: the rail is an ADDITION
+   * Skills & goals — as a section of the sheet (owner ruling 2026-09-14: the rail is an ADDITION
    * a coach puts on a plan, not a standing part of every sheet; a team that never uses goals
    * never sees it). Stored only when true. It is SHAPE, so a template keeps it and a plan started
    * from that template inherits it; the section itself still renders and prints only for a coach
@@ -1838,7 +1838,7 @@ export interface RepTeamEvent {
   homeAway: 'home' | 'away' | 'neutral' | null;
   /**
    * "This is a scrimmage" (mig 306) — a Game that stays on the schedule and in attendance like any
-   * game but is LEFT OUT of the season record and the Scouting Book's numbers, and whose lineup
+   * game but is LEFT OUT of the season record and the Scouting book's numbers, and whose lineup
    * opens on Development. Only meaningful on `league_game` (a tournament game is scored by its
    * organizer and never carries it — owner ruling D3, 2026-09-20); false on every other kind.
    * Editable at any time, before or after a result; the effect is immediate.
@@ -1897,7 +1897,7 @@ export interface PracticePlanSentStamp {
 }
 
 /**
- * Opponent Scouting Book (mig 225) — one row per (team, normalized opponent name).
+ * Opponent Scouting book (mig 225) — one row per (team, normalized opponent name).
  * An overlay: NO FK from events; identity resolved at read via normalizeOpponentName()
  * + aliases (lib/coach-opponents.ts). Rows are minted lazily on first write.
  */
@@ -1915,7 +1915,7 @@ export interface RepTeamOpponent {
   updatedAt: string;
 }
 
-/** Scouting Book capture log — attributed, append-only in spirit (delete = head coach / author-own). */
+/** Scouting book capture log — attributed, append-only in spirit (delete = head coach / author-own). */
 export interface RepTeamOpponentObservation {
   id: string;
   opponentId: string;

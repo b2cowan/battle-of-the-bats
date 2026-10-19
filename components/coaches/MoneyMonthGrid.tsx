@@ -1453,7 +1453,7 @@ export default function MoneyMonthGrid({
                   className={shared.btnSecondary}
                   onClick={() => setPlan(null)}
                 >
-                  {club ? club.planDoor.label : 'Open Budget Plan'}
+                  {club ? club.planDoor.label : 'Open the Budget'}
                 </Link>
               </div>
             )}

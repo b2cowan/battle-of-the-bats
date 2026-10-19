@@ -26,8 +26,8 @@ const TOURNAMENT_HOSTS = [
 ];
 const COACH_HOSTS = [
   'components/coaches/LibraryRow.tsx', // Practice plans' three tabs, the drill picker, the docked library
-  'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', // Skills & Goals › Sessions
-  'app/[orgSlug]/coaches/teams/[teamId]/history/opponents/panel.tsx', // the Scouting Book
+  'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', // Skills & goals › Sessions
+  'app/[orgSlug]/coaches/teams/[teamId]/history/opponents/panel.tsx', // the Scouting book
   'components/rep-teams/TryoutCheckIn.tsx', // coach Tryouts check-in (census C8)
 ];
 

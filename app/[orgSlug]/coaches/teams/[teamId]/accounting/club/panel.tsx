@@ -85,7 +85,7 @@ import { CoachListToolbar } from '@/components/coaches/kit';
  * the bills band's one-tap "Record as paid · $x" pill (D5, reversed). Each was defensible alone and
  * together they made one five-row table end in three different shapes — while the pill, which
  * applies to a minority of bills, sized the action column for ALL of them. Recording a payment
- * lives on the installment inside the room, which is where Player Dues has always put it.
+ * lives on the installment inside the room, which is where Player dues has always put it.
  */
 
 interface AllocationSplit {
@@ -1174,7 +1174,7 @@ export function ClubPanel({
                 ⚠ RECORDING A PAYMENT DID NOT MOVE — it is where it always was, on
                 the installment itself inside the bill's room, and every installment
                 offers it rather than only the last one. That also puts this screen
-                in step with Player Dues, where the one-tap has always lived on the
+                in step with Player dues, where the one-tap has always lived on the
                 installment and never on the family's list row.
                 ⚠ Do not reintroduce a conditional control in this cell. If a bill
                 ever needs a second action, it belongs in the room beside the first.

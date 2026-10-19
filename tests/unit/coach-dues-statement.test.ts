@@ -282,7 +282,7 @@ describe('what’s next, in sentences', () => {
 
   /* ⚠ THE BAND READS THE LADDER — GROSS — SO THE PARENT'S DOCUMENT AGREES WITH THE COACH'S TABLE
      (review 2026-09-07). Casey is the case: sent $1,200 against a $900 bill, handed $300 back. The
-     old pair printed "received $900.00" while Player Dues prints $1,200.00. */
+     old pair printed "received $900.00" while Player dues prints $1,200.00. */
   it('a refunded household reads what it SENT and what came back, not the netted figure', () => {
     const casey = { ...chen(),
       payments: [{ amount: 1200, receivedDate: '2026-08-01', method: 'etransfer' as const, note: null }],

@@ -8,7 +8,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 /**
  * The two team-wide dues settings, as rows — Automatic Dues Reminders and Credits reduce.
  *
- * Their HOME is Team settings → Money. They also appear inline on Player Dues while no dues
+ * Their HOME is Team settings → Money. They also appear inline on Player dues while no dues
  * schedule exists anywhere on the roster, because that is the one moment a coach is deciding how
  * dues will work and nothing they change can surprise a family yet.
  *

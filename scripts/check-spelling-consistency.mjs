@@ -153,6 +153,40 @@ const ENFORCED_PATTERNS = [
     pattern: /\bPublic Site\b/g,
     right: '"Public site" — the program and its page, in sentence case',
   },
+  /* ⚖ TAB NAMES ARE SENTENCE CASE, AND A SHARED TAB WEARS ONE WORD (owner, 2026-10-18, asked of the club's Accounting
+     tabs beside the coach's Money tabs). The coach's "Budget Plan" tab is "Budget", the club's word for the same
+     place; "Player Dues", "Scouting Book" and "Skills & Goals" are sentence case on the tab and everywhere that
+     names it (links, buttons, the Ledger's tag, exports, help, the nav). A CASE rule, so a shape. The lowercase
+     "budget plan" stays legal: it is ordinary English, help search keeps it as a synonym, and a schedule's stored
+     note says "Generated from budget plan". */
+  {
+    id: 'budget-tab-name',
+    pattern: /\bBudget Plan\b/g,
+    right: '"Budget" — the tab\'s name in both portals (a sentence\'s "budget plan" stays lowercase)',
+  },
+  {
+    id: 'player-dues-case',
+    pattern: /\bPlayer Dues\b/g,
+    right: '"Player dues" — the tab, in sentence case',
+  },
+  {
+    id: 'scouting-book-case',
+    pattern: /\bScouting Book\b/g,
+    right: '"Scouting book" — the Insights tab, in sentence case',
+  },
+  {
+    id: 'skills-goals-case',
+    pattern: /\bSkills (?:&|&amp;) Goals\b/g,
+    right: '"Skills & goals" — the nav label and the player tab, in sentence case',
+  },
+  /* The report keeps its capital A — the one tab name that does: both portals already spelled it "Budget vs. Actual"
+     (~300 times) and a sentence-case sweep of it would be a large copy change for no reader's gain. What this holds
+     out is the two stray spellings the 2026-10-18 sweep found beside it: a lowercase "actual" and a missing period. */
+  {
+    id: 'budget-vs-actual-name',
+    pattern: /\bBudget vs\.? actual\b|\bBudget vs Actual\b/g,
+    right: '"Budget vs. Actual" — the report\'s name in both portals',
+  },
 ];
 
 /**

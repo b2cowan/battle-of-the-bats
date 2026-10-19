@@ -237,7 +237,7 @@ export interface CellPanelSpec {
    schedule door (below) on By due date — both stated explicitly so the panel's per-device view
    memory can never re-aim a link. */
 const TRANSACTIONS_DOOR: PanelDoor = { section: 'ledger', extra: { view: 'timeline' }, label: 'Open the Ledger' };
-const DUES_DOOR: PanelDoor = { section: 'dues', label: 'Open Player Dues' };
+const DUES_DOOR: PanelDoor = { section: 'dues', label: 'Open Player dues' };
 const CLUB_DOOR: PanelDoor = { section: 'club', label: 'Open Club' };
 const SPONSORS_DOOR: PanelDoor = { section: 'fundraisers', extra: { kind: 'sponsor' }, label: 'Open Sponsors' };
 const FUNDRAISERS_DOOR: PanelDoor = { section: 'fundraisers', extra: { kind: 'fundraiser' }, label: 'Open Fundraisers' };
@@ -635,7 +635,7 @@ export function buildMonthGrid(input: {
    *
    * ⚠⚠ A PLAN IS NOT ALWAYS A BUDGET LINE, and the REVENUE band is the proof. What a season plans
    * to collect in dues is its dues INSTALMENT SCHEDULE — real dated amounts a coach set on the
-   * Player Dues tab, never a row in the budget planner. Feeding it through the same `place()` that
+   * Player dues tab, never a row in the budget planner. Feeding it through the same `place()` that
    * files spending is what lets one band builder serve both sides; the alternative was a second
    * bucketing pass for revenue, which is the "parallel copy" this module exists not to have.
    *

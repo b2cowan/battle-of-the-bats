@@ -15,7 +15,7 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  // The library is read by the metric editor only — a room inside Skills & Goals, which opens with
+  // The library is read by the metric editor only — a room inside Skills & goals, which opens with
   // the Development grant and nothing else (re-evaluation stage 0, D5, 2026-09-14). The player's
   // tab and the session page only WRITE here (below), and those were always grant-gated.
   const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);

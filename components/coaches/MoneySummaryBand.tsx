@@ -8,7 +8,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *
  * ⚠⚠ WHY THIS EXISTS, MEASURED. Five money tabs opened with a summary and drew it five ways — a
  * prose strip on Budget vs. Actual, three cells on Club, four bordered cards on Fundraising, a
- * titled panel on Budget Plan, and nothing at all on Player Dues (its figures sat in a table foot).
+ * titled panel on Budget Plan, and nothing at all on Player dues (its figures sat in a table foot).
  * Read off the stylesheets the differences were not stylistic choices but accidents of build order:
  * label 11px vs 12px, tracking .07em vs .04em, figure weight 700 vs 900, tabular numerals on three
  * of four. A treasurer reads all five in one sitting and had to find the summary somewhere new each
@@ -37,7 +37,7 @@ export interface MoneyTile {
    * ONE number, formatted by the caller.
    *
    * ⚠ THE TAB OWNS ITS OWN FORMATTER, deliberately. Budget vs. Actual prints accounting brackets
-   * (its binding screen notation), Player Dues prints a plain minus; a formatter in here would have
+   * (its binding screen notation), Player dues prints a plain minus; a formatter in here would have
    * to learn both and would become the place their rules drift together.
    */
   figure: ReactNode;
@@ -53,7 +53,7 @@ export interface MoneyTile {
   /**
    * ⚠⚠ THE CAPTION'S PHONE FORM — and it exists because three tabs had outgrown the contract one
    * line up (Money phone walk, decision M1, owner 2026-09-22). Measured at 390: Budget Plan's
-   * expenses caption ran to 60 characters and two lines, Player Dues' collected caption to 54, and
+   * expenses caption ran to 60 characters and two lines, Player dues' collected caption to 54, and
    * at two-up they would have taken a third. The desk caption is NOT wrong — at three tiles across
    * a 1,100px column it fits on one line and carries detail worth having — so the fix is a phone
    * form, not a shorter caption everywhere.

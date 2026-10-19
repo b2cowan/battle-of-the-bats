@@ -1128,7 +1128,7 @@ export default function CoachGameConsolePage({
     )
   );
 
-  // The Scouting Book sheet (the rider's door) — ONE instance, rendered by both the live
+  // The Scouting book sheet (the rider's door) — ONE instance, rendered by both the live
   // console (header-name door) and the recap (capture door), so the two can never drift.
   // Reading it is a menu; typing an observation into it is a form (owner, 2026-10-06), so the
   // panel says when its box opens and closes.
@@ -1176,7 +1176,7 @@ export default function CoachGameConsolePage({
             <p>{startLine}{event.status === 'cancelled' ? ' · Cancelled' : ''}</p>
           </div>
 
-          {/* The Scouting Book capture door (rider): quiet line, never a modal; skipping never
+          {/* The Scouting book capture door (rider): quiet line, never a modal; skipping never
               re-asks — it simply sits here. Same surface the score-saved toast opens. */}
           {opponentDoor && ended && (
             <button type="button" className={styles.gdBookLine} onClick={e => openSheet('book', e.currentTarget)}>
@@ -1266,7 +1266,7 @@ export default function CoachGameConsolePage({
               <ArrowLeft size={17} aria-hidden />
             </Link>
             {opponentDoor ? (
-              // The Scouting Book door (rider): the opponent's name opens your book as a sheet.
+              // The Scouting book door (rider): the opponent's name opens your book as a sheet.
               // Kept as the CONTEXTUAL route now that the footer carries a door you can see
               // (G3 = A) — two routes to one sheet are fine when they cannot disagree.
               // Absent when the slot is TBD — a door to nothing is a dead end, not a feature.

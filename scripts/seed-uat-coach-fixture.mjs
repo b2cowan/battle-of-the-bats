@@ -501,7 +501,7 @@ if (!liveFinishedRows?.length) {
 }
 
 /* One decided SCRIMMAGE (mig 306 — a Game with `is_scrimmage` set), so the owner's walk can see the
-   row's chip, the Scouting Book's EXH, the "Scrimmages · not counted" split and a record that does
+   row's chip, the Scouting book's EXH, the "Scrimmages · not counted" split and a record that does
    NOT move: a 2–7 loss vs Lakeside that must leave 3-2-1 exactly where it is. Idempotent on its name. */
 {
   const { data: scrimRows, error: scrimErr } = await db.from('rep_team_events')
@@ -2294,7 +2294,7 @@ if (!existingPr?.length) {
 // ── 13a. LEDGER PARITY — what its walks read (owner rulings D1–D7, 2026-10-02) ──
 /**
  * The walks on the Ledger Parity hub (https://claude.ai/artifact/EQqEd3s4CBLbnrnPuUVAAo, QA tab) need, on THIS
- * team's Ledger inside today's "Around today" window: a row of every derived kind (Player Dues and the Club
+ * team's Ledger inside today's "Around today" window: a row of every derived kind (Player dues and the Club
  * are already there — this adds a drive's hand-in, so Fundraising is too), and an UNPAID installment of the
  * team's own bill, so a row shows Record beside its chevron. And in a club: one payee the club SHARES and one
  * it keeps, and the team's OWN spelling of the shared one, named on a bill — the duplicate the team's
@@ -2894,7 +2894,7 @@ const QA_PEOPLE = [
      * Otherwise an ordinary assistant (attendance + lineups, no money), plus `notes: true` so the
      * goal form appears too — a goal is written only with the grant AND Internal notes
      * (`canWriteDevelopmentGoals`). `uat-asst-nomoney` is the pair: identical duties, the grant
-     * OFF, so every difference between them on Skills & Goals is the switch and nothing else.
+     * OFF, so every difference between them on Skills & goals is the switch and nothing else.
      *
      * ⚠ Every key spelled out (the treasurer's rule): an omitted key falls back to the assistant
      * default, and `development` defaults OFF — which is the one thing this persona exists to hold.

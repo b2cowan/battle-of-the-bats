@@ -196,7 +196,7 @@ export interface FamilyDuesActual {
    */
   untraced: number;
   /**
-   * ⚠⚠ WHAT CAME OFF THE BILL — the figure the Player Dues band subtracts from `Dues`
+   * ⚠⚠ WHAT CAME OFF THE BILL — the figure the Player dues band subtracts from `Dues`
    * (owner ruling R1, 2026-09-09: "a bill lowered is not a collection").
    *
    * A credit with no money behind it lowers what a family OWES; it is not something the team
@@ -449,7 +449,7 @@ export interface SeasonDuesParts {
    *
    * ⚠⚠ THIS IS THE AUTHORITATIVE TOTAL FOR THE REPORT'S PLAN SIDE, and it rides along here rather
    * than being derived at the report because the report must not reach a different figure from the
-   * Player Dues band — that disagreement is the whole defect this ruling closes. The month-by-month
+   * Player dues band — that disagreement is the whole defect this ruling closes. The month-by-month
    * PLACEMENT is a separate question answered by `duesPositionByInstallment`; read its header,
    * which explains why a total taken from that walk is wrong.
    */

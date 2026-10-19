@@ -244,7 +244,7 @@ describe('who may capture a moment (owner Q1, 2026-08-05)', () => {
   });
 
   it('a schedule-ONLY helper may not — their console is read-only and shows no footer', () => {
-    // ⚠ Deliberately stricter than the Scouting Book's gate (`schedule`). A predicate that
+    // ⚠ Deliberately stricter than the Scouting book's gate (`schedule`). A predicate that
     // said yes here would put a write behind a screen that renders no button.
     const helper = assistant({
       schedule: true, scheduleManage: false, attendance: false, lineups: false,

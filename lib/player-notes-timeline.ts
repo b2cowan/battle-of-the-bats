@@ -3,7 +3,7 @@
  * owner rulings 2026-09-13).
  *
  * A coach writes about a player in four places, each where it belongs: a one-line MOMENT from the
- * bench on game day, a skill OBSERVATION and a goal REVIEW on Skills & Goals, and — new with this
+ * bench on game day, a skill OBSERVATION and a goal REVIEW on Skills & goals, and — new with this
  * pass — a general NOTE that fits none of the others. The Notes tab is where they are READ
  * together: newest first, grouped by month, every entry marked with its source and the staff
  * member who wrote it. Nothing is written twice; this module never writes.

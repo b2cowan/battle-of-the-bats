@@ -836,7 +836,7 @@ export default function CoachLineupBuilderPage({
   // THE WAY BACK (stage 3 · D3, owner 2026-09-21: "back from the lineup must lead to the game, not
   // to Lineups"): the arrow returns to the door the builder was opened from — the game on the
   // Schedule (its sheet open on Lineup), the game-day console, the Overview — through the portal's
-  // `return` convention (the player page's way back to Skills & Goals): the address carries it,
+  // `return` convention (the player page's way back to Skills & goals): the address carries it,
   // `safeReturnPath` drops anything outside this team's portal, `returnLabel` names it by where
   // it goes. A foreign or missing address falls back to All lineups, which is what the room's
   // rows send. Save, Mark ready and the autosave never navigate.

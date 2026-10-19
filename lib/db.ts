@@ -1047,7 +1047,7 @@ export async function getStandings(tournamentId: string, divisionId: string, con
 /**
  * One organizer-side game row's identity: which tournament owns it and its two sides.
  * The tournament-intel route's entry point from a mirrored event's `source_tournament_game_id`
- * (Scouting Book P3) — identity only, so the full games read stays scoped to ONE tournament.
+ * (Scouting book P3) — identity only, so the full games read stays scoped to ONE tournament.
  */
 export async function getTournamentGameSides(gameId: string): Promise<{
   tournamentId: string;
@@ -10705,7 +10705,7 @@ export async function getRepAllocationSplit(
   return data ? mapRepAllocationSplit(data) : null;
 }
 
-// Player Dues Schedules
+// Player dues Schedules
 
 function mapRepPlayerDuesSchedule(r: any): RepPlayerDuesSchedule {
   return {
@@ -10786,7 +10786,7 @@ export async function updateRepPlayerDuesSchedule(scheduleId: string, fields: {
   return mapRepPlayerDuesSchedule(data);
 }
 
-// Player Dues Installments
+// Player dues Installments
 
 function mapRepPlayerDuesInstallment(r: any): RepPlayerDuesInstallment {
   return {
@@ -10842,7 +10842,7 @@ export async function markRepPlayerDuesInstallmentPaid(
   return mapRepPlayerDuesInstallment(data);
 }
 
-// Player Dues Payments (mig 232 — the receipt book; installments are the plan)
+// Player dues Payments (mig 232 — the receipt book; installments are the plan)
 
 import type { RepDuesPayment, RepDuesPayout, DuesPaymentMethod, DuesCredit } from './types';
 import { allocateDuesPayments, duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, planOverpaymentReconcile, SCHEDULE_CHANGE_CREDIT_DESCRIPTION, type DuesLadder } from './dues-payments';
@@ -11193,7 +11193,7 @@ export async function recordRepDuesPayment(opts: {
       amount: opts.amount,
       entryType: 'income',
       status: 'posted',
-      category: 'Player Dues',
+      category: 'Player dues',
       paymentMethod: opts.method,
       notes: opts.note ?? null,
     },
@@ -11424,7 +11424,7 @@ export async function createPaidExpense(opts: {
   }
 }
 
-// Player Dues Payouts (mig 234 — the OUTBOX; the mirror of the receipt book above)
+// Player dues Payouts (mig 234 — the OUTBOX; the mirror of the receipt book above)
 
 function mapRepDuesPayout(r: any): RepDuesPayout {
   return {
@@ -11583,7 +11583,7 @@ export async function writeRepDuesPayout(opts: RepDuesPayoutWrite): Promise<RepD
       amount: opts.amount,
       entryType: 'expense',
       status: 'posted',
-      category: 'Player Dues',
+      category: 'Player dues',
       paymentMethod: opts.method,
       notes: opts.note ?? null,
     },
@@ -14594,7 +14594,7 @@ export async function deletePlatformUser(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// ─── Opponent Scouting Book (mig 225) ────────────────────────────────────────────────────
+// ─── Opponent Scouting book (mig 225) ────────────────────────────────────────────────────
 // Overlay tables keyed on normalized opponent names — rep_team_events is never written here.
 // Coach-API-only (service role); capability gating lives in the routes.
 import type { RepTeamOpponent, RepTeamOpponentObservation } from './types';
@@ -14639,7 +14639,7 @@ function mapRepTeamOpponentObservation(row: Record<string, unknown>): RepTeamOpp
 const OPPONENT_BOOK_EVENT_LIMIT = 1000;
 
 /**
- * ⚠ Cross-season read feeding a LIVE instrument (the Scouting Book) — the
+ * ⚠ Cross-season read feeding a LIVE instrument (the Scouting book) — the
  * getRepTeamPracticePlansAcrossSeasons pattern, owner-ratified 2026-08-04: team-scoped
  * because a team is permanent and only its program year turns over; reads game events from
  * EVERY season so "our record vs them" spans years; writes nothing anywhere. Deliberately

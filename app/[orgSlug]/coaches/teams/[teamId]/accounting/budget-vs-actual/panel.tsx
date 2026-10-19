@@ -530,7 +530,7 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
               className={shared.btnSecondary}
               onClick={onClose}
             >
-              Open Budget Plan
+              Open the Budget
             </Link>
           </div>
         )) : (
@@ -1074,12 +1074,12 @@ function DuesBridge({
  * accessibility floor a hand-rolled overlay does not stand on.
  *
  * ⚠⚠ AND IT TAKES THE SAME TWO DOORS ITS TWIN ON THE MONTHS GRID TAKES (2026-09-09), which is the
- * whole point of there being a rule: `cellPanelSpec` answers "dues, actual" with Player Dues and the
+ * whole point of there being a rule: `cellPanelSpec` answers "dues, actual" with Player dues and the
  * Ledger, and this panel is the statement's reading of the same figure. Until then it ended on a
  * sentence naming a screen it would not open — the identical dead end `RecordsBehind` had, on the
  * row directly above it.
  *
- * ⚠ AND THOSE TWO DOORS ARE STILL BOTH RIGHT ONE LEVEL DOWN. Player Dues is where a coach chases
+ * ⚠ AND THOSE TWO DOORS ARE STILL BOTH RIGHT ONE LEVEL DOWN. Player dues is where a coach chases
  * THIS family (the screen has no per-family address, so it lands on the band that lists them all),
  * and the Ledger is the book of record for every movement. A panel about a child that ended in
  * prose would be the same dead end wearing a smaller hat.
@@ -1138,7 +1138,7 @@ function DuesBehind({ item, base, onClose }: {
         </div>
         <div className={shared.modalFooter}>
           <Link href={moneySectionHref(base, 'dues')} className={shared.btnSecondary} onClick={onClose}>
-            Open Player Dues
+            Open Player dues
           </Link>
           <Link
             href={moneySectionHref(base, 'ledger', { view: 'timeline' })}
@@ -1176,7 +1176,7 @@ function DuesBehind({ item, base, onClose }: {
  *
  * ⚠⚠ "Not set yet" IS A FACT A COACH MAY GENUINELY NOT KNOW, which is why it survived the ruling
  * that stripped every other category caption (owner 2026-09-06, QA §146: a row captioning itself
- * "N families · set on Player Dues" was telling a coach what they had just done). This one is the
+ * "N families · set on Player dues" was telling a coach what they had just done). This one is the
  * reason the Plan cell shows a dash, and the row is where they are looking when they wonder why.
  * The footnote stack says it too, but a footnote under thirty rows is not where a new team finds
  * the one thing it has to do first.
@@ -1602,7 +1602,7 @@ export function BudgetVsActualPanel({
       && (Math.abs(data.dues.actualParts.familyPaidCosts) > 0.005
         || Math.abs(data.dues.actualParts.fundraisingCredited) > 0.005),
     /* ⚠ WHAT CAME OFF THE PLAN, AND THE WORD FOR IT (owner R5, 2026-09-09). Same shape as the dues
-       band's caption on Player Dues, so one season is never described two ways: name whichever
+       band's caption on Player dues, so one season is never described two ways: name whichever
        kinds are actually present, and say nothing at all when there are neither — most seasons. */
     duesPlanWrittenOff: (() => {
       if (!data || !duesRowRenders(data.dues) || data.dues.billed === null) return null;
@@ -1862,7 +1862,7 @@ export function BudgetVsActualPanel({
       masthead: exportMasthead(asMonthGrid, asActivity),
       emptyMessage: asMonthGrid
         ? 'There is nothing in this month view to export yet.'
-        : 'Budget vs. Actual has nothing to report yet — it needs a budget plan.',
+        : 'Budget vs. Actual has nothing to report yet — it needs a budget.',
     };
   }
 
@@ -1965,7 +1965,7 @@ export function BudgetVsActualPanel({
 
   const bvaExport = (
     <MoneyExportButton
-      label={inMonthView ? 'Budget by month' : 'Budget vs. actual'}
+      label={inMonthView ? 'Budget by month' : 'Budget vs. Actual'}
       formats={['xlsx', 'csv', 'pdf']}
       build={buildExport}
       pdfHint={inMonthView
@@ -1995,10 +1995,10 @@ export function BudgetVsActualPanel({
         <>
           <CoachEmptyState
             icon={<TrendingUp size={22} aria-hidden />}
-            eyebrow="Budget vs. actual"
-            headline="No budget plan yet"
-            description="Create a budget plan to start tracking estimated spend against your actual ledger."
-            primaryAction={{ label: 'Create a budget plan', href: moneySectionHref(base, 'budget', undefined) }}
+            eyebrow="Budget vs. Actual"
+            headline="No budget yet"
+            description="Create a budget to start tracking estimated spend against your actual ledger."
+            primaryAction={{ label: 'Create a budget', href: moneySectionHref(base, 'budget', undefined) }}
             secondaryAction={{ label: 'See a finished example', onClick: () => setSampleOpen(true) }}
           />
           {sampleOpen && <SampleBudgetSheet initialTab="bva" onClose={() => setSampleOpen(false)} />}
@@ -2026,7 +2026,7 @@ export function BudgetVsActualPanel({
               · THE DUES CARD ANSWERED A DIFFERENT QUESTION, and answered it third. Dues are
                 money IN; this report measures spending against plan. All four of its figures
                 are already told on the Money hub's Overview card (which draws the bar and the
-                `· 88%` rate) and again on Player Dues' own footer — and since the income work
+                `· 88%` rate) and again on Player dues' own footer — and since the income work
                 landed, this report states dues month by month in its OWN income band, which the
                 card never could. ⚠ Do not "restore" it: the connection a coach actually needs
                 here (is enough coming in to fund the plan?) is answered at the foot by
@@ -2065,7 +2065,7 @@ export function BudgetVsActualPanel({
               ⚠ COLLECTED IS THE TABLE'S `Total revenue` ROW, as Spent is `Total expenses` — whole
               season, from `data.report`, never the To date re-cut, exactly as Spent reads `data`. */}
           <MoneySummaryBand
-            ariaLabel="Budget vs. actual summary"
+            ariaLabel="Budget vs. Actual summary"
             tiles={[
               {
                 key: 'collected',

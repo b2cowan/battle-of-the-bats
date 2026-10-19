@@ -400,11 +400,11 @@ test.describe('Money on a phone @360x740', () => {
 
     const surfaces: Array<[string, string]> = [
       ['Money hub', `${base()}/accounting`],
-      ['Season Budget Plan', `${base()}/accounting?section=budget`],
+      ['Budget', `${base()}/accounting?section=budget`],
       ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
       ['Ledger — Timeline', `${base()}/accounting?section=ledger&view=timeline`],
       ['Ledger — By bill', `${base()}/accounting?section=ledger&view=bills`],
-      ['Player Dues', `${base()}/accounting?section=dues`],
+      ['Player dues', `${base()}/accounting?section=dues`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       // Since List · Room · Question Phase B (2026-09-02) this URL opens the drive's ROOM over the
       // list — a full-screen sheet at this width, with tiles, the entries table and the pinned
@@ -580,7 +580,7 @@ test.describe('Money on a phone @360x740', () => {
     // miss the gate that every row on it has, so the sweep has to be the whole area.
     for (const [label, url] of [
       ['Money hub', `${base()}/accounting`],
-      ['Season Budget Plan', `${base()}/accounting?section=budget`],
+      ['Budget', `${base()}/accounting?section=budget`],
       ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
       ['Ledger — Timeline', `${base()}/accounting?section=ledger&view=timeline`],
       ['Ledger — By bill', `${base()}/accounting?section=ledger&view=bills`],

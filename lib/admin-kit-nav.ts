@@ -115,7 +115,7 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
     }
     case 'accounting': {
       // ⚖ ONE ROW THAT NEVER OPENS (Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30). Accounting is
-      // one page with tabs — Overview · Teams · Ledger · Allocations · Payment requests · Budget · Budget vs.
+      // one page with tabs — Overview · Budget · Teams · Ledger · Allocations · Payment requests · Budget vs.
       // Actual — so the rail lists no pages under it (and the phone's "In Accounting" row has nothing to
       // name): the tab row on the page is how a treasurer moves between them. The tabs' own list is
       // `accountingTabs` below; the rail row carries the waiting count while you are inside it too.
@@ -344,8 +344,12 @@ export function tournamentBarKeys(phase: TournamentPhase): readonly string[] {
  * the hub's program line and the help read, so none of them names a tab the page does not have.
  * Teams, Allocations and Payment requests are the club ↔ team loop: they exist only where the club runs rep
  * teams (`canOpenRepMoney`'s org half). Each tab is a real address (`HubTabBar` tabs are links).
- * ⚖ TEAMS IS SECOND (Club Accounting · Teams, Ask 1, owner 2026-10-16): the tab a treasurer opens most after the
- * Overview, so the row reads from the club, to its teams, to its books.
+ * ⚖ BUDGET IS SECOND, TEAMS THIRD (owner, 2026-10-18 — tab consistency across portals): the coach's Money row and
+ * this one read ONE shape, Overview · Budget · <the portal's own> · Ledger · <the club-and-team loop> · Budget vs.
+ * Actual, so a person who works both meets the same row. The plan opens the year and its report closes it. Teams
+ * keeps its place at the front for the reason it was moved there (the tab a treasurer opens most, Club Accounting ·
+ * Teams Ask 1, 2026-10-16) — one step further along, not to the back. The coach row's order is the
+ * one that did not move.
  */
 export type AccountingTabId = 'overview' | 'teams' | 'ledger' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual';
 
@@ -357,13 +361,13 @@ export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): A
   const a = `${base}/accounting`;
   return [
     { id: 'overview' as const, label: 'Overview', href: a },
+    { id: 'budget' as const, label: 'Budget', href: `${a}/budget` },
     ...(opts.runsRepTeams ? [{ id: 'teams' as const, label: 'Teams', href: `${a}/teams`, views: true as const }] : []),
     { id: 'ledger' as const, label: 'Ledger', href: `${a}/ledger` },
     ...(opts.runsRepTeams ? [
       { id: 'allocations' as const, label: 'Allocations', href: `${a}/allocations` },
       { id: 'payment-requests' as const, label: 'Payment requests', href: `${a}/payment-requests` },
     ] : []),
-    { id: 'budget' as const, label: 'Budget', href: `${a}/budget` },
     { id: 'budget-vs-actual' as const, label: 'Budget vs. Actual', href: `${a}/budget-vs-actual` },
   ];
 }

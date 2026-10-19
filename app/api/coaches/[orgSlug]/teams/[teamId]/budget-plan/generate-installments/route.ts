@@ -122,7 +122,7 @@ export const POST = withObservability(async (req: Request,
   // already agreed, straight from the preview the coach approved. It is recorded so the schedule
   // can say where it came from: the note used to read "Generated from budget plan" for every row,
   // which became untrue the moment a coach could type their own amounts, or split against the
-  // season estimate, or open this from Player Dues with no budget plan at all.
+  // season estimate, or open this from Player dues with no budget plan at all.
   const SCHEDULE_NOTES: Record<string, string> = {
     manual:   'Set by the coach',
     estimate: 'Generated from the season estimate',

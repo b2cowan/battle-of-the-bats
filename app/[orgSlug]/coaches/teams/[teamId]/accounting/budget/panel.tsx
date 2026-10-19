@@ -934,7 +934,7 @@ export function BudgetPlanPanel({
   // form↔record mapping, this is just where its result is remembered).
   const [formBaseline,       setFormBaseline]       = useState<LineForm>(BLANK_FORM);
 
-  // Set dues for all players — the modal itself is shared with Player Dues (one bulk-dues door,
+  // Set dues for all players — the modal itself is shared with Player dues (one bulk-dues door,
   // owner ruling 2026-08-13), so this panel holds nothing but whether it's open. Its form state,
   // its budget read and its discard guard all live inside the component.
   const [genOpen, setGenOpen] = useState(false);
@@ -2469,7 +2469,7 @@ export function BudgetPlanPanel({
       const built = budgetPeriodGridRows(fileView);
       return {
         dataset: `budget-plan-by-${granularity}`,
-        title: `Budget plan by ${GRANULARITY_LABEL[granularity].toLowerCase()}`,
+        title: `Budget by ${GRANULARITY_LABEL[granularity].toLowerCase()}`,
         columns,
         rows: built.rows,
         rowKinds: built.kinds,
@@ -2490,7 +2490,7 @@ export function BudgetPlanPanel({
     });
     return {
       dataset: 'budget-plan',
-      title: 'Season Budget Plan',
+      title: 'Budget',
       columns: BUDGET_PLAN_COLUMNS,
       rows: built.rows,
       rowKinds: built.kinds,
@@ -2510,7 +2510,7 @@ export function BudgetPlanPanel({
 
   const planExport = (
     <MoneyExportButton
-      label="Budget plan"
+      label="Budget"
       formats={['xlsx', 'csv', 'pdf']}
       build={buildPlanExport}
       pdfHint={viewMode === 'period'
@@ -2564,7 +2564,7 @@ export function BudgetPlanPanel({
           {!trueEmpty && (
           <>
           <MoneySummaryBand
-            ariaLabel="Budget plan summary"
+            ariaLabel="Budget summary"
             tiles={[
               {
                 key: 'revenue',
@@ -2572,7 +2572,7 @@ export function BudgetPlanPanel({
                 figure: fmt(seasonRevenue),
                 tone: 'good',
                 /* The phone form (M1, 2026-09-22). What goes is the WRITTEN-OFF CLAUSE — it is the
-                   Player Dues tab's own Dues caption one tab over, stated there with the figure it
+                   Player dues tab's own Dues caption one tab over, stated there with the figure it
                    belongs to. What stays is the DOOR: a coach with no dues set still has the only
                    control on this screen that sets them, because M1 does not remove controls, it
                    moves reading matter. ⚠ The words are the desk caption's, trimmed — not a
@@ -2802,7 +2802,7 @@ export function BudgetPlanPanel({
                     <CoachToolbarMenu
                       variant="glyph"
                       drawerOnPhone
-                      drawerTitle="Budget plan"
+                      drawerTitle="Budget"
                       label="More for this budget"
                       icon={<MoreHorizontal size={18} aria-hidden />}
                     >
@@ -3099,7 +3099,7 @@ export function BudgetPlanPanel({
                   net of write-offs, the same total the Dues tile prints — wearing the Scheduled tag,
                   or Draft while the Set-dues sheet is previewing one. It is a derived row, never a
                   budget line: nothing to fold, no pencil, and every edit still happens on the
-                  Player Dues tab. ⚠ Only on the UNFILTERED plan — a slice has no schedule. */}
+                  Player dues tab. ⚠ Only on the UNFILTERED plan — a slice has no schedule. */}
               {whenFilter === 'all' && periodView.installments && (
                 <tr
                   className={`${styles.ladderRow} ${styles.fundingRow} ${shared.rowTappable}`}
@@ -3116,7 +3116,7 @@ export function BudgetPlanPanel({
                       href={duesHref}
                       className={shared.moneyGridToggle}
                       onClick={e => { e.stopPropagation(); if (window.getSelection()?.toString()) e.preventDefault(); }}
-                      title="Open Player Dues"
+                      title="Open Player dues"
                     >
                       <span>{PLAN_LADDER_LABEL.installments}</span>
                       {duesBadge(styles.ladderBadge, duesDraft != null)}
@@ -4418,7 +4418,7 @@ export function BudgetPlanPanel({
         </div>
       )}
 
-      {/* ── Set dues for all players — the bulk-dues door, shared with Player Dues ── */}
+      {/* ── Set dues for all players — the bulk-dues door, shared with Player dues ── */}
       {genOpen && (
         <GenerateInstallmentsModal
           orgSlug={orgSlug}
@@ -4435,7 +4435,7 @@ export function BudgetPlanPanel({
           onGenerated={load}
           /* The schedule being previewed (decision D): the sheet hands the draft up and the plan
              behind it shows the row as Draft. The sheet prints its own "On the plan" sentence
-             (ruling F — it must say so wherever it is opened, Player Dues included). The callback
+             (ruling F — it must say so wherever it is opened, Player dues included). The callback
              is the setter itself, referentially stable, so the sheet's effect does not re-fire on
              every panel render. */
           onDraft={setDuesDraft}

@@ -23,7 +23,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   2. `history/awards/certificate`                 — a PRINT surface. Its back link lives in the
  *      print toolbar beside "Print certificate"; it has never rendered a page header at all.
  * (The team board's failed-load branch was the third until 2026-09-12: that page is a redirect
- * into Skills & Goals → Players now and renders nothing of its own.)
+ * into Skills & goals → Players now and renders nothing of its own.)
  * Giving a failed-load branch its own page header is a separate decision about what a broken
  * screen looks like. It was raised and deliberately not taken (spread ruling §7, "no unrelated
  * header tidying") — so if that decision is ever made, this component goes to zero and is deleted

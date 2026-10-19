@@ -1,6 +1,6 @@
 /**
  * lib/coach-opponents.ts
- * Opponent Scouting Book — pure logic, no I/O (unit tests: tests/unit/coach-opponents.test.ts).
+ * Opponent Scouting book — pure logic, no I/O (unit tests: tests/unit/coach-opponents.test.ts).
  *
  * The book is an OVERLAY keyed on normalized opponent names: `rep_team_events.opponent` is
  * free text with no opponent entity anywhere (even organizer-side tournament team ids are

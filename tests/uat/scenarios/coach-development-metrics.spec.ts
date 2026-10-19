@@ -224,7 +224,7 @@ test.describe('the three views and the exact addresses, rendered', () => {
     // Re-evaluation stage 4 (G1): the Players tab is gone; its old address lands on the Overview.
     await expect(tabs.getByRole('link', { name: 'Players' })).toHaveCount(0);
     await page.goto(`${base()}/development?section=players`);
-    await expect(page.getByText('Everything in Skills & Goals')).toBeVisible();
+    await expect(page.getByText('Everything in Skills & goals')).toBeVisible();
 
     // The board's old address lands on the one roster table — Insights → Coverage.
     await page.goto(`${base()}/development/board`);
@@ -243,10 +243,10 @@ test.describe('the three views and the exact addresses, rendered', () => {
     expect((await caseyRow.innerText())).toContain('—');
     // The count line is the first thing under the toolbar; the retired prose is gone.
     await expect(page.getByText(/of 12 players (has|have) a Throw speed result this season/)).toBeVisible();
-    await expect(page.getByText('Set goals and record in Skills & Goals →')).toHaveCount(0);
+    await expect(page.getByText('Set goals and record in Skills & goals →')).toHaveCount(0);
     await expect(page.getByText('Returning player')).toHaveCount(0);
     // The head coach holds the grant, so the door to the room is offered under the table.
-    await expect(page.getByRole('link', { name: 'Record in Skills & Goals →' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Record in Skills & goals →' })).toBeVisible();
 
     // The name is a link into the record's Results view, carrying the metric and the way back.
     // The NAME link ("#4 Devon Test"), not the row's own door ("Open Devon Test’s progress", added with

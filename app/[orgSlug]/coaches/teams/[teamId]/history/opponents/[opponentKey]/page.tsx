@@ -265,9 +265,9 @@ export default function CoachOpponentCardPage({
         <CoachBackLink href={`${base}/schedule`}>Back to schedule</CoachBackLink>
         <CoachNotGranted
           icon={<Telescope size={20} aria-hidden />}
-          section="Scouting Book"
+          section="Scouting book"
           what="The team's shared scouting book — everyone's observations on this opponent, plus the book line."
-          blocker="You can still log your own observations from the schedule. Ask your head coach for Scouting Book access to read the shared book."
+          blocker="You can still log your own observations from the schedule. Ask your head coach for Scouting book access to read the shared book."
         />
       </div>
     );

@@ -208,7 +208,7 @@ const SITES: Site[] = [
     },
   },
   /* ⚰⚰ SIX ROWS LEFT THIS INVENTORY ON 2026-09-01 (cleanup tranche 6), and the lesson is worth the
-     space they took. Budget Plan, Budget vs. Actual, Club, Player Dues, the Ledger and Fundraising
+     space they took. Budget Plan, Budget vs. Actual, Club, Player dues, the Ledger and Fundraising
      each rendered a `<CoachPageHeader variant={embedded ? 'embedded' : 'standard'}>`. Once the
      standalone money routes were deleted (2026-08-31, `2d430bad`) the hub was their only mount, so
      `embedded` was always true — and the embedded shape draws ACTIONS AND NOTHING ELSE. Four of the
@@ -353,13 +353,13 @@ const SITES: Site[] = [
     // is the landing and the action is ABSENT (not held back) until a measured test exists; the
     // not-granted return now keys on the Development grant.
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/layout.tsx', occurrence: 0,
-    screen: 'Skills & Goals — the "not turned on for you" gate on the whole subtree (D5)', variant: 'standard', helpHost: 'masthead', actions: null,
+    screen: 'Skills & goals — the "not turned on for you" gate on the whole subtree (D5)', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
     // Three tabs — Overview · Sessions · Metrics — since re-evaluation stage 4 (G1, 2026-09-16): the
     // Players tab left for Insights → Coverage, the one roster table.
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', occurrence: 0,
-    screen: 'Skills & Goals (Overview · Sessions · Metrics)', variant: 'standard', helpHost: 'masthead',
+    screen: 'Skills & goals (Overview · Sessions · Metrics)', variant: 'standard', helpHost: 'masthead',
     actions: {
       from: 'startAction', slot: 'action', holds: 'Start session (the one create; ABSENT until a test is defined — stage 0, 2026-09-14)',
       /* ⚠ THE CORNER, SINCE PHONE STAGE 4 · E5 (owner 2026-09-22). Measured at 390×844: a 139×44
@@ -389,7 +389,7 @@ const SITES: Site[] = [
     screen: 'Preview development handout', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   // ── Practice plans — one room, three tabs (practices re-evaluation stage 0, D5, 2026-09-14) ──
-  // The two libraries moved here WHOLE from under Skills & Goals; their old addresses are redirect
+  // The two libraries moved here WHOLE from under Skills & goals; their old addresses are redirect
   // pages with no header. Each tab is its own component and draws the room's header itself,
   // because its header ACTION and its help section are its own — so three call sites carry one
   // title. The Practices landing holds no action: the next-practice card owns the room's one lime.
@@ -1061,7 +1061,7 @@ describe('coach page headers — what the actions slot may hold', () => {
    */
   const BACK_LINK_FALLBACKS = [
     /* (The team board's failed-load branch left this list on 2026-09-12: the board page is a
-        redirect into Skills & Goals → Players now, and renders nothing of its own.) */
+        redirect into Skills & goals → Players now, and renders nothing of its own.) */
     /* The awards CERTIFICATE screen — a print surface; its way out rides the print toolbar. */
     'app/[orgSlug]/coaches/teams/[teamId]/history/awards/certificate/page.tsx',
     /* Opponent detail's failed-load branch — the same shape as the board's. */

@@ -52,7 +52,7 @@ import { possessive } from '@/lib/utils';
 // chart draws from. The Overview does not change — its rail's report count reads 4 by computation.
 //
 // ⚠ COVERAGE IS THE ONE ROSTER TABLE (re-evaluation stage 4, owner ruling G1,
-// 2026-09-16). The Skills & Goals Players tab drew the same cell from the same
+// 2026-09-16). The Skills & goals Players tab drew the same cell from the same
 // board read; the gate decided which copy stays — that hub is all-or-nothing
 // behind the Development grant, this report is read by every coach with record
 // access, and a read must not move behind a write grant. So Coverage took the one
@@ -129,7 +129,7 @@ interface PracticeRow {
 interface ReportData {
   showGoals: boolean;
   showMeasurables: boolean;
-  /** The Development grant — the only key that opens Skills & Goals (stage 0, D5); decided by the server. */
+  /** The Development grant — the only key that opens Skills & goals (stage 0, D5); decided by the server. */
   canWrite: boolean;
   types: RepTeamMeasurableType[];
   rows: ReportRow[];
@@ -384,7 +384,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
        `styles.page`, the <h1> and the help "?".
 
        ⚠ THE REPORT KEEPS THE WORD "DEVELOPMENT" AND THE NAV WORKBENCH DOES NOT: the sidebar item
-       is now "Skills & Goals" (owner ruling 5, 2026-08-18). That collision — two doors both called
+       is now "Skills & goals" (owner ruling 5, 2026-08-18). That collision — two doors both called
        Development, one a coverage report and one a workbench — is why this file's old title asked a
        question instead of naming itself. The door under the Coverage table names the room for a
        coach who holds the grant to it. */
@@ -395,7 +395,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
         </p>
       ) : !anyData ? (
         <p className={styles.detailPlaceholder}>
-          Nothing to cover yet — run a session in Skills &amp; Goals, add a goal from any
+          Nothing to cover yet — run a session in Skills &amp; goals, add a goal from any
           player&apos;s record, or write a plan for a practice.
         </p>
       ) : (
@@ -406,7 +406,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
           <div className={styles.devReportToolbar}>
             {/* Report and Show are plain labelled selects (2026-09-17) — the SAME `.field` +
                 `.label` + `.select` .devToolbarControl recipe Player/Metric/Compare already use
-                two lines down in `progressFields`, and the Skills & Goals workbench this toolbar
+                two lines down in `progressFields`, and the Skills & goals workbench this toolbar
                 was always meant to match (this file's own header comment named that intent when
                 the toolbar was built). SublinedChoice's one-off "toolbar" variant — a <button>
                 standing in for a <select> — never quite read as one of them; a real <select>
@@ -669,7 +669,7 @@ function CoverageReport({ data, metric, focus, base, here, tag }: {
           report, on the 44px floor. */}
       {canWrite && (
         <Link href={`${base}/development`} className={styles.insightsOpsLink}>
-          Record in Skills &amp; Goals →
+          Record in Skills &amp; goals →
         </Link>
       )}
 
@@ -1181,7 +1181,7 @@ function TeamReport({ data, metrics, base, tag }: {
       <p className={styles.formHint} style={{ marginTop: '0.35rem' }}>A change in a test does not explain why it happened.</p>
       {canWrite && (
         <Link href={`${base}/development`} className={styles.insightsOpsLink}>
-          Record in Skills &amp; Goals →
+          Record in Skills &amp; goals →
         </Link>
       )}
     </>

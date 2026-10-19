@@ -412,7 +412,7 @@ export const COVERAGE_DASH = '—';
 
 /**
  * ONE cell for the selected metric on the Coverage table (the one roster table since re-evaluation
- * stage 4, G1 — the Skills & Goals Players tab that drew the same cell is gone): the latest headline
+ * stage 4, G1 — the Skills & goals Players tab that drew the same cell is gone): the latest headline
  * ("8.31 seconds (of 2)", "2 of 3 in range", a skill's descriptor) with THAT metric's own date; else a
  * DASH — including when a session marked the player not-assessed, because the table answers "is there
  * a result", never "why isn't there one" (owner, 2026-09-17: whether the player was there is noise).

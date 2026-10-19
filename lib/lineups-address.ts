@@ -1,7 +1,7 @@
 /**
  * The Lineups room's addresses (the hub brought level with the Practice plans room, owner ask
  * 2026-09-18): one room, two tabs — Games · Templates — each a real, shareable address on
- * `?section=`, the Money / Insights / Skills & Goals / Practice plans hubs' convention
+ * `?section=`, the Money / Insights / Skills & goals / Practice plans hubs' convention
  * (`HubTabBar`). The bare hub address IS the Games landing and never carries `?section=games`.
  *
  * ⚠ This replaced `?tab=templates`, which was page STATE mirrored into the URL by hand

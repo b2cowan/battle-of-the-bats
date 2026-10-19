@@ -21,7 +21,7 @@ describe('the reader names where its button goes', () => {
     assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127/history', 'coach'), 'Open Insights');
     assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127/schedule', 'coach'), 'Open Schedule');
     assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127/settings', 'coach'), 'Open Settings');
-    assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127/development', 'coach'), 'Open Skills & Goals');
+    assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127/development', 'coach'), 'Open Skills & goals');
     assert.equal(notificationDestination('/uat-test-org/coaches/teams/3127', 'coach'), 'Open Overview');
   });
 

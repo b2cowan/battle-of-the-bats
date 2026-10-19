@@ -6,7 +6,7 @@ import { lineupsHref, type LineupsSection } from '@/lib/lineups-address';
  * The Lineups room's tab row — Games · Templates (the hub brought level with the Practice plans
  * room, owner ask 2026-09-18). Games is the landing; the template library is one tap to the side,
  * never above the season's list. Each tab is a real address (`?section=`), the Practice plans /
- * Skills & Goals / Money / Insights idiom, so the template editor's back door and the help can
+ * Skills & goals / Money / Insights idiom, so the template editor's back door and the help can
  * point at one.
  *
  * ⚠ This replaced the dark SEGMENTED control (`segChoice`) the hub wore since 2026-07-08. That

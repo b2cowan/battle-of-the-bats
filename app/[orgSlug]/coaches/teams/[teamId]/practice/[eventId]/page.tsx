@@ -102,7 +102,7 @@ type LoadState = {
   /** Is the picker's third source worth offering? One boolean off the plan GET (P3 C2). */
   hasPastSeasonPlans: boolean;
   sessions: RepTeamEvaluationSession[];
-  /** The game-week scouting bridge (Scouting Book P3) — null when the week has no booked
+  /** The game-week scouting bridge (Scouting book P3) — null when the week has no booked
    *  opponent with book content, which is most weeks. */
   scoutingBridge: PracticeWeekScoutingBridge | null;
   staffSuggestions: string[];
@@ -1063,7 +1063,7 @@ export default function CoachPracticePlanPage({
     );
   }
 
-  /* N4 · the practice-week scouting bridge (Scouting Book P3). ONE lead, both presentations: the desk's
+  /* N4 · the practice-week scouting bridge (Scouting book P3). ONE lead, both presentations: the desk's
      card above the toolbar ("— the book:" then the book's line, the freshest observation and "Full
      book"), and on a phone one row under the toolbar and the sent line — the "one quiet line" its
      ruling described — whose door is the book itself. Absent on a RECORD, as ever. */
@@ -1213,7 +1213,7 @@ export default function CoachPracticePlanPage({
         <p className={styles.errorText}>{loadError}</p>
       ) : !data ? null : (
         <div className={styles.ppSheetCol}>
-          {/* ── The practice-week bridge (Scouting Book P3, plan §4.9) ──
+          {/* ── The practice-week bridge (Scouting book P3, plan §4.9) ──
               One quiet line above the sheet: Saturday's intelligence while Tuesday's plan is
               being built. Read-only glance — capture and curation stay on the book's own
               surfaces. Absent when the week has no booked opponent with book content, absent

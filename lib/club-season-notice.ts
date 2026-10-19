@@ -64,7 +64,7 @@ export function clubSeasonStartedCard(p: {
   const c = p.carried;
   if (c) {
     if (c.players > 0) parts.push(pluralize(c.players, 'player'));
-    if (c.budgetPlan) parts.push('the budget plan');
+    if (c.budgetPlan) parts.push('the budget');
     if (c.feePlan) parts.push('the fee plan');
     if (c.openingBalance) parts.push('the opening balance');
   }

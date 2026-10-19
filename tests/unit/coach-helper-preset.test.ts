@@ -132,13 +132,13 @@ describe('a helper meets exactly two doors in the portal', () => {
    * ⚠ ADDED 2026-09-11 — the `scoutingBook` grant (narrowed from bare `schedule`) gave a head
    * coach a way to turn OFF the pooled scouting read for a helper without touching `schedule`
    * itself. The preset default keeps it ON (nothing changes until a head coach flips it), and a
-   * helper who can read the pooled book has a real reason to open Insights (the Scouting Book
+   * helper who can read the pooled book has a real reason to open Insights (the Scouting book
    * tab) — hiding that nav entry from someone who could already reach the same data by deep link
    * was exactly the "a door a persona can see but not use" bug this file otherwise guards
    * against, just pointed the other way. `Insights` therefore left the DOORS list above on
    * purpose; it is asserted OPEN here instead.
    */
-  it('opens Insights too, for the Scouting Book tab waiting inside', () => {
+  it('opens Insights too, for the Scouting book tab waiting inside', () => {
     const caps = helper();
     assert.equal(isCoachNavItemVisible(caps, 'Insights'), true);
   });
@@ -153,7 +153,7 @@ describe('a helper meets exactly two doors in the portal', () => {
     }
     assert.equal(isCoachNavItemVisible(caps, 'Staff'), false);   // head coach only, unchanged
     assert.equal(isCoachNavItemVisible(caps, 'Tryouts'), false); // ungranted by default, unchanged
-    // Skills & Goals (the old 'Development' label) left the open list on 2026-09-14 — re-evaluation
+    // Skills & goals (the old 'Development' label) left the open list on 2026-09-14 — re-evaluation
     // stage 0, owner ruling D5: the door is the Development grant, which no default assistant
     // holds. Not this preset's doing; recorded here so the list stays honest.
     assert.equal(isCoachNavItemVisible(caps, 'Development'), false);

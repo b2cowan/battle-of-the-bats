@@ -26,7 +26,7 @@ import { pathWithSearchParams, type SearchParamsRecord } from './coaches-portal-
  * is not a member here, and the hub's own `SectionId` is this ∪ 'dashboard'.
  *
  * ⚠ `scouting` is the SECTION ID for a folder still called `opponents`. The owner renamed the
- * report to "Scouting Book" (over "Opponents") in the mockup session; the drill-in book keeps its
+ * report to "Scouting book" (over "Opponents") in the mockup session; the drill-in book keeps its
  * `history/opponents/[opponentKey]` route, so renaming the folder would have moved a page nobody
  * asked to move. The id names what a coach reads; the folder names where the code sleeps.
  */

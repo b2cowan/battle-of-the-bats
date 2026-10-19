@@ -34,7 +34,7 @@ const DOT: Record<CoachRailDot, string> = {
 };
 
 /**
- * THE RAIL (plan §4, decision G) — "More in Money" · "Everything in Skills & Goals": a rail of
+ * THE RAIL (plan §4, decision G) — "More in Money" · "Everything in Skills & goals": a rail of
  * doors, one live line each, in a report card. dot · name · note · stat · chevron, 44px rows, the
  * two-column fold when the CARD is wider than 940px (a container query — the operating dashboard
  * hands it a ~362px slot beside the ledger where one column is right, the setup Overview the full

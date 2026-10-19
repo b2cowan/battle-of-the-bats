@@ -2,14 +2,14 @@
  * The Practice plans room's addresses (practices re-evaluation stage 0 · Arrive, owner ruling D5,
  * 2026-09-14; a fourth tab at stage 4, L9, 2026-09-16): one room, four tabs — Practices ·
  * Templates · Circuits · Drills, a size ladder (a whole practice, a block, a station) — each a
- * real, shareable address on `?section=`, the Money / Insights / Skills & Goals hubs' convention
+ * real, shareable address on `?section=`, the Money / Insights / Skills & goals hubs' convention
  * (`HubTabBar`). The bare hub address IS the Practices landing and never carries
  * `?section=practices`.
  *
- * ⚠ The two older libraries MOVED here whole from under Skills & Goals (`/development/templates`,
+ * ⚠ The two older libraries MOVED here whole from under Skills & goals (`/development/templates`,
  * `/development/drills`); those addresses redirect to the tab. The template editor is a drill-in
  * of its own at `/practice/templates/{id}`, the circuit editor at `/practice/circuits/{id}` — the
- * list is a tab, the record is a page, the same split Skills & Goals makes between
+ * list is a tab, the record is a page, the same split Skills & goals makes between
  * `?section=metrics` and `/development/metrics/{id}`.
  *
  * ⚠ NEVER A YEAR. Practice plans, templates and drills are live-season instruments; the look-back

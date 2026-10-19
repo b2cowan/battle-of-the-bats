@@ -1,7 +1,7 @@
 /**
  * THE OPPONENT GROUPING KEY — the one rule that decides whether two spellings are the same team.
  *
- * A leaf module with NO imports, and that is its whole job. The Opponent Scouting Book is an
+ * A leaf module with NO imports, and that is its whole job. The Opponent Scouting book is an
  * overlay keyed on this value (`rep_team_opponents.normalized_name`), so a book row only ever
  * finds its own games if the seed, the app and the URL parser all agree on the answer — and the
  * demo seeders run under Node's type-stripping, which cannot resolve `lib/coach-opponents.ts`'s

@@ -473,9 +473,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'coaches-player-dues',
-    label: 'Coaches Portal — Player Dues',
+    label: 'Coaches Portal — Player dues',
     module: 'coaches',
-    page: 'Player Dues',
+    page: 'Player dues',
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
     formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
@@ -492,7 +492,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     id: 'coaches-family-dues-statement',
     label: 'Coaches Portal — Family Dues Statement',
     module: 'coaches',
-    page: 'Player Dues',
+    page: 'Player dues',
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
     formats: ['pdf'],
     defaultFormat: 'pdf',
@@ -591,7 +591,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
        that has ever gone stale. */
     roundTrip: 'lib/coach-budget-import.ts',
     roundTripTest: 'tests/unit/coach-budget-plan-round-trip.test.ts',
-    label: 'Coaches Portal — Budget plan',
+    label: 'Coaches Portal — Budget',
     module: 'coaches',
     page: 'Money → Export ▾',
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx',
@@ -609,7 +609,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export the season budget plan, grouped exactly as the screen shows it — categories, summed items, each line’s schedule and notes, and the money-in sections; the By-period view exports its month or quarter columns. PDF prints the statement.',
+      'Export the season budget, grouped exactly as the screen shows it — categories, summed items, each line’s schedule and notes, and the money-in sections; the By-period view exports its month or quarter columns. PDF prints the statement.',
   },
   {
     /* ⚠ THE CATALOG ID IS UNCHANGED (Money split P1, 2026-08-16). It is a stable key the help
@@ -757,9 +757,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'accounting-budget-plan',
-    label: 'Budget Plan',
+    label: 'Budget',
     module: 'accounting',
-    page: 'Budget Plan',
+    page: 'Accounting › Budget',
     file: 'app/[orgSlug]/admin/accounting/budget/page.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
@@ -769,7 +769,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
-    helpSummary: 'Export budget plan by category and line with total, allocated, and collected amounts.',
+    helpSummary: 'Export the budget by category and line with total, allocated, and collected amounts.',
   },
   {
     // Catalog true-up 2026-08-22 (PDF Export Quality Phase 1): the xlsx/csv exports have been

@@ -669,7 +669,7 @@ export const canManageSchedule = (c: CoachCapabilities) => c.scheduleManage;
  * (coach-judgment content about a minor) describes goals and notes, not a drill sheet. The
  * assistant who runs Tuesday practice can now write Tuesday's plan. This WIDENS every existing
  * assistant who holds schedule editing (the plan's stated assumption 3); the sheet's Schedule
- * sentence says so. Skills & Goals writes (goals, measurables, sessions, continuity, carry) stay
+ * sentence says so. Skills & goals writes (goals, measurables, sessions, continuity, carry) stay
  * on `canWriteDevelopment` — this predicate is the seam between the two.
  *
  * ⚠ Its own NAME rather than callers reading `canManageSchedule` directly, so the day a coach asks
@@ -711,7 +711,7 @@ export const TOURNAMENTS_DOOR_DENIED_MESSAGE =
 /** See the schedule and open a practice plan. The sidebar's Schedule door keys on this. */
 export const canViewSchedule = (c: CoachCapabilities) => c.schedule;
 /**
- * Opponent Scouting Book (owner-ratified 2026-08-04, narrowed 2026-09-11): LOGGING an
+ * Opponent Scouting book (owner-ratified 2026-08-04, narrowed 2026-09-11): LOGGING an
  * observation — and seeing your OWN past ones back — is OPEN to every schedule-holder,
  * assistants and Helpers included, because the best observations come from the bench and
  * entries are always attributed. Reading the POOLED book (everyone else's notes, the book
@@ -734,7 +734,7 @@ export const canWriteScoutingSummary = (c: CoachCapabilities) => c.notes && c.sc
  *
  * **Anyone who DRIVES the console** — the union of the three grants that already carve the
  * console into zones (subs, Who's here, score + End game). Deliberately NOT `schedule` alone,
- * which is the Scouting Book's gate: a schedule-only Helper's console is read-only by the
+ * which is the Scouting book's gate: a schedule-only Helper's console is read-only by the
  * §1.15 ruling and renders no footer at all, so a bare-`schedule` predicate here would have
  * put a write behind a surface that shows no button — a gate contradicting its own screen.
  *

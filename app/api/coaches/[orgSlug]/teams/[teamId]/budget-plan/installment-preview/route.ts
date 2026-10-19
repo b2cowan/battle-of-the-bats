@@ -227,7 +227,7 @@ export const GET = withObservability(async (req: Request,
   // Three states used to end this endpoint, and the sheet with it: no budget lines, funding
   // covering the whole season, and an estimate of $0. Every one of them says the same thing —
   // "there is no number to divide" — which is a reason a SPLIT cannot run, not a reason a coach
-  // cannot type $400. Since this sheet is now also the Player Dues bulk door, where a coach may
+  // cannot type $400. Since this sheet is now also the Player dues bulk door, where a coach may
   // never have built a budget at all, that refusal was turning people away from the only job that
   // screen exists to do. The reasons now travel per-basis (see `describeInstallmentBases`) and
   // only a split is refused.
@@ -251,7 +251,7 @@ export const GET = withObservability(async (req: Request,
   // Three states used to end this endpoint, and the sheet with it: no budget lines, funding
   // covering the whole season, and an estimate of $0. Every one of them says the same thing —
   // "there is no number to divide" — which is a reason a SPLIT cannot run, not a reason a coach
-  // cannot type $400. Since this sheet is now also the Player Dues bulk door, where a coach may
+  // cannot type $400. Since this sheet is now also the Player dues bulk door, where a coach may
   // never have built a budget at all, that refusal was turning people away from the only job that
   // screen exists to do. The reasons now travel per-basis (see `describeInstallmentBases`) and
   // only a split is refused.

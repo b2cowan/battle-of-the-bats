@@ -69,7 +69,7 @@ import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, reentr
  * for the navigation to push over — a dead entry `popVerdict` steps over on the way back, exactly
  * what a link tapped INSIDE the sheet has always left. The rules of the hold, and why each one
  * exists, live with `createPressGate` in `backStep.ts`, where they are unit-tested as event sequences.
- * ⚠⚠ …AND IT IS READ ON `document`, NEVER `window` (§258 walk, 2026-10-02 — "Open Player Dues just
+ * ⚠⚠ …AND IT IS READ ON `document`, NEVER `window` (§258 walk, 2026-10-02 — "Open Player dues just
  * closes the window and keeps me on the Ledger"). A door INSIDE a floor that closes the floor as it
  * is clicked is this same tap: the close is the exit, the click is the navigation. But nearly every
  * floor's panel calls React's `stopPropagation()` on a click (QuestionShell, RoomShell, the month

@@ -11,7 +11,7 @@ import {
 import type { MastheadEvent, MastheadScoutingNudge } from './coach-masthead-status';
 
 /**
- * The game-week scouting nudge (Scouting Book P2): when the masthead feed's next event is
+ * The game-week scouting nudge (Scouting book P2): when the masthead feed's next event is
  * a GAME inside the coming week whose opponent has observations in the book, hand the
  * masthead one quiet line's worth of facts. Everything else — dismissal (once per game,
  * on-device), the sentence, the link — is the client's.
@@ -63,7 +63,7 @@ export interface PracticeWeekScoutingBridge {
 }
 
 /**
- * The practice-week bridge (Scouting Book P3, plan §4.9): when a practice is being built in
+ * The practice-week bridge (Scouting book P3, plan §4.9): when a practice is being built in
  * a week containing a booked opponent's game AND that opponent's book has content, hand the
  * planner one quiet panel's worth of facts — book line + freshest observation + the link.
  * Saturday's "they bunt the first strike" becomes Tuesday's bunt-defense block.

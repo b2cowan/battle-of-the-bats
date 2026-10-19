@@ -169,7 +169,7 @@ export default function CoachesPracticePlansPage({
   // request for a coach whose schedule access has been revoked. `hasAccess` is in the guard too —
   // a coach who is not on this team renders "Team not found" below, and firing a request that can
   // only 403 is work nobody ever sees the result of. ONCE per team, whichever tab the coach lands
-  // on (the Skills & Goals hub's idiom): gating it on the Practices tab re-fetched the list — and
+  // on (the Skills & goals hub's idiom): gating it on the Practices tab re-fetched the list — and
   // flashed "Loading…" — every time the coach came back from a library tab (/simplify, 2026-09-14).
   useEffect(() => {
     if (ctxLoading || !page.hasAccess || !canSeeSchedule) return;

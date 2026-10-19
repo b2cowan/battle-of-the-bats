@@ -2,7 +2,7 @@
    THE COACH KIT — the dashboard card, its parts, the list toolbar and the rail, ONCE.
    Plan: docs/projects/active/COACH_SHARED_STYLE_KIT_PLAN.md (owner rulings A–H, 2026-09-16).
 
-   Why this file exists: Skills & Goals' Overview was given Money's dashboard grammar on the owner's
+   Why this file exists: Skills & goals' Overview was given Money's dashboard grammar on the owner's
    instruction by COPYING every value into a second stylesheet — a coach screen must not import
    another section's module — and it had drifted in three places three days later (the rail
    chevron, the rail's two-column fold, two figure tones). The owner's ruling on hearing it: "shared
@@ -150,7 +150,7 @@
 }
 
 /* ── Figure: the number a card exists to show (`--type-figure`, a card figure read at a desk).
-   The body face, tabular: one numeral on Money, Skills & Goals and the team Overview alike — the
+   The body face, tabular: one numeral on Money, Skills & goals and the team Overview alike — the
    tiles and the Insights band drew it in the display face (decisions C, D). ── */
 .big {
   display: block;
@@ -265,7 +265,7 @@
 
 /* ═══ THE LIST TOOLBAR (decision E) — the row above a list: context or a lens on the left, the
    actions pinned right, wrapping, one rem of air below, the table under it. It was three live
-   recipes (`.panelToolbar` on six Money and Skills & Goals tabs, `.listToolbar` on Roster and
+   recipes (`.panelToolbar` on six Money and Skills & goals tabs, `.listToolbar` on Roster and
    Schedule, `.insightsPanelToolbar` on the reports) with three gaps, two spacings below and the
    44px floor hand-written three times — and two dead ones (`.scheduleToolbar`, `.listToolbarFact`
    and its phone drop had no callers). Money's geometry is the kit's.
@@ -297,7 +297,7 @@
   padding-bottom: 0.9rem;
 }
 /* The lede — ONE role (decision E): a count or a sentence, `--type-support`, the quiet ink, a
-   reading measure. The Roster's fact was 14px, Skills & Goals' 12px, Coverage's 14px bold; the
+   reading measure. The Roster's fact was 14px, Skills & goals' 12px, Coverage's 14px bold; the
    last is the report's FINDING and keeps its own class. */
 .toolbarLede {
   margin: 0;
@@ -405,7 +405,7 @@
 .calViewOn, .calViewOn:hover { background: var(--home-olive-soft); color: var(--home-olive); }
 @media (max-width: 768px) { .calView { min-height: var(--tap-min, 44px); } }
 
-/* ═══ THE RAIL (decision G) — "More in Money" · "Everything in Skills & Goals": a rail of doors,
+/* ═══ THE RAIL (decision G) — "More in Money" · "Everything in Skills & goals": a rail of doors,
    one live line each (F-17's bin C, so it is this kit's). dot · name · note · stat · chevron. ═══ */
 .railCard {
   container-type: inline-size;
@@ -495,5 +495,5 @@
 }
 /* ⚠ A TEXT glyph, not an icon — a hairline token measured 1.44:1 on the white card and failed the
    rendered contrast sweep; `--home-dim` is the muted ink AA-corrected precisely so quiet things
-   still read (5.91:1). `--type-support` — Money's; Skills & Goals' copy had drifted to heading size. */
+   still read (5.91:1). `--type-support` — Money's; Skills & goals' copy had drifted to heading size. */
 .railChev { color: var(--home-dim, var(--white-45)); font-size: var(--type-support); line-height: 1; }

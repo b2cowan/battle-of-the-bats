@@ -87,7 +87,7 @@ function PlanBar({ actual, target, scaleMax, overGood }: {
 export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Props) {
   const { dues, budget } = summary;
   /* ⚠⚠ THE CARD MEASURES THE BILL, AND SINCE 2026-09-09 IT SAYS SO IN ITS OWN NAME (owner R4).
-     `Collected` on the Player Dues band became money and only money — uncapped — so a card reading
+     `Collected` on the Player dues band became money and only money — uncapped — so a card reading
      it as PROGRESS TOWARD THE BILL would have shown 45% beside $7,349.32 still owed, and its bar
      would pass 100% the first time a team fundraises hard. That is not a figure a coach can
      interpret. The card now takes the name of the thing it has always actually measured and reads
@@ -158,10 +158,10 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
               />
             </>
           ) : (
-            <p className={styles.footNote}>Dues schedules exist but no installments are set yet. Set them up in Player Dues.</p>
+            <p className={styles.footNote}>Dues schedules exist but no installments are set yet. Set them up in Player dues.</p>
           )}
           <div className={kit.foot}>
-            <Link href={hrefs.dues} className={kit.footLink}>Player Dues →</Link>
+            <Link href={hrefs.dues} className={kit.footLink}>Player dues →</Link>
           </div>
         </CoachCard>
 
@@ -331,7 +331,7 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                 )}
               </div>
               <div className={kit.foot}>
-                <Link href={hrefs.budget} className={kit.footLink}>Budget plan →</Link>
+                <Link href={hrefs.budget} className={kit.footLink}>Budget →</Link>
                 <Link href={hrefs.budgetVsActual} className={kit.footLink}>Budget vs. Actual →</Link>
               </div>
             </>

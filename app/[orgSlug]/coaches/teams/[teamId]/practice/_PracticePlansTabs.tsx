@@ -7,7 +7,7 @@ import { practicePlansHref, type PracticePlansSection } from '@/lib/practice-pla
  * re-evaluation stage 0, owner ruling D5, 2026-09-14; the fourth tab at stage 4, L9, 2026-09-16).
  * Practices is the landing; the three libraries are one tap to the side, never above the season's
  * list, and read as a SIZE LADDER — a whole practice, a block with stations, a station. Each tab
- * is a real address (`?section=`), the Skills & Goals / Money / Insights idiom, so the plan page's
+ * is a real address (`?section=`), the Skills & goals / Money / Insights idiom, so the plan page's
  * picker and the help can point at one.
  *
  * ⚠ ABSENT, never disabled, for a viewer the page would refuse. All three library reads gate on

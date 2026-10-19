@@ -79,10 +79,10 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
     { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
     { key: '/tournaments',   icon: Trophy,        label: 'Tournaments' },
   ] },
-  // ⚠ "Development" → "Skills & Goals" (owner ruling 5, 2026-08-18) — matching the sidebar, whose
+  // ⚠ "Development" → "Skills & goals" (owner ruling 5, 2026-08-18) — matching the sidebar, whose
   // note carries the reasoning. Route unchanged; the gate keeps the old label as a fallthrough.
   { header: 'Progress', items: [
-    { key: '/development',   icon: TrendingUp,    label: 'Skills & Goals' },
+    { key: '/development',   icon: TrendingUp,    label: 'Skills & goals' },
     { key: '/history',       icon: BarChart3,     label: 'Insights' },
   ] },
   { header: 'Money', items: [
@@ -120,7 +120,7 @@ const MORE_ONLY_KEYS = ALL_MORE_KEYS.filter(key => !BAR_KEYS.has(key));
  * ⚠ Every key here MUST be a `MORE_SECTIONS` item — a tile is a door, and a door the groups do
  * not list is exactly the drift the guard exists to catch (`coach-nav-groups.test.ts` pins it).
  */
-// ⚖ While chat is paused, Practice plans is on the bar, so the tiles are Lineups · Skills & Goals · Money (owner's pick,
+// ⚖ While chat is paused, Practice plans is on the bar, so the tiles are Lineups · Skills & goals · Money (owner's pick,
 // ruling P3T, 2026-10-18 — over the recommended Tournaments). When chat's door returns, the three are restored.
 const HOT_KEYS = CHAT_PAUSED ? [
   '/lineups',

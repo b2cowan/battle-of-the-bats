@@ -6,7 +6,7 @@
  * The conversation LIVES in the shared money form (`accounting/expenses/panel.tsx`) because that
  * form is the thing the plan says to grow, and everything it needs — the taxonomy, the tag
  * library, the save paths — is already there. But its doors are all over the hub: the Record
- * button in the page header, a family's row on Player Dues, a player's row on a drive. This
+ * button in the page header, a family's row on Player dues, a player's row on a drive. This
  * context is how any of them reaches the form:
  *
  *  - `openNonce` — monotonic; each request bumps it. The Transactions instance of the shared panel

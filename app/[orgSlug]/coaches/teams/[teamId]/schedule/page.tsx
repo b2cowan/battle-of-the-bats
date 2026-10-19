@@ -227,7 +227,7 @@ export default function CoachesSchedulePage({
   // flag, and a closed season no longer renders this screen at all.
   const page = useCoachSeasonPage(orgSlug, teamId);
 
-  // Opponent Scouting Book roll-up (one fetch, no N+1): powers the record chip on upcoming
+  // Opponent Scouting book roll-up (one fetch, no N+1): powers the record chip on upcoming
   // game rows and the sheet's Scouting row. Non-fatal — a failed load just means no
   // chips this visit. The map is keyed by the book's normalized names AND every merged-away
   // alias (P2): an aliased spelling's events fold into the owner server-side, but the event

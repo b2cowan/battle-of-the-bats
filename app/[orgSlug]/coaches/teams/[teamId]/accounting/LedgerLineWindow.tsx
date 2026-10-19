@@ -3,7 +3,7 @@
  * ⚖ A LEDGER ROW ANOTHER TAB WROTE OPENS A READ WINDOW (Ledger Parity D3, owner 2026-10-02; hub screen 4).
  *
  * Before: a dues payment, money a fundraiser brought in, or a payment to or from the club did not open at
- * all — its last cell held a worded button ("Player Dues →") to the tab that wrote it. Now the ROW opens,
+ * all — its last cell held a worded button ("Player dues →") to the tab that wrote it. Now the ROW opens,
  * and what it opens is the club's window for a line another screen wrote: the facts, ONE sentence naming
  * where it is changed, and ONE door there. The body is the shared kit's `LedgerLineRead` — the club's
  * `ReadLineWindow` renders the same body — so the two portals draw one shape; the frame is the portal's

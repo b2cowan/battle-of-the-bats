@@ -25,7 +25,7 @@ interface Props {
      * only wider. So a row opens the book filtered to its own kind, and the coach sees what is
      * coming AND what the balance will be when it lands.
      *
-     * ⚠ ONE EXCEPTION, DELIBERATELY: an OVERDUE dues row still opens Player Dues, because its
+     * ⚠ ONE EXCEPTION, DELIBERATELY: an OVERDUE dues row still opens Player dues, because its
      * action is "Remind" — a workflow that lives there and has no equivalent on a book.
      */
     registerFrom: Record<'dues' | 'expense' | 'club', string>;
@@ -191,7 +191,7 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
   }, [lanes]);
 
   function actionFor(row: LedgerRow): { href: string; label: string } | null {
-    // Overdue dues keep their own door: Remind is a workflow, and it lives on Player Dues.
+    // Overdue dues keep their own door: Remind is a workflow, and it lives on Player dues.
     if (row.lane === 'dues' && row.overdue) return { href: hrefs.dues, label: 'Remind' };
     if (row.lane === 'dues') return { href: hrefs.registerFrom.dues, label: 'View' };
     if (row.lane === 'payable') return { href: hrefs.registerFrom.expense, label: 'View' };

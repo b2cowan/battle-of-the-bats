@@ -48,7 +48,7 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json(
       {
         error: `${team.name} already has a season. Start the next one from the team’s current season, `
-          + 'so its roster, budget plan, fee plan and opening balance come with it.',
+          + 'so its roster, budget, fee plan and opening balance come with it.',
         code: 'season_exists',
       },
       { status: 409 },

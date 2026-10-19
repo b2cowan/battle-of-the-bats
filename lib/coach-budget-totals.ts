@@ -278,7 +278,7 @@ export const PLAN_LADDER_LABEL = {
    * 2026-09-09; standard accounting line form, cf. "Net income (loss)").
    *
    * ⚠⚠ "(Buffer)", NEVER "(Surplus)" — and this is a product-wide word, not a preference. *Surplus
-   * to share* on the Player Dues tab is the season-end settlement: real cash left over, divided
+   * to share* on the Player dues tab is the season-end settlement: real cash left over, divided
    * among families, with hold-backs and payouts a coach can actually pay. A bracketed figure on
    * THIS row is a timing artifact of a plan — money arriving in one period for bills falling in
    * another — and nobody can spend it. One product, one meaning per word.
@@ -512,7 +512,7 @@ export function describeInstallmentBases(totals: BudgetTotals): InstallmentBases
   const estimateAmount = estimatedTotal == null ? null : r2(Math.max(0, estimatedTotal - expectedFunding));
   const estimateWhyNot =
     estimatedTotal == null
-      ? 'No season estimate set — add one on the Budget Plan to split against it.'
+      ? 'No season estimate set — add one on the Budget to split against it.'
       : estimatedTotal <= 0
         ? 'Your season estimate is $0.'
         : (estimateAmount ?? 0) <= 0

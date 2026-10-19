@@ -4,7 +4,7 @@ import { normalizeCreditApplicationMode, type CreditApplicationMode } from './du
  * The ONE write path for a team's two season-wide dues settings.
  *
  * ⚠ This exists because the two settings are now edited from two screens — Team settings → Money
- * (the home) and Player Dues' setup block (the moment before any dues exist) — and the two hand-
+ * (the home) and Player dues' setup block (the moment before any dues exist) — and the two hand-
  * rolled PATCH calls had already drifted the way duplicated logic always does: one carried a
  * revert guard earned in a review, the other surfaced save errors, and neither had both. A fix
  * applied to one had no way of reaching the other, because there was no shared code to carry it.

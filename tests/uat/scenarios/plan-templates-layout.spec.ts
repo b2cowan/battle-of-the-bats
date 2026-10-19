@@ -358,7 +358,7 @@ test.describe('the Development report — coverage, and the rules that bind hard
 });
 
 test.describe('the Practice plans room — the door to the library (stage 0, D5)', () => {
-  // The Skills & Goals tile that used to be the templates' door is gone (its own stage 0, 2026-09-14);
+  // The Skills & goals tile that used to be the templates' door is gone (its own stage 0, 2026-09-14);
   // the library is a TAB of Practice plans, absent for a coach the templates read would refuse.
   test('offers Templates and Drills as tabs beside Practices', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });

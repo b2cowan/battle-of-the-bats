@@ -84,7 +84,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const isPhone = useIsPhone();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const apiBase = `/api/coaches/${orgSlug}/teams/${teamId}`;
-  // A session is a room inside Skills & Goals: the subtree's layout answers a coach without the
+  // A session is a room inside Skills & goals: the subtree's layout answers a coach without the
   // Development grant before this mounts (D5), and the GET refuses the same coach.
 
   const [data, setData] = useState<SessionWorld | null>(null);
@@ -677,8 +677,8 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       <CoachPageHeader
         icon={ClipboardCheck}
         title={pageTitle}
-        backTo={{ href: skillsAndGoalsHref(base, 'sessions'), label: 'Skills & Goals' }}
-        helpLabel="Skills & Goals"
+        backTo={{ href: skillsAndGoalsHref(base, 'sessions'), label: 'Skills & goals' }}
+        helpLabel="Skills & goals"
         help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
       />
 

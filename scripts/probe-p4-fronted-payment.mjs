@@ -138,7 +138,7 @@ try {
     `entry ${depRow?.accounting_entry_id}`);
   check(depRow?.paid_by_player_id === players[0].id, 'the payment remembers who paid it');
   check(cents((await creditFor(players[0].id))?.amount ?? 0) === 20000,
-    'the household is owed $200.00 on Player Dues');
+    'the household is owed $200.00 on Player dues');
 
   // ── 2. The team's own payment on the SAME bill still posts one ──────────────────────────────
   const balance = await post(pay, { amount: 400, paidDate: today, method: 'etransfer' });

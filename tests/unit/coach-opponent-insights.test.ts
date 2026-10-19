@@ -1,5 +1,5 @@
 /**
- * "The numbers vs them" (Scouting Book P2, plan §4.6) — the honesty rule as tests.
+ * "The numbers vs them" (Scouting book P2, plan §4.6) — the honesty rule as tests.
  * Every line is provable from the meetings/lineups given, and every line is ABSENT below
  * its confidence floor (≥3 counted meetings; ≥2 saved lineups for the lineup joins) —
  * boundary cases are exercised on both sides.

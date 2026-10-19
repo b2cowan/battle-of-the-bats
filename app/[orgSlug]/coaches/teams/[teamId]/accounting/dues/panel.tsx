@@ -725,7 +725,7 @@ export function PlayerDuesPanel({
     const tally = new Map<string, number>();
     for (const sc of scheds) if (sc.notes) tally.set(sc.notes, (tally.get(sc.notes) ?? 0) + 1);
     const note = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-    const basis = note === 'Generated from budget plan' ? 'from the budget plan'
+    const basis = note === 'Generated from budget plan' ? 'from the budget'
       : note === 'Generated from the season estimate' ? 'from the season estimate'
       : note === 'Set by the coach' ? 'by hand'
       : null;
@@ -984,7 +984,7 @@ export function PlayerDuesPanel({
     const dues = duesExportRows(shownPlayers);
     return {
       dataset: 'player-dues',
-      title: 'Player Dues',
+      title: 'Player dues',
       columns: DUES_EXPORT_COLUMNS,
       // The list on screen, not the roster (owner E3): an export that ignored the filter would
       // hand a coach twelve rows under a title that promised three. The totals row under them
@@ -2260,7 +2260,7 @@ export function PlayerDuesPanel({
     {
       key: 'assessed',
       /* One word for one concept (owner, 2026-09-07): the column says Dues, the drawer tile says
-         Dues, the tab is Player Dues, the Statement row is Player dues — this tile and the roster
+         Dues, the tab is Player dues, the Statement row is Player dues — this tile and the roster
          player page were the only two surfaces still saying Assessed for the same figure. */
       label: 'Dues',
       /* ⚠⚠ NET OF WHAT WAS WRITTEN OFF IT (owner R1, 2026-09-09 — "a bill lowered is not a
@@ -2493,7 +2493,7 @@ export function PlayerDuesPanel({
           have one view (the cards), so a control there would choose between nothing.
 
           ⚠ THE SAME PILL EVERY OTHER MONEY TAB USES (owner, 2026-09-04 — finishing the 2026-08-20
-          "one control shape" ruling, whose adoption list named Player Dues next). This was the
+          "one control shape" ruling, whose adoption list named Player dues next). This was the
           last segmented view switch on any Money tab: Ledger, Budget Plan and Budget vs. Actual
           all choose their arrangement with a labelled `View` pill, so one product asked the same
           question two ways. Only the control's SHAPE changed — the choice still rides the URL
@@ -2727,7 +2727,7 @@ export function PlayerDuesPanel({
                     <DollarSign size={14} aria-hidden /> Set dues for all players
                   </button>
                   <span className={styles.settingRowDesc}>
-                    Start from your budget plan, or type the amounts yourself.
+                    Start from your budget, or type the amounts yourself.
                   </span>
                 </div>
               )}

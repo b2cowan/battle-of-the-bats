@@ -245,7 +245,7 @@ export const GET = withObservability(async (req: Request,
     team[def.id] = teamMetricCounts(players.map(p => readingsByPlayer.get(p.id)?.get(def.id) ?? []), def, notAssessed);
   }
 
-  // `id` + `reviewOn` ride along for the Skills & Goals Overview's "review due" line (stage 0,
+  // `id` + `reviewOn` ride along for the Skills & goals Overview's "review due" line (stage 0,
   // 2026-09-14) — the same read the Players view draws, no second query.
   const goalsByPlayer = new Map<string, { id: string; focusArea: string; status: string; reviewOn: string | null }[]>();
   for (const g of goals) {
@@ -275,7 +275,7 @@ export const GET = withObservability(async (req: Request,
     showMeasurables,
     /**
      * The Development grant — decided HERE, the way the sessions and player reads decide it: the
-     * Coverage report offers its "Record in Skills & Goals →" door only to a coach who can open the
+     * Coverage report offers its "Record in Skills & goals →" door only to a coach who can open the
      * room (re-evaluation stage 4, G1 — a door a coach cannot open is not offered).
      */
     canWrite: canWriteDevelopment(caps),

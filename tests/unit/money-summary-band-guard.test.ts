@@ -5,7 +5,7 @@
  *
  * ⚠⚠ WHY A GUARD RATHER THAN A CONVENTION, measured. Five money tabs opened with a summary and
  * drew it five ways: a prose strip on Budget vs. Actual, three cells on Club, four bordered cards
- * on Fundraising, a titled panel on Budget Plan, and on Player Dues nothing at all — its figures
+ * on Fundraising, a titled panel on Budget Plan, and on Player dues nothing at all — its figures
  * sat in a table foot below the roster. Read off the stylesheets, the differences were not choices
  * but accidents of build order: label 11px vs 12px, tracking .07em vs .04em, figure weight 700 vs
  * 900, tabular numerals on three of four. A treasurer reads all five in one sitting and had to find
@@ -317,7 +317,7 @@ describe('every money tab opens the same way', () => {
     assert.ok(
       band.includes('captionShort?: ReactNode'),
       'MoneySummaryBand must offer `captionShort` — the ≤6-word phone form. Three tabs had grown '
-      + 'sentence-length captions (Budget Plan 60 characters, Player Dues 54) while the recipe’s '
+      + 'sentence-length captions (Budget Plan 60 characters, Player dues 54) while the recipe’s '
       + 'own contract said six words; the desk caption is not wrong, so the fix is a phone form.',
     );
     assert.ok(

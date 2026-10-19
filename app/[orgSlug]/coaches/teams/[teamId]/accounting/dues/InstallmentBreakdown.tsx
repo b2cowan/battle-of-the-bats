@@ -1,6 +1,6 @@
 'use client';
 /**
- * Player Dues — the "By installment" lens (owner-approved mockup, artifact d7162867, 2026-08-14;
+ * Player dues — the "By installment" lens (owner-approved mockup, artifact d7162867, 2026-08-14;
  * headings, lit column and pager per mockup `6bd4c6d9` G1–G3, 2026-09-04; the owner-spotted
  * follow-up the same day: one-line rows, date-only headings, the amount back in every cell).
  *

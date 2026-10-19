@@ -134,11 +134,11 @@ describe('nav item labels are the capability-gate keys, so they are pinned', () 
     // The landing slot — whichever of the two the season's state calls for.
     'Overview', "Season's End",
     'Schedule', 'Practice plans', 'Lineups', 'Tournaments',
-    /* ⚠ "Development" → "Skills & Goals" (owner ruling 5, 2026-08-18). Two doors were called
+    /* ⚠ "Development" → "Skills & goals" (owner ruling 5, 2026-08-18). Two doors were called
        Development: this workbench, and the coverage REPORT inside Insights that measures how well
        it is being used. `isCoachNavItemVisible` gained a case for the new label AND kept the old
        one as a fallthrough — the pattern this list's own header describes. */
-    'Skills & Goals', 'Insights',
+    'Skills & goals', 'Insights',
     'Money',
     'Chat', 'Email families',
     'Roster', 'Tryouts',
@@ -421,7 +421,7 @@ describe('the phone sheet\'s hot row is a shortcut, never a regrouping', () => {
 
 /**
  * The notification reader's onward button names the page it opens in the NAV'S OWN WORDS ("Open
- * Insights", "Open Skills & Goals" — owner ruling 2026-09-25, D3 option B). That table is a third
+ * Insights", "Open Skills & goals" — owner ruling 2026-09-25, D3 option B). That table is a third
  * copy of these page names, in `lib/notification-view.ts`; this block is what ties it to the nav, so
  * a rename in the nav fails here instead of leaving the reader's button naming a page the coach can
  * no longer find by that name. Read from the phone nav's `{ key, icon, label }` literals — the tabs

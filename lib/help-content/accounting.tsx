@@ -30,7 +30,7 @@ const accountingHelp: HelpPageContent = {
       id: 'accounting-tabs',
       group: 'Getting started',
       heading: 'Finding your way: one page, its tabs across the top',
-      summary: 'Overview, Teams, Ledger, Allocations, Payment requests, Budget and Budget vs. Actual — tabs across the top of one page.',
+      summary: 'Overview, Budget, Teams, Ledger, Allocations, Payment requests and Budget vs. Actual — tabs across the top of one page.',
       keywords: ['tabs', 'overview', 'board summary', 'teams tab', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is'],
       searchText: 'accounting tabs overview teams ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are the teams where are allocations where are payment requests team account inside the teams tab team dropdown payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go where did the back arrow go',
       content: (
@@ -426,7 +426,7 @@ const accountingHelp: HelpPageContent = {
       searchText: 'teams tab the teams teams table every team list of teams allocated collected outstanding overdue sent waiting for you requests amber count holding up a payout cash on hand held by the team lock held by the teams not the club’s money closing row group filter no group fiscal year pill export excel csv overdue from 2025–26 earlier year closed year still owes line under outstanding why the team account says more where did the teams table go',
       content: (
         <>
-          <p><strong>Teams</strong> is the second tab, for a club that runs rep teams. One row per team, under its group, for the fiscal year on the <strong>Fiscal year</strong> pill:</p>
+          <p><strong>Teams</strong> is the tab after the Budget, for a club that runs rep teams. One row per team, under its group, for the fiscal year on the <strong>Fiscal year</strong> pill:</p>
           <HelpDefs>
             <HelpDef term="Allocated · Collected · Outstanding">What the club billed the team on the year’s allocations, what it received, and what is still owed. Overdue money is in red under Outstanding; money a team says it sent reads <em>sent, waiting for you</em>.</HelpDef>
             <HelpDef term="+ … overdue from 2025–26">What an earlier year’s bills still owe, on its own line under the year’s Outstanding and never added into it. Red while any of it is late. It is why the team’s account, which counts every year, can show more.</HelpDef>

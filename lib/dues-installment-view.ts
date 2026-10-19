@@ -1,5 +1,5 @@
 /**
- * Dues "By installment" view — the PURE derivations behind the Player Dues tab's second lens
+ * Dues "By installment" view — the PURE derivations behind the Player dues tab's second lens
  * (owner-approved mockup, artifact d7162867, 2026-08-14).
  *
  * Two questions this module answers, both from data the dues screen already holds:

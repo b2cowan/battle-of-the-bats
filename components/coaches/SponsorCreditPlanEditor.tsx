@@ -23,7 +23,7 @@
  *  · the ORDINARY pledge looks as it did: no dollars, no bills, only the stated default, until
  *    the coach opens the door (the 08-31 ruling retired landing ARITHMETIC from the pledge form;
  *    a choice is not arithmetic, and the default path must stay unchanged to the eye);
- *  · a family with no dues schedule gets a sentence pointing at Player Dues and no door (D6);
+ *  · a family with no dues schedule gets a sentence pointing at Player dues and no door (D6);
  *  · the picker shows a payment's date and amount as FACTS of the schedule, never a computed
  *    split — where the money lands is derived server-side and read in the family's drawer;
  *  · when the schedule was re-run after the arrangement, the cue asks for a look: "Keep these"
@@ -98,7 +98,7 @@ function ArrangementLine({
   if (schedulesLoaded && !hasSchedule) {
     return (
       <p className={own.applies}>
-        <span>Applies to <b>the team default</b> — {familyName} has no dues schedule yet. Set it up on <b>Player Dues</b> to name payments.</span>
+        <span>Applies to <b>the team default</b> — {familyName} has no dues schedule yet. Set it up on <b>Player dues</b> to name payments.</span>
       </p>
     );
   }

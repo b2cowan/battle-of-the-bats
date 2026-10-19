@@ -1,6 +1,6 @@
 /**
  * The player page's tabs have an ADDRESS (hub F13, 2026-09-13), and every deep link that predates
- * the tabs — `?section=development&view=…` from the Skills & Goals hub, Insights, the layout sweep,
+ * the tabs — `?section=development&view=…` from the Skills & goals hub, Insights, the layout sweep,
  * the marketing shots and the help articles — must keep landing on the right tab without a change
  * to its producer. This pins the mapping.
  */
@@ -11,10 +11,10 @@ import { DEFAULT_PLAYER_TAB, PLAYER_TABS, playerTabHref, resolvePlayerTab, tabFo
 const params = (o: Record<string, string>) => ({ get: (k: string) => (k in o ? o[k] : null) });
 
 describe('the five tabs', () => {
-  it('are Details · This season · Skills & Goals · Notes · Family & paperwork, in that order, Details first', () => {
+  it('are Details · This season · Skills & goals · Notes · Family & paperwork, in that order, Details first', () => {
     assert.deepEqual(PLAYER_TABS.map(t => t.id), ['details', 'season', 'skills', 'notes', 'family']);
     assert.equal(DEFAULT_PLAYER_TAB, 'details');
-    assert.equal(PLAYER_TABS[2].label, 'Skills & Goals');
+    assert.equal(PLAYER_TABS[2].label, 'Skills & goals');
   });
 });
 
@@ -30,11 +30,11 @@ describe('resolvePlayerTab', () => {
     assert.equal(resolvePlayerTab(params({ tab: 'nope' })), 'details');
   });
   it('every existing ?section= producer keeps landing on the tab that holds it', () => {
-    // playerDevelopmentHref (Skills & Goals hub, Insights, help, marketing shots) — always section=development
+    // playerDevelopmentHref (Skills & goals hub, Insights, help, marketing shots) — always section=development
     assert.equal(resolvePlayerTab(params({ section: 'development', view: 'results' })), 'skills');
     assert.equal(tabForSection('development'), 'skills');
     // the retired Observations view (re-evaluation stage 3, E1): a bare link is the Notes tab — the
-    // observation's home; one that named its goal stays on Skills & Goals; an explicit ?tab= still wins
+    // observation's home; one that named its goal stays on Skills & goals; an explicit ?tab= still wins
     assert.equal(resolvePlayerTab(params({ section: 'development', view: 'observations' })), 'notes');
     assert.equal(resolvePlayerTab(params({ section: 'development', view: 'observations', goal: 'G1' })), 'skills');
     assert.equal(resolvePlayerTab(params({ tab: 'skills', section: 'development', view: 'observations' })), 'skills');

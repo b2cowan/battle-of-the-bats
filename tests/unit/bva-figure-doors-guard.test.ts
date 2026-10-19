@@ -319,9 +319,9 @@ test('the statement panel does not dead-end either — every figure it opens has
   );
   assert.match(
     panel,
-    /Open Player Dues[\s\S]{0,400}?Open the Ledger/,
+    /Open Player dues[\s\S]{0,400}?Open the Ledger/,
     'The dues panel ("What families contributed") no longer offers both doors. Its twin on the '
-    + 'Months grid answers "dues, actual" with Player Dues AND the Ledger (`cellPanelSpec`); one '
+    + 'Months grid answers "dues, actual" with Player dues AND the Ledger (`cellPanelSpec`); one '
     + 'report giving two answers to one figure is the thing that rule exists to stop.',
   );
   /* ⚠ AND THE PLAN HALF TAKES THE SAME SHAPE THE GRID'S DOES — the door exactly when the lines are

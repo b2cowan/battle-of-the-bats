@@ -277,7 +277,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: "On your team's Budget Plan, the When filter reads just When until you pick something, then shows your choice with a tint. It used to read \"When All\" even while hiding rows, so a filtered plan could look complete.",
+        text: "On your team's Budget, the When filter reads just When until you pick something, then shows your choice with a tint. It used to read \"When All\" even while hiding rows, so a filtered plan could look complete.",
       },
       {
         category: 'improved',
@@ -351,7 +351,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'fixed',
-        text: "Smaller fixes: phones keep their own fading scrollbar, a window's scrollbar runs down its edge, a link inside a window (like Open Player Dues) takes you there, and a payee's or bill's Next due shows the amount with its date underneath.",
+        text: "Smaller fixes: phones keep their own fading scrollbar, a window's scrollbar runs down its edge, a link inside a window (like Open Player dues) takes you there, and a payee's or bill's Next due shows the amount with its date underneath.",
       },
     ],
   },
@@ -389,7 +389,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: "On a phone, the coaches portal's lists — Roster, Practice plans, Lineups, Player Dues, the Scouting Book and more — now sit in one frame with a line between rows, the way Schedule already did. The roster is a compact table of number, player and positions; its call buttons are gone, and parents' numbers are still on each player's page.",
+        text: "On a phone, the coaches portal's lists — Roster, Practice plans, Lineups, Player dues, the Scouting book and more — now sit in one frame with a line between rows, the way Schedule already did. The roster is a compact table of number, player and positions; its call buttons are gone, and parents' numbers are still on each player's page.",
       },
       {
         category: 'improved',
@@ -502,7 +502,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'new',
-        text: 'Money screens fit a phone screen too — the season summary and the Budget Plan open without part of the page hidden below the bottom bar.',
+        text: 'Money screens fit a phone screen too — the season summary and the Budget open without part of the page hidden below the bottom bar.',
       },
       {
         category: 'new',
@@ -558,7 +558,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'fixed',
-        text: "The Scouting Book page for an opponent is available as soon as a game is scheduled, not only after it's been played.",
+        text: "The Scouting book page for an opponent is available as soon as a game is scheduled, not only after it's been played.",
       },
       {
         category: 'fixed',
@@ -566,7 +566,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'fixed',
-        text: "The Budget Plan's phone summary no longer briefly shows ‘0 lines’ before your budget loads.",
+        text: "The Budget's phone summary no longer briefly shows ‘0 lines’ before your budget loads.",
       },
     ],
   },
@@ -628,7 +628,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'fixed',
-        text: 'The Budget Plan toolbar, the Budget vs Actual Export button, Fundraising\'s section headings and the Club tab\'s overdue count look the way they should again.',
+        text: 'The Budget toolbar, the Budget vs. Actual Export button, Fundraising\'s section headings and the Club tab\'s overdue count look the way they should again.',
       },
       {
         category: 'fixed',
@@ -642,7 +642,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
   },
   {
     date: '2026-09-18',
-    title: 'Practice plans, Skills & Goals and lineups, rebuilt — plus host your own team in your tournament',
+    title: 'Practice plans, Skills & goals and lineups, rebuilt — plus host your own team in your tournament',
     highlights: [
       {
         category: 'new',
@@ -658,7 +658,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'new',
-        text: 'Skills & Goals, redesigned. A new Overview dashboard, clearer test definitions, and sessions where you plan how many attempts you\'ll run for each test before you start. Record what you saw for a skill right from the session grid.',
+        text: 'Skills & goals, redesigned. A new Overview dashboard, clearer test definitions, and sessions where you plan how many attempts you\'ll run for each test before you start. Record what you saw for a skill right from the session grid.',
       },
       {
         category: 'new',
@@ -724,7 +724,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'new',
-        text: 'The player page, in five tabs: Details · This season · Skills & Goals · Notes · Family & paperwork. Notes reads every dated line about a player — general notes, game and practice moments, observations — in one timeline, and you can add a note there. Switch to another player without going back to the list.',
+        text: 'The player page, in five tabs: Details · This season · Skills & goals · Notes · Family & paperwork. Notes reads every dated line about a player — general notes, game and practice moments, observations — in one timeline, and you can add a note there. Switch to another player without going back to the list.',
       },
       {
         category: 'new',
@@ -744,7 +744,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'new',
-        text: 'The budget plan reads revenue first. Revenue, then expenses, closing on Opening balance → Net → Closing balance in both views and both export files, with a helper that says what player dues need to be for the plan to balance.',
+        text: 'The budget reads revenue first. Revenue, then expenses, closing on Opening balance → Net → Closing balance in both views and both export files, with a helper that says what player dues need to be for the plan to balance.',
       },
       {
         category: 'improved',
@@ -756,7 +756,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: 'Setting dues says what it does to the plan. The Player installments row opens Player Dues directly, and the Set-dues sheet tells you what a schedule will do to your budget plan wherever you open it from.',
+        text: 'Setting dues says what it does to the plan. The Player installments row opens Player dues directly, and the Set-dues sheet tells you what a schedule will do to your budget wherever you open it from.',
       },
       {
         category: 'improved',
@@ -864,7 +864,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'fixed',
-        text: 'Budget plans export and import as the same file, including plans carrying both costs and funding.',
+        text: 'Budgets export and import as the same file, including budgets carrying both costs and funding.',
       },
       {
         category: 'fixed',
@@ -886,7 +886,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
     highlights: [
       {
         category: 'new',
-        text: "Player Dues now reads left to right — what each family owes, what they've raised, what they've paid, and what's left.",
+        text: "Player dues now reads left to right — what each family owes, what they've raised, what they've paid, and what's left.",
       },
       {
         category: 'new',
@@ -902,7 +902,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'new',
-        text: 'Your budget plan totals on the page — planned costs, planned funding and player installments each carry their own subtotal.',
+        text: 'Your budget totals on the page — planned costs, planned funding and player installments each carry their own subtotal.',
       },
       {
         category: 'new',
@@ -930,7 +930,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: 'The Player Dues sheet fits eighteen families and its total on one printed page.',
+        text: 'The Player dues sheet fits eighteen families and its total on one printed page.',
       },
       {
         category: 'improved',
@@ -996,7 +996,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'fixed',
-        text: 'Page titles and help links are back on the Budget, Budget vs Actual, Dues, Expenses, Fundraisers, and Club screens.',
+        text: 'Page titles and help links are back on the Budget, Budget vs. Actual, Dues, Expenses, Fundraisers, and Club screens.',
       },
       {
         category: 'fixed',
@@ -1248,7 +1248,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'new',
-        text: 'Player Dues can now be read one installment at a time — see who\'s paid each installment across the whole team, and what\'s due next.',
+        text: 'Player dues can now be read one installment at a time — see who\'s paid each installment across the whole team, and what\'s due next.',
       },
       {
         category: 'new',

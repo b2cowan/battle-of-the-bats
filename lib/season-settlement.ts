@@ -1,5 +1,5 @@
 /**
- * Season settlement — the arithmetic behind the sheet at the foot of Player Dues, PURE: nothing
+ * Season settlement — the arithmetic behind the sheet at the foot of Player dues, PURE: nothing
  * here touches a database, and every figure is computed in integer cents (the discipline
  * lib/dues-payments.ts and lib/dues-credits.ts already hold).
  *

@@ -87,7 +87,7 @@ export default function DevelopmentHubPage({
  * ⚠ The four door tiles (Insights · Drills · Plan templates · Players) and the "practice plans live
  * in your Schedule" line are GONE (stage 0): Insights has its own door, and the practice
  * instruments belong to the practice-plans work. The drill library keeps no door here.
- * ⚠ A coach WITHOUT the Development grant has no door at all (D5): the nav hides Skills & Goals,
+ * ⚠ A coach WITHOUT the Development grant has no door at all (D5): the nav hides Skills & goals,
  * and this page — and the rooms inside it — render the shared not-granted block. "Either they can
  * see and update everything in here or they cannot."
  * ⚠ A metric's DEFINITION is a sheet over this page (re-evaluation stage 1, 2026-09-14), addressed
@@ -129,7 +129,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const helpRequest = {
     module: 'coaches' as const,
     sectionIds: ['premium-development'],
-    label: 'Skills & Goals',
+    label: 'Skills & goals',
     fullGuideHref: `/${orgSlug}/coaches/help#premium-development`,
   };
 
@@ -271,8 +271,8 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
           guidance is the Overview's card (stage 0). */}
       <CoachPageHeader
         icon={TrendingUp}
-        title="Skills & Goals"
-        helpLabel="Skills & Goals"
+        title="Skills & goals"
+        helpLabel="Skills & goals"
         help={helpRequest}
         actions={startAction}
         actionsPhoneInTitleRow
@@ -557,7 +557,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
   if (stage === 'define') {
     return (
       <CoachCard accent className={`${styles.nowCard} ${styles.nowPreseason}`}>
-        <p className={styles.nowEyebrow}>Skills &amp; Goals · Getting started</p>
+        <p className={styles.nowEyebrow}>Skills &amp; goals · Getting started</p>
         <p className={styles.nowHeadline}>Start by deciding what this team measures</p>
         <p className={styles.nowMeta}>
           A <strong>metric</strong> is a test you record the same way every time — a 60-yd sprint in seconds — or a skill
@@ -580,7 +580,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
       : <><strong>{names[0]}</strong>, <strong>{names[1]}</strong> and {names.length - 2} more</>;
     return (
       <CoachCard accent className={`${styles.nowCard} ${styles.nowPreseason}`}>
-        <p className={styles.nowEyebrow}>Skills &amp; Goals · Ready to record</p>
+        <p className={styles.nowEyebrow}>Skills &amp; goals · Ready to record</p>
         <p className={styles.nowHeadline}>Run your first session</p>
         <p className={styles.nowMeta}>
           You&apos;ll record {named} across the roster in one go — usually at a practice. A few sessions a season
@@ -623,7 +623,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
     <>
       {/* The kit's card, eyebrow, chip, figure, bar and foot (components/coaches/kit — owner rulings
           A–H, 2026-09-16): the SAME parts Money's Overview renders, so the two dashboards cannot
-          drift. This file keeps only what is Skills & Goals': the arc line, the attention list. */}
+          drift. This file keeps only what is Skills & goals': the arc line, the attention list. */}
       <div className={kit.row3}>
         {/* Sessions — the count, the latest, and whether any were left half-recorded. */}
         <CoachCard alert={unfinished.length > 0}>
@@ -753,11 +753,11 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
           )}
         </CoachCard>
 
-        {/* Everything in Skills & Goals — the kit's rail (Money's, drawn once): the rooms in the arc's
+        {/* Everything in Skills & goals — the kit's rail (Money's, drawn once): the rooms in the arc's
             order, a figure each. (The Players row went with the tab, stage 4 — the roster is read in
             Insights.) */}
         <CoachRail
-          title={<>Everything in Skills &amp; Goals</>}
+          title={<>Everything in Skills &amp; goals</>}
           idPrefix="sg-rail"
           groups={[{
             rows: [

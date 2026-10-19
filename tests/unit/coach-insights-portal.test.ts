@@ -101,7 +101,7 @@ describe('the Insights door moves for the treasurer and for nobody else', () => 
    */
   it('no other record surface narrows with it', () => {
     const treasurer = assistant({ ...NOTHING, money: 'write' });
-    // Skills & Goals left this list on 2026-09-14 (re-evaluation stage 0, D5): its door is the
+    // Skills & goals left this list on 2026-09-14 (re-evaluation stage 0, D5): its door is the
     // Development grant now, not record access — see the rename block below.
     for (const door of ['Roster', "Season's End"]) {
       assert.equal(
@@ -120,11 +120,11 @@ describe('the workbench renamed, and the old label still gates', () => {
    * record access, no grant — used to get a read-only face; now they get no door. The head coach
    * and a granted assistant get the whole room.
    */
-  it('"Skills & Goals" opens on the Development grant alone, and the old label gates the same way', () => {
-    assert.equal(isCoachNavItemVisible(assistant(NOTHING), 'Skills & Goals'), false);
-    assert.equal(isCoachNavItemVisible(assistant(), 'Skills & Goals'), false, 'record access alone no longer opens the door');
-    assert.equal(isCoachNavItemVisible(assistant({ development: true }), 'Skills & Goals'), true);
-    assert.equal(isCoachNavItemVisible(resolveCoachCapabilities('head_coach'), 'Skills & Goals'), true);
+  it('"Skills & goals" opens on the Development grant alone, and the old label gates the same way', () => {
+    assert.equal(isCoachNavItemVisible(assistant(NOTHING), 'Skills & goals'), false);
+    assert.equal(isCoachNavItemVisible(assistant(), 'Skills & goals'), false, 'record access alone no longer opens the door');
+    assert.equal(isCoachNavItemVisible(assistant({ development: true }), 'Skills & goals'), true);
+    assert.equal(isCoachNavItemVisible(resolveCoachCapabilities('head_coach'), 'Skills & goals'), true);
     assert.equal(isCoachNavItemVisible(assistant(), 'Development'), false);
     assert.equal(isCoachNavItemVisible(assistant({ development: true }), 'Development'), true);
   });
@@ -230,7 +230,7 @@ describe('a tab is a report’s only entry point, so the hub must render all of 
     ['playing-time', 'Playing time'],
     ['development', 'Development'],
     ['awards', 'Awards'],
-    ['scouting', 'Scouting Book'],
+    ['scouting', 'Scouting book'],
   ];
 
   it('every report has a tab AND a mounted panel', () => {

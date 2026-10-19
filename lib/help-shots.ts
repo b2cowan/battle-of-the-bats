@@ -107,8 +107,8 @@ export const HELP_SHOTS: HelpShot[] = [
        the table, which sits below the fold of this capture. The first rewrite claimed it, which
        would have been the same defect in a new coat: a caption is what a reader who cannot see the
        image is given INSTEAD of the image, so it may only promise what the picture delivers. */
-    alt: 'The Player Dues screen: four figures across the top — dues, collected, balance owing and past due — then the collection schedule, then a table where each family’s row reads left to right as a subtraction: dues, fundraising, other credits, what they have paid, and the balance they still owe. A dash marks a column with nothing in it.',
-    caption: 'Player Dues — a family’s row reads across as a subtraction, and a dash means there is nothing of that kind on the row. Credits lower the bill itself, so a family whose fundraising finished the job reads Settled rather than Paid. A row opens to Record payment.',
+    alt: 'The Player dues screen: four figures across the top — dues, collected, balance owing and past due — then the collection schedule, then a table where each family’s row reads left to right as a subtraction: dues, fundraising, other credits, what they have paid, and the balance they still owe. A dash marks a column with nothing in it.',
+    caption: 'Player dues — a family’s row reads across as a subtraction, and a dash means there is nothing of that kind on the row. Credits lower the bill itself, so a family whose fundraising finished the job reads Settled rather than Paid. A row opens to Record payment.',
   },
   {
     id: 'money-budget-vs-actual-months',

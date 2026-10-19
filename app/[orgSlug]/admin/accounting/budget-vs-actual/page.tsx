@@ -285,7 +285,7 @@ export default function BudgetVsActualTab() {
       <div className={cr.report}>
         {/* The coach's band, word for word (ruled 2026-10-01): in, out, unplanned, held. */}
         <MoneySummaryBand
-          ariaLabel="Budget vs. actual summary"
+          ariaLabel="Budget vs. Actual summary"
           tiles={[
             {
               key: 'collected', label: 'Collected', figure: fmtSigned(band.collected.amount),

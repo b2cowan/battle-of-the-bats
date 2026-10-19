@@ -77,7 +77,7 @@ interface HandSetPlayer { id: string; name: string }
  * THE SCHEDULE BEING PREVIEWED, as the Budget plan reads it (owner decision D, 2026-09-12): the
  * roster-wide total and dated instalments this run would WRITE. This sheet prints what it does to
  * the plan itself ("On the plan: season closing …" — owner ruling F, 2026-09-13: said wherever the
- * sheet is opened, Player Dues included), and hands it up through `onDraft` so a plan mounted
+ * sheet is opened, Player dues included), and hands it up through `onDraft` so a plan mounted
  * behind the sheet can stand it in for the saved schedule (the installments row reads Draft).
  * Null = no preview standing.
  *
@@ -110,14 +110,14 @@ interface ReplaceFacts {
 /**
  * THE bulk-dues door — one modal, reached from two places.
  *
- * The Budget Plan tab opens it as "generate from this budget"; Player Dues opens it as "set dues
+ * The Budget Plan tab opens it as "generate from this budget"; Player dues opens it as "set dues
  * for all players" (owner ruling 2026-08-13, replacing that tab's own total-and-installments
  * form). Those were two divergent flows writing the same rows, and only one of them showed the
  * coach what each player would actually owe before committing it.
  *
  * Two things it is careful about, both learned from what it replaces:
  *
- *  1. **It owns its budget read.** Player Dues has no budget in hand, so the modal fetches the
+ *  1. **It owns its budget read.** Player dues has no budget in hand, so the modal fetches the
  *     plan itself and computes the basis with the same shared helper the preview API uses. One
  *     source of truth beats two callers prop-drilling their own idea of the total.
  *  2. **A re-run never destroys money.** The old "Set dues for all players" deleted every
@@ -148,7 +148,7 @@ export default function GenerateInstallmentsModal({
   onGenerated: () => void | Promise<void>;
   /** Hands the previewed schedule up to a plan mounted behind this sheet (decision D) — called
    *  with null whenever the preview is dropped and on unmount, so Cancel restores the saved plan.
-   *  Pass a STABLE function (a state setter): it is an effect dependency. Absent from Player Dues,
+   *  Pass a STABLE function (a state setter): it is an effect dependency. Absent from Player dues,
    *  where there is no plan on screen — the sentence below carries the whole answer there. */
   onDraft?: (draft: DuesDraft | null) => void;
 }) {
@@ -634,7 +634,7 @@ export default function GenerateInstallmentsModal({
      The plan's own calculation, run twice — once over the SAVED schedule, once over the draft —
      and the difference said in the plan's own words: where the season closes, and the first month
      below zero. Built here, from this sheet's own read of the plan, so the sentence appears
-     wherever the sheet is opened: the Budget tab before dues exist, and Player Dues for the
+     wherever the sheet is opened: the Budget tab before dues exist, and Player dues for the
      mid-season re-run, which is exactly when "what does this do to my months" matters most. */
   const onThePlan = useMemo(() => {
     if (!draft || !plan) return null;
@@ -838,7 +838,7 @@ export default function GenerateInstallmentsModal({
                 ))}
                 <p className={shared.formHint} style={{ margin: 0 }}>
                   {duesHref
-                    ? <>Their payouts are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player Dues</Link> — open the player&apos;s record.</>
+                    ? <>Their payouts are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player dues</Link> — open the player&apos;s record.</>
                     : <>Open the player&apos;s record on this list — their payouts are listed there.</>}
                 </p>
               </div>
@@ -855,7 +855,7 @@ export default function GenerateInstallmentsModal({
                 ))}
                 <p className={shared.formHint} style={{ margin: 0 }}>
                   {duesHref
-                    ? <>Their adjustments are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player Dues</Link> — open the player&apos;s record.</>
+                    ? <>Their adjustments are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player dues</Link> — open the player&apos;s record.</>
                     : <>Open the player&apos;s record on this list — their adjustments are listed there.</>}
                 </p>
               </div>
@@ -874,7 +874,7 @@ export default function GenerateInstallmentsModal({
               </p>
             )}
             {duesHref
-              ? <Link href={duesHref} className={shared.btnPrimary} style={{ marginTop: '1rem' }}>View Player Dues →</Link>
+              ? <Link href={duesHref} className={shared.btnPrimary} style={{ marginTop: '1rem' }}>View Player dues →</Link>
               : <button type="button" className={shared.btnPrimary} style={{ marginTop: '1rem' }} onClick={onClose}>Done</button>}
           </div>
         ) : replaceFacts ? (
@@ -1050,11 +1050,11 @@ export default function GenerateInstallmentsModal({
             </fieldset>
 
             {/* ⚠ The budget nudge SURVIVES as a link rather than a wall (owner call 1). A coach
-                reaching this sheet from Player Dues with no budget is no longer turned away —
+                reaching this sheet from Player dues with no budget is no longer turned away —
                 but the offer that used to block them is still the first thing under the picker. */}
             {bases.budget.unavailable && bases.estimate.unavailable && (
               <Link href={budgetHref} className={styles.basisNudge}>
-                Build a Season Budget Plan first →
+                Build your budget first →
               </Link>
             )}
 
@@ -1177,7 +1177,7 @@ export default function GenerateInstallmentsModal({
                 {reconcileLine(true)}
                 {/* The plan's own answer to this schedule — where the season closes and the first
                     month below zero (decision D; ruling F moved it in here from the Budget tab so
-                    it shows from Player Dues too). */}
+                    it shows from Player dues too). */}
                 {onThePlan && <p className={styles.runCommon}>{onThePlan}</p>}
 
                 {/* ── The players this run treats differently ────────────────────────────────

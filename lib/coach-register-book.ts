@@ -384,7 +384,7 @@ export async function loadSeasonRegisterRows(
     });
   }
 
-  // ── Derived: Player Dues, both directions and both tenses ─────────────────
+  // ── Derived: Player dues, both directions and both tenses ─────────────────
   /**
    * ONE SHAPE FOR EVERY DUES ROW — a payment in, a payout back, an instalment still to come.
    *
@@ -422,7 +422,7 @@ export async function loadSeasonRegisterRows(
     movesCash: true,
     open: { kind: 'workspace', section: 'dues' },
     /* ⚠ NEVER SETTLED FROM HERE, on any of the three. A dues instalment is marked paid by recording
-       the family's PAYMENT on Player Dues — routing it through the money form would write a second,
+       the family's PAYMENT on Player dues — routing it through the money form would write a second,
        unlinked record of money the dues ledger has already accounted for. */
     recordPayment: null,
     detail: playerName.get(r.playerId) ?? null,

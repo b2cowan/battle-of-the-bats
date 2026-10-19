@@ -62,14 +62,14 @@ const optLabel = (labels: Record<string, string>, v: string | null | undefined) 
    outgrowing a card on a summary tab; the tabs had no URL, so a reload lost the tab and a link from
    the roster could not name one.
    Now: Details (the record — lands first) · This season (the facts: attendance, playing time,
-   awards, dues) · Skills & Goals (the judgement, named for the sidebar item) · Notes (everything
+   awards, dues) · Skills & goals (the judgement, named for the sidebar item) · Notes (everything
    written about the player, read in one place) · Family & paperwork (who to call). Each tab is a
    flat page of sections; `?tab=` names the tab on the portal's shared tab bar; `?section=` still
    scrolls-and-flashes within it; the glance card is the index on every tab, which is what lets
    Details land first without losing the mid-season answer. The tab table itself lives in
    `lib/coach-player-tabs.ts` so the roster's prompts and a unit test read the same one. */
 
-/** Which tabs need a capability: Skills & Goals needs goals or measurables; Notes needs Internal
+/** Which tabs need a capability: Skills & goals needs goals or measurables; Notes needs Internal
  *  notes. A tab not listed here is every coach's. */
 const TAB_GATE: Partial<Record<PlayerTab, (caps: CoachCapabilities) => boolean>> = {
   skills: caps => canViewDevelopmentGoals(caps) || canViewMeasurables(caps),

@@ -1,5 +1,5 @@
 /**
- * A BILL LOWERED IS NOT A COLLECTION (owner rulings R1–R5, 2026-09-09) — the Player Dues band,
+ * A BILL LOWERED IS NOT A COLLECTION (owner rulings R1–R5, 2026-09-09) — the Player dues band,
  * the Money Overview's **Bills settled** card, and the season identities that hold them to the
  * Statement.
  *

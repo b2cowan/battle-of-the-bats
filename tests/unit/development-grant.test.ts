@@ -58,7 +58,7 @@ describe('who may write development', () => {
 
   /**
    * A write grant with no read door is a dead switch. A helper holds none of the record duties, so
-   * without this the Skills & Goals door, the roster and every development read would stay shut on
+   * without this the Skills & goals door, the roster and every development read would stay shut on
    * a person the head coach just delegated recording to. Record access is the UNION of duties by
    * design (A1, 2026-08-03) — this is the eighth duty, and it self-corrects the way the others do.
    */

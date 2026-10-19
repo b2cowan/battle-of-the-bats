@@ -336,7 +336,7 @@ export default function CoachExportButton({
  * Save As, essentially: the coach has said WHAT, this asks in which form. Each choice is a
  * full-width card rather than a radio — there is no Confirm step, so picking IS the action.
  *
- * ⚠ TWO QUESTIONS, TWO CONTROLS (owner ruling 2026-08-24). On Roster and Player Dues this dialog
+ * ⚠ TWO QUESTIONS, TWO CONTROLS (owner ruling 2026-08-24). On Roster and Player dues this dialog
  * is really asking *which document* and *which file type*, and until now it flattened both into
  * one list separated by a sentence. That cost three things: "Excel" appeared twice meaning two
  * different files — one of them carrying every child's date of birth and every parent's phone

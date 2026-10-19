@@ -404,7 +404,7 @@ if (has('--changed') && !onlyIds) {
         .replace('__TSLUG__', '[tournamentSlug]')
         // A tab screen addresses its page with `?section=…`; the folder is what a changed file can
         // match, so the query is dropped (found 2026-09-16: `coach-history-scouting` computed to
-        // `…/history?section=scouting`, matched no file, and the Scouting Book's own diff swept
+        // `…/history?section=scouting`, matched no file, and the Scouting book's own diff swept
         // the Dashboard tab instead — "looks covered, is not").
         .replace(/\?.*$/, '');
     const hit = SCREENS.filter((s) => files.some((f) => f.startsWith(dirOf(s) + '/') || f.startsWith(dirOf(s) + '.')));

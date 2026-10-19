@@ -113,7 +113,7 @@ export default function HubTabBar<Id extends string>({
   /**
    * ⚠⚠ **THE TAB YOU ARE ON IS IN VIEW** (coaching from a phone · stage 6 · R3, owner 2026-09-24). The row
    * always opened scrolled to its START, so landing on a report further along — from a finding's chip, the
-   * More sheet, a bookmark — put the current tab off the screen: Insights' Scouting Book tab began 559px
+   * More sheet, a bookmark — put the current tab off the screen: Insights' Scouting book tab began 559px
    * along a 358px row, under a title that only says "Insights". Short labels could not fix it (seven tabs
    * need 676px). So when the active tab changes, the ROW scrolls to bring it clear of the edge fade.
    *

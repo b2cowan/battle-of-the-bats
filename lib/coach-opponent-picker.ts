@@ -1,6 +1,6 @@
 /**
  * lib/coach-opponent-picker.ts
- * The Opponent field's picker over the Scouting Book — pure logic, no I/O
+ * The Opponent field's picker over the Scouting book — pure logic, no I/O
  * (unit tests: tests/unit/coach-opponent-picker.test.ts).
  *
  * THE OPPONENT FIELD READS THE BOOK, AND IT IS NOT A TAG (owner, 2026-09-21; plan

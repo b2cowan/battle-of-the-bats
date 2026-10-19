@@ -247,7 +247,7 @@ export const PITCH_SLIDES = {
     // 2026-09-12). Unqualified, this sentence would be false for any team on that mode. The demo
     // world pins the default, so the PICTURE stays true either way.
     pageAnswer:
-      'Player Dues puts every family on one page — what they were charged, what they have paid, what is left, and who has fallen behind. Reminders go out on their own ahead of each installment’s due date, and one button chases whoever is still behind. Money a family raised fundraising comes off their own bill, or waits for season’s end — your call.',
+      'Player dues puts every family on one page — what they were charged, what they have paid, what is left, and who has fallen behind. Reminders go out on their own ahead of each installment’s due date, and one button chases whoever is still behind. Money a family raised fundraising comes off their own bill, or waits for season’s end — your call.',
     seoPhrase: 'every family’s dues on one page',
     /**
      * ⚠⚠ **THE RINGS ARE GONE, AND THAT IS A DECISION RATHER THAN AN OVERSIGHT** (2026-08-20,

@@ -867,7 +867,7 @@ export const SCREENS = [
   // Not recorded rows, a player outside the scope, a corrected attempt — every state the grid has.
   { id: 'coach-development-session-scoped', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/sessions/${c.scopedSessionId}` },
-  // The player's Skills & Goals tab, opened on each of its TWO views by the address (the sweep
+  // The player's Skills & goals tab, opened on each of its TWO views by the address (the sweep
   // cannot click; `?section=development&view=` is the product's own door) — re-evaluation stage 3
   // (2026-09-15): Goals with the one goal open in place (it opens by itself), Results with the
   // sprint's row opened by the address, and the Previous-seasons fold opened by the old `archive`
@@ -1314,7 +1314,7 @@ export const SCREENS = [
   { id: 'coach-history-awards',      session: 'coach', path: (c) => `${team(c)}/history?section=awards`,      ready: 'h1' },
   /**
    * ⚠ THE TWO REPORTS THAT HAVE NEVER BEEN SWEPT AT ALL. Playing Time carries the portal's widest
-   * table (six columns, one per player, with an inline bar in a cell) and the Scouting Book carries
+   * table (six columns, one per player, with an inline bar in a cell) and the Scouting book carries
    * a search field above a list of rows each holding two badges and a record chip — between them
    * the two shapes most likely to overflow a 361px phone. They had no rendered coverage as routes
    * either; becoming tabs is simply when it became cheap to add them.

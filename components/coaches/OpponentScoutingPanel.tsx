@@ -28,7 +28,7 @@ async function throwIfNotOk(res: Response, fallback: string): Promise<void> {
 }
 
 /**
- * The schedule drawer's Scouting tab — the GLANCE surface of the Opponent Scouting Book
+ * The schedule drawer's Scouting tab — the GLANCE surface of the Opponent Scouting book
  * (deep home: Insights → Opponents). Self-contained: fetches the opponent card itself so
  * the schedule page's already-large orchestration gains no new data shape. Also the
  * capture surface for "log an observation" against THIS game (open contribution,
@@ -196,7 +196,7 @@ export default function OpponentScoutingPanel({
         )
       ) : (
         <p className={styles.scoutFootnote}>
-          Showing your own notes only. Ask your head coach for Scouting Book access to see the team&rsquo;s shared book.
+          Showing your own notes only. Ask your head coach for Scouting book access to see the team&rsquo;s shared book.
         </p>
       )}
 

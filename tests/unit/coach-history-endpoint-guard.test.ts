@@ -572,12 +572,12 @@ describe('the decided absences — instruments never become history surfaces', (
   });
 
   /**
-   * The Opponent Scouting Book — ratified with the project approval (owner, 2026-08-04, again
+   * The Opponent Scouting book — ratified with the project approval (owner, 2026-08-04, again
    * 2026-08-16). The book is an INSTRUMENT: it reads game events from EVERY season to feed the LIVE
    * season's preparation. Notes update in place, so a note written last week is not what the coach
    * saw two years ago. The per-season FACTS stay reachable through Schedule and Insights.
    */
-  it('the opponent scouting book stays an instrument (Scouting Book P1)', () => {
+  it('the opponent scouting book stays an instrument (Scouting book P1)', () => {
     const bookRoutes = files.filter(f => f.replace(/\\/g, '/').includes('/opponents/'));
     assert.ok(bookRoutes.length >= 7, `expected the scouting-book routes to exist, found ${bookRoutes.length}`);
     for (const file of bookRoutes) {

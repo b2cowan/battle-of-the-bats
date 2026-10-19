@@ -12,7 +12,7 @@ import { CoachListToolbar } from '@/components/coaches/kit';
 import SearchField from '@/components/shared/SearchField';
 import styles from '../../../../coaches.module.css';
 
-// "Who are we up against?" — the Opponent Scouting Book's list: every team we've faced,
+// "Who are we up against?" — the Opponent Scouting book's list: every team we've faced,
 // across every season, grouped by normalized name (plus coach-managed aliases, P2).
 // INSTRUMENT: this page serves the live season and has no archive variant, by decision
 // (owner 2026-08-04) — the per-season game facts stay in Results.

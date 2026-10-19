@@ -130,7 +130,7 @@ describe('R3 — the tab you are on is in view; R3b — one spelling', () => {
   it('"Playing time" — the tab says what the page\'s own finding chips say', () => {
     assert.match(hub, /\{ id: 'playing-time', label: 'Playing time',/);
     assert.doesNotMatch(readSource('lib/help-content/coaches.tsx'), /Playing Time/);
-    assert.match(readSource('lib/coach-staff-labels.ts'), /scoutingBook: 'Scouting Book'/);
+    assert.match(readSource('lib/coach-staff-labels.ts'), /scoutingBook: 'Scouting book'/);
   });
 });
 

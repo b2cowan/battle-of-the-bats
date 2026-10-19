@@ -68,7 +68,7 @@ export interface StatementPlayerInput {
   /** ⚠⚠ THE SAME FIVE FIGURES THE COACH'S DUES TABLE PRINTS (the dues ladder, review 2026-09-07).
    *  Without it the band read the §148 pair — `paidAmount` net of refunds, `totalCredits` net of
    *  payouts — and a parent's document disagreed with the coach's screen for every refunded
-   *  household: Casey's statement said "$900.00 received" while Player Dues said $1,200.00, and
+   *  household: Casey's statement said "$900.00 received" while Player dues said $1,200.00, and
    *  Blake's band said credits $176.98 over a credits TABLE on the same page whose rows sum to
    *  $276.98. Gross is the correction. Optional so an older caller still builds; absent, the band
    *  falls back to the pair it always read. */

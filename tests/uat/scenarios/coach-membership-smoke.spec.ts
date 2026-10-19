@@ -593,7 +593,7 @@ test.describe('no write control survives on a finished working season', () => {
     { path: '/accounting?section=dues', label: 'Dues' },
     { path: '/accounting?section=budget', label: 'Budget' },
     { path: '/accounting?section=fundraisers', label: 'Fundraisers' },
-    { path: '/development', label: 'Skills & Goals' },
+    { path: '/development', label: 'Skills & goals' },
     { path: '/lineups', label: 'Lineups' },
     { path: '/tryouts/history', label: 'Tryout history' },
     { path: '/history', label: 'Insights hub' },

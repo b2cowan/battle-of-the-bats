@@ -254,7 +254,7 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
       {moved && !cancelled && (
         <span className={styles.eventChipMoved} title="The organizer moved this game">Moved</span>
       )}
-      {/* Scouting Book glance: your record vs this opponent, upcoming games only (the
+      {/* Scouting book glance: your record vs this opponent, upcoming games only (the
           caller passes null once a score exists — the trail slot is the score's then). */}
       {bookRecord && !cancelled && (
         <span className={styles.scoutRecChip} data-tone="even" title={`Your record vs ${event.opponent}`}>{bookRecord}</span>

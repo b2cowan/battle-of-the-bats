@@ -33,7 +33,7 @@ describe('the profile address', () => {
   it('a retired view lands on the home: the goal when one is named, the Notes tab otherwise, the fold for the archive', () => {
     const onGoal = parseDevelopmentAddress(params('section=development&view=observations&goal=G9'), base);
     assert.deepEqual([onGoal.view, onGoal.goalId], ['goals', 'G9'], 'an observation link that named its goal opens the goal (its history is the door)');
-    assert.equal(developmentAddressTab(params('section=development&view=observations&goal=G9')), null, 'and stays on Skills & Goals');
+    assert.equal(developmentAddressTab(params('section=development&view=observations&goal=G9')), null, 'and stays on Skills & goals');
     const bare = parseDevelopmentAddress(params('section=development&view=observations&metric=S1'), base);
     assert.equal(bare.view, null);
     assert.equal(developmentAddressTab(params('section=development&view=observations&metric=S1')), 'notes', 'a bare observations link is the Notes tab — the observation’s home');
@@ -69,11 +69,11 @@ describe('the profile address', () => {
     );
     assert.equal(playerDevelopmentHref(base, 'P1', { view: 'goals' }), `${base}/roster/P1?section=development&view=goals`);
     assert.equal(playerDevelopmentHref(base, 'P1', {}), `${base}/roster/P1?section=development`);
-    assert.equal(returnLabel(from, base), 'Skills & Goals');
+    assert.equal(returnLabel(from, base), 'Skills & goals');
     assert.equal(returnLabel(`${base}/history?section=development`, base), 'Insights');
     assert.equal(returnLabel(`${base}/roster`, base), null);
     assert.equal(returnLabel(`${base}/developmentx`, base), null, 'a prefix is not a route');
-    assert.equal(returnLabel(`${base}/development`, base), 'Skills & Goals');
+    assert.equal(returnLabel(`${base}/development`, base), 'Skills & goals');
   });
   it('names the lineup builder\'s three doors by where they go (stage 3 · D3)', () => {
     assert.equal(returnLabel(`${base}/schedule?event=ev1&tab=lineup`, base), 'The game');
@@ -90,7 +90,7 @@ describe('the profile address', () => {
 });
 
 describe('the workspace and Insights addresses', () => {
-  it('Skills & Goals is three sections on ?section= — the overview is the bare address; the Players tab is gone (stage 4, G1)', () => {
+  it('Skills & goals is three sections on ?section= — the overview is the bare address; the Players tab is gone (stage 4, G1)', () => {
     assert.equal(skillsAndGoalsHref(base, 'sessions'), `${base}/development?section=sessions`);
     assert.equal(skillsAndGoalsHref(base, 'metrics'), `${base}/development?section=metrics`);
     // The roster table has ONE home — Insights → Coverage — and its first Show choice rides `metric=focus`, one spelling.

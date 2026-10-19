@@ -17,7 +17,7 @@ import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { assembleOpponentTournamentIntel } from '@/lib/coach-tournament-intel';
 
 /**
- * "Their tournament so far" (Scouting Book P3, plan §4.7) — the opponent's OTHER results in
+ * "Their tournament so far" (Scouting book P3, plan §4.7) — the opponent's OTHER results in
  * the SAME tournament as this mirrored game, assembled from organizer-side data the platform
  * already hosts. Zero capture; refreshed on every read; the book fills itself between games.
  *

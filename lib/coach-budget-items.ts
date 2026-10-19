@@ -514,8 +514,8 @@ export async function resolveRaisingForItem(
     return {
       ok: false,
       error: kind === 'sponsor'
-        ? 'A sponsor can only raise for a word on your Sponsorship shelf. Add one there on the Budget Plan first.'
-        : 'A fundraiser can only raise for a word on your Fundraising shelf. Add one there on the Budget Plan first.',
+        ? 'A sponsor can only raise for a word on your Sponsorship shelf. Add one there on the Budget first.'
+        : 'A fundraiser can only raise for a word on your Fundraising shelf. Add one there on the Budget first.',
     };
   }
   return resolved;

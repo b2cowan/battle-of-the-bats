@@ -86,7 +86,7 @@ function CoachTeamHeaderInner({
   status: MastheadStatus;
   /** The season `status` was computed for — see the layout's note. Null when there is none. */
   statusYearId: string | null;
-  /** Game-week book nudge (Scouting Book P2) — computed only for the status's own season. */
+  /** Game-week book nudge (Scouting book P2) — computed only for the status's own season. */
   scoutingNudge: MastheadScoutingNudge | null;
   /** Game-Day Mode (P1): the console link, present only inside the game's live window. */
   gameDayConsole: MastheadGameDayConsole | null;
@@ -321,7 +321,7 @@ function CoachTeamHeaderInner({
         </div>
       </div>
 
-      {/* Game-week book nudge (Scouting Book P2, mockup Stage 6; re-anchored into the sticky bar
+      {/* Game-week book nudge (Scouting book P2, mockup Stage 6; re-anchored into the sticky bar
           2026-08-11): an attached row, not a floating card in page flow beneath it. Gated on the
           SAME `status` the bar renders from, so it can never speak for an archive or a mismatched
           ?year= season — and only for the very game the status names. When the status is already

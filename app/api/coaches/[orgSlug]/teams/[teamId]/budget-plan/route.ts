@@ -136,7 +136,7 @@ export const GET = withObservability(async (_req: Request,
 
   /* ⚠⚠ A BILL LOWERED IS NOT A COLLECTION, ON THIS SCREEN TOO (owner ruling §160 Part F2,
      2026-09-11 — "net it too"). `duesAssessedGross` and the raw installment amounts above answer
-     "what did you schedule"; a coach reading this page beside Player Dues or Budget vs. Actual has
+     "what did you schedule"; a coach reading this page beside Player dues or Budget vs. Actual has
      no way to know those already net a written-off bill out and this page doesn't. The TOTAL comes
      from `seasonDuesBand` — the same authoritative figure the Dues tile and the Statement read —
      and PLACEMENT (which instalment, which month) comes from `duesPositionByInstallment`, exactly

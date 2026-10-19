@@ -44,7 +44,7 @@ import { MAX_TAGS_PER_ITEM, uniqueIds } from '@/lib/rep-drills';
  *   ATTENDANCE               → `attendance`. Mirrors the existing gate.
  *   WRITE                    → `canWritePracticePlans` = "Schedule: View + edit" (R7, owner-approved
  *                              2026-09-10). Was HEAD COACH ONLY via `canWriteDevelopment`, a gate
- *                              borrowed from Skills & Goals; a drill sheet is not coach-judgment
+ *                              borrowed from Skills & goals; a drill sheet is not coach-judgment
  *                              content about a minor. Every assistant holding schedule editing
  *                              gained this on deploy (the plan's assumption 3).
  *
@@ -139,7 +139,7 @@ export const GET = withObservability(async (_req: Request,
     // THIS practice's own tags. ⚠ The same `rep_team_event_tags` rows a game's tags live in, told
     // apart by the tag's kind — a practice carrying a 'focus' tag IS a tagged plan (mig 221).
     getRepTeamEventTagsMap([eventId]).catch(() => ({} as Record<string, string[]>)),
-    // The practice-week scouting bridge (Scouting Book P3): the booked game this practice
+    // The practice-week scouting bridge (Scouting book P3): the booked game this practice
     // prepares for, when its opponent's book has content. Rides `schedule` with the rest of
     // the plan read — the book's own glance surfaces gate exactly the same way. Fails soft
     // internally (null), so it can never take the plan screen down with it.

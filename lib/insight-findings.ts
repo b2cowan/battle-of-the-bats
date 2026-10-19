@@ -437,7 +437,7 @@ export function summarizeDuesForFindings(rows: FindingsDuesRow[], todayISO: stri
     outstandingTotal: Math.round(rows.reduce((s, p) => s + (p.leftToSend ?? p.outstanding ?? 0), 0)),
     // ⚠ THE SHARED PREDICATE (lib/dues-status.ts), not a local filter. This counted a bill past
     // its date EVEN WHEN CREDITS HAD SETTLED IT — so Insights could say "2 dues installments
-    // overdue" while Player Dues, which excludes them, showed one row marked Past due. Credits
+    // overdue" while Player dues, which excludes them, showed one row marked Past due. Credits
     // settle bills and `paid_at` deliberately never stamps a credit-covered row (Paid stays
     // cash), so lateness is judged on the REMAINDER. `todayISO` is still the caller's day.
     overdueCount: rows.reduce((n, p) => n + pastDueInstallments(p.installments, todayISO).length, 0),

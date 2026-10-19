@@ -450,7 +450,7 @@ describe('the surfaces read through the one home', () => {
     const dialog = read('components', 'coaches', 'RecordObservationDialog.tsx');
     assert.match(dialog, /fixed\?\.skill/, 'the sheet takes the skill and the date from a session row');
     assert.match(dialog, /useDiscardGuard\(/, 'typed work is guarded on Escape, X and Cancel');
-    // The session page sends only what changed itself; the two player-page hosts (Skills & Goals, Notes)
+    // The session page sends only what changed itself; the two player-page hosts (Skills & goals, Notes)
     // go through ONE module that does (re-evaluation stage 3).
     assert.match(session, /observationEditPatch\(/, 'an edit sends only what changed, from the session');
     const host = read('components', 'coaches', 'observation-sheet-host.ts');

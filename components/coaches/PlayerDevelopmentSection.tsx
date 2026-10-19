@@ -853,7 +853,7 @@ export default function PlayerDevelopmentSection({
                                     {attemptsText ? <span title={correctedTitle}>{attemptsText}</span> : <span className={styles.devRowDash}>—</span>}
                                   </td>
                                   <td className={`${styles.td} ${styles.tdShrink}`}>
-                                    {/* The source is a door: the session (a room inside Skills & Goals, which opens with
+                                    {/* The source is a door: the session (a room inside Skills & goals, which opens with
                                         the Development grant only — a coach without it gets no door that 403s), or the
                                         result's own sheet (E7). */}
                                     {row.sessionId

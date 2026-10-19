@@ -74,7 +74,7 @@ export const GET = withObservability(async (_req: Request,
   if ('error' in resolved) return resolved.error!;
   const { assignment, session, programYear } = resolved;
   const caps = assignment.capabilities;
-  // A session's page is a room inside Skills & Goals: the Development grant only (stage 0, D5).
+  // A session's page is a room inside Skills & goals: the Development grant only (stage 0, D5).
   const denied = denyUnless(canWriteDevelopment(caps), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
   // Observations are a coach's written judgement about a child — READ on Internal notes, like goals.

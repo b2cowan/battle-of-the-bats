@@ -230,7 +230,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
      and environments). Each picture is taken on the team whose PHASE makes that screen true,
      which is why the two money shots below come from two different teams:
 
-       · Player Dues → 12U, MID-SEASON. The only team seeded rich enough to photograph:
+       · Player dues → 12U, MID-SEASON. The only team seeded rich enough to photograph:
          installments part-paid, two families genuinely past due, and a closed fundraiser
          crediting five families' dues. Everyone else is thin by design.
        · Season settlement → 14U, OFF-SEASON ("the books are open, the season isn't"), because
@@ -290,8 +290,8 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     clipAll: 'details[class*="duesCard"]:nth-of-type(-n+7)',
     size: { w: 358, h: 550 },
     takenAt: '2026-08-21',
-    alt: 'The Player Dues screen as a coach sees it on a phone: one card per family, each giving the player’s name, what they still owe and when it is next due — most of them a plain amount, one written in amber because part of it is already past due.',
-    caption: 'Player Dues on a phone — every family, what is left to pay, and the ones who have fallen behind called out where a coach will actually read them.',
+    alt: 'The Player dues screen as a coach sees it on a phone: one card per family, each giving the player’s name, what they still owe and when it is next due — most of them a plain amount, one written in amber because part of it is already past due.',
+    caption: 'Player dues on a phone — every family, what is left to pay, and the ones who have fallen behind called out where a coach will actually read them.',
   },
   {
     id: 'coach-season-settlement',

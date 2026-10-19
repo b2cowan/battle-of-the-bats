@@ -30,7 +30,7 @@
  * props to serve one caller. The two share their CSS (`convWhat*`, below), which is what keeps them
  * looking like one control; if the conversation chooser is ever simplified, this is where it lands.
  *
- * ⚠ `variant="toolbar"` (added for the Skills & Goals report toolbar, 2026-09-16) is the one other
+ * ⚠ `variant="toolbar"` (added for the Skills & goals report toolbar, 2026-09-16) is the one other
  * shape this DOES absorb: a compact filter field that must sit in a row beside plain `<select>`s and
  * look like one of them, rather than the bold olive "answer this" field the money conversation uses.
  * `group` on an option draws the SAME grey caps-label the money picker's groups use (`.convWhatGroup`)

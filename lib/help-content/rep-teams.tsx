@@ -121,7 +121,7 @@ const repTeamsHelp: HelpPageContent = {
         <>
           <p>A club team&apos;s seasons are the club&apos;s to change. The team page carries the doors, and the team&apos;s coaches are told each time.</p>
           <ul>
-            <li><strong>Start next season</strong> closes the current season and starts the next one with the team in it: the roster, the budget plan and the fee plan (both optional), the opening balance, and each returning player&apos;s history. The coaching staff stays. The schedule, tryouts and player documents start fresh.</li>
+            <li><strong>Start next season</strong> closes the current season and starts the next one with the team in it: the roster, the budget and the fee plan (both optional), the opening balance, and each returning player&apos;s history. The coaching staff stays. The schedule, tryouts and player documents start fresh.</li>
             <li><strong>Close the season</strong> ends it and starts nothing — for a team that isn&apos;t coming back. Nothing is deleted; the season becomes a record.</li>
             <li><strong>Reopen</strong> — on a closed team&apos;s page, &ldquo;Closed this by mistake?&rdquo; brings the season back. It&apos;s offered only while no season is live.</li>
           </ul>

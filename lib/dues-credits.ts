@@ -217,7 +217,7 @@ export const CREDIT_MODE_HINTS: Record<CreditApplicationMode, string> = {
 
 /**
  * The mode as a COMPLETE SENTENCE, for the two places that state the policy in prose: the Money
- * group's collapsed header and the Player Dues policy line under the table.
+ * group's collapsed header and the Player dues policy line under the table.
  *
  * ⚠ These exist because the LABELS are answers to a picker's question, not sentence fragments.
  * `keep_separate` reads "They don't — settle at season's end", so composing
@@ -230,7 +230,7 @@ export const CREDIT_MODE_SENTENCES: Record<CreditApplicationMode, string> = {
   next_first:    'Credits reduce the next payment first',
   /* "Money credits", not "credits" (/review 2026-09-12): since owner ruling F03 a write-off —
      an Adjustment, a forgiven balance — lowers the bill straight away on this setting too. This
-     sentence renders standalone under the Player Dues table and in the Money group's header,
+     sentence renders standalone under the Player dues table and in the Money group's header,
      on the very screen where an Adjustment has just lowered a bill. The picker LABEL above keeps
      its settled wording ("They don't — settle at season's end") — it is the option's NAME, quoted
      in help as a term, and its hint line carries the exception; renaming it is a vocabulary call. */

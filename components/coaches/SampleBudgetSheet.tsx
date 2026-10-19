@@ -108,7 +108,7 @@ export default function SampleBudgetSheet({
               className={`${shared.segBtn} ${tab === 'bva' ? shared.segBtnActive : ''}`}
               onClick={() => setTab('bva')}
             >
-              Budget vs. actual
+              Budget vs. Actual
             </button>
           </div>
 

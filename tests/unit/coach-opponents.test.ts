@@ -1,5 +1,5 @@
 /**
- * Opponent Scouting Book — pure-logic tests (lib/coach-opponents.ts).
+ * Opponent Scouting book — pure-logic tests (lib/coach-opponents.ts).
  * The load-bearing claims: the normalizer groups what it should and nothing more, aliases
  * fold groups together, the record chip can never disagree with the wrapped rule
  * (scrimmages listed, never counted), and future games are not "meetings".

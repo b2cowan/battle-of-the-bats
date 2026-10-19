@@ -776,7 +776,7 @@ export default function TeamSettingsPage({
               />
 
               {/* ⚠ HERE AND NOT IN THE SHARED ROWS. The two rows above are DUES settings and also
-                  render inline on Player Dues before any dues exist; this one is about
+                  render inline on Player dues before any dues exist; this one is about
                   fundraising, and would be a non-sequitur on that screen. It lives in the Money
                   group because that is where a treasurer sets the team's money habits once.
 

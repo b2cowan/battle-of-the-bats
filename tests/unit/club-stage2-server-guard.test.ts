@@ -283,7 +283,7 @@ describe('The coach is told when the club changes the season', () => {
         clubName: 'Northfield Minor Ball', teamName: '9U A', action: 'started', seasonName: '2027 Season',
         previousSeasonName: '2026 Season', carried: { players: 14, budgetPlan: true, feePlan: true, openingBalance: true },
       }).body,
-      '9U A · Came with the team: 14 players, the budget plan, the fee plan and the opening balance. Tryouts are closed until you open them. The 2026 Season is kept as a record.',
+      '9U A · Came with the team: 14 players, the budget, the fee plan and the opening balance. Tryouts are closed until you open them. The 2026 Season is kept as a record.',
     );
     assert.equal(
       clubSeasonNotice({ clubName: 'C', teamName: 'T', action: 'started', seasonName: '2027 Season', previousSeasonName: '2026 Season', carried: { players: 0, budgetPlan: false, feePlan: false, openingBalance: false } }).body,

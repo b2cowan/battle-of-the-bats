@@ -84,7 +84,7 @@ type SectionId = 'overview' | CoachMoneySection;
  * ⚠⚠ WHAT **Record** ARRIVES ANSWERED WITH, PER TAB (owner ruling, 2026-08-23).
  *
  * The button is the same button everywhere; what changes is whether the screen behind it makes an
- * honest guess. Standing on Player Dues, "a family paid their dues" is what a coach reaching for
+ * honest guess. Standing on Player dues, "a family paid their dues" is what a coach reaching for
  * Record almost always means — so the form opens there and they can change it, because **a tab is
  * a guess, not a record** (the other half of ruling A: a door that names one RECORD locks; a door
  * that names a SCREEN only suggests).
@@ -431,10 +431,15 @@ export default function CoachesAccountingPage({
     );
   }
 
+  /* ⚖ ONE ROW, BOTH PORTALS (owner, 2026-10-18): the club's Accounting tabs and these read the same
+     shape — Overview · Budget · <the portal's own> · Ledger · <the club-and-team loop> · Budget vs.
+     Actual — and a shared tab wears the club's word ("Budget", once "Budget Plan"). Labels are
+     sentence case, like every nav label; `check:spelling` holds the old spellings out. The order is
+     the season's (plan → collect → spend → review), which the Overview's setup index repeats. */
   const tabs: { id: SectionId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'budget', label: 'Budget Plan' },
-    { id: 'dues', label: 'Player Dues' },
+    { id: 'budget', label: 'Budget' },
+    { id: 'dues', label: 'Player dues' },
     { id: 'fundraisers', label: 'Fundraising' },
     /* ⚖⚖ ONE LEDGER WHERE THE SPLIT'S TWO TABS WERE (fold, owner-ruled 2026-08-28). "Ledger" is
        the word the org accounting module and house league already use for the same idea — a dated
@@ -498,7 +503,7 @@ export default function CoachesAccountingPage({
         `MoneySummaryRevisionBridge` was written with a full header explaining the defect it closes
         — the Record chooser's live hints going stale after the first save — and then never placed
         in the tree, leaving its callback unused and the defect open. P2 makes it matter more, not
-        less: money is now recorded from Player Dues, a drive's leaderboard and a bill's row, and
+        less: money is now recorded from Player dues, a drive's leaderboard and a bill's row, and
         every one of those writes has to reach the hints the next open reads. */}
     <MoneySummaryRevisionBridge onBump={quietReload} />
     <RecordMoneyProvider value={recordSignal}>

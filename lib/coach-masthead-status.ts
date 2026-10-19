@@ -34,7 +34,7 @@ export interface MastheadEvent {
 }
 
 /**
- * The game-week scouting nudge (Scouting Book P2, mockup Stage 6): one quiet line under
+ * The game-week scouting nudge (Scouting book P2, mockup Stage 6): one quiet line under
  * the masthead when the NEXT game's opponent has observations in the book. Assembled
  * server-side beside the feed (lib/coach-masthead); declared here so the client masthead
  * can name the type without importing the `server-only` module that fills it.

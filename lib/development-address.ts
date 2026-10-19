@@ -23,7 +23,7 @@ import { insightsSectionHref } from './coach-insights-links.ts';
 import { UNTAGGED_FILTER } from './rep-drills.ts';
 
 /**
- * The two views inside the player's Skills & Goals tab (re-evaluation stage 3, owner ruling E1,
+ * The two views inside the player's Skills & goals tab (re-evaluation stage 3, owner ruling E1,
  * 2026-09-15). Phase 2's `observations` and `archive` views are RETIRED, and their addresses still
  * land somewhere honest (`parseDevelopmentAddress`, `developmentAddressTab`): an observation's home
  * is the Notes tab, and the archive is a fold at the foot of this tab, opened by the address.
@@ -35,7 +35,7 @@ const RETIRED_VIEW_OBSERVATIONS = 'observations';
 const RETIRED_VIEW_ARCHIVE = 'archive';
 
 /**
- * Skills & Goals — three views on one screen. `overview` is the LANDING (re-evaluation stage 0,
+ * Skills & goals — three views on one screen. `overview` is the LANDING (re-evaluation stage 0,
  * owner ruling 2026-09-14): Money's shape — a getting-started card while there is nothing to
  * count, the season's dashboard once there is. The bare hub address IS the overview, so it never
  * carries `?section=overview`; the other two are addressed as before.
@@ -100,7 +100,7 @@ export function parseDevelopmentAddress(params: ParamReader, base: string): Deve
 }
 
 /**
- * The tab a development address lands on when it is NOT the Skills & Goals tab: a bare
+ * The tab a development address lands on when it is NOT the Skills & goals tab: a bare
  * `view=observations` (no goal) is the observation's home, the Notes tab (E1/E2). Read by the
  * player page's tab resolution (`resolvePlayerTab`); null for every address this tab answers.
  */
@@ -139,7 +139,7 @@ export function returnLabel(returnTo: string | null, base: string): string | nul
   if (returnTo === base) return 'Overview';
   // A route prefix with a boundary — `/development` and `/development?section=…`, never `/developmentx`.
   const under = (segment: string) => new RegExp(`^${base.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}/${segment}(?:[/?#]|$)`).test(returnTo);
-  if (under('development')) return 'Skills & Goals';
+  if (under('development')) return 'Skills & goals';
   if (under('history')) return 'Insights';
   if (under('schedule') && /[?&]event=/.test(returnTo)) return 'The game';
   if (under('game')) return 'Game day';
@@ -147,7 +147,7 @@ export function returnLabel(returnTo: string | null, base: string): string | nul
 }
 
 /**
- * Skills & Goals — sections on `?section=`, the Money and Insights hubs' convention; the overview
+ * Skills & goals — sections on `?section=`, the Money and Insights hubs' convention; the overview
  * is the bare address. `edit` opens a metric's DEFINITION in its sheet over whichever section is
  * on screen (re-evaluation stage 1, 2026-09-14 — a metric is a record on a list, so it opens over
  * the list the way a player's dues do, never on a page of its own): `new` defines one, an id edits

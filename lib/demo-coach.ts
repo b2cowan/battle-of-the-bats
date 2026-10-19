@@ -1541,7 +1541,7 @@ export const OFFSEASON_SHOWCASE_ROSTER_INDEX = 1;
  * product only draws a trend line "after a second entry" (`PlayerDevelopmentSection`). With a
  * single winter session the sandbox could show that measuring happens and never once show what
  * measuring is FOR — on the surface whose promise is "put this month's number beside last
- * month's". The Skills & Goals card was even saying it out loud: *"a few sessions a season is
+ * month's". The Skills & goals card was even saying it out loud: *"a few sessions a season is
  * what makes the trend lines real."*
  *
  * The two are deliberately different SHAPES, because the product allows both and a demo that only

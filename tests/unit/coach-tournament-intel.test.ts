@@ -1,5 +1,5 @@
 /**
- * "Their tournament so far" — pure-logic tests (lib/coach-tournament-intel.ts, Scouting Book P3).
+ * "Their tournament so far" — pure-logic tests (lib/coach-tournament-intel.ts, Scouting book P3).
  * The load-bearing claims: the block assembles ONLY for a revealed, same-tournament read
  * (published division, accepted opponent, public tournament); the game vs us is excluded;
  * names resolve from accepted teams only; forfeits count as results but never as unit totals;

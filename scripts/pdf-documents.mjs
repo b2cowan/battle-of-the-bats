@@ -713,12 +713,12 @@ export async function buildDocuments() {
   };
   const duesFixture = duesRows(QA151_ROSTER);
 
-  moneyDoc('coach-player-dues', 'Player dues team sheet', 'Player Dues',
+  moneyDoc('coach-player-dues', 'Player dues team sheet', 'Player dues',
     money$.DUES_EXPORT_COLUMNS,
     ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
       'app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx'], duesFixture, money$.duesPdfRows, {
       // The length promise: a full bench and its Total on one sheet. See FULL_BENCH.
-      edgeCases: [['full-bench', moneyRender('coach-player-dues', 'Player dues team sheet', 'Player Dues',
+      edgeCases: [['full-bench', moneyRender('coach-player-dues', 'Player dues team sheet', 'Player dues',
         money$.DUES_EXPORT_COLUMNS, duesRows(FULL_BENCH), money$.duesPdfRows), { maxPages: 1 }]],
     });
 
@@ -803,11 +803,11 @@ export async function buildDocuments() {
     });
     doc({
       id: 'coach-budget-plan',
-      label: 'Season budget plan',
+      label: 'Budget',
       screens: ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx'],
       headings: money$.BUDGET_PLAN_COLUMNS.map((c) => c.label),
       render: (name, settings) => money$.downloadMoneyExport('pdf', {
-        dataset: 'budget-plan', title: 'Season Budget Plan',
+        dataset: 'budget-plan', title: 'Budget',
         columns: money$.BUDGET_PLAN_COLUMNS, rows: built.rows, rowKinds: built.kinds,
         // The panel's own PDF currency treatment — shared formatter, em dash for an empty cell.
         pdfRows: (rows) => rows.map((r) => money$.BUDGET_PLAN_COLUMNS.map((c) => {
@@ -816,7 +816,7 @@ export async function buildDocuments() {
           return v === '' || v === undefined || v === null ? '—' : money$.formatMoneyCell(Number(v));
         })),
         orgLabel: 'riverdale-ridge', scopeLabel: SEASON, teamName: TEAM,
-        pdfSettings: settings, emptyMessage: 'Nothing to export on Season budget plan.',
+        pdfSettings: settings, emptyMessage: 'Nothing to export on the Budget.',
       }),
     });
   }

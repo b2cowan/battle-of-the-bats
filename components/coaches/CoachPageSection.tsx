@@ -27,7 +27,7 @@ export default function CoachPageSection({
   /** Stable anchor for `?section=` deep links; also the element id. Omit for a card that is not
    *  an address (a transient form, a month group). */
   sectionId?: string;
-  /** Omit when the tab's own name is the heading (the Skills & Goals tab holds one section). */
+  /** Omit when the tab's own name is the heading (the Skills & goals tab holds one section). */
   title?: string;
   /** Right-aligned summary annotation (a rate, a count, a balance). FACTS only — never a control. */
   meta?: React.ReactNode;

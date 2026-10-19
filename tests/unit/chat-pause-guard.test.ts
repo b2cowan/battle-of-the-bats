@@ -26,7 +26,7 @@ const REPO = path.join(import.meta.dirname, '..', '..');
 const DOORS = [
   // the bars and menus
   'components/consumer/ConsumerNav.tsx',               // home bar + public tournament bar and strip (P2)
-  'components/coaches/CoachesBottomNav.tsx',           // paid portal bar: Practices; tiles Lineups · Skills & Goals · Money (P3, P3T)
+  'components/coaches/CoachesBottomNav.tsx',           // paid portal bar: Practices; tiles Lineups · Skills & goals · Money (P3, P3T)
   'lib/coach-nav-visibility.ts',                       // paid sidebar, phone bar, tour step: Chat hidden (P3, P7)
   'lib/use-chat-door.ts',                              // free portal bar and left menu (P4F)
   'lib/invite-only-event.ts',                          // admin bar → Messages, rail, More, the chat page's redirect (P4, P1)
@@ -146,7 +146,7 @@ describe('while chat is paused', { skip: !CHAT_PAUSED }, () => {
     assert.equal(isCoachNavItemVisible({ ...head, schedule: false }, 'Practices'), false);
   });
 
-  it('the bar holds Practices in Chat\'s place and the tiles are Lineups · Skills & Goals · Money (P3, P3T)', () => {
+  it('the bar holds Practices in Chat\'s place and the tiles are Lineups · Skills & goals · Money (P3, P3T)', () => {
     const code = readCode('components/coaches/CoachesBottomNav.tsx');
     assert.match(code, /CHAT_PAUSED \? PRACTICES_TAB : CHAT_TAB/);
     assert.match(code, /key: '\/practice',\s*icon: NotebookPen,\s*label: 'Practices'/);

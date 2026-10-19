@@ -343,7 +343,7 @@ export function ItemRows({
            written anywhere: a family's row carries no budget lines, so this is false and the number
            stays a number. That is the report's existing rule applying, not an exception to it — a
            family's bill is one assessed figure, not a pile of records, and the instalment dates
-           behind it live on Player Dues, which is where a coach goes to chase. */
+           behind it live on Player dues, which is where a coach goes to chase. */
         const planBehind = (item.lines?.length ?? 0) > 0;
         /* ⚠ `item.costs?.length`, NOT `.length` — same deploy-skew note as `lines`, and the same
            predicate position: this runs unconditionally for every row. `refunds` needs no guard,

@@ -438,7 +438,7 @@ export default function TeamOverviewPage({
         // "Who's paid nothing" — a player who owes dues but has zero payments recorded.
         // Distinct from "overdue" (a specific installment past its due date): a coach wants
         // to know who hasn't started paying at all, not just which instalments slipped.
-        // Shared predicate with the Money → Player Dues "Haven't paid anything yet" panel,
+        // Shared predicate with the Money → Player dues "Haven't paid anything yet" panel,
         // so this badge count and that named list can never drift apart.
         const unpaid = players.filter(isNeverPaidPlayer).length;
         let paidInst = 0; let totalInst = 0;
@@ -1273,7 +1273,12 @@ export default function TeamOverviewPage({
             ? 'Track what the season costs'
             : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
           subIsHint: !budget || budget.amount == null,
-          href: moneySectionHref(base, 'budget-vs-actual'),
+          // ⚖ A tile named Budget opens the Budget tab while there is none to report on ("Not set" is asking
+          // you to make one), and Budget vs. Actual once there is — the figure it then shows, left to
+          // spend, is that report's (owner, 2026-10-18, when Money's "Budget Plan" tab became "Budget").
+          href: (!setupLoading && (!budget || budget.amount == null))
+            ? moneySectionHref(base, 'budget')
+            : moneySectionHref(base, 'budget-vs-actual'),
           tone: (!budget || budget.amount == null) ? 'muted'
             : budget.left < 0 ? 'danger' : 'default',
           // Floored at zero: spend against plan nets money back, so a refund that lands before the
@@ -1348,13 +1353,13 @@ export default function TeamOverviewPage({
         // The documented fallback when a coach has no lineup access — never a ranked list, so the
         // board cannot reshuffle underneath them week to week.
         return {
-          key, label: 'Skills & Goals', icon: TrendingUp,
+          key, label: 'Skills & goals', icon: TrendingUp,
           value: openGoalCount == null ? '…' : openGoalCount === 0 ? 'No goals yet' : String(openGoalCount),
           // Null (still loading) must not borrow the zero copy — the value would read "…" beside a
           // caption that has already decided the answer is none.
           sub: openGoalCount == null ? 'Checking…'
             : openGoalCount > 0 ? 'goals in progress' : 'Set a focus for each player',
-          // "7" under Skills & Goals could be skills, goals or players — the unit is the fact here.
+          // "7" under Skills & goals could be skills, goals or players — the unit is the fact here.
           subIsHint: openGoalCount == null || openGoalCount === 0,
           href: `${base}/development`,
           tone: openGoalCount ? 'default' : 'muted',
@@ -2242,7 +2247,7 @@ export default function TeamOverviewPage({
       <section aria-labelledby="board-title">
         <p className={styles.sectionKicker} id="board-title">Your team at a glance</p>
         {/* The kit's DOOR card (components/coaches/kit — owner ruling C, 2026-09-16): the same card,
-            eyebrow, figure and bar the Money and Skills & Goals dashboards draw, plus the lift, the
+            eyebrow, figure and bar the Money and Skills & goals dashboards draw, plus the lift, the
             hover and the arrow that say the whole tile opens. This band had kept "the shipped tile
             language, unchanged" so as not to be a second card system — and then Money became one. */}
         <div className={styles.boardGrid}>

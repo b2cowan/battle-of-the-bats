@@ -223,7 +223,7 @@ describe('practice-plan writing follows "Schedule: View + edit" (R7)', () => {
     assert.equal(canWritePracticePlans(preset('manager')), true);
     assert.equal(canWritePracticePlans(preset('treasurer')), false);
     assert.equal(canWritePracticePlans(preset('helper')), false);
-    // The seam: Skills & Goals writes ride the Development grant, which no preset carries.
+    // The seam: Skills & goals writes ride the Development grant, which no preset carries.
     assert.equal(canWriteDevelopment(preset('assistant')), false);
   });
 

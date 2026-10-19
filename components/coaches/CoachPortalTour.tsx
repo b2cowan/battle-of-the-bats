@@ -55,12 +55,12 @@ const CARDS: TourCard[] = [
     body: 'Your roster is where the season starts. Almost everything else in the portal reads from it — lineups, attendance, dues, who your announcements reach — which is why it’s the one thing worth doing first. Tryouts sits alongside it, because that’s where next season’s roster comes from.',
     href: '/roster',
     linkLabel: 'Open Roster',
-    // ⚠ "Development" → "Skills & Goals" (owner ruling 5, 2026-08-18). These are ITEM labels, i.e.
+    // ⚠ "Development" → "Skills & goals" (owner ruling 5, 2026-08-18). These are ITEM labels, i.e.
     // capability-gate keys, so this string is looked up in `isCoachNavItemVisible` — which keeps a
     // `'Development'` fallthrough precisely so a miss here would have kept gating rather than
     // silently opening. Updated anyway: a tour that names a menu item the coach cannot find is the
     // drift class this file's note above already describes.
-    needsAnyOf: ['Roster', 'Lineups', 'Skills & Goals'],
+    needsAnyOf: ['Roster', 'Lineups', 'Skills & goals'],
   },
   {
     key: 'season',
@@ -68,7 +68,7 @@ const CARDS: TourCard[] = [
     headline: 'Your season, as it happens',
     // ⚠ "a row of reports" is new with the reports portal (2026-08-18) — Insights became one page
     // of seven tabs, and a coach told only that it "reads them back to you" would not know to look
-    // for Attendance or the Scouting Book inside it.
+    // for Attendance or the Scouting book inside it.
     body: 'Your schedule is the spine: lineups attach to these games, attendance is taken from them, and Insights reads them back to you as a row of reports — results, attendance, playing time and more. You never type a number into Insights yourself.',
     href: '/schedule',
     linkLabel: 'Open Schedule',

@@ -1,6 +1,6 @@
 /**
  * The player page's FIVE tabs and their addresses (roster + player page review, owner rulings
- * 2026-09-13: R2-1 Details first · R2-2 "Skills & Goals" · R2-3 Notes is its own tab; hub F13).
+ * 2026-09-13: R2-1 Details first · R2-2 "Skills & goals" · R2-3 Notes is its own tab; hub F13).
  *
  * ⚠ TABS HAVE AN ADDRESS. They were `useState` buttons: reload returned to the first tab, Back did
  * not undo a switch, nothing could link to a tab, and a `?section=` into a non-default tab landed
@@ -9,7 +9,7 @@
  * scrolling-and-flashing WITHIN the tab.
  *
  * ⚠ EVERY EXISTING DEEP LINK KEEPS WORKING WITHOUT A CHANGE TO ITS PRODUCER. `?section=development`
- * (with any `view=`) is what the Skills & Goals hub, the Insights reports, the layout sweep, the
+ * (with any `view=`) is what the Skills & goals hub, the Insights reports, the layout sweep, the
  * marketing shots and seventeen help articles already send; `tabForSection` maps a section to the
  * tab that holds it, so an address that names only a section still opens the right tab. An
  * explicit `?tab=` wins over the mapping.
@@ -24,7 +24,7 @@ export type PlayerTab = 'details' | 'season' | 'skills' | 'notes' | 'family';
 export const PLAYER_TABS: ReadonlyArray<{ id: PlayerTab; label: string; short?: string }> = [
   { id: 'details', label: 'Details' },
   { id: 'season',  label: 'This season',        short: 'Season' },
-  { id: 'skills',  label: 'Skills & Goals',     short: 'Skills' },
+  { id: 'skills',  label: 'Skills & goals',     short: 'Skills' },
   { id: 'notes',   label: 'Notes' },
   { id: 'family',  label: 'Family & paperwork', short: 'Family' },
 ];

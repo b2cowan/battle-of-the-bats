@@ -155,7 +155,7 @@ describe('the walk places the money; it never decides how much there is', () => 
     /* THE DEFECT THIS PINS, found on the UAT fixture during the build rather than by reading.
        Avery was billed $700 and sent $1,250, so every instalment is settled in CASH and her $17.00
        adjustment lands on nothing. A season total taken from this walk would read $0.00 while the
-       Player Dues band read $17.00 — two figures for one concept, on the two screens the whole
+       Player dues band read $17.00 — two figures for one concept, on the two screens the whole
        ruling exists to reconcile. The caller takes the TOTAL from the band and uses this only for
        placement, carrying whatever cannot be placed to the undated column. */
     const r = duesPositionByInstallment({

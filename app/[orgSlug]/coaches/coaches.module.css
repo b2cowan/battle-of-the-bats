@@ -376,7 +376,7 @@
   padding: 0.2rem 0.5rem;
 }
 /* ⚠ THE SAME 44px FLOOR, for the small inline actions (check:layout tap-floor, 2026-08-20). These
-   are the money hub's cross-links — "Player Dues →", "Club →", "Fundraising →" — and the compact
+   are the money hub's cross-links — "Player dues →", "Club →", "Fundraising →" — and the compact
    buttons beside a drawer's rows. At 18px they are text a finger has to land on precisely.
    `inline-flex` so the min-height actually applies to the anchors, which are inline by default. */
 @media (max-width: 768px) {
@@ -1231,7 +1231,7 @@
 /* ── THE RIGHT RAIL IS GONE (owner ruling 2026-08-13) ───────────────────────
    `.railCols` / `.rail` / `.railGroup` / `.railLabel` / `.railRow` / `.railRowName` / `.railValue`
    / `.railValueWrap` / `.railValueBig` / `.railHideNarrow` were deleted here. They gave three
-   surfaces — the player profile, the lineup builder and Money → Player Dues — a 300px sticky
+   surfaces — the player profile, the lineup builder and Money → Player dues — a 300px sticky
    reference column. The owner's verdict on a live screenshot was that it made the view clunky,
    and the measurement agreed: on the player profile the rail was taking 300 of a 960px reading
    measure, so a form of real inputs was being squeezed into ~635px to make room for it.
@@ -1872,7 +1872,7 @@
    ⚰ `.snapshotCard` · `.snapshotHead` · `.snapshotHeadLabel` · `.snapshotHeadArrow` · `.snapshotValue` ·
    `.snapshotSub` · `.snapshotBar*` · `.snapshotFlag` (Chunk I → 2026-09-16): the six tiles are the
    kit's DOOR card now (components/coaches/kit; owner ruling C) — the same card, eyebrow, figure,
-   sub, bar and flag the Money and Skills & Goals dashboards draw, with the lift, hover and arrow
+   sub, bar and flag the Money and Skills & goals dashboards draw, with the lift, hover and arrow
    that say the whole tile opens. This band had kept "the shipped tile language, unchanged" so as
    not to be a second card system; Money became one anyway, and the kit ends it. Only the GRID is
    the board's own. Even rows on purpose (not "as many as fit", which orphans the last tile):
@@ -2386,7 +2386,7 @@ a.insightsStat:focus-visible { outline-offset: -2px; }
    44px floor on link-styled members lives in the kit's actions slot, once. */
 
 /* The quiet "go do something about this" link at the foot of a report panel — Playing Time's
-   "Manage lineups →", Development's "Set goals and record measurables in Skills & Goals →".
+   "Manage lineups →", Development's "Set goals and record measurables in Skills & goals →".
    ⚠ It carries the 44px TAP FLOOR because a 0.8rem line of text is ~15-20px tall and a report is
    read on a phone at the field: `check:layout` flagged both of these at 361px and 390px. Padding
    rather than a bare `min-height` so the box grows around the text instead of leaving the words
@@ -5460,7 +5460,7 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* ⚰ The player page's hand-rolled tab rail (`.playerTabs` / `.playerTab*`) retired 2026-09-13
    (roster + player page review, hub F13): the tabs are `CoachTabBar` links with a real `?tab=`
-   address now — the same component the Money hub, Insights and Skills & Goals use. One tab
+   address now — the same component the Money hub, Insights and Skills & goals use. One tab
    component in the portal, not two. */
 
 /* ── Glance card doors (hub F10/F15) ──────────────────────────────────────────────────────
@@ -5531,7 +5531,7 @@ a.oneChip:hover { border-color: currentColor; }
 .footerIconBtn.sectionEditBtn { border-color: transparent; background: none; color: var(--text-tertiary); }
 .footerIconBtn.sectionEditBtn:hover { color: var(--text-primary); background: var(--white-8); }
 .pageSectionBody { composes: collapseBody; padding-top: 0.4rem; }
-/* A section with no heading (the Skills & Goals tab's one section, a month group) opens with the
+/* A section with no heading (the Skills & goals tab's one section, a month group) opens with the
    full top padding its missing head row would have left. A class, not an inline style — a size
    set inline is invisible to every CSS-reading guard, which is the roster's 13.6px lesson. */
 .pageSectionBodyBare { padding-top: 1rem; }
@@ -5709,7 +5709,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    one at a time. Every control on the page's own surfaces takes the floor in the touch band
    (≤768, K-12): the Notes tab's toolbar, form and rows, the recap row, and the removal at the
    foot of Details. An inline link is a control too (register F-23), so a source chip grows to
-   the floor and the row with it. The Skills & Goals section keeps its own rules — it is the
+   the floor and the row with it. The Skills & goals section keeps its own rules — it is the
    Development hub's component, not this page's. */
 @media (max-width: 768px) {
   .notesToolbar button,
@@ -8421,7 +8421,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* ⚰ `.panelToolbar` · `.panelToolbarSticky` · `.panelToolbarActions` (page-level action ruling
    2026-08-13 → 2026-09-16) — the kit's `CoachListToolbar` (components/coaches/kit; owner ruling E)
    carries the row, its sticky variant (the measured `top` still set inline by the Ledger, the
-   margin→padding rule with it) and the actions slot. Every Money tab, Skills & Goals, Roster,
+   margin→padding rule with it) and the actions slot. Every Money tab, Skills & goals, Roster,
    Schedule, a player's Results and Insights render it; Money's geometry was the kit's. The
    `.panelSubhead` band heading below is a caller's own and stays.
    ⚠ "STAYS" WAS WRITTEN AND THE RULE WAS DELETED ANYWAY — the same commit took it, and for four days
@@ -9081,7 +9081,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    ⚠ A hairline under every row is the standard's answer to "track one row across eight columns";
    the table-recipe guard now fails the build on any table rule that names an undefined token. */
 
-/* ⚰ THE 130px ACTION COLUMN IS GONE (Ledger Parity D3, 2026-10-02). It existed so "Club →", "Player Dues →"
+/* ⚰ THE 130px ACTION COLUMN IS GONE (Ledger Parity D3, 2026-10-02). It existed so "Club →", "Player dues →"
    and "Fundraising →" — three widths of worded button — did not make the table's right edge ragged. The
    cell holds one chevron now (and Record beside it on an unpaid installment), the shared kit's `goCell`.
 
@@ -9126,12 +9126,12 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .devBands { display: flex; flex-direction: column; gap: 1rem; }
 
 /* Card title + its one action, on a row. Was an inline style repeated per card. */
-/* ── Skills & Goals list tabs (Sessions · Players · Metrics) — MONEY'S LIST-TAB GRAMMAR ──
+/* ── Skills & goals list tabs (Sessions · Players · Metrics) — MONEY'S LIST-TAB GRAMMAR ──
    (owner, 2026-09-14: "why do we have these gray backgrounds… different shades of gray in these
    whole sections?"). The three views used to sit inside `.detailSection` — the olive-soft tinted
    panel with a grey uppercase title — so the table inherited the tint and the empty state was a
    white card on a tinted card on the paper. The table standard (§3.3) says the ground is the card
-   and the frame is neutral, never an accent tint; Money's Ledger and Player Dues do exactly that:
+   and the frame is neutral, never an accent tint; Money's Ledger and Player dues do exactly that:
    a toolbar on the paper (context left, the control right), then the table on white. The toolbar
    IS Money's — `.panelToolbar` with the control in `.panelToolbarActions` (/simplify, 2026-09-14:
    a second toolbar class one file away from the first was the drift the shared-class rule names);
@@ -9158,7 +9158,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .devCellLink:hover { text-decoration: underline; }
 .devDisclosureSummary { display: flex; align-items: center; min-height: var(--tap-min, 44px); cursor: pointer; }
 
-/* (The "Then go look" band rule and its label retired with the band stack — Skills & Goals is
+/* (The "Then go look" band rule and its label retired with the band stack — Skills & goals is
    views on `?section=` since the development lifecycle's Phase 1, 2026-09-12. ⚰ The first-run
    held-back treatment — `.devHeldBack`, the dashed `.devBtnHeld` — and the `.devTail` practice-plans
    line retired with the Overview landing, re-evaluation stage 0, 2026-09-14: a switched-off lime
@@ -9210,12 +9210,12 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 
 /* ⚰ `.devCarryBanner` / `.devCarryActions` STOOD HERE — the one-time rollover carry-forward
-   banner on a player's Skills & Goals tab (Player Development 3D, M5; blueprint-blue as the
+   banner on a player's Skills & goals tab (Player Development 3D, M5; blueprint-blue as the
    info/offer voice). Retired 2026-09-16 with the banner itself: nothing on a player's page links a
    past season or acts on the link (owner ruling E9, plan §20.1) — a team-level surface is the next
    home for that question, and it will draw its own chrome. */
 
-/* The three quiet actions inside a player's Skills & Goals card — Test types, Add focus area,
+/* The three quiet actions inside a player's Skills & goals card — Test types, Add focus area,
    Log a measurable — plus the "Add test" in the shared new-test row. All four are the GLOBAL
    `btn btn-ghost`, which is 38px and belongs to every surface in the product; this class exists
    only to give them a floor on the screens this pass owns without moving that global.
@@ -11927,7 +11927,7 @@ span.libCardMain { cursor: default; }
 .ppSendPreview p { margin: 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
 .ppSendPreviewLabel { display: block; font-size: var(--type-label); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
 
-/* The practice-week scouting bridge (Scouting Book P3) — the game-week nudge's lime-spined
+/* The practice-week scouting bridge (Scouting book P3) — the game-week nudge's lime-spined
    card shape (.scoutNudge), grown one quiet line taller for the book line + observation. */
 .ppScoutBridge {
   display: flex; flex-direction: column; gap: 0.3rem;
@@ -12134,7 +12134,7 @@ span.libCardMain { cursor: default; }
   .ppSourceTab { margin-right: 0.5rem; }
 }
 
-/* ─── Opponent Scouting Book (P1, owner-approved 2026-08-04) ─────────────────────────────
+/* ─── Opponent Scouting book (P1, owner-approved 2026-08-04) ─────────────────────────────
    Every colour is a token, so the warm gate re-skins this with no rules of its own.
    The opponents are a row list on the standard's recipe (§3.10); the record chip is data-tone'd like
    lineupFrontChip (up = success, down = danger, even = neutral). */
@@ -13410,7 +13410,7 @@ div.gdRow { cursor: default; }
      one width. It is now `display` (2rem) everywhere, so there is nothing left to override. */
 }
 
-/* ── Player Dues — the By-installment lens (owner-approved mockup d7162867, 2026-08-14) ──────
+/* ── Player dues — the By-installment lens (owner-approved mockup d7162867, 2026-08-14) ──────
    A second way of reading the SAME dues list: a player x installment grid on desktop, and
    collapsible per-player cards on phones whose CLOSED face is the "due next" figure.
 
@@ -15525,7 +15525,7 @@ div.gdRow { cursor: default; }
   .colPagerBtn { min-height: 44px; }
 }
 
-/* ── Player Dues: set once, chase weekly (owner rulings 2026-09-04, mockup 6bd4c6d9) ───────── */
+/* ── Player dues: set once, chase weekly (owner rulings 2026-09-04, mockup 6bd4c6d9) ───────── */
 /* The toolbar's left group: View, Showing, and the grid's pager when it overflows. One flex row
    so the pager wraps under the pills on a narrow desktop rather than pushing Export off the end. */
 .duesToolbarLeft { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }

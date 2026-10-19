@@ -70,7 +70,7 @@ export interface CashSubject {
 
 export interface CashStripInputs {
   /** Dues a family actually paid, the day it arrived (mig 232). ⚠ The family's name comes from the
-   *  caller's roster read and is gated exactly as the Player Dues tab is — never wider. */
+   *  caller's roster read and is gated exactly as the Player dues tab is — never wider. */
   duesPayments: Array<{
     id: string; amount: number; receivedDate: string | null;
     playerId: string | null; playerName: string; method: string | null;

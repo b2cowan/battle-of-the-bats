@@ -18,7 +18,7 @@ import { buildPlayerNotesTimeline } from '@/lib/player-notes-timeline';
  *
  * GET is ONE READ over four sources — general notes (this table), bench moments, skill
  * observations and goal reviews — merged newest-first by `buildPlayerNotesTimeline`. Nothing is
- * written twice: observations and reviews are recorded on Skills & Goals, moments at the bench,
+ * written twice: observations and reviews are recorded on Skills & goals, moments at the bench,
  * and only the general note is written here (POST).
  *
  * Gates, stated once:

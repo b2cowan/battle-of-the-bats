@@ -28,7 +28,7 @@ import styles from '../../../coaches.module.css';
  * block instead of landing on Practice plans (found 2026-09-14, the practices stage 0 walk). So
  * those segments are let through untouched; the addresses they redirect to carry their own
  * gates, and this block still shows for every page that would actually have rendered here.
- * ⚠ What is NOT behind this door, by ruling: the player's own Skills & Goals tab on the roster
+ * ⚠ What is NOT behind this door, by ruling: the player's own Skills & goals tab on the roster
  * page and the Insights → Development reports (station 9 of the re-evaluation decides those).
  */
 export default function DevelopmentLayout({ children, params }: {
@@ -46,15 +46,15 @@ export default function DevelopmentLayout({ children, params }: {
       <div className={styles.page}>
         <CoachPageHeader
           icon={TrendingUp}
-          title="Skills & Goals"
-          helpLabel="Skills & Goals"
+          title="Skills & goals"
+          helpLabel="Skills & goals"
           help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
         />
         <CoachNotGranted
           icon={<TrendingUp size={20} aria-hidden />}
-          section="Skills & Goals"
+          section="Skills & goals"
           what="What this team measures, the sessions that record it, and what each player is working on — one row per player, so nobody quietly gets overlooked."
-          blocker="Skills & Goals opens with the Development grant. Ask your head coach to grant it."
+          blocker="Skills & goals opens with the Development grant. Ask your head coach to grant it."
         />
       </div>
     );

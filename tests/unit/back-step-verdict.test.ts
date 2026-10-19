@@ -300,7 +300,7 @@ describe('the hook wires the gate — five listeners, and the marker kept while 
   });
   it('"it left the page" listens on DOCUMENT, never window — a floor panel\'s React stopPropagation() halts the click AT document (§258 walk, 2026-10-02)', () => {
     // On window, a door inside a QuestionShell that closed it on click was never heard: the exit ran
-    // history.back() and the router dropped the navigation ("Open Player Dues" just closed the window).
+    // history.back() and the router dropped the navigation ("Open Player dues" just closed the window).
     assert.doesNotMatch(hook, /window\.addEventListener\('click', event => \{/);
   });
   it('the step\'s exit goes through the gate and consumes only when the tap did not leave', () => {

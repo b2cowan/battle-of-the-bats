@@ -6,7 +6,7 @@
  * This is distinct from "overdue" (a specific installment past its due date) — it
  * answers the coach's "who hasn't started paying at all?" question.
  *
- * BOTH the team Overview badge ("N unpaid") and the Money → Player Dues "Haven't paid
+ * BOTH the team Overview badge ("N unpaid") and the Money → Player dues "Haven't paid
  * anything yet" panel run this same predicate over the same `/dues` response, so the
  * count on the tile and the length of the named list can never drift apart.
  */
@@ -127,7 +127,7 @@ export function hasPastDueInstallment(
  *     How far through the season they are is what the Paid and Balance columns are for; who needs
  *     chasing is what this column is for.
  *
- * Shared because it is read in two places that must agree: the Player Dues table on screen, and
+ * Shared because it is read in two places that must agree: the Player dues table on screen, and
  * the Player dues export from the Money hub. A coach who exports a spreadsheet and finds a
  * different word beside a name than the table showed has been told two things by one product. The
  * colour stays with the table — that is presentation, and a spreadsheet has no use for it.

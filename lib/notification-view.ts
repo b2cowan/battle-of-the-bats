@@ -297,7 +297,7 @@ export const TEAM_COACH_FEED_EMPTY: FeedEmptyCopy = {
  * segment after `/coaches/teams/{id}`; the empty key is the team's Overview.
  * ⚠ A THIRD COPY OF THE NAV'S PAGE NAMES, AND PINNED TO THEM: `coach-nav-groups.test.ts` reads the
  * phone nav's `{ key, label }` pairs and fails when a name here differs from the nav's, or a page
- * here is one the nav no longer has — so a rename cannot leave "Open Skills & Goals" behind.
+ * here is one the nav no longer has — so a rename cannot leave "Open Skills & goals" behind.
  */
 export const COACH_TEAM_PAGE: Record<string, string> = {
   '':              'Overview',
@@ -305,7 +305,7 @@ export const COACH_TEAM_PAGE: Record<string, string> = {
   practice:        'Practice plans',
   lineups:         'Lineups',
   tournaments:     'Tournaments',
-  development:     'Skills & Goals',
+  development:     'Skills & goals',
   history:         'Insights',
   accounting:      'Money',
   announcements:   'Email families',
