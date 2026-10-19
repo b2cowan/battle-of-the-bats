@@ -25278,3 +25278,30 @@ below stays as the record of what the two kept changes do; with every chat door 
 - Not changed: the section names (**Money** for coaches, **Accounting** for the club), and the coach's single **Club** tab against the club's **Allocations** and **Payment requests**.
 - A dues schedule's saved note still says "Generated from budget plan"; that is a stored record, and the dues screen now reads it as "set … from the budget".
 <!-- /§337 -->
+
+## §338 ✅ · Club accounting · New allocation · a team's own installments — **a team paying on its own schedule reads as a numbered list (#1, #2…) under "Due date *" and "Amount *" that grows down; its Due says "Its own · 3 installments"; a box on a cream row is white in Warm (every form table); every one-line admin box is exactly 36px, so a date sits level with the dropdown beside it**
+
+**Ruled 2026-10-18** by the owner, asks A1–A3 of the A Team's Own Payments hub as recommended ("I agree with your recommendations, go ahead"), raised from two screenshots of New allocation. **Built and committed `a4968498` 2026-10-18.** **Walked ✅ 2026-10-18** — owner: "looks good, QA successful and complete". Hub (mockup, brief, plan, decisions, this walk as a checkable tab): https://claude.ai/artifact/VvKhccp22P49pzHdNMoZFa.
+
+**Accounts:** Club treasurer — uat-club-treasurer@uat-rep-club.local (UAT Rep Club); Tournament owner — uat-owner@uat-test-org.local. Nothing writes unless you press Bill or Create.
+
+**Walk W1 — a team's own installments, on a computer.** As Club treasurer, about 1,440 wide: Accounting › Allocations › New allocation.
+- **W1.1.** Look at Pay by. **Expect:** One payment and its date box sit level with Split, top and bottom.
+- **W1.2.** Pick a line in Bill from, type a Name and an Amount, keep Split on Evenly, and open any team's row with the arrow at its end. **Expect:** "This team pays in" sits above its dropdown; the dropdown is white on the cream row; nothing else shows yet.
+- **W1.3.** Pick **Its own · 3 installments**. **Expect:** Three lines, **#1 #2 #3**, under **Due date \*** and **Amount \***; the amounts sit right and add up to the team's share; the team's Due reads **Its own · 3 installments** on one line.
+- **W1.4.** Change #1's amount. **Expect:** A red "These add up to … of its … share." under the list; put it back and it goes.
+- **W1.5.** Pick **Its own · 6 installments**, then clear one amount. **Expect:** Six lines, the list growing downward; the empty box shows **$0.00**.
+- **W1.6.** Switch Split to **By amount**, then **By percentage**. **Expect:** A group heading's box (if the club has groups) and the open team's share box are white; the closed teams' boxes stay cream on their white rows.
+- **W1.7.** Press **Use the bill's schedule**. **Expect:** The row folds, its Due empties, and the focus lands on that row's arrow.
+
+**Walk W2 — on a phone.** The same window at about 390 wide.
+- **W2.1.** Open a team and pick **Its own · 3 installments**. **Expect:** The label above a full-width dropdown; **#1–#3** with 44px boxes, the date whole beside a narrower amount; the line under the team's name ends **Its own · 3 installments**.
+
+**Walk W3 — elsewhere, and Dark.**
+- **W3.1.** As Tournament owner: New tournament › the Divisions step; open a division with its arrow. **Expect:** Its boxes are white on the cream row.
+- **W3.2.** As Club treasurer: Schedules › New schedule, a split with group headings. **Expect:** A group heading's box is white.
+- **W3.3.** Any two other admin windows (Add team, Invite member). **Expect:** One-line boxes are 36px, a hair shorter than before, with nothing clipped; a member's access dropdown in Settings › Members keeps its compact size.
+- **W3.4.** Account menu › theme › **Dark**, then New allocation with a team open. **Expect:** The boxes look as before (a light wash on the dark row), not white.
+
+- Not changed: the dropdown's choices and their words (As the bill · … / Its own · N installments); boxes on white rows; the Dark theme.
+<!-- /§338 -->

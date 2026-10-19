@@ -7,6 +7,23 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-18 — A TEAM'S OWN INSTALLMENTS ARE A NUMBERED LIST; A BOX ON A CREAM ROW IS WHITE; ONE-LINE FIELDS ARE 36PX EXACTLY (owner, asks A1–A3 of the A Team's Own Payments hub as recommended — https://claude.ai/artifact/VvKhccp22P49pzHdNMoZFa; raised from two screenshots of New allocation: *"why is the date picker a different size than the one payment dropdown"* and *"it feels unstructured"*)
+**Decision:** (A1) a team paying on its own schedule in New allocation reads as the coaches' installment editor does:
+"This team pays in" is an ordinary field label over its dropdown, then column labels with plain stars ("Due date *",
+"Amount *"), then one line per installment numbered `#1`, `#2`… in a 24px right-aligned column, a 10.5rem date and a
+9rem amount set right with the "$0.00" placeholder; the add-up sentence (wrapping) and "Use the bill's schedule" end the
+list; one grid at both widths, the amount narrowing on a phone. (A2) In Warm, a box standing on a form table's raised
+paper ground (open row, group heading row, open phone record, group band) takes `--home-card`; a box on a white row
+keeps the One Window paper tone; Dark unchanged. Recorded as an amendment to One Window Q2. (A3) Due reads
+"Its own · N installments", the dropdown's ruled words, breaking only after the "·"; the Due column goes 22% → 26%,
+taken from Team. Separately, the club kit's one-line field is `height: 36px`, not a floor.
+**Rationale:** the wrapping line made six installments twelve unlabelled boxes over four lines; the paper-tone field
+on a paper row showed only as its outline (the toolbar select already kept its card fill for this reason); two words
+for one schedule sat one above the other; a 36px floor rendered 39 / 40 / 42 for a dropdown, a text box and a date.
+**Applies to:** New allocation (AllocationWindow), every FormTable's raised grounds (New allocation, New schedule, New
+tournament's Divisions step), every club-kit one-line field.
+
+
 ### 2026-10-18 — CHAT PAUSES: WHAT TAKES ITS PLACE IN EACH BAR (P1–P8, P3T, P4F)
 **Decision (owner, pasted rulings from the Chat hub's Pause tab):** behind one switch (`lib/chat-pause.ts`): the
 **home bar is left empty** — Home · Scores · Account, the signed-out bar's shape (P2); the **Premium coach bar puts

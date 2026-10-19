@@ -59,6 +59,16 @@ panels (Help, chat, plan) and menus are not windows here (Sheet Frame governs th
 | Q15 | Rooms (`RoomShell`) and record windows (KitDialog `record` / `steps`) are out; they take the one window's fields and foot later. |
 | Q16 | Coaches get their changes in the same release as the admin. |
 
+**Amendments to Q2 (2026-10-18; committed `a4968498` the same day, owner walk §338 ✅):**
+- **36px is exact, not a floor.** The club kit's one-line field is `height: 36px` (the phone's 44 still wins). As a
+  floor only, nothing rendered at 36: a dropdown came out 39, a text box 40 and a date 42, so New allocation's Pay by
+  date never sat level with the dropdown beside it (owner's screenshot). Compact boxes keep their own heights.
+- **A box on a form table's raised ground is white, in Warm only** (owner, A Team's Own Payments ask A2, as
+  recommended — https://claude.ai/artifact/VvKhccp22P49pzHdNMoZFa). On an open row, a group heading row, an open phone
+  record or a group band, the paper-tone field IS the ground, so it showed only as its outline; there a box takes
+  `--home-card`. A box on a white row keeps the paper tone. Dark is unchanged (a lighter wash on a darker row already
+  stands off). Precedent: the toolbar select's card fill.
+
 ## 4. Stages
 
 ### Stage 1 · One look

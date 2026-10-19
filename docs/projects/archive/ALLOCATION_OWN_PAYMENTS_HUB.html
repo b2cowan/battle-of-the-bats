@@ -1,0 +1,674 @@
+<title>A Team’s Own Payments</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@400;700&display=swap">
+<style>
+/* Hub chrome: the owner-approved project hub template (single light look, every colour explicit).
+   Product specimens below use the Warm theme's real values, scoped under .p, drawn at true size. */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.frame{width:min(1180px,calc(100% - 32px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted);text-align:right}
+.screen{padding:28px 32px 36px}
+.head{margin-bottom:18px}.screen h1:focus{outline:none}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.head .sub{max-width:70ch}
+.intent{padding:16px 28px;background:#fafbf7;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.asks{display:grid;gap:8px;margin:0 0 22px;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:14px;max-width:880px}
+.asks b{color:var(--ink)}
+.asks .ask{display:flex;gap:10px;align-items:baseline}
+.asks .id{flex:none;font-weight:800;font-size:12px;color:#1c2417;background:var(--lime);border-radius:4px;padding:1px 6px}
+
+/* one specimen: a caption line (state + its clickable flags and tags), then the drawing at true size */
+.spec{margin:0 0 30px}
+.caprow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px;margin:0 0 10px;font-size:13px;color:var(--muted)}
+.caprow .state{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--ink);margin-right:6px}
+.caprow .sep{margin:0 6px;color:#aab3a2}
+.truesize{overflow-x:auto;padding-bottom:6px}
+.measure{font-size:12px;color:var(--muted);margin:6px 0 0}
+.duo{display:flex;flex-wrap:wrap;gap:28px}
+
+/* clickable highlights — template rule 8 */
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:4px;line-height:1.4;cursor:pointer;border:1px solid}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border-color:#b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border-color:#b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border-color:#d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:4px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.qawrap{max-width:860px;margin:0 auto;padding:28px 24px 40px}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage li{margin:0 0 6px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+
+@media(max-width:700px){.screen{padding:20px 16px 28px}.brandbar{padding:12px 16px}}
+@media(max-width:600px){.hubbar{padding:11px 16px;gap:8px}.hubtabs{padding:0 16px}.walk{padding:10px 12px}.docpage{padding:22px 18px 36px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* ═══ THE PRODUCT, WARM THEME — values read from the code on 2026-10-18 ═══ */
+.p{--pp:#F8F4ED;--pc:#FFFFFF;--pl:rgba(70,55,30,.12);--pls:rgba(70,55,30,.20);--po:#57651E;--pi:#241E15;--pi2:#4A4235;--pi3:#615A54;--pd:#B03A22;--plime:#D9F99D;--pedge:rgba(87,101,30,.3);
+  font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;line-height:1.6;color:var(--pi);text-align:left}
+.p *{box-sizing:border-box}
+.p svg{display:block;flex:none}
+.ground{background:#B0ABA4;padding:20px;border-radius:10px;width:max-content}
+.win{width:800px;background:var(--pc);border:1px solid var(--pedge);border-radius:12px}
+.whead{display:flex;align-items:flex-start;gap:.6rem;padding:1.1rem 24px .4rem}
+.weye{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--pi2);margin:0 0 .2rem}
+.wtitle{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:16px;font-weight:700;line-height:1.25}
+.wx{margin-left:auto;width:32px;height:32px;display:grid;place-items:center;color:var(--pi3)}
+.wbody{padding:.6rem 24px 1rem;font-size:14px;line-height:1.5;color:var(--pi2)}
+.wfoot{display:flex;align-items:center;gap:.6rem;padding:.85rem 24px;border-top:1px solid var(--pl)}
+.wfoot .end{margin-left:auto}
+.pbtn{display:inline-flex;align-items:center;min-height:34px;padding:.45rem .9rem;border-radius:6px;border:1px solid transparent;font-weight:650;font-size:14px;line-height:1.25}
+.pbtn.out{background:var(--pc);color:var(--pi2);border-color:var(--pls)}.pbtn.lime{background:var(--plime);color:var(--pi)}
+.fld{display:flex;flex-direction:column;gap:.3rem;margin:0 0 .9rem;min-width:0}
+.flab{font-size:12px;font-weight:650;color:var(--pi2);line-height:1.6}
+.f{height:36px;padding:0 .65rem;background:var(--pp);border:1px solid var(--pls);border-radius:6px;color:var(--pi);font-size:14px;line-height:1.2;display:flex;align-items:center;gap:.5rem;white-space:nowrap;overflow:hidden;width:100%;min-width:0}
+.f .grow{margin-right:auto;overflow:hidden;text-overflow:ellipsis}
+.f.num{justify-content:flex-end;font-variant-numeric:tabular-nums}
+.f.dim{color:var(--pi3)}
+.f .cal{opacity:.7}
+.f.small{height:32px;padding:0 .5rem;width:6.5rem}
+.on-card .f.lift,.f.white{background:var(--pc)}
+.phint{font-size:12px;color:var(--pi3);line-height:1.45}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:0 1rem}
+.payby{display:flex;gap:.4rem;align-items:center}.payby>.f{flex:1 1 9rem}
+
+.tf{border:1px solid var(--pl);border-radius:10px;background:var(--pc);overflow:hidden}
+.tf table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:14px;color:var(--pi)}
+.tf th,.tf td{padding:.45rem .7rem;border-top:1px solid var(--pl);vertical-align:middle;font-weight:400;text-align:left;line-height:1.5}
+.tf thead th{border-top:0;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pi2);white-space:nowrap}
+.tf .num{text-align:right;font-variant-numeric:tabular-nums}
+.an{display:inline-flex;gap:.35rem;margin-left:.75rem;font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:650;letter-spacing:0;text-transform:none;color:var(--po)}.an i{color:var(--pi3);font-style:normal;font-weight:400}
+.tf .grp>*{background:var(--pp)}
+.gname{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pi2)}
+.gcount{font-size:12px;color:var(--pi3)}
+.lead{display:inline-flex;align-items:center;gap:.55rem;min-width:0;white-space:nowrap}
+.tf .tm>th{padding-left:2.1rem}
+.nm{font-weight:650}.snote{font-size:12px;color:var(--pi3);font-weight:400}
+.tf .open>*{background:var(--pp)}
+.tf td.formcell{padding:.25rem .7rem .6rem 2.6rem;border-top:0}
+.tf .chev{text-align:right;padding:0 .35rem}
+.chevb{display:inline-grid;place-items:center;width:32px;height:32px;color:var(--pi3)}
+.tf .close>*{border-top:2px solid var(--pls);font-weight:700}
+.owndue{font-weight:650;color:var(--pi);white-space:nowrap}
+.cb{width:16px;height:16px;border:1px solid rgba(87,101,30,.85);background:rgba(87,101,30,.14);border-radius:2px;position:relative;flex:none;display:inline-block}
+.cb::after{content:'';position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid var(--po);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.sharecell{display:inline-flex;align-items:center;justify-content:flex-end;gap:.35rem}
+.sharecell .u{font-size:12px;color:var(--pi3)}
+.plink{color:var(--po);font-weight:650;text-decoration:underline;text-underline-offset:3px;font-size:12px;white-space:nowrap}
+.pcap{display:block;font-size:12px;font-weight:600;color:var(--pd);white-space:nowrap}
+
+/* TODAY: a team's own payments, as built — one wrapping line (Money.module.css .ownPayments / .ownCount / .ownRow) */
+.ownT{display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center;font-size:12px;color:var(--pi2)}
+.ownT .cnt{display:inline-flex;align-items:center;gap:.5rem}
+.ownT .cnt>span{width:4.3rem;line-height:1.35}
+.ownT .cnt>.f{width:234px}
+.ownT .pr{display:inline-flex;gap:.35rem}.ownT .pr>.f{width:9rem}
+
+/* PROPOSED: the question as an ordinary field, then one numbered line per installment under its column labels —
+   the coaches' installment editor's own pattern (#N in a 24px column; "Due date *" / "Amount *" heads; 10.5rem date, 9rem money) */
+.ownP{display:grid;grid-template-columns:24px 10.5rem 9rem;gap:.4rem .5rem;align-items:center;font-size:12px;color:var(--pi2);padding-top:.1rem}
+.ownP .q{grid-column:1 / 4;font-weight:650;line-height:1.6;margin-bottom:-.1rem}
+.ownP .span3{grid-column:1 / 4;min-width:0}
+.ownP .span2{grid-column:2 / 4;min-width:0}
+.ownP .h{font-weight:650;line-height:1.2;padding-top:.3rem}.ownP .h.r{text-align:right}
+.ownP .n{font-weight:700;color:var(--pi3);text-align:right;font-variant-numeric:tabular-nums}
+.ownP .f{background:var(--pc)}
+.ownP .after{display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;padding-top:.1rem}
+
+/* PHONE: the team list as records (FormTable's phone branch) */
+.phonebox{width:390px;background:var(--pc);border:1px solid #c6cebc;border-radius:22px;padding:18px 20px 22px}
+.thead{display:flex;align-items:center;justify-content:space-between;margin:0 0 .35rem}
+.thead .an{margin:0}
+.pf{border:1px solid var(--pl);border-radius:10px;background:var(--pc);overflow:hidden}
+.gb{display:flex;align-items:center;gap:.5rem;padding:0 .75rem;background:var(--pp);min-height:44px}
+.gb .grow{flex:1}
+.rec{padding:.4rem .75rem .5rem;border-top:1px solid var(--pl)}.rec.open{background:var(--pp)}
+.rh{display:flex;align-items:center;gap:.5rem;min-height:44px}.rh .nm{flex:1}
+.fig{font-weight:650;font-variant-numeric:tabular-nums}
+.ex{width:44px;height:44px;display:grid;place-items:center;color:var(--pi3);margin-right:-.4rem}
+.rl{padding-left:calc(18px + .55rem);font-size:12px;color:var(--pi3)}
+.rf{padding:.4rem 0 .1rem calc(18px + .55rem)}
+.phonebox .f{height:44px}
+.phonebox .ownT .cnt>.f{width:12rem}
+.ownPh{grid-template-columns:24px minmax(0,1fr) 6.5rem}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+</svg>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>A Team’s Own Payments · project hub</strong><br><small>New allocation window · ✅ closed 2026-10-18 · A1–A3 ruled as recommended · committed a4968498 · owner walk §338 passed · rides the next promote</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-10-18 (hub version 1)">Design</li>
+    <li class="stage done" title="A1–A3 ruled as recommended 2026-10-18">Plan</li>
+    <li class="stage done" title="Committed a4968498 2026-10-18">Build</li>
+    <li class="stage" title="Closed out by the owner after the walk, 2026-10-18, without a /review pass">Review</li>
+    <li class="stage done" title="§338 ✅ 2026-10-18">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Screens" id="walkNav">
+    <a href="#s-window">1 · The whole window</a>
+    <a href="#s-six">2 · Six installments</a>
+    <a href="#s-cream">3 · Boxes on a cream row</a>
+    <a href="#s-phone">4 · On a phone</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team">Rep teams · Accounting · Allocations<br><span class="meta">Club admin, Warm theme, drawn at true size</span></div>
+    </header>
+
+    <!-- ═══ 1 · THE WHOLE WINDOW ═══ -->
+    <section class="screen" id="s-window">
+      <div class="head">
+        <div class="eyebrow">Screen 1 of 4</div>
+        <h1 tabindex="-1">New allocation, with one team paying on its own schedule</h1>
+        <p class="sub">The window as it opens on a computer: 800px wide, drawn at true size and unclipped (the real window scrolls). 14U AA pays the $231.25 share in three installments of its own, while the bill itself is one payment.</p>
+      </div>
+      <div class="asks" aria-label="What the owner was asked">
+        <div class="ask"><span class="id">✓</span><span><b>Ruled 2026-10-18: all three as recommended,</b> committed (a4968498) and walked (§338 ✅) the same day.</span></div>
+        <div class="ask"><span class="id">A1</span><span><b>One line per installment.</b> The team’s installments become a numbered list (#1, #2…) under “Due date *” and “Amount *”, the way the coaches’ installment editor lays out a schedule, instead of loose boxes that wrap like words.</span></div>
+        <div class="ask"><span class="id">A2</span><span><b>White boxes on cream.</b> A box standing on a cream row takes the white fill: every form table’s open rows and group rows, on a computer and a phone. Warm theme only. It amends the One Window field ruling for those rows.</span></div>
+        <div class="ask"><span class="id">A3</span><span><b>One word for the schedule.</b> Due says “Its own · 3 installments”, the dropdown’s own words, and its column takes 4% from Team so the words fit on one line.</span></div>
+      </div>
+
+      <div class="spec">
+        <div class="caprow"><span class="state">Today</span>
+          <button type="button" class="fl" data-finding="F01" data-here="14U AA’s row is open. The row is cream, and so are its dropdown and all six of its boxes, so each box is only an outline.">F01</button>
+          <button type="button" class="fl" data-finding="F02" data-here="Three payments: the first pair fits beside the dropdown, the next two wrap to a second line, and the way back wraps to a third. The label squeezes onto two lines.">F02</button>
+          <button type="button" class="fl" data-finding="F03" data-here="14U AA’s Due cell says “Its own · 3 payments”; the dropdown directly under it says “Its own · 3 installments”.">F03</button>
+        </div>
+        <div class="truesize p"><div class="ground">
+          <div class="win">
+            <div class="whead"><div><div class="weye">Allocations</div><div class="wtitle">New allocation</div></div><span class="wx"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+            <div class="wbody">
+              <div class="fld"><span class="flab">Bill from *</span><div class="f"><span class="grow">Umpires · $2,400.00 left</span><svg width="14" height="14"><use href="#i-down"/></svg></div></div>
+              <div class="grid2">
+                <div class="fld"><span class="flab">Name *</span><div class="f">Umpire fees</div></div>
+                <div class="fld"><span class="flab">Amount *</span><div class="f num">1,618.75</div><span class="phint">Up to $2,400.00. What you don’t allocate stays on the line.</span></div>
+                <div class="fld"><span class="flab">Split</span><div class="f"><span class="grow">Evenly</span><svg width="14" height="14"><use href="#i-down"/></svg></div></div>
+                <div class="fld"><span class="flab">Pay by *</span><div class="payby"><div class="f"><span class="grow">One payment</span><svg width="14" height="14"><use href="#i-down"/></svg></div><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div></div></div>
+              </div>
+              <div class="tf"><table>
+                <colgroup><col><col style="width:34%"><col style="width:22%"><col style="width:56px"></colgroup>
+                <thead><tr><th>Team<span class="an">All <i>·</i> None</span></th><th class="num">Share</th><th>Due</th><th></th></tr></thead>
+                <tbody>
+                  <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Senior</span><span class="gcount">· 3 teams</span></span></th><td class="num">$693.75</td><td></td><td></td></tr>
+                  <tr class="tm open"><th><span class="lead"><span class="cb"></span><span class="nm">14U AA</span><span class="snote">2027 Season</span></span></th><td class="num">$231.25</td><td><span class="owndue">Its own · 3 payments</span></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-up"/></svg></span></td></tr>
+                  <tr class="open"><td class="formcell" colspan="4">
+                    <div class="ownT">
+                      <span class="cnt"><span>This team pays in</span><div class="f"><span class="grow">Its own · 3 installments</span><svg width="14" height="14"><use href="#i-down"/></svg></div></span>
+                      <span class="pr"><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">77.09</div></span>
+                      <span class="pr"><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">77.08</div></span>
+                      <span class="pr"><div class="f"><span class="grow">2027-01-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">77.08</div></span>
+                      <span class="plink">Use the bill’s schedule</span>
+                    </div>
+                  </td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">15U AA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">15U AAA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Junior</span><span class="gcount">· 4 teams</span></span></th><td class="num">$925.00</td><td></td><td></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">9U AA</span><span class="snote">2027 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">10U AA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">11U AA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">12U AA</span><span class="snote">2027 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="close"><th>7 teams</th><td class="num">$1,618.75</td><td>nothing left over</td><td></td></tr>
+                </tbody>
+              </table></div>
+              <div class="fld" style="margin:.9rem 0 0"><span class="flab">Notes</span><div class="f dim">For the club’s own reference; teams don’t see it</div></div>
+            </div>
+            <div class="wfoot"><span class="pbtn out">Cancel</span><span class="pbtn lime end">Bill 7 teams · $1,618.75</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="spec">
+        <div class="caprow"><span class="state">Proposed</span>
+          <button type="button" class="fl fix" data-finding="F01" data-here="The open row stays cream so it still reads as part of 14U AA. Its dropdown and boxes are white and stand off it.">fixes F01</button>
+          <button type="button" class="fl fix" data-finding="F02" data-here="The question is an ordinary field over its dropdown, then “Due date *” and “Amount *”, then #1, #2 and #3 on a line each. The way back sits under the list.">fixes F02</button>
+          <button type="button" class="fl fix" data-finding="F03" data-here="14U AA’s Due cell now says “Its own · 3 installments”, the same words as the dropdown under it.">fixes F03</button>
+          <span class="sep">|</span>14U AA’s payments<span class="mk" data-k="re" data-note="Was: the label, the dropdown and each payment’s two boxes in one line that wraps wherever the width runs out. Now: the coaches’ installment-editor pattern. The question is an ordinary field over its dropdown; then column labels with required stars (“Due date *”, “Amount *”); then one numbered line per installment (#1, #2…), a 10.5rem date and a 9rem amount set right like every other figure. (A1)">Restyled</span>
+          <span class="sep">·</span>Boxes on cream<span class="mk" data-k="re" data-note="Was: cream boxes on a cream row, readable only by their outline. Now: a box on a cream row takes the white fill. A box on a white row (Name, Amount, Split, Pay by) keeps the cream paper tone the One Window ruling chose. (A2)">Restyled</span>
+          <span class="sep">·</span>Due<span class="mk" data-k="re" data-note="Was: “Its own · 3 payments”. Now: “Its own · 3 installments”, the dropdown’s words. The Due column goes from 22% to 26% of the table so the longer words stay on one line, and Team gives up those 4%. Team names still fit with room to spare. (A3)">Restyled</span>
+          <span class="sep">·</span>Pay by<span class="mk" data-k="re" data-note="Fixed earlier on 2026-10-18 and built in this session: every one-line box is exactly 36px tall. Before that, a dropdown came out at 39px and a date at 42px, so the date never sat level with the dropdown beside it.">Restyled</span>
+          <span class="sep">·</span>Everything else<span class="mk" data-k="un" data-note="The head, Bill from, Name, Amount, Split, the team list’s headings, groups and rows, the closing row and the foot are drawn as they are built today.">Unchanged</span>
+        </div>
+        <div class="truesize p"><div class="ground">
+          <div class="win">
+            <div class="whead"><div><div class="weye">Allocations</div><div class="wtitle">New allocation</div></div><span class="wx"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+            <div class="wbody">
+              <div class="fld"><span class="flab">Bill from *</span><div class="f"><span class="grow">Umpires · $2,400.00 left</span><svg width="14" height="14"><use href="#i-down"/></svg></div></div>
+              <div class="grid2">
+                <div class="fld"><span class="flab">Name *</span><div class="f">Umpire fees</div></div>
+                <div class="fld"><span class="flab">Amount *</span><div class="f num">1,618.75</div><span class="phint">Up to $2,400.00. What you don’t allocate stays on the line.</span></div>
+                <div class="fld"><span class="flab">Split</span><div class="f"><span class="grow">Evenly</span><svg width="14" height="14"><use href="#i-down"/></svg></div></div>
+                <div class="fld"><span class="flab">Pay by *</span><div class="payby"><div class="f"><span class="grow">One payment</span><svg width="14" height="14"><use href="#i-down"/></svg></div><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div></div></div>
+              </div>
+              <div class="tf"><table>
+                <colgroup><col><col style="width:34%"><col style="width:26%"><col style="width:56px"></colgroup>
+                <thead><tr><th>Team<span class="an">All <i>·</i> None</span></th><th class="num">Share</th><th>Due</th><th></th></tr></thead>
+                <tbody>
+                  <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Senior</span><span class="gcount">· 3 teams</span></span></th><td class="num">$693.75</td><td></td><td></td></tr>
+                  <tr class="tm open"><th><span class="lead"><span class="cb"></span><span class="nm">14U AA</span><span class="snote">2027 Season</span></span></th><td class="num">$231.25</td><td><span class="owndue">Its own · 3 installments</span></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-up"/></svg></span></td></tr>
+                  <tr class="open"><td class="formcell" colspan="4">
+                    <div class="ownP">
+                      <span class="q">This team pays in</span><div class="f span3"><span class="grow">Its own · 3 installments</span><svg width="14" height="14"><use href="#i-down"/></svg></div>
+                      <span></span><span class="h">Due date *</span><span class="h r">Amount *</span>
+                      <span class="n">#1</span><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">77.09</div>
+                      <span class="n">#2</span><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">77.08</div>
+                      <span class="n">#3</span><div class="f"><span class="grow">2027-01-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">77.08</div>
+                      <span></span><div class="after span2"><span class="plink">Use the bill’s schedule</span></div>
+                    </div>
+                  </td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">15U AA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">15U AAA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Junior</span><span class="gcount">· 4 teams</span></span></th><td class="num">$925.00</td><td></td><td></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">9U AA</span><span class="snote">2027 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">10U AA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">11U AA</span><span class="snote">2026 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">12U AA</span><span class="snote">2027 Season</span></span></th><td class="num">$231.25</td><td></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+                  <tr class="close"><th>7 teams</th><td class="num">$1,618.75</td><td>nothing left over</td><td></td></tr>
+                </tbody>
+              </table></div>
+              <div class="fld" style="margin:.9rem 0 0"><span class="flab">Notes</span><div class="f dim">For the club’s own reference; teams don’t see it</div></div>
+            </div>
+            <div class="wfoot"><span class="pbtn out">Cancel</span><span class="pbtn lime end">Bill 7 teams · $1,618.75</span></div>
+          </div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ═══ 2 · SIX INSTALLMENTS ═══ -->
+    <section class="screen" id="s-six" hidden>
+      <div class="head">
+        <div class="eyebrow">Screen 2 of 4</div>
+        <h1 tabindex="-1">The most the dropdown offers: six installments</h1>
+        <p class="sub">Only 14U AA’s two rows, at the team list’s true width. The first amount has been typed as 40.00 and the sixth is still empty, so the payments no longer add up to the share and the warning shows.</p>
+      </div>
+      <div class="spec">
+        <div class="caprow"><span class="state">Today</span>
+          <button type="button" class="fl" data-finding="F02" data-here="Six payments make twelve unlabelled boxes over four lines. Which date goes with which amount is a matter of counting, and the warning lands in the middle of the boxes.">F02</button>
+          <button type="button" class="fl" data-finding="F01" data-here="Every box is cream on the cream row.">F01</button>
+        </div>
+        <div class="truesize p"><div class="tf" style="width:750px"><table>
+          <colgroup><col><col style="width:34%"><col style="width:22%"><col style="width:56px"></colgroup>
+          <tbody>
+            <tr class="tm open"><th style="border-top:0"><span class="lead"><span class="cb"></span><span class="nm">14U AA</span><span class="snote">2027 Season</span></span></th><td class="num" style="border-top:0">$231.25</td><td style="border-top:0"><span class="owndue">Its own · 6 payments</span></td><td class="chev" style="border-top:0"><span class="chevb"><svg width="16" height="16"><use href="#i-up"/></svg></span></td></tr>
+            <tr class="open"><td class="formcell" colspan="4">
+              <div class="ownT">
+                <span class="cnt"><span>This team pays in</span><div class="f"><span class="grow">Its own · 6 installments</span><svg width="14" height="14"><use href="#i-down"/></svg></div></span>
+                <span class="pr"><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">40.00</div></span>
+                <span class="pr"><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">38.54</div></span>
+                <span class="pr"><div class="f"><span class="grow">2027-01-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">38.54</div></span>
+                <span class="pr"><div class="f"><span class="grow">2027-02-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">38.54</div></span>
+                <span class="pr"><div class="f"><span class="grow">2027-03-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">38.54</div></span>
+                <span class="pr"><div class="f"><span class="grow">yyyy-mm-dd</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f"></div></span>
+                <span class="pcap">These add up to $194.16 of its $231.25 share.</span>
+                <span class="plink">Use the bill’s schedule</span>
+              </div>
+            </td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+      <div class="spec">
+        <div class="caprow"><span class="state">Proposed</span>
+          <button type="button" class="fl fix" data-finding="F02" data-here="Six lines, one per payment. The list grows downward, so six installments look as tidy as two, and the warning sits directly under the amounts it is about.">fixes F02</button>
+          <button type="button" class="fl fix" data-finding="F01" data-here="White boxes on the cream row.">fixes F01</button>
+          <span class="sep">|</span>The warning<span class="mk" data-k="re" data-note="Same words and the same red as today. It moves from the middle of the boxes to directly under the list, above the way back. On a phone it wraps instead of running off the edge.">Restyled</span>
+        </div>
+        <div class="truesize p"><div class="tf" style="width:750px"><table>
+          <colgroup><col><col style="width:34%"><col style="width:26%"><col style="width:56px"></colgroup>
+          <tbody>
+            <tr class="tm open"><th style="border-top:0"><span class="lead"><span class="cb"></span><span class="nm">14U AA</span><span class="snote">2027 Season</span></span></th><td class="num" style="border-top:0">$231.25</td><td style="border-top:0"><span class="owndue">Its own · 6 installments</span></td><td class="chev" style="border-top:0"><span class="chevb"><svg width="16" height="16"><use href="#i-up"/></svg></span></td></tr>
+            <tr class="open"><td class="formcell" colspan="4">
+              <div class="ownP">
+                <span class="q">This team pays in</span><div class="f span3"><span class="grow">Its own · 6 installments</span><svg width="14" height="14"><use href="#i-down"/></svg></div>
+                <span></span><span class="h">Due date *</span><span class="h r">Amount *</span>
+                <span class="n">#1</span><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">40.00</div>
+                <span class="n">#2</span><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">38.54</div>
+                <span class="n">#3</span><div class="f"><span class="grow">2027-01-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">38.54</div>
+                <span class="n">#4</span><div class="f"><span class="grow">2027-02-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">38.54</div>
+                <span class="n">#5</span><div class="f"><span class="grow">2027-03-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">38.54</div>
+                <span class="n">#6</span><div class="f dim"><span class="grow">yyyy-mm-dd</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num dim">$0.00</div>
+                <span></span><div class="after span2"><span class="pcap">These add up to $194.16 of its $231.25 share.</span><span class="plink">Use the bill’s schedule</span></div>
+              </div>
+            </td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+    </section>
+
+    <!-- ═══ 3 · BOXES ON A CREAM ROW ═══ -->
+    <section class="screen" id="s-cream" hidden>
+      <div class="head">
+        <div class="eyebrow">Screen 3 of 4</div>
+        <h1 tabindex="-1">The same colour problem, wherever a box sits on cream</h1>
+        <p class="sub">The team list under By amount, with 14U AA open. Every group heading row carries its own box, and group rows are cream too. The rule in A2 is “a box on a cream row is white”, so it fixes these as well, and a team’s share box turns white while its row is open. A box on a white row keeps the cream paper tone.</p>
+      </div>
+      <div class="duo">
+        <div class="spec">
+          <div class="caprow"><span class="state">Today</span>
+            <button type="button" class="fl" data-finding="F01" data-here="Senior’s and Junior’s boxes are cream on their cream heading rows, and 14U AA’s share box is cream on its cream open row: each shows only as an outline. The closed team rows’ boxes, cream on white, read fine.">F01</button>
+          </div>
+          <div class="truesize p"><div class="tf" style="width:520px"><table>
+            <colgroup><col><col style="width:40%"><col style="width:56px"></colgroup>
+            <thead><tr><th>Team</th><th class="num">Share</th><th></th></tr></thead>
+            <tbody>
+              <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Senior</span><span class="gcount">· 3 teams</span></span></th><td class="num"><span class="sharecell"><span class="f small num">693.75</span></span></td><td></td></tr>
+              <tr class="tm open"><th><span class="lead"><span class="cb"></span><span class="nm">14U AA</span><span class="snote">2027 Season</span></span></th><td class="num"><span class="sharecell"><span class="f small num">231.25</span></span></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-up"/></svg></span></td></tr>
+              <tr class="open"><td class="formcell" colspan="3"><div class="ownT">
+                <span class="cnt"><span>This team pays in</span><div class="f"><span class="grow">Its own · 2 installments</span><svg width="14" height="14"><use href="#i-down"/></svg></div></span>
+                <span class="pr"><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">115.63</div></span>
+                <span class="pr"><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">115.62</div></span>
+                <span class="plink">Use the bill’s schedule</span>
+              </div></td></tr>
+              <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">15U AA</span><span class="snote">2026 Season</span></span></th><td class="num"><span class="sharecell"><span class="f small num">231.25</span></span></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+              <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Junior</span><span class="gcount">· 4 teams</span></span></th><td class="num"><span class="sharecell"><span class="f small num">925.00</span></span></td><td></td></tr>
+            </tbody>
+          </table></div></div>
+        </div>
+        <div class="spec">
+          <div class="caprow"><span class="state">Proposed</span>
+            <button type="button" class="fl fix" data-finding="F01" data-here="Senior’s and Junior’s boxes are white on their cream rows, and so are 14U AA’s boxes while its row is open. The closed team rows are unchanged.">fixes F01</button>
+            <span class="sep">|</span>Group boxes<span class="mk" data-k="re" data-note="Was: cream on a cream heading row. Now: white, so the box reads as a box. (A2)">Restyled</span>
+            <span class="sep">·</span>An open row’s share box<span class="mk" data-k="re" data-note="A box follows its ground: 14U AA’s share box is white while its row is open and cream again when the row folds. That colour change is the price of A2; the alternative is a white open row (see A2 on the Full Plan tab). (A2)">Restyled</span><span class="sep">·</span>Closed team rows<span class="mk" data-k="un" data-note="Cream boxes on white rows, exactly as the One Window ruling drew them.">Unchanged</span>
+          </div>
+          <div class="truesize p"><div class="tf" style="width:520px"><table>
+            <colgroup><col><col style="width:40%"><col style="width:56px"></colgroup>
+            <thead><tr><th>Team</th><th class="num">Share</th><th></th></tr></thead>
+            <tbody>
+              <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Senior</span><span class="gcount">· 3 teams</span></span></th><td class="num"><span class="sharecell"><span class="f small num white">693.75</span></span></td><td></td></tr>
+              <tr class="tm open"><th><span class="lead"><span class="cb"></span><span class="nm">14U AA</span><span class="snote">2027 Season</span></span></th><td class="num"><span class="sharecell"><span class="f small num white">231.25</span></span></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-up"/></svg></span></td></tr>
+              <tr class="open"><td class="formcell" colspan="3"><div class="ownP">
+                <span class="q">This team pays in</span><div class="f span3"><span class="grow">Its own · 2 installments</span><svg width="14" height="14"><use href="#i-down"/></svg></div>
+                <span></span><span class="h">Due date *</span><span class="h r">Amount *</span>
+                <span class="n">#1</span><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">115.63</div>
+                <span class="n">#2</span><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">115.62</div>
+                <span></span><div class="after span2"><span class="plink">Use the bill’s schedule</span></div>
+              </div></td></tr>
+              <tr class="tm"><th><span class="lead"><span class="cb"></span><span class="nm">15U AA</span><span class="snote">2026 Season</span></span></th><td class="num"><span class="sharecell"><span class="f small num">231.25</span></span></td><td class="chev"><span class="chevb"><svg width="16" height="16"><use href="#i-down"/></svg></span></td></tr>
+              <tr class="grp"><th><span class="lead"><span class="cb"></span><span class="gname">Junior</span><span class="gcount">· 4 teams</span></span></th><td class="num"><span class="sharecell"><span class="f small num white">925.00</span></span></td><td></td></tr>
+            </tbody>
+          </table></div></div>
+        </div>
+      </div>
+      <p class="measure">Drawn narrower than the window (520px) so both fit side by side. The Share boxes are the real 32px compact size. Dark theme is not drawn and does not change: its rows are the page’s own dark ground and its boxes a 5% white wash, so a box already stands off its row there. A2 is a Warm-only rule.</p>
+    </section>
+
+    <!-- ═══ 4 · ON A PHONE ═══ -->
+    <section class="screen" id="s-phone" hidden>
+      <div class="head">
+        <div class="eyebrow">Screen 4 of 4</div>
+        <h1 tabindex="-1">On a phone, the team list is a stack of records</h1>
+        <p class="sub">A 390px phone, true size: the window’s Teams section with 14U AA open. On a phone today’s boxes already stack, one payment per line, because the screen is narrow. The changes here are the colour, the headings and the numbered lines.</p>
+      </div>
+      <div class="duo">
+        <div class="spec">
+          <div class="caprow"><span class="state">Today</span>
+            <button type="button" class="fl" data-finding="F01" data-here="Cream boxes on the cream open record.">F01</button>
+            <button type="button" class="fl" data-finding="F03" data-here="The record’s line says “Its own · 3 payments”; the dropdown says “Its own · 3 installments”.">F03</button>
+          </div>
+          <div class="truesize p"><div class="phonebox">
+            <div class="thead"><span class="flab">Teams</span><span class="an">All <i>·</i> None</span></div>
+            <div class="pf">
+              <div class="gb"><span class="cb"></span><span class="gname">Senior</span><span class="gcount grow">· 3 teams</span><span class="fig">$693.75</span></div>
+              <div class="rec open">
+                <div class="rh"><span class="cb"></span><span class="nm">14U AA</span><span class="fig">$231.25</span><span class="ex"><svg width="16" height="16"><use href="#i-up"/></svg></span></div>
+                <div class="rl">2027 Season · Its own · 3 payments</div>
+                <div class="rf"><div class="ownT">
+                  <span class="cnt"><span>This team pays in</span><div class="f"><span class="grow">Its own · 3 inst…</span><svg width="14" height="14"><use href="#i-down"/></svg></div></span>
+                  <span class="pr"><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">77.09</div></span>
+                  <span class="pr"><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">77.08</div></span>
+                  <span class="pr"><div class="f"><span class="grow">2027-01-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f">77.08</div></span>
+                  <span class="plink" style="min-height:44px;display:inline-flex;align-items:center">Use the bill’s schedule</span>
+                </div></div>
+              </div>
+              <div class="rec"><div class="rh"><span class="cb"></span><span class="nm">15U AA</span><span class="fig">$231.25</span><span class="ex"><svg width="16" height="16"><use href="#i-down"/></svg></span></div><div class="rl">2026 Season</div></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="caprow"><span class="state">Proposed</span>
+            <button type="button" class="fl fix" data-finding="F01" data-here="White boxes on the cream open record.">fixes F01</button>
+            <button type="button" class="fl fix" data-finding="F02" data-here="The same grid as on a computer: the question over its dropdown, then #1, #2, #3 under “Due date *” and “Amount *”. The amount box is narrower here so a whole date still fits.">fixes F02</button>
+            <button type="button" class="fl fix" data-finding="F03" data-here="The record’s line says “Its own · 3 installments”.">fixes F03</button>
+          </div>
+          <div class="truesize p"><div class="phonebox">
+            <div class="thead"><span class="flab">Teams</span><span class="an">All <i>·</i> None</span></div>
+            <div class="pf">
+              <div class="gb"><span class="cb"></span><span class="gname">Senior</span><span class="gcount grow">· 3 teams</span><span class="fig">$693.75</span></div>
+              <div class="rec open">
+                <div class="rh"><span class="cb"></span><span class="nm">14U AA</span><span class="fig">$231.25</span><span class="ex"><svg width="16" height="16"><use href="#i-up"/></svg></span></div>
+                <div class="rl">2027 Season · Its own · 3 installments</div>
+                <div class="rf"><div class="ownP ownPh">
+                  <span class="q">This team pays in</span>
+                  <div class="f span3"><span class="grow">Its own · 3 installments</span><svg width="14" height="14"><use href="#i-down"/></svg></div>
+                  <span></span><span class="h">Due date *</span><span class="h r">Amount *</span>
+                  <span class="n">#1</span><div class="f"><span class="grow">2026-11-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">77.09</div>
+                  <span class="n">#2</span><div class="f"><span class="grow">2026-12-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">77.08</div>
+                  <span class="n">#3</span><div class="f"><span class="grow">2027-01-15</span><svg class="cal" width="15" height="15"><use href="#i-cal"/></svg></div><div class="f num">77.08</div>
+                  <span></span><div class="after span2"><span class="plink" style="min-height:44px;display:inline-flex;align-items:center">Use the bill’s schedule</span></div>
+                </div></div>
+              </div>
+              <div class="rec"><div class="rh"><span class="cb"></span><span class="nm">15U AA</span><span class="fig">$231.25</span><span class="ex"><svg width="16" height="16"><use href="#i-down"/></svg></span></div><div class="rl">2026 Season</div></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <p class="measure">Boxes are 44px here (the phone tap floor). Open this page on a phone to judge the size; a laptop window at any zoom can’t settle it.</p>
+    </section>
+
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>A team’s own payments</h1>
+  <h2>What changes for the club treasurer</h2>
+  <p>When a treasurer bills several teams and lets one of them pay on its own schedule, that team’s payments read as a short list: one numbered line per installment, each with its date and amount under “Due date” and “Amount”, the same way a coach’s installment schedule reads. Today they are loose boxes with no labels that wrap across the row like words in a sentence, and on the cream row they are hard to see at all.</p>
+  <h2>Why it matters</h2>
+  <p>This is where a treasurer types money and dates for a team. With six installments, today’s row is twelve unlabelled boxes over four lines, and matching each date to its amount takes counting. A wrong pairing becomes a family being told the wrong amount on the wrong day.</p>
+  <h2>Customer impact</h2>
+  <ul>
+    <li><b>Treasurers:</b> clubs that bill teams through allocations see it whenever one team pays differently from the rest. That is occasional, but it carries the most money per keystroke in the window.</li>
+    <li><b>Every form box on a cream row</b> becomes readable again, in this window and wherever else one appears. The colour problem arrived with today’s One Window change.</li>
+    <li><b>Coaches and families:</b> nothing changes for them.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Small, and it rides with the Club release, which is not on sale yet. The colour part should go before One Window’s owner walk closes, because that walk would otherwise pass a screen with invisible boxes.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A team paying in six installments reads as six lines with no counting.</li>
+    <li>Every box on a cream row is visible at a glance.</li>
+    <li>The row and its dropdown use the same word for the schedule.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>A team’s own payments · plan</h1>
+  <div class="note"><strong>Status.</strong> Drawn 2026-10-18 from the owner’s two screenshots of New allocation. A1–A3 ruled as recommended on 2026-10-18 and built on dev the same day, with the 36px field height from earlier in the session (Screen 1’s Pay by tag). Owner walk: §338 in the QA ledger, and the QA Walk tab here.</div>
+  <div class="note"><strong>Design pass, 2026-10-18 (before hand-off).</strong> Ten changes, all drawn:
+    <ul>
+      <li>Rows numbered “#1, #2…”, the coaches’ installment-editor pattern, at both widths. The first draft said “Payment 1”, which brought back the second word A3 removes.</li>
+      <li>The question is an ordinary field label over its dropdown.</li>
+      <li>Required stars on “Due date *” and “Amount *”.</li>
+      <li>The amount box is 9rem, the ruled money width.</li>
+      <li>The warning sits under the list and wraps on a phone.</li>
+      <li>An empty amount box shows “$0.00”.</li>
+      <li>The Due words break only at the “·” in a narrower window.</li>
+      <li>An open row under By amount is drawn, so its share box’s colour change can be seen.</li>
+      <li>A2’s grounds are named, and it is Warm only.</li>
+      <li>The window’s Notes field is drawn.</li>
+    </ul>
+    The pass also found three places where the written rules disagree (Open points, below).</div>
+  <h2>Findings</h2>
+  <h3>F01 — The boxes wear the row’s colour</h3>
+  <p>One Window (committed 992243fb on 2026-10-18) made every admin form box the cream paper tone. An open team row and every group heading row are that same cream, so a box on them is only an outline. In Warm both are exactly #F8F4ED. The ruling never considered a box on a cream ground. The toolbar dropdown kept its white fill for this very reason.</p>
+  <h3>F02 — A payment is two loose boxes that wrap like words</h3>
+  <p>The label, the dropdown and every payment’s date and amount sit in one line that wraps wherever the width runs out. The approved drawing showed one small box per payment (“Nov 15 · $115.63”), which can’t be typed into, so the build split each payment into two unlabelled 144px boxes. At three payments the row takes three lines. At six it is twelve boxes over four lines. The label squeezes onto two lines, and amounts sit left, unlike every other figure.</p>
+  <h3>F03 — Two words for one schedule</h3>
+  <p>The Due cell says “Its own · 3 payments” and the dropdown directly under it says “Its own · 3 installments”. The dropdown’s words were ruled: the bill’s schedule leads and says so, and every other choice says it is the team’s own. The Due cell’s words were drawn separately, probably chosen because they fit the column.</p>
+  <h2>Asks for the owner</h2>
+  <h3>A1 — One line per payment</h3>
+  <p><b>Recommended.</b> The coaches’ installment editor is the benchmark, and this copies it. “This team pays in” becomes an ordinary field label over its dropdown, like every other field in the window. Below it, column labels with plain required stars (“Due date *”, “Amount *”), since a grid’s columns are its labels and Create refuses a blank one. Then one line per installment, numbered #1, #2… in a narrow right-aligned column, with a 10.5rem date box and a 9rem amount box set right (the content-class widths ruled for money and dates). An empty amount box shows the window’s “$0.00” placeholder. The add-up warning and the way back (“Use the bill’s schedule”) sit under the list, and the warning wraps on a phone. The same grid serves a phone, with a narrower amount box. The screen reader names say “installment N” where they say “payment N” today.</p>
+  <p><i>Alternatives:</i> keep today’s wrapping line and only fix widths, which still wraps from four installments up and leaves the boxes unlabelled. Or replace the red sentence with a sum line under Amount (“$37.09 short”), the way the team list’s closing row reports its difference. That is a bigger change and is not drawn.</p>
+  <h3>A2 — A box on a cream row is white</h3>
+  <p><b>Recommended.</b> One rule in the form-table kit, Warm theme only: a box standing on a cream ground takes the white card fill. The grounds are named, not “anything cream”: an open row and a group heading row in the table, and an open record and a group band on a phone. A box on a white row keeps the paper tone, so the One Window ruling stands everywhere else. It is recorded as an amendment to that ruling (Q2, the field), and it has precedent: the toolbar dropdown already keeps the card fill because paper on paper is only an outline. Dark does not change, because there a box is already a lighter wash on a darker row. One consequence to accept: a team’s share box (By amount, By percentage) turns white while its row is open and cream again when the row folds (screen 3). <i>Alternative:</i> make the open row white instead. That loses the cream that ties the form to its team, and it doesn’t help the group heading rows.</p>
+  <h3>A3 — One word for the schedule</h3>
+  <p><b>Recommended.</b> Due says “Its own · 3 installments” on a computer and on a phone, the dropdown’s ruled words. At the real font, “Its own · 6 installments” is about 159px and today’s Due column holds about 143px. The column goes from 22% to 26% of the table (about 190px), and the 4% comes from Team, whose names use about 215 of its 273px. Share is untouched, because By percentage needs its width for the box, the % and the dollars. Where the window is narrower than 800px (a screen between 641 and about 800px wide), the words break only at the “·”, onto two lines, rather than running into the arrow. <i>Alternative:</i> keep “payments” in Due and accept two words.</p>
+  <h2>Open points from the design pass</h2>
+  <ul>
+    <li><b>Which style a column label inside a form wears.</b> The written rules give five: the table standard’s condensed uppercase heading, the form table’s mono uppercase heading, the club kit table’s sentence case, the coaches’ installment editor’s small uppercase, and the field label. The drawing uses the field label (sentence case), because these words are the only visible labels the boxes have, and the One Window ruling made every field label sentence case. If that holds, the coaches’ uppercase installment headings are the odd ones out.</li>
+    <li><b>The cream grounds A2 relies on are not in the table exception register.</b> The table standard says an item row is never tinted. The form table tints an open row and a group row cream anyway, and sets group names in small capitals. Whatever A2 rules, the register should record the form table’s grounds.</li>
+    <li><b>Olive text that acts inside a form</b> (“All · None”, “Use the bill’s schedule”) is not covered by the 10-01 button ruling, which covers toolbars and window feet. It is drawn as built.</li>
+  </ul>
+  <h2>Scope</h2>
+  <ul>
+    <li>New allocation: a team’s own payments (open row and phone record), its Due cell and the Due column width.</li>
+    <li>The form-table kit, Warm only: boxes on its named cream grounds take the white fill. This reaches every form table, including the New tournament window’s Divisions step. The build starts with a census of every form table with a box on one of those grounds.</li>
+  </ul>
+  <div class="note"><strong>Out of scope</strong><p>The dropdown’s choices and their words, which are ruled. Changing a bill’s terms after it is made, which is ruled out of 3d. Dark theme, where a box already stands off its row.</p><p><b>Seen while drawing, not in this plan:</b> “nothing left over” in the closing row is meant to be quiet but renders bold ink, because its quiet style only applies inside a different table. It is a one-line fix for whoever owns the closing row.</p></div>
+  <h2>Rollout</h2>
+  <p>Screen and kit styling plus the window’s markup and one word. No data change and no migration. The demo sandboxes follow the build on their own. The in-app help article on allocations only says a team’s Due “then says so”, without quoting the words, so it needs no change.</p>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens. A1–A3 are open on the Full Plan tab.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="qawrap">
+    <div class="eyebrow">Owner QA walk · §338</div>
+    <h1>A team’s own payments · QA walk</h1>
+    <div class="signin"><strong>Sign in as</strong> · localhost:3000 · Club treasurer: uat-club-treasurer@uat-rep-club.local (UAT Rep Club) · Tournament owner: uat-owner@uat-test-org.local · every test account’s password is the same (from .env.local). Nothing writes unless you press Bill or Create.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+/* Navigation lives in its own script, so a typo in the data script below can only break its own feature. */
+const $=id=>document.getElementById(id);
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+const intents={
+  's-window':'The whole window, so the change can be judged against everything around it. The open row grows by one line (three payments take four lines instead of three), and in return every box has a label and a place.',
+  's-six':'The worst case the dropdown allows. The proposal grows downward instead of sideways, and the warning sits under the figures it is about.',
+  's-cream':'The colour rule is wider than this one row. A2 fixes every box on a cream ground and leaves every box on a white row exactly as One Window drew it.',
+  's-phone':'A phone already stacks today’s boxes, so the gain there is smaller: colour, headings, numbering and one word. Open this page on a phone to judge it at true size.'
+};
+function showScreen(){const ids=[...document.querySelectorAll('.screen')].map(s=>s.id);let id=location.hash.slice(1);if(!ids.includes(id))id='s-window';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+intents[id]:'';if(location.hash)document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',()=>{showHub('mockup');showScreen()});showScreen();
+$('closeDialog').onclick=()=>$('dialog').close();
+</script>
+
+<script>
+'use strict';
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+const FINDINGS={
+  F01:{t:'The boxes wear the row’s colour',now:'Since today’s One Window change every form box is the cream paper tone. An open team row and every group heading row are painted the same cream, so a box on them is only an outline. The ruling never covered a box on a cream ground. The toolbar dropdown kept white for this very reason.',fix:'In Warm, a box standing on a cream ground (an open row or a group heading row, and on a phone an open record or a group band) takes the white card fill. A box on a white row keeps the paper tone, so the One Window ruling stands everywhere else. (A2)'},
+  F02:{t:'A payment is two loose boxes that wrap like words',now:'The label, the dropdown and each payment’s date and amount sit in one line that wraps wherever the width runs out. Three payments take three lines and six take four, as twelve unlabelled boxes. The label squeezes onto two lines and amounts sit left.',fix:'The coaches’ installment-editor pattern. The question is an ordinary field over its dropdown, then “Due date *” and “Amount *”, then one numbered line per installment (#1, #2…) with its date and a right-aligned amount. It grows down, never sideways, and the warning and the way back sit under the list. (A1)'},
+  F03:{t:'Two words for one schedule',now:'The Due cell says “Its own · 3 payments” while the dropdown under it says “Its own · 3 installments”. The dropdown’s words are ruled. The Due cell’s were drawn separately, probably to fit the column.',fix:'Due says “Its own · 3 installments”, on a computer and on a phone. The Due column takes 4% from Team (22% to 26%) so the words stay on one line. (A3)'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><p><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></p></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h3')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start'});hit.style.background='#d9f99d';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+const DECISIONS=[
+  {date:'2026-10-18',ask:'A1 · One line per installment, numbered #1, #2… under “Due date *” and “Amount *”',ruling:'accepted',label:'Accepted',why:'As recommended. The coaches’ installment editor is the benchmark: a grid’s columns are its labels, and the list grows down instead of wrapping like words.'},
+  {date:'2026-10-18',ask:'A2 · A box on a cream row is white (Warm only)',ruling:'accepted',label:'Accepted',why:'As recommended, and recorded as an amendment to One Window Q2. A paper-tone box on a paper row showed only as its outline; boxes on white rows keep the paper tone, and Dark is unchanged.'},
+  {date:'2026-10-18',ask:'A3 · Due reads “Its own · N installments”, and its column takes 4% from Team',ruling:'accepted',label:'Accepted',why:'As recommended. One word for one schedule, the dropdown’s ruled words; the column widens so the words fit on one line, and break only after the “·” in a narrower window.'},
+  {date:'2026-10-18',ask:'QA walk §338 (12 steps: computer, phone, the other two windows, Dark)',ruling:'accepted',label:'Passed',why:'Owner: “looks good, QA successful and complete. close this out”. Committed a4968498; the project closed and its hub moved to the archive.'}
+];
+const QA_PARTS=[
+  {id:'W1',title:'A team’s own installments, on a computer (Club treasurer, about 1,440 wide: Accounting › Allocations › New allocation)',steps:[
+    'Pay by: One payment and its date box sit level with Split, top and bottom.',
+    'Pick a line in Bill from, type a Name and an Amount, keep Evenly, open any team’s row with its arrow: “This team pays in” sits above its dropdown, white on the cream row, and nothing else shows yet.',
+    'Pick Its own · 3 installments: #1 #2 #3 under Due date * and Amount *; the amounts sit right and add up to the share; the team’s Due reads Its own · 3 installments on one line.',
+    'Change #1’s amount: a red “These add up to …” sentence under the list; put it back and it goes.',
+    'Pick Its own · 6 installments, then clear one amount: six lines growing downward; the empty box shows $0.00.',
+    'Split → By amount, then By percentage: a group heading’s box and the open team’s share box are white; closed teams’ boxes stay cream on white rows.',
+    'Press Use the bill’s schedule: the row folds, its Due empties, and the focus lands on that row’s arrow.']},
+  {id:'W2',title:'On a phone (the same window, about 390 wide)',steps:[
+    'Open a team and pick Its own · 3 installments: the label above a full-width dropdown; #1–#3 with 44px boxes, the date whole beside a narrower amount; the line under the team’s name ends Its own · 3 installments.']},
+  {id:'W3',title:'Elsewhere, and Dark',steps:[
+    'Tournament owner: New tournament › Divisions step, open a division with its arrow: its boxes are white on the cream row.',
+    'Club treasurer: Schedules › New schedule, a split with group headings: a group heading’s box is white.',
+    'Two other admin windows (Add team, Invite member): one-line boxes are 36px with nothing clipped; a member’s access dropdown in Settings › Members keeps its compact size.',
+    'Theme Dark, New allocation with a team open: the boxes look as before (a light wash on the dark row), not white.']}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-own-payments')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-own-payments',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent='Checked '+c.checked+' of '+c.total}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>'<div class="qapart"><h3>'+esc(p.id)+' · '+esc(p.title)+'</h3>'+p.steps.map((s,i)=>'<label class="qastep"><input type="checkbox" data-step="'+p.id+'-'+i+'" '+(qa[p.id+'-'+i]?'checked':'')+'> <span>'+esc(p.id)+'.'+(i+1)+' · '+esc(s)+'</span></label>').join('')+'<div class="verdictrow">Verdict:'+['pass','issue','call'].map(v=>'<button type="button" data-verdict="'+p.id+'" data-value="'+v+'" aria-pressed="'+(qa['verdict-'+p.id]===v)+'">'+(v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call')+'</button>').join('')+'</div><label>Notes<textarea data-notes="'+p.id+'" rows="2" placeholder="Anything worth recording">'+esc(qa['notes-'+p.id]||'')+'</textarea></label></div>').join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=['§338 A team’s own payments · QA summary','Checked '+c.checked+' of '+c.total,''];QA_PARTS.forEach(p=>{lines.push(p.id+' · '+p.title+' · verdict: '+(qa['verdict-'+p.id]||'unset'));p.steps.forEach((s,i)=>lines.push('  ['+(qa[p.id+'-'+i]?'x':' ')+'] '+p.id+'.'+(i+1)+' '+s));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+</script>
