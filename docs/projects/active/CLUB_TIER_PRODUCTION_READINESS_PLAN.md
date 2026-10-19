@@ -1003,7 +1003,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 - [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
-> **🔨 5c BUILT 2026-10-19** (from `CLUB_TIER_STAGE5C_BUILD_PROMPT.md`, to hub v121 → Stage 5c; walk **Owner QA §345**). **What:**
+> **🔨 5c BUILT 2026-10-19, committed `f1618c02`; ✅ walk §345 PASSED the same day, 34 of 34 (owner paste-back, no notes).** (from `CLUB_TIER_STAGE5C_BUILD_PROMPT.md`, to hub v121 → Stage 5c). **What:**
 > Part A — the house-league fee tick is ONE write (`lib/league-fee-paid.ts`), called by House league › Registrations and the
 > family's Record a payment (a conditional flip, so two presses make one fee line). Part B — `family_payment_handoffs`
 > (mig 338): a rep line is handed to the team's head coaches (colleague mail + a "Your club" Needs-attention bell

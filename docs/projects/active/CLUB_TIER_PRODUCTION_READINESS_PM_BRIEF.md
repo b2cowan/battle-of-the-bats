@@ -353,7 +353,7 @@ dated, never shown to the family, listed in the family's file); the "also on sta
 and the coach's private note about a player leaves the family file. A treasurer sees nothing new; a head coach gets a "the club received a payment" notice with Record it;
 a family receives nothing new. Found on the way: the family file carries the coach's private note about a player, which its
 own wording says it does not.
-**5c BUILT 2026-10-19 — the walk is §345.** What a club admin now sees: on a family who owes, **Record a payment** beside Message
+**5c BUILT 2026-10-19 — the walk is §345. ✅ Walked the same day: all 34 steps passed.** What a club admin now sees: on a family who owes, **Record a payment** beside Message
 and Export. One window takes the amount received and spreads it down the children who owe: a house-league fee is ticked and
 recorded in the club's books at once (the same tick as Registrations); a rep child's share goes to the team's head coach, and
 the child wears an amber "Sent to coach" tag until the coach records it (the family's money figures then move) or says it
@@ -363,7 +363,7 @@ dated, newest two then Show all; the author edits, the author or the owner delet
 them — and no longer prints the coach's private note about a player. Why it matters: the club can take a family's cheque
 without ever writing into a team's own book, and the coach's book stays the one source of truth. Trade-offs: a single note
 opens in the standard 640 record window (the drawing had it narrower); a head coach's answer is one press, but the club
-cannot record a rep payment itself — by design. Owed: the owner walk, a layout check after a dev-server restart, counsel's
+cannot record a rep payment itself — by design. Owed: a layout check, counsel's
 read of the family file's changed wording, and migration 338 on production with the promote.
 **5b BUILT 2026-10-17 — the walk is §329 (ten walks, hub QA tab, Stage 5). ✅ Walked 2026-10-18: all ten passed (one fix on the way: a house-league fee now counts in the family's money line, re-checked); what's left is a lawyer's read of the family file's wording.** What a club admin now sees: Families is
 one page with two tabs (Families, Duplicates — with a waiting count on the tab and the menu); one Show pill picks the
