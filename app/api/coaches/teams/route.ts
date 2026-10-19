@@ -5,6 +5,7 @@ import { createBasicCoachTeam } from '@/lib/basic-coach-teams';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import { basicCoachTeamWelcomeHtml, sendEmail, SITE_URL } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
+import { clearStartDoor } from '@/lib/start-door-server';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -68,19 +69,24 @@ export const POST = withObservability(async (req: NextRequest) => {
       ageGroup,
     });
 
-    try {
-      await sendEmail(
-        user.email,
-        `Your team home is ready - ${name}`,
-        basicCoachTeamWelcomeHtml({
-          teamName: name,
-          coachName: primaryCoachName ?? user.name,
-          teamUrl: `${SITE_URL}${coachTeamPath(id)}`,
-        }),
-      );
-    } catch (emailError) {
-      console.error('[coaches teams POST] welcome email error:', emailError);
-    }
+    const welcome = (async () => {
+      try {
+        await sendEmail(
+          user.email,
+          `Your team home is ready - ${name}`,
+          basicCoachTeamWelcomeHtml({
+            teamName: name,
+            coachName: primaryCoachName ?? user.name,
+            teamUrl: `${SITE_URL}${coachTeamPath(id)}`,
+          }),
+        );
+      } catch (emailError) {
+        console.error('[coaches teams POST] welcome email error:', emailError);
+      }
+    })();
+
+    // Account-first: the team is made, so Home's "Finish creating your team" card has done its job.
+    await Promise.all([welcome, clearStartDoor(user.id)]);
 
     return json({ ok: true, id });
   } catch (error) {

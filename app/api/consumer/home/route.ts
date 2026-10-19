@@ -21,6 +21,7 @@ import { getWholeEventFollowCards, getOrgFollowRollups } from '@/lib/entity-foll
 import { getCoachedRegistrationTeamIds } from '@/lib/basic-coach-teams';
 import { reconcilePendingInvitesForUser, listPendingInvitesForUser, withInvitationDetails } from '@/lib/invite-reconciliation';
 import { listPendingClubCoachInvitesForEmail } from '@/lib/assistant-invites';
+import { readStartDoor, sessionSignedInAt, startCardVisible } from '@/lib/start-door';
 
 const EMPTY: ConsumerHomePayload = {
   signedIn: false,
@@ -30,6 +31,7 @@ const EMPTY: ConsumerHomePayload = {
   followCount: 0,
   following: { current: [], past: [] },
   organizations: [],
+  startCard: null,
 };
 
 export const GET = withObservability(async () => {
@@ -104,6 +106,18 @@ export const GET = withObservability(async () => {
     getOrgFollowRollups(orgInputs),
   ]);
   const following = mergeWholeEventIntoRollup(teamRollup, wholeEventCards);
+  const workspaces = filterWorkspaceContexts(contexts);
+
+  // Account-First Sign-up (A4): an account that came from a start sign-up and has nowhere to go yet sees "Finish
+  // creating your team". Never a card whose step would not open: /start/league sends anyone with a pending invite
+  // back here, and shows a waitlist while the League Starter beta is off.
+  const start = readStartDoor(user.user_metadata);
+  const stepOpens = start?.door !== 'league' || (process.env.LEAGUE_STARTER_BETA === 'true' && pendingInvites.length === 0);
+  // Only a once-dismissed card needs to know when this session signed in.
+  const signedInAt = start?.notNow === 1 ? sessionSignedInAt((await supabase.auth.getClaims()).data?.claims?.amr) : null;
+  const startCard = start && stepOpens && startCardVisible(start, { signedInAt, hasWorkspace: workspaces.length > 0 })
+    ? { door: start.door, email: user.email }
+    : null;
 
   const payload: ConsumerHomePayload = {
     signedIn: true,
@@ -114,7 +128,7 @@ export const GET = withObservability(async () => {
       role: i.role,
     })),
     coachInvites,
-    workspaces: filterWorkspaceContexts(contexts),
+    workspaces,
     lapsed,
     // Raw follow count (post coach-dedupe) — carried alongside the enriched cards so the client
     // can tell "follows nothing" apart from "follows teams whose game info dropped out" (a followed
@@ -122,6 +136,7 @@ export const GET = withObservability(async () => {
     followCount: visibleFollows.length + followedTournaments.length,
     following,
     organizations,
+    startCard,
   };
   // Per-user, never shared: no-store is defense-in-depth beyond the SW's /api/ no-cache rule,
   // and matches every sibling consumer API (alert-prefs, follows, tournament-viewer).

@@ -32,7 +32,8 @@ describe('one rule', () => {
     assert.match(lib, /firstName: p\.firstName \? escapeHtml\(p\.firstName\) : undefined,/);
     assert.match(lib, /vars: \{ verifyUrl, orgName: continueName \?\? 'your account' \},/);
     assert.match(lib, /`\$\{p\.origin\}\/auth\/signup-confirm\?link=\$\{encodeURIComponent\(p\.actionLink\)\}`/);
-    assert.match(lib, /return safeNextPath\(next, fallback\);/);
+    // a start door's step 2 first (Account-First Sign-up, 2026-10-18), else a same-site path
+    assert.match(lib, /return safeNextPath\(next, door \? startDoorLinkPath\(door\) : fallback\);/);
   });
   it('every sign-up sends the verification email through the one helper (simplify 2026-10-17)', () => {
     for (const f of ['app/api/auth/signup/route.ts', 'app/api/auth/team-signup/route.ts', 'app/api/auth/coach-signup/route.ts', 'app/api/auth/resend-verification/route.ts']) {
@@ -57,7 +58,8 @@ describe('the coach sign-up', () => {
   });
   it('makes the account wait and says so; the link returns to the caller’s screen', () => {
     assert.match(route, /redirectTo: verificationRedirect\(origin, next\)/);
-    assert.match(route, /const next = verificationReturnPath\(body\.next, '\/coaches'\);/);
+    // A start door's link returns to that door's step 2 (Account-First Sign-up, 2026-10-18); every other caller's own screen.
+    assert.match(route, /const next = verificationReturnPath\(body\.next, '\/coaches', startDoor\);/);
     assert.match(route, /return json\(\{ ok: true, requiresEmailVerification: true, email \}\);/);
   });
   it('refuses a staff address and keeps its throttle', () => {
@@ -88,18 +90,19 @@ describe('every sign-up refuses a staff address', () => {
 });
 
 describe('the screens', () => {
-  it('the two /start forms: tell the server where to return, show the block, keep entries, and come back filled in', () => {
-    for (const [f, thing, nameVar] of [
-      ['app/(consumer)/start/team/StartTeamForm.tsx', 'team', 'teamName'],
-      ['app/(consumer)/start/league/StartLeagueForm.tsx', 'league', 'leagueName'],
+  it('the two /start forms: one account step that names its door, shows the block and keeps entries', () => {
+    // Account-first (2026-10-18): the name moved to step 2, so the link carries the door, not the name. The full
+    // shape is pinned in account-first-signup.test.ts.
+    const step = readCode('app/(consumer)/start/StartDoorForm.tsx');
+    assert.match(step, /startDoor: door,/);
+    assert.match(step, /setPassword\(''\);\s*setVerifyEmail\(emailNorm\);/);
+    assert.match(step, /<VerifyEmailSent\s+tone="start"/);
+    assert.match(step, /onChangeEmail=\{\(\) => setVerifyEmail\(null\)\}/);
+    for (const [f, door] of [
+      ['app/(consumer)/start/team/StartTeamForm.tsx', 'team'],
+      ['app/(consumer)/start/league/StartLeagueForm.tsx', 'league'],
     ] as const) {
-      const src = readCode(f);
-      assert.match(src, new RegExp(`next: returnPath\\(${nameVar}\\), continueName: ${nameVar}\\.trim\\(\\),`));
-      assert.match(src, /if \(created\.requiresEmailVerification\) \{\s*setPassword\(''\);\s*setVerifyEmail\(emailNorm\);/);
-      assert.match(src, /<VerifyEmailSent\s+tone="start"/);
-      assert.match(src, /onChangeEmail=\{\(\) => setVerifyEmail\(null\)\}/);
-      assert.match(src, new RegExp(`return \`/start/${thing}\\?${thing}=\\$\\{encodeURIComponent\\(name\\.trim\\(\\)\\)\\}&confirmed=1\`;`));
-      assert.match(src, /useState\(initialName\)/);
+      assert.match(readCode(f), new RegExp(`<StartDoorForm door="${door}"`));
     }
   });
   it('the coach join page: returns to itself and, back from the link with nothing to choose, links the registration', () => {
@@ -156,9 +159,11 @@ describe('the screens', () => {
 });
 
 describe('the block', () => {
-  const src = readCode('components/auth/VerifyEmailSent.tsx');
+  // The resend control is its own component since Account-First Sign-up (2026-10-18), shared with sign-in.
+  const src = readCode('components/auth/ResendLink.tsx');
   const css = readCode('components/auth/VerifyEmailSent.module.css');
   it('resends through the safe route, and gives way to a sentence after a send (absent beats disabled)', () => {
+    assert.match(readCode('components/auth/VerifyEmailSent.tsx'), /<ResendLink\b/);
     assert.match(src, /fetch\('\/api\/auth\/resend-verification'/);
     assert.match(src, /Sent again at \{clock\}\. Check your spam folder too\./);
     assert.match(src, /formatTime\(/, 'the house clock: lowercase, with periods');

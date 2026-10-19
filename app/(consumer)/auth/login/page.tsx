@@ -9,6 +9,7 @@ import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { forgetSandboxMarkerCookie } from '@/lib/sandbox-exit-rule';
 import { safeNextPath } from '@/lib/safe-redirect';
 import { SIGN_IN_ERROR_COPY } from '@/lib/auth-errors';
+import ResendLink from '@/components/auth/ResendLink';
 import { HudSkeleton } from '@/components/ui/HudSkeleton';
 import styles from '../auth.module.css';
 
@@ -80,6 +81,12 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
+  // A waiting account (signed up, never opened the email) is told to verify — and, since Account-First Sign-up (owner
+  // A7, 2026-10-18), can get the link again right in that box, with every resend's limit. Sign-in only reports a waiting
+  // account once the password matched, so this never tells a stranger which addresses have accounts. The account's
+  // remembered start door, when it has one, decides where the link lands (step 2) — the resend route reads it — unless
+  // this sign-in was opened with a destination of its own.
+  const [waitingEmail, setWaitingEmail] = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
@@ -127,10 +134,12 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setWaitingEmail(null);
     setLoading(true);
     const { error: err } = await signIn(email, password);
     if (err) {
       setError(SIGN_IN_ERROR_COPY[err] ?? err);
+      if (err === 'email_not_confirmed') setWaitingEmail(email.trim().toLowerCase());
       setLoading(false);
     } else {
       // J8-018 / J10-019: resolve a safe destination — never blindly push `next` (a URL the
@@ -204,7 +213,18 @@ function LoginForm() {
           </div>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && (
+          <div className={styles.error}>
+            {error}
+            {waitingEmail && (
+              <ResendLink
+                email={waitingEmail}
+                next={searchParams.get('next') ?? undefined}
+                classes={{ button: styles.errorAction, sent: styles.errorSent, error: styles.errorNote }}
+              />
+            )}
+          </div>
+        )}
 
         <div style={{ textAlign: 'right', marginTop: '-0.5rem' }}>
           <Link href="/auth/forgot-password" className={styles.footerLink} style={{ fontSize: '0.7rem' }}>

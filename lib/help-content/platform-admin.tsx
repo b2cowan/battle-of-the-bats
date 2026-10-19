@@ -119,10 +119,10 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-confirm-email-safe',
           question: 'Is it safe to use Confirm Email for a customer who never received the verification email?',
           answer: (
-            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as verified so they can continue. If you cannot verify their identity, have them use the normal resend/verification flow instead.</p>
+            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as verified so they can continue. If you cannot verify their identity, have them get a fresh link themselves: <strong>Send the link again</strong> is on the screen they saw after signing up, and in the &ldquo;verify your email&rdquo; message sign-in shows them. Either way, an account that came to start a team or league finds <strong>Finish creating your team</strong> (or league) on its Home until it does.</p>
           ),
-          answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise use the normal resend/verification flow.',
-          keywords: ['confirm email', 'verification', 'unconfirmed'],
+          answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise have them press Send the link again, on the screen they saw after signing up or in the verify-your-email message on sign-in. Either way, an account that came to start a team or league finds Finish creating your team (or league) on its Home until it does.',
+          keywords: ['confirm email', 'verification', 'unconfirmed', 'send the link again', 'sign in resend', 'finish creating your team'],
         },
       ],
     },

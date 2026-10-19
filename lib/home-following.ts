@@ -1,3 +1,4 @@
+import type { StartDoor } from './start-door';
 import type { FollowFeedEntry, FollowFeedGroup } from './follow-feed';
 import type { UserAccessContext, LapsedWorkspace } from './user-contexts';
 
@@ -186,4 +187,7 @@ export interface ConsumerHomePayload {
   following: { current: TournamentFollowCard[]; past: TournamentFollowCard[] };
   /** F2: followed organizations (below Following·Tournaments). Persists off-season. */
   organizations: OrgFollowCard[];
+  /** Account-First Sign-up (A4): the account came from a start sign-up and has not made its thing yet — Home's
+   *  "Finish creating your team" card. Absent for everyone else (fans and parents never see it). */
+  startCard: { door: StartDoor; email: string } | null;
 }

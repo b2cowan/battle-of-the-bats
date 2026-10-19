@@ -172,6 +172,41 @@
   color: var(--danger-light);
 }
 
+/* A waiting account's error box carries its own action (Account-First Sign-up A7, design review D12, 2026-10-18):
+   Send the link again, then the sentence that stands in for it until another send is allowed. */
+.errorAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  background: transparent;
+  border: 1px solid rgba(var(--danger-rgb), 0.35);
+  border-radius: 0;
+  cursor: pointer;
+}
+.errorAction:disabled { opacity: 0.5; cursor: not-allowed; }
+.errorSent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0.625rem 0 0;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  color: var(--fl-text);
+  border: 1px solid rgba(var(--danger-rgb), 0.2);
+}
+.errorNote { margin: 0.5rem 0 0; }
+
 /* ── Sign-up Invite Guard — "You've been invited" branch ─────────────────────
    Positive recognition moment (not an error): blueprint-framed panel + a single
    lime CTA, grey secondaries. See design_decisions.md 2026-07-06. No new tokens. */
@@ -365,6 +400,8 @@
 }
 
 /* Structural literals the remap can't reach (raw navy rgba borders/tints). */
+:global(html[data-user-theme="warm"]) .authSurface .errorAction,
+:global(html[data-user-theme="warm"]) .authSurface .errorSent { background: var(--home-card); }
 :global(html[data-user-theme="warm"]) .authSurface .header { border-bottom-color: var(--home-line); }
 
 :global(html[data-user-theme="warm"]) .authSurface .iconWrap {

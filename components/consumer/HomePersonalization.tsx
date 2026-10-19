@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
+  ArrowRight, Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
   RotateCcw, type LucideIcon,
 } from 'lucide-react';
 import { getSession } from '@/lib/auth';
@@ -20,6 +20,7 @@ import {
 } from '@/lib/home-following';
 import type { UserAccessContext, UserAccessContextKind } from '@/lib/user-contexts';
 import { WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
+import { START_CARD_COPY, START_DOOR_PATH, type StartDoor } from '@/lib/start-door';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import PendingInvitationsCard from '@/components/home/PendingInvitationsCard';
 import styles from './HomePersonalization.module.css';
@@ -54,6 +55,7 @@ const EMPTY_FOLLOWING = { current: [] as TournamentFollowCard[], past: [] as Tou
 export default function HomePersonalization() {
   const [payload, setPayload] = useState<ConsumerHomePayload | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [startCardHidden, setStartCardHidden] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,8 +143,16 @@ export default function HomePersonalization() {
   const feedSettled = signedIn ? loaded : (useDevice && !deviceFeed.loading);
   const followsButEmpty = followCount > 0 && !hasFollowing && feedSettled;
 
+  // Account-First Sign-up (A4): "Finish creating your team", for an account that came from a start sign-up only.
+  const startCard = signedIn && !startCardHidden ? (payload?.startCard ?? null) : null;
+  function startCardNotNow() {
+    setStartCardHidden(true);
+    void fetch('/api/account/start-door', { method: 'POST' }).catch(() => {});
+  }
+
+  // Hidden while the finish card shows, so Home never says both "finish your team" and "nothing here yet".
   const signedInEmpty =
-    loaded && signedIn &&
+    loaded && signedIn && !startCard &&
     invites.length === 0 && coachInvites.length === 0 && workspaces.length === 0 && lapsed.length === 0 &&
     followCount === 0 && organizations.length === 0;
 
@@ -150,6 +160,8 @@ export default function HomePersonalization() {
     <div className={styles.wrap}>
       {/* Loading placeholder for the account sections (Browse below is already painted). */}
       {!loaded && <div className={styles.skeleton} aria-hidden />}
+
+      {startCard && <StartCard door={startCard.door} email={startCard.email} onNotNow={startCardNotNow} />}
 
       {(invites.length > 0 || coachInvites.length > 0) && <PendingInvitationsCard invitations={invites} coachInvitations={coachInvites} />}
 
@@ -234,6 +246,27 @@ export default function HomePersonalization() {
         </p>
       )}
     </div>
+  );
+}
+
+/** Home's finish card (drawings D8): what was started, the one step left, and Not now. */
+function StartCard({ door, email, onNotNow }: { door: StartDoor; email: string; onNotNow: () => void }) {
+  const copy = START_CARD_COPY[door];
+  return (
+    <section className={styles.startCard} aria-labelledby="home-start-card-title">
+      <h2 id="home-start-card-title" className={styles.startTitle}>{copy.title}</h2>
+      <p className={styles.startBody}>You confirmed {email}. {copy.next}</p>
+      <div className={styles.startRow}>
+        <Link
+          href={START_DOOR_PATH[door]}
+          className={styles.startAction}
+          onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'start', door })}
+        >
+          {copy.action} <ArrowRight size={16} strokeWidth={2.2} aria-hidden />
+        </Link>
+        <button type="button" className={styles.startNotNow} onClick={onNotNow}>Not now</button>
+      </div>
+    </section>
   );
 }
 

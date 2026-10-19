@@ -13,6 +13,7 @@
 import { signupVerificationHtml, escapeHtml } from './email';
 import { sendTransactionalEmail } from './platform-email-templates';
 import { safeNextPath } from './safe-redirect';
+import { startDoorLinkPath, type StartDoor } from './start-door';
 
 /** Does a new account prove its email by link? One answer for every sign-up route. */
 export function shouldRequireEmailVerification(): boolean {
@@ -21,9 +22,14 @@ export function shouldRequireEmailVerification(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
-/** Where the verification link may return to: a same-site relative path, else `fallback`. */
-export function verificationReturnPath(next: unknown, fallback: string): string {
-  return safeNextPath(next, fallback);
+/**
+ * Where the verification link returns to: the caller's own screen when it names one (a same-site relative path) —
+ * the tournament registration's resend knows the exact join page that links its registration. When the caller names
+ * none (sign-in has no idea where a waiting account was headed), an account made by a start sign-up returns to its
+ * door's step 2 (Account-First Sign-up, 2026-10-18); anything else to `fallback`.
+ */
+export function verificationReturnPath(next: unknown, fallback: string, door?: StartDoor | null): string {
+  return safeNextPath(next, door ? startDoorLinkPath(door) : fallback);
 }
 
 /** The callback URL a verification link redirects to (it signs the person in, then opens `next`). */

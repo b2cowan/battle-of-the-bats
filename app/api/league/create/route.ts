@@ -10,6 +10,7 @@ import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, withObservability } from '@/lib/observability';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
+import { clearStartDoor } from '@/lib/start-door-server';
 
 // Abuse controls (Phase 6.6): blunt scripted mass-creation of free workspaces before the beta flag
 // is turned on for real users. Best-effort, per-Lambda-instance (no external store wired). Legit use
@@ -199,6 +200,9 @@ export const POST = withObservability(async (req: Request) => {
       });
       if (compErr) console.error('[league/create] Founding season comp_period insert error:', compErr);
     }
+
+    // Account-first: the league is made, so Home's "Finish creating your league" card has done its job.
+    await clearStartDoor(user.id);
 
     return NextResponse.json({ ok: true, orgSlug: org.slug });
   } catch (err) {

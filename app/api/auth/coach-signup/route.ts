@@ -9,6 +9,7 @@ import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import {
   sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect, verificationReturnPath,
 } from '@/lib/signup-verification';
+import { parseStartDoor } from '@/lib/start-door';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -50,6 +51,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     next?: unknown;
     continueName?: unknown;
     inviteToken?: unknown;
+    startDoor?: unknown;
   };
 
   const email     = typeof body.email     === 'string' ? body.email.trim().toLowerCase() : '';
@@ -57,6 +59,9 @@ export const POST = withObservability(async (req: NextRequest) => {
   const firstName = typeof body.firstName === 'string' ? body.firstName.trim() : '';
   const lastName  = typeof body.lastName  === 'string' ? body.lastName.trim()  : '';
   const continueName = typeof body.continueName === 'string' ? body.continueName.trim().slice(0, 120) : '';
+  // Account-first (owner A3, 2026-10-18): Start a team / Start a league send only the account and name their door. The
+  // account remembers it (lib/start-door.ts — screens only, never an entitlement), and the link lands on its step 2.
+  const startDoor = parseStartDoor(body.startDoor, ['team', 'league'] as const);
 
   if (!email || !password) {
     return json({ error: 'Email and password are required.' }, 400);
@@ -88,7 +93,10 @@ export const POST = withObservability(async (req: NextRequest) => {
   // email greetings (which greet by first_name) have the coach's real name. Without
   // this a coach account had blank user_metadata while an org owner did not.
   const fullName = `${firstName} ${lastName}`.trim();
-  const userMetadata = { first_name: firstName, last_name: lastName, full_name: fullName, display_name: fullName };
+  const userMetadata = {
+    first_name: firstName, last_name: lastName, full_name: fullName, display_name: fullName,
+    ...(startDoor ? { start: { door: startDoor } } : {}),
+  };
 
   // ── Verify by link (production): the account waits, unconfirmed, until the person opens the email ──
   if (shouldRequireEmailVerification() && !(await inviteProvesEmail(body.inviteToken, email))) {
@@ -101,7 +109,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     if (await authAccountExistsForEmail(email)) return json({ error: 'email_exists' }, 409);
 
     const origin = resolveTrustedAppOrigin(req);
-    const next = verificationReturnPath(body.next, '/coaches');
+    const next = verificationReturnPath(body.next, '/coaches', startDoor);
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email,

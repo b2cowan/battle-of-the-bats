@@ -8,6 +8,7 @@ import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import {
   sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect, verificationReturnPath,
 } from '@/lib/signup-verification';
+import { readStartDoor } from '@/lib/start-door';
 
 /**
  * "Send the link again" on every check-your-email screen (owner V3, 2026-10-16; hub SIGNUP_EMAIL_VERIFICATION_HUB.html).
@@ -16,6 +17,9 @@ import {
  * link for an existing address would overwrite the waiting account's password, while opening a magic link confirms
  * the email and keeps it (proven on dev 2026-10-16). The answer is the same whether or not anything was sent — no
  * account exists, it is already verified, it is staff — so this can't be used to learn which emails have accounts.
+ *
+ * An account made by a start sign-up remembers its door (lib/start-door.ts): when the asking screen names no
+ * destination of its own — sign-in (owner A7) — the link lands on that door's step 2.
  */
 const MINUTE = 60_000;
 const ipLimiter = new FixedWindowRateLimiter(15 * MINUTE, 10);
@@ -39,7 +43,7 @@ export const POST = withObservability(async (req: NextRequest) => {
   if (!user || user.email_confirmed_at) return NextResponse.json(SENT);
 
   const origin = resolveTrustedAppOrigin(req);
-  const next = verificationReturnPath(body.next, '/home');
+  const next = verificationReturnPath(body.next, '/home', readStartDoor(user.user_metadata)?.door);
   const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
     type: 'magiclink',
     email,

@@ -81,8 +81,10 @@
   border-radius: 10px;
 }
 .start .error { font-size: 0.8rem; color: var(--home-live); }
-.start .foot { border-top: 1px solid var(--home-line); font-size: 0.78rem; color: var(--home-dim); }
-.start .footLink { color: var(--home-olive); }
+.start .foot { border-top: 1px solid var(--home-line); font-size: 0.78rem; color: var(--home-dim); padding-top: 0.25rem; row-gap: 0; }
+/* Every link under a start form gets a 44px tap row (Account-First Sign-up design review D6, 2026-10-18). */
+.start .foot > * { display: inline-flex; align-items: center; gap: 0.3em; min-height: 44px; }
+.start .footLink { color: var(--home-olive); min-height: 44px; }
 
 /* ── the sign-in card (auth.module.css) ───────────────────────────────────────────────────────────── */
 .auth .lead { font-family: var(--font-data); font-size: 0.82rem; color: var(--fl-text); }

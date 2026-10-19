@@ -3,11 +3,12 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
-import { createClient } from '@/lib/supabase-server';
+import { getAuthUserCached } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { getAuthDestination } from '@/lib/auth-destination';
+import { startStepViewer } from '@/lib/start-door-server';
 import StartLeagueForm from './StartLeagueForm';
 import styles from '../start.module.css';
 
@@ -24,12 +25,12 @@ export const metadata: Metadata = {
  * (the /start picker also reflects the flag).
  */
 export default async function StartLeaguePage({ searchParams }: { searchParams: Promise<{ league?: string | string[]; confirmed?: string | string[] }> }) {
-  // Back from the verification link (verify every sign-up, 2026-10-16): the league name typed before it, and the flag.
+  // Back from the verification link: the flag, and — on a link sent before account-first (2026-10-18), for one
+  // release — the league name typed before it.
   const sp = await searchParams;
   const initialName = (Array.isArray(sp.league) ? sp.league[0] : sp.league ?? '').slice(0, 120);
   const confirmed = (Array.isArray(sp.confirmed) ? sp.confirmed[0] : sp.confirmed) === '1';
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUserCached();
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
     redirect('/platform-admin');
   }
@@ -56,7 +57,7 @@ export default async function StartLeaguePage({ searchParams }: { searchParams: 
       }
     }
 
-    return <StartLeagueForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} initialName={initialName} confirmed={confirmed} />;
+    return <StartLeagueForm viewer={await startStepViewer(user)} initialName={initialName} confirmed={confirmed} />;
   }
 
   return (

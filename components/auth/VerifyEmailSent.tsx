@@ -1,23 +1,10 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { formatTime } from '@/lib/utils';
+import ResendLink from './ResendLink';
 import styles from './VerifyEmailSent.module.css';
 
-/** How long the resend button stays away after a send (the server allows a few an hour per address). */
-const RESEND_COOLDOWN_MS = 60_000;
-
-/**
- * Ask for a fresh verification link. The server sends only to an account still waiting for its email and answers the
- * same either way. The one client request shape — this block's button and the register form's waiting-account paths.
- */
-export function requestVerificationLink(p: { email: string; next: string; continueName?: string }): Promise<Response> {
-  return fetch('/api/auth/resend-verification', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(p),
-  });
-}
+export { requestVerificationLink } from './ResendLink';
 
 /**
  * THE CHECK-YOUR-EMAIL BLOCK — every sign-up that verifies by link shows it after the form (owner ruling 2026-10-16,
@@ -40,51 +27,18 @@ export default function VerifyEmailSent(props: {
   signInHref?: string;
 }) {
   const { tone, email, lead, after, resendNext, continueName, onChangeEmail, signInHref } = props;
-  const [busy, setBusy] = useState(false);
-  const [sentAt, setSentAt] = useState<Date | null>(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!sentAt) return;
-    const t = window.setTimeout(() => setSentAt(null), RESEND_COOLDOWN_MS);
-    return () => window.clearTimeout(t);
-  }, [sentAt]);
-
-  async function resend() {
-    setBusy(true);
-    setError('');
-    try {
-      const res = await requestVerificationLink({ email, next: resendNext, continueName });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
-        setError(data.error ?? 'We couldn’t send the link just now. Please try again.');
-        return;
-      }
-      setSentAt(new Date());
-    } catch {
-      setError('We couldn’t send the link just now. Please try again.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const clock = sentAt
-    ? formatTime(`${String(sentAt.getHours()).padStart(2, '0')}:${String(sentAt.getMinutes()).padStart(2, '0')}`)
-    : '';
 
   return (
     <div className={`${styles.root} ${styles[tone]}`}>
       <p className={styles.lead}>{lead}</p>
       <p className={styles.sent} role="status">Verification email sent to {email}.</p>
       {after && <p className={styles.after}>{after}</p>}
-      {sentAt ? (
-        <p className={styles.sentAgain} role="status">Sent again at {clock}. Check your spam folder too.</p>
-      ) : (
-        <button type="button" className={styles.resend} onClick={resend} disabled={busy}>
-          {busy ? 'Sending…' : 'Send the link again'}
-        </button>
-      )}
-      {error && <p className={styles.error} role="alert">{error}</p>}
+      <ResendLink
+        email={email}
+        next={resendNext}
+        continueName={continueName}
+        classes={{ button: styles.resend, sent: styles.sentAgain, error: styles.error }}
+      />
       {(onChangeEmail || signInHref) && (
         <div className={styles.foot}>
           {onChangeEmail ? <button type="button" className={styles.footLink} onClick={onChangeEmail}>Use a different email</button> : <span />}
