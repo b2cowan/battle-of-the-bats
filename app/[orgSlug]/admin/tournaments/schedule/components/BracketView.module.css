@@ -75,18 +75,23 @@ button.card:focus-visible { outline: 2px solid var(--home-olive); outline-offset
 .card[data-final] { border-color: var(--home-olive); box-shadow: 0 0 0 1px var(--home-olive); }
 .when {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.4rem;
+  flex-direction: column;
+  gap: 0.2rem;
   font-size: var(--type-support);
   color: var(--text-secondary);
   padding-right: 1.25rem;
 }
+/* The game's line: its name with the state chip beside it; a long chip drops under the name whole. */
+.game { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.4rem; }
 .go { position: absolute; top: 0.6rem; right: 0.55rem; color: var(--text-tertiary); }
 .side { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.5rem; }
 .team { display: flex; flex-direction: column; min-width: 0; }
 .name { display: inline-flex; align-items: center; gap: 0.3rem; min-width: 0; font-size: var(--type-body); font-weight: 600; overflow-wrap: anywhere; }
 .side[data-won] .name { font-weight: 750; }
+/* A slot waiting on its team ("Semifinal 1 winner") reads quiet beside a real team; a decided game's loser fades. */
+.side[data-slot] .name { font-weight: 400; font-style: italic; color: var(--text-secondary); }
+.side[data-lost] .name,
+.side[data-lost] .score { font-weight: 500; color: var(--text-secondary); }
 .check { flex: none; color: var(--home-olive); }
 .slot { font-size: var(--type-support); color: var(--text-secondary); }
 .score { min-width: 1.5rem; text-align: right; font-size: var(--type-body); font-weight: 750; font-variant-numeric: tabular-nums; }

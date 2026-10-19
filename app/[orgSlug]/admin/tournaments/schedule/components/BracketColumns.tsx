@@ -70,9 +70,11 @@ function slotSides(g: BracketGame): { away: BracketSide; home: BracketSide } {
   return { away: slot(g.awayPlaceholder), home: slot(g.homePlaceholder) };
 }
 
-function Side({ side }: { side: BracketSide }) {
+/** A slot still waiting on its team reads quiet; once a game is decided its loser fades, so a finished card reads at a
+ *  glance (a finished game and one still to play carry no chip either way). */
+function Side({ side, lost }: { side: BracketSide; lost: boolean }) {
   return (
-    <div className={bv.side} data-won={side.won || undefined}>
+    <div className={bv.side} data-won={side.won || undefined} data-lost={lost || undefined} data-slot={!side.known || undefined}>
       <span className={bv.team}>
         <span className={bv.name}>
           {side.name}
@@ -147,17 +149,22 @@ export default function BracketColumns({ columns, teams, venues, stateOf, confli
     const sides = teams ? bracketSides(full, teams) : slotSides(g);
     const field = (venues ? resolveGameFieldLabel(full, venues) : g.location) || '';
     const round = g.bracketCode ? bracketGameLabel(g.bracketCode) : '';
-    // The when line breaks only between its parts, never inside one ("Semifinal" / "1").
-    const when = [bracketWhen(g.date, g.time), field, round, waiting?.has(g.id) ? CT.waits : ''].filter(Boolean)
-      .map(part => part.replace(/ /g, NO_BREAK)).join(' · ');
+    // Two lines, every card: when and where, then the game with the state the score can't say beside it
+    // ("Quarterfinal 2 · Needs a score", owner 2026-10-19). Each breaks only between its parts, never inside one.
+    const line = (parts: string[]) => parts.filter(Boolean).map(part => part.replace(/ /g, NO_BREAK)).join(' · ');
+    const when = line([bracketWhen(g.date, g.time), field]);
+    const game = line([round, waiting?.has(g.id) ? CT.waits : '']);
     const chip = stateOf ? stateChip(full, stateOf(full), conflictOf?.(full) ?? null) : null;
     const body: ReactNode = (
       <>
-        <span className={bv.when}>{when}{chip}</span>
+        <span className={bv.when}>
+          {when && <span>{when}</span>}
+          {(game || chip) && <span className={bv.game}>{game && <span>{game}</span>}{chip}</span>}
+        </span>
         {onOpen && <ChevronRight size={16} className={bv.go} aria-hidden />}
-        <Side side={sides.home} />
+        <Side side={sides.home} lost={sides.away.won} />
         <span className={bv.divider} aria-hidden />
-        <Side side={sides.away} />
+        <Side side={sides.away} lost={sides.home.won} />
       </>
     );
     const final = finalGameIds.has(g.id) || undefined;
