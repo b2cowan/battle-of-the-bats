@@ -25259,6 +25259,7 @@ below stays as the record of what the two kept changes do; with every chat door 
 - **W1.1.** Open Accounting. **Expect:** The tabs read **Overview · Budget · Teams · Ledger · Allocations · Payment requests · Budget vs. Actual**.
 - **W1.2.** Tap **Teams**, then open one team's account. **Expect:** **Teams** stays lit on the team's account, as before.
 - **W1.3.** Open the help's Accounting guide. **Expect:** It lists the tabs in the same order, and the Teams article says Teams is "the tab after the Budget".
+- **W1.4.** On **Ledger**, choose a team's book that has dues payments and open **Category**. **Expect:** one **Player dues**, never also "Player Dues" (mig 337 re-spelled the older lines; applied to dev 2026-10-18).
 
 **Walk W2 — The coach's Money row and everything that names it.** As Coach, on localhost.
 - **W2.1.** Open Money. **Expect:** The tabs read **Overview · Budget · Player dues · Fundraising · Ledger · Budget vs. Actual** (Club appears between Ledger and Budget vs. Actual only on a club team).
