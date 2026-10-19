@@ -1,0 +1,275 @@
+<title>Manage Member on a Phone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a cool document ground carrying three true-size 390px phone windows (today, A, B) side by side, wrapping on narrow screens; asks above, tagged notes under each frame. */
+:root {
+  --doc-bg: #EEF1F4;
+  --doc-panel: #FFFFFF;
+  --doc-fg: #1C232B;
+  --doc-soft: #4F5B66;
+  --doc-line: #D5DCE3;
+  --doc-accent: #3D5A73;
+  --tag-new: #57651E; --tag-new-bg: #EEF1DE;
+  --tag-res: #8A5A12; --tag-res-bg: #F7ECD8;
+  --tag-unc: #4F5B66; --tag-unc-bg: #E6EAEE;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #12171C; --doc-panel: #1A2128; --doc-fg: #E6EBF0; --doc-soft: #A3AFBA; --doc-line: #2C3640; --doc-accent: #9DB8CF;
+    --tag-new: #C5D88A; --tag-new-bg: #2A3018; --tag-res: #E9C07A; --tag-res-bg: #382A12; --tag-unc: #A3AFBA; --tag-unc-bg: #26303A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #12171C; --doc-panel: #1A2128; --doc-fg: #E6EBF0; --doc-soft: #A3AFBA; --doc-line: #2C3640; --doc-accent: #9DB8CF;
+  --tag-new: #C5D88A; --tag-new-bg: #2A3018; --tag-res: #E9C07A; --tag-res-bg: #382A12; --tag-unc: #A3AFBA; --tag-unc-bg: #26303A;
+  color-scheme: dark;
+}
+body { background: var(--doc-bg); color: var(--doc-fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: 2rem; line-height: 1.1; margin: 0; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--doc-soft); max-width: 68ch; }
+.asks { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 12px; max-width: 900px; }
+.asks h2 { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); margin: 0; font-weight: 500; }
+.ask { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 4px 10px; }
+.ask b.k { font-family: var(--f-mono); font-weight: 500; color: var(--doc-accent); }
+.ask p { margin: 0; }
+.ask .rec { color: var(--doc-soft); font-size: 0.93rem; }
+.frames { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+.col { display: grid; gap: 12px; width: 390px; max-width: 100%; }
+.col h3 { margin: 0; font-family: var(--f-display); font-size: 1.35rem; font-weight: 700; }
+.col h3 small { font-family: var(--f-mono); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); margin-right: 8px; }
+.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 0.92rem; }
+.notes li { display: grid; grid-template-columns: 6.2rem minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.tag { font-family: var(--f-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; justify-self: start; }
+.t-new { color: var(--tag-new); background: var(--tag-new-bg); }
+.t-res { color: var(--tag-res); background: var(--tag-res-bg); }
+.t-unc { color: var(--tag-unc); background: var(--tag-unc-bg); }
+.t-bad { color: #B03A22; background: #F6E1DC; }
+
+/* ── The product frame: fixed light warm-portal values (a specimen, not page chrome) ── */
+.phone { width: 390px; max-width: 100%; height: 760px; border-radius: 22px; border: 8px solid #2A2F35; background: #F8F4ED; overflow: hidden; display: flex; flex-direction: column; color: #241E15; font-family: var(--f-body); box-shadow: 0 10px 30px rgba(20, 28, 36, 0.18); }
+.whead { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px; padding: 14px 16px 10px 8px; background: #FFFFFF; border-bottom: 1px solid rgba(70,55,30,.12); }
+.back { width: 44px; height: 44px; display: grid; place-items: center; color: #241E15; }
+.wtitle { font-family: var(--f-display); font-weight: 700; font-size: 1.3rem; line-height: 1.15; margin-top: 8px; }
+.wid { font-size: 0.86rem; color: #615A54; line-height: 1.4; margin-top: 2px; overflow-wrap: anywhere; }
+.wbody { flex: 1; overflow-y: auto; overflow-x: hidden; background: #FFFFFF; padding: 16px 20px 20px; display: grid; gap: 16px; align-content: start; }
+.fld { display: grid; gap: 6px; }
+.lbl { font-size: 12px; font-weight: 650; color: #4A4235; }
+.inp, .sel { height: 44px; border: 1px solid rgba(70,55,30,.28); border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; color: #241E15; padding: 0 12px; width: 100%; box-sizing: border-box; }
+.sel { appearance: none; -webkit-appearance: none; background: #F8F4ED url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234A4235' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center; padding-right: 30px; }
+.hint { font-size: 12px; color: #615A54; margin: 0; }
+.atitle { font-family: var(--f-display); font-weight: 700; font-size: 1.05rem; margin: 4px 0 0; }
+
+/* Today's three-column table, clipped as it is now */
+.t3 { width: 440px; border-collapse: collapse; font-size: 14px; }
+.t3 th { text-align: left; font-weight: 650; color: #4A4235; font-size: 12px; padding: 8px 8px 10px 0; border-bottom: 1px solid rgba(70,55,30,.2); }
+.t3 td { padding: 12px 8px 12px 0; border-bottom: 1px solid rgba(70,55,30,.12); vertical-align: middle; height: 56px; }
+.t3 td:first-child { font-weight: 600; width: 120px; }
+.t3 .sel { width: 140px; }
+.clip { overflow: hidden; margin-right: -20px; }
+
+/* Option A and B: two columns that fit */
+.t2 { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.t2 th { text-align: left; font-weight: 650; color: #4A4235; font-size: 12px; padding: 6px 0 8px; border-bottom: 1px solid rgba(70,55,30,.2); }
+.t2 th:last-child { width: 112px; }
+.t2 td { padding: 8px 0; border-bottom: 1px solid rgba(70,55,30,.12); vertical-align: middle; min-height: 56px; }
+.t2 td:last-child { padding-left: 10px; }
+.t2 .pname { font-weight: 600; display: flex; align-items: center; gap: 4px; min-height: 28px; }
+.t2 .pname.fold { min-height: 44px; cursor: pointer; }
+.t2 .why { font-size: 12px; color: #615A54; display: block; line-height: 1.35; }
+.t2 .changedline { font-size: 12px; font-weight: 600; color: #57651E; display: block; line-height: 1.35; }
+.t2 .sentence td { padding: 0 0 10px; font-size: 12px; color: #835006; border-bottom: 1px solid rgba(70,55,30,.12); }
+.t2 tr.has-sentence td { border-bottom: none; }
+.chev { color: #615A54; }
+
+/* The body's end: rare doors, body weight, underlined on hover */
+.doors { display: flex; flex-wrap: wrap; gap: 4px 20px; padding-top: 4px; }
+.door { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 44px; background: none; border: 0; padding: 0; font: inherit; font-size: 14px; cursor: pointer; }
+.door:hover { text-decoration: underline; }
+.door:focus-visible { outline: 2px solid #57651E; outline-offset: 2px; }
+.door.ink { color: #241E15; }
+.door.red { color: #B03A22; }
+
+/* The pinned foot */
+.wfoot { background: #FFFFFF; border-top: 1px solid rgba(70,55,30,.14); padding: 10px 16px 14px; display: grid; gap: 10px; }
+.frow { display: flex; gap: 10px; align-items: center; }
+.frow.end { justify-content: flex-end; }
+.btn { height: 44px; padding: 0 16px; border-radius: 8px; font: inherit; font-weight: 600; font-size: 14px; border: 1px solid rgba(70,55,30,.3); background: #FFFFFF; color: #241E15; }
+.btn.lime { background: #D9F99D; border-color: #D9F99D; }
+.mark { outline: 2px dashed #B03A22; outline-offset: 3px; border-radius: 6px; }
+.markok { outline: 2px dashed #57651E; outline-offset: 3px; border-radius: 6px; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Manage a member, on a phone</h1>
+    <p class="lede">The owner's window for Riley Okonkwo (league registrar), drawn at true size: 390 wide, the width of most phones. Each window scrolls like the real one; the bottom bar stays put. Today is on the left, then your On / Off idea drawn two ways: A marks the rows changed for Riley, B marks the role default with an asterisk.</p>
+  </header>
+
+  <section class="asks" aria-labelledby="asks-h">
+    <h2 id="asks-h">Your calls</h2>
+    <div class="ask"><b class="k">A1</b><div><p><b>Suspend and Remove leave the bottom bar and end the window's body</b>, like Archive and Delete on other records. The bar keeps only Cancel and Save, in one row.</p><p class="rec">This changes your 10-09 rule rather than catching a miss. That rule left this window out on purpose: on a computer, Suspend and Remove share one row with Cancel and Save, so they cost no extra height. On a phone that row splits into two pinned rows, which is what you saw. Reinstate (for a suspended member) and Resend invite (for someone who hasn't joined) move with them. Suspend also changes from red to dark text, because it can be undone. Remove stays red.<br>Recommended: <b>at every width</b>. Otherwise the buttons sit in a different place depending on how wide the screen is.</p></div></div>
+    <div class="ask"><b class="k">A2</b><div><p><b>On / Off dropdowns (your idea). Which rows get the marker: the few changed for Riley (A), or the role defaults with an asterisk (B)?</b></p><p class="rec">Recommended: <b>A</b>. In this product an asterisk already means "required", and this window has form fields above the table. A also marks the one row that's different, rather than the six that aren't (the same reasoning as your required-field rule: mark the few, never the many).</p></div></div>
+    <div class="ask"><b class="k">A3</b><div><p><b>Whichever you pick, everywhere or on a phone only?</b></p><p class="rec">Recommended: <b>everywhere</b>. Two layouts of one table drift apart. On a computer today's three columns fit, but On / Off with a marker reads faster there too.</p></div></div>
+  </section>
+
+  <div class="frames">
+
+    <!-- ═════════ TODAY ═════════ -->
+    <div class="col">
+      <h3><small>Today</small>What you saw</h3>
+      <div class="phone" role="img" aria-label="Today's Manage window on a phone">
+        <div class="whead">
+          <span class="back" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+          <div><div class="wtitle">Manage Riley Okonkwo</div><div class="wid">uat-club-registrar@uat-rep-club.local · League registrar since October 2026</div></div>
+        </div>
+        <div class="wbody">
+          <div class="fld"><span class="lbl">Role</span><div class="inp" style="display:flex;align-items:center">League registrar</div></div>
+          <div class="fld"><span class="lbl">Title</span><div class="inp"></div><p class="hint">Shown under their name on this list.</p></div>
+          <div class="fld"><span class="lbl">Display name</span><div class="inp" style="display:flex;align-items:center">Riley Okonkwo</div><p class="hint">Shown instead of their email.</p></div>
+          <p class="atitle">What Riley can open</p>
+          <div class="clip mark">
+            <table class="t3">
+              <thead><tr><th>Program</th><th>As a League registrar</th><th>For Riley</th></tr></thead>
+              <tbody>
+                <tr><td>Rep teams</td><td>No</td><td><div class="sel" style="display:flex;align-items:center">Role default</div></td></tr>
+                <tr><td>Accounting</td><td>No</td><td><div class="sel" style="display:flex;align-items:center">Role default</div></td></tr>
+                <tr><td>Families</td><td>No</td><td><div class="sel" style="display:flex;align-items:center">Role default</div></td></tr>
+                <tr><td>Public site</td><td>No</td><td><div class="sel" style="display:flex;align-items:center">Role default</div></td></tr>
+                <tr><td>House league</td><td>Yes</td><td><div class="sel" style="display:flex;align-items:center">Role default</div></td></tr>
+                <tr><td>Tournaments</td><td>No</td><td><div class="sel" style="display:flex;align-items:center">Role default</div></td></tr>
+                <tr><td>Members ›</td><td>No</td><td><div class="sel" style="display:flex;align-items:center">Role default</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="hint">Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
+        </div>
+        <div class="wfoot">
+          <div class="frow mark"><button class="btn" tabindex="-1">Suspend…</button><button class="btn" tabindex="-1">Remove…</button></div>
+          <div class="frow end"><button class="btn" tabindex="-1">Cancel</button><button class="btn lime" tabindex="-1">Save</button></div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><span class="tag t-bad">Problem</span><span>The third column runs off the window, so every choice is cut to "Role def…".</span></li>
+        <li><span class="tag t-bad">Problem</span><span>On a phone the bottom bar splits into two pinned rows. That's about 120px of the screen for two buttons pressed once in a member's life. (On a computer they share one row with Cancel and Save.)</span></li>
+      </ul>
+    </div>
+
+    <!-- ═════════ OPTION A ═════════ -->
+    <div class="col">
+      <h3><small>Option A · recommended</small>On / Off, the changed rows are marked</h3>
+      <div class="phone">
+        <div class="whead">
+          <span class="back" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+          <div><div class="wtitle">Manage Riley Okonkwo</div><div class="wid">uat-club-registrar@uat-rep-club.local · League registrar since October 2026</div></div>
+        </div>
+        <div class="wbody">
+          <div class="fld"><label class="lbl" for="a-role">Role</label><select id="a-role" class="sel"><option>League registrar</option></select></div>
+          <div class="fld"><label class="lbl" for="a-title">Title</label><input id="a-title" class="inp" placeholder="e.g. Vice-president"><p class="hint">Shown under their name on this list.</p></div>
+          <div class="fld"><label class="lbl" for="a-name">Display name</label><input id="a-name" class="inp" value="Riley Okonkwo"><p class="hint">Shown instead of their email.</p></div>
+          <p class="atitle">What Riley can open</p>
+          <p class="hint">Each program starts the way every league registrar has it.</p>
+          <table class="t2">
+            <thead><tr><th>Program</th><th>For Riley</th></tr></thead>
+            <tbody>
+              <tr class="has-sentence"><td><span class="pname">Rep teams</span><span class="why changedline">Changed for Riley</span></td><td><select id="a-rep" class="sel" aria-label="Rep teams for Riley" data-default="off" data-sentence="a-rep-s"><option value="on" selected>On</option><option value="off">Off</option></select></td></tr>
+              <tr class="sentence" id="a-rep-s"><td colspan="2">Riley will see the club’s teams, tryouts, rosters and allocations.</td></tr>
+              <tr><td><span class="pname">Accounting</span><span class="why changedline" hidden>Changed for Riley</span></td><td><select id="a-acc" class="sel" aria-label="Accounting for Riley" data-default="off"><option value="on">On</option><option value="off" selected>Off</option></select></td></tr>
+              <tr><td><span class="pname">Families</span><span class="why changedline" hidden>Changed for Riley</span></td><td><select id="a-fam" class="sel" aria-label="Families for Riley" data-default="off"><option value="on">On</option><option value="off" selected>Off</option></select></td></tr>
+              <tr><td><span class="pname">Public site</span><span class="why changedline" hidden>Changed for Riley</span></td><td><select id="a-pub" class="sel" aria-label="Public site for Riley" data-default="off"><option value="on">On</option><option value="off" selected>Off</option></select></td></tr>
+              <tr><td><span class="pname">House league</span><span class="why changedline" hidden>Changed for Riley</span></td><td><select id="a-hl" class="sel" aria-label="House league for Riley" data-default="on"><option value="on" selected>On</option><option value="off">Off</option></select></td></tr>
+              <tr><td><span class="pname">Tournaments</span><span class="why changedline" hidden>Changed for Riley</span></td><td><select id="a-tour" class="sel" aria-label="Tournaments for Riley" data-default="off"><option value="on">On</option><option value="off" selected>Off</option></select></td></tr>
+              <tr><td><span class="pname fold">Members <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span><span class="why changedline" hidden>Changed for Riley</span></td><td><select id="a-mem" class="sel" aria-label="Members for Riley" data-default="off"><option value="on">On</option><option value="off" selected>Off</option></select></td></tr>
+            </tbody>
+          </table>
+          <p class="hint">Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
+          <div class="doors">
+            <button type="button" class="door ink"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>Suspend…</button>
+            <button type="button" class="door red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Remove…</button>
+          </div>
+        </div>
+        <div class="wfoot">
+          <div class="frow end"><button class="btn" tabindex="-1">Cancel</button><button class="btn lime" tabindex="-1">Save</button></div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><span class="tag t-new">Your idea</span><span>Every choice is just <b>On</b> or <b>Off</b>. Try any of them: set a row back to what league registrars get and its mark disappears.</span></li>
+        <li><span class="tag t-res">The marker</span><span>Only the rows that differ for Riley say <b>Changed for Riley</b>. Unmarked rows are what every league registrar gets. That marks the one row out of seven, not the six.</span></li>
+        <li><span class="tag t-unc">Unchanged</span><span>The amber sentence under a changed row, the › folds, and the line about plan &amp; billing.</span></li>
+        <li><span class="tag t-unc">Not drawn</span><span>These keep the same two columns. A board member who can't make changes sees plain On or Off instead of a choice. Families offers no On for someone limited to some teams, and keeps its sentence saying why. A volunteer sees "Helping with" and no table.</span></li>
+        <li><span class="tag t-new">Moved</span><span><b>Suspend…</b> (now dark, because it can be undone) and <b>Remove…</b> (red) end the body, and the bottom bar is one row (A1).</span></li>
+      </ul>
+    </div>
+
+    <!-- ═════════ OPTION B ═════════ -->
+    <div class="col">
+      <h3><small>Option B · as you described it</small>An asterisk marks the role default</h3>
+      <div class="phone">
+        <div class="whead">
+          <span class="back" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+          <div><div class="wtitle">Manage Riley Okonkwo</div><div class="wid">uat-club-registrar@uat-rep-club.local · League registrar since October 2026</div></div>
+        </div>
+        <div class="wbody">
+          <div class="fld"><label class="lbl" for="b-role">Role</label><select id="b-role" class="sel"><option>League registrar</option></select></div>
+          <div class="fld"><label class="lbl" for="b-title">Title</label><input id="b-title" class="inp" placeholder="e.g. Vice-president"><p class="hint">Shown under their name on this list.</p></div>
+          <div class="fld"><label class="lbl" for="b-name">Display name</label><input id="b-name" class="inp" value="Riley Okonkwo"><p class="hint">Shown instead of their email.</p></div>
+          <p class="atitle">What Riley can open</p>
+          <p class="hint">* What every league registrar gets.</p>
+          <table class="t2">
+            <thead><tr><th>Program</th><th>For Riley</th></tr></thead>
+            <tbody>
+              <tr class="has-sentence"><td><span class="pname">Rep teams</span></td><td><select id="b-rep" class="sel" aria-label="Rep teams for Riley"><option value="on" selected>On</option><option value="off">Off *</option></select></td></tr>
+              <tr class="sentence"><td colspan="2">Riley will see the club’s teams, tryouts, rosters and allocations.</td></tr>
+              <tr><td><span class="pname">Accounting</span></td><td><select id="b-acc" class="sel" aria-label="Accounting for Riley"><option value="on">On</option><option value="off" selected>Off *</option></select></td></tr>
+              <tr><td><span class="pname">Families</span></td><td><select id="b-fam" class="sel" aria-label="Families for Riley"><option value="on">On</option><option value="off" selected>Off *</option></select></td></tr>
+              <tr><td><span class="pname">Public site</span></td><td><select id="b-pub" class="sel" aria-label="Public site for Riley"><option value="on">On</option><option value="off" selected>Off *</option></select></td></tr>
+              <tr><td><span class="pname">House league</span></td><td><select id="b-hl" class="sel" aria-label="House league for Riley"><option value="on" selected>On *</option><option value="off">Off</option></select></td></tr>
+              <tr><td><span class="pname">Tournaments</span></td><td><select id="b-tour" class="sel" aria-label="Tournaments for Riley"><option value="on">On</option><option value="off" selected>Off *</option></select></td></tr>
+              <tr><td><span class="pname fold">Members <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></td><td><select id="b-mem" class="sel" aria-label="Members for Riley"><option value="on">On</option><option value="off" selected>Off *</option></select></td></tr>
+            </tbody>
+          </table>
+          <p class="hint">Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
+          <div class="doors">
+            <button type="button" class="door ink"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>Suspend…</button>
+            <button type="button" class="door red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Remove…</button>
+          </div>
+        </div>
+        <div class="wfoot">
+          <div class="frow end"><button class="btn" tabindex="-1">Cancel</button><button class="btn lime" tabindex="-1">Save</button></div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><span class="tag t-new">Your idea</span><span>The same On / Off choices. The role's own setting carries a <b>*</b>, so the one row without a star (Rep teams) is the one that differs.</span></li>
+        <li><span class="tag t-bad">Problem</span><span>Everywhere else in the product, a <b>*</b> means <b>required</b> (your 08-26 rule), and this same window has three form fields right above the table. A quick reader sees six required settings.</span></li>
+        <li><span class="tag t-bad">Problem</span><span>It marks the six rows that match the role and leaves the one that matters unmarked. You read the change from a missing star.</span></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Option A: a row says "Changed for Riley" (and Rep teams shows its sentence) only while it differs from the role.
+(function () {
+  document.querySelectorAll('select[data-default]').forEach(function (sel) {
+    function sync() {
+      var changed = sel.value !== sel.getAttribute('data-default');
+      var row = sel.closest('tr');
+      var mark = row.querySelector('.changedline');
+      if (mark) mark.hidden = !changed;
+      var sid = sel.getAttribute('data-sentence');
+      var sent = sid ? document.getElementById(sid) : null;
+      if (sent) { sent.hidden = !changed; row.classList.toggle('has-sentence', changed); }
+    }
+    sel.addEventListener('change', sync);
+    sync();
+  });
+})();
+</script>

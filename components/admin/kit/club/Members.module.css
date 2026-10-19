@@ -51,7 +51,9 @@
 .accessTable td { padding: 0.5rem 0.5rem; }
 .accessTable th:first-child,
 .accessTable td:first-child { padding-left: 0; }
-.accessSelect { height: 34px; min-height: 34px; padding: 0.3rem 0.45rem; width: auto; min-width: 8.5rem; }
+.accessSelect { height: 34px; min-height: 34px; padding: 0.3rem 0.45rem; width: auto; min-width: 5.5rem; }
+/* A row that differs from the role says so under its name (owner, 2026-10-19): the few marked, never the many. */
+.changedLine { display: block; font-size: var(--type-support); font-weight: 600; color: var(--home-olive); line-height: 1.35; }
 .sentenceRow td {
   padding-top: 0;
   font-size: var(--type-support);
@@ -93,7 +95,8 @@
 }
 .foldSelect { width: auto; height: 32px; min-height: 32px; padding: 0.2rem 0.4rem; font-size: var(--type-support); }
 .checkRow { display: flex; align-items: center; gap: 0.5rem; font-size: var(--type-support); color: var(--text-secondary); cursor: pointer; }
-.dangerText { color: var(--home-live); }
+/* The member's rare doors end the body (owner, 2026-10-19), as a record's Archive and Delete do. */
+.recordEnd { margin-top: 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.5rem; }
 @media (max-width: 768px) {
   .accessSelect, .foldSelect { min-height: var(--tap-min, 44px); }
   .foldToggle, .checkRow { min-height: var(--tap-min, 44px); }

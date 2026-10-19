@@ -7,6 +7,24 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-19 — A MEMBER'S ACCESS IS ON OR OFF, AND ONLY THE ROWS CHANGED FOR THEM ARE MARKED; MANAGE'S SUSPEND AND REMOVE END THE BODY (owner, at a phone walking §332 W4: *"I don't think suspend and remove need to be pinned and can we do a better job of fitting this table on a phone screen?"*, then *"can't you just … have the dropdowns simply on/off?"*; asks A1–A3 as recommended, option A — https://claude.ai/artifact/7Msss31mNkUAN46wHA2jBM)
+**Decision:**
+- **A1** Manage's Suspend… / Reinstate / Resend invite (RepKit `RecordAction`, ink — undoable) and Remove…
+  (`RecordDelete`, red) END THE BODY at every width; the foot is Cancel · Save alone. **Amends the 2026-10-09
+  rare-door entry's carve-out** ("any window whose foot start sits beside a foot end (Manage's Suspend…)"): that held
+  at a desk, where the two ends share one row, but on a phone the row stacks into two pinned rows. Suspend was red
+  text; it is ink now, because it can be undone.
+- **A2** "What Sam can open" is two columns, Program | For Sam, every choice **On / Off**; picking what the role gives
+  clears the override (the row follows the role again). A row set otherwise says **"Changed for Sam"** under its name,
+  in olive; a hint above the table says each program starts the way every [role] has it. The same On / Off and mark in
+  the Tournaments and Members folds. The three-way "Role default / Turn on / Turn off" and the "As a …" column are gone.
+- **A3** Everywhere, not phone-only — two layouts of one table drift.
+**Rationale:** the old table made the reader add two columns to learn the answer, and its third column ran off a
+phone. The owner's first sketch marked the role default with an asterisk; not built, because a plain asterisk means
+**required** (2026-08-25/26) and Manage has form fields above the table, and it would mark the six rows that match the
+role instead of the one that differs (mark the few, never the many).
+**Applies to:** `components/admin/kit/club/ManageMemberDialog.tsx`, `Members.module.css`; help: org + families.
+
 ### 2026-10-19 — A WINDOW KEEPS ITS WIDTH WHEN A CLICK TAKES IT TO ITS NEXT STEP; A SMALL TASK ON A BIG RECORD OPENS OVER IT; ANOTHER RECORD KEEPS ITS OWN WIDTH (owner, at the One Window Stage 1 walk: *"I do agree but also want to test when it is ready to make sure"*, then the census's two asks by choice, both as recommended — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48)
 **Decision:** the two flows that widened on a click open at the widest width any of their steps needs, and keep it:
 a payment request (520 → Approve / Confirm received, 640) and New tournament's "Start blank, or reuse" chooser (520 →

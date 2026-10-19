@@ -6,9 +6,10 @@
  *   · ONE Save for role, title, display name and access together (J10-021) — one PATCH, plus the
  *     tournament-access list when it changed (its own route). The mid-dialog "Save Overrides" is gone.
  *   · "What Sam can open": one row per program the plan carries, from the one access computation
- *     (`whatTheyCanOpen`), with Role default / Turn on / Turn off and a consequence sentence the
- *     moment a change would open or close a program (J10-023). The fourteen tournament verbs fold
- *     under "Tournaments ›".
+ *     (`whatTheyCanOpen`), On or Off, a row that differs from the role marked "Changed for Sam"
+ *     (owner, 2026-10-19 — it was Role default / Turn on / Turn off beside an "As a …" column, which
+ *     did not fit a phone), and a consequence sentence the moment a change would open or close a
+ *     program (J10-023). The fourteen tournament verbs fold under "Tournaments ›".
  *   · Plan & billing and organization settings are NOT offered (J10-022) — they stay with the owner.
  *   · Suspend asks first, in a question on top of the form (J10-018), and says what is kept.
  *
@@ -21,13 +22,14 @@
  * It writes only a volunteer's two job keys (`withVolunteerJob`); a volunteer always keeps one job.
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Mail, PauseCircle, RotateCcw } from 'lucide-react';
 import { whatTheyCanOpen, describeAccessChange, familiesBarredFor, roleLabel, type ProgramAccess } from '@/lib/member-access';
-import type { Capability } from '@/lib/roles';
+import { ROLE_DEFAULTS, type Capability } from '@/lib/roles';
 import type { Organization, OrgRole } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
 import KitDialog from './KitDialog';
 import PageNotice, { refusalNotice } from './PageNotice';
+import { RecordAction, RecordDelete } from './RepKit';
 import { RoleOptions, HelpingWithField } from './InviteMemberDialog';
 import { volunteerJobOf, withVolunteerJob, type VolunteerJob } from '@/lib/volunteer-jobs';
 import { HELPING_WITH } from '@/lib/volunteer-words';
@@ -160,13 +162,17 @@ export default function ManageMemberDialog({
     return () => { stale = true; };
   }, [ask, member.id, orgQuery]);
 
-  const override = (cap: Capability): 'default' | 'on' | 'off' =>
-    cap in caps ? (caps[cap] ? 'on' : 'off') : 'default';
-  const setOverride = (cap: Capability, value: 'default' | 'on' | 'off') => {
+  // ⚖ On / Off, with the rows that differ from the role marked (owner, 2026-10-19 — the three-way "Role default /
+  // Turn on / Turn off" and its "As a …" column did not fit a phone and made the reader add two columns). Picking what
+  // the role gives clears the override, so the row follows the role again; anything else is stored as an override.
+  const who = first === 'They' ? 'them' : first;
+  const roleGives = (cap: Capability) => role === 'owner' || ROLE_DEFAULTS[role]?.has(cap) === true;
+  const capOn = (cap: Capability) => (cap in caps ? caps[cap] : roleGives(cap));
+  const setCap = (cap: Capability, on: boolean) => {
     setCaps(prev => {
       const next = { ...prev };
-      if (value === 'default') delete next[cap];
-      else next[cap] = value === 'on';
+      if (on === roleGives(cap)) delete next[cap];
+      else next[cap] = on;
       return next;
     });
   };
@@ -287,29 +293,36 @@ export default function ManageMemberDialog({
 
   const currentNotOffered = roles && !roles.some(r => r.role === member.role) && !targetIsOwner;
 
-  const footerStart = (
-    <>
-      {viewerIsOwner && !targetIsOwner && member.status === 'active' && (
-        <button type="button" className={`btn btn-outline ${styles.dangerText}`} onClick={() => setAsk('suspend')} disabled={saving || acting}>
+  // ⚖ The member's rare doors END THE BODY at every width (owner, 2026-10-19, amending the 10-09 rare-door entry's
+  // carve-out): on a phone the foot's two ends stacked into two pinned rows. Suspend and Reinstate can be undone,
+  // so they are RecordAction's ink; Remove is RecordDelete's red. Each still asks first where it did.
+  const suspendDoor = viewerIsOwner && !targetIsOwner && member.status === 'active';
+  const reinstateDoor = viewerIsOwner && !targetIsOwner && member.status === 'suspended';
+  const resendDoor = canManage && member.status === 'invited';
+  const removeDoor = canManage && !targetIsOwner && !isSelf;
+  const doors = (suspendDoor || reinstateDoor || resendDoor || removeDoor) && (
+    <div className={styles.recordEnd}>
+      {suspendDoor && (
+        <RecordAction icon={<PauseCircle size={13} aria-hidden />} onClick={() => setAsk('suspend')} disabled={saving || acting}>
           Suspend…
-        </button>
+        </RecordAction>
       )}
-      {viewerIsOwner && !targetIsOwner && member.status === 'suspended' && (
-        <button type="button" className="btn btn-outline" onClick={() => void setStatus('active')} disabled={saving || acting}>
+      {reinstateDoor && (
+        <RecordAction icon={<RotateCcw size={13} aria-hidden />} onClick={() => void setStatus('active')} disabled={saving || acting}>
           {acting ? 'Reinstating…' : 'Reinstate'}
-        </button>
+        </RecordAction>
       )}
-      {canManage && member.status === 'invited' && (
-        <button type="button" className="btn btn-outline" onClick={() => void resend()} disabled={saving || acting}>
+      {resendDoor && (
+        <RecordAction icon={<Mail size={13} aria-hidden />} onClick={() => void resend()} disabled={saving || acting}>
           Resend invite
-        </button>
+        </RecordAction>
       )}
-      {canManage && !targetIsOwner && !isSelf && (
-        <button type="button" className={`btn btn-outline ${styles.dangerText}`} onClick={() => setAsk('remove')} disabled={saving || acting}>
+      {removeDoor && (
+        <RecordDelete onClick={() => setAsk('remove')} disabled={saving || acting}>
           Remove…
-        </button>
+        </RecordDelete>
       )}
-    </>
+    </div>
   );
 
   return (
@@ -321,7 +334,6 @@ export default function ManageMemberDialog({
         identity={identity}
         onClose={onClose}
         busy={saving}
-        footerStart={footerStart}
         footer={
           <>
             <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>Cancel</button>
@@ -381,12 +393,12 @@ export default function ManageMemberDialog({
         {!targetIsOwner && !isVolunteer && (
           <div className={styles.accessBlock}>
             <h3 className={styles.accessTitle}>What {first === 'They' ? 'they' : first} can open</h3>
+            <p className={ck.hint}>Each program starts the way every {roleLabel(role).toLowerCase()} has it.</p>
             <table className={`${ck.table} ${styles.accessTable}`}>
               <thead>
                 <tr>
                   <th scope="col">Program</th>
-                  <th scope="col">As {/^[aeiou]/i.test(roleLabel(role)) ? 'an' : 'a'} {roleLabel(role)}</th>
-                  <th scope="col">For {first === 'They' ? 'them' : first}</th>
+                  <th scope="col">For {who}</th>
                 </tr>
               </thead>
               <tbody>
@@ -402,10 +414,10 @@ export default function ManageMemberDialog({
                     <AccessRow
                       key={a.module}
                       access={a}
-                      value={override(a.module)}
-                      // Barred: no "Turn on" to offer (absent beats disabled) — unless it is on now, so it can be turned off.
+                      who={who}
+                      // Barred: no "On" to offer (absent beats disabled) — unless it is on now, so it can be turned off.
                       editable={canChangeAccess && (!familiesBarred || a.canOpen)}
-                      onChange={v => setOverride(a.module, v)}
+                      onChange={on => setCap(a.module, on)}
                       sentence={sentence}
                       fold={fold}
                     >
@@ -413,19 +425,15 @@ export default function ManageMemberDialog({
                         <>
                           {canChangeAccess && draftOpens('module_tournaments') && (
                             <div className={styles.foldList}>
-                              {TOURNAMENT_CONTROLS.map(c => {
-                                const v = override(c.cap);
-                                return (
-                                  <label key={c.cap} className={styles.foldRow}>
-                                    <span>{c.label}</span>
-                                    <select className={`${ck.select} ${styles.foldSelect}`} value={v} onChange={e => setOverride(c.cap, e.target.value as 'default' | 'on' | 'off')} aria-label={c.label}>
-                                      <option value="default">Role default</option>
-                                      <option value="on">Turn on</option>
-                                      <option value="off">Turn off</option>
-                                    </select>
-                                  </label>
-                                );
-                              })}
+                              {TOURNAMENT_CONTROLS.map(c => (
+                                <label key={c.cap} className={styles.foldRow}>
+                                  <span>
+                                    {c.label}
+                                    {capOn(c.cap) !== roleGives(c.cap) && <span className={styles.changedLine}>Changed for {who}</span>}
+                                  </span>
+                                  <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn(c.cap)} onChange={on => setCap(c.cap, on)} label={c.label} />
+                                </label>
+                              ))}
                             </div>
                           )}
                           {canScopeTournaments && draftOpens('module_tournaments') && (
@@ -469,12 +477,11 @@ export default function ManageMemberDialog({
                       {fold === 'members' && draftOpens('module_members') && (
                         <div className={styles.foldList}>
                           <label className={styles.foldRow}>
-                            <span>Invite and manage members</span>
-                            <select className={`${ck.select} ${styles.foldSelect}`} value={override('manage_members')} onChange={e => setOverride('manage_members', e.target.value as 'default' | 'on' | 'off')} aria-label="Invite and manage members">
-                              <option value="default">Role default</option>
-                              <option value="on">Turn on</option>
-                              <option value="off">Turn off</option>
-                            </select>
+                            <span>
+                              Invite and manage members
+                              {capOn('manage_members') !== roleGives('manage_members') && <span className={styles.changedLine}>Changed for {who}</span>}
+                            </span>
+                            <OnOffSelect className={`${ck.select} ${styles.foldSelect}`} on={capOn('manage_members')} onChange={on => setCap('manage_members', on)} label="Invite and manage members" />
                           </label>
                         </div>
                       )}
@@ -486,6 +493,8 @@ export default function ManageMemberDialog({
             <p className={ck.hint}>Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p>
           </div>
         )}
+
+        {doors}
       </KitDialog>
 
       {ask === 'suspend' && (
@@ -557,10 +566,26 @@ export default function ManageMemberDialog({
   );
 }
 
-/** One program row: its role default, the owner's choice, the consequence, and an optional fold. */
+/** On or Off — the access table's one choice (owner, 2026-10-19). */
+function OnOffSelect({ on, onChange, label, className }: {
+  on: boolean;
+  onChange: (on: boolean) => void;
+  label: string;
+  className: string;
+}) {
+  return (
+    <select className={className} value={on ? 'on' : 'off'} onChange={e => onChange(e.target.value === 'on')} aria-label={label}>
+      <option value="on">On</option>
+      <option value="off">Off</option>
+    </select>
+  );
+}
+
+/** One program row: On or Off for this member, marked when it differs from the role, the consequence, and an
+ *  optional fold. */
 function AccessRow({
   access,
-  value,
+  who,
   editable,
   onChange,
   sentence,
@@ -568,14 +593,19 @@ function AccessRow({
   children,
 }: {
   access: ProgramAccess;
-  value: 'default' | 'on' | 'off';
+  who: string;
   editable: boolean;
-  onChange: (v: 'default' | 'on' | 'off') => void;
+  onChange: (on: boolean) => void;
   sentence: string | null;
   fold: string | null;
   children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // The draft's own answer: the role's, unless this member is set otherwise (`override` is null when they match).
+  const on = access.override === null ? access.roleDefault : access.override === 'on';
+  // A read-only row shows the gate's answer; when something besides this member's setting closes it (the plan, the
+  // Families limit), "Changed for" would contradict the "Off" beside it — so it marks only an answer it explains.
+  const changed = access.override !== null && (editable || access.canOpen === on);
   return (
     <>
       <tr>
@@ -586,34 +616,24 @@ function AccessRow({
               <ChevronRight size={14} className={`${styles.foldChevron}${open ? ` ${styles.foldChevronOpen}` : ''}`} aria-hidden />
             </button>
           ) : access.label}
+          {changed && <span className={styles.changedLine}>Changed for {who}</span>}
         </td>
-        <td>{access.roleDefault ? 'Yes' : 'No'}</td>
         <td>
           {editable ? (
-            // The meaningful choice only: a program the role already opens can be turned off, one it
-            // does not can be turned on — never a "Turn on" that changes nothing.
-            <select
-              className={`${ck.select} ${styles.accessSelect}`}
-              value={value === 'on' && access.roleDefault ? 'default' : value === 'off' && !access.roleDefault ? 'default' : value}
-              onChange={e => onChange(e.target.value as 'default' | 'on' | 'off')}
-              aria-label={`${access.label} for this member`}
-            >
-              <option value="default">Role default</option>
-              {access.roleDefault ? <option value="off">Turn off</option> : <option value="on">Turn on</option>}
-            </select>
+            <OnOffSelect className={`${ck.select} ${styles.accessSelect}`} on={on} onChange={onChange} label={`${access.label} for ${who}`} />
           ) : (
-            <span>{access.canOpen ? 'Yes' : 'No'}</span>
+            <span>{access.canOpen ? 'On' : 'Off'}</span>
           )}
         </td>
       </tr>
       {sentence && (
         <tr className={styles.sentenceRow}>
-          <td colSpan={3}>{sentence}</td>
+          <td colSpan={2}>{sentence}</td>
         </tr>
       )}
       {fold && open && (
         <tr className={styles.foldRowWrap}>
-          <td colSpan={3}>{children}</td>
+          <td colSpan={2}>{children}</td>
         </tr>
       )}
     </>

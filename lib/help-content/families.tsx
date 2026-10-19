@@ -38,7 +38,7 @@ const familiesHelp: HelpPageContent = {
           </p>
           <ol>
             <li>Open <strong>Organization &rarr; Members</strong> and open the member.</li>
-            <li>In <strong>What they can open</strong>, set the <strong>Families</strong> row to <strong>Turn on</strong>.</li>
+            <li>In <strong>What they can open</strong>, set the <strong>Families</strong> row to <strong>On</strong>.</li>
           </ol>
           <p>
             A member limited to some teams can&rsquo;t be given Families: a family&rsquo;s record spans

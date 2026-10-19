@@ -168,8 +168,8 @@ export default function KitDialog({
   footer?: ReactNode;
   /** The far-left of the footer. ⚖ ANY SENTENCE IN THE FOOT SITS HERE, LEFT-ALIGNED, never among the buttons
    *  (owner, 2026-10-12, asked twice in a day): a count ("300 slots for 8 teams."), who is told, why the main action
-   *  can't go. Guarded: `tests/unit/kit-dialog-foot-text-guard.test.ts`. Also a destructive door kept away from
-   *  Save (Manage's Suspend…) — though a rare door now ends the body instead (2026-10-09). */
+   *  can't go. Guarded: `tests/unit/kit-dialog-foot-text-guard.test.ts`. Not a rare door: that ends the body
+   *  (2026-10-09; Manage's Suspend / Remove left this slot 2026-10-19). */
   footerStart?: ReactNode;
   /** A record opened from a list: its neighbours, named, and where it sits ("3 of 8"; `positionWide`,
    *  "3 of 8 in U11 Girls", above a phone). `noun` names what steps for a screen reader ("team"). */
