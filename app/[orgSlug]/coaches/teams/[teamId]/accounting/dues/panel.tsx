@@ -38,7 +38,7 @@ import budgetStyles from '../budget/budget.module.css';
 /* The generator's discard guard (owner Q21) — a typed hardship plan is the most expensive typing
    in the hub, and a stray backdrop click used to throw it away silently. */
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
@@ -4683,8 +4683,18 @@ export function PlayerDuesPanel({
           title={editingCreditId ? `Edit ${creditForm.creditType === 'other' ? 'adjustment' : 'credit'}` : 'Add adjustment'}
           subtitle={playerName(selected.player) || undefined}
           busy={creditSaving}
+          footer={<>
+            <QuestionCancel className={styles.btnGhost} />
+            {/* Sentence case beside its neighbours (Phase D) — the button used to change
+                capitalization scheme with its own state. Dead while the typed amount is past
+                the bill (the foreseeable refusal above) — never a live button the server will
+                refuse. */}
+            <button type="submit" form="dues-adjustment-form" className={styles.btnPrimary} disabled={creditSaving || adjustmentOverCeiling}>
+              {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Add adjustment'}
+            </button>
+          </>}
         >
-          <form onSubmit={e => { e.preventDefault(); void saveCredit(); }}>
+          <form id="dues-adjustment-form" onSubmit={e => { e.preventDefault(); void saveCredit(); }}>
             {/* ⚠⚠ THE PICKER IS GONE, NOT SHRUNK (owner rulings R6/R7, 2026-09-07). With
                 contributions recorded as PAYMENTS and fundraiser shares coming from the DRIVE,
                 one kind is left that a coach may type — and a select with one option is a
@@ -4830,17 +4840,7 @@ export function PlayerDuesPanel({
                 </p>
               );
             })()}
-            {creditError && <p className={styles.errorText} role="alert">{creditError}</p>}
-            <div className={styles.modalFooter}>
-              <QuestionCancel className={styles.btnGhost} />
-              {/* Sentence case beside its neighbours (Phase D) — the button used to change
-                  capitalization scheme with its own state. Dead while the typed amount is past
-                  the bill (the foreseeable refusal above) — never a live button the server will
-                  refuse. */}
-              <button type="submit" className={styles.btnPrimary} disabled={creditSaving || adjustmentOverCeiling}>
-                {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Add adjustment'}
-              </button>
-            </div>
+            <QuestionReason className={styles.errorText}>{creditError}</QuestionReason>
           </form>
         </QuestionShell>
       )}

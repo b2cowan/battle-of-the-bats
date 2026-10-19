@@ -4904,47 +4904,15 @@ a.oneChip:hover { border-color: currentColor; }
 @media (min-width: 769px) {
   .windowBody :is(input, select):is(.input, .select) { height: 36px; }
 }
+/* The foot's buttons are the window's own (`footer`, One Window 2b), 44px on a phone in KitDialog's stylesheet. */
 @media (max-width: 768px) {
   .windowBody input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="color"]),
-  .windowBody select,
-  .windowBody .modalFooter :is(button, a) { min-height: var(--tap-min, 44px); }
+  .windowBody select { min-height: var(--tap-min, 44px); }
 }
-/* ⚖ STAGE 2a SHIM — the consumer's own foot strip, until 2b moves its buttons into the window's foot. Allow-listed in
-   `tests/unit/one-window-stage2-guard.test.ts`; this block goes in 2b. The strip is laid out as the window's foot:
-   edge to edge at the window's side padding, pinned to the body's bottom while the body scrolls (`bottom` and the
-   bottom margin hand back the body's own 1rem), and on a phone at the screen's foot even under a short form. While
-   the window asks "Close without saving?" the strip stands down and the window's own foot holds the ask.
-   Edge to edge WITHOUT reaching out of its box (a negative side margin spills its wrapper — the layout check's
-   content-overflow, 2026-10-19): the strip keeps the content's width, and its card and hairline are carried out to
-   the window's edges by side shadows, which take no room and cover the side padding, so text scrolling under the
-   pinned strip never shows beside it. */
-.windowBody .modalFooter {
-  bottom: -1rem;
-  margin: 1.25rem 0 -1rem;
-  padding: 0.85rem 0;
-  box-shadow:
-    calc(-1 * var(--kit-dialog-side)) 1px 0 var(--card-bg),
-    var(--kit-dialog-side) 1px 0 var(--card-bg),
-    calc(-1 * var(--kit-dialog-side)) 0 0 var(--home-line),
-    var(--kit-dialog-side) 0 0 var(--home-line);
-}
-[data-asking] .windowBody .modalFooter { display: none; }
-/* The pinned strip sits OVER the body's last lines, so a field the keyboard reaches scrolls clear of it, not under it
-   (/review 2026-10-19: Tab to New fundraiser's dates at 1280×560 left them under the strip). */
-.windowBody :is(input, select, textarea, button, [tabindex]) { scroll-margin-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
-@media (max-width: 640px) {
-  .windowBody { display: flex; flex-direction: column; min-height: 100%; }
-  .windowBody > :has(> .modalFooter) { flex: 1 0 auto; display: flex; flex-direction: column; }
-  /* On a phone the window's body keeps the home indicator clear in its own bottom padding (KitDialog: `1rem +
-     env(safe-area-inset-bottom)`); the strip hands all of it back and keeps the indicator clear itself, as the
-     portal's full-screen foot did, so nothing scrolls beneath it on a notched phone. */
-  .windowBody .modalFooter {
-    margin-top: auto;
-    bottom: calc(-1rem - env(safe-area-inset-bottom, 0px));
-    margin-bottom: calc(-1rem - env(safe-area-inset-bottom, 0px));
-    padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
-  }
-}
+/* ⚰ THE STAGE 2a SHIM (→ 2026-10-19, One Window 2b): `.windowBody .modalFooter` laid a consumer's own foot strip out
+   as the window's foot — pinned with side shadows, standing down while the window asked, and a `scroll-margin-bottom`
+   so the keyboard never left a field under it. Every coach window's buttons are now the window's `footer`, a sibling
+   of the body rather than a strip over its last lines, so none of it has anything to do. */
 
 /* ⚰ `.editScope` (→ 2026-10-09): the event form's "Apply your changes to:" chooser, which replaced the footer after Save on
    a repeating event. The question moved to the window's pencil, before the form opens (owner ruling 2026-10-09). */
@@ -10024,13 +9992,23 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    over it and sits just above its pinned footer. The in-page sheets at 260 (the lineup builder's,
    the game-day sheets) are untouched: they are not `.modalOverlay`, and they still sit over the pill. */
 @media (max-width: 640px) {
-  body:has(.modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile)) .savePill,
-  body:has([data-coach-window][data-kind="form"]) .savePill {
+  body:has(.modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile)) .savePill {
     z-index: 410;
     /* The form's footer is one tap-floor row inside `.modalFooter`'s 1rem padding and its hairline
-       (measured 78px at 390); the pill clears it by 0.6rem, the gap it keeps above the nav. The one window's foot
-       (0.85rem a side) is 5px shorter, so the pill rides that much higher over a coach window on it. */
+       (measured 78px at 390); the pill clears it by 0.6rem, the gap it keeps above the nav. */
     bottom: calc(var(--tap-min, 44px) + 2rem + 1px + 0.6rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* Over the one window the foot is MEASURED (One Window 2b): the coach shell publishes the top coach window's foot
+     height as `--coach-window-foot` — one row of buttons at rest, taller while it asks "Close without saving?" or gives
+     a refusal's reason — so the pill never covers the ask's Discard (the 2a /review's note). The fallback is the
+     resting one-row foot, which is also where it stays over a window with no foot (it publishes nothing, so the pill
+     never drops over that body's last line). ⚠ Weighed against the `.modalOverlay` rule above, it must win when BOTH match — a coach window over
+     a room (a fundraiser's room, Payees: RoomShell is a `.modalOverlay`) — so its `:has()` carries the window's three
+     marks, the same weight as that rule's, and comes after it (/review 2026-10-19: with two marks the room's fixed
+     offset won and the pill covered the ask's Discard). */
+  body:has([data-kit-dialog][data-coach-window][data-kind="form"]) .savePill {
+    z-index: 410;
+    bottom: calc(var(--coach-window-foot, calc(var(--tap-min, 44px) + 1.7rem + 1px + env(safe-area-inset-bottom, 0px))) + 0.6rem);
   }
 }
 /* Between 641 and 900 every window is a centred card at 400 (its clearance runs to the bar's width since 2026-10-18,

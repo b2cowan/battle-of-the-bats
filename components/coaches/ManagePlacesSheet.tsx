@@ -95,7 +95,8 @@ export default function ManagePlacesSheet({
   }
 
   return (
-    <QuestionShell open onClose={onClose} ariaLabel="Places" title="Places" subtitle="The places your team goes, with what each one carries.">
+    <QuestionShell open onClose={onClose} ariaLabel="Places" title="Places" subtitle="The places your team goes, with what each one carries."
+      footer={<button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>}>
       <div className={`${styles.formBody} ${styles.formBodyTight}`}>
         {notice && <p className={styles.formHint} role="status">{notice}</p>}
         {places.length === 0 ? (
@@ -123,10 +124,8 @@ export default function ManagePlacesSheet({
             })}
           </div>
         )}
+        {/* A row's edit or remove failed: said under the rows it is about, not in the foot beside Done. */}
         {error && <p className={styles.errorText} role="alert">{error}</p>}
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>
-        </div>
       </div>
     </QuestionShell>
   );

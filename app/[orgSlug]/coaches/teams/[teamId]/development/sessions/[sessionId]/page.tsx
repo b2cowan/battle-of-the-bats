@@ -1086,8 +1086,15 @@ function SessionReviewDialog({
     return parts;
   };
   return (
-    <QuestionShell open onClose={onClose} ariaLabel="Review this session" title="Review this session" subtitle={plan ? `${title} · ${plan}` : title} busy={busy} scroll wide>
-      <div className={`${styles.formBody} ${styles.scrollPane}`}>
+    <QuestionShell open onClose={onClose} ariaLabel="Review this session" title="Review this session" subtitle={plan ? `${title} · ${plan}` : title} busy={busy} wide
+      // ⚠ BOTH WAYS OUT WAIT FOR THE WRITE (/review 2026-09-23). Ungated, a coach could answer for
+      // their last outstanding player and leave on the same breath; a write that then failed took
+      // the session's completeness with it, silently.
+      footer={<>
+        <button type="button" className={styles.btnSecondary} disabled={working} onClick={onBack}>Done — back to Sessions</button>
+        <button type="button" className={styles.btnPrimary} disabled={working} onClick={onClose}>Keep recording</button>
+      </>}>
+      <div className={styles.formBody}>
         {rows.length === 0 ? (
           <p className={styles.detailPlaceholder}>Nothing recorded yet.</p>
         ) : (
@@ -1146,13 +1153,6 @@ function SessionReviewDialog({
           <b>Not assessed</b> — you said why (absent, hurt); nothing left to do. <b>Not recorded</b> — nothing yet.
           {canWrite ? ' Tap a name to account for them.' : ''} The counts are read from what you recorded.
         </p>
-      </div>
-      {/* ⚠ BOTH WAYS OUT WAIT FOR THE WRITE (/review 2026-09-23). Ungated, a coach could answer for
-          their last outstanding player and leave on the same breath; a write that then failed took
-          the session's completeness with it, silently. */}
-      <div className={styles.modalFooter}>
-        <button type="button" className={styles.btnSecondary} disabled={working} onClick={onBack}>Done — back to Sessions</button>
-        <button type="button" className={styles.btnPrimary} disabled={working} onClick={onClose}>Keep recording</button>
       </div>
     </QuestionShell>
   );

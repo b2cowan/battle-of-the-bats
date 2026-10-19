@@ -362,18 +362,35 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
         ? `What ${item.itemName} plans`
         : `What ${item.itemName} has actually ${moved}`}
       title={item.itemName}
-      scroll
+      /* ⚠⚠ NEITHER HALF OF THIS PANEL MAY DEAD-END (the 2026-09-04 rule, applied to the panel it
+         was written about a ruling too late — it reached the Months grid's twin panels and not
+         this one, which ended in prose for every role).
+         · ACTUAL: one door, ungated. Transactions is the book of record for every movement, and
+           the rows that have a "thing itself" already open it themselves.
+         · PLAN: the door appears exactly when the lines are NOT links — a writer's lines each
+           open their own budget line, which lands closer to the work than any button, so a
+           button beside them would be a second, worse door to the same screen. */
+      footer={side === 'plan' ? (!canWrite ? (
+        <Link
+          href={moneySectionHref(base, 'budget')}
+          className={shared.btnSecondary}
+          onClick={onClose}
+        >
+          Open the Budget
+        </Link>
+      ) : undefined) : (
+        <Link
+          href={moneySectionHref(base, 'ledger', { view: 'timeline' })}
+          className={shared.btnSecondary}
+          onClick={onClose}
+        >
+          Open the Ledger
+        </Link>
+      )}
     >
       <>
         {/* One word carries one line (migration 286), so the plan side has at most one record behind
             its figure: read it once here rather than re-defaulting `item.lines` at every use. */}
-        {/* ⚠⚠ THE SCROLLING CHILD `scroll` WAS ALWAYS PROMISING. `.modalScrollBody` is
-            `display:flex; overflow:hidden` and expects exactly ONE child that scrolls; this panel
-            rendered a bare fragment, so the list was a shrinking flex item inside a clipped box and
-            a row with enough records lost its tail SILENTLY. Nothing failed, nothing logged — the
-            list just ended early. Found while adding the footer, which is what made it visible: a
-            pinned footer needs something to pin against. */}
-        <div className={shared.scrollPane}>
         {side === 'plan' ? (
           <>
             {/* ⚠⚠ WHAT THIS FIGURE IS MADE OF IS ITS SCHEDULE NOW (owner ruling 2026-09-09,
@@ -513,36 +530,6 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
               Every payment counted against this row, on the day it happened — whoever paid it.
             </p>
           </>
-        )}
-        </div>
-        {/* ⚠⚠ NEITHER HALF OF THIS PANEL MAY DEAD-END (the 2026-09-04 rule, applied to the panel it
-            was written about a ruling too late — it reached the Months grid's twin panels and not
-            this one, which ended in prose for every role).
-            · ACTUAL: one door, ungated. Transactions is the book of record for every movement, and
-              the rows that have a "thing itself" already open it themselves.
-            · PLAN: the door appears exactly when the lines are NOT links — a writer's lines each
-              open their own budget line, which lands closer to the work than any button, so a
-              button beside them would be a second, worse door to the same screen. */}
-        {side === 'plan' ? (!canWrite && (
-          <div className={shared.modalFooter}>
-            <Link
-              href={moneySectionHref(base, 'budget')}
-              className={shared.btnSecondary}
-              onClick={onClose}
-            >
-              Open the Budget
-            </Link>
-          </div>
-        )) : (
-          <div className={shared.modalFooter}>
-            <Link
-              href={moneySectionHref(base, 'ledger', { view: 'timeline' })}
-              className={shared.btnSecondary}
-              onClick={onClose}
-            >
-              Open the Ledger
-            </Link>
-          </div>
         )}
       </>
     </QuestionShell>
@@ -1110,45 +1097,40 @@ function DuesBehind({ item, base, onClose }: {
          alone would read identically from any of twelve rows. */
       ariaLabel={`What ${item.itemName} has contributed`}
       title={item.itemName}
-      scroll
+      footer={<>
+        <Link href={moneySectionHref(base, 'dues')} className={shared.btnSecondary} onClick={onClose}>
+          Open Player dues
+        </Link>
+        <Link
+          href={moneySectionHref(base, 'ledger', { view: 'timeline' })}
+          className={shared.btnSecondary}
+          onClick={onClose}
+        >
+          Open the Ledger
+        </Link>
+      </>}
     >
-      <>
-        <div className={shared.scrollPane}>
-          <p className={styles.linesBehindSub}><strong>{fmt(item.actual)}</strong> contributed</p>
-          <ul className={styles.linesBehindList}>
-            {rows.map(r => (
-              <li key={r.label}>
-                <span className={styles.linesBehindRow}>
-                  <span className={styles.linesBehindWho}>
-                    {r.label}
-                    <span className={styles.linesBehindNote}>{r.sub}</span>
-                  </span>
-                  <span className={styles.linesBehindAmt}>{fmt(r.amount)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          {/* ⚠ THE CASH SENTENCE STAYS AND GETS NO BUTTON. `Cash` is a LENS on this same report, not
-              a screen — a door for it would land the coach back where they already are, which is
-              the "politer face of a dead end" this pass exists to remove rather than re-dress. */}
-          <p className={styles.linesBehindFoot}>
-            Money you have handed back to this family is in none of these — see <strong>Cash</strong> for
-            what your account did.
-          </p>
-        </div>
-        <div className={shared.modalFooter}>
-          <Link href={moneySectionHref(base, 'dues')} className={shared.btnSecondary} onClick={onClose}>
-            Open Player dues
-          </Link>
-          <Link
-            href={moneySectionHref(base, 'ledger', { view: 'timeline' })}
-            className={shared.btnSecondary}
-            onClick={onClose}
-          >
-            Open the Ledger
-          </Link>
-        </div>
-      </>
+      <p className={styles.linesBehindSub}><strong>{fmt(item.actual)}</strong> contributed</p>
+      <ul className={styles.linesBehindList}>
+        {rows.map(r => (
+          <li key={r.label}>
+            <span className={styles.linesBehindRow}>
+              <span className={styles.linesBehindWho}>
+                {r.label}
+                <span className={styles.linesBehindNote}>{r.sub}</span>
+              </span>
+              <span className={styles.linesBehindAmt}>{fmt(r.amount)}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {/* ⚠ THE CASH SENTENCE STAYS AND GETS NO BUTTON. `Cash` is a LENS on this same report, not
+          a screen — a door for it would land the coach back where they already are, which is
+          the "politer face of a dead end" this pass exists to remove rather than re-dress. */}
+      <p className={styles.linesBehindFoot}>
+        Money you have handed back to this family is in none of these — see <strong>Cash</strong> for
+        what your account did.
+      </p>
     </QuestionShell>
   );
 }

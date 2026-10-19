@@ -36,7 +36,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import RoomShell, { type RoomTile } from '@/components/coaches/RoomShell';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
 import { useRoomAddress } from '@/components/coaches/useRoomAddress';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
@@ -1008,10 +1008,15 @@ export function FundraisersPanel({
         ariaLabel="New fundraiser"
         title="New fundraiser"
         busy={saving}
-        scroll
         leaveGuard={{ dirty: showCreate && formDirty, tabActive, message: "You haven't created this fundraiser yet. Leave without saving it?" }}
+        footer={<>
+          <QuestionCancel className={styles.btnGhost} />
+          <button type="submit" form="new-fundraiser-form" className={styles.btnPrimary} disabled={saving}>
+            {saving ? 'Creating…' : 'Create'}
+          </button>
+        </>}
       >
-        <form onSubmit={handleCreate}>
+        <form id="new-fundraiser-form" onSubmit={handleCreate}>
           <div className={styles.formGrid}>
             <div className={`${styles.field} ${styles.formGridFull}`}>
               <label className={styles.label}>Fundraiser name *</label>
@@ -1086,13 +1091,7 @@ export function FundraisersPanel({
               />
             </div>
           </div>
-          {formError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{formError}</p>}
-          <div className={styles.modalFooter}>
-            <QuestionCancel className={styles.btnGhost} />
-            <button type="submit" className={styles.btnPrimary} disabled={saving}>
-              {saving ? 'Creating…' : 'Create'}
-            </button>
-          </div>
+          <QuestionReason className={styles.errorText}>{formError}</QuestionReason>
         </form>
       </QuestionShell>
     </div>

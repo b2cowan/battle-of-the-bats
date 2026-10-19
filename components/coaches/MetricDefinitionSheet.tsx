@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import {
   KIND_LABELS, AIM_LABELS, HEADLINE_LABELS, MEASURABLE_AIMS, MEASURABLE_KINDS, UNIT_FIXED_MESSAGE,
@@ -345,6 +345,9 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
     </div>
   );
 
+  // The form is on screen (not loading, not "Metric not found"): only then does the foot have anything to act on.
+  const formShown = !loading && (isNew || !!current);
+
   return (
     <>
       <QuestionShell
@@ -355,15 +358,36 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
         title={title}
         subtitle={retired ? 'Retired. Its saved results stay where they were recorded.' : undefined}
         busy={busy}
-        scroll
         leaveGuard={{ message: 'You have unsaved changes to this definition. Leave without saving them?' }}
+        footerStart={formShown ? (
+          <>
+            <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => setPreviewOpen(true)}>Preview</button>
+            {!isNew && !retired && (
+              <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void setActive(false)}>Retire</button>
+            )}
+            {!isNew && retired && (
+              <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void setActive(true)}>Restore</button>
+            )}
+            {!isNew && !hasRecords && (
+              <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void remove()}>Delete</button>
+            )}
+          </>
+        ) : undefined}
+        footer={formShown ? (
+          <>
+            <QuestionCancel className={shared.btnSecondary} />
+            <button type="submit" form="metric-definition-form" className={shared.btnPrimary} disabled={busy || (!isNew && !dirty)}>
+              {busy ? 'Saving…' : isNew ? 'Save definition' : 'Save changes'}
+            </button>
+          </>
+        ) : undefined}
       >
         {loading ? (
-          <div className={`${shared.formBody} ${shared.scrollPane}`}><p className={shared.loadingState}>Loading this metric…</p></div>
+          <div className={shared.formBody}><p className={shared.loadingState}>Loading this metric…</p></div>
         ) : !isNew && !current ? (
-          <div className={`${shared.formBody} ${shared.scrollPane}`}><p className={shared.errorText} role="alert">{error || 'Metric not found.'}</p></div>
+          <div className={shared.formBody}><p className={shared.errorText} role="alert">{error || 'Metric not found.'}</p></div>
         ) : (
-          <form id="metric-definition-form" className={`${shared.formBody} ${shared.scrollPane} ${css.form}`} onSubmit={e => { e.preventDefault(); void save(); }}>
+          <form id="metric-definition-form" className={`${shared.formBody} ${css.form}`} onSubmit={e => { e.preventDefault(); void save(); }}>
             {field('Kind of metric', 'metric-kind',
               isNew && !fixedKind
                 ? (
@@ -464,33 +488,14 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
               </p>
             )}
 
-            {error && <p className={shared.errorText} role="alert">{error}</p>}
+            <QuestionReason className={shared.errorText}>{error}</QuestionReason>
           </form>
-        )}
-
-        {!loading && (isNew || current) && (
-          <div className={`${shared.modalFooter} ${css.foot}`}>
-            <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => setPreviewOpen(true)}>Preview</button>
-            {!isNew && !retired && (
-              <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void setActive(false)}>Retire</button>
-            )}
-            {!isNew && retired && (
-              <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void setActive(true)}>Restore</button>
-            )}
-            {!isNew && !hasRecords && (
-              <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void remove()}>Delete</button>
-            )}
-            <span className={css.footSpacer} />
-            <QuestionCancel className={shared.btnSecondary} />
-            <button type="submit" form="metric-definition-form" className={shared.btnPrimary} disabled={busy || (!isNew && !dirty)}>
-              {busy ? 'Saving…' : isNew ? 'Save definition' : 'Save changes'}
-            </button>
-          </div>
         )}
       </QuestionShell>
 
       {/* The full example, over the sheet: what a result reads like, and how the reports describe a change. */}
-      <QuestionShell open={previewOpen} onClose={() => setPreviewOpen(false)} ariaLabel="What a result of this metric reads like" title="What the coach records" subtitle={draft.name.trim() || (isTest ? 'Your test' : 'Your skill')}>
+      <QuestionShell open={previewOpen} onClose={() => setPreviewOpen(false)} ariaLabel="What a result of this metric reads like" title="What the coach records" subtitle={draft.name.trim() || (isTest ? 'Your test' : 'Your skill')}
+        footer={<button type="button" className={shared.btnSecondary} onClick={() => setPreviewOpen(false)}>Close</button>}>
         <div className={`${shared.formBody} ${css.preview}`}>
           {isTest ? (
             <>
@@ -526,9 +531,6 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
               <p className={css.meta}>An example date · entered by you · in a session</p>
             </>
           )}
-        </div>
-        <div className={shared.modalFooter}>
-          <button type="button" className={shared.btnSecondary} onClick={() => setPreviewOpen(false)}>Close</button>
         </div>
       </QuestionShell>
     </>

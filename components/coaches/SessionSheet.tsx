@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
@@ -171,11 +171,20 @@ export default function SessionSheet({
 
   return (
     <>
-      <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} busy={busy} scroll wide>
+      <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} busy={busy} wide
+        footerStart={mode === 'change' && onDelete ? (
+          <button type="button" className={styles.btnGhost} disabled={busy} onClick={onDelete}>Delete session</button>
+        ) : undefined}
+        footer={<>
+          <QuestionCancel className={styles.btnSecondary} />
+          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => void submit()}>
+            {busy ? 'Saving…' : mode === 'start' ? 'Start recording' : 'Save changes'}
+          </button>
+        </>}>
         {/* Four plain labelled groups on the sheet's white — the definition sheet's shape, and the
             frame's. (The first build boxed each question in a tinted `.formSection`; the frame draws
             no boxes — owner, 2026-09-15.) */}
-        <div className={`${styles.formBody} ${styles.scrollPane}`}>
+        <div className={styles.formBody}>
           {/* ── When? ── */}
           <div className={`${styles.field} ${css.group}`} role="group" aria-labelledby="session-when">
             <span id="session-when" className={styles.label}>When?</span>
@@ -280,17 +289,7 @@ export default function SessionSheet({
               ))}
             </div>
           </div>
-          {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
-        </div>
-        <div className={`${styles.modalFooter} ${css.sheetFoot}`}>
-          {mode === 'change' && onDelete && (
-            <button type="button" className={styles.btnGhost} disabled={busy} onClick={onDelete}>Delete session</button>
-          )}
-          <span className={css.footSpacer} />
-          <QuestionCancel className={styles.btnSecondary} />
-          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => void submit()}>
-            {busy ? 'Saving…' : mode === 'start' ? 'Start recording' : 'Save changes'}
-          </button>
+          <QuestionReason className={styles.errorText}>{localErr || error}</QuestionReason>
         </div>
       </QuestionShell>
       {/* "+ New test…" — the whole definition, stacked over the sheet (stage 1's precedent). */}

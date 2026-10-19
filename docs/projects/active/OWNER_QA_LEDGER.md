@@ -25664,3 +25664,22 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 - Not changed: who can open Families; the coach's Record money for every other door; Registrations' fee tick (one shared write now, behaviour unchanged); nothing in 5c reaches a family.
 <!-- /§345 -->
+
+## §346 ✅ · One window · Stage 2, parts 2a and 2b — **a coach form window is the admin's window: a tap outside does nothing; with words typed, ×, Cancel, Esc and the phone's Back ask in the window's own foot ("Close without saving? What you typed won't be kept." · Keep writing · Discard); its buttons sit in that foot, pinned at the bottom; a refused Save says why beside the button; on a phone, fields and foot buttons are 44px**
+
+**Built:** 2a committed `ada213b3` 2026-10-19; 2b built 2026-10-19 after /simplify and /review (plan "Stage 2b — as built"). Not a re-run of §339 (Stage 1's look).
+
+**Accounts** (password the UAT one): the Premium coach `uat-coach@uat-test-org.local` (Avery Test is on its roster); UAT Rep Club's owner `uat-club-owner@uat-rep-club.local` for group D only. Warm, a computer window about 1,280 wide unless a step says phone. Nothing is saved: Discard or Cancel out.
+
+- **A · Coach, computer (9 steps).** Add goal: buttons in the window's foot; a tap outside does nothing; type → × asks in the foot; Keep writing returns with the words and the cursor; Esc asks, Esc again keeps writing; Discard closes; an empty Add it says "Type the focus area first." beside the button, and typing quiets it. New fundraiser and Add adjustment ask the same way. New payee: an empty Add payee gives its reason beside the button; × with a name typed asks (it never asked before). Start session: × with a note typed asks (it never asked before); a test's definition: Preview at the foot's left, as tall as Cancel and Save.
+- **B · A window inside a window (3).** The event form's "Add … as a place": Esc in the place window asks only there; the event form keeps its typing; then the event form asks too.
+- **C · Phone (5).** Add goal fills the screen, foot buttons and fields 44; ← with words typed asks, the sentence on its own line; an existing goal (or observation, or result) shows Remove · Cancel · Save on ONE row (two rows = an owner call: a rare door can end the body); the observation's Save is the tall button; a ledger line's Close and door at the screen's foot.
+- **D · Dark and the club admin (3).** The ask reads in Dark; Message a family still asks "Close without sending?"; a club money window's refusal still sits beside its button with its mark.
+
+**The walk instrument:** the hub's QA tab, walk A (20 steps, paste-back), https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 (version 18).
+
+- Not changed: any window's words (but the ask's one sentence, 2a), what a window does, its width; the hand-built coach windows (2c / 2d) and the admin's forms (2e).
+- Changed during the walk (owner, 2026-10-19, using 2b): the ask's Discard is the red-tinted danger button (two outlined buttons went unnoticed); the walk ran on it.
+
+**✅ PASSED 2026-10-19, 20 of 20** (owner paste-back: "Ticked 20 of 20. Verdict: passes", no notes). C3 settles the Remove row: one row at 390. **§346 CLOSED.**
+<!-- /§346 -->

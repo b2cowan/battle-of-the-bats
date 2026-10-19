@@ -25,7 +25,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import styles from '../../../../coaches.module.css';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -624,8 +624,14 @@ export function ArrivalQuestion({
       title="Edit cheque"
       busy={saving}
       leaveGuard={{ tabActive, message: "You haven't saved this cheque correction. Leave without saving it?" }}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost} />
+        <button type="submit" form="sponsor-arrival-form" className={styles.btnPrimary} disabled={saving || !dirty}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </>}
     >
-      <form onSubmit={save}>
+      <form id="sponsor-arrival-form" onSubmit={save}>
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="arrival-amount">Amount *</label>
@@ -664,13 +670,7 @@ export function ArrivalQuestion({
           <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
             The books entry follows the new figure and date, and every family&apos;s credit from this sponsor is re-figured against the split.
           </p>
-          {error && <p className={`${styles.errorText} ${styles.formGridFull}`}>{error}</p>}
-        </div>
-        <div className={styles.modalFooter}>
-          <QuestionCancel className={styles.btnGhost} />
-          <button type="submit" className={styles.btnPrimary} disabled={saving || !dirty}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
+          <QuestionReason className={`${styles.errorText} ${styles.formGridFull}`}>{error}</QuestionReason>
         </div>
       </form>
     </QuestionShell>
@@ -781,10 +781,21 @@ export function EditSponsorshipSheet({
       ariaLabel={`Edit ${sponsor.name}`}
       title="Edit sponsorship"
       busy={saving}
-      scroll
       leaveGuard={{ tabActive, message: 'You have unsaved changes to this sponsor. Leave without saving them?' }}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost} />
+        <button
+          type="submit"
+          form="sponsor-edit-form"
+          className={styles.btnPrimary}
+          disabled={saving || refused}
+          title={refused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
+        >
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+      </>}
     >
-      <form onSubmit={save}>
+      <form id="sponsor-edit-form" onSubmit={save}>
         <div className={styles.formGrid}>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             {/* "Sponsor", matching the pledge sheet — one field, one name on the sibling forms. */}
@@ -836,18 +847,7 @@ export function EditSponsorshipSheet({
             Who is credited, and how much, is set in the room — under <strong>Credited to players</strong>.
           </p>
         </div>
-        {error && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{error}</p>}
-        <div className={styles.modalFooter}>
-          <QuestionCancel className={styles.btnGhost} />
-          <button
-            type="submit"
-            className={styles.btnPrimary}
-            disabled={saving || refused}
-            title={refused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
-          >
-            {saving ? 'Saving…' : 'Save changes'}
-          </button>
-        </div>
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </form>
     </QuestionShell>
   );

@@ -479,13 +479,11 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
           {/* The phone's sheet (G4): the same four choices, one column, Done — on the one form chrome.
               Each change already rides the address; Done only closes it onto the chart. */}
           {report === 'progress' && player && metric && (
-            <QuestionShell open={sheetShown} onClose={() => setSheetOpen(false)} ariaLabel="Change what Player progress shows" title="Player progress">
+            <QuestionShell open={sheetShown} onClose={() => setSheetOpen(false)} ariaLabel="Change what Player progress shows" title="Player progress"
+              footer={<button type="button" className="btn btn-lime" onClick={() => setSheetOpen(false)}>Done</button>}>
               <div className={styles.devReportSheetFields}>
                 {progressFields('progress-sheet')}
                 <p className={styles.formHint}>Roster order. A skill has no Show or Compare; a range test no Show.</p>
-              </div>
-              <div className={styles.modalFooter}>
-                <button type="button" className={`btn btn-lime ${styles.tapFloor}`} onClick={() => setSheetOpen(false)}>Done</button>
               </div>
             </QuestionShell>
           )}

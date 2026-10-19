@@ -85,31 +85,27 @@ export default function LedgerLineWindow({ row, base, open, onClose }: {
   const title = when ? `${row.description} · ${when}` : row.description;
 
   return (
-    <QuestionShell open={open} onClose={onClose} ariaLabel={title} title={title}>
-      <>
-        <div className={shared.scrollPane}>
-          <LedgerLineRead
-            facts={[
-              ['Amount', amount],
-              row.categoryName ? ['Category', row.categoryName] : null,
-              row.itemName ? ['Item', row.itemName] : null,
-              whoFact(row),
-              row.paidHow ? ['How it was paid', row.paidHow] : null,
-              [row.scheduled ? 'Due' : row.datedWhenRecorded ? 'Recorded on' : 'On', when ?? 'No date'],
-              statusFact(row),
-            ]}
-            where={whereSentence(row, door ? tab : null)}
-          />
-        </div>
-        <div className={shared.modalFooter}>
-          <button type="button" className={shared.btnSecondary} onClick={onClose}>Close</button>
-          {door && (
-            <Link href={door.href} className={shared.btnSecondary} onClick={onClose}>
-              {door.label} <ChevronRight size={14} aria-hidden />
-            </Link>
-          )}
-        </div>
-      </>
+    <QuestionShell open={open} onClose={onClose} ariaLabel={title} title={title}
+      footer={<>
+        <button type="button" className={shared.btnSecondary} onClick={onClose}>Close</button>
+        {door && (
+          <Link href={door.href} className={shared.btnSecondary} onClick={onClose}>
+            {door.label} <ChevronRight size={14} aria-hidden />
+          </Link>
+        )}
+      </>}>
+      <LedgerLineRead
+        facts={[
+          ['Amount', amount],
+          row.categoryName ? ['Category', row.categoryName] : null,
+          row.itemName ? ['Item', row.itemName] : null,
+          whoFact(row),
+          row.paidHow ? ['How it was paid', row.paidHow] : null,
+          [row.scheduled ? 'Due' : row.datedWhenRecorded ? 'Recorded on' : 'On', when ?? 'No date'],
+          statusFact(row),
+        ]}
+        where={whereSentence(row, door ? tab : null)}
+      />
     </QuestionShell>
   );
 }

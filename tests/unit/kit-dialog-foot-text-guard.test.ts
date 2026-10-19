@@ -14,8 +14,8 @@ import { cssRule, readCode, readSource, stripComments } from './_source-code.ts'
  * `margin-right: auto` pushes inside that group, not across the foot. The window's left is `footerStart`.
  *
  * So no KitDialog's `footer` carries a text element, written inline or through the `const` it names. A button's own
- * label (a `<span>` inside a `<button>`) is the button's, not a sentence. The coaches portal's windows are not
- * KitDialogs and already put a note on the left (a spacer before the buttons, or a line of its own above them).
+ * label (a `<span>` inside a `<button>`) is the button's, not a sentence. Since One Window Stage 2b (2026-10-19) the
+ * coaches portal's form shell, `QuestionShell`, hands its `footer` straight to KitDialog, so its callers are read too.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -49,7 +49,7 @@ function balanced(src: string, at: number, open: string, close: string): string 
  */
 function kitDialogFooters(code: string, where = 'the source'): string[] {
   const out: string[] = [];
-  for (const tag of code.matchAll(/<KitDialog\b/g)) {
+  for (const tag of code.matchAll(/<(?:KitDialog|QuestionShell)\b/g)) {
     // Walk the opening tag's attributes at brace depth 0 until it ends (`>` or `/>`).
     let i = tag.index + tag[0].length;
     for (; i < code.length; i++) {
@@ -60,10 +60,11 @@ function kitDialogFooters(code: string, where = 'the source'): string[] {
         if (/\sfooter=$/.test(code.slice(Math.max(0, i - 8), i))) {
           let body = expr;
           for (const id of new Set([...expr.matchAll(/\b([a-z]\w*)\b/g)].map(m => m[1]))) {
-            const def = new RegExp(`const ${id}\\s*=\\s*([(<])`).exec(code);
+            // Only a const that holds MARKUP: a flag or a figure the footer names (`disabled={overCeiling}`) is not foot.
+            const def = new RegExp(`const ${id}\\s*=\\s*(\\(\\s*<|<)`).exec(code);
             if (!def) continue;
-            const at = def.index + def[0].length - 1;
-            body += def[1] === '(' ? balanced(code, at, '(', ')') : code.slice(at, code.indexOf(';\n', at) + 1 || undefined);
+            const at = def.index + def[0].length - def[1].length;
+            body += def[1] !== '<' ? balanced(code, at, '(', ')') : code.slice(at, code.indexOf(';\n', at) + 1 || undefined);
           }
           out.push(body);
         }
@@ -89,6 +90,8 @@ function kitDialogFooters(code: string, where = 'the source'): string[] {
 function sentenceIn(footer: string): string | null {
   const actions = footer
     .replace(/<button\b[\s\S]*?<\/button>/g, '')
+    // The window's Cancel is a button (KitDialog's `DialogCancel`, the coach shell's `QuestionCancel`).
+    .replace(/<(DialogCancel|QuestionCancel)\b[^>]*?\/>|<(DialogCancel|QuestionCancel)\b[\s\S]*?<\/\2>/g, '')
     .replace(/<(Link|a)\b[\s\S]*?<\/\1>/g, '');
   const element = /<(span|p|small|strong|b|em|label|h[1-6]|li)\b[^>]*>/.exec(actions);
   if (element) return element[0];
@@ -128,13 +131,13 @@ describe('a sentence in a window\'s foot sits at its left (owner, 2026-10-12)', 
     assert.throws(() => kitDialogFooters(`<KitDialog footer={'{'} title="t">`, 'probe.tsx'), /probe\.tsx: a brace on a <KitDialog> tag never closes/);
   });
 
-  it('no KitDialog carries a sentence in its `footer` — it goes in `footerStart`', () => {
+  it('no KitDialog (or the coach shell over it) carries a sentence in its `footer` — it goes in `footerStart`', () => {
     const offenders: string[] = [];
     let footers = 0;
     for (const dir of ['app', 'components']) {
       for (const file of walk(path.join(ROOT, dir))) {
         const src = readFileSync(file, 'utf8');
-        if (!src.includes('<KitDialog')) continue;
+        if (!src.includes('<KitDialog') && !src.includes('<QuestionShell')) continue;
         const code = stripComments(src.replace(/\r\n/g, '\n'));
         const rel = path.relative(ROOT, file).split(path.sep).join('/');
         for (const footer of kitDialogFooters(code, rel)) {
@@ -144,7 +147,7 @@ describe('a sentence in a window\'s foot sits at its left (owner, 2026-10-12)', 
         }
       }
     }
-    assert.ok(footers > 40, `the scan found only ${footers} KitDialog footers — it has stopped reading them`);
+    assert.ok(footers > 70, `the scan found only ${footers} window footers — it has stopped reading them`);
     assert.deepEqual(offenders, [], 'a sentence in a window\'s foot goes in `footerStart`, at the left — never among the buttons');
   });
 });

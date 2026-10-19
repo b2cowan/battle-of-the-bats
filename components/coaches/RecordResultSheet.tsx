@@ -1,6 +1,6 @@
 'use client';
 import { useId, useState } from 'react';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
 import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
 import { describeHeadline, type SessionResult } from '@/lib/measurable-series';
@@ -112,8 +112,13 @@ export default function RecordResultSheet({
   const title = editing ? 'Edit the result' : 'Record a result';
   return (
     <>
-      <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={`${title} — ${playerName}`} title={title} subtitle={`${playerName} · outside a session`} busy={busy}>
-        <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => { e.preventDefault(); submit(); }}>
+      <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={`${title} — ${playerName}`} title={title} subtitle={`${playerName} · outside a session`} busy={busy}
+        footerStart={editing && onRemove ? <SheetRemoveButton label="Remove result" busy={busy} onRemove={onRemove} /> : undefined}
+        footer={<>
+          <QuestionCancel className={styles.btnSecondary} />
+          <button type="submit" form="record-result-form" className={styles.btnPrimary} disabled={busy || !type}>{busy ? 'Saving…' : editing ? 'Save' : 'Save result'}</button>
+        </>}>
+        <form id="record-result-form" className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => { e.preventDefault(); submit(); }}>
           <div className={styles.formGrid}>
             {/* A div + label htmlFor, not a wrapping label — see `useNewMetricDoor`. */}
             <div className={styles.field}>
@@ -164,12 +169,7 @@ export default function RecordResultSheet({
             {enteredBy && editing ? `Entered by ${enteredBy} · ` : ''}
             Outside a session — it reads exactly as a session’s result would: the best attempt leads, every attempt is kept.
           </p>
-          {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
-          <div className={styles.modalFooter}>
-            {editing && onRemove && <SheetRemoveButton label="Remove result" busy={busy} onRemove={onRemove} />}
-            <QuestionCancel className={styles.btnSecondary} />
-            <button type="submit" className={styles.btnPrimary} disabled={busy || !type}>{busy ? 'Saving…' : editing ? 'Save' : 'Save result'}</button>
-          </div>
+          <QuestionReason className={styles.errorText}>{localErr || error}</QuestionReason>
         </form>
       </QuestionShell>
       {/* "+ New test…" — stacked over the sheet, OUTSIDE its form (see `useNewMetricDoor`), fixed to

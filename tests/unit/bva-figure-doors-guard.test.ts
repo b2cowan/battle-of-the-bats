@@ -329,12 +329,12 @@ test('the statement panel does not dead-end either — every figure it opens has
      surfaces it governs, which is how the statement went a ruling without it. */
   assert.match(
     panel,
-    /side === 'plan' \? \(!canWrite && \(\s*<div className={shared\.modalFooter}>/,
+    /footer=\{side === 'plan' \? \(!canWrite \? \(\s*<Link\s+href=\{moneySectionHref\(base, 'budget'\)\}/,
     'The statement\'s PLAN panel has lost its read-only door. Its lines are links only for a coach '
     + 'who can write, so without it an assistant opens the panel, reads it, and can go nowhere.',
   );
   assert.ok(
-    !/side === 'plan' \? \((?<![!\w])canWrite && /.test(panel),
+    !/side === 'plan' \? \((?<![!\w])canWrite (&&|\?) /.test(panel),
     'The statement\'s plan panel is offering its budget door to a coach who can WRITE. Their lines '
     + 'already open the exact budget line; a button beside them is a second door to the same screen '
     + 'that lands further from the work.',
@@ -419,20 +419,18 @@ test('an entry that brought no money in is not counted as a payment', () => {
 });
 
 /**
- * **A DIALOG THAT OPTS INTO THE SCROLLING RECIPE MUST NAME THE PART THAT SCROLLS.**
+ * **A STATEMENT PANEL'S LIST MUST NEVER LOSE ITS TAIL.**
  *
  * `.modalScrollBody` is `display:flex; overflow:hidden` and expects one child that scrolls. Both
- * statement panels passed `scroll` and rendered a bare fragment, so no child matched: the list was
+ * statement panels once passed `scroll` and rendered a bare fragment, so no child matched: the list was
  * a shrinking flex item inside a clipped box, and a row with enough records lost its tail with no
- * error anywhere. It stayed invisible because the panels people opened were short.
+ * error anywhere. Since One Window Stage 2b (2026-10-19) the panels stand on the one window, whose body
+ * scrolls under its pinned head and foot, and the recipe is gone — so neither panel may bring it back.
  */
-test('the statement panels name a scrolling pane for the recipe they opted into', () => {
-  const opens = (panel.match(/scroll\s*\n?\s*>/g) ?? []).length;
-  const panes = (panel.match(/shared\.scrollPane/g) ?? []).length;
-  assert.ok(
-    panes >= opens && panes > 0,
-    `${opens} panel(s) here ask QuestionShell for the scrolling recipe and only ${panes} name a `
-    + 'pane for it. A dialog that opts in without one clips its own content silently — nothing '
-    + 'throws, nothing logs, the list simply ends early.',
-  );
+test('the statement panels stand on the one window\'s scrolling body, not the old clipping recipe', () => {
+  const opens = (panel.match(/<QuestionShell\b/g) ?? []).length;
+  assert.ok(opens >= 2, 'the statement panels are QuestionShell windows');
+  assert.doesNotMatch(panel, /modalScrollBody|\n\s+scroll\n/,
+    'A statement panel asks for the old scrolling recipe again. Its frame clips; a list without the one '
+    + 'child it expects ends early, silently.');
 });

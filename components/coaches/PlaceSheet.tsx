@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import QuestionShell, { QuestionCancel } from './QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from './QuestionShell';
 import { PLACE_NAME_MAX, PLACE_ADDRESS_MAX, PLACE_FIELD_MAX, PLACE_NOTE_MAX } from '@/lib/coach-places';
 import { fieldNounFor } from '@/lib/sports';
 import type { RepTeamPlace } from '@/lib/types';
@@ -83,8 +83,14 @@ export default function PlaceSheet({
   }
 
   return (
-    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} subtitle={editing?.name} busy={busy}>
-      <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={submit}>
+    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} subtitle={editing?.name} busy={busy}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost} />
+        <button type="submit" form="place-sheet-form" className={styles.btnPrimary} disabled={busy || !name.trim()}>
+          {busy ? 'Saving…' : editing ? 'Save changes' : 'Add place'}
+        </button>
+      </>}>
+      <form id="place-sheet-form" className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={submit}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="place-name">Name *</label>
           <input id="place-name" className={styles.input} value={name} maxLength={PLACE_NAME_MAX} autoFocus
@@ -118,13 +124,7 @@ export default function PlaceSheet({
         {offer && (
           <p className={styles.formHint}>Their name and address follow this edit; past events keep what they had, and each game keeps its own diamond.</p>
         )}
-        {error && <p className={styles.errorText} role="alert">{error}</p>}
-        <div className={styles.modalFooter}>
-          <QuestionCancel className={styles.btnGhost} />
-          <button type="submit" className={styles.btnPrimary} disabled={busy || !name.trim()}>
-            {busy ? 'Saving…' : editing ? 'Save changes' : 'Add place'}
-          </button>
-        </div>
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </form>
     </QuestionShell>
   );

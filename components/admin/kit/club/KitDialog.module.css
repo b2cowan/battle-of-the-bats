@@ -199,6 +199,13 @@
   border-top: 1px solid var(--home-line);
 }
 .footStart { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-right: auto; }
+/* A coach window's door at the left stands as tall as its buttons at the right at a desk (a quiet Preview or Remove
+   beside Save — One Window 2b: the coach's old foot strip stretched every button to one height, and a ghost button
+   alone measured 26.5 to Save's 34). A floor, not a stretch: a refusal that wraps beside it must not grow it (/review).
+   A touch width has its own 44 floor below. */
+@media (min-width: 769px) {
+  .panel[data-coach-window] .footStart > :is(button, a) { min-height: 34px; }
+}
 .footEnd { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; justify-content: flex-end; }
 
 /* Why the button was refused, beside it (Ask 11, 2026-10-08): between the foot's two ends at a desk, a line above
@@ -217,6 +224,9 @@
 }
 @media (max-width: 640px) {
   .footReason { order: -1; flex-basis: 100%; }
+  /* The buttons' group takes the rest of the row, still right-aligned, so a button that grows can fill it (the coach's
+     observation sheet: "Save & next player" and Save share the row at 56px, One Window 2b). No admin button grows. */
+  .footEnd { flex: 1 1 auto; }
 }
 
 /* Closing with words typed (`dirty`, One Window Q7): the ask's one sentence at the foot's left, Keep writing and

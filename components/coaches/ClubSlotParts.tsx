@@ -36,7 +36,7 @@
  */
 import { useEffect, useState } from 'react';
 import { ClipboardList, DollarSign, LogIn, Undo2 } from 'lucide-react';
-import QuestionShell from './QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from './QuestionShell';
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import own from './ClubSlot.module.css';
@@ -234,7 +234,16 @@ export function HandBackQuestion({ orgSlug, teamId, eventId, onClose, onDone }: 
   }
 
   return (
-    <QuestionShell open onClose={onClose} ariaLabel={SCHEDULE_WORDS.handBackQuestion} title={SCHEDULE_WORDS.handBackQuestion} busy={busy}>
+    <QuestionShell open onClose={onClose} ariaLabel={SCHEDULE_WORDS.handBackQuestion} title={SCHEDULE_WORDS.handBackQuestion} busy={busy}
+      // The buttons arrive with the question: nothing to answer while it loads, or when it couldn't (the X closes).
+      footer={choices ? (
+        <>
+          <QuestionCancel className={styles.btnGhost}>{C.keepIt}</QuestionCancel>
+          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>
+            {busy ? (asking ? H.asking : C.handingBack) : asking ? H.askButton : C.handBack}
+          </button>
+        </>
+      ) : undefined}>
       <div className={`${styles.formBody} ${own.questionBody}`}>
         <p className={own.what}>{SCHEDULE_WORDS.handBackWhat}</p>
         {!choices && !error && <LoadingState inline label={C.loadingPractices} />}
@@ -248,17 +257,8 @@ export function HandBackQuestion({ orgSlug, teamId, eventId, onClose, onDone }: 
             </span>
           </label>
         )}
-        {error && <p className={styles.errorText} role="alert">{error}</p>}
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </div>
-      {/* The buttons arrive with the question: nothing to answer while it loads, or when it couldn't (the X closes). */}
-      {choices && (
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{C.keepIt}</button>
-          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>
-            {busy ? (asking ? H.asking : C.handingBack) : asking ? H.askButton : C.handBack}
-          </button>
-        </div>
-      )}
     </QuestionShell>
   );
 }
@@ -286,14 +286,14 @@ export function WithdrawAskQuestion({ orgSlug, teamId, eventId, count, late = fa
     }
   }
   return (
-    <QuestionShell open onClose={onClose} ariaLabel={H.withdrawQuestion} title={H.withdrawQuestion} busy={busy}>
+    <QuestionShell open onClose={onClose} ariaLabel={H.withdrawQuestion} title={H.withdrawQuestion} busy={busy}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost}>{H.withdrawKeep}</QuestionCancel>
+        <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>{busy ? H.withdrawing : H.withdrawConfirm}</button>
+      </>}>
       <div className={`${styles.formBody} ${own.questionBody}`}>
         <p className={own.what}>{H.withdrawWhat(count, late)}</p>
-        {error && <p className={styles.errorText} role="alert">{error}</p>}
-      </div>
-      <div className={styles.modalFooter}>
-        <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{H.withdrawKeep}</button>
-        <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>{busy ? H.withdrawing : H.withdrawConfirm}</button>
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </div>
     </QuestionShell>
   );
@@ -341,22 +341,22 @@ export function TakeBackQuestion({ orgSlug, teamId, eventId, onClose, onDone }: 
   }
 
   return (
-    <QuestionShell open onClose={onClose} ariaLabel={H.takeBackQuestion} title={H.takeBackQuestion} busy={busy}>
+    <QuestionShell open onClose={onClose} ariaLabel={H.takeBackQuestion} title={H.takeBackQuestion} busy={busy}
+      footer={choices ? (
+        <>
+          <QuestionCancel className={styles.btnGhost}>{H.takeBackKeep}</QuestionCancel>
+          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>
+            {busy ? H.takingBack : H.takeBackConfirm}
+          </button>
+        </>
+      ) : undefined}>
       <div className={`${styles.formBody} ${own.questionBody}`}>
         <p className={own.what}>{H.takeBackLead}</p>
         {!choices && !error && <LoadingState inline label={C.loadingPractices} />}
         {choices && <ScopeRows name="take-back-scope" label={H.takeBackQuestion} reach={choices} scope={scope} onScope={setScope} />}
         {choices?.left && <p className={own.left}>{choices.left}</p>}
-        {error && <p className={styles.errorText} role="alert">{error}</p>}
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </div>
-      {choices && (
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{H.takeBackKeep}</button>
-          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>
-            {busy ? H.takingBack : H.takeBackConfirm}
-          </button>
-        </div>
-      )}
     </QuestionShell>
   );
 }
@@ -400,7 +400,13 @@ export function LateAskQuestion({ orgSlug, teamId, eventId, onClose, onDone }: {
   }
 
   return (
-    <QuestionShell open onClose={onClose} ariaLabel={H.lateQuestion} title={H.lateQuestion} busy={busy}>
+    <QuestionShell open onClose={onClose} ariaLabel={H.lateQuestion} title={H.lateQuestion} busy={busy}
+      footer={offer ? (
+        <>
+          <QuestionCancel className={styles.btnGhost}>{H.lateCancel}</QuestionCancel>
+          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>{busy ? H.asking : H.askButton}</button>
+        </>
+      ) : undefined}>
       <div className={`${styles.formBody} ${own.questionBody}`}>
         {!offer && !error && <LoadingState inline label={H.lateLoading} />}
         {offer && (
@@ -414,14 +420,8 @@ export function LateAskQuestion({ orgSlug, teamId, eventId, onClose, onDone }: {
             </dl>
           </>
         )}
-        {error && <p className={styles.errorText} role="alert">{error}</p>}
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </div>
-      {offer && (
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{H.lateCancel}</button>
-          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>{busy ? H.asking : H.askButton}</button>
-        </div>
-      )}
     </QuestionShell>
   );
 }

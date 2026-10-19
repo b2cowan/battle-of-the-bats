@@ -19,7 +19,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { CoachCard } from '@/components/coaches/kit';
-import QuestionShell from './QuestionShell';
+import QuestionShell, { QuestionReason } from './QuestionShell';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './CoachClubArrivalCard.module.css';
 import own from './ClubSlot.module.css';
@@ -110,8 +110,19 @@ function ReviewWindow({ review: r, url, onClose, onAnswered }: { review: Review;
 
   const payments = r.bill?.installments ?? [];
   return (
-    <QuestionShell open onClose={onClose} dirty={typed} ariaLabel={r.scheduleName} title={r.scheduleName} subtitle={C.reviewEyebrow} busy={busy} scroll wide>
-      <div className={`${styles.formBody} ${styles.scrollPane}`}>
+    <QuestionShell open onClose={onClose} dirty={typed} ariaLabel={r.scheduleName} title={r.scheduleName} subtitle={C.reviewEyebrow} busy={busy} wide
+      footer={asking ? (
+        <>
+          <button type="button" className={styles.btnGhost} onClick={() => setAsking(false)} disabled={busy}>{C.keepIt}</button>
+          <button type="button" className={styles.btnPrimary} onClick={() => void answer('ask_for_change')} disabled={busy}>{C.askSend}</button>
+        </>
+      ) : (
+        <>
+          <button type="button" className={styles.btnSecondary} onClick={() => setAsking(true)} disabled={busy}>{C.askForChange}</button>
+          <button type="button" className={styles.btnPrimary} onClick={() => void answer('looks_good')} disabled={busy}>{C.looksGood}</button>
+        </>
+      )}>
+      <div className={styles.formBody}>
         <div className={`${styles.infoBanner} ${styles.sourceNote} ${own.from}`}>
           <span>{C.reviewFrom} · <strong>{r.scheduleName}</strong>{r.replyBy ? ` · ${C.replyByWords(formatShortWeekdayDate(r.replyBy))}` : ''}</span>
         </div>
@@ -161,20 +172,7 @@ function ReviewWindow({ review: r, url, onClose, onAnswered }: { review: Review;
               onChange={e => setWords(e.target.value)} autoFocus />
           </label>
         )}
-        {error && <p className={styles.errorText} role="alert">{error}</p>}
-      </div>
-      <div className={styles.modalFooter}>
-        {asking ? (
-          <>
-            <button type="button" className={styles.btnGhost} onClick={() => setAsking(false)} disabled={busy}>{C.keepIt}</button>
-            <button type="button" className={styles.btnPrimary} onClick={() => void answer('ask_for_change')} disabled={busy}>{C.askSend}</button>
-          </>
-        ) : (
-          <>
-            <button type="button" className={styles.btnSecondary} onClick={() => setAsking(true)} disabled={busy}>{C.askForChange}</button>
-            <button type="button" className={styles.btnPrimary} onClick={() => void answer('looks_good')} disabled={busy}>{C.looksGood}</button>
-          </>
-        )}
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </div>
     </QuestionShell>
   );

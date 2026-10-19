@@ -247,10 +247,13 @@ describe('E3 — the dialog docks its foot and turns the select into answers', (
    */
   it('the foot docks by stretching the form in the component\'s OWN module, not with the shell\'s scroll variant', () => {
     assert.doesNotMatch(dialog, /<QuestionShell[^>]*\sscroll\b/, 'the variant that spilled 24px at all four widths');
-    assert.ok(dialog.includes('${css.phoneForm}') && dialog.includes('${css.phoneScroll}'), 'the form and its fields carry this module\'s classes');
-    assert.match(css, /@media \(max-width: 640px\)[\s\S]*\.phoneForm \{[^}]*flex: 1 1 auto/, 'the form stretches, ≤640 only');
-    assert.match(css, /\.phoneScroll \{[^}]*overflow-y: auto/, 'and the fields are the scroller');
-    assert.ok(!/\.phone(Form|Scroll) \{[^}]*margin-inline: -/.test(css), 'and neither bleeds by a guessed gutter');
+    // ⚖ One Window Stage 2b (2026-10-19): the foot is the window's own (`footer`, the submit naming its form), pinned
+    // under a body that scrolls — the stretched form that docked it (`.phoneForm` / `.phoneScroll`) went with it.
+    assert.match(dialog, /footer=\{<>/, 'the foot is the window\'s');
+    assert.match(dialog, /<button type="submit" form="record-observation-form"/);
+    assert.match(dialog, /<form id="record-observation-form"/);
+    assert.doesNotMatch(dialog, /className=\{[^}]*modalFooter/, 'no foot strip in the body');
+    assert.ok(!/\.phone(Form|Scroll) \{/.test(css), 'and nothing stretches the form any more');
     assert.ok(!dialog.includes('position: fixed'), 'nothing here hand-rolls a docked foot');
   });
 

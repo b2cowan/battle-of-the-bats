@@ -67,6 +67,12 @@ test('the stylesheet still declares scrolling children for the recipe, including
   assert.ok(SHAPES.length >= 2, 'the recipe lost its named shapes');
 });
 
+test('the coach form shell no longer offers the recipe: its body scrolls, and no caller asks for `scroll`', () => {
+  const shellSrc = codeOnly(readFileSync(join(ROOT, 'components/coaches/QuestionShell.tsx'), 'utf8'));
+  assert.doesNotMatch(shellSrc, /modalScrollBody|\bscroll\?: boolean/, 'the shell applies the recipe again');
+  // Every caller's props are parsed for `scroll` in one-window-stage2-guard ("the no-op `scroll` prop is gone").
+});
+
 test('every dialog on the scrolling recipe names one of its scrolling children', () => {
   const offenders: string[] = [];
   for (const root of SCAN_ROOTS) {
@@ -75,12 +81,9 @@ test('every dialog on the scrolling recipe names one of its scrolling children',
          callers are, and they are scanned. */
       if (file.endsWith('QuestionShell.tsx')) continue;
       const src = codeOnly(readFileSync(file, 'utf8'));
-      if (!/modalScrollBody/.test(src) && !/\bscroll\b(?!Height|Top|Left|Width|Into|By|To|able|ing|er|Y|X)/.test(src)) continue;
-      if (!/modalScrollBody/.test(src)) {
-        /* A `scroll` word alone is not the recipe (scrollIntoView, a scroll listener…). Only files
-           naming the class, or handing QuestionShell its `scroll` prop, are on the recipe. */
-        if (!/<QuestionShell[\s\S]{0,400}?\bscroll\b/.test(src)) continue;
-      }
+      /* Only files naming the class are on the recipe. QuestionShell's `scroll` prop, which once applied it, is gone
+         (One Window Stage 2b, 2026-10-19: the one window's body scrolls under its pinned head and foot) — see below. */
+      if (!/modalScrollBody/.test(src)) continue;
       const names = SHAPES.some(s => new RegExp(`\\b${s}\\b`).test(src));
       if (!names) offenders.push(relative(ROOT, file));
     }

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { FOCUS_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -58,8 +58,13 @@ export default function GoalSheet({
   const title = editing ? 'Edit the goal' : 'Add a goal';
 
   return (
-    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} subtitle={editing?.focusArea} busy={busy}>
-      <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => {
+    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} subtitle={editing?.focusArea} busy={busy}
+      footerStart={editing && onRemove ? <SheetRemoveButton label="Remove goal" busy={busy} onRemove={onRemove} /> : undefined}
+      footer={<>
+        <QuestionCancel className={styles.btnSecondary} />
+        <button type="submit" form="goal-sheet-form" className={styles.btnPrimary} disabled={busy}>{busy ? 'Saving…' : editing ? 'Save' : 'Add it'}</button>
+      </>}>
+      <form id="goal-sheet-form" className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => {
         e.preventDefault();
         const f = focus.trim();
         if (!f) { setLocalErr('Type the focus area first.'); return; }
@@ -106,12 +111,7 @@ export default function GoalSheet({
             </CoachFormDisclosure>
           </div>
         </div>
-        {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
-        <div className={styles.modalFooter}>
-          {editing && onRemove && <SheetRemoveButton label="Remove goal" busy={busy} onRemove={onRemove} />}
-          <QuestionCancel className={styles.btnSecondary} />
-          <button type="submit" className={styles.btnPrimary} disabled={busy}>{busy ? 'Saving…' : editing ? 'Save' : 'Add it'}</button>
-        </div>
+        <QuestionReason className={styles.errorText}>{localErr || error}</QuestionReason>
       </form>
     </QuestionShell>
   );

@@ -334,10 +334,9 @@ export default function LineupInningInspector({
       title={roleWord}
       subtitle={status}
       headerExtra={mark && <LineupStateMark state={mark.state} label={mark.label} inHeader />}
-      scroll
       wide
     >
-      <div className={`${coach.scrollPane} ${s.body}`}>
+      <div className={s.body}>
         {onBack && (
           <button type="button" className={check.back} onClick={onBack}>‹ Lineup check</button>
         )}

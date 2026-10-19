@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
 import { GOAL_STATUS_LABELS, nextReviewSuggestion, reviewGapWords } from '@/lib/development-goal-history';
 import { GOAL_STATUSES } from '@/lib/development-input';
@@ -67,8 +67,13 @@ export default function ReviewGoalDialog({
 
   return (
     <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={editing ? 'Edit the review' : 'Review the goal'}
-      title={editing ? 'Edit review' : 'Review the goal'} subtitle={goal.focusArea} busy={busy}>
-        <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => {
+      title={editing ? 'Edit review' : 'Review the goal'} subtitle={goal.focusArea} busy={busy}
+      footerStart={editing && onRemove ? <SheetRemoveButton label="Remove review" busy={busy} onRemove={onRemove} /> : undefined}
+      footer={<>
+        <QuestionCancel className={styles.btnSecondary} />
+        <button type="submit" form="review-goal-form" className={styles.btnPrimary} disabled={busy}>{busy ? 'Saving…' : editing ? 'Save' : 'Save review'}</button>
+      </>}>
+        <form id="review-goal-form" className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => {
           e.preventDefault();
           onSubmit({ status, reviewedOn, note: note.trim(), nextReviewOn: nextReviewOn || null, evidenceObservationIds: linkedObservations.map(o => o.id) });
         }}>
@@ -107,12 +112,7 @@ export default function ReviewGoalDialog({
               : 'No observation is linked to this goal yet — record one from the goal and it becomes evidence. '}
             {editing ? 'This review is on the goal’s history.' : 'This review is added to the goal’s history.'}
           </p>
-          {error && <p className={styles.errorText} role="alert">{error}</p>}
-          <div className={styles.modalFooter}>
-            {editing && onRemove && <SheetRemoveButton label="Remove review" busy={busy} onRemove={onRemove} />}
-            <QuestionCancel className={styles.btnSecondary} />
-            <button type="submit" className={styles.btnPrimary} disabled={busy}>{busy ? 'Saving…' : editing ? 'Save' : 'Save review'}</button>
-          </div>
+          <QuestionReason className={styles.errorText}>{error}</QuestionReason>
         </form>
     </QuestionShell>
   );

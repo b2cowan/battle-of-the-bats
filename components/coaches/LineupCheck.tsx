@@ -89,10 +89,9 @@ export default function LineupCheck({
       title="Lineup check"
       subtitle={subtitle}
       headerExtra={<LineupStateMark state={state} label={stateWord} inHeader />}
-      scroll
       wide
     >
-      <div className={`${coach.scrollPane} ${s.body}`}>
+      <div className={s.body}>
         {hasAttendance && attendance && (
           <>
             <CoachRowList inset label="Attendance">

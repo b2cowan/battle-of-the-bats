@@ -1,7 +1,7 @@
 'use client';
 import { useId, useState } from 'react';
 import { Check } from 'lucide-react';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { todayLocal } from '@/lib/measurable-format';
@@ -60,13 +60,9 @@ import css from './RecordObservationDialog.module.css';
  *     row whose whole body is the tap (stage 3's Templates ruling, applied by E2). Nothing is
  *     stranded: the dialog asks what you saw, and "I didn't assess this" is one of the answers.
  *   · the foot **DOCKS** at the screen's bottom carrying **Save & next player** and **Save**, both
- *     56px. It floated because `.modalFooter` asks for `margin-top: auto` while this dialog's
- *     footer is a GRANDCHILD inside its own `<form>` — a form that is not itself stretched gives
- *     `auto` nothing to push against. ⚠ The shell's `scroll` variant was TRIED for this and
- *     ABANDONED — it never shipped, so the diff shows no removal: that variant bleeds a form's
- *     fields by a DESKTOP-sized margin, and the sweep measured the form spilling 24px at all four
- *     widths. Three declarations in this component's own module stretch the form instead, so
- *     nothing above 640 moves and eight other sheets are left alone. The stylesheet has the detail.
+ *     56px. Since One Window Stage 2b (2026-10-19) it is the window's own foot (`footer`, the
+ *     submit naming its form with `form=`), pinned under a body that scrolls; until then it was a
+ *     `.modalFooter` inside the form, docked by stretching the form in this component's module.
  *
  * ⚠ **THE DESKTOP DOES NOT MOVE.** Above 640 the Descriptor select stays — and with it
  * "No descriptor", which the answer rows have nowhere to put — and so do Cancel and today's foot.
@@ -242,13 +238,27 @@ export default function RecordObservationDialog({
 
   return (
     <>
-    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={fixed ? `${verb} — ${title}` : title} title={title} subtitle={subtitle} busy={busy}>
-        {/* ⚠ `css.phoneForm` + `css.phoneScroll` are what dock the foot at ≤640 — three declarations
-            in this component's own module, deliberately NOT the shell's `scroll` variant (see the
-            E3 note above and the stylesheet for the 24px spill that route measured). Above 640 both
-            classes declare nothing, so the desktop form is exactly what it was. */}
-        <form className={`${styles.formBody} ${styles.formBodyTight} ${css.phoneForm}`} onSubmit={e => { e.preventDefault(); submit(false); }}>
-          <div className={`${styles.formGrid} ${css.phoneScroll}`}>
+    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={fixed ? `${verb} — ${title}` : title} title={title} subtitle={subtitle} busy={busy}
+      footerStart={editing && onRemove ? <SheetRemoveButton label="Remove observation" busy={busy} onRemove={onRemove} /> : undefined}
+      footer={<>
+        {/* ⚠ Cancel is a DESKTOP control. At ≤640 the header's own back arrow is the way out and
+            it runs the same guarded closer, so a second dismiss would spend a 56px slot the two
+            saves need. */}
+        {!isPhone && (
+          <QuestionCancel className={styles.btnSecondary} />
+        )}
+        {isPhone && nextLabel && (
+          <button type="button" className={`${styles.btnPrimary} ${css.footBtn}`} disabled={busy || !skillId}
+            onClick={() => submit(true)}>
+            {busy ? 'Saving…' : 'Save & next player'}
+          </button>
+        )}
+        <button type="submit" form="record-observation-form" className={`${isPhone && nextLabel ? styles.btnSecondary : styles.btnPrimary}${isPhone ? ` ${css.footBtn}${nextLabel ? ` ${css.footBtnNarrow}` : ''}` : ''}`} disabled={busy || !skillId}>
+          {busy ? 'Saving…' : isPhone && nextLabel ? 'Save' : editing ? 'Save' : 'Save observation'}
+        </button>
+      </>}>
+        <form id="record-observation-form" className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => { e.preventDefault(); submit(false); }}>
+          <div className={styles.formGrid}>
             {!fixed && (
               /* A div + label htmlFor, not a wrapping label — see `useNewMetricDoor`. */
               <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -359,25 +369,7 @@ export default function RecordObservationDialog({
           {editing && fixed?.enteredBy && (
             <p className={styles.formHint}>Entered by {fixed.enteredBy}</p>
           )}
-          {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
-          <div className={styles.modalFooter}>
-            {editing && onRemove && <SheetRemoveButton label="Remove observation" busy={busy} onRemove={onRemove} />}
-            {/* ⚠ Cancel is a DESKTOP control. At ≤640 the header's own back arrow is the way out and
-                it runs the same guarded closer, so a second dismiss would spend a 56px slot the two
-                saves need — and the only reason the foot is reachable at all now is that it docks. */}
-            {!isPhone && (
-              <QuestionCancel className={styles.btnSecondary} />
-            )}
-            {isPhone && nextLabel && (
-              <button type="button" className={`${styles.btnPrimary} ${css.footBtn}`} disabled={busy || !skillId}
-                onClick={() => submit(true)}>
-                {busy ? 'Saving…' : 'Save & next player'}
-              </button>
-            )}
-            <button type="submit" className={`${isPhone && nextLabel ? styles.btnSecondary : styles.btnPrimary}${isPhone ? ` ${css.footBtn}${nextLabel ? ` ${css.footBtnNarrow}` : ''}` : ''}`} disabled={busy || !skillId}>
-              {busy ? 'Saving…' : isPhone && nextLabel ? 'Save' : editing ? 'Save' : 'Save observation'}
-            </button>
-          </div>
+          <QuestionReason className={styles.errorText}>{localErr || error}</QuestionReason>
         </form>
     </QuestionShell>
     {/* "+ New skill…" — stacked over the sheet, OUTSIDE its form (see `useNewMetricDoor`). */}

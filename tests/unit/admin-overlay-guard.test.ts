@@ -90,7 +90,7 @@ const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
   'components/admin/LeagueCapUpgrade.tsx': { layers: ['leagueCap'] },
   'components/admin/kit/club/KitDialog.tsx': { layers: ['kitForm'] },
   'components/admin/kit/club/money/AllocationWindow.tsx': { notAForm: 'reads its KitDialog (`closest(\'[role="dialog"]\')`); draws none' },
-  'components/admin/kit/club/money/MoneyKit.tsx': { notAForm: 'FormError portals into KitDialog\'s reason slot, inside the window' },
+  // (MoneyKit.tsx left 2026-10-19: FormError is KitDialog's own refusal line now, `DialogReason`, One Window 2b.)
   'components/admin/tournament/PrintedPage.tsx': { notAForm: 'a print-only portal; never on screen' },
   'components/admin/tournament/ReorderList.tsx': { notAForm: 'a MENU: the row\'s options (move up, move down), a SheetFrame menu on a phone' },
   'components/admin/tournament/TournamentAdminUI.tsx': { notAForm: 'a MENU: the status legend popover, read-only' },

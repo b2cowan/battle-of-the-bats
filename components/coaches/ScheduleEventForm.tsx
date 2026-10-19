@@ -4,7 +4,7 @@ import { AlertTriangle, Clock, Undo2, X } from 'lucide-react';
 import { EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import ArrivalSelect from '@/components/coaches/ArrivalSelect';
 import PlaceSheet from '@/components/coaches/PlaceSheet';
 import ManagePlacesSheet from '@/components/coaches/ManagePlacesSheet';
@@ -896,6 +896,28 @@ export default function ScheduleEventForm({
             <span className={styles.eventTypeDot} style={{ background: EVENT_COLORS[form.eventType] }} aria-hidden />
           </span>
         }
+        // ⚰ "Apply your changes to: This event only · This & future · All events" (→ 2026-10-09): the question moved to the
+        // pencil, before the form opens, so the form knows the dates it checks. Save saves them in one press.
+        footer={<>
+          <QuestionCancel className={styles.btnGhost} />
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid || practiceEndInvalid}
+            onClick={handleSave}
+          >
+            {saving
+              ? 'Saving…'
+              : editingEventId
+                // A series edit names how many it saves, as Add does ("Save 2 practices").
+                ? seriesEdit ? `Save ${pluralize(scopeDates.length, eventWord(form))}` : 'Save changes'
+                // Name the real count: a removed bye week means eleven, not twelve.
+                : recurringSeries && keptDates.length
+                  ? `Add ${keptDates.length} ${recurrenceNoun}${keptDates.length === 1 ? '' : 's'}`
+                  // The title's verb, in the portal's sentence case: "Add game", "Add practice".
+                  : `Add ${recurrenceNoun}`}
+          </button>
+        </>}
       >
           <div className={`${styles.formBody} ${styles.formBodyTight}`}>
 
@@ -1335,29 +1357,7 @@ export default function ScheduleEventForm({
             </CoachFormDisclosure>
           </div>
 
-          {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
-
-          {/* ⚰ "Apply your changes to: This event only · This & future · All events" (→ 2026-10-09): the question moved to the
-              pencil, before the form opens, so the form knows the dates it checks. Save saves them in one press. */}
-          <div className={styles.modalFooter}>
-            <QuestionCancel className={styles.btnGhost} />
-            <button
-              className={styles.btnPrimary}
-              disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid || practiceEndInvalid}
-              onClick={handleSave}
-            >
-              {saving
-                ? 'Saving…'
-                : editingEventId
-                  // A series edit names how many it saves, as Add does ("Save 2 practices").
-                  ? seriesEdit ? `Save ${pluralize(scopeDates.length, eventWord(form))}` : 'Save changes'
-                  // Name the real count: a removed bye week means eleven, not twelve.
-                  : recurringSeries && keptDates.length
-                    ? `Add ${keptDates.length} ${recurrenceNoun}${keptDates.length === 1 ? '' : 's'}`
-                    // The title's verb, in the portal's sentence case: "Add game", "Add practice".
-                    : `Add ${recurrenceNoun}`}
-            </button>
-          </div>
+          <QuestionReason className={styles.errorText}>{saveError}</QuestionReason>
       </QuestionShell>
     </>
   );

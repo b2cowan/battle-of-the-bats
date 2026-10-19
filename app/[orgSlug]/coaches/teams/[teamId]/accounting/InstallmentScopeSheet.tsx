@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import {
   planScopedInstallmentEdit, planScopedInstallmentDelete, describeScopedOutcome,
 } from '@/lib/payable-scope-edit';
@@ -162,6 +162,19 @@ export default function InstallmentScopeSheet({
       ariaLabel={`${title} — ${description}`}
       title={title}
       subtitle={`${description} — ${count > 1 ? `installment ${installment.installmentNumber} of ${count}` : 'one payment'}`}
+      footer={<>
+        {/* Busy-gated and asking like every other way out: a Cancel that dismissed the sheet mid-write was the
+            misleading half of the 2026-09-04 /review. */}
+        <QuestionCancel className={shared.btnGhost} />
+        <button
+          type="button"
+          className={mode === 'remove' ? shared.btnDanger : shared.btnPrimary}
+          disabled={busy || !!outcome.refusal || nothingToDo}
+          onClick={commit}
+        >
+          {busy ? 'Saving…' : mode === 'remove' ? 'Remove it' : 'Save the change'}
+        </button>
+      </>}
     >
         <div className={shared.formGrid}>
           {mode === 'edit' ? (
@@ -243,21 +256,7 @@ export default function InstallmentScopeSheet({
             </p>
           ) : null}
 
-          {error && <p className={`${shared.errorText} ${shared.formGridFull}`}>{error}</p>}
-        </div>
-
-        <div className={shared.modalFooter}>
-          {/* Busy-gated and asking like every other way out: a Cancel that dismissed the sheet mid-write was the
-              misleading half of the 2026-09-04 /review. */}
-          <QuestionCancel className={shared.btnGhost} />
-          <button
-            type="button"
-            className={mode === 'remove' ? shared.btnDanger : shared.btnPrimary}
-            disabled={busy || !!outcome.refusal || nothingToDo}
-            onClick={commit}
-          >
-            {busy ? 'Saving…' : mode === 'remove' ? 'Remove it' : 'Save the change'}
-          </button>
+          <QuestionReason className={`${shared.errorText} ${shared.formGridFull}`}>{error}</QuestionReason>
         </div>
     </QuestionShell>
   );

@@ -8,7 +8,9 @@ two flows keep one width; a census found five more: a bill's tasks open over it,
 and built and committed `6e3222f8` the same day after /review; **owner walk 2 ✅ passed 2026-10-19** (14 of 14, no
 notes; hub QA tab, QA ledger §339). Stage 1 is closed but for the layout check below. **Stage 2's gate was published
 2026-10-19** (census and calls B1–B9 on the hub, before-figures; **asks A–D ruled as recommended 2026-10-19**); **part
-2a (the one piece) committed `ada213b3` 2026-10-19** after /simplify and /review ("Stage 2a — as built" below); walked with 2b. Still open: the layout
+2a (the one piece) committed `ada213b3` 2026-10-19** after /simplify and /review ("Stage 2a — as built" below); walked with 2b. **Part 2b (the
+foot) built 2026-10-19, /simplify and /review run the same day** ("Stage 2b — as built" below); walk A (2a + 2b) on the
+hub's QA tab — **owner walk A ✅ passed 2026-10-19 (20 of 20, no notes; QA ledger §346)**. Still open: the layout
 check on the screens Stage 1 touched (warm-theme sweep of the whole product ran on staging at the 2026-10-19 promote, master job 282, owner accepted its findings; the dark-theme sweep was not run, owner accepted the skip, run it on staging).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
@@ -354,6 +356,64 @@ Groups from another practice) are forms that fill a phone, and tryouts' Which se
   check** (390 and 1440, Warm) on the six screens that open these windows: no new findings — after the shim's first
   version spilled 20 / 24px out of its wrapper (a negative side margin; now side shadows carry the strip's card and
   hairline to the edges). Screenshots for the hand-off: `.probe/ow2/shot-*.png`.
+
+#### Stage 2b — as built 2026-10-19 (the foot; built from `ONE_WINDOW_STAGE2B_BUILD_PROMPT.md`)
+- **Every shell window's buttons are the window's own foot.** `QuestionShell` passes KitDialog's `footer` (buttons only)
+  and `footerStart`; 24 files, 34 `<QuestionShell>` windows (the census's 32, plus Club Tier 5c's "not received" ask in
+  `ClubHandoffDoor.tsx`, another session's uncommitted file: its two-line foot move rides in that file and is committed
+  with it, and Preview counted separately). A submit outside its form names it (`<form id>` + `form=`, the admin's idiom:
+  14 forms, ids unique; Enter still submits). **No window had a sentence above its buttons**, so `footerStart` holds only
+  the doors a window already had at its left: Remove goal / observation / result / review, Delete session, and Define a
+  metric's Preview · Retire · Restore · Delete. ⚖ Kept as the walked two-ended row, not moved to the body's end (the
+  rare-door ruling, amended 10-19, allows a two-ended row only if it stays one row at 390 — checked in walk A step C3
+  with Remove showing: one row at 390, passed 2026-10-19).
+- **A refused Save says why beside the button.** `DialogReason` in KitDialog (re-exported as `QuestionReason`) portals
+  the reason into the foot's slot; in place where a window has no foot, or `inPlace` for one field's reason. /simplify
+  made it the ONE refusal line: the club money kit's `FormError` is now a wrapper over it (its type, its mark in the
+  foot; nothing it renders changed). Kept in place, on purpose: Places' row errors (about a row, not Done), Join a
+  club's typed-name mismatch (one field), the load errors of the club practice questions (no foot until they load).
+- **The 2a shim is gone** (`.windowBody .modalFooter`, its phone flex column, side shadows, `scroll-margin-bottom`), and
+  the no-op `scroll` prop with it (12 callers, not 10: LineupCheck and the inning inspector passed it too), plus the dead
+  `scrollPane` wrappers, `.phoneForm` / `.phoneScroll` (the observation sheet's docking), `.footSpacer`, `.sheetFoot`,
+  `.footRemove`, and Define a metric's `.foot` rules.
+- **The phone save pill rides the measured foot** (the 2a /review's note: it could sit over the ask's Discard).
+  KitDialog reports its foot height (`onFootHeight`, a ResizeObserver; any caller may ask); `QuestionShell` keeps the
+  stack of open coach windows and publishes the top one's as `--coach-window-foot`, only when it changes; a window with
+  no foot publishes nothing (the pill keeps its resting height). The §227 rule reads it; its `:has()` carries the
+  window's three marks so it outweighs the `.modalOverlay` rule when a coach window is open over a room.
+- **Two things the window now does for a coach form:** the phone foot's button group fills the row (`.footEnd`, so the
+  observation sheet's "Save & next player" can grow; no admin button grows), and a coach window's door at the left gets
+  a 34px floor at a desk (a ghost Preview measured 26.5 beside Save's 34 once the old strip's stretch was gone).
+- **/simplify 2026-10-19** (four angles): FormError onto DialogReason (one reveal-before-paint rule, not two); the pill
+  bookkeeping out of the shared window into the coach shell; the root written only on a change and only by the top
+  window; dead CSS, stale comments and empty wrappers removed; the club questions' "Keep it" is `QuestionCancel`. Not
+  done, noted: a shell-made form id (useId through context) instead of hand-paired ids; a `remove` prop for the four
+  sheets' Remove; an opt-in for the `.footEnd` grow.
+- **/review 2026-10-19** (high-risk: four lenses, gate first). Fixed: the pill rule lost to the room's `.modalOverlay`
+  rule when a coach window was open over a room (equal weight now, and later); the left door's first fix stretched it
+  to a wrapped refusal's height in the admin's money windows (a floor instead, coach windows only); a footless window
+  dropped the pill over its body's last line; typing in a window nested inside another quieted the outer window's
+  reason (the body's capture now ignores a nested window's events — 2a's nested-Escape rule). Noted, not changed (low):
+  the root is written twice on open (0, then the height) before first paint; a nested pair mounting in one commit would
+  push child-first (only on a hot reload); a reason re-announces if a foot remounts; Enter in a one-field form while it
+  asks still submits (as before). Found by the after-figures: the observation sheet's phone Save was 44, not its drawn
+  56, since 2a (the window's `.foot button` floor outranked it) — restored.
+- **After-figures** (`.probe/ow2/after-2b*.md`): 27 windows opened at 390, 26 at 1280 (the club practice questions, the
+  club review card and Join a club have no data on the UAT team). Phone: one-line fields 44, foot buttons 44 (the
+  observation sheet's Save 56). Computer: fields 36, foot buttons 34 (a read window's links 39), the left doors 34, × 32.
+  **Layout check** (`check:layout`, 9 window screens × 4 widths, one page at a time after a memory abort): no new
+  findings; 12 baseline tap-floor entries on the event form and the dues record no longer reproduce (not pruned: the
+  baseline is shared).
+- **Guards:** `one-window-stage2-guard` (SHIM emptied: no shell window draws a foot strip; submits name their form; no
+  `scroll` prop; one refusal line; the measured pill and its weight), `kit-dialog-foot-text-guard` reads QuestionShell
+  feet too (and knows the window's Cancel is a button), `modal-scroll-recipe-guard`, `bva-figure-doors-guard`,
+  `coach-practice-week-phone-guard`, `club-stage3c-screens-guard`, `admin-overlay-guard` — each restated, none loosened.
+- **Discard is red-tinted (owner, 2026-10-19, using 2b):** two outlined buttons were quieter than the lime Save they
+  replaced, so the ask went unnoticed and a press on × read as "nothing happened". Discard is now `btn btn-danger` (Q11
+  already rules a destructive answer red-tinted); Keep writing stays outlined and keeps the focus. Every window that asks,
+  Message a family included. Guarded; hub drawing, walk A and Decisions updated (hub version 19).
+- **Help:** two coach articles still say "Keep editing" (Money's forms; the discard question). The shell windows say
+  "Keep writing" since 2a; the hand-built ones still say "Keep editing" until they move (2c / 2d) — /docs owed.
 
 ### Stage 3 · One question
 What changes on screen: every "are you sure" in all three areas looks the same; no browser grey boxes; Saved / Done

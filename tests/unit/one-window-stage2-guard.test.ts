@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { cssRule, filesUnder, openingTags, parseProps, readCode, stripComments, readSource } from './_source-code.ts';
+import { cssRule, filesUnder, openingTags, parseProps, readCode, splitPhoneCss, stripComments, readSource } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -13,6 +13,9 @@ import { cssRule, filesUnder, openingTags, parseProps, readCode, stripComments, 
  *       shell (`QuestionShell`) is a thin wrapper over it. Closing with words typed asks in the window's foot;
  *       every way out shares one closer. One page-scroll lock. The save pill still rises over a coach window.
  *       Inside a coach window, fields are 36px on a computer and fields and foot buttons 44px on a phone.
+ *   2b  Every coach window's buttons are the window's own foot (`footer` / `footerStart`, a submit naming its form
+ *       with `form=`), never a `.modalFooter` in its body; the 2a shim and the no-op `scroll` prop are gone; a
+ *       refused save's reason shows in the foot (`QuestionReason`); the phone's save pill rides the measured foot.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -47,14 +50,15 @@ describe('2a · the one window is both portals\' window', () => {
   });
 
   it('the coach form shell renders the one window, and draws no overlay of its own', () => {
-    assert.match(shell, /import KitDialog, \{ DialogCancel \} from '@\/components\/admin\/kit\/club\/KitDialog';/);
+    assert.match(shell, /import KitDialog, \{ DialogCancel, DialogReason \} from '@\/components\/admin\/kit\/club\/KitDialog';/);
     assert.match(shell, /<KitDialog\s+kind="form"/);
     assert.doesNotMatch(shell, /modalOverlay|useDialogFloor|useOverlayOpen|CoachModalHeader|RAISED_OVERLAY_Z/,
       'the overlay, the floor, the counter and the head are the one window\'s now');
     // It keeps the route guard armed while its form is hidden on another tab (the hub keeps panels mounted).
     assert.match(shell, /if \(!open\) return guard;/);
     // The coach rules for a window: no phone keyboard on open, the forms' own type, and the asks pass through.
-    for (const prop of [/openOn="panel"/, /\n\s+ownType\n/, /dirty=\{dirty\}/, /raised=\{raised\}/, /size=\{wide \? 'medium' : undefined\}/]) {
+    for (const prop of [/openOn="panel"/, /\n\s+ownType\n/, /dirty=\{dirty\}/, /raised=\{raised\}/, /size=\{wide \? 'medium' : undefined\}/,
+      /footer=\{footer\}/, /footerStart=\{footerStart\}/]) {
       assert.match(shell, prop);
     }
   });
@@ -99,7 +103,9 @@ describe('2a · closing with words typed asks in the foot (Q7, answers A and B)'
   it('the ask stands down when nothing is left to lose or a save starts, and never closes a window mid-write (/review)', () => {
     assert.match(kit, /if \(asking && \(busy \|\| !dirty\)\) setAsking\(false\);/);
     assert.match(kit, /onClick=\{keepWriting\} disabled=\{busy\}/);
-    assert.match(kit, /onClick=\{onClose\} disabled=\{busy\}>\{WINDOW_ASK\.discard\}/);
+    // Discard is the red-tinted danger button, Keep writing the quiet outline (owner 2026-10-19: two outlines went unnoticed).
+    assert.match(kit, /className="btn btn-danger" onClick=\{onClose\} disabled=\{busy\}>\{WINDOW_ASK\.discard\}/);
+    assert.match(kit, /className="btn btn-outline" onClick=\{keepWriting\} disabled=\{busy\}>\{WINDOW_ASK\.keep\}/);
   });
 
   it('a window nested inside another owns its keys: one Escape never reaches the window behind it (/review)', () => {
@@ -157,8 +163,8 @@ describe('2a · one page lock, and the layers', () => {
     const form = zOf('.overlay');
     const raised = zOf('.overlayRaised');
     assert.equal(form, 400);
-    // On a phone the coach window joins the §227 rule beside `.modalOverlay` (one measured offset, not two copies).
-    const phone = /@media \(max-width: 640px\) \{\s*body:has\(\.modalOverlay:not\(\.daySheetOverlay\):not\(\.centeredOnMobile\)\) \.savePill,\s*body:has\(\[data-coach-window\]\[data-kind="form"\]\) \.savePill \{\s*z-index: (\d+);/.exec(coachesCss);
+    // On a phone the coach window has its own §227 rule beside `.modalOverlay`'s, riding its measured foot (2b).
+    const phone = /body:has\(\[data-kit-dialog\]\[data-coach-window\]\[data-kind="form"\]\) \.savePill \{\s*z-index: (\d+);/.exec(splitPhoneCss(coachesCss).phone);
     const wider = /@media \(min-width: 641px\) \{\s*body:has\(\[data-coach-window\]\) \.savePill \{ z-index: (\d+); \}/.exec(coachesCss);
     assert.ok(phone && Number(phone[1]) > raised, 'over a full-screen coach form on a phone');
     assert.ok(wider && Number(wider[1]) > raised, 'over any coach window above a phone (it stood at 200 there before)');
@@ -183,12 +189,9 @@ describe('2a · Q2 and Q10 inside a coach window', () => {
     // Real fields only — a read-only value drawn as a field (`<span class="input">`) keeps its height (/review).
     assert.match(css, /@media \(min-width: 769px\) \{\s*\.windowBody :is\(input, select\):is\(\.input, \.select\) \{ height: 36px; \}\s*\}/);
   });
-  it('a field the keyboard reaches scrolls clear of the pinned foot strip, and a phone strip reaches the screen foot (/review)', () => {
-    assert.match(css, /\.windowBody :is\(input, select, textarea, button, \[tabindex\]\) \{ scroll-margin-bottom: calc\(5rem \+ env\(safe-area-inset-bottom, 0px\)\); \}/);
-    assert.match(css, /bottom: calc\(-1rem - env\(safe-area-inset-bottom, 0px\)\);\s*margin-bottom: calc\(-1rem - env\(safe-area-inset-bottom, 0px\)\);\s*padding-bottom: calc\(0\.85rem \+ env\(safe-area-inset-bottom, 0px\)\);/);
-  });
-  it('on a phone, its one-line fields and foot buttons are 44px', () => {
-    assert.match(css, /@media \(max-width: 768px\) \{\s*\.windowBody input:not\(\[type="checkbox"\]\)[^{]*\.windowBody select,\s*\.windowBody \.modalFooter :is\(button, a\) \{ min-height: var\(--tap-min, 44px\); \}/);
+  it('on a phone, its one-line fields are 44px, and the window\'s own foot buttons are 44px', () => {
+    assert.match(css, /@media \(max-width: 768px\) \{\s*\.windowBody input:not\(\[type="checkbox"\]\)[^{]*\.windowBody select \{ min-height: var\(--tap-min, 44px\); \}/);
+    assert.match(kitCss, /@media \(max-width: 768px\) \{\s*\.foot button,\s*\.foot a,/);
   });
   it('a global .btn inside a coach window wears the portal\'s button face, as the admin\'s does', () => {
     const globals = readCode('app/globals.css');
@@ -199,28 +202,91 @@ describe('2a · Q2 and Q10 inside a coach window', () => {
   });
 });
 
-describe('2a · the shim and the windows still to move (each list only shrinks)', () => {
-  it('a shell window drawing its own foot strip is listed, until 2b moves its buttons into the window\'s foot', () => {
-    // ⚖ 2b empties this list, and the `.windowBody .modalFooter` shim in coaches.module.css goes with it.
-    const SHIM = new Set([
-      'components/coaches/ClubReviewCard.tsx', 'components/coaches/ClubSlotParts.tsx', 'components/coaches/GoalSheet.tsx',
-      'components/coaches/ManagePlacesSheet.tsx', 'components/coaches/MetricDefinitionSheet.tsx', 'components/coaches/PlaceSheet.tsx',
-      'components/coaches/RecordObservationDialog.tsx', 'components/coaches/RecordResultSheet.tsx', 'components/coaches/ReviewGoalDialog.tsx',
-      'components/coaches/ScheduleEventForm.tsx', 'components/coaches/SessionSheet.tsx', 'app/[orgSlug]/coaches/link-org/page.tsx',
-      'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx', 'app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
-      'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/DriveRoom.tsx', 'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx',
-      'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/SponsorRoom.tsx', 'app/[orgSlug]/coaches/teams/[teamId]/accounting/InstallmentScopeSheet.tsx',
-      'app/[orgSlug]/coaches/teams/[teamId]/accounting/LedgerLineWindow.tsx', 'app/[orgSlug]/coaches/teams/[teamId]/accounting/PayeesWindow.tsx',
-      'app/[orgSlug]/coaches/teams/[teamId]/development/sessions/[sessionId]/page.tsx', 'app/[orgSlug]/coaches/teams/[teamId]/history/development/panel.tsx',
-      // Written by Club Tier Stage 5c while 2a was in flight (2026-10-19): in 2a the shell has no foot to offer yet.
-      'components/coaches/ClubHandoffDoor.tsx',
-    ]);
-    const all = TSX.map(({ file }) => file);
-    const found = tsxWith('<QuestionShell', 'modalFooter').map(({ file }) => file);
-    assert.deepEqual(found.filter(f => !SHIM.has(f)), [], 'a new shell window puts its buttons in the window\'s foot, never a .modalFooter');
-    // An entry whose file is not in the tree yet (another build's window, mid-flight) is not a stale entry.
-    assert.deepEqual([...SHIM].filter(f => all.includes(f) && !found.includes(f)), [], 'moved to the foot: take it off SHIM');
+describe('2b · a coach window\'s buttons are the window\'s own foot', () => {
+  /** Every `<QuestionShell …>…</QuestionShell>` in a file: the element from its opening tag to its close. */
+  const shellElements = (code: string): string[] => {
+    const out: string[] = [];
+    for (let at = code.indexOf('<QuestionShell'); at >= 0; at = code.indexOf('<QuestionShell', at + 1)) {
+      const end = code.indexOf('</QuestionShell>', at);
+      out.push(code.slice(at, end < 0 ? undefined : end));
+    }
+    return out;
+  };
+
+  it('no shell window draws its own foot strip: its buttons are `footer`, a door or a sentence `footerStart`', () => {
+    // ⚖ The 2a SHIM list emptied here (2026-10-19): 24 files, 34 windows. A `.modalFooter` elsewhere in the same file is
+    // a hand-built window still to move (2c / 2d, the ALLOWED list below), not a shell window's foot.
+    const offenders = tsxWith('<QuestionShell', 'modalFooter')
+      .filter(({ code }) => shellElements(code).some(el => /modalFooter/.test(el)))
+      .map(({ file }) => file);
+    assert.deepEqual(offenders, [], 'a shell window puts its buttons in the window\'s foot (`footer`), never a .modalFooter');
+    // The scanner sees one when it is there.
+    assert.equal(shellElements('<QuestionShell open>\n<div className={styles.modalFooter}>x</div>\n</QuestionShell>').some(el => /modalFooter/.test(el)), true);
   });
+
+  it('the shim is gone from the coach stylesheet', () => {
+    assert.doesNotMatch(coachesCss, /\.windowBody \.modalFooter|\.windowBody > :has\(> \.modalFooter\)|\.windowBody :is\([^)]*\) \{ scroll-margin-bottom/);
+    assert.doesNotMatch(coachesCss, /--kit-dialog-side/, 'the shim\'s side shadows read the window\'s padding');
+  });
+
+  it('a submit in the foot names its form, and the form carries that id', () => {
+    let submits = 0;
+    for (const { file, code } of tsxWith('<QuestionShell', 'type="submit"')) {
+      for (const tag of openingTags(code, 'QuestionShell', file)) {
+        for (const m of tag.matchAll(/<button\b[^>]*?type="submit"[^>]*?>/g)) {
+          submits++;
+          const form = /\sform="([\w-]+)"/.exec(m[0])?.[1];
+          assert.ok(form, `${file}: a submit in a window's foot is outside its form — give it form="…"`);
+          assert.match(code, new RegExp(`<form id="${form}"`), `${file}: no <form id="${form}">`);
+        }
+      }
+    }
+    assert.ok(submits >= 12, `only ${submits} submits found in shell feet — the scan has stopped reading them`);
+  });
+
+  it('the no-op `scroll` prop is gone, from the shell and from every caller', () => {
+    assert.doesNotMatch(shell, /\bscroll\?: boolean/);
+    const callers = tsxWith('<QuestionShell')
+      .filter(({ file, code }) => openingTags(code, 'QuestionShell', file).some(tag => parseProps(tag).has('scroll')))
+      .map(({ file }) => file);
+    assert.deepEqual(callers, []);
+  });
+
+  it('a refused save\'s reason shows in the foot beside the button (KitDialog\'s slot), at any scroll — ONE line, both portals', () => {
+    assert.match(shell, /export \{ DialogReason as QuestionReason \};/);
+    assert.match(kit, /export function DialogReason\(/);
+    assert.match(kit, /if \(!inPlace && reason\?\.slot\) return createPortal\(<p className=\{className\} role="alert">\{icon\}\{children\}<\/p>, reason\.slot\);/);
+    assert.match(kit, /useLayoutEffect\(\(\) => \{ if \(text && !inPlace\) reveal\?\.\(\); \}, \[text, inPlace, reveal\]\);/, 'a reason written into a quiet slot is shown and announced');
+    // The club money kit's refusal is the same line in its own type (/simplify 2026-10-19: it was a second copy).
+    const money = readCode('components/admin/kit/club/money/MoneyKit.tsx');
+    assert.match(money, /export function FormError\([^)]*\) \{\s*return \(\s*<DialogReason className=\{repKit\.formError\} inPlace=\{inPlace\}/);
+    assert.doesNotMatch(money, /useContext\(KitReasonSlot\)|createPortal/);
+  });
+
+  it('on a phone the save pill rides the top coach window\'s measured foot (the ask and a reason make it taller)', () => {
+    // The window reports its foot (any caller may ask); the coach shell keeps the stack and publishes the top one.
+    assert.match(kit, /const watch = new ResizeObserver\(\(\[entry\]\) => onFootHeight\(/);
+    assert.match(kit, /<div ref=\{setFootEl\} className=\{styles\.foot\}/);
+    assert.doesNotMatch(kit, /--coach-window-foot/, 'the shared window knows nothing of the coach page\'s pill');
+    assert.match(shell, /onFootHeight=\{onFootHeight\}/);
+    assert.match(shell, /if \(value === publishedFoot\) return;/, 'the root is restyled only when the height changes');
+    assert.match(shell, /if \(openFeet\[openFeet\.length - 1\] === foot\.current\) publishFoot\(\);/, 'only the top window publishes');
+    // Three marks in its `:has()`, the weight of the `.modalOverlay` rule (a class and two :not()s), and AFTER it — so a
+    // coach window over a room still rides its own foot (/review 2026-10-19).
+    const phone = splitPhoneCss(coachesCss).phone;
+    const measured = phone.indexOf('body:has([data-kit-dialog][data-coach-window][data-kind="form"]) .savePill {');
+    const overlay = phone.indexOf('body:has(.modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile)) .savePill {');
+    assert.ok(overlay >= 0 && measured > overlay, 'the measured rule comes after the room\'s, at the same weight');
+    assert.match(coachesCss, /body:has\(\[data-kit-dialog\]\[data-coach-window\]\[data-kind="form"\]\) \.savePill \{\s*z-index: 410;\s*bottom: calc\(var\(--coach-window-foot,/);
+    // A window with no foot publishes nothing: the pill keeps its resting height instead of covering the body (/review).
+    assert.match(shell, /const value = top\?\.height \? `\$\{top\.height\}px` : '';/);
+    // A change inside a window nested in another's body quiets only its own reason, not the outer one's (/review).
+    assert.match(kit, /const ownChange = \(target: EventTarget\) => target instanceof Element && target\.closest\('\[data-kit-dialog\]'\) === panelRef\.current;/);
+    assert.equal((kit.match(/if \(ownChange\(e\.target\)/g) ?? []).length, 3);
+  });
+});
+
+describe('2a · the windows still to move (each list only shrinks)', () => {
 
   it('no coach file builds a window from .modalOverlay outside the list, and every entry says why', () => {
     // ⚖ Q15 keeps rooms, records and sheets out; the rest move in 2c and 2d and come off as they go.

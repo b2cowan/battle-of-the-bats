@@ -151,9 +151,9 @@
 .captionLine { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
 .captionLine b { color: var(--text-secondary); font-weight: 600; }
 
-/* ── the sheets: the footer's Remove at the left (the attempt boxes are the session grid's own —
-   `DevelopmentSession.module.css`, imported by the result sheet; one idiom, one module) ── */
-.footRemove { margin-right: auto; }
+/* ── the sheets (the attempt boxes are the session grid's own — `DevelopmentSession.module.css`, imported by the result
+   sheet; one idiom, one module). ⚰ `.footRemove` (→ 2026-10-19): Remove sits in the window's `footerStart`, which is
+   the foot's left already (One Window 2b). ── */
 /* (The "+ New test…" define line moved to its own hook, `useNewMetricDoor`, when the observation
    sheet's "+ New skill…" became its second consumer — 2026-09-28.) */
 

@@ -25,7 +25,7 @@
  */
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import styles from '../../../../coaches.module.css';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -573,8 +573,16 @@ export function DriveEntryQuestion({
       subtitle={entry.playerName}
       busy={saving}
       leaveGuard={{ tabActive, message: "You haven't saved this correction. Leave without saving it?" }}
+      footer={<>
+        {/* Dead while a save is in flight: the PATCH cannot be recalled, and a Cancel that unmounted
+            the form mid-save let the edit land anyway after the coach believed it was abandoned. */}
+        <QuestionCancel className={styles.btnGhost} />
+        <button type="submit" form="drive-entry-form" className={styles.btnPrimary} disabled={saving || !dirty}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </>}
     >
-      <form onSubmit={save}>
+      <form id="drive-entry-form" onSubmit={save}>
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="drive-entry-amount">Amount raised *</label>
@@ -613,15 +621,7 @@ export function DriveEntryQuestion({
             The books entry and the family&apos;s credit follow the new figure
             {date !== entry.effectiveDate ? ' and the new date' : ''}. Nothing else moves.
           </p>
-          {error && <p className={`${styles.errorText} ${styles.formGridFull}`}>{error}</p>}
-        </div>
-        <div className={styles.modalFooter}>
-          {/* Dead while a save is in flight: the PATCH cannot be recalled, and a Cancel that unmounted
-              the form mid-save let the edit land anyway after the coach believed it was abandoned. */}
-          <QuestionCancel className={styles.btnGhost} />
-          <button type="submit" className={styles.btnPrimary} disabled={saving || !dirty}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
+          <QuestionReason className={`${styles.errorText} ${styles.formGridFull}`}>{error}</QuestionReason>
         </div>
       </form>
     </QuestionShell>
@@ -721,10 +721,15 @@ export function EditDriveSheet({
       ariaLabel={`Edit ${drive.name}`}
       title="Edit fundraiser"
       busy={saving}
-      scroll
       leaveGuard={{ tabActive, message: "You haven't saved your changes to this fundraiser. Leave without saving them?" }}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost} />
+        <button type="submit" form="drive-edit-form" className={styles.btnPrimary} disabled={saving}>
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+      </>}
     >
-      <form onSubmit={save}>
+      <form id="drive-edit-form" onSubmit={save}>
         <div className={styles.formGrid}>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Name *</label>
@@ -777,13 +782,7 @@ export function EditDriveSheet({
             />
           </div>
         </div>
-        {error && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{error}</p>}
-        <div className={styles.modalFooter}>
-          <QuestionCancel className={styles.btnGhost} />
-          <button type="submit" className={styles.btnPrimary} disabled={saving}>
-            {saving ? 'Saving…' : 'Save changes'}
-          </button>
-        </div>
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </form>
     </QuestionShell>
   );

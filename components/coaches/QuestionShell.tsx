@@ -1,11 +1,31 @@
 'use client';
-import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
-import KitDialog, { DialogCancel } from '@/components/admin/kit/club/KitDialog';
+import KitDialog, { DialogCancel, DialogReason } from '@/components/admin/kit/club/KitDialog';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 
-/** A Cancel inside a coach form that closes the way ×, Escape and Back do — through the ask when `dirty`. */
+/** A Cancel in a coach form's foot that closes the way ×, Escape and Back do — through the ask when `dirty`. */
 export { DialogCancel as QuestionCancel };
+/** Why the foot's button was refused, written in the form and shown in the foot's reason slot, at any scroll. */
+export { DialogReason as QuestionReason };
+
+/* A coach page's save pill rides just above the TOP coach window's foot on a phone (coaches.module.css, the §227
+   rule). The foot is one row of buttons at rest and grows a line while it asks or gives a reason, so the window reports
+   its height (KitDialog's `onFootHeight`) and the newest open window's is published as `--coach-window-foot`, written
+   only when it changes (a custom property on the root restyles the whole page). */
+const openFeet: Array<{ height: number }> = [];
+let publishedFoot = '';
+function publishFoot() {
+  const top = openFeet[openFeet.length - 1];
+  // A window with no foot (the lineup's check and inning) publishes nothing: the pill keeps its resting one-row height
+  // rather than dropping over the body's last line (/review 2026-10-19).
+  const value = top?.height ? `${top.height}px` : '';
+  if (value === publishedFoot) return;
+  publishedFoot = value;
+  const root = document.documentElement.style;
+  if (value) root.setProperty('--coach-window-foot', value);
+  else root.removeProperty('--coach-window-foot');
+}
 
 /**
  * THE QUESTION — the one modal chrome a form stands in (List · Room · Question, owner-ruled
@@ -22,7 +42,8 @@ export { DialogCancel as QuestionCancel };
  * What it keeps: its name and props, the ROUTE guard (`UnsavedChangesGuard`, which stays armed while the form is
  * dirty even when `open` is false — the hub keeps hidden panels mounted, typing intact), and the coach forms' own
  * type (`ownType`). What it does NOT own: the form. The consumer renders its own `<form>` and fields as children;
- * its Cancel is `QuestionCancel`.
+ * its buttons are the window's `footer` (a submit names its form with `form=`, the admin's idiom), its Cancel is
+ * `QuestionCancel`, and a refused save's reason is `QuestionReason` (shown in the foot, beside the button).
  *
  * ⚠ CLOSE IS BUSY-GATED: the window never dismisses while a save is in flight (the club fold's /review lesson).
  *
@@ -31,10 +52,9 @@ export { DialogCancel as QuestionCancel };
  * Escape on whatever tab the coach was on. The portaled Record conversation is the one exception
  * and does not use this shell.
  *
- * ⚖ STAGE 2a SHIM: a consumer's own `.modalFooter` inside its children is laid out as the window's foot by the
- * `.windowBody` rules in `coaches.module.css`, and stands down while the window asks. Sub-part 2b moves every
- * consumer's buttons into the window's foot, and the shim goes. `scroll` is a no-op now (the window's body
- * scrolls, its head stays) and leaves with it. `wide` is the window's 640 (`size="medium"`).
+ * ⚖ ITS BUTTONS ARE THE WINDOW'S FOOT (Stage 2b, 2026-10-19): `footer` (buttons only) and `footerStart` (a sentence
+ * or a door at the left), KitDialog's own — never a `.modalFooter` in the children (guarded). The window's body
+ * scrolls and its head and foot stay. `wide` is the window's 640 (`size="medium"`).
  */
 export default function QuestionShell({
   open,
@@ -49,6 +69,8 @@ export default function QuestionShell({
   leaveGuard,
   raised = false,
   dirty = false,
+  footer,
+  footerStart,
   children,
 }: {
   open: boolean;
@@ -63,8 +85,6 @@ export default function QuestionShell({
   /** One mark between the title and the X — the lineup lens's status symbol. Not a slot for controls. */
   headerExtra?: ReactNode;
   busy?: boolean;
-  /** A no-op since Stage 2a (the window's body scrolls); callers drop it in 2b. */
-  scroll?: boolean;
   /** The 640px window — for a form with two columns or a control beside a long label. */
   wide?: boolean;
   /** Typed work the ROUTE guard protects (a link, a reload), the message in its own words. Its `dirty` is the window's
@@ -75,11 +95,29 @@ export default function QuestionShell({
   raised?: boolean;
   /** Something is typed that closing would lose: ×, ←, Cancel (`QuestionCancel`), Escape and Back ask in the foot. */
   dirty?: boolean;
+  /** The window's buttons, at the foot's right: Cancel (`QuestionCancel`), then the main one. BUTTONS ONLY. */
+  footer?: ReactNode;
+  /** The foot's far left: a sentence, or a door that shares the main act's row (Remove). */
+  footerStart?: ReactNode;
   children: ReactNode;
 }) {
   /* The reload warning stays armed while the form is dirty even if its tab is hidden (the hub
      keeps the panel mounted, typing intact); only the link interception follows the tab, so a
      dirty form on a hidden tab never blocks a click on the tab the coach is actually reading. */
+  // This window's foot, on the stack while it is open (the window's own effect reports a height first).
+  const foot = useRef({ height: 0 });
+  useEffect(() => {
+    if (!open) return;
+    const entry = foot.current;
+    openFeet.push(entry);
+    publishFoot();
+    return () => { openFeet.splice(openFeet.indexOf(entry), 1); publishFoot(); };
+  }, [open]);
+  const onFootHeight = useCallback((height: number) => {
+    foot.current.height = height;
+    if (openFeet[openFeet.length - 1] === foot.current) publishFoot();
+  }, []);
+
   const guardDirty = leaveGuard?.dirty ?? dirty;
   const guard = leaveGuard ? (
     <UnsavedChangesGuard
@@ -105,8 +143,11 @@ export default function QuestionShell({
         size={wide ? 'medium' : undefined}
         raised={raised}
         dirty={dirty}
+        footer={footer}
+        footerStart={footerStart}
         openOn="panel"
         ownType
+        onFootHeight={onFootHeight}
       >
         <div className={coach.windowBody}>{children}</div>
       </KitDialog>

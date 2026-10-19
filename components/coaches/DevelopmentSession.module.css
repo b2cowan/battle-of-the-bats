@@ -377,8 +377,8 @@
 .pickAll .pickLink { min-height: 0; padding: 0; font-size: var(--type-support); }
 .pickColumns { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.25rem; align-items: start; }
 .pickColumns .pickRow, .pickColumns .pickMain { min-height: 2.25rem; }
-.sheetFoot { display: flex; align-items: center; gap: 0.5rem; }
-.footSpacer { flex: 1; }
+/* ⚰ `.sheetFoot` / `.footSpacer` (→ 2026-10-19, One Window 2b): the session sheet's Delete session is the window's
+   `footerStart`, Cancel and Save its `footer`. */
 /* The touch floor (≤768): every control on the grid and in the sheet clears `--tap-min` on a finger.
    Above it, the boxes, the "+", the observation door and the row links are drawn-size (40px). */
 @media (max-width: 768px) {

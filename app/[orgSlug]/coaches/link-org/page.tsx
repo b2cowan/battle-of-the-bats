@@ -352,8 +352,14 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         ariaLabel={confirmingLive ? confirmTitle(confirmingLive.repTeam?.name ?? ownTeamName, confirmingLive.linkedOrg?.name ?? 'the club') : JOIN_A_CLUB_TITLE}
         title={confirmingLive ? confirmTitle(confirmingLive.repTeam?.name ?? ownTeamName, confirmingLive.linkedOrg?.name ?? 'the club') : ''}
         busy={confirmingLive !== null && workingId === confirmingLive.id}
+        footer={<>
+          <QuestionCancel className={styles.btnSecondary} />
+          <button type="submit" form="join-club-confirm-form" className="btn btn-lime">
+            {confirmingLive && workingId === confirmingLive.id ? 'Joining…' : `Join ${confirmingLive?.linkedOrg?.name ?? 'the club'}`}
+          </button>
+        </>}
       >
-        <form onSubmit={e => { e.preventDefault(); void approve(); }}>
+        <form id="join-club-confirm-form" onSubmit={e => { e.preventDefault(); void approve(); }}>
           <p className={own.confirmBody}>{CONFIRM_BODY_COACH}</p>
           <label className={styles.field}>
             <span className={styles.label}>{CONFIRM_FIELD}</span>
@@ -365,13 +371,8 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
               autoComplete="off"
             />
           </label>
+          {/* The typed name's own reason, so it stays under its field (KitDialog: a reason that belongs to one field). */}
           {typedMiss && <p className={own.confirmMiss} role="alert">{REFUSAL.confirmMismatch}</p>}
-          <div className={styles.modalFooter}>
-            <QuestionCancel className={styles.btnSecondary} />
-            <button type="submit" className="btn btn-lime">
-              {confirmingLive && workingId === confirmingLive.id ? 'Joining…' : `Join ${confirmingLive?.linkedOrg?.name ?? 'the club'}`}
-            </button>
-          </div>
         </form>
       </QuestionShell>
     </div>

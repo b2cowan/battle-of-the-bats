@@ -32,7 +32,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronRight, Pencil, Plus, Users } from 'lucide-react';
 import RoomShell, { type RoomNav, type RoomTile } from '@/components/coaches/RoomShell';
-import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import LoadingState from '@/components/shared/LoadingState';
@@ -487,38 +487,36 @@ function MergeQuestion({ payee, others, shared, api, raised, onBack, onDone }: {
   }
   return (
     <QuestionShell open onClose={onBack} onBack={onBack} busy={busy} raised={raised}
-      ariaLabel={`Merge ${payee.name} into another payee`} title={`Merge ${payee.name} into another payee?`}>
-      <>
-        {error && <p className={`${styles.errorText} ${own.error}`} role="alert">{error}</p>}
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="merge-into">Keep *</label>
-          <select id="merge-into" className={styles.select} value={into} onChange={e => { setInto(e.target.value); setError(''); }}>
-            <option value="">Choose a payee…</option>
-            {shared.length > 0 && (
-              <optgroup label={SHARED_PAYEES_HEADING}>
-                {shared.map(s => <option key={s.id} value={s.id}>{s.name} (the club’s)</option>)}
-              </optgroup>
-            )}
-            {others.length > 0 && (
-              shared.length > 0
-                ? <optgroup label={OWN_PAYEES_HEADING}>{others.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</optgroup>
-                : others.map(o => <option key={o.id} value={o.id}>{o.name}</option>)
-            )}
-          </select>
-        </div>
-        <p className={`${own.lead} ${own.afterField}`}>{keep
-          ? `${entries} move${payee.uses === 1 ? 's' : ''} to ${keep.name}, and ${payee.name} is removed.`
-          : `Every entry naming ${payee.name} (${payee.uses}) moves to the payee you keep, and ${payee.name} is removed.`}</p>
-        {keepShared && (
-          <p className={own.consent}>
-            {keepShared.name} is shared by your club, so your club will see {payee.uses === 1 ? 'this entry' : `these ${entries}`}.
-          </p>
-        )}
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnSecondary} onClick={onBack} disabled={busy}>Back</button>
-          <button type="button" className={styles.btnPrimary} onClick={() => void go()} disabled={busy || !keep}>{busy ? 'Merging…' : 'Merge'}</button>
-        </div>
-      </>
+      ariaLabel={`Merge ${payee.name} into another payee`} title={`Merge ${payee.name} into another payee?`}
+      footer={<>
+        <button type="button" className={styles.btnSecondary} onClick={onBack} disabled={busy}>Back</button>
+        <button type="button" className={styles.btnPrimary} onClick={() => void go()} disabled={busy || !keep}>{busy ? 'Merging…' : 'Merge'}</button>
+      </>}>
+      <QuestionReason className={`${styles.errorText} ${own.error}`}>{error}</QuestionReason>
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="merge-into">Keep *</label>
+        <select id="merge-into" className={styles.select} value={into} onChange={e => { setInto(e.target.value); setError(''); }}>
+          <option value="">Choose a payee…</option>
+          {shared.length > 0 && (
+            <optgroup label={SHARED_PAYEES_HEADING}>
+              {shared.map(s => <option key={s.id} value={s.id}>{s.name} (the club’s)</option>)}
+            </optgroup>
+          )}
+          {others.length > 0 && (
+            shared.length > 0
+              ? <optgroup label={OWN_PAYEES_HEADING}>{others.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</optgroup>
+              : others.map(o => <option key={o.id} value={o.id}>{o.name}</option>)
+          )}
+        </select>
+      </div>
+      <p className={`${own.lead} ${own.afterField}`}>{keep
+        ? `${entries} move${payee.uses === 1 ? 's' : ''} to ${keep.name}, and ${payee.name} is removed.`
+        : `Every entry naming ${payee.name} (${payee.uses}) moves to the payee you keep, and ${payee.name} is removed.`}</p>
+      {keepShared && (
+        <p className={own.consent}>
+          {keepShared.name} is shared by your club, so your club will see {payee.uses === 1 ? 'this entry' : `these ${entries}`}.
+        </p>
+      )}
     </QuestionShell>
   );
 }
@@ -544,17 +542,17 @@ function NewPayeeQuestion({ api, raised, onClose, onAdded }: { api: string; rais
   }
   return (
     <QuestionShell open onClose={onClose} busy={busy} raised={raised} ariaLabel="New payee" title="New payee" dirty={!!name.trim()}
-      leaveGuard={{ message: 'Leave without adding this payee?' }}>
-      <form onSubmit={e => { e.preventDefault(); void add(); }}>
-        {error && <p className={`${styles.errorText} ${own.error}`} role="alert">{error}</p>}
+      leaveGuard={{ message: 'Leave without adding this payee?' }}
+      footer={<>
+        <QuestionCancel className={styles.btnSecondary} />
+        <button type="submit" form="new-payee-form" className={styles.btnPrimary} disabled={busy}>{busy ? 'Adding…' : 'Add payee'}</button>
+      </>}>
+      <form id="new-payee-form" onSubmit={e => { e.preventDefault(); void add(); }}>
+        <QuestionReason className={`${styles.errorText} ${own.error}`}>{error}</QuestionReason>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="new-payee">Name *</label>
           <input id="new-payee" className={styles.input} value={name} maxLength={200} autoFocus
             placeholder="For example: Town of Northfield" onChange={e => { setName(e.target.value); setError(''); }} />
-        </div>
-        <div className={styles.modalFooter}>
-          <QuestionCancel className={styles.btnSecondary} />
-          <button type="submit" className={styles.btnPrimary} disabled={busy}>{busy ? 'Adding…' : 'Add payee'}</button>
         </div>
       </form>
     </QuestionShell>

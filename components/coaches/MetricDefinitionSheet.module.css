@@ -42,9 +42,8 @@
 }
 .rule strong { color: var(--text-primary); }
 
-/* The footer: Preview and Retire/Restore on the left, Cancel and Save on the right. */
-.foot { flex-wrap: wrap; }
-.footSpacer { flex: 1; }
+/* ⚰ `.foot` / `.footSpacer` (→ 2026-10-19, One Window 2b): Preview, Retire / Restore and Delete are the window's
+   `footerStart`, Cancel and Save its `footer`; the window lays the foot out and gives it the 44px floor on a phone. */
 
 /* ── The preview modal's body ─────────────────────────────────────────────── */
 .preview { gap: 0.45rem; padding-bottom: 0.5rem; }
@@ -80,9 +79,9 @@
 
 /* The 44px floor on every control the sheet draws, at touch widths — the shared .input / .select /
    .btn* classes render 33–37px there portal-wide (a standing ratchet item), and a NEW form does not
-   get to inherit that debt. Scoped to this sheet's form and footer. */
+   get to inherit that debt. Scoped to this sheet's form (its foot is the window's, 44px at touch widths). */
 @media (max-width: 900px) {
-  .form input, .form select, .form textarea, .foot button { min-height: var(--tap-min, 44px); }
+  .form input, .form select, .form textarea { min-height: var(--tap-min, 44px); }
 }
 
 /* A retired metric's written fields (the method, a skill's descriptors) read back as they were typed. */

@@ -104,7 +104,8 @@
  * its controls (the preview's colour swatches) and a click in it is not "outside". The panel moves left by the
  * aside's width so the pair is centred; a phone never shows it.
  */
-import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
@@ -144,6 +145,24 @@ export type KitStep = { name: string; onStep: () => void };
  *  a window with a foot: a refusal there stays where it is written. */
 export const KitReasonSlot = createContext<{ slot: HTMLElement | null; reveal: () => void } | null>(null);
 
+/** Why the foot's button was refused, written anywhere in the body and shown in the foot's reason slot (see the
+ *  header), with `icon` before it there; in place where the window has no foot, or where the reason belongs to ONE
+ *  field (`inPlace`: it stays under that field). The one refusal line for both portals: the club's money kit wraps it
+ *  as `FormError`, the coaches portal's forms as `QuestionReason` (One Window Stage 2b), each with its own type. */
+export function DialogReason({ children, className, icon, inPlace = false }: {
+  children: ReactNode; className?: string; icon?: ReactNode; inPlace?: boolean;
+}) {
+  const reason = useContext(KitReasonSlot);
+  const text = typeof children === 'string' ? children : children ? 'node' : '';
+  const reveal = reason?.reveal;
+  // Before paint: a reason written into a slot still hidden by an earlier change must be shown in the same frame,
+  // or a screen reader may not announce it (/review, Ask 11).
+  useLayoutEffect(() => { if (text && !inPlace) reveal?.(); }, [text, inPlace, reveal]);
+  if (!children) return null;
+  if (!inPlace && reason?.slot) return createPortal(<p className={className} role="alert">{icon}{children}</p>, reason.slot);
+  return <p className={className} role="alert">{children}</p>;
+}
+
 export default function KitDialog({
   kind,
   title,
@@ -171,6 +190,7 @@ export default function KitDialog({
   headerExtra,
   openOn = 'field',
   ownType = false,
+  onFootHeight,
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
@@ -240,6 +260,9 @@ export default function KitDialog({
   /** The caller's content draws its own type (the coaches portal's forms carry their own classes): the body keeps
    *  its padding and scroll but not the kit's face, ink and paragraph spacing. */
   ownType?: boolean;
+  /** Told the foot's height in px (0 with no foot) as it changes — the coach shell places the page's save pill by it.
+   *  Keep it stable (`useCallback`): a new function re-attaches the watch. */
+  onFootHeight?: (height: number) => void;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -312,6 +335,17 @@ export default function KitDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The foot's height, for a caller that places something by it (`onFootHeight`): 0 with no foot, and again whenever
+  // it appears, goes or changes height (the ask, a reason).
+  const [footEl, setFootEl] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!onFootHeight) return;
+    if (!footEl) { onFootHeight(0); return; }
+    const watch = new ResizeObserver(([entry]) => onFootHeight(Math.round(entry.borderBoxSize?.[0]?.blockSize ?? footEl.offsetHeight)));
+    watch.observe(footEl);
+    return () => watch.disconnect();
+  }, [footEl, onFootHeight]);
+
   /** Previous / Next: the caller swaps the record; the window stays, starts it at its top, and keeps
    *  the keyboard inside (the depth chart's player). */
   const step = (target: KitStep) => {
@@ -320,12 +354,18 @@ export default function KitDialog({
     panelRef.current?.focus({ preventScroll: true });
   };
 
+  /** Whether an event in the body is this window's own, not one from a window nested inside its body. */
+  const ownChange = (target: EventTarget) => target instanceof Element && target.closest('[data-kit-dialog]') === panelRef.current;
+
   // While the foot asks, it holds the ask in place of the window's own sentence and buttons (see the header).
+  // Discard is the red-tinted danger button (owner, 2026-10-19, using the walk: two outlined buttons were quieter than the
+  // lime Save they replaced, so the ask went unnoticed and a press on × read as "nothing happened"; One Window Q11 already
+  // rules a destructive answer red-tinted). Keep writing stays the quiet one.
   const footStart = asking ? <p className={styles.ask} role="alert">{discardAsk ?? WINDOW_ASK.sentence}</p> : footerStart;
   const footEnd = asking ? (
     <>
       <button type="button" ref={keepRef} className="btn btn-outline" onClick={keepWriting} disabled={busy}>{WINDOW_ASK.keep}</button>
-      <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{WINDOW_ASK.discard}</button>
+      <button type="button" className="btn btn-danger" onClick={onClose} disabled={busy}>{WINDOW_ASK.discard}</button>
     </>
   ) : footer;
 
@@ -395,17 +435,19 @@ export default function KitDialog({
         )}
         <KitReasonSlot.Provider value={reason}>
           <div className={styles.bodyWrap} data-has-status={status != null || undefined}>
-            {/* Any change in the body quiets the reason beside the button: it was about what was there before. */}
+            {/* Any change in the body quiets the reason beside the button: it was about what was there before. Not a
+                change inside a window nested in this body (the event form's Add a place): that window has its own
+                reason (/review 2026-10-19, One Window 2b — the nested Escape's rule, applied here). */}
             <div ref={bodyRef} className={`${styles.body}${ownType ? ` ${styles.ownType}` : ''}`}
-              onInputCapture={hasFoot ? () => setReasonQuiet(true) : undefined}
-              onChangeCapture={hasFoot ? () => setReasonQuiet(true) : undefined}
+              onInputCapture={hasFoot ? e => { if (ownChange(e.target)) setReasonQuiet(true); } : undefined}
+              onChangeCapture={hasFoot ? e => { if (ownChange(e.target)) setReasonQuiet(true); } : undefined}
               // A button in the body changes the form too (All, None, a row's chevron, "Use the bill's schedule").
-              onClickCapture={hasFoot ? e => { if ((e.target as HTMLElement).closest('button')) setReasonQuiet(true); } : undefined}>{children}</div>
+              onClickCapture={hasFoot ? e => { if (ownChange(e.target) && (e.target as HTMLElement).closest('button')) setReasonQuiet(true); } : undefined}>{children}</div>
             {status != null && <div className={styles.status}>{status}</div>}
           </div>
-          {/* A window with no foot of its own grows one while it asks (a coach form whose buttons are in its body). */}
+          {/* A window with no foot of its own grows one while it asks (a read window, a list of choices). */}
           {(hasFoot || asking) && (
-            <div className={styles.foot} onClickCapture={() => setReasonQuiet(false)}>
+            <div ref={setFootEl} className={styles.foot} onClickCapture={() => setReasonQuiet(false)}>
               {footStart && <div className={styles.footStart}>{footStart}</div>}
               <div ref={setReasonSlot} className={`${styles.footReason}${reasonQuiet || asking ? ` ${styles.footReasonQuiet}` : ''}`} />
               {footEnd != null && <div className={styles.footEnd}>{footEnd}</div>}
