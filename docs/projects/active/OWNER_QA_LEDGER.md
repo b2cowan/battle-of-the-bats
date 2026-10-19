@@ -25305,3 +25305,14 @@ below stays as the record of what the two kept changes do; with every chat door 
 
 - Not changed: the dropdown's choices and their words (As the bill · … / Its own · N installments); boxes on white rows; the Dark theme.
 <!-- /§338 -->
+
+## §339 ✅ · One window · Stage 1 · one look — **every admin form and question window wears paper-tone fields (36px, 6px corners), a tinted edge with no shadow and 24px inside, at the width its content needs (520 one column, 640 side by side or a record, 800 a big table or two panes); every field label in both portals is sentence case; coach windows dim the page in the theme's tone**
+
+**Ruled 2026-10-18** by the owner (Q1–Q16 and the width audit's S1–S5, all as recommended). **Built and committed `992243fb` 2026-10-18** after /simplify and /review. **Walked ✅ 2026-10-19** — owner paste-back: "Ticked 30 of 30. Verdict: passes", no notes. The walk is the hub's checkable QA tab: https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 (plan `docs/projects/active/ONE_WINDOW_PLAN.md`).
+
+**Accounts:** Club admin — uat-club-owner@uat-rep-club.local (UAT Rep Club); Tournament admin — uat-owner@uat-test-org.local; Coaches portal — uat-coach@uat-test-org.local. Look-only: nothing is saved.
+
+**What the 30 steps covered:** A · the club admin on a computer, Warm (12 — Invite someone at 520 with a plain star, Manage a member at 640, New allocation and Words your teams use at 800, the stock-logo chooser, a tryout applicant's foot, a venue record, a family record, the permit pickers, PDF settings' labels, House league's season labels) · B · the club admin in Dark (1) · C · the tournament admin (6 — Add game at 640, the round-robin generator at 800 across its steps, Publish at 520, the bracket editor's Home / Away, Web address, Dark) · D · the coaches portal (7 — Add player, a player's details, New fundraiser, a practice plan, a lineup, Settings › Money, the Dark dimmed page) · E · phones (4, sign-in unchanged among them).
+
+- Not in this walk: the two flows that widen on a click (a payment request 520 → Approve 640; New tournament's chooser 520 → its next step 640) — an owner call, open; the layout check on the screens Stage 1 touched (on staging at the promote).
+<!-- /§339 -->

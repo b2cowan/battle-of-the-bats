@@ -2,7 +2,9 @@
 
 **Status:** all sixteen asks ruled as recommended 2026-10-18 (owner paste-back; hub version 1). Plan written
 2026-10-18. Stage 1 width audit published 2026-10-18 (hub version 3); its five calls S1–S5 ruled as recommended the
-same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review; owner walk owed (hub QA tab).
+same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review; **owner walk ✅ passed 2026-10-19**
+(30 of 30, no notes; hub QA tab, QA ledger §339). Still open on Stage 1: the two flows that widen on a click (§4, an
+owner call) and the layout check on the screens it touched (runs on staging at the promote).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
 **PM brief:** `docs/projects/active/ONE_WINDOW_PM_BRIEF.md`
