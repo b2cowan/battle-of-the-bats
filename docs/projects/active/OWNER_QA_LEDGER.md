@@ -25683,3 +25683,36 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **✅ PASSED 2026-10-19, 20 of 20** (owner paste-back: "Ticked 20 of 20. Verdict: passes", no notes). C3 settles the Remove row: one row at 390. **§346 CLOSED.**
 <!-- /§346 -->
+
+## §347 · Free coach tap targets — **on a phone every control a free coach taps is a fingertip (44px): a roster, schedule or fee row is one door to its form, Remove lives in the form, the player's number is the reorder handle, Mark paid stays on the row**
+
+**Built 2026-10-19** to the owner's rulings Q1–Q7 (all as recommended; hub https://claude.ai/artifact/Rne2oGZjtLyKp2S74MXfJS, plan `FREE_COACH_TAP_TARGETS_PLAN.md`). Proof on the local dev server: the 12 free screens + the paid Overview and Announcements at 361/390/768/1440, 56 of 56 pairs, **334 findings → 7** (the 7 ruled to be accepted with a reason); a probe opened one row on each editor at 390 and 768 (nothing under 44) and drove the roster's Move menu.
+
+**Sign in:** http://localhost:3000 · `uat-free-coach@uat-free-coach.local` (password as every test account) → **UAT Free Team**. W4 also uses `uat-coach@uat-test-org.local`. A phone, or Dev Tools at 390 wide, unless a step says otherwise.
+
+**Walk W1 — the roster on a phone (one purpose: a row is one door; the number is the handle). Writes: one reorder, put back by its own step.**
+- **W1.1** More › **Roster**. **Expect:** each player row has no pencil and no bin; the player's number sits in a bordered square at the row's start with a small grip mark; a chevron at the row's end.
+- **W1.2** Tap a player's **name**. **Expect:** that row opens into the same form as before (number, first and last name, the two "+ Add …" lines, Cancel · Save); every field and button is a full fingertip tall; **Remove player** (red, with a small bin) sits just above Cancel · Save.
+- **W1.3** Tap **Remove player**. **Expect:** the same "Remove this player?" question as before. Tap **Cancel** (nothing is removed), then Cancel the form.
+- **W1.4** **Tap** (don't hold) Theo Novak's number. **Expect:** a sheet at the bottom: his name, "2 of 12", **Move up · Move down · Cancel**. Tap **Move down**. **Expect:** the sheet closes and Theo is now third.
+- **W1.5** Tap Theo's number again › **Move up**. **Expect:** he is back second. (This puts the order back.)
+- **W1.6** **Press and hold** a number, then drag the row up or down a place and let go. **Expect:** the row moves; a quick swipe on the list still scrolls. Put it back the same way.
+
+**Walk W2 — the schedule and fees doors on a phone (one purpose: open, act, remove from inside). Writes: one Mark paid, undone by its own step.**
+- **W2.1** More › **Schedule**. **Expect:** no pencil or bin on any event; tap an event → its form opens in place, the Practice · Game · Event choice and every field a full fingertip; **Remove event** above Cancel · Save. Cancel.
+- **W2.2** More › **Fees**. **Expect:** an unpaid fee row shows its name and amount, a chevron, and an olive-outlined **Mark paid** a full fingertip tall; a paid fee shows "Paid · <date>" and a chevron, and no "Undo" word on the row.
+- **W2.3** Tap **Mark paid** on Theo Novak's fee. **Expect:** it turns Paid at once, the totals move.
+- **W2.4** Tap that fee's **name**. **Expect:** its form opens; the **Fee label** field is a full-height box (it was squashed to a sliver on a phone before); **Mark unpaid** (dark ink) and **Remove fee** (red) sit side by side above Cancel · Save. Tap **Mark unpaid** (this undoes W2.3), then Cancel.
+
+**Walk W3 — the small links (one purpose: bigger tap areas, nothing moved). Nothing in it writes.**
+- **W3.1** **Overview**. **Expect:** the "?" by the page title, **⇄ Fan view** under the tournament card, **See all →** on the Tournaments tile and **Upgrade to Premium — free →** each take a whole fingertip; the type is the size it was. Fan view sits a little further below its card than before.
+- **W3.2** **Announcements**. **Expect:** the Subject box and **Send announcement** / **Refresh** are a full fingertip tall.
+- **W3.3** More › **Explore** (Open →, Upgrade) and the Teams page's **Express interest**. **Expect:** each a full fingertip tall.
+
+**Walk W4 — the computer, and the paid screens the shared parts reach (one purpose: nothing else moved). Nothing in it writes.**
+- **W4.1** Free coach, about 1,440 wide: Roster, Schedule, Fees. **Expect:** rows read as before with a chevron at the end; a row tints under the mouse and opens on click. **Changed (flagged):** the roster's number now sits beside the grip as plain olive figures, without its tinted box.
+- **W4.2** Sign in as `uat-coach@uat-test-org.local`: the paid Overview and Announcements at 390. **Expect:** the Overview's live-tournament line keeps its height (Fan view is a bigger target inside it); Announcements' Subject / Send / Refresh contacts are a full fingertip tall.
+
+- Not changed: what any form saves, the Remove / Remove event / Remove fee questions, the Practice · Game · Event choice, tournament games on the schedule (still read-only rows), the help page's What's New and search box (accepted, below), the global small button, the help button's own size.
+- **Accepted on the owner's word (Q5, Q6), with written reasons in the layout baseline:** the help page's What's New (19px) and Search this guide (42px) at 361/390/768 — every help page's, owned by the touch-target debt plan; the free Notifications "?" at 768 (34 wide) — the paid page header's F-21.
+<!-- /§347 -->

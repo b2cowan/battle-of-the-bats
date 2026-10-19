@@ -1,0 +1,766 @@
+<title>Free Coach Tap Targets</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the repo's project-hub shell (bar · tabs · walk) around TRUE-SIZE product frames drawn side by side,
+   Today beside the options; a width switch redraws every frame at 390 or 768 and a tap-box layer measures them live. */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--hubground:#e7e9e1;--bad:#c2261a;--ok:#2f7a1f;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--hubground);color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:12px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubactions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid #748267;border-radius:7px;overflow:hidden}
+.seg button{background:#3a4932;color:#fff;border:0;padding:8px 13px;min-height:44px;font-size:13px}
+.seg button[aria-pressed=true]{background:var(--lime);color:#1c2417;font-weight:700}
+.tapsw{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:7px;padding:8px 13px;min-height:44px;font-size:13px}
+.tapsw[aria-pressed=true]{background:var(--lime);color:#1c2417;font-weight:700}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.screen{padding:22px 24px 30px}
+.screenhead{max-width:900px;margin-bottom:16px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{margin:22px 0 0;padding:14px 18px;background:#fafbf7;font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:8px;max-width:900px}.intent strong{color:var(--ink)}
+.frames{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;overflow-x:auto;padding-bottom:8px}
+.fcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fcap{font-size:13px;font-weight:700;display:flex;align-items:center;flex-wrap:wrap;gap:4px;max-width:var(--fw)}
+.fcap .meta{font-weight:400;flex-basis:100%}
+.rec{background:var(--lime);border:1px solid #b9d88c;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+
+/* clickable highlights */
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 system-ui,sans-serif;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage li{margin-bottom:6px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--white);max-width:1100px}
+table.census{border-collapse:collapse;width:100%;font-size:13.5px;min-width:860px}
+.census th,.census td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.census th{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+.census td.n{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.census tr:last-child td{border-bottom:0}
+.px{font:600 12px ui-monospace,monospace;color:var(--bad);white-space:nowrap}
+.reach{font-size:12px;padding:2px 7px;border-radius:10px;background:var(--soft);white-space:nowrap}.reach.shared{background:#f4ecd9}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+
+/* questions + paste-back */
+.q{border:1px solid var(--line);border-radius:10px;background:var(--white);padding:18px 20px;margin-bottom:14px;max-width:900px}
+.q h3{margin:0 0 6px;font-size:16px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:7px;border:1px solid transparent;margin:4px 0;cursor:pointer;font-size:14px}
+.opt:hover{background:#fafbf7;border-color:var(--line)}
+.opt input{width:20px;height:20px;margin-top:2px;accent-color:var(--olive);flex:none}
+.opt.recd b::after{content:'Recommended';margin-left:8px;font:800 10px/1.4 system-ui;letter-spacing:.5px;text-transform:uppercase;background:var(--lime);border:1px solid #b9d88c;border-radius:4px;padding:1px 6px;vertical-align:middle}
+.q textarea,#pasteOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;background:var(--white)}
+#pasteOut{font:12px/1.5 ui-monospace,monospace}
+.why{font-size:13.5px;color:var(--muted);margin:6px 0 4px}
+
+/* ============ THE PRODUCT, AT TRUE SIZE (warm coaches theme — values read from the product's stylesheets) ============ */
+.pf{--bg:#F8F4ED;--sf:#FFFFFF;--ln:rgba(70,55,30,.12);--ln2:rgba(70,55,30,.20);--t1:#241E15;--t2:#4A4235;--t3:#615A54;--ol:#57651E;--olr:87,101,30;--lm:#D9F99D;--dan:#B03A22;--amb:#835006;--blu:#134FD3;
+  --sans:Inter,system-ui,sans-serif;--disp:'Barlow Condensed','Arial Narrow',sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+  width:var(--fw);flex:none;position:relative;background:var(--bg);color:var(--t1);font:14px/1.6 var(--sans);border:1px solid #c9c2b4;border-radius:16px;overflow:hidden;container-type:inline-size;text-align:left}
+.pf *{box-sizing:border-box}
+.pf button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.pf .i{width:var(--s,16px);height:var(--s,16px);stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.pf .mh{padding:.7rem .9rem .55rem;border-bottom:1px solid var(--ln);background:rgba(248,244,237,.92)}
+.pf .ey{font:700 10px/1.3 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--t3)}
+.pf .tn{font:800 20px/1.15 var(--disp);color:var(--t1)}
+.pf .pg{padding:1.5rem 1rem 3rem}
+@container (min-width:701px){.pf .pg{padding:2rem 1.5rem 4rem}}
+.pf .bn{display:grid;grid-template-columns:repeat(3,1fr);min-height:72px;padding:.4rem 0;border-top:1px solid var(--ln);background:rgba(248,244,237,.92)}
+.pf .bn a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;color:var(--t3);text-decoration:none;font:600 11px/1.2 var(--sans)}
+.pf .bn .iw{width:46px;height:30px;display:grid;place-items:center;border-radius:999px}
+.pf .bn a.on{color:var(--ol)}.pf .bn a.on .iw{background:rgba(var(--olr),.10)}
+/* section shell */
+.pf .sh{display:flex;flex-direction:column;align-items:stretch;gap:.4rem;margin-bottom:.75rem}
+.pf .sh.row{flex-direction:row;align-items:center;justify-content:space-between}
+@container (min-width:701px){.pf .sh{flex-direction:row;align-items:center;justify-content:space-between;gap:1rem}}
+.pf .st{font:700 10.4px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin:0}
+.pf .se{margin-left:auto;display:flex;align-items:center;gap:.6rem}
+.pf .cnt{font:700 .7rem/1 var(--mono);letter-spacing:.06em;color:var(--t3)}
+.pf .hb{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--t3)}
+@container (min-width:761px){.pf .hb{width:34px;height:34px}}
+.pf .hb.w44{width:44px;height:44px;margin-block:-6px}
+/* rows */
+.pf ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
+.pf .rw{display:flex;align-items:center;gap:.6rem;padding:.6rem .7rem;background:var(--sf);border:1px solid var(--ln);border-radius:12px;min-width:0}
+.pf .gr{width:30px;height:38px;display:grid;place-items:center;color:var(--t3)}
+.pf .gr.g44{width:44px;height:44px;margin:-3px 0}
+.pf .js{min-width:38px;height:38px;padding:0 .4rem;display:grid;place-items:center;font:700 16px/1 var(--mono);color:var(--ol);background:rgba(var(--olr),.08);border:1px solid rgba(var(--olr),.25);border-radius:6px;flex:none}
+.pf .mn{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1rem}
+.pf .nm{font-size:16px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf .nm small{font-size:16px;font-weight:400;color:var(--t2)}
+.pf .mt{font-size:12px;line-height:1.35;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf .ra{display:flex;gap:.3rem;flex:none}
+.pf .ib{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--ln);border-radius:6px;color:var(--t2)}
+.pf .ib.b44{width:44px;height:44px;margin:-3px 0}
+.pf .ad{display:inline-flex;align-items:center;gap:.4rem;align-self:flex-start;padding:.55rem .9rem;font-size:14px;font-weight:600;line-height:1.25;color:var(--ol);background:rgba(var(--olr),.06);border:1px dashed rgba(var(--olr),.4);border-radius:6px}
+.pf .ad.a44{min-height:44px}
+.pf .ed{display:flex;flex-direction:column;gap:.6rem}
+/* option C: the row is the door */
+.pf .rw.door{padding:0 0 0 .6rem;gap:.5rem}
+.pf .db{flex:1;min-width:0;display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem .6rem .1rem;min-height:58px;text-align:left;border-radius:0 12px 12px 0}
+.pf .db .chev{color:var(--t3)}
+.pf .nh{width:44px;height:44px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:700 16px/1 var(--mono);color:var(--ol);background:rgba(var(--olr),.08);border:1px solid rgba(var(--olr),.32);border-radius:8px;touch-action:none}
+.pf .nh .i{--s:12px;color:rgba(var(--olr),.7)}
+@container (max-width:640px){.pf .db .chev{align-self:flex-start;margin-top:3px}}
+/* the in-place form */
+.pf .fm{padding:.9rem;border:1px solid rgba(var(--olr),.35);border-radius:12px;background:var(--sf);box-shadow:0 0 0 3px rgba(var(--olr),.08);display:flex;flex-direction:column;gap:.6rem}
+.pf .frow{display:flex;gap:.5rem}
+.pf .in{height:40px;padding:0 .7rem;border:1px solid var(--ln2);border-radius:6px;background:var(--sf);font:14px var(--sans);color:var(--t1);min-width:0;flex:1;display:flex;align-items:center;color:var(--t1)}
+.pf .in.ph{color:var(--t3)}
+.pf .lbl .in,.pf .frow.colm .in,.pf .fm > .in{flex:none}
+.pf .in.num{flex:0 0 56px;justify-content:center;font-family:var(--mono)}
+.pf .in.i44{height:44px}
+.pf .tg{display:inline-flex;align-items:center;gap:.3rem;font-size:12px;font-weight:600;color:var(--ol);align-self:flex-start;min-height:22px}
+.pf .tg.t44{min-height:44px}
+.pf .fa{display:flex;gap:.5rem}
+.pf .cb,.pf .sb{flex:1;height:42px;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;border-radius:6px;font-size:14px;font-weight:700}
+.pf .cb{border:1px solid var(--ln2)}.pf .sb{background:var(--lm);color:var(--t1)}
+.pf .cb.b44,.pf .sb.b44{height:44px}
+.pf .rmv{display:inline-flex;align-items:center;gap:.35rem;min-height:44px;padding:0 .1rem;color:var(--dan);font-size:14px;font-weight:400}
+.pf .rmv:hover{text-decoration:underline}
+.pf .rmv.ink{color:var(--t1)}
+.pf .bodyend{display:flex;flex-wrap:wrap;gap:0 1.2rem;margin-top:-.2rem}
+.pf .dim{opacity:.4}
+/* schedule */
+.pf .rw.game{border-left:3px solid var(--ol)}.pf .rw.prac{border-left:3px solid rgba(19,79,211,.5)}
+.pf .tc{min-width:40px;height:38px;border-radius:6px;display:grid;place-items:center;flex:none}
+.pf .tc.g{color:var(--ol);background:rgba(var(--olr),.10)}.pf .tc.p{color:var(--blu);background:rgba(19,79,211,.08)}.pf .tc.e{color:var(--t3);background:var(--bg)}
+.pf .sg{display:flex;padding:.2rem;border:1px solid var(--ln);border-radius:6px;background:var(--sf)}
+.pf .sg span{flex:1;height:34px;display:grid;place-items:center;border-radius:4px;font-size:14px;font-weight:600;color:var(--t2)}
+.pf .sg.s44 span{height:40px}
+.pf .sg span.on{background:var(--lm);color:var(--t1)}
+.pf .lbl{font-size:12px;color:var(--t2);display:flex;flex-direction:column;gap:.25rem}
+/* fees */
+.pf .pn{display:flex;gap:.7rem;padding:.85rem 1rem;background:var(--sf);border:1px solid var(--ln);border-radius:12px;font-size:14px;color:var(--t2);line-height:1.5}
+.pf .sum{display:grid;grid-template-columns:1fr;gap:.5rem}
+@container (min-width:701px){.pf .sum{grid-template-columns:repeat(3,1fr)}.pf .sum.two{grid-template-columns:repeat(2,1fr)}}
+.pf .sum div{padding:.7rem;background:var(--sf);border:1px solid var(--ln);border-radius:6px;font-size:12px;color:var(--t2)}
+.pf .sum b{display:block;font-size:16px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.pf .sum b.amb{color:var(--amb)}
+.pf .blk h3{margin:0;font-size:16px;font-weight:700}.pf .blk .mt{white-space:normal}
+.pf .pgp{display:flex;flex-direction:column;gap:.45rem;padding:.65rem;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
+.pf .phd{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem}
+.pf .phd b{font-size:14px}.pf .phd .jn{font:600 12px var(--mono);color:var(--ol);margin-left:.35rem}
+.pf .tot{font-size:12px;color:var(--t3);text-align:right;line-height:1.35;min-width:96px}
+.pf .fr{display:flex;align-items:center;gap:.6rem;padding:.55rem .6rem;background:var(--sf);border:1px solid var(--ln);border-radius:6px;min-width:0}
+.pf .fr .nm{font-size:14px;font-weight:650}
+.pf .mp{flex:none;display:inline-flex;align-items:center;gap:.35rem;height:32px;padding:0 .7rem;border:1px solid var(--ln2);border-radius:6px;font-size:12px;font-weight:600;color:var(--t2)}
+.pf .mp.ol{color:var(--ol);border-color:var(--ol);background:var(--sf)}
+.pf .mp.m44{height:44px;margin:-6px 0}
+.pf .pp{flex:none;display:inline-flex;align-items:center;gap:.3rem;height:26px;padding:0 .55rem;color:var(--ol);background:rgba(var(--olr),.12);border:1px solid rgba(var(--olr),.4);border-radius:6px;font:700 12px var(--mono)}
+.pf .un{font-size:12px;color:var(--t3);text-decoration:underline;flex:none;line-height:1.25}
+.pf .un.u44{min-height:44px;padding:0 .5rem;border:1px solid var(--ln2);border-radius:6px;text-decoration:none;font-weight:600;margin:-6px 0}
+.pf .fr.door{padding:0 0 0 .6rem;gap:.4rem}
+.pf .fr.door .db{min-height:48px;padding:.45rem .6rem .45rem 0}
+/* overview */
+.pf h2.h2{font:700 10.4px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin:1.4rem 0 .6rem}
+.pf .rc{display:flex;flex-direction:column;align-items:flex-start}
+.pf .card{display:flex;justify-content:space-between;gap:.8rem;align-items:center;width:100%;padding:.9rem 1rem;background:var(--sf);border:1px solid var(--ln);border-radius:12px;text-decoration:none;color:var(--t1)}
+.pf .card b{display:block;font-size:16px}.pf .card .mt{white-space:normal}
+.pf .chip{font:800 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:.35rem .55rem;border-radius:999px;background:rgba(var(--olr),.12);color:var(--ol);white-space:nowrap}
+.pf .fv{display:inline-flex;align-items:center;gap:.35rem;margin-left:.5rem;padding:.15rem .2rem;font:600 .7rem/1.6 var(--mono);letter-spacing:.03em;color:var(--ol);text-decoration:none}
+.pf .fv.f44{min-height:44px;margin-bottom:-21px}
+.pf .hq{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.pf .hqi{display:flex;gap:.65rem;padding:.85rem;background:var(--sf);border:1px solid var(--ln);border-radius:12px;min-width:0}
+.pf .hqi.wide{grid-column:1/-1}
+.pf .hqic{width:36px;height:36px;border-radius:6px;display:grid;place-items:center;background:rgba(var(--olr),.10);color:var(--ol);flex:none}
+.pf .hql{font:800 10px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--t3)}
+.pf .hqi strong{display:block;font-size:16px;font-weight:850;line-height:1.3}
+.pf .hqi p{margin:0;font-size:12px;color:var(--t2);line-height:1.4}
+.pf .sa{display:inline-flex;align-items:center;min-height:24px;padding:.1rem 0;font-size:12px;font-weight:700;color:var(--ol);text-decoration:none}
+.pf .sa.s44{min-height:44px;margin:-10px 0}
+.pf .shelf{margin-top:2rem;padding:1.1rem 1.2rem;background:var(--bg);border:1px solid rgba(var(--olr),.32);border-radius:12px;display:flex;flex-direction:column;gap:.5rem;align-items:flex-start}
+.pf .shelf .ey{color:var(--ol)}
+.pf .shelf p{margin:0;font-size:14px;color:var(--t2)}
+.pf .cta{display:inline-flex;align-items:center;padding:.55rem .95rem;border-radius:10px;background:var(--lm);color:var(--t1);font-weight:700;font-size:14px;line-height:1.6;text-decoration:none}
+.pf .cta.c44{min-height:44px}
+/* announcements */
+.pf .note{display:flex;gap:.4rem;align-items:center;font-size:12px;color:var(--t3)}
+.pf .warn{display:flex;gap:.5rem;align-items:flex-start;padding:.55rem .75rem;font-size:12px;color:var(--amb);background:rgba(131,80,6,.08);border:1px solid rgba(131,80,6,.25);border-radius:6px}
+.pf .af{padding:.9rem;background:var(--sf);border:1px solid rgba(var(--olr),.25);border-radius:12px;box-shadow:0 1px 2px rgba(70,55,30,.06);display:flex;flex-direction:column;gap:.6rem}
+.pf .ta{min-height:118px;padding:.5rem .7rem;border:1px solid var(--ln2);border-radius:6px;color:var(--t3)}
+.pf .acts{display:flex;justify-content:flex-end;gap:.5rem}
+@container (max-width:700px){.pf .acts{flex-direction:column-reverse}.pf .acts > *{width:100%}}
+.pf .gb,.pf .sendb{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:42px;padding:0 .95rem;border-radius:6px;font-size:14px}
+.pf .gb{border:1px solid var(--ln2);font-weight:600;color:var(--t2)}.pf .sendb{background:var(--lm);font-weight:800}
+.pf .gb.b44,.pf .sendb.b44{min-height:44px}
+.pf .lg{padding:.9rem;background:var(--sf);border:1px solid rgba(var(--olr),.25);border-radius:12px;display:flex;flex-direction:column;gap:.5rem}
+.pf .lg h3{margin:0;font-size:16px}
+.pf .banner{padding:.6rem .8rem;border-radius:8px;background:rgba(var(--olr),.08);color:var(--ol);font-size:13px}
+/* misc screens */
+.pf .ex{display:flex;flex-direction:column;gap:.5rem;padding:.9rem 1rem;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
+.pf .ex b{font-size:15px}
+.pf .ob{align-self:flex-start;display:inline-flex;align-items:center;padding:.35rem .65rem;border:1px solid var(--ln2);border-radius:6px;font-size:12px;font-weight:700;color:var(--ol);text-decoration:none;line-height:1.45}
+.pf .ob.o44{min-height:44px}
+.pf .gbtn{align-self:flex-start;display:inline-flex;align-items:center;min-height:36px;padding:0 .9rem;border:1px solid var(--ln2);border-radius:6px;font:700 14px/1 var(--disp);letter-spacing:.04em;text-transform:uppercase;color:var(--t1);text-decoration:none}
+.pf .gbtn.g44{min-height:44px}
+.pf .srch{height:42px;border:1px solid var(--ln2);border-radius:8px;padding:0 .8rem;display:flex;align-items:center;color:var(--t3);background:var(--sf)}
+.pf .wn{display:inline-block;font-size:12px;font-weight:600;color:var(--ol);text-decoration:underline;line-height:19px}
+
+/* the tap-box layer */
+.tapbox{position:absolute;pointer-events:none;border:2px dashed var(--ok);border-radius:4px;z-index:5}
+.tapbox.bad{border-color:var(--bad);background:rgba(194,38,26,.07)}
+.tapbox span{position:absolute;top:-9px;right:-2px;font:700 9.5px/1 ui-monospace,monospace;background:var(--ok);color:#fff;padding:2px 3px;border-radius:3px;white-space:nowrap}
+.tapbox.bad span{background:var(--bad)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:0 0 14px}
+.legend i{display:inline-block;width:18px;height:12px;border:2px dashed var(--ok);vertical-align:-2px;margin-right:5px;border-radius:3px}.legend i.bad{border-color:var(--bad);background:rgba(194,38,26,.07)}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px;max-width:900px}
+.qapage{padding:22px 24px 30px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:var(--white);padding:18px 20px;margin-bottom:16px;max-width:900px}
+.qapart h3{margin:0 0 4px}
+.qastep{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:14px;cursor:pointer}
+.qastep input{width:20px;height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:var(--white);border-radius:6px;padding:8px 12px;min-height:44px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea,#qaOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;background:var(--white)}
+#qaOut{font:12px/1.5 ui-monospace,monospace;max-width:900px}
+@media(max-width:600px){.hubbar{padding:11px 16px;gap:8px}.hubtabs{padding:0 16px}.walk{padding:8px 16px}.screen{padding:18px 16px 26px}.docpage{padding:22px 16px 36px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol>
+  <symbol id="i-griph" viewBox="0 0 24 24"><circle cx="5" cy="9" r="1"/><circle cx="12" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="5" cy="15" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="19" cy="15" r="1"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+  <symbol id="i-dumb" viewBox="0 0 24 24"><path d="M6.5 6.5 17.5 17.5"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+</svg>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Free coach tap targets — project hub</strong><br><small>Q1–Q7 ruled 2026-10-19 · built and proved 2026-10-19 (334 → 7 accepted) · QA walk §347 open</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Census re-measured on staging 2026-10-19: 334 findings, 48 of 48 pairs measured, identical to the 7dc48b31 run; drawn and /design-checked 2026-10-19">Design</li>
+    <li class="stage done" title="Q1–Q7 ruled by the owner 2026-10-19, all as recommended">Plan</li>
+    <li class="stage done" title="Built 2026-10-19 on dev (local), proved on the local dev server: 56 of 56 pairs, 334 findings → 7 accepted">Build</li>
+    <li class="stage done" title="/simplify (4 lenses) and /review (3 lenses) 2026-10-19; /docs 2026-10-19">Review</li>
+    <li class="stage current" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions">
+    <div class="seg" role="group" aria-label="Frame width"><button type="button" data-w="390" aria-pressed="true">390 phone</button><button type="button" data-w="768" aria-pressed="false">768 tablet</button></div>
+    <button type="button" class="tapsw" id="tapsw" aria-pressed="true">Tap boxes on</button>
+  </div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk §347</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#census">1 · Census</a><a href="#roster">2 · Roster</a><a href="#schedule">3 · Schedule</a><a href="#fees">4 · Fees</a><a href="#overview">5 · Overview</a><a href="#announce">6 · Announcements</a><a href="#rest">7 · Help, Explore, Teams</a><a href="#designcheck">8 · Design check</a><a href="#questions">9 · Your rulings</a>
+  </nav>
+
+  <section class="screen" id="census">
+    <div class="screenhead">
+      <div class="eyebrow">Measured on staging 2026-10-19 · the free coach, 12 screens × 4 widths</div>
+      <h1 tabindex="-1">334 findings, 12 defects</h1>
+      <p class="sub">All 48 screen-width pairs were measured and none were skipped. The run matches the one this job was written from, finding for finding, so nothing has moved. Nothing fails at 1440. The count is high because one undersized button repeats on every row: 228 of the 334 are the pencil and trash on 12 players, 5 events and 2 fees.</p>
+    </div>
+    <div class="tablewrap"><table class="census">
+      <thead><tr><th>#</th><th>Control</th><th>Today</th><th>Where</th><th class="n">Findings</th><th>Reach</th><th>Proposal</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><b>Row Edit / Remove</b> (pencil, trash)</td><td class="px">38×38</td><td>Roster · Schedule · Fees</td><td class="n">228</td><td><span class="reach">free only</span></td><td>Q1: the row opens its form; Remove moves into the form</td></tr>
+        <tr><td>2</td><td><b>Drag to reorder</b> grip</td><td class="px">30×38</td><td>Roster</td><td class="n">6</td><td><span class="reach">free only</span></td><td>Q2: on a phone the player’s number becomes the 44px handle</td></tr>
+        <tr><td>3</td><td><b>Add player / Add event / Add fee</b></td><td class="px">37 tall</td><td>Roster · Schedule · Fees</td><td class="n">9</td><td><span class="reach">free only</span></td><td>Q4: 44 tall where it stands</td></tr>
+        <tr><td>4</td><td><b>Page help “?”</b></td><td class="px">32 / 34</td><td>Overview · Roster · Schedule · Fees · Announcements (+ Notifications at 768)</td><td class="n">31</td><td><span class="reach shared">shared button, free holder</span></td><td>Q5: 44×44 from the free holder, as the paid headers do. The help button itself is not touched</td></tr>
+        <tr><td>5</td><td><b>Upgrade to Premium — free →</b></td><td class="px">40 tall</td><td>5 tool pages + Explore</td><td class="n">18</td><td><span class="reach">free only</span></td><td>44 tall (no ruling needed)</td></tr>
+        <tr><td>6</td><td><b>⇄ Fan view</b> link</td><td class="px">23 tall</td><td>Overview · Tournaments · All tournaments</td><td class="n">9</td><td><span class="reach shared">shared with paid</span></td><td>Q5: a 44px tap box; the type stays the same size</td></tr>
+        <tr><td>7</td><td><b>See all →</b> · <b>Open →</b> · <b>Express interest</b></td><td class="px">24 · 32 · 36</td><td>Overview · Explore · Teams</td><td class="n">9</td><td><span class="reach">free only</span></td><td>44 (no ruling needed). Express interest is fixed beside the global small button, which is not touched</td></tr>
+        <tr><td>8</td><td><b>Mark paid</b> · its <b>Undo</b></td><td class="px">32 · 15</td><td>Fees</td><td class="n">9</td><td><span class="reach">free only</span></td><td>Q3: Mark paid 44 on the row; Undo moves into the fee’s form as “Mark unpaid”</td></tr>
+        <tr><td>9</td><td>Announcement <b>subject</b> · <b>Refresh</b> · <b>Send</b></td><td class="px">40 · 42 · 42</td><td>Announcements</td><td class="n">9</td><td><span class="reach shared">shared with paid</span></td><td>Q5: 44, fixed once for both portals</td></tr>
+        <tr><td>10</td><td>Help page <b>What’s New</b> · <b>Search this guide</b></td><td class="px">19 · 42</td><td>Help</td><td class="n">6</td><td><span class="reach shared">every help page</span></td><td>Q6: accept here with a written reason; the touch-target debt plan owns them</td></tr>
+        <tr><td>11</td><td><b>The form behind every row</b>: fields, Save / Cancel, Practice · Game · Event</td><td class="px">40 · 42 · 34</td><td>Roster · Schedule · Fees, once a row is opened</td><td class="n">not counted</td><td><span class="reach">free only</span></td><td>Q7: 44 in the same pass. The sweep never opens a form, so the 334 does not include these</td></tr>
+      </tbody>
+    </table></div>
+    <p class="meta" style="margin-top:10px;max-width:900px">Search this guide (42) is not in the job’s census table but is in the measurement, so it is listed with What’s New. Row 11 is new: I found it reading the editors, and no sweep has measured it. Total: 228 + 6 + 9 + 31 + 18 + 9 + 9 + 9 + 9 + 6 = 334.</p>
+    <div class="intent"><strong>How to read the drawings:</strong> every frame is drawn at true size: 390 or 768 CSS pixels wide, using the warm theme’s colours, type and spacing as the product’s stylesheets set them. Turn on <b>Tap boxes</b> and each control is outlined with its measured size. Red means under 44 in either direction, green means it clears 44. The page measures the drawings itself, so the numbers come from the drawings, not from labels.</div>
+  </section>
+
+  <section class="screen" id="roster" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Q1 · Q2 · Q4 · Q7</div>
+      <h1 tabindex="-1">Roster: the row is the door</h1>
+      <p class="sub">Today each of 12 rows has a 30px grip and two 38px buttons. That is 3 undersized targets per player, and they leave the name 156px at 390. Option A enlarges all three. Option C, which I recommend, makes the row itself the target and moves Remove into the form the row already opens.</p>
+    </div>
+    <div class="legend"><span><i></i>clears 44 both ways</span><span><i class="bad"></i>under 44</span></div>
+    <div class="frames" id="f-roster"></div>
+    <div class="intent" id="i-roster"></div>
+  </section>
+
+  <section class="screen" id="schedule" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Q1 · Q4 · Q7</div>
+      <h1 tabindex="-1">Schedule: the same move</h1>
+      <p class="sub">The paid schedule already works this way: tap an event to open it, and Remove is inside. The free schedule gets the same behaviour without the paid portal’s event window. Tapping a row opens the form it opens today.</p>
+    </div>
+    <div class="legend"><span><i></i>clears 44 both ways</span><span><i class="bad"></i>under 44</span></div>
+    <div class="frames" id="f-schedule"></div>
+    <div class="intent" id="i-schedule"></div>
+  </section>
+
+  <section class="screen" id="fees" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Q1 · Q3 · Q4 · Q7</div>
+      <h1 tabindex="-1">Fees: Mark paid stays one tap</h1>
+      <p class="sub">The fee row is where option A breaks down. “Spring tournament fee” needs 154px. Measured on staging at 390, it already gets only 112px on an unpaid row and 52px on a paid one. Making every control 44 squeezes the paid row’s name to almost nothing. In C, Mark paid stays on the row as the page’s one-tap action, and Undo becomes “Mark unpaid” inside the fee’s form.</p>
+    </div>
+    <div class="legend"><span><i></i>clears 44 both ways</span><span><i class="bad"></i>under 44</span></div>
+    <div class="frames" id="f-fees"></div>
+    <div class="intent" id="i-fees"></div>
+  </section>
+
+  <section class="screen" id="overview" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Q5 · plus three free-only fixes</div>
+      <h1 tabindex="-1">Overview: four small links grow their tap box</h1>
+      <p class="sub">Nothing moves and no type changes size. The “?”, Fan view, See all → and Upgrade each get a 44px tap area. Each tap area borrows space that is already there, so nothing on the screen moves.</p>
+    </div>
+    <div class="legend"><span><i></i>clears 44 both ways</span><span><i class="bad"></i>under 44</span></div>
+    <div class="frames" id="f-overview"></div>
+    <div class="intent" id="i-overview"></div>
+  </section>
+
+  <section class="screen" id="announce" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Q5 · shared with the paid team’s Announcements</div>
+      <h1 tabindex="-1">Announcements: 40 and 42 become 44</h1>
+      <p class="sub">The free and paid portals draw this screen from the same component. Fixing it here fixes the paid page too. The paid page has the same three controls on file as known debt with no reason given.</p>
+    </div>
+    <div class="legend"><span><i></i>clears 44 both ways</span><span><i class="bad"></i>under 44</span></div>
+    <div class="frames" id="f-announce"></div>
+    <div class="intent" id="i-announce"></div>
+  </section>
+
+  <section class="screen" id="rest" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Q6 · and the free-only fixes that need no ruling</div>
+      <h1 tabindex="-1">Help, Explore and Teams</h1>
+      <p class="sub">Explore’s Open → and Teams’ Express interest grow to 44, a free-only change. On the help page, What’s New and the search box belong to every help page in the product, the admin side included. I recommend leaving them to the plan that owns them.</p>
+    </div>
+    <div class="legend"><span><i></i>clears 44 both ways</span><span><i class="bad"></i>under 44</span></div>
+    <div class="frames" id="f-rest"></div>
+    <div class="intent" id="i-rest"></div>
+  </section>
+
+  <section class="screen" id="designcheck" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">/design · run on these drawings 2026-10-19 · proposals until you rule</div>
+      <h1 tabindex="-1">What the design check changed</h1>
+      <p class="sub">The drawings were checked against the portal’s written rules before this hand-off. Six changes are already in the drawings. Four points are named and left alone, because they concern how the product looks today, not this job.</p>
+    </div>
+    <div class="docpage" style="margin:0;padding:0;max-width:900px">
+      <h2>Changed in the drawings</h2>
+      <ol>
+        <li><b>Remove ends the form’s body; the form’s last row is Cancel · Save alone.</b> The first draft put Remove under Save. The portal’s rule (10-09, sharpened 10-19) puts a record’s rare door at the end of its body. It wears the delete look: a 13px trash and red words at body weight, underlined only on hover.</li>
+        <li><b>“Mark unpaid” is ink, not red.</b> It can be undone, so it uses the record-action look, beside Remove fee.</li>
+        <li><b>The number is the reorder handle at every touch width.</b> The first draft kept a separate grip at 641–768. The reorder ruling says the handle is the row’s number where the list has one, at touch widths. Its tap sheet carries Move up · Move down · Cancel.</li>
+        <li><b>Mark paid wears the row’s worded-action olive</b> (olive words on a 1px olive border, 44 tall), not the neutral grey of today’s button.</li>
+        <li><b>Each small link borrows its tap area.</b> Fan view, See all → and the “?” get 44px through a matching negative margin, so no row or card moves. The first draft let Fan view add about 20px of space, on the paid screens too.</li>
+        <li><b>The row’s door is a real button named for its record</b> (“Edit Theo Novak”, marked as expanding), with the chevron last. On a phone the chevron sits in the corner.</li>
+      </ol>
+      <h2>Named, not changed (today’s product, outside this job)</h2>
+      <ul>
+        <li><b>The Paid pill’s colour.</b> It is today’s olive status tint. The rules say status colour lives in a chip, which it is. Whether it should move to the success green is a separate call.</li>
+        <li><b>The other rows dim while one is open.</b> The product does this today, and no rule covers it either way. The nearest precedents lean against dimming. Kept as today.</li>
+        <li><b>The free rows are cards with gaps.</b> The row-list rule says a row is not a card on a computer. That is a list job, already named in the plan.</li>
+        <li><b>Where Mark paid sits on a phone row</b>, beside the door or on its own full-width line, is an open portal question (A11). It is drawn beside the door, as today.</li>
+      </ul>
+      <h2>Said out loud on Q1</h2>
+      <p>Option C knowingly departs from two written rules. On a phone the form folds in place, but the 10-19 One Window ruling says a form fills the phone. And these three lists drop the 08-15 money-table idiom (a pencil plus the row) in favour of the row-list rule (the row is a button with a chevron). Both are in the Q1 option text, so a ruling for C is a ruling on them.</p>
+    </div>
+  </section>
+
+  <section class="screen" id="questions" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Seven rulings · pick one per question, add a note, copy the paste-back</div>
+      <h1 tabindex="-1">Your rulings</h1>
+      <p class="sub">The recommended pick is marked on each question and is selected when the page opens. Change what you disagree with, then paste the summary back into the chat. Nothing is built until you do.</p>
+    </div>
+    <div id="qs"></div>
+    <button class="button primary" type="button" id="buildPaste">Build paste-back</button>
+    <textarea id="pasteOut" rows="12" readonly hidden></textarea>
+  </section>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Free coach tap targets</h1>
+  <h2>What changes for the coach</h2>
+  <p>On a phone, every button a free coach taps becomes at least the size of a fingertip (44 pixels). Most of the work is on Roster, Schedule and Fees. Instead of a small pencil and a small trash can on every row, the coach taps the row itself to open it, and Remove sits inside the form that opens. Fees keeps its one-tap “Mark paid” on the row. Undoing a payment moves inside the fee as “Mark unpaid”. On the other screens nothing moves. Small links and buttons get a bigger tap area at the same type size.</p>
+  <h2>Why it matters</h2>
+  <p>The free portal is the front door to Premium, and a free coach is most likely to be using it from a phone at the field. Today they hit 334 undersized targets across 12 screens. The worst is a 15px “Undo”, and the most common is the pair of 38px buttons repeated on every player. Every release sweep reports all 334 as new, which buries any real regression in noise.</p>
+  <h2>Customer impact</h2>
+  <ul>
+    <li><b>Free coaches:</b> fewer mis-taps, and a row they can open with a thumb. Roster names and fee names get more room before they are cut off.</li>
+    <li><b>Premium coaches:</b> three screens change through shared parts. The Fan view link on Overview and Tournaments gets a bigger tap area that borrows the space already below it, so nothing moves. Announcements’ subject, Refresh and Send grow from 40–42 to 44. The paid pages already have these on file as known debt, so this fixes them.</li>
+    <li><b>Help:</b> one roster sentence (“use the pencil to edit and the trash icon to remove”) and the matching schedule and fees lines are rewritten.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Medium. Nothing is broken, but until this lands every promote’s layout check reports 334 known findings as new. It is a small build once the drawings are ruled.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>The free coach screens sweep at 361, 390, 768 and 1440 with no new findings. Anything left is accepted on the owner’s word with a written reason.</li>
+    <li>The paid screens the shared parts reach sweep no worse, and their Announcements entries stop reproducing.</li>
+    <li>A coach can add, open, edit, remove and reorder a player, an event and a fee from a 390px phone without a tap that misses.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Free coach tap targets — plan</h1>
+  <div class="note">The plan’s source of truth is <code>docs/projects/active/FREE_COACH_TAP_TARGETS_PLAN.md</code>. This tab is a reading copy of it.</div>
+  <h2>Problem</h2>
+  <p>On 2026-10-19 the layout upkeep added the free coach portal to the layout sweep. Twelve screens measure clean except for touch-target size: 334 findings at 361, 390 and 768, and none at 1440. They come from twelve distinct controls repeated by the fixture’s rows. Re-measured on staging the same day, the findings are identical key for key and every pair was measured.</p>
+  <h2>Scope</h2>
+  <p>The census rows 1–9 and 11, on the free coach portal. Shared parts are touched only where Q5 says so. Census row 10 (the help page) is put to the owner as Q6.</p>
+  <div class="note"><strong>Out of scope — named, not fixed</strong>
+    <ul>
+      <li><b>The free editors’ Save / Cancel.</b> Editing an existing player, event or fee asks for a Save. The owner ruled on 09-24 that editing autosaves and only creating asks. This is drift, but it is a behaviour change, not a size change, so it is its own job.</li>
+      <li><b>The free lists are cards with gaps.</b> The house row-list standard says a row is not a card on a desktop. That is a separate list-recipe job, and option B would take it on.</li>
+      <li><b>The paid roster hides its reorder grip on a phone.</b> That goes against the 10-12 reorder ruling (the number is a 44px handle). It is reported as a finding and not changed here.</li>
+      <li><b>The paid header “?” at 641–768</b> (34 wide, F-21) belongs to the touch-target debt plan.</li>
+    </ul>
+  </div>
+  <h2>Approach (as recommended; each line waits on its ruling)</h2>
+  <h3>Q1 — row actions: option C</h3>
+  <p>On Roster, Schedule and Fees, the row’s main area becomes one button that opens the in-place form the pencil opens today. The pencil and trash leave the row. Remove (Remove player · Remove event · Remove fee) moves to the foot of that form, behind the same confirmation it has today. A chevron at the row’s end says the row opens. The form keeps today’s fields, its in-place fold and its Save / Cancel.</p>
+  <p><b>Option A</b> keeps the pencil and trash and makes them 44. It is quick and changes no flow, but it costs the name its room. At 390 the roster name drops from 156px to about 130px. A paid fee’s name, 52px today against the 154px “Spring tournament fee” needs, drops to almost nothing. <b>Option B</b> builds a real record for each row, which reads first, has a pencil that flips the whole record, autosaves, has Remove in the foot and goes full screen on a phone. That is the house standard in full, but it means three new record windows in the free portal plus the house row list. The row list carries the paid portal’s whole stylesheet into the free bundle unless that stylesheet is split first. It is several sessions of work and a full help rewrite. C gets the house rule that matters here, row is the door and Remove is inside, at the cost of one said-out-loud gap: the house list rule says a row that opens a form opens it full screen on a phone, and C keeps today’s in-place fold.</p>
+  <h3>Q2 — roster reorder on a phone</h3>
+  <p>At ≤640 the jersey number becomes the 44×44 handle, following the 10-12 ruling. Hold it to drag, or tap it for Move up · Move down · Cancel. At 641–768 the grip stays and grows to 44×44, as on the paid roster. Above 768 the mouse drag is unchanged. The alternative is to hide the grip at ≤640, as the paid roster does: cheaper, but a phone-only coach could then never reorder.</p>
+  <h3>Q3 — fees</h3>
+  <p>Mark paid is 44 tall on the row and stays one tap. A paid fee’s row shows the existing “Paid · Oct 19” pill and the chevron. “Mark unpaid” sits in the fee’s form beside Remove fee. The alternative is a 44px bordered “Undo” left on the row.</p>
+  <h3>Q4 — Add buttons</h3>
+  <p>Add player · Add event · Add fee stay where they are and grow to 44 tall at ≤768. Moving them into a page-header primary, as the paid portal does, is a header redesign the free section shell does not have a slot for.</p>
+  <h3>Q5 — shared parts</h3>
+  <ul>
+    <li><b>Fan view</b>: fixed in its shared component. The link gets a 44px-tall tap box and its type stays 0.7rem. <b>Paid change:</b> the paid Overview’s live-event card and every paid Tournaments card get the bigger tap area. It borrows the space below the link with a matching negative margin, so nothing moves. Stage 1 checks each of the five places it appears; where the next card sits closer than 21px, the gap grows there instead.</li>
+    <li><b>The “?”</b>: 44×44 from the free section holder, matching the paid team header and page header holders. The help button itself is untouched, and no paid screen changes. The free Notifications page uses the paid page header, so its 768 “?” is the paid F-21 debt. I recommend recording that one finding against F-21 with a written reason.</li>
+    <li><b>Announcements</b>: fixed once in its shared stylesheet. Subject 44, Refresh 44, Send 44, and Refresh contacts 44 at ≤768. <b>Paid change:</b> the paid team’s Announcements gets the same sizes. Its nine on-file entries, which have no reason, stop reproducing and are pruned only on the owner’s word, from a warm staging run.</li>
+  </ul>
+  <h3>Q6 — the help page</h3>
+  <p>What’s New (19) and Search this guide (42) are every help page’s, admin included, and the touch-target debt plan owns them. I recommend accepting the six free-help findings with a reason pointing there. The keys carry no fixture name, so they will not re-key.</p>
+  <h3>Q7 — the forms behind the rows</h3>
+  <p>Fields 40 → 44 and Save / Cancel 42 → 44 at ≤768. The Practice · Game · Event pills go from 34 to 40, which with their 4px frame clears 44 for the whole control. The “+ Add date of birth”-style toggles get a 44px tap box. The sweep never opens a form, so these are not in the 334. The proof is a probe that opens one row on each screen and measures it.</p>
+  <h3>Free-only fixes with no question</h3>
+  <p>Upgrade to Premium (both places) 40 → 44 · See all → 24 → 44 tap box · Open → 32 → 44 · Express interest 36 → 44, with a local class beside the global small button, which is not touched.</p>
+  <h2>Proof</h2>
+  <p>Built changes are not on staging until pushed, so the proof runs on the local dev server, after asking whether another session is using it. It runs the twelve free ids at four widths with one worker, plus the paid screens the shared changes reach. Zero unmeasured. A probe opens one row per editor and measures the form. Every baseline change is listed with its reason. Nothing is added to the baseline to make a run pass.</p>
+  <h2>Rollout</h2>
+  <p>One product commit and one records commit, both on the owner’s word. Then /simplify, /review and /docs: the roster, schedule and fees help copy changes under C. A ledger § walk is published on this hub. No migration and no demo story change. The demos run the same free editors and follow the product.</p>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<section id="hub-qa" class="qapage" hidden>
+  <div class="eyebrow">Owner QA walk · ledger §347</div>
+  <h1>Free coach tap targets — QA walk</h1>
+  <p class="sub" style="margin-bottom:16px;max-width:900px">Four walks, one purpose each. Tick as you go (ticks stay in this browser), give each walk a verdict, then copy the paste-back into the chat.</p>
+  <div class="signin"><strong>Sign in as</strong> — <b>http://localhost:3000</b> · <code>uat-free-coach@uat-free-coach.local</code> · password: the standard test password (in <code>.env.local</code>; keep it private) → <b>UAT Free Team</b>. W4.2 uses <code>uat-coach@uat-test-org.local</code>. A phone, or Dev Tools at 390 wide, unless a step says otherwise. ⚠ Restart the dev server first (this build added a stylesheet).</div>
+  <div class="qaprogress" id="qaCount"></div>
+  <div id="qaParts"></div>
+  <button class="button primary" type="button" id="qaBuild">Build paste-back</button>
+  <textarea id="qaOut" rows="10" readonly hidden></textarea>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const I=(n,s)=>'<svg class="i" style="--s:'+(s||16)+'px" aria-hidden="true"><use href="#i-'+n+'"/></svg>';
+let W=390,TAPS=true;
+try{const w=Number(localStorage.getItem('fctt-w'));if(w===390||w===768)W=w;if(localStorage.getItem('fctt-taps')==='0')TAPS=false}catch(e){}
+
+/* ---------- product chrome ---------- */
+function frame(body,tab){return '<div class="pf" style="--fw:'+W+'px"><div class="mh"><div class="ey">Coaches portal</div><div class="tn">UAT Free Team</div></div><div class="pg">'+body+'</div>'+
+ '<nav class="bn"><a href="#" class="'+(tab==='ov'?'on':'')+'"><span class="iw">'+I('grid',22)+'</span>Overview</a><a href="#" class="'+(tab==='tr'?'on':'')+'"><span class="iw">'+I('trophy',22)+'</span>Tournaments</a><a href="#" class="'+(tab==='more'?'on':'')+'"><span class="iw">'+I('more',22)+'</span>More</a></nav></div>'}
+function col(cap,meta,html,recd){return '<div class="fcol" style="--fw:'+W+'px"><div class="fcap">'+cap+(recd?' <span class="rec">Recommended</span>':'')+'<span class="meta">'+meta+'</span></div>'+html+'</div>'}
+function head(title,count,after){return '<div class="sh"><h1 class="st">'+title+'</h1><div class="se">'+(count?'<span class="cnt">'+count+'</span>':'')+'<button class="hb'+(after?' w44':'')+'" aria-label="Help: '+title+'">'+I('help',20)+'</button></div></div>'}
+function shelf(after){return '<div class="shelf"><div class="ey">Premium coaches portal</div><p>Lineups, practice plans, attendance and dues for the whole season.</p><a href="#" class="cta'+(after?' c44':'')+'">Upgrade to Premium — free →</a></div>'}
+
+/* ---------- roster ---------- */
+const PLAYERS=[['Maya Chen','2',1],['Theo Novak','4',0],['Amara Boateng','7',1],['Liam Fraser','9',0],['Sofia Marchetti','11',1],['Eli Tremblay','12',0],['Noor Haddad','14',0],['Jonah Whitecloud','17',1],['Ava Sandhu','21',0],['Kai Morrison','23',0],['Lucas Pereira','27',1],['Zoe Lindqvist','31',0]];
+const pmeta=p=>p[2]?'Contact on file':'';
+function rosterRow(p,v,dim){
+  const mt=pmeta(p)?'<span class="mt">'+pmeta(p)+'</span>':'';
+  if(v==='today'||v==='A'){const big=v==='A';
+    return '<li class="rw'+(dim?' dim':'')+'"><button class="gr'+(big?' g44':'')+'" aria-label="Drag to reorder">'+I('grip',16)+'</button><span class="js">'+p[1]+'</span><div class="mn"><span class="nm">'+p[0]+'</span>'+mt+'</div><div class="ra"><button class="ib'+(big?' b44':'')+'" aria-label="Edit '+p[0]+'">'+I('pencil',15)+'</button><button class="ib'+(big?' b44':'')+'" aria-label="Remove '+p[0]+'">'+I('trash',15)+'</button></div></li>'}
+  /* C */
+  return '<li class="rw door'+(dim?' dim':'')+'"><button class="nh" aria-label="Move '+p[0]+' — hold to drag, tap for Move up or Move down">'+p[1]+I('griph',12)+'</button><button class="db" aria-expanded="false" aria-label="Edit '+p[0]+'"><div class="mn"><span class="nm">'+p[0]+'</span>'+mt+'</div>'+I('chev',16).replace('class="i"','class="i chev"')+'</button></li>'}
+function rosterForm(p,after){const i=after?' i44':'',b=after?' b44':'',t=after?' t44':'';
+  return '<li class="fm"><div class="frow"><span class="in num'+i+'">'+p[1]+'</span><span class="in'+i+'">'+p[0].split(' ')[0]+'</span><span class="in'+i+'">'+p[0].split(' ')[1]+'</span></div>'+
+  '<button class="tg'+t+'">'+I('plus',13)+'Add date of birth (optional)</button><button class="tg'+t+'">'+I('plus',13)+'Add parent contact / note (optional)</button>'+
+  (after?'<div class="bodyend"><button class="rmv">'+I('trash',13)+'Remove player</button></div>':'')+
+  '<div class="fa"><button class="cb'+b+'">'+I('x',14)+'Cancel</button><button class="sb'+b+'">'+I('check',14)+'Save</button></div></li>'}
+function rosterScreen(v,open){const rows=PLAYERS.map((p,i)=>open&&i===1?rosterForm(p,v!=='today'):rosterRow(p,v,open&&i!==1)).join('');
+  return frame(head('Roster','12 players',v!=='today')+'<div class="ed"><ul>'+rows+'</ul><button class="ad'+(v!=='today'?' a44':'')+'">'+I('plus',15)+'Add player</button></div>'+shelf(v!=='today'),'more')}
+
+/* ---------- schedule ---------- */
+const EVENTS=[['game','vs Riverside Rockets','Sat, Sep 19 · 10:00 a.m. · Kinsmen Park, Diamond 2'],['prac','Practice','Tue, Apr 6 · 6:00 p.m. · Centennial Park'],['ev','Team photo day','Sat, Apr 10 · 9:00 a.m. · Centennial Park'],['prac','Practice','Tue, Apr 13 · 6:00 p.m. · Centennial Park'],['game','vs Northside Thunder','Sat, Apr 17 · 10:00 a.m. · Kinsmen Park, Diamond 4'],['game','vs Lakeside Lightning','Sat, Apr 24 · 1:00 p.m. · Lakeside Fields']];
+const chip=t=>t==='game'?'<span class="tc g" aria-label="Game">'+I('trophy',17)+'</span>':t==='prac'?'<span class="tc p" aria-label="Practice">'+I('dumb',17)+'</span>':'<span class="tc e" aria-label="Event">'+I('cal',17)+'</span>';
+const ename=e=>e[0]==='game'?'vs <small>'+e[1].slice(3)+'</small>':e[1];
+function schedRow(e,v,dim){const cls='rw'+(e[0]==='game'?' game':e[0]==='prac'?' prac':'')+(dim?' dim':'');
+  const mn='<div class="mn"><span class="nm">'+ename(e)+'</span><span class="mt">'+e[2]+'</span></div>';
+  if(v==='C')return '<li class="'+cls+' door">'+'<button class="db" style="padding-left:0" aria-expanded="false" aria-label="Edit '+e[1]+'">'+chip(e[0])+mn+I('chev',16).replace('class="i"','class="i chev"')+'</button></li>';
+  return '<li class="'+cls+'">'+chip(e[0])+mn+'<div class="ra"><button class="ib" aria-label="Edit '+e[1]+'">'+I('pencil',15)+'</button><button class="ib" aria-label="Remove '+e[1]+'">'+I('trash',15)+'</button></div></li>'}
+function schedForm(e,after){const i=after?' i44':'',b=after?' b44':'';
+  return '<li class="fm"><div class="sg'+(after?' s44':'')+'"><span class="on">Practice</span><span>Game</span><span>Event</span></div><span class="in'+i+'">Practice</span>'+
+  '<label class="lbl">Starts *<span class="in'+i+'">Apr 6, 2027 · 6:00 p.m.</span></label><label class="lbl">Ends<span class="in'+i+'">Apr 6, 2027 · 7:30 p.m.</span></label>'+
+  '<button class="tg'+(after?' t44':'')+'">'+I('plus',13)+'Add location / details (optional)</button>'+
+  (after?'<div class="bodyend"><button class="rmv">'+I('trash',13)+'Remove event</button></div>':'')+'<div class="fa"><button class="cb'+b+'">'+I('x',14)+'Cancel</button><button class="sb'+b+'">'+I('check',14)+'Save</button></div></li>'}
+function schedScreen(v,open){const rows=EVENTS.map((e,i)=>open&&i===1?schedForm(e,v!=='today'):schedRow(e,v,open&&i!==1)).join('');
+  return frame(head('Schedule','6 events',v!=='today')+'<div class="ed"><ul>'+rows+'</ul><button class="ad'+(v!=='today'?' a44':'')+'">'+I('plus',15)+'Add event</button></div>'+shelf(v!=='today'),'more')}
+
+/* ---------- fees ---------- */
+function feeRow(label,paid,v){const nm='<div class="mn"><span class="nm">'+label+'</span><span class="mt">$'+(label==='Jersey deposit'?'20.00':'45.00')+'</span></div>';
+  const state=paid?'<span class="pp">'+I('checkc',13)+'Paid · Oct 19</span>':'';
+  if(v==='C'){return '<li class="fr door"><button class="db" aria-expanded="false" aria-label="Edit '+label+'">'+nm+(paid?state:'')+I('chev',16).replace('class="i"','class="i chev"')+'</button>'+(paid?'':'<button class="mp m44 ol" aria-label="Mark '+label+' paid" style="margin-right:.6rem">'+I('check',14)+'Mark paid</button>')+'</li>'}
+  const big=v==='A';
+  const act=paid?state+'<button class="un'+(big?' u44':'')+'" aria-label="Mark '+label+' unpaid">Undo</button>':'<button class="mp'+(big?' m44':'')+'" aria-label="Mark '+label+' paid">'+I('check',14)+'Mark paid</button>';
+  return '<li class="fr">'+nm+act+'<div class="ra"><button class="ib'+(big?' b44':'')+'" aria-label="Edit '+label+'">'+I('pencil',15)+'</button><button class="ib'+(big?' b44':'')+'" aria-label="Remove '+label+'">'+I('trash',15)+'</button></div></li>'}
+function feeForm(){return '<li class="fm" style="border-radius:6px"><div class="frow colm" style="flex-direction:column"><span class="in i44">Spring tournament fee</span><span class="in i44" style="font-family:var(--mono)">45.00</span></div><button class="tg t44">'+I('plus',13)+'Add note (optional)</button><div class="bodyend"><button class="rmv ink">'+I('refresh',13)+'Mark unpaid</button><button class="rmv">'+I('trash',13)+'Remove fee</button></div><div class="fa"><button class="cb b44">'+I('x',14)+'Cancel</button><button class="sb b44">'+I('check',14)+'Save</button></div></li>'}
+function player(name,jn,unpaid,paidAmt,rows){return '<div class="pgp"><div class="phd"><div><b>'+name+'</b><span class="jn">#'+jn+'</span></div><div class="tot">$'+unpaid+' unpaid<br>$'+paidAmt+' paid</div></div><ul>'+rows+'</ul></div>'}
+function feesScreen(v,open){const after=v!=='today';
+  const maya=open?feeForm():feeRow('Spring tournament fee',true,v);
+  const body=head('Fees','2 unpaid',after)+'<div class="ed" style="gap:.7rem"><div class="pn">'+I('wallet',18)+'<div><b>Track what your players owe you</b> — season fees, dues, a cost you’re splitting.</div></div>'+
+   '<div class="sum"><div>Owed<b>$110.00</b></div><div>Paid<b>$45.00</b></div><div>Unpaid<b class="amb">$65.00</b></div></div>'+
+   '<button class="ad'+(after?' a44':'')+'">'+I('plus',15)+'Add fee</button>'+
+   '<div class="blk"><h3>Roster fees</h3><span class="mt">What each player owes you. Charge everyone at once, or one player at a time.</span></div>'+
+   '<div class="ed" style="gap:.5rem">'+player('Maya Chen','2','0.00','45.00',maya)+player('Theo Novak','4','45.00','0.00',feeRow('Spring tournament fee',false,v))+player('Amara Boateng','7','20.00','0.00',feeRow('Jersey deposit',false,v))+'</div>'+
+   '<span class="mt" style="font-size:12px;color:var(--t3)">9 players have no fee yet.</span></div>'+shelf(after);
+  return frame(body,'more')}
+
+/* ---------- overview ---------- */
+function overviewScreen(v){const a=v!=='today';
+  const tile=(ic,l,s,p,wide,link)=>'<div class="hqi'+(wide?' wide':'')+'"><span class="hqic">'+I(ic,17)+'</span><div style="min-width:0;flex:1"><div class="hql">'+l+'</div><strong>'+s+'</strong><p>'+p+'</p>'+(link?'<a href="#" class="sa'+(a?' s44':'')+'">See all →</a>':'')+'</div></div>';
+  const body='<div class="sh row"><h1 class="st">Overview</h1><div class="se"><button class="hb'+(a?' w44':'')+'" aria-label="Help: Overview">'+I('help',20)+'</button></div></div>'+
+   '<h2 class="h2" style="margin-top:.4rem">Your tournament</h2><div class="rc"><a href="#" class="card"><div style="min-width:0"><b>Championship</b><span class="mt">UAT Plus Org · Jun 5 – 7, 2027</span></div><span class="chip">Upcoming</span></a><a href="#" class="fv'+(a?' f44':'')+'">⇄ Fan view — public schedule &amp; live scores</a></div>'+
+   '<h2 class="h2">At a glance</h2><div class="hq">'+tile('users','Roster','12','12 players')+tile('cal','Schedule','Next','Practice - Apr 6')+tile('dollar','Fees','$65.00','2 unpaid fees')+tile('mega','Announcements','5','contacts ready')+tile('trophy','Tournaments','1','Championship · Jun 5 – 7',true,true)+'</div>'+shelf(a);
+  return frame(body,'ov')}
+
+/* ---------- announcements ---------- */
+function annScreen(v){const a=v!=='today',b=a?' b44':'';
+  const body=head('Announcements','',a)+'<div class="ed" style="gap:.7rem"><div class="sum two"><div>On roster<b>12</b></div><div>Recipients<b>5</b></div></div>'+
+   '<div class="note">'+I('users',13)+'Each player on your Roster with a contact email gets this — 5 people will receive it.</div>'+
+   '<div class="warn">'+I('alert',15)+'7 players have no email on file — add one on your Roster to include them.</div>'+
+   '<div class="af"><span class="in'+(a?' i44':'')+' ph">Subject — e.g. Game time changed</span><div class="ta">Write your update to the team…</div><div class="acts"><button class="gb'+b+'">'+I('refresh',14)+'Refresh</button><button class="sendb'+b+'">'+I('send',15)+'Send announcement</button></div></div>'+
+   '<div class="lg"><h3>Recent announcements</h3><span class="mt" style="font-size:14px">No announcements sent yet.</span></div></div>'+shelf(a);
+  return frame(body,'more')}
+
+/* ---------- rest ---------- */
+function exploreScreen(v){const a=v!=='today';
+  const card=(t,p)=>'<div class="ex"><b>'+t+'</b><span class="mt" style="white-space:normal;font-size:13px">'+p+'</span><a href="#" class="ob'+(a?' o44':'')+'">Open →</a></div>';
+  return frame('<div class="sh row"><h1 class="st">Explore</h1></div><div class="ed">'+card('Practice plans','Plan a practice block by block and print the sheet.')+card('Lineups','Build a batting order and fielding chart in a few taps.')+'</div><div class="shelf"><div class="ey">Premium coaches portal</div><p>Everything here, for your whole season.</p><a href="#" class="cta'+(a?' c44':'')+'">Upgrade to Premium — free →</a></div>','more')}
+function teamsScreen(v){const a=v!=='today';
+  return frame('<div class="sh row"><h1 class="st">Teams</h1></div><div class="ex"><b>Looking for a club team?</b><span class="mt" style="white-space:normal;font-size:13px">Tell clubs near you that your team is open to joining a league.</span><a href="#" class="gbtn'+(a?' g44':'')+'">Express interest</a></div>','more')}
+function helpScreen(){return frame('<div class="sh row"><h1 class="st">Help</h1></div><div class="ed"><div class="srch">Search this guide</div><a href="#" class="wn">What’s New</a><div class="ex"><b>Getting started</b><span class="mt" style="white-space:normal;font-size:13px">Your roster, your schedule and your first tournament.</span></div></div>','more')}
+
+/* ---------- draw each screen ---------- */
+function draw(){
+ $('f-roster').innerHTML=col('Today <span class="mk" data-k="un" data-note="The free roster as it renders today: grip, number, name and two icon buttons per row. Drawn so the build cannot drop anything by accident.">Unchanged</span>','12 players · Help “?” and Add player too',rosterScreen('today'))+
+  col('Option A <span class="mk" data-k="re" data-note="Same row, three targets enlarged to 44. The name column loses about 18px to the bigger controls.">Restyled</span><button class="fl" data-finding="F1" data-here="Every row keeps three targets. At 390 the name column drops from 156px to about 130px.">F1</button>','Keep the icons, make them 44',rosterScreen('A'))+
+  col('Option C <span class="mk" data-k="new" data-note="The row’s main area becomes one button that opens the form. The pencil and trash leave the row, and a chevron says the row opens.">New</span><button class="fl fix" data-finding="F1" data-here="One target per row plus the number handle. The name column grows from 156px to about 250px at 390.">fixes F1</button><button class="fl fix" data-finding="F2" data-here="At every touch width (≤768) the number is a 44×44 handle with a grip mark: hold it to drag, tap it for Move up · Move down · Cancel. A computer keeps today’s grip.">fixes F2</button>','The row is the door',rosterScreen('C'),true)+
+  col('Option C, a row opened <span class="mk" data-k="new" data-note="“Remove player” moves from the row to the end of the form’s body, just above Cancel · Save, behind the same “Remove this player?” confirmation it has today. It wears the portal’s delete look: a small trash and red words at body weight.">New</span><button class="fl fix" data-finding="F7" data-here="Fields, Save and Cancel at 44 and the toggles with a 44px tap box. Today this form is 40 / 42 / 22 and no sweep has measured it.">fixes F7</button>','Tap Theo Novak',rosterScreen('C',true),true)+
+  col('Today, a row opened <button class="fl" data-finding="F7" data-here="Opened with the pencil today. Not measured by the sweep.">F7</button>','For comparison',rosterScreen('today',true));
+ $('i-roster').innerHTML='<strong>Design intent:</strong> one target per row, and Remove inside the record, matching the paid portal’s roster and schedule. The in-place form is kept, so a coach who knew the pencil still finds the same form.<br><br><strong>What option B would add</strong> (not drawn as a screen): tapping the row opens a separate record that reads first. One pencil flips the whole record to editing, edits autosave, Remove sits in the foot, and on a phone it fills the screen. That is the house standard in full. It also means three new record windows in the free portal, the house row list (which carries the paid portal’s whole stylesheet into the free one), and a help rewrite. I do not recommend it for this job.';
+ $('f-schedule').innerHTML=col('Today <span class="mk" data-k="un" data-note="Six editable events, each with a 38px pencil and trash.">Unchanged</span><button class="fl" data-finding="F1" data-here="Two 38px buttons on each of the events.">F1</button>','6 events',schedScreen('today'))+
+  col('Option C <span class="mk" data-k="new" data-note="The type chip, title and when/where become one button. The paid schedule’s list does the same, opening its event window.">New</span><button class="fl fix" data-finding="F1" data-here="One 44+ target per event.">fixes F1</button>','The row is the door',schedScreen('C'),true)+
+  col('Option C, a row opened <span class="mk" data-k="new" data-note="Remove event ends the form’s body, above Cancel · Save, behind today’s “Remove this event?” confirmation. The Practice · Game · Event pills grow from 34 to 40, so the whole control clears 44.">New</span><button class="fl fix" data-finding="F7" data-here="Pills, fields and buttons clear 44.">fixes F7</button>','Tap the Apr 6 practice',schedScreen('C',true),true);
+ $('i-schedule').innerHTML='<strong>Design intent:</strong> the same move as Roster, so the three free editors keep behaving alike. Tournament games on this list are already read-only rows and are not touched. The fixture has none, so none are drawn.';
+ $('f-fees').innerHTML=col('Today <span class="mk" data-k="un" data-note="Each fee row: name, Mark paid (32) or the Paid pill with a 15px underlined Undo, then a 38px pencil and trash.">Unchanged</span><button class="fl" data-finding="F3" data-here="Mark paid is 32 tall; Undo is an underlined word 15 tall.">F3</button>','3 fees on 3 players',feesScreen('today'))+
+  col('Option A <span class="mk" data-k="re" data-note="Everything stays on the row and grows to 44. Undo becomes a bordered 44px button.">Restyled</span><button class="fl" data-finding="F1" data-here="At 390 a paid fee’s name drops from 52px today to about 10px: the pill, the Undo and two 44px icons fill the row.">F1</button>','Keep everything, make it 44',feesScreen('A'))+
+  col('Option C <span class="mk" data-k="new" data-note="The fee’s name and amount open the fee. Mark paid stays on the row as a 44px one-tap action. A paid fee shows the Paid pill and opens like any other.">New</span><button class="fl fix" data-finding="F3" data-here="Mark paid 44 on the row; no Undo on the row.">fixes F3</button>','The row is the door; Mark paid stays',feesScreen('C'),true)+
+  col('Option C, a paid fee opened <span class="mk" data-k="new" data-note="“Mark unpaid” (today’s Undo, in ink because it can be undone) and “Remove fee” (red) end the form’s body side by side, above Cancel · Save. Undoing a payment is now two taps instead of one, which is the price of not keeping a 15px word on the row.">New</span><button class="fl fix" data-finding="F3" data-here="Mark unpaid replaces Undo, at 44.">fixes F3</button>','Tap Maya Chen’s paid fee',feesScreen('C',true),true);
+ $('i-fees').innerHTML='<strong>Design intent:</strong> collecting a payment is what this page is for, so it stays one tap on the row. Undoing one is rare and moves inside the fee. The paid portal does the same: a payment is removed from its receipt book, never from the row.';
+ $('f-overview').innerHTML=col('Today <span class="mk" data-k="un" data-note="The free Overview with the fixture’s tournament.">Unchanged</span><button class="fl" data-finding="F4" data-here="Fan view 23 tall, See all → 24, “?” 32, Upgrade 40.">F4</button>','',overviewScreen('today'))+
+  col('After <span class="mk" data-k="re" data-note="The type and placement are the same. Each link gets a 44px tap area. Each one borrows space that is already there with a matching negative margin, so the layout does not move.">Restyled</span><button class="fl fix" data-finding="F4" data-here="All four clear 44.">fixes F4</button>','The same screen, four tap boxes',overviewScreen('after'),true);
+ $('i-overview').innerHTML='<strong>Design intent:</strong> no visual redesign. ⚠ Fan view is shared. The paid Overview’s live-event card and every paid Tournaments card get the same bigger tap area, drawn into the space below it.';
+ $('f-announce').innerHTML=col('Today <span class="mk" data-k="un" data-note="The shared Announcements editor as the free coach sees it.">Unchanged</span><button class="fl" data-finding="F5" data-here="Subject 40, Refresh 42, Send 42, help “?” 32.">F5</button>','5 of 12 players have an email',annScreen('today'))+
+  col('After <span class="mk" data-k="re" data-note="The same layout with each control at 44. Refresh contacts, shown when nobody has an email, also goes from 32 to 44.">Restyled</span><button class="fl fix" data-finding="F5" data-here="All clear 44, in both portals.">fixes F5</button>','Also the paid team’s Announcements',annScreen('after'),true);
+ $('i-announce').innerHTML='<strong>Design intent:</strong> fix it once in the shared editor. The paid page’s on-file entries for these controls have no reason, so this clears paid debt rather than adding paid risk.';
+ $('f-rest').innerHTML=col('Explore · today <button class="fl" data-finding="F6" data-here="Open → 32, Upgrade 40.">F6</button>','',exploreScreen('today'))+col('Explore · after <span class="mk" data-k="re" data-note="Open → and Upgrade at 44.">Restyled</span>','',exploreScreen('after'),true)+
+  col('Teams · today <button class="fl" data-finding="F6" data-here="Express interest is the product’s global small ghost button, 36 tall.">F6</button>','',teamsScreen('today'))+col('Teams · after <span class="mk" data-k="re" data-note="44 tall from a local class on this one link. The global small button is not touched.">Restyled</span>','',teamsScreen('after'),true)+
+  col('Help · today and after <span class="mk" data-k="un" data-note="Recommended: unchanged here. What’s New and the search box are every help page’s, including the admin help, and the touch-target debt plan owns them.">Unchanged</span><button class="fl" data-finding="F8" data-here="What’s New 19, Search 42. Recommended to accept with a reason.">F8</button>','Q6 · accept with a reason',helpScreen());
+ $('i-rest').innerHTML='<strong>Design intent:</strong> free-only links grow. The help page’s two controls are left to the plan that owns every help page, so this job does not quietly change the admin help.';
+ document.querySelectorAll('.fcol').forEach(c=>c.style.setProperty('--fw',W+'px'));
+ bindTags();requestAnimationFrame(paintTaps);
+}
+
+/* ---------- the tap-box layer (measures the drawings themselves) ---------- */
+function paintTaps(){document.querySelectorAll('.tapbox').forEach(n=>n.remove());if(!TAPS)return;
+ document.querySelectorAll('.screen:not([hidden]) .pf').forEach(pf=>{const pr=pf.getBoundingClientRect();
+  pf.querySelectorAll('button, a, .in, .srch').forEach(el=>{const r=el.getBoundingClientRect();if(!r.width||!r.height)return;if(el.closest('.bn'))return;
+   const w=Math.round(r.width),h=Math.round(r.height),bad=(w<44||h<44);
+   const box=document.createElement('div');box.className='tapbox'+(bad?' bad':'');box.style.left=(r.left-pr.left)+'px';box.style.top=(r.top-pr.top)+'px';box.style.width=r.width+'px';box.style.height=r.height+'px';
+   box.innerHTML='<span>'+(w>=120?h+' tall':w+'×'+h)+'</span>';pf.appendChild(box)})})}
+window.addEventListener('resize',()=>requestAnimationFrame(paintTaps));
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>requestAnimationFrame(paintTaps));
+
+/* ---------- hub tabs, screens, width ---------- */
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{$('hub-'+h).hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));if(which==='mockup')requestAnimationFrame(paintTaps)}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+const SCREENS=['census','roster','schedule','fees','overview','announce','rest','designcheck','questions'];
+function showScreen(){const id=SCREENS.includes(location.hash.slice(1))?location.hash.slice(1):'census';showHub('mockup');document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));requestAnimationFrame(paintTaps)}
+window.addEventListener('hashchange',showScreen);
+document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{W=Number(b.dataset.w);try{localStorage.setItem('fctt-w',String(W))}catch(e){}syncSwitches();draw()});
+$('tapsw').onclick=()=>{TAPS=!TAPS;try{localStorage.setItem('fctt-taps',TAPS?'1':'0')}catch(e){}syncSwitches();paintTaps()};
+function syncSwitches(){document.querySelectorAll('[data-w]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.w)===W)));$('tapsw').setAttribute('aria-pressed',String(TAPS));$('tapsw').textContent=TAPS?'Tap boxes on':'Tap boxes off'}
+document.addEventListener('click',e=>{if(e.target.closest('.pf a,.pf button'))e.preventDefault()},true);
+
+/* ---------- explanations behind every highlight ---------- */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F1:{t:'Row Edit / Remove (228 of the 334)',now:'Every roster, schedule and fee row carries a 38×38 pencil and a 38×38 trash. They are the free editors’ own buttons, and the paid portal has none on its rows.',fix:'Option C, recommended: the row’s main area is one button that opens the form the pencil opens today, and Remove ends that form’s body, above Cancel · Save. Option A grows both icons to 44. Option B builds a full record per row.'},
+ F2:{t:'Roster reorder grip (6)',now:'A 30×38 grip at every width. The paid roster grows its grip to 44 at ≤768 and hides it at ≤640, so a phone never reorders a paid roster.',fix:'Recommended: the 10-12 reorder ruling, which says the handle is the row’s number where the list has one, 44px at touch widths. At ≤768 the jersey number is the 44×44 handle (hold to drag, tap for Move up · Move down · Cancel). A computer keeps today’s grip and mouse drag. The alternative is to hide it at ≤640, as the paid roster does.'},
+ F3:{t:'Mark paid 32 · Undo 15 (9)',now:'Mark paid is a 32px bordered button. Undo is a bare underlined word, 15px tall, the smallest target in the free portal.',fix:'Mark paid 44 on the row. Undo moves into the fee’s form as “Mark unpaid”, beside Remove fee. The alternative keeps a bordered 44px Undo on the row.'},
+ F4:{t:'Overview links (Fan view 23 · See all 24 · “?” 32 · Upgrade 40)',now:'Four small links, each under the floor. Fan view is shared with the paid Overview and paid Tournaments. The “?” is the app-wide help button inside a free holder that adds no floor.',fix:'Each gets a 44px tap area at the same type size. The “?” is fixed from the free holder only, as the paid holders already do. Fan view is fixed in its shared component.'},
+ F5:{t:'Announcements (subject 40 · Refresh 42 · Send 42)',now:'The shared editor sets 40 / 42 and nothing raises them at touch widths. The paid page has the same controls on file as debt with no reason.',fix:'44 at ≤768 in the shared stylesheet, which fixes both portals at once.'},
+ F6:{t:'Open → 32 · Express interest 36 · Upgrade 40',now:'Explore’s Open → and the Premium link are free-only. Express interest wears the product’s global small ghost button.',fix:'44, free-only. Express interest gets a local class beside the global one, and the global small button is not touched.'},
+ F7:{t:'The forms behind the rows (not in the 334)',now:'Opened with the pencil, each editor’s form has 40px fields, 42px Save / Cancel, 34px Practice · Game · Event pills and ~22px “+ Add …” toggles. The sweep never opens a form, so no run has measured them.',fix:'44 at ≤768 in the free editors’ own stylesheets, proved by a probe that opens one row on each screen.'},
+ F8:{t:'Help page: What’s New 19 · Search 42 (6)',now:'Both belong to the help layout every help page uses, the admin help hub included. The paid help page has the same two on file with no reason.',fix:'Recommended: accept the six free-help findings with a reason pointing to the touch-target debt plan, which owns every help page. The keys carry no fixture name.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today.',re:'Exists today and changes size or shape.',un:'Exists today and is drawn unchanged.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,'<div class="explain"><h3>What the code does today</h3><p>'+esc(f.now)+'</p>'+(here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':'')+'<h3>What the proposal does</h3><p>'+esc(f.fix)+'</p></div>')}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag','<div class="explain"><p>'+esc(el.dataset.note||GENERIC_NOTE[k]||'')+'</p><p class="sub">'+esc(GENERIC_NOTE[k]||'')+'</p></div>')}
+function bindTags(){document.querySelectorAll('.mk').forEach(el=>{if(el.dataset.bound)return;el.dataset.bound='1';el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})})}
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button');if(el&&el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here)}});
+
+/* ---------- the rulings ---------- */
+const QS=[
+ {id:'Q1',t:'Row actions on Roster, Schedule and Fees',why:'This is the big one: 228 of the 334 findings. It decides how a free coach edits and removes a player, an event and a fee.',opts:[
+  ['C','The row is the door (C)','Tap the row to open the form it opens today; Remove moves into the form. One target per row, more room for the name. Help copy changes for the three editors. Two known gaps, both deliberate. First, on a phone the form still folds in place, while the house rule (One Window, 10-19) says a form fills the phone. The free forms are named for One Window’s later stages. Second, these three free lists drop the 08-15 money-table idiom (a pencil plus the row) for the row-list rule (the row is a button with a chevron).',1],
+  ['A','Keep the icons, make them 44 (A)','No flow change and no help change. Three targets per row stay. A paid fee’s name, 52px today, is squeezed to almost nothing at 390.'],
+  ['B','A full record per row (B)','The house standard in full: reads first, one pencil, autosaves, full screen on a phone. Several sessions of work, a new dependency for the free portal, and a help rewrite.'],
+  ['A+B','A now, B as its own job later','Quick fix today, the record work planned separately.']]},
+ {id:'Q2',t:'Roster reorder on a phone',why:'The free roster’s order is the only order its coach sets. The paid roster hides the grip on a phone, which goes against your 10-12 reorder ruling.',opts:[
+  ['handle','The number is the 44px handle','Hold to drag, tap for Move up · Move down · Cancel, at every touch width. Follows the reorder ruling. A computer keeps today’s grip.',1],
+  ['hide','Hide the grip at ≤640, as the paid roster does','Cheapest and matches the paid roster. A phone-only coach can no longer reorder.']]},
+ {id:'Q3',t:'Fees: Mark paid and its Undo',why:'Undo is a 15px underlined word today.',opts:[
+  ['form','Mark paid 44 on the row; “Mark unpaid” inside the fee’s form','Collecting stays one tap; undoing becomes two. Matches how the paid portal removes a payment. Pairs with Q1 = C.',1],
+  ['row','Mark paid 44; a bordered 44px Undo stays on the row','Undo stays one tap. Costs the fee name more room. Pairs with Q1 = A.']]},
+ {id:'Q4',t:'Add player · Add event · Add fee',why:'37 tall today.',opts:[
+  ['inplace','44 tall where they stand','A size change only.',1],
+  ['header','Move them to a page-header primary, as the paid portal does','The free section header has no slot for one, so this is a header redesign for three screens.']]},
+ {id:'Q5',t:'The shared parts',why:'Each of these changes what a Premium coach sees, or deliberately does not.',opts:[
+  ['all','Fan view in its shared component · the “?” from the free holder only · Announcements in its shared stylesheet · the free Notifications “?” at 768 recorded against F-21 with a reason','Paid change: Fan view’s tap area grows on the paid Overview and Tournaments, into the space below it, so nothing moves. Paid Announcements controls reach 44. No paid header changes.',1],
+  ['nofan','The same, but leave Fan view alone and accept its 9 free findings with a reason','No paid layout change at all. The 23px link stays in both portals.'],
+  ['f21','The same, and also fix the paid header “?” at 641–768 now','Clears F-21’s “?” across every paid page at tablet width, which takes it from the debt plan.']]},
+ {id:'Q6',t:'Help page: What’s New (19) and Search this guide (42)',why:'Every help page has both, the admin help included.',opts:[
+  ['accept','Accept the 6 free-help findings with a reason pointing at the touch-target debt plan','The keys carry no fixture name, so they will not re-key.',1],
+  ['fix','Fix both here, in the shared help layout','Every help page in the product changes, including the admin help hub.']]},
+ {id:'Q7',t:'The forms behind the rows',why:'Not in the 334: the sweep never opens a form, so these have never been measured.',opts:[
+  ['fix','Fix them in the same pass (fields, Save / Cancel, the type pills, the “+ Add …” toggles)','Proved by a probe that opens one row per editor.',1],
+  ['later','Leave them for another job','The rows grow and the forms behind them stay small.']]}
+];
+let picks={};try{picks=JSON.parse(localStorage.getItem('fctt-picks')||'{}')}catch(e){picks={}}
+function savePicks(){try{localStorage.setItem('fctt-picks',JSON.stringify(picks))}catch(e){}}
+function drawQs(){$('qs').innerHTML=QS.map(q=>{const cur=(picks[q.id]&&picks[q.id].v)||q.opts.find(o=>o[3])[0];
+  return '<div class="q"><h3>'+q.id+' · '+esc(q.t)+'</h3><p class="why">'+esc(q.why)+'</p>'+q.opts.map(o=>'<label class="opt'+(o[3]?' recd':'')+'"><input type="radio" id="'+q.id+'-'+o[0]+'" name="'+q.id+'" value="'+o[0]+'"'+(o[0]===cur?' checked':'')+'><span><b>'+esc(o[1])+'</b><br><span class="meta" style="font-size:13px">'+esc(o[2])+'</span></span></label>').join('')+
+  '<label class="meta" for="'+q.id+'-note">Note</label><textarea id="'+q.id+'-note" data-note="'+q.id+'" rows="2" placeholder="Anything to add or push back on">'+esc((picks[q.id]&&picks[q.id].n)||'')+'</textarea></div>'}).join('');
+ document.querySelectorAll('#qs input[type=radio]').forEach(r=>r.onchange=()=>{(picks[r.name]??={}).v=r.value;savePicks()});
+ document.querySelectorAll('#qs textarea').forEach(t=>t.oninput=()=>{(picks[t.dataset.note]??={}).n=t.value;savePicks()})}
+$('buildPaste').onclick=()=>{const lines=['Free coach tap targets — rulings',''];QS.forEach(q=>{const sel=document.querySelector('input[name="'+q.id+'"]:checked');const o=q.opts.find(x=>x[0]===(sel&&sel.value));const n=(document.querySelector('[data-note="'+q.id+'"]')||{}).value||'';lines.push(q.id+' · '+q.t+': '+(o?o[1]:'—')+(o&&o[3]?' (as recommended)':''));if(n.trim())lines.push('   note: '+n.trim())});const out=$('pasteOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();try{navigator.clipboard.writeText(out.value).catch(()=>{})}catch(e){}};
+
+/* ---------- the QA walk (ledger §347) ---------- */
+const QA_PARTS=[
+ {id:'W1',title:'The roster on a phone — a row is one door; the number is the handle (writes one reorder, put back in W1.5)',steps:[
+  'More › Roster: no pencil and no bin on any row; each player’s number sits in a bordered square with a small grip mark; a chevron at the row’s end.',
+  'Tap a player’s name: the row opens into the same form as before; every field and button a full fingertip tall; Remove player (red, small bin) just above Cancel · Save.',
+  'Tap Remove player: the same “Remove this player?” question. Tap Cancel (nothing removed), then Cancel the form.',
+  'TAP (don’t hold) Theo Novak’s number: a sheet with his name, “2 of 12”, Move up · Move down · Cancel. Tap Move down: the sheet closes and Theo is third.',
+  'Tap Theo’s number again › Move up: he is back second (this puts the order back).',
+  'Press and HOLD a number, drag the row a place and let go: it moves; a quick swipe on the list still scrolls. Put it back the same way.']},
+ {id:'W2',title:'Schedule and fees doors on a phone — open, act, remove from inside (writes one Mark paid, undone in W2.4)',steps:[
+  'More › Schedule: no pencil or bin; tap an event → its form opens in place, the Practice · Game · Event choice and every field a full fingertip; Remove event above Cancel · Save. Cancel.',
+  'More › Fees: an unpaid fee shows its name, amount, a chevron and an olive-outlined Mark paid a full fingertip tall; a paid fee shows “Paid · date” and a chevron, no “Undo” on the row.',
+  'Tap Mark paid on Theo Novak’s fee: it turns Paid at once and the totals move.',
+  'Tap that fee’s name: the Fee label field is a full-height box (it was a squashed sliver on a phone before); Mark unpaid (dark ink) and Remove fee (red) side by side above Cancel · Save. Tap Mark unpaid (undoes W2.3), then Cancel.']},
+ {id:'W3',title:'The small links — bigger tap areas, nothing moved (nothing writes)',steps:[
+  'Overview: the “?” by the title, ⇄ Fan view under the tournament card, See all → on the Tournaments tile and Upgrade to Premium each take a whole fingertip; type the same size. Fan view sits a little further below its card than before.',
+  'Announcements: the Subject box, Send announcement and Refresh are a full fingertip tall.',
+  'More › Explore (Open →, Upgrade) and the Teams page’s Express interest: each a full fingertip tall.']},
+ {id:'W4',title:'The computer, and the paid screens the shared parts reach — nothing else moved (nothing writes)',steps:[
+  'Free coach at about 1,440 wide — Roster, Schedule, Fees: rows read as before with a chevron; a row tints under the mouse and opens on click. CHANGED (flagged): the roster’s number sits beside the grip as plain olive figures, without its tinted box.',
+  'As uat-coach@uat-test-org.local at 390: the paid Overview’s live-tournament line keeps its height (Fan view is a bigger target inside it); paid Announcements’ Subject, Send and Refresh contacts are a full fingertip tall.']}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('fctt-qa')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('fctt-qa',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let c=0,t=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{t++;if(qa[p.id+'-'+i])c++}));return{c,t}}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>'<div class="qapart"><h3>'+esc(p.id)+' · '+esc(p.title)+'</h3>'+p.steps.map((st,i)=>'<label class="qastep"><input type="checkbox" id="qa-'+p.id+'-'+i+'" data-step="'+p.id+'-'+i+'"'+(qa[p.id+'-'+i]?' checked':'')+'><span><b>'+p.id+'.'+(i+1)+'</b> '+esc(st)+'</span></label>').join('')+'<div class="verdictrow">Verdict:'+['pass','issue','call'].map(v=>'<button type="button" data-verdict="'+p.id+'" data-value="'+v+'" aria-pressed="'+(qa['v-'+p.id]===v)+'">'+(v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call')+'</button>').join('')+'</div><label class="meta" for="qan-'+p.id+'">Notes</label><textarea id="qan-'+p.id+'" data-qnote="'+p.id+'" rows="2" placeholder="Anything worth recording">'+esc(qa['n-'+p.id]||'')+'</textarea></div>').join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQA()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['v-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-qnote]').forEach(el=>el.oninput=()=>{qa['n-'+el.dataset.qnote]=el.value;saveQA()});
+ paintQA()}
+function paintQA(){const k=qaCounts();$('qaCount').textContent='Checked '+k.c+' of '+k.t}
+$('qaBuild').onclick=()=>{const k=qaCounts();const L=['Free coach tap targets — QA walk §347','Checked '+k.c+' of '+k.t,''];QA_PARTS.forEach(p=>{L.push(p.id+' · verdict: '+(qa['v-'+p.id]||'unset'));p.steps.forEach((st,i)=>{if(!qa[p.id+'-'+i])L.push('  [ ] '+p.id+'.'+(i+1)+' '+st.slice(0,70))});if(qa['n-'+p.id])L.push('  Notes: '+qa['n-'+p.id])});const o=$('qaOut');o.value=L.join('\n');o.hidden=false;o.focus();o.select();try{navigator.clipboard.writeText(o.value).catch(()=>{})}catch(e){}};
+drawQA();
+
+/* ---------- decisions ---------- */
+const DECISIONS=[
+  {date:'2026-10-19',ask:'Q1 · Row actions on Roster, Schedule and Fees',why:'The row is the door (C): the row opens the in-place form it already had, Remove ends that form’s body. Ruled knowing both gaps written into the option: the phone form still folds in place (One Window D says a form fills the phone), and these lists drop the 08-15 pencil-plus-row idiom for the row-list door. (as recommended)'},
+  {date:'2026-10-19',ask:'Q2 · Roster reorder on a phone',why:'The number is the 44px reorder handle at every touch width: hold to drag, tap for Move up · Move down · Cancel. A computer keeps the grip. (as recommended)'},
+  {date:'2026-10-19',ask:'Q3 · Fees: Mark paid and its Undo',why:'Mark paid stays on the row at 44, in the row’s worded-action olive; Undo becomes “Mark unpaid” inside the fee’s form, beside Remove fee. (as recommended)'},
+  {date:'2026-10-19',ask:'Q4 · Add player · Add event · Add fee',why:'Add player · Add event · Add fee grow to 44 where they stand. (as recommended)'},
+  {date:'2026-10-19',ask:'Q5 · The shared parts',why:'Fan view fixed in its shared component; the “?” from the free holder only; Announcements in its shared stylesheet; the free Notifications “?” at 768 recorded against F-21 with a written reason. (as recommended)'},
+  {date:'2026-10-19',ask:'Q6 · The help page’s What’s New and search box',why:'The six free-help findings (What’s New 19, Search this guide 42) are accepted with a reason pointing to the touch-target debt plan, which owns every help page. (as recommended)'},
+  {date:'2026-10-19',ask:'Q7 · The forms behind the rows',why:'The forms behind the rows are fixed in the same pass: fields, Save / Cancel, the choice pills and the “+ Add …” toggles. (as recommended)'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>'<div class="decisionrow"><div class="dhead" style="display:flex;justify-content:space-between;gap:12px"><strong>'+esc(d.ask)+'</strong><span class="rec">Ruled</span></div><p class="meta">'+esc(d.date)+'</p><p>'+esc(d.why)+'</p></div>').join('')||'<p class="sub">No rulings recorded yet. Q1–Q7 are on the Mockup tab, screen 8.</p>';
+
+syncSwitches();drawQs();draw();showScreen();
+</script>
