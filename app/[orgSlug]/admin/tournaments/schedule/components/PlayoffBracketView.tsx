@@ -9,7 +9,9 @@
  *   · A coin toss still owed for its seeds is said HERE, where the seeds wait: the amber note naming the tie and the
  *     games waiting on it, with Record the toss (S7). The waiting game says so once, in its when line.
  *   · Every bracket game shows, whatever the Filter (a played semifinal no longer reads "No playoff bracket yet").
- *     A Search (or a Filter) lists the games it matches in round bands instead (1 October).
+ *     A Search (or a Filter) lists the games it matches in round bands instead (1 October), and the head line says so
+ *     after the format; nothing matching is Day's "No games match the filter" row (owner 2026-10-19). The
+ *     Filter here never offers Division (the arrows are the division) or Stage (every game is a playoff).
  *   · A desk draws the diagram (BracketColumns); a phone reads the rounds as bands in one frame — the day's row, the
  *     winner bold and checked — with the diagram one tap away (Show as diagram: today's zoom frame) when a game feeds
  *     another; a lone final is its list.
@@ -24,7 +26,7 @@ import { playoffFormatLabel } from '@/lib/playoff-picture';
 import { bracketChampion, bracketSides, playedCount, type BracketChampion } from '@/lib/bracket-reading';
 import { gamesWaitingOnToss, type PendingToss } from '@/lib/coin-toss';
 import type { ScheduleConflict, ScheduleState } from '@/lib/schedule-day';
-import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, bracketWhen } from '@/lib/schedule-words';
+import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, SCHEDULE_DAY_WORDS as W, bracketWhen } from '@/lib/schedule-words';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
 import { CoinTossNote } from '@/components/admin/CoinTossRecorder';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -72,7 +74,7 @@ interface BracketGroup { key: string; title: string | null; games: Game[]; champ
 
 export default function PlayoffBracketView({
   games, divisionGames, teams, divisions, division, venues, stateOf, conflictOf, fromRoundRobin, tosses, onRecordToss,
-  canEdit, editLabel, onEditBracket, onOpen, focus,
+  canEdit, editLabel, onEditBracket, onOpen, focus, onClearFocus,
 }: {
   /** The division's bracket games — every one, whatever the Filter. */
   games: Game[];
@@ -97,6 +99,8 @@ export default function PlayoffBracketView({
   onOpen: (g: Game) => void;
   /** A Search or Filter is on: the ids it matches (listed in round bands). */
   focus: ReadonlySet<string> | null;
+  /** Clears the Filter and Search — the way back to the bracket the focus note names. */
+  onClearFocus: () => void;
 }) {
   const isPhone = useIsPhone();
   const [diagramOnPhone, setDiagramOnPhone] = useState(false);
@@ -143,6 +147,13 @@ export default function PlayoffBracketView({
     </button>
   );
   const headAction = isPhone ? diagramSwitch : editButton;
+  // A Filter or Search turned the bracket into its matching games: the head line says so after the format, so the
+  // view stays one line with Edit bracket at its end (owner 2026-10-19; the line above names the filter and Reset
+  // lives in its menu). Nothing matching is Day's own "No games match the filter" row, with Clear the filter.
+  const matched = focus === null ? 0 : games.filter(g => focus.has(g.id)).length;
+  const clearButton = (
+    <button type="button" className="btn btn-outline btn-data" onClick={onClearFocus}>{W.clearFilter}</button>
+  );
 
   /** A bracket's rounds as bands; a division with more than one bracket names it in each band ("Pool A playoffs ·
    *  Semifinals"), so the frame stays one list of bands. */
@@ -188,7 +199,10 @@ export default function PlayoffBracketView({
     <div className={sd.list}>
       {division && (caption || headAction) && (
         <div className={bv.head}>
-          <span className={bv.caption}>{caption}</span>
+          <span className={bv.caption}>
+            {caption}
+            {focus !== null && matched > 0 && <span role="status">{caption ? ' · ' : ''}{B.focusNote(matched)}</span>}
+          </span>
           {headAction && <div className={bv.headAction}>{headAction}</div>}
         </div>
       )}
@@ -203,6 +217,10 @@ export default function PlayoffBracketView({
           <b>{B.emptyTitle}</b>
           <p>{B.emptyBody}</p>
         </div>
+      ) : focus !== null && matched === 0 ? (
+        <ClubRowList>
+          <ClubRow title={W.noGamesMatch} actions={clearButton} />
+        </ClubRowList>
       ) : (
         <>
           {listForm ? (

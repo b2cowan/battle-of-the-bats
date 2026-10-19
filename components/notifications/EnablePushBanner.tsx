@@ -8,7 +8,9 @@
  * only way to enable push was buried in a per-event settings table, and the
  * "Allow" confirm rendered off-screen on mobile.
  *
- * Shows only when: push is supported, the browser hasn't blocked notifications,
+ * Shows only when: on a phone or tablet (never a computer — owner 2026-10-19; a
+ * desk still turns alerts on from Notification settings), push is supported, the
+ * browser hasn't blocked notifications,
  * this device isn't already subscribed, and the user hasn't recently dismissed it.
  * Auto-hides forever on this device once enabled. Tapping "Turn on" fires the
  * phone's Allow dialog directly (browser-rendered → always visible) inside the
@@ -23,6 +25,7 @@ import {
   enablePushOnThisDevice,
   pushFailureMessageFor,
 } from '@/lib/push-client';
+import { isHandheldDevice } from '@/lib/device';
 import styles from './EnablePushBanner.module.css';
 
 const DISMISS_KEY = 'flhq-push-prompt-dismissed';
@@ -65,7 +68,7 @@ export default function EnablePushBanner() {
     let cancelled = false;
 
     (async () => {
-      if (!isPushSupported()) return;
+      if (!isHandheldDevice() || !isPushSupported()) return;
       if (Notification.permission === 'denied') return;
       if (recentlyDismissed()) return;
       const endpoint = await subscribedEndpoint();

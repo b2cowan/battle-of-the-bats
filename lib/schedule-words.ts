@@ -828,6 +828,9 @@ export const BRACKET_WORDS = {
   played: (played: number, of: number) => `${played} of ${of} played`,
   showDiagram: 'Show as diagram',
   showList: 'Show as list',
+  /** A Filter or Search lists the bracket's matching games instead of drawing it, and the head line says so after the
+   *  format: "Single elimination · 8 teams · the 6 games that match, listed by round" (owner 2026-10-19). */
+  focusNote: (n: number) => `${n === 1 ? 'the one game that matches' : `the ${n} games that match`}, listed by round`,
   /** A division in the Playoffs stage with no bracket games yet. */
   emptyTitle: 'No playoff bracket yet',
   emptyBody: 'A bracket is rounds of games wired together: each game feeds its winner (or loser) into the next. Build one here, and the rounds and matchups link up for you.',

@@ -12,7 +12,7 @@
  */
 import { useEffect, useState } from 'react';
 import { BellRing, X } from 'lucide-react';
-import { isStandalonePWA } from '@/lib/device';
+import { isHandheldDevice, isStandalonePWA } from '@/lib/device';
 import {
   isPushSupported,
   enablePushOnThisDevice,
@@ -49,7 +49,8 @@ export default function AlertsNudge({ orgSlug, tournamentSlug, enabled }: Props)
     let cancelled = false;
     const evaluate = async () => {
       // The nudge is purely a post-install discovery aid — only inside the app.
-      if (!isStandalonePWA() || !isPushSupported()) return setVisible(false);
+      // Never on a computer, even as an installed app (owner 2026-10-19).
+      if (!isStandalonePWA() || !isHandheldDevice() || !isPushSupported()) return setVisible(false);
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return setVisible(false);
       let dismissed = false;
       try {

@@ -43,16 +43,27 @@ export function isStandalonePWA(): boolean {
 }
 
 /**
+ * True on a phone or tablet — browser or installed app — and false on a computer.
+ * The ONE handheld test: install eligibility builds on it, and the "turn on alerts
+ * on this device" prompts gate on it (owner 2026-10-19: no device-alert prompts on
+ * a desktop; a computer can still turn alerts on from Notification settings).
+ */
+export function isHandheldDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia?.('(pointer: coarse)')?.matches === true ||
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    isDesktopModeIPad()
+  );
+}
+
+/**
  * True when a "Get the app" affordance makes sense: a phone/tablet BROWSER —
  * not desktop (nothing to install) and not the installed app itself. The ONE
  * definition of install eligibility (More-sheet row, and any future entry
  * point) so the gating rule can never drift between surfaces.
  */
 export function isInstallEligibleBrowser(): boolean {
-  if (typeof window === 'undefined') return false;
   if (isStandalonePWA()) return false;
-  return (
-    window.matchMedia?.('(pointer: coarse)')?.matches === true ||
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-  );
+  return isHandheldDevice();
 }

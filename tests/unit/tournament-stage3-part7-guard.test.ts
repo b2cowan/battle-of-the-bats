@@ -35,6 +35,19 @@ describe('S6 — the bracket reads who played, the score, who won and the champi
     assert.match(page, /const bracketGames = bracketDivision \? scheduled\.filter\(g => g\.isPlayoff && g\.divisionId === bracketDivision\.id\) : \[\];/);
     assert.match(page, /<PlayoffBracketView\s+games=\{bracketGames\}/);
   });
+  it('the Bracket view\'s Filter never names a division or stage, and a listed bracket says why (owner 2026-10-19)', () => {
+    const page = readCode(PAGE);
+    // The arrows are the division and every game is a playoff: those picks rest here, never empty the bracket.
+    assert.match(page, /const bracketFilter: ScheduleFilter = \{ \.\.\.filter, divisions: \[\], stages: \[\] \};/);
+    assert.match(page, /options: divisions\.length > 1 && !inBracket \?/);
+    assert.match(page, /options: hasRoundRobinStage && hasPlayoffStage && !inBracket/);
+    assert.match(page, /focus=\{bracketFocus\}\s+onClearFocus=\{clearScheduleFilters\}/);
+    const view = readCode(VIEW);
+    // Said on the head line after the format — one line, Edit bracket at its end, never a second row with a button.
+    assert.match(view, /\{caption\}\s*\{focus !== null && matched > 0 && <span role="status">\{caption \? ' · ' : ''\}\{B\.focusNote\(matched\)\}<\/span>\}/);
+    assert.doesNotMatch(view, /bv\.focusNote/);
+    assert.match(view, /focus !== null && matched === 0 \? \(\s*<ClubRowList>\s*<ClubRow title=\{W\.noGamesMatch\} actions=\{clearButton\} \/>/);
+  });
   it('Show as diagram is offered only when a game feeds another — a lone final is its list (owner 2026-10-12)', () => {
     const view = readCode(VIEW);
     assert.match(view, /const hasDiagram = bracketHasFeeds\(games\);/);
@@ -52,7 +65,7 @@ describe('S6 — the bracket reads who played, the score, who won and the champi
     const view = readCode(VIEW);
     assert.doesNotMatch(view, /bracketTitle|bv\.title\b/);
     assert.match(view, /const headAction = isPhone \? diagramSwitch : editButton;/);
-    assert.match(view, /<span className=\{bv\.caption\}>\{caption\}<\/span>\s*\{headAction && <div className=\{bv\.headAction\}>/);
+    assert.match(view, /<span className=\{bv\.caption\}>\s*\{caption\}[\s\S]*?<\/span>\s*\{headAction && <div className=\{bv\.headAction\}>/);
   });
 });
 

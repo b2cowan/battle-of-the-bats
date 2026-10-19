@@ -840,9 +840,16 @@ export default function AdminSchedulePage() {
   const searched = scheduled.filter(g => matchesScheduleSearch(
     resolveTeam(g.homeTeamId, g.homePlaceholder), resolveTeam(g.awayTeamId, g.awayPlaceholder), search));
   const filtered = searched.filter(g => matchesScheduleFilter(g, stateOf(g), filter, conflictOf(g)));
+  // The Bracket view's Filter (owner 2026-10-19): the arrows are its division and every game in it is a playoff, so a
+  // Division or Stage pick made in another view rests here — out of the menu and the line, never emptying the bracket
+  // — and is back in Day or All games. What still narrows a bracket (Conflicts, Status, the field) or a Search lists
+  // the games it matches, and the view says so.
+  const bracketFilter: ScheduleFilter = { ...filter, divisions: [], stages: [] };
+  const bracketMatched = searched.filter(g => matchesScheduleFilter(g, stateOf(g), bracketFilter, conflictOf(g)));
   const filteredIds = new Set(filtered.map(g => g.id));
   const dayGames = filtered.filter(g => g.date === day);
-  const exportGames = shownView === 'day' || shownView === 'timeline' ? dayGames : filtered;
+  // Bracket view's export reads the Filter that view shows, never a resting Division or Stage pick it cannot see.
+  const exportGames = shownView === 'day' || shownView === 'timeline' ? dayGames : shownView === 'bracket' ? bracketMatched : filtered;
 
   // The per-division features (the bracket, Add game's division, the generators' defaults, temporary lanes) read ONE
   // division when the Bracket view or the Filter names one; otherwise every division.
@@ -856,6 +863,7 @@ export default function AdminSchedulePage() {
   const divisionGames = scheduled.filter(g => selectedDivisionIds.has(g.divisionId));
   // A bracket reads every one of its games, whatever the Filter (S6: a played semifinal no longer reads "No bracket").
   const bracketGames = bracketDivision ? scheduled.filter(g => g.isPlayoff && g.divisionId === bracketDivision.id) : [];
+  const bracketFocus = filtersOn(bracketFilter) > 0 || search.trim() !== '' ? new Set(bracketMatched.map(g => g.id)) : null;
   // A coin toss still owed (S7): the standings engine's own flags, read by the one reading Results and the dashboard use.
   const tosses = useMemo(
     () => pendingCoinTosses({ divisions, teams, games: scheduled, settings: currentTournament?.settings }),
@@ -1075,7 +1083,11 @@ export default function AdminSchedulePage() {
   ];
   function chooseView(next: ScheduleView) {
     setView(next);
-    if (next === 'bracket' && !bracketDivisionId && bracketDivision) setBracketDivisionId(bracketDivision.id);
+    // Re-choosing Bracket from inside it keeps the arrows' division.
+    if (next !== 'bracket' || shownView === 'bracket') return;
+    // A Filter naming one division opens that division's bracket (owner 2026-10-19).
+    if (filter.divisions.length === 1) setBracketDivisionId(filter.divisions[0]);
+    else if (!bracketDivisionId && bracketDivision) setBracketDivisionId(bracketDivision.id);
   }
 
   // Schedule health's "Show them" on a clash (walk §294): the Filter's Conflicts row ticked ALONE — every other group and
@@ -1143,7 +1155,10 @@ export default function AdminSchedulePage() {
   }
 
   // The Filter: Division · Stage · Status · the sport's field, several choices each, counted over what the view reads.
-  const countBase = shownView === 'day' || shownView === 'timeline' ? searched.filter(g => g.date === day) : searched;
+  const countBase = shownView === 'day' || shownView === 'timeline' ? searched.filter(g => g.date === day)
+    : shownView === 'bracket' ? searched.filter(g => g.isPlayoff && g.divisionId === bracketDivision?.id)
+    : searched;
+  const inBracket = shownView === 'bracket';
   const countBy = (pick: (g: Game) => string) => countBase.reduce((m, g) => m.set(pick(g), (m.get(pick(g)) ?? 0) + 1), new Map<string, number>());
   const divisionCounts = countBy(g => g.divisionId);
   const stageCounts = countBy(g => (g.isPlayoff ? 'playoff' : 'pool'));
@@ -1172,11 +1187,11 @@ export default function AdminSchedulePage() {
     },
     {
       key: 'division', label: W.groups.division, selected: filter.divisions, onToggle: k => toggle('divisions', k),
-      options: divisions.length > 1 ? divisions.map(d => ({ key: d.id, label: d.name, count: divisionCounts.get(d.id) ?? 0 })) : [],
+      options: divisions.length > 1 && !inBracket ? divisions.map(d => ({ key: d.id, label: d.name, count: divisionCounts.get(d.id) ?? 0 })) : [],
     },
     {
       key: 'stage', label: W.groups.stage, selected: filter.stages, onToggle: k => toggle('stages', k),
-      options: hasRoundRobinStage && hasPlayoffStage
+      options: hasRoundRobinStage && hasPlayoffStage && !inBracket
         ? (['pool', 'playoff'] as const).map(st => ({ key: st, label: W.stages[st], count: stageCounts.get(st) ?? 0 }))
         : [],
     },
@@ -1520,7 +1535,8 @@ export default function AdminSchedulePage() {
           editLabel={bracketGames.length > 0 ? T.editBracket : T.buildBracket}
           onEditBracket={() => enterBracketEditor()}
           onOpen={openGame}
-          focus={filtersOn(filter) > 0 || search.trim() !== '' ? filteredIds : null}
+          focus={bracketFocus}
+          onClearFocus={clearScheduleFilters}
         />
       ) : (
         <ScheduleDayList
