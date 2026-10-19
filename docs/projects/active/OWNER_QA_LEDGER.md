@@ -25487,3 +25487,18 @@ The email round trip for the new start forms (Part 1, `8647a4e8`, is on staging)
 
 - Not changed: who may suspend, remove, reinstate or resend; what a role opens; the questions those doors ask.
 <!-- /§340 -->
+
+## §341 · Register Your Existing Team · E3 — **the claim page says what New Team makes: one line under Existing Team / New Team, shown before any tap, naming the Premium portal the new free team won't show in; and, when nothing can be chosen (the team is locked for the coach, or already in the tournament), the same line above Continue**
+
+**Ruled 2026-10-19** by the owner on the project hub's "E3 · Join page" tab (https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm), H1–H3 all as recommended: the line under the pair, always shown; the registration form's sentence from one place, the label "New Team" kept; shown whenever the coach has any Premium team, above Continue when there is no pair. **Built and committed `341988d9` 2026-10-19** (plan §16; /review high-risk tier: no Critical/High/Medium). The walk is the hub's "QA walk · join page" tab.
+
+**Accounts** (password `UATPassword2026!`, one private window each; dev email can't reach UAT addresses, so the claim links are built by hand): uat-coach (Chris Hadley, head coach of both UAT Premium teams) on his own unclaimed *UAT Test Team*; uat-asst-nomoney (Owen MacLeod, assistant on both, no Register for tournaments) on *E3 Walk Owen*; uat-free-coach (one free team, *UAT Free Team*) on *E3 Walk Free*. The two walk entries were made on dev for this walk (UAT Import Smoke, U12) and are removed after the paste-back. **Never press Continue on the claim page in this walk:** it files the registration under a new free team.
+
+- **W1.** uat-coach opens `/coaches/join?registered=1&registrationId=54de491f-0c8e-4a62-86fb-a46dfb9663f6&email=uat-coach%40uat-test-org.local&next=%2Fcoaches%2Ftournaments`, computer then phone. **Expect:** Before any tap, directly under the two buttons, "**New Team** — Makes a separate free team. It won’t show in any of your Coaches Portals." (New Team in white, the rest grey); tapping New Team removes the list and the line stays where it was; Existing Team brings the list back under the line; on a phone the line wraps to two lines with no sideways scroll.
+- **W2.** uat-asst-nomoney opens `…registrationId=7a3a8dfb-5322-4cdd-994f-770d152524af&email=uat-asst-nomoney%40uat-test-org.local…`. **Expect:** No pair; "UAT Standalone Team · Coaches Portal — Chris Hadley (head coach) registers this team. Ask Chris if you need to do it yourself."; "UAT Standalone Team (No Metrics) — Already registered as “No Metrics - Walk” · U12 · Pending Review"; directly above Continue, "**Continue** — Makes a separate free team. It won’t show in any of your Coaches Portals."
+- **W3.** uat-free-coach opens `…registrationId=349e3d89-fd4c-404d-9c8b-936ef8e7d96d&email=uat-free-coach%40uat-free-coach.local…`. **Expect:** Existing Team and New Team with UAT Free Team in the list, and no line: the page as before.
+- **W4.** uat-coach on `/uat-test-org/uat-import-smoke/register`, Step 2. **Expect:** "A different team" reads exactly "Makes a separate free team. It won’t show in any of your Coaches Portals." Leave without submitting.
+- **W5.** The Coaches Portal's help, searching "new team". **Expect:** "Registering on another organizer's page — which team do I pick?" opens; its last paragraph describes the claim page's New Team line and Continue.
+
+- Not changed: which button starts chosen, no team picked for the coach, what Continue does, the server; the page's button sizes and "team profile" wording (raised on the drawing, not ruled).
+<!-- /§341 -->

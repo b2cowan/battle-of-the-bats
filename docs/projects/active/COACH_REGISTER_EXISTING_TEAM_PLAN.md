@@ -93,7 +93,7 @@ the return only for an account that has a team or workspace, which every returni
 | 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6, B1 | Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed `8e318e4f` 2026-10-15; walk §312 ✅ passed 2026-10-16 (33 of 33; the read-back's two questions are in the ledger); migration 329 waiting on the owner's go |
 | 1b | Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10) | C1, C2, C3 | Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt `COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md` written 2026-10-15; built (§13) and committed `9fe3c4f6` 2026-10-15; walk §314 ✅ passed 2026-10-16 (20 of 20; the read-back found W2's and W3's entries never made, see §13) |
 | 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled 2026-10-16; committed `2b1fe65a` (records `a2e57e3a`) 2026-10-16 (§14); walk §317 (the hub's "QA walk · one entry" tab, W4 = §318) ✅ passed 2026-10-16, 15 of 15 on the paste-back; the dev read-back finds no trace of W3–W4 (no notice ever named their entry); closed on the owner's word the same day ("mark 317 complete"), see the ledger |
-| 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | E1, E2, E3 | Counted 2026-10-16 on dev and, on the owner's go, production (§15): **none misfiled**, before or after the release. Ruled 2026-10-16: closed as counted, no door, no fixes (E1); counted again only if a coach or organizer reports one (E2); the join page's New Team gets the form's treatment in the next registration build (E3, owed) |
+| 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | E1, E2, E3 | Counted 2026-10-16 on dev and, on the owner's go, production (§15): **none misfiled**, before or after the release. Ruled 2026-10-16: closed as counted, no door, no fixes (E1); counted again only if a coach or organizer reports one (E2); the join page's New Team gets the form's treatment in the next registration build (E3). E3 drawn 2026-10-19 (hub's "E3 · Join page" tab), H1–H3 ruled 2026-10-19 as recommended, built and committed `341988d9` 2026-10-19 (§16); walk §341 |
 | Later | A one-time emailed code as a second way to sign in; teams that live in a club's account | not asked yet | — |
 
 ## 5. Stage 1 — what the coach sees
@@ -700,7 +700,7 @@ and the server ask one computation, unit-tested, walked in §312, §314 and §31
 
 - **The join page's New Team** (`/coaches/join`). Every coach email that carries the claim link lands there: the
   registration confirmation, the organizer's resend-access and chat sign-up reminder, and, on the free Tournament plan
-  (`d82c4118`, committed 2026-10-16, not yet on production), the team-added email that is the invitation. It still offers
+  (`d82c4118`, on production since 2026-10-18, master job 281; this line said "not yet on production" when written), the team-added email that is the invitation. It still offers
   **Existing Team** and **New Team** as two equal buttons with no sentence under New Team, the shape F4 named on the old
   form. It picks Existing Team when the coach has a team to choose, but its team list starts on "Select a team", nothing
   chosen. A Premium coach
@@ -710,8 +710,9 @@ and the server ask one computation, unit-tested, walked in §312, §314 and §31
   Definition 1 counts it, marked as held at the time.
 - **A second email.** Email first cannot recognize a coach who signs up again under another address. Definition 5 is the
   only check, and it is by hand.
-- **The join link and one team, one entry, on production until the next release.** The claim's refusal of a team already
-  in the tournament is in `d82c4118`, not in `85a5428d`, so on production today the join page can still file an entry
+- **The join link and one team, one entry, on production until the next release** (closed: `d82c4118` reached production
+  2026-10-18, master job 281). The claim's refusal of a team already
+  in the tournament is in `d82c4118`, not in `85a5428d`, so on production at the count the join page could still file an entry
   under a team that is already in. Definition 2 would count it.
 
 ### What a move must carry (for a one-off fix on A5's pattern)
@@ -756,7 +757,8 @@ and it is small enough for the next registration build session. Not built here.
 - **E2 → count again only if a coach or organizer reports one.** Not the recommendation (a re-count on 2026-11-16); the
   owner chose the third option. No re-count is scheduled; `.probe/reg-stage2-count.mjs` stays ready for a report.
 - **E3 → give New Team the form's treatment, in the next registration build**, as recommended: on the join page, New
-  Team comes last, with the sentence saying it makes a separate team the portal won't show. Owed; not built.
+  Team comes last, with the sentence saying it makes a separate team the portal won't show. Owed; not built. (Drawn,
+  ruled H1–H3 and built 2026-10-19: §16.)
 
 ### Asks (as put on the hub's Stage 2 tab)
 
@@ -767,3 +769,66 @@ and it is small enough for the next registration build session. Not built here.
 - **E3 — The join page's New Team.** Recommend **give it the form's treatment** (last, with the sentence saying it makes
   a separate team the portal won't show), in the next registration build. Other options: leave it; remove New Team from
   the join page when the coach has a Premium team they may register.
+
+## 16. E3 · the join page's New Team (drawn, ruled and built 2026-10-19)
+
+**Committed `341988d9` 2026-10-19** (the page, the shared sentence, its guards, the help article); records in the commit after it.
+
+**Gate 0 (drawn 2026-10-19).** The hub's "E3 · Join page" tab: true-size phone frames before and after for one portal
+team, New Team tapped, two portal teams (today's frame captured read-only on dev), a team locked for the coach, a team
+already in the tournament, a computer-width pair, and a no-change tile; /design and /marketing ran before the hand-off.
+The drawing found what the E3 text had not said: **a second route** (J2). When the coach's Premium team is locked for
+them or already in the tournament there is no pair; the page names the team and offers only Continue, which files the
+entry under a new free team without a word.
+
+**Rulings (owner, 2026-10-19, pasted from the hub; no notes):**
+
+- **H1 → one line under the pair, always shown**, as recommended.
+- **H2 → the form's sentence from one place; keep "New Team"**, as recommended.
+- **H3 → any portal team; above Continue when there is no pair**, as recommended.
+
+**Raised on the drawing, not ruled, so left as they are:** this page's buttons are 39–41px tall and its team list's
+text 13.6px on a phone, under the consumer floor of 2026-07-13 (/design); the page's "team profile" wording beside
+"free team" (/marketing); an "ask the organizer to remove the extra entry" sentence on the already-in screen.
+
+**The build's own calls (not part of the rulings):**
+
+- **The line's treatment** (/design, after checking the decisions log: the 2026-08-14 reason that a sentence stating
+  what a choice is about to do is never the smallest type): 0.75rem, the sentence in the page's grey, the bold lead
+  ("New Team" / "Continue") in the page's white. Defined whole in `app/coaches/join/join.module.css`; no rule added to
+  `auth.module.css`.
+- **Spacing as drawn:** 8px under the pair and 12px above the team list (the pair's grid drops its bottom margin only
+  while the line shows); above Continue, 0.4rem closer than the form's gap (about 8px on a phone, 14px on a computer).
+- **`differentTeamSentence`** moved from `RegisterContent.tsx` into `lib/registrable-teams.ts` (pure, the portal cards
+  in), byte-identical; the form's call passes the same portal cards. The module header names the sentence as shared.
+- **Untouched:** which button starts chosen, no team picked for the coach, the verified auto-link, Continue's
+  behaviour, the server and the claim API.
+- **The walk does not press Continue.** It would file a dev fixture entry; Continue's behaviour did not change.
+
+**Verified.** Unit `tests/unit/registrable-teams.test.ts` 64/64 (six new: the exact sentence in four variants; both
+screens import it and neither holds its words; the join line sits outside the Existing Team branch; the no-pair line
+sits after the locked lines and before Continue; a failed list yields no portal teams), each guard mutation-checked
+(a reworded sentence, the line moved inside the Existing Team branch, the words pasted into the page: each failed).
+`signup-verification-guard` 22/22 (its join-page anchors hold; not edited). Typecheck, focused lint and
+`check:spelling` clean. `npm test` 7,949 of 7,952: the three failures are other sessions' open work (the admin rail
+scrollbar, the coach ink tiers, Toolbar Rules Stage 3). `check:css-selectors` red on two findings not in this change
+(GuidanceRail `.context`; `inviteRole` in `auth.module.css`). A read-only Playwright probe
+(`.probe/e3-join-after.mjs`, 390 and 1280; cases other than the real two-portal one answered inside the browser):
+gaps 8/12, the line stays when New Team is tapped, 8px above Continue (14 on a computer), no horizontal scroll, the title
+clears the top bar, buttons unchanged at 41/40/39px; a free-only coach and a failed list show no line.
+
+**/review** (high-risk tier by path; lenses: correctness, regression; security, data and concurrency not exercised: no
+data, route or write changed). No Critical, High or Medium. Kept as owner findings, not changed: the verified
+auto-link (pre-existing, pinned by another session's guard) still files a new free team without the line for a
+brand-new account that is already on a portal's staff with nothing choosable; when the only choosable team is a free one
+and the portal is locked, the line implies a contrast Existing Team does not offer. Advisory: "any of your Coaches
+Portals" when every portal is locked, and the fallback card name making "your Your Coaches Portal team portal" (both
+the form's own wording since Stage 1); the placement guards read source order. Fixed: the stylesheet comment's spacing.
+
+**Help.** `faq-premium-register-elsewhere` (`lib/help-content/coaches.tsx`): the claim page's New Team line and its
+Continue line, `answerText` and `keywords` in step; "greyed" corrected (the claim page names a team that is already in,
+in a line).
+
+**Walk.** §341, the hub's "QA walk · join page" tab. Dev data made for it on the owner's go 2026-10-19: *E3 Walk Owen*
+(`7a3a8dfb…`, uat-asst-nomoney) and *E3 Walk Free* (`349e3d89…`, uat-free-coach), UAT Import Smoke, U12; removed after
+the paste-back (`.probe/e3-walk-entries.mjs --remove`). The head coach walks his own unclaimed *UAT Test Team* entry.

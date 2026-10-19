@@ -131,6 +131,21 @@ own tournament.
 
 - No coach or organizer reports an entry filed under the wrong team after 2026-10-16.
 - A Premium coach claiming an organizer-added entry sees their team first, and "New Team" says it makes a separate team
-  their portal won't show.
+  their portal won't show. Built and committed `341988d9` 2026-10-19 (E3, below); the owner's walk is §341.
 
 Owner calls E1–E3 ruled 2026-10-16 (hub's Stage 2 and Decisions tabs). Plan §15.
+
+## E3 — the claim page says what New Team makes (ruled and built 2026-10-19)
+
+**What changes.** A coach with a Premium team who opens a claim link from an organizer's email sees one line under
+Existing Team and New Team, before tapping anything: New Team makes a separate free team, and it won't show in their
+Premium team's portal, named. A coach with nothing to choose there (the team is locked for them, or already in that
+tournament) sees the same line above Continue, which is the second way the original case could happen. Free-team-only
+coaches and brand-new coaches see the page as before; nothing is blocked and no choice is removed.
+
+**Why it matters.** Every claim link lands on this page, and on the free Tournament plan (on production since
+2026-10-18) the organizer's "team added" email is the invitation, so this is now how most coaches attach their entries.
+The words are the registration form's own, kept in one place, so the two screens can never say it differently.
+
+**Owner calls.** H1–H3 ruled 2026-10-19, all as recommended: the line under the pair, the form's sentence with the
+label "New Team" kept, shown whenever the coach has any Premium team (hub's "E3 · Join page" tab). Plan §16.

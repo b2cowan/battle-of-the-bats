@@ -1,7 +1,8 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Register Your Existing Team</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: the hub chrome (bar, tabs, document pages) is the project-hub kit, one light look;
    product frames inside it are drawn in the product's own tokens at true phone width (390px). */
@@ -69,6 +70,7 @@ p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-siz
 .qverdict button[aria-pressed=true][data-v=call]{background:#fdf1d6;border-color:#ead39b;color:#6b4a0b}
 .qa textarea,#qaOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;resize:vertical;background:var(--white)}
 .qa1b textarea,#qa1bOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;resize:vertical;background:var(--white)}
+.qaj textarea,#qajOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;resize:vertical;background:var(--white)}
 .qaone textarea,#qaoneOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;resize:vertical;background:var(--white)}
 #qaOut{font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:10px}
 
@@ -211,6 +213,83 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 .s2counts tr.s2total td{background:var(--soft);font-weight:700}
 #pasteOut2{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:10px;resize:vertical;background:var(--white);font:12px/1.5 ui-monospace,Menlo,monospace}
 .findings{list-style:none;padding:0;margin:0 0 16px}.findings li{display:flex;gap:10px;align-items:flex-start;margin:0 0 8px;font-size:14px}
+
+/* ---------- E3 · the coach claim page (/coaches/join), drawn in the marketing site's dark look at true size ---------- */
+.mk[data-k=ch]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}
+.e3jump{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+.e3jump a{min-height:44px;display:inline-flex;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--white);font-size:13px;color:var(--ink);text-decoration:none}
+.e3scr{max-width:1100px;margin:28px auto 8px;padding:0 24px}
+.e3scr h2{margin:0 0 4px;font-size:20px;display:flex;align-items:baseline;gap:10px}
+.e3scr h2 .num{font:600 13px ui-monospace,Menlo,monospace;color:var(--muted)}
+.e3scr > .sub{max-width:760px;margin:0 0 14px}
+.e3frames{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.e3frames.col{flex-direction:column}
+.e3fr{margin:0;min-width:0;max-width:100%;display:flex;flex-direction:column;gap:8px}
+.e3fr figcaption{display:flex;align-items:baseline;gap:8px}.e3fr figcaption .state{margin:0}
+.e3below{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;margin-top:18px;align-items:start}
+.e3below .notes{max-width:none}
+.e3below .ask{margin:0}
+.e3tile{max-width:760px;border:1px dashed #aab6a1;border-radius:10px;background:var(--white);padding:16px 18px;font-size:14px}
+#e3PasteOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:10px;resize:vertical;background:var(--white);font:12px/1.5 ui-monospace,Menlo,monospace}
+.jp-cap{display:block;border:1px solid #3b3d45;border-radius:22px;max-width:none}
+.jp{--j-bg:#0a0a0a;--j-ink:#f1f5f9;--j-muted:#94a3b8;--j-lime:#d9f99d;--j-on-lime:#0f1123;--j-rule:rgba(30,58,138,.3);--j-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;--j-cond:'Barlow Condensed','Arial Narrow',sans-serif;
+  width:390px;height:844px;flex-shrink:0;background:var(--j-bg);color:var(--j-ink);font:15px/1.6 'Inter',system-ui,sans-serif;border:1px solid #3b3d45;border-radius:22px;overflow:hidden;position:relative;box-shadow:0 14px 40px #00000030}
+.jp *{box-sizing:border-box}
+.jp-bar{height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 24px;border-bottom:1px solid var(--j-rule)}
+.jp-mark{font:700 16.8px/1 var(--j-mono);letter-spacing:-.05em;color:var(--j-ink);white-space:nowrap}.jp-mark b{color:var(--j-lime);font-weight:700}.jp-mark i{font-style:normal;color:var(--j-muted);opacity:.5}
+.jp-mark.lg{font-size:20px}
+.jp-pills{display:flex;gap:8px}
+.jp-pill{min-height:44px;padding:0 10px;display:inline-flex;align-items:center;font:700 12.48px/1 var(--j-mono);letter-spacing:.03em;text-transform:uppercase;color:var(--j-muted);border:1px solid rgba(30,58,138,.4);white-space:nowrap}
+.jp-pill.go{background:var(--j-lime);border-color:var(--j-lime);color:#0a0a0a}
+.jp-arr{font-family:system-ui,sans-serif;margin-left:6px}
+.jp-page{padding:36px 16px 20px}
+.jp-card{max-width:420px;margin:0 auto;padding-top:4px}
+.jp-head{text-align:center;margin-bottom:16px;padding-bottom:12.8px;border-bottom:1px solid var(--j-rule)}
+.jp-icon{display:none}
+.jp-title{font:700 17.6px/1.15 var(--j-mono);letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px;color:var(--j-ink)}
+.jp-sub{font:400 11.2px/1.6 var(--j-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--j-muted);margin:0}
+.jp-form{display:flex;flex-direction:column;gap:14.4px}
+.jp-group{display:flex;flex-direction:column;gap:6.4px}
+.jp-label{font:700 10px/1.6 var(--j-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--j-muted)}
+.jp-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.jp-pair.tight{margin-bottom:0}
+.jp-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:6px;font:700 16px/19px var(--j-cond);letter-spacing:.04em;white-space:nowrap;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.08)}
+.jp-btn.on{background:var(--j-lime);color:var(--j-on-lime);border-color:var(--j-lime)}
+.jp-btn.full{border:0}
+.jp-select{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(30,58,138,.05);border:1px solid rgba(30,58,138,.4);font:400 13.6px/1 var(--j-mono);color:var(--j-ink)}
+.jp-select svg{width:16px;height:16px;color:rgba(255,255,255,.3)}
+.jp-note{font:400 11.2px/1.6 var(--j-mono);letter-spacing:.06em;color:var(--j-muted);margin:0}
+.jp-note strong{font-weight:700}
+.jp-warn{margin:1.6px 0 5.6px}
+.jp-cons{font-size:12px}.jp-cons strong{color:var(--j-ink)}
+.jp-pre{display:flex;flex-direction:column;gap:8px}
+.jp-locked{margin:0 0 12px}
+.jp-gap{height:168px}
+.jp-foot{border-top:1px solid var(--j-rule);padding:48px 24px}
+.jp-foot p{font:400 12px/1.6 var(--j-mono);color:var(--j-muted);margin:14px 0 0;max-width:340px}
+.jp-tabs{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:rgba(13,11,20,.97);border-top:1px solid rgba(30,58,138,.25)}
+.jp-tabs span{padding:14px 2px;text-align:center;font:700 9.6px/1.6 var(--j-mono);letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.6);border-top:2px solid transparent;white-space:nowrap}
+.jp .mk,.jp .fl{margin-left:6px}
+.jd{width:1280px;height:900px}
+.jd .jp-bar{padding:0 64px}
+.jd .jp-mark{font-size:20px}
+.jd-links{display:flex;gap:24px}.jd-links span{font:600 12.48px/1 var(--j-mono);letter-spacing:.03em;text-transform:uppercase;color:var(--j-muted)}
+.jd .jp-pills{gap:24px}.jd .jp-pill{min-height:30px;padding:0 16px}
+.jd .jp-page{padding:36px 20px 40px}
+.jd .jp-card{padding-top:12px}
+.jd .jp-head{margin-bottom:24px;padding-bottom:18.4px}
+.jd .jp-icon{display:grid;place-items:center;width:42px;height:42px;margin:0 auto 14.4px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#22c55e}.jd .jp-icon svg{width:20px;height:20px}
+.jd .jp-form{gap:20px}
+.jd .jp-gap{height:96px}
+.jd .jp-foot{padding:48px calc((100% - 1152px) / 2 + 24px)}
+.jd-cols{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:32px}
+.jd-cols > div:nth-child(1){grid-column:span 4}.jd-cols > div:nth-child(2),.jd-cols > div:nth-child(3){grid-column:span 2;display:flex;flex-direction:column;gap:14px}.jd-cols > div:nth-child(4){grid-column:span 4}
+.jd-cols b{font:700 10px/1.6 var(--j-mono);letter-spacing:.12em;text-transform:uppercase;color:#859bd5}
+.jd-cols span{font:400 12px/1.6 var(--j-mono);color:var(--j-muted)}
+.jd-qr{display:flex;gap:14px;align-items:flex-start}.jd-qr i{width:78px;height:78px;flex-shrink:0;border-radius:6px;background:repeating-conic-gradient(#0a0a0a 0 25%,#fff 0 50%) 0 0/13px 13px;border:6px solid #fff}
+.jd-qr p{margin:0;font:400 11.5px/1.5 var(--j-mono);color:var(--j-muted)}.jd-qr p b{display:block;color:var(--j-ink);font-size:10px;margin-bottom:4px}
+@media(max-width:860px){.e3below{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.e3scr{padding:0 16px}}
 @media(max-width:600px){.hubbar{padding:11px 16px;gap:8px}.hubtabs{padding:0 16px}.screens{padding:10px 16px}.spec{padding:0 16px;gap:18px}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
@@ -234,13 +313,13 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </svg>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · Stage 1b (the head coach comes from the portal) ruled 2026-10-15 (C1–C3), committed 9fe3c4f6 2026-10-15 · its QA walk (§314) is on the QA walk 1b tab · One team, one entry committed 2b1fe65a 2026-10-16 · its QA walk (§317) is on the QA walk · one entry tab · A4 committed eb150914, A5 on prod 2026-10-13 · Stage 2 counted and closed 2026-10-16: none misfiled; E1–E3 ruled (the join page’s New Team is owed)</small></div>
+  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · Stage 1b (the head coach comes from the portal) ruled 2026-10-15 (C1–C3), committed 9fe3c4f6 2026-10-15 · its QA walk (§314) is on the QA walk 1b tab · One team, one entry committed 2b1fe65a 2026-10-16 · its QA walk (§317) is on the QA walk · one entry tab · A4 committed eb150914, A5 on prod 2026-10-13 · Stage 2 counted and closed 2026-10-16: none misfiled; E1–E3 ruled · E3, the join page’s New Team: drawn and ruled 2026-10-19 (H1–H3 as recommended), committed 341988d9 2026-10-19 · its QA walk (§341) is on the QA walk · join page tab</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Walk and Stage 1 drawn 2026-10-13; ratified 2026-10-13, A1–A6 as recommended">Design</li>
     <li class="stage done" title="Plan 2026-10-13; B1 ruled 2026-10-15">Plan</li>
     <li class="stage done" title="Stage 1 built and committed 8e318e4f 2026-10-15; Stage 1b committed 9fe3c4f6 2026-10-15; one team, one entry committed 2b1fe65a 2026-10-16">Build</li>
     <li class="stage done" title="Stage 1: /design on the built screens 2026-10-14, /simplify and /review (five lenses) 2026-10-14/15. Stage 1b: /design, /simplify and /review (four lenses) 2026-10-15">Review</li>
-    <li class="stage current" title="Walks §312 (Stage 1) and §314 (Stage 1b) issued 2026-10-15; §317 (one team, one entry) issued 2026-10-16">QA</li>
+    <li class="stage current" title="Walks §312 (Stage 1) and §314 (Stage 1b) issued 2026-10-15; §317 (one team, one entry) issued 2026-10-16; §341 (E3, the join page) issued 2026-10-19">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
 </div>
@@ -250,9 +329,11 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <button type="button" data-hub="qa" aria-pressed="false">QA walk</button>
   <button type="button" data-hub="qa1b" aria-pressed="false">QA walk 1b</button>
   <button type="button" data-hub="qaone" aria-pressed="false">QA walk · one entry</button>
+  <button type="button" data-hub="qaj" aria-pressed="false">QA walk · join page</button>
   <button type="button" data-hub="stage1" aria-pressed="false">Stage 1</button>
   <button type="button" data-hub="stage1b" aria-pressed="false">Stage 1b</button>
   <button type="button" data-hub="stage2" aria-pressed="false">Stage 2 · Misfiled entries</button>
+  <button type="button" data-hub="e3" aria-pressed="false">E3 · Join page</button>
   <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
   <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
   <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
@@ -1273,7 +1354,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <div class="station">
     <h3>The join page’s New Team <span class="meta" style="font-weight:600">· the one to fix (E3)</span></h3>
     <dl>
-      <dt>As built</dt><dd>Every coach email with a claim link lands on the join page: the registration confirmation, the organizer’s resend access and chat sign-up reminder, and, on the free Tournament plan (committed, not yet on production), the “team added” email that is the invitation. It still offers <b>Existing Team</b> and <b>New Team</b> as two equal buttons, with no sentence under New Team. It starts on Existing Team, but its list starts on “Select a team”.</dd>
+      <dt>As built</dt><dd>Every coach email with a claim link lands on the join page: the registration confirmation, the organizer’s resend access and chat sign-up reminder, and, on the free Tournament plan (on production since 2026-10-18, job 281), the “team added” email that is the invitation. It still offers <b>Existing Team</b> and <b>New Team</b> as two equal buttons, with no sentence under New Team. It starts on Existing Team, but its list starts on “Select a team”.</dd>
       <dt>My read</dt><dd>This is the old form’s F4 on a different page. A Premium coach claiming a team the organizer added who taps New Team makes the original case again. Once the free plan’s invite-only events ship, this page is how most coaches attach their entries.</dd>
     </dl>
   </div>
@@ -1287,7 +1368,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   </div>
   <div class="station">
     <h3>The join page and “one team, one entry”, until the next release</h3>
-    <dl><dt>As built</dt><dd>The join page’s refusal of a team that is already in the tournament is committed but not on production, so today it can still file a second entry for a team. Count 2 would catch it. It closes with the next release.</dd></dl>
+    <dl><dt>As built</dt><dd>The join page’s refusal of a team that is already in the tournament was committed but not on production at the count, so then it could still file a second entry for a team. Count 2 would catch it. Closed: on production since 2026-10-18 (job 281).</dd></dl>
   </div>
 
   <h2>If a move is ever needed</h2>
@@ -1309,6 +1390,301 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <div id="asks2"></div>
   <button class="button primary" type="button" id="buildPaste2">Build paste-back summary</button>
   <textarea id="pasteOut2" rows="10" readonly hidden aria-label="Stage 2 paste-back summary"></textarea>
+</section>
+
+<!-- ================= QA WALK · JOIN PAGE (§341) ================= -->
+<section id="hub-qaj" class="docpage" hidden>
+  <div class="eyebrow">QA walk · Owner QA Ledger §341 · issued 2026-10-19</div>
+  <h1>The join page says what New Team makes</h1>
+  <p class="sub">One purpose: <b>the claim page says what New Team (or Continue) makes, and says it where the coach decides.</b> Five walks. Tick each step as you see it; give each walk a verdict; then build the paste-back summary and paste it into chat. Ticks are kept in this browser only.</p>
+
+  <div class="callout">
+    <p style="margin:0 0 6px"><b>Sign in as</b> (dev only; keep this page private)</p>
+    <ul style="margin:0">
+      <li><b>Where:</b> <code>http://localhost:3000</code> (restarted 2026-10-19 at 1:09 p.m. for this walk)</li>
+      <li><b>Password for every account below:</b> <code>UATPassword2026!</code></li>
+      <li><b>W1, W4:</b> <code>uat-coach@uat-test-org.local</code> (Chris Hadley), head coach of both UAT Premium teams</li>
+      <li><b>W2:</b> <code>uat-asst-nomoney@uat-test-org.local</code> (Owen MacLeod), an assistant on both, without Register for tournaments</li>
+      <li><b>W3:</b> <code>uat-free-coach@uat-free-coach.local</code>, one free team (<i>UAT Free Team</i>) and no Premium team</li>
+      <li><b>The claim links</b> are built by hand: dev email can’t reach the UAT addresses. Use one private window per account, signed in first.</li>
+    </ul>
+  </div>
+  <div class="callout warn">
+    <p style="margin:0"><b>Never press Continue on the claim page in this walk.</b> It files the registration under a new free team. The walk writes nothing. <i>E3 Walk Owen</i> and <i>E3 Walk Free</i> were made on dev for it (UAT Import Smoke, U12); I remove them after you paste back.</p>
+  </div>
+  <p id="qajProgress" class="meta" style="font-size:14px;font-weight:700"></p>
+
+  <div class="station qaj" data-walkj="W1">
+    <h3><span class="num">W1</span>A head coach with two Premium teams</h3>
+    <p class="meta">Computer, then phone. uat-coach. Link: <code>http://localhost:3000/coaches/join?registered=1&amp;registrationId=54de491f-0c8e-4a62-86fb-a46dfb9663f6&amp;email=uat-coach%40uat-test-org.local&amp;next=%2Fcoaches%2Ftournaments</code></p>
+    <label class="qstep"><input type="checkbox" data-stepj="W1-1"> <span>Open the link. <b>Choose Team Profile</b>, “UAT Test Team will appear in your Coaches Portal.”, <b>Existing Team</b> chosen, the list on “Select a team”.</span></label>
+    <label class="qstep"><input type="checkbox" data-stepj="W1-2"> <span>Before tapping anything, directly under the two buttons: “<b>New Team</b> — Makes a separate free team. It won’t show in any of your Coaches Portals.” New Team in white, the rest in grey, a little larger than the page’s other small grey lines.</span></label>
+    <label class="qstep"><input type="checkbox" data-stepj="W1-3"> <span>Tap <b>New Team</b>: the list goes, and the line stays exactly where it was.</span></label>
+    <label class="qstep"><input type="checkbox" data-stepj="W1-4"> <span>Tap <b>Existing Team</b>: the list comes back under the line, offering <i>UAT Standalone Team</i> and <i>UAT Standalone Team (No Metrics)</i>, each “· Coaches Portal”. Leave without pressing Continue.</span></label>
+    <label class="qstep"><input type="checkbox" data-stepj="W1-5"> <span>On a phone (390 wide): the line wraps onto two lines, nothing runs off the screen, no sideways scroll, and the buttons look as they did.</span></label>
+  </div>
+
+  <div class="station qaj" data-walkj="W2">
+    <h3><span class="num">W2</span>An assistant whose Premium teams are locked</h3>
+    <p class="meta">Computer, then phone. uat-asst-nomoney. Link: <code>http://localhost:3000/coaches/join?registered=1&amp;registrationId=7a3a8dfb-5322-4cdd-994f-770d152524af&amp;email=uat-asst-nomoney%40uat-test-org.local&amp;next=%2Fcoaches%2Ftournaments</code></p>
+    <label class="qstep"><input type="checkbox" data-stepj="W2-1"> <span>No Existing Team / New Team buttons. Two lines: “<b>UAT Standalone Team</b> · Coaches Portal — Chris Hadley (head coach) registers this team. Ask Chris if you need to do it yourself.” and “<b>UAT Standalone Team (No Metrics)</b> — Already registered as “No Metrics - Walk” · U12 · Pending Review”.</span></label>
+    <label class="qstep"><input type="checkbox" data-stepj="W2-2"> <span>Directly above <b>Continue</b>: “<b>Continue</b> — Makes a separate free team. It won’t show in any of your Coaches Portals.” Do not press Continue.</span></label>
+    <label class="qstep"><input type="checkbox" data-stepj="W2-3"> <span>On a phone: the line sits just above the button, clearly apart from the two lines above it.</span></label>
+  </div>
+
+  <div class="station qaj" data-walkj="W3">
+    <h3><span class="num">W3</span>A free-team-only coach sees the page as before</h3>
+    <p class="meta">Computer. uat-free-coach. Link: <code>http://localhost:3000/coaches/join?registered=1&amp;registrationId=349e3d89-fd4c-404d-9c8b-936ef8e7d96d&amp;email=uat-free-coach%40uat-free-coach.local&amp;next=%2Fcoaches%2Ftournaments</code></p>
+    <label class="qstep"><input type="checkbox" data-stepj="W3-1"> <span><b>Existing Team</b> and <b>New Team</b>, the list offering <i>UAT Free Team</i>, and no line anywhere. Leave without pressing Continue.</span></label>
+  </div>
+
+  <div class="station qaj" data-walkj="W4">
+    <h3><span class="num">W4</span>The registration form’s sentence reads as before</h3>
+    <p class="meta">Computer. uat-coach. <code>http://localhost:3000/uat-test-org/uat-import-smoke/register</code></p>
+    <label class="qstep"><input type="checkbox" data-stepj="W4-1"> <span>Step 2: <b>A different team</b> is last and reads exactly “Makes a separate free team. It won’t show in any of your Coaches Portals.” Leave without submitting.</span></label>
+  </div>
+
+  <div class="station qaj" data-walkj="W5">
+    <h3><span class="num">W5</span>The help article</h3>
+    <p class="meta">Any computer, the Coaches Portal’s help.</p>
+    <label class="qstep"><input type="checkbox" data-stepj="W5-1"> <span>Search “new team”: <b>Registering on another organizer’s page — which team do I pick?</b> opens, and its last paragraph describes the claim page’s New Team line, and Continue when nothing can be chosen.</span></label>
+  </div>
+
+  <button class="button primary" type="button" id="qajBuild">Build paste-back summary</button>
+  <textarea id="qajOut" rows="10" readonly hidden aria-label="QA walk join page paste-back summary"></textarea>
+</section>
+
+<!-- ================= E3 · JOIN PAGE (Gate 0, drawn 2026-10-19) ================= -->
+<section id="hub-e3" hidden>
+  <div class="docpage" style="padding-bottom:8px">
+    <div class="eyebrow">E3 · the join page’s New Team · drawn 2026-10-19 · ruled 2026-10-19</div>
+    <div class="callout" style="margin-top:10px"><b>Ruled 2026-10-19, H1–H3 all as recommended</b> (see Decisions): the line under the pair, always shown; the registration form’s sentence from one place, the label “New Team” kept; shown whenever the coach has any Premium team, above Continue when there is no pair. Built the same day as drawn, with the line one step above the page’s grey lines (the design review below); the walk is the <b>QA walk · join page</b> tab (§341). The boxes stay for the record.</div>
+    <h1>The join page says what New Team makes</h1>
+    <p class="sub">Your E3 ruling (2026-10-16): give the join page’s New Team the registration form’s treatment. The ruling set the direction. This tab draws the shape and asks the three things it left open (H1–H3, each beside the screen it decides). Nothing is built yet.</p>
+
+    <h2>What the code does today</h2>
+    <ul class="findings">
+      <li><button class="fl" type="button" data-finding="J1">J1</button> <span>— New Team says nothing about what it makes. It sits beside Existing Team as an equal button, and it makes a separate free team the Premium portal never shows.</span></li>
+      <li><button class="fl" type="button" data-finding="J2">J2</button> <span>— With nothing to choose, Continue quietly makes a free team. When the coach’s Premium team is locked for them or already in this tournament, there is no pair: the page names the team and offers only Continue.</span></li>
+    </ul>
+    <div class="callout"><b>Who lands here.</b> Every coach email with a claim link opens this page: the registration confirmation, the organizer’s resend access and chat sign-up reminder, and, on the free Tournament plan, the “team added” email, which is the invitation. The free plan’s invite-only events reached production on 2026-10-18 (job 281), so this page now carries real traffic.</div>
+    <div class="callout warn">
+      <p style="margin:0 0 8px"><b>Three things the plan did not say</b></p>
+      <ul style="margin:0">
+        <li><b>A second route.</b> When the coach’s Premium team is locked for them (staff without Register for tournaments) or already in this tournament, there is no pair at all. The page names the team and offers only Continue, which makes a free team without a word (J2, screens 3 and 3b). The plan’s E3 text describes only the pair.</li>
+        <li><b>“Last” needs a shape.</b> On the form, “A different team” is the last card. Here New Team is one half of a two-button pair, so “last” has no literal meaning. H1 asks where the sentence goes.</li>
+        <li><b>It is already live.</b> The change that made the “team added” email the invitation shipped on 2026-10-18 (job 281). The Stage 2 tab and the plan said it was not on production yet; both were corrected with the build (2026-10-19).</li>
+      </ul>
+    </div>
+    <h2>What the coach will see</h2>
+    <p>A coach with a Premium team who opens a claim link sees one new line under <b>Existing Team</b> and <b>New Team</b>, before tapping anything: New Team makes a separate free team, and it won’t show in their Premium team’s portal, named. A coach with nothing to choose (the team is locked for them, or already in this tournament) sees the same line above <b>Continue</b>. Coaches whose teams are all free, and brand-new coaches, see the page as it is today. Nothing is blocked and no choice is removed.</p>
+    <nav class="e3jump" aria-label="E3 screens">
+      <a href="#e3-s1">1 · One portal team</a><a href="#e3-s1b">1b · New Team tapped</a><a href="#e3-s2">2 · Two portal teams</a><a href="#e3-s3">3 · Locked for you</a><a href="#e3-s3b">3b · Already in</a><a href="#e3-sd">Computer</a><a href="#e3-s4">4 · No change</a><a href="#e3-paste">Paste-back</a>
+    </nav>
+  </div>
+
+  <div class="e3scr" id="e3-s1">
+    <h2><span class="num">1</span>A Premium head coach with one Coaches Portal team</h2>
+    <p class="sub">Brett Jackson, head coach of Milton Bats U13 Purple, opens the organizer’s “team added” email. The organizer entered the team as Milton Bats Purple. Both frames drawn from the code; screen 2 is the capture.</p>
+    <div class="e3frames">
+      <figure class="e3fr"><figcaption><span class="state before">Today</span> <span class="meta">drawn from the code</span></figcaption><div class="devwrap"><div class="jp" aria-label="Today: one Premium team, Existing Team chosen">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p></div><div class="jp-form"><div class="jp-group"><div class="jp-label">Coaches Portal Team</div><div class="jp-pair"><span class="jp-btn on">Existing Team</span><span class="jp-btn">New Team<button class="fl" type="button" data-finding="J1" data-here="New Team, offered as an equal choice with nothing about what it makes.">J1</button></span></div><div class="jp-select">Select a team<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div><span class="jp-btn on full">Continue</span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+      <figure class="e3fr"><figcaption><span class="state after">Proposed</span> <span class="meta">the line under the pair</span></figcaption><div class="devwrap"><div class="jp" aria-label="Proposed: one Premium team, Existing Team chosen, the line under the pair">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p><span class="mk" data-k="un" data-note="Unchanged. It now sits above a line saying New Team won’t show in the portal. Both are true: a New Team shows in your free Coaches Portal, just not in the Premium team’s. A coach may still read them as contradicting each other. I have left it alone; say in a note if you want it reworded.">Unchanged</span></div><div class="jp-form"><div class="jp-group"><div class="jp-label">Coaches Portal Team<span class="mk" data-k="un" data-note="The pair, its words, and Existing Team chosen first are all unchanged. Nothing is picked from the list for the coach: this registration may belong to a different team than the Premium one, so a default could misfile it the other way.">Unchanged</span></div><div class="jp-pair tight"><span class="jp-btn on">Existing Team</span><span class="jp-btn">New Team</span></div><p class="jp-note jp-cons jp-warn"><strong>New Team</strong> — Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.<span class="mk" data-k="new" data-note="The new line. It sits under the pair and shows before anything is tapped. It starts with the choice’s name in bold, so it reads on its own, and the rest is the registration form’s own sentence, word for word (H2). It names the portal the new team won’t show in.">New</span></p><div class="jp-select">Select a team<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div><span class="jp-btn on full">Continue</span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+    </div>
+    <div class="e3below">
+      <div class="notes"><ul>
+        <li><button class="fl" type="button" data-finding="J1" data-here="The New Team button, today.">J1</button><span>Today: two equal buttons. Nothing says what New Team makes.</span></li>
+        <li><span class="mk" data-k="new" data-note="The new line. It sits under the pair and shows before anything is tapped. It starts with the choice’s name in bold, so it reads on its own, and the rest is the registration form’s own sentence, word for word (H2). It names the portal the new team won’t show in.">New</span><span>One line under the pair, shown before any tap, naming the portal the new team won’t show in.</span></li>
+        <li><span class="mk" data-k="un" data-note="The pair, its words, and Existing Team chosen first are all unchanged. Nothing is picked from the list for the coach: this registration may belong to a different team than the Premium one, so a default could misfile it the other way.">Unchanged</span><span>The pair, Existing Team chosen first, and “Select a team” with nothing picked for the coach.</span></li>
+        <li><span class="mk" data-k="un" data-note="Unchanged. It now sits above a line saying New Team won’t show in the portal. Both are true: a New Team shows in your free Coaches Portal, just not in the Premium team’s. A coach may still read them as contradicting each other. I have left it alone; say in a note if you want it reworded.">Unchanged</span><span>The subtitle, which still says this registration will appear in “your Coaches Portal”.</span></li>
+      </ul></div>
+      <div class="ask" data-e3ask="H1">
+  <h3>H1 · Where the line goes</h3>
+  <p class="rec">Recommend: one line directly under the Existing Team / New Team pair, shown before anything is tapped, led by “New Team” in bold.</p>
+  <label class="opt"><input type="checkbox" id="e3-H1-0" data-e3opt="H1" data-i="0"> <span>One line under the pair, always shown (recommended)</span></label>
+  <label class="opt"><input type="checkbox" id="e3-H1-1" data-e3opt="H1" data-i="1"> <span>Restyle the pair as the registration form’s two cards, each with its sentence</span></label>
+  <label class="opt"><input type="checkbox" id="e3-H1-2" data-e3opt="H1" data-i="2"> <span>Put the sentence inside the New Team button</span></label>
+  <p class="rides"><b>What rides on it:</b> The registration form’s own design review ruled that this sentence must be visible without opening anything. A New Team button on a phone is about 175px wide, too narrow to carry it. The line sits between the pair and the team list, so it stays put when New Team is tapped and the list goes away. The two cards would match the form most closely, but they rebuild the whole block for the sake of one sentence.</p>
+  <label class="meta" for="e3-H1-note">Note</label><textarea id="e3-H1-note" rows="2" data-e3note="H1"></textarea>
+</div>
+    </div>
+  </div>
+
+  <div class="e3scr" id="e3-s1b">
+    <h2><span class="num">1b</span>The same coach taps New Team</h2>
+    <p class="sub">The line stays where it was and the team list goes. Continue now makes the separate free team the line describes.</p>
+    <div class="e3frames">
+      <figure class="e3fr"><figcaption><span class="state before">Today</span> <span class="meta">drawn from the code</span></figcaption><div class="devwrap"><div class="jp" aria-label="Today: New Team tapped">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p></div><div class="jp-form"><div class="jp-group"><div class="jp-label">Coaches Portal Team</div><div class="jp-pair"><span class="jp-btn">Existing Team</span><span class="jp-btn on">New Team<button class="fl" type="button" data-finding="J1" data-here="New Team chosen. Continue now makes a separate free team, and the page has said nothing.">J1</button></span></div></div><span class="jp-btn on full">Continue</span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+      <figure class="e3fr"><figcaption><span class="state after">Proposed</span> <span class="meta">the line stays</span></figcaption><div class="devwrap"><div class="jp" aria-label="Proposed: New Team tapped, the line stays">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p></div><div class="jp-form"><div class="jp-group"><div class="jp-label">Coaches Portal Team</div><div class="jp-pair tight"><span class="jp-btn">Existing Team</span><span class="jp-btn on">New Team</span></div><p class="jp-note jp-cons jp-warn"><strong>New Team</strong> — Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.<span class="mk" data-k="new" data-note="The same line, in the same place. Tapping New Team removes the team list under it, so the line does not move.">New</span></p></div><span class="jp-btn on full">Continue<span class="mk" data-k="un" data-note="Continue does what it did: with New Team chosen, it makes a separate free team. The line has already said so.">Unchanged</span></span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+    </div>
+  </div>
+
+  <div class="e3scr" id="e3-s2">
+    <h2><span class="num">2</span>A coach with two Coaches Portal teams</h2>
+    <p class="sub">Today’s frame is a capture from dev (2026-10-19): Chris Hadley, head coach of both UAT Premium teams, opening an unclaimed registration that carries his email. Nothing was pressed and nothing was written. The round “N” at the bottom is the dev server’s own badge, not the product.</p>
+    <div class="e3frames">
+      <figure class="e3fr"><figcaption><span class="state before">Today</span> <span class="meta">captured on dev</span></figcaption><div class="devwrap"><img class="jp-cap" src="data:image/png;base64,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" width="390" height="844" alt="Today, captured on dev: Choose Team Profile with Existing Team and New Team and no line"></div></figure>
+      <figure class="e3fr"><figcaption><span class="state after">Proposed</span> <span class="meta">the plural line</span></figcaption><div class="devwrap"><div class="jp" aria-label="Proposed: two Premium teams, the plural line">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">UAT Test Team will appear in your Coaches Portal.</p></div><div class="jp-form"><div class="jp-group"><div class="jp-label">Coaches Portal Team</div><div class="jp-pair tight"><span class="jp-btn on">Existing Team</span><span class="jp-btn">New Team</span></div><p class="jp-note jp-cons jp-warn"><strong>New Team</strong> — Makes a separate free team. It won’t show in any of your Coaches Portals.<span class="mk" data-k="new" data-note="With two or more Coaches Portal teams the line can’t name one, so it says “any of your Coaches Portals”, as the registration form does.">New</span></p><div class="jp-select">Select a team<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div><span class="jp-btn on full">Continue</span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+    </div>
+    <div class="e3below">
+      <div class="notes"><ul>
+        <li><span class="mk" data-k="new" data-note="With two or more Coaches Portal teams the line can’t name one, so it says “any of your Coaches Portals”, as the registration form does.">New</span><span>With two or more portal teams, the line names none: “any of your Coaches Portals”.</span></li>
+      </ul>
+      <p class="meta">Not changed, passed to the words review: the page calls the same thing a “team profile” (its title, and its error “Select a team, or create a new team profile.”), while the line says “free team”.</p></div>
+      <div class="ask" data-e3ask="H2">
+  <h3>H2 · The words, and one label</h3>
+  <p class="rec">Recommend: the registration form’s sentence word for word, kept in one place both screens read, and keep the label “New Team”.</p>
+  <label class="opt"><input type="checkbox" id="e3-H2-0" data-e3opt="H2" data-i="0"> <span>The form’s sentence from one place; keep “New Team” (recommended)</span></label>
+  <label class="opt"><input type="checkbox" id="e3-H2-1" data-e3opt="H2" data-i="1"> <span>The form’s sentence from one place; rename New Team to “A different team”</span></label>
+  <label class="opt"><input type="checkbox" id="e3-H2-2" data-e3opt="H2" data-i="2"> <span>Different words for this page (say them in the note)</span></label>
+  <p class="rides"><b>What rides on it:</b> The sentence: with one portal, “Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.” (“the” portal when the team is locked for you); with two or more, “… It won’t show in any of your Coaches Portals.” Kept in one place, the form and this page can’t drift apart. The label: New Team pairs with Existing Team, and your E3 ruling named it. But the form and the help article call the same choice “A different team”, so one choice already has two names. Renaming it here is the other option. The capital after the dash matches the page’s own lines (“Already registered …”, “Brett Jackson (head coach) registers …”).</p>
+  <label class="meta" for="e3-H2-note">Note</label><textarea id="e3-H2-note" rows="2" data-e3note="H2"></textarea>
+</div>
+    </div>
+  </div>
+
+  <div class="e3scr" id="e3-s3">
+    <h2><span class="num">3</span>A coach whose Premium team is locked for them</h2>
+    <p class="sub">Sam Patel, an assistant on Milton Bats U13 Purple without Register for tournaments. There is no pair, because nothing on the list is his to choose.</p>
+    <div class="e3frames">
+      <figure class="e3fr"><figcaption><span class="state before">Today</span> <span class="meta">drawn from the code</span></figcaption><div class="devwrap"><div class="jp" aria-label="Today: the Premium team is locked for this coach, no pair">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p></div><div class="jp-form"><p class="jp-note jp-locked"><strong>Milton Bats U13 Purple</strong> · Coaches Portal — Brett Jackson (head coach) or Alex Morgan (team manager) registers this team. Ask Brett if you need to do it yourself.</p><span class="jp-btn on full">Continue<button class="fl" type="button" data-finding="J2" data-here="Continue is the only choice, and it makes a separate free team without a word.">J2</button></span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+      <figure class="e3fr"><figcaption><span class="state after">Proposed</span> <span class="meta">the line above Continue</span></figcaption><div class="devwrap"><div class="jp" aria-label="Proposed: locked, the line above Continue">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p></div><div class="jp-form"><p class="jp-note jp-locked"><strong>Milton Bats U13 Purple</strong> · Coaches Portal — Brett Jackson (head coach) or Alex Morgan (team manager) registers this team. Ask Brett if you need to do it yourself.<span class="mk" data-k="un" data-note="The line that names the team and who registers it is unchanged.">Unchanged</span></p><div class="jp-pre"><p class="jp-note jp-cons"><strong>Continue</strong> — Makes a separate free team. It won’t show in the Milton Bats U13 Purple portal.<span class="mk" data-k="new" data-note="The same sentence, led by “Continue”, directly above the button it describes. It says “the” portal, not “your”, because the team isn’t Sam’s to register, which is how the registration form words it.">New</span></p><span class="jp-btn on full">Continue</span></div></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+    </div>
+    <div class="e3below">
+      <div class="notes"><ul>
+        <li><button class="fl" type="button" data-finding="J2" data-here="Continue, the only button, today.">J2</button><span>Today: the team and who registers it, then Continue, which makes a free team without a word.</span></li>
+        <li><span class="mk" data-k="new" data-note="The same sentence, led by “Continue”, directly above the button it describes. It says “the” portal, not “your”, because the team isn’t Sam’s to register, which is how the registration form words it.">New</span><span>The same sentence, led by “Continue”, above the button. “The” portal, because the team isn’t his to register.</span></li>
+      </ul></div>
+      <div class="ask" data-e3ask="H3">
+  <h3>H3 · When it shows</h3>
+  <p class="rec">Recommend: whenever the coach has a Coaches Portal team of any kind (one they can choose, one locked for them, or one already in this tournament). With no pair, the same sentence sits above Continue, led by “Continue”.</p>
+  <label class="opt"><input type="checkbox" id="e3-H3-0" data-e3opt="H3" data-i="0"> <span>Any portal team; above Continue when there is no pair (recommended)</span></label>
+  <label class="opt"><input type="checkbox" id="e3-H3-1" data-e3opt="H3" data-i="1"> <span>Every coach, free-team-only coaches too (the form’s “separate from the ones above” wording)</span></label>
+  <label class="opt"><input type="checkbox" id="e3-H3-2" data-e3opt="H3" data-i="2"> <span>Something else (say in the note)</span></label>
+  <p class="rides"><b>What rides on it:</b> That is when New Team or Continue cuts this registration off from a portal. A coach whose teams are all free loses nothing by making another, so the line would only add words. Nothing is blocked: you chose a warning over hiding New Team, so blocking Continue is not offered. If the team list fails to load, the page keeps its error and shows no line, because with no list there is nothing to name.</p>
+  <label class="meta" for="e3-H3-note">Note</label><textarea id="e3-H3-note" rows="2" data-e3note="H3"></textarea>
+</div>
+    </div>
+  </div>
+
+  <div class="e3scr" id="e3-s3b">
+    <h2><span class="num">3b</span>A coach whose team is already in this tournament</h2>
+    <p class="sub">Brett again. He registered the team himself last week, as Milton Bats Purple - Jackson, and the organizer has also added Milton Bats Purple with his email. Nothing can be chosen.</p>
+    <div class="e3frames">
+      <figure class="e3fr"><figcaption><span class="state before">Today</span> <span class="meta">drawn from the code</span></figcaption><div class="devwrap"><div class="jp" aria-label="Today: the Premium team is already in this tournament, no pair">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p></div><div class="jp-form"><p class="jp-note jp-locked"><strong>Milton Bats U13 Purple</strong> — Already registered as “Milton Bats Purple - Jackson” · U13 · Accepted</p><span class="jp-btn on full">Continue<button class="fl" type="button" data-finding="J2" data-here="The team is already in, so nothing can be chosen. Continue makes a separate free team for this extra registration.">J2</button></span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+      <figure class="e3fr"><figcaption><span class="state after">Proposed</span> <span class="meta">the line above Continue</span></figcaption><div class="devwrap"><div class="jp" aria-label="Proposed: already in, the line above Continue">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">Milton Bats Purple will appear in your Coaches Portal.</p></div><div class="jp-form"><p class="jp-note jp-locked"><strong>Milton Bats U13 Purple</strong> — Already registered as “Milton Bats Purple - Jackson” · U13 · Accepted</p><div class="jp-pre"><p class="jp-note jp-cons"><strong>Continue</strong> — Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.<span class="mk" data-k="new" data-note="Here the line says “your” portal: the team is Brett’s, it is just already in this tournament.">New</span></p><span class="jp-btn on full">Continue</span></div></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div>
+  <nav class="jp-tabs"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></nav>
+</div></div></figure>
+    </div>
+    <div class="e3below">
+      <div class="notes"><ul>
+        <li><span class="mk" data-k="new" data-note="Here the line says “your” portal: the team is Brett’s, it is just already in this tournament.">New</span><span>The line says “your” portal here: the team is his, just already in.</span></li>
+      </ul>
+      <p>When the team is already in, this registration is probably an extra one the organizer added. The line warns, but it does not say what to do instead. When a coach picks a team that is already in, the claim’s refusal says “Ask the organizer to remove the extra entry.” Not proposed here; say so in H3’s note if you want that sentence on this screen too.</p></div>
+    </div>
+  </div>
+
+  <div class="e3scr" id="e3-sd">
+    <h2><span class="num">⌨</span>Computer · screen 2 at 1280 wide</h2>
+    <p class="sub">True size: scroll sideways inside each frame on a narrow window. Today is the capture; the proposal is drawn on the same names. The check icon above the title shows on a computer only.</p>
+    <div class="e3frames col">
+      <figure class="e3fr"><figcaption><span class="state before">Today</span> <span class="meta">captured on dev</span></figcaption><div class="devwrap"><img class="jp-cap" src="data:image/png;base64,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" width="1280" height="900" alt="Today at 1280, captured on dev"></div></figure>
+      <figure class="e3fr"><figcaption><span class="state after">Proposed</span> <span class="meta">the plural line, two lines wide</span></figcaption><div class="devwrap"><div class="jp jd" aria-label="Proposed at a computer’s width: two Premium teams">
+  <div class="jp-bar"><span class="jp-mark">FIELD<b>LOGIC</b><i>HQ</i></span><span class="jd-links"><span>Tournaments</span><span>Coaches</span><span>Leagues</span><span>Clubs</span><span>Pricing</span></span><span class="jp-pills"><span class="jp-pill">Account</span><span class="jp-pill go">Open App <span class="jp-arr">→</span></span></span></div>
+  <div class="jp-page"><div class="jp-card"><div class="jp-head"><div class="jp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div><h4 class="jp-title">Choose Team Profile</h4><p class="jp-sub">UAT Test Team will appear in your Coaches Portal.</p></div><div class="jp-form"><div class="jp-group"><div class="jp-label">Coaches Portal Team</div><div class="jp-pair tight"><span class="jp-btn on">Existing Team</span><span class="jp-btn">New Team</span></div><p class="jp-note jp-cons jp-warn"><strong>New Team</strong> — Makes a separate free team. It won’t show in any of your Coaches Portals.<span class="mk" data-k="new" data-note="The same line at a computer’s width. The card stays 420px wide, so it wraps onto two lines.">New</span></p><div class="jp-select">Select a team<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div><span class="jp-btn on full">Continue</span></div></div></div>
+  <div class="jp-gap"></div>
+  <div class="jp-foot"><div class="jd-cols"><div><span class="jp-mark lg">FIELD<b>LOGIC</b><i>HQ</i></span><p>From first registration to final standings — built for the people running community sport.</p></div><div><b>Product</b><span>Discover</span><span>Pricing</span><span>Live Demos</span><span>What’s New</span></div><div><b>Get Started</b><span>Start Free</span><span>Coaches</span><span>Sign In</span></div><div class="jd-qr"><i></i><p><b>Also on your phone</b>Scan with your phone camera to open FieldLogicHQ — live scores and alerts for the teams you follow.</p></div></div></div>
+</div></div></figure>
+    </div>
+  </div>
+
+  <div class="e3scr" id="e3-s4">
+    <h2><span class="num">4</span>No change</h2>
+    <div class="e3tile">
+      <p><b>A coach whose teams are all free, and a brand-new coach,</b> see the page exactly as today. A second free team costs them nothing, so there is nothing to warn about. The form’s wording for them (“Makes a new free team, separate from the ones above”) is a card’s sub-line and has no place on this page.</p>
+      <p style="margin:0"><b>If the team list can’t load,</b> the page keeps its error and its greyed-out Continue, and shows no line: with no list there is nothing to name.</p>
+    </div>
+  </div>
+
+  <div class="docpage" id="e3-paste" style="padding-top:8px">
+    <h2>Reviews before you saw it</h2>
+    <div class="callout">
+      <p style="margin:0 0 8px"><b>Design review (/design, 2026-10-19).</b> Checked against the decisions log, the page as built (captured on dev at 390 and 1280) and the registration form’s ruled sentence.</p>
+      <ul style="margin:0">
+        <li><b>Kept: the line sits under the pair</b>, 8px below the buttons and 12px above the team list, so it groups with the choice it explains, not with the list. It holds still when New Team is tapped.</li>
+        <li><b>Changed after checking the log: the line is a consequence, not small print.</b> A 2026-08-14 ruling (made on a portal form, its reason applies here) says a sentence stating what a choice is about to do is the reason for choosing it, so it is never set as the smallest type. So the line is one step up from the locked and already-registered lines: 12px instead of 11.2px, the sentence in the page’s grey (about 7.7:1 on the dark ground), the bold lead in the page’s white so it ties to the button it names. Still no warning colour: amber in this product marks a clash, red on this page is an error, and you chose warn over block.</li>
+        <li><b>Kept: with no pair, the line sits 8px above Continue</b> and well clear of the locked line, so it reads as the button’s caption rather than a second locked line.</li>
+        <li><b>Checked against the form’s ruling</b> (2026-10-13): the sentence is visible without opening anything, in the same words.</li>
+        <li><b>Fixed in the drawing:</b> the arrow on Open App.</li>
+        <li><b>Found, not part of E3 (your call):</b> on a phone, this page’s buttons are 39–41px tall and the team list’s text is 13.6px. The consumer phone rules (2026-07-13) ask for a 44px touch floor and 16px text in fields; below 16px an iPhone zooms in when the list is tapped. The registration form meets both. Say in a note if you want them fixed in the same build; otherwise they stay as they are.</li>
+        <li><b>A drawing note:</b> the tags take room in the frames. The product has none, so it sits a little tighter than drawn.</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <p style="margin:0 0 8px"><b>Words review (/marketing, 2026-10-19).</b></p>
+      <ul style="margin:0">
+        <li><b>Keep the capital after the dash.</b> The page’s own lines already read “Name — Already registered …” and “Name · Coaches Portal — Brett Jackson (head coach) registers this team …”, and one shared sentence can’t carry two cases. “New Team makes a separate free team …” reads more like speech, and the help article phrases it that way, but it would need a second copy of the sentence.</li>
+        <li><b>“Continue — Makes …” is clear</b> because it sits directly above the button it names. A lead like “If you continue” would need words that differ from the form’s.</li>
+        <li><b>The label.</b> Keep “New Team” for this build, as your ruling named it. If you want one name everywhere, “A different team” is the better of the two: it asks whether this is a different team from the portal, which was the question on October 13. “New Team” invites a coach who is simply new to this tournament (H2’s second option).</li>
+        <li><b>“Team profile”</b> (the title, Choose Team Profile, and the error) sits beside “free team” and “Coaches Portal Team”: three names on one card. Not changed. A candidate for a later pass: title “Choose Your Team”, error “Select a team, or choose New Team.” Say in H2’s note if you want it in this build.</li>
+      </ul>
+    </div>
+    <h2>Paste-back</h2>
+    <p class="sub" style="margin-bottom:14px">Tick one answer for each of H1–H3 (on screens 1, 2 and 3), add a note if you like, then build the summary and paste it into chat. Your ticks stay in this browser only.</p>
+    <button class="button primary" type="button" id="e3Build">Build paste-back summary</button>
+    <textarea id="e3PasteOut" rows="9" readonly hidden aria-label="E3 paste-back summary"></textarea>
+  </div>
 </section>
 
 <!-- ================= BRIEF / PLAN / DECISIONS ================= -->
@@ -1350,6 +1726,10 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>Success criteria.</b></p>
 <ul><li>No coach or organizer reports an entry filed under the wrong team after 2026-10-16.</li><li>A Premium coach claiming an organizer-added entry sees their team first, and "New Team" says it makes a separate team their portal won't show.</li></ul>
 <p>Owner calls E1–E3 ruled 2026-10-16 (hub's Stage 2 and Decisions tabs). Plan §15.</p>
+<h2>E3 — the claim page says what New Team makes (ruled and built 2026-10-19)</h2>
+<p><b>What changes.</b> A coach with a Premium team who opens a claim link from an organizer’s email sees one line under Existing Team and New Team, before tapping anything: New Team makes a separate free team, and it won’t show in their Premium team’s portal, named. A coach with nothing to choose there (the team is locked for them, or already in that tournament) sees the same line above Continue, which is the second way the original case could happen. Free-team-only coaches and brand-new coaches see the page as before; nothing is blocked and no choice is removed.</p>
+<p><b>Why it matters.</b> Every claim link lands on this page, and on the free Tournament plan (on production since 2026-10-18) the organizer’s “team added” email is the invitation, so this is now how most coaches attach their entries. The words are the registration form’s own, kept in one place, so the two screens can never say it differently.</p>
+<p><b>Owner calls.</b> H1–H3 ruled 2026-10-19, all as recommended (hub’s “E3 · Join page” tab). Plan §16.</p>
 </section>
 
 <section id="hub-plan" class="docpage" hidden>
@@ -1485,7 +1865,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>A5's entry reads correctly</b>: <i>Milton Bats Purple - Jackson</i> sits under the Purple portal's own free team, linked by its active head coach. Every other 2027 entry made through the form sits under a free team made with it.</p>
 <p><b>After the release</b>, one entry arrived: <i>Barrie Storm (Weekes)</i> at 7:53 p.m., accepted at once, with no coach-side link and no account for its email, which is how an organizer's hand-added team looks. <b>No coach has registered through the form since the release</b>, so the "after" column cannot show whether the cause is closed. The code says it is (the form and the server ask one computation, unit-tested, walked in §312, §314 and §317); the data has not been asked yet.</p>
 <h3>Where a misfiled entry can still come from</h3>
-<ul><li><b>The join page's New Team</b> (<code>/coaches/join</code>). Every coach email that carries the claim link lands there: the registration confirmation, the organizer's resend-access and chat sign-up reminder, and, on the free Tournament plan (<code>d82c4118</code>, committed 2026-10-16, not yet on production), the team-added email that is the invitation. It still offers <b>Existing Team</b> and <b>New Team</b> as two equal buttons with no sentence under New Team, the shape F4 named on the old form. It picks Existing Team when the coach has a team to choose, but its team list starts on "Select a team", nothing chosen. A Premium coach claiming an organizer-added entry who taps New Team makes A5's shape again. Once the free plan's invite-only events ship, this page is how most coaches attach their entries. (E3.)</li><li><b>"A different team", chosen on purpose.</b> The form says plainly that it makes a separate team the portal won't show. Definition 1 counts it, marked as held at the time.</li><li><b>A second email.</b> Email first cannot recognize a coach who signs up again under another address. Definition 5 is the only check, and it is by hand.</li><li><b>The join link and one team, one entry, on production until the next release.</b> The claim's refusal of a team already in the tournament is in <code>d82c4118</code>, not in <code>85a5428d</code>, so on production today the join page can still file an entry under a team that is already in. Definition 2 would count it.</li></ul>
+<ul><li><b>The join page's New Team</b> (<code>/coaches/join</code>). Every coach email that carries the claim link lands there: the registration confirmation, the organizer's resend-access and chat sign-up reminder, and, on the free Tournament plan (<code>d82c4118</code>, on production since 2026-10-18, master job 281), the team-added email that is the invitation. It still offers <b>Existing Team</b> and <b>New Team</b> as two equal buttons with no sentence under New Team, the shape F4 named on the old form. It picks Existing Team when the coach has a team to choose, but its team list starts on "Select a team", nothing chosen. A Premium coach claiming an organizer-added entry who taps New Team makes A5's shape again. Once the free plan's invite-only events ship, this page is how most coaches attach their entries. (E3.)</li><li><b>"A different team", chosen on purpose.</b> The form says plainly that it makes a separate team the portal won't show. Definition 1 counts it, marked as held at the time.</li><li><b>A second email.</b> Email first cannot recognize a coach who signs up again under another address. Definition 5 is the only check, and it is by hand.</li><li><b>The join link and one team, one entry, on production until the next release.</b> The claim's refusal of a team already in the tournament is in <code>d82c4118</code>, not in <code>85a5428d</code>, so on production today the join page can still file an entry under a team that is already in. Definition 2 would count it.</li></ul>
 <h3>What a move must carry (for a one-off fix on A5's pattern)</h3>
 <p>The script pattern is <code>.probe/brett-a5-move-entry.mjs</code>: preconditions re-checked, a backup written first, a dry run, then <code>--apply</code> on the owner's go, named case by case.</p>
 <ul><li><b>Re-check before writing:</b> the entry has exactly one coach-side link, to the stray team; the target portal is live and standalone and the person is on it; the stray team is otherwise empty (players, events, fees, announcements, other entries), or the fix stops; <b>the target team is not already in that tournament</b> (one team, one entry, new since A5, and the move must refuse rather than make a duplicate).</li><li><b>Moves with the one link</b>, because each of these reads through it: the portal's Tournaments page and the entry's record; the team notices; roster submission, which then reads the portal's free team (the Part D deferral; a stray's own roster would be left behind, which is why "empty" is a precondition); the tournament coach chat, whose seats are re-synced from the link, so the portal's coaches join at the next sync. The sync never removes anyone, so the stray team's members keep their seat. That is harmless in A5's shape, where they are the same coach, and a decision to make when they are not.</li><li><b>Stays, because it is the organizer's:</b> the entry itself (its name, division, status, payments, slot, check-in, the roster already sent), its contact email (the claim key), and the coach and coach email recorded at registration. A moved entry keeps the head coach it was registered with; the coach changes it on the portal's tournament page. Any claim rows for the entry stay as they are.</li><li><b>Afterwards:</b> the stray team and its membership are removed only when empty, as A5 did.</li></ul>
@@ -1497,6 +1877,18 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <ul><li><b>E1 → close Stage 2 as counted: no door, no fixes</b>, as recommended.</li><li><b>E2 → count again only if a coach or organizer reports one.</b> Not the recommendation (a re-count on 2026-11-16); the owner chose the third option. No re-count is scheduled; <code>.probe/reg-stage2-count.mjs</code> stays ready for a report.</li><li><b>E3 → give New Team the form's treatment, in the next registration build</b>, as recommended: on the join page, New Team comes last, with the sentence saying it makes a separate team the portal won't show. Owed; not built.</li></ul>
 <h3>Asks (as put on the hub's Stage 2 tab)</h3>
 <ul><li><b>E1 — Stage 2 with nothing to fix.</b> Recommend <b>close it as counted: no door, no fixes.</b> Other options: draw the coach's repair door anyway; keep Stage 2 open until the re-count.</li><li><b>E2 — When to count again.</b> Recommend <b>on 2026-11-16, a month after the release</b>, run by a session with your go for the production read. Other options: when the 2027 registration closes; only if a coach or organizer reports one.</li><li><b>E3 — The join page's New Team.</b> Recommend <b>give it the form's treatment</b> (last, with the sentence saying it makes a separate team the portal won't show), in the next registration build. Other options: leave it; remove New Team from the join page when the coach has a Premium team they may register.</li></ul>
+<h2>16. E3 · the join page’s New Team (drawn, ruled and built 2026-10-19)</h2>
+<p><b>Committed <code>341988d9</code> 2026-10-19</b> (the page, the shared sentence, its guards, the help article).</p>
+<p><b>Gate 0 (drawn 2026-10-19).</b> The hub’s “E3 · Join page” tab: true-size phone frames before and after for one portal team, New Team tapped, two portal teams (today’s frame captured read-only on dev), a team locked for the coach, a team already in the tournament, a computer-width pair, and a no-change tile; /design and /marketing ran before the hand-off. The drawing found what the E3 text had not said: <b>a second route</b> (J2). When the coach’s Premium team is locked for them or already in the tournament there is no pair; the page names the team and offers only Continue, which files the entry under a new free team without a word.</p>
+<p><b>Rulings (owner, 2026-10-19, pasted from the hub; no notes):</b></p>
+<ul><li><b>H1 → one line under the pair, always shown</b>, as recommended.</li><li><b>H2 → the form’s sentence from one place; keep “New Team”</b>, as recommended.</li><li><b>H3 → any portal team; above Continue when there is no pair</b>, as recommended.</li></ul>
+<p><b>Raised on the drawing, not ruled, so left as they are:</b> this page’s buttons are 39–41px tall and its team list’s text 13.6px on a phone, under the consumer floor of 2026-07-13 (/design); the page’s “team profile” wording beside “free team” (/marketing); an “ask the organizer to remove the extra entry” sentence on the already-in screen.</p>
+<p><b>The build’s own calls (not part of the rulings):</b></p>
+<ul><li><b>The line’s treatment</b> (/design, after checking the decisions log: the 2026-08-14 reason that a sentence stating what a choice is about to do is never the smallest type): 0.75rem, the sentence in the page’s grey, the bold lead in the page’s white. Defined whole in the join page’s own stylesheet; no rule added to the shared sign-up styles.</li><li><b>Spacing as drawn:</b> 8px under the pair and 12px above the team list; above Continue, 0.4rem closer than the form’s gap (about 8px on a phone, 14px on a computer).</li><li><b>The sentence</b> moved from the registration form into <code>lib/registrable-teams.ts</code> (<code>differentTeamSentence</code>), byte-identical; the form passes the same portal cards.</li><li><b>Untouched:</b> which button starts chosen, no team picked for the coach, the verified auto-link, Continue’s behaviour, the server and the claim API.</li><li><b>The walk does not press Continue.</b> It would file a dev fixture entry; Continue’s behaviour did not change.</li></ul>
+<p><b>Verified.</b> Unit 64/64 in <code>tests/unit/registrable-teams.test.ts</code> (six new, each mutation-checked: a reworded sentence, the line moved inside the Existing Team branch, the words pasted into the page — each failed); the sign-up guard’s join-page anchors hold (22/22, not edited); typecheck, focused lint and the spelling gate clean; <code>npm test</code> 7,949 of 7,952, the three failures in other sessions’ open work. A read-only probe at 390 and 1280: gaps 8/12, the line stays when New Team is tapped, 8px above Continue, no sideways scroll, buttons unchanged; a free-only coach and a failed list show no line.</p>
+<p><b>/review</b> (high-risk tier by path; correctness and regression lenses): no Critical, High or Medium. Kept as owner findings: the verified auto-link (pre-existing, pinned by another session’s guard) still files a new free team without the line for a brand-new account already on a portal’s staff with nothing choosable; with only a free team choosable and the portal locked, the line implies a contrast Existing Team does not offer.</p>
+<p><b>Help.</b> The registration article gains the claim page’s New Team and Continue lines, its search words in step, and corrects “greyed” for a team that is already in.</p>
+<p><b>Walk.</b> §341, the “QA walk · join page” tab. Dev data made for it on the owner’s go: <i>E3 Walk Owen</i> and <i>E3 Walk Free</i> (UAT Import Smoke, U12), removed after the paste-back.</p>
 </section>
 
 <section id="hub-decisions" class="docpage" hidden>
@@ -1514,7 +1906,7 @@ const $ = id => document.getElementById(id);
 const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* hub tabs */
-const HUBS = ['walk','qa','qa1b','qaone','stage1','stage1b','stage2','brief','plan','decisions'];
+const HUBS = ['walk','qa','qa1b','qaone','qaj','stage1','stage1b','stage2','e3','brief','plan','decisions'];
 function showHub(which){
   HUBS.forEach(h => { const s = $('hub-' + h); if (s) s.hidden = h !== which; });
   document.querySelectorAll('[data-hub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hub === which)));
@@ -1560,21 +1952,24 @@ const FINDINGS = {
   G1: { t: 'The name boxes don’t say whose name, or why', now: 'A signed-in coach sees First Name and Last Name only when their account has no name on file. Nothing on the screen says so, so the boxes read as a second person, a contact, beside the account.', fix: 'For a Premium team whose head coach the portal can name, there are no boxes at all. When nobody has a name for you, the boxes read Your first name and Your last name, with a line saying why they are asked and that the answer is saved.' },
   G2: { t: 'What is typed is thrown away', now: 'The name goes on the tournament entry and is never saved to the account, so the next registration asks again.', fix: 'The answer is saved to the account, filling an empty name only, so the boxes appear once (Ask C3).' },
   G3: { t: 'Whoever presses Submit becomes the coach', now: 'The name typed (or the account’s name) is stored as the entry’s coach. It shows on the organizer’s list and team record, in their new-registration email, in the greeting of every later email to the team, and on the public Teams and team pages. Since Stage 1 lets staff register, a team manager who registers is listed as the coach.', fix: 'For a Premium team, the entry’s coach is the portal’s head coach, whoever registers. Review shows it before Submit, and the server reads it again from the staff list rather than trusting the page.' },
+  J1: { tab: 'e3', t: 'New Team says nothing about what it makes', now: 'A coach with a team to choose sees Existing Team and New Team as two equal buttons. New Team makes a separate free team that the Premium portal never shows, and nothing on the page says so. This is F4, the shape behind the original case, on the page every claim link opens.', fix: 'One line under the pair, shown before anything is tapped, says New Team makes a separate free team and names the portal it won’t show in. The words are the registration form’s own.' },
+  J2: { tab: 'e3', t: 'With nothing to choose, Continue quietly makes a free team', now: 'When the coach’s Premium team is locked for them (staff without Register for tournaments) or already in this tournament, there is no pair. The page names the team, then offers Continue, and Continue makes a new free team without a word. The E3 ruling’s text covers only the pair.', fix: 'The same line sits above Continue, led by “Continue”, so the coach knows what the button makes before pressing it. Nothing is blocked.' },
   G4: { t: '“Registering as” changes while you type', now: 'The line shows the email until you type in First Name, then follows the box letter by letter.', fix: 'It stays put: your account’s name, or your email when the account has none.' }
 };
-const KIND = { new: 'New', re: 'Restyled from today', un: 'Unchanged from today' };
-const GENERIC = { new: 'Not in the product today.', re: 'Exists today and changes in shape, wording or place.', un: 'Exists today and is drawn here unchanged, so a build cannot drop it by accident.' };
+const KIND = { new: 'New', re: 'Restyled from today', ch: 'Changed from today', un: 'Unchanged from today' };
+const GENERIC = { new: 'Not in the product today.', re: 'Exists today and changes in shape, wording or place.', ch: 'Exists today and changes in wording, place or behaviour.', un: 'Exists today and is drawn here unchanged, so a build cannot drop it by accident.' };
 function explainFinding(id, here){
   const f = FINDINGS[id]; if (!f) return;
-  modal(id + ' · ' + f.t, '<div class="explain"><h3>What the code does today</h3><p>' + esc(f.now) + '</p>' + (here ? '<h3>Where you are looking</h3><p class="here">' + esc(here) + '</p>' : '') + '<h3>What the proposal does</h3><p>' + esc(f.fix) + '</p><button class="button" type="button" data-plan="' + id + '">Read the full finding in the plan →</button></div>');
+  modal(id + ' · ' + f.t, '<div class="explain"><h3>What the code does today</h3><p>' + esc(f.now) + '</p>' + (here ? '<h3>Where you are looking</h3><p class="here">' + esc(here) + '</p>' : '') + '<h3>What the proposal does</h3><p>' + esc(f.fix) + '</p><button class="button" type="button" data-plan="' + id + '">' + (f.tab ? 'Read it beside the drawings →' : 'Read the full finding in the plan →') + '</button></div>');
 }
 function explainTag(el){
   const k = el.dataset.k;
   modal(KIND[k] || 'Tag', '<div class="explain"><p>' + esc(el.dataset.note || GENERIC[k] || '') + '</p>' + (el.dataset.note ? '<p class="sub">' + esc(GENERIC[k] || '') + '</p>' : '') + '</div>');
 }
 function jumpToFinding(id){
-  $('dialog').close(); showHub('plan');
-  const hit = [...document.querySelectorAll('#hub-plan p, #hub-plan h2, #hub-plan h3, #hub-plan li')].find(n => n.textContent.trim().startsWith(id + ' —'));
+  const tab = (FINDINGS[id] && FINDINGS[id].tab) || 'plan';
+  $('dialog').close(); showHub(tab);
+  const hit = [...document.querySelectorAll(['p', 'h2', 'h3', 'li'].map(t => '#hub-' + tab + ' ' + t).join(', '))].find(n => n.textContent.trim().startsWith(id + ' —'));
   if (hit) { hit.scrollIntoView({ block: 'start' }); hit.style.background = 'var(--lime)'; setTimeout(() => { hit.style.background = ''; }, 2500); }
 }
 document.querySelectorAll('.mk').forEach(el => {
@@ -1639,7 +2034,10 @@ const DECISIONS = [
   { date: '2026-10-16', ask: 'Can a team the organizer rejected register itself again?', ruling: 'accepted', label: 'Decided', why: 'No. Owner: “I think rejected should not be allowed to register again, if the organizers want them to be allowed back in they can change the status to accepted or delete the team and allow a new registration.” A rejected registration still counts and shows as Not Accepted on the card, which reverses the earlier “rejected does not count”. It now agrees with “Add my team” and the name rule, which already counted it.' },
   { date: '2026-10-16', ask: 'E1 · Stage 2 found nothing to fix. What happens to it?', ruling: 'accepted', label: 'As recommended', why: 'Close Stage 2 as counted: no repair door, no fixes. None of the 30 real entries on production is filed under the wrong team.' },
   { date: '2026-10-16', ask: 'E2 · When should the count run again?', ruling: 'accepted', label: 'Decided', why: 'Only if a coach or organizer reports one. The owner chose this over the recommended re-count on 2026-11-16, so none is scheduled; the count stays ready to run on a report.' },
-  { date: '2026-10-16', ask: 'E3 · The join page still offers New Team beside Existing Team, with no warning. Change it?', ruling: 'accepted', label: 'As recommended', why: 'Give New Team the registration form’s treatment, with the sentence saying it makes a separate team the portal won’t show, in the next registration build.' }
+  { date: '2026-10-16', ask: 'E3 · The join page still offers New Team beside Existing Team, with no warning. Change it?', ruling: 'accepted', label: 'As recommended', why: 'Give New Team the registration form’s treatment, with the sentence saying it makes a separate team the portal won’t show, in the next registration build.' },
+  { date: '2026-10-19', ask: 'H1 · Where does the join page’s line go?', ruling: 'accepted', label: 'As recommended', why: 'One line directly under the Existing Team / New Team pair, shown before anything is tapped.' },
+  { date: '2026-10-19', ask: 'H2 · The words, and the label', ruling: 'accepted', label: 'As recommended', why: 'The registration form’s sentence, kept in one place both screens read; the label stays “New Team”.' },
+  { date: '2026-10-19', ask: 'H3 · When does the line show?', ruling: 'accepted', label: 'As recommended', why: 'Whenever the coach has a Coaches Portal team of any kind. With no pair (the team is locked for them, or already in the tournament), the same sentence sits above Continue, led by “Continue”.' }
 ];
 /* qa walk: ticks, a verdict and a note per walk, kept in this browser; a paste-back summary */
 const QA_KEY = 'reg-existing-qa-312';
@@ -1872,3 +2270,89 @@ $('decisionRows').innerHTML = DECISIONS.map(d => '<div class="station"><div styl
   });
 })();
 </script>
+
+<script>
+/* E3 asks (H1–H3): the ask text lives in the page itself, so this script holds no copy; its own saved state and paste-back. */
+(function(){
+  'use strict';
+  var KEY = 'reg-existing-asks-e3';
+  var st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { st = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  var opts = Array.prototype.slice.call(document.querySelectorAll('[data-e3opt]'));
+  opts.forEach(function(cb){
+    cb.checked = st[cb.dataset.e3opt] === Number(cb.dataset.i);
+    cb.addEventListener('change', function(){
+      var id = cb.dataset.e3opt, i = Number(cb.dataset.i);
+      if (cb.checked) { st[id] = i; opts.forEach(function(o){ if (o !== cb && o.dataset.e3opt === id) o.checked = false; }); }
+      else if (st[id] === i) delete st[id];
+      save();
+    });
+  });
+  document.querySelectorAll('[data-e3note]').forEach(function(t){
+    t.value = st[t.dataset.e3note + '-note'] || '';
+    t.addEventListener('input', function(){ st[t.dataset.e3note + '-note'] = t.value; save(); });
+  });
+  document.getElementById('e3Build').addEventListener('click', function(){
+    var lines = ['Register Your Existing Team, E3 · the join page — rulings', ''];
+    document.querySelectorAll('[data-e3ask]').forEach(function(box){
+      var id = box.dataset.e3ask;
+      var q = box.querySelector('h3').textContent;
+      var hit = box.querySelector('[data-e3opt]:checked');
+      lines.push(q + ' → ' + (hit ? hit.parentNode.querySelector('span').textContent : '(no choice ticked)'));
+      if (st[id + '-note']) lines.push('   Note: ' + st[id + '-note']);
+    });
+    var out = document.getElementById('e3PasteOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+  });
+})();
+</script>
+
+<script>
+/* QA walk · join page (§341): its own attributes, saved state and paste-back, so a slip here never touches the other walks. */
+(function(){
+  'use strict';
+  var KEY = 'reg-existing-qa-341';
+  var VERDICTS = [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']];
+  var qa = {};
+  try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) {} }
+  function steps(){ return Array.prototype.slice.call(document.querySelectorAll('[data-stepj]')); }
+  function progress(){ document.getElementById('qajProgress').textContent = 'Checked ' + steps().filter(function(cb){ return cb.checked; }).length + ' of ' + steps().length; }
+  document.querySelectorAll('.qaj').forEach(function(card){
+    var w = card.dataset.walkj;
+    var box = document.createElement('div');
+    box.innerHTML = '<div class="qverdict" role="group" aria-label="Verdict for ' + w + '">' +
+      VERDICTS.map(function(v){ return '<button type="button" data-walkj-v="' + w + '" data-v="' + v[0] + '" aria-pressed="' + String(qa[w + ':v'] === v[0]) + '">' + v[1] + '</button>'; }).join('') +
+      '</div><label class="meta" for="' + w + '-qjnote">Notes</label><textarea id="' + w + '-qjnote" rows="2" data-qjnote="' + w + '"></textarea>';
+    card.appendChild(box);
+    box.querySelector('textarea').value = qa[w + ':n'] || '';
+  });
+  steps().forEach(function(cb){
+    cb.checked = !!qa[cb.dataset.stepj];
+    cb.addEventListener('change', function(){ qa[cb.dataset.stepj] = cb.checked; save(); progress(); });
+  });
+  document.querySelectorAll('[data-walkj-v]').forEach(function(b){ b.addEventListener('click', function(){
+    var w = b.dataset.walkjV;
+    qa[w + ':v'] = qa[w + ':v'] === b.dataset.v ? '' : b.dataset.v;
+    document.querySelectorAll('[data-walkj-v="' + w + '"]').forEach(function(o){ o.setAttribute('aria-pressed', String(qa[w + ':v'] === o.dataset.v)); });
+    save();
+  }); });
+  document.querySelectorAll('[data-qjnote]').forEach(function(t){ t.addEventListener('input', function(){ qa[t.dataset.qjnote + ':n'] = t.value; save(); }); });
+  document.getElementById('qajBuild').addEventListener('click', function(){
+    var all = steps();
+    var lines = ['§341 · Register Your Existing Team, E3 · the join page — Checked ' + all.filter(function(cb){ return cb.checked; }).length + ' of ' + all.length, ''];
+    document.querySelectorAll('.qaj').forEach(function(card){
+      var w = card.dataset.walkj;
+      var own = Array.prototype.slice.call(card.querySelectorAll('[data-stepj]'));
+      var v = VERDICTS.filter(function(x){ return x[0] === qa[w + ':v']; })[0];
+      var missed = own.filter(function(cb){ return !cb.checked; }).map(function(cb){ return cb.dataset.stepj.split('-')[1]; });
+      lines.push(w + ' [' + (v ? v[1] : 'no verdict').toUpperCase() + '] ' + own.filter(function(cb){ return cb.checked; }).length + '/' + own.length + (missed.length ? ' · unticked: ' + missed.join(', ') : ''));
+      if (qa[w + ':n']) lines.push('   Notes: ' + qa[w + ':n']);
+    });
+    var out = document.getElementById('qajOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+  });
+  progress();
+})();
+</script>
+
+</body></html>
