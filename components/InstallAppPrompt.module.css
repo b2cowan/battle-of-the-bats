@@ -50,9 +50,9 @@
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--white);
-  font-family: var(--font-data, monospace);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  /* The body face, sentence case, on every surface (Admin type sweep A6, 2026-10-19): this is the
+     product's own install prompt, not a club's public lettering. */
+  font-family: var(--font-sans, system-ui, sans-serif);
 }
 
 .instructions {
@@ -84,11 +84,9 @@
   border-radius: var(--radius-sm);
   background: var(--primary);
   color: var(--on-primary);
-  font-family: var(--font-data, monospace);
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 650;
   white-space: nowrap;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35);

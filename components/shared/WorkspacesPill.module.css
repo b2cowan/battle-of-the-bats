@@ -63,19 +63,21 @@
   background: color-mix(in srgb, var(--fl-text) 7%, transparent);
 }
 
+/* The kit's eyebrow over a workspace's name (Admin type sweep, 2026-10-19). */
 .rowCap {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--data-gray);
 }
 
+/* A workspace's name is a menu item: the portal's menu item (CoachToolbarMenu .itemLabel). */
 .rowTitle {
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
   line-height: 1.25;
 }
 
@@ -83,10 +85,9 @@
   margin-top: 0.15rem;
   padding: 0.45rem 0.65rem;
   border-top: 1px solid var(--border-2);
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--data-gray);
   text-decoration: none;
   transition: color 0.12s ease;

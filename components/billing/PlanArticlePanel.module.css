@@ -66,11 +66,11 @@
 
 /* A true eyebrow (labels .panelHeadline below it) — mono stays, in the accent. */
 .panelEyebrow {
-  font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
+  font-family: var(--font-data, monospace); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--home-olive);
   margin: 0;
 }
@@ -79,7 +79,7 @@
 .panelHeadline {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.3;
@@ -119,9 +119,11 @@
   flex-shrink: 0;
 }
 
+/* A figure: the body face, digits aligned (Admin type sweep A1, 2026-10-19). */
 .priceAmount {
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }
 
@@ -175,11 +177,11 @@
 
 /* A true eyebrow (labels .sectionHeadline below it) — mono stays, the eyebrow ink. */
 .sectionEyebrow {
-  font-family: var(--font-data, monospace);
-  font-size: 0.58rem;
+  font-family: var(--font-data, monospace); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
   margin: 0;
 }
@@ -189,7 +191,7 @@
 .sectionHeadline {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.3;
@@ -256,10 +258,11 @@
 
 /* A true eyebrow (labels .stepTitle below it). */
 .stepLabel {
-  font-size: 0.6rem;
+  font-family: var(--font-data, monospace); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
   margin: 0;
 }

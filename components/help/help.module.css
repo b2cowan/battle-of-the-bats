@@ -396,10 +396,11 @@
   border: 0;
   color: var(--primary-light);
   font: inherit;
-  font-size: 0.68rem;
+  /* A nav group heading (NAV_STANDARD; Admin type sweep A11, 2026-10-19). */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-transform: uppercase; /* type-ok: nav group heading */
   padding: 7px 6px 7px 4px;
   /* The contents menu is the guide's primary control now (on a phone it is the
      whole first screen), so every row clears the 44px tap floor at EVERY width
@@ -436,9 +437,9 @@
 /* Sub-group label inside TOC */
 .helpTocSubLabel {
   margin: 5px 0 2px 14px;
-  font-size: 0.62rem;
+  font-size: var(--type-label);
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: nav group heading */
   color: var(--white-40, rgba(255, 255, 255, 0.4));
   font-weight: 700;
 }
@@ -620,7 +621,7 @@
 
 .helpPageTitle {
   font-size: 1.75rem;
-  font-weight: 900;
+  font-weight: 700;
   font-family: var(--font-display, sans-serif);
   color: var(--primary-light);
   margin: 0 0 0.3rem;
@@ -692,9 +693,11 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  font-size: 0.72rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  /* The kit's eyebrow (Admin type sweep A11, 2026-10-19). */
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--primary-light);
   font-weight: 700;
   padding-bottom: 7px;
@@ -857,11 +860,12 @@
   margin-bottom: 0;
 }
 
-/* Group heading (h2) — uppercase lime separator */
+/* Group heading (h2) — the kit's eyebrow as a separator (Admin type sweep A11, 2026-10-19) */
 .helpGroupHeading {
-  font-size: 0.72rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--primary-light);
   font-weight: 700;
   padding-bottom: 7px;
@@ -1073,7 +1077,7 @@
   margin: 0;
   color: var(--fl-text, rgba(255, 255, 255, 0.86));
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .helpResultHeader span {
@@ -1250,7 +1254,7 @@
 
 .helpHubTitle {
   font-size: 1.75rem;
-  font-weight: 900;
+  font-weight: 700;
   font-family: var(--font-display, sans-serif);
   color: var(--fl-text, rgba(255, 255, 255, 0.9));
   margin: 0 0 0.35rem;
@@ -1308,9 +1312,10 @@
 }
 
 .helpHubSectionLabel span {
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--primary-light);
   font-weight: 700;
   white-space: nowrap;
@@ -1609,9 +1614,10 @@
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
 }
 .helpDrawerEyebrow {
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--white-40, rgba(255, 255, 255, 0.4));
   font-weight: 700;
   margin: 0;
@@ -1757,9 +1763,11 @@
    .helpFaqItem (shared via HelpAccordionItem) — only the caption and the body
    spacing are sub-topic-specific. */
 .helpSubtopicLabel {
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--white-35);
   margin: 14px 0 6px;
 }

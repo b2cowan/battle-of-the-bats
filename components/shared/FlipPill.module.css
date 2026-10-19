@@ -148,11 +148,11 @@
   background: color-mix(in srgb, var(--fl-text) 7%, transparent);
 }
 
+/* A row in the flip list is a menu item: the portal's menu item (Admin type sweep, 2026-10-19). */
 .rowLabel {
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
 }
 
 .rowSub {

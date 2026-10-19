@@ -1602,6 +1602,14 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.01em;
   font-weight: 800;
 }
+/* The admin's headings (Admin type sweep A5, owner 2026-10-19): a heading with no style of its own is the
+   window title's weight, not the 800 above — about 37 headings fell back to it. Weight (0,0,1), the bare
+   element's, and AFTER the rule above so it wins that tie; a module class that styles its own heading
+   (0,1,0) still wins, so a deliberate weight is never overridden. */
+:where([data-admin-kit]) :is(h1, h2, h3, h4, h5, h6):where(:not([data-public-preview] *)) {
+  letter-spacing: normal;
+  font-weight: 700;
+}
 
 .display-xl  { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; line-height: 1; }
 .display-lg  { font-size: clamp(2.25rem, 6vw, 4rem); font-weight: 800; }

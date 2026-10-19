@@ -279,15 +279,16 @@
   color: var(--text-tertiary);
 }
 
-/* Today / Yesterday / Earlier — quieter than a section header. */
+/* Today / Yesterday / Earlier — a band heading, the standard's one recipe (Admin type sweep A4,
+   2026-10-19: display face, 700, capitals at 0.05em). */
 .dateHeader {
   padding: 0.5rem 20px 0.25rem;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
+  font-family: var(--font-display, sans-serif);
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: band heading */
+  color: var(--text-secondary);
 }
 
 /* ── Notification rows — the bell's own, unchanged in the drawer (hub screen 2) ── */
@@ -417,11 +418,10 @@
   border-radius: 999px;
   background: var(--surface);
   cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  /* A small button in the body face, sentence case (Admin type sweep, 2026-10-19). */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--text-secondary);
   transition: color 0.15s, border-color 0.15s;
 }

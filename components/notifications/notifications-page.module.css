@@ -211,14 +211,15 @@
   color: var(--text-tertiary);
 }
 
+/* A band heading, the standard's one recipe (Admin type sweep A4, 2026-10-19). */
 .dateHeader {
   padding: 0.6rem 1.1rem 0.3rem;
-  font-family: var(--font-data);
-  font-size: 0.64rem;
+  font-family: var(--font-display, sans-serif);
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: band heading */
+  color: var(--text-secondary);
   /* A day header sits on a band of the page ground so the list reads as days rather than as one
      block; where the warm block is out of scope (admin) both vars are absent and it stays flat. */
   background: var(--home-paper, transparent);

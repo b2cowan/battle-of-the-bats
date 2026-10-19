@@ -72,18 +72,20 @@
 }
 
 .identityCap {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
+  /* The kit's eyebrow (Admin type sweep, 2026-10-19): a label over the signed-in address. */
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--data-gray);
 }
 
+/* The signed-in email stays in the data face: an address is read character by character (A2). */
 .identityValue {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: an address */
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--fl-text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -117,9 +119,9 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--data-gray);
   transition: background 0.12s ease, color 0.12s ease;
 }
@@ -142,9 +144,10 @@
   text-align: left;
   color: var(--fl-text);
   text-decoration: none;
-  font-family: var(--font-data);
-  font-size: 0.74rem;
-  font-weight: 700;
+  /* A menu item, as the portal's menus draw one (CoachToolbarMenu .itemLabel). */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
   line-height: 1.25;
   transition: background 0.12s ease;
 }
