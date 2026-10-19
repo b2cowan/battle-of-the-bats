@@ -30,7 +30,7 @@ import { formatInOrgZone } from '@/lib/timezone';
 import KitDialog from './KitDialog';
 import PageNotice, { refusalNotice } from './PageNotice';
 import { RecordAction, RecordDelete } from './RepKit';
-import { RoleOptions, HelpingWithField } from './InviteMemberDialog';
+import { RolePicker, HelpingWithField } from './InviteMemberDialog';
 import { volunteerJobOf, withVolunteerJob, type VolunteerJob } from '@/lib/volunteer-jobs';
 import { HELPING_WITH } from '@/lib/volunteer-words';
 import { consequence } from './member-summary';
@@ -352,13 +352,14 @@ export default function ManageMemberDialog({
           <div className={ck.field}>
             <label className={ck.label} htmlFor="kit-manage-role">Role</label>
             {canChangeRole && roles ? (
-              <select id="kit-manage-role" className={ck.select} value={role} onChange={e => setRole(e.target.value as OrgRole)}>
-                <RoleOptions
-                  roles={roles}
-                  noun={noun}
-                  extra={currentNotOffered ? { role: member.role, label: `${roleLabel(member.role)} (current)` } : undefined}
-                />
-              </select>
+              <RolePicker
+                id="kit-manage-role"
+                roles={roles}
+                noun={noun}
+                value={role}
+                onChange={setRole}
+                extra={currentNotOffered ? { role: member.role, label: `${roleLabel(member.role)} (current)` } : undefined}
+              />
             ) : (
               <p className={styles.readValue}>{roleLabel(member.role)}</p>
             )}

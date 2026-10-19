@@ -19,6 +19,8 @@ import KitDialog from './KitDialog';
 import PageNotice, { refusalNotice } from './PageNotice';
 import type { AssignableRoleOption } from './members-types';
 import ck from './ClubKit.module.css';
+import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
+import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import LoadingState from '@/components/shared/LoadingState';
 
 /** "Helping with" — the field the invite and Manage share (one control, one set of words). */
@@ -48,21 +50,34 @@ export function roleGroupLabel(group: AssignableRoleOption['group'], noun: strin
 }
 
 /** The grouped options, in the route's order; a group with nothing in it has no heading. */
-export function RoleOptions({ roles, noun, extra }: { roles: AssignableRoleOption[]; noun: string; extra?: { role: OrgRole; label: string } }) {
-  const groups = (['runs_the_club', 'house_league', 'volunteers'] as const)
-    .map(g => ({ g, items: roles.filter(r => r.group === g) }))
-    .filter(x => x.items.length > 0);
+/** The role field, for Invite and Manage: the portal's sub-lined dropdown (owner, 2026-10-19 — "our portal convention
+ *  is subtext below the main text", the coach's Record window). Each role's name, its hint on the line under it, in
+ *  its group. It replaced a native `<select>` whose options read "League registrar — league sign-ups": a native list
+ *  cannot carry a second line. The closed field wears the kit's own select look, so it sits like the fields around it. */
+export function RolePicker({ id, roles, noun, value, onChange, extra }: {
+  id: string;
+  roles: AssignableRoleOption[];
+  noun: string;
+  value: OrgRole;
+  onChange: (role: OrgRole) => void;
+  extra?: { role: OrgRole; label: string };
+}) {
+  const options: SublinedOption<OrgRole>[] = [
+    ...(extra ? [{ value: extra.role, name: extra.label, sub: '' }] : []),
+    ...(['runs_the_club', 'house_league', 'volunteers'] as const).flatMap(g =>
+      roles.filter(r => r.group === g).map(r => ({ value: r.role, name: r.label, sub: r.hint ?? '', group: roleGroupLabel(g, noun) })),
+    ),
+  ];
   return (
-    <>
-      {extra && <option value={extra.role}>{extra.label}</option>}
-      {groups.map(({ g, items }) => (
-        <optgroup key={g} label={roleGroupLabel(g, noun)}>
-          {items.map(r => (
-            <option key={r.role} value={r.role}>{r.hint ? `${r.label} — ${r.hint}` : r.label}</option>
-          ))}
-        </optgroup>
-      ))}
-    </>
+    <SublinedChoice
+      id={id}
+      label="Role"
+      options={options}
+      value={value}
+      onChange={onChange}
+      variant="toolbar"
+      triggerClassName={`${ck.select} ${shared.convChoiceToolbarField}`}
+    />
   );
 }
 
@@ -162,9 +177,7 @@ export default function InviteMemberDialog({
           <label className={ck.label} htmlFor="kit-invite-role">Role<span className={ck.required} aria-hidden>*</span></label>
           {roles ? (
             <>
-              <select id="kit-invite-role" className={ck.select} value={chosen} onChange={e => setRole(e.target.value as OrgRole)} required>
-                <RoleOptions roles={roles} noun={noun} />
-              </select>
+              <RolePicker id="kit-invite-role" roles={roles} noun={noun} value={chosen as OrgRole} onChange={setRole} />
               {chosenRole?.opens && <p className={ck.hint}>{chosenRole.opens}</p>}
             </>
           ) : rolesFailed ? (
