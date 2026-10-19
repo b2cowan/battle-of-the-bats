@@ -25570,7 +25570,7 @@ Parts 2 (`e692ae98`) and 3 (`36b1d234`). Localhost has email verification off, s
 
 **Walk W5 — A different plan and billing ride along too.** As a fresh address. ⚠ This walk WRITES (it makes an account, an organization or a team).
 - **W5.1.** Signed out, open `/auth/signup?plan=league&billing=annual`. **Expect:** The note reads "**League Plus, billed annually**, from the pricing page…".
-- **W5.2.** Create the account, name the organization, tap **Create Organization**. **Expect:** The plan step with the **League Plus** card highlighted and **Annual** chosen. (Nothing is bought yet — you can still pick any plan.)
+- **W5.2.** Create the account, name the organization, tap **Create Organization**. **Expect:** The plan step with **Annual** chosen. League Plus reads **Not open yet**, so no card is highlighted — a plan that is not on sale is never featured (corrected 2026-10-19 after your W5 walk; what this screen should say to someone who came for League Plus is in the plan chooser review the plan now owes). Nothing is bought yet.
 
 **Walk W6 — An address that already has an account is sent to sign in, then to step 2.** As the free coach. Nothing in it writes.
 - **W6.1.** Signed out, open `/auth/signup?plan=tournament_plus&billing=monthly` and sign up with uat-free-coach@uat-free-coach.local. **Expect:** Sign-in opens with that address filled in.
