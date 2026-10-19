@@ -105,9 +105,11 @@ export const DRAFT_BOARD_WORDS = {
   divisions: 'Divisions',
   contact: 'Who teams can write to',
   orgContact: (email: string) => `Your organization’s email, ${email}`,
-  /** Nobody chosen: coach-facing email already goes to the owner, so the row says so (owner ruling 2026-10-19). */
-  ownerContact: (email: string) => `Your organization’s owner, ${email}`,
-  ownerContactNoEmail: 'Your organization’s owner',
+  /** Nobody chosen and no organization email: coach-facing email goes to the owner (owner ruling 2026-10-19), but the
+   *  public site's contact never falls back to the owner's sign-in address, so it shows none — the row says both, and
+   *  never blocks Activate (owner, 2026-10-19, after review). */
+  ownerContact: (email: string) => `Coach emails go to your organization’s owner, ${email}. Your public site shows no contact.`,
+  ownerContactNoEmail: 'Coach emails go to your organization’s owner. Your public site shows no contact.',
   /** A chosen member whose email can't be read: the row is still done (Activate reads a contact, not its address). */
   memberContact: 'A member of your organization',
   rest: 'The rest, when you’re ready',

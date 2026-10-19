@@ -91,8 +91,8 @@ describe('the board\'s rows say what is set (E2)', () => {
     assert.equal(timingLine({ minutes: 90, perDivision: false, breakers: ['h2h', 'rd', 'rf'], breakersPerDivision: false }, 'softball'),
       '90-minute games · head-to-head, then run difference');
     assert.equal(publicSiteLine(['Schedule', 'Standings', 'Teams', 'Rules'], false, 6), 'Schedule, Standings, Teams, and Rules on · no logo');
-    assert.equal(contactLine({ source: 'owner', email: 'sam@club.ca' }), 'Your organization’s owner, sam@club.ca');
-    assert.equal(contactLine({ source: 'owner', email: null }), 'Your organization’s owner');
+    assert.equal(contactLine({ source: 'owner', email: 'sam@club.ca' }), 'Coach emails go to your organization’s owner, sam@club.ca. Your public site shows no contact.');
+    assert.equal(contactLine({ source: 'owner', email: null }), 'Coach emails go to your organization’s owner. Your public site shows no contact.');
     assert.equal(contactLine({ source: 'org', email: 'info@club.ca' }), 'Your organization’s email, info@club.ca');
     assert.equal(contactLine({ source: 'tournament', email: 'td@club.ca' }), 'td@club.ca');
   });

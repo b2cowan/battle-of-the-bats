@@ -7,7 +7,8 @@
  *   │ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
  *   │ ✓ Dates                    May 14–16, 2027                         ›   every row a DOOR to the exact place
  *   │ ✓ Divisions                U11 · U13 · U15 — 24 spots               ›
- *   │ ✓ Who teams can write to   Your organization’s owner, sam@…         ›   (always done: the owner when nobody is chosen, 2026-10-19)
+ *   │ ✓ Who teams can write to   Coach emails go to your organization’s owner, sam@…. Your public site shows no contact.  ›
+ *   │                            (always done: the owner when nobody is chosen, 2026-10-19; the public-site half is a nudge)
  *   │ THE REST, WHEN YOU'RE READY 2 of 6
  *   │   Venues · Fees · Schedule · Rules & resources · Game timing & tie-breakers · Public site
  *   └
