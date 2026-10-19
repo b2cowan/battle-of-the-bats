@@ -268,14 +268,14 @@ table.census{border-collapse:collapse;width:100%;font-size:13.5px;min-width:860p
 </svg>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Free coach tap targets — project hub</strong><br><small>Q1–Q7 ruled 2026-10-19 · built and proved 2026-10-19 (334 → 7 accepted) · QA walk §347 open</small></div>
+  <div class="hubtitle"><strong>Free coach tap targets — project hub</strong><br><small>Q1–Q7 ruled 2026-10-19 · built and proved 2026-10-19 (334 → 7 accepted) · ✅ QA walk §347 passed 15 of 15 · closed</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Census re-measured on staging 2026-10-19: 334 findings, 48 of 48 pairs measured, identical to the 7dc48b31 run; drawn and /design-checked 2026-10-19">Design</li>
     <li class="stage done" title="Q1–Q7 ruled by the owner 2026-10-19, all as recommended">Plan</li>
     <li class="stage done" title="Built 2026-10-19 on dev (local), proved on the local dev server: 56 of 56 pairs, 334 findings → 7 accepted">Build</li>
     <li class="stage done" title="/simplify (4 lenses) and /review (3 lenses) 2026-10-19; /docs 2026-10-19">Review</li>
-    <li class="stage current" title="—">QA</li>
-    <li class="stage" title="—">Shipped</li>
+    <li class="stage done" title="Owner walk §347 passed 2026-10-19: 15 of 15 steps, W1–W4 all pass, no notes">QA</li>
+    <li class="stage current" title="Committed on dev 2026-10-19 (3e8f8950); reaches production with the next release">Shipped</li>
   </ul>
   <div class="hubactions">
     <div class="seg" role="group" aria-label="Frame width"><button type="button" data-w="390" aria-pressed="true">390 phone</button><button type="button" data-w="768" aria-pressed="false">768 tablet</button></div>
@@ -454,7 +454,7 @@ table.census{border-collapse:collapse;width:100%;font-size:13.5px;min-width:860p
 <section id="hub-plan" class="docpage" hidden>
   <div class="eyebrow">Full assessment</div>
   <h1>Free coach tap targets — plan</h1>
-  <div class="note">The plan’s source of truth is <code>docs/projects/active/FREE_COACH_TAP_TARGETS_PLAN.md</code>. This tab is a reading copy of it.</div>
+  <div class="note">The plan’s source of truth is <code>docs/projects/archive/FREE_COACH_TAP_TARGETS_PLAN.md</code>. This tab is a reading copy of it.</div>
   <h2>Problem</h2>
   <p>On 2026-10-19 the layout upkeep added the free coach portal to the layout sweep. Twelve screens measure clean except for touch-target size: 334 findings at 361, 390 and 768, and none at 1440. They come from twelve distinct controls repeated by the fixture’s rows. Re-measured on staging the same day, the findings are identical key for key and every pair was measured.</p>
   <h2>Scope</h2>
@@ -503,7 +503,7 @@ table.census{border-collapse:collapse;width:100%;font-size:13.5px;min-width:860p
 </section>
 
 <section id="hub-qa" class="qapage" hidden>
-  <div class="eyebrow">Owner QA walk · ledger §347</div>
+  <div class="eyebrow">Owner QA walk · ledger §347 · ✅ passed 2026-10-19, 15 of 15</div>
   <h1>Free coach tap targets — QA walk</h1>
   <p class="sub" style="margin-bottom:16px;max-width:900px">Four walks, one purpose each. Tick as you go (ticks stay in this browser), give each walk a verdict, then copy the paste-back into the chat.</p>
   <div class="signin"><strong>Sign in as</strong> — <b>http://localhost:3000</b> · <code>uat-free-coach@uat-free-coach.local</code> · password: the standard test password (in <code>.env.local</code>; keep it private) → <b>UAT Free Team</b>. W4.2 uses <code>uat-coach@uat-test-org.local</code>. A phone, or Dev Tools at 390 wide, unless a step says otherwise. ⚠ Restart the dev server first (this build added a stylesheet).</div>

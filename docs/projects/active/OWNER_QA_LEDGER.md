@@ -25686,7 +25686,9 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 ## §347 · Free coach tap targets — **on a phone every control a free coach taps is a fingertip (44px): a roster, schedule or fee row is one door to its form, Remove lives in the form, the player's number is the reorder handle, Mark paid stays on the row**
 
-**Built 2026-10-19** to the owner's rulings Q1–Q7 (all as recommended; hub https://claude.ai/artifact/Rne2oGZjtLyKp2S74MXfJS, plan `FREE_COACH_TAP_TARGETS_PLAN.md`). Proof on the local dev server: the 12 free screens + the paid Overview and Announcements at 361/390/768/1440, 56 of 56 pairs, **334 findings → 7** (the 7 ruled to be accepted with a reason); a probe opened one row on each editor at 390 and 768 (nothing under 44) and drove the roster's Move menu.
+**✅ PASSED 2026-10-19 — 15 of 15 steps, all four walks (W1–W4) pass** (owner paste-back, no notes). Project closed; plan archived.
+
+**Built 2026-10-19** to the owner's rulings Q1–Q7 (all as recommended; hub https://claude.ai/artifact/Rne2oGZjtLyKp2S74MXfJS, plan `docs/projects/archive/FREE_COACH_TAP_TARGETS_PLAN.md`). Proof on the local dev server: the 12 free screens + the paid Overview and Announcements at 361/390/768/1440, 56 of 56 pairs, **334 findings → 7** (the 7 ruled to be accepted with a reason); a probe opened one row on each editor at 390 and 768 (nothing under 44) and drove the roster's Move menu.
 
 **Sign in:** http://localhost:3000 · `uat-free-coach@uat-free-coach.local` (password as every test account) → **UAT Free Team**. W4 also uses `uat-coach@uat-test-org.local`. A phone, or Dev Tools at 390 wide, unless a step says otherwise.
 

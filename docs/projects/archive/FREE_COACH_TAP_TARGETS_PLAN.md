@@ -1,10 +1,10 @@
 # Free coach tap targets — plan
 
 > Hub (mockup · brief · plan · rulings · QA walk): https://claude.ai/artifact/Rne2oGZjtLyKp2S74MXfJS
-> (source `docs/projects/active/FREE_COACH_TAP_TARGETS_HUB.html` — republish the SAME path).
+> (source `docs/projects/archive/FREE_COACH_TAP_TARGETS_HUB.html` — republish the SAME path).
 > PM brief: `FREE_COACH_TAP_TARGETS_PM_BRIEF.md`. Prompt: `FREE_COACH_TAP_TARGETS_PROMPT.md`.
 > Stage 0 drawn 2026-10-19 against `f1618c02`. **Q1–Q7 RULED by the owner 2026-10-19, all as recommended** (the hub's
-> paste-back). Stage 1 built the same day — see §8.
+> paste-back). Stage 1 built the same day — see §8. **✅ CLOSED 2026-10-19: owner walk §347 PASSED, 15 of 15, no notes; archived.**
 
 ## 1. Problem
 
@@ -181,4 +181,4 @@ On the owner's word; `dev`; explicit pathspecs; product change and records in se
 - **Not done here:** the dev server needs a restart before browser testing (a new stylesheet; the restart was not
   permitted from this session).
 - **Committed** `3e8f8950` (product, 23 files) + `cde47e21` (records) on `dev`, 2026-10-19, on the owner's word; not
-  pushed. Owner walk §347 owed.
+  pushed. **Owner walk §347 ✅ PASSED 2026-10-19, 15 of 15 (W1–W4 all pass, no notes).**

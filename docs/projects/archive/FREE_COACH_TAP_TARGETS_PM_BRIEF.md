@@ -1,7 +1,8 @@
 # Free coach tap targets — PM brief
 
 > Hub: https://claude.ai/artifact/Rne2oGZjtLyKp2S74MXfJS · Plan: `FREE_COACH_TAP_TARGETS_PLAN.md`
-> Stage 0 drawn 2026-10-19; waiting on seven owner rulings.
+> Stage 0 drawn 2026-10-19; Q1–Q7 ruled as recommended and built the same day. **✅ CLOSED 2026-10-19 — owner walk §347
+> passed, 15 of 15.**
 
 **What changes for the coach.** On a phone, every control a free coach taps gets at least a fingertip-sized
 (44px) tap area. On Roster, Schedule and Fees (recommended option): instead of a small pencil and trash on every
