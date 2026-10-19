@@ -14,8 +14,15 @@ edits nothing, commits nothing and publishes nothing.** If you find a record tha
 
 - **Ordered by when to do things, not grouped by project** (owner, 2026-10-13: *"the list is not supposed to be grouped by
   project, it is supposed to be grouped in the order in which I should execute them, identifying those that can run in
-  parallel and those that need to run sequentially"*). Use **waves**. Inside a wave, items run in parallel unless marked
-  **→** (wait for the item before it). Say *why* something waits, in a few words.
+  parallel and those that need to run sequentially"*). Use **waves**. Say *why* something waits, in a few words.
+- **A "run in parallel" group holds only what can start now, each in a new chat** (owner, 2026-10-19, after a follow-up
+  step listed inside Wave 1's "all five in parallel" was started early in a fresh chat: *"make sure going forward follow
+  up sessions aren't in the same group as 'these can all run in parallel', that is conflicting and confusing"*).
+  Inside a wave, the parallel group is only the items the owner can open right now, each in its own new chat, and its
+  heading's count counts those items and nothing else. Anything that waits for another item, and any **follow-up** (the
+  next message to a chat that is already open: a build after its gate, the next part of a staged build), goes in a
+  **separate group below it**, headed as not yet (for example **"Later in this wave · don't start yet"**). Each item
+  there says which chat it belongs in and what it waits for, and is never numbered in sequence with the run-now items.
 - **Wave 1 lists every open QA walk with its link** (owner, 2026-10-14): a table of walk · what it checks · where to open
   it (the page's URL, the tab, and the walk's number or name).
 - **Product-owner voice.** Say what the owner sees and does, not file paths, function names or commit hashes. Name things
@@ -105,9 +112,10 @@ project the owner started belongs in the list.
 1. **Since the last list:** two to five lines.
 2. **⚠ Urgent**, only if real: a security fix not on production, or a release far behind (say how far, and what it
    carries).
-3. **Wave 1 · now:** the items, then the walk table with links, then any one-off sessions (a `/strategy` or `/marketing`
-   pass).
-4. **Waves 2 onward**, each with its parallel and sequential items and the reason for each "→".
+3. **Wave 1 · now:** the items that start now (the parallel group), then the walk table with links, then any one-off
+   sessions (a `/strategy` or `/marketing` pass), then, as its own group, **later in this wave**: the items that wait
+   and the follow-ups to chats already open (the 2026-10-19 grouping ruling above).
+4. **Waves 2 onward**, each with its parallel group and, separately, its later items with the reason each waits.
 5. **After the Club release:** the platform admin project.
 6. **Fillers.**
 7. **Still waiting on you:** each a question with your recommendation.
