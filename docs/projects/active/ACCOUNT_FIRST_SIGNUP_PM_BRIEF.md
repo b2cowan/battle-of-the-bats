@@ -2,7 +2,8 @@
 
 **Status:** drawn and design-reviewed 2026-10-18; all seven asks ruled as recommended the same day. Part 1 (Start a
 team, Start a league, Home's finish card, sign-in's Send the link again) built and committed `8647a4e8` 2026-10-18;
-owner walk §336 owed. Parts 2 (Run a tournament) and 3 (Coach Premium) next. Plan: `ACCOUNT_FIRST_SIGNUP_PLAN.md`.
+owner walk §336 owed. **Home's finish card revised 2026-10-19** (a workspace that waits for its name; drawn, OK'd by
+the owner and built the same day; §336's W3 and W5 rewritten, W16–W17 added). Parts 2 (Run a tournament) and 3 (Coach Premium) next. Plan: `ACCOUNT_FIRST_SIGNUP_PLAN.md`.
 
 ## What changes for the person signing up
 
@@ -13,7 +14,9 @@ the sport and billing before checkout). Nothing is asked twice, and the page say
 next.
 
 If they open the email on another device, or come back days later and sign in, FieldLogicHQ still knows what they came
-to start and takes them there. Home shows "Finish setting up your team" until they do.
+to start and takes them there. Home keeps a place for it under Workspaces — "Your team, not named yet" — until they name
+it, and then that same card carries the team's name. Nothing to dismiss, and nothing to lose (revised 2026-10-19; it
+was a "Finish creating your team" card with Not now).
 
 ## Why it matters
 

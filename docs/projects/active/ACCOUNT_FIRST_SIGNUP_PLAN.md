@@ -4,7 +4,11 @@
 source `docs/projects/active/ACCOUNT_FIRST_SIGNUP_HUB.html`, built by `.probe/account-first/build-hub.cjs`). **A1–A7
 ruled as recommended by the owner 2026-10-18** (see Rulings). **Part 1 (shared pieces + Start a team + Start a
 league) built and committed `8647a4e8` 2026-10-18** on `dev` after /simplify and /review (high risk) — see *As built,
-Part 1* below; owner walk §336 owed (hub QA tab). Parts 2 and 3 next, from `ACCOUNT_FIRST_SIGNUP_BUILD_PROMPT.md`.
+Part 1* below; owner walk §336 owed (hub QA tab) — **one walk with Verify Every Sign-up since 2026-10-19** (owner: §326's
+still-true checks carried into §336, its "name filled in" checks retired; this hub is the one home). Parts 2 and 3 next, from `ACCOUNT_FIRST_SIGNUP_BUILD_PROMPT.md`.
+**A4 revised 2026-10-19** (owner direction, walking §336): a workspace that waits for its name replaces the finish card —
+drawn on the hub's Home screen (v7), **OK'd by the owner the same day ("I approve") and built** (see *A4 revised* below).
+Part 1 is on `origin/dev` (staging) since its push, not on production; the revision reaches staging with its own push.
 Follows Verify Every Sign-up (`SIGNUP_EMAIL_VERIFICATION_HUB.html`, committed `80f25c09`, on prod 2026-10-18 job 281).
 PM brief: `ACCOUNT_FIRST_SIGNUP_PM_BRIEF.md`.
 
@@ -100,6 +104,7 @@ Send the link again on sign-in for a waiting account.
 - **A4** Home shows a finish card ("Finish creating your team" / league / organization; Coach Premium: "Finish setting
   up your Coaches Portal" + Continue setup) only to an account that came from a start door and has not finished. Not now
   hides it until the next sign-in; a **second** Not now hides it for good. "Nothing here yet" is hidden while it shows.
+  **Revised 2026-10-19** — see *A4 revised* below.
 - **A5** The Founding Season offer counts from the day the **account** was made: an account created before the
   sign-up close (`FOUNDING_SEASON_SIGNUP_CLOSE`, end of 2026-12-31) still gets the comp when its organization is created
   after it. The comp's end date is fixed for everyone (`FOUNDING_SEASON_END`), so a late organization gains nothing.
@@ -113,6 +118,81 @@ Send the link again on sign-in for a waiting account.
 Design review 2026-10-18 (D1–D12, on the hub's Decisions tab) is part of the drawings these rulings approved: no icon
 well on phone start forms, the plain "Your email is confirmed." sentence, 44px foot links, "Create Account" in the start
 forms and "Create account" on the Premium card, the resend inside the sign-in error box.
+
+## A4 revised (owner, 2026-10-19)
+
+**Why:** walking §336, two taps on Not now left the account on "Nothing here yet — follow a team" with no way back to
+the team it came to start (F05 was fixed only while the card showed; the plan's promise above, "an account with nothing
+sees a way to start something", was never built). Owner direction: a pending workspace that stays on Home for good, with
+no team name, so it is always there without being a nagging message, and it fills in with the team once it is named.
+
+**Ruled the same day:**
+- It shows **beside every other workspace**, not only when there is none: *"otherwise they lose that team … it should
+  look like a second team they still owe if it truly is."*
+- Wording: **Coaches Portal · Not named yet · Name your team**; no plan badge (nothing to price yet); Coach Premium has
+  its own words, **Setup not finished · Continue setup**.
+- A way for a fan (an account that never came from a start door) to start something stays **out of this project**.
+
+**Held from standing rulings:** it is a **placeholder drawn from the remembered door**, never a real nameless team,
+league or organization — a real row would bring back F01's orphans and V1's second-team-from-a-link-opened-twice, and
+would flip every rule that asks whether the account has a workspace. Nothing is made until the name is typed and
+Create is tapped.
+
+**As drawn (hub Home screen, v7; OK'd 2026-10-19):** the real Home workspace card, unchanged in frame; three slots differ —
+an amber **Not named yet** badge (the warm badge ink), the title **Your team**, and **Name your team** in the meta
+line's place, olive, in the sans at 12px because it is the one thing on the card that must be read (/design D13). The
+whole card opens step 2; its one door mark is the chevron every workspace card carries (D14). Solid edge — dashed
+already means a record that left a list (D16). /design 2026-10-19 D13–D17 are on the hub's Decisions tab. It sits after the workspaces already in use. League and organization wait as the Admin Area card they
+become (blue icon well); Coach Premium as a Coaches Portal card. Two free teams already share one Home card ("Your
+teams · N teams"), so for a coach who also assists on another free team, the waiting card folds into that one when
+named rather than filling in alone (today's rule, unchanged).
+
+**OK'd by the owner 2026-10-19 ("I approve") and built the same day.** What the build changed:
+- Home: the finish card becomes the waiting workspace, inside the Workspaces section; "Nothing here yet" stays hidden
+  while it shows (Home is not empty).
+- The card's rule drops the no-workspace condition (owner: every case) and the Not now count. The Not now write, its
+  route and the session sign-in-time read (`sessionSignedInAt`, `getClaims()` amr) go with it; `notNow`/`notNowAt`
+  on existing accounts are simply ignored.
+- It goes when the thing is made by any route. **The finish card hid itself once there was any workspace, so only two
+  paths cleared the door; now that the card shows beside every workspace, a missed path is a "Not named yet" card next
+  to the real team.** Census 2026-10-19 (helper, cited lines read): `clearStartDoor` is now also called by
+  `provisionStandaloneTeamWorkspace` once committed (every Coach Premium team: the checkout's comp and mock paths, both
+  Stripe webhook events) and by `linkTournamentRegistrationToBasicCoachTeam` when it creates or adopts a free team (the
+  join page; a signed-in tournament registration). Deliberately not cleared: a staff seat (owner: "otherwise they lose
+  that team"), a season rollover, a team moved into a club, and a tournament organization from the add-organization
+  form — not the team or league the door came to start; the organization door and its clear are Part 2's.
+- The waiting card is the Home workspace card itself (`WaitingWorkspaceCard`, `WAITING_WORKSPACE` in
+  `lib/start-door.ts`): the family's label, icon and accent; the amber badge Home already uses; the step as `.wsAction`
+  (sans, 0.75rem, olive). The payload field is `waitingWorkspace: { door }` (no email: the card no longer says "You
+  confirmed …"). Gone: `startCardVisible`, `withNotNow`, `sessionSignedInAt`, `recordStartDoorNotNow`,
+  `POST /api/account/start-door`, the `.start*` styles.
+- The league card keeps today's rule: only while Start a league can open (the beta is on and no invitation waits).
+- Walk §336: W3 and W5 rewritten (saved under their own keys, so old ticks never land on new steps); W4 and W6 reworded;
+  W16 (Coach Premium takes the waiting card's place, localhost) and W17 (beside a team they help with, staging after
+  the push) added. Help: the two answers that named the finish card (coaches first login; platform-admin Confirm
+  Email) say what Home shows now.
+- Guard `tests/unit/account-first-signup.test.ts` pins the new rule, the card, and every clear above.
+
+**Fixed in /review (high risk, four lenses, 2026-10-19):**
+- **A waiting league that could never open** (High): `/start/league` and `/api/league/create` turn away an account
+  already in a real organization, and the finish card's no-workspace rule had been hiding that case. The league door's
+  card now carries all three of the page's gates (beta on, no pending invite, `!userBelongsToOtherRealOrg`).
+- **Only a matching door clears** (Medium, two lenses): `clearStartDoor(userId, fulfils)` — a free team or a claim
+  clears `team`; a Premium team clears `team` and `premium`; a league clears `league`. **This supersedes Part 1's build
+  call "creating either a team or a league clears the door"**, made while the card hid itself on any workspace (so the
+  cross-clear was invisible); under "beside every workspace", a team made by a league-door account would have wiped the
+  league it still owes.
+- The card's link has no `aria-label` of its own: like every workspace card, its name is what it shows, so the visible
+  "Coaches Portal" / "Admin Area" is in it (label in name). The "route is gone" test resolves from the repo root.
+- Help search keywords gain "not named yet" (the old "finish creating your team" stays, for people who remember it).
+
+**Accepted, left as they are:** a failed clear (an auth hiccup, logged) leaves the card beside the real team until a
+later creation of that kind — Stripe's retry takes the already-provisioned path, which does not clear; a door set by
+hand in the account's own metadata can show a card for `organization`/`premium` whose page then turns the person away
+(their own Home only; nothing gated is exposed); accounts made on staging since `8647a4e8` that made a team by Premium
+or a claim keep their door until they make another (no backfill: staging-only, about a day). **Part 2 must call
+`clearStartDoor(user.id, ['organization'])` wherever an organization is made for the account** (`/api/org/create` and
+the new step 2), or the organization door's card stays beside the real organization.
 
 ## Build order (one build, three parts, each shippable alone)
 
@@ -159,7 +239,8 @@ forms and "Create account" on the Premium card, the resend inside the sign-in er
 
 **Calls made in the build** (the drawings did not decide them; told to the owner before building):
 - Home's card also needs **no workspace yet**, so a Premium buyer never sees a stale "Finish creating your team".
-- Creating **either** a team or a league clears the door.
+- Creating **either** a team or a league clears the door. *(Superseded 2026-10-19 by A4 revised + /review: only the
+  matching door clears — see "Fixed in /review" under A4 revised.)*
 - The step line shows on step 2 only on a **first day** (no workspace), the same condition as "Not now, go to Home".
 - The league's public address is **olive** (the drawing), not pale lime on cream — F08's fix on this form too.
 
