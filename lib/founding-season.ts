@@ -55,10 +55,11 @@ export async function lockStartDoorOrUndo(userId: string, door: string | null): 
 
 /**
  * May this creation get the Founding Season comp? The rule is `isFoundingSeasonOpenFor` (lib/plan-config.ts); this
- * reads its two server facts off the signed-in auth user. Every creation path that grants the comp asks here.
+ * reads its two server facts off the signed-in auth user. Every creation path that grants the comp asks here, and so
+ * does every screen that shows the offer (signed out is the window alone), so the price shown is the price charged.
  */
-export function foundingSeasonOfferFor(user: { created_at?: string | null; app_metadata?: unknown }, creates: OfferDoor): boolean {
-  return isFoundingSeasonOpenFor(user.created_at, lockedStartDoorOf(user.app_metadata) === creates);
+export function foundingSeasonOfferFor(user: { created_at?: string | null; app_metadata?: unknown } | null, creates: OfferDoor): boolean {
+  return isFoundingSeasonOpenFor(user?.created_at, lockedStartDoorOf(user?.app_metadata) === creates);
 }
 
 /**

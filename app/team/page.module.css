@@ -494,6 +494,23 @@
   font-weight: 600;
 }
 
+/* Account-first (Part 3, 2026-10-19): step 1's line under its button, and step 2's plain "Your email is confirmed."
+   (design review D5 — a sentence, not a box). */
+.fineNote {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--home-dim);
+  text-align: center;
+}
+
+.confirmedLine {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--home-ink);
+}
+
 /* Founding-season billing reframe: the amounts are the AFTER-Jan-1 price, not a charge now. */
 .billingNote {
   margin: 0 0 0.75rem;
@@ -582,22 +599,12 @@
   border-radius: var(--home-radius-sm);
 }
 
-.successBox,
 .errorBox {
   margin-top: 1rem;
   padding: 0.85rem 1rem;
   border-radius: var(--home-radius-sm);
   font-size: 0.8rem;
   line-height: 1.55;
-}
-
-.successBox {
-  border: 1px solid rgba(var(--home-olive-rgb), 0.3);
-  color: var(--home-olive);
-  background: var(--home-olive-soft);
-}
-
-.errorBox {
   border: 1px solid rgba(var(--home-live-rgb), 0.3);
   color: var(--home-live);
   background: var(--home-live-soft);

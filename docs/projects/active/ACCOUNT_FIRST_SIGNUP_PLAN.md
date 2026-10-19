@@ -342,3 +342,51 @@ widths; the start and sign-up forms are not in the layout registry):**
   everywhere but localhost, so nobody is affected.
 - The plan step's "Welcome to your Founding Season" banner still reads the window, so an organization that gets
   Tournament Plus free on its first choice after the close does not see it (a neighbour, not built here).
+
+## As built, Part 3 (2026-10-19)
+
+**Coach Premium and the claim link, account first.** `app/team/TeamSignupClient.tsx` is two steps on the same card (the
+sales page beside it unchanged): signed out, step 1 is the account alone — Create / Sign in kept, the step line
+("1 Your account · 2 Your team", D3), **Create account** with no arrow (D7), the drawn fine print; signed in, step 2 is
+today's signed-in card (team, sport, plan, Start free / checkout) after "Your email is confirmed." when the link brought
+them (D5). The `sessionStorage` draft is gone (F02). The check-your-email state is the one block with Send the link again
+(V3). The billing from the pricing page rides on the account (`user_metadata.start = { door: 'premium', billing? }`).
+
+- `/api/auth/team-signup`: the coach sign-up's throttle (`7bbfbebb`); **an existing-account check before the sign-up
+  link** (it had none — a sign-up link for an existing address can overwrite that account's password; the other
+  sign-ups always checked); the door remembered, and locked for the offer (`lockStartDoorOrUndo`). The link returns to
+  the claim (`/coaches/claim/<token>?confirmed=1`), the reactivation, or `/coaches/start?confirmed=1`.
+- **A claim token is never kept on the account** (build call, told to the owner): it is a secret that grants the team,
+  and account metadata rides in every session and shows in support views. **A claim sign-up remembers no door either**
+  (/review): Home's Continue setup and a resend from sign-in would have opened the blank Premium step, where a new team
+  could be bought and the claim left open. Its own email link returns to the claim; the organizer's claim email is the
+  way back. Its door is still **locked**, so the offer after the close holds for the claim (edge (b)). A reactivation
+  sign-up claims no door at all (a returning coach, not a start).
+- **Founding Season, edge (b):** `create-team-checkout` reads `foundingSeasonOfferFor(user, 'premium')`; `/coaches/start`
+  and the claim page pass the card the same answer (`foundingOffer`), so the price shown is the price charged.
+- **Home:** the waiting Premium card hides while the Premium checkout is closed (the page shows an interest form) and
+  once the account owns a live Premium portal.
+- Guards: `account-first-signup` (Part 3 block; mutation-checked 2026-10-19 — the draft put back, the existing-account
+  check disabled or moved after the link, and the checkout back on the bare window each fail it);
+  `coach-signup-throttle-guard` holds Coach Premium's limits.
+
+**/simplify (2026-10-19, four lenses):** who is signed in comes from the server (no session check in the browser, no
+flash of the wrong step); one step line, `components/auth/StartSteps`, shared by the start forms and the Premium card;
+`foundingSeasonOfferFor` takes a signed-out visitor (the window alone), so both Premium pages ask it directly; one
+billing reader (`parseStartBilling`); the shared `normalizeBillingCycle`; the gated and error notices defined once,
+above each step's button; one submit label; Home's two Premium reads run together. Skipped on purpose: one sign-up guard
+shared by the three sign-up routes (a shared limiter pools budgets on security routes — a deliberate call for later); a
+shared "would the step open" helper across Home, the pages and the create routes.
+
+**/review (2026-10-19, high risk, five lenses; typecheck, lint, tokens, contrast, spelling green for this scope;
+`check:layout` n/a — the Premium page is not in the layout registry):** no way found to get the Premium comp without
+the entitlement. Fixed: signing in on the card refreshes the page's answers (the offer was a signed-out visitor's, so
+after the close a held offer showed the list price); a waiting account that signs in on the card gets the
+check-your-email block with its resend (it was a dead end); a claim remembers no door and a reactivation claims none
+(above); a reactivated portal clears the door and its lock (`lib/team-checkout.ts`, as first provisioning does); the
+reactivation link keeps its team name, and a reactivation opens on Sign in; back from the link without a session opens on
+Sign in; one submit at a time; Home's Premium card hides when its reads fail; the Premium UAT smoke spec follows the
+two steps. Accepted: the shared sign-up limit can be spent by a spammer (as the coach sign-up's); "an account already
+exists" tells that one does (as every sign-up); the existing-account check scans the account list (as every sign-up);
+an account that began the old one-form Premium sign-up before this release and checks out after December 31 has no
+lock (it checked out at the link in the old flow); after an in-card sign-in the remembered billing is not re-applied.

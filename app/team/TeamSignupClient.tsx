@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { OFFERED_SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
 import {
   ArrowRight,
@@ -14,12 +14,15 @@ import {
   Users,
   WalletCards,
 } from 'lucide-react';
-import { getUser, signIn } from '@/lib/auth';
+import { signIn } from '@/lib/auth';
 import {
   COACHES_CLAIM_PATH,
   COACHES_START_PATH,
 } from '@/lib/coaches-portal-routes';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, normalizeBillingCycle, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { startDoorLinkPath } from '@/lib/start-door';
+import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
+import StartSteps from '@/components/auth/StartSteps';
 import styles from './page.module.css';
 
 type BillingCycle = 'monthly' | 'annual';
@@ -46,9 +49,19 @@ type TeamSignupClientProps = {
   prefillTeamName?: string | null;
   prefillSport?: string | null;
   prefillBasicTeamId?: string | null;
+  /** Back from the verification link: step 2 says "Your email is confirmed." */
+  confirmed?: boolean;
+  /** Who is signed in, from the server — step 2 straight away, with no session check in the browser. */
+  signedInEmail?: string | null;
+  /**
+   * Does this visitor get the Founding Season offer? The server answers (lib/founding-season.ts): the window while it
+   * is open; after it, only an account made by then that came through Coach Premium (edge (b), 2026-10-19) — the same
+   * rule the checkout applies, so the card never shows a price the checkout won't charge.
+   */
+  foundingOffer: boolean;
+  /** The billing chosen on the pricing page, remembered on the account across the email (Account-First Part 3). */
+  rememberedBilling?: BillingCycle | null;
 };
-
-const DRAFT_KEY = 'fieldlogichq.coaches.signup.draft';
 
 // Sourced from the shared canonical list (lib/sports) so the sport set never drifts again.
 // Coach signup stores the display label (legacy free-text convention), so we map to labels.
@@ -84,10 +97,6 @@ const AUTH_ERRORS: Record<string, string> = {
   network_error: 'Could not reach the auth service. Please try again.',
 };
 
-function normalizeBilling(value: string | null): BillingCycle {
-  return value === 'annual' ? 'annual' : 'monthly';
-}
-
 function slugPreview(value: string): string {
   return value
     .toLowerCase()
@@ -118,7 +127,12 @@ export default function TeamSignupClient({
   prefillTeamName = null,
   prefillSport = null,
   prefillBasicTeamId = null,
+  confirmed = false,
+  signedInEmail = null,
+  foundingOffer: foundingPromoActive,
+  rememberedBilling = null,
 }: TeamSignupClientProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const currentYear = new Date().getFullYear();
   const reactivationOrgSlug = searchParams.get('reactivateOrgSlug')?.trim() || null;
@@ -132,15 +146,17 @@ export default function TeamSignupClient({
   const [sport, setSport] = useState(normalizeSport(prefillSport));
   // Season is no longer asked at signup — it defaults silently (claim season, else current year).
   const seasonYear = claim?.seasonYear ?? currentYear;
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>(normalizeBilling(searchParams.get('billing')));
-  const [authMode, setAuthMode] = useState<AuthMode>('signup');
-  const [email, setEmail] = useState(claim?.contactEmail ?? '');
+  // The pricing page's billing: in the address, or remembered on the account across the email (F02: no browser-tab draft).
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>(normalizeBillingCycle(searchParams.get('billing') ?? rememberedBilling));
+  const [authMode, setAuthMode] = useState<AuthMode>((confirmed && !signedInEmail) || isReactivation ? 'signin' : 'signup');
+  // Signed in: the account's own address (a claim reserved for another address says so). Signed out: the claim's.
+  const [email, setEmail] = useState(signedInEmail ?? claim?.contactEmail ?? '');
   const [password, setPassword] = useState('');
   // Signup collects the coach's real name — a Basic account has none otherwise (was landing as "n/a").
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!signedInEmail);
+  const [startedSignedOut] = useState(!signedInEmail);
   const [busyLabel, setBusyLabel] = useState('');
   const [error, setError] = useState('');
   const [verificationEmail, setVerificationEmail] = useState('');
@@ -148,141 +164,128 @@ export default function TeamSignupClient({
   const busy = !!busyLabel;
   const cleanTeamName = teamName.trim();
   const previewSlug = slugPreview(cleanTeamName) || 'your-team';
-  const foundingPromoActive = isFoundingSeasonPromoActive('team');
   const planPrice = foundingPromoActive
     ? `Free through ${FOUNDING_SEASON_END_LABEL}`
     : billingCycle === 'annual'
       ? `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / season`
       : `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`;
-  const accountReady = isAuthenticated || (email.trim() && password.length >= (authMode === 'signup' ? 8 : 1));
-  // A new (signup) account must carry a real first + last name; already-authed / sign-in do not.
-  const nameReady = isAuthenticated || authMode === 'signin' || (!!firstName.trim() && !!lastName.trim());
+  // Account-first (Part 3, owner A1–A3 2026-10-18): signed out, the card is step 1 — the account alone; signed in, it is
+  // step 2 — today's signed-in card (team, sport, plan, then checkout). Nothing typed lives in the browser tab (F02).
+  const onAccountStep = !isAuthenticated;
+  // Step 2 shows the two-step line to someone who has just come through step 1: by the email link, or in this visit.
+  const cameThroughStep1 = !isReactivation && (confirmed || (isAuthenticated && startedSignedOut));
+  const accountReady = !!email.trim() && password.length >= (authMode === 'signup' ? 8 : 1)
+    && (authMode === 'signin' || (!!firstName.trim() && !!lastName.trim()));
   const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
-  const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && !!accountReady && nameReady && !busy;
-  // Isolate the draft per claim / per originating free team so a stale generic draft can't clobber a
-  // team-specific pre-fill (and vice versa).
-  const draftKey = claim
-    ? `${DRAFT_KEY}.${claim.token.slice(0, 12)}`
-    : prefillBasicTeamId
-      ? `${DRAFT_KEY}.team.${prefillBasicTeamId.slice(0, 12)}`
-      : DRAFT_KEY;
+  const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && isAuthenticated && !busy;
   const claimPath = claim ? `${COACHES_CLAIM_PATH}/${encodeURIComponent(claim.token)}` : COACHES_START_PATH;
-  const claimReturnPath = `${claimPath}?billing=${billingCycle}`;
   const returnPath = isReactivation
-    ? `${COACHES_START_PATH}?reactivateOrgSlug=${encodeURIComponent(reactivationOrgSlug ?? '')}`
-    : claimReturnPath;
+    ? `${COACHES_START_PATH}?${new URLSearchParams({ reactivateOrgSlug: reactivationOrgSlug ?? '', ...(reactivationTeamName ? { teamName: reactivationTeamName } : {}) })}`
+    : `${claimPath}?billing=${billingCycle}`;
+  // Where the verification link returns: step 2 of this card — the claim, the reactivation, or Coach Premium's own step
+  // (the account remembers the door, so a resend from sign-in lands there too).
+  const confirmedAt = (path: string) => `${path}${path.includes('?') ? '&' : '?'}confirmed=1`;
+  const linkPath = claim ? confirmedAt(claimPath) : isReactivation ? confirmedAt(returnPath) : startDoorLinkPath('premium');
+  const founding = foundingPromoActive && !isReactivation;
+  // The two notices sit just above whichever step's button is showing.
+  const notices = (
+    <>
+      {teamIsGated && <div className={styles.errorBox}>Coaches Portal self-serve signup is not open yet.</div>}
+      {error && <div className={styles.errorBox} role="alert">{error}</div>}
+    </>
+  );
+  const submitLabel = isWarmUpgrade
+    ? (founding ? 'Upgrade to Premium — free' : 'Upgrade now')
+    : isReactivation ? 'Start reactivation' : founding ? 'Start free' : 'Start checkout';
 
-  const seasonName = useMemo(() => {
-    return cleanTeamName ? `${cleanTeamName} ${seasonYear}` : `Team ${seasonYear}`;
-  }, [cleanTeamName, seasonYear]);
+  const seasonName = cleanTeamName ? `${cleanTeamName} ${seasonYear}` : `Team ${seasonYear}`;
 
-  useEffect(() => {
-    window.queueMicrotask(() => {
-      const stored = window.sessionStorage.getItem(draftKey);
-      if (stored) {
-        try {
-          const draft = JSON.parse(stored) as Partial<{
-            teamName: string;
-            sport: string;
-            billingCycle: BillingCycle;
-            email: string;
-          }>;
-          if (draft.teamName) setTeamName(draft.teamName);
-          // In a warm upgrade the sport is locked to the free team's (the picker is hidden) — don't
-          // let a stale saved draft override that prefill.
-          if (draft.sport && !isWarmUpgrade) setSport(draft.sport);
-          if (draft.billingCycle) setBillingCycle(draft.billingCycle);
-          if (draft.email) setEmail(draft.email);
-        } catch {
-          window.sessionStorage.removeItem(draftKey);
-        }
-      }
-
-      const billing = normalizeBilling(searchParams.get('billing'));
-      setBillingCycle(billing);
-    });
-
-    getUser()
-      .then(user => {
-        setIsAuthenticated(!!user);
-        if (user?.email) setEmail(user.email);
-      })
-      .catch(() => {
-        setIsAuthenticated(false);
-      })
-      .finally(() => setCheckingAuth(false));
-  }, [draftKey, searchParams, isWarmUpgrade]);
-
-  function saveDraft() {
-    window.sessionStorage.setItem(draftKey, JSON.stringify({
-      teamName,
-      sport,
-      billingCycle,
-      email,
-    }));
-  }
-
-  function validateForm() {
-    if (teamIsGated) return 'Coaches Portal self-serve signup is not open yet.';
-    if (cleanTeamName.length < 2) return 'Enter your team name.';
-    if (!isAuthenticated && !email.trim()) return 'Enter your email address.';
+  function validateAccount() {
+    if (!email.trim()) return 'Enter your email address.';
     if (claim && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase()) {
       return `This team claim is reserved for ${claim.contactEmail}.`;
     }
-    if (claimEmailMismatch) {
-      return `You are signed in as ${email}. Sign in with ${claim.contactEmail} to claim this team.`;
-    }
-    if (!isAuthenticated && authMode === 'signup') {
+    if (authMode === 'signup') {
       if (!firstName.trim()) return 'Enter your first name.';
       if (!lastName.trim()) return 'Enter your last name.';
       if (password.length < 8) return 'Password must be at least 8 characters.';
     }
-    if (!isAuthenticated && authMode === 'signin' && !password) {
-      return 'Enter your password.';
+    if (authMode === 'signin' && !password) return 'Enter your password.';
+    return '';
+  }
+
+  function validateTeam() {
+    if (teamIsGated) return 'Coaches Portal self-serve signup is not open yet.';
+    if (cleanTeamName.length < 2) return 'Enter your team name.';
+    if (claimEmailMismatch) {
+      return `You are signed in as ${email}. Sign in with ${claim.contactEmail} to claim this team.`;
     }
     return '';
   }
 
-  async function ensureAccount() {
-    if (isAuthenticated) return true;
-
+  /** Step 1: make the account (it remembers this door and the billing — lib/start-door.ts), or sign in. */
+  async function handleAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setError('');
+    const validationError = validateAccount();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setBusyLabel(authMode === 'signup' ? 'Creating account...' : 'Signing in...');
-    saveDraft();
-
-    if (authMode === 'signup') {
-      const signupRes = await fetch('/api/auth/team-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName: firstName.trim(), lastName: lastName.trim(), next: claimPath }),
-      });
-      const signupPayload = await readJson(signupRes);
-
-      if (!signupRes.ok) {
-        if (signupRes.status === 409) {
-          setAuthMode('signin');
-          throw new Error('That email already has a FieldLogicHQ account. Sign in to continue.');
+    try {
+      if (authMode === 'signup') {
+        const signupRes = await fetch('/api/auth/team-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email, password, firstName: firstName.trim(), lastName: lastName.trim(),
+            next: linkPath,
+            // A reactivation is a returning coach, not a start. A claim keeps the offer's locked door (edge (b)) but no
+            // remembered door: Home and a resend would lead to a blank Premium step, where a new team could be bought
+            // and the claim left open — the organizer's claim email is the way back.
+            ...(isReactivation ? {} : { startDoor: 'premium', billing: billingCycle, ...(claim ? { claim: true } : {}) }),
+          }),
+        });
+        const signupPayload = await readJson(signupRes);
+        if (!signupRes.ok) {
+          if (signupRes.status === 409) {
+            setAuthMode('signin');
+            throw new Error('That email already has a FieldLogicHQ account. Sign in to continue.');
+          }
+          throw new Error(getPayloadError(signupPayload, 'Could not create your account.'));
         }
-        throw new Error(getPayloadError(signupPayload, 'Could not create your account.'));
+        if (signupPayload.requiresEmailVerification === true) {
+          // The account waits until the person opens the email; the entries stay for "Use a different email" (the
+          // password is cleared).
+          setPassword('');
+          setVerificationEmail(typeof signupPayload.email === 'string' ? signupPayload.email : email);
+          setBusyLabel('');
+          return;
+        }
       }
-
-      if (signupPayload.requiresEmailVerification === true) {
-        setVerificationEmail(typeof signupPayload.email === 'string' ? signupPayload.email : email);
-        return false;
+      const signin = await signIn(email, password);
+      if (signin.error === 'email_not_confirmed') {
+        // A waiting account: the check-your-email block, with Send the link again (V3), rather than a dead end.
+        setPassword('');
+        setVerificationEmail(email.trim().toLowerCase());
+        setBusyLabel('');
+        return;
       }
+      if (signin.error) throw new Error(AUTH_ERRORS[signin.error] ?? signin.error);
+      setIsAuthenticated(true);
+      // The page's answers (the offer, the remembered billing) were a signed-out visitor's: ask again for this account,
+      // so the price shown is the price the checkout charges.
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     }
-
-    const signin = await signIn(email, password);
-    if (signin.error) {
-      throw new Error(AUTH_ERRORS[signin.error] ?? signin.error);
-    }
-
-    setIsAuthenticated(true);
-    return true;
+    setBusyLabel('');
   }
 
   async function startCheckout() {
     setBusyLabel('Starting checkout...');
-    saveDraft();
 
     const response = await fetch('/api/billing/create-team-checkout', {
       method: 'POST',
@@ -317,8 +320,6 @@ export default function TeamSignupClient({
       throw new Error('Checkout did not return a destination URL.');
     }
 
-    window.sessionStorage.removeItem(draftKey);
-
     // Founding-season comp path returns an INTERNAL portal URL (no Stripe). Route it through the
     // warm success screen (design_decisions S1-2): it names the free period, then "Open your season
     // workspace →" hands off into the operating portal (its own theme — the deliberate handoff). A
@@ -337,20 +338,18 @@ export default function TeamSignupClient({
     }
   }
 
+  /** Step 2: one tap starts the checkout (never automatically, V1). */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
-    setVerificationEmail('');
 
-    const validationError = validateForm();
+    const validationError = validateTeam();
     if (validationError) {
       setError(validationError);
       return;
     }
 
     try {
-      const accountReadyForCheckout = await ensureAccount();
-      if (!accountReadyForCheckout) return;
       await startCheckout();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -472,7 +471,7 @@ export default function TeamSignupClient({
           )}
         </div>
 
-        <form id="team-signup-form" className={styles.formPane} onSubmit={handleSubmit}>
+        <form id="team-signup-form" className={styles.formPane} onSubmit={onAccountStep ? handleAccount : handleSubmit}>
           <div className={styles.formHeader}>
             <div>
               <p className={styles.formKicker}>{claim ? 'Secure claim' : isWarmUpgrade ? 'Confirm your upgrade' : 'Start setup'}</p>
@@ -481,183 +480,206 @@ export default function TeamSignupClient({
             <Users size={22} />
           </div>
 
-          <div className={styles.sectionBlock}>
-            <div className={styles.sectionTitle}>
-              <ClipboardList size={16} />
-              Team details
-            </div>
-            <label className={styles.field}>
-              <span>Team name <span className={styles.reqMark}>*</span></span>
-              <input
-                value={teamName}
-                onChange={event => setTeamName(event.target.value)}
-                placeholder="Milton Thunder U15"
-                autoComplete="organization"
-                disabled={busy}
+          {/* The two-step line every start sign-up wears (A2; D3: "Your team"): on step 1, and on step 2 when the person
+              has just come through step 1 — by the email link or in this visit. */}
+          {((onAccountStep && !isReactivation) || cameThroughStep1) && (
+            <StartSteps current={onAccountStep ? 1 : 2} second="Your team" />
+          )}
+
+          {onAccountStep ? (
+            verificationEmail ? (
+              // Verify every sign-up (owner V3, 2026-10-16): the one check-your-email block, with Send the link again.
+              <VerifyEmailSent
+                tone="start"
+                email={verificationEmail}
+                lead={claim
+                  ? <>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight back here to activate {claim.teamName}.</>
+                  : <>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to naming your team.</>}
+                after={<>Open it on any phone or computer.</>}
+                resendNext={linkPath}
+                onChangeEmail={claim ? undefined : () => setVerificationEmail('')}
+                signInHref={`/auth/login?next=${encodeURIComponent(linkPath)}&email=${encodeURIComponent(verificationEmail)}`}
               />
-            </label>
-            {/* Warm upgrade already knows the sport (carried from the free team), so the picker
-                is hidden — the value still rides along to checkout. Cold/claim signups pick it. */}
-            {!isWarmUpgrade && (
-              <label className={styles.field}>
-                <span>Sport</span>
-                <select value={sport} onChange={event => setSport(event.target.value)} disabled={busy}>
-                  {SPORT_OPTIONS.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <p className={styles.previewLine}>
-              Portal URL preview: <span>fieldlogichq.ca/{previewSlug}</span>
-            </p>
-          </div>
-
-          <div className={styles.sectionBlock}>
-            <div className={styles.sectionTitle}>
-              <WalletCards size={16} />
-              Billing
-            </div>
-            {foundingPromoActive && (
-              <p className={styles.billingNote}>
-                Free through {FOUNDING_SEASON_END_LABEL} — no card required. Pick the plan you&apos;ll move to after; change it any time before then.
-              </p>
-            )}
-            <div className={styles.segmented} role="group" aria-label="Billing cycle">
-              <button
-                type="button"
-                className={billingCycle === 'annual' ? styles.segmentActive : ''}
-                onClick={() => setBillingCycle('annual')}
-                disabled={busy}
-                aria-pressed={billingCycle === 'annual'}
-              >
-                Seasonal{' '}
-                <span>{foundingPromoActive && 'then '}{formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD</span>
-              </button>
-              <button
-                type="button"
-                className={billingCycle === 'monthly' ? styles.segmentActive : ''}
-                onClick={() => setBillingCycle('monthly')}
-                disabled={busy}
-                aria-pressed={billingCycle === 'monthly'}
-              >
-                Monthly{' '}
-                <span>{foundingPromoActive && 'then '}{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD</span>
-              </button>
-            </div>
-          </div>
-
-          {!isAuthenticated && !checkingAuth && (
-            <div className={styles.sectionBlock}>
-              <div className={styles.authModeRow}>
-                <div className={styles.sectionTitle}>
-                  <LogIn size={16} />
-                  Account
+            ) : (
+              <>
+                <div className={styles.sectionBlock}>
+                  <div className={styles.authModeRow}>
+                    <div className={styles.sectionTitle}>
+                      <LogIn size={16} />
+                      Account
+                    </div>
+                    <div className={styles.authToggle} role="group" aria-label="Account mode">
+                      <button
+                        type="button"
+                        className={authMode === 'signup' ? styles.authActive : ''}
+                        onClick={() => setAuthMode('signup')}
+                        disabled={busy}
+                      >
+                        Create
+                      </button>
+                      <button
+                        type="button"
+                        className={authMode === 'signin' ? styles.authActive : ''}
+                        onClick={() => setAuthMode('signin')}
+                        disabled={busy}
+                      >
+                        Sign in
+                      </button>
+                    </div>
+                  </div>
+                  {authMode === 'signup' && (
+                    <div className={styles.twoCol}>
+                      <label className={styles.field}>
+                        <span>First name <span className={styles.reqMark}>*</span></span>
+                        <input
+                          value={firstName}
+                          onChange={event => setFirstName(event.target.value)}
+                          placeholder="Jordan"
+                          autoComplete="given-name"
+                          disabled={busy}
+                        />
+                      </label>
+                      <label className={styles.field}>
+                        <span>Last name <span className={styles.reqMark}>*</span></span>
+                        <input
+                          value={lastName}
+                          onChange={event => setLastName(event.target.value)}
+                          placeholder="Lee"
+                          autoComplete="family-name"
+                          disabled={busy}
+                        />
+                      </label>
+                    </div>
+                  )}
+                  <label className={styles.field}>
+                    <span>Email <span className={styles.reqMark}>*</span></span>
+                    <input
+                      value={email}
+                      onChange={event => setEmail(event.target.value)}
+                      type="email"
+                      placeholder="coach@example.com"
+                      autoComplete="email"
+                      disabled={busy || !!claim}
+                    />
+                  </label>
+                  <label className={styles.field}>
+                    <span>Password</span>
+                    <input
+                      value={password}
+                      onChange={event => setPassword(event.target.value)}
+                      type="password"
+                      placeholder={authMode === 'signup' ? 'At least 8 characters' : 'Enter password'}
+                      autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
+                      disabled={busy}
+                    />
+                  </label>
                 </div>
-                <div className={styles.authToggle} role="group" aria-label="Account mode">
+
+                {notices}
+                {/* D7: "Create account", no dash or arrow. */}
+                <button type="submit" className={styles.primaryButton} disabled={busy || !accountReady || teamIsGated}>
+                  <span>{busyLabel || (authMode === 'signup' ? 'Create account' : 'Sign in')}</span>
+                </button>
+                {authMode === 'signup' && (
+                  <p className={styles.fineNote}>
+                    {claim
+                      ? 'Next, confirm your email. Then check your team and pick the plan you\'ll move to.'
+                      : 'Next, confirm your email. Then name your team, pick the sport and the plan you\'ll move to.'}
+                  </p>
+                )}
+              </>
+            )
+          ) : (
+            <>
+              {confirmed && <p className={styles.confirmedLine}>Your email is confirmed.</p>}
+              <div className={styles.sectionBlock}>
+                <div className={styles.sectionTitle}>
+                  <ClipboardList size={16} />
+                  Team details
+                </div>
+                <label className={styles.field}>
+                  <span>Team name <span className={styles.reqMark}>*</span></span>
+                  <input
+                    value={teamName}
+                    onChange={event => setTeamName(event.target.value)}
+                    placeholder="Milton Thunder U15"
+                    autoComplete="organization"
+                    disabled={busy}
+                  />
+                </label>
+                {/* Warm upgrade already knows the sport (carried from the free team), so the picker
+                    is hidden — the value still rides along to checkout. Cold/claim signups pick it. */}
+                {!isWarmUpgrade && (
+                  <label className={styles.field}>
+                    <span>Sport</span>
+                    <select value={sport} onChange={event => setSport(event.target.value)} disabled={busy}>
+                      {SPORT_OPTIONS.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <p className={styles.previewLine}>
+                  Portal URL preview: <span>fieldlogichq.ca/{previewSlug}</span>
+                </p>
+              </div>
+
+              <div className={styles.sectionBlock}>
+                <div className={styles.sectionTitle}>
+                  <WalletCards size={16} />
+                  Billing
+                </div>
+                {foundingPromoActive && (
+                  <p className={styles.billingNote}>
+                    Free through {FOUNDING_SEASON_END_LABEL} — no card required. Pick the plan you&apos;ll move to after; change it any time before then.
+                  </p>
+                )}
+                <div className={styles.segmented} role="group" aria-label="Billing cycle">
                   <button
                     type="button"
-                    className={authMode === 'signup' ? styles.authActive : ''}
-                    onClick={() => setAuthMode('signup')}
+                    className={billingCycle === 'annual' ? styles.segmentActive : ''}
+                    onClick={() => setBillingCycle('annual')}
                     disabled={busy}
+                    aria-pressed={billingCycle === 'annual'}
                   >
-                    Create
+                    Seasonal{' '}
+                    <span>{foundingPromoActive && 'then '}{formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD</span>
                   </button>
                   <button
                     type="button"
-                    className={authMode === 'signin' ? styles.authActive : ''}
-                    onClick={() => setAuthMode('signin')}
+                    className={billingCycle === 'monthly' ? styles.segmentActive : ''}
+                    onClick={() => setBillingCycle('monthly')}
                     disabled={busy}
+                    aria-pressed={billingCycle === 'monthly'}
                   >
-                    Sign in
+                    Monthly{' '}
+                    <span>{foundingPromoActive && 'then '}{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD</span>
                   </button>
                 </div>
               </div>
-              {authMode === 'signup' && (
-                <div className={styles.twoCol}>
-                  <label className={styles.field}>
-                    <span>First name <span className={styles.reqMark}>*</span></span>
-                    <input
-                      value={firstName}
-                      onChange={event => setFirstName(event.target.value)}
-                      placeholder="Jordan"
-                      autoComplete="given-name"
-                      disabled={busy}
-                    />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Last name <span className={styles.reqMark}>*</span></span>
-                    <input
-                      value={lastName}
-                      onChange={event => setLastName(event.target.value)}
-                      placeholder="Lee"
-                      autoComplete="family-name"
-                      disabled={busy}
-                    />
-                  </label>
-                </div>
-              )}
-              <label className={styles.field}>
-                <span>Email <span className={styles.reqMark}>*</span></span>
-                <input
-                  value={email}
-                  onChange={event => setEmail(event.target.value)}
-                  type="email"
-                  placeholder="coach@example.com"
-                  autoComplete="email"
-                  disabled={busy || !!claim}
-                />
-              </label>
-              <label className={styles.field}>
-                <span>Password</span>
-                <input
-                  value={password}
-                  onChange={event => setPassword(event.target.value)}
-                  type="password"
-                  placeholder={authMode === 'signup' ? 'At least 8 characters' : 'Enter password'}
-                  autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
-                  disabled={busy}
-                />
-              </label>
-            </div>
-          )}
 
-          {(isAuthenticated || checkingAuth) && (
-            <div className={claimEmailMismatch ? styles.errorBox : styles.sessionState}>
-              <ShieldCheck size={16} />
-              {checkingAuth
-                ? 'Checking your session...'
-                : claimEmailMismatch
+              <div className={claimEmailMismatch ? styles.errorBox : styles.sessionState}>
+                <ShieldCheck size={16} />
+                {claimEmailMismatch
                   ? `Signed in as ${email}. This claim is reserved for ${claim?.contactEmail}.`
                   : 'Signed in and ready for checkout.'}
-            </div>
-          )}
+              </div>
+              {notices}
+              <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
+                <span>{busyLabel || submitLabel}</span>
+                <ArrowRight size={16} />
+              </button>
 
-          {verificationEmail && (
-            <div className={styles.successBox}>
-              Verification email sent to {verificationEmail}. After verifying, return here and continue checkout.
-            </div>
+              <div className={styles.footerRow}>
+                {foundingPromoActive
+                  ? <span className={styles.footerNote}><CalendarDays size={14} /> Free through {FOUNDING_SEASON_END_LABEL}</span>
+                  : <span><CalendarDays size={14} /> {seasonName}</span>}
+                {isWarmUpgrade
+                  ? <span className={styles.footerNote}>Cancel anytime</span>
+                  : <Link href="/pricing">Compare plans</Link>}
+              </div>
+            </>
           )}
-          {teamIsGated && (
-            <div className={styles.errorBox}>Coaches Portal self-serve signup is not open yet.</div>
-          )}
-          {error && <div className={styles.errorBox}>{error}</div>}
-
-          <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
-            <span>{busyLabel || (foundingPromoActive && !isReactivation
-              ? (isAuthenticated ? (isWarmUpgrade ? 'Upgrade to Premium — free' : 'Start free') : authMode === 'signup' ? 'Create my team — free' : 'Sign in and start free')
-              : (isAuthenticated ? (isWarmUpgrade ? 'Upgrade now' : isReactivation ? 'Start reactivation' : 'Start checkout') : authMode === 'signup' ? 'Create account and checkout' : 'Sign in and checkout'))}</span>
-            <ArrowRight size={16} />
-          </button>
-
-          <div className={styles.footerRow}>
-            {foundingPromoActive
-              ? <span className={styles.footerNote}><CalendarDays size={14} /> Free through {FOUNDING_SEASON_END_LABEL}</span>
-              : <span><CalendarDays size={14} /> {seasonName}</span>}
-            {isWarmUpgrade
-              ? <span className={styles.footerNote}>Cancel anytime</span>
-              : <Link href="/pricing">Compare plans</Link>}
-          </div>
         </form>
       </section>
     </main>

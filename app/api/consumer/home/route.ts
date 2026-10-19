@@ -23,6 +23,8 @@ import { reconcilePendingInvitesForUser, listPendingInvitesForUser, withInvitati
 import { listPendingClubCoachInvitesForEmail } from '@/lib/assistant-invites';
 import { readStartDoor } from '@/lib/start-door';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-entitlements';
 
 const EMPTY: ConsumerHomePayload = {
   signedIn: false,
@@ -118,9 +120,14 @@ export const GET = withObservability(async () => {
   const start = readStartDoor(user.user_metadata);
   const makesAnOrganization = start?.door === 'league' || start?.door === 'organization';
   const leagueBetaOff = start?.door === 'league' && process.env.LEAGUE_STARTER_BETA !== 'true';
-  const stepOpens = !makesAnOrganization || (
+  // Coach Premium (Part 3): /coaches/start shows an interest form while the Premium checkout is closed, and its checkout
+  // turns away an account that already owns a live Premium portal — the card would lead to neither.
+  // A read that fails hides the card: it is a way in, never the gate (the checkout refuses either case itself).
+  const premiumOpens = start?.door !== 'premium' || await Promise.all([getPlanGatingMap(), getActiveOwnedTeamWorkspace(user.id)])
+    .then(([gating, portal]) => !gating.team && !portal, () => false);
+  const stepOpens = premiumOpens && (!makesAnOrganization || (
     !leagueBetaOff && pendingInvites.length === 0 && !(await userBelongsToOtherRealOrg(user.id))
-  );
+  ));
   const waitingWorkspace = start && stepOpens ? { door: start.door } : null;
 
   const payload: ConsumerHomePayload = {

@@ -5,9 +5,13 @@ import styles from '../../../team/page.module.css';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getTeamWorkspaceClaimByToken } from '@/lib/team-workspace-claims';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
+import { getAuthUserCached } from '@/lib/supabase-server';
+import { foundingSeasonOfferFor } from '@/lib/founding-season';
+import { readStartDoor } from '@/lib/start-door';
 
 type PageProps = {
   params: Promise<{ token: string }>;
+  searchParams?: Promise<{ confirmed?: string }>;
 };
 
 export const metadata = {
@@ -36,14 +40,16 @@ function ClaimUnavailable({ title, body }: { title: string; body: string }) {
   );
 }
 
-export default async function CoachesPortalClaimPage({ params }: PageProps) {
+export default async function CoachesPortalClaimPage({ params, searchParams }: PageProps) {
   const { token } = await params;
-  const [gatingMap, claim] = await Promise.all([
+  const confirmed = (await searchParams)?.confirmed === '1';
+  const [gatingMap, claim, user] = await Promise.all([
     getPlanGatingMap(),
     getTeamWorkspaceClaimByToken(token).catch(error => {
       console.error('[coaches claim] lookup error:', error);
       return null;
     }),
+    getAuthUserCached(),
   ]);
 
   if (!claim) {
@@ -80,7 +86,15 @@ export default async function CoachesPortalClaimPage({ params }: PageProps) {
 
   return (
     <Suspense fallback={null}>
-      <TeamSignupClient teamIsGated={gatingMap.team} claim={prefill} />
+      {/* Account-first (Part 3): the claim keeps its server re-fill; the offer is the server's answer (edge (b)). */}
+      <TeamSignupClient
+        teamIsGated={gatingMap.team}
+        claim={prefill}
+        confirmed={confirmed}
+        foundingOffer={foundingSeasonOfferFor(user, 'premium')}
+        rememberedBilling={readStartDoor(user?.user_metadata)?.billing ?? null}
+        signedInEmail={user?.email ?? null}
+      />
     </Suspense>
   );
 }

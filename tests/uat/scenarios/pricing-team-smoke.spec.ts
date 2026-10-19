@@ -20,12 +20,13 @@ test.describe('public pricing Team segment', () => {
     await anonPage.goto('/coaches/start?billing=annual');
     await expect(anonPage).toHaveURL(/\/coaches\/start\?billing=annual/, { timeout: 30_000 });
     await expect(anonPage.getByRole('heading', { name: 'From tournament weekend to season workspace.' })).toBeVisible();
-    // Promo-robust: while the Founding Season promo runs the annual price renders as
-    // "Seasonal then $290 CAD"; afterwards as "$290 CAD / season". Substring matching covers
-    // both, so this spec no longer breaks at either promo flip (the old exact string pinned
-    // the promo-inactive branch and failed the day the promo launched).
-    await expect(anonPage.getByText('$290 CAD').first()).toBeVisible();
-    await expect(anonPage.getByRole('button', { name: /Seasonal/ })).toHaveAttribute('aria-pressed', 'true');
+    // Account first (Account-First Sign-up Part 3, 2026-10-19): signed out, the card is step 1 — the account alone. The
+    // team, the sport and the plan (where "Seasonal" and "$290 CAD" live) are step 2, after the email link; the
+    // ?billing= choice rides on the account to it. So no billing buttons here, signed out.
+    await expect(anonPage.getByRole('heading', { name: 'Create your Coaches Portal' })).toBeVisible();
+    await expect(anonPage.getByRole('list', { name: 'Sign-up steps' })).toBeVisible();
+    await expect(anonPage.getByRole('button', { name: 'Create account' })).toBeVisible();
+    await expect(anonPage.getByRole('button', { name: /Seasonal/ })).toHaveCount(0);
     await expect(anonPage.getByText('Keep the team running after the tournament')).toBeVisible();
     await expect(anonPage.getByText('Host an invite-only round robin or exhibition weekend')).toBeVisible();
 
@@ -33,6 +34,6 @@ test.describe('public pricing Team segment', () => {
     await expect(anonPage.getByRole('heading', { name: 'From tournament weekend to season workspace.' })).toBeVisible({
       timeout: 30_000,
     });
-    await expect(anonPage.getByText('$290 CAD').first()).toBeVisible();
+    await expect(anonPage.getByRole('button', { name: 'Create account' })).toBeVisible();
   });
 });

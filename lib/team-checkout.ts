@@ -16,6 +16,7 @@ import {
 import type { SubscriptionStatus } from './types';
 import type { TeamEntitlementStatus, TeamWorkspaceSource } from './team-workspace-entitlements';
 import { getActiveOwnedTeamWorkspace } from './team-workspace-entitlements';
+import { clearStartDoor } from './start-door-server';
 
 export type TeamCheckoutRequest = {
   teamName: string;
@@ -797,6 +798,10 @@ async function reactivateCompTeamWorkspace(
       claimedByUserId: parsed.ownerUserId,
     });
   }
+
+  // As first provisioning does: the portal is back, so no remembered or locked Coach Premium door outlives it — a lock
+  // left behind would carry the Founding offer to a later portal after the close (/review 2026-10-19, Part 3).
+  await clearStartDoor(parsed.ownerUserId, ['team', 'premium']);
 
   return {
     provisioned: false,

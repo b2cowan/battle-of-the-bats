@@ -26,3 +26,21 @@ describe('the coach sign-up throttle', () => {
     assert.match(route, /return json\(\{ error: 'Too many sign-up attempts\. Please wait a few minutes and try again\.' \}, 429\);/);
   });
 });
+
+/** Coach Premium's account step gets the same limits (Account-First Sign-up Part 3, 2026-10-19) — it had none. */
+describe('the Coach Premium sign-up throttle', () => {
+  const route = readCode('app/api/auth/team-signup/route.ts');
+
+  it('has the same three limits', () => {
+    assert.match(route, /const ipLimiter = new FixedWindowRateLimiter\(15 \* MINUTE, 15\);/);
+    assert.match(route, /const emailLimiter = new FixedWindowRateLimiter\(60 \* MINUTE, 5\);/);
+    assert.match(route, /const globalLimiter = new FixedWindowRateLimiter\(5 \* MINUTE, 60\);/);
+  });
+
+  it('refuses with 429 after the request is well-formed and before the account is made', () => {
+    const check = at(route, "if (!ipLimiter.take(ip) || !emailLimiter.take(normalizedEmail) || !globalLimiter.take('global')) {");
+    assert.ok(at(route, "return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });") < check, 'after the shape checks');
+    assert.ok(check < at(route, 'supabaseAdmin.auth.admin.generateLink('), 'before the account is made');
+    assert.match(route, /return NextResponse\.json\(\{ error: 'Too many sign-up attempts\. Please wait a few minutes and try again\.' \}, \{ status: 429 \}\);/);
+  });
+});

@@ -2,13 +2,14 @@
 import { useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarDays, Check, Eye, EyeOff, Mail, MailCheck, Tag, Trophy, Users } from 'lucide-react';
+import { CalendarDays, Eye, EyeOff, Mail, MailCheck, Tag, Trophy, Users } from 'lucide-react';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
+import StartSteps from '@/components/auth/StartSteps';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { START_DOOR_PATH, startDoorLinkPath, type StartPricing, type StartStepViewer } from '@/lib/start-door';
 import styles from './startForm.module.css';
 
-/** The doors this form serves (Coach Premium keeps its own card until Part 3). */
+/** The doors this form serves (Coach Premium keeps its own card, with the same account-first steps — Part 3). */
 type FormDoor = 'team' | 'league' | 'organization';
 
 /** Each door's words, step 1 and step 2 (the hub's drawings). */
@@ -77,27 +78,6 @@ const SIGNUP_ROUTE: Record<FormDoor, string> = {
 /** A door's create step, carrying the pricing page's plan for an account that signs in instead of signing up. */
 function stepHref(door: FormDoor, pricing: StartPricing | null | undefined): string {
   return pricing ? `${START_DOOR_PATH[door]}?${new URLSearchParams({ plan: pricing.plan, billing: pricing.billing })}` : START_DOOR_PATH[door];
-}
-
-/**
- * The two-step line (owner A2, design review D2, 2026-10-18): "1 Your account · 2 Your team". It says the naming step
- * is coming, which is what makes step 2 read as the second half rather than a repeat. Not a control.
- */
-function StartSteps({ current, second }: { current: 1 | 2; second: string }) {
-  return (
-    <ol className={styles.steps} aria-label="Sign-up steps">
-      <li className={current === 1 ? styles.stepOn : styles.stepDone} aria-current={current === 1 ? 'step' : undefined}>
-        <span className={styles.stepNum}>
-          {current === 1 ? '1' : <Check size={12} strokeWidth={3} role="img" aria-label="Done" />}
-        </span>
-        <span>Your account</span>
-      </li>
-      <li className={current === 2 ? styles.stepOn : undefined} aria-current={current === 2 ? 'step' : undefined}>
-        <span className={styles.stepNum}>2</span>
-        <span>{second}</span>
-      </li>
-    </ol>
-  );
 }
 
 /** A start form's heading: the door's own name, its line, and (on a first day) the two steps. */

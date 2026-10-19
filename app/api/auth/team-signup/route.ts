@@ -4,29 +4,56 @@ import { COACHES_START_PATH, normalizeCoachPortalNext } from '@/lib/coaches-port
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
+import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
+import { parseStartBilling, parseStartDoor, startDoorLinkPath } from '@/lib/start-door';
+import { lockStartDoorOrUndo } from '@/lib/founding-season';
 
 // The verification rule is shared by every sign-up (lib/signup-verification.ts, 2026-10-16).
+
+/**
+ * Coach Premium's account step (Account-First Sign-up Part 3, owner A1–A7 2026-10-18): the account alone — the team,
+ * the sport and the plan are asked on step 2, after the email link. The account remembers its door with the billing
+ * picked on the pricing page and, from a claim link, the claim (lib/start-door.ts — screens only), and locks the door for
+ * the Founding Season offer after the close (edge (b), 2026-10-19).
+ *
+ * Throttled as the coach sign-up is (`7bbfbebb`): per source, per address, and a global ceiling.
+ */
+const MINUTE = 60_000;
+const ipLimiter = new FixedWindowRateLimiter(15 * MINUTE, 15);      // per source IP (spoofable → global backstop)
+const emailLimiter = new FixedWindowRateLimiter(60 * MINUTE, 5);    // per address being signed up
+const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 60);   // spoofing-proof ceiling across all callers
 
 async function rollbackAuthUser(id: string) {
   const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
   if (error) console.error('Coaches Portal signup rollback auth user error:', error);
 }
 
-function normalizeNext(value: unknown): string {
+function normalizeNext(value: unknown, fallback: string): string {
   return typeof value === 'string'
-    ? normalizeCoachPortalNext(value.slice(0, 240), COACHES_START_PATH)
-    : COACHES_START_PATH;
+    ? normalizeCoachPortalNext(value.slice(0, 240), fallback)
+    : fallback;
 }
 
 export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
 
   try {
-    const { email, password, next, firstName, lastName } = await req.json();
+    const { email, password, next, firstName, lastName, startDoor, billing, claim } = await req.json();
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     const normalizedPassword = String(password ?? '');
-    const safeNext = normalizeNext(next);
+    // The account remembers Coach Premium's door with the billing from the pricing page. A claim sign-up remembers no
+    // door (/review 2026-10-19): Home's Continue setup and a resend from sign-in would open the blank Premium step, where
+    // a new team could be bought and the claim left open — its own link (`next`) and the organizer's claim email are its
+    // way back. Its token is never kept on the account either (a secret that grants the team; metadata rides in every
+    // session). The door is still LOCKED below for both, so the offer after the close holds for the claim too (edge (b)).
+    const premiumDoor = parseStartDoor(startDoor, ['premium'] as const);
+    const premiumBilling = parseStartBilling(billing);
+    const startRecord = premiumDoor && claim !== true
+      ? { door: premiumDoor, ...(premiumBilling && { billing: premiumBilling }) }
+      : null;
+    const safeNext = normalizeNext(next, premiumDoor ? startDoorLinkPath('premium') : COACHES_START_PATH);
     // Coach's real name (collected at signup so a Basic account isn't nameless). Optional here so a
     // signed-in / claim caller isn't blocked; the signup form enforces it before this call.
     const first = String(firstName ?? '').trim().slice(0, 80);
@@ -34,9 +61,10 @@ export const POST = withObservability(async (req: Request) => {
     const fullName = `${first} ${last}`.trim();
     // display_name too, matching the coach-signup route — the platform-admin org-detail member list
     // reads display_name with no fallback, so omitting it would show a blank name there.
-    const userMetadata = (first || last)
-      ? { first_name: first, last_name: last, full_name: fullName, display_name: fullName }
-      : undefined;
+    const metadata: Record<string, unknown> = {};
+    if (first || last) Object.assign(metadata, { first_name: first, last_name: last, full_name: fullName, display_name: fullName });
+    if (startRecord) metadata.start = startRecord;
+    const userMetadata = Object.keys(metadata).length > 0 ? metadata : undefined;
 
     if (!normalizedEmail || !normalizedPassword) {
       return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
@@ -48,6 +76,18 @@ export const POST = withObservability(async (req: Request) => {
     // off, an unclaimed staff address could otherwise be registered by anyone, and platform roles follow the email.
     if (await isPlatformAdminEmail(normalizedEmail)) {
       return NextResponse.json({ error: 'This email address cannot be used to create an account.' }, { status: 403 });
+    }
+    // Only a well-formed request spends budget; most specific first, so a throttled caller can't spend the global one.
+    const ip = clientIpFrom(req);
+    if (!ipLimiter.take(ip) || !emailLimiter.take(normalizedEmail) || !globalLimiter.take('global')) {
+      console.warn(`[auth/team-signup] rate-limited sign-up attempt ip=${ip}`);
+      return NextResponse.json({ error: 'Too many sign-up attempts. Please wait a few minutes and try again.' }, { status: 429 });
+    }
+    // An existing account answers "sign in" before anything is made: a sign-up link generated for an existing address
+    // would overwrite that account's password and rotate its token (the other sign-ups check the same; found building
+    // Part 3, 2026-10-19 — this route had no check).
+    if (await authAccountExistsForEmail(normalizedEmail)) {
+      return NextResponse.json({ error: 'An account already exists for this email. Please sign in instead.' }, { status: 409 });
     }
 
     const requireVerification = shouldRequireEmailVerification();
@@ -99,6 +139,13 @@ export const POST = withObservability(async (req: Request) => {
       }
 
       userId = authData.user.id;
+    }
+
+    // The Founding Season offer after the close reads a locked copy of the door (lib/founding-season.ts, edge (b)
+    // 2026-10-19); a failed lock has already undone the account.
+    if (!(await lockStartDoorOrUndo(userId, premiumDoor))) {
+      userId = null;
+      return NextResponse.json({ error: 'Account could not be created. Please try again.' }, { status: 500 });
     }
 
     if (requireVerification) {

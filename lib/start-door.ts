@@ -34,12 +34,19 @@ export interface StartDoorRecord {
   door: StartDoor;
   /** Only on the organization door, and only when the person came from a plan on the pricing page. */
   pricing?: StartPricing;
+  /** Only on Coach Premium's door: the billing chosen before the account was made (Part 3), so step 2 opens on it. */
+  billing?: StartBilling;
+}
+
+/** A billing choice from an untrusted value, or none. */
+export function parseStartBilling(billing: unknown): StartBilling | null {
+  return billing === 'annual' || billing === 'monthly' ? billing : null;
 }
 
 /** The pricing page's plan and billing from untrusted values; no plan is none, and billing defaults to monthly. */
 export function parseStartPricing(plan: unknown, billing: unknown): StartPricing | null {
   if (typeof plan !== 'string' || !(START_PLANS as readonly string[]).includes(plan)) return null;
-  return { plan: plan as StartPlan, billing: billing === 'annual' ? 'annual' : 'monthly' };
+  return { plan: plan as StartPlan, billing: parseStartBilling(billing) ?? 'monthly' };
 }
 
 /** The plan step, with the pricing page's choice when there was one (`/{org}/admin/onboarding`). */
@@ -81,8 +88,12 @@ export function readStartDoor(userMetadata: unknown): StartDoorRecord | null {
   const { door: rawDoor, plan, billing } = raw as { door?: unknown; plan?: unknown; billing?: unknown };
   const door = parseStartDoor(rawDoor, DOORS);
   if (!door) return null;
-  const pricing = door === 'organization' ? parseStartPricing(plan, billing) : null;
-  return pricing ? { door, pricing } : { door };
+  if (door === 'organization') {
+    const pricing = parseStartPricing(plan, billing);
+    return pricing ? { door, pricing } : { door };
+  }
+  const premiumBilling = door === 'premium' ? parseStartBilling(billing) : null;
+  return premiumBilling ? { door, billing: premiumBilling } : { door };
 }
 
 /** Where the verification link (and every resend of it) returns: the door's create step, marked as just confirmed. */
