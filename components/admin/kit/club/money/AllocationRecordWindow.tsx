@@ -24,8 +24,9 @@
  *                    held, its reason under the field; ✓ saves what is pending first. A closed year's allocation reads
  *                    with no pencil and one locked line; its unpaid installments stay receivable.
  *   a team's bill  — one level in, IN PLACE, behind "← {the allocation}" (Ask 4): 3a's bill room unchanged in what it
- *                    says and does, its figures the same joined band. Record, Confirm, Undo and Remind hand off in the
- *                    bill's place and come back to it. A door to one team's bill opens the window at this level, and
+ *                    says and does, its figures the same joined band. Record, Confirm and Remind open OVER the bill
+ *                    (`raised`; owner 2026-10-19, so the window never changes width on a click) and close back to it;
+ *                    Undo, a question, hands off in its place. A door to one team's bill opens the window at this level, and
  *                    Back goes up to the allocation before it goes out.
  *
  * A WINDOW THAT HANDS OFF (a budget line, From the teams, a Ledger line, behind the figure — Ask 5) turns into this one
@@ -159,47 +160,46 @@ export default function AllocationRecordWindow({ q, orgSlug, allocationId, bill 
   const bills = read.teams;
   const theBill = bills.find(t => t.splitId === openSplit) ?? null;
 
-  // ── A team's bill, one level in — and the questions it hands off to, in its place ──
+  // ── A team's bill, one level in. Undo (a question) hands off in its place; Record / Confirm received and Remind
+  //    open OVER it, raised, so the bill stays behind them at its own width (owner 2026-10-19). ──
   if (theBill) {
     const inBand = bills.filter(t => t.band === theBill.band);
     const at = inBand.findIndex(t => t.splitId === theBill.splitId);
     const stepTo = (t: TeamBill | undefined): KitStep | null => (t ? { name: t.teamName, onStep: () => { setSaid(null); setOpenSplit(t.splitId); } } : null);
     const recordFor = question?.kind === 'record' ? theBill.installments.find(i => i.id === question.installmentId) ?? null : null;
-    if (question?.kind === 'record' && recordFor) {
-      return (
-        <RecordWindow mode={question.mode} allocation={read.allocation} bill={theBill} installment={recordFor} q={q}
-          onClose={() => setQuestion(null)} onDone={after} />
-      );
-    }
     if (question?.kind === 'undo') {
       return <UndoWindow allocation={read.allocation} bill={theBill} q={q} onClose={() => setQuestion(null)} onDone={after} />;
     }
-    if (question?.kind === 'remind' && currentOrg) {
-      return (
-        <RemindersWindow q={q} orgName={currentOrg.name} senderName={senderName} team={{ id: theBill.teamId, name: theBill.teamName }}
-          onClose={() => setQuestion(null)} onSent={text => after(text)} />
-      );
-    }
     return (
-      <BillRoom
-        // Keyed by the bill: stepping to the next team's bill is a new place (its own address, its own Back step).
-        key={theBill.splitId}
-        address={addressOf?.(theBill.splitId)}
-        allocation={read.allocation}
-        bill={theBill}
-        bandWord={BAND_WORD[theBill.band]}
-        position={`${at + 1} of ${inBand.length}`}
-        steps={{ prev: stepTo(inBand[at - 1]), next: stepTo(inBand[at + 1]) }}
-        canMove={read.canMove}
-        accountingBase={accountingBase}
-        back={{ label: read.allocation.description, onBack: () => { setSaid(null); setQuestion(null); setOpenSplit(null); } }}
-        wide
-        status={said ? <NoticePill inline key={said} message={said} onDone={() => setSaid(null)} /> : undefined}
-        onRecord={(i, mode) => { setSaid(null); setQuestion({ kind: 'record', mode, installmentId: i.id }); }}
-        onUndo={() => { setSaid(null); setQuestion({ kind: 'undo' }); }}
-        onRemind={() => { setSaid(null); setQuestion({ kind: 'remind' }); }}
-        onClose={onClose}
-      />
+      <>
+        <BillRoom
+          // Keyed by the bill: stepping to the next team's bill is a new place (its own address, its own Back step).
+          key={theBill.splitId}
+          address={addressOf?.(theBill.splitId)}
+          allocation={read.allocation}
+          bill={theBill}
+          bandWord={BAND_WORD[theBill.band]}
+          position={`${at + 1} of ${inBand.length}`}
+          steps={{ prev: stepTo(inBand[at - 1]), next: stepTo(inBand[at + 1]) }}
+          canMove={read.canMove}
+          accountingBase={accountingBase}
+          back={{ label: read.allocation.description, onBack: () => { setSaid(null); setQuestion(null); setOpenSplit(null); } }}
+          wide
+          status={said ? <NoticePill inline key={said} message={said} onDone={() => setSaid(null)} /> : undefined}
+          onRecord={(i, mode) => { setSaid(null); setQuestion({ kind: 'record', mode, installmentId: i.id }); }}
+          onUndo={() => { setSaid(null); setQuestion({ kind: 'undo' }); }}
+          onRemind={() => { setSaid(null); setQuestion({ kind: 'remind' }); }}
+          onClose={onClose}
+        />
+        {question?.kind === 'record' && recordFor && (
+          <RecordWindow mode={question.mode} allocation={read.allocation} bill={theBill} installment={recordFor} q={q}
+            onClose={() => setQuestion(null)} onDone={after} />
+        )}
+        {question?.kind === 'remind' && currentOrg && (
+          <RemindersWindow q={q} orgName={currentOrg.name} senderName={senderName} team={{ id: theBill.teamId, name: theBill.teamName }}
+            raised onClose={() => setQuestion(null)} onSent={text => after(text)} />
+        )}
+      </>
     );
   }
 

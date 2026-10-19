@@ -3,8 +3,10 @@
 **Status:** all sixteen asks ruled as recommended 2026-10-18 (owner paste-back; hub version 1). Plan written
 2026-10-18. Stage 1 width audit published 2026-10-18 (hub version 3); its five calls S1–S5 ruled as recommended the
 same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review; **owner walk ✅ passed 2026-10-19**
-(30 of 30, no notes; hub QA tab, QA ledger §339). Still open on Stage 1: the two flows that widen on a click (§4, an
-owner call) and the layout check on the screens it touched (runs on staging at the promote).
+(30 of 30, no notes; hub QA tab, QA ledger §339). Windows that changed width on a click were ruled 2026-10-19 (the
+two flows keep one width; a census found five more: a bill's tasks open over it, an allocation keeps its own width)
+and built the same day, not yet committed; owner walk owed (hub QA tab, walk 2, 14 steps). Still open: the layout
+check on the screens Stage 1 touched (runs on staging at the promote).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
 **PM brief:** `docs/projects/active/ONE_WINDOW_PM_BRIEF.md`
@@ -137,8 +139,41 @@ the page in the themed tone.
   control, not a form field); the aside's reserve and the save pill follow the 24px. Three more Title Case labels fixed
   (Contact email, Category & item, Period breakdown); the guard now fails on any Title Case label in either portal.
   Shared test helpers `filesUnder` / `openingTags` / `parseProps` in `tests/unit/_source-code.ts`.
-- **Open, for the owner:** two flows widen on a click, as the ruled list has them — a payment request (520) → Approve
-  (640) in place, and New tournament's chooser (520) → its create or reuse step (640).
+- **⚖ Ruled 2026-10-19 (owner, at the walk): one flow keeps one width, the widest its steps need** — "I do agree but
+  also want to test when it is ready". Two flows widened on a click, as the ruled list had them: a payment request
+  (520) → Approve / Confirm received (640) in place, and New tournament's chooser (520) → its create or reuse step
+  (640). Both now open at 640 (`RequestWindow` and the chooser take `size="medium"`). *Build call, not part of the
+  ruling (put to the owner with the walk):* a question opened from a flow (Decline, Reverse) is its own window and
+  keeps the question's width, as Q11's one "are you sure" window has it. Guarded in
+  `tests/unit/one-window-stage1-guard.test.ts` ("One flow keeps one width"). Owner walk: the hub's QA tab, walk 2.
+- **⚖ Ruled 2026-10-19, both as recommended (owner, by choice) — a census of every KitDialog the same day found five
+  more windows that change width on a click**, of two kinds (verified at the swap sites):
+  - *A small task on a big record* — a team's bill (`BillRoom`, 800 — always `wide` from `AllocationRecordWindow`) →
+    Record / Confirm received (`RecordWindow`, 640) or Remind (`RemindersWindow`, 520) — **opens OVER the bill**,
+    `raised`, mounted beside it; the bill stays behind at its own width. Built: `RecordWindow` is always raised (its one
+    caller is the bill); `RemindersWindow` takes a `raised` prop (the Allocations tab's whole-club Send reminders stays
+    on the form layer). Undo is a question and still hands off in the bill's place (not part of the ruling).
+  - *Another record opened from inside one* — a budget line (640) → Allocate (New allocation, 800) or an allocation
+    row; From the teams (520) → an allocation; a ledger line (640) → Open the allocation (800, or straight to a team's
+    bill); a Budget vs. Actual statement row (520) → an allocation — **each record keeps its own width** (unchanged):
+    the title, the back link and everything inside change, so the width change says "somewhere else".
+  - Not in scope: stacked windows (Payees → New payee, a family → Message a family, New tournament → New venue are
+    drawn over the window beneath, which stays), and a form ↔ question swap.
+  - Guarded in the same test: no task window returns in the bill's place, Record and Remind are raised, and every
+    allocation window is `wide`. Owner walk 2 (14 steps) on the hub's QA tab covers all three rulings.
+  - **/review 2026-10-19 (owner: "review and commit")** — two lenses. Caught: on the **Allocations tab** (the one door
+    that writes the window's place into the URL), closing a raised window steps Back onto the bill's addressed entry;
+    Next's router reads that entry's `?allocation=…&bill=…` into the search, and the page took it for a new ask —
+    the whole window would close and reopen (a loading flash, the "recorded" pill lost). This was `useBackStep`'s
+    "owed" note ("until their pages tell their own address from a new ask"). Fixed in the page: an address naming
+    the allocation already open is its OWN (`ownAsk`), so the window stays and the address is never
+    `router.replace`d while it is open; the close's Back clears it. Other doors pass no address, so they were never
+    exposed. Guard: `club-stage3d-screens-guard`. Also tightened: the bill guard now reads RemindersWindow's own
+    `raised={raised}`, rejects `raised={false}`, and catches a task window returned or ternaried in the bill's place
+    (mutation-checked: four regressions, all caught). **Follow-up, not built (Low):** after a payment is recorded the
+    row's Record button becomes a chip, so focus returned to it lands on the page body — Tab is pulled back into the
+    bill and Esc still works, but a screen reader loses its place (the old in-place swap remounted the bill, which
+    focused its panel).
 - `KitDialog`: `.form` 32.5rem; `size` prop (`medium` 40rem, `wide` 50rem); `--kit-dialog-side` 1.5rem on a computer and
   the 1.25rem it had at ≤640 (a phone form already fills the screen; the ruled drawing does not widen it); `.progress`
   shares the variable; tinted edge, no shadow on the panel and on the `aside` preview card.

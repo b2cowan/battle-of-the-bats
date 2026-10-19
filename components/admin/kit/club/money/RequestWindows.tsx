@@ -112,8 +112,11 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
   const budget = [r.budgetCategoryName, r.budgetItemName].filter(Boolean).join(' › ');
   const decided = decisionLine(r);
   return (
+    // 640, the width Approve / Confirm received opens at in its place: one flow keeps one width (One Window, owner
+    // 2026-10-19). Decline and Reverse are questions, which keep the question window's own width.
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={eyebrow}
       title={title}
       onClose={onClose}

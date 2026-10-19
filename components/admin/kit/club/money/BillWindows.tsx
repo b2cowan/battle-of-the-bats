@@ -241,9 +241,11 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
   }
 
   return (
+    // Over the bill it is opened from, never in its place: the bill stays behind it at its own width (owner 2026-10-19).
     <KitDialog
       kind="form"
       size="medium"
+      raised
       eyebrow={`${allocation.description} · ${bill.teamName} · ${ofN(installment, bill)}`}
       title={`${verb} ${amount} received`}
       onClose={onClose}

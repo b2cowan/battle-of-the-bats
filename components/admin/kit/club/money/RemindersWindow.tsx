@@ -27,13 +27,15 @@ import LoadingState from '@/components/shared/LoadingState';
 const lineWords = (l: ReminderLine) =>
   `${l.allocation}${l.of > 1 ? `, ${l.number} of ${l.of}` : ''} · ${money(l.amount)} · ${l.daysLate > 0 ? daysLateWords(l.daysLate) : day(l.dueDate)}`;
 
-export default function RemindersWindow({ q, orgName, senderName, team, onClose, onSent }: {
+export default function RemindersWindow({ q, orgName, senderName, team, raised = false, onClose, onSent }: {
   q: string;
   orgName: string;
   /** The sender, as the email's reply-to names them. */
   senderName: string;
   /** The single-team variant (a team's bill): only that team. */
   team?: { id: string; name: string };
+  /** Opened from a team's bill: over the bill, which stays behind it at its own width (owner 2026-10-19). */
+  raised?: boolean;
   onClose: () => void;
   onSent: (text: string) => void;
 }) {
@@ -84,6 +86,7 @@ export default function RemindersWindow({ q, orgName, senderName, team, onClose,
       kind="form"
       eyebrow={team ? 'A team’s bill' : 'Allocations'}
       title={team ? `Remind ${team.name}` : 'Send reminders'}
+      raised={raised}
       onClose={onClose}
       busy={busy}
       footer={

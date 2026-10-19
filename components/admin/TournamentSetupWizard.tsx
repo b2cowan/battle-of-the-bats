@@ -711,9 +711,12 @@ export default function TournamentSetupWizard({
   //    boxed callout, a different lock shape (F09). ─────
   if (preStep === 'choose') {
     const sorted = [...(existingTournaments ?? [])].sort((a, b) => (sourceRank(a.status) - sourceRank(b.status)) || ((b.year ?? 0) - (a.year ?? 0)));
+    // 640, the width of both steps it leads to (Start blank, a past event's reuse): one flow keeps one width (One Window,
+    // owner 2026-10-19).
     return (
       <KitDialog
         kind="form"
+        size="medium"
         title={W.title}
         identity="Start blank, or reuse setup from an event you already ran."
         onClose={requestClose}

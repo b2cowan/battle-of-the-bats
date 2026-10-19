@@ -16,6 +16,12 @@ import { cssRule, filesUnder, openingTags, parseProps, readCode, readSource, spl
  *   Q6  The admin's window has a tinted edge and no shadow.
  *   S1  The club kit's required star is in the label's ink (the 2026-08-25 ruling, finished).
  *   S4  A record window keeps today's width on every path: it passes a `size`.
+ *   One flow keeps one width, the widest its steps need (owner, at the Stage 1 walk, 2026-10-19), ruled for
+ *       two flows: a payment request → Approve, and New tournament's chooser → its next step. A question is its
+ *       own window and keeps the question's width. A census the same day found more windows that change width
+ *       on a click, and the owner ruled them too: a small task on a big record opens OVER it, raised (a team's
+ *       bill → Record / Confirm received, Remind); another record opened from inside one keeps its own width (a
+ *       budget line, a ledger line, From the teams, a statement row → an allocation, 800).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -213,5 +219,53 @@ describe('S4 — a record window keeps today\'s width on every path', () => {
     }
     assert.ok(records >= 15, `found only ${records} record windows — the scan has stopped seeing them`);
     assert.deepEqual(offenders, [], 'a record window with no size drops to the new 520 (call S4: one width, today\'s)');
+  });
+});
+
+describe('One flow keeps one width (owner, 2026-10-19)', () => {
+  const sizeOf = (tag: string | undefined) => (tag === undefined ? 'missing' : parseProps(tag).get('size') ?? '520');
+  it('a payment request opens at the 640 its Approve / Confirm received step opens at in its place', () => {
+    const file = 'components/admin/kit/club/money/RequestWindows.tsx';
+    const forms = openingTags(stripComments(readSource(file)), 'KitDialog', file).filter(t => parseProps(t).get('kind') === 'form');
+    assert.equal(forms.length, 2, 'the request and its Approve step are the file\'s two form windows');
+    assert.deepEqual(forms.map(sizeOf), ['medium', 'medium']);
+  });
+  it('New tournament\'s chooser opens at the 640 of both steps it leads to (Start blank, reuse a past event)', () => {
+    const file = 'components/admin/TournamentSetupWizard.tsx';
+    const tags = openingTags(stripComments(readSource(file)), 'KitDialog', file);
+    const chooser = tags.find(t => t.includes('Start blank, or reuse'));
+    const reuse = tags.find(t => t.includes('REUSE_WORDS.title('));
+    const create = tags.find(t => t.includes('progress={') && t.includes('title={W.title}'));
+    assert.deepEqual([chooser, reuse, create].map(sizeOf), ['medium', 'medium', 'medium']);
+  });
+  it('a team\'s bill keeps its width: Record / Confirm received and Remind open OVER it, raised, never in its place', () => {
+    const money = 'components/admin/kit/club/money';
+    const hostFile = `${money}/AllocationRecordWindow.tsx`;
+    const host = stripComments(readSource(hostFile));
+    // Each task window is mounted ONCE, after the bill, inside the fragment the bill is returned in. One returned
+    // instead of the bill (an early return, a ternary) sits before `<BillRoom` or outside that fragment.
+    const at = (s: string) => { const i = host.indexOf(s); assert.ok(i >= 0, `${s} is in the file`); return i; };
+    const TASKS = ['<RecordWindow', '<RemindersWindow'];
+    for (const t of TASKS) assert.equal(host.split(t).length - 1, 1, `${t} is mounted once`);
+    const billAt = at('<BillRoom');
+    const open = host.lastIndexOf('<>', billAt);
+    const close = host.indexOf('</>', billAt);
+    assert.ok(open >= 0 && /^\s*$/.test(host.slice(open + 2, billAt)) && close > billAt, 'the bill is returned in a fragment');
+    for (const t of TASKS) assert.ok(billAt < at(t) && at(t) < close, `${t} sits beside the bill, after it, in its fragment`);
+    // `raised` bare or `{true}` — never `{false}`, never left off.
+    const raisedOn = (tag: string | undefined) => { const v = tag === undefined ? undefined : parseProps(tag).get('raised'); return v === null || v === 'true'; };
+    assert.ok(raisedOn(openingTags(host, 'RemindersWindow', hostFile)[0]), 'Remind from a bill is raised');
+    const remindFile = `${money}/RemindersWindow.tsx`;
+    const remindDialog = openingTags(stripComments(readSource(remindFile)), 'KitDialog', remindFile);
+    assert.equal(remindDialog.length, 1);
+    assert.equal(parseProps(remindDialog[0]).get('raised'), 'raised', 'RemindersWindow hands its `raised` to its window');
+    const billFile = `${money}/BillWindows.tsx`;
+    const bill = stripComments(readSource(billFile));
+    assert.ok(raisedOn(openingTags(bill.slice(bill.indexOf('export function RecordWindow')), 'KitDialog', billFile)[0]), 'Record received is raised');
+  });
+  it('another record opened from inside one keeps its own width (owner 2026-10-19): an allocation is 800 from every door', () => {
+    const tags = openingTags(stripComments(readSource('components/admin/kit/club/money/AllocationRecordWindow.tsx')), 'KitDialog');
+    assert.ok(tags.length >= 3);
+    assert.deepEqual([...new Set(tags.map(sizeOf))], ['wide']);
   });
 });

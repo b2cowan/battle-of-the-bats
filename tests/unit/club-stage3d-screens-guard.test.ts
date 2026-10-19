@@ -167,7 +167,13 @@ describe('3. an allocation is ONE window, opened from every door (Asks 3–5)', 
     assert.match(tab, /const openWin = setWin;/, 'opening, stepping and closing write no address through the router');
     // An arriving address is read whenever it changes, dropped, and the window mounts only once it is gone.
     assert.match(tab, /if \(asked !== seenAsk\) \{/);
-    assert.match(tab, /\{win && !askedId && \(/);
+    assert.match(tab, /\{win && !arriving && \(/);
+    // …but the open window's OWN address coming back (a raised window over a bill closing onto the bill's entry, One
+    // Window 2026-10-19) is not an ask: it neither reopens the window nor is replaced while the window is open.
+    assert.match(tab, /const own = askedId !== null && askedId === win\?\.id;/);
+    assert.match(tab, /if \(askedId && !own\) setWin\(/);
+    assert.match(tab, /const arriving = askedId !== null && askedId !== ownAsk;/);
+    assert.match(tab, /useEffect\(\(\) => \{\s*if \(!arriving\) return;/);
     const dialog = readCode(`${KIT}/KitDialog.tsx`);
     assert.match(dialog, /address: address \?\? null \}\);/, 'the kit hands the place to the floor\'s Back step');
     const win = readCode(ALLOC_WINDOW);

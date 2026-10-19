@@ -404,14 +404,14 @@ body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>One window · project hub</strong><br><small>All sixteen asks ruled as recommended 2026-10-18 · stage 1 width audit’s five calls ruled as recommended 2026-10-18 · stage 1 committed 992243fb 2026-10-18 · stage 1 walk passed 2026-10-19 (30 of 30) · opened from the Feedback window hub (F08)</small></div>
+  <div class="hubtitle"><strong>One window · project hub</strong><br><small>All sixteen asks ruled as recommended 2026-10-18 · stage 1 width audit’s five calls ruled as recommended 2026-10-18 · stage 1 committed 992243fb 2026-10-18 · stage 1 walk passed 2026-10-19 (30 of 30) · one flow keeps one width, ruled and built 2026-10-19, walk 2 owed (QA tab) · opened from the Feedback window hub (F08)</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Ruled 2026-10-18: Q1–Q16 as recommended (hub version 1)">Design</li>
     <li class="stage done" title="Plan written 2026-10-18; stage 1 width audit ruled 2026-10-18 (S1–S5)">Plan</li>
     <li class="stage done" title="Stage 1 built 2026-10-18; committed 992243fb">Build</li>
     <li class="stage done" title="/simplify and /review 2026-10-18, before commit 992243fb">Review</li>
-    <li class="stage done" title="Owner walk passed 2026-10-19: 30 of 30, no notes (QA tab; QA ledger §339)">QA</li>
-    <li class="stage current" title="Stage 1 goes out with the next promote (Q16: coaches in the same release); stages 2–4 to build">Shipped</li>
+    <li class="stage current" title="Walk 1 passed 2026-10-19: 30 of 30, no notes (QA ledger §339). Walk 2 owed: a window keeps its width, 14 steps (QA tab)">QA</li>
+    <li class="stage" title="Stage 1 goes out with the next promote (Q16: coaches in the same release); stages 2–4 to build">Shipped</li>
   </ul>
 </div>
 
@@ -786,8 +786,28 @@ body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
 
 <!-- ═════════════════════════ QA ═════════════════════════ -->
 <section id="hub-qa" class="docpage" hidden>
-  <div class="eyebrow">QA · stage 1 · one look</div>
-  <h1>Walk: does every window wear the one look?</h1>
+  <div class="eyebrow">QA · walk 2 · stage 1 follow-up · one flow, one width</div>
+  <h1>Walk 2: does a window keep its width when a click takes it to its next step?</h1>
+  <p class="sub">One purpose: the rulings of 2026-10-19, “a window keeps its width when a click takes it to its next step”. A payment request and New tournament’s chooser now open at the width of the step they lead to; a team’s bill keeps its width because its small tasks open over it; an allocation opened from another record keeps its own width. This walk only looks and presses Cancel, Esc or Back; it never saves. About 15 minutes, <span id="qa2Count">14</span> steps, on localhost. Ticks and notes stay in this browser; press <b>Build the summary</b> at the end and paste it into the chat.</p>
+  <div class="note" style="margin-top:16px"><strong>Sign in as</strong> (every test account’s password is the same):
+    <ul style="margin:6px 0 0">
+      <li><b>Club admin:</b> UAT Rep Club’s owner, <code>uat-club-owner@uat-rep-club.local</code> · <code>/uat-rep-club/admin</code></li>
+      <li><b>Tournament admin:</b> the Plus test club’s owner, <code>uat-owner@uat-test-org.local</code> · <code>/uat-plus-org/admin/tournaments</code></li>
+    </ul>
+    Warm theme, a computer window about 1,280 wide unless a step says phone.</div>
+  <div id="qa2List"></div>
+  <h2>Verdict</h2>
+  <div class="ask">
+    <label class="opt"><input type="radio" name="qa2V" value="pass"><span>Passes: every window kept its width as the steps say</span></label>
+    <label class="opt"><input type="radio" name="qa2V" value="notes"><span>Passes, with the notes above</span></label>
+    <label class="opt"><input type="radio" name="qa2V" value="fail"><span>Fails: something in the notes has to change before commit</span></label>
+  </div>
+  <button type="button" class="pastebtn" id="qa2Summary">Build the summary</button>
+  <textarea id="qa2Out" rows="10" readonly hidden style="width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;font:12px/1.5 ui-monospace,monospace;background:var(--paper)"></textarea>
+
+  <hr style="margin:44px 0 28px;border:0;border-top:1px solid var(--line)">
+  <div class="eyebrow">QA · walk 1 · stage 1 · one look</div>
+  <h1>Walk 1: does every window wear the one look?</h1>
   <p class="sub">One purpose: stage 1’s look. Nothing about what a window asks or does changed, so this walk only looks; it never saves. About 30 minutes, 30 steps, on localhost. Ticks and notes stay in this browser; press <b>Build the summary</b> at the end and paste it into the chat.</p>
   <div class="note" style="margin-top:16px"><strong>✅ Passed 2026-10-19</strong> — the owner ticked 30 of 30 with no notes. Recorded in the plan and the QA ledger (§339).</div>
   <div class="note" style="margin-top:16px"><strong>Sign in as</strong> (every test account’s password is the same):
@@ -1398,28 +1418,61 @@ const QA = [
     ["Premium coach: Roster › Add player.", "Labels in sentence case. The window’s shape is unchanged (how coach windows behave changes in stage 2)."],
     ["Signed out: open the sign-in page.", "Unchanged: its labels keep their own style (sign-in sits outside both portals)."]]}
 ];
-let QS = {}; try { QS = JSON.parse(localStorage.getItem("ow-qa1") || "{}"); } catch (e) { QS = {}; }
-function saveQ(){ try { localStorage.setItem("ow-qa1", JSON.stringify(QS)); } catch (e) {} }
-$("qaList").innerHTML = QA.map((grp, gi) => `<div class="qagroup"><h2>${esc(grp.g)}</h2><p class="qameta"><b>Sign in:</b> ${esc(grp.who)} · <b>Where:</b> ${esc(grp.where)}</p>${grp.steps.map((s, si) => {
-  const id = `${"ABCDE"[gi]}${si + 1}`;
-  return `<div class="qastep"><label><input type="checkbox" data-qa="${id}" ${QS[id] ? "checked" : ""} aria-label="Step ${id} looks as described"><span><span class="do">${id} · ${esc(s[0])}</span><span class="see">Expect: ${esc(s[1])}</span></span></label><textarea data-qanote="${id}" placeholder="Anything off? (optional)">${esc(QS["n-" + id] || "")}</textarea></div>`;
-}).join("")}</div>`).join("");
-document.querySelectorAll("[data-qa]").forEach(c => c.onchange = () => { QS[c.dataset.qa] = c.checked; saveQ(); });
-document.querySelectorAll("[data-qanote]").forEach(t => t.oninput = () => { QS["n-" + t.dataset.qanote] = t.value; saveQ(); });
-document.querySelectorAll("input[name=qaV]").forEach(r => { r.checked = QS.verdict === r.value; r.onchange = () => { QS.verdict = r.value; saveQ(); }; });
-$("qaSummary").onclick = () => {
-  const lines = ["One window · stage 1 walk (one look)", ""];
-  let done = 0, all = 0;
-  QA.forEach((grp, gi) => grp.steps.forEach((s, si) => {
-    const id = `${"ABCDE"[gi]}${si + 1}`; all++; if (QS[id]) done++;
-    if (!QS[id] || QS["n-" + id]) lines.push(`${id} ${QS[id] ? "✓" : "☐"} ${s[0]}${QS["n-" + id] ? "\n   Note: " + QS["n-" + id] : ""}`);
-  }));
-  lines.splice(1, 0, `Ticked ${done} of ${all}. Verdict: ${({pass: "passes", notes: "passes, with notes", fail: "fails"})[QS.verdict] || "(none)"}`);
-  const out = $("qaOut"); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
-};
+/* ---------- QA walk 2: one flow, one width (ruled 2026-10-19) ---------- */
+const QA2 = [
+  {g: "A · Payment requests, computer", who: "UAT Rep Club’s owner", where: "Accounting › Payment requests, Warm, about 1,280 wide. Steps 2 and 3 need a request that is waiting; if none is, open any request for step 1 and skip them. Nothing here is saved", steps: [
+    ["Open a request that is waiting.", "The window is the wider one (640, was 520): about as wide as Manage a member. Its facts read as before."],
+    ["Press Approve (or Confirm … received, on a request where the team pays the club).", "The window keeps its width: only what is inside changes, to the day, how it was paid and Reference. Press Cancel: back to the request, still the same width."],
+    ["Press Decline, then Keep it waiting.", "Decline opens the narrower “are you sure” window, as before: a question keeps its own width. That part is the build’s call, not your ruling, so say in a note if you want it the same width too. Keep it waiting brings back the request at 640."],
+    ["Accounting › Teams › a team with a request › open the request from the team’s account.", "The same 640 window as from Payment requests."]]},
+  {g: "B · A team’s bill, computer", who: "UAT Rep Club’s owner", where: "Accounting › Allocations, Warm, about 1,280 wide; a bill with an installment still to pay. Nothing here is saved: every window is closed with Cancel or Esc", steps: [
+    ["Open an allocation, then a team’s bill from its table.", "The bill, in the wide window (800), as before."],
+    ["On an installment row, press Record received (or Confirm received, where the coach says it was sent).", "A smaller window (640) opens OVER the bill: the bill stays behind it, dimmed, at its own width. It no longer gives way to the smaller window. Press Cancel: the bill is still there, where you left it. It does not close and open again (no loading line, no flicker), and the address bar still names the bill."],
+    ["Press Remind (the team) at the bill’s foot.", "The reminder window opens over the bill the same way. Press Cancel: back to the bill."],
+    ["Open Record received again and press Esc.", "Only the small window closes; the bill stays open."]]},
+  {g: "C · Another record opened from inside one, computer", who: "UAT Rep Club’s owner", where: "Accounting › Budget; a budget line that has an allocation. Nothing here is saved", steps: [
+    ["Open the budget line, then the allocation in its list.", "Unchanged, as you ruled: the allocation opens in the line’s place at its own width (800), because it is a different record. × brings back the line at the line’s width (640)."]]},
+  {g: "D · Tournament admin, computer", who: "the Plus test club’s owner", where: "Tournaments, Warm, about 1,280 wide. The chooser shows only for a club that has run a tournament before. Nothing here is saved", steps: [
+    ["Press New tournament.", "The “Start blank, or reuse” window opens at the wider width (640, was 520); the list of past events is wider."],
+    ["Pick a past event from the list.", "The reuse step opens at the same width, with the public-page preview beside it as before. Press Back: the chooser again, the same width."],
+    ["Press Start blank tournament.", "The first step of the new tournament at the same width, with its preview. Close it with × (Leave, if it asks)."]]},
+  {g: "E · Phone", who: "UAT Rep Club’s owner", where: "A phone, or a window about 390 wide", steps: [
+    ["Payment requests › open a request, then Approve if it is waiting.", "Full screen both times with ← at the top left, as before: on a phone a window always fills the screen."],
+    ["Allocations › an allocation › a team’s bill › Record received, then the phone’s Back (or ←).", "Record received fills the screen over the bill; Back closes it and leaves you on the bill, not out of it, with no flicker. One more Back goes up to the allocation, as before."]]}
+];
+
+/* ---------- QA walks: one machine, one store per walk ---------- */
+function mountWalk(w){
+  let S = {}; try { S = JSON.parse(localStorage.getItem(w.key) || "{}"); } catch (e) { S = {}; }
+  const save = () => { try { localStorage.setItem(w.key, JSON.stringify(S)); } catch (e) {} };
+  const L = "ABCDEFGH";
+  const list = $(w.list);
+  list.innerHTML = w.groups.map((grp, gi) => `<div class="qagroup"><h2>${esc(grp.g)}</h2><p class="qameta"><b>Sign in:</b> ${esc(grp.who)} · <b>Where:</b> ${esc(grp.where)}</p>${grp.steps.map((s, si) => {
+    const id = `${L[gi]}${si + 1}`;
+    return `<div class="qastep"><label><input type="checkbox" data-qa="${id}" ${S[id] ? "checked" : ""} aria-label="Step ${id} looks as described"><span><span class="do">${id} · ${esc(s[0])}</span><span class="see">Expect: ${esc(s[1])}</span></span></label><textarea data-qanote="${id}" placeholder="Anything off? (optional)">${esc(S["n-" + id] || "")}</textarea></div>`;
+  }).join("")}</div>`).join("");
+  list.querySelectorAll("[data-qa]").forEach(c => c.onchange = () => { S[c.dataset.qa] = c.checked; save(); });
+  list.querySelectorAll("[data-qanote]").forEach(t => t.oninput = () => { S["n-" + t.dataset.qanote] = t.value; save(); });
+  document.querySelectorAll(`input[name=${w.verdict}]`).forEach(r => { r.checked = S.verdict === r.value; r.onchange = () => { S.verdict = r.value; save(); }; });
+  $(w.button).onclick = () => {
+    const lines = [w.title, ""];
+    let done = 0, all = 0;
+    w.groups.forEach((grp, gi) => grp.steps.forEach((s, si) => {
+      const id = `${L[gi]}${si + 1}`; all++; if (S[id]) done++;
+      if (!S[id] || S["n-" + id]) lines.push(`${id} ${S[id] ? "✓" : "☐"} ${s[0]}${S["n-" + id] ? "\n   Note: " + S["n-" + id] : ""}`);
+    }));
+    lines.splice(1, 0, `Ticked ${done} of ${all}. Verdict: ${({pass: "passes", notes: "passes, with notes", fail: "fails"})[S.verdict] || "(none)"}`);
+    const out = $(w.out); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
+  };
+}
+mountWalk({key: "ow-qa2", title: "One window · walk 2 (one flow, one width)", groups: QA2, list: "qa2List", verdict: "qa2V", button: "qa2Summary", out: "qa2Out"});
+mountWalk({key: "ow-qa1", title: "One window · stage 1 walk (one look)", groups: QA, list: "qaList", verdict: "qaV", button: "qaSummary", out: "qaOut"});
+$("qa2Count").textContent = QA2.reduce((n, g) => n + g.steps.length, 0);
 
 /* ---------- decisions ---------- */
 const DECISIONS = [
+  {date: "2026-10-19", ask: "Two flows widened on a click: a payment request (520) → Approve (640), and New tournament’s chooser (520) → its next step (640)", label: "One width per flow", why: "Asked after the stage 1 walk passed; the owner agreed: “I do agree but also want to test when it is ready to make sure.” A flow opens at the widest width any of its steps needs and keeps it, because a window that resizes under the pointer reads as a glitch (the schedule generators already keep 800 across their steps). Both flows now open at 640. Not part of the ruling, the build’s call: a question opened from a flow (Decline, Reverse) keeps the question window’s own width. Walk 2 on the QA tab tests it. A census the same day found five more windows that change width on a click; the next decision rules them."},
+  {date: "2026-10-19", ask: "Five more windows change width on a click: a team’s bill (800) → Record received (640) or Remind (520); a budget line, a ledger line, From the teams and a statement row → an allocation (800)", label: "Ruled as recommended", why: "Found by a census of every admin window after the first ruling. Two kinds, two answers, both as recommended. A small task on a big record opens OVER it as a smaller window, and the bill stays dimmed behind it at its own width; this is the layer New payee already uses over Payees. Opening a different record from inside one keeps each record at its own width: the title, the back link and everything inside change, and a ledger line widened to 800 only because it can lead to an allocation would be mostly empty. Undo on a bill is a question and still opens in the bill’s place (not part of the ruling)."},
   {date: "2026-10-18", ask: "S1–S5: the stage 1 width audit’s five calls", label: "Ruled as recommended", why: "The owner’s paste-back chose the recommended option on all five: the twelve red required stars left in the admin go plain, like the other 71 (the families’ sign-up pages and the platform console keep their own); a short table that fits at 640 keeps 640 (Manage a member, Ask the coaches, Payees, a sent email, New tournament in steps); two panes side by side keep 800 (both schedule generators, Close the year); record windows keep today’s width on every path they open from; the rest of the list as published."},
   {date: "2026-10-18", ask: "Q1–Q16: the one window’s look, behaviour, question, notices, strays, scope and rollout", label: "Ruled as recommended", why: "The owner’s paste-back chose the recommended option on all sixteen asks: sentence-case labels everywhere (windows and pages, both portals); paper-tone fields, 36px, 6px corners; 520 / 640 / 800 widths; 24px inside; the admin’s themed dimmed page; a tinted edge, no shadow; no form closes on a stray tap; a foot sentence slot and a refusal line in every window; 44px fields and foot buttons on a phone, measured in the build; one are-you-sure window, centred on a phone; notices stop being windows; the strays join in stage 4; rooms and record windows stay out; coaches get their changes in the same release as the admin."},
   {date: "2026-10-18", ask: "Should the admin’s and the coaches portal’s windows become one look, and how does it apply to the tournament admin?", label: "Walk and draw it", why: "Raised by the owner comparing the two feedback-window drawings (Feedback window hub, F08): “why is the format of these different?” Answered “sure” to drawing one window for both portals as its own project, and asked to see how it applies to the tournament admin screens. Sixteen asks open after the design review."}

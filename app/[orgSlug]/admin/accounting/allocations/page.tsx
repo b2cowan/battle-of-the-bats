@@ -146,19 +146,28 @@ export default function AllocationsTab() {
   const askedBill = search.get('bill');
   const asked = askedId ? `${askedId}|${askedBill ?? ''}` : null;
   const [seenAsk, setSeenAsk] = useState<string | null>(null);
+  // ⚠ THE OPEN WINDOW'S OWN ADDRESS COMING BACK IS NOT AN ASK (owner 2026-10-19, One Window: a team's bill keeps its
+  // width, so Record received and Remind open RAISED over it). Closing a raised window steps Back onto the bill's entry,
+  // and the router reads that entry's `?allocation=…&bill=…` into the search as if it were asked (`useBackStep`'s
+  // "owed" note). An address naming the allocation already open is that: the window stays as it is, and the address is
+  // left alone — never `router.replace`d while it is open — until its close steps Back past it.
+  const [ownAsk, setOwnAsk] = useState<string | null>(null);
   if (asked !== seenAsk) {
     setSeenAsk(asked);
-    if (askedId) setWin({ id: askedId, bill: askedBill });
+    const own = askedId !== null && askedId === win?.id;
+    setOwnAsk(own ? askedId : null);
+    if (askedId && !own) setWin({ id: askedId, bill: askedBill });
   }
+  const arriving = askedId !== null && askedId !== ownAsk;
   // …then leaves the address, and the window mounts once it has (its Back step then starts from the clean list).
   useEffect(() => {
-    if (!askedId) return;
+    if (!arriving) return;
     const params = new URLSearchParams(search.toString());
     params.delete('allocation');
     params.delete('bill');
     const qs = params.toString();
     router.replace(qs ? `${base}?${qs}` : base, { scroll: false });
-  }, [askedId, search, router, base]);
+  }, [arriving, search, router, base]);
   /** The window's place, at a level — written into the URL bar by its own Back step while it is open. */
   const addressOf = (id: string) => (bill: string | null) => {
     const params = new URLSearchParams();
@@ -311,7 +320,7 @@ export default function AllocationsTab() {
         <ComingDue due={due} dueWindow={dueWindow} onOpen={openWin} />
       )}
 
-      {win && !askedId && (
+      {win && !arriving && (
         <AllocationRecordWindow
           // Previous · Next (or a notice) swap the allocation: a key per allocation and bill starts it afresh.
           key={`${win.id}|${win.bill ?? ''}`}

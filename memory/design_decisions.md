@@ -7,6 +7,26 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-19 — A WINDOW KEEPS ITS WIDTH WHEN A CLICK TAKES IT TO ITS NEXT STEP; A SMALL TASK ON A BIG RECORD OPENS OVER IT; ANOTHER RECORD KEEPS ITS OWN WIDTH (owner, at the One Window Stage 1 walk: *"I do agree but also want to test when it is ready to make sure"*, then the census's two asks by choice, both as recommended — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48)
+**Decision:** the two flows that widened on a click open at the widest width any of their steps needs, and keep it:
+a payment request (520 → Approve / Confirm received, 640) and New tournament's "Start blank, or reuse" chooser (520 →
+its create or reuse step, 640). Both open at 640. A census the same day found five more windows that change width on
+a click, of two kinds, and the owner ruled both as recommended: **a small task on a big record opens OVER it**
+(`raised`) — a team's bill (800) → Record / Confirm received (640) and Remind (520), the bill staying behind at its own
+width; **another record opened from inside one keeps its own width** — a budget line, a ledger line, From the teams
+and a statement row → an allocation (800), unchanged.
+**Why:** a window that resizes under the pointer reads as a glitch; the schedule generators already keep 800 across
+their steps. A payment request reads as a record, and a record is 640. A three-field form at a bill's 800 would be
+mostly empty, so a bill's tasks rise over it instead (the layer New payee already uses over Payees). Opening a
+different record changes the title, the back link and everything inside, so there the width change says "somewhere
+else", and a ledger line widened to 800 only because it can lead to an allocation would be mostly empty.
+**Not ruled — the build's call, put to the owner with the walk:** a question opened from a flow (Decline, Reverse, a
+bill's Undo) is its own "are you sure" window and keeps the question's width (One Window Q11, 2026-10-18).
+**Applies to:** the seven windows named. A window raised over an ADDRESSED window closes with a Back onto that
+window's address, so a page that opens its window from its address must tell its own address from a new ask (the
+Allocations tab does, 2026-10-19 /review). Guarded in `tests/unit/one-window-stage1-guard.test.ts` ("One flow keeps one
+width"). Plan: `docs/projects/active/ONE_WINDOW_PLAN.md` §4, Stage 1.
+
 ### 2026-10-18 — A TEAM'S OWN INSTALLMENTS ARE A NUMBERED LIST; A BOX ON A CREAM ROW IS WHITE; ONE-LINE FIELDS ARE 36PX EXACTLY (owner, asks A1–A3 of the A Team's Own Payments hub as recommended — https://claude.ai/artifact/VvKhccp22P49pzHdNMoZFa; raised from two screenshots of New allocation: *"why is the date picker a different size than the one payment dropdown"* and *"it feels unstructured"*)
 **Decision:** (A1) a team paying on its own schedule in New allocation reads as the coaches' installment editor does:
 "This team pays in" is an ordinary field label over its dropdown, then column labels with plain stars ("Due date *",
