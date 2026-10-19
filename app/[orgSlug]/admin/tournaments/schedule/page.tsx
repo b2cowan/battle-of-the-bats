@@ -26,7 +26,7 @@ import { formatTime } from '@/lib/utils';
 import ZeroVenuePrompt from './components/ZeroVenuePrompt';
 import ResolveLocationsModal from './components/ResolveLocationsModal';
 import { buildLocationResolvePlan, type LocationResolvePlan } from '@/lib/tournament-location-resolve';
-import { buildScheduleMetrics, getScheduleHealthRules } from '@/lib/schedule-metrics';
+import { buildEventScheduleHealth, getScheduleHealthRules } from '@/lib/schedule-metrics';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -968,21 +968,18 @@ export default function AdminSchedulePage() {
   // Schedule health across EVERY division (S1 — it scored one division at a time), for its one row at the day's foot.
   const healthMetrics = useMemo(() => {
     if (!currentTournament || scheduled.length === 0) return null;
-    return buildScheduleMetrics({
+    // THE event's health — the dashboard reads the same call, so the two show one number.
+    return buildEventScheduleHealth({
       games: scheduled,
       teams,
       divisions,
-      venues,
       tournament: currentTournament,
-      includePlayoffs: true,
       // Draft rules drive the live preview as the organizer adjusts them.
-      maxGamesPerDay: healthRules.maxGamesPerDay,
-      minRestMinutes: healthRules.minRestMinutes,
-      expectedGamesPerParticipant: healthRules.targetGamesPerTeam ?? undefined,
+      rules: healthRules,
     });
-  }, [currentTournament, scheduled, teams, divisions, venues, healthRules]);
+  }, [currentTournament, scheduled, teams, divisions, healthRules]);
   const healthScope = W.healthScope(new Set(scheduled.map(g => g.divisionId)).size);
-  const healthCaption = healthMetrics && healthMetrics.totalGames > 0
+  const healthCaption = healthMetrics && healthMetrics.timedGames > 0
     ? [GAME_DAY_WORDS.healthCaption(healthMetrics.healthTone, healthMetrics.issues.length), healthScope].filter(Boolean).join(' · ')
     : GAME_DAY_WORDS.healthNotBuilt;
 
@@ -1613,7 +1610,7 @@ export default function AdminSchedulePage() {
         <div className={sd.health}>
           <HealthRow
             data-sandbox-tour="schedule-health"
-            score={healthMetrics.totalGames > 0 ? healthMetrics.healthScore : null}
+            score={healthMetrics.timedGames > 0 ? healthMetrics.healthScore : null}
             tone={healthMetrics.healthTone}
             title={GAME_DAY_WORDS.healthTitle}
             caption={healthCaption}

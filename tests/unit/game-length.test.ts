@@ -120,7 +120,11 @@ describe('the readers ask the chain (source guard — a new hard-coded length fa
     const src = read('app/api/admin/tournament-dashboard/route.ts');
     assert.match(src, /gameLengthMinutes\(g\.duration_minutes, g\.division_id \? divisionMinutesById\.get\(g\.division_id\)/);
     assert.match(src, /durationMinutes: lengthOf\(g\)/);
-    assert.match(src, /durationMinutes: lengthOf\(game\)/);
+    // Health: the game's own length goes to the one event-health call with each division's and the tournament's
+    // settings, and the engine walks the chain itself (schedule-health-one-number, owner 2026-10-19).
+    assert.match(src, /games: games\.map\(scheduleMetricGameFromRow\)/);
+    assert.match(src, /settings: d\.settings as Division\['settings'\]/);
+    assert.match(src, /tournament: \{ settings: tSettings as Tournament\['settings'\] \}/);
     assert.doesNotMatch(src, /\?\? 60\b/);
     assert.doesNotMatch(src, /gameDurationMinutes: positiveNumber\(tSettings\.game_duration_minutes\)/);
   });

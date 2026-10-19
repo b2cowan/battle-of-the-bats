@@ -6,12 +6,12 @@ import {
   getGames,
   getDivisions,
 } from '@/lib/db';
-import type { TournamentSettings } from '@/lib/types';
+import type { Division, Tournament, TournamentSettings } from '@/lib/types';
 import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { buildRegistrationAttentionSummary } from '@/lib/registration-attention';
 import { hasCapability } from '@/lib/roles';
-import { buildScheduleMetrics, type ScheduleMetricGame } from '@/lib/schedule-metrics';
+import { buildEventScheduleHealth, scheduleMetricGameFromRow } from '@/lib/schedule-metrics';
 import { getOrgOwnerEmail, supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { tournamentNow } from '@/lib/timezone';
@@ -125,10 +125,6 @@ function roundLabel(code: string | null): string {
 
 function positiveNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
-}
-
-function nonNegativeNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
 export const GET = withObservability(async (req: Request) => {
@@ -523,48 +519,23 @@ export const GET = withObservability(async (req: Request) => {
   const feeMode = t.fee_schedule_mode ?? 'tournament';
   // "Not tracked here": no team owes anything and no payment figure counts — whatever amount was typed before.
   const tracksPayments = tournamentTracksPayments(tSettings);
-  const scheduleMetricGames: ScheduleMetricGame[] = activeGames
-    .filter(game => game.game_date && game.game_time)
-    .map(game => ({
-      id: game.id,
-      divisionId: game.division_id ?? '',
-      homeTeamId: game.home_team_id,
-      awayTeamId: game.away_team_id,
-      homeSlotId: game.home_slot_id,
-      awaySlotId: game.away_slot_id,
-      homePlaceholder: game.home_placeholder,
-      awayPlaceholder: game.away_placeholder,
-      date: game.game_date,
-      time: game.game_time,
-      // Each game measured at its own chain length (the health engine used to take the tournament's for every game).
-      durationMinutes: lengthOf(game),
-      venueId: game.diamond_id,
-      venueFacilityId: game.venue_facility_id,
-      scheduleFacilityLaneId: game.schedule_facility_lane_id ?? null,
-      location: game.location,
-      status: game.status,
-      isPlayoff: game.is_playoff,
-    }));
-  const savedHealthRules = (tSettings as TournamentSettings).schedule_health_rules;
-  const scheduleMetrics = buildScheduleMetrics({
-    games: scheduleMetricGames,
-    teams: acceptedTeams.map(team => ({
+  // THE event's health, the Schedule page's own call (owner 2026-10-19): every game, pool and playoff, each division's
+  // timing, the bracket wiring and the saved rules, so the board and the Schedule show one number.
+  const scheduleMetrics = buildEventScheduleHealth({
+    games: games.map(scheduleMetricGameFromRow),
+    teams: teamPayments.map(team => ({
       id: team.id,
       name: team.name ?? 'Team',
       divisionId: team.division_id,
       status: team.status,
       seed: team.seed ?? null,
     })),
-    bufferMinutes: positiveNumber(tSettings.buffer_minutes),
-    // Organizer-defined Schedule Health rules so the dashboard score/tone match the Schedule panel.
-    maxGamesPerDay: positiveNumber(savedHealthRules?.maxGamesPerDay),
-    minRestMinutes: nonNegativeNumber(savedHealthRules?.minRestMinutes),
-    expectedGamesPerParticipant: positiveNumber(savedHealthRules?.targetGamesPerTeam ?? undefined),
-    manualTravelBuffers: {
-      venueChangeMinutes: positiveNumber(tSettings.schedule_travel_venue_buffer_minutes),
-      facilityChangeMinutes: positiveNumber(tSettings.schedule_travel_facility_buffer_minutes),
-    },
-    includePlayoffs: false,
+    divisions: divisions.map(d => ({
+      id: d.id,
+      settings: d.settings as Division['settings'],
+      playoffConfig: d.playoff_config as Division['playoffConfig'],
+    })),
+    tournament: { settings: tSettings as Tournament['settings'] },
   });
   const scheduleHealth = {
     score: scheduleMetrics.healthScore,
@@ -572,7 +543,7 @@ export const GET = withObservability(async (req: Request) => {
     issueCount: scheduleMetrics.issues.length,
     topIssue: scheduleMetrics.issues[0]?.title ?? null,
     totalGames: activeGames.length,
-    timedGames: scheduleMetrics.totalGames,
+    timedGames: scheduleMetrics.timedGames,
     participantCount: scheduleMetrics.participantCount,
     backToBack: scheduleMetrics.backToBackCount,
     maxGamesInDay: scheduleMetrics.maxGamesInDay,

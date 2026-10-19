@@ -214,6 +214,74 @@ const DEFAULT_MAX_GAMES_PER_DAY = 2;
 const EARLY_GAME_CUTOFF_MINUTES = 12 * 60;
 const LATE_GAME_CUTOFF_MINUTES = 17 * 60;
 
+/**
+ * THE event's schedule health — every division, pool and playoff games alike — as the Schedule page and the dashboard
+ * both read it. One call, so the two cannot drift: the dashboard once scored its own way (pool games only, the
+ * tournament's buffer for every division, no bracket wiring), so a playoffs-only event read "no timed schedule" on the
+ * board beside a scored bracket on the Schedule (owner 2026-10-19). At event scope the engine reads only a division's
+ * `id`, `settings` and `playoffConfig` and the tournament's `settings`, which is all a caller must supply.
+ * `rules` is the Schedule panel's live draft; omitted, the tournament's saved rules apply.
+ * `timedGames` (a live game with a day and a time) decides "No timed schedule generated yet" on both — `totalGames`
+ * also counts a game still to be timed, which has no score to give.
+ */
+export function buildEventScheduleHealth(input: {
+  games: ScheduleMetricGame[];
+  teams: ScheduleMetricTeam[];
+  divisions: readonly Pick<Division, 'id' | 'settings' | 'playoffConfig'>[];
+  tournament: Pick<Tournament, 'settings'> | null;
+  rules?: { maxGamesPerDay?: number; minRestMinutes?: number; targetGamesPerTeam?: number | null };
+}): ScheduleMetrics & { timedGames: number } {
+  const timedGames = input.games.filter(g => g.status !== 'cancelled' && g.date && g.time).length;
+  return { timedGames, ...buildScheduleMetrics({
+    games: input.games,
+    teams: input.teams,
+    divisions: input.divisions as Division[],
+    tournament: input.tournament as Tournament | null,
+    includePlayoffs: true,
+    maxGamesPerDay: input.rules?.maxGamesPerDay,
+    minRestMinutes: input.rules?.minRestMinutes,
+    expectedGamesPerParticipant: input.rules?.targetGamesPerTeam ?? undefined,
+  }) };
+}
+
+/** A `games` row as the health engine reads a game. Typed `Required` on purpose: a field the engine learns to read
+ *  fails the build here until the server passes it too (the dashboard once left out the bracket wiring and scores). */
+export function scheduleMetricGameFromRow(row: {
+  id: string; tournament_id?: string | null; division_id: string | null;
+  home_team_id: string | null; away_team_id: string | null; home_slot_id: string | null; away_slot_id: string | null;
+  home_placeholder: string | null; away_placeholder: string | null; game_date: string | null; game_time: string | null;
+  diamond_id: string | null; venue_facility_id: string | null; schedule_facility_lane_id?: string | null;
+  location: string | null; status: string | null; is_playoff: boolean | null; duration_minutes: number | null;
+  bracket_code: string | null; bracket_id: string | null; home_score: number | null; away_score: number | null;
+}): Required<ScheduleMetricGame> {
+  return {
+    id: row.id,
+    tournamentId: row.tournament_id ?? '',
+    divisionId: row.division_id ?? '',
+    homeTeamId: row.home_team_id,
+    awayTeamId: row.away_team_id,
+    homeSlotId: row.home_slot_id,
+    awaySlotId: row.away_slot_id,
+    homePlaceholder: row.home_placeholder,
+    awayPlaceholder: row.away_placeholder,
+    date: row.game_date,
+    time: row.game_time,
+    venueId: row.diamond_id,
+    venueFacilityId: row.venue_facility_id,
+    scheduleFacilityLaneId: row.schedule_facility_lane_id ?? null,
+    // The engine reads a lane's label only as "a lane is set", which the id already says.
+    scheduleFacilityLaneLabel: null,
+    location: row.location,
+    status: row.status,
+    isPlayoff: row.is_playoff,
+    durationMinutes: row.duration_minutes,
+    bracketCode: row.bracket_code,
+    bracketId: row.bracket_id,
+    homeScore: row.home_score,
+    awayScore: row.away_score,
+  };
+}
+
 export function buildScheduleMetrics(options: BuildScheduleMetricsOptions): ScheduleMetrics {
   const {
     teams = [],
