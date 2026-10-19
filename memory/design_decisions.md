@@ -51,6 +51,31 @@ the hub’s Formatting check.
 **Applies to:** the Families record and its new windows; the coaches portal’s Record money (filled in from a club hand-off)
 and its “Your club” bell; the family file. Build prompt: `docs/projects/active/CLUB_TIER_STAGE5C_BUILD_PROMPT.md`.
 
+### 2026-10-19 — ONE WINDOW STAGE 2: THE ASK BEFORE CLOSING REACHES THE COACH WINDOWS FIRST; A TAP OUTSIDE A FORM DOES NOTHING; THE HAND-BUILT COACH WINDOWS MOVE NOW; A SMALL PHONE CARD IS ONLY FOR A QUESTION (owner, asks A–D of the Stage 2 window census, all as recommended, by paste-back — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 version 13, Proposal › "Stage 2 · windows"; two sessions ran the gate in parallel and put the same four asks, and the owner answered both the same way)
+**Decision:**
+- **A** The in-foot ask before closing (Q7: Keep writing / Discard) is built into the one window piece in Stage 2 and
+  turned on in every coach window that holds typed words, and in Message a family. The admin's
+  form windows get it as Stage 2's last part (2e), each with its own idea of what counts as typed (the owner's answer
+  in the session that carries Stage 2: "Coach now, admin in 2e"; the parallel session had put 2e as optional).
+- **B** A tap outside a form does nothing, typed or not; only ×, Cancel, Esc and Back close it (the admin's form today).
+  **Clarifies Q7**, whose words had a tap outside ask first when something is typed.
+- **C** The hand-built coach windows move in Stage 2: those without Esc, Tab and Back first (the tryout windows
+  included), then the rest, the practice page's windows last; sheets, slide-overs and records stay out. **Amends Q14
+  for these windows only**: House league, the tournament's old windows and the one-offs
+  stay in stage 4.
+- **D** Of the nine coach windows that are a small centred card on a phone, the real questions (Delete line?, Close the
+  season?) become the question window and stay small cards; the other seven become forms and fill the phone like every
+  other form (Choose an icon, Export, Start next season, Upload a document, the two month-grid windows, and Subscribe in
+  your calendar app, which opens on a computer only). No third shape.
+**Rationale (the asks' reasoning, which the owner accepted):** A — no admin form asks today (Message a family asks in
+its foot; New tournament asks in a second window), and every window that asks has to define what counts as typed, so
+the reach is a choice; B — an ask raised by a tap that missed the window is noise, and ignoring the tap loses nothing;
+C — about twenty coach and tryout windows have no Esc, Tab or Back, and several drop typed words to a stray tap with
+nothing asking, which stage 4 would leave for two more stages; D — the one window has two shapes (Q12), and a third would be a
+new variant.
+**Applies to:** `KitDialog` (the ask), `QuestionShell`, the hand-built coach and tryout windows; plan
+`docs/projects/active/ONE_WINDOW_PLAN.md`, "Stage 2 gate".
+
 ### 2026-10-19 — A MEMBER'S ACCESS IS ON OR OFF, AND ONLY THE ROWS CHANGED FOR THEM ARE MARKED; MANAGE'S SUSPEND AND REMOVE END THE BODY (owner, at a phone walking §332 W4: *"I don't think suspend and remove need to be pinned and can we do a better job of fitting this table on a phone screen?"*, then *"can't you just … have the dropdowns simply on/off?"*; asks A1–A3 as recommended, option A — https://claude.ai/artifact/7Msss31mNkUAN46wHA2jBM)
 **Decision:**
 - **A1** Manage's Suspend… / Reinstate / Resend invite (RepKit `RecordAction`, ink — undoable) and Remove…

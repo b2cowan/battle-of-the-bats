@@ -7,7 +7,8 @@ same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review (S
 two flows keep one width; a census found five more: a bill's tasks open over it, an allocation keeps its own width)
 and built and committed `6e3222f8` the same day after /review; **owner walk 2 ✅ passed 2026-10-19** (14 of 14, no
 notes; hub QA tab, QA ledger §339). Stage 1 is closed but for the layout check below. **Stage 2's gate was published
-2026-10-19** (census, before-figures, asks A–D open on the hub; "Stage 2 gate" below); nothing built. Still open: the layout
+2026-10-19** (census and calls B1–B9 on the hub, before-figures; **asks A–D ruled as recommended 2026-10-19**); **part
+2a (the one piece) committed `ada213b3` 2026-10-19** after /simplify and /review ("Stage 2a — as built" below); walked with 2b. Still open: the layout
 check on the screens Stage 1 touched (warm-theme sweep of the whole product ran on staging at the 2026-10-19 promote, master job 282, owner accepted its findings; the dark-theme sweep was not run, owner accepted the skip, run it on staging).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
@@ -74,6 +75,12 @@ panels (Help, chat, plan) and menus are not windows here (Sheet Frame governs th
   record or a group band, the paper-tone field IS the ground, so it showed only as its outline; there a box takes
   `--home-card`. A box on a white row keeps the paper tone. Dark is unchanged (a lighter wash on a darker row already
   stands off). Precedent: the toolbar select's card fill.
+
+**Amendments to Q7 and Q14 (2026-10-19, Stage 2 asks B and C, as recommended; owner paste-back):**
+- **Q7 · a tap outside a form does nothing, typed or not.** Only ×, Cancel, Esc and Back close it, and with words typed
+  those ask in the foot. Q7's words had a tap outside ask too.
+- **Q14 · the hand-built coach windows move in Stage 2**, not stage 4. House league, the tournament's old windows and
+  the one-offs stay in stage 4.
 
 ## 4. Stages
 
@@ -210,60 +217,143 @@ fields and foot buttons on a phone.
 - ⚠ Naming: "Question" already names the coach FORM shell; the yes/no window takes another name in code.
 - A foot sentence must be short at 520px, or it takes its own line above the buttons (drawn on the hub).
 
-#### Stage 2 gate — census, before-figures and four questions (2026-10-19; nothing built)
-Run from `ONE_WINDOW_STAGE2_BUILD_PROMPT.md`. Published on the hub, Proposal › "Stage 2 · windows": every window as a
-call the owner rules by number (W1–W83, the hub's `S2ROWS`; not "B1…", because B is a question), the before-figures,
-and asks A–D with a paste-back. **Open: A–D.** Build waits for them and for Toolbar Rules Stage 3's commit (shared files).
-- **Census** (four helpers, the floor and scrim columns spot-checked in the code): 32 `<QuestionShell` renders in 24
-  files; 51 hand-built windows (46 coach `.modalOverlay`, the desktop lineup setup included, and 5 tryout `.scrim`); 20
-  coach + 5 tryout without `useDialogFloor`. **76 move** (2b 32 · 2c 23 · 2d 21) and **7 stay out**: the dues family
-  drawer, the schedule event slide-over, the phone day list, the depth-chart player sheet, the practice station and
-  block sheets, the groups room. **42 of the 76 hold typed words, and 16 of those close with nothing asking today** —
-  shell: New payee (a `leaveGuard` only: ×, Cancel and Esc drop the name), Change a payment
-  (`InstallmentScopeSheet`), the club proposal's "Ask for a change" (`ClubReviewCard`), `SessionSheet`, link-org's
-  typed confirmation; hand-built: `GiveAwardModal`, `StartNextSeasonModal`, `RosterBulkAddSheet`,
-  `BudgetItemManagerModal`, the dues settlement window, Set refund, `SentWindow`, `PromoteDialog`,
-  `SaveAsTemplateDialog`, `DrillSheet`, `AwardIconPicker`. Staying out but a loss: the dues drawer's inline payment form
-  is not counted in `drawerFormDirty` (W77; a small fix offered for 2d).
-- **Corrections to the build prompt and this plan:**
-  1. Q7 is not "the admin's behaviour": no `KitDialog` caller asks before closing except `MessageFamilyWindow` (in its
+#### Stage 2 gate — census, before-figures, A–D (2026-10-19)
+Run from `ONE_WINDOW_STAGE2_BUILD_PROMPT.md`. ⚠ **Two sessions ran this gate in parallel; the owner chose this
+plan's census to carry Stage 2** (hub Proposal › "Stage 2 · windows", section `census2`, calls B1–B8; published in
+hub version 13 by the other session, which then took its own W1–W83 section off; its rows stay in
+`.probe/ow2-gate/census.cjs`, gitignored, as a cross-check). Commits `957b6eea` and `366ad8eb` carry the census section.
+
+**A–D ruled 2026-10-19, all four as recommended** (owner, AskUserQuestion, this session; the other session put the
+same four to the owner with its own wording of D, superseded by the choice above). Design log entry of the same date.
+- **A** the ask is built into the one window and turned on in the coach windows that ask today, the hand-built ones as
+  they move, and Message a family; the club and tournament admin's forms get it as a last part, **2e**, each with its
+  own idea of what counts as typed.
+- **B** a tap outside a form does nothing, typed or not (amends Q7's words, §3).
+- **C** the hand-built coach windows move in Stage 2: those with no Tab trap or phone Back first (2c, the five tryout
+  windows with them), then the rest (2d), the practice page's last; records and sheets stay out (amends Q14, §3).
+- **D** Close the season and Delete a budget line become the small centred question. The other seven small-card windows
+  (Choose an icon, Export, Start next season, Upload a document, the month grid's two figure windows, Subscribe in your
+  calendar app) become forms that fill a phone — the owner's D as worded in the parallel session and in the design
+  log; B5 on the hub restates it for a tick. No new window shape.
+
+**The census calls B1–B9 — ruled 2026-10-19, all nine as recommended** (owner paste-back; hub version 15): B1 one
+sentence for every window's ask (not each window's own stakes words, the other session's default); B2 the five shell
+windows that hold typed words and never asked ask too (ClubReviewCard's change request, New payee,
+InstallmentScopeSheet, SessionSheet, link-org's typed confirmation — built in 2a); B3 the eight hand-built windows that
+never asked ask as they move; B4 the drill sheet moves as a form and asks; B5 all seven other small-card windows fill a
+phone (the owner's D); B6 four read and manage windows move in 2c and 2d; B7 ten stay out; B8 the rest as listed;
+**B9, six windows the two censuses classed differently:** the season settlement MOVES as an 800 form (a statement and one decision, like the club's
+Close the year — the other census's reading, adopted); a staff member stays out (a record that saves as you go); lineup
+setup on a computer stays out (the phone sheet's panel); Set refund is a question (one pick, over the settlement);
+Categories & items gets the ask while a name is being typed; the list pickers (Apply a template, Start this plan from…,
+Groups from another practice) are forms that fill a phone, and tryouts' Which session is a question.
+
+- **Census** (helpers, every floor / scrim / typed claim spot-checked in the code): 32 `<QuestionShell` in 24 files
+  (13 call `useDiscardGuard`); 51 hand-built windows — 45 coach `.modalOverlay` renders, the desktop lineup setup, 5
+  tryout `.scrim` windows. Part 2c: 15 coach + 5 tryout with no floor, plus 3 read windows (B6). Part 2d: 13 with the
+  floor, plus the drill sheet (B4) and 4 read windows (B5, B6). Out: 10 (B7). Hub tables list every window.
+- **Corrections to the build prompt and this plan** (both censuses):
+  1. Q7 is not "the admin's behaviour": no `KitDialog` caller asked before closing except `MessageFamilyWindow` (in its
      foot) and `TournamentSetupWizard`, which asks in a SECOND question window ("Leave setup?" · Keep working · Leave,
-     `lib/tournament-setup-words.ts`). The ask is built into the piece (ask A).
-  2. The tap-outside wording collides (hub legend "with nothing typed it closes at once" vs Q7) → ask B.
-  3. Q14 (design log: "the coach hand-built windows" join in stage 4) vs this plan's Stage 2 → ask C.
-  4. Counts: `useDiscardGuard(` 28 sites in 23 files (13 in shell windows); `KitDialog` 147 renders in 69 files (club
-     40 files / 89, tournament 29 / 58); hand-built without the floor 20 (the plan's ~17).
-  5. `DrillSheet` HAS the floor (the prompt's 2c "high-risk" list misfiles it); its scrim and Esc still drop typed words.
-  6. The dues settlement window is a statement and one decision, like the club's Close the year (a `KitDialog` form):
-     recommended to move (W58), where the prompt had it out.
-  7. Three wordings of one answer: Keep editing (`useDiscardGuard`), Keep working (New tournament), Keep writing (ruled;
-     `lib/families-words.ts`). The foot ask says Keep writing; New tournament's stays until the admin forms join (A).
-  8. The stakes sentence: `useDiscardGuard`'s `detail` names what is lost ("an amount and 3 payment periods"); the
-     drawn foot says only "What you typed won't be kept." Default unless the owner says otherwise: the foot ask's
-     sentence keeps each window's stakes where it has one.
-  9. More guards key on `.modalOverlay` than the prompt lists: also `coach-award-edit`, `coach-schedule-phone-guard`,
+     `lib/tournament-setup-words.ts`). The ask is now built into the piece (A); New tournament's moves in 2e.
+  2. Hub legend vs Q7 on a tap outside → B. Q14 vs this plan → C.
+  3. Counts: `useDiscardGuard(` 28 sites in 23 files; hand-built without the floor 20, not ~17.
+  4. `DrillSheet` HAS the floor (the prompt's 2c list misfiles it); × and a stray tap still drop typed edits (B4).
+  5. Three wordings of one answer: Keep editing (`useDiscardGuard`), Keep working (New tournament), Keep writing (ruled,
+     drawn). The one window says Keep writing; the other two go as their windows move (Stage 3 owns `useConfirm`).
+  6. Guards keyed on `.modalOverlay` beyond the prompt's list: `coach-award-edit`, `coach-schedule-phone-guard`,
      `coach-schedule-sheet-guard`, `one-window-stage1-guard`.
-  10. No guard forbids a coach file importing `components/admin/kit` (coaches already import `components/admin`:
-      `CoachPortalShell`, the attendance panel). `kit-dialog-foot-text-guard` already scans every `.tsx`, so each coach
-      caller is held to "no sentence in `footer`" the moment it arrives.
-  11. No shell window has a docked `alertdialog`; the docked confirms live in hand-built windows (Record money, the club
-      request, dues).
-- **Step 0 · before-figures — a SAMPLE, not every window.** The machine was shared with the release's layout check,
-  another session's typecheck and a Club probe; a full pass through the shared dev server tripped the memory floor
-  three times (each abort discarded, never read as a pass). Measured by a probe on the UAT coach team, Warm, never
-  typing or saving: 12 windows at 1280 and 9 at 390, covering the shell, hand-built with and without the floor, and a
-  tryout window. The shell's fields and buttons come from one shared rule (`.input` / `.btn`), so its figures stand for
-  all 32; every window is measured after its move (the figure Q10 asks for). Raw figures: `.probe/ow2-gate/before.json`
-  (gitignored).
-  - **Phone (390):** one-line fields 35 (text, number) to 38.7 (dates, times; selects 37); 8 of 9 windows have a field
-    under 44. Foot buttons 31.4–33.4 (Add player 41); 8 of 9 under 44. Define a metric already meets 44 throughout.
-  - **Computer (1280):** text and number fields 35; selects 37; dates and times 38–38.7; the budget line's fields 36.6;
-    the tryout session window 38.2–41.2 (its own stylesheet). Foot buttons 34 (a ledger line's links 38.8; Add player
-    and tryouts 41). Q2's exact 36 is therefore a visible 1–3px change inside coach windows.
-  - **A tap outside closed all 12 windows tested** (nothing typed).
-  - **Widths off the ladder** (not in the prompt): the hand-built budget line form is 720 and the tryout session window
-    460; each takes 520 / 640 / 800 when it moves, so 2c and 2d need a width call per hand-built window (the shell's
-    are already 520 or 640).
+  7. No guard forbade a coach file importing `components/admin/kit`; `kit-dialog-foot-text-guard` holds every caller.
+  8. No shell window docks an `alertdialog`; the docked confirms live in hand-built windows (Record money, the club
+     request, dues).
+  9. The dues drawer's inline payment form is not counted in `drawerFormDirty` (stays out; a small fix offered for 2d).
+  10. Widths off the ladder: the hand-built budget line form is 720, the tryout session window 460; each takes 520 /
+      640 / 800 as it moves.
+- **Step 0 · before-figures (the 32 shell windows, `.probe/ow2/measure.mjs`, re-runnable; 27 opened at 390 and 26 at
+  1280 — the club practice asks, the club review card and link-org have no data on the UAT team, and Player progress
+  is phone-only).** Fields: text 35px, menus 37, dates 38–38.5, at both widths; Define a metric already 44 on a phone.
+  Foot buttons: 34 on a computer, 31.5–33.5 on a phone (a ledger line's and a dues read window's 39). × 26×28.5 on a
+  computer; the phone's ← 44×44. Controls under 44 at 390: 0–10 a window. The other session's sample of hand-built
+  windows: Add player 41, tryouts 38–41, the budget line 36.6 (raw: `.probe/ow2-gate/before.json`). A tap outside
+  closed every window tested.
+
+#### Stage 2a — as built 2026-10-19 (the one piece; committed `ada213b3` 2026-10-19)
+- **`KitDialog` is both portals' window** (header: "ONE WINDOW FOR BOTH PORTALS"; the "admin only" line is gone).
+  New props, kept small because the Feedback build starts from them: `dirty`, `discardAsk` (a window's own sentence —
+  Message a family's "Close without sending?"), `headerExtra` (a status mark), `openOn="panel"` (the coach rule: no
+  phone keyboard on open unless a field asks), `ownType` (the caller's content draws its own type), and `back.label`
+  optional (an unnamed level: the phone's ← and Back go up). Export `DialogCancel` (a Cancel that closes through the
+  ask); the drawn words live once in `lib/window-words.ts` (`WINDOW_ASK`).
+- **The ask:** ×, ←, `DialogCancel`, Escape and Back all go through one `requestClose`: busy holds; while it asks, the
+  same way out again is Keep writing (focus goes back where it was); `dirty` asks; otherwise it closes. The ask takes
+  the foot's sentence slot and its buttons ("Close without saving? What you typed won't be kept." · Keep writing ·
+  Discard), hides the reason line while it shows, and a window with no foot grows one while it asks. Not an
+  `alertdialog`, so the floor's Back means Keep writing rather than holding. A tap outside a form does nothing; outside
+  a question it is the "no", through the same closer.
+- **One page lock:** `useOverlayOpenIfAvailable` now returns whether the coaches portal's provider is there; inside it
+  the portal's counter is the only lock (and hides the phone bars), elsewhere KitDialog's own count. The panel says so:
+  `data-coach-window`, plus `data-kind` and `data-asking`.
+- **`QuestionShell`** keeps its name and props, renders `KitDialog` kind "form" (`wide` → 640, `subtitle` → identity,
+  `onBack` → an unnamed level, `raised` → 405), keeps the route guard armed while `!open`, and wraps its form in
+  `.windowBody`. `scroll` is a no-op. Re-exports `DialogCancel` as `QuestionCancel`.
+- **Layers:** a coach form now stands at 400 at every width (it was 200 on a computer). Order: window 400 < raised room
+  401 (`RAISED_OVERLAY_Z`, rooms only now) < raised window 405 < question 410 < the global confirm 1000. The save pill
+  rises over a coach window on the one piece: over a full-screen coach form on a phone (above its foot), over any coach
+  window above 640 (`body:has([data-coach-window])`, beside the `.modalOverlay` rules, which stay for the hand-built
+  windows). The admin's windows are not marked, so the admin page's pill stays under them.
+- **Q2 · Q10 inside a coach window** (`.windowBody`, page forms untouched): the portal's own fields (`.input`,
+  `.select`) are 36px on a computer; on a phone every one-line field and the legacy foot's buttons are 44px (the one
+  window's own foot buttons already were).
+- **The 2a shim** (`.windowBody .modalFooter`, allow-listed): a consumer's own foot strip is laid out as the window's
+  foot until 2b moves its buttons into `footer` — pinned to the body's bottom, edge to edge, at the screen's foot on a
+  phone, hidden while the window asks.
+- **A window reads left to right wherever it is mounted** (`.panel` resets `text-align` and `white-space`, the coach
+  `.modal`'s 2026-09-09 lesson).
+- **Windows switched from the second-window ask to the foot:** GoalSheet, PlaceSheet, ReviewGoalDialog,
+  RecordResultSheet, RecordObservationDialog, MetricDefinitionSheet, ScheduleEventForm, SponsorRoom ×2, DriveRoom ×2,
+  New fundraiser, and Message a family (its own `asking` state removed; `keepWriting` / `discard` left
+  `lib/families-words.ts`), and the dues panel's Add adjustment (it waited for Toolbar Rules Stage 3, committed
+  `93b35b43` the same day). **Call B2:** ClubReviewCard (a change request typed and not sent), New payee (a name),
+  InstallmentScopeSheet (amount, date or scope changed), SessionSheet (any of its facts changed since it opened,
+  `snapshotEqual`) and link-org's Approve a club link (the typed team name) now ask too. `useDiscardGuard` stays for its
+  15 other callers (hand-built windows) until they move or Stage 3 owns the confirm.
+- **/simplify 2026-10-19** (four angles, scoped to 2a): a global `.btn` inside a coach window wears the admin's button
+  face (`[data-coach-window] .btn` beside `[data-admin-kit] .btn` in globals.css — Keep writing / Discard, and Join a
+  club's and Player progress's buttons, which were still the old display face); the ask's words moved to
+  `lib/window-words.ts`; `QuestionShell`'s `leaveGuard.dirty` defaults to the window's own `dirty` (one source, not two
+  that can drift; only New fundraiser keeps its own); `openOn="panel"` now leaves focus to the floor instead of
+  repeating its rule; the phone save-pill rule joins the §227 `.modalOverlay` block (one measured offset); the 36px
+  rule sits in a computer-only media query (no set-then-reset); the dead `data-kit-overlay` and stale comments went;
+  the guard reads the tree once (879 → 550 ms). Left for 2b: dropping the no-op `scroll` prop from its 10 callers.
+  Left as they are (guarded, a deeper refactor each): one counted page-lock module for the provider and KitDialog; the
+  shim's side shadows.
+- **/review 2026-10-19** (four lenses: the ask's state, blast radius, layers and rendered CSS, the page lock and
+  lifecycle; findings verified in the code, two measured in a browser). Fixed: a window nested inside another (the
+  event form's Add a place / Places) answered one Escape twice — the form behind asked too (the floor now lets the
+  innermost `[role="dialog"][aria-modal]` own its keys; checked live); the ask's Discard stayed live while a save ran
+  (Enter in a field still submits) — the ask now stands down when a save starts or the words are gone, and its buttons
+  are busy-gated; the shim's strip hid a field the keyboard reached in a short window (now `scroll-margin-bottom` on
+  the body's controls; measured 0 hidden at 1280×560 / 1280×430 / 390×844) and stopped short of a notched phone's
+  foot (the strip now hands back the body's safe-area padding and carries it itself); the 36px rule clipped read-only
+  `<span class="input">` values (now real inputs and selects only). Not changed, recorded: read-only coach windows no
+  longer close on a tap outside (ruled, B and B8); the page pill can sit over the ask's Discard on a phone while a
+  Retry shows (pre-existing geometry); a window with a level (`back`) does not ask on ← (no window has both today);
+  admin overlays that each save and restore `body.style.overflow` (BottomSheet, HelpDrawer) can still unbalance
+  KitDialog's own lock in the admin — true before 2a; `tests/uat/scenarios/coach-money-mobile-smoke.spec.ts` (lines
+  ~687, 754, 815) finds the hand-built money windows by `.modalOverlay` and the old ask words — update it when 2c/2d
+  move them.
+- **Guards:** new `tests/unit/one-window-stage2-guard.test.ts` (23 tests; 14 mutations, each turned it red). Updated,
+  same meaning: `kit-dialog-floor-guard`, `club-stage3d-screens-guard`, `kit-dialog-foot-text-guard`,
+  `ledger-parity-screens-guard`, `development-record`, `coach-practice-week-phone-guard`.
+- **After-figures:** the same script, 2026-10-19 (`.probe/ow2/after-2a.*`; 27 windows opened at 390 and 27 at 1280 —
+  the observation window needed a second try). **Phone:** one-line fields 44 and foot buttons 44 in every window that
+  opened (were 35–38.5 and 31.5–34). **Computer:** fields 36 (were 35–38.5); a category picker 36.5 and a seconds
+  stepper 40 keep their own sizes (their own classes, not the portal's `.input` / `.select`); foot buttons 34 (39 for a
+  read window's links); × 32×32 (was 26×28.5). Still under 44 at 390, none a field or a foot button: a date field's
+  calendar icon, a checkbox, two text links, two "More" disclosures (36.5), a "No one" chip (41.5 wide). **Layout
+  check** (390 and 1440, Warm) on the six screens that open these windows: no new findings — after the shim's first
+  version spilled 20 / 24px out of its wrapper (a negative side margin; now side shadows carry the strip's card and
+  hairline to the edges). Screenshots for the hand-off: `.probe/ow2/shot-*.png`.
 
 ### Stage 3 · One question
 What changes on screen: every "are you sure" in all three areas looks the same; no browser grey boxes; Saved / Done

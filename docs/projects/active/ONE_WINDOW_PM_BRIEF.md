@@ -10,7 +10,8 @@ the tournament admin or the coaches portal.
 - **The look is the coaches portal's:** paper-tone fields and a narrower window. Labels are in sentence case, as on the
   admin's settings pages, and that now applies to every form in the product.
 - **The behaviour is the admin's:**
-  - A stray tap never throws away a half-filled form; if something is typed, the window asks first.
+  - A stray tap outside a form does nothing. If something is typed, closing it asks first: in every coach window
+    from stage 2, and in the admin's forms only if that is chosen later (ruled 2026-10-19).
   - Fields and buttons are full tap size on a phone.
   - A short sentence at the foot says what happens next, and a refused save says why beside the button.
 - **One "are you sure" window everywhere**, a small centred card on a phone. The browser's grey boxes are gone.
@@ -37,7 +38,8 @@ front of paying customers.
 
 ## Stages
 1. **One look:** fields, widths, spacing, edge, labels, and the dimmed page.
-2. **One behaviour:** coach windows gain the admin's behaviour.
+2. **One behaviour:** coach windows, the hand-built ones included (moved up from stage 4, ruled 2026-10-19), gain the
+   admin's behaviour.
 3. **One question:** one confirm everywhere; notices fade.
 4. **Strays join:** House league, the tournament's old windows, one-offs.
 
