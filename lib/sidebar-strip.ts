@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 
 /**
  * lib/sidebar-strip.ts — THE SIDEBAR STRIP SETTING, ONE FOR EVERY PORTAL ON THE DEVICE (Sidebar Strip &
- * Grid Width, Stage 2; plan `docs/projects/active/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`).
+ * Grid Width, Stage 2; plan `docs/projects/archive/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`).
  *
  * ⚖ The owner's rulings (2026-10-12): remembered PER DEVICE, ALWAYS A CHOICE (nothing collapses by itself
  * at any width), and ONE setting shared by every portal — the club and tournament sidebar (`AdminKitRail`),
