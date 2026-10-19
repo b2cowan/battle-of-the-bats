@@ -201,8 +201,8 @@ export const POST = withObservability(async (req: Request) => {
       if (compErr) console.error('[league/create] Founding season comp_period insert error:', compErr);
     }
 
-    // Account-first: the league is made, so Home's "Finish creating your league" card has done its job.
-    await clearStartDoor(user.id);
+    // Account-first: the league is made, so Home's waiting workspace has done its job.
+    await clearStartDoor(user.id, ['league']);
 
     return NextResponse.json({ ok: true, orgSlug: org.slug });
   } catch (err) {

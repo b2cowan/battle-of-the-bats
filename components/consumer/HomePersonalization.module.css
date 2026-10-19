@@ -124,6 +124,15 @@
   color: var(--home-dim);
 }
 .wsChevron { color: var(--home-dim); flex-shrink: 0; }
+/* A waiting workspace's one step, in the meta line's place (Account-First A4 revised 2026-10-19, /design D13): the
+   one line on the card that must be read, so it is the sans at the support size in the link colour, not the meta
+   line's data face. The chevron stays the card's only door mark (D14). */
+.wsAction {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--home-olive);
+}
 
 /* ── Lapsed reactivate card ──────────────────────────────────────────────── */
 .lapsedCard {
@@ -313,63 +322,3 @@
   animation: shimmer 1.4s ease infinite;
 }
 @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
-
-/* ── Finish card (Account-First Sign-up A4, drawings D8, 2026-10-18) ─────────
-   For an account that came from a start sign-up and has not made its thing yet.
-   One lime action (the warm primary language) and a quiet Not now. */
-.startCard {
-  padding: 1rem;
-  background: var(--home-card);
-  border: 1px solid rgba(var(--home-olive-rgb), 0.32);
-  border-radius: var(--home-radius);
-}
-.startTitle {
-  margin: 0 0 0.375rem;
-  font-family: var(--font-display, sans-serif);
-  font-size: 1.45rem;
-  font-weight: 800;
-  line-height: 1.12;
-  color: var(--home-ink);
-  text-wrap: balance;
-}
-.startBody {
-  margin: 0 0 0.875rem;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--home-dim);
-  overflow-wrap: anywhere;
-}
-.startRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.375rem 1rem;
-}
-.startAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  min-height: 44px;
-  padding: 0 1rem;
-  border-radius: 10px;
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-  font-size: 0.94rem;
-  font-weight: 800;
-  text-decoration: none;
-  transition: filter 0.15s;
-}
-.startAction:hover { filter: brightness(1.05); }
-.startNotNow {
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--home-dim);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-.startNotNow:hover { color: var(--home-ink); }

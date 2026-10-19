@@ -21,7 +21,8 @@ import { getWholeEventFollowCards, getOrgFollowRollups } from '@/lib/entity-foll
 import { getCoachedRegistrationTeamIds } from '@/lib/basic-coach-teams';
 import { reconcilePendingInvitesForUser, listPendingInvitesForUser, withInvitationDetails } from '@/lib/invite-reconciliation';
 import { listPendingClubCoachInvitesForEmail } from '@/lib/assistant-invites';
-import { readStartDoor, sessionSignedInAt, startCardVisible } from '@/lib/start-door';
+import { readStartDoor } from '@/lib/start-door';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 
 const EMPTY: ConsumerHomePayload = {
   signedIn: false,
@@ -31,7 +32,7 @@ const EMPTY: ConsumerHomePayload = {
   followCount: 0,
   following: { current: [], past: [] },
   organizations: [],
-  startCard: null,
+  waitingWorkspace: null,
 };
 
 export const GET = withObservability(async () => {
@@ -108,16 +109,16 @@ export const GET = withObservability(async () => {
   const following = mergeWholeEventIntoRollup(teamRollup, wholeEventCards);
   const workspaces = filterWorkspaceContexts(contexts);
 
-  // Account-First Sign-up (A4): an account that came from a start sign-up and has nowhere to go yet sees "Finish
-  // creating your team". Never a card whose step would not open: /start/league sends anyone with a pending invite
-  // back here, and shows a waitlist while the League Starter beta is off.
+  // Account-First Sign-up (A4, revised 2026-10-19): an account that came from a start sign-up keeps a workspace waiting
+  // for its name until that team, league or organization is made — beside any other workspace (owner: "otherwise they
+  // lose that team"), with no Not now. Never one whose step would not open: /start/league shows a waitlist while the
+  // League Starter beta is off, and turns away a pending invite and an account already in a real organization (the
+  // page's and /api/league/create's own gates). The finish card's no-workspace rule used to hide those last two.
   const start = readStartDoor(user.user_metadata);
-  const stepOpens = start?.door !== 'league' || (process.env.LEAGUE_STARTER_BETA === 'true' && pendingInvites.length === 0);
-  // Only a once-dismissed card needs to know when this session signed in.
-  const signedInAt = start?.notNow === 1 ? sessionSignedInAt((await supabase.auth.getClaims()).data?.claims?.amr) : null;
-  const startCard = start && stepOpens && startCardVisible(start, { signedInAt, hasWorkspace: workspaces.length > 0 })
-    ? { door: start.door, email: user.email }
-    : null;
+  const stepOpens = start?.door !== 'league' || (
+    process.env.LEAGUE_STARTER_BETA === 'true' && pendingInvites.length === 0 && !(await userBelongsToOtherRealOrg(user.id))
+  );
+  const waitingWorkspace = start && stepOpens ? { door: start.door } : null;
 
   const payload: ConsumerHomePayload = {
     signedIn: true,
@@ -136,7 +137,7 @@ export const GET = withObservability(async () => {
     followCount: visibleFollows.length + followedTournaments.length,
     following,
     organizations,
-    startCard,
+    waitingWorkspace,
   };
   // Per-user, never shared: no-store is defense-in-depth beyond the SW's /api/ no-cache rule,
   // and matches every sibling consumer API (alert-prefs, follows, tournament-viewer).

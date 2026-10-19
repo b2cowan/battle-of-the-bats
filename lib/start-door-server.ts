@@ -5,33 +5,29 @@
  */
 import { supabaseAdmin } from './supabase-admin';
 import { getUserAccessContextsCached, filterWorkspaceContexts } from './user-contexts';
-import { readStartDoor, withNotNow, type StartStepViewer } from './start-door';
+import { readStartDoor, type StartDoor, type StartStepViewer } from './start-door';
 
 type AuthUserLike = { id: string; email?: string | null; user_metadata?: unknown };
 
 /**
- * Forget the remembered door once a creation completes. Takes the account id alone, so any creation path can call
- * it. Never fails the caller: a door left behind only shows a card, and Home hides that once there is a workspace.
+ * Forget the remembered door once the thing it came to start is made. Takes the account id and the doors that
+ * creation fulfils, so any creation path can call it, and EVERY path that gives the account its own team or league
+ * must: Home shows the door's waiting workspace beside every other workspace (A4 revised 2026-10-19), so a door left
+ * behind is a "Not named yet" card sitting next to the real one. Only a matching door clears — a team never finishes
+ * a waiting league, or the other way round (owner: it shows "if it truly is" still owed). Never fails the caller: a
+ * failed clear is logged, and the card stays until a later creation of that kind clears it.
  */
-export async function clearStartDoor(userId: string): Promise<void> {
+export async function clearStartDoor(userId: string, fulfils: readonly StartDoor[]): Promise<void> {
   try {
     const { data, error: readError } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (readError || !data?.user || !readStartDoor(data.user.user_metadata)) return;
+    if (readError || !data?.user) return;
+    const start = readStartDoor(data.user.user_metadata);
+    if (!start || !fulfils.includes(start.door)) return;
     const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { user_metadata: { start: null } });
     if (error) console.error('[start-door] clear failed:', error);
   } catch (err) {
     console.error('[start-door] clear failed:', err);
   }
-}
-
-/** Home's "Not now" (A4): count it on the account, so the second one holds on every device. */
-export async function recordStartDoorNotNow(user: AuthUserLike): Promise<void> {
-  const start = readStartDoor(user.user_metadata);
-  if (!start) return;
-  const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-    user_metadata: { start: withNotNow(start, new Date()) },
-  });
-  if (error) console.error('[start-door] not-now failed:', error);
 }
 
 /**

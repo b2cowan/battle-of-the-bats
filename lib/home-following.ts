@@ -187,7 +187,8 @@ export interface ConsumerHomePayload {
   following: { current: TournamentFollowCard[]; past: TournamentFollowCard[] };
   /** F2: followed organizations (below Following·Tournaments). Persists off-season. */
   organizations: OrgFollowCard[];
-  /** Account-First Sign-up (A4): the account came from a start sign-up and has not made its thing yet — Home's
-   *  "Finish creating your team" card. Absent for everyone else (fans and parents never see it). */
-  startCard: { door: StartDoor; email: string } | null;
+  /** Account-First Sign-up (A4, revised 2026-10-19): the account came from a start sign-up and has not made its thing
+   *  yet — Home's waiting workspace ("Your team · Not named yet"), shown after the workspaces in use. Absent for
+   *  everyone else (fans and parents never see it). */
+  waitingWorkspace: { door: StartDoor } | null;
 }

@@ -1,29 +1,28 @@
 /**
  * ACCOUNT-FIRST SIGN-UP (owner rulings A1–A7, 2026-10-18; hub docs/projects/active/ACCOUNT_FIRST_SIGNUP_HUB.html).
  * Every start sign-up asks for the account alone; the team, league or organization is named after the email link, on
- * the door's step 2. The account remembers its door (lib/start-door.ts) so the link, every resend and Home's finish
- * card all lead back there, wherever the link is opened.
+ * the door's step 2. The account remembers its door (lib/start-door.ts) so the link, every resend and Home's waiting
+ * workspace (A4, revised 2026-10-19) all lead back there, wherever the link is opened.
  *
  * Part 1 (shared pieces + Start a team + Start a league). The rules are exercised directly; the wiring is pinned by
  * source scans, as signup-verification-guard.test.ts does for the verify-by-link rule this builds on.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readCode } from './_source-code.ts';
 import {
-  readStartDoor, parseStartDoor, sessionSignedInAt, startCardVisible, startDoorLinkPath, withNotNow, START_DOOR_PATH, START_CARD_COPY,
+  readStartDoor, parseStartDoor, startDoorLinkPath, START_DOOR_PATH, WAITING_WORKSPACE,
 } from '../../lib/start-door.ts';
 
 describe('the remembered door', () => {
   it('reads only a well-formed record; anything else is no door', () => {
     assert.deepEqual(readStartDoor({ start: { door: 'team' } }), { door: 'team' });
-    assert.deepEqual(readStartDoor({ start: { door: 'league', notNow: 1, notNowAt: '2026-10-18T12:00:00.000Z' } }),
-      { door: 'league', notNow: 1, notNowAt: '2026-10-18T12:00:00.000Z' });
     for (const md of [null, undefined, {}, { start: null }, { start: 'team' }, { start: { door: 'club' } }, { start: { door: 7 } }]) {
       assert.equal(readStartDoor(md), null, JSON.stringify(md));
     }
-    // a hand-edited count or date is dropped, never trusted as a number or a time
-    assert.deepEqual(readStartDoor({ start: { door: 'team', notNow: 'lots', notNowAt: 'yesterday' } }), { door: 'team' });
+    // the finish card's Not now count (before A4 was revised, 2026-10-19) is left on some accounts, and means nothing now
+    assert.deepEqual(readStartDoor({ start: { door: 'league', notNow: 2, notNowAt: '2026-10-18T12:00:00.000Z' } }), { door: 'league' });
   });
 
   it('a route takes only the doors it serves', () => {
@@ -39,38 +38,12 @@ describe('the remembered door', () => {
     assert.equal(START_DOOR_PATH.premium, '/coaches/start');
   });
 
-  it('Not now: the first hides the card until the next sign-in, the second hides it for good (A4)', () => {
-    const fresh = { door: 'team' as const };
-    const at = (signedInAt: string | null) => ({ signedInAt, hasWorkspace: false });
-    assert.equal(startCardVisible(fresh, at('2026-10-18T09:00:00.000Z')), true);
-
-    const once = withNotNow(fresh, new Date('2026-10-18T10:00:00.000Z'));
-    assert.deepEqual(once, { door: 'team', notNow: 1, notNowAt: '2026-10-18T10:00:00.000Z' });
-    assert.equal(startCardVisible(once, at('2026-10-18T09:00:00.000Z')), false, 'same sign-in: hidden');
-    assert.equal(startCardVisible(once, at('2026-10-19T08:00:00.000Z')), true, 'signed in again: back');
-    assert.equal(startCardVisible(once, at(null)), false, 'no sign-in on record: stays hidden');
-
-    const twice = withNotNow(once, new Date('2026-10-19T08:30:00.000Z'));
-    assert.equal(twice.notNow, 2);
-    assert.equal(startCardVisible(twice, at('2026-11-01T08:00:00.000Z')), false, 'for good');
-  });
-
-  it('never for an account that already has a workspace, however it was made', () => {
-    assert.equal(startCardVisible({ door: 'team' }, { signedInAt: '2026-10-18T09:00:00.000Z', hasWorkspace: true }), false);
-  });
-
-  it('"the next sign-in" is the session’s own sign-in time, which a token refresh does not move', () => {
-    // 2026-10-18T10:00:00Z = 1792317600
-    assert.equal(sessionSignedInAt([{ method: 'password', timestamp: 1792317600 }, { method: 'totp', timestamp: 1792318200 }]), '2026-10-18T10:00:00.000Z');
-    assert.equal(sessionSignedInAt(['password']), null, 'the string-only claim format carries no time');
-    assert.equal(sessionSignedInAt(undefined), null);
-  });
-
-  it('Coach Premium has its own card words; the others name what is left to make', () => {
-    assert.equal(START_CARD_COPY.team.title, 'Finish creating your team');
-    assert.equal(START_CARD_COPY.league.title, 'Finish creating your league');
-    assert.equal(START_CARD_COPY.organization.title, 'Finish creating your organization');
-    assert.deepEqual([START_CARD_COPY.premium.title, START_CARD_COPY.premium.action], ['Finish setting up your Coaches Portal', 'Continue setup']);
+  it('the waiting workspace wears the card it will become, in the words the owner ruled (A4 revised 2026-10-19)', () => {
+    assert.deepEqual(WAITING_WORKSPACE.team, { kind: 'coaches_basic', badge: 'Not named yet', title: 'Your team', action: 'Name your team' });
+    assert.deepEqual(WAITING_WORKSPACE.league, { kind: 'organization', badge: 'Not named yet', title: 'Your league', action: 'Name your league' });
+    assert.deepEqual(WAITING_WORKSPACE.organization, { kind: 'organization', badge: 'Not named yet', title: 'Your organization', action: 'Name your organization' });
+    // Coach Premium's step 2 asks for the team, the sport and the plan, so its words are its own
+    assert.deepEqual(WAITING_WORKSPACE.premium, { kind: 'coaches_premium', badge: 'Setup not finished', title: 'Your team', action: 'Continue setup' });
   });
 
   it('steers screens only: no entitlement, price or Founding Season rule reads it', () => {
@@ -167,28 +140,67 @@ describe('the start forms', () => {
   });
 });
 
-describe('a creation clears the door', () => {
+/**
+ * ⚠ The waiting workspace shows beside every other workspace (A4 revised 2026-10-19), so EVERY path that gives the
+ * account its own team or league must clear the door — a door left behind is a "Not named yet" card next to the real
+ * team. The finish card hid itself once there was any workspace, so before the revision only two paths cleared it.
+ * Census 2026-10-19: Premium makes every team through one provisioner (checkout comp + mock paths, both Stripe
+ * webhook events); a registration claim creates or adopts a free team in one helper (the join page, a signed-in
+ * tournament registration). Not cleared on purpose: a staff seat, a season rollover, a tournament organization
+ * (not the team or league the door came to start; the organization door, and its clear, are Part 2's).
+ * Each clear names the doors it fulfils (/review 2026-10-19): a team never finishes a waiting league, or the other way
+ * round, because the card shows only while the thing "truly is" still owed.
+ */
+describe('a creation clears the door it fulfils', () => {
   it('the free team and the free league', () => {
-    assert.match(readCode('app/api/coaches/teams/route.ts'), /await Promise\.all\(\[welcome, clearStartDoor\(user\.id\)\]\);\s*return json\(\{ ok: true, id \}\);/);
-    assert.match(readCode('app/api/league/create/route.ts'), /await clearStartDoor\(user\.id\);\s*return NextResponse\.json\(\{ ok: true, orgSlug: org\.slug \}\);/);
+    assert.match(readCode('app/api/coaches/teams/route.ts'), /await Promise\.all\(\[welcome, clearStartDoor\(user\.id, \['team'\]\)\]\);\s*return json\(\{ ok: true, id \}\);/);
+    assert.match(readCode('app/api/league/create/route.ts'), /await clearStartDoor\(user\.id, \['league'\]\);\s*return NextResponse\.json\(\{ ok: true, orgSlug: org\.slug \}\);/);
+  });
+  it('a Coach Premium team, once its provisioning is committed', () => {
+    assert.match(readCode('lib/team-workspace-provisioning.ts'), /createdOrgId = null;[\s\S]{0,500}?await clearStartDoor\(ownerUserId, \['team', 'premium'\]\);/);
+  });
+  it('a free team a registration claim creates or adopts', () => {
+    const lib = readCode('lib/basic-coach-teams.ts');
+    assert.match(lib, /status: 'active' \}\);[\s\S]{0,500}?await clearStartDoor\(params\.userId, \['team'\]\);\s*return \{ basicCoachTeamId: foreignLink, createdTeam: false \};/, 'adopting an orphaned team');
+    assert.match(lib, /if \(createdTeam\) await clearStartDoor\(params\.userId, \['team'\]\);\s*return \{ basicCoachTeamId, createdTeam \};/, 'a team made for the claim');
+  });
+  it('only a matching door clears', () => {
+    const lib = readCode('lib/start-door-server.ts');
+    assert.match(lib, /export async function clearStartDoor\(userId: string, fulfils: readonly StartDoor\[\]\)/);
+    assert.match(lib, /if \(!start \|\| !fulfils\.includes\(start\.door\)\) return;/);
   });
 });
 
-describe('Home’s finish card (A4)', () => {
-  it('only for an account with a remembered door and nowhere to go yet', () => {
-    const route = readCode('app/api/consumer/home/route.ts');
-    assert.match(route, /startCardVisible\(start, \{ signedInAt, hasWorkspace: workspaces\.length > 0 \}\)/);
-    assert.match(route, /sessionSignedInAt\(\(await supabase\.auth\.getClaims\(\)\)\.data\?\.claims\?\.amr\)/);
-    assert.doesNotMatch(route, /last_sign_in_at/, 'a token refresh re-stamps it');
+describe('Home’s waiting workspace (A4 revised 2026-10-19)', () => {
+  const route = readCode('app/api/consumer/home/route.ts');
+  const home = readCode('components/consumer/HomePersonalization.tsx');
+  it('for an account with a remembered door, beside any other workspace, with nothing to dismiss', () => {
+    assert.match(route, /const waitingWorkspace = start && stepOpens \? \{ door: start\.door \} : null;/);
+    assert.doesNotMatch(route, /hasWorkspace|getClaims|notNow|last_sign_in_at/, 'no workspace check and no Not now timing');
+    // resolved from the repo root, not the working directory, so the check cannot pass vacuously (/review)
+    assert.equal(existsSync(new URL('../../app/api/account/start-door/route.ts', import.meta.url)), false, 'the Not now route is gone');
+    assert.doesNotMatch(home, /Not now|api\/account\/start-door/);
   });
-  it('never leads to a step that would not open', () => {
-    assert.match(readCode('app/api/consumer/home/route.ts'), /const stepOpens = start\?\.door !== 'league' \|\| \(process\.env\.LEAGUE_STARTER_BETA === 'true' && pendingInvites\.length === 0\);/);
+  it('never leads to a step that would not open: the league door carries /start/league’s three gates', () => {
+    // an account already in a real organization is turned away by the page and by /api/league/create (/review)
+    assert.match(route, /const stepOpens = start\?\.door !== 'league' \|\| \(\s*process\.env\.LEAGUE_STARTER_BETA === 'true' && pendingInvites\.length === 0 && !\(await userBelongsToOtherRealOrg\(user\.id\)\)\s*\);/);
+    const page = readCode('app/(consumer)/start/league/page.tsx');
+    assert.match(page, /if \(user\?\.id && \(await userBelongsToOtherRealOrg\(user\.id\)\)\) \{/, 'the page gate this mirrors');
   });
-  it('hides "Nothing here yet" while it shows, and Not now is counted on the account', () => {
-    const home = readCode('components/consumer/HomePersonalization.tsx');
-    assert.match(home, /const signedInEmpty =\s*loaded && signedIn && !startCard &&/);
-    assert.match(home, /fetch\('\/api\/account\/start-door', \{ method: 'POST' \}\)/);
-    assert.match(readCode('app/api/account/start-door/route.ts'), /await recordStartDoorNotNow\(user\);/);
+  it('sits in Workspaces after the workspaces in use, and Home is not empty while it shows', () => {
+    assert.match(home, /\{workspaces\.map\(ws => <WorkspaceCard key=\{ws\.id\} ctx=\{ws\} \/>\)\}\s*\{waiting && <WaitingWorkspaceCard door=\{waiting\.door\} \/>\}/);
+    assert.match(home, /\{\(workspaces\.length > 0 \|\| waiting\) && \(/);
+    assert.match(home, /const signedInEmpty =\s*loaded && signedIn && !waiting &&/);
+  });
+  it('is the workspace card itself: that family’s label and icon, an amber badge, the step in the meta line’s place', () => {
+    const card = home.slice(home.indexOf('function WaitingWorkspaceCard('), home.indexOf('function WorkspaceCard('));
+    assert.match(card, /className=\{styles\.wsCard\}/);
+    assert.match(card, /<span className=\{styles\.wsKind\}>\{KIND_LABEL\[card\.kind\]\}<\/span>/);
+    assert.match(card, /<span className=\{styles\.wsBadge\} data-accent="amber">\{card\.badge\}<\/span>/);
+    assert.match(card, /<span className=\{styles\.wsAction\}>\{card\.action\}<\/span>/);
+    assert.match(card, /href=\{START_DOOR_PATH\[door\]\}/);
+    // /design D13: the one line that must be read is the sans at the support size, not the meta line's data face
+    assert.match(readCode('components/consumer/HomePersonalization.module.css'), /\.wsAction \{[^}]*font-family: var\(--font-sans[^}]*font-size: 0\.75rem;/);
   });
 });
 

@@ -12,6 +12,7 @@ import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
 import { findBasicCoachTeamIdForTournamentRegistration, resolveBasicCoachTeamIdForWorkspace } from './basic-coach-teams';
 import { migrateBasicTeamIntoWorkspace } from './coach-upgrade-migration';
+import { clearStartDoor } from './start-door-server';
 import { DEFAULT_SPORT } from './sports';
 import { normalizeCreditApplicationMode } from './dues-credits';
 import type {
@@ -443,6 +444,11 @@ export async function provisionStandaloneTeamWorkspace(
     }
 
     createdOrgId = null;
+
+    // Account-first: the owner now has a team of their own, so a waiting team (free or Premium) has done its job; a
+    // waiting league has not. Here, not in a caller, because every Premium path makes its team through this one
+    // function (the checkout's comp and mock paths, both Stripe webhook events). Never throws.
+    await clearStartDoor(ownerUserId, ['team', 'premium']);
 
     // Free→Premium data migration (Phase 4) — runs ONLY for the provisioner that won the atomic
     // claim above (so exactly once per upgraded team), and only AFTER provisioning is committed +

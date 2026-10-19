@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  ArrowRight, Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
+  Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
   RotateCcw, type LucideIcon,
 } from 'lucide-react';
 import { getSession } from '@/lib/auth';
@@ -20,7 +20,7 @@ import {
 } from '@/lib/home-following';
 import type { UserAccessContext, UserAccessContextKind } from '@/lib/user-contexts';
 import { WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
-import { START_CARD_COPY, START_DOOR_PATH, type StartDoor } from '@/lib/start-door';
+import { WAITING_WORKSPACE, START_DOOR_PATH, type StartDoor } from '@/lib/start-door';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import PendingInvitationsCard from '@/components/home/PendingInvitationsCard';
 import styles from './HomePersonalization.module.css';
@@ -55,7 +55,6 @@ const EMPTY_FOLLOWING = { current: [] as TournamentFollowCard[], past: [] as Tou
 export default function HomePersonalization() {
   const [payload, setPayload] = useState<ConsumerHomePayload | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [startCardHidden, setStartCardHidden] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,16 +142,12 @@ export default function HomePersonalization() {
   const feedSettled = signedIn ? loaded : (useDevice && !deviceFeed.loading);
   const followsButEmpty = followCount > 0 && !hasFollowing && feedSettled;
 
-  // Account-First Sign-up (A4): "Finish creating your team", for an account that came from a start sign-up only.
-  const startCard = signedIn && !startCardHidden ? (payload?.startCard ?? null) : null;
-  function startCardNotNow() {
-    setStartCardHidden(true);
-    void fetch('/api/account/start-door', { method: 'POST' }).catch(() => {});
-  }
+  // Account-First Sign-up (A4, revised 2026-10-19): the workspace an account came to start, waiting for its name.
+  const waiting = signedIn ? (payload?.waitingWorkspace ?? null) : null;
 
-  // Hidden while the finish card shows, so Home never says both "finish your team" and "nothing here yet".
+  // A waiting workspace is a workspace, so Home is not empty while it shows.
   const signedInEmpty =
-    loaded && signedIn && !startCard &&
+    loaded && signedIn && !waiting &&
     invites.length === 0 && coachInvites.length === 0 && workspaces.length === 0 && lapsed.length === 0 &&
     followCount === 0 && organizations.length === 0;
 
@@ -161,17 +156,16 @@ export default function HomePersonalization() {
       {/* Loading placeholder for the account sections (Browse below is already painted). */}
       {!loaded && <div className={styles.skeleton} aria-hidden />}
 
-      {startCard && <StartCard door={startCard.door} email={startCard.email} onNotNow={startCardNotNow} />}
-
       {(invites.length > 0 || coachInvites.length > 0) && <PendingInvitationsCard invitations={invites} coachInvitations={coachInvites} />}
 
-      {workspaces.length > 0 && (
+      {(workspaces.length > 0 || waiting) && (
         <section className={styles.section}>
           <div className={styles.sectionHead}>
             <p className={styles.kicker}>Workspaces</p>
           </div>
           <div className={styles.cardList}>
             {workspaces.map(ws => <WorkspaceCard key={ws.id} ctx={ws} />)}
+            {waiting && <WaitingWorkspaceCard door={waiting.door} />}
           </div>
         </section>
       )}
@@ -249,24 +243,34 @@ export default function HomePersonalization() {
   );
 }
 
-/** Home's finish card (drawings D8): what was started, the one step left, and Not now. */
-function StartCard({ door, email, onNotNow }: { door: StartDoor; email: string; onNotNow: () => void }) {
-  const copy = START_CARD_COPY[door];
+/**
+ * A workspace waiting for its name (A4 revised 2026-10-19, hub v7): the card its team, league or organization will
+ * become, after the workspaces in use — that family's label, icon and accent, an amber "Not named yet", and the one
+ * step left in the meta line's place. It stays until the thing is made; there is nothing to dismiss. Nothing is made
+ * until that step's Create (V1), so it is drawn from what the account came to start, never from a nameless row.
+ */
+function WaitingWorkspaceCard({ door }: { door: StartDoor }) {
+  const card = WAITING_WORKSPACE[door];
+  const Icon = KIND_ICON[card.kind];
   return (
-    <section className={styles.startCard} aria-labelledby="home-start-card-title">
-      <h2 id="home-start-card-title" className={styles.startTitle}>{copy.title}</h2>
-      <p className={styles.startBody}>You confirmed {email}. {copy.next}</p>
-      <div className={styles.startRow}>
-        <Link
-          href={START_DOOR_PATH[door]}
-          className={styles.startAction}
-          onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'start', door })}
-        >
-          {copy.action} <ArrowRight size={16} strokeWidth={2.2} aria-hidden />
-        </Link>
-        <button type="button" className={styles.startNotNow} onClick={onNotNow}>Not now</button>
-      </div>
-    </section>
+    <Link
+      href={START_DOOR_PATH[door]}
+      className={styles.wsCard}
+      onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'start', door })}
+    >
+      <span className={styles.wsIcon} data-accent={KIND_ACCENT[card.kind]} aria-hidden>
+        <Icon size={19} strokeWidth={1.8} />
+      </span>
+      <span className={styles.wsInfo}>
+        <span className={styles.wsTop}>
+          <span className={styles.wsKind}>{KIND_LABEL[card.kind]}</span>
+          <span className={styles.wsBadge} data-accent="amber">{card.badge}</span>
+        </span>
+        <span className={styles.wsTitle}>{card.title}</span>
+        <span className={styles.wsAction}>{card.action}</span>
+      </span>
+      <ChevronRight size={16} strokeWidth={2.2} className={styles.wsChevron} aria-hidden />
+    </Link>
   );
 }
 

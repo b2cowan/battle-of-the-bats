@@ -7,7 +7,7 @@
  * land the person on that door's create step, wherever the link is opened. It is cleared when the creation completes.
  *
  * ⚠ `user_metadata` is editable by the signed-in user (`supabase.auth.updateUser({ data })`). This record steers
- * SCREENS only — which create step, whether Home shows the finish card. It must never decide an entitlement, a price
+ * SCREENS only — which create step, whether Home shows a waiting workspace. It must never decide an entitlement, a price
  * or Founding Season eligibility; those read server-side facts (`auth.users.created_at`, the plan rules, checkout).
  *
  * Framework-free: the sign-up forms, the routes and Home all read it.
@@ -19,10 +19,6 @@ export type StartDoor = (typeof DOORS)[number];
 
 export interface StartDoorRecord {
   door: StartDoor;
-  /** Home's "Not now" taps: one hides the card until the next sign-in, two hide it for good (A4). */
-  notNow?: number;
-  /** When the last "Not now" was tapped (ISO), compared with the account's last sign-in. */
-  notNowAt?: string;
 }
 
 /** Who is looking at a door's create step: signed in, and whether this is their first day (no workspace yet). */
@@ -44,17 +40,15 @@ export function parseStartDoor<D extends StartDoor>(value: unknown, allowed: rea
   return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? value as D : null;
 }
 
-/** Read the remembered door off an auth user's metadata; anything malformed reads as none. */
+/**
+ * Read the remembered door off an auth user's metadata; anything malformed reads as none. Any other key on the record
+ * is ignored — the `notNow` count Home's finish card kept before A4 was revised (2026-10-19) no longer means anything.
+ */
 export function readStartDoor(userMetadata: unknown): StartDoorRecord | null {
   const raw = (userMetadata as { start?: unknown } | null | undefined)?.start;
   if (!raw || typeof raw !== 'object') return null;
-  const r = raw as { door?: unknown; notNow?: unknown; notNowAt?: unknown };
-  const door = parseStartDoor(r.door, DOORS);
-  if (!door) return null;
-  const record: StartDoorRecord = { door };
-  if (typeof r.notNow === 'number' && Number.isFinite(r.notNow) && r.notNow > 0) record.notNow = Math.floor(r.notNow);
-  if (typeof r.notNowAt === 'string' && !Number.isNaN(Date.parse(r.notNowAt))) record.notNowAt = r.notNowAt;
-  return record;
+  const door = parseStartDoor((raw as { door?: unknown }).door, DOORS);
+  return door ? { door } : null;
 }
 
 /** Where the verification link (and every resend of it) returns: the door's create step, marked as just confirmed. */
@@ -63,41 +57,15 @@ export function startDoorLinkPath(door: StartDoor): string {
 }
 
 /**
- * When this session signed in (ISO), from the access token's authentication entries (`amr`). Those survive a token
- * refresh; the account's `last_sign_in_at` does not — the auth service re-stamps it on every refresh, so "until the
- * next sign-in" measured by it would mean "for about an hour".
+ * Home's waiting workspace, by door (A4 revised 2026-10-19, hub v7): the card the door's team, league or organization
+ * will become, waiting for its name under Workspaces until it is made. It shows beside every other workspace (owner:
+ * "otherwise they lose that team") and has no Not now. `kind` is the workspace family it joins, so it wears that
+ * card's label, icon and accent and fills in where it sits. Coach Premium has its own words because its step 2 asks
+ * for the team, sport and plan before checkout. Words ruled by the owner 2026-10-19.
  */
-export function sessionSignedInAt(amr: unknown): string | null {
-  if (!Array.isArray(amr)) return null;
-  const times = amr
-    .map(e => (e && typeof e === 'object' ? (e as { timestamp?: unknown }).timestamp : undefined))
-    .filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
-  return times.length ? new Date(Math.min(...times) * 1000).toISOString() : null;
-}
-
-/**
- * Does Home show the finish card (A4)? Never to an account that already has a workspace — it has somewhere to go,
- * even one made another way. Not after a second "Not now"; after the first, only in a session signed in since.
- */
-export function startCardVisible(start: StartDoorRecord, account: { signedInAt: string | null | undefined; hasWorkspace: boolean }): boolean {
-  if (account.hasWorkspace) return false;
-  const notNow = start.notNow ?? 0;
-  if (notNow >= 2) return false;
-  if (notNow === 0) return true;
-  const signedIn = account.signedInAt ? Date.parse(account.signedInAt) : NaN;
-  const dismissed = start.notNowAt ? Date.parse(start.notNowAt) : NaN;
-  return Number.isFinite(signedIn) && Number.isFinite(dismissed) && signedIn > dismissed;
-}
-
-/** The record after one more "Not now". */
-export function withNotNow(start: StartDoorRecord, now: Date): StartDoorRecord {
-  return { ...start, notNow: (start.notNow ?? 0) + 1, notNowAt: now.toISOString() };
-}
-
-/** Home's finish card, by door (drawings D8; Coach Premium has its own words because its step 2 asks for more). */
-export const START_CARD_COPY: Record<StartDoor, { title: string; next: string; action: string }> = {
-  team: { title: 'Finish creating your team', next: 'One more step opens your Coaches Portal.', action: 'Name your team' },
-  league: { title: 'Finish creating your league', next: 'One more step opens your league setup.', action: 'Name your league' },
-  organization: { title: 'Finish creating your organization', next: 'One more step opens your organization.', action: 'Name your organization' },
-  premium: { title: 'Finish setting up your Coaches Portal', next: 'Your team, sport and plan are next.', action: 'Continue setup' },
+export const WAITING_WORKSPACE: Record<StartDoor, { kind: 'coaches_basic' | 'coaches_premium' | 'organization'; badge: string; title: string; action: string }> = {
+  team: { kind: 'coaches_basic', badge: 'Not named yet', title: 'Your team', action: 'Name your team' },
+  league: { kind: 'organization', badge: 'Not named yet', title: 'Your league', action: 'Name your league' },
+  organization: { kind: 'organization', badge: 'Not named yet', title: 'Your organization', action: 'Name your organization' },
+  premium: { kind: 'coaches_premium', badge: 'Setup not finished', title: 'Your team', action: 'Continue setup' },
 };

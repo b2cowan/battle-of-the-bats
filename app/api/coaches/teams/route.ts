@@ -85,8 +85,8 @@ export const POST = withObservability(async (req: NextRequest) => {
       }
     })();
 
-    // Account-first: the team is made, so Home's "Finish creating your team" card has done its job.
-    await Promise.all([welcome, clearStartDoor(user.id)]);
+    // Account-first: the team is made, so Home's waiting workspace has done its job.
+    await Promise.all([welcome, clearStartDoor(user.id, ['team'])]);
 
     return json({ ok: true, id });
   } catch (error) {

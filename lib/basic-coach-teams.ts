@@ -13,6 +13,9 @@ import { authAccountExistsForEmail } from './auth-account-lookup';
 // only at call time, the same shape as the `coach-team-page` import above.
 import { getRegistrableTeamsForUser } from './registrable-teams-server';
 import { findRegistrableTeam, type RegistrableTeam } from './registrable-teams';
+// ⚠ Another deliberate cycle (start-door-server → user-contexts reads this module's summaries): only functions cross
+// it, at call time. A claim that gives the account its own team clears Home's waiting workspace.
+import { clearStartDoor } from './start-door-server';
 
 export type BasicCoachTeam = {
   id: string;
@@ -649,6 +652,8 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
       }
       throw adoptError;
     }
+    // Account-first: the account now owns a team, so a waiting team has done its job (a waiting league has not).
+    await clearStartDoor(params.userId, ['team']);
     return { basicCoachTeamId: foreignLink, createdTeam: false };
   }
 
@@ -692,6 +697,8 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
     throw linkError;
   }
 
+  // Account-first: a team made for this claim is the account's own, so a waiting team has done its job.
+  if (createdTeam) await clearStartDoor(params.userId, ['team']);
   return { basicCoachTeamId, createdTeam };
 }
 
