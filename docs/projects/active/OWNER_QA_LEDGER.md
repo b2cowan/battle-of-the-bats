@@ -25627,3 +25627,15 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 - A reactivation (a returning coach bringing back a cancelled portal) opens on **Sign in** and is not a "start": no step line, no waiting card.
 - Part 1 + Verify Every Sign-up (§336) passed 2026-10-19, 48 of 48; its walk is in the ledger.
 <!-- /§343 -->
+
+## §344 · Scouting book · the red record chip on a row under the mouse — **a losing record ("0-2") stays readable while the pointer rests on its row, at every width**
+
+**Found 2026-10-19** by the release layout sweep (the 2026-10-19 promote: Scouting book @768, contrast 4.41:1 against the 4.5:1 floor) and traced in the layout upkeep session: on a computer or tablet, a row takes a hover wash under the mouse, and the record chip's see-through red fill let it through. Phones already had the cure (the chip goes solid inside a phone card); it now applies inside a row at every width — the Scouting book's rows and the Schedule list's. Measured on the dev server, a hovered losing row: Warm 4.41:1 → **5.04:1** at 768 and 1,440; Dark 5.37:1 → 5.76:1; phones unchanged at 5.04:1. **Fix committed `53158fde` 2026-10-19** on the owner's word (with the sweep work `db628a34`).
+
+**Walk W1 — one purpose (the record chip on a row under the mouse); nothing in it writes.** On localhost; `uat-coach@uat-test-org.local` (password as every test account).
+- **W1.1 · Scouting book, on a computer.** UAT Test Team › History › **Scouting book**, about 1,440 wide, Warm. Rest the mouse on a row whose record chip is red (a losing record, e.g. "0-2"). **Expect:** the chip stays a small solid tinted box, its red number clearly readable while the row is hovered. The green (winning) and grey (even) chips are solid in a row too now, as a phone already shows them: at rest they look as before (Warm's grey moves by a shade), and under the mouse no chip picks up the row's tint.
+- **W1.2 · Schedule list, on a computer.** UAT Test Team › **Schedule**, List view, 1,440: hover an upcoming game that shows a record chip ("Your record vs …"). **Expect:** the same — the chip keeps its own tint under the mouse.
+- **W1.3 · The same, in Dark.** **Expect:** the red chip readable on a hovered row.
+
+- Not changed: the chip's colours, sizes and words; chips outside a row (the opponent page's header, the opponent picker's list, the calendar) keep their see-through tint.
+<!-- /§344 -->

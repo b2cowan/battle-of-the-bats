@@ -382,6 +382,11 @@ every width…": parts 1–2 Decided, parts 3–5 Proposed and put to the owner)
   none). A coach with no team keeps the "Get started" door under the header.
 - **B4 · measuring:** probe on the FCHP world now; the free-coach UAT fixture and the free phone screens in the
   layout sweep are a follow-up (the UAT fixture files were open in the Register Your Existing Team session).
+  **Done: committed `db628a34` 2026-10-19** (layout upkeep): a saved free-coach sign-in, 12 free screens in the sweep
+  (the Overview and its phone More sheet, Roster, Schedule, Tournaments, Explore, Fees, Announcements, Notifications,
+  all tournaments, Team workspaces, Help) and a fixture with every tool on and a season of rows. The free bar and its
+  More sheet measure clean; the pages report 334 tap targets under 44px at 361/390/768 (row Edit/Remove 38px, Add
+  37px, the "?" 32–34px, Fees' "Mark unpaid" 15px, Help's "What's New" 19px…), not baselined — the owner's call.
 
 **What shipped** (rules in `lib/coach-free-nav.ts`, the bar `components/coaches/CoachFreeBottomNav.tsx`, guard
 `tests/unit/coach-free-bar-guard.test.ts`): the four-tab bar (Chat by `useChatDoor`, whose `ready` holds the tabs ≤800ms
@@ -418,7 +423,7 @@ clash); a scoped layout sweep of the paid bar's three screens at four widths, no
 Casey and Avery seated on two teams (each temporary row removed): every ruling above, the count dropping 3→2 the moment a
 notice opens, the bar gone under a "Remove player?" window, Pause for a coach with no follow.
 
-**Follow-ups, not built:** the free-coach UAT fixture and free phone screens in the layout sweep (B4); one
+**Follow-ups, not built** (B4's fixture and sweep screens: committed `db628a34` 2026-10-19)**:** one
 `--bottom-bar-clear` token for every shell, and one data attribute for every phone bar's keyboard rule; the paid More
 has no Account row and no Warm / Dark on a phone (raised, not asked); the "9+" helper in one place.
 **Owner walk:** ledger §315, the hub's QA walk tab, W7–W9 — ✅ marked complete 2026-10-16 on the owner's word (no paste-back; the dev read-back found no trace of W8 or W9, see the ledger).
