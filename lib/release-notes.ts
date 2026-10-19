@@ -65,6 +65,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
+        // spelling-ok: names the retired tab label on purpose
         text: 'In the Premium Coaches Portal, Budget Plan is now called Budget and is the second tab, right after Overview. Tab names such as Player dues, Scouting book and Skills & goals now read in sentence case.',
       },
       {
