@@ -119,10 +119,10 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-confirm-email-safe',
           question: 'Is it safe to use Confirm Email for a customer who never received the verification email?',
           answer: (
-            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as verified so they can continue. If you cannot verify their identity, have them get a fresh link themselves: <strong>Send the link again</strong> is on the screen they saw after signing up, and in the &ldquo;verify your email&rdquo; message sign-in shows them. Either way, an account that came to start a team or league finds it waiting on its Home, under <strong>Workspaces</strong> and marked <strong>Not named yet</strong>, until it does.</p>
+            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as verified so they can continue. If you cannot verify their identity, have them get a fresh link themselves: <strong>Send the link again</strong> is on the screen they saw after signing up, and in the &ldquo;verify your email&rdquo; message sign-in shows them. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under <strong>Workspaces</strong> and marked <strong>Not named yet</strong> (a Coach Premium setup is marked <strong>Setup not finished</strong>), until it does.</p>
           ),
-          answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise have them press Send the link again, on the screen they saw after signing up or in the verify-your-email message on sign-in. Either way, an account that came to start a team or league finds it waiting on its Home, under Workspaces and marked Not named yet, until it does.',
-          keywords: ['confirm email', 'verification', 'unconfirmed', 'send the link again', 'sign in resend', 'not named yet', 'finish creating your team'],
+          answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise have them press Send the link again, on the screen they saw after signing up or in the verify-your-email message on sign-in. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under Workspaces and marked Not named yet (a Coach Premium setup is marked Setup not finished), until it does.',
+          keywords: ['confirm email', 'verification', 'unconfirmed', 'send the link again', 'sign in resend', 'not named yet', 'finish creating your team', 'setup not finished', 'run a tournament'],
         },
       ],
     },
