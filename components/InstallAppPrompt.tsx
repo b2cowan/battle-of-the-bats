@@ -47,6 +47,10 @@ function ShareIcon() {
 
 type Mode = 'hidden' | 'ios' | 'ios-chrome' | 'android' | 'generic';
 
+function isTouchPrimary(): boolean {
+  return window.matchMedia?.('(pointer: coarse)')?.matches === true || /Android/i.test(navigator.userAgent);
+}
+
 interface Props {
   /** Name shown in the prompt copy (the installed name comes from the manifest). */
   appName?: string;
@@ -95,6 +99,30 @@ export default function InstallAppPrompt({
   // that ask bypasses the follow-suppression gates, so the follow-hide below
   // must not yank it either.
   const manualShowRef = useRef(false);
+
+  // Desktop Chromium (Edge/Chrome) also fires `beforeinstallprompt`, but the
+  // add-to-home-screen banner is meant for phones/tablets. Gate on the primary
+  // pointer being coarse (touch) so it never shows on a desktop/laptop — a
+  // touchscreen laptop driven by a trackpad reports a fine primary pointer and
+  // is correctly treated as desktop. The /Android/ UA check is a safety net for
+  // the rare device that misreports the pointer media query.
+  // Followed live, not read once: DevTools' phone preview reports a coarse pointer, and
+  // leaving it used to strand an auto-shown banner on the desktop (owner, 2026-10-19).
+  // Read at first render: the value only feeds the show gate (the banner renders nothing until a client
+  // effect decides), so the server's `false` never reaches the markup.
+  const [touchPrimary, setTouchPrimary] = useState(() => typeof window !== 'undefined' && isTouchPrimary());
+  useEffect(() => {
+    const mq = window.matchMedia?.('(pointer: coarse)');
+    const onChange = () => {
+      const touch = isTouchPrimary();
+      setTouchPrimary(touch);
+      // Hide only the banner that showed itself; an explicit "Download app" ask stays. No dismissal is
+      // recorded — the device changed, the person said nothing.
+      if (!touch && !manualShowRef.current) setMode('hidden');
+    };
+    mq?.addEventListener?.('change', onChange);
+    return () => mq?.removeEventListener?.('change', onChange);
+  }, []);
 
   // Always capture the native install event — independent of dismissal/standalone —
   // so a manual "Download app" tap (see the flhq:show-install listener below) can fire
@@ -160,19 +188,12 @@ export default function InstallAppPrompt({
       return;
     }
 
-    // Desktop Chromium (Edge/Chrome) also fires `beforeinstallprompt`, but the
-    // add-to-home-screen banner is meant for phones/tablets. Gate on the primary
-    // pointer being coarse (touch) so it never shows on a desktop/laptop — a
-    // touchscreen laptop driven by a trackpad reports a fine primary pointer and
-    // is correctly treated as desktop. The /Android/ UA check is a safety net for
-    // the rare device that misreports the pointer media query.
-    const isTouchPrimary =
-      window.matchMedia?.('(pointer: coarse)')?.matches === true || /Android/i.test(ua);
-    if (!isTouchPrimary) return;
+    // Phones and tablets only (the touch gate, followed live above).
+    if (!touchPrimary) return;
 
     // Android Chromium: show once the native install event has been captured above.
     if (deferred) setMode('android');
-  }, [mode, deferred, dismissKey, orgSlug, tournamentSlug]);
+  }, [mode, deferred, touchPrimary, dismissKey, orgSlug, tournamentSlug]);
 
   // A follow made mid-session hides an already-visible auto banner — the My-Team
   // dock takes over as the engaged-fan surface (J6-045). The auto-show gate above
