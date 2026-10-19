@@ -399,12 +399,29 @@ body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
 .sizes td.ch{white-space:nowrap}
 .sizes td.ch .was{color:var(--muted)}
 
+/* S2-CSS:start */
+/* ───────────── STAGE 2 · window census (2026-10-19) ───────────── */
+.s2tbl td,.s2tbl th{font-size:13px;padding:7px 8px}
+.s2tbl td.id{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.s2tbl td.m{white-space:nowrap;font-variant-numeric:tabular-nums}
+.s2tbl td.m .lo{color:var(--bad);font-weight:700}
+.s2tbl td.yn{white-space:nowrap}
+.s2tbl td.call{min-width:16rem}
+.s2tbl .no{color:var(--bad);font-weight:700}
+.s2key{display:flex;flex-wrap:wrap;gap:6px 18px;margin:6px 0 10px;font-size:13px;color:var(--muted)}
+.s2key b{color:var(--ink)}
+.s2asks .ask h3{font-size:15px}
+.s2fig{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;max-width:900px;margin:8px 0 6px}
+.s2fig div{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px}
+.s2fig b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.s2fig span{font-size:13px;color:var(--muted)}
+/* S2-CSS:end */
 @media (max-width:640px){.hubbar{padding:11px 16px}.hubtabs,.controls{padding-left:16px;padding-right:16px}.wrap{padding:18px 16px 28px}.jump{margin-left:0}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>One window · project hub</strong><br><small>All sixteen asks ruled as recommended 2026-10-18 · stage 1 width audit’s five calls ruled as recommended 2026-10-18 · stage 1 committed 992243fb 2026-10-18 · stage 1 walk passed 2026-10-19 (30 of 30) · windows keep their width, ruled 2026-10-19 and committed 6e3222f8, walk 2 passed 2026-10-19 (14 of 14) · opened from the Feedback window hub (F08)</small></div>
+  <div class="hubtitle"><strong>One window · project hub</strong><br><small>All sixteen asks ruled as recommended 2026-10-18 · stage 1 width audit’s five calls ruled as recommended 2026-10-18 · stage 1 committed 992243fb 2026-10-18 · stage 1 walk passed 2026-10-19 (30 of 30) · windows keep their width, ruled 2026-10-19 and committed 6e3222f8, walk 2 passed 2026-10-19 (14 of 14) · stage 2 census and before-figures published 2026-10-19, four questions open · opened from the Feedback window hub (F08)</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Ruled 2026-10-18: Q1–Q16 as recommended (hub version 1)">Design</li>
     <li class="stage done" title="Plan written 2026-10-18; stage 1 width audit ruled 2026-10-18 (S1–S5)">Plan</li>
@@ -438,7 +455,7 @@ body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
     <a href="#w1">1 · Form windows</a><a href="#w2">2 · Are you sure</a><a href="#w3">3 · Strays</a><a href="#w4">4 · Already the same</a><a href="#w5">Standing back</a>
   </nav>
   <nav class="jump" id="jumpProp" aria-label="Proposal screens" hidden>
-    <a href="#audit">Stage 1 · widths</a><a href="#p1">Tournament</a><a href="#p2">Coaches portal</a><a href="#p3">Are you sure</a><a href="#p4">Notices</a><a href="#asks">Asks</a><a href="#check">Design check</a>
+    <!--S2-JUMP:start--><a href="#s2">Stage 2 · windows</a><!--S2-JUMP:end--><a href="#audit">Stage 1 · widths</a><a href="#census2">Stage 2 · windows</a><a href="#p1">Tournament</a><a href="#p2">Coaches portal</a><a href="#p3">Are you sure</a><a href="#p4">Notices</a><a href="#asks">Asks</a><a href="#check">Design check</a>
   </nav>
 </div>
 
@@ -600,7 +617,57 @@ body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
       <p class="sub">The same window over a tournament screen and a coach screen, then the one question window and the notice pill. Each changed part carries the stage that delivers it. The asks are at the end, with a paste-back.</p>
     </header>
 
-    <section class="station" id="audit">
+<!--S2-SECTION:start-->
+    <section class="station" id="s2">
+      <header><div class="eyebrow">Stage 2 · the window census · 2026-10-19 · nothing built yet · four questions open</div><h2>Every coach window, counted and measured before it moves</h2>
+        <p class="sub">Stage 2 puts the coaches portal’s windows on the admin’s window piece, so they stop closing on a stray tap, gain the foot sentence and the refusal line, and get full tap size on a phone. Below: where the plan was wrong, four questions, what the windows measure today, and every window with a call you can rule by number (W1 to W83).</p></header>
+      <div class="tablewrap"><table class="ftable" style="max-width:1000px">
+        <thead><tr><th>Group</th><th class="n">Windows</th><th class="n">Esc, Tab and Back today</th><th class="n">With typed words</th><th class="n">Of those, nothing asks today</th><th>Sub-part</th></tr></thead>
+        <tbody>
+          <tr><td>The coach form shell</td><td class="n">32</td><td class="n">all</td><td class="n">18</td><td class="n">5</td><td>2a (the piece) and 2b</td></tr>
+          <tr><td>Hand-built, without Esc, Tab and Back (tryouts included)</td><td class="n">23</td><td class="n">none</td><td class="n">14</td><td class="n">5</td><td>2c (ask C)</td></tr>
+          <tr><td>Hand-built, with them</td><td class="n">21</td><td class="n">all</td><td class="n">10</td><td class="n">6</td><td>2d (ask C)</td></tr>
+          <tr><td><b>Moving</b></td><td class="n"><b>76</b></td><td class="n"></td><td class="n"><b>42</b></td><td class="n"><b>16</b></td><td></td></tr>
+          <tr><td>Staying out: sheets, slide-overs, records with Previous and Next, a room</td><td class="n">7</td><td class="n"></td><td class="n"></td><td class="n"></td><td>Q15 and the sheet rules</td></tr>
+        </tbody></table></div>
+
+      <div class="read"><h3>Where the plan was wrong</h3>
+        <ul>
+          <li><b>The admin does not ask before closing.</b> Q7 calls the ask “the admin’s behaviour”, but every admin form closes at once when you press ×, Cancel or Esc with words typed. Message a family asks in its foot (built by hand for that one window), and New tournament asks in a second window (“Leave setup?”). So the ask is built into the one window piece in this stage, not borrowed (ask A).</li>
+          <li><b>The ruled words disagree about a tap outside.</b> Q7 says no form closes on a stray tap, and that with words typed a tap outside asks first; the Stage 2 drawing’s note says an empty form “closes at once”. The admin’s form does nothing on a tap outside (ask B).</li>
+          <li><b>The hand-built windows are staged twice.</b> The plan moves them in Stage 2; your Q14 put “the coach hand-built windows” in stage 4 with the strays (ask C).</li>
+          <li><b>More windows lose typed words today than the plan counted.</b> 16 of the 42 moving windows that hold typed words close with nothing asking, on a stray tap, ×, Cancel or Esc: five on the shell (New payee, Change a payment, a club schedule’s “Ask for a change”, New session, the link-to-a-club confirmation) and the rest hand-built (Give an award, Start next season, Add players, Categories &amp; items, the season settlement, Set refund, “We’ve sent it”, Save to my drills, Save as template, a drill, the icon chooser). One window that stays out loses words too: a half-typed payment in a family’s dues drawer (W77).</li>
+          <li><b>The ask would say less than today.</b> The thirteen windows that ask today name what is at stake (“You’ve entered an amount and 3 payment periods.”); the drawn foot says only “What you typed won’t be kept.” My default, unless you say otherwise: the foot keeps each window’s own stakes sentence where it has one, and “Keep editing” becomes the ruled “Keep writing”. The product has three spellings of that answer today (Keep editing, Keep working on New tournament, Keep writing on Message a family); New tournament’s stays until the admin forms join (ask A).</li>
+          <li><b>The “Saved” pill would hide.</b> Today it rises over a coach window through a rule tied to the old window; on the one piece it would sit under every window at every width. Re-pointed in the build, guarded; nothing to decide.</li>
+          <li><b>Coach fields have no set height,</b> so the 36px of Q2 is not there yet inside coach windows (figures below). Stage 2 sets 36px on a computer and 44px on a phone inside windows only; page forms are untouched.</li>
+          <li><b>Hand-built windows are off the width ladder,</b> which the plan does not schedule: the budget line form is 720 wide and a tryout window 460. Each takes 520, 640 or 800 when it moves, so 2c and 2d carry a width call per window, as Stage 1’s audit did. The shell’s windows are already 520 or 640.</li>
+          <li><b>Counts.</b> 28 places ask through the second window today, not 24. The admin piece has 147 uses in 69 files. The drill window already has Esc, Tab and Back (the prompt filed it with the ones that do not), but still loses typed words to a stray tap. The season settlement is a statement and one decision, like the club’s Close the year, not a record: I recommend it moves (W58), where the prompt had it staying out.</li>
+          <li><b>Numbering.</b> The per-window calls are W1 to W83, not B1…, because B is a question below.</li>
+        </ul></div>
+
+      <h3 style="margin-top:24px">Four questions</h3>
+      <p class="sub" style="max-width:900px">Each is where the rulings are silent or disagree. None reopens a ruling except C, which would amend Q14 for these windows only.</p>
+      <div id="s2askList" class="s2asks" style="max-width:900px;margin-top:12px"></div>
+
+      <h3 style="margin-top:24px">Before: what the coach windows measure today</h3>
+      <p class="sub" style="max-width:900px" id="s2before"></p>
+
+      <h3 style="margin-top:24px">Every window</h3>
+      <div class="s2key"><span><b>Esc, Tab, Back</b>: the keyboard and phone floor today</span><span><b>Ask today</b>: what happens when you close with words typed</span><span><b>Tap outside</b>: measured on a computer, nothing typed</span><span><b>Phone · computer</b>: one-line fields / foot buttons, in px, measured today (red under 44 on a phone)</span></div>
+      <details style="max-width:1200px;margin-top:10px" open><summary style="cursor:pointer;font-weight:700;padding:6px 0">2b · the coach form shell · 32 windows</summary><div class="tablewrap"><table class="ftable s2tbl" id="s2t2b"></table></div></details>
+      <details style="max-width:1200px;margin-top:10px"><summary style="cursor:pointer;font-weight:700;padding:6px 0">2c · hand-built, without Esc, Tab and Back · 23 windows</summary><div class="tablewrap"><table class="ftable s2tbl" id="s2t2c"></table></div></details>
+      <details style="max-width:1200px;margin-top:10px"><summary style="cursor:pointer;font-weight:700;padding:6px 0">2d · hand-built, with them · 21 windows</summary><div class="tablewrap"><table class="ftable s2tbl" id="s2t2d"></table></div></details>
+      <details style="max-width:1200px;margin-top:10px"><summary style="cursor:pointer;font-weight:700;padding:6px 0">Staying out · 7 windows</summary><div class="tablewrap"><table class="ftable s2tbl" id="s2tout"></table></div></details>
+
+      <div style="margin-top:20px">
+        <label for="s2wnotes" style="display:block;font-weight:700;margin-bottom:4px">Any W call you would change, by number (optional)</label>
+        <textarea id="s2wnotes" rows="3" style="width:100%;max-width:900px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--paper)"></textarea>
+        <div style="margin-top:12px"><button type="button" class="pastebtn" id="s2Summary">Build paste-back</button></div>
+        <textarea id="s2Out" rows="9" readonly hidden style="width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;font:12px/1.5 ui-monospace,monospace;background:var(--paper)"></textarea>
+      </div>
+    </section>
+
+<!--S2-SECTION:end-->    <section class="station" id="audit">
       <header><div class="eyebrow">Stage 1 · width audit · 2026-10-18 · its five calls ruled as recommended the same day</div><h2>Every admin form window, sized</h2>
         <p class="sub">Your width ladder (Q3: 520 a form, 640 with side-by-side fields, 800 holding a table) applied to every form window in the club and tournament admin: 90 windows, 58 club and 32 tournament. Nothing is built yet. Five calls are below the drawings; the full list is at the end.</p></header>
       <p class="note mob-only" style="max-width:900px">A window’s width shows only on a computer: on a phone every form fills the screen, so nothing in this section changes there. Switch the drawings to Computer to see the specimens.</p>
@@ -679,6 +746,121 @@ body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
       </div>
     </section>
 
+    <section class="station" id="census2">
+      <header><div class="eyebrow">Stage 2 · window census · 2026-10-19 · your answers A–D ruled as recommended the same day</div><h2>Every coach window, and the part that moves it</h2>
+        <p class="sub">Your four answers of 2026-10-19: the “Close without saving?” ask is built once and turned on in the coach windows, with the admin’s forms as a last part; a tap outside a form does nothing, typed or not; the hand-built coach windows move in this stage, the ones with no keyboard handling first; Close the season and Delete a budget line become the small question, and the other small-card windows get a call each below. Nothing is built yet. Eight calls follow the table; the full list is at the end.</p></header>
+      <div class="tablewrap"><table class="ftable" style="max-width:900px">
+        <thead><tr><th>Part</th><th class="n">Windows</th><th>What you see</th></tr></thead>
+        <tbody>
+          <tr><td><b>2a</b> · the one piece</td><td class="n">32</td><td>The coaches portal’s shared form window becomes the admin’s window. A tap outside stops closing it. The 13 that ask before throwing typing away ask in the window’s foot instead of a second window over it. On a phone, fields and foot buttons reach 44px.</td></tr>
+          <tr><td><b>2b</b> · the foot</td><td class="n">32</td><td>The same windows put their buttons in the window’s foot, a sentence already sitting above the buttons moves to the foot’s left, and a refused Save says why beside the button. No new words.</td></tr>
+          <tr><td><b>2c</b> · no keyboard handling</td><td class="n">20 + 3</td><td>15 hand-built coach windows and 5 tryout windows that never kept Tab inside or answered the phone’s Back, most dangerous first. Plus three read windows with the same gap (call B6).</td></tr>
+          <tr><td><b>2d</b> · the rest</td><td class="n">13 + 5</td><td>Hand-built windows that already handle the keys: they take the one window. Plus the drill sheet and four read windows (calls B4 to B6). The practice plan’s windows go last, one at a time.</td></tr>
+          <tr><td><b>Stays out</b></td><td class="n">10</td><td>Records, sheets and slide-overs (Q15, call B7).</td></tr>
+          <tr><td><b>2e</b> · admin forms</td><td class="n">about 84</td><td>The club and tournament admin’s forms learn the same ask, each with its own idea of “something is typed” (your answer A).</td></tr>
+        </tbody></table></div>
+      <p class="meta" style="max-width:900px">The admin’s windows do not ask today either: ×, Cancel and Escape close an admin form at once with words typed. Only Message a family asks, and it was hand-built in that one window; part 2a moves it onto the shared ask with its words unchanged.</p>
+
+      <h3 style="margin-top:24px">Eight calls</h3>
+      <p class="sub" style="max-width:900px">B1 to B3 are which windows ask. B4 to B7 are which windows move and in what shape. B8 is the rest of the list.</p>
+      <div id="c2askList" class="s1asks" style="max-width:900px;margin-top:12px"></div>
+      <div style="margin-top:12px">
+        <button type="button" class="pastebtn" id="c2Summary">Build paste-back</button>
+        <textarea id="c2Out" rows="10" readonly hidden style="width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;font:12px/1.5 ui-monospace,monospace;background:var(--paper)"></textarea>
+      </div>
+
+      <h3 style="margin-top:28px">Every window</h3>
+      <p class="sub" style="max-width:900px">“Keys today” is whether Tab stays inside and the phone’s Back closes it. “Asks today” is whether closing with words typed asks first. The last column is the part that moves it and any call that decides it.</p>
+      <details style="max-width:1000px;margin-top:10px" open><summary style="cursor:pointer;font-weight:700;padding:6px 0">The coaches portal’s shared form window · 32 windows · parts 2a and 2b</summary>
+        <div class="tablewrap"><table class="ftable">
+          <thead><tr><th>Window</th><th>Where</th><th>Asks today</th><th>Typed words</th><th>Part · call</th></tr></thead>
+          <tbody>
+            <tr><td>Edit cheque · Edit sponsorship</td><td>Money › Fundraising › a sponsor</td><td>Yes, in a second window</td><td>Yes</td><td>2a asks in the foot (B1)</td></tr>
+            <tr><td>New fundraiser</td><td>Money › Fundraising</td><td>Yes</td><td>Yes</td><td>2a (B1)</td></tr>
+            <tr><td>Edit entry · Edit fundraiser</td><td>Money › Fundraising › a drive</td><td>Yes</td><td>Yes</td><td>2a (B1)</td></tr>
+            <tr><td>Add adjustment · Edit credit</td><td>Money › Player dues › a player</td><td>Yes</td><td>Yes</td><td>2a (B1)</td></tr>
+            <tr><td>Add or edit an event</td><td>Schedule</td><td>Yes</td><td>Yes</td><td>2a (B1)</td></tr>
+            <tr><td>Review the goal · Record a result · Record an observation · Add or edit a goal</td><td>A player › Skills and goals</td><td>Yes</td><td>Yes</td><td>2a (B1)</td></tr>
+            <tr><td>New or edit a test</td><td>Development</td><td>Yes</td><td>Yes</td><td>2a (B1)</td></tr>
+            <tr><td>Add or edit a place</td><td>Schedule › an event’s form</td><td>Yes</td><td>Yes</td><td>2a (B1)</td></tr>
+            <tr><td>A club schedule’s review (asking for a change)</td><td>Overview</td><td>No</td><td>Yes</td><td>2a (B2)</td></tr>
+            <tr><td>New payee</td><td>Money › Ledger › Payees</td><td>Only before leaving the page</td><td>Yes</td><td>2a (B2)</td></tr>
+            <tr><td>Change or remove a payment</td><td>Money › Ledger › a bill</td><td>No</td><td>Yes</td><td>2a (B2)</td></tr>
+            <tr><td>Start or change a session</td><td>Development</td><td>No</td><td>Yes</td><td>2a (B2)</td></tr>
+            <tr><td>Approve a club link</td><td>Free portal › Link to a club</td><td>No</td><td>Yes (the team’s name, typed to confirm)</td><td>2a (B2)</td></tr>
+            <tr><td>Hand back · Withdraw · Take back · Give a team time</td><td>Schedule › a club practice</td><td>—</td><td>No (choices)</td><td>2a; stay forms (found on the way)</td></tr>
+            <tr><td>Merge into another payee</td><td>Money › Ledger › Payees › a payee</td><td>—</td><td>No</td><td>2a</td></tr>
+            <tr><td>Review this session</td><td>Development › a session</td><td>—</td><td>No</td><td>2a</td></tr>
+            <tr><td>Player progress (phone)</td><td>History › Development</td><td>—</td><td>No</td><td>2a</td></tr>
+            <tr><td>A ledger line · Behind a figure ×2</td><td>Money › Ledger · Budget vs. Actual</td><td>—</td><td>No (read)</td><td>2a</td></tr>
+            <tr><td>What the coach records · Places</td><td>Development · Schedule</td><td>—</td><td>No</td><td>2a</td></tr>
+            <tr><td>An inning · Lineup check</td><td>Lineups › a game</td><td>—</td><td>No (read, no foot)</td><td>2a</td></tr>
+          </tbody></table></div></details>
+      <details style="max-width:1000px;margin-top:10px"><summary style="cursor:pointer;font-weight:700;padding:6px 0">Hand-built, no keyboard handling today · 20 windows + 3 read · part 2c</summary>
+        <div class="tablewrap"><table class="ftable">
+          <thead><tr><th>Window</th><th>Where</th><th>Keys today</th><th>Asks today</th><th>Typed words</th><th>Shape · call</th></tr></thead>
+          <tbody>
+            <tr><td>Add players (paste a list)</td><td>Roster</td><td>None</td><td>No: a stray tap drops the list</td><td>Yes</td><td>Form, first (B3)</td></tr>
+            <tr><td>Give or edit an award</td><td>History › Awards · an event</td><td>None</td><td>No: a stray tap drops it</td><td>Yes</td><td>Form, first (B3)</td></tr>
+            <tr><td>Start next season</td><td>Settings · Overview · the closed season</td><td>Escape only</td><td>No</td><td>Yes</td><td>Form, first (B3, B5)</td></tr>
+            <tr><td>Close the season</td><td>Overview</td><td>Escape only</td><td>—</td><td>No</td><td>Question (your answer D)</td></tr>
+            <tr><td>Delete a budget line?</td><td>Money › Budget</td><td>None</td><td>—</td><td>No</td><td>Question (your answer D)</td></tr>
+            <tr><td>Export</td><td>Schedule · Roster · Money</td><td>Escape only</td><td>—</td><td>No</td><td>B5</td></tr>
+            <tr><td>Choose an icon</td><td>Awards · the tag manager</td><td>None</td><td>—</td><td>No</td><td>B5</td></tr>
+            <tr><td>Upload a document</td><td>A player › Documents</td><td>None</td><td>No</td><td>Yes (a file)</td><td>B3, B5</td></tr>
+            <tr><td>Add a player</td><td>Roster</td><td>None</td><td>Yes</td><td>Yes</td><td>Form</td></tr>
+            <tr><td>Add or edit a budget line</td><td>Money › Budget</td><td>None</td><td>Yes</td><td>Yes</td><td>Form</td></tr>
+            <tr><td>Bring in a schedule</td><td>Schedule › Add › Import</td><td>None</td><td>Yes</td><td>Yes</td><td>Form</td></tr>
+            <tr><td>Import a spreadsheet · Your starting budget</td><td>Money › Budget</td><td>None</td><td>Yes</td><td>Yes</td><td>Form</td></tr>
+            <tr><td>Apply a lineup template to…</td><td>Lineups › Templates</td><td>None</td><td>—</td><td>No</td><td>Question (one pick)</td></tr>
+            <tr><td>Add from a past season</td><td>Practice › Drills · Circuits · Plan templates</td><td>None</td><td>—</td><td>No</td><td>Form (a list to add from)</td></tr>
+            <tr><td>Tryouts: add or edit a session · add an evaluator · add a walk-up player · the scorecard</td><td>Tryouts</td><td>None</td><td>Yes</td><td>Yes</td><td>Form</td></tr>
+            <tr><td>Tryouts: which session is this sheet for?</td><td>Tryouts › Check-in</td><td>None</td><td>—</td><td>No</td><td>Question</td></tr>
+            <tr><td>Categories and items · Sample season budget · Recent imports</td><td>Money</td><td>None</td><td>—</td><td>No</td><td>B6</td></tr>
+          </tbody></table></div></details>
+      <details style="max-width:1000px;margin-top:10px"><summary style="cursor:pointer;font-weight:700;padding:6px 0">Hand-built, keys handled today · 13 windows + 5 · part 2d</summary>
+        <div class="tablewrap"><table class="ftable">
+          <thead><tr><th>Window</th><th>Where</th><th>Asks today</th><th>Typed words</th><th>Shape · call</th></tr></thead>
+          <tbody>
+            <tr><td>Set dues for all players</td><td>Money › Player dues · Budget</td><td>Yes</td><td>Yes</td><td>Form</td></tr>
+            <tr><td>Record money · Add a bill</td><td>Money</td><td>Yes</td><td>Yes</td><td>Form (stays drawn inside Money’s own frame)</td></tr>
+            <tr><td>New club request</td><td>Money › Club</td><td>Yes</td><td>Yes</td><td>Form</td></tr>
+            <tr><td>Tell the club you’ve sent</td><td>Money › Club</td><td>No</td><td>Yes</td><td>Form (B3)</td></tr>
+            <tr><td>Set refund</td><td>Money › Player dues › settlement</td><td>—</td><td>No</td><td>Question</td></tr>
+            <tr><td>Send due reminders?</td><td>Money › Player dues</td><td>—</td><td>No</td><td>Question</td></tr>
+            <tr><td>Save to my drills or circuits · Save as template</td><td>A practice plan</td><td>No</td><td>Yes (a name)</td><td>Form (B3)</td></tr>
+            <tr><td>Send to staff</td><td>A practice plan</td><td>No</td><td>Yes</td><td>Form (B3)</td></tr>
+            <tr><td>Start this plan from… · Groups from another practice</td><td>A practice plan</td><td>—</td><td>No</td><td>Question (one pick)</td></tr>
+            <tr><td>Add a block or a station · Choose players</td><td>A practice plan</td><td>—</td><td>No</td><td>Form (a list to pick from)</td></tr>
+            <tr><td>The drill sheet (New drill, or a drill)</td><td>Practice › Drills · a practice plan</td><td>No: a stray tap drops unsaved edits</td><td>Yes</td><td>B4</td></tr>
+            <tr><td>Reminder preview</td><td>Money › Player dues · Settings</td><td>—</td><td>No (read)</td><td>B6</td></tr>
+            <tr><td>Subscribe in your calendar (computer)</td><td>Export › Subscribe</td><td>—</td><td>No</td><td>B5</td></tr>
+            <tr><td>The month grid’s two figure windows</td><td>Money › Budget vs. Actual</td><td>—</td><td>No (read)</td><td>B5</td></tr>
+          </tbody></table></div></details>
+      <details style="max-width:1000px;margin-top:10px"><summary style="cursor:pointer;font-weight:700;padding:6px 0">Stays out · 10 records, sheets and slide-overs (Q15, call B7)</summary>
+        <div class="tablewrap"><table class="ftable">
+          <thead><tr><th>Window</th><th>Where</th><th>Why it stays</th></tr></thead>
+          <tbody>
+            <tr><td>An event’s slide-over</td><td>Schedule</td><td>A record, with its own address and Back</td></tr>
+            <tr><td>A day’s list</td><td>Schedule (phone)</td><td>A part-height sheet</td></tr>
+            <tr><td>A player’s dues</td><td>Money › Player dues</td><td>A record drawer</td></tr>
+            <tr><td>Season settlement</td><td>Money › Player dues</td><td>A record holding a table (900 wide)</td></tr>
+            <tr><td>A staff member</td><td>Staff</td><td>A record that saves as you go</td></tr>
+            <tr><td>A station · a block · Groups</td><td>A practice plan</td><td>Sheets that save the plan as you go</td></tr>
+            <tr><td>A player on the depth chart</td><td>Roster (phone)</td><td>A record sheet</td></tr>
+            <tr><td>Lineup setup (computer)</td><td>Lineups › a game</td><td>The same panel as the phone’s sheet, beside the lineup</td></tr>
+          </tbody></table></div></details>
+      <div class="read" style="margin-top:18px"><h3>Found on the way (no call needed)</h3>
+        <ul>
+          <li><b>Two questions close in the middle of their own save today.</b> A tap outside Set refund or Send due reminders? closes it while it is still working. Once a tap outside does nothing (your answer B), and with their keys already waiting for the save, both hold until the save ends.</li>
+          <li><b>Delete a budget line has no keys at all today</b> (no Escape, no Back, no Tab trap). As the question window it gets all three.</li>
+          <li><b>Five windows ask a question with choices</b> (Hand back, Withdraw, Take back, Give a team time, Merge into another payee). They fill a phone today and stay that way in this stage; the question window is stage 3’s.</li>
+          <li><b>Two coach windows also open in the club admin</b> (Choose an icon in the shared library, and the month grid in the club’s Budget vs. Actual). They move once, for both.</li>
+          <li><b>No window’s words change in this stage</b>, except the ask’s one sentence (B1).</li>
+        </ul>
+      </div>
+    </section>
+
     <section class="station" id="p1">
       <header><div class="eyebrow">Tournament admin</div><h2>Schedule → Add game, in the one window</h2></header>
       <div class="legend"><span class="lbl">Changes</span>
@@ -698,13 +880,13 @@ body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
     <section class="station" id="p2">
       <header><div class="eyebrow">Coaches portal</div><h2>Roster → Add player, in the same window</h2></header>
       <div class="legend"><span class="lbl">Changes</span>
-        <span class="mk" data-k="st" data-note="Stage 2. The coach windows move onto the one piece and gain the admin’s behaviours: a stray tap outside never closes a form (it asks first when something is typed), a sentence slot at the left of the foot, a refusal line beside the buttons, and 44px fields and buttons on a phone. Ask Q7.">S2 · behaviour</span>
+        <span class="mk" data-k="st" data-note="Stage 2. The coach windows move onto the one piece and gain the admin’s behaviours: a tap outside a form does nothing, typed or not (your answer B, 2026-10-19), a sentence slot at the left of the foot, a refusal line beside the buttons, and 44px fields and buttons on a phone. Ask Q7.">S2 · behaviour</span>
         <span class="mk" data-k="re" data-note="Was black at 60% in both themes. Now the admin’s themed tone: a warm brown in Warm, navy in Dark. Ask Q5.">Dimmed page</span>
         <span class="mk" data-k="new" data-note="New for the coaches portal: a sentence at the left of the foot, for what happens next. Here: the guardian gets an invitation. At 520px a foot sentence has to be short, or it takes its own line above the buttons.">Foot sentence</span>
         <span class="mk" data-k="re" data-note="Was small capitals in the quieter ink. Now sentence case, like the admin and its settings pages. This changes every labelled field in the coaches portal, on pages as well as in windows. Ask Q1.">Labels</span>
         <span class="mk" data-k="un" data-note="Fields, width and spacing are already the portal’s: in stage 1 they become everyone’s.">Fields · width</span>
         <span class="mk" data-k="new" data-note="New for the coaches portal: when Save is refused, the reason sits beside the button instead of in the body above the fields. Ask Q9.">Refused</span>
-        <span class="mk" data-k="new" data-note="New for the coaches portal: with something typed, ×, Cancel, a tap outside or the phone’s Back asks first, in the foot, exactly as the admin’s Message a family does. With nothing typed it closes at once. Ask Q7.">Closing with words typed</span>
+        <span class="mk" data-k="new" data-note="New for the coaches portal: with something typed, ×, Cancel, Escape or the phone’s Back asks first, in the foot, exactly as the admin’s Message a family does; a tap outside does nothing (your answer B, 2026-10-19). With nothing typed it closes at once. Ask Q7.">Closing with words typed</span>
       </div>
       <div class="caption"><b>Coaches portal · 15U AAA · Roster</b><span><span class="tname">Warm</span></span></div>
       <div class="scroller"><div class="app desk" data-t="warm" id="p2desk"></div></div>
@@ -1287,7 +1469,7 @@ function showHub(which){
   $("jumpWalk").hidden = which !== "walk"; $("jumpProp").hidden = which !== "proposal";
 }
 document.querySelectorAll("[data-hub]").forEach(b => b.onclick = () => showHub(b.dataset.hub));
-const PROP_IDS = ["audit","p1","p2","p3","p4","asks","check"];
+const PROP_IDS = ["audit","census2","p1","p2","p3","p4","asks","check"];
 function route(){ const id = location.hash.slice(1); showHub(PROP_IDS.includes(id) ? "proposal" : HUBS.includes(id) ? id : "walk"); if (id) { const el = $(id); if (el) el.scrollIntoView({block: "start"}); } }
 window.addEventListener("hashchange", route); route();
 
@@ -1472,6 +1654,7 @@ $("qa2Count").textContent = QA2.reduce((n, g) => n + g.steps.length, 0);
 
 /* ---------- decisions ---------- */
 const DECISIONS = [
+  {date: "2026-10-19", ask: "A–D: how far the ask reaches, a tap outside, when the hand-built coach windows move, the small-card windows", label: "Ruled as recommended", why: "Asked at the start of the stage 2 build (the rulings were silent or collided). A: the “Close without saving?” ask is built once into the window and turned on in the coach windows that ask today, the hand-built ones as they move, and Message a family; the club and tournament admin’s forms get it as a last part, 2e, each with its own idea of what counts as typed (the admin’s forms do not ask today either). B: a tap outside a form does nothing, typed or not, which settles the hub’s two readings of Q7 in favour of F07. C: the hand-built coach windows move in stage 2, the ones with no keyboard handling first, then the rest; records and sheets stay out under Q15; the five tryout windows join. This brings them forward from stage 4, where Q14 had put them. D: Close the season and Delete a budget line become the small centred question; the other small-card windows get a call each on the stage 2 census; no new window shape."},
   {date: "2026-10-19", ask: "Two flows widened on a click: a payment request (520) → Approve (640), and New tournament’s chooser (520) → its next step (640)", label: "One width per flow", why: "Asked after the stage 1 walk passed; the owner agreed: “I do agree but also want to test when it is ready to make sure.” A flow opens at the widest width any of its steps needs and keeps it, because a window that resizes under the pointer reads as a glitch (the schedule generators already keep 800 across their steps). Both flows now open at 640. Not part of the ruling, the build’s call: a question opened from a flow (Decline, Reverse) keeps the question window’s own width. Walk 2 on the QA tab tests it. A census the same day found five more windows that change width on a click; the next decision rules them."},
   {date: "2026-10-19", ask: "Five more windows change width on a click: a team’s bill (800) → Record received (640) or Remind (520); a budget line, a ledger line, From the teams and a statement row → an allocation (800)", label: "Ruled as recommended", why: "Found by a census of every admin window after the first ruling. Two kinds, two answers, both as recommended. A small task on a big record opens OVER it as a smaller window, and the bill stays dimmed behind it at its own width; this is the layer New payee already uses over Payees. Opening a different record from inside one keeps each record at its own width: the title, the back link and everything inside change, and a ledger line widened to 800 only because it can lead to an allocation would be mostly empty. Undo on a bill is a question and still opens in the bill’s place (not part of the ruling)."},
   {date: "2026-10-18", ask: "S1–S5: the stage 1 width audit’s five calls", label: "Ruled as recommended", why: "The owner’s paste-back chose the recommended option on all five: the twelve red required stars left in the admin go plain, like the other 71 (the families’ sign-up pages and the platform console keep their own); a short table that fits at 640 keeps 640 (Manage a member, Ask the coaches, Payees, a sent email, New tournament in steps); two panes side by side keep 800 (both schedule generators, Close the year); record windows keep today’s width on every path they open from; the rest of the list as published."},
@@ -1480,3 +1663,59 @@ const DECISIONS = [
 ];
 $("decisionRows").innerHTML = DECISIONS.map(d => `<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join("");
 </script>
+<script>
+/* ---------- stage 2 census calls + paste-back (2026-10-19) ---------- */
+const C2ASKS = [
+  {id: "B1", t: "One sentence for every window’s ask", why: "The 13 windows that ask today say what is at stake in their own words, in a second window over the form (“Discard this review? You’ve entered how it’s going. Closing now won’t save any of it.”). In the foot there is room for one short line at 520px, so every window says the drawn sentence: “Close without saving? What you typed won’t be kept.” with Keep writing and Discard. Message a family keeps its own “Close without sending?”.", opts: [["a","The one sentence, in every window",1],["b","Keep each window’s own words, in the foot",0]]},
+  {id: "B2", t: "Five shell windows that hold typed words and never asked", why: "A club schedule’s review (asking for a change), New payee (it asks only before leaving the page), Change or remove a payment, Start or change a session, and Approve a club link in the free portal. Today ×, Escape or Back drops what was typed with no question.", opts: [["a","They ask too",1],["b","They keep closing at once",0]]},
+  {id: "B3", t: "Eight hand-built windows that hold typed words and never asked", why: "Start next season, Add players (paste a list), Give an award, Upload a document, Tell the club you’ve sent, Save to my drills or circuits, Save as template, and Send to staff. The first three also close on a stray tap today.", opts: [["a","They ask too, as they move",1],["b","They keep closing at once",0]]},
+  {id: "B4", t: "The drill sheet", why: "It opens like a record (a drill’s name as its title) but it has a Save, and × or a stray tap drops unsaved edits without asking. Q15 keeps records out; this one behaves like a form.", opts: [["a","It moves onto the one window as a form, and asks",1],["b","It stays out as a record (Q15)",0]]},
+  {id: "B5", t: "The small-card windows (your answer D)", why: "Close the season and Delete a budget line are ruled. The rest: Choose an icon and Export become the small centred question (one pick, nothing typed); Subscribe in your calendar becomes the question on a computer, and its phone sheet does not change; Start next season and Upload a document become forms that fill a phone, because they have fields; the month grid’s two figure windows become forms like Budget vs. Actual’s own figure windows. The icon picker and the month grid also open in the club admin and move for both.", opts: [["a","As listed",1],["b","Changes, in the notes",0]]},
+  {id: "B6", t: "Four read and manage windows move too", why: "Categories and items, Sample season budget, Recent imports and Reminder preview. Nothing in them is typed, but the first three never keep Tab inside or answer the phone’s Back. They keep what they show and how wide they are.", opts: [["a","They move, in 2c and 2d",1],["b","They wait for stage 4",0]]},
+  {id: "B7", t: "Ten stay out", why: "An event’s slide-over, a day’s list, a player’s dues, Season settlement, a staff member, a practice plan’s station, block and Groups sheets, a player on the depth chart, and Lineup setup on a computer: records, sheets and slide-overs, which Q15 keeps out.", opts: [["a","They stay out",1],["b","Bring some in, named in the notes",0]]},
+  {id: "B8", t: "The rest of the list", why: "Everything else as listed in the tables below: each window keeps its words, its width and what it does; it gains the one window’s keys and foot, and stops closing on a tap outside.", opts: [["a","OK as listed",1],["b","Changes, in the notes",0]]}
+];
+let C2 = {}; try { C2 = JSON.parse(localStorage.getItem("ow-c2") || "{}"); } catch (e) { C2 = {}; }
+function saveC2(){ try { localStorage.setItem("ow-c2", JSON.stringify(C2)); } catch (e) {} }
+$("c2askList").innerHTML = C2ASKS.map(q => `<div class="ask"><h3>${q.id} · ${esc(q.t)}</h3><p>${esc(q.why)}</p>${q.opts.map(o => `<label class="opt"><input type="radio" name="${q.id}" value="${o[0]}" ${C2[q.id] === o[0] ? "checked" : ""}><span>${esc(o[1])}${o[2] ? `<span class="rec">Recommended</span>` : ""}</span></label>`).join("")}<textarea data-c2note="${q.id}" placeholder="Notes (optional)">${esc(C2["n-" + q.id] || "")}</textarea></div>`).join("");
+document.querySelectorAll("#c2askList input[type=radio]").forEach(r => r.onchange = () => { C2[r.name] = r.value; saveC2(); });
+document.querySelectorAll("#c2askList textarea").forEach(t => t.oninput = () => { C2["n-" + t.dataset.c2note] = t.value; saveC2(); });
+$("c2Summary").onclick = () => {
+  const lines = ["One window · stage 2 census calls", ""];
+  C2ASKS.forEach(q => { const pick = q.opts.find(o => o[0] === C2[q.id]); lines.push(`${q.id} · ${q.t}: ${pick ? pick[1] : "(no answer)"}`); if (C2["n-" + q.id]) lines.push("   Notes: " + C2["n-" + q.id]); });
+  const out = $("c2Out"); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
+};
+</script>
+<!--S2-SCRIPT:start-->
+<script>
+/* ---------- STAGE 2 · window census + four questions (2026-10-19) ---------- */
+(function(){
+  const S2ROWS = [["W1","2b","History › Development › Progress (phone)","Player progress pickers","Y","","N","","","","phone only","phone only","Moves. Its note above Done (“Roster order…”) becomes the foot sentence."],["W2","2b","Development › a session","Review this session","Y","","N","Closes","","","—","34","Moves. Its legend stays in the body (it explains the names, not the next step); a name’s own warning stays by the name."],["W3","2b","Link to a club (free portal)","Bring the team into the club? (type its name)","Y","none","Y","","","","","","Moves as a form, so its phone shape is unchanged; Stage 3 decides whether it becomes the question window. Its “doesn’t match” line goes beside the button. Not reachable on the test accounts."],["W4","2b","Accounting › Ledger › Tools › Payees › a payee","Merge into another payee?","Y","","N","Closes","","","37","34","Moves, raised over Payees, Back kept. Its refusal moves beside the button."],["W5","2b","Accounting › Ledger › Tools › Payees","New payee","Y","page","Y","Closes","35","33.4","35","34","Moves; the ask turns on. Today ×, Cancel or Esc drops a typed name silently; only leaving the page warns."],["W6","2b","Accounting › Ledger › a row written by Dues, Fundraising or Club","A ledger line (read-only)","Y","","N","Closes","","","—","38.8","Moves. “Recorded on Player dues…” becomes the foot sentence beside Open ›."],["W7","2b","Accounting › Budget vs. Actual › a figure","The records behind a figure","Y","","N","","","","","","Moves. Its one-line explanation becomes the foot sentence."],["W8","2b","Accounting › Budget vs. Actual › a family’s Actual","A family’s dues behind the figure","Y","","N","","","","","","Moves. Its sentence becomes the foot sentence beside the two links."],["W9","2b","Accounting › Ledger › a bill › Change or Remove","Change a payment","Y","none","Y","Closes","35–38.6","31.4","35–38.6","34","Moves; the ask turns on (an edited amount or date is lost today). Its outcome line moves beside the button."],["W10","2b","Schedule › a club practice › Hand back","Hand back which practices?","Y","","N","","","","","","Moves. Its refusal goes beside the button. Not reachable on the test accounts."],["W11","2b","Schedule › a handed-back practice › Withdraw","Withdraw your ask?","Y","","N","","","","","","Moves as a form for now; Stage 3 decides the question shape. Not reachable on the test accounts."],["W12","2b","Schedule › a handed-back practice › Take it back","Take back which practices?","Y","","N","","","","","","Moves. Its closing sentence becomes the foot sentence. Not reachable on the test accounts."],["W13","2b","Schedule › a handed-back practice › Ask for money back","Ask the club for money back?","Y","","N","","","","","","Moves. Not reachable on the test accounts."],["W14","2b","Overview › a club schedule › Review it","A club schedule proposal","Y","none","Y","","","","","","Moves; the ask turns on while asking for a change. “Nothing is on your schedule…” becomes the foot sentence."],["W15","2b","Accounting › Fundraisers › a sponsor › an arrival › Edit","Edit cheque","Y","asks","Y","","","","","","Moves; asks in the foot instead of a second window. “The books entry follows…” becomes the foot sentence."],["W16","2b","Accounting › Fundraisers › a sponsor › Edit sponsorship","Edit sponsorship","Y","asks","Y","","","","","","Moves; asks in the foot. Its hint becomes the foot sentence."],["W17","2b","Accounting › Fundraisers › + Fundraiser","New fundraiser","Y","asks","Y","Closes","35–44","31.4","35–38","34","Moves; asks in the foot. Its error moves beside Create."],["W18","2b","Accounting › Fundraisers › a drive › an entry › Edit","Edit entry","Y","asks","Y","","","","","","Moves; asks in the foot. Its sentence becomes the foot sentence."],["W19","2b","Accounting › Fundraisers › a drive › Edit","Edit fundraiser","Y","asks","Y","","","","","","Moves; asks in the foot."],["W20","2b","Accounting › Player dues › a family › Add adjustment","Add adjustment","Y","asks","Y","","","","","","Moves; asks in the foot. “When you save: …” becomes the foot sentence."],["W21","2b","Roster › a player › Development › Add goal","Add a goal","Y","asks","Y","","35","33.4","","","Moves; asks in the foot."],["W22","2b","Lineups › a game › Lineup check","Lineup check","Y","","N","","","","","","Moves. No foot; its status mark stays beside the title."],["W23","2b","Lineups › a game › an inning","An inning","Y","","N","","","","","","Moves. No foot; Back and its status mark kept."],["W24","2b","Schedule › an event’s form › Where › Manage places","Places","Y","","N","","","","","","Moves, over the event form."],["W25","2b","Development › Metrics › Define a metric","Define a metric","Y","asks","Y","","44","44","","","Moves; asks in the foot. Its five foot buttons (Preview, Retire, Delete, Cancel, Save) checked at 520 and on a phone."],["W26","2b","Development › a metric › Preview","What the coach records","Y","","N","","","","","","Moves, over the definition."],["W27","2b","Schedule › an event’s form › Places › a pencil","Add or edit a place","Y","asks","Y","","","","","","Moves; asks in the foot."],["W28","2b","Roster › a player › Development › Record an observation","Record an observation","Y","asks","Y","","","","","","Moves; asks in the foot."],["W29","2b","Roster › a player › Development › Record a result","Record a result","Y","asks","Y","","","","","","Moves; asks in the foot."],["W30","2b","Roster › a player › Development › a goal › Review","Review the goal","Y","asks","Y","","","","","","Moves; asks in the foot. Its evidence sentence stays in the body."],["W31","2b","Schedule › Add event, or an event’s pencil","Add or edit an event","Y","asks","Y","Closes","35–38.7","31.4","35–38.7","34","Moves; asks in the foot. Its series counts (“3 practices, 1 opponent”) become the ask’s sentence (wording note)."],["W32","2b","Development › Sessions › Start session","New session / This session","Y","none","Y","","","","","","Moves; the ask turns on (a typed note is lost today)."],["W33","2c","Accounting › Budget › Add line, or a line","Add or edit a budget line","N","asks","Y","Closes","36.6–44","31.4","36.6","34","Moves. Gains Tab, Esc and Back; asks in the foot."],["W34","2c","Accounting › Budget › a line › Delete line","Delete line?","N","","N","","","","","","Becomes the question window: a small centred card on a phone, as today (ask D)."],["W35","2c","Accounting › Budget, empty › See a finished example","Sample season budget","N","","N","","","","","","Moves (read-only form). Not reachable on the test team (it has a budget)."],["W36","2c","Accounting › Budget, empty › Start","Your starting budget","N","asks","Y","","","","","","Moves. Gains Tab, Esc and Back; asks in the foot."],["W37","2c","Accounting › Budget › Categories & items","Categories & items","N","none","Y","","","","","","Moves; the ask turns on (a half-typed rename is lost today)."],["W38","2c","Accounting › Import › Budget lines or Bills","Import a spreadsheet","N","asks","Y","","","","","","Moves; asks in the foot."],["W39","2c","Accounting › Import › Recent imports","Recent imports","N","","N","","","","","","Moves (read-only form)."],["W40","2c","An award type › its icon","Choose an icon","N","none","Y","","","","","","Moves as a form raised over the award form; on a phone it fills the screen (a small card today; ask D)."],["W41","2c","Roster, Schedule, Accounting › Export","Export","N","","N","","","","","","Moves as a form; on a phone it fills the screen (a small card today; ask D). Its own Esc handling goes."],["W42","2c","Overview › the season cue › just close it","Close the season?","N","","N","","","","","","Becomes the question window, still a small card on a phone (ask D); its own text colours go. Not reachable on the test team."],["W43","2c","Roster › Add player","Add player","N","own","Y","Closes","35–37","41","35–37","41","Moves; its own discard question becomes the foot ask."],["W44","2c","History › Awards › Give an award (also from an event)","Give an award","N","none","Y","Closes","37","31.4","37","34","Moves; the ask turns on (a typed note is lost to a stray tap today)."],["W45","2c","Settings, Overview › Start next season","Start next season","N","none","Y","","","","","","Moves as a form: on a phone it fills the screen (a small card today; ask D). The ask turns on; its own text colours go."],["W46","2c","Schedule › Add event › Import a schedule","Bring in a schedule","N","asks","Y","","","","","","Moves; asks in the foot."],["W47","2c","Roster › a player › Documents › Upload","Upload a document","N","","N","","","","","","Moves as a form: gains Esc, Tab and Back (none today; a tap outside does nothing either); on a phone it fills the screen (ask D)."],["W48","2c","Practice › Drills, Templates, Circuits › Add from a past season","Add from a past season","N","","N","","","","","","Moves."],["W49","2c","Roster › Import, or Paste a list","Add players","N","none","Y","","","","","","Moves; the ask turns on (pasted and edited rows are lost to a stray tap today)."],["W50","2c","Lineups › Templates › Apply","Apply a template to…","N","","N","","","","","","Moves."],["W51","2c","Tryouts › a day › Check-in › Add player","A walk-up player","N","asks","Y","","","","","","Moves; asks in the foot."],["W52","2c","Tryouts › a day › Check-in › Print sheet","Which session is this sheet for?","N","","N","","","","","","Moves."],["W53","2c","Tryouts › Setup › Add session","Add or edit a session","N","asks","Y","Closes","","","38.2–41.2","41","Moves; asks in the foot."],["W54","2c","Tryouts › Setup › Add evaluator","Add an evaluator","N","asks","Y","","","","","","Moves; asks in the foot. A stray tap no longer loses the show-once link it hands you."],["W55","2c","Tryouts › Setup › Scorecard","Evaluation scorecard","N","asks","Y","","","","","","Moves; asks in the foot."],["W56","2d","Accounting › Budget or Player dues › Set dues for all players","Set dues for all players","Y","asks","Y","","","","","","Moves; asks in the foot."],["W57","2d","Accounting › Ledger › Record, Add a bill, or a row","Record money","Y","asks","Y","Closes","","","35–38","34","Moves, keeping its place inside the themed page (it opens from a tab that stays mounted). Its docked delete row re-checked."],["W58","2d","Accounting › Player dues › Close out the season","Close the budget and pay families back","Y","none","Y","","","","","","Moves (800), like the club’s Close the year: a statement and one decision, not a record. The ask turns on for the held-back amount. The prompt had it staying out."],["W59","2d","Accounting › Player dues › settlement › Change what a player takes","Set refund","Y","none","Y","","","","","","Moves, raised over the settlement; the ask turns on."],["W60","2d","Accounting › Player dues › Send due reminders","Send due reminders?","Y","","N","","","","","","Becomes the question window: on a phone a small centred card (it fills the screen today)."],["W61","2d","Accounting › Club › a bill › We’ve sent it","Tell the club you’ve sent an installment","Y","none","Y","","","","","","Moves, raised over the bill; the ask turns on (date, method and reference are lost to a stray tap today)."],["W62","2d","Accounting › Club › Make a request, or a request","A club request","Y","asks","Y","","","","","","Moves; asks in the foot; its docked confirm re-checked."],["W63","2d","Accounting › Player dues › See what they’ll receive (also Settings)","Dues reminder emails","Y","","N","","","","","","Moves (read-only form)."],["W64","2d","Accounting › Budget vs. Actual › Months › a cell","A month’s records","Y","","N","","","","","","Moves as a form: on a phone it fills the screen (a small card today), like the club’s Behind a figure (ask D)."],["W65","2d","Accounting › Budget vs. Actual › Months › a plan figure","A month’s plan lines","Y","","N","","","","","","As W64."],["W66","2d","Schedule › Export › Subscribe (computer)","Subscribe in your calendar app","Y","","N","","","","","","Moves. A phone keeps its sheet."],["W67","2d","Staff › Invite someone, or a member’s access","Invite someone / a member","Y","asks","Y","","","","","","Moves, like the club’s Manage a member; asks in the foot."],["W68","2d","Practice › a plan › Send to staff","Send to staff","Y","","N","","","","","","Moves. The practice page’s side-by-side layout: one at a time, last."],["W69","2d","Practice › a plan › Groups › From another practice","Groups from another practice","Y","","N","","","","","","Moves (practice layout, last)."],["W70","2d","Practice › a plan › Add a block, Add a station, Swap drill","The drill picker","Y","","N","","","","","","Moves (practice layout, last)."],["W71","2d","Practice › a plan › a block › Save to my drills","Save to my drills or circuits","Y","none","Y","","","","","","Moves; the ask turns on (a typed name is lost today). Practice layout, last."],["W72","2d","Practice › a plan › a block › Choose players","Choose players","Y","","N","","","","","","Moves (practice layout, last)."],["W73","2d","Practice › a blank plan › Start this plan from…","Start this plan from…","Y","","N","","","","","","Moves (practice layout, last)."],["W74","2d","Practice › a plan › Save as template","Save as template","Y","none","Y","","","","","","Moves; the ask turns on (a typed name is lost today). Practice layout, last."],["W75","2d","Practice › Drills › New drill, or a drill","A drill","Y","none","Y","","","","","","Moves; the ask turns on (typed words are lost to a stray tap today)."],["W76","2d","Lineups › a game › Setup (computer)","Lineup setup","Y","","applied","","","","","","Moves (computer only; a phone keeps its sheet). Nothing to ask: its numbers apply as typed."],["W77","out","Accounting › Player dues › a family","The family’s dues drawer","Y","asks","Y","","","","","","Stays (a slide-over). But a half-typed payment in it is lost to a stray tap or Esc today; I’d fold a small fix into 2d."],["W78","out","Schedule › an event","The event slide-over","Y","own","Y","","","","","","Stays (a slide-over; it saves as you go)."],["W79","out","Schedule › Month (phone) › a busy day","The day’s list","N","","N","","","","","","Stays (a sheet)."],["W80","out","Depth chart (phone) › a player","A player’s depth sheet","N","","applied","","","","","","Stays (a record sheet; saves as you go)."],["W81","out","Practice › a plan › a station","A station","Y","","applied","","","","","","Stays (a record with Previous and Next; Q15)."],["W82","out","Practice › a plan (phone) › a block","A block","Y","","applied","","","","","","Stays (a record with Previous and Next; Q15)."],["W83","out","Practice › a plan › Make groups","The groups room","Y","","applied","","","","","","Stays (a room; Q15)."]];
+  const S2ASKS = [{"id":"A","t":"How far the ask before closing reaches","why":"Q7 reads “every window”, but no admin form asks today (see the first line above). Each window that asks has to say what counts as typed, so the reach is a real choice. The coach windows with typed words are 42 of the 76 that move. The admin has 90 form windows; asking in each one means deciding, one by one, what counts as typed there.","opts":[["a","Every coach window with typed words (42) and Message a family, in this stage. The admin’s form windows follow later in an optional sub-part (2e), only if you say so",1],["b","Every window in both portals, in this stage",0],["c","Only the coach windows that ask today; the rest keep closing at once",0]]},{"id":"B","t":"A tap outside a form","why":"Q7 says no form closes on a stray tap, and that with words typed a tap outside asks first. The Stage 2 drawing’s note says an empty form closes at once on one. The admin’s form does nothing on a tap outside, typed or not, and only ×, Cancel, Esc and Back close it. An ask that pops up because a tap missed the window is noise, and nothing is lost by ignoring the tap.","opts":[["a","Nothing happens, typed or not, as in the admin today",1],["b","Nothing when empty; asks in the foot when words are typed (Q7’s words as written)",0]]},{"id":"C","t":"When the hand-built coach windows move","why":"The plan moves them in Stage 2; your Q14 put them in stage 4 with the strays. 23 of them (5 are tryout windows) have no Esc, Tab or Back today, and several lose typed words to a stray tap with nothing asking. Stage 4 would leave that as it is for two more stages. Moving them now amends Q14 for these windows only; House league, the tournament’s old windows and the one-offs stay in stage 4.","opts":[["a","Stage 2: the 23 without the floor first (2c), then the 21 with it (2d), the practice page’s windows last; the 7 sheets and records stay out",1],["b","Stage 4, as Q14 has it: Stage 2 is the piece and the 32 shell windows only",0]]},{"id":"D","t":"Windows that are a small card on a phone today","why":"Nine coach windows stay a small centred card on a phone. The one window has two shapes: a form fills a phone, and the question is the small card (Q12). A third shape for these would be a new variant. Send due reminders? is a question that fills a phone today; under the recommendation it becomes the small card too (W60).","opts":[["a","The real questions (Delete line?, Close the season?) become the question window and stay small cards; the other seven become forms and fill the phone like every other form: Choose an icon, Export, Start next season, Upload a document, the two month-grid windows, and Subscribe in your calendar app (a computer only)",1],["b","All nine become the question window: small cards, but a picker or a form then has no ×",0],["c","Keep them as they are (a third shape; reopens Q12)",0]]}];
+  const S2P = {"o390":9,"o1280":12,"f390":"35–44","b390":"31.4–44","f1280":"35–41.2","b1280":"34–41","fUnder":8,"bUnder":8,"scrimCloses":12,"scrimTested":12};
+  const ASK = {asks: "Asks, in a second window", own: "Its own ask", page: "Only on leaving the page", none: "<span class=\"no\">Nothing asks</span>", "": "—"};
+  const TYPED = {Y: "Yes", N: "No", applied: "Kept as typed"};
+  const lo = (v, lim) => { if (!v || !/^[0-9]/.test(v)) return esc(v || "—"); const lowest = parseFloat(v); return lowest < lim ? `<span class="lo">${esc(v)}</span>` : esc(v); };
+  const head = `<thead><tr><th>#</th><th>Screen</th><th>Window</th><th>Esc, Tab, Back</th><th>Ask today</th><th>Typed words</th><th>Tap outside</th><th>Phone</th><th>Computer</th><th>Call</th></tr></thead>`;
+  const row = r => `<tr><td class="id">${r[0]}</td><td>${esc(r[2])}</td><td><b>${esc(r[3])}</b></td><td class="yn">${r[4] === "Y" ? "Yes" : "<span class=\"no\">No</span>"}</td><td>${ASK[r[5]]}</td><td class="yn">${TYPED[r[6]] || r[6]}</td><td class="yn">${esc(r[7] || "—")}</td><td class="m">${lo(r[8], 44)} / ${lo(r[9], 44)}</td><td class="m">${esc(r[10] || "—")} / ${esc(r[11] || "—")}</td><td class="call">${esc(r[12])}</td></tr>`;
+  ["2b","2c","2d","out"].forEach(p => { const t = $("s2t" + p); if (t) t.innerHTML = head + "<tbody>" + S2ROWS.filter(r => r[1] === p).map(row).join("") + "</tbody>"; });
+  const b = $("s2before");
+  if (b) b.innerHTML = S2P.o1280 || S2P.o390
+    ? `Measured by a script on the test team, Warm, never typing or saving. <b>A sample, not every window:</b> the machine was shared with the release check and other sessions, and a full pass through the shared dev server tripped its memory floor twice. So ${S2P.o390} windows at 390 wide and ${S2P.o1280} at 1,280, covering every family (the shell, hand-built with and without Esc, Tab and Back, tryouts). The shell’s fields and buttons come from one shared rule, so its figures stand for all 32. The build measures every window after its move, and that is the figure Q10 asks for. <b>On a phone</b> one-line fields measure ${S2P.f390}px and foot buttons ${S2P.b390}px; ${S2P.fUnder} windows have a field under 44 and ${S2P.bUnder} a foot button under 44. <b>On a computer</b> fields measure ${S2P.f1280}px and foot buttons ${S2P.b1280}px. <b>A tap outside</b> closed ${S2P.scrimCloses} of the ${S2P.scrimTested} windows tested with nothing typed. A dash in the table means not measured before.`
+    : "The measurement is queued: the machine was busy with the release’s layout check. The figures land here before the build starts.";
+  let S2 = {}; try { S2 = JSON.parse(localStorage.getItem("ow-s2") || "{}"); } catch (e) { S2 = {}; }
+  const save = () => { try { localStorage.setItem("ow-s2", JSON.stringify(S2)); } catch (e) {} };
+  $("s2askList").innerHTML = S2ASKS.map(q => `<div class="ask"><h3>${q.id} · ${esc(q.t)}</h3><p>${esc(q.why)}</p>${q.opts.map(o => `<label class="opt"><input type="radio" name="s2${q.id}" value="${o[0]}" ${S2[q.id] === o[0] ? "checked" : ""}><span>${esc(o[1])}${o[2] ? `<span class="rec">Recommended</span>` : ""}</span></label>`).join("")}<textarea data-s2note="${q.id}" placeholder="Notes (optional)">${esc(S2["n-" + q.id] || "")}</textarea></div>`).join("");
+  document.querySelectorAll("#s2askList input[type=radio]").forEach(r => r.onchange = () => { S2[r.name.slice(2)] = r.value; save(); });
+  document.querySelectorAll("#s2askList textarea").forEach(t => t.oninput = () => { S2["n-" + t.dataset.s2note] = t.value; save(); });
+  const wn = $("s2wnotes"); wn.value = S2.w || ""; wn.oninput = () => { S2.w = wn.value; save(); };
+  $("s2Summary").onclick = () => {
+    const lines = ["One window · stage 2 questions", ""];
+    S2ASKS.forEach(q => { const pick = q.opts.find(o => o[0] === S2[q.id]); lines.push(`${q.id} · ${q.t}: ${pick ? pick[1] : "(no answer)"}`); if (S2["n-" + q.id]) lines.push("   Notes: " + S2["n-" + q.id]); });
+    lines.push("", "W calls: " + (S2.w ? S2.w : "as listed"));
+    const out = $("s2Out"); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
+  };
+  if (typeof PROP_IDS !== "undefined" && !PROP_IDS.includes("s2")) { PROP_IDS.push("s2"); if (location.hash === "#s2") route(); }
+})();
+</script>
+<!--S2-SCRIPT:end-->

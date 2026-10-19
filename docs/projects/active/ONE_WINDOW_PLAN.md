@@ -6,7 +6,8 @@ same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review; *
 (30 of 30, no notes; hub QA tab, QA ledger §339). Windows that changed width on a click were ruled 2026-10-19 (the
 two flows keep one width; a census found five more: a bill's tasks open over it, an allocation keeps its own width)
 and built and committed `6e3222f8` the same day after /review; **owner walk 2 ✅ passed 2026-10-19** (14 of 14, no
-notes; hub QA tab, QA ledger §339). Stage 1 is closed but for the layout check below; Stage 2 is next. Still open: the layout
+notes; hub QA tab, QA ledger §339). Stage 1 is closed but for the layout check below. **Stage 2's gate was published
+2026-10-19** (census, before-figures, asks A–D open on the hub; "Stage 2 gate" below); nothing built. Still open: the layout
 check on the screens Stage 1 touched (runs on staging at the promote).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
@@ -208,6 +209,61 @@ fields and foot buttons on a phone.
   record the figures here.
 - ⚠ Naming: "Question" already names the coach FORM shell; the yes/no window takes another name in code.
 - A foot sentence must be short at 520px, or it takes its own line above the buttons (drawn on the hub).
+
+#### Stage 2 gate — census, before-figures and four questions (2026-10-19; nothing built)
+Run from `ONE_WINDOW_STAGE2_BUILD_PROMPT.md`. Published on the hub, Proposal › "Stage 2 · windows": every window as a
+call the owner rules by number (W1–W83, the hub's `S2ROWS`; not "B1…", because B is a question), the before-figures,
+and asks A–D with a paste-back. **Open: A–D.** Build waits for them and for Toolbar Rules Stage 3's commit (shared files).
+- **Census** (four helpers, the floor and scrim columns spot-checked in the code): 32 `<QuestionShell` renders in 24
+  files; 51 hand-built windows (46 coach `.modalOverlay`, the desktop lineup setup included, and 5 tryout `.scrim`); 20
+  coach + 5 tryout without `useDialogFloor`. **76 move** (2b 32 · 2c 23 · 2d 21) and **7 stay out**: the dues family
+  drawer, the schedule event slide-over, the phone day list, the depth-chart player sheet, the practice station and
+  block sheets, the groups room. **42 of the 76 hold typed words, and 16 of those close with nothing asking today** —
+  shell: New payee (a `leaveGuard` only: ×, Cancel and Esc drop the name), Change a payment
+  (`InstallmentScopeSheet`), the club proposal's "Ask for a change" (`ClubReviewCard`), `SessionSheet`, link-org's
+  typed confirmation; hand-built: `GiveAwardModal`, `StartNextSeasonModal`, `RosterBulkAddSheet`,
+  `BudgetItemManagerModal`, the dues settlement window, Set refund, `SentWindow`, `PromoteDialog`,
+  `SaveAsTemplateDialog`, `DrillSheet`, `AwardIconPicker`. Staying out but a loss: the dues drawer's inline payment form
+  is not counted in `drawerFormDirty` (W77; a small fix offered for 2d).
+- **Corrections to the build prompt and this plan:**
+  1. Q7 is not "the admin's behaviour": no `KitDialog` caller asks before closing except `MessageFamilyWindow` (in its
+     foot) and `TournamentSetupWizard`, which asks in a SECOND question window ("Leave setup?" · Keep working · Leave,
+     `lib/tournament-setup-words.ts`). The ask is built into the piece (ask A).
+  2. The tap-outside wording collides (hub legend "with nothing typed it closes at once" vs Q7) → ask B.
+  3. Q14 (design log: "the coach hand-built windows" join in stage 4) vs this plan's Stage 2 → ask C.
+  4. Counts: `useDiscardGuard(` 28 sites in 23 files (13 in shell windows); `KitDialog` 147 renders in 69 files (club
+     40 files / 89, tournament 29 / 58); hand-built without the floor 20 (the plan's ~17).
+  5. `DrillSheet` HAS the floor (the prompt's 2c "high-risk" list misfiles it); its scrim and Esc still drop typed words.
+  6. The dues settlement window is a statement and one decision, like the club's Close the year (a `KitDialog` form):
+     recommended to move (W58), where the prompt had it out.
+  7. Three wordings of one answer: Keep editing (`useDiscardGuard`), Keep working (New tournament), Keep writing (ruled;
+     `lib/families-words.ts`). The foot ask says Keep writing; New tournament's stays until the admin forms join (A).
+  8. The stakes sentence: `useDiscardGuard`'s `detail` names what is lost ("an amount and 3 payment periods"); the
+     drawn foot says only "What you typed won't be kept." Default unless the owner says otherwise: the foot ask's
+     sentence keeps each window's stakes where it has one.
+  9. More guards key on `.modalOverlay` than the prompt lists: also `coach-award-edit`, `coach-schedule-phone-guard`,
+     `coach-schedule-sheet-guard`, `one-window-stage1-guard`.
+  10. No guard forbids a coach file importing `components/admin/kit` (coaches already import `components/admin`:
+      `CoachPortalShell`, the attendance panel). `kit-dialog-foot-text-guard` already scans every `.tsx`, so each coach
+      caller is held to "no sentence in `footer`" the moment it arrives.
+  11. No shell window has a docked `alertdialog`; the docked confirms live in hand-built windows (Record money, the club
+      request, dues).
+- **Step 0 · before-figures — a SAMPLE, not every window.** The machine was shared with the release's layout check,
+  another session's typecheck and a Club probe; a full pass through the shared dev server tripped the memory floor
+  three times (each abort discarded, never read as a pass). Measured by a probe on the UAT coach team, Warm, never
+  typing or saving: 12 windows at 1280 and 9 at 390, covering the shell, hand-built with and without the floor, and a
+  tryout window. The shell's fields and buttons come from one shared rule (`.input` / `.btn`), so its figures stand for
+  all 32; every window is measured after its move (the figure Q10 asks for). Raw figures: `.probe/ow2-gate/before.json`
+  (gitignored).
+  - **Phone (390):** one-line fields 35 (text, number) to 38.7 (dates, times; selects 37); 8 of 9 windows have a field
+    under 44. Foot buttons 31.4–33.4 (Add player 41); 8 of 9 under 44. Define a metric already meets 44 throughout.
+  - **Computer (1280):** text and number fields 35; selects 37; dates and times 38–38.7; the budget line's fields 36.6;
+    the tryout session window 38.2–41.2 (its own stylesheet). Foot buttons 34 (a ledger line's links 38.8; Add player
+    and tryouts 41). Q2's exact 36 is therefore a visible 1–3px change inside coach windows.
+  - **A tap outside closed all 12 windows tested** (nothing typed).
+  - **Widths off the ladder** (not in the prompt): the hand-built budget line form is 720 and the tryout session window
+    460; each takes 520 / 640 / 800 when it moves, so 2c and 2d need a width call per hand-built window (the shell's
+    are already 520 or 640).
 
 ### Stage 3 · One question
 What changes on screen: every "are you sure" in all three areas looks the same; no browser grey boxes; Saved / Done
