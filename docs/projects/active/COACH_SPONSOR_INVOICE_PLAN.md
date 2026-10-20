@@ -23,6 +23,8 @@ invoice on the team's own paper (crest, colour band, house footer), straight fro
 | A5 | **Anyone who can record the team's money** can make one. |
 | A6 | **Download only**; the coach attaches it to their own email. |
 | A7 | The `/design` review's 8 drawing changes accepted (plain required stars; 640 window; sentence-case section titles; sponsor name as the eyebrow over "Invoice"; team details fold; plain Amount hint; close ask + refusal; no PAID stamp, no repeated details block, figures = invoiced · paid · balance due; From line respects the team's own line-2 setting). |
+| A8 | A deleted sponsorship's invoice **keeps only its number** — the contact details are cleared (owner, 2026-10-20: "it can keep the number"; mig 341). |
+| A9 | Staff with read-only money access may see a sponsor's billing contact — **fine as is** (owner, 2026-10-20). |
 
 ## 2. What is built
 

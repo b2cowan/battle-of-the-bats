@@ -4936,8 +4936,11 @@ route" — it predates the list read; this entry is the current truth. Moves wit
    `fundraiser_id` is **ON DELETE SET NULL, not CASCADE**: deleting a sponsorship leaves the row as the number's
    tombstone, so the max never falls back and 003 is never handed to a second business. **The known exception:**
    deleting the season (`program_year_id`) or the team CASCADE-deletes its rows. No product path deletes a season that
-   could hold invoices (only rollbacks of a just-created year), so only a manual DBA delete can free a number. The
-   tombstone keeps the bill-to contact on purpose; nulling it is an open owner call.
+   could hold invoices (only rollbacks of a just-created year), so only a manual DBA delete can free a number.
+   **The tombstone keeps ONLY the number (mig 341, owner 2026-10-20 "it can keep the number"):** a BEFORE UPDATE OF
+   `fundraiser_id` trigger (`rep_sponsor_invoices_forget_contact`) fires on the FK's own SET NULL and clears
+   `bill_to_attention` / `bill_to_email` / `bill_to_address`, setting `bill_to_name` to "Deleted sponsorship" (NOT NULL).
+   Number, amount, dates and description stay — the team's bookkeeping, not the sponsor's contact.
 2. **`amount` is never typed** — the sponsor's `pledged_amount`, else what has arrived, read by the route at each
    download. If it moved since the last download, the row re-stamps `amount` and sets `revised_on` (A4: same number,
    "Revised <date>"). Paid / part paid / paid in full is DERIVED from the arrivals at print time, never stored.
