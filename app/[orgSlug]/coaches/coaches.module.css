@@ -8284,7 +8284,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   background: var(--home-lime);
   color: var(--home-lime-ink);
 }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .btnPrimary:hover {
+/* ⚠ NOT ON A DISABLED ONE (/review, One Window 2d): this weighs more than `.btnPrimary:disabled`, so a dead CTA under
+   the mouse went back to full lime at full strength — against the ruling that a disabled button fades with its hover
+   off. Every coaches CTA, not just the season settlement's Pay that showed it. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .btnPrimary:hover:not(:disabled) {
   background: rgba(var(--home-lime-rgb), 0.82);
   opacity: 1;
 }
