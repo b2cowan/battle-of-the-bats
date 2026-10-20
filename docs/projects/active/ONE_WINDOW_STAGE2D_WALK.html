@@ -1,0 +1,160 @@
+<title>One Window 2d Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;650;700&display=swap">
+<style>
+/* Layout: the project hub's frame (dark bar, then one document on paper) — a checkable walk, one purpose. */
+:root{
+  --paper:#f5f4ef;--card:#ffffff;--ground:#e7e9e1;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;
+  --olive:#486224;--blue:#245f79;--warn:#8a5a12;--warn-soft:#f6ecd6;--good:#2f6a2a;--good-soft:#e2efd9;
+  --bar:#222d1e;--bar-ink:#ffffff;--bar-muted:#d5dfcc;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-data:'IBM Plex Mono',ui-monospace,'Cascadia Mono',monospace;
+  color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#1b2119;--card:#232a20;--ground:#141912;--ink:#e6ebdf;--muted:#a3ad9a;--line:#3a4434;--soft:#2b3427;
+  --olive:#a9c97a;--blue:#7fbcd6;--warn:#e2b45e;--warn-soft:#3a3120;--good:#9fd18f;--good-soft:#24331f;
+  --bar:#0f140d;--bar-ink:#f2f5ee;--bar-muted:#aab79c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1b2119;--card:#232a20;--ground:#141912;--ink:#e6ebdf;--muted:#a3ad9a;--line:#3a4434;--soft:#2b3427;
+  --olive:#a9c97a;--blue:#7fbcd6;--warn:#e2b45e;--warn-soft:#3a3120;--good:#9fd18f;--good-soft:#24331f;
+  --bar:#0f140d;--bar-ink:#f2f5ee;--bar-muted:#aab79c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--f-body)}
+button,textarea{font:inherit;color:inherit}button{cursor:pointer}
+a{color:var(--blue);text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+[hidden]{display:none!important}
+.hubbar{background:var(--bar);color:var(--bar-ink);padding:13px 24px;display:flex;gap:10px 22px;align-items:center;flex-wrap:wrap}
+.hubbar strong{font:700 19px/1.2 var(--f-display);letter-spacing:.3px;margin-right:auto}
+.hubbar a{color:var(--bar-ink);font-size:13px;font-weight:650}
+.wrap{max-width:820px;margin:0 auto;padding:28px 24px 64px}
+h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
+.eyebrow{font:700 11px/1.3 var(--f-data);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.note{padding:12px 16px;border-left:3px solid var(--blue);background:var(--soft);font-size:14px;margin:0 0 14px;border-radius:0 6px 6px 0}
+.note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.prog{font-weight:700;margin:16px 0}
+.signin{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:0 0 14px}
+.signin .eyebrow{margin-bottom:8px}
+.cred{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.cred .who{min-width:200px;font-weight:650}
+code{font:500 13px/1.4 var(--f-data);background:var(--soft);padding:2px 7px;border-radius:5px;user-select:all;overflow-wrap:anywhere}
+.part{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px}
+.part h2{margin:0 0 6px;font-size:16px}
+.step{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14px}
+.step input{width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:var(--olive)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 8px;font-size:13px}
+.verdict button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;min-height:40px}
+.verdict button[aria-pressed="true"]{background:var(--good-soft);color:var(--good);font-weight:700;border-color:transparent}
+.part textarea,#out{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper)}
+.meta{font-size:12px;color:var(--muted)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 10px}
+.btn{min-height:44px;padding:9px 16px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-weight:650}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+@media (max-width:600px){.wrap{padding-inline:16px}.hubbar{padding-inline:16px}}
+</style>
+
+<div class="hubbar"><strong>One Window · Stage 2d walk (walk C)</strong><a href="https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48">The hub</a></div>
+<main class="wrap">
+  <div class="eyebrow">Your walk · Stage 2d · built 20 Oct 2026</div>
+  <h1>Money and practice windows ask in their own foot, like every other window</h1>
+  <p>One purpose: the last of the coaches portal’s own windows behave like every other window. These are Record money, the club request, Set dues, the season settlement, the reminders, the month grid, Subscribe and the practice windows. Each one keeps Tab inside, closes on Esc and the phone’s Back without moving the page, and ignores a tap outside. With something typed, closing asks in the window’s foot: “Close without saving? What you typed won’t be kept.” with Keep writing and a red Discard. It never opens a second “Discard this…? / Keep editing” window on top. Part F covers what the review fixed afterwards.</p>
+  <div class="note"><strong>Where:</strong> the dev site (localhost:3000), on a computer unless a step says phone (390 wide, or your phone). The test team is “UAT Test Team”: <code>localhost:3000/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe</code>. Money is in the sidebar; its tabs run Overview · Budget · Player dues · Fundraising · Ledger · Club · Budget vs. Actual.</div>
+  <div class="signin" aria-label="Sign in as">
+    <div class="eyebrow">Sign in as · dev site · localhost:3000/auth/login</div>
+    <div class="cred"><span class="who">Coach, head coach of UAT Test Team (every part)</span><code>uat-coach@uat-test-org.local</code><code>UATPassword2026!</code></div>
+  </div>
+  <div class="note warn"><strong>Nothing in this walk saves.</strong> Every step closes with Esc, Cancel or Discard, or leaves without saving. Never press Save, Set dues for N players, Pay everyone, Send or Replace. Preview in Set dues only reads. The hold-back “Save” in Part F is pressed only with −5, which the window refuses before anything is sent.</div>
+  <div class="note"><strong>Two windows keep the old second window, on purpose</strong> (your call, 20 Oct): the Player dues player panel and the staff member sheet still ask “Discard this…? / Keep editing” until rooms and records get the one foot. Part C step 6 checks the gap that was fixed there.</div>
+  <div class="note"><strong>Not walkable on the test team, checked in code:</strong> Budget’s own Set dues door (it shows only before any dues are set), Set dues’ “This roster already has dues” step (it appears only after pressing Set dues), Start this plan from…, Groups from another practice, and Send to staff (they need saved practice plans or staff with email). The phone’s drill picker can’t be checked either, because a phone’s + Add a station makes a station. Part H lists the ones you can reach with the setup.</div>
+  <p class="prog" id="count"></p>
+  <div id="parts"></div>
+  <div class="bar"><button type="button" class="btn primary" id="build">Build paste-back summary</button><button type="button" class="btn" id="copy" hidden>Copy</button><span class="meta" id="copied"></span></div>
+  <textarea id="out" rows="12" readonly hidden aria-label="Walk summary"></textarea>
+</main>
+
+<script>
+(function(){
+  var PARTS=[
+    {id:'A',title:'Record money and the Ledger',steps:[
+      'Money → the green “+ Record” (top right). Record money opens (520 wide). Press Tab several times: the focus never leaves it. Click outside: nothing happens. Esc closes it (nothing typed).',
+      '+ Record again, pick “We paid for something”, type an amount, then press ×: the foot asks “Close without saving?”. Keep writing keeps the amount; × again, then Discard closes it. No second window opened on top at any point.',
+      'Ledger → Bills → Add a bill. Type a description, then Esc: it asks in the foot. Discard.',
+      'Ledger → Timeline → click a cost row. The edit form opens. Press Delete: the “delete this?” question docks across the whole foot, and Cancel and Save are gone while it shows. Press its No/Cancel: the foot is back. Close the form.',
+      'Fundraising → open a drive → Record. Record money opens over the drive room. Esc closes only Record money; the drive room is still open.'
+    ]},
+    {id:'B',title:'Club',steps:[
+      'Money → Club → Make a request. Type an amount, then Esc: it asks. Discard.',
+      'If a request is pending, its pencil (Edit) opens the same window. If it offers Withdraw, press it: the question docks across the foot. Press No/Cancel. Close the window.',
+      'Open a club bill → “We’ve sent it” on an installment. The small window opens over the bill. Change the date or the reference, then Esc: it asks. Discard. The bill is still open.'
+    ]},
+    {id:'C',title:'Player dues',steps:[
+      'Player dues → “Change the schedule for everyone”. Set dues for all players opens, a little wider (640). Type a due date, then Esc: it asks. Keep writing.',
+      'Press Preview (it only reads). The window shows what would change. Press the browser’s Back: you go up to the form with your date kept, and the page does not move. Then Cancel → Discard.',
+      'Player dues → Review settlement (or Close out the season). The widest window (800), with the “$X to N families” sentence at the foot’s left. Esc closes it at once: nothing is typed.',
+      'Settlement again → the hold-back’s Change. Type 7.5, then Esc: it asks. Keep writing; then the hold-back’s own Cancel. Esc now closes at once.',
+      'Settlement → open a family row → “Change what … takes”, if the row offers it. Set refund is a small card in the middle, over the settlement. Esc answers no: the card goes and the settlement stays.',
+      'Close the settlement. Open a player row (the panel on the right) → a payment’s edit (the receipt correction). Change the amount, then close the panel: it now asks (this was the gap). These two keep the old “Keep editing” window on purpose. Keep editing → Cancel the correction → close.',
+      'Send due reminders. It is a small form (it fills a phone), not a question. “See what they’ll receive” opens the letter over it, 640 wide; Esc closes only the letter. Esc again closes Send due reminders. Do not press Send.',
+      'Settings → Money → See an example. The same letter window opens. Esc closes it.'
+    ]},
+    {id:'D',title:'Read windows',steps:[
+      'Budget vs. Actual → Months → click a Budget figure. The plan window opens (520). Esc closes it and the grid is where it was.',
+      'Click an Actual figure. Its window lists what is behind the figure. Press a door in it (for example “Open Player dues”): you land on that tab with no window held open. Press the browser’s Back: Budget vs. Actual is back with the window open again. Back once more closes it.',
+      'Schedule → Export → Subscribe in your calendar app (computer). It opens as the one window (520). Tab stays inside; Esc closes it. Do not press Reset the link.'
+    ]},
+    {id:'E',title:'Practice plans',steps:[
+      'Practice plans → Drills → open a drill. The drill sheet opens (640) with its name as the title. Change the name, then Esc: it asks; Discard. Retire (or Restore) now sits at the end of the sheet’s body, not in the foot.',
+      'Drills → + New drill. Esc closes it at once (nothing typed). Open it again, type a name, then Esc: it asks. Discard.',
+      'Open a practice → Save as template (on a phone, it is under ⋯). Esc closes it at once (the name is only pre-filled). Change the name, then Esc: it asks. Discard.',
+      'Same practice → the Skills circuit → open a station → Save to my drills. It opens over the station. Change the name, then Esc: it asks; Discard. The station is still open.',
+      'Same practice → open Warm-up → the players door (Choose players). The list opens and never asks: each tap is a choice. Esc closes it.',
+      'On a computer, Skills circuit → + Add a station. The drill chooser opens (520). Esc closes it; no station was added.'
+    ]},
+    {id:'F',title:'What the review fixed',steps:[
+      'Leaving with words typed: Email families → write a subject. Click Schedule in the sidebar. The warning reads “You have unsaved changes to this announcement.” (it used to say “this player” everywhere). Leave without saving takes you to the Schedule.',
+      'Settlement → the hold-back’s Change. Type −5 and press Save: the reason shows under the field. Press Save again: the reason is still there (the second press used to show nothing). Cancel, then close.',
+      'Settlement → Change → type 7.5 → Esc → Discard. Open the settlement again: the hold-back is not left in edit, and Change is back.',
+      'Set dues → type a date → Preview → Esc (it asks) → the browser’s Back (on a phone, ←). You are back on the form and the “Close without saving?” question is gone.',
+      'In the Warm look, where the settlement says “Not ready to close yet”, move the mouse over the greyed-out “Pay everyone and close the season”: it stays faded, with no lime. The same holds for any greyed-out main button.',
+      'Player dues → + Record → We paid for something → “More — paid by, payee, tags, notes” → click the Payee field → Manage payees…. Payees opens on top (it used to do nothing on any tab but the Ledger). Esc goes back to Record money. Close it.'
+    ]},
+    {id:'G',title:'On a phone',steps:[
+      'On a phone, + Record: the window fills the screen. Type an amount and use the phone’s Back: it asks in the foot; Discard. You are still on the same tab.',
+      'On a phone, the settlement, Send due reminders and the drill sheet fill the screen. Set refund stays a small card in the middle.',
+      'On a phone, the fields and foot buttons in these windows are full fingertip size (44), and Retire at the end of the drill sheet too.',
+      'On a phone, on a practice, change something and, while its pill still says it is saving, tap a link at the top or bottom of the screen. If the “Unsaved changes” warning comes up, it reaches the screen edges (it used to stop 16 px short) and names this practice. Stay on this page. (The practice saves itself in a moment, so the warning may not come up; skip it if so.)'
+    ]},
+    {id:'H',title:'Dark, and the optional setup',steps:[
+      'Switch to Dark and open Record money and the settlement. Both read clearly, and the red Discard in the ask stands out.',
+      'Optional, if you have the data: a team with no dues set → Budget → Set dues for all players opens the same 640 window. A team with saved practice plans → Start this plan from… and Groups from another practice open as the one window and never ask. Staff with email → a practice → Send to staff asks nothing and closes on Esc.'
+    ]}
+  ];
+  var KEY='ow2d-walk', st={};
+  try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){st={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+  var esc=function(v){return String(v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  function count(){var c=0,t=0;PARTS.forEach(function(p){p.steps.forEach(function(_,i){t++;if(st[p.id+'-'+i])c++;});});document.getElementById('count').textContent=c+' of '+t+' steps ticked';}
+  document.getElementById('parts').innerHTML=PARTS.map(function(p){
+    return '<section class="part"><h2>Part '+p.id+' · '+esc(p.title)+'</h2>'+p.steps.map(function(s,i){var k=p.id+'-'+i;return '<label class="step"><input type="checkbox" id="s-'+k+'" data-k="'+k+'"'+(st[k]?' checked':'')+'><span>'+esc(s)+'</span></label>';}).join('')+
+      '<div class="verdict">Verdict: '+['Pass','Issue','Needs a call'].map(function(v){return '<button type="button" data-p="'+p.id+'" data-v="'+v+'" aria-pressed="'+(st['v-'+p.id]===v)+'">'+v+'</button>';}).join('')+'</div>'+
+      '<label class="meta" for="n-'+p.id+'">Notes</label><textarea id="n-'+p.id+'" data-n="'+p.id+'" rows="2" placeholder="Anything worth recording">'+esc(st['n-'+p.id]||'')+'</textarea></section>';
+  }).join('');
+  count();
+  document.getElementById('parts').addEventListener('change',function(e){var k=e.target.dataset&&e.target.dataset.k;if(k){st[k]=e.target.checked;save();count();}});
+  document.getElementById('parts').addEventListener('input',function(e){var n=e.target.dataset&&e.target.dataset.n;if(n){st['n-'+n]=e.target.value;save();}});
+  document.getElementById('parts').addEventListener('click',function(e){var b=e.target.closest('button[data-p]');if(!b)return;st['v-'+b.dataset.p]=b.dataset.v;save();
+    document.querySelectorAll('button[data-p="'+b.dataset.p+'"]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});});
+  document.getElementById('build').addEventListener('click',function(){
+    var lines=['One Window · Stage 2d walk (walk C)',''];
+    PARTS.forEach(function(p){lines.push('Part '+p.id+' · '+p.title+': '+(st['v-'+p.id]||'no verdict'));
+      p.steps.forEach(function(s,i){lines.push('  ['+(st[p.id+'-'+i]?'x':' ')+'] '+s);});
+      if(st['n-'+p.id])lines.push('  Notes: '+st['n-'+p.id]);lines.push('');});
+    var o=document.getElementById('out');o.value=lines.join('\n');o.hidden=false;document.getElementById('copy').hidden=false;o.select();
+  });
+  document.getElementById('copy').addEventListener('click',function(){var o=document.getElementById('out');
+    var ok=function(){document.getElementById('copied').textContent='Copied';};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(o.value).then(ok,function(){o.select();document.getElementById('copied').textContent='Select all and copy';});}else{o.select();}});
+})();
+</script>

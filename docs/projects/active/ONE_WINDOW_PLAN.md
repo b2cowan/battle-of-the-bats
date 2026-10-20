@@ -12,7 +12,11 @@ notes; hub QA tab, QA ledger §339). Stage 1 is closed but for the layout check 
 foot) built 2026-10-19, /simplify and /review run the same day** ("Stage 2b — as built" below); walk A (2a + 2b) on the
 hub's QA tab — **owner walk A ✅ passed 2026-10-19 (20 of 20, no notes; QA ledger §346)**. **Part 2c (the hand-built
 coach windows) built in seven parts, each committed on the owner's OK, `cb83e3b6` … `83278609` 2026-10-19/20**, after
-/simplify and /review ("Stage 2c — as built" below); walk B on its own page, https://claude.ai/artifact/29LZVZrLGbk3mEoxWoXc3v (QA ledger §349; the hub is left as it stands, owner 2026-10-20). Still open: the layout
+/simplify and /review ("Stage 2c — as built" below); walk B on its own page, https://claude.ai/artifact/29LZVZrLGbk3mEoxWoXc3v (QA ledger §349; the hub is left as it stands, owner 2026-10-20) — **walk B ✅ passed 2026-10-20 (all 30 steps, optional Part G included, no notes)**. **Part 2d (the rest of the
+hand-built coach windows: money, dues, the read windows, practice) built in six parts, each committed on the owner's OK,
+`b930546c` … `64d3f8b6` 2026-10-20**, then /simplify `57e734ec` and /review (its 2d fixes `e233aa3e`; three older defects
+it found, fixed on the owner's word: `8f20d258`, `95f94785`, `37594662`) ("Stage 2d — as built" below); walk C on its own
+page, https://claude.ai/artifact/8dfgi7HJrhdogenLQs8vvW (QA ledger §353). Still open: the layout
 check on the screens Stage 1 touched (warm-theme sweep of the whole product ran on staging at the 2026-10-19 promote, master job 282, owner accepted its findings; the dark-theme sweep was not run, owner accepted the skip, run it on staging).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
@@ -505,6 +509,107 @@ fields · foot buttons · ×; ‹ the back arrow):
   extra Back after Start next season navigates the page (low, recorded). **/docs held for 2d:** five `useDiscardGuard`
   second windows remain (Generate installments, the club panel, dues, Record money in expenses — all 2d — and the staff
   sheet, which stays out, Q15), so the two "Keep editing" help answers change once, when 2d moves them.
+
+#### Stage 2d — as built 2026-10-20 (the rest of the hand-built coach windows; six parts, each committed on the owner's OK)
+Built from `ONE_WINDOW_STAGE2D_BUILD_PROMPT.md`. Every 2d window is now the one window (`QuestionShell`, or KitDialog
+directly where a window serves both portals): Tab stays inside, Escape and the phone's Back close only the top window and
+leave the page where it was, a tap outside a form does nothing, none closes while it writes, and with something typed
+every way out asks in the window's own foot — **no 2d window opens the old "Discard this…? / Keep editing" second window
+any more.** No window's words changed except the ask's one sentence (B1). The guard's "still to move in 2d" list is empty
+(`MOVES_2D` retired).
+- **⚖ Owner calls, ruled 2026-10-20 as recommended:** (1) the dues player drawer and the staff sheet KEEP the old
+  second-window ask until rooms and records get the one foot (Q15's later stage) — but the drawer's receipt correction,
+  which closed with no ask at all, now counts as typed (part 4); (2) the season settlement asks ONLY over a typed,
+  unsaved hold-back (its one typed thing, with its own Save); (3) Send due reminders? is a SMALL FORM (it fills a phone),
+  and its letter opens raised over it. Call 4 (widths) was not asked; the picks are obvious and walk C shows them: Set
+  dues 620 → **640** (two fields side by side; its player-by-player grid renders only when amounts vary, which no door
+  makes true today — so not 800 as the prompt guessed), the settlement 900 → 800 (ruled), the reminder letter
+  600 → 640, the month grid's windows 460 → 520.
+- **Part 1 `b930546c`** — Record money / Add a bill / the edit form (and Record from a drive): still portaled into the
+  Warm marker (the hub's Record button opens it over any tab), held while a save or a delete runs, route guard kept.
+  The two docked delete confirms stay WHOLE in the foot's left (`footerStart`, a full row; the buttons step aside while
+  one shows). The form's "discard noun" fields went with the second window.
+- **Part 2 `c91c3d7f`** — the club request (its Withdraw confirm docks the same way) and "We've sent it" (asks once the
+  date, how or reference moved off what it opened with).
+- **Part 3 `3f22cda9`** — Set dues for all players: its steps are levels (the replace question → the preview → the
+  form; ← and Back go up one, keeping what was typed; `levelKey`), a foot per level, 640, the route guard via
+  `leaveGuard`; every link inside closes the window as it leaves.
+- **Part 4 `ad9bf26d`** — the season settlement (800, "$X to N families" at the foot's left, asks on call 2), Set refund
+  (`kind="question"`, a small card over the settlement), Send due reminders? (call 3), the reminder letter (640, from the
+  confirm, the drawer and Team settings), the drawer's `payDirty` (call 1's gap). The settlement's dead Pay button keeps
+  its faded face against the Warm lime (`[data-coach-window] .btnPrimary.settlementPay:disabled`).
+- **Part 5 `685c2313`** — Budget vs. Actual's month grid (the plan window and the figure window) and Subscribe in your
+  calendar app at a desk, on **KitDialog directly** (`openOn="panel"` + `ownType`): they serve the club admin's Budget vs.
+  Actual too. The phone keeps Subscribe's sheet. KitDialog gained `opener` (focus goes home to the menu row that opened
+  it). ⚠ The money hub keeps hidden tabs mounted, so the grid takes `tabActive`: a figure window left open behind a door
+  that switches tab would hold the phone bars and the page lock on the next tab. The figure window's doors still do not
+  close it, so Back returns to it (probed: no history entry is pushed on the way back; the dead one is taken over).
+- **Part 6 `64d3f8b6`** — the practice windows: the drill sheet (asks once touched; the docked "+ New drill" asks once
+  it differs from a blank draft; Retire / Restore moved to the END OF THE BODY by the rare-door ruling, owner accepted),
+  Save as template and Save to my drills (ask once the name moved off its pre-fill; Replace / Update is a level —
+  `QuestionShell` gained `backLabel`), the pickers (Groups from another practice, the drill chooser, Choose players,
+  Start this plan from…) and Send to staff, which never ask. The practice page's phone edge-to-edge rule had handed the
+  one window's fixed overlay a side margin; it now skips it. The editor's station and block sheets stay out.
+- **/simplify `57e734ec`** — the window hides a docked confirm's buttons itself (`.foot:has(> .footStart >
+  [role="alertdialog"]) > .footEnd`); the overlay carries `data-kit-overlay` so the practice rule names it; the money
+  panels' route guards moved into `leaveGuard`; `SaveOverQuestion`'s question became optional; dead classes went.
+- **/review (four lenses: close-and-ask, state and hidden tabs, blast radius, layering), 2026-10-20** — fixed in
+  `e233aa3e`: **"Leave without saving" now closes the window** — the route guard stopped the coach's link click, so a
+  door's own close never ran and a hidden hub tab kept the window and the dropped words; the guard now REPLAYS the
+  coach's own click (a close beside a bare `router.push` had the window's Back step run `history.back()` and cancel the
+  navigation — probed), and a replayed plain link quiets the browser's own "Leave site?" for 3 s; the hold-back's
+  refusal sits under its field (`inPlace`: the foot's reason quiets on a body click and spoke again only when its words
+  changed, so the same refusal twice read as a dead Save); the settlement's close puts the hold-back back as saved and
+  a hold-back save holds the window; Set dues' replace Back is held mid-write; going up a level stands the close-ask down
+  (KitDialog, every window with levels). **Three older defects it found, fixed on the owner's word, each its own
+  commit:** `8f20d258` a disabled main button lit up full lime under the mouse in Warm, PORTAL-WIDE (the Warm hover now
+  skips a disabled one, per the disabled-button ruling); `95f94785` the coach leave warning said "unsaved changes on this
+  player" on every screen — its words are now each caller's, required — and on a phone the practice page's own leave
+  warning stopped 16 px short of the glass; `37594662` "Manage payees…" did nothing from Record money opened over any tab
+  but the Ledger (Payees now follows that form's portal). Refuted by a browser run: the month-grid Back re-push.
+  Dropped as by design: Save as template asks after a tapped template's name is put back in the field.
+
+**Before → after** (`.probe/ow2/{before,after}-2d*.md`; phone = fields · foot buttons · close; computer = width ·
+fields · foot buttons · ×; ‹ the back arrow):
+
+| Window | Phone 390 | Computer 1280 |
+|---|---|---|
+| Record money | 35–44 · 31.5 · ‹44 → 44 · 44 · ‹44 | 520 · 35–38 · 34 · 24 → 520 · 36 · 34 · 32 |
+| Add a bill | 35–44 · 31.5 · ‹44 → 44 · 44 · ‹44 | 520 · 35–38.5 · 34 · 24 → 520 · 36 · 34 · 32 |
+| Record from a drive | 35–38 · 31.5 · ‹44 → 44 · 44 · ‹44 | 520 · 35–38 · 34 · 24 → 520 · 36 · 34 · 32 |
+| Edit a record | 33.5–44 · 44 · ‹44 → 44 · 44 · ‹44 | 520 · 33.5–38 · 34 · 24 → 520 · 36 · 34 · 32 |
+| Club request (new / edit) | 35–44 · 31.5–44 · ‹44 → 44 · 44 · ‹44 | 520 · 35–37 · 34 · 24 → 520 · 36 · 34 · 32 |
+| We've sent it | 35–38 · 31.5 · ‹44 → 44 · 44 · ‹44 | 520 · 35–38 · 34 · 24 → 520 · 36 · 34 · 32 |
+| Set dues for all players | 38.5 · 33.5 · ‹44 → 44 · 44 · ‹44 | 620 · 38.5 · 34 · 24 → 640 · 36 · 34 · 32 |
+| Season settlement | – · 44 · ×44 → – · 44 · ‹44 | 900 · – · 44 · 44 → 800 · – · 34 · 32 |
+| Set refund (question) | fill · ×44 → a 350 card · 44 · none | 480 · ×26 → 416 · 34 · none |
+| Send due reminders? | fill · ×44 → fill · 44 · ‹44 | 460 · ×26 → 520 · 34 · 32 |
+| The reminder letter | fill · ×44 → fill · ‹44 | 600 · ×26 → 640 · 32 |
+| Month grid · plan window | a 358 card · ×44 → fill · ‹44 | 460 · ×24 → 520 · 32 |
+| Month grid · figure window | a 358 card · 39 · ×44 → fill · 44 · ‹44 | 460 · 39 · ×24 → 520 · 39 · 32 (its doors) |
+| Subscribe (computer; a phone keeps its sheet) | – | 520 · ×26 → 520 · 34 · 32 |
+| Drill sheet | 44 · 44 · ‹44 → 44 · 44 · ‹44 | 640 · 35–38 · 34 · 24 → 640 · 36–38 · 34 · 32 |
+| Save as template | 35 · 31.5 · ×44 → 44 · 44 · ‹44 | 520 · 35 · 34 · 26 → 520 · 36 · 34 · 32 |
+| Save to my drills | 35 · 31.5 · ×44 → 44 · 44 · ‹44 | 520 · 35 · 34 · 26 → 520 · 36 · 34 · 32 |
+| Choose players | – · 31.5 · ×44 → – · 44 · ‹44 | 520 · – · 34 · 26 → 520 · – · 34 · 32 |
+| Add a station (computer) | – | 520 · 44 · ×26 → 520 · 44 · 32 (its search) |
+
+- **Calls made in the build:** the widths above (call 4); the docked delete / Withdraw confirms take the foot's whole
+  row rather than a second window or a body line; Retire at the drill sheet's body end; the month grid and Subscribe
+  on KitDialog directly (both portals).
+- **Skipped, with reasons:** reachable only with data the UAT team lacks, so checked in code and guards — Budget's own
+  Set dues door (only before any dues are set), the replace level (it appears only after pressing Set dues, a write),
+  Start this plan from… and Groups from another practice (saved plans), Send to staff (staff with email), the phone's
+  drill chooser (a phone's + Add a station makes a station), the club admin's month grid on a phone. Walk C names them
+  in its setup lines and Part H.
+- **Probes:** behave-2d1 47/47, 2d2 42/42, 2d3 25/25, 2d4 63/63, 2d5 38/38 coach + the admin desk 6/6, 2d6 55/55; the
+  review's fixes 33/33 (behave-review), the leave guard on a plain page 5/5; 2d1, 2d3, 2d4 and 2d6 re-run green after
+  the fixes. `check:layout --changed` ran per part. Full unit suite: one failure, the known `coach-semantic-ink`
+  `.occGroupPermit` (not 2d's).
+- **Still open, carried:** pre-existing, reported, not fixed — after Esc closes the settlement, the browser's Back
+  reopens it (`settlement=open` stays in the history). **/docs owed now that 2d is in:** the "Keep editing" help answers
+  — every 2d window asks in its foot, while the dues player panel and the staff sheet keep the old words (call 1), and
+  the `useConfirm` asks (the announcement editor, the event sheet, the credit split) are Stage 3's.
 
 ### Stage 3 · One question
 What changes on screen: every "are you sure" in all three areas looks the same; no browser grey boxes; Saved / Done

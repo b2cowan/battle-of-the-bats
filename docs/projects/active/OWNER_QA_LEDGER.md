@@ -26096,3 +26096,22 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **Checked beside the walk (2026-10-20):** `check:layout` on the club screens (club-home, club-home-rep-only, club-teams, club-team, club-tryout, club-house-league, club-past-tournaments) at 361, 390, 768 and 1440 — 28/28 clean (the 768 run first stopped itself for low memory; it ran clean after the dev server restart); `check:demos` ✓; unit tests: the club suite 1,657/1,657.
 <!-- /§352 -->
+
+## §353 · One window · Stage 2, part 2d (walk C) — **the money, dues and practice windows ask in their own foot: Record money, the club request, Set dues, the season settlement, the reminders, Budget vs. Actual's month windows, Subscribe and the practice windows open in the one window, keep Tab inside, close on Esc and the phone's Back without moving the page, ignore a tap outside, and never open a second "are you sure" on top — plus the four fixes from 2d's review**
+
+**Built:** six parts, each committed on the owner's OK, `b930546c` … `64d3f8b6` 2026-10-20, then /simplify `57e734ec` and /review (its 2d fixes `e233aa3e`; three older defects it found, fixed on the owner's word: `8f20d258` a greyed-out main button lit up on hover in Warm, portal-wide · `95f94785` the leave warning said "this player" on every coach screen, and stopped short of a phone's edges on a practice · `37594662` Manage payees did nothing over most Money tabs). Plan `docs/projects/active/ONE_WINDOW_PLAN.md`, "Stage 2d — as built". Not a re-run of §349 (2c's windows).
+
+**The walk:** its own page, https://claude.ai/artifact/8dfgi7HJrhdogenLQs8vvW, source `docs/projects/active/ONE_WINDOW_STAGE2D_WALK.html`, 39 steps in eight parts: A Record money and the Ledger · B Club · C Player dues · D read windows · E practice plans · F what the review fixed · G on a phone · H Dark and the optional setup.
+
+**Sign in:** `uat-coach@uat-test-org.local` (password as every UAT account), head coach of UAT Test Team, on localhost:3000.
+
+**Writes:** none. Every step closes with Esc, Cancel or Discard, or leaves without saving; the hold-back's Save is pressed only with −5, which the window refuses before anything is sent.
+
+**Owner calls behind it (ruled 2026-10-20, as recommended):** the dues player panel and the staff sheet keep the old "Discard this…? / Keep editing" window until rooms and records get the one foot, but the panel's receipt correction now asks; the settlement asks only over a typed, unsaved hold-back; Send due reminders? is a small form.
+
+**Not walkable on the UAT team (checked in code and guards):** Budget's own Set dues door (only before any dues are set), Set dues' "This roster already has dues" step (only after pressing Set dues), Start this plan from… and Groups from another practice (saved plans), Send to staff (staff with email), the phone's drill chooser (a phone's + Add a station makes a station) — Part H, optional.
+
+**Checked beside the walk (2026-10-20):** behaviour probes 2d1 47/47, 2d2 42/42, 2d3 25/25, 2d4 63/63, 2d5 38/38 (+ the club admin's month grid at a desk 6/6), 2d6 55/55; the review's fixes 33/33 and the leave warning on a plain page 5/5; 2d1, 2d3, 2d4, 2d6 re-run green after the fixes; `check:layout --changed` per part; full unit suite with one known failure not 2d's (`coach-semantic-ink` `.occGroupPermit`).
+
+**Owed beside the walk:** a dev server restart before it (the shared window changed); `/docs` for the "Keep editing" help answers (the dues player panel and the staff sheet keep the old words). Pre-existing, recorded: after Esc closes the settlement, the browser's Back reopens it.
+<!-- /§353 -->

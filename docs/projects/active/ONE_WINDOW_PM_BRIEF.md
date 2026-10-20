@@ -41,8 +41,12 @@ front of paying customers.
 2. **One behaviour:** coach windows, the hand-built ones included (moved up from stage 4, ruled 2026-10-19), gain the
    admin's behaviour. Built in parts: 2a and 2b (the shell windows and their foot, walked 2026-10-19); **2c (the 23
    hand-built coach windows, the tryouts' and the money tools' included) built 2026-10-19/20**, with every field in a
-   coach window 36px on a computer whatever its stylesheet (owner 2026-10-20); 2d (the money and practice windows that
-   still ask in a second window) next.
+   coach window 36px on a computer whatever its stylesheet (owner 2026-10-20); **2d (the money, dues and practice
+   windows that still asked in a second window, plus Budget vs. Actual's month windows and Subscribe) built 2026-10-20**:
+   no coach money or practice window opens a second "are you sure" on top any more, except the dues player panel and
+   the staff sheet, which keep it until rooms and records get the one foot (owner 2026-10-20). Its review also fixed
+   three older defects across the coach portal: greyed-out buttons lit up on hover, the leave warning said "this player"
+   on every screen, and Manage payees did nothing over most Money tabs. Walk C owed; 2e (the admin's forms ask) next.
 3. **One question:** one confirm everywhere; notices fade.
 4. **Strays join:** House league, the tournament's old windows, one-offs.
 
