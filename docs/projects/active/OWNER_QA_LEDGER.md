@@ -26079,5 +26079,5 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **Checked beside the walk (2026-10-20):** the 2c captures, phone + laptop, Warm + Dark, with browser-answered auth calls (`.probe/first-look/cap-stage2c.mjs`): every screen in the drawn words, the button in view at 390 × 844 and 1366 × 768, every broken link landing on its notice with the registration kept; `check:layout` on the six new anonymous entries, clean but for the known 27px app-bar link; the screen-reader tree (notice before the field, the sent block takes focus); typecheck clean; the auth unit tests 116 of 116.
 
-**Owed beside the walk:** `/docs` for all of Stage 2 (help still says the resend sits "in" the message and quotes the old sign-in words); the whole-product layout sweep on staging.
+**Owed beside the walk:** the whole-product layout sweep on staging. `/docs` for all of Stage 2 done `d53812198` 2026-10-20 (the coaches, tournaments and platform-admin guides speak the new words; a new "I forgot my password" answer in the coaches guide).
 <!-- /§351 -->
