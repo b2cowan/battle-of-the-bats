@@ -28,9 +28,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, Plus, Globe, Users2, HelpCircle, Trophy,
+  LayoutGrid, ChevronRight, Globe, Users2, HelpCircle, Trophy,
 } from 'lucide-react';
-import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import {
@@ -40,15 +39,13 @@ import {
 import strip from '@/components/shared/SidebarStrip.module.css';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { getBillingHref } from '@/lib/billing-urls';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useSidebarStrip } from '@/lib/sidebar-strip';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
 import { isKitLinkActive, kitTournamentLabel, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
-import { holdsSlot } from '@/lib/tournament-slot';
-import { slotsInUseRefusal, STATUS_WORD } from '@/lib/tournament-status-words';
+import { STATUS_WORD } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
 import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
 import styles from './AdminKitFrame.module.css';
@@ -151,8 +148,6 @@ export default function AdminKitRail() {
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
-  // The + opens the ONE setup wizard the admin frame mounts (Stage 4, D2) — not a copy of its own.
-  const { openNew } = useSetupWizard();
   const repTeamName = useRailTeamName(repTeamId);
   const seasons = useHouseLeagueSeasons(!!seasonId);
 
@@ -285,7 +280,7 @@ export default function AdminKitRail() {
         )}
 
         {onTournaments ? (
-          <TournamentRail labelled={!tournamentOnly} onCreate={() => openNew('sidebar_create')} />
+          <TournamentRail labelled={!tournamentOnly} />
         ) : (
           <>
             {!tournamentOnly && !isCanceled && programs.length > 0 && (
@@ -447,10 +442,8 @@ function defaultGroups(status: string): Set<string> {
 }
 
 /** Today's tournament rail, restyled: switcher, Operations / Setup / Admin (Accounting is Admin's last row). */
-function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: () => void }) {
+function TournamentRail({ labelled }: { labelled: boolean }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { currentOrg, userRole } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
   const { base, tournamentGroups: groups } = useAdminKitNav();
@@ -496,14 +489,8 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const itemActive = (key: string) => pathname.startsWith(`${base}/tournaments/${key}`)
     && !allKeys.some(k => k !== key && k.length > key.length && pathname.startsWith(`${base}/tournaments/${k}`));
 
-  const slotLimit = currentOrg?.tournamentLimit ?? 9999;
-  // One at a time (A23): only Draft and Active events hold a slot (lib/tournament-slot.ts).
-  const slotHolders = tournaments.filter(t => holdsSlot(t.status)).sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1));
-  const atLimit = slotHolders.length >= slotLimit;
-  const billingHref = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : `${base}/org/billing`;
-  const canCreate = userRole === 'owner' || userRole === 'admin';
-  const create = () => (atLimit && userRole === 'owner' ? router.push(billingHref) : atLimit ? undefined : onCreate());
-  const createTitle = atLimit ? slotsInUseRefusal(slotLimit, slotHolders[0] ?? null) : 'Create a new tournament';
+  // ⚰ The switcher's + and the strip's "New tournament" are gone (owner 2026-10-19): a new tournament starts on the
+  // Tournaments page's own New tournament, its one door (with its slot line), and the switcher takes the full width.
   const tileName = currentTournament?.name ?? tournaments[0]?.name ?? '';
   // A group's rows. A group folded shut keeps them in the page, out of sight (`foldedGroup`) — the strip shows
   // every icon, because it has no heading to open.
@@ -538,20 +525,8 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
             ) : (
               <span className={styles.switcherName}>{currentTournament?.name}</span>
             )}
-            {canCreate && (
-              <button
-                type="button"
-                className={styles.switcherAdd}
-                onClick={create}
-                disabled={atLimit && userRole !== 'owner'}
-                title={createTitle}
-                aria-label="Create new tournament"
-              >
-                <Plus size={14} aria-hidden />
-              </button>
-            )}
           </div>
-          {/* The strip's tile (hub screen 8): the event's initials, opening the list and New tournament. */}
+          {/* The strip's tile (hub screen 8): the event's initials, opening the list. */}
           <SidebarStripTile
             name={tileName}
             label={`${tileName} · switch tournament`}
@@ -592,11 +567,6 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
             {t.name}
           </StripMenuButton>
         ))}
-        {canCreate && (
-          <StripMenuButton add onSelect={create} disabled={atLimit && userRole !== 'owner'} title={createTitle}>
-            New tournament
-          </StripMenuButton>
-        )}
       </SidebarStripMenu>
     </>
   );

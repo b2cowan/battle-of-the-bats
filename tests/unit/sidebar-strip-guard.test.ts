@@ -228,7 +228,8 @@ describe('4. no count, dot or door is lost in the strip', () => {
   it('the pickers become tiles that open their lists — the coach list keeps "No live season"', () => {
     for (const f of RAILS) assert.match(readCode(f), /<SidebarStripTile\b/, f);
     assert.match(readCode(COACH_RAIL), /<StripMenuGroup label="No live season">/);
-    assert.match(readCode(ADMIN_RAIL), /New tournament/);
+    // The tournament list switches only: a new tournament starts on the Tournaments page (owner 2026-10-19).
+    assert.doesNotMatch(readCode(ADMIN_RAIL), /New tournament/);
   });
 
   it('the free portal shows its team header band in the strip on every page whose address names a team', () => {

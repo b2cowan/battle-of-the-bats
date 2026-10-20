@@ -197,21 +197,6 @@
   white-space: nowrap;
   padding: 0.4rem 0.4rem;
 }
-.switcherAdd {
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 7px;
-  border: 1px solid var(--home-line-strong);
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.switcherAdd:hover:not(:disabled) { background: var(--home-olive-soft); color: var(--text-primary); }
-.switcherAdd:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .spacer { flex: 1; min-height: 1rem; }
 

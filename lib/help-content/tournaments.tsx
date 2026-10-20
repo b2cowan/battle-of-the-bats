@@ -69,7 +69,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Collapse the sidebar',
       summary: 'Fold the sidebar to a narrow strip of icons so the schedule and other wide pages get more room, and open it again.',
       keywords: ['sidebar', 'collapse sidebar', 'collapse', 'expand sidebar', 'expand', 'icons', 'icon strip', 'strip', 'more room', 'more space', 'hide the sidebar', 'smaller sidebar', 'laptop', 'tournament tile', 'switch tournament', 'initials'],
-      searchText: 'collapse the sidebar fold the sidebar shrink the sidebar hide the sidebar make the sidebar smaller narrow strip of icons icon strip more room for the schedule laptop small screen wider page expand sidebar open the sidebar again get the sidebar back last row of the sidebar point at an icon to see its name tab to an icon operations setup admin thin lines every page an icon folded group closed group still shows its icons teams waiting count help dot on the corner tournament picker tile initials switch tournament list of tournaments new tournament remembered on this computer this browser club admin coaches portal never collapses by itself phone tablet bottom bar unchanged more menu on a phone club overview back to the club from a tournament help on phone sidebar foot',
+      searchText: 'collapse the sidebar fold the sidebar shrink the sidebar hide the sidebar make the sidebar smaller narrow strip of icons icon strip more room for the schedule laptop small screen wider page expand sidebar open the sidebar again get the sidebar back last row of the sidebar point at an icon to see its name tab to an icon operations setup admin thin lines every page an icon folded group closed group still shows its icons teams waiting count help dot on the corner tournament picker tile initials switch tournament list of tournaments new tournament on the tournaments page remembered on this computer this browser club admin coaches portal never collapses by itself phone tablet bottom bar unchanged more menu on a phone club overview back to the club from a tournament help on phone sidebar foot',
       content: (
         <>
           <p>On a computer you can fold the sidebar down to a narrow strip of icons, so the schedule and other wide pages get the room. Your choice is kept in this browser for every part of FieldLogicHQ you use there, and nothing collapses by itself.</p>
@@ -80,7 +80,7 @@ const tournamentsHelp: HelpPageContent = {
           <HelpDefs>
             <HelpDef term="Pages">Operations, Setup and Admin become thin lines and every page is an icon, even in a group you folded shut. Point at an icon, or tab to it, to see its name.</HelpDef>
             <HelpDef term="Counts">The waiting count on <strong>Teams</strong> and the new-release dot on <strong>Help</strong> sit on the corner of their icons.</HelpDef>
-            <HelpDef term="Your tournament">The tournament picker becomes a tile with the event&rsquo;s initials. Click it for the list of your tournaments and <strong>New tournament</strong>.</HelpDef>
+            <HelpDef term="Your tournament">The tournament picker becomes a tile with the event&rsquo;s initials. Click it for the list of your tournaments to switch between them. To start a new one, use <strong>New tournament</strong> on the <strong>Tournaments</strong> page.</HelpDef>
           </HelpDefs>
           <HelpNote variant="info" title="On a phone">Phones and tablets held upright don&rsquo;t change; they use the bar at the bottom.</HelpNote>
         </>
