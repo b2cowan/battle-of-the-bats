@@ -153,6 +153,9 @@ export default function QuestionShell({
       active={guardDirty}
       interceptClicks={guardDirty && (leaveGuard.tabActive ?? true)}
       message={leaveGuard.message}
+      /* "Leave without saving" closes the window as it leaves: the guard stops the link's own click, so a link's close
+         never runs, and a hidden hub tab would keep the window, and the words, waiting (/review, One Window 2d). */
+      onLeave={open ? onClose : undefined}
     />
   ) : null;
 

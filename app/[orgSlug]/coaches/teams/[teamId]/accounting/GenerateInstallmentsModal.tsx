@@ -766,7 +766,9 @@ export default function GenerateInstallmentsModal({
       : <QuestionCancel className={shared.btnPrimary}>Done</QuestionCancel>
   ) : level === 'replace' && replaceFacts ? (
     <>
-      <button type="button" className={shared.btnGhost} onClick={leaveReplace}>
+      {/* Held while the replace writes, like ← and the Back gesture (busy): leaving the level mid-write would land the
+          coach on the preview, then throw them to the result (/review). */}
+      <button type="button" className={shared.btnGhost} onClick={leaveReplace} disabled={generating}>
         Back
       </button>
       {/* ⚠ KEEPING THE HAND-SET SCHEDULES IS THE PRIMARY, and "everyone" the quieter

@@ -54,11 +54,13 @@ describe('1. the window kit: a named back, and one raised form layer', () => {
   const css = readCode(`${KIT}/KitDialog.module.css`);
 
   it('the named back goes UP a level — the desk line, the phone ← and the phone\'s Back gesture — never closes', () => {
-    assert.match(dialog, /<button type="button" className=\{styles\.namedBack\} onClick=\{back\.onBack\}/);
+    assert.match(dialog, /<button type="button" className=\{styles\.namedBack\} onClick=\{goUp\}/);
     // Without a level, ← closes through the window's one closer (One Window Stage 2: it asks first when `dirty`).
-    assert.match(dialog, /className=\{styles\.back\} onClick=\{back \? back\.onBack : requestClose\}/);
+    // A level goes up through `goUp` (it also stands the close-ask down, /review One Window 2d).
+    assert.match(dialog, /const goUp = back \? \(\) => \{ setAsking\(false\); back\.onBack\(\); \} : undefined;/);
+    assert.match(dialog, /className=\{styles\.back\} onClick=\{goUp \?\? requestClose\}/);
     assert.match(dialog, /aria-label=\{back\?\.label \? `Back to \$\{back\.label\}` : 'Back'\}/);
-    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose: requestClose, onBack: back\?\.onBack,/);
+    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose: requestClose, onBack: goUp,/);
     // × still closes the whole window (through the same closer).
     assert.match(dialog, /className=\{styles\.close\} onClick=\{requestClose\}/);
   });

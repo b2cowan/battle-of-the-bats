@@ -77,7 +77,14 @@ describe('2a · closing with words typed asks in the foot (Q7, answers A and B)'
 
   it('×, ←, Cancel and the floor\'s Escape and Back share the one closer', () => {
     assert.match(kit, /className=\{styles\.close\} onClick=\{requestClose\}/, '×');
-    assert.match(kit, /className=\{styles\.back\} onClick=\{back \? back\.onBack : requestClose\}/, '← (a level goes up first)');
+    assert.match(kit, /className=\{styles\.back\} onClick=\{goUp \?\? requestClose\}/, '← (a level goes up first)');
+    // Going up a level answers the close-ask: it stands down rather than asking over the level above (/review 2d).
+    assert.match(kit, /const goUp = back \? \(\) => \{ setAsking\(false\); back\.onBack\(\); \} : undefined;/);
+    // "Leave without saving" from a window's route guard closes the window as it leaves (/review 2d).
+    assert.match(readCode('components/coaches/QuestionShell.tsx'), /onLeave=\{open \? onClose : undefined\}/);
+    // …by REPLAYING the coach's own link click (its handler runs, and the back-step gate hears a link leaving), never a
+    // bare router.push beside a close — that close ran history.back() and cancelled the navigation.
+    assert.match(readCode('components/shared/UnsavedChangesGuard.tsx'), /try \{ held\.anchor\.click\(\); onLeave\?\.\(\); \} finally \{ replaying\.current = false; \}/);
     assert.match(kit, /useDialogFloor\(true, panelRef, \{ onClose: requestClose,/, 'Escape and the phone\'s Back');
     assert.match(kit, /onClick=\{close\?\.requestClose\} disabled=\{close\?\.busy\}/, 'DialogCancel');
     assert.equal((kit.match(/\bonClose\(\)/g) ?? []).length, 1, 'only the closer itself calls onClose (Discard passes it)');
@@ -500,7 +507,8 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
   it('the dues windows: the settlement (800) asks only over an unsaved hold-back, Set refund is the question over it, Send due reminders a small form, the letter a read window (part 4)', () => {
     const code = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx');
     // B9: the settlement moves as an 800 form; owner call 2 (2026-10-20): it asks only over a hold-back typed and not saved.
-    assert.match(code, /<QuestionShell\s+open=\{tabActive\}\s+onClose=\{\(\) => setRefundOpen\(false\)\}\s+dirty=\{holdBackDirty\}\s+busy=\{payAllBusy\}\s+widest\b/);
+    // /review: closing puts the hold-back back as saved (a Discard drops the typed amount), and a hold-back save holds it.
+    assert.match(code, /<QuestionShell\s+open=\{tabActive\}\s+onClose=\{\(\) => \{ setRefundOpen\(false\); leaveHoldBack\(\); \}\}\s+dirty=\{holdBackDirty\}\s+busy=\{payAllBusy \|\| holdBackSaving\}\s+widest\b/);
     assert.match(code, /const holdBackDirty = holdBackEditing && !!settlement\s+&& holdBackInput !== \(settlement\.pot\.holdBack > 0 \? String\(settlement\.pot\.holdBack\) : ''\);/);
     // B9: Set refund is the one window's small question, on the question layer over the settlement.
     assert.match(code, /<QuestionShell kind="question" open=\{tabActive\} onClose=\{\(\) => setChoiceFor\(null\)\} busy=\{choiceSaving\}/);

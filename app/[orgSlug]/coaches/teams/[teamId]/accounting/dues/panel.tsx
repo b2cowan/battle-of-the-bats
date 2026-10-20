@@ -647,6 +647,9 @@ export function PlayerDuesPanel({
   const [holdBackEditing, setHoldBackEditing] = useState(false);
   const [holdBackInput, setHoldBackInput] = useState('');
   const [holdBackSaving, setHoldBackSaving] = useState(false);
+  /** Why the hold-back was refused — under ITS field (`inPlace`), never the foot's line: the foot's reason quiets on a body
+   *  click and speaks again only when its words change, so the same refusal twice read as a Save that did nothing (/review). */
+  const [holdBackError, setHoldBackError] = useState('');
   /* (The settlement's own per-row payout state stood here — a `payingRow`, its form and its
      saving flag. All three went with the per-row Pay out button, 2026-08-14; the player drawer's
      equivalents went with the conversation, 2026-08-23. Neither exists now.) */
@@ -1150,7 +1153,7 @@ export function PlayerDuesPanel({
   /** The one figure a coach may state. Refused above the surplus — server-side, with the reason. */
   async function saveHoldBack() {
     setHoldBackSaving(true);
-    setSettlementError('');
+    setHoldBackError('');
     try {
       const holdBackAmount = holdBackInput.trim() === '' ? 0 : parseFloat(holdBackInput);
       if (isNaN(holdBackAmount) || holdBackAmount < 0) throw new Error('Enter an amount to hold back (0 or more).');
@@ -1163,7 +1166,7 @@ export function PlayerDuesPanel({
       applySettlement(await res.json());
       setHoldBackEditing(false);
     } catch (e) {
-      setSettlementError(e instanceof Error ? e.message : 'Save failed');
+      setHoldBackError(e instanceof Error ? e.message : 'Save failed');
     } finally {
       setHoldBackSaving(false);
     }
@@ -2556,6 +2559,13 @@ export function PlayerDuesPanel({
      its one typed thing, and it has its own Save. Typed and not saved, closing asks; otherwise the sheet closes at once. */
   const holdBackDirty = holdBackEditing && !!settlement
     && holdBackInput !== (settlement.pot.holdBack > 0 ? String(settlement.pot.holdBack) : '');
+  /** Put the hold-back back as saved: its Cancel, and the window's close (a Discard means the typed amount goes too —
+   *  left editing, the field reopened with the next visit, /review). */
+  const leaveHoldBack = () => {
+    setHoldBackEditing(false);
+    setHoldBackError('');
+    if (settlement) setHoldBackInput(settlement.pot.holdBack > 0 ? String(settlement.pot.holdBack) : '');
+  };
   const confirmText = { fontSize: '0.85rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1.1rem' } as const;
   const confirmDim = { margin: 0, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' } as const;
   function reminderConfirm() {
@@ -3129,9 +3139,9 @@ export function PlayerDuesPanel({
           {refundOpen && (
             <QuestionShell
               open={tabActive}
-              onClose={() => setRefundOpen(false)}
+              onClose={() => { setRefundOpen(false); leaveHoldBack(); }}
               dirty={holdBackDirty}
-              busy={payAllBusy}
+              busy={payAllBusy || holdBackSaving}
               widest
               ariaLabel="Season settlement"
               title={closeOutReady
@@ -3273,13 +3283,13 @@ export function PlayerDuesPanel({
                               type="number" min={0} max={settlement.pot.holdBackCap} step="0.01"
                               aria-label="Amount to hold back for next season"
                               value={holdBackInput}
-                              onChange={e => setHoldBackInput(e.target.value)}
+                              onChange={e => { setHoldBackInput(e.target.value); setHoldBackError(''); }}
                               style={{ width: 110, fontSize: '0.8rem' }}
                             />
                             <button className={styles.btnPrimary} disabled={holdBackSaving || payAllBusy} onClick={saveHoldBack} style={{ fontSize: '0.75rem', minHeight: 44 }}>
                               {holdBackSaving ? '…' : 'Save'}
                             </button>
-                            <button className={styles.btnGhost} onClick={() => { setHoldBackEditing(false); setHoldBackInput(settlement.pot.holdBack > 0 ? String(settlement.pot.holdBack) : ''); }} style={{ fontSize: '0.75rem', minHeight: 44 }}>
+                            <button className={styles.btnGhost} onClick={leaveHoldBack} style={{ fontSize: '0.75rem', minHeight: 44 }}>
                               Cancel
                             </button>
                           </span>
@@ -3296,6 +3306,7 @@ export function PlayerDuesPanel({
                           At most {fmt(settlement.pot.holdBackCap)} — the rest is money the team owes families.
                         </p>
                       )}
+                      {holdBackEditing && <QuestionReason inPlace className={styles.errorText}>{holdBackError}</QuestionReason>}
                       {/* The bottom line — or, in a shortfall, the fact that there isn't one. */}
                       <div style={{
                         display: 'flex', justifyContent: 'space-between', gap: '1rem',

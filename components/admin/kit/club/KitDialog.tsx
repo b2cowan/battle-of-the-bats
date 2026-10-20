@@ -309,11 +309,14 @@ export default function KitDialog({
     onClose();
   };
   useEffect(() => { if (asking) keepRef.current?.focus({ preventScroll: true }); }, [asking]);
+  /** Up a level (←, the named back, the Back gesture). The ask was about closing the whole window: a coach who went up a
+   *  level instead has answered it, so it stands down rather than asking over the level above (/review, One Window 2d). */
+  const goUp = back ? () => { setAsking(false); back.onBack(); } : undefined;
 
   // Mounted = open. Called BEFORE the focus effect below, so the floor records the opener while it
   // still has focus, then that effect moves the cursor into the first field. A level inside the window
   // gives the phone's Back somewhere to go first (`back`); the floor re-seats focus when the level changes.
-  useDialogFloor(true, panelRef, { onClose: requestClose, onBack: back?.onBack, busy, focusKey: levelKey ?? null, address: address ?? null, opener });
+  useDialogFloor(true, panelRef, { onClose: requestClose, onBack: goUp, busy, focusKey: levelKey ?? null, address: address ?? null, opener });
 
   // A new level starts at its top (Previous / Next do the same through `step` below).
   const shownLevel = useRef(levelKey);
@@ -406,14 +409,14 @@ export default function KitDialog({
         <div className={styles.head}>
           {kind === 'form' && (
             /* A phone's ← goes up a level when there is one ("Back to Payees"), else it closes the form. */
-            <button type="button" className={styles.back} onClick={back ? back.onBack : requestClose}
+            <button type="button" className={styles.back} onClick={goUp ?? requestClose}
               aria-label={back?.label ? `Back to ${back.label}` : 'Back'} disabled={busy}>
               <ArrowLeft size={20} aria-hidden />
             </button>
           )}
           <div className={styles.titleBlock}>
             {back?.label && kind === 'form' && (
-              <button type="button" className={styles.namedBack} onClick={back.onBack} disabled={busy}>
+              <button type="button" className={styles.namedBack} onClick={goUp} disabled={busy}>
                 <ArrowLeft size={14} aria-hidden />{back.label}
               </button>
             )}
