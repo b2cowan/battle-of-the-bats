@@ -19,19 +19,19 @@ test.describe('public pricing Team segment', () => {
 
     await anonPage.goto('/coaches/start?billing=annual');
     await expect(anonPage).toHaveURL(/\/coaches\/start\?billing=annual/, { timeout: 30_000 });
-    await expect(anonPage.getByRole('heading', { name: 'From tournament weekend to season workspace.' })).toBeVisible();
-    // Account first (Account-First Sign-up Part 3, 2026-10-19): signed out, the card is step 1 — the account alone. The
-    // team, the sport and the plan (where "Seasonal" and "$290 CAD" live) are step 2, after the email link; the
-    // ?billing= choice rides on the account to it. So no billing buttons here, signed out.
-    await expect(anonPage.getByRole('heading', { name: 'Create your Coaches Portal' })).toBeVisible();
+    // Coach Premium is one of the doors (The first look R1, owner 2026-10-19): the heading the /start card uses, the
+    // offer as its one sub line, and the account form at once — no sales hero above it. Signed out, the card is step 1,
+    // the account alone; the team, the sport and the plan are step 2, after the email link, and the ?billing= choice
+    // rides on the account to it. So no billing buttons here, signed out.
+    await expect(anonPage.getByRole('heading', { name: 'Coach a team' })).toBeVisible();
+    await expect(anonPage.getByText(/^Premium Coaches Portal\. /)).toBeVisible();
     await expect(anonPage.getByRole('list', { name: 'Sign-up steps' })).toBeVisible();
     await expect(anonPage.getByRole('button', { name: 'Create account' })).toBeVisible();
-    await expect(anonPage.getByRole('button', { name: /Seasonal/ })).toHaveCount(0);
-    await expect(anonPage.getByText('Keep the team running after the tournament')).toBeVisible();
-    await expect(anonPage.getByText('Host an invite-only round robin or exhibition weekend')).toBeVisible();
+    await expect(anonPage.getByRole('group', { name: /After the Founding Season|Billing/ })).toHaveCount(0);
+    await expect(anonPage.getByText('Keep the team running after the tournament')).toHaveCount(0);
 
     await anonPage.goto('/coaches/start?billing=annual&source=registration_confirmation&orgSlug=demo-org&tournamentSlug=demo-tournament');
-    await expect(anonPage.getByRole('heading', { name: 'From tournament weekend to season workspace.' })).toBeVisible({
+    await expect(anonPage.getByRole('heading', { name: 'Coach a team' })).toBeVisible({
       timeout: 30_000,
     });
     await expect(anonPage.getByRole('button', { name: 'Create account' })).toBeVisible();

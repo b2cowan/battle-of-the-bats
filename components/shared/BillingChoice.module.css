@@ -1,0 +1,34 @@
+/* The billing choice (The first look, D-F3, 2026-10-19): two options, 44px, 14/600, the picked one with a check and a
+   2px olive edge on white. Warm vocabulary, so it follows the host's Warm / Dark. */
+.choice {
+  display: flex;
+  gap: 0.375rem;
+}
+.option {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--home-card);
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-ink-soft);
+  cursor: pointer;
+}
+.option:hover:not(:disabled) { border-color: var(--home-olive); }
+/* The picked one keeps its size: the 2px edge eats into the padding, never the box. */
+.picked {
+  composes: option;
+  border: 2px solid var(--home-olive);
+  padding: 0 calc(0.75rem - 1px);
+  color: var(--home-ink);
+}
+.picked svg { color: var(--home-olive); }
+.option:disabled { opacity: 0.5; cursor: not-allowed; }

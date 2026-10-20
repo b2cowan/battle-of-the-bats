@@ -59,22 +59,96 @@ export interface AccountValues {
 }
 
 /**
- * First name, last name, email, password (with the eye), in that order, with the same placeholders and the same hint
- * at every door (plan rule 4). `email={false}` drops the email field for a door that already knows it (an invitation).
- * `afterEmail` is the line a door hangs under the email ("An account already exists…"). `focusEmail` puts the cursor
- * in the email field when the form opens again from "Use a different email".
+ * The password field with the eye. `create` is a new password: the rule as a hint under it (D-F4, never a placeholder)
+ * and the browser's new-password fill; `current` is a sign-in, with nothing under it.
  */
-export function AccountFields({ idPrefix, values, onChange, email = true, afterEmail, disabled = false, focusEmail = false }: {
+export function PasswordField({ id, value, onChange, purpose = 'create', disabled = false }: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  purpose?: 'create' | 'current';
+  disabled?: boolean;
+}) {
+  const [showPw, setShowPw] = useState(false);
+  const creating = purpose === 'create';
+  return (
+    <Field id={id} label="Password" hint={creating ? 'At least 8 characters.' : undefined}>
+      <div className={styles.pwWrap}>
+        <input
+          id={id}
+          type={showPw ? 'text' : 'password'}
+          className={styles.input}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          required
+          minLength={creating ? 8 : undefined}
+          autoComplete={creating ? 'new-password' : 'current-password'}
+          aria-describedby={creating ? hintId(id) : undefined}
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          className={styles.eye}
+          onClick={() => setShowPw(s => !s)}
+          // One name and a pressed state, so a screen reader hears "Show password, toggle button, pressed".
+          aria-label="Show password"
+          aria-pressed={showPw}
+        >
+          {showPw ? <EyeOff size={20} strokeWidth={1.8} aria-hidden /> : <Eye size={20} strokeWidth={1.8} aria-hidden />}
+        </button>
+      </div>
+    </Field>
+  );
+}
+
+/** The email field, the same at every door; `locked` when the address is fixed (a tournament claim is reserved for one). */
+export function EmailField({ id, value, onChange, locked = false, disabled = false, autoFocus = false, hint }: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  locked?: boolean;
+  disabled?: boolean;
+  autoFocus?: boolean;
+  /** The line under the field, read with it: why it is locked, or "An account already exists…". */
+  hint?: ReactNode;
+}) {
+  return (
+    <Field id={id} label="Email" hint={hint}>
+      <input
+        aria-describedby={hint ? hintId(id) : undefined}
+        id={id}
+        type="email"
+        className={styles.input}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder="you@example.com"
+        required
+        autoComplete="email"
+        readOnly={locked}
+        disabled={disabled}
+        autoFocus={autoFocus}
+      />
+    </Field>
+  );
+}
+
+/**
+ * First name, last name, email, password (with the eye), in that order, with the same placeholders and the same hint
+ * at every door (plan rule 4). `email={false}` drops the email field for a door that already knows it (an invitation);
+ * `emailLocked` shows it fixed (a tournament claim). `emailHint` is the line a door hangs under the email, read with it
+ * ("An account already exists…"). `focusEmail` puts the cursor in the email field when the form opens again (from "Use
+ * a different email", or from the sign-in form).
+ */
+export function AccountFields({ idPrefix, values, onChange, email = true, emailLocked = false, emailHint, disabled = false, focusEmail = false }: {
   idPrefix: string;
   values: AccountValues;
   onChange: (field: keyof AccountValues, value: string) => void;
   email?: boolean;
-  afterEmail?: ReactNode;
+  emailLocked?: boolean;
+  emailHint?: ReactNode;
   disabled?: boolean;
   focusEmail?: boolean;
 }) {
-  const [showPw, setShowPw] = useState(false);
-  const pwId = `${idPrefix}-password`;
   return (
     <>
       <div className={styles.two}>
@@ -107,49 +181,18 @@ export function AccountFields({ idPrefix, values, onChange, email = true, afterE
       </div>
 
       {email && (
-        <Field id={`${idPrefix}-email`} label="Email">
-          <input
-            id={`${idPrefix}-email`}
-            type="email"
-            className={styles.input}
-            value={values.email}
-            onChange={e => onChange('email', e.target.value)}
-            placeholder="you@example.com"
-            required
-            autoComplete="email"
-            disabled={disabled}
-            autoFocus={focusEmail}
-          />
-          {afterEmail}
-        </Field>
+        <EmailField
+          id={`${idPrefix}-email`}
+          value={values.email}
+          onChange={value => onChange('email', value)}
+          locked={emailLocked}
+          disabled={disabled}
+          autoFocus={focusEmail}
+          hint={emailHint}
+        />
       )}
 
-      <Field id={pwId} label="Password" hint="At least 8 characters.">
-        <div className={styles.pwWrap}>
-          <input
-            id={pwId}
-            type={showPw ? 'text' : 'password'}
-            className={styles.input}
-            value={values.password}
-            onChange={e => onChange('password', e.target.value)}
-            required
-            minLength={8}
-            autoComplete="new-password"
-            aria-describedby={hintId(pwId)}
-            disabled={disabled}
-          />
-          <button
-            type="button"
-            className={styles.eye}
-            onClick={() => setShowPw(s => !s)}
-            // One name and a pressed state, so a screen reader hears "Show password, toggle button, pressed".
-            aria-label="Show password"
-            aria-pressed={showPw}
-          >
-            {showPw ? <EyeOff size={20} strokeWidth={1.8} aria-hidden /> : <Eye size={20} strokeWidth={1.8} aria-hidden />}
-          </button>
-        </div>
-      </Field>
+      <PasswordField id={`${idPrefix}-password`} value={values.password} onChange={value => onChange('password', value)} disabled={disabled} />
     </>
   );
 }

@@ -402,7 +402,7 @@ describe('Home’s waiting workspace (A4 revised 2026-10-19)', () => {
 });
 
 /**
- * PART 3 — COACH PREMIUM AND THE CLAIM LINK (2026-10-19). Step 1 is the account card alone (Create / Sign in kept); the
+ * PART 3 — COACH PREMIUM AND THE CLAIM LINK (2026-10-19). Step 1 is the account card alone; the
  * team, the sport and the plan are step 2 — today's signed-in card. Nothing typed lives in the browser tab any more (F02):
  * the billing rides on the account. The claim link keeps its server re-fill; its token is never kept on the account.
  */
@@ -426,23 +426,35 @@ describe('Coach Premium, account first (Part 3)', () => {
     assert.match(card, /const \[isAuthenticated, setIsAuthenticated\] = useState\(!!signedInEmail\);/);
     assert.doesNotMatch(card, /getUser\(|checkingAuth/);
     assert.match(card, /const onAccountStep = !isAuthenticated;/);
-    assert.match(card, /onSubmit=\{onAccountStep \? handleAccount : handleSubmit\}/);
+    assert.match(card, /<form className=\{accountForm\.form\} onSubmit=\{handleAccount\}>/);
+    assert.match(card, /<form className=\{accountForm\.form\} onSubmit=\{handleSubmit\}>/);
     // a reactivation is no start; a claim says so, keeping the offer's locked door but no remembered one (/review)
     assert.match(card, /\.\.\.\(isReactivation \? \{\} : \{ startDoor: 'premium', billing: billingCycle, \.\.\.\(claim \? \{ claim: true \} : \{\}\) \}\),/);
     // signing in on the card re-asks the server, so the offer and the billing are the account's (/review)
     assert.match(card, /setIsAuthenticated\(true\);[\s\S]{0,300}?router\.refresh\(\);/);
     // a waiting account that signs in gets the check-your-email block with its resend, not a dead end (/review)
     assert.match(card, /if \(signin\.error === 'email_not_confirmed'\) \{[\s\S]{0,200}?setVerificationEmail\(/);
-    assert.match(card, /<StartSteps current=\{onAccountStep \? 1 : 2\} second="Your team" \/>/, 'D3');
+    assert.match(card, /<StartSteps current=\{onAccountStep \? 1 : 2\} labels=\{\['Account', 'Team'\]\} \/>/, 'D3, D-F5');
     assert.match(card, /import StartSteps from '@\/components\/auth\/StartSteps';/, 'one step line, shared with the start forms');
-    assert.match(card, /\{busyLabel \|\| \(authMode === 'signup' \? 'Create account' : 'Sign in'\)\}<\/span>\s*<\/button>/, 'D7: no arrow');
-    assert.match(card, /Next, confirm your email\. Then name your team, pick the sport and the plan you\\'ll move to\./);
-    assert.match(card, /\{confirmed && <p className=\{styles\.confirmedLine\}>Your email is confirmed\.<\/p>\}/, 'D5');
+    assert.match(card, /\{busyLabel \|\| \(authMode === 'signup' \? 'Create account' : 'Sign in'\)\}\s*<\/button>/, 'D7: no arrow');
+    assert.match(card, /\{confirmed && <p className=\{accountForm\.body\}>Your email is confirmed\.<\/p>\}/, 'D5');
     // the one check-your-email block, with Send the link again (V3)
     assert.match(card, /<VerifyEmailSent\s+tone="start"/);
     assert.match(card, /resendNext=\{linkPath\}/);
     // the billing from the address, else remembered on the account
     assert.match(card, /normalizeBillingCycle\(searchParams\.get\('billing'\) \?\? rememberedBilling\)/);
+  });
+  it('looks like the other doors (The first look R1, owner 2026-10-19): the start column, no sales, no toggle', () => {
+    assert.match(card, /<StartColumn>\s*<StartHead title=\{title\} sub=\{sub\} steps=\{steps\} \/>/);
+    assert.doesNotMatch(card, /VALUE_POINTS|WORKFLOW_STEPS|heroActions|pricePanel|workspacePreview|authToggle|Get started|Compare pricing/, 'no sales hero, offer panel, checklist or Create / Sign in toggle');
+    assert.match(card, /: isWarmUpgrade \? `Upgrade \$\{prefillTeamName\?\.trim\(\) \|\| 'your team'\} to Premium` : 'Coach a team';/, 'the /start card’s words; upgrade and reactivation keep their own (owner 2026-10-19)');
+    // the offer is read from the plan settings, never typed, so it changes by itself when the window closes
+    assert.match(card, /`Premium Coaches Portal\. Free through \$\{FOUNDING_SEASON_END_LABEL\}, then \$\{MONTHLY\}\.`/);
+    assert.match(card, /const MONTHLY = `\$\{formatPriceAmount\(PLAN_CONFIG\.team\.monthlyPrice\)\}\/month`;/);
+    assert.doesNotMatch(card, /Seasonal/, '"Seasonal" becomes the annual price wording');
+    assert.match(card, /<BillingChoice\b/, 'the shared billing choice (D-F3)');
+    assert.match(card, /founding \? 'Create team' : 'Continue to checkout'/, 'D-F6');
+    assert.equal(existsSync(new URL('../../app/team/page.module.css', import.meta.url)), false, 'the card carries no form styles of its own');
   });
   it('the card shows the price the checkout will charge: the server’s answer, not the bare window', () => {
     assert.match(card, /foundingOffer: foundingPromoActive,/);

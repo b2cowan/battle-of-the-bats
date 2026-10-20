@@ -95,6 +95,19 @@
   box-shadow: 0 0 0 3px rgba(var(--home-olive-rgb), 0.16);
 }
 .input:disabled { opacity: 0.6; cursor: not-allowed; }
+/* A fixed address (a tournament claim is reserved for one): read, never typed over. */
+.input[readonly] { background: var(--home-fill); }
+/* A dropdown in the same kit (Coach Premium's sport): the field, with its own chevron. */
+.select {
+  composes: input;
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: linear-gradient(45deg, transparent 50%, var(--home-dim) 50%), linear-gradient(135deg, var(--home-dim) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
 /* The line under a field: the password rule (D-F4: a hint, never a placeholder), a public address. */
 .hint {
   margin: 0;

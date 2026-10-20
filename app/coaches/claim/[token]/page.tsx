@@ -1,7 +1,9 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import TeamSignupClient, { type TeamClaimPrefill } from '../../../team/TeamSignupClient';
-import styles from '../../../team/page.module.css';
+import { StartColumn, StartHead } from '@/components/auth/AccountForm';
+// The stylesheet itself, not the client module's re-export: a server page can't dot into a client module's export.
+import accountForm from '@/components/auth/AccountForm.module.css';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getTeamWorkspaceClaimByToken } from '@/lib/team-workspace-claims';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
@@ -19,24 +21,13 @@ export const metadata = {
   description: 'Activate Premium Coaches Portal from a tournament team claim link.',
 };
 
+/** A claim link that can't be used: the start column, its reason, and the way to Coach Premium (The first look, Stage 1b: the look only — Ask 7 parks how the claim works). */
 function ClaimUnavailable({ title, body }: { title: string; body: string }) {
   return (
-    <main className={styles.page}>
-      <section className={styles.signupSurface}>
-        <div className={styles.copyPane}>
-          <p className={styles.eyebrow}>Tournament team claim</p>
-          <h1 className={styles.title}>{title}</h1>
-          <p className={styles.lede}>{body}</p>
-          <div className={styles.pricePanel}>
-            <div>
-              <p className={styles.priceLabel}>Next step</p>
-              <p className={styles.price}>Start Premium Coaches Portal</p>
-            </div>
-          </div>
-          <Link href={COACHES_START_PATH} className={styles.inlineAction}>Open Coaches Portal signup</Link>
-        </div>
-      </section>
-    </main>
+    <StartColumn>
+      <StartHead title={title} sub={body} />
+      <Link href={COACHES_START_PATH} className={accountForm.primary}>Open Coaches Portal signup</Link>
+    </StartColumn>
   );
 }
 

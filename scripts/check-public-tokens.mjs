@@ -128,7 +128,6 @@ const SCOPES = {
     dirs: ['app/(consumer)', 'components/consumer'],
     files: [
       'components/home/PendingInvitationsCard.module.css',
-      'app/team/page.module.css',
       'components/notifications/PreferencesTable.module.css',
       'components/notifications/PushDeviceTester.module.css',
       'components/notifications/FanAlertsCard.module.css',
