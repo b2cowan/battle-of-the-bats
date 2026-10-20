@@ -22,7 +22,6 @@ import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coac
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import { toKnownCategories } from '@/lib/coach-budget-import';
-import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { touched, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
@@ -2736,6 +2735,8 @@ function MoneyRecordsPanel({
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const canWriteMoney = (page.capabilities?.money === 'write');
+  /** The record form offers Delete: an edit the coach may write, never a commitment (its Delete is its page's, Part B). */
+  const formOffersDelete = formMode === 'edit' && canWriteMoney && editing?.expenseType !== 'tournament_payable';
   // The team's OWN money tags (org-shared ones are managed by the org admin, not here).
 
   /* ── The hub's Record button reaches this form here (P1) ────────────────────────────────────
@@ -8152,6 +8153,9 @@ function MoneyRecordsPanel({
           onClose={dismissForm}
           dirty={formDirty}
           busy={saving || deleting}
+          /* The window's own ask covers closing it; this covers walking away from it — a tap on the sidebar, the
+             bottom nav, or a browser refresh mid-form. Links are intercepted only while this tab is on screen. */
+          leaveGuard={{ message: "You haven't saved what you entered on this form. Leave without saving it?", tabActive }}
           ariaLabel={formMode === 'edit' ? copy.editTitle : isPayableForm ? 'Add a bill' : 'Record money'}
           /* Three doors, three names. "Record money" is the conversation; "Add a bill" is the
              Ledger's setup form, which this modal also is (B2); an edit says what it is
@@ -8267,7 +8271,7 @@ function MoneyRecordsPanel({
               </div>
             )}
             </>
-          ) : (isPayableForm || (formMode === 'edit' && canWriteMoney && editing?.expenseType !== 'tournament_payable')) ? (
+          ) : (isPayableForm || formOffersDelete) ? (
             <>
             {/* The bill form's consequence rides IN THE FOOT, its own row above the buttons (the foot wraps a long
                 sentence onto its own line), so it is readable at the moment of saving however long the schedule
@@ -8283,8 +8287,7 @@ function MoneyRecordsPanel({
                 spare. ⚠ The test is the RECORD's type, not the form's door: `isPayableForm` is
                 also true while ADDING, where there is nothing to delete and this branch is
                 already shut by `formMode`. */}
-            {formMode === 'edit' && canWriteMoney
-              && editing?.expenseType !== 'tournament_payable' && (
+            {formOffersDelete && (
               <button
                 type="button"
                 className={styles.deleteRecordBtn}
@@ -8801,13 +8804,8 @@ function MoneyRecordsPanel({
           }}
         />
       )}
-      {/* The window's own ask covers closing it; this covers walking away from it —
-          a tap on the sidebar, the bottom nav, or a browser refresh mid-form. */}
-      <UnsavedChangesGuard
-        active={formOpen && formDirty}
-        interceptClicks={formOpen && formDirty && tabActive}
-        message="You haven't saved what you entered on this form. Leave without saving it?"
-      />
+      {/* ⚰ The form's route guard stood here: it rides with the window now (`leaveGuard`, the shell's), mounted while the
+          form is open — one way to guard a window, as Set dues for all players does. */}
     </div>
   );
 }

@@ -2141,8 +2141,8 @@ function PromoteDialog({
       )}>
         {updating ? (
           <div className={styles.ppDrillWrite}>
+            {/* The window titles this level with the question ("Update “X”?"), so the body opens on its sub line. */}
             <SaveOverQuestion
-              question={`Update “${updating.name}”?`} titled
               sub={kind === 'drill'
                 ? 'Its words, coaching points, equipment and tags become tonight’s.'
                 : 'Its stations, their setup, points and kit, and its tags become this block’s.'}

@@ -18,7 +18,6 @@ import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
-import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useSharedMoneyRead, useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
   CLUB_MONEY_ITEM_DIRECTION, CLUB_MONEY_IN_ASK, clubMoneyInWord, clubRequestItemDirection,
@@ -2194,6 +2193,14 @@ export function ClubPanel({
           onClose={closeForm}
           dirty={formDirty}
           busy={busy || filingBusy}
+          /* Walking away (a link, a reload) — armed while the form is dirty even with its tab hidden (the shell keeps
+             the guard while closed); links are intercepted only while the tab is on screen. */
+          leaveGuard={{
+            message: editing
+              ? "You've changed this club request but haven't saved it. Leave without saving?"
+              : "You haven't submitted this club request. Leave without saving it?",
+            tabActive,
+          }}
           ariaLabel={editing ? (readOnly ? 'Club request details' : 'Edit club request') : 'New club request'}
           title={editing ? 'Club request' : 'New club request'}
           subtitle={editing
@@ -2544,13 +2551,6 @@ export function ClubPanel({
         </QuestionShell>
       )}
 
-      <UnsavedChangesGuard
-        active={showForm && formDirty}
-        interceptClicks={showForm && formDirty && tabActive}
-        message={editing
-          ? "You've changed this club request but haven't saved it. Leave without saving?"
-          : "You haven't submitted this club request. Leave without saving it?"}
-      />
     </div>
   );
 }

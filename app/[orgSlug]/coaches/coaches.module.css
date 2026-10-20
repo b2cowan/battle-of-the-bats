@@ -8695,10 +8695,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 
 /* Delete in the form footer, pushed away from Save so the two are never adjacent (Budget Plan's
    pattern — the quiet danger link opposite the primary action). */
-/* A footer that says what its Save reaches (the drill sheet, save-over D8): the line takes its own
-   row above the buttons, so Retire · Cancel · Save keep theirs. */
-.modalFooterNoted { flex-wrap: wrap; }
-.modalFooterNote { composes: formHint; flex: 1 1 100%; }
 
 .deleteRecordBtn {
   margin-right: auto;
@@ -11076,9 +11072,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
      through (owner, 2026-09-25: "weird spacing around it"), and the pill sat 28px in from the right
      where every other screen puts it at 12. Both from this rule's first day (09-24).
      ⚠ AND THE ONE WINDOW IS A FIXED CHILD TOO (One Window 2d): those three dialogs are KitDialog's overlay now — a
-     class this sheet cannot name — so it is skipped by what it holds (`[data-kit-dialog]`, the window's panel). */
-  .coachesMain:has(.ppSheetPair) .page > :not(.ppSheetCol):not(.modalOverlay):not(.savePill):not(:has(> [data-kit-dialog])),
-  .coachesMain:has(.ppSheetPair) .ppSheetCol > :not(.ppSheetPair):not(.modalOverlay):not(:has(> [data-kit-dialog])) { margin-inline: 1rem; }
+     class this sheet cannot name — so it is skipped by its own mark (`[data-kit-overlay]`). */
+  .coachesMain:has(.ppSheetPair) .page > :not(.ppSheetCol):not(.modalOverlay):not(.savePill):not([data-kit-overlay]),
+  .coachesMain:has(.ppSheetPair) .ppSheetCol > :not(.ppSheetPair):not(.modalOverlay):not([data-kit-overlay]) { margin-inline: 1rem; }
   /* The team strip bleeds over the shell gutter with a -1rem side margin; with no gutter here that
      bleed would hang 16px off each edge (probe: the page scrolled sideways by 16px). */
   .coachesMain:has(.ppSheetPair) .teamHeader { margin-inline: 0; }
@@ -11558,8 +11554,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppStationModal .modalTitle { flex: 1 1 auto; min-width: 0; margin-right: 0.5rem; }
 /* The head sits the same 0.6rem above the first field that every field sits above the next
    (owner catch, 2026-09-20): the shared modal head's own 1.25rem bottom margin stacked on the
-   body's top padding and read as a gap of its own. The body's padding is the whole distance —
-   here and on the drill sheet, which wears the same head. */
+   body's top padding and read as a gap of its own. The body's padding is the whole distance (the
+   station modal and the block sheet; the drill sheet is the one window's since One Window 2d). */
 .ppStationModal .modalHeader { margin-bottom: 0; }
 .ppStationTitle { font-size: var(--type-heading); font-weight: 700; }
 /* The drill sheet is the one window since One Window 2d: its typeable name sits in the WINDOW's head, outside the body

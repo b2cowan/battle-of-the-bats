@@ -204,6 +204,9 @@
    buttons it suspends stand in the same place (RoomShell's doors slot makes the same promise). */
 .footStart:has(> [role="alertdialog"]) { flex: 1 1 100%; margin-right: 0; }
 .footStart > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }
+/* …and the window, not each caller, hides the buttons it suspends — a fact about the tree, as RoomShell's doors slot
+   states it (/simplify 2026-10-20), so a caller that forgets to drop its `footer` still shows one band. */
+.foot:has(> .footStart > [role="alertdialog"]) > .footEnd { display: none; }
 /* A coach window's door at the left stands as tall as its buttons at the right at a desk (a quiet Preview or Remove
    beside Save — One Window 2b: the coach's old foot strip stretched every button to one height, and a ghost button
    alone measured 26.5 to Save's 34). A floor, not a stretch: a refusal that wraps beside it must not grow it (/review).

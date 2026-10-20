@@ -65,11 +65,11 @@ describe('D1 — the name decides, and the question stays in the window', () => 
     const question = stripComments(readSource('components/coaches/SaveOverQuestion.tsx'));
     assert.doesNotMatch(question, /> Back\b|ChevronLeft|ArrowLeft/, 'the shared question carries no Back of its own');
     // Since One Window 2d the bar's Back is the window's named back ("‹ Save as template" at a desk, "Back to …" on a
-    // phone's ←), the question the window's title — and the body no longer says the question twice (`titled`).
+    // phone's ←), the question the window's title — and the body no longer says the question twice (no `question`).
     assert.match(page, /backLabel="Save as template" levelKey=\{replacing \? 'replace' : 'name'\}\s+ariaLabel="Save as template" title=\{replacing \? `Replace “\$\{replacing\.name\}”\?` : 'Save as template'\}/);
     assert.match(editor, /backLabel=\{`Save to my \$\{noun\}`\} levelKey=\{updating \? 'update' : 'form'\}\s+ariaLabel=\{`Save to my \$\{noun\}`\} title=\{updating \? `Update “\$\{updating\.name\}”\?` : `Save to my \$\{noun\}`\}/);
-    assert.match(page, /question=\{`Replace “\$\{replacing\.name\}”\?`\} titled/);
-    assert.match(editor, /question=\{`Update “\$\{updating\.name\}”\?`\} titled/);
+    assert.doesNotMatch(page.slice(page.indexOf('function SaveAsTemplateDialog(')), /<SaveOverQuestion\s+question=/);
+    assert.doesNotMatch(editor.slice(editor.indexOf('function PromoteDialog(')), /<SaveOverQuestion\s+question=/);
     assert.match(readSource('components/coaches/QuestionShell.tsx'), /back=\{isForm && onBack \? \{ onBack, label: backLabel \} : undefined\}/);
   });
 

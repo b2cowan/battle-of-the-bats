@@ -1741,8 +1741,8 @@ function SaveAsTemplateDialog({
       )}>
         {replacing ? (
           <div className={styles.ppDrillWrite}>
+            {/* The window titles this level with the question ("Replace “X”?"), so the body opens on its sub line. */}
             <SaveOverQuestion
-              question={`Replace “${replacing.name}”?`} titled
               sub="Its blocks, stations, timings, what it’s about and its tags become this practice’s."
               now={describe(replacing)} after={after}
               confirmLabel="Replace template" busyLabel="Replacing…" busy={busy} error={error}

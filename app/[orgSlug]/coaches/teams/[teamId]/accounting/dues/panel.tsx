@@ -556,6 +556,8 @@ export function PlayerDuesPanel({
   // Payments (mig 232 — the receipt book)
   const [recordingPayment, setRecordingPayment] = useState(false);
   const [payForm, setPayForm] = useState(BLANK_PAYMENT_FORM);
+  /** What the correction form opened with — the instance its opener seeded, as the credit form's baseline is. */
+  const [payBaseline, setPayBaseline] = useState<typeof BLANK_PAYMENT_FORM | null>(null);
   const [paySaving, setPaySaving] = useState(false);
   const [payError, setPayError] = useState('');
   const [payNotice, setPayNotice] = useState('');
@@ -1503,10 +1505,9 @@ export function PlayerDuesPanel({
     : undefined;
   /* ⚠ THE RECEIPT CORRECTION IS TYPING TOO (One Window 2d, owner call 1, 2026-10-20). It was left out of this count, so
      a half-corrected receipt closed with the drawer — and with its own Cancel — with nothing asking. Moved off the
-     receipt it opened on, it is dirty. (The drawer itself stays out of the one window, Q15, and keeps its own ask.) */
-  const payDirty = recordingPayment && !!editingReceipt && !snapshotEqual(payForm, {
-    amount: String(editingReceipt.amount), receivedDate: editingReceipt.receivedDate, method: editingReceipt.method, note: editingReceipt.note ?? '',
-  });
+     receipt it opened on (the baseline its opener seeded), it is dirty. (The drawer itself stays out of the one window,
+     Q15, and keeps its own ask.) */
+  const payDirty = recordingPayment && payBaseline !== null && !snapshotEqual(payForm, payBaseline);
   const drawerFormDirty = scheduleDirty || creditDirty || payDirty;
 
   /** Every way OUT of the drawer goes through this one guarded closer — backdrop, ✕ and the back
@@ -1568,12 +1569,14 @@ export function PlayerDuesPanel({
   function openEditPayment(pm: RepDuesPayment) {
     closeMoneySheets();
     setEditingPaymentId(pm.id);
-    setPayForm({
+    const opened = {
       amount:       String(pm.amount),
       receivedDate: pm.receivedDate,
       method:       pm.method,
       note:         pm.note ?? '',
-    });
+    };
+    setPayForm(opened);
+    setPayBaseline(opened);
     setPayError('');
     setPayNotice('');
     setRecordingPayment(true);
@@ -1807,9 +1810,8 @@ export function PlayerDuesPanel({
   // see the list but no send buttons.
   const moneyCanWrite = (page.capabilities?.money === 'write');
 
-  /** The receipt the correction form is pointed at — ONE lookup, shared by the form's heading
-   *  and its consequence line (each used to run its own .find over the same list). */
-  /* ⚰ `editingReceipt` moved up beside the drawer's typed count (One Window 2d), which reads it. */
+  /* ⚰ `editingReceipt` (ONE lookup, shared by the correction form's heading and its consequence line) moved up beside
+     the drawer's typed count (One Window 2d). */
 
   /* The confirmation's facts, derived from the SAME selector the send itself uses
      (`nextUnpaidInstallment`) so the strip can never name a different bill than the route posts —
@@ -2556,12 +2558,11 @@ export function PlayerDuesPanel({
     && holdBackInput !== (settlement.pot.holdBack > 0 ? String(settlement.pot.holdBack) : '');
   const confirmText = { fontSize: '0.85rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1.1rem' } as const;
   const confirmDim = { margin: 0, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' } as const;
-  function reminderConfirmBody() {
+  function reminderConfirm() {
     const loading = reminderPreview === 'loading';
     const pv = reminderPreview !== null && typeof reminderPreview === 'object' ? reminderPreview : null;
     const zero = !!pv && pv.families === 0;
-    return (
-      <>
+    const body = (
         <div style={confirmText}>
           {loading ? (
             <p style={{ margin: 0 }}>Working out who this would reach…</p>
@@ -2622,16 +2623,11 @@ export function PlayerDuesPanel({
             </>
           )}
         </div>
-      </>
     );
-  }
-  /** The confirm's foot (One Window 2d — the window's own foot, at every scroll): the letter's door at the left, the
-   *  window's closer and Send at the right. Same reading of the count as the body above. */
-  function reminderConfirmFoot() {
-    const loading = reminderPreview === 'loading';
-    const pv = reminderPreview !== null && typeof reminderPreview === 'object' ? reminderPreview : null;
-    const zero = !!pv && pv.families === 0;
+    /* The confirm's foot (One Window 2d — the window's own foot, at every scroll), from the SAME reading of the count as
+       the body: the letter's door at the left, the window's closer and Send at the right. */
     return {
+      body,
       /* The letter itself — the on-demand variant, which is what THIS button sends. */
       start: (
         <button
@@ -4996,12 +4992,12 @@ export function PlayerDuesPanel({
           they'll receive" opens the letter OVER it, and a question stands on the top layer, so the letter would open
           underneath. 460 → the ladder's 520; it fills a phone. Nothing typed: it never asks. */}
       {confirmRemindersOpen && (() => {
-        const foot = reminderConfirmFoot();
+        const confirm = reminderConfirm();
         return (
           <QuestionShell open={tabActive} onClose={() => setConfirmRemindersOpen(false)} busy={sendingReminders}
             ariaLabel="Send due reminders?" title="Send due reminders?"
-            footerStart={foot.start} footer={foot.end}>
-            {reminderConfirmBody()}
+            footerStart={confirm.start} footer={confirm.end}>
+            {confirm.body}
           </QuestionShell>
         );
       })()}

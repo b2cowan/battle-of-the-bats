@@ -450,8 +450,9 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
     assert.match(code, /createPortal\(\s*<QuestionShell[\s\S]*?<\/QuestionShell>,\s*document\.querySelector\('\[data-coach-warm-enabled\]'\) \?\? document\.body,/);
     assert.doesNotMatch(code, /useDiscardGuard\(|useOverlayOpen|useDialogFloor|CoachModalHeader|modalOverlay|modalFooter/,
       'the window asks and owns its overlay, floor and head; no second window');
-    // The route guard (a link, a reload) stays beside the window's own ask.
-    assert.match(code, /<UnsavedChangesGuard\s+active=\{formOpen && formDirty\}\s+interceptClicks=\{formOpen && formDirty && tabActive\}/);
+    // The route guard (a link, a reload) stays beside the window's own ask — the shell's, links only while the tab shows.
+    assert.match(code, /leaveGuard=\{\{ message: "You haven't saved what you entered on this form\. Leave without saving it\?", tabActive \}\}/);
+    assert.doesNotMatch(code, /<UnsavedChangesGuard/, 'one way to guard a window: the shell\'s leaveGuard');
     // The two delete confirms stay docked in the foot: whole at its left, the window's buttons gone while one shows.
     assert.match(code, /footerStart=\{confirmDelete \? \(/);
     assert.match(code, /footer=\{confirmDelete \? undefined : \(\s*<>\s*<QuestionCancel className=\{styles\.btnGhost\} \/>/);
@@ -459,6 +460,8 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
     // …and the one window's foot takes a docked confirm across its whole row (RoomShell's doors-slot promise).
     assert.match(kitCss, /\.footStart:has\(> \[role="alertdialog"\]\) \{ flex: 1 1 100%; margin-right: 0; \}/);
     assert.match(kitCss, /\.footStart > \[role="alertdialog"\] \{ flex: 1 1 100%; margin: 0; \}/);
+    // …and the window itself hides the buttons a docked confirm suspends (a fact about the tree, not a caller's mode).
+    assert.match(kitCss, /\.foot:has\(> \.footStart > \[role="alertdialog"\]\) > \.footEnd \{ display: none; \}/);
   });
 
   it('B1 + B3: the club request asks in its own foot; the "installment sent" window asks as it moves (part 2)', () => {
@@ -473,7 +476,8 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
     assert.match(code, /<QuestionShell open onClose=\{onCancel\} dirty=\{dirty\} busy=\{busy\}/);
     assert.doesNotMatch(code, /useDiscardGuard|useOverlayOpen|useDialogFloor|CoachModalHeader|modalOverlay|modalFooter/,
       'both windows ask and own their overlay, floor and head; no second window');
-    assert.match(code, /<UnsavedChangesGuard\s+active=\{showForm && formDirty\}/);
+    assert.match(code, /leaveGuard=\{\{\s*message: editing\s*\?[\s\S]*?tabActive,\s*\}\}/);
+    assert.doesNotMatch(code, /<UnsavedChangesGuard/, 'one way to guard a window: the shell\'s leaveGuard');
   });
 
   it('B1: Set dues for all players asks in its own foot, its levels are Back steps, and its links close it (part 3)', () => {

@@ -540,8 +540,9 @@ describe('practice plans on a phone · stage 4 (N1–N4) — the head of the pag
     assert.ok(pane > 0 && pane < last && last < hint && hint < error, 'the body → the last send → the hint … → the refusal (into the foot)');
     assert.doesNotMatch(sheet, /modalFooter|scrollPane|CoachModalHeader/);
     // The edge-to-edge rule's gutter skips every fixed child of the page — the one window's overlay included (it is
-    // skipped by what it holds: a margin on a fixed overlay stopped a dialog 16px short of the glass, 2026-09-25).
-    assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \.page > :not\(\.ppSheetCol\):not\(\.modalOverlay\):not\(\.savePill\):not\(:has\(> \[data-kit-dialog\]\)\),\s*\.coachesMain:has\(\.ppSheetPair\) \.ppSheetCol > :not\(\.ppSheetPair\):not\(\.modalOverlay\):not\(:has\(> \[data-kit-dialog\]\)\) \{ margin-inline: 1rem; \}/);
+    // skipped by its own mark: a margin on a fixed overlay stopped a dialog 16px short of the glass, 2026-09-25).
+    assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \.page > :not\(\.ppSheetCol\):not\(\.modalOverlay\):not\(\.savePill\):not\(\[data-kit-overlay\]\),\s*\.coachesMain:has\(\.ppSheetPair\) \.ppSheetCol > :not\(\.ppSheetPair\):not\(\.modalOverlay\):not\(\[data-kit-overlay\]\) \{ margin-inline: 1rem; \}/);
+    assert.match(readCode('components/admin/kit/club/KitDialog.tsx'), /data-kit-overlay=""/, 'the window\'s fixed layer carries the mark');
   });
 
   it('N3 — About renders under the timeline on a phone, before the focus rail; in JS order', () => {

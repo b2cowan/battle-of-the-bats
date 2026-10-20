@@ -377,6 +377,9 @@ export default function KitDialog({
   return (
     <div
       className={`${styles.overlay} ${kind === 'question' ? styles.overlayQuestion : styles.overlayForm}${raised && kind === 'form' ? ` ${styles.overlayRaised}` : ''}`}
+      // The fixed layer itself, named for a page stylesheet that must leave it alone (the practice page's phone gutter
+      // rule skips it — a margin on a fixed overlay pulls it in from the glass). The panel inside is `data-kit-dialog`.
+      data-kit-overlay=""
       onPointerDown={e => {
         // A tap outside a question is its "no"; outside a form it does nothing, typed or not (answer B).
         if (kind === 'question' && e.target === e.currentTarget && !busy) requestClose();
