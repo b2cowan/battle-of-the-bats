@@ -72,6 +72,9 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
   it('the rail and the phone’s More sheet carry it under Calendar, never on a tournament-only rail', () => {
     const rail = readCode(RAIL);
     assert.match(rail, /schedulesLink && !tournamentOnly/);
+    // ⚖ Inside a tournament neither club row shows (owner 2026-10-20): Overview alone is the way back to the club.
+    assert.match(rail, /calendarLink && !tournamentOnly && !onTournaments/);
+    assert.match(rail, /schedulesLink && !tournamentOnly && !onTournaments/);
     assert.ok(rail.indexOf('calendarLink.href') < rail.indexOf('schedulesLink.href'), 'Schedules sits under Calendar');
     // ⚖ One club bar (owner 2026-10-17, `lib/nav-tiles.ts`): Calendar is a tab, and Schedules the first tile at the top of
     // More — or, without three tiles, the full row it was, under Notifications.

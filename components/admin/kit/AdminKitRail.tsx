@@ -269,13 +269,15 @@ export default function AdminKitRail() {
           <RailRow href={base} label="Overview" active={pathname === base} icon={LayoutGrid} />
         )}
         {/* The club calendar (Club Tier 6b, Ask 7): directly under Overview — it spans every program, so it is no
-            program's row. `kitCalendarLink` holds its gate. */}
-        {calendarLink && !tournamentOnly && (
+            program's row. `kitCalendarLink` holds its gate. ⚖ Not inside a tournament (owner 2026-10-20): there Overview
+            is the one way back to the club, as Programs and Organization already are not rows, and the phone's tournament
+            bar never carried either. Schedules, below, follows the same rule. */}
+        {calendarLink && !tournamentOnly && !onTournaments && (
           <RailRow href={calendarLink.href} label={calendarLink.label} active={isKitLinkActive(pathname, calendarLink)} icon={calendarLink.icon} />
         )}
         {/* The club scheduler (Club Tier 11a): directly under Calendar — Calendar reads what is booked, Schedules hands the
             club's time out. `kitSchedulesLink` holds its gate (owner or admin, the plan's key, rep teams to hand time to). */}
-        {schedulesLink && !tournamentOnly && (
+        {schedulesLink && !tournamentOnly && !onTournaments && (
           <RailRow href={schedulesLink.href} label={schedulesLink.label} active={isKitLinkActive(pathname, schedulesLink)} icon={schedulesLink.icon} />
         )}
 
