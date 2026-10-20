@@ -51,7 +51,7 @@ If the right fix has **no surface in this table**, that is itself a gap — log 
 
 | Type | Signals |
 |---|---|
-| `INVITE_AUTH` | "incorrect email or password" after invite, UNCONFIRMED/INVITED badges, never received email, expired link |
+| `INVITE_AUTH` | "That email and password don't match" after invite (customers may still quote the old "incorrect email or password"), UNCONFIRMED/INVITED badges, never received email, expired link |
 | `PLAN_GATE` | feature blocked/allowed wrongly, stale limit, addon not reflected |
 | `BILLING` | payment didn't update plan, Stripe webhook, comp/override expiry |
 | `ACCESS_ROLE` | wrong role, can't see a module, removed-but-still-shows |
@@ -142,7 +142,8 @@ Rules for gap logging:
 
 ## Known patterns (seed knowledge)
 
-### Invited user can't log in ("incorrect email or password")
+### Invited user can't log in ("That email and password don't match"; before 2026-10-20 "incorrect email or password")
+- **What sign-in shows (since The first look, Stage 2):** a wrong password is a red notice, "That email and password don't match. Try again, or use "Forgot your password?" below."; an account that never opened its confirmation email gets an amber "Confirm your email first." with **Send the link again** under it; an expired or used link gets an amber "That link has expired or was already used." with **Email me a new link**. Forgot password allows three reset emails per address per hour; past that it says "Too many tries."
 - **Cause:** admin-created users get a Supabase auth user with *no password*; they must click the email setup link (→ `/auth/callback` → `/auth/accept-invite`) to set one. UNCONFIRMED/INVITED badges = never accepted.
 - **Trap:** users try the login page or "Create account" instead of the email link → `invalid_credentials`.
 - **Invite link TTL:** Supabase default ~24h. Member row never expires; only the link does.
