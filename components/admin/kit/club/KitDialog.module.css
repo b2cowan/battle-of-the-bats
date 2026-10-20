@@ -199,6 +199,11 @@
   border-top: 1px solid var(--home-line);
 }
 .footStart { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-right: auto; }
+/* A confirmation docked in the foot (a coach form's "Delete …?" — Record money's two, One Window 2d) takes the foot's
+   whole row and REPLACES the buttons it suspends: the caller passes no `footer` while it shows, so the question and the
+   buttons it suspends stand in the same place (RoomShell's doors slot makes the same promise). */
+.footStart:has(> [role="alertdialog"]) { flex: 1 1 100%; margin-right: 0; }
+.footStart > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }
 /* A coach window's door at the left stands as tall as its buttons at the right at a desk (a quiet Preview or Remove
    beside Save — One Window 2b: the coach's old foot strip stretched every button to one height, and a ghost button
    alone measured 26.5 to Save's 34). A floor, not a stretch: a refusal that wraps beside it must not grow it (/review).

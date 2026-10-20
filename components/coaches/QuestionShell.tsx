@@ -49,8 +49,9 @@ function publishFoot() {
  *
  * ⚠ `open` should include the consumer's `tabActive` for a form whose state survives a tab switch
  * (the hub keeps panels mounted, hidden): a floor left armed on a hidden panel answered a bare
- * Escape on whatever tab the coach was on. The portaled Record conversation is the one exception
- * and does not use this shell.
+ * Escape on whatever tab the coach was on. The one exception is the Record money form (Money's
+ * expenses panel), which is PORTALED into the portal's warm root and so is on screen whenever it is
+ * open, whichever tab is showing: its `open` is its own (One Window 2d).
  *
  * ⚖ ITS BUTTONS ARE THE WINDOW'S FOOT (Stage 2b, 2026-10-19): `footer` (buttons only) and `footerStart` (a sentence
  * or a door at the left), KitDialog's own — never a `.modalFooter` in the children (guarded). The window's body

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2, MoreHorizontal } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { creditKindSentence } from '@/lib/dues-credits';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
@@ -15,17 +14,16 @@ import type { PayableItem } from '@/components/accounting/UpcomingPayablesPanel'
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import SponsorCreditPlanEditor, { type SponsorCreditPlanRow } from '@/components/coaches/SponsorCreditPlanEditor';
 import { fetchFamilyPaymentSchedules, type FamilyPaymentSchedules } from '@/lib/coach-family-schedules';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useRoomAddress } from '@/components/coaches/useRoomAddress';
 import { roomNeighbours } from '@/lib/room-neighbours';
 import type { RoomTile } from '@/components/coaches/RoomShell';
 
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import { toKnownCategories } from '@/lib/coach-budget-import';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
-import { useDiscardGuard, touched, snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import { touched, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import {
@@ -589,8 +587,8 @@ type CostTiming = 'paid' | 'payable';
 /**
  * What the form is called, in every place it has to name itself.
  *
- * ⚠ ONE EXHAUSTIVE RECORD, NOT SIX TERNARY CHAINS. The modal title, the discard-guard noun, the
- * examples line, the stated-fact sentence on an edit, the delete-confirm title and the save button
+ * ⚠ ONE EXHAUSTIVE RECORD, NOT SIX TERNARY CHAINS. The modal title, the discard-guard noun (gone with the
+ * second-window ask, One Window 2d — the window asks in its foot, in one sentence), the examples line, the stated-fact sentence on an edit, the delete-confirm title and the save button
  * each spelled the same four-way fork out for themselves — so a fifth kind, or a reworded example,
  * meant finding all six and getting all six right. A `Record` keyed by the resolved tag makes a
  * missing case a compile error, which is the same lesson `LINE_KIND_SECTION` and
@@ -609,14 +607,11 @@ type FormKindTag = 'expense' | 'payable' | 'income' | 'refund';
 const FORM_COPY: Record<FormKindTag, {
   /** Modal title when editing a saved record. */
   editTitle: string;
-  /** What the discard guard calls the thing being abandoned. */
-  noun: string;
   /** The stated fact shown instead of the switch on an edit. */
   statedFact: string;
 }> = {
   expense: {
     editTitle: 'Edit expense',
-    noun: 'expense',
     statedFact: 'An expense — money the team has already spent.',
   },
   /* ⚖ THE RECORD IS A BILL (fold decision 6A, owner 2026-08-28). "Commitment" and "bill" were two
@@ -625,17 +620,14 @@ const FORM_COPY: Record<FormKindTag, {
      `tournament_payable`, the export dataset) are identifiers, not prose, and stay. */
   payable: {
     editTitle: 'Edit bill',
-    noun: 'bill',
     statedFact: 'A bill — money the team owes but has not paid.',
   },
   income: {
     editTitle: 'Edit income',
-    noun: 'income entry',
     statedFact: 'Income — money the team earned or was given.',
   },
   refund: {
     editTitle: 'Edit money back',
-    noun: 'money-back entry',
     statedFact: 'Money back — a refund, credit or reimbursement of something already recorded.',
   },
 };
@@ -678,7 +670,7 @@ function kindForFace(onPayables: boolean): { kind: EntryKind; timing: CostTiming
 
 /**
  * THE ONE BRANCH TABLE — everything an answer is, in the exact order mockup 01 draws them.
- * The chooser's two groups, the direct-writer set, the ledger side and the guard noun are all
+ * The chooser's two groups, the direct-writer set and the ledger side are all
  * DERIVED below: five parallel lists keyed by the same union is how a ninth answer would reach
  * four of them and silently miss the fifth (/simplify, 2026-08-23). A missing key here is a
  * compile error, which is the same lesson FORM_COPY already encodes two screens up.
@@ -710,17 +702,15 @@ const CONV_BRANCH: Record<ConversationBranch, {
   side?: 'in' | 'out';
   /** Submits through its HOME TAB's writer instead of this form's ledger save. */
   direct?: true;
-  /** What the discard guard calls a half-entered record. Ledger answers use FORM_COPY. */
-  noun?: string;
 }> = {
-  dues:       { name: 'A family paid their dues',        group: 'in',  sub: "Lands on that player's bill",            direct: true, noun: 'payment' },
-  drive:      { name: 'Fundraiser money came in',        group: 'in',  sub: 'Logged to a drive — the whole team, or one player', direct: true, noun: 'fundraiser amount' },
-  sponsor:    { name: 'A sponsor came through',          group: 'in',  sub: 'A business or a grant gave directly',    direct: true, noun: 'sponsor' },
+  dues:       { name: 'A family paid their dues',        group: 'in',  sub: "Lands on that player's bill",            direct: true },
+  drive:      { name: 'Fundraiser money came in',        group: 'in',  sub: 'Logged to a drive — the whole team, or one player', direct: true },
+  sponsor:    { name: 'A sponsor came through',          group: 'in',  sub: 'A business or a grant gave directly',    direct: true },
   refund:     { name: 'Money back on something we paid', group: 'in',  sub: 'A refund against a cost on the books',   side: 'out' },
   'other-in': { name: 'Other money in',                  group: 'in',  sub: 'Interest, a facility rebate, a plain donation', side: 'in' },
   spend:      { name: 'We paid for something',           group: 'out', sub: 'Paid already — or owed on a schedule',   side: 'out' },
-  club:       { name: 'We settled up with the club',     group: 'out', sub: 'Pay down what the club has billed',      direct: true, noun: 'settlement' },
-  payout:     { name: 'We paid a family back',           group: 'out', sub: 'Return credit a family has built up',    direct: true, noun: 'payout' },
+  club:       { name: 'We settled up with the club',     group: 'out', sub: 'Pay down what the club has billed',      direct: true },
+  payout:     { name: 'We paid a family back',           group: 'out', sub: 'Return credit a family has built up',    direct: true },
 };
 const CONV_IDS = Object.keys(CONV_BRANCH) as ConversationBranch[];
 /** The chooser's two groups (mockup 01) — derived; the table's order is the drawn order.
@@ -1640,21 +1630,12 @@ function MoneyRecordsPanel({
   const [seasonYear, setSeasonYear] = useState<number>(() => new Date().getFullYear());
   const [seasonOpened, setSeasonOpened] = useState<string | null>(null);
 
-  /* Nav-hide + body-scroll-lock registration for the record modal and the scope editor — one
-     registration, any door.
-     ⚖⚖ THE BILL IS ONE AGAIN, AND IT REGISTERS ITSELF (List · Room · Question Phase C, 2026-09-04).
-     The 2026-08-26 note here read "the commitment is no longer one of them… it is a sub-view of the
-     Payables tab now, so it must NOT hide the nav or lock the body". That was right for a PAGE, and
-     the room reverses it: `RoomShell` holds the counter for every room, and the room has its own
-     internal scroll, so locking the body behind it is exactly what should happen.
-     ⚠ THE SCOPE SHEET LEFT THIS LINE FOR THE SAME REASON (`/review`, 2026-09-04). It moved into
-     `QuestionShell`, which registers it — counting it here as well double-incremented the shared
-     counter. Harmless while both halves balanced, and precisely the bookkeeping that stops
-     balancing the day one of them is refactored. One registration per overlay, at the overlay. */
-  useOverlayOpen(formOpen);
+  /* ⚰ `useOverlayOpen(formOpen)` STOOD HERE (nav-hide + body-scroll-lock for the record form). The form is the one
+     window now (One Window 2d), which registers with the portal's counter itself — one registration per overlay, at
+     the overlay (the scope sheet's and the bill room's lesson, 2026-09-04). */
 
-  /* Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to bin it
-     silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
+  /* What counts as typed (Chunk A, review f7-3/f7-7): a half-filled form must never close without asking.
+     Dirtiness covers the combobox/tag selections too, not just the text fields.
 
      ⚠ WHEN EDITING, "dirty" IS MEASURED AGAINST THE SAVED RECORD, not against blank. Comparing an
      edit form to BLANK_RECORD would call every edit dirty the instant it opened — including one the
@@ -1682,22 +1663,13 @@ function MoneyRecordsPanel({
     || touched(conv, convOpenedWith)
     // The sponsor branch's credit-family rows are an array — the formPlan idiom.
     || !snapshotEqual(convSponsorPlan, convSponsorPlanOpenedWith);
-  const closeForm = useDiscardGuard({
-    dirty: formDirty,
-    close: () => dismissForm(),
-    // A branch record has its own noun — "Discard this expense?" over a half-entered dues
-    // payment would be the guard naming the wrong thing.
-    noun: (convBranch && CONV_BRANCH[convBranch].noun) || copy.noun,
-  });
-  /* The form stands on the same accessibility floor as a room (D7, List · Room · Question):
-     Escape closes through the discard guard, Tab stays inside, focus returns to the door that
-     opened it. ⚠ Keyed on `formOpen` ALONE, never `tabActive` — this modal is PORTALED and on
-     screen whenever it is open, including when the hub's Record button opened it while this panel
-     sits hidden under another tab; gating on the tab would disarm it exactly then. Stacked over an
-     open room (a drive's Record door), a bare Escape reaches only the floor that opened last, so
-     the room beneath stays — Phase B, 2026-09-02. */
-  const convPanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(formOpen, convPanelRef, { onClose: () => { void closeForm(); }, busy: saving });
+  /* ⚰ `useDiscardGuard` (the second window, "Discard this expense?" · Keep editing) and `useDialogFloor` STOOD HERE.
+     The form is the one window (One Window 2d, call B1): with something typed, ×, ←, Cancel, Escape and the phone's
+     Back ask in its own foot, in the one sentence — never a second window over it. Its floor is the window's: Tab stays
+     inside, focus returns to the door that opened it, and stacked over an open room (a drive's Record door) one Escape
+     closes only this window. ⚠ The window is open on `formOpen` ALONE, never `tabActive`: it is PORTALED and on screen
+     whenever it is open, including when the hub's Record button opened it while this panel sits hidden under another
+     tab — gating on the tab would hide it exactly then (see the render). */
 
   /* One reset, three callers (close, save, delete). It was four lines repeated at each — which is
      the shape where a fifth form field gets added to two of them and quietly persists into the next
@@ -8171,34 +8143,177 @@ function MoneyRecordsPanel({
           and the whole money form renders in the WRONG THEME inside a warm portal. globals.css's
           own note about the help drawer documents exactly this trap. Body is only the fallback for
           a mount with no shell around it. */}
+      {/* ⚖ THE ONE WINDOW (One Window 2d, 2026-10-20): Tab stays inside, Escape and the phone's Back close only this
+          window, a tap outside does nothing, and with something typed every way out asks in the foot. A write in flight
+          (a save or a delete) holds it. The portal stays — see above. */}
       {formOpen && createPortal(
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeForm)?.(); }}>
-          <div
-            ref={convPanelRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-label={formMode === 'edit' ? copy.editTitle : isPayableForm ? 'Add a bill' : 'Record money'}
-            aria-busy={saving || undefined}
-            className={`${styles.modal} ${styles.modalScrollBody}`}
-            onClick={e => e.stopPropagation()}
-          >
-            <CoachModalHeader
-              /* Three doors, three names. "Record money" is the conversation; "Add a bill" is the
-                 Ledger's setup form, which this modal also is (B2); an edit says what it is
-                 editing. A bill door titled "Record money" would be the product contradicting the
-                 ruling in its own header. ⚠ The bill subtitle carries the whole teaching now —
-                 the intro paragraph that restated it a third time is gone (fold form redesign,
-                 finding 1: three tellings before the first field). */
-              title={formMode === 'edit' ? copy.editTitle
-                : isPayableForm ? 'Add a bill'
-                : 'Record money'}
-              subtitle={formMode !== 'add' ? undefined
-                : isPayableForm ? 'Money the team owes but hasn’t paid — nothing moves today'
-                : convBranch ? CONV_BRANCH[convBranch].name
-                : 'Write down money that moved — it gets filed for you.'}
-              onClose={closeForm}
-            />
+        <QuestionShell
+          open
+          onClose={dismissForm}
+          dirty={formDirty}
+          busy={saving || deleting}
+          ariaLabel={formMode === 'edit' ? copy.editTitle : isPayableForm ? 'Add a bill' : 'Record money'}
+          /* Three doors, three names. "Record money" is the conversation; "Add a bill" is the
+             Ledger's setup form, which this modal also is (B2); an edit says what it is
+             editing. A bill door titled "Record money" would be the product contradicting the
+             ruling in its own header. ⚠ The bill subtitle carries the whole teaching now —
+             the intro paragraph that restated it a third time is gone (fold form redesign,
+             finding 1: three tellings before the first field). */
+          title={formMode === 'edit' ? copy.editTitle
+            : isPayableForm ? 'Add a bill'
+            : 'Record money'}
+          subtitle={formMode !== 'add' ? undefined
+            : isPayableForm ? 'Money the team owes but hasn’t paid — nothing moves today'
+            : convBranch ? CONV_BRANCH[convBranch].name
+            : 'Write down money that moved — it gets filed for you.'}
+          /* ── Delete, in front of a confirmation that states the money consequence ────────
+             ⚠ THE DIALOG NAMES DOLLARS, never a bare "Are you sure?". Deleting something
+             already paid reverses what it posted, and a coach must be told the size of that
+             before they can consent to it. `ledgerReversalPreview` is the SAME function the
+             server reverses with, so the sentence and the outcome cannot drift apart.
+             ⚠ MONEY IN REVERSES THE OTHER WAY, so it gets its own sentence rather than the
+             expense one with a word flipped: deleting an arrival LOWERS cash on hand. And
+             nothing here can change what a family is owed, on either kind — see
+             `moneyInReversalPreview`, which deliberately has no `owesFamily`.
+             ⚠⚠ THE CONFIRMATIONS ARE THE FOOT’S OTHER STATE — they stood ABOVE the buttons, in
+             the scrolling body, which on a long form put them BELOW THE FOLD (owner, §134 walk,
+             found on the Club tab’s twin of this block). Pressing Delete looked like it did
+             nothing at all. Now the question REPLACES the row of buttons it suspends, in the one
+             band that is always visible: whole (its sentence and its own Keep it · Delete) at the
+             foot's left, with the window's buttons gone while it shows (One Window 2d — the one
+             window's foot takes a docked confirm across its full width, KitDialog.module.css).
+             Do not move a confirm back into a window's scrolling body.
+             ⚠ Both dock in the SAME slot and are mutually exclusive by their own guards: a
+             money-in entry and a commitment are never the same record. */
+          footerStart={confirmDelete ? (
+            <>
+            {editingMoneyIn && moneyInDeletePreview && (
+              <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
+                <p className={styles.dangerConfirmTitle}>
+                  Delete this {entryKind === 'income' ? 'income entry' : 'money-back entry'}?
+                </p>
+                <p className={styles.dangerConfirmBody}>
+                  {moneyInDeletePreview.posted ? (
+                    <>
+                      <strong>{fmt(moneyInDeletePreview.amount)}</strong> is on the team’s books as money
+                      that came in. Deleting it takes that back off, so cash on hand goes{' '}
+                      <strong>down</strong> by {fmt(moneyInDeletePreview.amount)}.
+                      {entryKind === 'refund' && ' The item it was reducing goes back up by the same amount.'}
+                    </>
+                  ) : (
+                    'Nothing was posted for this, so no money moves.'
+                  )}
+                </p>
+                <p className={styles.dangerConfirmBody}>Nobody’s dues change either way.</p>
+                <div className={styles.dangerConfirmActions}>
+                  <button type="button" className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
+                  <button type="button" className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
+                    {deleting ? 'Deleting…' : moneyInDeletePreview.posted ? 'Delete and reverse' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {editing && (
+              <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
+                <p className={styles.dangerConfirmTitle}>
+                  Delete “{editing.description}”?
+                </p>
+                {deletePreview.amount > 0 && (
+                  <p className={styles.dangerConfirmBody}>
+                    This has already posted <strong>{fmt(deletePreview.amount)}</strong> out of the team’s
+                    books{deletePreview.legs > 1 ? ` across ${deletePreview.legs} payments` : ''}. Deleting it will
+                    reverse that, so cash on hand goes back up by {fmt(deletePreview.amount)}.
+                  </p>
+                )}
+                {/* ⚠⚠ IT NAMES THE HOUSEHOLD AND THE FIGURE (owner ruling 2026-08-27). "A family
+                    paid this out of pocket" was true and unactionable: a coach deleting a mistyped
+                    cost could not tell WHO was about to lose WHAT, and the credit goes by cascade
+                    the instant they confirm. The ruling settles an asymmetry — removing a PLAYER
+                    who carries credits is refused outright, while deleting the COST they are owed
+                    against went through in silence. The delete still goes through; it just stops
+                    being silent. */}
+                {deletePreview.owesFamily && (
+                  <p className={styles.dangerConfirmBody}>
+                    {deletePreview.owedByFamily.length > 0 ? (
+                      <>
+                        <strong>The credit the team owes will be removed too:</strong>{' '}
+                        {deletePreview.owedByFamily.map((o, at) => {
+                          const who = formatPlayerFirstLast(roster.find(r => r.id === o.playerId));
+                          return (
+                            <Fragment key={o.playerId}>
+                              {at > 0 ? ', ' : ''}
+                              {who ? <>{possessive(who)} family</> : <>a family</>} <strong>{fmt(o.amount)}</strong>
+                            </Fragment>
+                          );
+                        })}
+                        . No team cash moves either way.
+                      </>
+                    ) : (
+                      <>A family paid this out of pocket. <strong>The credit the team owes them will
+                      be removed too</strong> — no team cash moves either way.</>
+                    )}
+                  </p>
+                )}
+                {deletePreview.amount === 0 && !deletePreview.owesFamily && (
+                  <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>
+                )}
+                <div className={styles.dangerConfirmActions}>
+                  <button type="button" className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
+                  <button type="button" className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
+                    {deleting ? 'Deleting…' : deletePreview.amount > 0 ? 'Delete and reverse' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
+            </>
+          ) : (isPayableForm || (formMode === 'edit' && canWriteMoney && editing?.expenseType !== 'tournament_payable')) ? (
+            <>
+            {/* The bill form's consequence rides IN THE FOOT, its own row above the buttons (the foot wraps a long
+                sentence onto its own line), so it is readable at the moment of saving however long the schedule
+                grows — see the in-grid site's note. */}
+            {isPayableForm && <div style={{ flexBasis: '100%' }}>{consequenceLine()}</div>}
+            {/* Delete lives in the FORM's foot, not on the row — the pattern Budget Plan set,
+                and the reason a row needs only one control (owner ruling 2026-08-15).
+                ⚠⚠ EXCEPT ON A COMMITMENT, WHOSE DELETE MOVED TO THE FOOT OF ITS PAGE (Part B).
+                After the register re-point the only way this form opens on a saved commitment is
+                `Add an installment`, launched FROM that page — so a Delete here would be a second,
+                quieter door to the same destructive act, sitting inside a schedule editor and one
+                scroll from the real one. The phase's rule is one delete path, not a softer
+                spare. ⚠ The test is the RECORD's type, not the form's door: `isPayableForm` is
+                also true while ADDING, where there is nothing to delete and this branch is
+                already shut by `formMode`. */}
+            {formMode === 'edit' && canWriteMoney
+              && editing?.expenseType !== 'tournament_payable' && (
+              <button
+                type="button"
+                className={styles.deleteRecordBtn}
+                onClick={() => setConfirmDelete(true)}
+                disabled={saving || deleting}
+              >
+                <Trash2 size={13} aria-hidden /> Delete
+              </button>
+            )}
+            </>
+          ) : undefined}
+          /* ⚠ HELD WHILE SAVING (/review, 2026-08-23): the window's `busy` holds Cancel, ×, Escape and Back while a
+             save or a delete is in flight — every save path through this foot moves money, and a form that closed
+             mid-POST would read as nothing happened while the payment landed a moment later. */
+          footer={confirmDelete ? undefined : (
+            <>
+              <QuestionCancel className={styles.btnGhost} />
+              <button type="button" className={styles.btnPrimary} disabled={saving || deleting} onClick={saveRecord}>
+                {/* ⚠ ONE WORD FOR ADD AND EDIT (owner ruling 2026-08-16). It used to name the
+                    outcome — "Add Expense", "Add Money Back", "Save changes" — which was right while
+                    the button was the only thing that knew what the form had become. The consequence
+                    line above it says that now, in dollars, so the button can go back to being a
+                    button. (The settle mode that kept "Mark Paid" is gone — recording money is the
+                    Record-a-payment modal below, whose button names its own outcome.) */}
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </>
+          )}
+        >
             <div className={styles.formGrid}>
               {/* ── What kind of entry is this? ───────────────────────────────────────────────
                   THREE ANSWERS, BECAUSE ACCOUNTING HAS THREE (plan §3.1, mockup ee76cc79).
@@ -8647,159 +8762,9 @@ function MoneyRecordsPanel({
               )}
             </div>
 
-            {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
-
-            {/* ── Delete, in front of a confirmation that states the money consequence ────────
-                ⚠ THE DIALOG NAMES DOLLARS, never a bare "Are you sure?". Deleting something
-                already paid reverses what it posted, and a coach must be told the size of that
-                before they can consent to it. `ledgerReversalPreview` is the SAME function the
-                server reverses with, so the sentence and the outcome cannot drift apart. */}
-            {/* ⚠ MONEY IN REVERSES THE OTHER WAY, so it gets its own sentence rather than the
-                expense one with a word flipped: deleting an arrival LOWERS cash on hand. And
-                nothing here can change what a family is owed, on either kind — see
-                `moneyInReversalPreview`, which deliberately has no `owesFamily`. */}
-            {/* ⚠⚠ THE CONFIRMATIONS ARE THE FOOTER’S OTHER STATE — they stood ABOVE this band, in
-                the scrolling body, which on a long form put them BELOW THE FOLD (owner, §134 walk,
-                found on the Club tab’s twin of this block). Pressing Delete looked like it did
-                nothing at all. Now the question REPLACES the row of buttons it suspends, in the one
-                band that is always visible — the contract stated on the .modalFooter alertdialog
-                rule, and the one RoomShell already gives its doors slot. Do not move a confirm back
-                into a modal’s scrolling body.
-                ⚠ Both dock in the SAME slot and are mutually exclusive by their own guards: a
-                money-in entry and a commitment are never the same record. */}
-            <div className={styles.modalFooter} style={isPayableForm ? { flexWrap: 'wrap' } : undefined}>
-              {confirmDelete ? (
-                <>
-                {confirmDelete && editingMoneyIn && moneyInDeletePreview && (
-                  <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
-                    <p className={styles.dangerConfirmTitle}>
-                      Delete this {entryKind === 'income' ? 'income entry' : 'money-back entry'}?
-                    </p>
-                    <p className={styles.dangerConfirmBody}>
-                      {moneyInDeletePreview.posted ? (
-                        <>
-                          <strong>{fmt(moneyInDeletePreview.amount)}</strong> is on the team’s books as money
-                          that came in. Deleting it takes that back off, so cash on hand goes{' '}
-                          <strong>down</strong> by {fmt(moneyInDeletePreview.amount)}.
-                          {entryKind === 'refund' && ' The item it was reducing goes back up by the same amount.'}
-                        </>
-                      ) : (
-                        'Nothing was posted for this, so no money moves.'
-                      )}
-                    </p>
-                    <p className={styles.dangerConfirmBody}>Nobody’s dues change either way.</p>
-                    <div className={styles.dangerConfirmActions}>
-                      <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
-                      <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
-                        {deleting ? 'Deleting…' : moneyInDeletePreview.posted ? 'Delete and reverse' : 'Delete'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {confirmDelete && editing && (
-                  <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
-                    <p className={styles.dangerConfirmTitle}>
-                      Delete “{editing.description}”?
-                    </p>
-                    {deletePreview.amount > 0 && (
-                      <p className={styles.dangerConfirmBody}>
-                        This has already posted <strong>{fmt(deletePreview.amount)}</strong> out of the team’s
-                        books{deletePreview.legs > 1 ? ` across ${deletePreview.legs} payments` : ''}. Deleting it will
-                        reverse that, so cash on hand goes back up by {fmt(deletePreview.amount)}.
-                      </p>
-                    )}
-                    {/* ⚠⚠ IT NAMES THE HOUSEHOLD AND THE FIGURE (owner ruling 2026-08-27). "A family
-                        paid this out of pocket" was true and unactionable: a coach deleting a mistyped
-                        cost could not tell WHO was about to lose WHAT, and the credit goes by cascade
-                        the instant they confirm. The ruling settles an asymmetry — removing a PLAYER
-                        who carries credits is refused outright, while deleting the COST they are owed
-                        against went through in silence. The delete still goes through; it just stops
-                        being silent. */}
-                    {deletePreview.owesFamily && (
-                      <p className={styles.dangerConfirmBody}>
-                        {deletePreview.owedByFamily.length > 0 ? (
-                          <>
-                            <strong>The credit the team owes will be removed too:</strong>{' '}
-                            {deletePreview.owedByFamily.map((o, at) => {
-                              const who = formatPlayerFirstLast(roster.find(r => r.id === o.playerId));
-                              return (
-                                <Fragment key={o.playerId}>
-                                  {at > 0 ? ', ' : ''}
-                                  {who ? <>{possessive(who)} family</> : <>a family</>} <strong>{fmt(o.amount)}</strong>
-                                </Fragment>
-                              );
-                            })}
-                            . No team cash moves either way.
-                          </>
-                        ) : (
-                          <>A family paid this out of pocket. <strong>The credit the team owes them will
-                          be removed too</strong> — no team cash moves either way.</>
-                        )}
-                      </p>
-                    )}
-                    {deletePreview.amount === 0 && !deletePreview.owesFamily && (
-                      <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>
-                    )}
-                    <div className={styles.dangerConfirmActions}>
-                      <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
-                      <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
-                        {deleting ? 'Deleting…' : deletePreview.amount > 0 ? 'Delete and reverse' : 'Delete'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                </>
-              ) : (
-                <>
-              {/* The bill form's consequence rides INSIDE the sticky footer (full-width first row)
-                  so it is readable at the moment of saving however long the schedule grows — see
-                  the in-grid site's note. `flexBasis: 100%` puts the buttons on their own row. */}
-              {isPayableForm && (
-                <div style={{ flexBasis: '100%' }}>{consequenceLine()}</div>
-              )}
-              {/* Delete lives in the FORM's footer, not on the row — the pattern Budget Plan set,
-                  and the reason a row needs only one control (owner ruling 2026-08-15).
-                  ⚠⚠ EXCEPT ON A COMMITMENT, WHOSE DELETE MOVED TO THE FOOT OF ITS PAGE (Part B).
-                  After the register re-point the only way this form opens on a saved commitment is
-                  `Add an installment`, launched FROM that page — so a Delete here would be a second,
-                  quieter door to the same destructive act, sitting inside a schedule editor and one
-                  scroll from the real one. The phase's rule is one delete path, not a softer
-                  spare. ⚠ The test is the RECORD's type, not the form's door: `isPayableForm` is
-                  also true while ADDING, where there is nothing to delete and this branch is
-                  already shut by `formMode`. */}
-              {/* ⚰ `!confirmDelete` STOOD HERE and is gone: the confirmation now replaces this
-                  whole row rather than appearing beneath it, so there is nothing left to hide. */}
-              {formMode === 'edit' && canWriteMoney
-                && editing?.expenseType !== 'tournament_payable' && (
-                <button
-                  className={styles.deleteRecordBtn}
-                  onClick={() => setConfirmDelete(true)}
-                  disabled={saving || deleting}
-                >
-                  <Trash2 size={13} aria-hidden /> Delete
-                </button>
-              )}
-              {/* ⚠ DISABLED WHILE SAVING (/review, 2026-08-23). The Record-a-payment modal P2
-                  deleted guarded its own Cancel this way, and routing bill payments through this
-                  shared footer would have quietly dropped that: click Save, then Cancel while the
-                  POST is in flight, and the form closes as though nothing happened while the
-                  payment lands a moment later. Every save path through this footer moves money. */}
-              <button className={styles.btnGhost} disabled={saving || deleting} onClick={closeForm}>Cancel</button>
-              <button className={styles.btnPrimary} disabled={saving || deleting} onClick={saveRecord}>
-                {/* ⚠ ONE WORD FOR ADD AND EDIT (owner ruling 2026-08-16). It used to name the
-                    outcome — "Add Expense", "Add Money Back", "Save changes" — which was right while
-                    the button was the only thing that knew what the form had become. The consequence
-                    line above it says that now, in dollars, so the button can go back to being a
-                    button. (The settle mode that kept "Mark Paid" is gone — recording money is the
-                    Record-a-payment modal below, whose button names its own outcome.) */}
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>,
+            {/* A refused save (or delete) says why beside the button, in the foot, at any scroll (One Window 2b). */}
+            <QuestionReason className={styles.errorText}>{saveError}</QuestionReason>
+        </QuestionShell>,
         document.querySelector('[data-coach-warm-enabled]') ?? document.body,
       )}
 
@@ -8836,7 +8801,7 @@ function MoneyRecordsPanel({
           }}
         />
       )}
-      {/* The discard guard covers dismissing the sheet; this covers walking away from it —
+      {/* The window's own ask covers closing it; this covers walking away from it —
           a tap on the sidebar, the bottom nav, or a browser refresh mid-form. */}
       <UnsavedChangesGuard
         active={formOpen && formDirty}

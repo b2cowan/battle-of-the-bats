@@ -545,7 +545,8 @@ test.describe('Money on a phone @360x740', () => {
     await page.getByRole('button', { name: /record money/i }).first().click();
     await expect(page.getByPlaceholder(/diamond rental/i)).toBeVisible();
     await page.getByRole('button', { name: /^back$/i }).click();
-    await expect(page.getByText(/discard this expense/i)).toBeHidden();
+    // The one window's ask (One Window 2d) — never shown over a form nobody touched.
+    await expect(page.getByText(/close without saving\?/i)).toBeHidden();
     await expect(page.getByPlaceholder(/diamond rental/i)).toHaveCount(0);
   });
 
@@ -672,7 +673,7 @@ test.describe('Money forms on a desktop', () => {
   // phone tests above exercise the back arrow instead.
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test('a backdrop click on a dirty Money form asks before discarding', async ({ page }) => {
+  test('a dirty Money form ignores a backdrop click and asks in its foot before discarding', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
     await open(page, `${base()}/accounting?section=transactions`);
 
@@ -684,9 +685,15 @@ test.describe('Money forms on a desktop', () => {
     await page.getByRole('button', { name: /record money/i }).first().click();
     await page.getByPlaceholder(/diamond rental/i).fill('Bat bag');
 
-    await page.locator('[class*="modalOverlay"]').first().click({ position: { x: 5, y: 5 } });
-    await expect(page.getByText(/discard this expense/i)).toBeVisible();
-    await page.getByRole('button', { name: /keep editing/i }).click();
+    /* ⚖ ONE WINDOW (answer B, 2026-10-19; Record money moved in 2d): a tap outside a form does NOTHING, typed or
+       not — the form stays, and nothing asks. Only ×, Cancel, Escape and Back close it, and with words typed those
+       ask in the window's own foot ("Close without saving?" · Keep writing · Discard), never in a second window. */
+    await page.mouse.click(5, 5);
+    await expect(page.getByPlaceholder(/diamond rental/i)).toHaveValue('Bat bag');
+    await expect(page.getByText(/close without saving\?/i)).toBeHidden();
+    await page.keyboard.press('Escape');
+    await expect(page.getByText(/close without saving\?/i)).toBeVisible();
+    await page.getByRole('button', { name: /keep writing/i }).click();
     await expect(page.getByPlaceholder(/diamond rental/i)).toHaveValue('Bat bag');
   });
 

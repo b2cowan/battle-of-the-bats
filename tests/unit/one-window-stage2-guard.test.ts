@@ -18,6 +18,8 @@ import { cssRule, filesUnder, openingTags, parseProps, readCode, splitPhoneCss, 
  *       refused save's reason shows in the foot (`QuestionReason`); the phone's save pill rides the measured foot.
  *   2c  The hand-built coach windows with no Tab trap or phone Back move onto the shell, most dangerous first; the
  *       eight that never asked ask as they move (B3), the small cards that are not questions fill a phone (B5).
+ *   2d  The rest of the hand-built coach windows (they had the floor already) move onto the shell: the money windows
+ *       that asked in a second window ask in their own foot (B1), the read windows fill a phone, the practice page last.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -437,6 +439,28 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
   });
 });
 
+describe('2d · the rest of the hand-built coach windows move onto the one window', () => {
+  it('call B1: Record money / Add a bill asks in its own foot, stays portaled, and keeps its route guard (part 1)', () => {
+    const code = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx');
+    // A save or a delete in flight holds every way out; with something typed, every way out asks in the foot.
+    assert.match(code, /<QuestionShell\s+open\s+onClose=\{dismissForm\}\s+dirty=\{formDirty\}\s+busy=\{saving \|\| deleting\}/);
+    // ⚠ Still PORTALED into the warm root: the hub's Record button opens it while this panel may be hidden under
+    // another tab, and the coach palette hangs off `[data-coach-warm-enabled]` (never <body> while a shell exists).
+    assert.match(code, /createPortal\(\s*<QuestionShell[\s\S]*?<\/QuestionShell>,\s*document\.querySelector\('\[data-coach-warm-enabled\]'\) \?\? document\.body,/);
+    assert.doesNotMatch(code, /useDiscardGuard\(|useOverlayOpen|useDialogFloor|CoachModalHeader|modalOverlay|modalFooter/,
+      'the window asks and owns its overlay, floor and head; no second window');
+    // The route guard (a link, a reload) stays beside the window's own ask.
+    assert.match(code, /<UnsavedChangesGuard\s+active=\{formOpen && formDirty\}\s+interceptClicks=\{formOpen && formDirty && tabActive\}/);
+    // The two delete confirms stay docked in the foot: whole at its left, the window's buttons gone while one shows.
+    assert.match(code, /footerStart=\{confirmDelete \? \(/);
+    assert.match(code, /footer=\{confirmDelete \? undefined : \(\s*<>\s*<QuestionCancel className=\{styles\.btnGhost\} \/>/);
+    assert.equal((code.match(/role="alertdialog" aria-label="Confirm delete"/g) ?? []).length, 2);
+    // …and the one window's foot takes a docked confirm across its whole row (RoomShell's doors-slot promise).
+    assert.match(kitCss, /\.footStart:has\(> \[role="alertdialog"\]\) \{ flex: 1 1 100%; margin-right: 0; \}/);
+    assert.match(kitCss, /\.footStart > \[role="alertdialog"\] \{ flex: 1 1 100%; margin: 0; \}/);
+  });
+});
+
 describe('2a · the windows still to move (each list only shrinks)', () => {
 
   it('no coach file builds a window from .modalOverlay outside the list, and every entry says why', () => {
@@ -455,7 +479,6 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', MOVES_2D + ' (and the player drawer stays out)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx', MOVES_2D + ' (Record money, portaled)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx', MOVES_2D + ', the practice page last'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx', MOVES_2D + ', the practice page last (its station and block sheets stay out)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeSendSheet.tsx', MOVES_2D],
