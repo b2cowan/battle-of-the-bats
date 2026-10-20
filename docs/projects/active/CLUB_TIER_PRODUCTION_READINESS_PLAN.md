@@ -1003,6 +1003,14 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > entry 2026-10-19 "A club's public site". Next: the build prompts, one per sub-stage (4a → 4b → 4c, then 4d sponsors).
 > **📝 4a build prompt written 2026-10-19:** `CLUB_TIER_STAGE4A_BUILD_PROMPT.md` (one rule, one refusal; for a new chat). 4b–4e prompts
 > are written as each one before them lands.
+> **⚖ 4b SPLIT 2026-10-20 (owner, "agree with your recommendations"):** **4b-1 the frame** — the light ground and type, the
+> club's colour as four roles with the darkening rule, the club's own bar (72 px, Sign in, tabs; no Discover or Pricing), no
+> platform phone bar, one footer, "page · club" titles, "Past tournaments", every existing club page restyled with its structure
+> unchanged, the club pages added to the layout sweep — walked ON ITS OWN, because it changes every club page at once; then
+> **4b-2 the pages** (the home's two shapes, Teams page and tab with Born in, the club Tryouts page, tryout days and the finished
+> state, the team page's new parts, preview cards, sitemap, the banner strip) built inside it. Open for 4b-1: what a signed-in
+> member of staff sees in the club's bar (not drawn; the build asks first). **📝 4b-1 build prompt written 2026-10-20:**
+> `CLUB_TIER_STAGE4B1_BUILD_PROMPT.md` (for a new chat).
 > **✅ 4a BUILT + COMMITTED `d82ad01a3` 2026-10-20** (local, not pushed; one session, from `CLUB_TIER_STAGE4A_BUILD_PROMPT.md`; words through /marketing 2026-10-20, owner "looks
 > good"). **One rule:** `lib/public-club-access.ts` (`publicClubRefusal`: no club · site off or cancelled · plan does not carry the
 > page — rep teams for team and tryout pages, house league for league, tournaments for archives; the home needs only the switch)
