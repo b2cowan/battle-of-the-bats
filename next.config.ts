@@ -38,6 +38,25 @@ const nextConfig: NextConfig = {
     if (!dev) config.cache = false;
     return config;
   },
+  // Security headers on every response (owner, 2026-10-19, found while answering "can a club mask our address?").
+  // Production sent neither: any site could show our admin and coach screens inside its own frame and trick a signed-in
+  // user into clicking them (clickjacking), and browsers were never told to stay on HTTPS. frame-ancestors 'self' is the
+  // modern rule and X-Frame-Options the older browsers' copy; same-origin frames (the dev email preview) still work. A
+  // club's own domain (Club Tier 4e) serves its pages as 'self' too. HSTS stays on THIS host only: includeSubDomains
+  // would also force HTTPS on any subdomain we have not audited (an email link-tracking host, say), and preload is a
+  // commitment that is hard to undo, so neither is set. Pinned by tests/unit/security-headers.test.ts.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000' },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       // Redirect .com to .ca (canonical domain)
