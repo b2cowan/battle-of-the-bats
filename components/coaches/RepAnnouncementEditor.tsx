@@ -187,7 +187,7 @@ export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster =
 
   return (
     <div className={styles.editor}>
-      <UnsavedChangesGuard active={subjectReady || bodyReady} />
+      <UnsavedChangesGuard active={subjectReady || bodyReady} message="You have unsaved changes to this announcement. Leave without saving them?" />
       {error && <p className={styles.error} role="alert">{error}</p>}
       {notice && <p className={styles.notice}>{notice}</p>}
 

@@ -11075,9 +11075,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
      through (owner, 2026-09-25: "weird spacing around it"), and the pill sat 28px in from the right
      where every other screen puts it at 12. Both from this rule's first day (09-24).
      ⚠ AND THE ONE WINDOW IS A FIXED CHILD TOO (One Window 2d): those three dialogs are KitDialog's overlay now — a
-     class this sheet cannot name — so it is skipped by its own mark (`[data-kit-overlay]`). */
-  .coachesMain:has(.ppSheetPair) .page > :not(.ppSheetCol):not(.modalOverlay):not(.savePill):not([data-kit-overlay]),
-  .coachesMain:has(.ppSheetPair) .ppSheetCol > :not(.ppSheetPair):not(.modalOverlay):not([data-kit-overlay]) { margin-inline: 1rem; }
+     class this sheet cannot name — so it is skipped by its own mark (`[data-kit-overlay]`). And the page's "Unsaved
+     changes" leave confirm (the shared FeedbackModal, unportalled: its root is the global `.modal-overlay`, /review). */
+  .coachesMain:has(.ppSheetPair) .page > :not(.ppSheetCol):not(.modalOverlay):not(.savePill):not([data-kit-overlay]):not(:global(.modal-overlay)),
+  .coachesMain:has(.ppSheetPair) .ppSheetCol > :not(.ppSheetPair):not(.modalOverlay):not([data-kit-overlay]):not(:global(.modal-overlay)) { margin-inline: 1rem; }
   /* The team strip bleeds over the shell gutter with a -1rem side margin; with no gutter here that
      bleed would hang 16px off each edge (probe: the page scrolled sideways by 16px). */
   .coachesMain:has(.ppSheetPair) .teamHeader { margin-inline: 0; }

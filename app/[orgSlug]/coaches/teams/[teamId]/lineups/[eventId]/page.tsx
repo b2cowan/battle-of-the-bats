@@ -1003,7 +1003,7 @@ export default function CoachLineupBuilderPage({
     // grid's last row or the notes field while the word is up.
     <div className={`${styles.page} ${styles.pageWide} ${lineupRows.length > 0 ? styles.savePillPage : ''}`}>
       {header}
-      <UnsavedChangesGuard active={lineupDirty} />
+      <UnsavedChangesGuard active={lineupDirty} message="You have unsaved changes to this lineup. Leave without saving them?" />
 
       {loading ? (
         <div className={styles.loadingState}>Loading lineup…</div>

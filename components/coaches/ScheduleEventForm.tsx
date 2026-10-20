@@ -874,7 +874,7 @@ export default function ScheduleEventForm({
   return (
     <>
       {/* Warn before leaving with an unsaved event. */}
-      <UnsavedChangesGuard active={formDirty} />
+      <UnsavedChangesGuard active={formDirty} message="You have unsaved changes to this event. Leave without saving them?" />
       {/* Stands in QuestionShell since the consistency pass (owner ruling 2026-09-21): the dialog
           floor (role, label, Escape, the Tab trap, focus restore), the shared overlay (a full-screen
           sheet ≤640 with no opt-in) and the busy-gated close all come from the shell — this form was

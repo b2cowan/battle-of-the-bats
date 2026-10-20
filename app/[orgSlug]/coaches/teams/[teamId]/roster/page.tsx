@@ -947,7 +947,7 @@ export default function RosterPage({
           below the fold once (2026-08-24) for outranking the roster, and then retired. */}
 
       {/* Add player modal */}
-      <UnsavedChangesGuard active={addDirty} />
+      <UnsavedChangesGuard active={addDirty} message="You haven't added this player yet. Leave without saving it?" />
 
       {/* ⚖ THE ONE WINDOW (One Window Stage 2c, B1, 2026-10-19): with something typed, ×, ←, Escape and the phone's
           Back ask in the window's foot (Keep writing · Discard) instead of a second window; a tap outside does nothing.

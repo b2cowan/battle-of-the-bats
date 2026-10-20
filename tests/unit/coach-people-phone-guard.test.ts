@@ -149,7 +149,7 @@ describe('F2 · the name is the switcher; the sheet is the team sheet\'s twin', 
     // No chevrons on EITHER switcher (owner, 2026-09-24): the tint says where you are.
     assert.doesNotMatch(sheet, /ChevronRight|dropChevron/);
     assert.doesNotMatch(readCode(TEAM_SHEET), /ChevronRight|dropChevron/);
-    assert.match(page, /<UnsavedChangesGuard active=\{dirty\} \/>/);
+    assert.match(page, /<UnsavedChangesGuard active=\{dirty\} message="You have unsaved changes to this player\. Leave without saving them\?" \/>/);
   });
   it('a row keeps the tab the coach was reading and the way back', () => {
     assert.match(page, /const playerHref = \(id: string\) => playerTabHref\(`\$\{base\}\/roster\/\$\{id\}`, tab, \{ returnTo \}\);/);

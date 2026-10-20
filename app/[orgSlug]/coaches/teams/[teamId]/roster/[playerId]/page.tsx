@@ -627,7 +627,7 @@ export default function PlayerDetailPage({
 
   return (
     <div className={styles.page}>
-      <UnsavedChangesGuard active={dirty} />
+      <UnsavedChangesGuard active={dirty} message="You have unsaved changes to this player. Leave without saving them?" />
       {/* Header (page-header ruling 2026-08-11): the player's name, nothing under the title — age
           is a live fact, so it leads the glance card one line down. The jersey number chip that
           used to sit beside it was dropped (owner call, 2026-09-13): it read as an orphaned badge

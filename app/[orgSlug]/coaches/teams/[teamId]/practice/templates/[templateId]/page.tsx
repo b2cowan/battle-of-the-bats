@@ -165,7 +165,7 @@ export default function CoachPlanTemplateEditorPage({
 
   return (
     <div className={`${styles.page} ${styles.savePillPage}`}>
-      <UnsavedChangesGuard active={dirty} />
+      <UnsavedChangesGuard active={dirty} message="You have unsaved changes to this template. Leave without saving them?" />
 
       <CoachPageHeader
         icon={BookMarked}

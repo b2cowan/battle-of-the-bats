@@ -145,7 +145,7 @@ export default function CoachCircuitEditorPage({
 
   return (
     <div className={`${styles.page} ${styles.savePillPage}`}>
-      <UnsavedChangesGuard active={dirty} />
+      <UnsavedChangesGuard active={dirty} message="You have unsaved changes to this circuit. Leave without saving them?" />
 
       <CoachPageHeader
         icon={Repeat}

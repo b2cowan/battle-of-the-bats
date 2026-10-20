@@ -1201,7 +1201,7 @@ export default function CoachPracticePlanPage({
        fills exactly what the header fills; undocked it is `.page`'s own 960, the sheet alone. */
     <div ref={columnRef} className={`${styles.page} ${styles.savePillPage}${isDocked ? ` ${styles.pageWide}` : ''}`}>
       {header}
-      <UnsavedChangesGuard active={dirty} />
+      <UnsavedChangesGuard active={dirty} message="You have unsaved changes to this practice. Leave without saving them?" />
 
       {loading ? (
         <div className={styles.loadingState}>Loading practice…</div>

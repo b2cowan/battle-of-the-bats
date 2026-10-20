@@ -1294,7 +1294,7 @@ export default function ScheduleEventSheet({
       })()}
 
       {/* Warn before leaving with an unsaved attendance edit. */}
-      <UnsavedChangesGuard active={attendanceDirty} />
+      <UnsavedChangesGuard active={attendanceDirty} message="You have unsaved attendance changes. Leave without saving them?" />
 
       {giveAwardOpen && (
         <GiveAwardModal

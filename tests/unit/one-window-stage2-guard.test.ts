@@ -354,7 +354,7 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
       assert.doesNotMatch(code, /useDiscardGuard|useOverlayOpen|CoachModalHeader|modalOverlay|modalFooter|confirm\(\{\s*title: 'Discard/, `${file}: the window asks; no second window`);
     }
     // Add a player keeps its route guard (a link, a reload) beside the window's own ask.
-    assert.match(readCode(`${T}/roster/page.tsx`), /<UnsavedChangesGuard active=\{addDirty\} \/>/);
+    assert.match(readCode(`${T}/roster/page.tsx`), /<UnsavedChangesGuard active=\{addDirty\} message="You haven't added this player yet\. Leave without saving it\?" \/>/);
     // A month-grid link that arrives over a dirty budget line is dropped, never asked about in a second window.
     assert.match(readCode(`${T}/accounting/budget/panel.tsx`), /if \(lineDirtyNow\.current\) return;\s*setEditingLine\(line\);/);
   });

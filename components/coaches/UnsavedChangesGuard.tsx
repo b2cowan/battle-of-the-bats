@@ -2,15 +2,10 @@
 import SharedUnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 
 /**
- * Coach edit-screen guard — the shared UnsavedChangesGuard with the coaches portal's player copy.
- * Thin wrapper so existing coach call sites (`<UnsavedChangesGuard active={isDirty} />`) are unchanged
- * while the reusable implementation lives in components/shared.
+ * Coach edit-screen guard — the shared UnsavedChangesGuard, saying what the coach would lose.
+ * ⚠ THE WORDS ARE THE CALLER'S, AND REQUIRED (/review, One Window 2d): this wrapper used to say "unsaved changes on
+ * this player" for every screen that mounted it, practices, lineups, templates and events included. Name the thing.
  */
-export default function UnsavedChangesGuard({ active }: { active: boolean }) {
-  return (
-    <SharedUnsavedChangesGuard
-      active={active}
-      message="You have unsaved changes on this player. Leave without saving them?"
-    />
-  );
+export default function UnsavedChangesGuard({ active, message }: { active: boolean; message: string }) {
+  return <SharedUnsavedChangesGuard active={active} message={message} />;
 }
