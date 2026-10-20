@@ -3,17 +3,9 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { signIn } from '@/lib/auth';
+import { signInErrorCopy } from '@/lib/auth-errors';
 import styles from './platform-login.module.css';
 
-const ERROR_MAP: Record<string, string> = {
-  'Invalid login credentials': 'Incorrect email or password.',
-  'invalid_credentials':       'Incorrect email or password.',
-  'too_many_requests':         'Too many attempts — please wait a moment.',
-  'Email not confirmed':       'Account not yet confirmed.',
-  'email_not_confirmed':       'Account not yet confirmed.',
-  'auth_timeout':              'Sign-in is taking too long. Check your connection and try again.',
-  'network_error':             'Could not reach the auth service. Please try again.',
-};
 
 function LoginForm() {
   const router       = useRouter();
@@ -39,7 +31,8 @@ function LoginForm() {
     setLoading(true);
     const { error: err } = await signIn(email, password);
     if (err) {
-      setError(ERROR_MAP[err] ?? 'Sign-in failed — check your credentials.');
+      // The one set of sign-in words (lib/auth-errors), the same as every customer sign-in (owner 2026-10-20).
+      setError(signInErrorCopy(err));
       setLoading(false);
     } else {
       const next = searchParams.get('next') ?? '/platform-admin';
@@ -53,11 +46,14 @@ function LoginForm() {
     setResetError('');
     setResetLoading(true);
     try {
-      await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/forgot-password', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: resetEmail }),
       });
+      // The route's limit (three links an hour per address) is a refusal, never "sent" (owner 2026-10-20).
+      if (res.status === 429) { setResetError('Too many tries. Wait a while, then try again.'); return; }
+      if (!res.ok) { setResetError('We couldn’t send the link. Try again.'); return; }
       setResetSent(true);
     } catch {
       setResetError('Network error — please try again.');

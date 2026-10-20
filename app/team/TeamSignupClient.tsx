@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { OFFERED_SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
 import { signIn } from '@/lib/auth';
+import { signInErrorCopy } from '@/lib/auth-errors';
 import {
   COACHES_CLAIM_PATH,
   COACHES_START_PATH,
@@ -84,14 +85,6 @@ const BILLING_OPTIONS = [
   { value: 'monthly', label: MONTHLY },
   { value: 'annual', label: ANNUAL },
 ] as const satisfies readonly { value: BillingCycle; label: string }[];
-
-const AUTH_ERRORS: Record<string, string> = {
-  invalid_credentials: 'Incorrect email or password. Please try again.',
-  email_not_confirmed: 'Please verify your email before signing in.',
-  too_many_requests: 'Too many sign-in attempts. Please wait a moment and try again.',
-  auth_timeout: 'Sign-in is taking too long. Check your connection and try again.',
-  network_error: 'Could not reach the auth service. Please try again.',
-};
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
   try {
@@ -282,7 +275,8 @@ export default function TeamSignupClient({
         setBusyLabel('');
         return;
       }
-      if (signin.error) throw new Error(AUTH_ERRORS[signin.error] ?? signin.error);
+      // The one set of sign-in words (lib/auth-errors), never a raw code (owner 2026-10-20).
+      if (signin.error) throw new Error(signInErrorCopy(signin.error));
       setIsAuthenticated(true);
       // The page's answers (the offer, the remembered billing) were a signed-out visitor's: ask again for this account,
       // so the price shown is the price the checkout charges.

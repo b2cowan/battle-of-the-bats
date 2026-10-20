@@ -16,6 +16,13 @@ export const SIGN_IN_ERROR_COPY: Readonly<Record<string, string>> = {
   network_error: 'Could not reach the auth service. Please try again.',
 };
 
+/** What a failed sign-in says when its code is none of the above: never the raw code or the provider's English. */
+export const SIGN_IN_ERROR_FALLBACK = 'Sign-in didn’t work. Try again in a moment.';
+
+/** The words for a failed sign-in's code — the map's line, a screen's own override, else the one fallback sentence. */
+export const signInErrorCopy = (code: string, overrides?: Readonly<Record<string, string>>): string =>
+  overrides?.[code] ?? SIGN_IN_ERROR_COPY[code] ?? SIGN_IN_ERROR_FALLBACK;
+
 /**
  * Why a screen sent someone to sign-in (`/auth/login?reason=…`), so sign-in can say so above its fields (The first
  * look 2b). `expiredLink`: a confirmation link that cannot be used (expired, already used, or broken), from the auth

@@ -497,6 +497,16 @@ those people, because the account-only sign-up carries their `next`.
   touches 2b's sign-in page and test); the reset's 1.5-second hop to the account has no cancel (pre-existing).
 
 ## /design review of the drawings (2026-10-19)
+- **Three of those findings fixed after the commit (owner, 2026-10-20, "fix those 3 items"):** (1) forgot password has
+  "Send the link again"'s budget (three per address an hour, ten per network in 15 minutes, a ceiling); past it the
+  page says "Too many tries." in the amber notice, not "check your connection"; and both no-tell routes answer their
+  200 no sooner than a 2-second floor (`lib/no-tell-floor.ts`), so a found account is no slower (the resend route had
+  the same leak; sending after the answer is not possible on Amplify). Every reset request now takes about 2 seconds.
+  (2) Every password sign-in screen (sign-in, tournament registration, the team sign-up, the platform-admin sign-in, the
+  account-only sign-up) words a failure through `signInErrorCopy` in `lib/auth-errors.ts`: the shared map, a screen's
+  override, else "Sign-in didn't work. Try again in a moment.", never a raw code; the team sign-up's and platform admin's
+  own copies are gone. (3) The helpdesk agent's command file quotes the new words. Pinned in
+  `tests/unit/sign-in-words-and-no-tell-guard.test.ts`.
 
 Run before hand-off; its changes are in the drawings and listed on the hub's Your answers tab. D-F1 and D-F2 became
 Asks 12 and 13. Applied: D-F3 the billing choice 44px / 14px with a check on the picked option (one control shared

@@ -112,7 +112,8 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
       'Press Use a different email. The form is back with the address still filled and the cursor in it.',
       'Open localhost:3000/auth/forgot-password?next=%2Fuat-test-org%2Fregister and send. The sent sentence ends with “Once you set a new password, you’ll come back to your registration.” (your call at the build gate). Without the next= part, that sentence is not there.',
       'Open localhost:3000/auth/forgot-password?reason=expired-link. The amber notice “That link has expired or was already used. Request a new one below.” sits above the Email field. This is where every expired or used reset link now lands (Walk 5 does it for real).',
-      'Turn the connection off (browser developer tools → Network → Offline), then send. An amber notice says “We couldn’t send the link. Check your connection and try again.” and “Check your email” does not show. Turn the connection back on.'
+      'Turn the connection off (browser developer tools → Network → Offline), then send. An amber notice says “We couldn’t send the link. Check your connection and try again.” and “Check your email” does not show. Turn the connection back on.',
+      'Send a reset link for the same made-up address four times in a row (Use a different email between sends). Each send takes about two seconds; the fourth shows the amber “Too many tries. Wait a while, then try again.” instead of “Check your email”. (Three links an hour per address, added after the build at your request.)'
     ]},
     {id:'3',stg:false,title:'Sign-in says the way forward',
      for:'The refusals sign-in can show locally: the wrong password (the one red notice), an address that already has an account handed over from a sign-up (olive), and an expired link’s new-link button.',
@@ -123,7 +124,8 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
       'On localhost:3000/auth/login, sign in as the coach with a wrong password. A red-edged notice under the fields: “That email and password don’t match. Try again, or use “Forgot your password?” below.”',
       'Open localhost:3000/start/team and make an account with uat-coach@uat-test-org.local and any password. You are handed to sign-in with the address filled and an olive notice: “You already have an account with that email. Sign in below.”',
       'Open localhost:3000/auth/login?reason=expired-link and press “Email me a new link” with the field empty. A red line under the field: “Enter your email address first.” Type an address and press it again: an olive notice “Check your email. If that address is waiting to be confirmed, a new link is on its way. Check your spam folder too.”',
-      'Sign in as the coach with the right password. You land where you always do.'
+      'Sign in as the coach with the right password. You land where you always do.',
+      'Open localhost:3000/platform-admin/login and sign in with a wrong password. It says “That email and password don’t match. Try again.” (the platform admin’s own old words, “Incorrect email or password”, are gone).'
     ]},
     {id:'4',stg:false,title:'Two existing screens: a bold name now prints in full ink',
      for:'A side effect of the reset screen’s bold address: a bold name inside the line under a heading now prints in full ink instead of the dim grey, on every screen that has one. Two existing screens do: the coach join page and the assistant-coach invitation, both on “You’re signed in as a different account”.',

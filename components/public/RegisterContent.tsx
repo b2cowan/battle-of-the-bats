@@ -15,7 +15,7 @@ import {
   alreadyRegisteredLine, differentTeamSentence, isChoosableTeam, pickEntryHeadCoach, TEAM_ALREADY_REGISTERED, whoRegistersSentence,
   type CardHeadCoach, type RegistrableTeam,
 } from '@/lib/registrable-teams';
-import { SIGN_IN_ERROR_COPY, isValidEmail } from '@/lib/auth-errors';
+import { isValidEmail, signInErrorCopy } from '@/lib/auth-errors';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import VerifyEmailSent, { requestVerificationLink } from '@/components/auth/VerifyEmailSent';
 import PasswordInput from '@/components/auth/PasswordInput';
@@ -86,8 +86,7 @@ function cardState(team: RegistrableTeam): CardState {
 }
 
 /** Sign-in failures on Step 1: the sign-in page's words, with "wrong password" pointing at the reset link below it. */
-const SIGN_IN_ERRORS: Readonly<Record<string, string>> = {
-  ...SIGN_IN_ERROR_COPY,
+const SIGN_IN_OVERRIDES: Readonly<Record<string, string>> = {
   invalid_credentials: 'That password doesn’t match this account. Try again, or reset it below.',
 };
 
@@ -490,7 +489,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       const { signIn } = await import('@/lib/auth');
       const { error } = await signIn(form.email.trim().toLowerCase(), form.password);
       if (error) {
-        setStepError(SIGN_IN_ERRORS[error] ?? 'We couldn’t sign you in. Please try again.');
+        setStepError(signInErrorCopy(error, SIGN_IN_OVERRIDES));
         return;
       }
       if (!(await loadCoachTeams())) {

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { forgetSandboxMarkerCookie } from '@/lib/sandbox-exit-rule';
 import { safeNextPath } from '@/lib/safe-redirect';
-import { SIGN_IN_ERROR_COPY, SIGN_IN_REASON } from '@/lib/auth-errors';
+import { SIGN_IN_REASON, signInErrorCopy } from '@/lib/auth-errors';
 import ResendLink from '@/components/auth/ResendLink';
 import { EmailField, PasswordField, StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
 import LoadingState from '@/components/shared/LoadingState';
@@ -81,7 +81,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail]       = useState(searchParams.get('email') ?? '');
   const [password, setPassword] = useState('');
-  // The failure's code from signIn (the notice is chosen by it; its words come from SIGN_IN_ERROR_COPY).
+  // The failure's code from signIn (the notice is chosen by it; its words come from signInErrorCopy).
   const [error, setError]       = useState('');
   // "Email me a new link" with the field empty asks for the address under the field (U7), never an alert.
   const [missingEmail, setMissingEmail] = useState(false);
@@ -218,7 +218,7 @@ function LoginForm() {
             />
           </>
         ) : error ? (
-          <div className={accountForm.noticeWarn} role="alert">{SIGN_IN_ERROR_COPY[error] ?? error}</div>
+          <div className={accountForm.noticeWarn} role="alert">{signInErrorCopy(error)}</div>
         ) : null}
 
         {/* The password matched for a waiting account, so the way back to it is noise there (owner, Stage 2b gate). */}

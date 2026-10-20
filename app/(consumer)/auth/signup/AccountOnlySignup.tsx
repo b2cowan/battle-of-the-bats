@@ -3,6 +3,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
+import { signInErrorCopy } from '@/lib/auth-errors';
 import { safeNextPath } from '@/lib/safe-redirect';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
@@ -90,7 +91,7 @@ function AccountOnlyForm() {
 
     const { error: signInErr } = await signIn(email, password);
     if (signInErr) {
-      setError(signInErr);
+      setError(signInErrorCopy(signInErr)); // the one set of sign-in words, never the raw code
       setLoading(false);
       return;
     }

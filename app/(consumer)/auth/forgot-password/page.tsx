@@ -18,7 +18,7 @@ function ForgotPasswordForm() {
   // is dropped here and again by the server.
   const returnTo = registrationReturnPath(searchParams.get('next'));
   const [email, setEmail] = useState(searchParams.get('email') ?? '');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed' | 'limited'>('idle');
   // Once a new link is on its way, the notice about the old one has done its job (it stays gone after "Use a different
   // email"). A reset link that could not be used — expired, already used, or broken — lands here with the reason (U4
   // screen 3).
@@ -42,6 +42,8 @@ function ForgotPasswordForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, ...(returnTo ? { next: returnTo } : {}) }),
       });
+      // The route's limit (three links an hour per address): a wait, nobody's mistake, said as one (owner 2026-10-20).
+      if (res.status === 429) { setStatus('limited'); return; }
       if (!res.ok) throw new Error(`forgot-password ${res.status}`);
       // Always "check your email" — the route answers the same for every address, so this never reveals an account.
       setStatus('sent');
@@ -96,6 +98,12 @@ function ForgotPasswordForm() {
           <div className={accountForm.noticeWarn} role="alert">
             <strong>We couldn’t send the link.</strong>{' '}
             Check your connection and try again.
+          </div>
+        )}
+        {status === 'limited' && (
+          <div className={accountForm.noticeWarn} role="alert">
+            <strong>Too many tries.</strong>{' '}
+            Wait a while, then try again. Check your inbox and spam folder for a link you already asked for.
           </div>
         )}
 

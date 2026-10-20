@@ -50,7 +50,7 @@ describe('every refusal says the way forward (U1, the waiting account, D-F9)', (
     assert.match(page, /`\/auth\/forgot-password\?next=\$\{encodeURIComponent\(next\)\}`/);
   });
   it('any other failure is amber in its own sentence (owner, 2b gate), and no shared line says "verify"', () => {
-    assert.match(page, /\) : error \? \(\s*<div className=\{accountForm\.noticeWarn\} role="alert">\{SIGN_IN_ERROR_COPY\[error\] \?\? error\}<\/div>/);
+    assert.match(page, /\) : error \? \(\s*<div className=\{accountForm\.noticeWarn\} role="alert">\{signInErrorCopy\(error\)\}<\/div>/);
     for (const line of Object.values(SIGN_IN_ERROR_COPY)) assert.doesNotMatch(line, /verif/i);
     // Supabase's own rate-limit code reaches every sign-in screen as the one the copy is keyed on (it showed raw before)
     assert.match(readCode('lib/auth.ts'), /if \(authError\.code === 'over_request_rate_limit'\) return \{ error: 'too_many_requests' \};\s*if \(authError\.code\) return/);

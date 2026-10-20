@@ -236,8 +236,8 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-coach-forgot-password',
           question: 'I forgot my password — how do I get back in?',
-          answerText: 'On the sign-in page, press Forgot your password?, type your email and press Send me a reset link. Open the email (Reset your FieldLogicHQ password) and press its button, then Reset my password on the page it opens. Choose a new password (at least 8 characters) and press Save password; you are taken into your account. The link works for 1 hour. An old or already-used link opens the forgot-password page, which says so: ask for a new one there. Started from a registration form? After the new password you come back to that registration, signed in. No email? The page says a link is on its way if an account exists for that address, so check your spam folder and the spelling of the address.',
-          keywords: ['forgot password', 'reset password', 'reset my password', 'send me a reset link', 'choose a new password', 'save password', 'cannot sign in', 'can\'t log in', 'password not working', 'wrong password', 'don\'t match', 'reset link expired', 'reset link already used', 'no reset email', 'change password'],
+          answerText: 'On the sign-in page, press Forgot your password?, type your email and press Send me a reset link. Open the email (Reset your FieldLogicHQ password) and press its button, then Reset my password on the page it opens. Choose a new password (at least 8 characters) and press Save password; you are taken into your account. The link works for 1 hour. An old or already-used link opens the forgot-password page, which says so: ask for a new one there. Started from a registration form? After the new password you come back to that registration, signed in. No email? The page says a link is on its way if an account exists for that address, so check your spam folder and the spelling of the address. Asked several times? You can get three reset links an hour; after that the page says Too many tries, so wait a while and use the newest email.',
+          keywords: ['forgot password', 'reset password', 'too many tries', 'too many requests', 'reset my password', 'send me a reset link', 'choose a new password', 'save password', 'cannot sign in', 'can\'t log in', 'password not working', 'wrong password', 'don\'t match', 'reset link expired', 'reset link already used', 'no reset email', 'change password'],
           answer: (
             <>
               <ol>
@@ -250,6 +250,7 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>Link expired or already used?</strong> The link works for 1 hour. An old one opens the forgot-password page, which says so: ask for a new one there.</li>
                 <li><strong>Started from a registration form?</strong> After the new password you come back to that registration, signed in.</li>
                 <li><strong>No email?</strong> The page says a link is on its way <em>if</em> an account exists for that address, so check your spam folder and the spelling of the address.</li>
+                <li><strong>Asked several times?</strong> You can get three reset links an hour. After that the page says <strong>Too many tries</strong>: wait a while and use the newest email.</li>
               </ul>
             </>
           ),

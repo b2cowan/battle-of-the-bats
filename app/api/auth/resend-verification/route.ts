@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { withObservability, captureError } from '@/lib/observability';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
+import { holdUntilFloor } from '@/lib/no-tell-floor';
 import { findAuthUserByEmail } from '@/lib/auth-account-lookup';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import {
@@ -28,6 +29,15 @@ const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 60);
 const SENT = { ok: true };
 
 export const POST = withObservability(async (req: NextRequest) => {
+  const startedAt = Date.now();
+  const res = await resend(req);
+  // The no-tell answer leaves at the same time whatever was found (a waiting account makes a link and sends an email);
+  // a refusal (400, 429) names no account and leaves at once. First Look 2c review, 2026-10-20.
+  if (res.ok) await holdUntilFloor(startedAt);
+  return res;
+}, { route: '/api/auth/resend-verification' });
+
+async function resend(req: NextRequest): Promise<NextResponse> {
   const body = await req.json().catch(() => ({})) as { email?: unknown; next?: unknown; continueName?: unknown };
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -69,4 +79,4 @@ export const POST = withObservability(async (req: NextRequest) => {
     continueName: typeof body.continueName === 'string' ? body.continueName : null,
   });
   return NextResponse.json(SENT);
-}, { route: '/api/auth/resend-verification' });
+}
