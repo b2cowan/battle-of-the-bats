@@ -346,7 +346,7 @@ tournament intro's "← Back to all options" is gone. Premium: no Portal URL pre
 "Create account" foot link; Create team is always tappable and says why it cannot go (no name, wrong account). The club
 invitation's name fields lost the 60-character typing limit (the server trims to 60).
 
-**Open owner calls (walk §348 Part C).** The join page's sub cannot name the team and the tournament (signed out it
+**Owner calls (walk §348 Part C) — RULED 2026-10-20, all four as recommended:** The join page's sub cannot name the team and the tournament (signed out it
 knows only the registration and the email; *rec:* keep the plain line). The foot links are bold olive with no
 underline, as drawn (WCAG 1.4.1 prefers one: a `/design` call). Fainter-than-3:1 field edges outside this stage
 (Discover's search and filter in Dark; every field in Warm, about 1.4:1) (*rec:* The public face, warm). The footer's
@@ -356,6 +356,8 @@ underline, as drawn (WCAG 1.4.1 prefers one: a `/design` call). Fainter-than-3:1
 alerts in one place."); the join page's subs; "Create account and join"; Premium's reactivation sub; the menu's Coach a
 team line ("A free team home for your season — no organization needed.", now leading to Premium while the Founding
 Season runs).
+
+**/marketing pass on those sentences, 2026-10-20: no change needed.** "Your teams, scores and alerts in one place.", the join page's subs, "Create account and join" and the reactivation sub ("Restore your team workspace instead of starting a new one.") are in voice and say what happens. Two small notes, neither made: (1) the menu's Coach a team line ("A free team home for your season — no organization needed.") is true while the door opens Coach Premium (free through the Founding Season) and for the free Basic door, but would promise "free" in front of the gated "Coming soon" page; it is one fixed string for three doors, so a menu that takes its words from the one coach rule (as /start's card does) is the cleaner end state, an owner call; (2) the two invitation buttons load differently ("Joining…" on the club invitation, "Setting up…" on the assistant-coach invitation); one word is tidier.
 
 **Owed.** The whole-product layout sweep (1d touches the shared bar and the palette; the dev-server run widened to
 every screen and aborted on memory, 2026-10-20) on staging at the next promote (`/release` §1d-5). The email round trip,
@@ -495,8 +497,6 @@ those people, because the account-only sign-up carries their `next`.
 - **Findings, not fixed:** the forgot route has no rate limit (and an existing account answers slower, because the
   send is awaited: a timing side channel); `SIGN_IN_REASON` now names a reason the forgot screen also reads (a rename
   touches 2b's sign-in page and test); the reset's 1.5-second hop to the account has no cancel (pre-existing).
-
-## /design review of the drawings (2026-10-19)
 - **Three of those findings fixed after the commit (owner, 2026-10-20, "fix those 3 items"):** (1) forgot password has
   "Send the link again"'s budget (three per address an hour, ten per network in 15 minutes, a ceiling); past it the
   page says "Too many tries." in the amber notice, not "check your connection"; and both no-tell routes answer their
@@ -507,6 +507,8 @@ those people, because the account-only sign-up carries their `next`.
   override, else "Sign-in didn't work. Try again in a moment.", never a raw code; the team sign-up's and platform admin's
   own copies are gone. (3) The helpdesk agent's command file quotes the new words. Pinned in
   `tests/unit/sign-in-words-and-no-tell-guard.test.ts`.
+
+## /design review of the drawings (2026-10-19)
 
 Run before hand-off; its changes are in the drawings and listed on the hub's Your answers tab. D-F1 and D-F2 became
 Asks 12 and 13. Applied: D-F3 the billing choice 44px / 14px with a check on the picked option (one control shared

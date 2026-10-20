@@ -6,7 +6,7 @@
  * console lettering underneath — the typewriter face, forced capitals, extra-wide tracking, 800–900 weights —
  * and nothing measured it: `check:old-look` counts code shapes, `check:public-tokens` counts colours. The owner
  * found it from a screenshot of the bracket editor. The rule it enforces is F2 (2026-09-25) with the sweep's
- * rulings A1–A14 (`memory/design_decisions.md` 2026-10-19; `docs/projects/active/ADMIN_TYPE_SWEEP_PLAN.md`):
+ * rulings A1–A14 (`memory/design_decisions.md` 2026-10-19; `docs/projects/archive/ADMIN_TYPE_SWEEP_PLAN.md`):
  * the data face only on eyebrows, chips, codes and readouts; capitals only on eyebrows, chips, column headings,
  * band headings and nav group headings; everything else the body face in sentence case.
  *

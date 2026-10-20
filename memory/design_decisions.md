@@ -7,6 +7,52 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — STAGE 7: A TOURNAMENT'S FEES LAND IN ITS OWN BOOK; THE CLUB'S OWN TEAM PAYS NO FEE; ONE FEE WRITE FOR TOURNAMENT AND HOUSE LEAGUE; "ADD OUR TEAMS" IN ONE WINDOW; AN EMAIL (NOT "MESSAGES") TO EVERY FAMILY; THE COACH'S TOURNAMENTS AS A ROW LIST AND ONE PAGE (owner, Club Tier Stage 7 round 1, all 13 asks as recommended — drawings https://claude.ai/artifact/MLqvD7TXbLM5QX8H9mmapZ)
+
+**Decision (7a, the tournament's money — Asks 1–4):**
+- **Ask 1 — A.** Marking a visiting team paid writes the fee into **the tournament's own book**, opened by itself on the first paid
+  fee and filed under the word the club picks once. The plan's old wording ("an income entry on the org ledger") is **replaced**.
+  Stage 12c (an online payment) writes the same line.
+- **Ask 2 — A.** The club's own team in its own tournament has **no fee, said as such**: "Our team" on the row, "No fee" in
+  Payment, "No fee · your club's team" on the coach's page; **nothing is written to any book**. A club that wants its teams to
+  pay toward hosting bills them through an allocation (Stage 3).
+- **Ask 3 — A.** The tournament is **one category on the club's budget**, holding its revenue and its costs; its book's lines
+  count in the Statement through the words they carry; **By activity is the coach's report shape, unchanged**. A cost paid from the
+  general book and filed under the tournament counts toward it.
+- **Ask 4 — A.** **One fee write is built in 7a and the house league moves onto it**, fixing its six defects (fires and
+  forgets, pending line on approval instead of when paid, nothing for a self-signed-up family, a declined or withdrawn
+  registration never voided, a voided line brought back to life, a season's book opened twice) **with a failing test for each**.
+
+**Decision (7b — Ask 5 — A):** **Add our teams** is **one window, many teams**, a division per team, each entered, accepted and
+linked at once. The admin enters; the coach sees it appear. A head coach cannot enter the club's tournament from the coach portal.
+
+**Decision (7c — Asks 6, 7 — A, A):** **Email families** is an **email**, on Families, through the one club send window: every
+family, some rep teams, or a house-league season; each family once; head coaches copied; **email only, no replies, no push**. It
+**does not take the word "Messages"** (that word belongs to the chat pause's E2). **Anyone with Families access** may send;
+**3 club-wide sends a day**; an **Emails tab on Families** lists every club-wide and one-household email, with delivered of sent.
+
+**Decision (7d, the coach's Tournaments — Asks 8–12 — all A):** the list is **a row list in the portal's recipe** (dates in
+front, banded Coming up / Finished, a chip only where it says something, the intro line gone, Fan view under the list); the page
+is **as drawn** (titled by the tournament, one status, Games on your Schedule, Your games, one Registration card, From the
+organizer as rows, a help door, two columns on a computer, the Schedule's game sheet leads back); the event's **head coach
+autosaves on the page**, as a form only for the head coach and the team manager (an assistant reads it as a line) **and the
+server refuses everyone else**; the clock/live-rule/spelling set is **fixed in 7d** (game rows on the booking's clock and "6:00
+p.m."; Registered and announcement dates on the club's clock; "Playing now" by the shared rule; "vs" at home and "at" away in rows,
+the change notice and the calendar file; breakpoints onto 640 / 768 / 900); **every 7d change lands in the free portal too**
+(one page, two shells), including the title order: the free shell's header names the tournament, the team under it.
+
+**Decision (walk — Ask 13 — A):** each part (7a–7d) gets **its own checkable walk page after its build**, one purpose per walk.
+
+**Rationale:** a club's tournament already has a book of its own; a fee in the general book would mix one event's money into
+everything else and make "did it pay for itself?" need a filter. A club's own team is not a customer (the team's own book is the
+coach's, D3). The house league's fee write is the pattern the plan said to copy "done right" and is not; building it once
+fixes both. "Message every family" is the email the chat pause already kept (the scheduler's Ask 9 ruled the one club send
+window), not the Messages product.
+**Applies to:** the tournament Teams table and Payments, the tournament's book and the club's Budget vs. Actual, the house
+league's fee path, Families, the coach and free portals' Tournaments list and record. **Not decided here:** Stage 12c's checkout,
+refunds paid online, the house league's season email folding into one screen (chat pause E6), Messages (E2/E3), and the words
+(`/marketing`).
+
 ### 2026-10-20 — A CLUB'S HOME: FOLLOW SITS AT THE END OF ABOUT THE CLUB; NO "QUESTIONS?" CARD AT A DESK; THE BANNER IS A DESK STRIP WITH NOTHING ON IT (owner, Club Tier Stage 4b-2a build gate, both as recommended; the banner settled by /design)
 
 **Decision:** The club home's **Follow** button (shown only for a club listed in Discover) sits at the **end of the About the
@@ -19,38 +65,6 @@ About keeps it off screen one, which Open now and the teams own. The desktop dra
 the same repetition the 4b-1 leftover (the hero's contact) was removed for. A strip that carries no words needs no scrim.
 **Applies to:** `components/public/ClubSiteHome.tsx`, `FollowOrgButton`. Not the tournament-only org's home (no public site),
 which keeps its hero.
-
-### 2026-10-20 — THE SIDE DOOR'S ICON NAMES WHERE IT GOES: A GLOBE FOR THE PUBLIC SIDE, THE CLUB OFFICE FOR YOUR SIDE; THE ⇄ CHARACTER IS RETIRED; AN ICON-ONLY DOOR IS A BARE ICON, AND ON THE PUBLIC PAGES THE DOOR AND ACCOUNT ARE BARE ICONS AT EVERY WIDTH (owner, 2026-10-20; no mockup, owner waived it; the own-side icon picked from eight drawn options, https://claude.ai/artifact/8H43QjyqxT2cQBCi2ikz69)
-
-**Decision:** The flip door (every surface that carries it: the club's bar, a tournament's public header and the platform
-strip, the admin event header including its scroll-collapsed icon-only form, the coaches portal, a coach's tournament
-record, the scorekeeper's header) shows a drawn icon in place of the typed ⇄: **lucide `Globe`** when it lands on the
-public side (one public destination, or a chooser of public schedules), **lucide `Building2`** ("the club office", option F) when it
-lands on the viewer's own side (Admin, Coaches Portal, Scorekeeper, or the "Roles" chooser). **A door with a word is a pill; a door with only its icon is a bare icon** (no border, no fill, a faint tint on
-hover — the way the app's bars draw Account and Chat), its destination its accessible name and, at a desk, its hover
-tooltip. Phone: every surface's door is the bare icon. Desk: the PUBLIC pages (the club's bar, a tournament's header and
-the platform strip) keep the bare icon too, beside an Account that is also an icon (owner 2026-10-20: "why a border
-around one of them and a symbol in one?"); the operator shells' headers (admin event header, coach tournament record,
-scorekeeper) keep the labelled pill at a desk, and the admin header's scroll-collapsed form is the bare icon. The coach's "Fan view" link wears the same globe. In a club's own bar, a signed-in
-visitor's Account is the **lucide `User`** icon at every width (the icon the account menu wears in the app's bars);
-signed out stays the word "Sign in" at every width.
-Sizes (stroke 1.8): 15px beside the label in a desk pill; a bare icon is 17px in a 30px box at a desk (the strip's
-icon-door size), 22px in a 44px box on every phone bar and in the club's bar at every width (the same as the Account
-icon beside it, so a bar's icon doors read as one row); the Fan view globe 13px at stroke 2
-(a 13px mark at 1.8 goes faint in the accent colour).
-**Rationale:** the ⇄ was a text character no product face carries, so a phone borrowed it from a system font, thin and
-off-centre, and alone on a phone it said "flip" but never where to. An icon that names the destination matches the
-standing "label a door by its destination" rule, and the globe already means "your public page" in the admin nav. The
-office building already means "a club or organization" (Discover results, Home, starting a club), so "this club's
-office" reads the same way; the owner turned down a dashboard mark, and the gear was passed over because beside the
-person icon it reads as "my account settings". Its weak spot: a coach's door to the Coaches Portal wears the office too. The
-cost is the old "one glyph means the other side of this same place" grammar: the door's icon now varies with where it
-goes. Only staff ever see the door, and a desk keeps its word. "Sign in" stays a word because to a visitor with no account
-a person icon could mean profile or join.
-**Supersedes:** "⇄ = SIDE, plain = ENTER" (2026-08-01 Stage G) for the side's MARK (the rule that a side door is a
-different control from an enter door stands); the ⇄ in the 2026-10-20 club-bar entry below, the 2026-10-06 masthead
-entry, and the Flip entries of July. ⇄ inside prose ("List ⇄ Depth chart") is not a control and is untouched.
-**Applies to:** the shared flip pill, the Fan view link, the club's bar.
 
 ### 2026-10-20 — THE WAIT AND THE WAY BACK: THE ACCOUNT EMAILS WEAR ONE WARM ENVELOPE, AND EVERY REFUSAL ON SIGN-IN SAYS THE WAY FORWARD (owner, The first look Stage 2, U1–U8 as recommended, after `/design`; `/marketing` read the words; three owner calls at the build gate, as recommended)
 
@@ -100,6 +114,38 @@ edit can never bring back the old dark card.
 **Applies to:** sign-in, the Continue page, forgot and reset, `/auth/callback`'s failure path, the verification and
 password-reset emails (`lib/email-envelope-warm.ts`; every other email keeps `wrap()` until The public face's S3).
 
+### 2026-10-20 — THE SIDE DOOR'S ICON NAMES WHERE IT GOES: A GLOBE FOR THE PUBLIC SIDE, THE CLUB OFFICE FOR YOUR SIDE; THE ⇄ CHARACTER IS RETIRED; AN ICON-ONLY DOOR IS A BARE ICON, AND ON THE PUBLIC PAGES THE DOOR AND ACCOUNT ARE BARE ICONS AT EVERY WIDTH (owner, 2026-10-20; no mockup, owner waived it; the own-side icon picked from eight drawn options, https://claude.ai/artifact/8H43QjyqxT2cQBCi2ikz69)
+
+**Decision:** The flip door (every surface that carries it: the club's bar, a tournament's public header and the platform
+strip, the admin event header including its scroll-collapsed icon-only form, the coaches portal, a coach's tournament
+record, the scorekeeper's header) shows a drawn icon in place of the typed ⇄: **lucide `Globe`** when it lands on the
+public side (one public destination, or a chooser of public schedules), **lucide `Building2`** ("the club office", option F) when it
+lands on the viewer's own side (Admin, Coaches Portal, Scorekeeper, or the "Roles" chooser). **A door with a word is a pill; a door with only its icon is a bare icon** (no border, no fill, a faint tint on
+hover — the way the app's bars draw Account and Chat), its destination its accessible name and, at a desk, its hover
+tooltip. Phone: every surface's door is the bare icon. Desk: the PUBLIC pages (the club's bar, a tournament's header and
+the platform strip) keep the bare icon too, beside an Account that is also an icon (owner 2026-10-20: "why a border
+around one of them and a symbol in one?"); the operator shells' headers (admin event header, coach tournament record,
+scorekeeper) keep the labelled pill at a desk, and the admin header's scroll-collapsed form is the bare icon. The coach's "Fan view" link wears the same globe. In a club's own bar, a signed-in
+visitor's Account is the **lucide `User`** icon at every width (the icon the account menu wears in the app's bars);
+signed out stays the word "Sign in" at every width.
+Sizes (stroke 1.8): 15px beside the label in a desk pill; a bare icon is 17px in a 30px box at a desk (the strip's
+icon-door size), 22px in a 44px box on every phone bar and in the club's bar at every width (the same as the Account
+icon beside it, so a bar's icon doors read as one row); the Fan view globe 13px at stroke 2
+(a 13px mark at 1.8 goes faint in the accent colour).
+**Rationale:** the ⇄ was a text character no product face carries, so a phone borrowed it from a system font, thin and
+off-centre, and alone on a phone it said "flip" but never where to. An icon that names the destination matches the
+standing "label a door by its destination" rule, and the globe already means "your public page" in the admin nav. The
+office building already means "a club or organization" (Discover results, Home, starting a club), so "this club's
+office" reads the same way; the owner turned down a dashboard mark, and the gear was passed over because beside the
+person icon it reads as "my account settings". Its weak spot: a coach's door to the Coaches Portal wears the office too. The
+cost is the old "one glyph means the other side of this same place" grammar: the door's icon now varies with where it
+goes. Only staff ever see the door, and a desk keeps its word. "Sign in" stays a word because to a visitor with no account
+a person icon could mean profile or join.
+**Supersedes:** "⇄ = SIDE, plain = ENTER" (2026-08-01 Stage G) for the side's MARK (the rule that a side door is a
+different control from an enter door stands); the ⇄ in the 2026-10-20 club-bar entry below, the 2026-10-06 masthead
+entry, and the Flip entries of July. ⇄ inside prose ("List ⇄ Depth chart") is not a control and is untouched.
+**Applies to:** the shared flip pill, the Fan view link, the club's bar.
+
 ### 2026-10-20 — NO ADMIN HOME PAGE FOR SOMEONE WHO CANNOT SEE TOURNAMENTS: THEIR FIRST DOOR, ELSE "ACCESS RESTRICTED" (owner, admin type sweep Stage 5 E1, as recommended)
 
 **Decision:** On a tournament-only organization, a member who cannot see tournaments no longer gets the pre-redesign
@@ -112,7 +158,6 @@ door that asks the same rule as its page never bounces back. On the Tournament /
 admin does not exist (every page of it goes to tournaments), so there the card is the honest answer. Families is never
 a door here: its gate also refuses a member limited to some teams.
 **Applies to:** the admin home only. Members who can see tournaments keep their routing (dashboard, list or setup).
-
 
 ### 2026-10-20 — A CLUB'S BAR: ONE QUIET STAFF DOOR, ONLY FOR THIS CLUB'S STAFF, OUTERMOST (owner, Club Tier Stage 4b-1 Ask S1, option A as recommended — drawing https://claude.ai/artifact/JoYUB7TDUh2sB75owpMJyP)
 

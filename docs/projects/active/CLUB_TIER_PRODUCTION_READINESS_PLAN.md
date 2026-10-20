@@ -2234,7 +2234,12 @@ boxes taking the Opponent Picker (F13); an arrival after the start flagged under
 Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No.
 
 ### Stage 7 — Tournaments inside a club + one door to every family
-> **DRAWN 2026-10-20, asks 1–13 open (nothing ruled, nothing built).** Drawings (round 1, through `/design`, 15 drawing changes
+> **⚖ RULED 2026-10-20 (owner): all 13 asks as recommended (option A each), round 1.** Design-log entry written; build prompts
+> `CLUB_TIER_STAGE7A_BUILD_PROMPT.md` (first); the 7b / 7c / 7d prompts are written after 7a commits and walks; each part gets
+> its own walk (Ask 13). **Stage 12c's wait on Ask 1 is over:** an online tournament payment goes through 7a's one fee write. Nothing
+> built. The paragraph below is the drawing record (its "open" and "recommended" wording is history).
+>
+> **DRAWN 2026-10-20 (asks were open until the ruling above).** Drawings (round 1, through `/design`, 15 drawing changes
 > applied): https://claude.ai/artifact/MLqvD7TXbLM5QX8H9mmapZ (source `CLUB_TIER_STAGE7_DRAWINGS.html`, captures
 > `club-tier-stage7/`). Re-verified at HEAD `658cb84e5`: **G01 fixed** 2026-09-26 (`69ee4101`, the club's own Overview) and
 > **G04 fixed** 2026-09-29 (`00865a6d`, the program-year pages are a redirect), so both leave this stage; G03, C18 and G02 still
@@ -2534,36 +2539,6 @@ club nets the full fee and the payment shows in its books with nobody typing it;
 unit tests for the paid-state rules and the gate; the layout sweep on the checkout screens; **the Stage 12 walk** (its own checkable
 page, a § in the Owner QA Ledger) passed.
 
-## 7. Sequencing & dependencies
-
-```
-Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ──┬─ Stage 3a ─ 3b ─ 3c (money) ─┐
-         │                               │                          │                               │
-         │                               ├─ Stage 4 (public face, 4a–4e) ┤                           ├─ Stage 10 (permits) ─ Stage 8 ─ release
-         │                               │                          ├─ Stage 5 (families) ──────────┤
-         │                               │                          ├─ Stage 6 (venues/calendar) ───┤
-         │                               │                          └─ Stage 7 (tournaments+comms) ─┘
-         └─ rulings D1/D2/D8 RULED 2026-09-25 ───────────────────────► Stage 3 may start once Stages 1–2 land
-Stage 9 (house league) ─── its own plan and release track; may run alongside Stage 10
-Stage 12 (payments, ⚖ 2026-10-19): 12a foundation (any time; no live charge before counsel) ─► 12b house league (after Stage 9) ·
-                   12c tournaments (after Stage 7) ─► 12d hardening ─► Stage 8 ─► release (the release waits for Stage 12)
-Stage 6 (built) ─► 6c one calendar (review + the coach desk schedule) ─► Stage 10 + Stage 11 drawn in ONE session
-                   (permits → the club's schedules) ─► built as two ─► Stage 8 ─► release (⚖ 2026-10-08: the release
-                   waits for Stage 11 too)
-                   6c ─► 6d calendar feeds (on its own; owner 2026-10-11) · 6e the event form (any gap) — both hold the release (⚖ 2026-10-12)
-                   the coach portal's Tournaments (merged deep-dive stage 3) ─► drawn with Stage 7
-Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─► gates Stage 1's SCREENS (R5 refined:
-                         Stage 1's server half runs beside it; its screens build behind the switch after slice 1);
-                         Phase 2 = inside each club stage · Phase 3 tournament screens (own project) · Phase 4 with Stage 9
-```
-⚖ **2026-09-25: the release waits for Stage 10 (permits).** ⚖ **2026-10-08: and for Stage 11 (the club scheduler)**
-(owner: *"the release will wait until this is all done"*). Stage 8's go/no-go therefore comes after Stages 3, 6, 10 and
-11 at the earliest.
-⚖ **2026-10-19 (owner): payments processing and a club's own web address are inside the Club release too, and the release has NO
-date** — *"I am not married to any specific dates but will release when the product is fully ready, and that includes payments
-processing. The release will depend on all of these being complete."* So: **Stage 12** (payments processing: house-league
-registration as a flow, beside tournament registration; planned 2026-10-19) and **Stage 4e** (a club's own web address, carried by
-every plan with the public site at no extra charge) are release work like every stage here. The 2026-07-28 "launch H1 2027" line no longer sets a date for the Club release (logged via /strategy 2026-10-19); counsel
 ### Stage 13 — Navigation across the three portals (⚖ added by the owner 2026-10-20; inside the release; the last stage before Stage 8's go/no-go)
 > **Why this stage exists:** the owner, 2026-10-20 — evaluate the navigation of the club, the tournament and the Coaches Portal,
 > how each is structured on a computer and on a phone, *"large focus on the club but making sure that whatever standards are
@@ -2606,6 +2581,37 @@ unwritten departures.
 **Migrations:** none expected. **Definition of done:** the inventory walked; every crossing ruled and built; parity holds or is
 written as an exception; `NAV_STANDARD.md` updated; the guards in the build; the walk passed.
 
+## 7. Sequencing & dependencies
+
+```
+Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ──┬─ Stage 3a ─ 3b ─ 3c (money) ─┐
+         │                               │                          │                               │
+         │                               ├─ Stage 4 (public face, 4a–4e) ┤                           ├─ Stage 10 (permits) ─ Stage 8 ─ release
+         │                               │                          ├─ Stage 5 (families) ──────────┤
+         │                               │                          ├─ Stage 6 (venues/calendar) ───┤
+         │                               │                          └─ Stage 7 (tournaments+comms) ─┘
+         └─ rulings D1/D2/D8 RULED 2026-09-25 ───────────────────────► Stage 3 may start once Stages 1–2 land
+Stage 9 (house league) ─── its own plan and release track; may run alongside Stage 10
+Stage 12 (payments, ⚖ 2026-10-19): 12a foundation (any time; no live charge before counsel) ─► 12b house league (after Stage 9) ·
+                   12c tournaments (after Stage 7) ─► 12d hardening ─► Stage 8 ─► release (the release waits for Stage 12)
+Stage 13 (navigation, ⚖ 2026-10-20): after every stage that adds a nav door (7, 9, 10, 11, 12) ─► Stage 8's go/no-go
+Stage 6 (built) ─► 6c one calendar (review + the coach desk schedule) ─► Stage 10 + Stage 11 drawn in ONE session
+                   (permits → the club's schedules) ─► built as two ─► Stage 8 ─► release (⚖ 2026-10-08: the release
+                   waits for Stage 11 too)
+                   6c ─► 6d calendar feeds (on its own; owner 2026-10-11) · 6e the event form (any gap) — both hold the release (⚖ 2026-10-12)
+                   the coach portal's Tournaments (merged deep-dive stage 3) ─► drawn with Stage 7
+Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─► gates Stage 1's SCREENS (R5 refined:
+                         Stage 1's server half runs beside it; its screens build behind the switch after slice 1);
+                         Phase 2 = inside each club stage · Phase 3 tournament screens (own project) · Phase 4 with Stage 9
+```
+⚖ **2026-09-25: the release waits for Stage 10 (permits).** ⚖ **2026-10-08: and for Stage 11 (the club scheduler)**
+(owner: *"the release will wait until this is all done"*). Stage 8's go/no-go therefore comes after Stages 3, 6, 10 and
+11 at the earliest.
+⚖ **2026-10-19 (owner): payments processing and a club's own web address are inside the Club release too, and the release has NO
+date** — *"I am not married to any specific dates but will release when the product is fully ready, and that includes payments
+processing. The release will depend on all of these being complete."* So: **Stage 12** (payments processing: house-league
+registration as a flow, beside tournament registration; planned 2026-10-19) and **Stage 4e** (a club's own web address, carried by
+every plan with the public site at no extra charge) are release work like every stage here. The 2026-07-28 "launch H1 2027" line no longer sets a date for the Club release (logged via /strategy 2026-10-19); counsel
 sign-off stays the payments launch gate.
 ⚖ **2026-10-12 (owner): EVERYTHING in this plan is inside the Club release** — *"everything is inside the club release,
 those will be done months before we are ready to release club anyways"*, completing the owner's 2026-10-10 rule (*"the club
@@ -2619,7 +2625,6 @@ same release — logged there as Proposed, confirmed when Stage 9 opens (D11's o
 - Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
 - Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.
 - Stage 12 (payments): 12a can be built any time but charges nothing live before counsel signs off; 12b needs Stage 9 (the
-Stage 13 (navigation, ⚖ 2026-10-20): after every stage that adds a nav door (7, 9, 10, 11, 12) ─► Stage 8's go/no-go
   house-league data it charges against: a fee per division, early-bird dates); 12c needs Stage 7's tournament-fees decision; all
   of it precedes Stage 8's go/no-go. Stage 4e (own web address) needs only its hosting spike and Stage 4b's pages.
 - Stage 6's venue book is a prerequisite for Stage 9's league scheduling, not for the Club release.

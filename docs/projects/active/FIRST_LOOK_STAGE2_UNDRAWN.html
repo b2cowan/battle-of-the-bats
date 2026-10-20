@@ -1,0 +1,522 @@
+<title>First Look Stage 2</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: one review page; hub chrome in the house template's light review palette, the product specimens in the
+   warm consumer skin (the /start forms) at true phone width (390px), three to a row on a desktop.
+   Deliberately single-theme (light): the specimens ARE the light warm product, so the page commits to one look and
+   sets every colour and the body background explicitly. */
+:root{
+  --paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;
+  --w-paper:#f6f1ea;--w-ink:#211c15;--w-ink-soft:#3d372f;--w-dim:#665f57;--w-olive:#55641c;--w-olive-soft:rgba(85,100,28,.10);--w-okline:rgba(85,100,28,.32);--w-okbg:rgba(85,100,28,.08);--w-line:rgba(70,55,30,.16);--w-field:#d9d2c6;--w-place:#8b847b;--w-lime:#d9f99d;--w-small:#8a9298;
+  --ui:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 var(--ui)}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.6px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:24px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14.5px;color:var(--muted);margin:0;max-width:78ch}.meta{font-size:12.5px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+/* hub chrome */
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:12px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow-x:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13.5px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.frame{width:min(1320px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+main.screens{padding:26px 28px 32px}
+.head{margin-bottom:6px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.part{display:inline-block;padding:2px 8px;border-radius:20px;background:var(--ink);color:#fff;letter-spacing:.6px}
+.intent{padding:16px 28px;background:#fafbf7;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+/* rows of screens */
+.rowlbl{display:flex;align-items:center;gap:10px;margin:26px 0 12px;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;background:var(--white);border:1px solid var(--line);letter-spacing:.5px}
+.pill.now{background:#eeeee9}.pill.after{background:var(--lime);border-color:#b9d88c;color:#2b3f12}
+.strip{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.fig{margin:0;width:390px;max-width:100%;min-width:0}
+.fig.wide{width:640px}
+.fig figcaption{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:700;color:var(--ink);margin:0 0 8px;min-height:24px}
+.fig .arrow{font-size:12.5px;color:var(--muted);margin:10px 4px 0;line-height:1.5}
+.capbox{width:390px;max-width:100%;max-height:844px;overflow:auto;border:1px solid #c9c1b2;border-radius:26px;background:#fff}
+.capbox img{display:block;width:390px;max-width:100%;height:auto}
+.capbox.desk{width:640px;border-radius:10px;max-height:none}.capbox.desk img{width:640px}
+
+/* the drawn phone (warm consumer skin) */
+.ph{width:390px;max-width:100%;border:1px solid #c9c1b2;border-radius:26px;overflow:hidden;background:var(--w-paper);color:var(--w-ink);font-family:var(--sans);display:flex;flex-direction:column;box-shadow:0 1px 0 #0000000a}
+.ph-top{background:#fff;border-bottom:1px solid var(--w-line);padding:14px 16px}
+.wm{font:700 17px/1 var(--mono);letter-spacing:.02em;color:var(--w-ink)}.wm span{color:var(--w-olive)}.wm i{font-style:normal;color:#4b463f}
+.ph-body{padding:20px 16px 26px;flex:1}
+.ph-bar{display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1px solid var(--w-line);padding:9px 0 11px;text-align:center;font:600 11px var(--sans);letter-spacing:.05em;color:#57524b;text-transform:uppercase}
+.ph-bar span{display:flex;flex-direction:column;align-items:center;gap:3px}.ph-bar .on{color:var(--w-olive)}
+.ic{flex:none}
+
+/* /start form pieces */
+.f-head{text-align:center;padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--w-line)}
+.f-well{width:44px;height:44px;border-radius:9px;background:var(--w-olive-soft);border:1px solid var(--w-okline);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:var(--w-olive)}
+.f-title{font:800 26px/1.08 var(--display);letter-spacing:-.005em;margin:0 0 6px;text-wrap:balance}
+.f-sub{font-size:15px;color:var(--w-dim);margin:0;line-height:1.4;overflow-wrap:anywhere}
+.f-steps{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;font:700 12px var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--w-dim)}
+.f-steps>span{display:inline-flex;align-items:center;gap:6px}
+.f-steps .n{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(70,55,30,.08);font-style:normal;font-size:12px;font-weight:800}
+.f-steps .on{color:var(--w-ink)}.f-steps .on .n{background:var(--w-ink);color:var(--w-paper)}
+.f-steps .done{opacity:.75}.f-steps .done .n{background:var(--w-olive);color:#fff}
+.f-steps .rule{flex:0 1 32px;max-width:40px;min-width:12px;height:1px;background:var(--w-field)}
+.f-grp{margin-bottom:16px}
+.f-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f-lbl{display:block;font:600 14px var(--mono);color:var(--w-ink-soft);margin:0 0 6px}
+.f-inp{background:#fff;border:1px solid var(--w-field);border-radius:10px;min-height:46px;padding:10px 14px;font-size:17px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--w-place);overflow:hidden;white-space:nowrap}
+.f-inp.val{color:var(--w-ink)}.f-inp.focus{border-color:var(--w-olive);box-shadow:0 0 0 3px rgba(85,100,28,.16)}
+.f-inp .caret{width:1.5px;height:22px;background:var(--w-ink);margin-right:auto}
+.f-help{font:400 12.5px/1.6 var(--mono);color:var(--w-dim);margin:8px 0 0}.f-help b{color:var(--w-olive);font-weight:500}.f-help b.pale{color:#d4ec9f}
+.f-cta{min-height:48px;border-radius:10px;background:var(--w-lime);display:flex;align-items:center;justify-content:center;gap:8px;font:800 17px var(--sans);color:var(--w-ink);margin-top:20px}
+.f-small{font:400 12.5px/1.6 var(--mono);color:var(--w-small);text-align:center;margin:14px 0 0}
+.f-foot{border-top:1px solid var(--w-line);margin-top:20px;padding-top:6px;text-align:center;font-size:15px;color:var(--w-dim);display:flex;justify-content:center;gap:0 20px;flex-wrap:wrap}.f-foot b{color:var(--w-olive)}.f-foot>*{display:inline-flex;align-items:center;min-height:44px}
+.f-ok{font-size:14.5px;line-height:1.5;padding:10px 12px;border-radius:9px;border:1px solid var(--w-okline);background:var(--w-okbg);color:var(--w-olive);margin:0 0 18px;overflow-wrap:anywhere}
+.f-conf{font-size:16px;line-height:1.5;color:var(--w-ink);margin:0 0 18px}
+.f-body{font-size:15.5px;line-height:1.55;margin:0 0 14px}
+.f-ghost{min-height:46px;border:1px solid var(--w-field);border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15.5px;margin-top:12px}
+.f-chip{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px 12px;border:1px solid var(--w-okline);border-radius:9px;background:#fff;margin:0 0 18px;color:var(--w-ink-soft)}.f-chip svg{color:var(--w-olive);margin-top:2px}
+.f-same{border:1px dashed var(--w-field);border-radius:12px;padding:14px;font-size:14px;color:var(--w-dim);text-align:center;line-height:1.5}
+
+/* the older auth look (sign-in, the account-only page, today's organization sign-up) */
+.a-well{width:44px;height:44px;border:1px solid var(--w-field);background:#fff;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:var(--w-olive)}
+.a-title{font:700 24px var(--mono);letter-spacing:.08em;text-transform:uppercase;text-align:center;margin:0 0 6px}
+.a-sub{font:400 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--w-dim);text-align:center;margin:0 0 18px;padding-bottom:16px;border-bottom:1px solid var(--w-line)}
+.a-lbl{font:700 12.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#4a453e;margin:0 0 6px;display:block}
+.a-inp{border:1px solid var(--w-field);background:#fff;min-height:46px;padding:10px 14px;font:400 16px var(--mono);color:var(--w-ink);display:flex;align-items:center;margin-bottom:16px;overflow:hidden;white-space:nowrap}
+.a-cta{min-height:48px;background:var(--w-lime);display:flex;align-items:center;justify-content:center;font:700 14px var(--mono);letter-spacing:.14em;text-transform:uppercase;margin-top:14px}
+.a-err{border:1px solid rgba(158,48,48,.3);background:rgba(158,48,48,.07);color:#8a2b2b;padding:10px 12px;font:400 13px/1.55 var(--mono);margin:0 0 12px}
+.a-ghost{min-height:44px;border:1px solid rgba(158,48,48,.35);background:#fff;color:var(--w-ink);display:flex;align-items:center;justify-content:center;font:700 12.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;margin:10px 0 0}
+.a-sent{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 10px;font:400 12.5px/1.5 var(--mono);color:var(--w-ink);background:#fff;border:1px solid rgba(158,48,48,.2);margin:10px 0 0}
+.a-forgot{text-align:right;font:400 13px var(--mono);color:var(--w-olive);margin:4px 0 0}
+.a-foot{border-top:1px solid var(--w-line);margin-top:20px;padding-top:6px;display:flex;justify-content:center;text-align:center;font:400 13.5px var(--mono);color:var(--w-dim)}.a-foot b{color:var(--w-olive)}.a-foot>*{display:inline-flex;align-items:center;min-height:44px}
+
+/* Home */
+.h-search{border:1px solid var(--w-field);border-radius:999px;background:#fff;min-height:50px;padding:0 18px;display:flex;align-items:center;gap:10px;font-size:16.5px;color:var(--w-place);white-space:nowrap;overflow:hidden}
+.h-rule{height:1px;background:var(--w-line);margin:18px -16px 20px}
+.h-card{border:1px solid var(--w-okline);background:#fff;border-radius:14px;padding:16px;margin-bottom:20px}
+.h-card .eb{font:700 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--w-olive);margin:0 0 6px}
+.h-card h4{font:800 23px/1.12 var(--display);margin:0 0 6px}
+.h-card p{font-size:14.5px;color:var(--w-dim);margin:0 0 14px;line-height:1.5;overflow-wrap:anywhere}
+.h-row{display:flex;gap:6px 16px;align-items:center;flex-wrap:wrap}
+.h-btn{min-height:44px;padding:0 16px;border-radius:10px;background:var(--w-lime);font-weight:800;font-size:15px;display:inline-flex;align-items:center;gap:6px}
+.h-text{min-height:44px;display:inline-flex;align-items:center;font-size:14.5px;color:var(--w-dim);text-decoration:underline;text-underline-offset:3px}
+.h-empty{font-size:16.5px;color:var(--w-dim);line-height:1.5;margin:0 0 24px}
+.h-sec{font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--w-dim);margin:0 0 12px}
+.h-chips{display:flex;gap:8px;margin-bottom:18px;align-items:center}.h-chips span{border:1px solid var(--w-field);border-radius:999px;padding:0 12px;min-height:44px;display:inline-flex;align-items:center;font:700 11.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;background:#fff;white-space:nowrap}.h-chips span.on{background:var(--w-ink);color:var(--w-paper);border-color:var(--w-ink)}.h-chips span.fi{width:44px;padding:0;justify-content:center}
+.h-count{display:flex;justify-content:space-between;align-items:center;font:500 12.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--w-dim);margin:0 0 14px}.h-count i{font-style:normal;border:1px solid var(--w-field);border-radius:10px;padding:6px 10px;background:#fff;letter-spacing:0}
+.h-tcard{border:1px solid var(--w-line);border-radius:14px;background:#fff;padding:16px;margin-bottom:10px}.h-tc-top{display:flex;gap:12px;align-items:flex-start}.h-tile{width:44px;height:44px;border-radius:9px;background:var(--w-olive-soft);border:1px solid var(--w-line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--w-olive);flex:none}.h-tcard b{font-size:17px;display:block;line-height:1.25}.h-tcard .org{font-size:14.5px;color:var(--w-dim)}.h-live{margin-left:auto;font:700 10.5px var(--mono);letter-spacing:.08em;color:#a33b2c;border:1px solid rgba(163,59,44,.3);background:rgba(163,59,44,.07);border-radius:999px;padding:4px 9px;white-space:nowrap}.h-meta{font:400 13px var(--mono);color:var(--w-dim);margin:12px 0 0}.h-view{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--w-line);margin-top:12px;padding-top:12px;font:700 12px var(--mono);letter-spacing:.1em;color:var(--w-olive)}
+
+/* Coach Premium */
+.p-eb{font:700 11px var(--mono);letter-spacing:.12em;color:var(--w-olive);text-transform:uppercase;margin:0 0 8px}
+.p-h{font:800 30px/1.06 var(--display);margin:0 0 10px;text-wrap:balance}
+.p-body{font-size:15.5px;color:var(--w-dim);line-height:1.55;margin:0 0 18px}
+.p-panel{border:1px solid var(--w-line);border-radius:14px;background:#fff;padding:14px 16px;margin-bottom:18px;font-size:14px;color:var(--w-dim)}.p-panel b{display:block;font:700 19px var(--mono);color:var(--w-ink);margin:4px 0 2px}
+.p-card{background:#fff;border:1px solid var(--w-line);border-radius:14px;padding:18px}
+.p-cardh{font:800 22px var(--display);margin:2px 0 0}
+.p-sec{display:flex;gap:8px;align-items:center;font:700 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;margin:16px 0 10px;padding-top:14px;border-top:1px solid var(--w-line)}
+.p-lbl{font-size:13.5px;font-weight:600;margin:0 0 6px;display:block}
+.p-inp{background:var(--w-paper);border:1px solid #ddd5c8;border-radius:9px;min-height:44px;padding:10px 12px;font-size:15.5px;color:var(--w-place);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;overflow:hidden;white-space:nowrap}
+.p-inp.val{color:var(--w-ink)}.p-inp.focus{border-color:var(--w-olive);box-shadow:0 0 0 3px rgba(85,100,28,.16)}
+.p-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.p-tabs span{border:1px solid #ddd5c8;border-radius:8px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600}.p-tabs span.on{border-color:var(--w-olive);background:#eef0e6}
+.p-opt{border:1px solid #ddd5c8;border-radius:9px;padding:10px 12px;margin-bottom:8px;font-size:14.5px;font-weight:600}.p-opt.on{border-color:var(--w-olive);background:#eef0e6}.p-opt span{display:block;font-size:12.5px;font-weight:400;color:var(--w-dim)}
+.p-cta{min-height:48px;border-radius:10px;background:var(--w-lime);display:flex;align-items:center;justify-content:center;gap:6px;font-weight:800;font-size:16px;margin-top:16px}
+.p-fine{font-size:13.5px;color:var(--w-dim);margin:12px 0 0}
+
+/* plan step schematic */
+.pl-h{font:800 26px var(--display);margin:0 0 4px}
+.pl-opt{border:1px solid var(--w-line);border-radius:12px;background:#fff;padding:12px 14px;margin-bottom:10px;font-size:14px;color:var(--w-dim)}
+.pl-opt.on{border:2px solid var(--w-olive)}.pl-opt b{display:flex;justify-content:space-between;gap:10px;font-size:16px;color:var(--w-ink);margin-bottom:2px}
+.schem{font:400 12px var(--mono);color:var(--w-dim);border:1px dashed var(--w-field);border-radius:8px;padding:8px 10px;margin-top:14px}
+
+/* overview */
+.lane{display:grid;grid-template-columns:88px repeat(4,minmax(0,1fr));gap:12px;align-items:stretch;margin:0 0 12px}
+.lane .ll{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);align-self:center}
+.lbox{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;font-size:13.5px;position:relative;min-width:0}
+.lbox b{display:block;font-size:14px;margin-bottom:2px}
+.lbox.bad{border-color:#e0a9a9;background:#fbf1f1}.lbox.good{border-color:#b9d88c;background:#f3f9ea}
+.lbox:not(:last-child)::after{content:'\2192';position:absolute;right:-6px;top:50%;transform:translate(50%,-50%);color:var(--muted);font-weight:700}
+.tbl-wrap{overflow-x:auto;margin:0 0 16px}
+.tbl{border-collapse:collapse;width:100%;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:10px}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+.tbl tr:last-child td{border-bottom:0}
+.twocol{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px 28px}
+ul.plain{margin:0 0 12px;padding-left:20px}ul.plain li{margin-bottom:6px}
+
+/* asks */
+.asks{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:26px}
+.ask{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px 18px;min-width:0}
+.ask-h{display:flex;gap:10px;align-items:baseline}
+.ask-id{font:800 12px ui-monospace,Consolas,monospace;background:var(--ink);color:#fff;border-radius:5px;padding:2px 7px;flex:none}
+.ask-q{font-weight:700;font-size:15.5px;line-height:1.35}
+.ask-why{font-size:14px;color:var(--muted);margin:8px 0 10px}
+.ask-opts{display:flex;flex-direction:column;gap:6px}
+.ask-opts label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;cursor:pointer;font-size:14.5px;background:var(--paper)}
+.ask-opts label:has(input:checked){border-color:var(--olive);background:#eef6dc}
+.ask-opts input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--olive);flex:none}
+.ask textarea{width:100%;min-height:46px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);margin-top:8px;resize:vertical;font-size:14px}
+.ask .nl{display:block;font-size:12.5px;color:var(--muted);margin-top:8px}
+
+.ruled-line{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-weight:700;font-size:14.5px;color:var(--olive);margin:10px 0 0}
+.ruled-chip{font:800 10.5px/1.4 var(--ui);letter-spacing:.6px;text-transform:uppercase;background:var(--lime);color:#2b3f12;border:1px solid #b9d88c;border-radius:4px;padding:2px 7px}
+.ask-others{font-size:13px;color:var(--muted);margin:0}
+
+/* highlights */
+.mk{display:inline-block;font:800 10px/1.4 var(--ui);letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;cursor:pointer;margin-left:4px;white-space:nowrap}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 var(--ui);border-radius:4px;padding:3px 7px;letter-spacing:.5px;vertical-align:middle}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+.tagrow{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin:6px 0 0}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:600px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:17px}.dialogbody{padding:20px 22px}
+.explain h3{margin:14px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain h3:first-child{margin-top:0}.explain p{font-size:14.5px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+
+/* doc tabs */
+.docpage{max-width:820px;margin:0 auto;padding:32px 24px 56px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.md h2{font-size:21px}.md h3{font-size:17px;margin-top:22px}.md h4{font-size:15px}
+.md table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff}
+.md th,.md td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}.md th{background:#fafbf7}
+.md code{font:12.5px ui-monospace,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.md li{margin-bottom:6px}.md blockquote{margin:0 0 12px;padding:8px 14px;border-left:3px solid var(--line);color:var(--muted)}
+.tblwrap{overflow-x:auto;margin:0 0 16px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:#fff;padding:14px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:4px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.stands{background:#e3edf2;border-color:#b6cfdb}
+#askSummary{list-style:none;padding:0;margin:0 0 16px}
+#askSummary li{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px 14px;margin-bottom:8px;font-size:14.5px}
+#askSummary a{font:800 12px ui-monospace,Consolas,monospace;background:var(--ink);color:#fff;border-radius:5px;padding:2px 7px;text-decoration:none;margin-right:6px}
+#askSummary .open{display:block;color:var(--muted);font-size:13.5px;margin-top:4px}#askSummary .picked{display:block;color:var(--olive);font-weight:700;font-size:13.5px;margin-top:4px}
+#pasteOut{width:100%;min-height:200px;font:12.5px/1.5 ui-monospace,Consolas,monospace;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;margin-top:12px}
+
+@container(max-width:820px){main.screens{padding:18px 14px 24px}.lane{grid-template-columns:1fr}.lbox::after{display:none}.fig.wide,.capbox.desk,.capbox.desk img{width:100%}}
+@media(max-width:600px){.hubbar{padding:11px 15px}.hubtabs{padding:0 14px}.walk{padding:8px 12px}.docpage{padding:22px 16px 40px}.intent{padding:14px 16px}.asks{grid-template-columns:1fr}.frame{width:calc(100% - 16px)}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* Home · workspace cards (A4 revised 2026-10-19), at the product's own sizes: HomePersonalization.module.css at 1rem = 16px */
+.ws-list{display:flex;flex-direction:column;gap:9.6px;margin:0 0 24px}
+.ws{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12.8px;padding:12.8px 14.4px;background:#fff;border:1px solid rgba(70,55,30,.12);border-radius:14px;box-shadow:0 1px 2px rgba(70,55,30,.06)}
+.ws-ic{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(70,55,30,.12);color:var(--w-olive);background:var(--w-olive-soft)}
+.ws-ic.blue{color:#134fd3;background:rgba(19,79,211,.08);border-color:rgba(19,79,211,.2)}
+.ws-info{min-width:0;display:flex;flex-direction:column;gap:3.2px}
+.ws-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ws-kind{font:700 9px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--w-dim)}
+.ws-badge{font:700 8.6px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:1.9px 7.2px;color:var(--w-olive);background:var(--w-olive-soft);border:1px solid rgba(85,100,28,.25);white-space:nowrap}
+.ws-badge.amber{color:#835006;background:rgba(131,80,6,.08);border-color:rgba(131,80,6,.25)}
+.ws-title{font:700 14.7px/1.3 var(--sans);color:var(--w-ink);overflow-wrap:anywhere}
+.ws-meta{display:flex;flex-wrap:wrap;gap:4px 9.6px;font:400 10.2px/1.4 var(--mono);letter-spacing:.03em;color:var(--w-dim)}
+.ws-act{font:700 12px/1.3 var(--sans);letter-spacing:0;color:var(--w-olive)}
+.ws-chev{display:flex;color:var(--w-dim)}
+.ws-tags{justify-content:flex-start;margin:-14px 0 22px}
+.ws-deck{width:390px;max-width:100%;border:1px solid #c9c1b2;border-radius:14px;background:var(--w-paper);padding:16px}
+.ws-deck .ws-list{margin:0}.ws-deck .ws-tags{margin:10px 0 0}
+
+/* Home on a computer: drawn at 1280px, shown at half size (sizes measured from the 1280px capture) */
+.dk-box{width:640px;max-width:100%;overflow:hidden;border:1px solid #c9c1b2;border-radius:10px;background:var(--w-paper)}
+.dk{width:1280px;zoom:.5;font-family:var(--sans);color:var(--w-ink);background:var(--w-paper)}
+.dk-nav{display:flex;align-items:center;gap:32px;height:47px;padding:0 16px;background:#fff;border-bottom:1px solid var(--w-line)}
+.dk-links,.dk-util{display:flex;gap:24px;font:700 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#57524b}
+.dk-links b{color:var(--w-olive)}.dk-util{margin-left:auto}
+.dk-band{padding:15px 0;border-bottom:1px solid var(--w-line)}
+.dk-search{width:947px;margin:0 auto;height:40px;border:1px solid var(--w-field);border-radius:999px;background:#fff;display:flex;align-items:center;gap:10px;padding:0 16px;font-size:15px;color:var(--w-place)}
+.dk-col{width:947px;margin:0 auto;padding:30px 0 44px}
+.dk-chips{display:flex;gap:8px;margin:0 0 26px}
+.dk-chips span{height:30px;padding:0 14px;border:1px solid var(--w-field);border-radius:999px;background:#fff;display:inline-flex;align-items:center;font:700 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.dk-chips .on{background:var(--w-ink);color:var(--w-paper);border-color:var(--w-ink)}.dk-chips .sel{font:500 12.5px var(--mono);letter-spacing:0;text-transform:none}
+.dk-count{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--w-dim);margin:0 0 26px}
+.dk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.dk-tc{border:1px solid var(--w-line);border-radius:14px;background:#fff;padding:18px;min-width:0}
+.dk-tc-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.dk-tile{width:42px;height:42px;border-radius:9px;background:var(--w-olive-soft);border:1px solid var(--w-line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--w-olive);flex:none}
+.dk-tc-name{min-width:0;flex:1}.dk-tc-name b{display:block;font-size:16px;line-height:1.25}.dk-tc-name span{font-size:13px;color:var(--w-dim)}
+.dk-pill{font:700 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#835006;border:1px solid rgba(131,80,6,.3);background:rgba(131,80,6,.06);border-radius:999px;padding:4px 9px;white-space:nowrap}
+.dk-pill.live{color:#a33b2c;border-color:rgba(163,59,44,.3);background:rgba(163,59,44,.06)}
+.dk-tc-meta{font:400 12px var(--mono);color:var(--w-dim);margin:0 0 6px}
+.dk-tc-view{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--w-line);margin-top:14px;padding-top:14px;font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--w-olive)}
+
+/* First Look hub additions (2026-10-19). Hub chrome from the Account-First hub.css; the PROPOSED first-run screens
+   below are drawn on the type ladder (32 display / 16 heading / 14 body / 12 support), Inter for every word a person
+   reads, monospace only for the wordmark and a plan chip. */
+.hubtabs{gap:20px}
+.viewtog{display:inline-flex;border:1px solid #4a5a42;border-radius:8px;overflow:hidden;margin-left:auto}
+.viewtog button{min-height:40px;padding:0 14px;border:0;background:transparent;color:#d5dfcc;font-size:13px;font-weight:700}
+.viewtog button[aria-pressed=true]{background:var(--lime);color:#1c2417}
+.subnav{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.subnav a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13.5px;border-radius:6px}
+.subnav a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.scr{padding:24px 28px 34px}
+.only-desk{display:none}
+body[data-view=desk] .only-desk{display:block}
+body[data-view=desk] .only-phone{display:none}
+body[data-view=desk] .strip .fig.only-desk{display:block}
+.note-desk{display:none;font-size:13px;color:var(--muted);margin:6px 0 0}
+body[data-view=desk] .note-desk{display:block}
+
+/* walk */
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px 28px;margin:18px 0 0}
+.read h3{margin:0 0 6px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.read ul{margin:0;padding-left:18px}.read li{margin-bottom:7px;font-size:14.5px}
+.meas{border-collapse:collapse;font-size:13.5px;background:#fff;border:1px solid var(--line);margin:14px 0 0;width:100%}
+.meas th,.meas td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+.meas th{font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+.meas td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.meas .bad{color:var(--error);font-weight:700}
+.capbox{position:relative}
+.fold{position:absolute;left:0;right:0;border-top:2px dashed #c0392b;pointer-events:none}
+.fold span{position:absolute;right:6px;top:-22px;font:800 10px/1.4 var(--ui);letter-spacing:.5px;background:#c0392b;color:#fff;border-radius:4px;padding:2px 6px;text-transform:uppercase}
+.capbox.lapcap{width:683px;border-radius:8px;max-height:none}.capbox.lapcap img{width:683px}
+.capbox.tall{max-height:1300px}
+.cta-tbl td:first-child{white-space:nowrap}
+
+/* the drawn phone, true size, with the fold */
+.ph.tru{min-height:844px;position:relative}
+.ph.tall{height:auto}
+.ph .foldline{position:absolute;left:0;right:0;top:843px;border-top:2px dashed #c0392b}
+.ph-top{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 16px}
+.ph-bar{font:600 12px var(--sans);letter-spacing:0;text-transform:none}
+
+/* proposed form kit (S1) */
+.nf-title{font:700 32px/1.05 var(--display);text-align:center;margin:4px 0 8px;letter-spacing:0;text-wrap:balance;color:var(--w-ink)}
+.nf-sub{font:400 16px/1.45 var(--sans);color:var(--w-dim);text-align:center;margin:0}
+.nf-head{padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--w-line)}
+.nf-head.left .nf-title,.nf-head.left .nf-sub{text-align:left}
+.nf-grp{margin-bottom:14px}
+.nf-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.nf-lbl{display:block;font:600 14px var(--sans);color:var(--w-ink-soft);margin:0 0 6px}
+.nf-inp{background:var(--w-field-bg,#fff);border:1px solid var(--w-field);border-radius:10px;height:48px;padding:0 14px;font:400 16px var(--sans);display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--w-place);overflow:hidden;white-space:nowrap}
+.nf-inp.val{color:var(--w-ink)}.nf-inp.focus{border-color:var(--w-olive);box-shadow:0 0 0 3px rgba(85,100,28,.16)}
+.nf-help{font:400 14px/1.45 var(--sans);color:var(--w-dim);margin:6px 0 0}
+.nf-help b{color:var(--w-olive);font-weight:600}
+.nf-cta{height:48px;border-radius:10px;background:var(--w-lime);display:flex;align-items:center;justify-content:center;font:700 16px var(--sans);color:#211c15;margin-top:18px}
+.nf-sec{height:48px;border-radius:10px;background:var(--w-field-bg,#fff);border:1px solid var(--w-field);display:flex;align-items:center;justify-content:center;font:700 16px var(--sans);color:var(--w-ink);margin-top:12px}
+.nf-fine{font:400 14px/1.45 var(--sans);color:var(--w-dim);text-align:center;margin:12px 0 0}
+.nf-foot{border-top:1px solid var(--w-line);margin-top:18px;padding-top:4px;display:flex;justify-content:center;flex-wrap:wrap;gap:0 18px;font:400 14px var(--sans);color:var(--w-dim)}
+.nf-foot>span{display:inline-flex;align-items:center;min-height:44px;gap:5px}.nf-foot b{color:var(--w-olive);font-weight:600}
+.nf-foot.split{justify-content:space-between}
+.nf-chip{display:flex;gap:10px;align-items:flex-start;font:400 14px/1.45 var(--sans);padding:10px 12px;border:1px solid var(--w-line);border-left:3px solid var(--w-olive);border-radius:8px;background:var(--w-field-bg,#fff);margin:0 0 16px;color:var(--w-ink-soft)}
+.nf-chip svg{color:var(--w-olive);margin-top:2px}
+.nf-call{font:400 15px/1.5 var(--sans);padding:12px 14px;border:1px solid var(--w-line);border-left:3px solid var(--w-olive);border-radius:8px;background:var(--w-field-bg,#fff);margin:0 0 14px;color:var(--w-ink)}
+.nf-call.warn{border-left-color:#b7791f}.nf-call.err{border-left-color:#b23b2e}
+.nf-call b{display:block;font-weight:700;margin-bottom:2px}
+.nf-body{font:400 16px/1.5 var(--sans);color:var(--w-ink);margin:0 0 14px}
+.nf-forgot{display:flex;justify-content:flex-end;min-height:44px;align-items:center;font:600 14px var(--sans);color:var(--w-olive);margin-top:-6px}
+.f-steps{font:700 12px var(--sans);letter-spacing:.05em}
+
+/* choice cards (the plan step, S3) */
+.pc{border:1px solid var(--w-line);border-radius:12px;background:var(--w-field-bg,#fff);padding:14px 16px;margin-bottom:12px}
+.pc.on{border:2px solid var(--w-olive);padding:13px 15px}
+.pc-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pc-name{font:700 16px var(--sans);color:var(--w-ink)}
+.pc-price{font:700 16px var(--sans);color:var(--w-ink);white-space:nowrap}
+.pc-was{font:400 12px var(--sans);color:var(--w-dim);margin:2px 0 8px}
+.pc ul{margin:0 0 4px;padding-left:18px;font:400 14px/1.45 var(--sans);color:var(--w-ink-soft)}.pc li{margin-bottom:3px}
+.pc .nf-cta,.pc .nf-sec{margin-top:12px;height:44px}
+.pc-tag{display:inline-block;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--w-olive);border:1px solid var(--w-okline);border-radius:999px;padding:2px 8px;margin:0 0 6px}
+.pc-bill{display:flex;gap:6px;margin-top:10px}.pc-bill span{flex:1;height:36px;border:1px solid var(--w-field);border-radius:8px;display:flex;align-items:center;justify-content:center;font:600 13px var(--sans);color:var(--w-ink-soft)}.pc-bill span.on{border-color:var(--w-olive);background:var(--w-olive-soft);color:var(--w-ink)}
+.nf-link{display:flex;justify-content:center;align-items:center;min-height:44px;font:600 14px var(--sans);color:var(--w-olive)}
+
+/* the laptop frame, true 1366x768 shown at 60% */
+.lapbox{width:820px;max-width:100%;overflow:hidden;border:1px solid #c9c1b2;border-radius:10px;background:var(--w-paper);position:relative}
+.lap{width:1366px;height:768px;zoom:.6;font-family:var(--sans);color:var(--w-ink);background:var(--w-paper);overflow:hidden;position:relative}
+.dkbar{display:flex;align-items:center;gap:28px;height:56px;padding:0 24px;background:#fff;border-bottom:1px solid var(--w-line)}
+.dkbar .lk{display:flex;gap:22px;font:600 14px var(--sans);color:#57524b}.dkbar .lk b{color:var(--w-olive)}
+.dkbar .rt{margin-left:auto;display:flex;align-items:center;gap:22px;font:600 14px var(--sans);color:#57524b}
+.dkbar .pillbtn{border:1px solid var(--w-field);border-radius:999px;padding:7px 14px;color:var(--w-ink)}
+.dkcol{width:420px;margin:0 auto;padding:36px 0 0}
+.dkwide{width:900px;margin:0 auto;padding:30px 0 0}
+.dkgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.lapfold{position:absolute;left:0;right:0;bottom:0;border-top:2px dashed #c0392b}
+
+/* the email (S2): 600px envelope on the warm ground */
+.mail{width:600px;max-width:100%;background:#f6f1ea;border:1px solid #c9c1b2;border-radius:10px;padding:28px 20px;font-family:Arial,Helvetica,sans-serif;color:#211c15}
+.mail .card{background:#fff;border:1px solid rgba(70,55,30,.16);border-radius:12px;padding:28px 26px}
+.mail .wmk{font:700 15px var(--mono);letter-spacing:.02em;margin:0 0 22px}.mail .wmk span{color:#55641c}.mail .wmk i{font-style:normal;color:#4b463f}
+.mail h4{font:700 24px/1.2 Arial,Helvetica,sans-serif;margin:0 0 14px}
+.mail p{font:400 16px/1.55 Arial,Helvetica,sans-serif;margin:0 0 14px}
+.mail .mbtn{display:inline-block;background:#d9f99d;color:#211c15;font:700 16px Arial,Helvetica,sans-serif;padding:14px 26px;border-radius:10px;margin:6px 0 18px}
+.mail .small{font-size:13px;color:#665f57}
+.mail .mfoot{font:400 12px/1.5 Arial,Helvetica,sans-serif;color:#665f57;text-align:center;margin:16px 0 0}
+.mail.ph-w{width:390px;padding:16px 12px}.mail.ph-w .card{padding:22px 18px}
+
+/* dark (Ask 10) */
+.ph.dark{--w-paper:#0b0d10;--w-ink:#eef1f4;--w-ink-soft:#d3d8de;--w-dim:#a3abb4;--w-olive:#c5e48a;--w-okline:rgba(197,228,138,.35);--w-line:rgba(255,255,255,.12);--w-field:#3a3f48;--w-place:#7d858f;--w-field-bg:#14171c;--w-olive-soft:rgba(197,228,138,.12);border-color:#2a2e35}
+.ph.dark .ph-top,.ph.dark .ph-bar{background:#111418;border-color:rgba(255,255,255,.1)}
+.ph.dark .wm{color:#eef1f4}.ph.dark .wm span{color:#d9f99d}.ph.dark .wm i{color:#9aa3ad}
+.ph.dark .ph-bar{color:#a3abb4}.ph.dark .ph-bar .on{color:#d9f99d}
+.ph.dark .f-steps{color:var(--w-dim)}.ph.dark .f-steps .on{color:var(--w-ink)}.ph.dark .f-steps .on .n{background:#eef1f4;color:#0b0d10}.ph.dark .f-steps .n{background:rgba(255,255,255,.1)}
+
+/* stage chips on tags */
+.mk .st{font-weight:800;opacity:.8;margin-left:4px}
+.stg{display:inline-block;font:800 10px/1.4 var(--ui);letter-spacing:.5px;padding:2px 7px;border-radius:20px;background:var(--ink);color:#fff;vertical-align:middle}
+.rules ol{padding-left:22px}.rules li{margin-bottom:10px;font-size:15px}
+.ladder td:first-child{white-space:nowrap;font-weight:700}
+.f-steps.three{gap:6px;flex-wrap:nowrap}.f-steps.three .rule{flex:0 1 18px;min-width:10px}.f-steps.three>span{gap:5px;white-space:nowrap}
+
+/* /design review 2026-10-19 (D-F2 … D-F11), applied to the drawings */
+.dkbar .lk,.dkbar .rt{font:600 12.5px var(--sans)}
+.dkbar .pillbtn{height:30px;display:inline-flex;align-items:center;padding:0 14px;box-sizing:border-box}
+.pc-bill span{height:44px;font:600 14px var(--sans);gap:6px}
+.pc-bill span.on{border:2px solid var(--w-olive);background:var(--w-field-bg,#fff)}
+.pc .nf-cta,.pc .nf-sec{height:48px}
+.f-steps .done{opacity:1;color:var(--w-dim)}
+.ph.tru .ph-bar{position:absolute;left:0;right:0;top:786px}
+.ph.tru .ph-body{padding-bottom:84px}
+.nf-call{font-size:14px}.nf-call b{font-size:16px}
+.ph.dark{--w-field:#646b77}
+.mail .wmk{font-family:'Courier New',Courier,monospace}
+.mail .mbtn{border:1px solid #55641c}
+
+
+.nf-call.err{border-left-color:#B03A22}.todaybox .tq{border-left-color:#B03A22}
+.ph.dark .nf-call.err{border-left-color:#f08a72}.ph.dark .nf-call.warn{border-left-color:#e6b04f}.ph.dark .nf-inp.bad{border-color:#f08a72}.ph.dark .nf-help.bad{color:#f08a72}
+
+/* stage 2 drawings: page-level additions to the hub kit */
+body{font:15px/1.55 var(--ui);background:#e7e9e1}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:#222d1e;color:#fff;padding:10px 16px;display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap}
+.topbar strong{font-size:14.5px}.topbar small{color:#d5dfcc;font-size:12.5px}
+.topbar nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.topbar nav a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border-radius:20px;color:#e7f0da;text-decoration:none;font-size:13px;font-weight:700}
+.topbar nav a.done{background:#3a4932}.topbar nav a:hover{background:#2f3d29}
+.topbar .copy{min-height:44px;padding:0 14px;border-radius:8px;border:0;background:var(--lime);color:#1c2417;font-weight:800;font-size:13px}
+.wrapx{width:min(1320px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper)}
+.intro{padding:20px 28px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.intro h1{margin:0 0 6px}
+.intro ul{margin:8px 0 0;padding-left:20px;font-size:14.5px}.intro li{margin-bottom:4px}
+.scr{padding:26px 28px 34px;border-bottom:1px solid var(--line)}.scr:last-of-type{border-bottom:0}
+.ask-col{flex:1 1 360px;min-width:min(100%,320px);max-width:560px}
+.todaybox{width:390px;max-width:100%;border:1px solid #c9c1b2;border-radius:12px;background:#fff;padding:16px 18px}
+.todaybox .tq{font:600 15px/1.45 var(--ui);margin:0 0 8px;padding:10px 12px;border-left:3px solid #b23b2e;background:#faf6f3;border-radius:6px}
+.todaybox .tn{font-size:13.5px;color:var(--muted);margin:0}
+table.flow{border-collapse:collapse;width:100%;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+table.flow th,table.flow td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+table.flow th{background:var(--soft);font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+table.flow tr:last-child td{border-bottom:0}
+.nf-inp.bad{border-color:#B03A22}.nf-help.bad{color:#B03A22}
+.nf-call.warn,.nf-call.err{} .nf-call b{display:block}
+.mail.simdark{background:#14171a;border-color:#2c3036}.mail.simdark .card{background:#1d2126;border-color:#2c3036}
+.mail.simdark h4,.mail.simdark p{color:#e8e4dc}.mail.simdark .small,.mail.simdark .mfoot{color:#9a958c}
+.mail.simdark .wmk{color:#e8e4dc}.mail.simdark .wmk span{color:#b9cf7a}.mail.simdark .wmk i{color:#9a958c}
+.mail.simdark .mbtn{background:#4b5c24;color:#f1f5e3;border-color:#8da64a}
+.mk{border:1px solid transparent;font-family:var(--ui)}
+#pop{position:fixed;z-index:50;max-width:min(340px,calc(100vw - 24px));background:#222d1e;color:#f2f6ea;border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45;box-shadow:0 8px 24px #0004}
+#pop[hidden]{display:none}
+.fallback{display:block;width:100%;min-height:160px;margin:8px 0 0;padding:8px;font:12.5px/1.4 ui-monospace,Consolas,monospace}
+@media (max-width:640px){.scr{padding:20px 16px 28px}.intro{padding:16px}}
+</style>
+<div class="topbar"><div><strong>The first look · Stage 2 · eight undrawn states</strong><br><small>Drawn 2026-10-20 · <span id="count">0 of 8 answered</span></small></div><nav aria-label="States"><a href="#u1">U1</a><a href="#u2">U2</a><a href="#u3">U3</a><a href="#u4">U4</a><a href="#u5">U5</a><a href="#u6">U6</a><a href="#u7">U7</a><a href="#u8">U8</a></nav><button class="copy" id="copy" type="button">Copy my answers</button></div>
+<textarea class="fallback" id="fallback" hidden aria-label="Your answers, select and copy"></textarea>
+<div class="wrapx">
+<div class="intro"><h1>The states Stage 2 never drew</h1>
+<p class="sub">Stage 2 (the wait and the way back) was drawn and ruled on 2026-10-19, but the drawings stopped short of eight states the build would need. Each is drawn below at true phone size (390 × 844, the dashed line is where the screen ends) beside what the product does today, with a recommendation you can accept or change. The screens already drawn and ruled (the verification email, the Continue page, the expired-link notice, plain sign-in, a waiting account) are in the first-look hub and are not redrawn.</p>
+<ul><li><b>Tags</b> (New, Changed, Unchanged) are clickable and say what changed and why.</li><li><b>Your answers</b> are kept in this browser. Press Copy my answers when you are done and paste them back.</li><li>Words go through /marketing before they are built; the drawn wording is the proposal.</li></ul></div>
+<section class="scr" id="u1"><div class="eyebrow">Stage 2 · U1 · sign-in</div><h1>A wrong password</h1><p class="sub">Today the red box says one sentence and offers nothing beside it; the only way to a reset is the small line under the form. Red stays for this case (D-F9: nothing else is red).</p><div class="strip"><figure class="fig"><figcaption><span class="pill now">Today</span>A wrong password today</figcaption><div class="todaybox"><p class="tq">Incorrect email or password. Please try again.</p><p class="tn">Red box above the fields, monospace type. No link, no button. “Forgot your password?” is a small line further down.</p></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>A wrong password</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Sign in</p><p class="nf-sub">Welcome back.</p></div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp val">jordan.lee@example.com</div></div><div class="nf-grp"><span class="nf-lbl">Password</span><div class="nf-inp val">••••••••••<svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div></div><div class="nf-call err"><b>That email and password don&rsquo;t match.</b>Try again, or use &ldquo;Forgot your password?&rdquo; below.</div><div class="tagrow"><button type="button" class="mk" data-k="new" data-note="The sentence says what is wrong and points at the way forward, which sits directly beneath it. Red edge kept for this case only (D-F9).">New<span class="st">S2</span></button></div><div class="nf-forgot">Forgot your password?</div><div class="nf-cta" style="margin-top:6px">Sign in</div><div class="nf-foot"><span>New here? <b>Get started</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <div class="ask-col"><div class="ask" data-ask="U1"><div class="ask-h"><span class="ask-id">U1</span><span class="ask-q">What a wrong password says</span></div><p class="ask-why">Rule 7: every failure says what to do, in one sentence, with the way forward beside it.</p><div class="ask-opts"><label><input type="radio" name="U1" value="As drawn: red edge, &amp;ldquo;That email and password don&amp;rsquo;t match.&amp;rdquo; and a pointer to Forgot your password? directly beneath" data-rec="1"><span>As drawn: red edge, &ldquo;That email and password don&rsquo;t match.&rdquo; and a pointer to Forgot your password? directly beneath <b>(recommended)</b></span></label><label><input type="radio" name="U1" value="Keep today&amp;rsquo;s sentence and restyle the box only"><span>Keep today&rsquo;s sentence and restyle the box only</span></label></div><span class="nl"><b>What rides on it:</b> the sentence and the box, nothing else; the Forgot row does not move</span><textarea id="note-U1" aria-label="Notes on U1" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="u2"><div class="eyebrow">Stage 2 · U2 · sign-in</div><h1>An address that already has an account</h1><p class="sub">When someone starts a sign-up with an address that already has an account, they are sent to sign-in with the email filled in. That hand-off keeps working; today it arrives with no word of why.</p><div class="strip"><figure class="fig"><figcaption><span class="pill now">Today</span>The hand-off today</figcaption><div class="todaybox"><p class="tq">(nothing)</p><p class="tn">Sign-in opens with the email already typed and no sentence. The person has to guess why they are not creating an account.</p></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>Sent here from a sign-up</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Sign in</p><p class="nf-sub">Welcome back.</p></div><div class="nf-call "><b>You already have an account with that email.</b>Sign in below.</div><div class="tagrow"><button type="button" class="mk" data-k="new" data-note="A neutral notice, olive edge: nothing has gone wrong, so it is not amber or red. It appears only on the hand-off from a sign-up.">New<span class="st">S2</span></button></div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp val">jordan.lee@example.com</div></div><div class="nf-grp"><span class="nf-lbl">Password</span><div class="nf-inp">Your password<svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div></div><div class="nf-forgot">Forgot your password?</div><div class="nf-cta" style="margin-top:6px">Sign in</div><div class="nf-foot"><span>New here? <b>Get started</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <div class="ask-col"><div class="ask" data-ask="U2"><div class="ask-h"><span class="ask-id">U2</span><span class="ask-q">A word of why on the hand-off</span></div><p class="ask-why">The hand-off exists so nobody makes a second account; the notice says so in one line.</p><div class="ask-opts"><label><input type="radio" name="U2" value="As drawn: a neutral notice, &amp;ldquo;You already have an account with that email. Sign in below.&amp;rdquo;" data-rec="1"><span>As drawn: a neutral notice, &ldquo;You already have an account with that email. Sign in below.&rdquo; <b>(recommended)</b></span></label><label><input type="radio" name="U2" value="No notice; the filled email is enough"><span>No notice; the filled email is enough</span></label></div><span class="nl"><b>What rides on it:</b> only the sign-in screen when it is reached from a sign-up</span><textarea id="note-U2" aria-label="Notes on U2" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="u3"><div class="eyebrow">Stage 2 · U3 · the Continue page</div><h1>A Continue link that does not work</h1><p class="sub">Ask 8 ruled that a broken link goes to the sign-in notice. This carries that to the Continue page: no screen of its own, and no “Create account” button that opens the organization door whatever door the person came from.</p><div class="strip"><figure class="fig"><figcaption><span class="pill now">Today</span>The Continue page, broken link, today</figcaption><div class="todaybox"><p class="tq">This verification link is invalid. Return to sign up and request a new one.</p><p class="tn">Followed by a “Create account” link that opens the organization sign-up, even for someone who started a team.</p></div></figure>
+  <figure class="fig wide" style="width:640px"><figcaption><span class="pill after">After</span>Where each unusable link ends</figcaption>
+  <table class="flow"><thead><tr><th>The person taps&hellip;</th><th>Today</th><th>After</th></tr></thead><tbody>
+  <tr><td>The link in the email, expired or already used</td><td>Plain sign-in, no word of why</td><td>Sign-in with the amber notice <em>(already drawn, Ask 8)</em></td></tr>
+  <tr><td>The Continue page, with a broken or missing link</td><td>&ldquo;This verification link is invalid&rdquo; and a Create account button to the organization door</td><td><b>The same sign-in with the same amber notice</b></td></tr>
+  <tr><td>A reset-password link, expired or used</td><td>Its own small text line</td><td>The forgot screen with the notice (U4)</td></tr>
+  </tbody></table>
+  <p class="arrow"><button type="button" class="mk" data-k="new" data-note="One place says it: sign-in. The notice text, the amber edge and Email me a new link are the ones already drawn in Ask 8. Nothing new to build for this row beyond routing the Continue page there.">New<span class="st">S2</span></button></p></figure>
+  <div class="ask-col"><div class="ask" data-ask="U3"><div class="ask-h"><span class="ask-id">U3</span><span class="ask-q">The Continue page&rsquo;s broken link</span></div><p class="ask-why">Fewer screens, and the one sentence reads the same wherever a link fails.</p><div class="ask-opts"><label><input type="radio" name="U3" value="No screen of its own: it opens sign-in with the expired-link notice" data-rec="1"><span>No screen of its own: it opens sign-in with the expired-link notice <b>(recommended)</b></span></label><label><input type="radio" name="U3" value="Keep a small invalid-link screen on the Continue page (reworded, with a Sign in button)"><span>Keep a small invalid-link screen on the Continue page (reworded, with a Sign in button)</span></label></div><span class="nl"><b>What rides on it:</b> whether a person can tap Create account from a dead link; they cannot after this</span><textarea id="note-U3" aria-label="Notes on U3" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="u4"><div class="eyebrow">Stage 2 · U4 · forgot and reset password</div><h1>Forgot password and the two reset screens</h1><p class="sub">Six screens, all in the start column and type. An expired or used reset link opens the forgot screen with the amber notice, so it needs no screen of its own. The tap page is the Continue page again: it exists so a mail scanner cannot spend the one-time link, and it stays.</p><div class="strip">
+  <figure class="fig"><figcaption><span class="pill after">After</span>1 · Forgot password</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Reset your password</p><p class="nf-sub">Enter your email and we&rsquo;ll send you a link.</p></div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp">you@example.com</div></div><div class="nf-cta">Send me a reset link</div><div class="nf-foot"><span>Remembered it? <b>Sign in</b></span></div><div class="tagrow"><button type="button" class="mk" data-k="re" data-note="Was &amp;ldquo;RESET PASSWORD&amp;rdquo; and &amp;ldquo;SEND RESET LINK&amp;rdquo; in monospace capitals with a 42px button. The words come from the hub&amp;rsquo;s own note (&amp;ldquo;Reset your password&amp;rdquo; / &amp;ldquo;Send me a reset link&amp;rdquo;).">Changed<span class="st">S2</span></button></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>2 · Sent</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Check your email</p><p class="nf-sub">If an account exists for <span style="font-weight:700;color:var(--w-ink)">jordan.lee@example.com</span>, a reset link is on its way. Check your spam folder too.</p></div><div class="tagrow"><button type="button" class="mk" data-k="re" data-note="Same answer whether or not an account exists, as today, so it says &amp;ldquo;if&amp;rdquo;. The sentence is the sub line (a notice is for something that went wrong); the foot is the check-your-email block&amp;rsquo;s.">Changed<span class="st">S2</span></button></div><div class="nf-foot split"><span>Use a different email</span><span><b>Back to sign in</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>3 · The link has expired</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Reset your password</p><p class="nf-sub">Enter your email and we&rsquo;ll send you a link.</p></div><div class="nf-call warn"><b>That link has expired or was already used.</b>Request a new one below.</div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp">you@example.com</div></div><div class="nf-cta">Send me a reset link</div><div class="nf-foot"><span>Remembered it? <b>Sign in</b></span></div><div class="tagrow"><button type="button" class="mk" data-k="new" data-note="Replaces the small text line on the old reset pages. The same amber notice as sign-in, so a failed link reads the same everywhere (U3).">New<span class="st">S2</span></button></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  </div><div class="strip">
+  <figure class="fig"><figcaption><span class="pill after">After</span>4 · The tap page</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Reset your password</p><p class="nf-sub">One tap and you can choose a new password.</p></div><div class="nf-cta">Reset my password</div><div class="tagrow"><button type="button" class="mk" data-k="re" data-note="Was &amp;ldquo;SET NEW PASSWORD&amp;rdquo;. The extra tap stays; the button says what it does, like the Continue page&amp;rsquo;s &amp;ldquo;Confirm my email&amp;rdquo;.">Changed<span class="st">S2</span></button></div><div class="nf-foot"><span><b>Back to sign in</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>5 · Choose a new password</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Choose a new password</p></div><div class="nf-grp"><span class="nf-lbl">New password</span><div class="nf-inp">Your new password<svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div><p class="nf-help">At least 8 characters.</p></div><div class="nf-cta">Save password</div><div class="tagrow"><button type="button" class="mk" data-k="re" data-note="The shared password field with its eye; the rule sits under it as a hint, not in the placeholder (D-F4). Was its own field with its own eye.">Changed<span class="st">S2</span></button></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>6 · Saved</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Password saved</p><p class="nf-sub">Taking you to your account&hellip;</p></div><div class="tagrow"><button type="button" class="mk" data-k="re" data-note="Was &amp;ldquo;Password updated. Redirecting…&amp;rdquo;. Where it goes is unchanged.">Changed<span class="st">S2</span></button></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <div class="ask-col"><div class="ask" data-ask="U4"><div class="ask-h"><span class="ask-id">U4</span><span class="ask-q">The forgot and reset screens</span></div><p class="ask-why">Six screens instead of seven states: an expired link borrows the forgot screen.</p><div class="ask-opts"><label><input type="radio" name="U4" value="As drawn: six screens; an expired or used reset link opens the forgot screen with the amber notice" data-rec="1"><span>As drawn: six screens; an expired or used reset link opens the forgot screen with the amber notice <b>(recommended)</b></span></label><label><input type="radio" name="U4" value="Keep a separate &amp;ldquo;This link has expired&amp;rdquo; screen with a Request a new link button"><span>Keep a separate &ldquo;This link has expired&rdquo; screen with a Request a new link button</span></label></div><span class="nl"><b>What rides on it:</b> the words on all six screens; sending the email and the destination after saving do not change</span><textarea id="note-U4" aria-label="Notes on U4" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="u5"><div class="eyebrow">Stage 2 · U5 · the password-reset email</div><h1>The password-reset email</h1><p class="sub">Named in Ask 1 and never drawn. It wears the same warm envelope as the verification email (drawn in the hub at 600px). It has no first name: the platform sends it to an address, not a person.</p><div class="strip"><figure class="fig wide" style="width:600px"><figcaption><span class="pill after">After</span>The reset email</figcaption><div class="mail "><div class="card"><p class="wmk">FIELD<span>LOGIC</span><i>HQ</i></p><h4>Reset your password</h4><p>We got a request to reset the password for your FieldLogicHQ account.</p><p>Use the button to choose a new one. The link works for 1 hour.</p><span class="mbtn">Reset my password</span><p class="small">If you didn&rsquo;t ask for this, ignore this email. Your password won&rsquo;t change.</p></div><p class="mfoot">FieldLogicHQ</p></div><p class="arrow"><button type="button" class="mk" data-k="re" data-note="Was a separate dark monospace card (&amp;ldquo;RESET YOUR PASSWORD&amp;rdquo;, &amp;ldquo;Reset Password →&amp;rdquo;). Now the same warm envelope as the verification email, so there is one account-email look.">Changed<span class="st">S2</span></button> <span class="meta">The hour is true: the email-link expiry is 3600 seconds on both the dev and production projects (checked 2026-10-20).</span></p></figure>
+  <div class="ask-col"><div class="ask" data-ask="U5"><div class="ask-h"><span class="ask-id">U5</span><span class="ask-q">The reset email&rsquo;s words</span></div><p class="ask-why">The button matches the tap page (&ldquo;Reset my password&rdquo;), as the verification email&rsquo;s matches the Continue page.</p><div class="ask-opts"><label><input type="radio" name="U5" value="As drawn" data-rec="1"><span>As drawn <b>(recommended)</b></span></label><label><input type="radio" name="U5" value="Change the wording (say how in the notes)"><span>Change the wording (say how in the notes)</span></label></div><span class="nl"><b>What rides on it:</b> the email text only; the template stays customisable with its single variable</span><textarea id="note-U5" aria-label="Notes on U5" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="u6"><div class="eyebrow">Stage 2 · U6 · the verification email</div><h1>What the verification email says comes next, for every door</h1><p class="sub">The hub drew one sentence, for Start a team. The email is sent from six doors. The old email named whatever team or organization had been typed; this one names the next step instead, so the typed name drops out.</p><div class="strip"><figure class="fig wide" style="width:760px"><figcaption><span class="pill after">After</span>One sentence per door (it follows &ldquo;Confirm your email to finish your account.&rdquo;)</figcaption>
+  <table class="flow"><thead><tr><th>Door</th><th>The email says</th><th>Why</th></tr></thead><tbody><tr><td>Start a team</td><td><b>Then you&rsquo;ll name your team.</b></td><td class="meta">drawn in the hub</td></tr><tr><td>Start a league season</td><td><b>Then you&rsquo;ll set up your season.</b></td><td class="meta">matches the step 2 button, &ldquo;Start your season&rdquo;</td></tr><tr><td>Run a tournament</td><td><b>Then you&rsquo;ll name your organization and pick a plan.</b></td><td class="meta">step 2 names the organization, then the plan</td></tr><tr><td>Coach Premium</td><td><b>Then you&rsquo;ll name your team and choose its sport.</b></td><td class="meta">step 2 is team name and sport</td></tr><tr><td>Account only (no door)</td><td><b>Then you&rsquo;ll land on your Home page.</b></td><td class="meta">where confirming takes them</td></tr><tr><td>A coach join page or a registration</td><td><b>Then we&rsquo;ll connect you to your team&rsquo;s registration.</b></td><td class="meta">the join page&rsquo;s own promise today</td></tr></tbody></table>
+  <p class="arrow"><button type="button" class="mk" data-k="new" data-note="Only Start a team was drawn. The other five are proposed here; /marketing reads them before the build.">New<span class="st">S2</span></button> <span class="meta">Words go through /marketing before they are built.</span></p></figure>
+  <div class="ask-col"><div class="ask" data-ask="U6"><div class="ask-h"><span class="ask-id">U6</span><span class="ask-q">The next-step sentence at each door</span></div><p class="ask-why">The person has just left a screen that promised something; the email should keep the promise.</p><div class="ask-opts"><label><input type="radio" name="U6" value="As listed: one fixed sentence per door" data-rec="1"><span>As listed: one fixed sentence per door <b>(recommended)</b></span></label><label><input type="radio" name="U6" value="Name the team or organization when the person already typed one (&amp;ldquo;Then you&amp;rsquo;ll finish setting up Riverdale Ridge.&amp;rdquo;), the fixed sentence otherwise"><span>Name the team or organization when the person already typed one (&ldquo;Then you&rsquo;ll finish setting up Riverdale Ridge.&rdquo;), the fixed sentence otherwise</span></label></div><span class="nl"><b>What rides on it:</b> whether the email can show a name; the second option needs the build to carry the typed name through</span><textarea id="note-U6" aria-label="Notes on U6" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="u7"><div class="eyebrow">Stage 2 · U7 · sign-in</div><h1>What “Email me a new link” says</h1><p class="sub">The button is drawn; what it says afterwards is not. It sends a fresh link only when the address is still waiting to be confirmed. For a link that was already used, the account is confirmed and nothing is sent, and the system answers the same either way on purpose so nobody can test which addresses have accounts. So the words after it cannot promise a link.</p><div class="strip">
+  <figure class="fig"><figcaption><span class="pill after">After</span>No address typed yet</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Sign in</p><p class="nf-sub">Welcome back.</p></div><div class="nf-call warn"><b>That link has expired or was already used.</b>Sign in, or send yourself a new one.</div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp bad">you@example.com</div><p class="nf-help bad">Enter your email address first.</p></div><div class="nf-grp"><span class="nf-lbl">Password</span><div class="nf-inp">Your password<svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div></div><div class="nf-forgot">Forgot your password?</div><div class="nf-cta" style="margin-top:6px">Sign in</div><div class="nf-sec">Email me a new link</div><div class="tagrow"><button type="button" class="mk" data-k="new" data-note="An empty field asks for the address in one line under the field. No alert, no red box.">New<span class="st">S2</span></button></div><div class="nf-foot"><span>New here? <b>Get started</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>After it sends</figcaption><div class="ph tru"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Sign in</p><p class="nf-sub">Welcome back.</p></div><div class="nf-call warn"><b>That link has expired or was already used.</b>Sign in, or send yourself a new one.</div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp val">jordan.lee@example.com</div></div><div class="nf-grp"><span class="nf-lbl">Password</span><div class="nf-inp">Your password<svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div></div><div class="nf-forgot">Forgot your password?</div><div class="nf-cta" style="margin-top:6px">Sign in</div><div style="height:12px"></div><div class="nf-call "><b>Check your email.</b>If that address is waiting to be confirmed, a new link is on its way. Check your spam folder too.</div><div class="tagrow"><button type="button" class="mk" data-k="new" data-note="Announced as a status line. It says &amp;ldquo;if&amp;rdquo; because the answer is the same for every address. It replaces the button for a minute, as Send the link again does today.">New<span class="st">S2</span></button></div><div class="nf-foot"><span>New here? <b>Get started</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <div class="ask-col"><div class="ask" data-ask="U7"><div class="ask-h"><span class="ask-id">U7</span><span class="ask-q">The words after &ldquo;Email me a new link&rdquo;</span></div><p class="ask-why">A plain &ldquo;Sent&rdquo; would be untrue for a used link: the person would wait for an email that never comes.</p><div class="ask-opts"><label><input type="radio" name="U7" value="As drawn: &amp;ldquo;If that address is waiting to be confirmed, a new link is on its way.&amp;rdquo;" data-rec="1"><span>As drawn: &ldquo;If that address is waiting to be confirmed, a new link is on its way.&rdquo; <b>(recommended)</b></span></label><label><input type="radio" name="U7" value="A plain &amp;ldquo;Link sent.&amp;rdquo; (shorter, but wrong for a used link)"><span>A plain &ldquo;Link sent.&rdquo; (shorter, but wrong for a used link)</span></label></div><span class="nl"><b>What rides on it:</b> whether a person is told something false; the notice above keeps &ldquo;Sign in&rdquo; first either way</span><textarea id="note-U7" aria-label="Notes on U7" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="u8"><div class="eyebrow">Stage 2 · U8 · the emails</div><h1>On a phone, and in a dark mail app</h1><p class="sub">The hub drew the email at 600px only. Most people open it on a phone, and some mail apps recolour a light email in dark mode. The second picture is a simulation of one such recolouring, not a screenshot: the build checks the real apps (Gmail, Apple Mail, Outlook) with the real email.</p><div class="strip">
+  <figure class="fig" style="width:390px"><figcaption><span class="pill after">After</span>On a phone (390px)</figcaption><div class="mail ph-w"><div class="card"><p class="wmk">FIELD<span>LOGIC</span><i>HQ</i></p><h4>Confirm your email</h4><p>Hi Jordan, welcome to FieldLogicHQ.</p><p>Confirm your email to finish your account. Then you&rsquo;ll name your team.</p><span class="mbtn">Confirm my email</span><p class="small">If you didn&rsquo;t create this account, you can ignore this email.</p></div><p class="mfoot">FieldLogicHQ</p></div><p class="arrow"><button type="button" class="mk" data-k="new" data-note="The same email, narrower: the card keeps its padding, the button stays one tap tall, nothing scrolls sideways.">New<span class="st">S2</span></button></p></figure>
+  <figure class="fig" style="width:390px"><figcaption><span class="pill after">Simulated</span>A dark mail app, simulated</figcaption><div class="mail ph-w simdark"><div class="card"><p class="wmk">FIELD<span>LOGIC</span><i>HQ</i></p><h4>Confirm your email</h4><p>Hi Jordan, welcome to FieldLogicHQ.</p><p>Confirm your email to finish your account. Then you&rsquo;ll name your team.</p><span class="mbtn">Confirm my email</span><p class="small">If you didn&rsquo;t create this account, you can ignore this email.</p></div><p class="mfoot">FieldLogicHQ</p></div><p class="arrow"><button type="button" class="mk" data-k="un" data-note="What an auto-darkening app can do to a light email. The olive edge keeps the button findable when its lime fill is darkened. This is a guess; the real apps decide.">Guess<span class="st">S2</span></button></p></figure>
+  <div class="ask-col"><div class="ask" data-ask="U8"><div class="ask-h"><span class="ask-id">U8</span><span class="ask-q">Dark mail apps</span></div><p class="ask-why">Apps that honour a light-only request keep the card light; others recolour it. Either way it must stay readable.</p><div class="ask-opts"><label><input type="radio" name="U8" value="Ask mail apps to keep the email light where they honour it, and check the rest in the real apps before shipping" data-rec="1"><span>Ask mail apps to keep the email light where they honour it, and check the rest in the real apps before shipping <b>(recommended)</b></span></label><label><input type="radio" name="U8" value="Also design a deliberate dark email (more work, a second layout to keep in step)"><span>Also design a deliberate dark email (more work, a second layout to keep in step)</span></label></div><span class="nl"><b>What rides on it:</b> one layout or two; the first keeps the single warm envelope The public face will migrate onto</span><textarea id="note-U8" aria-label="Notes on U8" placeholder="Notes (optional)"></textarea></div></div></div></section><section class="scr" id="dark"><div class="eyebrow">Stage 2 · Dark</div><h1>The two coloured notices in Dark</h1><p class="sub">Ask 10 (ruled) puts the whole first run on the Warm / Dark setting, and Stage 1 drew its Dark. The red and amber notices are the new colours Stage 2 adds, so they are drawn here against the dark ground. Nothing to rule; this is the spec for the build. The edge colours are lifted for the dark ground (the light values read about 2.4:1 there).</p><div class="strip">
+  <figure class="fig"><figcaption><span class="pill after">After</span>Wrong password, Dark</figcaption><div class="ph tru dark"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Sign in</p><p class="nf-sub">Welcome back.</p></div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp val">jordan.lee@example.com</div></div><div class="nf-grp"><span class="nf-lbl">Password</span><div class="nf-inp val">••••••••••<svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div></div><div class="nf-call err"><b>That email and password don&rsquo;t match.</b>Try again, or use &ldquo;Forgot your password?&rdquo; below.</div><div class="nf-forgot">Forgot your password?</div><div class="nf-cta" style="margin-top:6px">Sign in</div><div class="nf-foot"><span>New here? <b>Get started</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  <figure class="fig"><figcaption><span class="pill after">After</span>Expired link, Dark</figcaption><div class="ph tru dark"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div><div class="ph-body"><div class="nf-head"><p class="nf-title">Sign in</p><p class="nf-sub">Welcome back.</p></div><div class="nf-call warn"><b>That link has expired or was already used.</b>Sign in, or send yourself a new one.</div><div class="nf-grp"><span class="nf-lbl">Email</span><div class="nf-inp">you@example.com</div></div><div class="nf-grp"><span class="nf-lbl">Password</span><div class="nf-inp">Your password<svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div></div><div class="nf-forgot">Forgot your password?</div><div class="nf-cta" style="margin-top:6px">Sign in</div><div class="nf-sec">Email me a new link</div><div class="nf-foot"><span>New here? <b>Get started</b></span></div></div><div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sign in</span></div><div class="foldline"></div></div></figure>
+  </div></section>
+</div>
+<div id="pop" role="status" hidden></div>
+<script>
+(function(){
+  var ASKS=[{"id":"U1","q":"What a wrong password says","opts":["As drawn: red edge, 'That email and password don't match.' and a pointer to Forgot your password? directly beneath","Keep today's sentence and restyle the box only"]},{"id":"U2","q":"A word of why on the hand-off","opts":["As drawn: a neutral notice, 'You already have an account with that email. Sign in below.'","No notice; the filled email is enough"]},{"id":"U3","q":"The Continue page's broken link","opts":["No screen of its own: it opens sign-in with the expired-link notice","Keep a small invalid-link screen on the Continue page (reworded, with a Sign in button)"]},{"id":"U4","q":"The forgot and reset screens","opts":["As drawn: six screens; an expired or used reset link opens the forgot screen with the amber notice","Keep a separate 'This link has expired' screen with a Request a new link button"]},{"id":"U5","q":"The reset email's words","opts":["As drawn","Change the wording (say how in the notes)"]},{"id":"U6","q":"The next-step sentence at each door","opts":["As listed: one fixed sentence per door","Name the team or organization when the person already typed one ('Then you'll finish setting up Riverdale Ridge.'), the fixed sentence otherwise"]},{"id":"U7","q":"The words after 'Email me a new link'","opts":["As drawn: 'If that address is waiting to be confirmed, a new link is on its way.'","A plain 'Link sent.' (shorter, but wrong for a used link)"]},{"id":"U8","q":"Dark mail apps","opts":["Ask mail apps to keep the email light where they honour it, and check the rest in the real apps before shipping","Also design a deliberate dark email (more work, a second layout to keep in step)"]}];
+  var KEY='first-look-stage2-answers';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
+  function refresh(){
+    var n=0;
+    ASKS.forEach(function(a){
+      var link=document.querySelector('.topbar nav a[href="#'+a.id.toLowerCase()+'"]');
+      var ans=state[a.id]&&state[a.id].v;
+      if(ans){ n++; if(link) link.classList.add('done'); } else if(link) link.classList.remove('done');
+    });
+    var c=document.getElementById('count'); if(c) c.textContent=n+' of '+ASKS.length+' answered';
+  }
+  document.querySelectorAll('.ask').forEach(function(box){
+    var id=box.getAttribute('data-ask'); var s=state[id]||{};
+    box.querySelectorAll('input[type=radio]').forEach(function(r){
+      if(s.v&&r.value===s.v) r.checked=true;
+      r.addEventListener('change',function(){ state[id]=state[id]||{}; state[id].v=r.value; save(); refresh(); });
+    });
+    var ta=box.querySelector('textarea'); if(s.n) ta.value=s.n;
+    ta.addEventListener('input',function(){ state[id]=state[id]||{}; state[id].n=ta.value; save(); });
+  });
+  refresh();
+  function summary(){
+    var out=['The first look, Stage 2 undrawn states: my answers'];
+    ASKS.forEach(function(a){
+      var s=state[a.id]||{}; var line=a.id+' ('+a.q+'): '+(s.v||'NOT ANSWERED');
+      if(s.n&&s.n.trim()) line+=' | Notes: '+s.n.trim();
+      out.push(line);
+    });
+    return out.join('\n');
+  }
+  var btn=document.getElementById('copy');
+  btn.addEventListener('click',function(){
+    var t=summary(); var done=function(){ btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy my answers';},1800); };
+    var fb=function(){ var ta=document.getElementById('fallback'); ta.hidden=false; ta.value=t; ta.focus(); ta.select(); btn.textContent='Select and copy below'; };
+    try{ navigator.clipboard.writeText(t).then(done,fb); }catch(e){ fb(); }
+  });
+  var pop=document.getElementById('pop'), cur=null;
+  function close(){ pop.hidden=true; cur=null; }
+  document.addEventListener('click',function(e){
+    var m=e.target.closest&&e.target.closest('.mk');
+    if(!m){ if(!e.target.closest('#pop')) close(); return; }
+    if(cur===m){ close(); return; }
+    pop.textContent=''; var tmp=document.createElement('div'); tmp.innerHTML=m.getAttribute('data-note'); pop.textContent=tmp.textContent;
+    pop.hidden=false; cur=m;
+    var r=m.getBoundingClientRect(); var w=pop.offsetWidth;
+    var x=Math.max(12,Math.min(r.left,window.innerWidth-w-12)); var y=r.bottom+8;
+    if(y+pop.offsetHeight>window.innerHeight-8) y=Math.max(8,r.top-pop.offsetHeight-8);
+    pop.style.left=x+'px'; pop.style.top=y+'px';
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+  window.addEventListener('scroll',close,{passive:true});
+})();
+</script>

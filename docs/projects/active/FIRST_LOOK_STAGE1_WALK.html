@@ -89,12 +89,12 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
 (function(){
   var PARTS=[
     {id:'1',title:'Start something new',
-     for:'A newcomer picks what they came to do and meets the same account form at every door: Start a team, Start a league season, Run a tournament. The account comes first; the team, league or organization is named on step 2.',
+     for:'A newcomer picks what they came to do and meets the same account form at every door: Start a team (the free Basic team, reached from the quiet line under the cards), Start a league season, Run a tournament. The account comes first; the team, league or organization is named on step 2.',
      pass:'Every door shows one heading in the bold display letters, one plain sub line, the step line, the four fields with the password hint under the field, and “Create account” in view without scrolling.',
      not:'Check your email (staging); Coach Premium (Walk 2).',
      who:'Nobody signed in. Computer, then phone.',
      steps:[
-      'Open localhost:3000/start and pick Start a team. You see “Start a team”, “A free team home, no organization needed”, the step line “1 ACCOUNT · 2 TEAM”, First name / Last name, Email (“you@example.com”), Password with “At least 8 characters.” under it, and the lime “Create account” button, all without scrolling.',
+      'Open localhost:3000/start. The team card there says “Coach a team” and is the Premium Coaches Portal (Walk 2), so this step uses the quiet line under the cards instead: “The Basic Coaches Portal is free with no end date →” (scroll down if it is cut off), or type localhost:3000/start/team. You see “Start a team”, “A free team home, no organization needed”, the step line “1 ACCOUNT · 2 TEAM”, First name / Last name, Email (“you@example.com”), Password with “At least 8 characters.” under it, and the lime “Create account” button, all without scrolling.',
       'Fill it with a new address (for example firstlook.team.1020@example.com) and Create account. Step 2 opens with the same heading and sub line, the step line on “2 TEAM”, and a “Create team” button. Stop there; you do not need to make the team.',
       'Back to /start and pick Start a league season. Same form, the step line reads “ACCOUNT · LEAGUE”, and the season’s limits line sits under the button.',
       'Back to /start and pick Run a tournament. The form shows at once (there is no intro page any more, and no “Back to all options”). The step line reads “ACCOUNT · ORGANIZATION · PLAN”.',
@@ -108,7 +108,7 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
      not:'Paying at checkout; a live claim link (needs a real tournament invitation).',
      who:'Signed out for steps 1–2, then the accounts named in each step.',
      steps:[
-      'Signed out, open localhost:3000/coaches/start. “Coach a team”, the offer as one sub line (Free through the Founding Season, then the monthly price), the shared form, “Create account”. Nothing above the heading.',
+      'Signed out, open localhost:3000/start and press the “Coach a team” card (tagged “2027 season free”); it lands on localhost:3000/coaches/start. “Coach a team”, the offer as one sub line (Free through the Founding Season, then the monthly price), the shared form, “Create account”. Nothing above the heading.',
       'Its foot reads “Already have an account? Sign in”. There is no Create / Sign in toggle anywhere on the page.',
       'Sign in as fchp-free-host@dev.local, then open localhost:3000/coaches/start?confirmed=1. Step 2: Team name, Sport as a dropdown, the plan choice as two side-by-side options (the picked one has a check and an olive edge), “Create team”, and “Not now, go to Home”. Do not create the team.',
       'Sign in as the free coach. Open the free team’s Explore page and tap “Upgrade to Premium — free”. Step 2 opens with the team’s name and sport already filled. Do not create it.',
