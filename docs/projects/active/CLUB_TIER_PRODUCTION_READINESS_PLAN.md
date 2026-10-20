@@ -2534,6 +2534,48 @@ date** — *"I am not married to any specific dates but will release when the pr
 processing. The release will depend on all of these being complete."* So: **Stage 12** (payments processing: house-league
 registration as a flow, beside tournament registration; planned 2026-10-19) and **Stage 4e** (a club's own web address, carried by
 every plan with the public site at no extra charge) are release work like every stage here. The 2026-07-28 "launch H1 2027" line no longer sets a date for the Club release (logged via /strategy 2026-10-19); counsel
+### Stage 13 — Navigation across the three portals (⚖ added by the owner 2026-10-20; inside the release; the last stage before Stage 8's go/no-go)
+> **Why this stage exists:** the owner, 2026-10-20 — evaluate the navigation of the club, the tournament and the Coaches Portal,
+> how each is structured on a computer and on a phone, *"large focus on the club but making sure that whatever standards are
+> established are adhered to across the board for a consistent experience unless specific exceptions dictate otherwise."*
+> **It does not start over.** Stage 8's nav review was ruled 2026-10-17 and walked §331 ✅ 12 of 12: the standard is
+> `docs/agents/design/NAV_STANDARD.md` (N1–N10, the icon dictionary, the exceptions). This stage is that standard measured
+> against the whole product once every stage has placed its doors, and widened where it is silent.
+> **Where it is silent — the finding that opened this stage:** the standard rules each nav on its own, and says almost nothing
+> about the **crossings**, where one area's nav meets another's. The same day: inside a club's tournament the desktop sidebar
+> still listed the club's **Calendar** and **Schedules** under Overview (added by 6b and 11a "directly under Overview", without
+> the tournament case), while the phone's tournament bar never showed them. Fixed 2026-10-20 (the sidebar hides both inside a
+> tournament; Overview alone is the way back; build-guarded). A second, still open: that way back is **"Overview"** on the desktop
+> sidebar and **"Club overview"** in the phone's More sheet (N6, Ask A5) — one door, two names.
+
+**Closes:** the crossings · desktop ↔ phone parity, everywhere · the club sidebar at its full length · a standard with no
+unwritten departures.
+- [ ] **The inventory (a helper's census, then the owner's walk of it):** every nav surface — the desktop sidebar and its
+  collapsed strip, the phone bar, the More sheet, the top strip and its account menu — in every place and for every person who
+  sees it: the club (its Overview, each program, Organization, Accounting, Calendar, Schedules, the bookings and payments pages
+  Stages 10–12 add; on Club, Club · Association and League Plus; a cancelled club), the tournament (inside a club, and on a
+  tournament-only plan; each phase), the Premium Coaches Portal (a live season, and the one door of a closed one) and the free
+  portal; as owner, admin, treasurer, staff and a coach who also holds an admin role. Captured at 390 and 1440.
+- [ ] **The crossings (the new ground):** club → tournament and back; the club admin ↔ their own Coaches Portal; the tournament
+  → the club's Accounting (the club's book read for one event); a coach's team with no live season. For each: what stays, what
+  leaves, what the way back is called, and that it is the same on both devices.
+- [ ] **Desktop ↔ phone parity:** every door on one is reachable on the other, under the same name, or it is written down as an
+  exception with its reason.
+- [ ] **The club, first and longest:** does the club sidebar still read as one object at its full length (Rep teams, House
+  league, Families, Public site, Accounting, Calendar, Schedules, bookings, payments)? Its order, its groups, the Overview's job,
+  and whether N10's one phone bar still holds with every program on.
+- [ ] **The standard, extended:** new rules for the crossings and for parity go into `NAV_STANDARD.md`; every departure found is
+  either fixed or written into its exceptions with the reason that earns it. **The default is the same everywhere; an exception
+  has to name what makes its place different.** The tournament bar following the phase, the free portal's tiles and the closed
+  season's one door are the standing examples of an exception that earns it.
+- [ ] **Owner session:** findings and asks drawn as a whole-screen before/after artifact, through `/design`, before any build.
+- [ ] **Build gates:** each crossing rule gets a guard, as the tournament case did 2026-10-20, so a later stage cannot quietly
+  undo it; a phone-only or desktop-only change to a nav fails unless the other is checked.
+- [ ] **The walk:** its own checkable page, a § in the Owner QA Ledger; the layout sweep on staging (never the dev server — a
+  shared bar sweeps every screen).
+**Migrations:** none expected. **Definition of done:** the inventory walked; every crossing ruled and built; parity holds or is
+written as an exception; `NAV_STANDARD.md` updated; the guards in the build; the walk passed.
+
 sign-off stays the payments launch gate.
 ⚖ **2026-10-12 (owner): EVERYTHING in this plan is inside the Club release** — *"everything is inside the club release,
 those will be done months before we are ready to release club anyways"*, completing the owner's 2026-10-10 rule (*"the club
@@ -2547,6 +2589,7 @@ same release — logged there as Proposed, confirmed when Stage 9 opens (D11's o
 - Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
 - Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.
 - Stage 12 (payments): 12a can be built any time but charges nothing live before counsel signs off; 12b needs Stage 9 (the
+Stage 13 (navigation, ⚖ 2026-10-20): after every stage that adds a nav door (7, 9, 10, 11, 12) ─► Stage 8's go/no-go
   house-league data it charges against: a fee per division, early-bird dates); 12c needs Stage 7's tournament-fees decision; all
   of it precedes Stage 8's go/no-go. Stage 4e (own web address) needs only its hosting spike and Stage 4b's pages.
 - Stage 6's venue book is a prerequisite for Stage 9's league scheduling, not for the Club release.
