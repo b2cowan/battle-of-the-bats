@@ -157,6 +157,9 @@ export function sponsorFacts(s: Fundraiser, moneyTags: RepTeamTag[]): ReactNode 
   return (
     <>
       {raising}
+      {/* The invoice, once downloaded (Coach Sponsor Invoice, mig 339) — before the free-text note, so a long
+          note is what the one-line clamp cuts, never whether this sponsor has been billed. */}
+      {s.invoice && <> · <strong>Invoice {s.invoice.number}</strong> issued {formatStoredDate(s.invoice.issuedOn, { withYear: false })}</>}
       {s.description && <> · {s.description}</>}
       <TagChips tagIds={s.tagIds} moneyTags={moneyTags} />
     </>

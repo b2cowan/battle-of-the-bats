@@ -19,8 +19,8 @@ export type { ICSEventInput, ICSInstantEventInput } from './ics';
 export { downloadICS, downloadICSFromInstants } from './ics';
 export { coachScheduleCalendarEntries, coachScheduleSheetRows, houseLeagueCalendarEntries } from './schedule-calendar';
 
-export type { OrgPdfSettings, ReportShape, LineupPosterOptions, LineupPosterPlayer, LineupPosterOrientation, DevelopmentSummaryOptions, PracticeSheetOptions, PracticeSheetBlock, PracticeSheetStation, PracticeSheetRotation, TryoutBoardSummaryOptions, FamilyDuesStatementRender, FamilyDuesStatementsOptions } from './pdf';
-export { BRANDING_TEXT, DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, abbreviateHeadings, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary, downloadFamilyDuesStatements } from './pdf';
+export type { OrgPdfSettings, ReportShape, LineupPosterOptions, LineupPosterPlayer, LineupPosterOrientation, DevelopmentSummaryOptions, PracticeSheetOptions, PracticeSheetBlock, PracticeSheetStation, PracticeSheetRotation, TryoutBoardSummaryOptions, FamilyDuesStatementRender, FamilyDuesStatementsOptions, SponsorInvoiceOptions } from './pdf';
+export { BRANDING_TEXT, DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, abbreviateHeadings, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary, downloadFamilyDuesStatements, downloadSponsorInvoice } from './pdf';
 
 
 // The two roster documents' column lists (Rosters pass) — imported by the roster page

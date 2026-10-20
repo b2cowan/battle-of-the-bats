@@ -2369,6 +2369,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_teams.pdf_settings -->
 **`pdf_settings`** (jsonb, NOT NULL, default `'{}'`; **mig 259**) — the **team layer of document branding** (PDF Export Quality decision 7, owner 2026-08-21): `{ logoDataUrl?, accentColor?, footerText? }`, written by the coaches-portal "How your documents look" card. Every key optional — **an absent key inherits the club's** (`organizations.pdf_settings`) at resolve time; `{}` = fully inherited ("Use club look" writes `{}` back). `logoDataUrl` is a **pre-normalized PNG/JPEG data URL** (client downscales to ≤256px; server re-validates format + ~300 KB cap in the PUT). Resolution is server-side ONLY ([lib/export/resolve-pdf-settings.ts](../../../lib/export/resolve-pdf-settings.ts)): team field → club field → default; team crest → club logo → none; the NAME on team paper is always the team's name and is **not stored here** (not a setting). **Lives on the team, not the season** — a crest outlasts a program year, like `schedule_visibility`/`share_club_book` above. Mapped as `RepTeam.pdfLook` (null when `{}`). _Writes:_ head coach only, on plans with `pdf_template_settings` (Tournament Plus+ orgs and the standalone Premium portal), via [app/api/coaches/[orgSlug]/teams/[teamId]/pdf-settings/route.ts](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/pdf-settings/route.ts) PUT (whole-object replace).
 
+<!-- dict:col:rep_teams.sponsor_payment_details -->
+**`sponsor_payment_details`** (jsonb, NOT NULL, default `'{}'`; **mig 339**, Coach Sponsor Invoice 2026-10-20) — **how sponsors pay this team**, printed on every sponsor invoice: `{ chequeAddress?, etransferEmail?, questionsTo? }` (free text; `questionsTo` is a name and how to reach them). **Payable-to is NOT stored** — it is always the team's name (owner ruling R1). No tax number or tax key exists or may be added (R2). Normalized by `normalizePaymentDetails` in [lib/coach-sponsor-invoice.ts](../../../lib/coach-sponsor-invoice.ts) (three keys, trimmed, empties dropped). **Lives on the team, not the season**, like `pdf_settings`. _Writes:_ anyone with money write, on `pdf_exports` plans, only through the invoice route's POST and only when the window's section was opened (a folded section sends nothing) — the invoice window is its ONLY home (A3).
+
 <!-- dict:col:rep_teams.family_link_token_hash -->
 <!-- dict:col:rep_teams.family_link_created_at -->
 <!-- dict:col:rep_teams.family_link_created_by -->
@@ -4915,6 +4918,66 @@ refuses a non-array. **Gotcha 6:** the positions are copied onto every credit ac
 cue, D4):** a dues re-run inserts fresh installment rows, so `max(rep_player_dues_installments.created_at)
 > arranged_at` for that family is "the schedule was re-run after this was arranged" — no column on the
 schedule was added for it.
+
+### `rep_sponsor_invoices`
+<!-- dict:table:rep_sponsor_invoices -->
+
+**Purpose:** the invoice a coaches-portal team issues a SPONSOR (`rep_fundraisers` `kind='sponsor'`) — downloaded as a
+house PDF for the sponsor's accounting department (**mig 339**, Coach Sponsor Invoice, owner rulings 2026-10-20; plan
+`docs/projects/active/COACH_SPONSOR_INVOICE_PLAN.md`). One row per sponsor. Always from the TEAM (R1); **no tax of any
+kind** (R2). Written only through `app/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/invoice`; read
+there and by the fundraisers list GET (number + issue date for the room's facts line). Service role only (RLS on,
+`anon`/`authenticated` revoked). ⚠ The table COMMENT in mig 339 says "read and written only through the coach invoice
+route" — it predates the list read; this entry is the current truth. Moves with the team into a club (mig 340, `c_moves`).
+
+**Gotchas (read first):**
+1. **The number is NEVER reused (A2).** It is `season_year`-`seq` printed `2026-003`; `seq` is max+1 within
+   `(team_id, season_year)` on the first download, a race settled by the unique index and a retry. That is why
+   `fundraiser_id` is **ON DELETE SET NULL, not CASCADE**: deleting a sponsorship leaves the row as the number's
+   tombstone, so the max never falls back and 003 is never handed to a second business. **The known exception:**
+   deleting the season (`program_year_id`) or the team CASCADE-deletes its rows. No product path deletes a season that
+   could hold invoices (only rollbacks of a just-created year), so only a manual DBA delete can free a number. The
+   tombstone keeps the bill-to contact on purpose; nulling it is an open owner call.
+2. **`amount` is never typed** — the sponsor's `pledged_amount`, else what has arrived, read by the route at each
+   download. If it moved since the last download, the row re-stamps `amount` and sets `revised_on` (A4: same number,
+   "Revised <date>"). Paid / part paid / paid in full is DERIVED from the arrivals at print time, never stored.
+3. **One per sponsor** — partial UNIQUE `(fundraiser_id) WHERE fundraiser_id IS NOT NULL`.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_sponsor_invoices.org_id -->
+<!-- dict:col:rep_sponsor_invoices.team_id -->
+<!-- dict:col:rep_sponsor_invoices.program_year_id -->
+<!-- dict:col:rep_sponsor_invoices.fundraiser_id -->
+**`org_id`** / **`team_id`** / **`program_year_id`** (FKs, CASCADE) / **`fundraiser_id`** (FK → `rep_fundraisers`,
+**SET NULL** — gotcha 1) — scope, the season it was issued in, and the sponsor.
+
+<!-- dict:col:rep_sponsor_invoices.season_year -->
+<!-- dict:col:rep_sponsor_invoices.seq -->
+**`season_year`** (int, NOT NULL — `rep_program_years.year` at issue) / **`seq`** (int, NOT NULL, CHECK `> 0`) — the
+number; UNIQUE `(team_id, season_year, seq)`. Formatted by `formatInvoiceNumber` in `lib/coach-sponsor-invoice.ts`.
+
+<!-- dict:col:rep_sponsor_invoices.bill_to_name -->
+<!-- dict:col:rep_sponsor_invoices.bill_to_attention -->
+<!-- dict:col:rep_sponsor_invoices.bill_to_email -->
+<!-- dict:col:rep_sponsor_invoices.bill_to_address -->
+**`bill_to_name`** (text, NOT NULL, non-blank — often the business's legal name, defaults to the sponsor's name) /
+**`bill_to_attention`** / **`bill_to_email`** / **`bill_to_address`** (text, nullable; address multi-line) — the
+Bill to block, kept on the sponsor so the next download pre-fills it.
+
+<!-- dict:col:rep_sponsor_invoices.description -->
+<!-- dict:col:rep_sponsor_invoices.amount -->
+**`description`** (text, NOT NULL, non-blank; default "Team sponsorship — <season name>", never the sponsor's private
+notes) / **`amount`** (numeric(12,2), NOT NULL, CHECK `> 0`) — the one line (gotcha 2).
+
+<!-- dict:col:rep_sponsor_invoices.issued_on -->
+<!-- dict:col:rep_sponsor_invoices.due_on -->
+<!-- dict:col:rep_sponsor_invoices.revised_on -->
+**`issued_on`** (date, NOT NULL) / **`due_on`** (date, nullable; defaults from the sponsor's `expected_by`) /
+**`revised_on`** (date, nullable — gotcha 2).
+
+<!-- dict:col:rep_sponsor_invoices.created_by -->
+**`created_by`** (uuid → `auth.users`, SET NULL) — who first downloaded it.
 
 ### `rep_cost_allocations`
 <!-- dict:table:rep_cost_allocations -->

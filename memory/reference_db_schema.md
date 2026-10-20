@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-19 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-20 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-19
+# DB Schema Reference — 2026-10-20
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -255,6 +255,10 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, total_surplus (numeric), notes, created_by (uuid), created_at, updated_at, hold_back_amount (numeric)
 - Indexes: rep_season_surplus_program_year_id_key
 
+### rep_sponsor_invoices
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, fundraiser_id (uuid) → rep_fundraisers.id, season_year (integer) NOT NULL, seq (integer) NOT NULL, bill_to_name NOT NULL, bill_to_attention, bill_to_email, bill_to_address, description NOT NULL, amount (numeric) NOT NULL, issued_on NOT NULL, due_on, revised_on, created_by (uuid), created_at, updated_at
+- Indexes: rep_sponsor_invoices_fundraiser_uniq, rep_sponsor_invoices_number_uniq, rep_sponsor_invoices_org_idx, rep_sponsor_invoices_year_idx
+
 ### rep_team_announcements
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, subject NOT NULL, body NOT NULL, recipient_count (integer), sent_count (integer), failed_count (integer), status, sent_at, created_by (uuid), created_at, updated_at
 - Indexes: rep_team_announcements_org_id_idx, rep_team_announcements_team_id_idx, rep_team_announcements_year_idx
@@ -388,7 +392,7 @@ id (uuid), tournament_team_id (uuid) → teams.id NOT NULL, rep_team_id (uuid) �
 - Indexes: rep_team_tournament_registrations_org_idx, rep_team_tournament_registrations_rep_team_idx, rep_team_tournament_registrations_tournament_team_unique
 
 ### rep_teams
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer), sponsor_payment_details (jsonb)
 - Indexes: idx_rep_teams_org_share_club_book, rep_teams_group_id_idx, rep_teams_org_id_slug_key
 
 ### rep_tryout_evaluator_sessions
@@ -852,11 +856,11 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **206 tables** across 10 modules.
+Total: **207 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 74 tables
+- Rep Teams: 75 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

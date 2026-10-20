@@ -139,6 +139,9 @@
 @media (max-width: 640px) {
   .actions { flex-wrap: wrap; }
   .facts { flex-basis: 100%; white-space: normal; overflow: visible; }
+  /* Three doors (the sponsor room: Edit sponsorship · Invoice · Record) are ~340px at the 44px phone floor — more
+     than a 360px phone has inside the room. They wrap, right-aligned, rather than scroll sideways (/review 2026-10-20). */
+  .actionDoors { flex: 1 1 auto; max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
 }
 
 /* History — the portal's own CoachCollapseSection, closed by default; this only spaces it. */

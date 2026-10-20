@@ -1,0 +1,613 @@
+<title>Sponsor Invoice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a review sheet on a cool slate ground; the product frames sit on it as specimens
+   (warm portal paper, light, as shipped), the printed invoice as a Letter page. */
+:root {
+  /* document chrome */
+  --doc-bg: #eef0f3; --doc-surface: #ffffff; --doc-ink: #1d2430; --doc-soft: #4b5563; --doc-dim: #6b7280;
+  --doc-line: rgba(29,36,48,.12); --doc-accent: #3b5bab; --doc-accent-soft: rgba(59,91,171,.10);
+  --tag-new: #3b5bab; --tag-new-bg: rgba(59,91,171,.12); --tag-same: #6b7280; --tag-same-bg: rgba(107,114,128,.12);
+  --rec: #2f6b3a; --rec-bg: rgba(47,107,58,.10);
+  /* product — warm coaches portal (light, as shipped; specimens do not theme) */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-line: rgba(70,55,30,.12); --p-line-strong: rgba(70,55,30,.20);
+  --p-room-border: rgba(87,101,30,.3); --p-scrim: rgba(36,30,21,.34);
+  --p-ink: #241E15; --p-soft: #4A4235; --p-dim: #615A54; --p-olive: #57651E; --p-olive-soft: rgba(87,101,30,.10);
+  --p-lime: #D9F99D; --p-win: #34662A; --p-amber: #835006; --p-amber-ink: #6B4105; --p-red: #B03A22; --p-plum: #7B4B6E;
+  /* printed paper — the house recipe */
+  --pdf-accent: #2e6b3f; --pdf-ink: #141423; --pdf-soft: #505064; --pdf-dim: #6e6e7d; --pdf-line: #d2d2dc;
+  --pdf-zebra: #f8f8fc; --pdf-border: #dcdce6; --pdf-page: #ffffff;
+  --f-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --f-pdf: Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171c; --doc-surface: #1c2027; --doc-ink: #e7e9ee; --doc-soft: #b4bac6; --doc-dim: #8b93a1;
+  --doc-line: rgba(231,233,238,.12); --doc-accent: #8fa8e8; --doc-accent-soft: rgba(143,168,232,.14);
+  --tag-new: #a9bdf0; --tag-new-bg: rgba(143,168,232,.16); --tag-same: #aab1bd; --tag-same-bg: rgba(170,177,189,.14);
+  --rec: #8fd19b; --rec-bg: rgba(143,209,155,.12); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171c; --doc-surface: #1c2027; --doc-ink: #e7e9ee; --doc-soft: #b4bac6; --doc-dim: #8b93a1;
+  --doc-line: rgba(231,233,238,.12); --doc-accent: #8fa8e8; --doc-accent-soft: rgba(143,168,232,.14);
+  --tag-new: #a9bdf0; --tag-new-bg: rgba(143,168,232,.16); --tag-same: #aab1bd; --tag-same-bg: rgba(170,177,189,.14);
+  --rec: #8fd19b; --rec-bg: rgba(143,209,155,.12); color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--f-sans); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; display: flex; flex-direction: column; gap: 40px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--doc-dim); }
+.head { display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+.head h1 { font-size: 34px; letter-spacing: -.01em; }
+.head p { color: var(--doc-soft); }
+.ruled { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.ruled span { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--rec-bg); color: var(--rec); font-weight: 600; }
+section.block { display: flex; flex-direction: column; gap: 14px; }
+section.block > h2 { font-size: 22px; }
+section.block > .lede { color: var(--doc-soft); max-width: 760px; }
+.card { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 10px; padding: 20px 22px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.summary .card h3 { font-size: 15px; margin-bottom: 6px; }
+.summary .card p { color: var(--doc-soft); font-size: 14px; }
+.cap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--doc-dim); }
+.cap strong { color: var(--doc-ink); font-size: 14px; }
+.scroller { overflow-x: auto; padding-bottom: 6px; }
+.row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.row > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* clickable annotation tags */
+.tag { font: 600 11px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; border: 0; border-radius: 4px; padding: 4px 6px; cursor: pointer; vertical-align: middle; }
+.tag.new { background: var(--tag-new-bg); color: var(--tag-new); }
+.tag.same { background: var(--tag-same-bg); color: var(--tag-same); }
+.tag:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.tagnote { font-size: 13px; color: var(--doc-ink); background: var(--doc-accent-soft); border-radius: 6px; padding: 8px 10px; max-width: 640px; }
+
+/* ── product specimen: the sponsor room ─────────────────────────────────── */
+.p-frame { font-family: var(--f-sans); color: var(--p-ink); background: var(--p-scrim); padding: 28px; border-radius: 10px; width: 1096px; }
+.p-frame.mid { width: 696px; }
+.p-frame.phone { width: 390px; padding: 0; background: var(--p-card); border: 1px solid var(--doc-line); overflow: hidden; border-radius: 14px; }
+.room { background: var(--p-card); border: 1px solid var(--p-room-border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; font-size: 14px; }
+.phone .room { border: 0; border-radius: 0; padding: 16px; gap: 14px; }
+.room-head { display: flex; align-items: center; gap: 10px; }
+.room-head h3 { font-size: 16px; font-weight: 700; }
+.room-head .x { margin-left: auto; color: var(--p-dim); font-size: 18px; }
+.phone .room-head .back { font-size: 18px; color: var(--p-dim); width: 44px; height: 44px; display: inline-flex; align-items: center; margin: -10px 0 -10px -12px; justify-content: center; }
+.pill { font: 600 12px/1 var(--f-sans); letter-spacing: .03em; text-transform: uppercase; border-radius: 4px; padding: 4px 6px; border: 1px solid; }
+.pill.amber { background: rgba(131,80,6,.12); color: var(--p-amber-ink); border-color: rgba(131,80,6,.25); }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.tiles > div { padding: 12px 16px; border-right: 1px solid var(--p-line); }
+.tiles > div:last-child { border-right: 0; }
+.phone .tiles > div { padding: 10px 10px; }
+.tiles .lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--p-dim); }
+.tiles .val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.phone .tiles .val { font-size: 16px; }
+.tiles .val.amber { color: var(--p-amber); }
+.factsrow { display: flex; align-items: center; gap: 12px; }
+.phone .factsrow { flex-direction: column; align-items: stretch; gap: 10px; }
+.facts { flex: 1; min-width: 0; color: var(--p-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.facts b { color: var(--p-ink); }
+.acts { display: flex; gap: 8px; }
+.phone .acts { justify-content: flex-end; }
+.btn { font: 500 14px/1 var(--f-sans); height: 34px; padding: 0 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; white-space: nowrap; }
+.phone .btn { height: 44px; }
+.btn.ghost { background: transparent; color: var(--p-dim); }
+.btn.secondary { background: #fff; color: var(--p-soft); border-color: var(--p-line-strong); }
+.btn.pri { background: var(--p-lime); color: var(--p-ink); font-weight: 600; }
+.btn.danger { background: var(--p-red); color: #fff; font-weight: 600; }
+.ico { width: 14px; height: 14px; flex: none; }
+.zones { display: grid; grid-template-columns: 1.15fr .85fr; gap: 14px; }
+.phone .zones { grid-template-columns: 1fr; }
+.zone { border: 1px solid var(--p-line); border-radius: 8px; padding: 13px 16px; display: flex; flex-direction: column; gap: 8px; }
+.zlbl { font-family: var(--f-display); font-weight: 700; font-size: 13px; letter-spacing: .07em; text-transform: uppercase; color: var(--p-dim); }
+.zone .muted { color: var(--p-dim); font-size: 13px; }
+.roomfoot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--p-line); padding-top: 12px; font-size: 13px; }
+.roomfoot .del { color: var(--p-red); display: inline-flex; align-items: center; gap: 6px; }
+.roomfoot .nav { color: var(--p-dim); }
+
+/* ── product specimen: the invoice window (KitDialog, medium = 640, 24 inside) ── */
+.win { background: var(--p-card); border: 1px solid var(--p-room-border); border-radius: 12px; width: 640px; display: flex; flex-direction: column; font-size: 14px; }
+.phone .win { width: 100%; border: 0; border-radius: 0; }
+.win-head { display: flex; align-items: flex-start; gap: 10px; padding: 20px 24px 14px; border-bottom: 1px solid var(--p-line); }
+.phone .win-head { padding: 6px 16px 12px 4px; align-items: center; }
+.win-head .tt { flex: 1; min-width: 0; }
+.win-head .eb { font-size: 12px; color: var(--p-dim); font-weight: 600; }
+.win-head h3 { font-size: 16px; font-weight: 700; }
+.win-head .x { color: var(--p-dim); font-size: 18px; }
+.win-head .back { color: var(--p-dim); font-size: 18px; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.win-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; }
+.phone .win-body { padding: 16px; }
+.fs { display: flex; flex-direction: column; gap: 10px; }
+.fs-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.fs-h h4 { margin: 0; font-size: 14px; font-weight: 700; color: var(--p-ink); }
+.fs-h small { font-size: 12px; color: var(--p-dim); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.phone .grid2 { grid-template-columns: 1fr; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld.full { grid-column: 1 / -1; }
+.fld label { font-size: 12px; font-weight: 600; color: var(--p-soft); }
+.fld .in { border: 1px solid var(--p-line-strong); border-radius: 6px; min-height: 36px; padding: 8px 10px; font-size: 14px; color: var(--p-ink); background: #fff; line-height: 1.35; }
+.phone .fld .in { min-height: 44px; padding: 12px 10px; }
+.fld .in.ta { min-height: 58px; white-space: pre-line; }
+.fld .in.bad { border-color: var(--p-red); }
+.fld .ro { min-height: 36px; padding: 8px 0; font-size: 14px; color: var(--p-ink); font-variant-numeric: tabular-nums; }
+.fld .hint { font-size: 12px; color: var(--p-dim); }
+.saved { display: flex; align-items: center; gap: 12px; border: 1px solid var(--p-line); border-radius: 8px; padding: 10px 12px; }
+.saved .sv { flex: 1; min-width: 0; font-size: 13px; color: var(--p-soft); }
+.saved .sv b { color: var(--p-ink); }
+.saved .chg { color: var(--p-olive); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.win-foot { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--p-line); }
+.win-foot .say { flex: 1; min-width: 0; font-size: 13px; color: var(--p-dim); }
+.win-foot .say.err { color: var(--p-red); font-weight: 600; }
+.win-foot .btns { display: flex; gap: 8px; }
+.phone .win-foot { flex-wrap: wrap; padding: 12px 16px; }
+.phone .win-foot .say { flex-basis: 100%; }
+.phone .win-foot .btns { margin-left: auto; }
+
+/* ── printed paper: the house recipe at 96 px / in (Letter 8.5 × 11) ────── */
+.pages { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+.paper { width: 816px; min-height: 1056px; background: var(--pdf-page); color: var(--pdf-ink); font-family: var(--f-pdf); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.08); display: flex; flex-direction: column; }
+.paper .band { height: 30px; background: var(--pdf-accent); }
+.paper .inner { padding: 23px 53px 0; display: flex; flex-direction: column; flex: 1; }
+.ident { display: flex; align-items: center; gap: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--pdf-line); }
+.ident svg { width: 46px; height: 46px; flex: none; }
+.ident .nm { font-weight: 700; font-size: 19px; }
+.ident .l2 { font-size: 12px; color: var(--pdf-soft); margin-top: 2px; }
+.ttl { margin-top: 14px; }
+.ttl h5 { margin: 0; font-size: 17px; font-weight: 700; }
+.ttl .sub { font-size: 12px; color: var(--pdf-soft); margin-top: 3px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 14px; }
+.stats .v { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stats .k { font-size: 10px; color: var(--pdf-dim); margin-top: 2px; }
+.sec { border-top: 1px solid var(--pdf-line); margin-top: 18px; padding-top: 14px; }
+.sec .sl { font-size: 11px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--pdf-dim); margin-bottom: 10px; }
+.addr { font-size: 12.5px; line-height: 1.55; }
+.addr b { font-size: 13px; }
+.ptable { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid var(--pdf-border); }
+.ptable th { background: var(--pdf-accent); color: #fff; text-align: left; font-weight: 700; font-size: 11.5px; padding: 9px 15px; }
+.ptable td { padding: 9px 15px; vertical-align: top; font-variant-numeric: tabular-nums; }
+.ptable tbody tr:nth-child(even) td { background: var(--pdf-zebra); }
+.ptable .r { text-align: right; }
+.ptable .desc small { display: block; color: var(--pdf-soft); font-size: 10.5px; margin-top: 2px; }
+.bul { font-size: 12px; color: #323241; display: flex; flex-direction: column; gap: 5px; padding-left: 0; margin: 0; list-style: none; }
+.bul li::before { content: "•  "; }
+.close { font-style: italic; font-size: 11.5px; color: var(--pdf-dim); margin-top: 18px; }
+.pfoot { margin-top: auto; padding: 0 0 28px; display: flex; justify-content: space-between; font-size: 9.5px; color: var(--pdf-dim); }
+
+/* asks */
+.asks { display: flex; flex-direction: column; gap: 12px; }
+.ask { display: grid; grid-template-columns: 48px 1fr; gap: 4px 14px; }
+.ask .n { font-family: var(--f-mono); font-size: 13px; color: var(--doc-accent); padding-top: 2px; }
+.ask h3 { font-size: 15.5px; }
+.ask p { color: var(--doc-soft); font-size: 14px; }
+.opts { grid-column: 2; display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.opts label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; padding: 8px 10px; border: 1px solid var(--doc-line); border-radius: 8px; cursor: pointer; }
+.opts label.isrec { border-color: color-mix(in srgb, var(--rec) 40%, transparent); }
+.opts .recb { font: 600 11px/1 var(--f-mono); color: var(--rec); background: var(--rec-bg); padding: 3px 6px; border-radius: 4px; margin-left: 6px; white-space: nowrap; }
+.opts input { margin-top: 4px; accent-color: var(--doc-accent); }
+.copyrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.copybtn { font: 600 14px/1 var(--f-sans); padding: 10px 16px; border-radius: 8px; border: 0; background: var(--doc-accent); color: var(--doc-surface); cursor: pointer; }
+#copied { font-size: 13px; color: var(--doc-dim); }
+#answers { width: 100%; min-height: 130px; font: 13px/1.5 var(--f-mono); color: var(--doc-ink); background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 8px; padding: 10px; }
+.out { columns: 2 260px; column-gap: 28px; }
+.out li { break-inside: avoid; margin-bottom: 8px; color: var(--doc-soft); font-size: 14px; }
+.out li b { color: var(--doc-ink); }
+.dfix { font-size: 14px; color: var(--doc-soft); display: flex; flex-direction: column; gap: 4px; margin: 0; padding-left: 20px; }
+@media (max-width: 640px) { .head h1 { font-size: 27px; } .ask { grid-template-columns: 1fr; } .opts { grid-column: 1; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></g></symbol>
+  <symbol id="pencil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></g></symbol>
+  <symbol id="crest" viewBox="0 0 46 46"><path d="M23 2 L42 9 V23 C42 34 33 41 23 44 C13 41 4 34 4 23 V9 Z" fill="#2e6b3f"/><path d="M23 7 L37 12 V23 C37 31 31 36 23 39 C15 36 9 31 9 23 V12 Z" fill="none" stroke="#ffffff" stroke-width="1.5"/><text x="23" y="28" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="13" fill="#ffffff">RR</text></symbol>
+</svg>
+
+<div class="wrap">
+
+<header class="head">
+  <div class="eyebrow">Coaches portal · Premium · drawing round 1 · 2026-10-20</div>
+  <h1>Sponsor invoice</h1>
+  <p>A coach opens a sponsor, presses <b>Invoice</b>, checks a few details and downloads a PDF on the team's own paper. The sponsor's accounting department gets a numbered invoice that says who to pay, how, and by when.</p>
+  <div class="ruled" aria-label="Already ruled">
+    <span>Ruled · always from the team</span>
+    <span>Ruled · no tax line or tax wording</span>
+    <span>Ruled · titled "Invoice", never a donation receipt</span>
+  </div>
+</header>
+
+<section class="block">
+  <h2>What changes for a coach</h2>
+  <div class="summary">
+    <div class="card"><h3>One new button on the sponsor</h3><p>The sponsor record gains <b>Invoice</b> beside Edit sponsorship. Nothing else on the money screens moves. There is no new menu item and no new screen.</p></div>
+    <div class="card"><h3>Typed once, reused after</h3><p>The sponsor's billing contact is kept on the sponsor. How sponsors pay the team (cheque address, e-transfer email, who answers questions) is kept for the team. After the first invoice, that part folds to one line.</p></div>
+    <div class="card"><h3>A number that stays put</h3><p>The first download gives the invoice its number and issue date. Downloading again reprints the same number, so the sponsor never sees two numbers for one bill.</p></div>
+    <div class="card"><h3>Who sees it</h3><p>Anyone who can record the team's money, on plans that already include PDF documents, like the family dues statement. On other plans the button isn't there at all. It isn't shown greyed out.</p></div>
+  </div>
+</section>
+
+<!-- ═════════ 1 · THE SPONSOR RECORD, BEFORE / AFTER ═════════ -->
+<section class="block" id="room">
+  <h2>1 · The sponsor record</h2>
+  <p class="lede">The whole window, as it opens from the Sponsors list today and with this change. The tiles, the cheques and the credit split don't change.</p>
+
+  <div class="cap"><strong>Before</strong> <button class="tag same" type="button" data-note="Today's sponsor window as built: Edit sponsorship (ghost) and Record (lime, the room's one lime) on the right of the facts line.">Unchanged</button></div>
+  <div class="scroller"><div class="p-frame">
+    <div class="room">
+      <div class="room-head"><h3>Halvorsen Plumbing &amp; Heating</h3><span class="pill amber">Pledged</span><span class="x" aria-hidden="true">×</span></div>
+      <div class="tiles">
+        <div><div class="lbl">Pledged</div><div class="val">$750.00</div></div>
+        <div><div class="lbl">Arrived</div><div class="val">—</div></div>
+        <div><div class="lbl">To come</div><div class="val amber">$750.00 · by Nov 15</div></div>
+      </div>
+      <div class="factsrow">
+        <div class="facts">Raising for <b>Tournament fees</b> · Logo on the dugout banner</div>
+        <div class="acts"><span class="btn ghost"><svg class="ico"><use href="#pencil"/></svg> Edit sponsorship</span><span class="btn pri">Record</span></div>
+      </div>
+      <div class="zones">
+        <div class="zone"><div class="zlbl">Cheques</div><div class="muted">Nothing has arrived yet — $750.00 still to come.</div></div>
+        <div class="zone"><div class="zlbl">Credited to players</div><div class="muted">Nobody in particular — the whole team.</div></div>
+      </div>
+      <div class="roomfoot"><span class="del"><svg class="ico"><use href="#trash"/></svg> Delete this sponsorship</span><span class="nav">‹ Birch Dental · 2 of 5 sponsors · Kingfisher Auto ›</span></div>
+    </div>
+  </div></div>
+
+  <div class="cap"><strong>After</strong>
+    <button class="tag new" type="button" data-note="NEW · Invoice is a white secondary button between Edit sponsorship and Record, the same face as the dues drawer's Family statement button (an action that opens a window is the white button). Record stays the room's one lime. Shown to anyone who can record money, on plans with PDF documents.">New · Invoice button</button>
+    <button class="tag new" type="button" data-note="NEW · Once an invoice has been downloaded, the facts line names its number and the day it was issued, so a treasurer can tell at a glance whether this sponsor has been billed. It sits before the free-text note, so a long note is what gets cut off. The Sponsors list keeps its columns.">New · issued note</button>
+  </div>
+  <div class="scroller"><div class="p-frame">
+    <div class="room">
+      <div class="room-head"><h3>Halvorsen Plumbing &amp; Heating</h3><span class="pill amber">Pledged</span><span class="x" aria-hidden="true">×</span></div>
+      <div class="tiles">
+        <div><div class="lbl">Pledged</div><div class="val">$750.00</div></div>
+        <div><div class="lbl">Arrived</div><div class="val">—</div></div>
+        <div><div class="lbl">To come</div><div class="val amber">$750.00 · by Nov 15</div></div>
+      </div>
+      <div class="factsrow">
+        <div class="facts">Raising for <b>Tournament fees</b> · <b>Invoice 2026-003</b> issued Oct 20 · Logo on the dugout banner</div>
+        <div class="acts"><span class="btn ghost"><svg class="ico"><use href="#pencil"/></svg> Edit sponsorship</span><span class="btn secondary">Invoice</span><span class="btn pri">Record</span></div>
+      </div>
+      <div class="zones">
+        <div class="zone"><div class="zlbl">Cheques</div><div class="muted">Nothing has arrived yet — $750.00 still to come.</div></div>
+        <div class="zone"><div class="zlbl">Credited to players</div><div class="muted">Nobody in particular — the whole team.</div></div>
+      </div>
+      <div class="roomfoot"><span class="del"><svg class="ico"><use href="#trash"/></svg> Delete this sponsorship</span><span class="nav">‹ Birch Dental · 2 of 5 sponsors · Kingfisher Auto ›</span></div>
+    </div>
+  </div></div>
+
+  <div class="cap"><strong>After, on a phone (390 wide)</strong> <button class="tag new" type="button" data-note="The tightest case: three buttons under the facts line at the 44px phone height. They fit on one row at 390 wide (about 340 of the 358 available), so nothing needs to fold into a menu.">New · three buttons fit</button></div>
+  <div class="scroller"><div class="p-frame phone">
+    <div class="room">
+      <div class="room-head"><span class="back" aria-hidden="true">←</span><h3>Halvorsen Plumbing &amp; Heating</h3><span class="pill amber">Pledged</span></div>
+      <div class="tiles">
+        <div><div class="lbl">Pledged</div><div class="val">$750</div></div>
+        <div><div class="lbl">Arrived</div><div class="val">—</div></div>
+        <div><div class="lbl">To come</div><div class="val amber">$750</div></div>
+      </div>
+      <div class="factsrow">
+        <div class="facts">Raising for <b>Tournament fees</b> · <b>Invoice 2026-003</b> issued Oct 20</div>
+        <div class="acts"><span class="btn ghost"><svg class="ico"><use href="#pencil"/></svg> Edit sponsorship</span><span class="btn secondary">Invoice</span><span class="btn pri">Record</span></div>
+      </div>
+      <div class="zones"><div class="zone"><div class="zlbl">Cheques</div><div class="muted">Nothing has arrived yet — $750.00 still to come.</div></div></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ═════════ 2 · THE INVOICE WINDOW ═════════ -->
+<section class="block" id="window">
+  <h2>2 · The invoice window</h2>
+  <p class="lede">Pressing Invoice opens this window over the sponsor. Everything is filled in ahead from what the team already recorded. Making an invoice is a create, so nothing is kept until <b>Download invoice</b>, and closing with changes asks first.</p>
+
+  <div class="cap"><strong>The team's first invoice</strong>
+    <button class="tag new" type="button" data-note="Bill to is kept on this sponsor once you download. 'Name on the invoice' starts as the sponsor's name. A business often wants its legal name here instead of the name the team uses for it.">New · Bill to</button>
+    <button class="tag new" type="button" data-note="The amount is not typed here. It is the pledged amount, so the invoice can never disagree with the team's books. The due date starts from the sponsor's Expected by date.">New · This invoice</button>
+    <button class="tag new" type="button" data-note="How sponsors pay the team is kept for the team once you download, and prints on every invoice the team sends. 'Payable to' is always the team's name (ruled), so it is shown, not typed.">New · How sponsors pay</button>
+  </div>
+  <div class="scroller"><div class="p-frame mid">
+    <div class="win">
+      <div class="win-head"><div class="tt"><div class="eb">Halvorsen Plumbing &amp; Heating</div><h3>Invoice</h3></div><span class="x" aria-hidden="true">×</span></div>
+      <div class="win-body">
+        <div class="fs">
+          <div class="fs-h"><h4>Bill to</h4><small>Kept on this sponsor</small></div>
+          <div class="grid2">
+            <div class="fld full"><label>Name on the invoice *</label><div class="in">Halvorsen Plumbing &amp; Heating Ltd.</div></div>
+            <div class="fld"><label>Attention</label><div class="in">Dana Halvorsen, Accounts payable</div></div>
+            <div class="fld"><label>Email</label><div class="in">ap@halvorsenplumbing.ca</div></div>
+            <div class="fld full"><label>Mailing address</label><div class="in ta">48 Mill Road
+Riverdale ON  K0A 1B0</div></div>
+          </div>
+        </div>
+        <div class="fs">
+          <div class="fs-h"><h4>This invoice</h4></div>
+          <div class="grid2">
+            <div class="fld"><label>Invoice number</label><div class="ro">2026-003</div><div class="hint">Fixed once you download.</div></div>
+            <div class="fld"><label>Amount</label><div class="ro"><b>$750.00</b></div><div class="hint">The pledged amount. Change it in Edit sponsorship.</div></div>
+            <div class="fld"><label>Issue date</label><div class="in">Oct 20, 2026</div></div>
+            <div class="fld"><label>Due date</label><div class="in">Nov 15, 2026</div></div>
+            <div class="fld full"><label>Description *</label><div class="in">Team sponsorship — 2026 Season · logo on the dugout banner</div></div>
+          </div>
+        </div>
+        <div class="fs">
+          <div class="fs-h"><h4>How sponsors pay the team</h4><small>Kept for the team · prints on every invoice</small></div>
+          <div class="grid2">
+            <div class="fld full"><label>Payable to</label><div class="ro">Riverdale Ridge U13 AA</div></div>
+            <div class="fld full"><label>Mailing address for cheques</label><div class="in ta">c/o Priya Nand, 112 Birch Crescent
+Riverdale ON  K0A 2C0</div></div>
+            <div class="fld"><label>E-transfer email</label><div class="in">treasurer@riverdaleridge.ca</div></div>
+            <div class="fld"><label>Questions go to</label><div class="in">Priya Nand, team treasurer</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="win-foot"><div class="say">Downloading keeps these details and gives the invoice its number.</div><div class="btns"><span class="btn secondary">Cancel</span><span class="btn pri">Download invoice</span></div></div>
+    </div>
+  </div></div>
+
+  <div class="row">
+    <div>
+      <div class="cap"><strong>Every invoice after that (phone)</strong>
+        <button class="tag new" type="button" data-note="Once the team's payment details are kept, they fold to one line with Change. That is the 'one press' promise. The window opens to what changes per invoice (who it's for and when it's due), and the team's details stay out of the way.">New · team details folded</button>
+        <button class="tag same" type="button" data-note="On a phone it is the portal's form sheet: full screen, ← in its own head, fields and buttons at the 44px phone height, the sentence above the buttons.">Form sheet</button>
+      </div>
+      <div class="scroller"><div class="p-frame phone">
+        <div class="win">
+          <div class="win-head"><span class="back" aria-hidden="true">←</span><div class="tt"><div class="eb">Kingfisher Auto</div><h3>Invoice</h3></div></div>
+          <div class="win-body">
+            <div class="fs">
+              <div class="fs-h"><h4>Bill to</h4><small>Kept on this sponsor</small></div>
+              <div class="grid2">
+                <div class="fld"><label>Name on the invoice *</label><div class="in">Kingfisher Auto Service Inc.</div></div>
+                <div class="fld"><label>Attention</label><div class="in">Accounts payable</div></div>
+                <div class="fld"><label>Email</label><div class="in">payables@kingfisherauto.ca</div></div>
+              </div>
+            </div>
+            <div class="fs">
+              <div class="fs-h"><h4>This invoice</h4></div>
+              <div class="grid2">
+                <div class="fld"><label>Amount</label><div class="ro"><b>$500.00</b> · invoice 2026-004</div></div>
+                <div class="fld"><label>Due date</label><div class="in">Dec 1, 2026</div></div>
+              </div>
+            </div>
+            <div class="fs">
+              <div class="fs-h"><h4>How sponsors pay the team</h4></div>
+              <div class="saved"><div class="sv">Payable to <b>Riverdale Ridge U13 AA</b> · e-transfer treasurer@riverdaleridge.ca · cheques to 112 Birch Crescent</div><span class="chg">Change</span></div>
+            </div>
+          </div>
+          <div class="win-foot"><div class="say">Downloading keeps these details and gives the invoice its number.</div><div class="btns"><span class="btn secondary">Cancel</span><span class="btn pri">Download invoice</span></div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div>
+      <div class="cap"><strong>Two states</strong>
+        <button class="tag same" type="button" data-note="Closing a create with changes asks once in the foot: Keep writing or Discard (red). This is the window kit's own close ask, not something new.">Close ask</button>
+        <button class="tag same" type="button" data-note="A refusal says what is missing beside the button, in the foot's sentence spot, and marks the field. The button stays pressable (absent beats disabled). Pressing it again after the fix downloads.">Refusal</button>
+      </div>
+      <div class="p-frame mid" style="display:flex;flex-direction:column;gap:16px">
+        <div class="win">
+          <div class="win-foot"><div class="say"><b style="color:var(--p-ink)">Close without saving?</b> The details you typed for this invoice won't be kept.</div><div class="btns"><span class="btn secondary">Keep writing</span><span class="btn danger">Discard</span></div></div>
+        </div>
+        <div class="win">
+          <div class="win-body" style="padding-bottom:6px"><div class="fld"><label>Name on the invoice *</label><div class="in bad">&nbsp;</div></div></div>
+          <div class="win-foot"><div class="say err">Add the name on the invoice. It's who the sponsor's accounts department pays against.</div><div class="btns"><span class="btn secondary">Cancel</span><span class="btn pri">Download invoice</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 3 · THE PRINTED INVOICE ═════════ -->
+<section class="block" id="paper">
+  <h2>3 · The printed invoice</h2>
+  <p class="lede">The house recipe, drawn to the family dues statement's measurements: the team's colour band, its crest and name top-left, the hairline, title and subtitle, three figures, section labels, the colour table head, the closing note and the footer. True Letter size. The left page is a pledged sponsor. The right page is the same invoice after the money arrived, which is <a href="#asks" style="color:var(--doc-accent)">Ask 1</a>.</p>
+  <div class="cap">
+    <button class="tag new" type="button" data-note="Line two of the identity band is whatever the team set in How your documents look, as on every team document. When the team set nothing there (most teams), the invoice prints the team's cheque address on that line, because an accounts clerk files by the From address.">New · From address</button>
+    <button class="tag new" type="button" data-note="Three figures, like the statement's dues · paid · balance: invoiced · paid · balance due. The invoice number lives in the subtitle and in How to pay, not as a figure.">New · figures</button>
+    <button class="tag new" type="button" data-note="No tax line and no tax wording anywhere (ruled). A one-line invoice has no totals row, like every house table. The figures above already state the total.">Ruled · no tax</button>
+    <button class="tag same" type="button" data-note="Band, crest, hairline, section labels, table head colour, zebra rows, the italic closing note and the footer line (site · email · Exported · Generated by FieldLogicHQ · Page n of N) are the house document as rendered today. No stamps or boxed text: the house recipe has none.">House recipe · unchanged</button>
+  </div>
+  <div class="scroller"><div class="pages">
+
+    <!-- PLEDGED -->
+    <article class="paper" aria-label="Invoice, pledged">
+      <div class="band"></div>
+      <div class="inner">
+        <div class="ident">
+          <svg viewBox="0 0 46 46" aria-hidden="true"><use href="#crest"/></svg>
+          <div><div class="nm">Riverdale Ridge U13 AA</div><div class="l2">c/o Priya Nand, 112 Birch Crescent, Riverdale ON  K0A 2C0</div></div>
+        </div>
+        <div class="ttl"><h5>Invoice</h5><div class="sub">No. 2026-003  ·  Issued Oct 20, 2026  ·  Due Nov 15, 2026</div></div>
+        <div class="stats">
+          <div><div class="v">$750.00</div><div class="k">invoiced</div></div>
+          <div><div class="v">$0.00</div><div class="k">paid</div></div>
+          <div><div class="v">$750.00</div><div class="k">balance due</div></div>
+        </div>
+        <div class="sec">
+          <div class="sl">Bill to</div>
+          <div class="addr"><b>Halvorsen Plumbing &amp; Heating Ltd.</b><br>Attn: Dana Halvorsen, Accounts payable<br>48 Mill Road, Riverdale ON  K0A 1B0<br>ap@halvorsenplumbing.ca</div>
+        </div>
+        <div class="sec">
+          <table class="ptable">
+            <thead><tr><th>Description</th><th class="r" style="width:150px">Amount</th></tr></thead>
+            <tbody><tr><td class="desc">Team sponsorship — 2026 Season<small>Logo on the dugout banner</small></td><td class="r">$750.00</td></tr></tbody>
+          </table>
+        </div>
+        <div class="sec">
+          <div class="sl">How to pay</div>
+          <ul class="bul">
+            <li>By e-transfer to treasurer@riverdaleridge.ca</li>
+            <li>By cheque payable to Riverdale Ridge U13 AA, mailed to c/o Priya Nand, 112 Birch Crescent, Riverdale ON  K0A 2C0</li>
+            <li>Please quote invoice 2026-003 with your payment.</li>
+          </ul>
+        </div>
+        <p class="close">Questions about this invoice? Contact Priya Nand, team treasurer, at treasurer@riverdaleridge.ca. Thank you for supporting Riverdale Ridge U13 AA.</p>
+        <div class="pfoot"><span>riverdaleridge.ca  ·  treasurer@riverdaleridge.ca  ·  Exported: 2026-10-20  ·  Generated by FieldLogicHQ</span><span>Page 1 of 1</span></div>
+      </div>
+    </article>
+
+    <!-- PAID -->
+    <article class="paper" aria-label="Invoice, paid in full">
+      <div class="band"></div>
+      <div class="inner">
+        <div class="ident">
+          <svg viewBox="0 0 46 46" aria-hidden="true"><use href="#crest"/></svg>
+          <div><div class="nm">Riverdale Ridge U13 AA</div><div class="l2">c/o Priya Nand, 112 Birch Crescent, Riverdale ON  K0A 2C0</div></div>
+        </div>
+        <div class="ttl"><h5>Invoice</h5><div class="sub">Paid in full Nov 4, 2026  ·  No. 2026-003  ·  Issued Oct 20, 2026</div></div>
+        <div class="stats">
+          <div><div class="v">$750.00</div><div class="k">invoiced</div></div>
+          <div><div class="v">$750.00</div><div class="k">paid</div></div>
+          <div><div class="v">$0.00</div><div class="k">balance due</div></div>
+        </div>
+        <div class="sec">
+          <div class="sl">Bill to</div>
+          <div class="addr"><b>Halvorsen Plumbing &amp; Heating Ltd.</b><br>Attn: Dana Halvorsen, Accounts payable<br>48 Mill Road, Riverdale ON  K0A 1B0<br>ap@halvorsenplumbing.ca</div>
+        </div>
+        <div class="sec">
+          <table class="ptable">
+            <thead><tr><th>Description</th><th class="r" style="width:150px">Amount</th></tr></thead>
+            <tbody><tr><td class="desc">Team sponsorship — 2026 Season<small>Logo on the dugout banner</small></td><td class="r">$750.00</td></tr></tbody>
+          </table>
+        </div>
+        <div class="sec">
+          <div class="sl">Payments received — thank you</div>
+          <table class="ptable">
+            <thead><tr><th>Date</th><th>How it arrived</th><th class="r" style="width:150px">Amount</th></tr></thead>
+            <tbody><tr><td>Nov 4, 2026</td><td>Cheque</td><td class="r">$750.00</td></tr></tbody>
+          </table>
+        </div>
+        <p class="close">Paid in full. Thank you for supporting Riverdale Ridge U13 AA. Questions? Contact Priya Nand, team treasurer, at treasurer@riverdaleridge.ca.</p>
+        <div class="pfoot"><span>riverdaleridge.ca  ·  treasurer@riverdaleridge.ca  ·  Exported: 2026-11-05  ·  Generated by FieldLogicHQ</span><span>Page 1 of 1</span></div>
+      </div>
+    </article>
+
+  </div></div>
+  <p class="lede" style="font-size:14px">When only part of a pledge has arrived, the same page shows the payments so far, keeps "How to pay" for the balance due, and its subtitle reads "Balance due Nov 15, 2026".</p>
+</section>
+
+<!-- ═════════ ASKS ═════════ -->
+<section class="block" id="asks">
+  <h2>Asks for you</h2>
+  <p class="lede">Each has a recommendation. "All as recommended" is a complete answer. Pick any you want to change, then copy your answers back into the chat.</p>
+  <div class="asks card" id="askList"></div>
+  <div class="copyrow"><button class="copybtn" type="button" id="copyBtn">Copy my answers</button><span id="copied" aria-live="polite"></span></div>
+  <textarea id="answers" readonly aria-label="Your answers"></textarea>
+</section>
+
+<section class="block">
+  <h2>Design review applied</h2>
+  <p class="lede">The drawings went through the design review before you saw them. It changed these, as proposals for you to accept with the asks:</p>
+  <ul class="dfix">
+    <li>Required stars are plain, in the label's ink. The window is the portal's medium width, and its section titles are sentence case.</li>
+    <li>The window title is "Invoice" with the sponsor's name above it, so a long name can't wrap the title on a phone.</li>
+    <li>After the first invoice, the team's payment details fold to one line with Change.</li>
+    <li>The Amount hint is plain text. A link out of an unsaved window would lose what was typed.</li>
+    <li>The close ask and a refusal are drawn. The foot sentence says what Download keeps.</li>
+    <li>The printed page dropped a rotated PAID stamp, because the house documents have none. "Paid in full" leads the subtitle instead.</li>
+    <li>The printed page dropped a repeated details block. The figures are invoiced · paid · balance due, like the dues statement.</li>
+    <li>The From line respects the team's own document setting. The room's delete control is drawn with its real icon.</li>
+  </ul>
+</section>
+
+<section class="block">
+  <h2>Not in this round</h2>
+  <ul class="out">
+    <li><b>Tax of any kind.</b> Ruled out. No tax field, line or wording.</li>
+    <li><b>Club teams invoicing as the club.</b> From the coaches portal it is always the team (ruled). A club-issued invoice would belong to the club's own money screens, as a separate decision.</li>
+    <li><b>Invoices for anything except a sponsor.</b> Families already get their dues statement. Grants and other income have no invoice.</li>
+    <li><b>A closed season.</b> Invoicing is a money tool, so it lives on the working season only. A closed season's money shelf keeps showing the sponsor and its arrivals as it does today.</li>
+    <li><b>Help guide and demo.</b> The fundraising help article gets an Invoice section at build time. The demo picks this up on its own.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+(function () {
+  // clickable annotation tags: each opens its explanation directly under its own row
+  document.querySelectorAll('.tag[data-note]').forEach(function (t) {
+    t.setAttribute('aria-expanded', 'false');
+    t.addEventListener('click', function () {
+      var host = t.closest('.cap') || t.parentElement;
+      var nxt = host.nextElementSibling;
+      var open = nxt && nxt.classList.contains('tagnote') ? nxt : null;
+      var same = open && open.dataset.src === t.textContent;
+      if (open) open.remove();
+      host.querySelectorAll('.tag').forEach(function (x) { x.setAttribute('aria-expanded', 'false'); });
+      if (same) return;
+      var n = document.createElement('div');
+      n.className = 'tagnote'; n.dataset.src = t.textContent; n.textContent = t.dataset.note;
+      host.insertAdjacentElement('afterend', n);
+      t.setAttribute('aria-expanded', 'true');
+    });
+  });
+
+  var ASKS = [
+    { id: 'A1', q: 'Once money arrives, does the same button print the invoice as paid in full?',
+      why: 'Accounting departments often ask for proof of payment after they pay. The paid copy keeps the same number, leads with "Paid in full" and lists what arrived. It is still titled "Invoice", never a receipt for a donation.',
+      opts: ['Yes. Received prints paid in full, part received prints the balance due (as drawn)', 'No. Only ever the unpaid invoice'], rec: 0 },
+    { id: 'A2', q: 'How are invoice numbers counted?',
+      why: 'A number must never repeat for the team. Starting with the season year makes it easy to find in a sponsor’s files.',
+      opts: ['Season year + count for that season: 2026-001, 2026-002 …', 'One running count for the team’s whole life: 0001, 0002 …'], rec: 0 },
+    { id: 'A3', q: 'Where does a coach set how sponsors pay the team?',
+      why: 'The invoice window is where a coach first needs the details, so asking there is never a dead end, and after the first invoice they fold to one line. A second home in team settings is a second place for the same facts to drift.',
+      opts: ['In the invoice window only, kept for the team (as drawn)', 'In team settings, beside How your documents look, and read-only in the window', 'Both places'], rec: 0 },
+    { id: 'A4', q: 'If the pledged amount changes after an invoice was issued, what happens?',
+      why: 'A sponsor bumps $500 to $750 after receiving the invoice. Reusing the number with the new amount keeps one bill per sponsor. A new number leaves the sponsor holding two invoices for one sponsorship.',
+      opts: ['Same number. The reprint shows the new amount and reads "Revised Oct 28, 2026" in its subtitle', 'A new number, and the old one is noted as replaced'], rec: 0 },
+    { id: 'A5', q: 'Who can make an invoice?',
+      why: 'An invoice is a money document. The people who can already record a sponsor’s cheque are the natural fit.',
+      opts: ['Anyone who can record the team’s money', 'Head coach only'], rec: 0 },
+    { id: 'A6', q: 'Does FieldLogicHQ email the invoice to the sponsor, or does the coach send it?',
+      why: 'Download-only ships sooner, and the coach stays in their own email thread with the sponsor. Sending from the product adds a sent record, bounces and a new email to design.',
+      opts: ['Download only for now. The coach attaches it to their own email', 'Add "Email to sponsor" in the same build'], rec: 0 },
+    { id: 'A7', q: 'Do you accept the design review’s changes listed below?',
+      why: 'They are drawn into every specimen above. Each one rests on an existing portal rule.',
+      opts: ['Yes, all of them', 'Not all. I’ll say which in the chat'], rec: 0 }
+  ];
+  var KEY = 'sponsor-invoice-asks-r1', saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  var list = document.getElementById('askList');
+  ASKS.forEach(function (a) {
+    var el = document.createElement('div'); el.className = 'ask';
+    var html = '<div class="n">' + a.id + '</div><div><h3></h3><p></p></div><div class="opts">';
+    a.opts.forEach(function (o, i) {
+      html += '<label class="' + (i === a.rec ? 'isrec' : '') + '"><input type="radio" name="' + a.id + '" id="' + a.id + '-' + i + '" value="' + i + '"><span></span></label>';
+    });
+    el.innerHTML = html + '</div>';
+    el.querySelector('h3').textContent = a.q;
+    el.querySelector('p').textContent = a.why;
+    el.querySelectorAll('.opts label').forEach(function (l, i) {
+      var s = l.querySelector('span'); s.textContent = a.opts[i];
+      if (i === a.rec) { var b = document.createElement('span'); b.className = 'recb'; b.textContent = 'Recommended'; s.appendChild(b); }
+      var inp = l.querySelector('input');
+      if (String(saved[a.id]) === String(i)) inp.checked = true;
+      inp.addEventListener('change', function () { saved[a.id] = i; try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} render(); });
+    });
+    list.appendChild(el);
+  });
+  var ta = document.getElementById('answers');
+  function render() {
+    var lines = ['Sponsor invoice: round 1 answers'];
+    var allRec = true;
+    ASKS.forEach(function (a) {
+      var pick = saved[a.id];
+      if (pick === undefined || pick === a.rec) { lines.push(a.id + ': as recommended (' + a.opts[a.rec] + ')'); }
+      else { allRec = false; lines.push(a.id + ': ' + a.opts[pick]); }
+    });
+    if (allRec) lines.splice(1, 0, 'All as recommended.');
+    ta.value = lines.join('\n');
+  }
+  render();
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var msg = document.getElementById('copied');
+    function fallback() { ta.focus(); ta.select(); msg.textContent = 'Selected. Press Ctrl+C to copy.'; }
+    try {
+      navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = 'Copied. Paste it into the chat.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+})();
+</script>

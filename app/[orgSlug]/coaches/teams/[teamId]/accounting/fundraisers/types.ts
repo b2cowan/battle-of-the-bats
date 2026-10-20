@@ -39,6 +39,8 @@ export interface Fundraiser {
   pledgedAmount: number | null;
   stillToCome: number;
   expectedBy: string | null;
+  /** Sponsor only: the invoice once one has been downloaded (mig 339) — its number and issue date. */
+  invoice: { number: string; issuedOn: string } | null;
   creditFamilies: { playerId: string; value: number; unit: string; name: string | null }[];
 }
 

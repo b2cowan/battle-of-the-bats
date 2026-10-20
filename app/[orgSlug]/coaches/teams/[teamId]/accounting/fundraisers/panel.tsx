@@ -63,6 +63,9 @@ import {
   SponsorRoomBody, ArrivalQuestion, EditSponsorshipSheet, SponsorStatusChip, expectedClause,
   sponsorFacts,
 } from './SponsorRoom';
+import { SponsorInvoiceWindow } from './SponsorInvoiceWindow';
+import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature } from '@/lib/plan-features';
 
 export function FundraisersPanel({
   params: paramsPromise,
@@ -75,6 +78,10 @@ export function FundraisersPanel({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { loading: ctxLoading } = useCoaches();
+  /* The sponsor invoice (mig 339) is a PDF document: shown on the plans that carry PDF documents, the dues
+     statement's gate, and ABSENT elsewhere (absent beats disabled). The route holds the same gate. */
+  const { currentOrg } = useOrg();
+  const canUsePdf = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
   const recordSignal = useRecordMoneySignal();
   const confirmDialog = useConfirm();
   const bumpMoneyRevision = useBumpMoneyRevision();
@@ -448,6 +455,8 @@ export function FundraisersPanel({
   // ── Questions and sheets the room asks ───────────────────────────────────────────────────
   const [editDrive, setEditDrive] = useState<Fundraiser | null>(null);
   const [editSponsor, setEditSponsor] = useState<Fundraiser | null>(null);
+  /** The sponsor whose invoice window is open (Coach Sponsor Invoice, mig 339). */
+  const [invoiceFor, setInvoiceFor] = useState<Fundraiser | null>(null);
   const [entryEdit, setEntryEdit] = useState<DriveEntryRow | null>(null);
   const [arrivalEdit, setArrivalEdit] = useState<SponsorArrival | null>(null);
 
@@ -873,6 +882,14 @@ export function FundraisersPanel({
               <button type="button" className={styles.btnGhost} disabled={!roomRead?.data} onClick={() => setEditSponsor(openRecord)}>
                 <Pencil size={14} aria-hidden /> Edit sponsorship
               </button>
+              {/* ⚖ THE INVOICE DOOR (Coach Sponsor Invoice, owner 2026-10-20): the white secondary, like the dues
+                  drawer's Family statement — an act that opens a window; Record stays the room's one lime. The window
+                  reads its own amount and payments from the invoice route, so it never waits on the room's read. */}
+              {canUsePdf && (
+                <button type="button" className={styles.btnSecondary} onClick={() => setInvoiceFor(openRecord)}>
+                  Invoice
+                </button>
+              )}
               {recordSignal && (
                 <button
                   type="button"
@@ -996,6 +1013,17 @@ export function FundraisersPanel({
           onManageChanged={quietReload}
           onSaved={() => { setEditSponsor(null); afterRoomWrite(); }}
           onClose={() => setEditSponsor(null)}
+          tabActive={tabActive}
+        />
+      )}
+      {invoiceFor && (
+        <SponsorInvoiceWindow
+          key={invoiceFor.id}
+          orgSlug={orgSlug}
+          teamId={teamId}
+          sponsor={invoiceFor}
+          onIssued={afterRoomWrite}
+          onClose={() => setInvoiceFor(null)}
           tabActive={tabActive}
         />
       )}

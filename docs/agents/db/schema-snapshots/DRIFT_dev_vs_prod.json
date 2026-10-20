@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-19",
-  "total": 58,
+  "generated": "2026-10-20",
+  "total": 94,
   "counts": {
-    "tables": 2,
-    "columns": 25,
-    "indexes": 12,
-    "constraints": 13,
-    "rls": 6
+    "tables": 3,
+    "columns": 45,
+    "indexes": 17,
+    "constraints": 19,
+    "rls": 10
   },
   "items": [
     {
@@ -31,6 +31,22 @@
     },
     {
       "key": "check:only-dev:family_payment_handoffs.family_payment_handoffs_state_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_bill_to_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_description_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_seq_check",
       "sig": ""
     },
     {
@@ -134,6 +150,86 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_sponsor_invoices.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.bill_to_address",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.bill_to_attention",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.bill_to_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.bill_to_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.description",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.due_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.fundraiser_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.issued_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.revised_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.season_year",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.seq",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_sponsor_invoices.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_teams.sponsor_payment_details",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_notes.family_notes_created_by_fkey",
       "sig": ""
     },
@@ -186,6 +282,30 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_fundraiser_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_sponsor_invoices.rep_sponsor_invoices_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "index:changed:notifications_org_needs_attention_idx",
       "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
@@ -234,11 +354,35 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_sponsor_invoices_fundraiser_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_sponsor_invoices_number_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_sponsor_invoices_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_sponsor_invoices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_sponsor_invoices_year_idx",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:family_notes",
       "sig": ""
     },
     {
       "key": "table:only-dev:family_payment_handoffs",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_sponsor_invoices",
       "sig": ""
     }
   ]

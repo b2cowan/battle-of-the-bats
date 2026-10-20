@@ -2652,6 +2652,254 @@ export async function downloadFamilyDuesStatements(filename: string, opts: Famil
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+//  Sponsor invoice (Coach Sponsor Invoice, mig 339 — owner rulings 2026-10-20)
+//  The dues statement's recipe, for a business's accounts-payable desk: band, crest, title, three
+//  figures, Bill to, the one line, How to pay, payments received, the closing line, the footer.
+//  ⚖ Always from the team (R1). ⚖ NO TAX — no field, line or word (R2). ⚖ Titled "Invoice" in every
+//  state (R3): a paid copy says "Paid in full" in its subtitle; the house has no stamps.
+//  Plan: docs/projects/active/COACH_SPONSOR_INVOICE_PLAN.md.
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface SponsorInvoiceOptions {
+  /** Whose paper — the header falls back to it when headerLine1 is blank. Also the payee (R1). */
+  teamName: string;
+  /** The team's cheque address on one line: the identity band's second line when the team's own
+   *  document look set none (an accounts clerk files by the From address). */
+  fromLine?: string | null;
+  number: string;
+  /** Dates, formatted by the caller in the org's zone like every date here ("Oct 20, 2026"). */
+  issuedLabel: string;
+  dueLabel?: string | null;
+  revisedLabel?: string | null;
+  /** The money has all arrived (A1). */
+  paidInFull?: boolean;
+  /** The latest arrival's date, when one was recorded — never invented (/review). */
+  paidInFullLabel?: string | null;
+  /** Some money has arrived but not all: the due date reads "Balance due". */
+  partPaid?: boolean;
+  /** The three figures, formatted: invoiced · paid · balance due. */
+  invoiced: string;
+  paid: string;
+  balance: string;
+  billTo: { name: string; attention?: string | null; address?: string | null; email?: string | null };
+  description: string;
+  amount: string;
+  /** Payments received: [date, how it arrived, amount]. */
+  payments: string[][];
+  howToPay: { etransferEmail?: string | null; chequeAddress?: string | null };
+  /** Who answers questions, as the team typed it ("Priya Nand, treasurer@…"). */
+  questionsTo?: string | null;
+  settings: OrgPdfSettings;
+}
+
+/** Exported for the contract tests — the download wrapper injects real jsPDF/autoTable. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildSponsorInvoiceDoc(jsPDFClass: any, autoTable: any, opts: SponsorInvoiceOptions): any {
+  const { settings, teamName } = opts;
+  const accentRgb = hexToRgb(settings.accentColor);
+  const headerTextColor = isDark(settings.accentColor) ? [255, 255, 255] : [15, 15, 20];
+  const doc = new jsPDFClass({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentWidth = pageWidth - MARGIN * 2;
+  const maxY = pageHeight - 18;
+  const line1 = settings.headerLine1 || teamName;
+  const paidInFull = !!opts.paidInFull;
+  // The team's own second line wins; the cheque address only fills an empty one (design review, A7).
+  const identity: OrgPdfSettings = settings.headerLine2 || !opts.fromLine ? settings : { ...settings, headerLine2: opts.fromLine };
+
+  let y = 0;
+  const accentBar = () => {
+    doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.rect(0, 0, pageWidth, 8, 'F');
+  };
+  const continuationHeader = () => {
+    accentBar();
+    const cy = MARGIN + 4;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(20, 20, 35);
+    doc.text(line1, MARGIN, cy);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(110, 110, 125);
+    doc.text(`Invoice ${opts.number} (continued)`, pageWidth - MARGIN, cy, { align: 'right' });
+  };
+  const headered = new Set<number>([1]);
+  const ensureRoom = (needed: number) => {
+    if (y + needed <= maxY) return;
+    doc.addPage();
+    headered.add(doc.internal.getNumberOfPages());
+    continuationHeader();
+    y = MARGIN + 11;
+  };
+  const sectionLabel = (text: string) => {
+    ensureRoom(20);
+    doc.setDrawColor(210, 210, 220);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, y, pageWidth - MARGIN, y);
+    y += 5.5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(110, 110, 125);
+    doc.text(text.toUpperCase(), MARGIN, y);
+    y += 4;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const table = (head: string[], body: string[][], columnStyles: Record<number, any>) => {
+    autoTable(doc, {
+      theme: 'plain',
+      styles: { font: 'helvetica', fontSize: 8, cellPadding: { top: 2, right: 4, bottom: 2, left: 4 }, overflow: 'linebreak', textColor: [20, 20, 35] },
+      headStyles: { fillColor: [accentRgb.r, accentRgb.g, accentRgb.b], textColor: headerTextColor, fontStyle: 'bold', fontSize: 8.5 },
+      alternateRowStyles: { fillColor: [248, 248, 252] },
+      tableLineColor: [220, 220, 230],
+      tableLineWidth: 0.2,
+      margin: { left: MARGIN, right: MARGIN, top: MARGIN + 11, bottom: 18 },
+      rowPageBreak: 'avoid',
+      head: [head],
+      body,
+      columnStyles,
+      startY: y,
+      didDrawPage: () => {
+        const page = doc.internal.getNumberOfPages();
+        if (!headered.has(page)) { headered.add(page); continuationHeader(); }
+      },
+      // The money column's heading sits over its figures (right), like the figures themselves.
+      didParseCell: (data: { section: string; column: { index: number }; cell: { styles: { halign: string } } }) => {
+        if (data.section === 'head' && columnStyles[data.column.index]?.halign === 'right') data.cell.styles.halign = 'right';
+      },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    y = (doc as any).lastAutoTable.finalY + 5.5;
+  };
+  const bullets = (lines: string[]) => {
+    for (const lineText of lines) {
+      const wrapped: string[] = doc.splitTextToSize(`•  ${lineText}`, contentWidth);
+      ensureRoom(wrapped.length * 5 + 2);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(50, 50, 65);
+      doc.text(wrapped, MARGIN, y + 4);
+      y += wrapped.length * 5;
+    }
+    y += 3;
+  };
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  accentBar();
+  y = drawIdentityBand(doc, identity, line1, MARGIN) + 6;
+
+  // ── Title + subtitle — the status leads once it is paid (design review, A7) ──
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(20, 20, 35);
+  doc.text('Invoice', MARGIN, y);
+  y += 5;
+  const partPaid = !paidInFull && !!opts.partPaid;
+  const subtitle = paidInFull
+    ? [opts.paidInFullLabel ? `Paid in full ${opts.paidInFullLabel}` : 'Paid in full', `No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null]
+    : [`No. ${opts.number}`, `Issued ${opts.issuedLabel}`, opts.revisedLabel ? `Revised ${opts.revisedLabel}` : null,
+      opts.dueLabel ? `${partPaid ? 'Balance due' : 'Due'} ${opts.dueLabel}` : null];
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(90, 90, 110);
+  doc.text(subtitle.filter(Boolean).join('  ·  '), MARGIN, y);
+  y += 8.5;
+
+  // ── The three figures (the statement's dues · paid · balance) ───────────────
+  const stats = [
+    { n: opts.invoiced, label: 'invoiced' },
+    { n: opts.paid, label: 'paid' },
+    { n: opts.balance, label: 'balance due' },
+  ];
+  const colW = contentWidth / stats.length;
+  stats.forEach((s, i) => {
+    const x = MARGIN + i * colW;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(20, 20, 35);
+    doc.text(s.n, x, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(110, 110, 125);
+    doc.text(s.label, x, y + 4.5);
+  });
+  y += 11;
+
+  // ── Bill to ───────────────────────────────────────────────────────────────
+  sectionLabel('Bill to');
+  const billLines: { text: string; bold?: boolean }[] = [
+    { text: opts.billTo.name, bold: true },
+    ...(opts.billTo.attention ? [{ text: `Attn: ${opts.billTo.attention}` }] : []),
+    ...(opts.billTo.address ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(text => ({ text })),
+    ...(opts.billTo.email ? [{ text: opts.billTo.email }] : []),
+  ];
+  for (const l of billLines) {
+    const wrapped: string[] = doc.splitTextToSize(l.text, contentWidth);
+    ensureRoom(wrapped.length * 4.6);
+    doc.setFont('helvetica', l.bold ? 'bold' : 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(20, 20, 35);
+    doc.text(wrapped, MARGIN, y + 3.5);
+    y += wrapped.length * 4.6;
+  }
+  y += 5;
+
+  // ── The line — no totals row: the figures above state the total ─────────────
+  table(['Description', 'Amount'], [[opts.description, opts.amount]], { 1: { halign: 'right', cellWidth: 40 } });
+
+  // ── How to pay — gone once nothing is owed ─────────────────────────────────
+  if (!paidInFull) {
+    // A cheque line only says where to mail one; with neither way given it still names the payee (R1).
+    const { etransferEmail, chequeAddress } = opts.howToPay;
+    const ways = [
+      etransferEmail ? `By e-transfer to ${etransferEmail}` : null,
+      chequeAddress ? `By cheque payable to ${teamName}, mailed to ${chequeAddress}` : null,
+      !etransferEmail && !chequeAddress ? `Payable to ${teamName}` : null,
+      `Please quote invoice ${opts.number} with your payment.`,
+    ].filter((s): s is string => !!s);
+    sectionLabel('How to pay');
+    bullets(ways);
+  }
+
+  // ── Payments received ──────────────────────────────────────────────────────
+  if (opts.payments.length > 0) {
+    sectionLabel('Payments received — thank you');
+    table(['Date', 'How it arrived', 'Amount'], opts.payments, { 2: { halign: 'right', cellWidth: 40 } });
+  }
+
+  // ── The door back to a human ───────────────────────────────────────────────
+  const thanks = `Thank you for supporting ${teamName}.`;
+  const who = opts.questionsTo?.trim().replace(/[.\s]+$/, '');
+  const ask = who ? `Questions about this invoice? Contact ${who}.` : null;
+  const closing = paidInFull ? ['Paid in full.', thanks, ask].filter(Boolean).join(' ') : [ask, thanks].filter(Boolean).join(' ');
+  const closingLines: string[] = doc.splitTextToSize(closing, contentWidth);
+  if (y + closingLines.length * 4 + 2 > pageHeight - 13) {
+    doc.addPage();
+    headered.add(doc.internal.getNumberOfPages());
+    continuationHeader();
+    y = MARGIN + 11;
+  }
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 125);
+  doc.text(closingLines, MARGIN, y + 2);
+
+  stampFooters(doc, settings);
+  return doc;
+}
+
+/** Lazy-loaded download wrapper, same shape as every export entry point here. */
+export async function downloadSponsorInvoice(filename: string, opts: SponsorInvoiceOptions): Promise<void> {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+  const doc = buildSponsorInvoiceDoc(jsPDF, autoTable, opts);
+  doc.save(filename);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  Dugout-wall lineup posters (Coach Lineup Builder Phase 3)
 //  A high-contrast, pen-fillable poster — NOT the generic report table. Blank
 //  cells print as empty boxes the coach fills in by hand at the field; an

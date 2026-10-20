@@ -18,6 +18,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { tournamentToday } from '@/lib/timezone';
 import { isFundraisingKind, isSponsorStatus } from '@/lib/coach-fundraising';
 import { resolveRaisingForItem } from '@/lib/coach-budget-items';
+import { formatInvoiceNumber } from '@/lib/coach-sponsor-invoice';
 import { accrueArrival, creditPlanProblem, parseCreditPlanRows, stillToCome, type CreditPlanShare, type CreditPlanShareInput } from '@/lib/sponsor-arrivals';
 import { writeSponsorArrivalRow, resolveArrangements, arrangementColumns, rosterFamilyNames } from '@/lib/sponsor-arrivals-server';
 
@@ -144,7 +145,7 @@ export const GET = withObservability(async (_req: Request,
   }
 
   const fundraiserIds = fundraisers.map(f => f.id);
-  const [{ data: entries }, { data: planRows }, tagsByFundraiserId] = await Promise.all([
+  const [{ data: entries }, { data: planRows }, tagsByFundraiserId, { data: invoiceRows }] = await Promise.all([
     supabaseAdmin
       .from('rep_fundraiser_entries')
       .select('fundraiser_id, player_id, amount_raised, rebate_amount')
@@ -155,7 +156,16 @@ export const GET = withObservability(async (_req: Request,
       .in('fundraiser_id', fundraiserIds)
       .order('created_at', { ascending: true }),
     getRepTeamFundraiserTagsMap(fundraiserIds),
+    // The sponsor's invoice, once one was downloaded (mig 339) — the room's facts line names it.
+    supabaseAdmin
+      .from('rep_sponsor_invoices')
+      .select('fundraiser_id, season_year, seq, issued_on')
+      .in('fundraiser_id', fundraiserIds),
   ]);
+  const invoiceByFundraiser = new Map((invoiceRows ?? []).map(r => [
+    r.fundraiser_id as string,
+    { number: formatInvoiceNumber(Number(r.season_year), Number(r.seq)), issuedOn: r.issued_on as string },
+  ]));
 
   // Entries are ARRIVALS for a sponsor (mig 268) and per-player rows for a drive — the sum works
   // for both, and a pledged sponsor deliberately has none: its figure is the pledge column.
@@ -225,6 +235,7 @@ export const GET = withObservability(async (_req: Request,
       pledgedAmount:       pledged,
       stillToCome:         stillToCome(pledged, t.totalRaised),
       expectedBy:          isSponsor ? (f.expected_by ?? null) : null,
+      invoice:             isSponsor ? (invoiceByFundraiser.get(f.id) ?? null) : null,
       // ⚠ Tags travel with the RECORD, never onto the list row (row-density ruling 2026-08-15) —
       // the list carries them only so the export can, and so opening a record does not need a
       // second fetch to know what it is already labelled.

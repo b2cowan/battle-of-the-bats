@@ -6600,6 +6600,66 @@
     "update_rule": null
   },
   {
+    "table_name": "rep_sponsor_invoices",
+    "constraint_name": "rep_sponsor_invoices_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_sponsor_invoices",
+    "constraint_name": "rep_sponsor_invoices_fundraiser_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fundraiser_id",
+    "foreign_table": "rep_fundraisers",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_sponsor_invoices",
+    "constraint_name": "rep_sponsor_invoices_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_sponsor_invoices",
+    "constraint_name": "rep_sponsor_invoices_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_sponsor_invoices",
+    "constraint_name": "rep_sponsor_invoices_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_sponsor_invoices",
+    "constraint_name": "rep_sponsor_invoices_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "rep_team_announcements",
     "constraint_name": "rep_team_announcements_org_id_fkey",
     "constraint_type": "FOREIGN KEY",

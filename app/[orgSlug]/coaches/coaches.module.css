@@ -5028,6 +5028,19 @@ a.oneChip:hover { border-color: currentColor; }
   letter-spacing: 0.06em;
   color: var(--text-tertiary);
 }
+/* A value a form SHOWS but does not take (the sponsor invoice's number and amount, its Payable to): the input row's
+   height, so it lines up with a typed field beside it, with no box — a box would say "type here". */
+.formValue {
+  margin: 0; min-height: 36px; display: flex; align-items: center;
+  font-size: var(--type-body); color: var(--text-primary); font-variant-numeric: tabular-nums;
+}
+/* A group kept from before, folded to one line with its Change door (the sponsor invoice's team details, design
+   review 2026-10-20) — a hairline card, never a tint (the 2026-09-21 flat-form ruling). */
+.formFoldedLine {
+  display: flex; align-items: center; gap: 0.75rem;
+  border: 1px solid var(--home-line, var(--border)); border-radius: 8px; padding: 0.6rem 0.75rem;
+}
+.formFoldedLine > p { flex: 1; min-width: 0; }
 .formSectionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
 /* Date · Start time · End time on one row (the event form asks the date ONCE, owner 2026-09-21).
    The date takes the wider track; ≤640 it spans the row and the two times share the second. */

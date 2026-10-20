@@ -72,6 +72,7 @@ export default function QuestionShell({
   onBack,
   levelKey,
   ariaLabel,
+  eyebrow,
   title,
   subtitle,
   headerExtra,
@@ -97,6 +98,9 @@ export default function QuestionShell({
   levelKey?: string;
   /** Names the question for assistive tech — "Edit the amount Avery Test raised". */
   ariaLabel: string;
+  /** The record the window acts on, over its title ("Halvorsen Plumbing" over "Invoice") — a long name never wraps
+   *  the title on a phone (Sponsor Invoice design review, 2026-10-20). KitDialog's own eyebrow. */
+  eyebrow?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
   /** One mark between the title and the X — the lineup lens's status symbol. Not a slot for controls. */
@@ -154,6 +158,7 @@ export default function QuestionShell({
     <>
       <KitDialog
         kind={kind}
+        eyebrow={eyebrow}
         title={title}
         ariaLabel={ariaLabel}
         identity={subtitle}

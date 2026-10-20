@@ -1,27 +1,28 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 58 divergence(s)** across dev/prod.
+**⚠️ 94 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 2 | 0 | — |
-| Columns | 25 | 0 | 0 |
-| Indexes | 10 | 0 | 2 |
-| Constraints | 13 | 0 | — |
-| RLS / CHECK | 6 | 0 | 0 (RLS state) |
+| Tables | 3 | 0 | — |
+| Columns | 45 | 0 | 0 |
+| Indexes | 15 | 0 | 2 |
+| Constraints | 19 | 0 | — |
+| RLS / CHECK | 10 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (2)
+### Only in DEV (3)
 - `family_notes`
 - `family_payment_handoffs`
+- `rep_sponsor_invoices`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (25)
+### Only in DEV (45)
 - `family_notes.body`
 - `family_notes.created_at`
 - `family_notes.created_by`
@@ -47,6 +48,26 @@ _none_
 - `family_payment_handoffs.sent_to`
 - `family_payment_handoffs.state`
 - `family_payment_handoffs.team_id`
+- `rep_sponsor_invoices.amount`
+- `rep_sponsor_invoices.bill_to_address`
+- `rep_sponsor_invoices.bill_to_attention`
+- `rep_sponsor_invoices.bill_to_email`
+- `rep_sponsor_invoices.bill_to_name`
+- `rep_sponsor_invoices.created_at`
+- `rep_sponsor_invoices.created_by`
+- `rep_sponsor_invoices.description`
+- `rep_sponsor_invoices.due_on`
+- `rep_sponsor_invoices.fundraiser_id`
+- `rep_sponsor_invoices.id`
+- `rep_sponsor_invoices.issued_on`
+- `rep_sponsor_invoices.org_id`
+- `rep_sponsor_invoices.program_year_id`
+- `rep_sponsor_invoices.revised_on`
+- `rep_sponsor_invoices.season_year`
+- `rep_sponsor_invoices.seq`
+- `rep_sponsor_invoices.team_id`
+- `rep_sponsor_invoices.updated_at`
+- `rep_teams.sponsor_payment_details`
 
 ### Only in PROD (0)
 _none_
@@ -55,7 +76,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (10)
+### Only in DEV (15)
 - `family_notes_org_idx`
 - `family_notes_person_idx`
 - `family_notes_pkey`
@@ -66,6 +87,11 @@ _none_
 - `family_payment_handoffs_player_sent_idx`
 - `family_payment_handoffs_team_idx`
 - `family_payment_handoffs_year_idx`
+- `rep_sponsor_invoices_fundraiser_uniq`
+- `rep_sponsor_invoices_number_uniq`
+- `rep_sponsor_invoices_org_idx`
+- `rep_sponsor_invoices_pkey`
+- `rep_sponsor_invoices_year_idx`
 
 ### Only in PROD (0)
 _none_
@@ -79,7 +105,7 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (13)
+### Only in DEV (19)
 - `family_notes.family_notes_created_by_fkey`
 - `family_notes.family_notes_org_id_fkey`
 - `family_notes.family_notes_person_id_fkey`
@@ -93,6 +119,12 @@ _none_
 - `family_payment_handoffs.family_payment_handoffs_roster_player_id_fkey`
 - `family_payment_handoffs.family_payment_handoffs_sent_by_fkey`
 - `family_payment_handoffs.family_payment_handoffs_team_id_fkey`
+- `rep_sponsor_invoices.rep_sponsor_invoices_created_by_fkey`
+- `rep_sponsor_invoices.rep_sponsor_invoices_fundraiser_id_fkey`
+- `rep_sponsor_invoices.rep_sponsor_invoices_org_id_fkey`
+- `rep_sponsor_invoices.rep_sponsor_invoices_pkey`
+- `rep_sponsor_invoices.rep_sponsor_invoices_program_year_id_fkey`
+- `rep_sponsor_invoices.rep_sponsor_invoices_team_id_fkey`
 
 ### Only in PROD (0)
 _none_
@@ -101,13 +133,17 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (6)
+### CHECK only in DEV (10)
 - `family_notes.family_notes_body_check`
 - `family_payment_handoffs.family_payment_handoffs_amount_check`
 - `family_payment_handoffs.family_payment_handoffs_method_check`
 - `family_payment_handoffs.family_payment_handoffs_note_check`
 - `family_payment_handoffs.family_payment_handoffs_resolved_chk`
 - `family_payment_handoffs.family_payment_handoffs_state_check`
+- `rep_sponsor_invoices.rep_sponsor_invoices_amount_check`
+- `rep_sponsor_invoices.rep_sponsor_invoices_bill_to_name_check`
+- `rep_sponsor_invoices.rep_sponsor_invoices_description_check`
+- `rep_sponsor_invoices.rep_sponsor_invoices_seq_check`
 
 ### CHECK only in PROD (0)
 _none_

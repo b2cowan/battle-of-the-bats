@@ -3155,6 +3155,31 @@
     "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_program_year_id_key ON public.rep_season_surplus USING btree (program_year_id)"
   },
   {
+    "tablename": "rep_sponsor_invoices",
+    "indexname": "rep_sponsor_invoices_fundraiser_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_sponsor_invoices_fundraiser_uniq ON public.rep_sponsor_invoices USING btree (fundraiser_id) WHERE (fundraiser_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_sponsor_invoices",
+    "indexname": "rep_sponsor_invoices_number_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_sponsor_invoices_number_uniq ON public.rep_sponsor_invoices USING btree (team_id, season_year, seq)"
+  },
+  {
+    "tablename": "rep_sponsor_invoices",
+    "indexname": "rep_sponsor_invoices_org_idx",
+    "indexdef": "CREATE INDEX rep_sponsor_invoices_org_idx ON public.rep_sponsor_invoices USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_sponsor_invoices",
+    "indexname": "rep_sponsor_invoices_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_sponsor_invoices_pkey ON public.rep_sponsor_invoices USING btree (id)"
+  },
+  {
+    "tablename": "rep_sponsor_invoices",
+    "indexname": "rep_sponsor_invoices_year_idx",
+    "indexdef": "CREATE INDEX rep_sponsor_invoices_year_idx ON public.rep_sponsor_invoices USING btree (program_year_id)"
+  },
+  {
     "tablename": "rep_team_announcements",
     "indexname": "rep_team_announcements_org_id_idx",
     "indexdef": "CREATE INDEX rep_team_announcements_org_id_idx ON public.rep_team_announcements USING btree (org_id)"

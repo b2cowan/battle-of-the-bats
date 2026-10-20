@@ -114,7 +114,7 @@ export async function buildDocuments() {
   const {
     DEFAULT_PDF_SETTINGS, downloadPDF, downloadPracticeSheet, downloadDevelopmentSummary,
     downloadTryoutBoardSummary, downloadFamilyDuesStatements, downloadLineupPoster,
-    downloadBattingOrderCard, buildPositionLegend,
+    downloadBattingOrderCard, buildPositionLegend, downloadSponsorInvoice,
   } = pdf;
 
   /* ── The identity ladder, resolved the way the two GET endpoints serve it ───────────────
@@ -1008,6 +1008,38 @@ export async function buildDocuments() {
     ],
   });
 
+  // The sponsor invoice (Coach Sponsor Invoice, mig 339): unpaid, part paid, paid in full (A1). No tax, ever (R2).
+  const invoiceBase = {
+    teamName: TEAM,
+    fromLine: 'c/o Priya Nand, 112 Birch Crescent, Riverdale ON  K0A 2C0',
+    number: '2026-003', issuedLabel: 'Oct 20, 2026', dueLabel: 'Nov 15, 2026',
+    invoiced: '$750.00', paid: '$0.00', balance: '$750.00',
+    billTo: {
+      name: 'Halvorsen Plumbing & Heating Ltd.', attention: 'Dana Halvorsen, Accounts payable',
+      address: '48 Mill Road\nRiverdale ON  K0A 1B0', email: 'ap@halvorsenplumbing.ca',
+    },
+    description: `Team sponsorship — ${SEASON}`, amount: '$750.00', payments: [],
+    howToPay: { etransferEmail: 'treasurer@riverdaleridge.ca', chequeAddress: 'c/o Priya Nand, 112 Birch Crescent, Riverdale ON  K0A 2C0' },
+    questionsTo: 'Priya Nand, team treasurer, at treasurer@riverdaleridge.ca',
+  };
+  doc({
+    id: 'coach-sponsor-invoice',
+    label: 'Sponsor invoice',
+    entry: 'downloadSponsorInvoice',
+    screens: ['app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/SponsorInvoiceWindow.tsx'],
+    render: (name, settings) => downloadSponsorInvoice(name, { ...invoiceBase, settings }),
+    edgeCases: [
+      ['part-paid', (name, settings) => downloadSponsorInvoice(name, {
+        ...invoiceBase, partPaid: true, paid: '$250.00', balance: '$500.00', revisedLabel: 'Oct 28, 2026',
+        payments: [['Oct 30, 2026', 'Cheque', '$250.00']], settings,
+      })],
+      ['paid-in-full', (name, settings) => downloadSponsorInvoice(name, {
+        ...invoiceBase, paidInFull: true, paidInFullLabel: 'Nov 4, 2026', paid: '$750.00', balance: '$0.00',
+        payments: [['Oct 30, 2026', 'Cheque', '$250.00'], ['Nov 4, 2026', 'E-Transfer', '$500.00']], settings,
+      })],
+    ],
+  });
+
   /** Households, built by the PRODUCT's own assembler from player-shaped rows. */
   function statementFamilies() {
     const player = (over) => ({
@@ -1528,7 +1560,7 @@ export const PLUMBING_SCREENS = [
 
 /** Documents printed on team paper — everything a coach hands out. The rest is admin paper. */
 export const COACH_DOCUMENTS = new Set([
-  'coach-player-dues', 'coach-budget-vs-actual', 'coach-budget-plan', 'coach-family-statements',
+  'coach-player-dues', 'coach-budget-vs-actual', 'coach-budget-plan', 'coach-family-statements', 'coach-sponsor-invoice',
   'coach-roster-wall', 'coach-roster-contacts', 'coach-practice-run-sheet',
   'coach-development-summary', 'coach-lineup-poster', 'coach-batting-card',
   'tryout-check-in', 'tryout-report-full-detail', 'tryout-board-summary',
