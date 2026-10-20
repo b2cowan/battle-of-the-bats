@@ -394,7 +394,8 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
   it('the tryout windows: four forms ask in their own foot, and Which session is the small centred question (part 6)', () => {
     const R = 'components/rep-teams';
     const forms: Array<[string, RegExp]> = [
-      [`${R}/TryoutDayCard.tsx`, /<QuestionShell open=\{modalOpen\} onClose=\{\(\) => setModalOpen\(false\)\} dirty=\{formDirty\} busy=\{saving\}/],
+      // It also holds while its own Delete session runs (Row doors stage 1, 2026-10-20).
+      [`${R}/TryoutDayCard.tsx`, /<QuestionShell open=\{modalOpen\} onClose=\{\(\) => setModalOpen\(false\)\} dirty=\{formDirty\} busy=\{saving \|\| deletingId !== null\}/],
       // The minted link is a done-screen: it closes silently (the ask is the typed name's only).
       [`${R}/TryoutEvaluatorsCard.tsx`, /<QuestionShell open=\{open\} onClose=\{\(\) => setOpen\(false\)\} dirty=\{nameDirty\} busy=\{saving\}/],
       // The fields beside the helpers' preview: the ladder's widest; the running total is the foot's sentence.

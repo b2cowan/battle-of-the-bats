@@ -88,6 +88,18 @@
 .sessionWhen { font-size: var(--type-body); font-weight: 600; color: var(--white-90); }
 .sessionMeta { font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.1rem; }
 .sessionActions { display: flex; gap: 0.25rem; flex: 0 0 auto; }
+/* A session row is one door to Edit session, the chevron last (§3.10; Row doors stage 1, owner 2026-10-20): it was a
+   pencil and a one-tap bin at 34px. The whole row is the fingertip. */
+.sessionDoor {
+  width: 100%; min-height: var(--tap-min, 44px);
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.sessionDoor:hover { border-color: rgba(255,255,255,0.22); border-left-color: var(--logic-lime); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionDoor:hover {
+  border-color: var(--home-line-strong); border-left-color: var(--home-olive);
+}
+.sessionDoor:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.sessionChevron { flex: 0 0 auto; color: var(--text-tertiary); }
 .iconBtn {
   width: 34px; height: 34px;
   display: inline-flex; align-items: center; justify-content: center;

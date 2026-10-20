@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, ChevronRight } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { touched } from '@/components/coaches/useDiscardGuard';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
+import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
 import { utcToZonedInputs, addCalendarDays } from '@/lib/timezone';
 import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
@@ -112,6 +114,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
   const [clubVenues, setClubVenues] = useState<{ inClub: boolean; venues: ClubVenueOption[] }>({ inClub: false, venues: [] });
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -290,15 +293,27 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
     }
   }
 
+  /** Delete session — the open session window's door at the foot's left, behind the portal's one confirm (Row doors
+   *  stage 1, owner 2026-10-20: the row's bin deleted on one tap). Nothing else names a session, so only it goes. */
   async function deleteSession(id: string) {
     if (!canWrite || deletingId) return;
+    const ok = await confirm({
+      title: 'Delete this session?',
+      message: 'It comes off your tryout dates and the team’s schedule. Check-ins and scores are not affected.',
+      confirmText: 'Delete session',
+      cancelText: 'Keep',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setDeletingId(id);
+    setFormError(null);
     try {
       const res = await fetch(`${base}/${id}`, { method: 'DELETE' });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? 'Failed to remove'); }
       setSessions(prev => prev.filter(s => s.id !== id));
+      setModalOpen(false);
     } catch (e: any) {
-      fail(e.message ?? 'Failed to remove session.');
+      setFormError(e.message ?? 'Failed to remove session.');
     } finally {
       setDeletingId(null);
     }
@@ -338,24 +353,29 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
 
           {sessions.length > 0 && (
             <div className={styles.sessionList} style={{ marginTop: '0.6rem' }}>
-              {sessions.map(s => (
-                <div key={s.id} className={styles.sessionRow}>
+              {/* ⚖ A ROW IS ONE DOOR (TABLE_AND_LIST_STANDARD §3.10; Row doors stage 1, owner 2026-10-20): the whole
+                  session row opens Edit session, the chevron last; Delete session lives in that window. The row's
+                  own words are its name — a screen reader hears "Edit session" first, then the date. */}
+              {sessions.map(s => {
+                const main = (
                   <div className={styles.sessionMain}>
-                    <div className={styles.sessionWhen}>{formatTryoutSessionWhen(s)}</div>
+                    <div className={styles.sessionWhen}>{canWrite && <span className={coach.srOnly}>Edit session: </span>}{formatTryoutSessionWhen(s)}</div>
                     {(s.location || s.fieldNumber || s.label) && (
                       <div className={styles.sessionMeta}>
                         {[s.label, s.location, surfaceLabel(sport, s.fieldNumber)].filter(Boolean).join(' · ')}
                       </div>
                     )}
                   </div>
-                  {canWrite && (
-                    <div className={styles.sessionActions}>
-                      <button type="button" className={styles.iconBtn} onClick={() => openEdit(s)} aria-label="Edit session"><Pencil size={15} /></button>
-                      <button type="button" className={`${styles.iconBtn} ${styles.iconDanger}`} onClick={() => deleteSession(s.id)} disabled={deletingId === s.id} aria-label="Remove session"><Trash2 size={15} /></button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+                return canWrite ? (
+                  <button key={s.id} type="button" className={`${styles.sessionRow} ${styles.sessionDoor}`} onClick={() => openEdit(s)}>
+                    {main}
+                    <ChevronRight size={16} aria-hidden className={styles.sessionChevron} />
+                  </button>
+                ) : (
+                  <div key={s.id} className={styles.sessionRow}>{main}</div>
+                );
+              })}
             </div>
           )}
 
@@ -369,8 +389,11 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
 
       {/* Add or edit a session in the one window (One Window 2c): a form that fills a phone, the ladder's 520 on a
           computer (460 before). Typed changes ask in the foot; a tap outside does nothing; it holds while it saves. */}
-      <QuestionShell open={modalOpen} onClose={() => setModalOpen(false)} dirty={formDirty} busy={saving}
+      <QuestionShell open={modalOpen} onClose={() => setModalOpen(false)} dirty={formDirty} busy={saving || deletingId !== null}
         ariaLabel={editingId ? 'Edit session' : 'Add session'} title={editingId ? 'Edit session' : 'Add session'}
+        footerStart={editingId && canWrite
+          ? <SheetRemoveButton label="Delete session" busy={saving || deletingId !== null} onRemove={() => deleteSession(editingId)} />
+          : undefined}
         footer={<>
           <QuestionCancel className="btn btn-ghost" />
           <button type="button" className="btn btn-primary" onClick={saveSession} disabled={saving || checking}>

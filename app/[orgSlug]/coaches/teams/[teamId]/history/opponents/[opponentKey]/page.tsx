@@ -5,6 +5,7 @@ import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   recordChip, recordTone, resultLetter,
@@ -54,7 +55,7 @@ function ObservationRow({ o, showDate, manyAuthors, canErase, onRemove }: {
       </span>
       {o.tag && <span className={styles.scoutObsTag}>{o.tag}</span>}
       {canErase && (
-        <button type="button" className={styles.scoutObsDelete} aria-label="Remove observation" title="Remove observation" onClick={() => onRemove(o.id)}>
+        <button type="button" className={styles.scoutObsDelete} aria-label={`Remove observation: ${o.body.length > 60 ? `${o.body.slice(0, 60)}…` : o.body}`} title="Remove observation" onClick={() => onRemove(o.id)}>
           <X size={13} />
         </button>
       )}
@@ -153,6 +154,7 @@ export default function CoachOpponentCardPage({
 }) {
   const { orgSlug, teamId, opponentKey } = use(paramsPromise);
   const { assignments, loading: ctxLoading } = useCoaches();
+  const confirm = useConfirm();
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
@@ -305,7 +307,17 @@ export default function CoachOpponentCardPage({
     await load();
   }
 
+  /** Asks first (Row doors stage 1, owner 2026-10-20: the × removed a note on one tap). An observation has nothing else
+   *  to open, so its remove stays on the row — at a fingertip's size under a finger. */
   async function removeObservation(id: string) {
+    const ok = await confirm({
+      title: 'Remove this observation?',
+      message: 'It comes out of your team’s scouting book. This can’t be undone.',
+      confirmText: 'Remove',
+      cancelText: 'Keep',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`${apiBase}/observations/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();

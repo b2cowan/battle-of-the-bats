@@ -2698,7 +2698,10 @@ tbody tr:last-child td { border-bottom: none; }
      BOTTOM-RIGHT corner, so an opaque one is the most visible instance of the bug. */
   ::-webkit-scrollbar-corner { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--home-line-strong, rgba(255,255,255,0.18)); border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+  /* Hover darkens the SAME neutral ink the thumb already wears — never the organization's brand colour
+     (owner, 2026-10-20: a scrollbar is browser furniture; a navy bar on one club and a yellow one on the
+     next read as a fault, and a pale brand colour made the hover invisible). */
+  ::-webkit-scrollbar-thumb:hover { background: rgba(var(--home-line-rgb, 255, 255, 255), 0.5); }
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */

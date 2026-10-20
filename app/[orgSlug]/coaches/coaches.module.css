@@ -12648,6 +12648,11 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   cursor: pointer;
 }
 .scoutObsDelete:hover { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.35); background: rgba(var(--danger-rgb), 0.08); }
+/* Under a finger the eraser is a fingertip (Row doors stage 1, owner 2026-10-20: it was 22px on a phone); a mouse keeps
+   the quiet 22. The un-merge × in Identity wears it too. */
+@media (pointer: coarse) {
+  .scoutObsDelete { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}
 
 /* Schedule drawer — Scouting tab panel */
 .scoutPanel { display: flex; flex-direction: column; gap: 0.55rem; padding: 0.25rem 0; }

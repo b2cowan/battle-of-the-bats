@@ -5,6 +5,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import type { RepDocumentType } from '@/lib/types';
 
 const DOC_TYPE_LABELS: Record<RepDocumentType, string> = {
@@ -49,6 +50,8 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+  const confirm = useConfirm();
   const ids = useId();
   const isPhone = useIsPhone();
 
@@ -106,11 +109,26 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
     a.click();
   }
 
-  async function handleDelete(docId: string) {
-    setDeletingId(docId);
+  /** Asks first, then deletes (Row doors stage 1, owner 2026-10-20: the bin deleted on one tap, and dropped the row
+   *  even when the server refused). A document has nothing else to open, so its two doors stay on the row. */
+  async function handleDelete(doc: DocRow) {
+    if (deletingId) return;
+    const ok = await confirm({
+      title: 'Delete this document?',
+      message: `“${doc.fileName}” is removed from this player’s file. This can’t be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Keep',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setDeletingId(doc.id);
+    setDeleteError('');
     try {
-      await fetch(`${base}/${docId}`, { method: 'DELETE' });
-      setDocs(prev => prev.filter(d => d.id !== docId));
+      const res = await fetch(`${base}/${doc.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setDocs(prev => prev.filter(d => d.id !== doc.id));
+    } catch {
+      setDeleteError(`Couldn’t delete “${doc.fileName}” — try again.`);
     } finally {
       setDeletingId(null);
     }
@@ -150,6 +168,8 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
       ) : docs.length === 0 ? (
         <p className={styles.detailPlaceholder}>No documents uploaded yet.</p>
       ) : (
+        <>
+        {deleteError && <p className={styles.errorText} role="alert">{deleteError}</p>}
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
@@ -179,33 +199,37 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
                     {new Date(doc.createdAt).toLocaleDateString()}
                   </td>
                   <td className={styles.td} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', marginRight: '0.25rem' }}
-                      onClick={() => handleDownload(doc.id, doc.fileName)}
-                      title="Download"
-                    >
-                      <Download size={13} />
-                    </button>
-                    {canManage && (
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: 'var(--danger-light)', opacity: deletingId === doc.id ? 0.5 : 1 }}
-                      disabled={deletingId === doc.id}
-                      onClick={() => handleDelete(doc.id)}
-                      title="Delete"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                    )}
+                    {/* The shared row icon button: named for a screen reader, 44px under a finger. */}
+                    <span style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        className={styles.rowIconBtn}
+                        onClick={() => handleDownload(doc.id, doc.fileName)}
+                        aria-label={`Download ${doc.fileName}`}
+                        title="Download"
+                      >
+                        <Download size={14} aria-hidden />
+                      </button>
+                      {canManage && (
+                      <button
+                        type="button"
+                        className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
+                        disabled={deletingId === doc.id}
+                        onClick={() => handleDelete(doc)}
+                        aria-label={`Delete ${doc.fileName}`}
+                        title="Delete"
+                      >
+                        <Trash2 size={14} aria-hidden />
+                      </button>
+                      )}
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        </>
       )}
     </CoachPageSection>
 
