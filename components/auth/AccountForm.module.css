@@ -102,6 +102,7 @@
   box-shadow: 0 0 0 3px rgba(var(--home-olive-rgb), 0.16);
 }
 .input:disabled { opacity: 0.6; cursor: not-allowed; }
+.input[aria-invalid="true"] { border-color: var(--home-live); }
 /* A fixed address (a tournament claim is reserved for one): read, never typed over. */
 .input[readonly] { background: var(--home-fill); }
 /* A dropdown in the same kit (Coach Premium's sport): the field, with its own chevron. */
@@ -126,6 +127,8 @@
 }
 .hint strong { color: var(--home-olive); font-weight: 600; }
 .hint a { color: var(--home-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+/* The hint when the field needs fixing: one red line under it, no box (U7: "Enter your email address first."). */
+.hintError { color: var(--home-live); }
 
 .pwWrap { position: relative; }
 .pwWrap .input { padding-right: 3rem; }
@@ -254,6 +257,44 @@
   font-size: var(--type-body);
   color: var(--home-live);
 }
+/* THE NOTICE (The first look 2b, D-F8/D-F9, U1–U7): the callout with a bold 16px title on its own line and the body
+   sentence after it. The edge says what kind: olive when nothing went wrong (an existing address handed over from a
+   sign-up, "Check your email."), amber for a wait or a refusal that is nobody's mistake (a waiting account, an expired
+   link, too many attempts), red for the wrong password alone. `noticeError` composes `.error` so a red notice is the
+   kit's one error box. In Dark the edges take the shell's own lime, amber and red (the light values read about 2.4:1
+   there). Every variant lists `callout` itself: Turbopack's `composes` is not transitive, so `composes: notice` alone
+   would drop the box. */
+.notice {
+  composes: callout; /* the callout's own olive edge is the neutral notice's */
+}
+.notice > strong:first-child {
+  display: block;
+  margin-bottom: 0.125rem;
+  font-size: var(--type-heading);
+  line-height: 1.3;
+}
+.noticeWarn {
+  composes: callout notice;
+  border-left-color: var(--home-notice-amber);
+}
+.noticeError {
+  composes: callout notice error; /* the red edge is .error's */
+}
+/* After "Email me a new link", the olive notice stands where the button was, for the same minute. */
+.noticeSent {
+  composes: callout notice;
+  min-height: 48px;
+}
+
+/* Sign-in's "Forgot your password?": a right-aligned 44px row tucked under the field it is about. */
+.forgotRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.375rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+}
+
 /* After a resend the button gives way to this sentence until another send is allowed (absent beats disabled). */
 .sentAgain {
   margin: 0;

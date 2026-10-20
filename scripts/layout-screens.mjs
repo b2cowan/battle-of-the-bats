@@ -1793,6 +1793,36 @@ export const SCREENS = [
     route: 'app/[orgSlug]/league' },
   { id: 'club-past-tournaments',  session: 'anon', path: () => '/free-test-org/archives',                ready: 'h1', widths: ['320'],
     route: 'app/[orgSlug]/archives' },
+
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * SIGN-IN AND THE WAY BACK INTO IT (The first look, Stage 2b). `session: 'anon'`: a signed-in visitor is forwarded
+   * before the form renders. The notices are reached by the URL the product itself sends (`reason=`), and the wrong
+   * password by a sign-in whose password grant the runner answers itself with Supabase's `invalid_credentials` (the
+   * entry runs at every width: real sign-ins would spend the auth service's per-IP limit and, once over it, render the
+   * "too many attempts" notice instead and fail as "did not render"). The waiting-account
+   * notice is NOT here: it needs an account that never confirmed, and localhost has confirmation off — the Stage 2 walk
+   * reaches it on staging. 320 because sign-in is where a link from any phone lands.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  { id: 'auth-sign-in',              session: 'anon', path: () => '/auth/login',                                ready: 'h1', widths: ['320'],
+    route: 'app/(consumer)/auth/login/page' },
+  { id: 'auth-sign-in-expired-link', session: 'anon', path: () => '/auth/login?reason=expired-link&next=%2Fdiscover', ready: 'h1', widths: ['320'],
+    route: 'app/(consumer)/auth/login/page', note: 'the amber notice above the fields and "Email me a new link" under Sign in' },
+  { id: 'auth-sign-in-existing',     session: 'anon', path: () => '/auth/login?reason=account-exists&email=layout-sweep%40example.com', ready: 'h1', widths: ['320'],
+    route: 'app/(consumer)/auth/login/page', note: 'the olive hand-off notice, the address filled' },
+  { id: 'auth-sign-in-wrong-password', session: 'anon', path: () => '/auth/login', ready: 'h1', widths: ['320'],
+    route: 'app/(consumer)/auth/login/page', note: 'the red notice, between the fields and the Forgot row',
+    interact: async (page) => {
+      await page.route('**/auth/v1/token?grant_type=password*', r => r.fulfill({
+        status: 400, contentType: 'application/json',
+        body: JSON.stringify({ code: 'invalid_credentials', error_code: 'invalid_credentials', msg: 'Invalid login credentials' }),
+      }));
+      await page.locator('#login-email').fill('no-account-layout-sweep@example.com');
+      await page.locator('#login-password').fill('not-the-password');
+      await page.locator('#login-submit').click();
+      await page.getByRole('alert').filter({ hasText: 'don’t match' }).waitFor({ timeout: 15_000 });
+    } },
 ];
 
 /**

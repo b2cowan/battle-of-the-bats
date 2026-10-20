@@ -44,8 +44,9 @@ entry, and the Flip entries of July. ⇄ inside prose ("List ⇄ Depth chart") i
 **Decision:** The eight states the Stage 2 drawings left out (page https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ):
 - **U1 wrong password:** keep the red edge (red is for a wrong password only). "That email and password don't match." /
   "Try again, or use "Forgot your password?" below."
-- **U2 an existing address handed to sign-in:** the neutral (amber) notice above the fields, "You already have an
-  account with that email." / "Sign in below."
+- **U2 an existing address handed to sign-in:** the neutral notice above the fields, olive-edged as drawn (nothing has
+  gone wrong), "You already have an account with that email." / "Sign in below." (Corrected 2026-10-20 at the 2b build:
+  this line first said amber; the ruled drawing is olive.)
 - **U3 a broken confirm link:** no screen of its own; sign-in with the same expired-link notice.
 - **U4 forgot and reset:** the start column, the shared fields and the Continue page's wording ("Reset my password" on
   the tap page), every state drawn.
@@ -61,8 +62,16 @@ entry, and the Flip entries of July. ⇄ inside prose ("List ⇄ Depth chart") i
 - **The envelope** (D-F11): 600px warm ground `#f6f1ea` with a 1px `#c9c1b2` edge, a white card, ink `#211c15`, Arial;
   the Courier wordmark (FIELD ink, LOGIC olive `#55641c`, HQ `#4b463f`); a lime button with a 1px olive edge; the footer
   word outside the card.
-- **The notices** (D-F8/F9): a white box with a coloured left edge, amber `#b7791f` for everything that is not an error,
-  red `#b23b2e` for the wrong password alone; in Dark the edges are lifted (the light values read about 2.4:1 there).
+- **The notices** (D-F8/F9): a white box with a coloured left edge: olive when nothing went wrong (the U2 hand-off, U7's
+  "Check your email."), amber `#b7791f` for a wait or a refusal that is nobody's mistake (a waiting account, an expired
+  link, too many attempts), red for the wrong password alone; in Dark the edges are lifted (the light values read about
+  2.4:1 there; built with the shell's own lime, amber and red).
+- **At the 2b build gate and review (owner, 2026-10-20, all as recommended):** "New here? Get started" keeps where the
+  person was headed (the plain account sign-up with that destination, else the start page); the coach deep-link lines
+  are dropped (one sign-in for every way in); too many attempts, a slow connection and the service unreachable take the
+  amber notice in their own sentence; the Forgot row is hidden while the waiting-account notice shows (their password
+  was right); an organization invitation's failed link goes to the invitation's own expired screen ("Set a password"),
+  never sign-in's notice, whose "new link" would be a confirmation email or nothing.
 **Rationale:** an expired link, a waiting account or a wrong password is where a new customer gives up, and the old
 screens said nothing about what to do next. Saying the next step in one sentence keeps the promise the last screen made.
 The emails cannot know Warm or Dark or load the fonts, so one fixed warm layout is the honest version of the product's

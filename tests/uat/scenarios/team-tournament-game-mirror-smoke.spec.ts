@@ -214,7 +214,7 @@ test.afterAll(async () => {
 async function signIn(page: import('@playwright/test').Page) {
   await page.goto('/auth/login');
   await page.getByLabel(/email/i).fill(EMAIL);
-  await page.getByLabel(/password/i).fill(PASSWORD);
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: /sign in|log in/i }).click();
   await page.waitForURL(url => !url.pathname.includes('/auth/login'), { timeout: 45_000 });
 }

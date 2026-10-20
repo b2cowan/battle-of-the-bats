@@ -5,6 +5,7 @@ import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 import { STAFF_KIND_COPY, type StaffKind } from '@/lib/coach-capabilities';
+import { accountExistsSignInHref } from '@/lib/auth-errors';
 
 interface InviteInfo {
   status: string;
@@ -90,7 +91,7 @@ function AcceptForm() {
     if (signup.status === 409) {
       // Account already exists for this email — send them to sign in, then back here.
       const next = `/auth/accept-assistant-invite?token=${encodeURIComponent(token)}`;
-      router.push(`/auth/login?next=${encodeURIComponent(next)}&email=${encodeURIComponent(email)}`);
+      router.push(accountExistsSignInHref(next, email));
       return;
     }
     if (!signup.ok) {

@@ -41,6 +41,8 @@ export async function signIn(
   const authError = error as { code?: string; message?: string };
   const message = authError.message ?? '';
   const normalized = message.toLowerCase();
+  // Supabase names its rate limit `over_request_rate_limit`; every sign-in screen words it as `too_many_requests`.
+  if (authError.code === 'over_request_rate_limit') return { error: 'too_many_requests' };
   if (authError.code) return { error: authError.code };
   if (normalized.includes('email not confirmed')) return { error: 'email_not_confirmed' };
   if (normalized.includes('invalid login credentials')) return { error: 'invalid_credentials' };

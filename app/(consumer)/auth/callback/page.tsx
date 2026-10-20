@@ -4,6 +4,7 @@ import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import { safeNextPath } from '@/lib/safe-redirect';
+import { expiredLinkSignInHref } from '@/lib/auth-errors';
 
 function CallbackHandler() {
   const router = useRouter();
@@ -49,7 +50,27 @@ function CallbackHandler() {
         }
       }
 
-      router.replace('/auth/login');
+      // Nothing above signed the person in, so the link itself could not be used: expired, already used (Supabase puts
+      // `error_code=otp_expired` in the hash or the query), a code that will not exchange, or no code at all. Sign-in
+      // says so and offers a new one (The first look 2b, F09). The one fall-through that is NOT a broken link is a
+      // person who backed out of a sign-in (`error=access_denied` with no code); that keeps the plain sign-in. Where
+      // the link was headed rides along, so a new link from there returns to the same place.
+      const failure = new URLSearchParams(hash);
+      const errorCode = failure.get('error_code') ?? searchParams.get('error_code');
+      const errorName = failure.get('error') ?? searchParams.get('error');
+      if (errorName === 'access_denied' && !errorCode) {
+        router.replace('/auth/login');
+        return;
+      }
+      const headed = safeNextPath(searchParams.get('next'), null);
+      // An organization invitation's link goes to its own page, whose expired screen knows the person was invited and
+      // has no password yet ("Set a password"; owner, 2b review). Sign-in's "send yourself a new one" would send a
+      // confirmation email instead, or nothing. The path is lib/invite-links.ts acceptInvitePath's (server-only there).
+      if (headed && headed.split('?')[0] === '/auth/accept-invite') {
+        router.replace(headed);
+        return;
+      }
+      router.replace(expiredLinkSignInHref(headed));
     }
 
     handle();

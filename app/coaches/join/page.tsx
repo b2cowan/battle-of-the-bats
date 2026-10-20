@@ -10,6 +10,7 @@ import {
   normalizeCoachPortalNext,
 } from '@/lib/coaches-portal-routes';
 import { alreadyRegisteredLine, differentTeamSentence, isChoosableTeam, whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
+import { accountExistsSignInHref } from '@/lib/auth-errors';
 import joinStyles from './join.module.css';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 
@@ -221,7 +222,7 @@ function JoinForm() {
       const nextAfterLogin = registrationId
         ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(email.trim())}&next=${encodeURIComponent(nextParam)}`
         : nextParam;
-      router.push(`/auth/login?next=${encodeURIComponent(nextAfterLogin)}&email=${encodeURIComponent(email.trim())}`);
+      router.push(accountExistsSignInHref(nextAfterLogin, email.trim()));
       return;
     }
 

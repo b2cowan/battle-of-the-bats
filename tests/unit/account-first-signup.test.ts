@@ -256,8 +256,9 @@ describe('the start forms', () => {
     assert.match(form, /organization: '\/api\/auth\/signup',/, 'it keeps the Sign-up Invite Guard');
     assert.match(form, /\.\.\.\(pricing \? \{ plan: pricing\.plan, billing: pricing\.billing \} : \{\}\),/);
     assert.match(form, /<strong>\{PLAN_CONFIG\[pricing\.plan\]\.label\}, billed \{pricing\.billing === 'annual' \? 'annually' : 'monthly'\}<\/strong>, from\s+the pricing page\. You&apos;ll confirm it after naming your organization\./);
-    // an account that signs in instead keeps the plan through the sign-in
-    assert.match(form, /router\.push\(`\/auth\/login\?next=\$\{encodeURIComponent\(nextStep\)\}&email=\$\{encodeURIComponent\(emailNorm\)\}`\);/);
+    // an account that signs in instead keeps the plan through the sign-in (the one 409 hand-off carries `next` and the
+    // address: first-look-stage2b-signin.test.ts pins its URL)
+    assert.match(form, /router\.push\(accountExistsSignInHref\(nextStep, emailNorm\)\);/);
     // on localhost every door's page renders its own step 2 at the same address (Run a tournament's too, since Ask 6)
     assert.match(form, /const \{ error: signInErr \} = await signIn\(emailNorm, password\);[\s\S]{0,260}?router\.refresh\(\);\s*\}/);
     // the invited branch keeps its words
@@ -469,15 +470,22 @@ describe('Coach Premium, account first (Part 3)', () => {
 
 describe('sign-in offers the link again (A7)', () => {
   const page = readCode('app/(consumer)/auth/login/page.tsx');
-  it('inside the error box, only for a waiting account, through the one resend control', () => {
+  it('right after the waiting-account notice, only for a waiting account, through the one resend control', () => {
     assert.match(page, /if \(err === 'email_not_confirmed'\) setWaitingEmail\(/);
-    assert.match(page, /<div className=\{styles\.error\}>\s*\{error\}\s*\{waitingEmail && \(\s*<ResendLink/);
-    assert.match(page, /classes=\{\{ button: styles\.errorAction, sent: styles\.errorSent, error: styles\.errorNote \}\}/);
+    // D12 since The first look 2b: the amber notice, then the resend straight after it (the drawn order: fields,
+    // notice, Send the link again, Sign in)
+    assert.match(page, /\) : waitingEmail \? \(\s*<>\s*<div className=\{accountForm\.noticeWarn\} role="alert">\s*<strong>Confirm your email first\.<\/strong>\{' '\}\s*We sent a link to \{waitingEmail\} when you signed up\.\s*<\/div>\s*<ResendLink\s+email=\{waitingEmail\}/);
+    assert.match(page, /classes=\{\{ button: accountForm\.secondary, sent: accountForm\.sentAgain, error: accountForm\.errorText \}\}/);
     // no destination of its own unless the sign-in was opened with one, so the account's door decides
-    assert.match(page, /next=\{searchParams\.get\('next'\) \?\? undefined\}/);
+    assert.match(page, /const next = searchParams\.get\('next'\);/);
+    assert.match(page, /<ResendLink\s+email=\{waitingEmail\}\s+next=\{next \?\? undefined\}/);
     assert.match(readCode('components/auth/VerifyEmailSent.tsx'), /<ResendLink\b/, 'the check-your-email block renders the same control');
     assert.match(readCode('components/auth/ResendLink.tsx'), /<p className=\{classes\.sent\} role="status">Sent again at \{clock\}\. Check your spam folder too\.<\/p>/, 'D12, announced');
-    assert.match(readCode('app/(consumer)/auth/auth.module.css'), /\.errorAction \{[^}]*min-height: 44px;/);
+    // the tap target: the kit's secondary composes the 48px primary, and the sent sentence keeps the same height
+    const kit = readCode('components/auth/AccountForm.module.css');
+    assert.match(kit, /\.primary \{[^}]*min-height: 48px;/);
+    assert.match(kit, /\.secondary \{\s*composes: primary;/);
+    assert.match(kit, /\.sentAgain \{[^}]*min-height: 48px;/);
   });
 });
 

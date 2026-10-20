@@ -29,7 +29,7 @@ const FOREIGN_ORG = '/uat-rep-club';
 async function signIn(page: Page) {
   await page.goto('/auth/login');
   await page.getByLabel(/email/i).fill(OPERATOR.email);
-  await page.getByLabel(/password/i).fill(OPERATOR.password);
+  await page.getByLabel('Password', { exact: true }).fill(OPERATOR.password);
   await page.getByRole('button', { name: /sign in|log in/i }).first().click();
   await page.waitForURL(url => !url.pathname.startsWith('/auth/login'), { timeout: 30_000 });
 }

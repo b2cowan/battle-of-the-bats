@@ -6,6 +6,7 @@ import { Tag } from 'lucide-react';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import StartSteps from '@/components/auth/StartSteps';
 import { AccountFields, Field, StartColumn, StartFoot, StartHead, accountForm, hintId, type AccountValues } from '@/components/auth/AccountForm';
+import { accountExistsSignInHref } from '@/lib/auth-errors';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { START_DOOR_PATH, startDoorLinkPath, type StartPricing, type StartStepViewer } from '@/lib/start-door';
 
@@ -159,7 +160,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
     };
     if (signupRes.status === 409) {
       // Email already has an account — sign in, then name the thing (the page's signed-in step takes over).
-      router.push(`/auth/login?next=${encodeURIComponent(nextStep)}&email=${encodeURIComponent(emailNorm)}`);
+      router.push(accountExistsSignInHref(nextStep, emailNorm));
       return;
     }
     if (created.inviteBranch === 'invited') {

@@ -413,6 +413,48 @@ those people, because the account-only sign-up carries their `next`.
   this runs on staging. The renders from the real builders at 600 and 390, light and dark, are in
   `.probe/first-look/out-2a/` (`cap-stage2a.mjs`).
 
+**2b — sign-in and the way back into it.**
+- **Sign-in is the one account step** (F04): the start column, `EmailField` / `PasswordField purpose="current"`, the
+  48px lime button, one foot link, the product's one loading line ("Loading sign-in…", "Signing in…"). The ids the UAT
+  scenarios sign in with are kept, as are the `next` handling, the 10-second loop breaker and the demo account's local
+  sign-out (pinned in `tests/unit/first-look-stage2b-signin.test.ts`).
+- **The notices** are the kit's (`AccountForm.module.css` `.notice` / `.noticeWarn` / `.noticeError` / `.noticeSent`):
+  the callout with a bold 16px title line. Olive when nothing went wrong, amber (`--home-notice-amber`, a new warm token,
+  `var(--warning)` in Dark) for a wait or a nobody's-fault refusal, red composing the kit's `.error` for the wrong
+  password. Each variant lists `callout` itself: Turbopack's `composes` is not transitive, and the first build drew no
+  box at all (caught on the captures).
+- **Why the person is there** rides on the URL (`SIGN_IN_REASON` in `lib/auth-errors.ts`): `reason=expired-link` from
+  the callback, `reason=account-exists` from the three sign-ups that hand a 409 to sign-in (`accountExistsSignInHref`:
+  Start a team / league / tournament, the coach join page, the assistant-coach invitation). A plain redirect has none.
+- **The callback's fall-through** (F09): every success path is byte for byte as it was. A backed-out sign-in
+  (`error=access_denied`, no code) keeps the plain sign-in; an organization invitation's failed link goes to its own
+  expired screen (owner, at the 2b review: sign-in's "new link" would be a confirmation email, or nothing); everything
+  else (expired, used, a code that will not exchange, no code) lands on the expired-link notice with where the link
+  was headed, so the new link and its email's next-step sentence land in the same place.
+- **"Email me a new link"** is `ResendLink` (one send, one limit, one cooldown), with a label, the U7 sent notice and an
+  empty-field check; keyed on the address, so a corrected address can send at once.
+- **Owner calls at the 2b gate (all as recommended):** "Get started" keeps the destination (the plain account sign-up
+  carrying it, else `/start`); the coach deep-link lines are dropped; the undrawn failures (too many attempts, slow
+  connection, service unreachable) are amber in their own sentence; the Forgot row is hidden for a waiting account.
+- **Fixed on the way, inside the screen's own refusals:** Supabase's rate-limit code (`over_request_rate_limit`) showed
+  raw on sign-in; `signIn` now returns `too_many_requests` for it, which every sign-in screen already words.
+- **The shared map's two lines say "confirm"**, not "verify" (tournament registration can show the waiting one).
+- **The 17 UAT specs** that filled the password by `getByLabel(/password/i)` now ask for the exact label: the shared
+  eye button is named "Show password", which the loose pattern also matched.
+- **Layout sweep:** four anonymous sign-in entries (plain, expired link, the hand-off, the wrong password with the
+  password grant answered by the runner). Their only finding is the app bar's FieldLogicHQ home link, 27px tall on a
+  phone: shared chrome, every consumer page, not 2b's; reported, not baselined. The waiting account is not in the sweep
+  (it needs an unconfirmed account; localhost has confirmation off): the Stage 2 walk reaches it on staging.
+- **Departures from the drawing:** the password field has no placeholder ("Your password" was drawn); the shared field
+  carries none at any door. The Dark edges use the shell's own lime, amber and red rather than the drawing's three
+  approximations.
+- **Findings, not fixed:** the team sign-up (`app/team`) and the platform-admin sign-in keep their own copies of the old
+  words ("Incorrect email or password", "Please verify…"); the account-only sign-up shows a sign-in failure's raw code
+  (pre-existing); the UAT scenarios each carry their own sign-in steps (a shared helper would stop the next markup
+  change touching 17 files); help (`coaches.tsx` ~L219–227, `tournaments.tsx` ~L724–729, `platform-admin.tsx`
+  ~L122–124) still says the resend sits "in" the message and that sign-in says "verify" — `/docs` after 2c;
+  `.claude/commands/helpdesk.md` matches the old error text.
+
 ## /design review of the drawings (2026-10-19)
 
 Run before hand-off; its changes are in the drawings and listed on the hub's Your answers tab. D-F1 and D-F2 became

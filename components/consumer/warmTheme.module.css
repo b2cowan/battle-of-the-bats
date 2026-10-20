@@ -48,6 +48,7 @@
      only ever AA-safe as text on a white card; amber failed 8 of the 9 grounds the portal paints.
      MUST MOVE TOGETHER WITH THE globals.css COPY — the palette test asserts the two agree. */
   --home-amber:        #835006;                 /* upcoming amber */
+  --home-notice-amber: #B7791F;                 /* a notice's amber EDGE (The first look D-F9): a 3px rule, never text */
   --home-blue:         #134FD3;                 /* admin-blue chips */
   --home-win:          #34662A;                 /* win green (loss = --home-live; tie = --home-dim) */
   /* A tinted SURFACE, distinct from the hairline --home-line that used to do both jobs. */
@@ -157,6 +158,7 @@
   --home-live:        var(--danger);
   --home-live-soft:   rgba(var(--danger-rgb), 0.12);
   --home-amber:       var(--warning);
+  --home-notice-amber: var(--warning);
   --home-blue:        var(--info);
   --home-win:         var(--success);
   --home-shadow:      0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.45);

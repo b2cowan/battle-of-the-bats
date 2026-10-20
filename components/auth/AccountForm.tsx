@@ -102,7 +102,7 @@ export function PasswordField({ id, value, onChange, purpose = 'create', disable
 }
 
 /** The email field, the same at every door; `locked` when the address is fixed (a tournament claim is reserved for one). */
-export function EmailField({ id, value, onChange, locked = false, disabled = false, autoFocus = false, hint }: {
+export function EmailField({ id, value, onChange, locked = false, disabled = false, autoFocus = false, hint, invalid = false }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
@@ -111,11 +111,14 @@ export function EmailField({ id, value, onChange, locked = false, disabled = fal
   autoFocus?: boolean;
   /** The line under the field, read with it: why it is locked, or "An account already exists…". */
   hint?: ReactNode;
+  /** The field needs the person's attention (sign-in's "Enter your email address first."): a red edge, announced. */
+  invalid?: boolean;
 }) {
   return (
     <Field id={id} label="Email" hint={hint}>
       <input
         aria-describedby={hint ? hintId(id) : undefined}
+        aria-invalid={invalid || undefined}
         id={id}
         type="email"
         className={styles.input}

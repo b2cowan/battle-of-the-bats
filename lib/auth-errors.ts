@@ -6,13 +6,36 @@
  * the reset link beneath it) by spreading this map. Framework-free, so it costs a page no auth client.
  */
 export const SIGN_IN_ERROR_COPY: Readonly<Record<string, string>> = {
-  invalid_credentials: 'Incorrect email or password. Please try again.',
-  email_not_confirmed: 'Please verify your email before signing in. Check your inbox for a confirmation link.',
+  // The sign-in page words these two in its own notices (a title and the way forward, The first look 2b, U1 and the
+  // waiting account); these lines are the one-sentence form for a screen without them.
+  invalid_credentials: 'That email and password don’t match. Try again.',
+  email_not_confirmed: 'Confirm your email before signing in. Check your inbox for the link we sent.',
   too_many_requests: 'Too many sign-in attempts. Please wait a moment and try again.',
   user_not_found: 'No account found for this email address.',
   auth_timeout: 'Sign-in is taking too long. Check your connection and try again.',
   network_error: 'Could not reach the auth service. Please try again.',
 };
+
+/**
+ * Why a screen sent someone to sign-in (`/auth/login?reason=…`), so sign-in can say so above its fields (The first
+ * look 2b). `expiredLink`: the auth callback met a link that cannot be used (expired, already used, or broken); the
+ * Continue page's broken link (U3) joins it in 2c. An organization invitation's failed link goes to its own page. `accountExists`: a sign-up handed over an address that already has an account (the 409). A plain
+ * redirect carries no reason and shows no notice.
+ */
+export const SIGN_IN_REASON = {
+  expiredLink: 'expired-link',
+  accountExists: 'account-exists',
+} as const;
+
+/** The sign-up's hand-off to sign-in when the address already has an account (the 409): the address filled, the
+ *  destination kept, and the reason, so sign-in says why the person is there (U2). */
+export const accountExistsSignInHref = (next: string, email: string): string =>
+  `/auth/login?next=${encodeURIComponent(next)}&email=${encodeURIComponent(email)}&reason=${SIGN_IN_REASON.accountExists}`;
+
+/** Where a link that cannot be used sends the person (F09, U3): sign-in with the reason, and where the link was headed
+ *  when it said (already checked same-origin by the caller), so a new link from there returns to the same place. */
+export const expiredLinkSignInHref = (next: string | null): string =>
+  `/auth/login?reason=${SIGN_IN_REASON.expiredLink}${next ? `&next=${encodeURIComponent(next)}` : ''}`;
 
 /** The one email shape check for a form and the route behind it — they must accept the same addresses. */
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -1,17 +1,16 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, getUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase-browser';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { forgetSandboxMarkerCookie } from '@/lib/sandbox-exit-rule';
 import { safeNextPath } from '@/lib/safe-redirect';
-import { SIGN_IN_ERROR_COPY } from '@/lib/auth-errors';
+import { SIGN_IN_ERROR_COPY, SIGN_IN_REASON } from '@/lib/auth-errors';
 import ResendLink from '@/components/auth/ResendLink';
-import { HudSkeleton } from '@/components/ui/HudSkeleton';
-import styles from '../auth.module.css';
+import { EmailField, PasswordField, StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
+import LoadingState from '@/components/shared/LoadingState';
 
 /**
  * Resolve the post-login destination. Honors `next` ONLY when it is a same-origin
@@ -74,13 +73,18 @@ async function resolveLoginDestination(next: string | null): Promise<string> {
   return safeNext && hasWorkspace ? safeNext : destination;
 }
 
+/** The one loading line while the page checks who is signed in (and while the URL is read). */
+const LOADING = <StartColumn><LoadingState label="Loading sign-in…" /></StartColumn>;
+
 function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail]       = useState(searchParams.get('email') ?? '');
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw]     = useState(false);
+  // The failure's code from signIn (the notice is chosen by it; its words come from SIGN_IN_ERROR_COPY).
   const [error, setError]       = useState('');
+  // "Email me a new link" with the field empty asks for the address under the field (U7), never an alert.
+  const [missingEmail, setMissingEmail] = useState(false);
   // A waiting account (signed up, never opened the email) is told to verify — and, since Account-First Sign-up (owner
   // A7, 2026-10-18), can get the link again right in that box, with every resend's limit. Sign-in only reports a waiting
   // account once the password matched, so this never tells a stranger which addresses have accounts. The account's
@@ -138,7 +142,7 @@ function LoginForm() {
     setLoading(true);
     const { error: err } = await signIn(email, password);
     if (err) {
-      setError(SIGN_IN_ERROR_COPY[err] ?? err);
+      setError(err);
       if (err === 'email_not_confirmed') setWaitingEmail(email.trim().toLowerCase());
       setLoading(false);
     } else {
@@ -152,138 +156,113 @@ function LoginForm() {
     }
   }
 
+  const next = searchParams.get('next');
+  const reason = searchParams.get('reason');
+  const expiredLink = reason === SIGN_IN_REASON.expiredLink;
+  // "New here?" keeps where the person was headed (owner, Stage 2b gate): with a destination it opens the plain account
+  // sign-up, which returns them there once confirmed; with none, the start page and its doors.
+  const safeNext = safeNextPath(next, null);
+  const getStartedHref = safeNext ? `/auth/signup?account=1&next=${encodeURIComponent(safeNext)}` : '/start';
+  const forgotHref = next ? `/auth/forgot-password?next=${encodeURIComponent(next)}` : '/auth/forgot-password';
+
   if (checkingAuth) {
-    return (
-      <div className={styles.card}>
-        <HudSkeleton message="CHECKING SESSION..." rows={3} />
-      </div>
-    );
+    return LOADING;
   }
 
   return (
-    <div className={styles.card}>
-      <div className={styles.header}>
-        <div className={styles.iconWrap}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-        </div>
-        <h1 className={styles.title}>Sign In</h1>
-        {/* Brand canon: never "tournament management platform" (memory/project_brand_name).
-            Coach deep links (signed-out visit to /coaches/*) land here — keep visual
-            continuity with the portal they're returning to. */}
-        <p className={styles.sub}>
-          {(searchParams.get('next') ?? '').startsWith('/coaches')
-            ? 'FieldLogicHQ — Coaches Portal'
-            : 'FieldLogicHQ'}
-        </p>
-      </div>
+    <StartColumn>
+      <StartHead title="Sign in" sub="Welcome back." />
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className="form-group">
-          <label className="form-label" htmlFor="login-email">Email</label>
-          <input
-            id="login-email"
-            type="email"
-            className="form-input"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            autoComplete="email"
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="login-password">Password</label>
-          <div className={styles.pwWrap}>
-            <input
-              id="login-password"
-              type={showPw ? 'text' : 'password'}
-              className="form-input"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Enter password"
-              required
-              autoComplete="current-password"
-            />
-            <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
-              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-            </button>
+      <form onSubmit={handleSubmit} className={accountForm.form}>
+        {/* Above the fields: why the person is here. A link that failed (the callback passes the reason, U3 included),
+            or the hand-off from a sign-up whose address already has an account (U2). A plain redirect here has no
+            reason and no notice. */}
+        {expiredLink ? (
+          <div className={accountForm.noticeWarn} role="status">
+            <strong>That link has expired or was already used.</strong>{' '}
+            Sign in, or send yourself a new one.
           </div>
-        </div>
+        ) : reason === SIGN_IN_REASON.accountExists && !error && !loading ? (
+          <div className={accountForm.notice} role="status">
+            <strong>You already have an account with that email.</strong>{' '}
+            Sign in below.
+          </div>
+        ) : null}
 
-        {error && (
-          <div className={styles.error}>
-            {error}
-            {waitingEmail && (
-              <ResendLink
-                email={waitingEmail}
-                next={searchParams.get('next') ?? undefined}
-                classes={{ button: styles.errorAction, sent: styles.errorSent, error: styles.errorNote }}
-              />
-            )}
+        <EmailField
+          id="login-email"
+          value={email}
+          onChange={value => { setEmail(value); if (missingEmail) setMissingEmail(false); }}
+          invalid={missingEmail}
+          hint={missingEmail && <span className={accountForm.hintError} role="alert">Enter your email address first.</span>}
+        />
+        <PasswordField id="login-password" purpose="current" value={password} onChange={setPassword} />
+
+        {/* Below the fields: what the sign-in said. A waiting account is amber (nothing went wrong) and its resend
+            follows it (D12); the wrong password alone is red (D-F9); anything else is amber, in its own sentence. */}
+        {error === 'invalid_credentials' ? (
+          <div className={accountForm.noticeError} role="alert">
+            <strong>That email and password don’t match.</strong>{' '}
+            Try again, or use “Forgot your password?” below.
+          </div>
+        ) : waitingEmail ? (
+          <>
+            <div className={accountForm.noticeWarn} role="alert">
+              <strong>Confirm your email first.</strong>{' '}
+              We sent a link to {waitingEmail} when you signed up.
+            </div>
+            <ResendLink
+              email={waitingEmail}
+              next={next ?? undefined}
+              classes={{ button: accountForm.secondary, sent: accountForm.sentAgain, error: accountForm.errorText }}
+            />
+          </>
+        ) : error ? (
+          <div className={accountForm.noticeWarn} role="alert">{SIGN_IN_ERROR_COPY[error] ?? error}</div>
+        ) : null}
+
+        {/* The password matched for a waiting account, so the way back to it is noise there (owner, Stage 2b gate). */}
+        {!waitingEmail && (
+          <div className={accountForm.forgotRow}>
+            <Link href={forgotHref} className={accountForm.footLink}>Forgot your password?</Link>
           </div>
         )}
 
-        <div style={{ textAlign: 'right', marginTop: '-0.5rem' }}>
-          <Link href="/auth/forgot-password" className={styles.footerLink} style={{ fontSize: '0.7rem' }}>
-            Forgot your password?
-          </Link>
-        </div>
-
-        <button
-          type="submit"
-          className={styles.submitBtn}
-          disabled={loading}
-          id="login-submit"
-        >
-          {loading ? 'Authenticating…' : 'Sign In'}
+        <button type="submit" className={accountForm.primary} disabled={loading} id="login-submit">
+          {loading ? 'Signing in…' : 'Sign in'}
         </button>
+
+        {/* U7: a fresh link for the address typed above, the same resend as "Send the link again", worded with "if"
+            because the server answers the same for every address (a used link is a confirmed account: nothing comes). */}
+        {expiredLink && !waitingEmail && (
+          <ResendLink
+            // A different address is a different send: changing the field clears "Check your email." and any refusal,
+            // so a mistyped address can be fixed at once (the server's per-address limit still holds).
+            key={email.trim().toLowerCase()}
+            email={email.trim().toLowerCase()}
+            next={next ?? undefined}
+            label="Email me a new link"
+            onMissingEmail={() => setMissingEmail(true)}
+            sentNotice={<><strong>Check your email.</strong>{' '}If that address is waiting to be confirmed, a new link is on its way. Check your spam folder too.</>}
+            classes={{ button: accountForm.secondary, sent: accountForm.noticeSent, error: accountForm.errorText }}
+          />
+        )}
       </form>
 
-      <div className={styles.footer}>
-        {(searchParams.get('next') ?? '').startsWith('/coaches') && (
-          <p className={styles.footerText} style={{ marginBottom: '0.4rem' }}>
-            Heading back to your Coaches Portal? Sign in with the email you used
-            when you registered your team.
-          </p>
-        )}
-        {/* Fans/parents are the default audience here — plain account signup first
-            (carrying `next` so they land back where they were headed). The organizer
-            path is the labeled exception, via the /start front door. */}
-        <p className={styles.footerText}>
+      <StartFoot>
+        <p>
           New here?{' '}
-          <Link
-            href={`/auth/signup?account=1${searchParams.get('next') ? `&next=${encodeURIComponent(searchParams.get('next')!)}` : ''}`}
-            className={styles.footerLink}
-          >
-            Create a free account
-          </Link>
+          <Link href={getStartedHref} className={accountForm.footLink}>Get started</Link>
         </p>
-        <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
-          Organizing an event?{' '}
-          <Link href="/start" className={styles.footerLink}>Run a tournament →</Link>
-        </p>
-        <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
-          Invited by an organization? Finish setup using the link in your
-          invitation email — don&apos;t create a new account here.
-        </p>
-      </div>
-    </div>
+      </StartFoot>
+    </StartColumn>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className={styles.page}>
-      <Suspense fallback={
-        <div className={styles.card}>
-          <HudSkeleton message="VERIFYING CREDENTIALS..." rows={3} />
-        </div>
-      }>
-        <LoginForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={LOADING}>
+      <LoginForm />
+    </Suspense>
   );
 }
