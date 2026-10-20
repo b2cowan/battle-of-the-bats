@@ -12,9 +12,10 @@ const publicAddress = (name: string) => (
 );
 
 /**
- * Run a tournament, account first (Account-First Sign-up Part 2, owner A1–A7 2026-10-18). Step 2 names the
- * organization; one tap makes it, its address, the owner seat and the Founding Season offer (/api/org/create), then the
- * plan step opens with the pricing page's plan chosen when there was one (A6).
+ * Run a tournament, account first (Account-First Sign-up Part 2, owner A1–A7 2026-10-18), both steps at /start/tournament
+ * since the intro page folded into step 1 (The first look, Ask 6, 2026-10-19). Step 1 carries the pricing page's plan on
+ * the account; step 2 names the organization; one tap makes it, its address, the owner seat and the Founding Season
+ * offer (/api/org/create), then the plan step opens with the pricing page's plan chosen when there was one (A6).
  */
 export default function StartTournamentForm({ pricing, ...props }: {
   viewer: StartStepViewer | null;
@@ -34,5 +35,5 @@ export default function StartTournamentForm({ pricing, ...props }: {
     return planStepPath(data.orgSlug, pricing);
   }
 
-  return <StartDoorForm door="organization" create={createOrganization} help={publicAddress} {...props} />;
+  return <StartDoorForm door="organization" create={createOrganization} help={publicAddress} pricing={pricing} {...props} />;
 }

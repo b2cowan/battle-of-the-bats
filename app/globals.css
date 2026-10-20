@@ -705,7 +705,13 @@ body:has([data-chat-fullbleed]) {
      is drift.
 
      ⚠ Coaches portal is fully migrated. The admin shell still uses literals — when it follows,
-     it consumes these same eight and does not mint a ninth. */
+     it consumes these same eight and does not mint a ninth.
+
+     ⚠ ONE NAMED EXCEPTION to `--type-display`'s job (owner, The first look Ask 12, 2026-10-19):
+     a first-run page heading — one per screen, no back arrow — takes the display step. A sign-up
+     screen is not a working page: its heading is the one thing on it ("Start a team", "Create
+     your account"). It uses this token as it is; it does not mint a new one, and a working page's
+     title stays on `--type-title`. */
   --type-display: 2rem;      /* 32px — a number read from the bench or across a room: the score,
                                 the season record. NOT a big card figure. */
   --type-figure:  1.5rem;    /* 24px — the number a card exists to show, with its title above it */

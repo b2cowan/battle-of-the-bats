@@ -144,6 +144,9 @@ const SCOPES = {
       // /start forms and Coach Premium's card. Consumer for the same reason as the block above: it wears its hosts' warm
       // tokens, and the account it is part of is a consumer account.
       'components/auth/StartSteps.module.css',
+      // The first look, Stage 1 (2026-10-19) — the one account step every door wears (the start column, the heading,
+      // the account fields, the buttons, the foot row). Consumer for the same reason: warm tokens, a consumer account.
+      'components/auth/AccountForm.module.css',
     ],
     excludeSegments: new Set(),
     excludeFiles: new Set(['components/consumer/ConsumerShell.module.css']),

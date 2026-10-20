@@ -208,10 +208,15 @@ describe('Run a tournament: the organization sign-up makes the account alone (Pa
     // the plan step features the plan from the pricing page (A6)
     assert.match(readCode('app/[orgSlug]/admin/onboarding/page.tsx'), /featuredPlan=\{pricingPlan \?\? 'tournament_plus'\}/);
   });
-  it('step 1 lives where the pricing page and every "create your free account" link point; account-only is unchanged', () => {
-    const page = readCode('app/(consumer)/auth/signup/page.tsx');
-    assert.match(page, /if \(searchParams\.get\('account'\) === '1'\) return <AccountOnlyForm \/>;\s*return <StartAccountStep door="organization" pricing=\{parseStartPricing\(searchParams\.get\('plan'\), searchParams\.get\('billing'\)\)\} \/>;/);
-    assert.doesNotMatch(page, /orgName|Create Organization|inviteBranch/, 'the account-only form makes no organization');
+  it('step 1 lives at /start/tournament (the intro folded in, Ask 6); /auth/signup forwards there with its plan; account-only stays', () => {
+    const tournament = readCode('app/(consumer)/start/tournament/page.tsx');
+    assert.match(tournament, /if \(!user\?\.email\) \{\s*return <StartTournamentForm viewer=\{null\} pricing=\{parseStartPricing\(first\(sp\.plan\), first\(sp\.billing\)\)\} \/>;/);
+    assert.doesNotMatch(tournament, /Create your free account|I already have an account/, 'the intro page is gone');
+    // the forward runs before any render; Next passes the query (the pricing page's plan and billing) through
+    assert.match(readCode('next.config.ts'), /\{ source: '\/auth\/signup', missing: \[\{ type: 'query', key: 'account', value: '1' \}\], destination: '\/start\/tournament', permanent: false \}/, '?account=1 is the account-only page and never forwards');
+    assert.match(readCode('app/(consumer)/auth/signup/page.tsx'), /return <AccountOnlySignup \/>;/);
+    const accountOnly = readCode('app/(consumer)/auth/signup/AccountOnlySignup.tsx');
+    assert.doesNotMatch(accountOnly, /orgName|Create Organization|inviteBranch/, 'the account-only form makes no organization');
   });
 });
 
@@ -237,42 +242,51 @@ describe('no signed-out sign-up creates an organization, team or league', () => 
 describe('the start forms', () => {
   const form = readCode('app/(consumer)/start/StartDoorForm.tsx');
   it('step 1 is the account alone, and says what comes next (A1, A2)', () => {
-    const step1 = form.slice(form.indexOf('export function StartAccountStep('), form.indexOf('function InvitedInstead('));
+    const step1 = form.slice(form.indexOf('function StartAccountStep('), form.indexOf('function InvitedInstead('));
     assert.doesNotMatch(step1, /copy\.label|continueName/, 'no name field, no name in the email');
     assert.match(step1, /startDoor: door,/);
-    assert.match(step1, /\{loading \? 'Creating…' : 'Create Account'\}/, 'D7');
-    assert.match(step1, /steps=\{<StartSteps current=\{1\} second=\{copy\.step\} \/>\}/);
+    assert.match(step1, /\{loading \? 'Creating…' : 'Create account'\}/, 'The first look, Ask 3: one spelling at every door');
+    assert.match(step1, /steps=\{<StartSteps current=\{1\} labels=\{copy\.steps\} \/>\}/);
+    assert.match(step1, /<AccountFields\b/, 'the one account form (The first look, rule 4)');
     assert.match(step1, /It brings you straight to \{copy\.nextStep\}\./);
   });
   it('Run a tournament’s step 1: its own words, the organization sign-up, the pricing plan riding along (A6)', () => {
-    assert.match(form, /title: 'Create Your Organization',\s*sub: 'Run your tournament, league or club',\s*step: 'Your organization',/);
+    assert.match(form, /title: 'Run a tournament',\s*sub: 'Free to start\. You\\'ll name your organization next\.',/);
+    assert.match(form, /steps: \['Account', 'Organization', 'Plan'\],/, 'the plan step shows in the step line');
     assert.match(form, /organization: '\/api\/auth\/signup',/, 'it keeps the Sign-up Invite Guard');
     assert.match(form, /\.\.\.\(pricing \? \{ plan: pricing\.plan, billing: pricing\.billing \} : \{\}\),/);
     assert.match(form, /<strong>\{PLAN_CONFIG\[pricing\.plan\]\.label\}, billed \{pricing\.billing === 'annual' \? 'annually' : 'monthly'\}<\/strong>, from\s+the pricing page\. You&apos;ll confirm it after naming your organization\./);
     // an account that signs in instead keeps the plan through the sign-in
     assert.match(form, /router\.push\(`\/auth\/login\?next=\$\{encodeURIComponent\(nextStep\)\}&email=\$\{encodeURIComponent\(emailNorm\)\}`\);/);
-    // on localhost the team and league pages render step 2 themselves; only Run a tournament moves to its step 2
-    assert.match(form, /if \(door === 'organization'\) router\.replace\(START_DOOR_PATH\[door\]\);\s*router\.refresh\(\);/);
+    // on localhost every door's page renders its own step 2 at the same address (Run a tournament's too, since Ask 6)
+    assert.match(form, /const \{ error: signInErr \} = await signIn\(emailNorm, password\);[\s\S]{0,260}?router\.refresh\(\);\s*\}/);
     // the invited branch keeps its words
     assert.match(form, /You don&apos;t need to create an organization — just accept your invitation to get started\./);
     assert.match(form, /'Email me my invitation link'/);
     assert.match(form, /Not you\? Create a new organization instead/);
-    // D10: the plan chip's edge is solid; D6: the quiet way out is a 44px row
-    const css = readCode('app/(consumer)/start/startForm.module.css');
-    assert.match(css, /\.pricingChip \{[^}]*border: 1px solid/);
+    // D10: the plan chip's edge is solid (the white callout with an olive edge); D6: the quiet way out is a 44px row
+    assert.match(form, /<p className=\{accountForm\.calloutIcon\}>/);
+    const css = readCode('components/auth/AccountForm.module.css');
+    assert.match(css, /\.callout \{[^}]*border: 1px solid[^}]*border-left: 3px solid var\(--home-olive\);/);
     assert.match(css, /\.textBtn \{[^}]*min-height: 44px;/);
+    assert.equal(existsSync(new URL('../../app/(consumer)/start/startForm.module.css', import.meta.url)), false, 'the doors carry no form styles of their own');
   });
   it('keeps the Verify Every Sign-up block: check your email, resend, keep entries, sign in', () => {
     assert.match(form, /if \(created\.requiresEmailVerification\) \{\s*setPassword\(''\);\s*setVerifyEmail\(emailNorm\);/);
     assert.match(form, /<VerifyEmailSent\s+tone="start"/);
-    assert.match(form, /onChangeEmail=\{\(\) => setVerifyEmail\(null\)\}/);
+    // back to the form, entries kept, the cursor in the email field (the Stage 1 screen-reader pass)
+    assert.match(form, /onChangeEmail=\{\(\) => \{ setVerifyEmail\(null\); setChangingEmail\(true\); \}\}/);
+    assert.match(form, /focusEmail=\{changingEmail\}/);
     assert.match(form, /resendNext=\{startDoorLinkPath\(door\)\}/);
   });
   it('step 2 is the name, empty and focused (A3), confirmed in a plain sentence (D5), one tap to create (V1)', () => {
     const step2 = form.slice(form.indexOf('function NameStep('));
     assert.match(step2, /autoFocus/);
-    assert.match(step2, /\{confirmed && <p className=\{styles\.confirmed\}>Your email is confirmed\.<\/p>\}/);
-    assert.match(step2, /steps=\{viewer\.firstRun \? <StartSteps current=\{2\} second=\{copy\.step\} \/> : undefined\}/);
+    assert.match(step2, /\{confirmed && <p className=\{accountForm\.body\}>Your email is confirmed\.<\/p>\}/);
+    assert.match(step2, /steps=\{viewer\.firstRun \? <StartSteps current=\{2\} labels=\{copy\.steps\} \/> : undefined\}/);
+    // step 2 keeps step 1's heading; the "Adding a team to <email>" line is gone (The first look, F19)
+    assert.match(step2, /title=\{copy\.title\}/);
+    assert.doesNotMatch(form, /Adding a|viewer\.email/);
     assert.match(step2, /\{viewer\.firstRun \? 'Not now, go to Home' : '← Back to your workspaces'\}/, 'F07');
     assert.match(step2, /async function handleSubmit\(e: React\.FormEvent\)/);
     assert.doesNotMatch(form, /useEffect/, 'nothing creates on its own');
@@ -281,12 +295,14 @@ describe('the start forms', () => {
   });
   it('the step line is the register page’s step bar, and not a control', () => {
     const steps = readCode('components/auth/StartSteps.tsx');
-    assert.match(steps, /<ol className=\{styles\.steps\} aria-label="Sign-up steps">/);
+    assert.match(steps, /<ol className=\{styles\.steps\} aria-label="Sign-up steps"/);
     assert.doesNotMatch(steps, /<(button|a)\b/, 'no step is clickable');
     assert.match(form, /import StartSteps from '@\/components\/auth\/StartSteps';/);
     assert.match(readCode('components/auth/StartSteps.module.css'), /\.stepNum \{[^}]*width: 24px;[^}]*height: 24px;/);
-    const css = readCode('app/(consumer)/start/startForm.module.css');
-    assert.match(css, /\.footerLink \{[^}]*min-height: 44px;/, 'D6');
+    // a screen reader hears "Step 1 of 2: Account" (The first look, the screen-reader pass)
+    assert.match(steps, /<span className="sr-only">Step \{n\} of \{steps\.length\}: <\/span>/);
+    const css = readCode('components/auth/AccountForm.module.css');
+    assert.match(css, /\.footLink \{[^}]*min-height: 44px;/, 'D6');
   });
   for (const [f, door] of [
     ['app/(consumer)/start/team/StartTeamForm.tsx', 'team'],

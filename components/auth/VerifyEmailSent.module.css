@@ -1,6 +1,7 @@
 /* The check-your-email block (verify every sign-up, owner 2026-10-16; hub SIGNUP_EMAIL_VERIFICATION_HUB.html).
-   One component on three grounds, each in its host's own tokens: the /start forms (warm), the sign-in card
-   (auth.module.css: mono, uppercase controls) and the event's public Register page (its success card). */
+   The start look every account door shares is the one account step's own (AccountForm.module.css, The first look
+   Stage 1); these are the two older grounds: the sign-in card (auth.module.css: mono, uppercase controls) and the
+   event's public Register page (its success card). */
 
 .root {
   display: flex;
@@ -55,36 +56,6 @@
   text-decoration: none;
 }
 .footLink:hover { text-decoration: underline; }
-
-/* ── /start forms (startForm.module.css's warm ground) ─────────────────────────────────────────────── */
-.start .lead { font-size: 0.92rem; color: var(--home-ink); }
-.start .sent {
-  font-size: 0.86rem;
-  color: var(--home-olive);
-  background: var(--home-olive-soft);
-  border: 1px solid rgba(var(--home-olive-rgb), 0.25);
-  border-radius: var(--home-radius-sm);
-}
-.start .after { font-size: 0.8rem; color: var(--home-dim); }
-.start .resend {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--home-ink);
-  background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 10px;
-}
-.start .sentAgain {
-  font-size: 0.82rem;
-  color: var(--home-dim);
-  border: 1px dashed var(--home-line-strong);
-  border-radius: 10px;
-}
-.start .error { font-size: 0.8rem; color: var(--home-live); }
-.start .foot { border-top: 1px solid var(--home-line); font-size: 0.78rem; color: var(--home-dim); padding-top: 0.25rem; row-gap: 0; }
-/* Every link under a start form gets a 44px tap row (Account-First Sign-up design review D6, 2026-10-18). */
-.start .foot > * { display: inline-flex; align-items: center; gap: 0.3em; min-height: 44px; }
-.start .footLink { color: var(--home-olive); min-height: 44px; }
 
 /* ── the sign-in card (auth.module.css) ───────────────────────────────────────────────────────────── */
 .auth .lead { font-family: var(--font-data); font-size: 0.82rem; color: var(--fl-text); }

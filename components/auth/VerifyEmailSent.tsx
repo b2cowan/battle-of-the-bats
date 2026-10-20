@@ -1,17 +1,23 @@
 'use client';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import ResendLink from './ResendLink';
+import { StartFoot, accountForm } from './AccountForm';
 import styles from './VerifyEmailSent.module.css';
 
 export { requestVerificationLink } from './ResendLink';
 
 /**
  * THE CHECK-YOUR-EMAIL BLOCK — every sign-up that verifies by link shows it after the form (owner ruling 2026-10-16,
- * "verify every sign-up"; drawings on SIGNUP_EMAIL_VERIFICATION_HUB.html). The org sign-up's own words, a statement
- * of where the email went, "Send the link again" (V3), and the two ways out.
+ * "verify every sign-up"; drawings on SIGNUP_EMAIL_VERIFICATION_HUB.html). The door's own words, a statement of where
+ * the email went, "Send the link again" (V3), and the two ways out.
  *
- * `tone` picks the host's own ground: the /start forms, the sign-in card, or the event's public Register page.
+ * `tone` picks the host's own ground:
+ *  - `start` — the one look every account door shares (The first look, Stage 1, 2026-10-19): the email in one white
+ *    callout, the resend as the white secondary, "Use a different email" and "Already confirmed? Sign in" on one
+ *    44px row. Each door keeps its own last clause in `lead`.
+ *  - `auth` — the sign-in card's older look, until the last door leaves it (Stage 1c).
+ *  - `register` — the event's public Register page, which wears the organizer's brand and keeps its own look.
  */
 export default function VerifyEmailSent(props: {
   tone: 'start' | 'auth' | 'register';
@@ -23,10 +29,38 @@ export default function VerifyEmailSent(props: {
   continueName?: string;
   /** "Use a different email": back to the form with its entries kept. Absent where the email is fixed. */
   onChangeEmail?: () => void;
-  /** "Already verified? Sign in". */
+  /** "Already confirmed? Sign in". */
   signInHref?: string;
 }) {
   const { tone, email, lead, after, resendNext, continueName, onChangeEmail, signInHref } = props;
+  // The start look takes focus when it opens: the button that submitted the form is gone, and a status line inserted
+  // with its text already in it is not reliably spoken (The first look, the Stage 1 screen-reader pass).
+  const leadRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (tone === 'start') leadRef.current?.focus();
+  }, [tone]);
+
+  if (tone === 'start') {
+    return (
+      <div className={accountForm.form}>
+        {/* The form this replaces held focus; it moves here so a screen reader reads where the email went. */}
+        <p className={accountForm.body} tabIndex={-1} ref={leadRef}>{lead}</p>
+        <p className={accountForm.callout} role="status">Sent to <strong>{email}</strong>.{after && <> {after}</>}</p>
+        <ResendLink
+          email={email}
+          next={resendNext}
+          continueName={continueName}
+          classes={{ button: accountForm.secondary, sent: accountForm.sentAgain, error: accountForm.errorText }}
+        />
+        {(onChangeEmail || signInHref) && (
+          <StartFoot split>
+            {onChangeEmail ? <button type="button" className={accountForm.footLink} onClick={onChangeEmail}>Use a different email</button> : <span />}
+            {signInHref && <span>Already confirmed? <Link href={signInHref} className={accountForm.footLink}>Sign in</Link></span>}
+          </StartFoot>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`${styles.root} ${styles[tone]}`}>
@@ -42,7 +76,7 @@ export default function VerifyEmailSent(props: {
       {(onChangeEmail || signInHref) && (
         <div className={styles.foot}>
           {onChangeEmail ? <button type="button" className={styles.footLink} onClick={onChangeEmail}>Use a different email</button> : <span />}
-          {signInHref && <span>Already verified? <Link href={signInHref} className={styles.footLink}>Sign in</Link></span>}
+          {signInHref && <span>Already confirmed? <Link href={signInHref} className={styles.footLink}>Sign in</Link></span>}
         </div>
       )}
     </div>

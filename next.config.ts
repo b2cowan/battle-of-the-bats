@@ -72,6 +72,11 @@ const nextConfig: NextConfig = {
       { source: '/teams',        destination: '/milton-bats/teams',        permanent: true },
       { source: '/teams/:id',    destination: '/milton-bats/teams/:id',    permanent: true },
       { source: '/admin/:path*', destination: '/milton-bats/admin/:path*', permanent: true },
+      // Run a tournament's step 1 moved to /start/tournament when its intro page folded into it (The first look, Ask 6,
+      // 2026-10-19). An old /auth/signup link forwards there before any render, its query (the pricing page's plan and
+      // billing) passed through; `?account=1` is the account-only sign-up and stays. Not permanent: the address still
+      // serves account-only, so no browser should learn to skip it.
+      { source: '/auth/signup', missing: [{ type: 'query', key: 'account', value: '1' }], destination: '/start/tournament', permanent: false },
     ];
   },
 };

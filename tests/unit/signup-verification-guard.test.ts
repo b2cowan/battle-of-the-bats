@@ -97,7 +97,7 @@ describe('the screens', () => {
     assert.match(step, /startDoor: door,/);
     assert.match(step, /setPassword\(''\);\s*setVerifyEmail\(emailNorm\);/);
     assert.match(step, /<VerifyEmailSent\s+tone="start"/);
-    assert.match(step, /onChangeEmail=\{\(\) => setVerifyEmail\(null\)\}/);
+    assert.match(step, /onChangeEmail=\{\(\) => \{ setVerifyEmail\(null\); setChangingEmail\(true\); \}\}/);
     for (const [f, door] of [
       ['app/(consumer)/start/team/StartTeamForm.tsx', 'team'],
       ['app/(consumer)/start/league/StartLeagueForm.tsx', 'league'],
@@ -153,9 +153,11 @@ describe('the screens', () => {
   });
   it('the org sign-up shows the same block, with resend (V3)', () => {
     // Run a tournament is the shared start form since Account-First Part 2 (2026-10-19) — the block above, tone
-    // "start". The account-only sign-up on the same address keeps its own, returning where it was going.
-    const src = readCode('app/(consumer)/auth/signup/page.tsx');
-    assert.match(src, /return <StartAccountStep door="organization"/);
+    // "start" — and lives at /start/tournament since The first look (Ask 6); /auth/signup forwards there. The
+    // account-only sign-up on that address keeps its own block, returning where it was going.
+    assert.match(readCode('app/(consumer)/start/tournament/StartTournamentForm.tsx'), /<StartDoorForm door="organization"/);
+    assert.match(readCode('next.config.ts'), /source: '\/auth\/signup', missing: \[\{ type: 'query', key: 'account', value: '1' \}\], destination: '\/start\/tournament'/);
+    const src = readCode('app/(consumer)/auth/signup/AccountOnlySignup.tsx');
     assert.match(src, /<VerifyEmailSent\s+tone="auth"/);
     assert.match(src, /resendNext=\{safeNext \?\? '\/discover'\}/);
   });

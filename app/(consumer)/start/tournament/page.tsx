@@ -1,7 +1,5 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { Trophy } from 'lucide-react';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
@@ -10,7 +8,6 @@ import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { parseStartPricing, readStartDoor } from '@/lib/start-door';
 import { startStepViewer } from '@/lib/start-door-server';
 import StartTournamentForm from './StartTournamentForm';
-import styles from '../start.module.css';
 
 export const metadata: Metadata = {
   title: 'Run a tournament — FieldLogicHQ',
@@ -21,8 +18,8 @@ const first = (value: Param) => (Array.isArray(value) ? value[0] : value);
 
 /**
  * /start/tournament — the organizer on-ramp.
- *  - Signed OUT → a one-screen heads-up, then step 1 of Run a tournament (/auth/signup — the account alone since
- *    Account-First Sign-up Part 2, 2026-10-19).
+ *  - Signed OUT → step 1, the account alone, here at once (The first look, Ask 6, 2026-10-19: the one-screen intro
+ *    folded into it, and /auth/signup forwards here with the pricing page's plan).
  *  - Signed IN with NO org yet → step 2: name the organization (the email link lands here, and so does Home's waiting
  *    workspace). One tap makes it, then the plan step opens.
  *  - Signed IN who ALREADY has an org → redirect home. Identity model is "single-org by default"
@@ -35,38 +32,10 @@ export default async function StartTournamentPage({ searchParams }: {
   const sp = await searchParams;
   const user = await getAuthUserCached();
 
+  // Signed out: step 1, the account form at once (The first look, Ask 6, 2026-10-19 — the intro page folded in), with
+  // the plan picked on the pricing page riding on it (A6). /auth/signup forwards here with that plan.
   if (!user?.email) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.container}>
-          <header className={styles.header}>
-            <div className={styles.iconWrap}>
-              <Trophy size={21} strokeWidth={1.8} aria-hidden />
-            </div>
-            <h1 className={styles.title}>Run a tournament</h1>
-            <p className={styles.sub}>Free — no credit card</p>
-          </header>
-
-          <p className={styles.lead}>
-            Next step: create your free organizer account — your name, email, and a password. Then you name your
-            organization and land in your own dashboard, with teams, schedule, brackets, and a public site ready to set up.
-          </p>
-
-          <div className={styles.actions}>
-            <Link href="/auth/signup" className={styles.ctaPrimary}>
-              Create your free account →
-            </Link>
-            <Link href="/auth/login" className={styles.ctaSecondary}>
-              I already have an account
-            </Link>
-          </div>
-
-          <footer className={styles.footer}>
-            <Link href="/start" className={styles.footerLink}>← Back to all options</Link>
-          </footer>
-        </div>
-      </div>
-    );
+    return <StartTournamentForm viewer={null} pricing={parseStartPricing(first(sp.plan), first(sp.billing))} />;
   }
   // The three gates are independent reads: one round trip, then the redirects in their order.
   const [isStaff, inRealOrg, { count: pendingInvites }] = await Promise.all([

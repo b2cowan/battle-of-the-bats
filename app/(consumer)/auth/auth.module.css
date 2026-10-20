@@ -187,7 +187,7 @@
 .errorNote { margin: 0.5rem 0 0; }
 
 /* ── Invitation copy (the accept-invite form). The org sign-up's "You've been invited" branch moved to the start
-   look with Run a tournament's step 1 (Account-First Sign-up Part 2, 2026-10-19; startForm.module.css). */
+   look with Run a tournament's step 1 (Account-First Sign-up Part 2, 2026-10-19; now components/auth/AccountForm.module.css). */
 .inviteBody {
   font-family: var(--font-data);
   font-size: 0.78rem;
