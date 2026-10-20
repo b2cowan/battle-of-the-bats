@@ -7,6 +7,38 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — THE SIDE DOOR'S ICON NAMES WHERE IT GOES: A GLOBE FOR THE PUBLIC SIDE, THE CLUB OFFICE FOR YOUR SIDE; THE ⇄ CHARACTER IS RETIRED; AN ICON-ONLY DOOR IS A BARE ICON, AND ON THE PUBLIC PAGES THE DOOR AND ACCOUNT ARE BARE ICONS AT EVERY WIDTH (owner, 2026-10-20; no mockup, owner waived it; the own-side icon picked from eight drawn options, https://claude.ai/artifact/8H43QjyqxT2cQBCi2ikz69)
+
+**Decision:** The flip door (every surface that carries it: the club's bar, a tournament's public header and the platform
+strip, the admin event header including its scroll-collapsed icon-only form, the coaches portal, a coach's tournament
+record, the scorekeeper's header) shows a drawn icon in place of the typed ⇄: **lucide `Globe`** when it lands on the
+public side (one public destination, or a chooser of public schedules), **lucide `Building2`** ("the club office", option F) when it
+lands on the viewer's own side (Admin, Coaches Portal, Scorekeeper, or the "Roles" chooser). **A door with a word is a pill; a door with only its icon is a bare icon** (no border, no fill, a faint tint on
+hover — the way the app's bars draw Account and Chat), its destination its accessible name and, at a desk, its hover
+tooltip. Phone: every surface's door is the bare icon. Desk: the PUBLIC pages (the club's bar, a tournament's header and
+the platform strip) keep the bare icon too, beside an Account that is also an icon (owner 2026-10-20: "why a border
+around one of them and a symbol in one?"); the operator shells' headers (admin event header, coach tournament record,
+scorekeeper) keep the labelled pill at a desk, and the admin header's scroll-collapsed form is the bare icon. The coach's "Fan view" link wears the same globe. In a club's own bar, a signed-in
+visitor's Account is the **lucide `User`** icon at every width (the icon the account menu wears in the app's bars);
+signed out stays the word "Sign in" at every width.
+Sizes (stroke 1.8): 15px beside the label in a desk pill; a bare icon is 17px in a 30px box at a desk (the strip's
+icon-door size), 22px in a 44px box on every phone bar and in the club's bar at every width (the same as the Account
+icon beside it, so a bar's icon doors read as one row); the Fan view globe 13px at stroke 2
+(a 13px mark at 1.8 goes faint in the accent colour).
+**Rationale:** the ⇄ was a text character no product face carries, so a phone borrowed it from a system font, thin and
+off-centre, and alone on a phone it said "flip" but never where to. An icon that names the destination matches the
+standing "label a door by its destination" rule, and the globe already means "your public page" in the admin nav. The
+office building already means "a club or organization" (Discover results, Home, starting a club), so "this club's
+office" reads the same way; the owner turned down a dashboard mark, and the gear was passed over because beside the
+person icon it reads as "my account settings". Its weak spot: a coach's door to the Coaches Portal wears the office too. The
+cost is the old "one glyph means the other side of this same place" grammar: the door's icon now varies with where it
+goes. Only staff ever see the door, and a desk keeps its word. "Sign in" stays a word because to a visitor with no account
+a person icon could mean profile or join.
+**Supersedes:** "⇄ = SIDE, plain = ENTER" (2026-08-01 Stage G) for the side's MARK (the rule that a side door is a
+different control from an enter door stands); the ⇄ in the 2026-10-20 club-bar entry below, the 2026-10-06 masthead
+entry, and the Flip entries of July. ⇄ inside prose ("List ⇄ Depth chart") is not a control and is untouched.
+**Applies to:** the shared flip pill, the Fan view link, the club's bar.
+
 ### 2026-10-20 — THE WAIT AND THE WAY BACK: THE ACCOUNT EMAILS WEAR ONE WARM ENVELOPE, AND EVERY REFUSAL ON SIGN-IN SAYS THE WAY FORWARD (owner, The first look Stage 2, U1–U8 as recommended, after `/design`; `/marketing` read the words; three owner calls at the build gate, as recommended)
 
 **Decision:** The eight states the Stage 2 drawings left out (page https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ):

@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import { Globe } from 'lucide-react';
 import { resolveFlip, primaryTarget } from '@/lib/flip-twins';
 import styles from './FanViewLink.module.css';
 
 /**
  * FanViewLink — the quiet per-event flip door ("The Flip" P3): a coach's in-content
- * `⇄ Fan view` link beneath an event card/row, landing on that event's public side via the
+ * Fan view link beneath an event card/row, landing on that event's public side via the
  * shared resolver. ONE component + one stylesheet so the five coach surfaces that render it
  * (both overviews + all three tournaments lists) can't drift in wording, styling, or target —
  * the same discipline FlipPill enforces for the corner pill. Placement rule (rev-3 mockups):
@@ -12,6 +13,9 @@ import styles from './FanViewLink.module.css';
  *
  * Server-safe (no client hooks) so both the server-rendered free portal and the client-side
  * premium pages render it directly.
+ *
+ * Its mark is the globe, the flip pill's public-side icon (owner 2026-10-20) — one icon for "the public side" across
+ * every door that lands there. It replaced a typed ⇄ character the product's faces don't carry.
  */
 export default function FanViewLink({
   orgSlug,
@@ -27,7 +31,7 @@ export default function FanViewLink({
   ).href;
   return (
     <Link href={href} className={`${styles.fanView} ${className ?? ''}`}>
-      <span aria-hidden>⇄</span> Fan view — public schedule &amp; live scores
+      <Globe className={styles.icon} strokeWidth={2} aria-hidden /> Fan view — public schedule &amp; live scores
     </Link>
   );
 }

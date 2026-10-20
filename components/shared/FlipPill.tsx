@@ -14,14 +14,19 @@
  *
  * Return-memory (read): after a flip, if a fresh sessionStorage snapshot exists it overrides the
  * stateless twin with a direct return to the exact page they came from, labelled by DESTINATION
- * (e.g. "⇄ Admin") — never "Back to …" (owner call 2026-07-31).
+ * (e.g. "Admin") — never "Back to …" (owner call 2026-07-31).
+ *
+ * THE ICON NAMES THE DESTINATION TOO (owner 2026-10-20): a globe for the public side, the club office (a building) for
+ * the viewer's own side. It replaced a typed ⇄ character, which no product face carries — the phone
+ * borrowed it from a system font, thin and off-centre — and which, alone on a phone, said "flip" but
+ * never where to.
  */
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown } from 'lucide-react';
-import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipSurfaceLabel, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
+import { Building2, ChevronDown, Globe } from 'lucide-react';
+import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipSurfaceLabel, flipLandsOnPublic, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
 import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './FlipPill.module.css';
 
@@ -29,8 +34,9 @@ interface FlipPillProps {
   resolution: FlipResolution;
   /** 'inline' = slim slot inside a bar/header; 'floating' = a docked content-corner control. */
   variant?: 'inline' | 'floating';
-  /** Icon-only: shows just the ⇄ glyph (the label stays as the accessible name). Used by the admin
-   *  header when it collapses on scroll, to free up the row for the event name. */
+  /** Icon-only: a bare icon door showing just the destination icon (the label stays the accessible name, and
+   *  the hover tooltip). The public pages' doors wear it at every width (the club's bar, a tournament's header
+   *  and the platform strip, owner 2026-10-20); the admin header wears it when it collapses on scroll. */
   compact?: boolean;
   /** Overrides the accessible name (defaults to the visible destination label). */
   ariaLabel?: string;
@@ -87,14 +93,20 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
 
   const rootClass = `${styles.wrap} ${variant === 'floating' ? styles.floating : styles.inline} ${className ?? ''}`;
   const pillClass = `${styles.pill} ${compact ? styles.compact : ''}`;
-  // The ⇄ glyph + (unless compact) the destination text. The glyph is decorative; the accessible
-  // name comes from aria-label, so icon-only stays labelled for screen readers.
-  const inner = (text: string) => (
-    <span className={styles.label}>
-      <span className={styles.glyph} aria-hidden>⇄</span>
-      {!compact && <span className={styles.labelText}>{text}</span>}
-    </span>
-  );
+  // An icon-only door names its destination on hover too: a mouse user can check where it goes before leaving.
+  const tip = (label: string) => (compact ? label : undefined);
+  // The destination icon + (unless compact) the destination text. The icon is decorative; the
+  // accessible name comes from aria-label, so icon-only stays labelled for screen readers. Sized by
+  // the stylesheet per container (desk, phone, the club's tile), so no size rides on the element.
+  const inner = (text: string, toPublic: boolean) => {
+    const Icon = toPublic ? Globe : Building2;
+    return (
+      <span className={styles.label}>
+        <Icon className={styles.glyph} strokeWidth={1.8} aria-hidden />
+        {!compact && <span className={styles.labelText}>{text}</span>}
+      </span>
+    );
+  };
 
   // Not yet known what this control is (the admin shell resolves its event + roles in the browser).
   // Hold the space and show NOTHING rather than paint a stand-in that gets replaced a moment later —
@@ -109,7 +121,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
     return (
       <div className={rootClass} aria-hidden>
         <span className={`${pillClass} ${styles.pendingPlaceholder}`}>
-          {inner(pendingLabel)}
+          {inner(pendingLabel, flipLandsOnPublic(resolution))}
           {/* A chooser resolves with a caret, so reserve its width too or the pill grows on arrival. */}
           {resolution.kind === 'multi' && <ChevronDown size={13} className={styles.caret} aria-hidden />}
         </span>
@@ -124,8 +136,8 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   if (back && resolution.kind === 'single') {
     return (
       <div className={rootClass}>
-        <Link href={back.href} className={pillClass} aria-label={ariaLabel ?? back.label} onClick={stampReturn}>
-          {inner(back.label)}
+        <Link href={back.href} className={pillClass} aria-label={ariaLabel ?? back.label} title={tip(back.label)} onClick={stampReturn} data-flip-door="">
+          {inner(back.label, flipLandsOnPublic({ kind: 'single', target: back }))}
         </Link>
       </div>
     );
@@ -134,8 +146,8 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   if (resolution.kind === 'single') {
     return (
       <div className={rootClass}>
-        <Link href={resolution.target.href} className={pillClass} aria-label={ariaLabel ?? resolution.target.label} onClick={stampReturn}>
-          {inner(resolution.target.label)}
+        <Link href={resolution.target.href} className={pillClass} aria-label={ariaLabel ?? resolution.target.label} title={tip(resolution.target.label)} onClick={stampReturn} data-flip-door="">
+          {inner(resolution.target.label, flipLandsOnPublic(resolution))}
         </Link>
       </div>
     );
@@ -159,8 +171,10 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={ariaLabel ?? `${resolution.label} — choose a page`}
+        title={tip(resolution.label)}
+        data-flip-door=""
       >
-        {inner(resolution.label)}
+        {inner(resolution.label, flipLandsOnPublic(resolution))}
         <ChevronDown size={13} className={`${styles.caret} ${open ? styles.caretOpen : ''}`} aria-hidden />
       </button>
       {open && (

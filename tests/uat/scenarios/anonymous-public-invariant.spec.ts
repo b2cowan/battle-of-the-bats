@@ -93,10 +93,9 @@ test.describe('Q5.2 — DOM parity: no role-tied nodes render for anonymous visi
       await page.goto(path, { waitUntil: 'networkidle' });
       await page.waitForTimeout(1500); // let any post-hydration control mount
 
-      // The flip pill (⇄) and the Workspaces chooser are the two role-tied controls this surface
-      // can grow. Neither may exist for a fan.
-      await expect(page.getByRole('link', { name: /⇄/ })).toHaveCount(0);
-      await expect(page.getByRole('button', { name: /⇄/ })).toHaveCount(0);
+      // The flip pill (marked data-flip-door) and the Workspaces chooser are the two role-tied controls
+      // this surface can grow. Neither may exist for a fan.
+      await expect(page.locator('[data-flip-door]')).toHaveCount(0);
       await expect(page.getByRole('button', { name: /workspaces/i })).toHaveCount(0);
       await expect(page.getByRole('link', { name: /^Admin Area$/i })).toHaveCount(0);
       await expect(page.getByRole('link', { name: /^Coaches Portal$/i })).toHaveCount(0);
@@ -118,7 +117,7 @@ test.describe('Q5.4 — SW-cache invariant: server HTML carries no role branchin
       const html = await (await request.get(path)).text();
       // These strings only exist inside role-resolved chrome. Any of them in the SERVER payload
       // means identity was baked into HTML the service worker caches as the anonymous variant.
-      for (const marker of ['Admin Area', 'Workspaces', 'All workspaces', '⇄']) {
+      for (const marker of ['Admin Area', 'Workspaces', 'All workspaces', 'data-flip-door']) {
         expect(html, `${marker} must not be server-rendered on ${path}`).not.toContain(marker);
       }
     });
@@ -255,7 +254,7 @@ test.describe('Stage F — the org section tabs', () => {
   test('the row carries no identity — it is safe in SW-cached anonymous HTML', async ({ request }) => {
     const html = await (await request.get(ORG)).text();
     expect(html).toContain('Sections');            // server-rendered, so no post-hydration jump
-    for (const marker of ['Admin Area', 'Workspaces', '⇄']) {
+    for (const marker of ['Admin Area', 'Workspaces', 'data-flip-door']) {
       expect(html, `${marker} must not ride the section row`).not.toContain(marker);
     }
   });

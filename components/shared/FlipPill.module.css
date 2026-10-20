@@ -18,7 +18,7 @@
 }
 
 /* Sharing a row with a title (admin header) — cap tighter than the standalone floating control's 62vw
-   so a long label (e.g. a "⇄ Back to …" return-memory string) can't crowd out the name on phones. */
+   so a long label can't crowd out the name on phones. */
 .inline .pill {
   max-width: 46vw;
 }
@@ -32,7 +32,7 @@
    operator door there). That row is an all-caps mono cluster — Discover / Run a Tournament / Sign in
    — so the pill matches ITS ROW's typography rather than the event-header typography it uses
    everywhere else, where it sits beside a sentence-case event name. The control's identity is
-   carried by the pill shape, the ⇄ glyph and the popover, none of which change; only the letterform
+   carried by the pill shape, the destination icon and the popover, none of which change; only the letterform
    and size follow the container. Sizing is matched to the `.utilCta`/`.utilCoach` pills it now sits
    among so it isn't the smallest thing in a row where it's the most important.
    Amends the 2026-07-23 "renders identically on every surface" note for this container only. */
@@ -50,6 +50,24 @@
    their whole idiom at once. Delete this rule then; the base below is already the product's lettering. */
 .strip .pill, .publicLook .pill { font-family: var(--font-data); font-weight: 700; }
 .publicLook .pill { font-size: 0.72rem; letter-spacing: 0.02em; }
+
+/* THE CLUB'S BAR (Club Tier Stage 4b-1, Ask S1 ruled 2026-10-20): the staff door on a club's own colour band, in the bar's
+   own text colour (--club-on-fill, which the club's frame defines). Since 2026-10-20 (owner) the bar always mounts it
+   icon-only, a bare icon beside Account at every width (`.clubLook .pill.compact` below); this labelled outline is what a
+   caller that ever mounts it with its word gets. */
+.clubLook .pill {
+  max-width: none;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid currentColor;
+  border-radius: 18px;
+  background: none;
+  font: 600 14px/1 var(--club-text-face);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--club-on-fill);
+}
+.clubLook .pill .glyph { color: inherit; width: 16px; height: 16px; }
 
 /* The pill on the signed-in surfaces (admin header, coaches portal, scorekeeper): the body face, sentence
    case, the support size, the button weight. */
@@ -93,8 +111,12 @@
   min-width: 0;
 }
 
+/* The destination icon (a drawn lucide mark, owner 2026-10-20): sized here per container, never on the element.
+   At a desk it sits beside the label at the label's own cap height. */
 .glyph {
   flex-shrink: 0;
+  width: 15px;
+  height: 15px;
   color: var(--data-gray);
 }
 
@@ -104,13 +126,41 @@
   text-overflow: ellipsis;
 }
 
-/* Icon-only (admin header collapsed) — square-ish so the round pill reads as a compact button. */
-.compact {
-  padding: 0.4rem 0.46rem;
+/* ICON-ONLY IS A BARE ICON (owner 2026-10-20): a door with a word is a pill; a door with only its icon is an icon door —
+   no border, no fill, a faint tint on hover — the way the app's bars draw Account and Chat (ConsumerShell `.stripIcon`).
+   Worn at every width by the public pages' doors (the club's bar, a tournament's header and the platform strip) and by
+   the admin header when it collapses on scroll. `.pill.compact` outranks every container's pill rule above it. */
+.pill.compact {
+  justify-content: center;
+  min-width: var(--icon-door-size, 30px);
+  min-height: var(--icon-door-size, 30px);
+  padding: 0 2px;
+  border-color: transparent;
+  border-radius: 8px;
+  background: none;
+}
+.pill.compact:hover {
+  border-color: transparent;
+  background: color-mix(in srgb, currentColor 10%, transparent);
 }
 .compact .glyph {
-  color: var(--fl-text);
+  width: 17px;
+  height: 17px;
+  color: inherit;
 }
+/* The platform strip's icon doors are muted until hovered (its Account and Chat). */
+.strip .pill.compact { color: var(--white-45); }
+.strip .pill.compact:hover { color: var(--fl-text); background: none; }
+/* The club's bar: the 44 px tile and 22 px icon of the Account icon beside it, at every width. */
+.clubLook .pill.compact {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+}
+.clubLook .pill.compact .glyph { width: 22px; height: 22px; }
 
 .caret {
   flex-shrink: 0;
@@ -168,24 +218,35 @@
   color: var(--data-gray);
 }
 
-/* ── Phone: icon-only short pill (owner call 2026-07-23, option B) ──
-   On the mobile chrome (≤900px) the inline pill drops to just the ⇄ glyph — no words — so a long
-   event name or a "⇄ Back to …" return label can't truncate the header. It keeps the SAME rounded
-   pill shape as desktop, just trimmed to the glyph (a short horizontal lozenge — NOT a square/circle,
-   which read as too heavy) so it reads as one consistent control across every surface (admin, public,
-   later coach/scorekeeper — all render this one component). The destination stays the accessible
-   name (aria-label) and the tap still flips to the right place. Same on the scroll-collapsed admin
-   header, so there's no size jump; multi-hat keeps its caret so "⇄ ▾" still reads as a chooser. */
+/* ── Phone: a bare icon door (owner 2026-10-20; was the icon-only short pill of 2026-07-23, option B) ──
+   On the mobile chrome (≤900px) the inline door drops its words AND its pill: no border, no fill, just the
+   destination icon at 22px in a 44px tap box — the same size and look as the Account icon beside it, so a
+   bar's icon doors read as one row. The destination stays the accessible name (aria-label) and the tap still
+   flips to the right place. Every surface renders this one component (club bar, admin header — scrolled or
+   not — tournament header, coaches portal, scorekeeper), so they all change together. A chooser keeps its
+   caret, so "icon ▾" still reads as a chooser; that is why the box is a minimum width, not a fixed one. */
 @media (max-width: 900px) {
   .inline .labelText { display: none; }
-  .inline .pill {
+  .inline .pill,
+  .clubLook .pill {
+    justify-content: center;
     max-width: none;
-    padding: 0.36rem 0.78rem;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 4px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
   }
+  .inline .pill:hover { background: none; }
   .inline .glyph {
     color: var(--fl-text);
-    font-size: 0.95rem; /* a touch larger so the lone glyph reads clearly */
+    width: 22px;
+    height: 22px;
   }
+  /* The club's bar: the icon wears the bar's own text colour (--club-on-fill), like Account beside it. */
+  .clubLook .pill .glyph { color: inherit; width: 22px; height: 22px; }
 }
 
 /* Pending: the control's identity isn't known yet (admin resolves its event + roles client-side).

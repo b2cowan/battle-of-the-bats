@@ -16,6 +16,8 @@
   text-decoration: none;
 }
 .fanView:hover { text-decoration: underline; }
+/* The globe at the link's own cap height; the full stroke, since a 13px mark at 1.8 goes faint in the accent colour. */
+.icon { flex-shrink: 0; width: 13px; height: 13px; }
 
 /* A 44px tap box on touch widths (Free coach tap targets Q5, 2026-10-19), the type unchanged. The link
    knows nothing of where it sits: a caller whose own gap can give the box room says so in its own

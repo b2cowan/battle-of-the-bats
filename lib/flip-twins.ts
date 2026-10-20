@@ -503,3 +503,14 @@ export function flipSurfaceLabel(url: string): string {
   if (/\/coaches(\/|$)/.test(pathname)) return 'Coaches Portal';
   return 'Public site';
 }
+
+/**
+ * Does this flip land on the PUBLIC side? It picks the door's icon (owner 2026-10-20): the public side is a globe,
+ * the viewer's own side (Admin / Coaches Portal / Scorekeeper, or the chooser of them) the club office — the icon names
+ * WHERE the door goes, as its label does. A chooser counts as public only when every row is; through the same
+ * coarse surface test the label uses, so the icon and the word can never disagree.
+ */
+export function flipLandsOnPublic(resolution: FlipResolution): boolean {
+  const targets = resolution.kind === 'single' ? [resolution.target] : resolution.targets;
+  return targets.length > 0 && targets.every(t => flipSurfaceLabel(t.href) === 'Public site');
+}

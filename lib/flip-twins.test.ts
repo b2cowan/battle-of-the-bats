@@ -16,6 +16,7 @@ import {
   publicGamePageHref,
   publicTeamPageHref,
   resolveOrgReturnFlip,
+  flipLandsOnPublic,
   type FlipContext,
   type FlipResolution,
 } from './flip-twins.ts';
@@ -529,4 +530,25 @@ test('org return: doors from other orgs are filtered out BEFORE the single/multi
   );
   assert.equal(res?.kind, 'single');
   assert.equal(res?.kind === 'single' && res.target.href, '/ravens/admin');
+});
+
+// ── The door's icon names its destination (owner 2026-10-20): globe = public side, club office = your side ──
+
+test('flipLandsOnPublic: an admin screen flipping out lands on the public side', () => {
+  const res = resolveFlip({ pathname: '/ravens/admin/tournaments/schedule', direction: 'to-public', ctx: { orgSlug: 'ravens', tournamentSlug: 'cup' } });
+  assert.equal(flipLandsOnPublic(res), true);
+});
+
+test("flipLandsOnPublic: a public page flipping in lands on the viewer's own side", () => {
+  const res = resolveFlip({ pathname: '/ravens/cup/schedule', direction: 'to-role', ctx: { orgSlug: 'ravens', tournamentSlug: 'cup' } });
+  assert.equal(flipLandsOnPublic(res), false);
+});
+
+test("flipLandsOnPublic: the scorekeeper's chooser of public schedules is public; the Roles chooser is not", () => {
+  const sk = resolveScorekeeperFlip({ orgSlug: 'ravens', tournaments: [{ name: 'A', slug: 'a' }, { name: 'B', slug: 'b' }] });
+  assert.equal(sk.kind, 'multi');
+  assert.equal(flipLandsOnPublic(sk), true);
+  const roles = resolveOrgReturnFlip([{ href: '/ravens/admin', title: 'Ravens' }, { href: '/ravens/coaches/teams/1', title: '12U' }], 'ravens');
+  assert.equal(roles?.kind, 'multi');
+  assert.equal(roles && flipLandsOnPublic(roles), false);
 });

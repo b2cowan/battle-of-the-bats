@@ -35,20 +35,21 @@ test.describe('Stage E.2 — the operator return flip', () => {
     await signIn(page);
     await page.goto(OWNED_ORG, { waitUntil: 'networkidle' });
     // Identity resolves client-side after hydration, so the door arrives late by design.
-    const flip = page.locator('nav').getByText('⇄', { exact: false }).first();
+    // The door is found by its marker: its face is an icon (globe / club office), its words only its accessible name.
+    const flip = page.locator('nav [data-flip-door]').first();
     await expect(flip).toBeVisible({ timeout: 15_000 });
   });
 
   test('the flip points INTO this org, never into the operator\'s other org', async ({ page }) => {
     await signIn(page);
     await page.goto(OWNED_ORG, { waitUntil: 'networkidle' });
-    const door = page.locator(`nav a[href^="${OWNED_ORG}/"]`).filter({ hasText: '⇄' }).first();
+    const door = page.locator(`nav a[href^="${OWNED_ORG}/"][data-flip-door]`).first();
     await expect(door).toBeVisible({ timeout: 15_000 });
 
     // The same operator on their OTHER org gets that org's door — proving the scoping is per-page,
     // not "the first workspace I happen to hold".
     await page.goto(ALSO_OWNED_ORG, { waitUntil: 'networkidle' });
-    const otherDoor = page.locator(`nav a[href^="${ALSO_OWNED_ORG}/"]`).filter({ hasText: '⇄' }).first();
+    const otherDoor = page.locator(`nav a[href^="${ALSO_OWNED_ORG}/"][data-flip-door]`).first();
     await expect(otherDoor).toBeVisible({ timeout: 15_000 });
   });
 
@@ -56,6 +57,6 @@ test.describe('Stage E.2 — the operator return flip', () => {
     await signIn(page);
     await page.goto(FOREIGN_ORG, { waitUntil: 'networkidle' });
     await page.waitForTimeout(3000); // give any late-resolving control time to wrongly appear
-    await expect(page.locator('nav').getByText('⇄', { exact: false })).toHaveCount(0);
+    await expect(page.locator('nav [data-flip-door]')).toHaveCount(0);
   });
 });

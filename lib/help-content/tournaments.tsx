@@ -1550,7 +1550,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li>Tap <strong>Finalize score</strong> (or <strong>Submit for review</strong>). A short notice confirms it — &ldquo;Final · Wolves 7, Royals 4&rdquo; — and the list stays where it was.</li>
               </HelpSteps>
               <p>A tap outside the sheet does nothing, so a stray thumb can&rsquo;t lose a score; <strong>Cancel</strong> (or the phone&rsquo;s Back) closes it. If you send a score back from Results &amp; scoring while their screen is open, they see &ldquo;Sent back to score again&rdquo; with the game&rsquo;s teams, and the game returns to To score. A forfeit sits under Final and can&rsquo;t be scored there.</p>
-              <p>The <strong>⇄ Public site</strong> pill in the header opens the public schedule for the event being scored, so a volunteer can check a posted score is live. If two of your events run that day, it opens a small chooser.</p>
+              <p>The <strong>Public site</strong> pill in the header (a globe on a phone) opens the public schedule for the event being scored, so a volunteer can check a posted score is live. If two of your events run that day, it opens a small chooser.</p>
             </>
           ),
         },
@@ -2054,7 +2054,7 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use the flip pill in the top-right corner of any tournament admin screen — labeled <strong>⇄ Preview</strong> on a draft and <strong>⇄ Public</strong> once the tournament is live — to open the matching public (or preview) page in the same tab and inspect the public tournament experience before or after activation.</p>
+          <p>Use the flip pill in the top-right corner of any tournament admin screen — labeled <strong>Preview site</strong> on a draft and <strong>Public site</strong> once the tournament is live — to open the matching public (or preview) page in the same tab and inspect the public tournament experience before or after activation.</p>
           <p>The public tournament site can include registration, schedule, standings, results, teams, rules, resources, and news depending on tournament setup and status. Preview is always available to admins regardless of tournament status — share the preview link internally to review the public experience before you activate.</p>
         </>
       ),

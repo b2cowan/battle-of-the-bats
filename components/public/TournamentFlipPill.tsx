@@ -19,5 +19,5 @@ export default function TournamentFlipPill() {
   const { resolution } = usePublicFlip();
   // Nothing until identity resolves; nothing for fans/signed-out (no hat here) — the corner is theirs.
   if (!resolution) return null;
-  return <FlipPill resolution={resolution} variant="inline" className={`${styles.enter} ${flipStyles.publicLook}`} />;
+  return <FlipPill resolution={resolution} variant="inline" compact className={`${styles.enter} ${flipStyles.publicLook}`} />;
 }

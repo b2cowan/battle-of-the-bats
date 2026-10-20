@@ -402,18 +402,18 @@ export default function ConsumerNav({
   //     Account avatar (the shared in-place menu); an operator gets the persistent role pill
   //     instead of the CTA.
   if (variant === 'tournament') {
-    // The Flip renders through the shared control — same glyph, same popover for a multi-hat
-    // account — wearing the `strip` variant so it matches this row's all-caps mono typography and
-    // pill sizing instead of the event-header typography it uses elsewhere (/design 2026-07-31).
+    // The Flip renders through the shared control — same icon, same popover for a multi-hat
+    // account — icon-only (owner 2026-10-20), a bare icon door beside this row's Account and Chat
+    // icons, in the `strip` variant's muted colour.
     // While the answer is still in flight the slot holds its space and shows nothing, rather than
     // painting the acquisition CTA and taking it back.
     // Stage D.2 on the strip too, via the same shared resolver: an operator who is a
     // plain fan of THIS event (no Flip) with 2+ places gets the honest Workspaces
     // popover instead of the silent precedence winner.
     const doorSlot = stripDoorResolving
-      ? <FlipPill resolution={FLIP_SLOT_PENDING} variant="inline" className={flip.strip} />
+      ? <FlipPill resolution={FLIP_SLOT_PENDING} variant="inline" compact className={flip.strip} />
       : eventFlip
-        ? <FlipPill resolution={eventFlip} variant="inline" className={flip.strip} />
+        ? <FlipPill resolution={eventFlip} variant="inline" compact className={flip.strip} />
         : stripDoor?.kind === 'workspaces'
           ? <WorkspacesPill workspaces={stripDoor.workspaces} className={styles.utilCoach} />
           : stripDoor?.kind === 'pill'
