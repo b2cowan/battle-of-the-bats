@@ -418,7 +418,7 @@ list: `.probe/ats4b/files.txt`; the 4f edit script `.probe/ats4b/d1.cjs` (+ `pin
   comment. Known, left: `.dayBand` / `.gh` / `.pdayHead` at 0.04em (recipe 0.05em, invisible); house league's base
   rules still say display under their kit layers (always in the kit); `.savingsBadge`'s box.
 
-### Stage 5 — as built 2026-10-20 (not committed yet; owner walk owed: https://claude.ai/artifact/H4STQyxxQQYkszGuyk9mbg, source `ADMIN_TYPE_SWEEP_STAGE5_WALK.html`)
+### Stage 5 — as built 2026-10-20 (committed `a57a9a321` 5a + `759d4972d` 5b, help names `30bd68597`, 2026-10-20; owner walk owed: https://claude.ai/artifact/H4STQyxxQQYkszGuyk9mbg, source `ADMIN_TYPE_SWEEP_STAGE5_WALK.html`)
 
 Built from `ADMIN_TYPE_SWEEP_STAGE5_BUILD_PROMPT.md`. Every "dead" claim re-proved by two read-only helpers and a
 main-session spot-check (each same-named use traced to a different module); the cut scripts and their logs are in
