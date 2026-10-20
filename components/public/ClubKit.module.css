@@ -1,0 +1,149 @@
+/* The club's page kit: the pieces every public club page wears (Club Tier Stage 4b-1).
+
+   The league, archives, team, tryout and home pages were each restyled onto the club's light frame
+   (components/public/ClubFrame.module.css supplies the --club-* tokens) and each re-declared the same back link,
+   title, band, card, status chip and buttons — as module rules in one place and as inline style objects in the
+   others — and the copies drifted (a back link that was 400 or 600 weight, three chip paddings, a disabled button at
+   0.4, 0.5 and 0.6). They are written ONCE here, with one value each:
+
+     back link   600 14px --club-ink, 44px tall, no underline
+     title       32px / 1.1 in the title face and weight
+     band        700 12px capitals, .06em, --club-soft (DC-06)
+     card        --club-card, 1px --club-line, 8px, no shadow
+     chip        600 12px, 6px 10px, radius 20px (DC-04); ok = the one green, neutral = soft on the ground
+     button      44px, 0 20px, 8px, 600 16px; a disabled one fades to 0.5 (the product's one disabled-button rule)
+
+   Type steps only (12 · 14 · 16 · 20 · 24 · 32); no tints, no shadows, no typewriter face. The league's own page
+   column stays in app/[orgSlug]/league/league-column.module.css; the sign-up forms' pieces are in ClubForm.module.css. */
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  margin-bottom: 0.75rem;
+  font: 600 0.875rem var(--club-text-face);
+  color: var(--club-ink);
+  text-decoration: none;
+}
+.back:hover { text-decoration: underline; }
+
+.title {
+  margin: 0 0 0.35rem;
+  font-family: var(--club-title-face);
+  font-weight: var(--club-title-weight);
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: var(--club-text);
+}
+.cardTitle {
+  margin: 0 0 0.75rem;
+  font-family: var(--club-title-face);
+  font-weight: var(--club-title-weight);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--club-text);
+}
+.sub {
+  margin: 0;
+  font: 400 0.875rem var(--club-text-face);
+  color: var(--club-soft);
+}
+.body {
+  margin: 0 0 1rem;
+  font: 400 1rem/1.6 var(--club-text-face);
+  color: var(--club-soft);
+}
+
+/* A group's band, and a table's column heading (DC-06): the words are typed in sentence case, the capitals are this
+   rule's. */
+.band {
+  margin-bottom: 0.75rem;
+  font: 700 0.75rem var(--club-text-face);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--club-soft);
+}
+
+.card {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+}
+
+/* The status chip (DC-04): positive = the one green, neutral = soft text on the ground with a hairline. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  font: 600 0.75rem/1 var(--club-text-face);
+  white-space: nowrap;
+}
+.chipOk {
+  color: var(--club-ok);
+  background: var(--club-ok-bg);
+}
+.chipNeutral {
+  color: var(--club-soft);
+  background: var(--club-ground);
+  border-color: var(--club-line-2);
+}
+.chipRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Buttons: worn on a <button> or a link. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 8px;
+  font: 600 1rem var(--club-text-face);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btnPrimary {
+  background: var(--club-fill);
+  color: var(--club-on-fill);
+  border: 1.5px solid var(--club-edge);
+}
+.btnSecondary {
+  background: var(--club-card);
+  color: var(--club-text);
+  border: 1px solid var(--club-field);
+}
+.btnSm {
+  padding: 0 1rem;
+  font-size: 0.875rem;
+}
+.btnRow {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* "Nothing here yet" panels. */
+.empty {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--club-line-2);
+  border-radius: 8px;
+  color: var(--club-soft);
+  font: 400 0.875rem var(--club-text-face);
+}

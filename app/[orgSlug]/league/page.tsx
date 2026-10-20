@@ -1,13 +1,19 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { getLeagueSeasons } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
-import { isFreePlan } from '@/lib/plan-config';
-import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
+import { clubPageMetadata } from '@/lib/club-page-meta';
 import type { LeagueSeason } from '@/lib/types';
 import column from './league-column.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
+  const { orgSlug } = await params;
+  return clubPageMetadata(orgSlug, () => 'House league');
+}
 
 const STATUS_LABEL: Record<string, string> = {
   registration_open:   'Registration open',
@@ -15,14 +21,6 @@ const STATUS_LABEL: Record<string, string> = {
   active:              'Season active',
   completed:           'Season complete',
   archived:            'Archived',
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  registration_open:   '#4ade80',
-  registration_closed: '#fbbf24',
-  active:              '#60a5fa',
-  completed:           '#a78bfa',
-  archived:            'rgba(255,255,255,0.3)',
 };
 
 function formatYear(iso: string | null): string {
@@ -52,68 +50,23 @@ export default async function LeagueIndexPage({
     s => s.status === 'completed' || s.status === 'archived',
   );
 
+  // The light ground and the club's bar and footer come from the club's frame (Club Tier Stage 4b-1); the page only
+  // lays out its column. The credit line moved to the frame's footer.
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
+    <div>
       {/* R6: the shared 1200px page column, with this page's 760px reading measure left-aligned
           inside it — so headings sit under the section tab row rather than 244px inboard of it. */}
       <div className={`container ${column.column}`}>
-        {/* Back */}
-        <Link
-          href={`/${orgSlug}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
-          ← {org.name}
-        </Link>
-
         {/* Title */}
-        <div style={{ marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1.5rem' }}>
-          <h1
-            style={{
-              fontSize: '2.25rem',
-              fontWeight: 900,
-              color: '#f0f0f0',
-              fontFamily: 'var(--font-display, sans-serif)',
-              margin: '0 0 0.35rem',
-              lineHeight: 1.1,
-            }}
-          >
-            House league
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.4)' }}>
-            {org.name}
-          </p>
+        <div className={column.header}>
+          <h1 className={kit.title}>House league</h1>
+          <p className={kit.sub}>{org.name}</p>
         </div>
 
         {/* Featured / current season */}
         {featured && (
           <div style={{ marginBottom: '2.5rem' }}>
-            <div
-              style={{
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: 'rgba(255,255,255,0.35)',
-                marginBottom: '0.75rem',
-              }}
-            >
-              Current season
-            </div>
+            <div className={kit.band}>Current season</div>
             <FeaturedSeasonCard season={featured} orgSlug={orgSlug} />
           </div>
         )}
@@ -121,18 +74,7 @@ export default async function LeagueIndexPage({
         {/* Past seasons */}
         {past.length > 0 && (
           <div>
-            <div
-              style={{
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: 'rgba(255,255,255,0.35)',
-                marginBottom: '0.75rem',
-              }}
-            >
-              Past seasons
-            </div>
+            <div className={kit.band}>Past seasons</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {past.map(s => (
                 <PastSeasonRow key={s.id} season={s} orgSlug={orgSlug} />
@@ -140,12 +82,6 @@ export default async function LeagueIndexPage({
             </div>
           </div>
         )}
-
-        {/* Nav Unification Stage E.5 — the same ratified-subtle paid-tier credit the org home and
-            event pages already carry, on the same plan gate. House league is a League/Club feature,
-            so in practice this always renders here; the gate stays for the free-floor League
-            Starter profile, which reaches this page on a free plan and keeps carrying nothing. */}
-        {!isFreePlan(org.planId) && <BuiltOnCredit />}
       </div>
     </div>
   );
@@ -156,111 +92,31 @@ function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug
   const canRegister = season.status === 'registration_open';
 
   return (
-    <div
-      style={{
-        padding: '1.5rem',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '12px',
-        background: 'rgba(255,255,255,0.03)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-        <span
-          style={{
-            fontSize: '0.68rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            color: STATUS_COLOR[season.status] ?? 'rgba(255,255,255,0.4)',
-          }}
-        >
+    <div className={kit.card}>
+      <div className={kit.chipRow}>
+        <span className={`${kit.chip} ${canRegister ? kit.chipOk : kit.chipNeutral}`}>
           {STATUS_LABEL[season.status] ?? season.status}
         </span>
         {season.division && (
-          <span
-            style={{
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              padding: '0.15rem 0.5rem',
-              borderRadius: '4px',
-              background: 'rgba(96,165,250,0.1)',
-              color: '#60a5fa',
-              border: '1px solid rgba(96,165,250,0.2)',
-            }}
-          >
-            {season.division}
-          </span>
+          <span className={`${kit.chip} ${kit.chipNeutral}`}>{season.division}</span>
         )}
       </div>
 
-      <h2
-        style={{
-          fontSize: '1.5rem',
-          fontWeight: 800,
-          color: '#f0f0f0',
-          margin: '0 0 0.75rem',
-          fontFamily: 'var(--font-display, sans-serif)',
-        }}
-      >
-        {season.name}
-      </h2>
+      <h2 className={kit.cardTitle}>{season.name}</h2>
 
-      {season.description && (
-        <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.55)', margin: '0 0 1rem', lineHeight: 1.6 }}>
-          {season.description}
-        </p>
-      )}
+      {season.description && <p className={kit.body}>{season.description}</p>}
 
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+      <div className={kit.btnRow}>
         {canRegister ? (
-          <Link
-            href={`/${orgSlug}/league/${season.slug}/register`}
-            style={{
-              display: 'inline-block',
-              padding: '0.65rem 1.75rem',
-              background: 'var(--logic-lime)',
-              color: '#0A0A0A',
-              fontWeight: 800,
-              fontSize: '0.9rem',
-              fontFamily: 'var(--font-display, sans-serif)',
-              borderRadius: '8px',
-              textDecoration: 'none',
-            }}
-          >
-            Register →
+          <Link href={`/${orgSlug}/league/${season.slug}/register`} className={`${kit.btn} ${kit.btnPrimary}`}>
+            Register
           </Link>
         ) : null}
-        <Link
-          href={href}
-          style={{
-            display: 'inline-block',
-            padding: '0.65rem 1.5rem',
-            background: 'rgba(255,255,255,0.06)',
-            color: 'rgba(255,255,255,0.7)',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            border: '1px solid rgba(255,255,255,0.1)',
-          }}
-        >
+        <Link href={href} className={`${kit.btn} ${kit.btnSecondary}`}>
           View season
         </Link>
         {season.status === 'active' && (
-          <Link
-            href={`/${orgSlug}/league/${season.slug}/standings`}
-            style={{
-              display: 'inline-block',
-              padding: '0.65rem 1.5rem',
-              background: 'rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.7)',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
+          <Link href={`/${orgSlug}/league/${season.slug}/standings`} className={`${kit.btn} ${kit.btnSecondary}`}>
             Standings
           </Link>
         )}
@@ -275,14 +131,12 @@ function PastSeasonRow({ season, orgSlug }: { season: LeagueSeason; orgSlug: str
 
   return (
     <div
+      className={kit.card}
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0.85rem 1.1rem',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '8px',
-        background: 'rgba(255,255,255,0.02)',
         gap: '1rem',
         flexWrap: 'wrap',
       }}
@@ -290,61 +144,23 @@ function PastSeasonRow({ season, orgSlug }: { season: LeagueSeason; orgSlug: str
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
           {year && (
-            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
-              {year}
-            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--club-dim)', fontWeight: 600 }}>{year}</span>
           )}
           {season.division && (
-            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>{season.division}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--club-dim)' }}>{season.division}</span>
           )}
         </div>
-        <span style={{ fontWeight: 700, color: '#e0e0e0', fontSize: '0.95rem' }}>{season.name}</span>
+        <span style={{ fontWeight: 700, color: 'var(--club-text)', fontSize: '1rem' }}>{season.name}</span>
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, flexWrap: 'wrap' }}>
-        <Link
-          href={`${href}/standings`}
-          style={{
-            fontSize: '0.78rem',
-            padding: '0.35rem 0.75rem',
-            borderRadius: '6px',
-            background: 'rgba(255,255,255,0.05)',
-            color: 'rgba(255,255,255,0.55)',
-            textDecoration: 'none',
-            border: '1px solid rgba(255,255,255,0.08)',
-            fontWeight: 500,
-          }}
-        >
+        <Link href={`${href}/standings`} className={`${kit.btn} ${kit.btnSm} ${kit.btnSecondary}`}>
           Standings
         </Link>
-        <Link
-          href={`${href}/schedule`}
-          style={{
-            fontSize: '0.78rem',
-            padding: '0.35rem 0.75rem',
-            borderRadius: '6px',
-            background: 'rgba(255,255,255,0.05)',
-            color: 'rgba(255,255,255,0.55)',
-            textDecoration: 'none',
-            border: '1px solid rgba(255,255,255,0.08)',
-            fontWeight: 500,
-          }}
-        >
+        <Link href={`${href}/schedule`} className={`${kit.btn} ${kit.btnSm} ${kit.btnSecondary}`}>
           Schedule
         </Link>
-        <Link
-          href={href}
-          style={{
-            fontSize: '0.78rem',
-            padding: '0.35rem 0.75rem',
-            borderRadius: '6px',
-            background: 'rgba(255,255,255,0.05)',
-            color: 'rgba(255,255,255,0.55)',
-            textDecoration: 'none',
-            border: '1px solid rgba(255,255,255,0.08)',
-            fontWeight: 500,
-          }}
-        >
+        <Link href={href} className={`${kit.btn} ${kit.btnSm} ${kit.btnSecondary}`}>
           Overview
         </Link>
       </div>

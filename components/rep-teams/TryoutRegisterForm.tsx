@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { possessive, registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
+import formKit from '@/components/public/ClubForm.module.css';
 
 interface Props {
   orgSlug: string;
@@ -145,140 +146,140 @@ export default function TryoutRegisterForm({
 
   if (success) {
     return (
-      <div className={styles.successPanel}>
-        <div className={styles.successIcon}>
+      <div className={formKit.successPanel}>
+        <div className={formKit.successIcon}>
           <CheckCircle size={28} />
         </div>
-        <h2 className={styles.successTitle}>Application Received</h2>
-        <p className={styles.successBody}>
+        <h2 className={formKit.successTitle}>Application received</h2>
+        <p className={formKit.successBody}>
           We&apos;ve received <strong>{possessive(success.playerName)}</strong> tryout application
           for <strong>{teamName}</strong> — <strong>{yearName}</strong>. A confirmation email
           has been sent to <strong>{success.guardianEmail}</strong>. Our coaching staff will
           be in touch.
         </p>
-        <div className={styles.refBox}>
-          Reference: <span className={styles.refCode}>{registrationReference(success.id)}</span>
+        <div className={formKit.refBox}>
+          Reference: <span className={formKit.refCode}>{registrationReference(success.id)}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} noValidate>
+    <form className={formKit.form} onSubmit={handleSubmit} noValidate>
 
-      {/* ── Section 1: Player Information ───────────────────────────────── */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Player Information</h2>
-        <div className={styles.fieldRow}>
+      {/* ── Section 1: Player information ───────────────────────────────── */}
+      <div className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>Player information</h2>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>
-              First Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              First name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.playerFirstName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.playerFirstName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.playerFirstName}
               onChange={set('playerFirstName')}
               maxLength={80}
               autoComplete="given-name"
             />
-            {errors.playerFirstName && <p className={styles.errorMsg}>{errors.playerFirstName}</p>}
+            {errors.playerFirstName && <p className={formKit.errorMsg}>{errors.playerFirstName}</p>}
           </div>
           <div>
-            <label className={styles.label}>
-              Last Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              Last name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.playerLastName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.playerLastName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.playerLastName}
               onChange={set('playerLastName')}
               maxLength={80}
               autoComplete="family-name"
             />
-            {errors.playerLastName && <p className={styles.errorMsg}>{errors.playerLastName}</p>}
+            {errors.playerLastName && <p className={formKit.errorMsg}>{errors.playerLastName}</p>}
           </div>
         </div>
-        <div className={styles.fieldRow}>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>
-              Date of Birth <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              Date of birth <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.playerDateOfBirth ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.playerDateOfBirth ? ` ${formKit.inputError}` : ''}`}
               type="date"
               value={form.playerDateOfBirth}
               onChange={set('playerDateOfBirth')}
             />
-            {errors.playerDateOfBirth && <p className={styles.errorMsg}>{errors.playerDateOfBirth}</p>}
+            {errors.playerDateOfBirth && <p className={formKit.errorMsg}>{errors.playerDateOfBirth}</p>}
           </div>
         </div>
-        <div className={styles.field}>
-          <label className={styles.label}>Additional Notes</label>
+        <div className={formKit.field}>
+          <label className={formKit.label}>Additional notes</label>
           <textarea
-            className={styles.textarea}
+            className={formKit.textarea}
             value={form.playerNotes}
             onChange={set('playerNotes')}
             maxLength={500}
             rows={3}
             placeholder="Position preference, experience level, any relevant notes…"
           />
-          <p className={styles.hint}>Optional. Max 500 characters.</p>
+          <p className={formKit.hint}>Optional. Max 500 characters.</p>
         </div>
       </div>
 
       {/* ── Section 2: Guardian Information ─────────────────────────────── */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Parent / Guardian Information</h2>
-        <div className={styles.fieldRow}>
+      <div className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>Parent or guardian information</h2>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>
-              First Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              First name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.guardianFirstName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.guardianFirstName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.guardianFirstName}
               onChange={set('guardianFirstName')}
               maxLength={80}
               autoComplete="given-name"
             />
-            {errors.guardianFirstName && <p className={styles.errorMsg}>{errors.guardianFirstName}</p>}
+            {errors.guardianFirstName && <p className={formKit.errorMsg}>{errors.guardianFirstName}</p>}
           </div>
           <div>
-            <label className={styles.label}>
-              Last Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              Last name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.guardianLastName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.guardianLastName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.guardianLastName}
               onChange={set('guardianLastName')}
               maxLength={80}
               autoComplete="family-name"
             />
-            {errors.guardianLastName && <p className={styles.errorMsg}>{errors.guardianLastName}</p>}
+            {errors.guardianLastName && <p className={formKit.errorMsg}>{errors.guardianLastName}</p>}
           </div>
         </div>
-        <div className={styles.fieldRow}>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>
-              Email Address <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              Email address <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.guardianEmail ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.guardianEmail ? ` ${formKit.inputError}` : ''}`}
               type="email"
               value={form.guardianEmail}
               onChange={set('guardianEmail')}
               maxLength={200}
               autoComplete="email"
             />
-            {errors.guardianEmail && <p className={styles.errorMsg}>{errors.guardianEmail}</p>}
+            {errors.guardianEmail && <p className={formKit.errorMsg}>{errors.guardianEmail}</p>}
           </div>
           <div>
-            <label className={styles.label}>Phone Number</label>
+            <label className={formKit.label}>Phone number</label>
             <input
-              className={styles.input}
+              className={formKit.input}
               type="tel"
               value={form.guardianPhone}
               onChange={set('guardianPhone')}
@@ -291,8 +292,8 @@ export default function TryoutRegisterForm({
       </div>
 
       {/* ── Section 3: Consent ─────────────────────────────────────────── */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Before you submit, please confirm</h2>
+      <div className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>Before you submit, please confirm</h2>
         <div className={styles.consentList}>
           <label className={styles.consentItem}>
             <input
@@ -334,7 +335,7 @@ export default function TryoutRegisterForm({
             </span>
           </label>
         </div>
-        {errors.consent && <p className={styles.errorMsg} style={{ marginTop: '0.6rem' }}>{errors.consent}</p>}
+        {errors.consent && <p className={formKit.errorMsg} style={{ marginTop: '0.6rem' }}>{errors.consent}</p>}
 
         {/* ⚠ THIS SENTENCE IS A PROMISE TO A FAMILY — keep it matched to what actually sends.
             It used to read "We'll email you about this application either way — offers, waitlist
@@ -367,9 +368,9 @@ export default function TryoutRegisterForm({
 
       {/* ── Submit ───────────────────────────────────────────────────────── */}
       <div>
-        {globalError && <div className={styles.globalError}>{globalError}</div>}
-        <button type="submit" className={styles.submitBtn} disabled={submitting}>
-          {submitting ? 'Submitting…' : 'Submit Tryout Application'}
+        {globalError && <div className={formKit.globalError}>{globalError}</div>}
+        <button type="submit" className={formKit.submitBtn} disabled={submitting}>
+          {submitting ? 'Submitting…' : 'Submit tryout application'}
         </button>
       </div>
 

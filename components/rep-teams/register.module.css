@@ -1,94 +1,5 @@
-/* ── Form container ───────────────────────────────────────────────────────── */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* ── Sections ─────────────────────────────────────────────────────────────── */
-.section {
-  padding: 1.25rem 1.5rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-}
-
-.sectionTitle {
-  font-size: var(--type-label);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.4);
-  margin: 0 0 1rem;
-}
-
-/* ── Grid rows ────────────────────────────────────────────────────────────── */
-.fieldRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem 1rem;
-  margin-bottom: 0.85rem;
-}
-.fieldRow:last-child { margin-bottom: 0; }
-
-@media (max-width: 480px) {
-  .fieldRow { grid-template-columns: 1fr; }
-}
-
-.field {
-  margin-bottom: 0.85rem;
-}
-.field:last-child { margin-bottom: 0; }
-
-/* ── Labels + inputs ──────────────────────────────────────────────────────── */
-.label {
-  display: block;
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: rgba(255,255,255,0.6);
-  margin-bottom: 0.35rem;
-}
-
-.required {
-  color: var(--danger-light);
-  margin-left: 0.1em;
-}
-
-.input,
-.textarea {
-  width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  color: var(--white-90);
-  font-size: var(--type-body);
-  box-sizing: border-box;
-  transition: border-color 0.15s;
-  font-family: inherit;
-}
-.input:focus,
-.textarea:focus {
-  outline: none;
-  border-color: var(--logic-lime);
-}
-.inputError { border-color: var(--danger-light) !important; }
-.textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.errorMsg {
-  font-size: var(--type-support);
-  color: var(--danger-light);
-  margin: 0.25rem 0 0;
-}
-
-.hint {
-  font-size: var(--type-support);
-  color: rgba(255,255,255,0.4);
-  margin: 0.25rem 0 0;
-}
+/* The tryout application's own pieces (Club Tier Stage 4b-1): the consent list. Everything the two sign-up forms share —
+   sections, fields, inputs, the submit button, the success panel — is in components/public/ClubForm.module.css. */
 
 /* ── Consent ──────────────────────────────────────────────────────────────── */
 .consentList {
@@ -102,107 +13,46 @@
   gap: 0.65rem;
   cursor: pointer;
   /* generous hit area for thumbs on mobile */
-  min-height: 28px;
+  min-height: 44px;
 }
+/* A 22px box with a 2px field border; drawn here because the browser's own box ignores both. */
 .consentCheckbox {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin-top: 0.1rem;
-  accent-color: var(--logic-lime);
+  width: 22px;
+  height: 22px;
+  margin: 0.1rem 0 0;
+  background: var(--club-card);
+  border: 2px solid var(--club-field);
+  border-radius: 4px;
   cursor: pointer;
+}
+.consentCheckbox:checked {
+  background: var(--club-fill);
+  border-color: var(--club-edge);
+}
+.consentCheckbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 11px;
+  border: solid var(--club-on-fill);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.consentCheckbox:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: 2px;
 }
 .consentText {
-  font-size: var(--type-body);
-  line-height: 1.5;
-  color: rgba(255,255,255,0.72);
+  font: 400 14px/1.5 var(--club-text-face);
+  color: var(--club-text);
 }
 .consentLink {
-  color: var(--logic-lime);
+  color: var(--club-ink);
   text-decoration: underline;
-}
-
-/* ── Global error ─────────────────────────────────────────────────────────── */
-.globalError {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background: rgba(248,113,113,0.1);
-  border: 1px solid rgba(248,113,113,0.3);
-  color: var(--danger-light);
-  font-size: var(--type-body);
-  margin-bottom: 0.85rem;
-}
-
-/* ── Submit button ────────────────────────────────────────────────────────── */
-.submitBtn {
-  width: 100%;
-  padding: 0.9rem;
-  font-size: var(--type-heading);
-  font-weight: 700;
-  background: var(--logic-lime);
-  color: var(--pitch-black);
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
-  font-family: var(--font-display, sans-serif);
-  letter-spacing: 0.01em;
-}
-.submitBtn:hover:not(:disabled) { opacity: 0.9; }
-.submitBtn:active:not(:disabled) { transform: scale(0.99); }
-.submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* ── Success panel ────────────────────────────────────────────────────────── */
-.successPanel {
-  text-align: center;
-  padding: 3rem 2rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.02);
-}
-
-.successIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  color: var(--logic-lime);
-}
-
-.successTitle {
-  font-size: var(--type-title);
-  font-weight: 800;
-  color: var(--white-90);
-  margin: 0 0 0.6rem;
-  font-family: var(--font-display, sans-serif);
-}
-
-.successBody {
-  font-size: var(--type-body);
-  color: rgba(255,255,255,0.6);
-  line-height: 1.65;
-  max-width: 440px;
-  margin: 0 auto 1.5rem;
-}
-
-.refBox {
-  display: inline-block;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  font-size: var(--type-support);
-  color: rgba(255,255,255,0.5);
-}
-.refCode {
-  font-weight: 700;
-  color: rgba(255,255,255,0.85);
-  letter-spacing: 0.12em;
-  font-family: var(--font-data, 'IBM Plex Mono', monospace);
-  margin-left: 0.25rem;
 }

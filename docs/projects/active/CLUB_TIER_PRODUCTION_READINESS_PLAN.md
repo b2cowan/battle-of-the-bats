@@ -1062,6 +1062,42 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > too. Accepted, recorded: a refused club's team feed keeps the team's name on its empty calendar (its subscribers already know it);
 > the club's logo URL and colours stay in the layout's payload under the refusal (only the name shows). 131 tests across the 4a and
 > neighbouring guards pass; browser probe re-run.
+> **✅ 4b-1 BUILT 2026-10-20 (on `dev`; one session from `CLUB_TIER_STAGE4B1_BUILD_PROMPT.md`; walk §350
+> https://claude.ai/artifact/BaHx5XwXac4VkEisssNno5 — ✅ PASSED 32/32, owner 2026-10-20).** **Ask S1 RULED 2026-10-20, option A** (drawing
+> https://claude.ai/artifact/JoYUB7TDUh2sB75owpMJyP): one quiet ⇄ door for THIS club's staff only, OUTERMOST, right of Account
+> (the prompt's "left of Account" would have broken the ratified door order); never the Workspaces chooser on a club's bar. Words
+> through /marketing 2026-10-20 (Sign in · House league · Past tournaments · "Questions? Email the club" · Copy/Copied · "page · club"
+> titles · the ledger voice retired: no Digital Ledger, no sealed/hash/Verified on the public pages). **The frame:**
+> `components/public/ClubFrame.tsx` (mounted by the org layout around every page; wears the frame where `wearsClubFrame` —
+> beside the not-found faces in `lib/club-not-found-face.ts` — says a live club's page), `ClubBar.tsx` (72 px band, logo or
+> initials, name + tagline, tabs in the band at a desk / a white row on a phone, Sign in / Account, `FlipPill` `.clubLook`),
+> `ClubFooter.tsx` (shared `useCopyToClipboard`; the credit through `BuiltOnCredit`'s new `className`), `ClubFrame.module.css`
+> (`.site` = the fixed light ground + the platform's dark-ground tokens redefined, the warm portal's recipe; light native controls;
+> no phone-bar reserve; its own skip link). **The colour:** `lib/club-colour-roles.ts` — fill, text on fill, ink (4.5 : 1 on the
+> ground), edge (3 : 1), accent (decoration; a club that never chose gets the edge, never FieldLogicHQ's lime), **mark** (the
+> selected desk tab: the accent where it shows on the fill, else the text on it — the drawings' pink had an invisible one),
+> tile; written as `--club-*` on :root by the org layout. Worked values: navy and yellow exact; pink fill #D04072 exact; sky ink
+> #497689 and pink ink #C43C6B are the rule's (the drawing's #487487 / #B03862 are a shade darker than "darkened until it reaches
+> 4.5 : 1"). **Pages:** every club page restyled, structure unchanged, on one shared `ClubKit.module.css` (+ `ClubForm.module.css`
+> for both sign-up forms); titled through `lib/club-page-meta.ts` (`clubPageMetadata`, ABSOLUTE titles — the org layout's
+> "%s | club" template still titles tournament pages, deliberately untouched — and request-cached reads); the description is the
+> club's tagline / first sentence / name. **Platform bars:** the Navbar's org branch and ConsumerNav's org-public branch are gone;
+> the 4a refusal no longer needs the phone bar's label. **Layout sweep:** five anonymous `club-*` screens + a "club site" widen
+> rule. **Gates:** red run first (frame guard 37 of 112 failing, the colour test unloadable); after: frame + 4a guards 146/146,
+> colour roles 11/11, typecheck clean, `npm test` 8,378/8,379 (the one failure is another session's coaches.module.css), the
+> anonymous-public + org-return-flip UAT specs all passed, `check:layout` 25/25 on the club screens. /design (2 fixes), /simplify
+> (4 lenses: one kit, cached reads, one predicate, FlipPill look), /review high-risk (4 lenses, 10 fixed incl. the skip link, a
+> tournament-only club showing its stored tagline/contact, the phone-bar reserve, a hollow staff-door UAT check). `/docs`:
+> `public-org-page` in `lib/help-content/org.tsx` rewritten.
+> **For 4b-2 (recorded, not built):** the home's centred hero still repeats the footer's contact; section headings centred over
+> left cards; the team colour strip under the phone tab row; an uploaded banner sits under a 90 % ground scrim (untested — no
+> fixture has a banner); the team's own colour no longer tints its division chip (DC-02). **Findings for the owner:** (1) a
+> handful of standalone platform pages (the root 404, unsubscribe confirmation, the pitch deck, the tryout scorer) used to fall into
+> the old org branch and wore a nameless bar with Discover/Pricing/Sign In; they now have no top bar (recommended: keep);
+> (2) the admin's door to the public page still reads "Public ledger" while the page is "Past tournaments" (one-name rule — for
+> 4c's editor pass); (3) the root 404's "script tag" console warning on every not-found (pre-existing); (4) a club page still reads
+> the club twice (`resolvePublicClub` uncached — pre-existing, follow-up); (5) a "page not found" tab title is not possible for a
+> segment not-found in Next 16 (only `global-not-found` takes metadata) — such a page carries the club's name.
 > **⚖ Ruled the same day (owner): a club's own web address is Stage 4e, inside the release, as recommended; payments
 > processing is inside the release and the release has no date (§7).** The evidence behind both: **a club's own web address** (evidence 2026-10-19: 8 of the 10 club sites use their own
 > domain; the 2 that do not are on free or low-end tools; every platform that documents it hosts the site on the club's domain

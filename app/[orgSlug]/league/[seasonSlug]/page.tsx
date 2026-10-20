@@ -1,12 +1,24 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
+import type { Metadata } from 'next';
+import { getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
+import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LeagueDivision } from '@/lib/types';
 import column from '../league-column.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
+
+// The tab names the season as the club stored it. A draft season is hidden by this page, so it is not named either.
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
+  const { orgSlug, seasonSlug } = await params;
+  return clubPageMetadata(orgSlug, async club => {
+    const season = await getClubSeason(club.id, seasonSlug);
+    return season && season.status !== 'draft' ? season.name : null;
+  });
+}
 
 const STATUS_LABEL: Record<string, string> = {
   draft:                'Draft',
@@ -15,15 +27,6 @@ const STATUS_LABEL: Record<string, string> = {
   active:               'Season active',
   completed:            'Season complete',
   archived:             'Archived',
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  draft:                'rgba(255,255,255,0.4)',
-  registration_open:    '#4ade80',
-  registration_closed:  '#fbbf24',
-  active:               '#60a5fa',
-  completed:            '#a78bfa',
-  archived:             'rgba(255,255,255,0.3)',
 };
 
 function formatDate(iso: string | null): string {
@@ -37,6 +40,10 @@ interface DivisionWithCount extends LeagueDivision {
   activeCount: number;
 }
 
+/** A key-date or fee block: its band label over its value. */
+const factValue: React.CSSProperties = { fontSize: '0.875rem', color: 'var(--club-text)', fontWeight: 600 };
+const factBand: React.CSSProperties = { marginBottom: '0.2rem' };
+
 export default async function LeagueSeasonPage({
   params,
 }: {
@@ -47,7 +54,7 @@ export default async function LeagueSeasonPage({
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
 
-  const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
+  const season = await getClubSeason(org.id, seasonSlug);
   if (!season) notFound();
 
   // Only show non-draft seasons publicly
@@ -67,148 +74,52 @@ export default async function LeagueSeasonPage({
   );
 
   const registrationOpen = season.status === 'registration_open';
+  const finished = season.status === 'completed' || season.status === 'archived';
 
+  // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
+    <div>
       {/* R6: the shared 1200px page column; this page's 760px measure left-aligns inside it. */}
       <div className={`container ${column.column}`}>
-        {/* Back to org */}
-        <Link
-          href={`/${orgSlug}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
-          ← {org.name}
-        </Link>
-
         {/* Season header */}
-        <div
-          style={{
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-            paddingBottom: '1.5rem',
-            marginBottom: '2rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: STATUS_COLOR[season.status] ?? 'rgba(255,255,255,0.4)',
-              }}
-            >
+        <div className={column.header}>
+          <div className={kit.chipRow}>
+            <span className={`${kit.chip} ${registrationOpen ? kit.chipOk : kit.chipNeutral}`}>
               {STATUS_LABEL[season.status] ?? season.status}
             </span>
             {season.division && (
-              <span
-                style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  padding: '0.15rem 0.5rem',
-                  borderRadius: '4px',
-                  background: 'rgba(96,165,250,0.1)',
-                  color: '#60a5fa',
-                  border: '1px solid rgba(96,165,250,0.2)',
-                }}
-              >
-                {season.division}
-              </span>
+              <span className={`${kit.chip} ${kit.chipNeutral}`}>{season.division}</span>
             )}
           </div>
-          <h1
-            style={{
-              fontSize: '2rem',
-              fontWeight: 900,
-              color: '#f0f0f0',
-              fontFamily: 'var(--font-display, sans-serif)',
-              margin: '0 0 0.5rem',
-              lineHeight: 1.1,
-            }}
-          >
-            {season.name}
-          </h1>
+          <h1 className={kit.title}>{season.name}</h1>
           {season.description && (
-            <p
-              style={{
-                fontSize: '0.95rem',
-                color: 'rgba(255,255,255,0.55)',
-                margin: '0 0 1rem',
-                lineHeight: 1.6,
-                maxWidth: '600px',
-              }}
-            >
+            <p className={kit.body} style={{ maxWidth: '600px', marginTop: '0.5rem' }}>
               {season.description}
             </p>
           )}
 
           {/* Key dates + fee */}
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
             {(season.registrationOpenAt || season.registrationCloseAt) && (
               <div>
-                <div
-                  style={{
-                    fontSize: '0.65rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: 'rgba(255,255,255,0.35)',
-                    marginBottom: '0.2rem',
-                  }}
-                >
-                  Registration
-                </div>
-                <div style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+                <div className={kit.band} style={factBand}>Registration</div>
+                <div style={factValue}>
                   {formatDate(season.registrationOpenAt)} — {formatDate(season.registrationCloseAt)}
                 </div>
               </div>
             )}
             {(season.seasonStartDate || season.seasonEndDate) && (
               <div>
-                <div
-                  style={{
-                    fontSize: '0.65rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: 'rgba(255,255,255,0.35)',
-                    marginBottom: '0.2rem',
-                  }}
-                >
-                  Season dates
-                </div>
-                <div style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+                <div className={kit.band} style={factBand}>Season dates</div>
+                <div style={factValue}>
                   {formatDate(season.seasonStartDate)} — {formatDate(season.seasonEndDate)}
                 </div>
               </div>
             )}
             {season.registrationFee != null && (
               <div>
-                <div
-                  style={{
-                    fontSize: '0.65rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: 'rgba(255,255,255,0.35)',
-                    marginBottom: '0.2rem',
-                  }}
-                >
-                  Registration fee
-                </div>
-                <div style={{ fontSize: '0.88rem', color: '#a3e635', fontWeight: 700 }}>
+                <div className={kit.band} style={factBand}>Registration fee</div>
+                <div style={{ ...factValue, fontWeight: 700 }}>
                   ${season.registrationFee.toFixed(2)}
                 </div>
               </div>
@@ -219,18 +130,7 @@ export default async function LeagueSeasonPage({
         {/* Divisions */}
         {divisions.length > 0 && (
           <div style={{ marginBottom: '2rem' }}>
-            <div
-              style={{
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: 'rgba(255,255,255,0.35)',
-                marginBottom: '0.85rem',
-              }}
-            >
-              Divisions
-            </div>
+            <div className={kit.band}>Divisions</div>
             <div
               style={{
                 display: 'grid',
@@ -242,20 +142,12 @@ export default async function LeagueSeasonPage({
                 const pct = d.capacity ? Math.min(1, d.activeCount / d.capacity) : 0;
                 const isFull = d.capacity != null && d.activeCount >= d.capacity;
                 return (
-                  <div
-                    key={d.id}
-                    style={{
-                      padding: '1rem 1.25rem',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.03)',
-                    }}
-                  >
+                  <div key={d.id} className={kit.card} style={{ padding: '1rem 1.25rem' }}>
                     <div
                       style={{
-                        fontSize: '0.95rem',
+                        fontSize: '1rem',
                         fontWeight: 700,
-                        color: '#f0f0f0',
+                        color: 'var(--club-text)',
                         marginBottom: '0.6rem',
                       }}
                     >
@@ -265,11 +157,11 @@ export default async function LeagueSeasonPage({
                       <>
                         <div
                           style={{
-                            height: '5px',
-                            background: 'rgba(255,255,255,0.08)',
+                            height: '6px',
+                            background: 'var(--club-line)',
                             borderRadius: '3px',
                             overflow: 'hidden',
-                            marginBottom: '0.35rem',
+                            marginBottom: '0.5rem',
                           }}
                         >
                           <div
@@ -277,22 +169,17 @@ export default async function LeagueSeasonPage({
                               height: '100%',
                               width: `${pct * 100}%`,
                               borderRadius: '3px',
-                              background: isFull ? '#f87171' : '#a3e635',
-                              transition: 'width 0.3s ease',
+                              background: isFull ? 'var(--danger)' : 'var(--club-fill)',
                             }}
                           />
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
-                          {d.activeCount} / {d.capacity} spots filled
-                          {isFull && (
-                            <span style={{ color: '#fbbf24', marginLeft: '0.5rem', fontWeight: 600 }}>
-                              Waitlist open
-                            </span>
-                          )}
+                        <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span>{d.activeCount} / {d.capacity} spots filled</span>
+                          {isFull && <span className={`${kit.chip} ${kit.chipNeutral}`}>Waitlist open</span>}
                         </div>
                       </>
                     ) : (
-                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)' }}>
                         {d.activeCount} registered
                       </div>
                     )}
@@ -308,29 +195,12 @@ export default async function LeagueSeasonPage({
           <div>
             <Link
               href={`/${orgSlug}/league/${seasonSlug}/register`}
-              style={{
-                display: 'inline-block',
-                padding: '0.85rem 2.5rem',
-                background: 'var(--logic-lime)',
-                color: '#0A0A0A',
-                fontWeight: 800,
-                fontSize: '1rem',
-                fontFamily: 'var(--font-display, sans-serif)',
-                borderRadius: '10px',
-                textDecoration: 'none',
-                letterSpacing: '0.01em',
-              }}
+              className={`${kit.btn} ${kit.btnPrimary}`}
             >
-              Register now →
+              Register now
             </Link>
             {season.registrationCloseAt && (
-              <p
-                style={{
-                  marginTop: '0.75rem',
-                  fontSize: '0.8rem',
-                  color: 'rgba(255,255,255,0.4)',
-                }}
-              >
+              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>
                 Registration closes {formatDate(season.registrationCloseAt)}
               </p>
             )}
@@ -338,14 +208,12 @@ export default async function LeagueSeasonPage({
         ) : (
           <div>
             <div
+              className={kit.card}
               style={{
                 padding: '1rem 1.25rem',
-                borderRadius: '8px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                fontSize: '0.88rem',
-                color: 'rgba(255,255,255,0.45)',
-                marginBottom: (season.status === 'completed' || season.status === 'archived' || season.status === 'active') ? '1.25rem' : 0,
+                fontSize: '0.875rem',
+                color: 'var(--club-soft)',
+                marginBottom: (finished || season.status === 'active') ? '1.25rem' : 0,
               }}
             >
               {season.status === 'registration_closed' && 'Registration for this season has closed.'}
@@ -355,43 +223,17 @@ export default async function LeagueSeasonPage({
             </div>
 
             {/* Quick-access links for active, completed, and archived seasons */}
-            {(season.status === 'active' || season.status === 'completed' || season.status === 'archived') && (
-              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+            {(season.status === 'active' || finished) && (
+              <div className={kit.btnRow}>
                 <Link
                   href={`/${orgSlug}/league/${seasonSlug}/standings`}
-                  style={{
-                    display: 'inline-block',
-                    padding: '0.65rem 1.5rem',
-                    background: season.status === 'completed' || season.status === 'archived'
-                      ? 'rgba(163,230,53,0.1)'
-                      : 'rgba(255,255,255,0.06)',
-                    color: season.status === 'completed' || season.status === 'archived'
-                      ? '#a3e635'
-                      : 'rgba(255,255,255,0.7)',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    border: season.status === 'completed' || season.status === 'archived'
-                      ? '1px solid rgba(163,230,53,0.25)'
-                      : '1px solid rgba(255,255,255,0.1)',
-                  }}
+                  className={`${kit.btn} ${finished ? kit.btnPrimary : kit.btnSecondary}`}
                 >
-                  {season.status === 'completed' || season.status === 'archived' ? 'Final standings →' : 'Standings →'}
+                  {finished ? 'Final standings →' : 'Standings →'}
                 </Link>
                 <Link
                   href={`/${orgSlug}/league/${seasonSlug}/schedule`}
-                  style={{
-                    display: 'inline-block',
-                    padding: '0.65rem 1.5rem',
-                    background: 'rgba(255,255,255,0.06)',
-                    color: 'rgba(255,255,255,0.7)',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                  }}
+                  className={`${kit.btn} ${kit.btnSecondary}`}
                 >
                   Schedule
                 </Link>

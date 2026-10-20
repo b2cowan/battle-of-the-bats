@@ -86,6 +86,29 @@ a door here: its gate also refuses a member limited to some teams.
 **Applies to:** the admin home only. Members who can see tournaments keep their routing (dashboard, list or setup).
 
 
+### 2026-10-20 — A CLUB'S BAR: ONE QUIET STAFF DOOR, ONLY FOR THIS CLUB'S STAFF, OUTERMOST (owner, Club Tier Stage 4b-1 Ask S1, option A as recommended — drawing https://claude.ai/artifact/JoYUB7TDUh2sB75owpMJyP)
+
+**Decision:** In a club's own bar, a signed-out visitor sees "Sign in" and every signed-in visitor sees "Account". A
+member of THIS club's staff also gets one door back to their side (today's labels: "Admin", "Coaches Portal",
+"Roles" for more than one; its mark is the club office icon since the entry above — it was ⇄), placed **outermost, right of Account**: an icon (44 × 44, named for screen readers) on a
+phone, a labelled outline pill at a desk. Staff of another club, and every family, see no door; the "Workspaces"
+chooser for people with places elsewhere does not appear in a club's bar.
+**Rationale:** staff check their own site constantly and need one tap back. Today's door showed for staff of ANY club,
+which drew a door into Riverbend on Lakeshore's own page. The order is the ratified Stage G door order (account
+about you, the door about elsewhere, outermost); the build prompt's "left of Account" would have broken it.
+**Applies to:** the club's bar on every club public page. Not tournament pages (their strip keeps its own flip).
+
+### 2026-10-20 — A CLUB'S SITE ON A PHONE: THE TAB ROW PINS, THE COLOUR BAND SCROLLS AWAY; NO "← CLUB" LINK BACK TO THE CLUB HOME (owner, Club Tier Stage 4b-1, confirmed in the browser the same day)
+
+**Decision:** At phone width a club's public site keeps its **section tab row pinned** at the top (the accent stripe as
+its top edge, about 48 px) and lets the **colour band scroll away**. At a desk nothing changes: the tabs sit inside the
+band, which scrolls as one. The "← {club name}" links back to the club home leave the house league, season, team and
+Past tournaments pages; one-level-up links ("← Past tournaments", "← {season}", "← Back to {team}") stay.
+**Rationale:** the tabs are how a family moves between long pages (schedule, standings); the band is identity, seen
+once. Pinning both ate about 100 px of a phone screen. The 4b-1 rebuild had silently dropped pinning (production
+pinned both) — a build side effect, never a ruling.
+**Applies to:** the club's bar (`components/public/ClubFrame.module.css`), the club pages' back links.
+
 ### 2026-10-20 — THE FIRST RUN'S EIGHT RULES: ONE FRAME, ONE TYPE, ONE WORDING, ONE ACCOUNT FORM, ONE STEP LINE AND WAIT, THE BUTTON IN VIEW, EVERY FAILURE SAYS WHAT TO DO, ONE DOOR PER THING; THE APP'S BAR IN SENTENCE CASE; DARK STAYS DARK (owner, The first look, rules 1–8 + Asks 3, 10, 12, 13, ruled 2026-10-19 as recommended; built as Stage 1, 2026-10-20 — hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx)
 
 **Decision (for `/design`; the words for `/marketing`, Ask 3 — written rules, no build guard).** Every screen a newcomer

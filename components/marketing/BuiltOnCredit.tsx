@@ -23,9 +23,13 @@ import styles from './tournament-growth.module.css';
  * NOT rendered on free-plan events: those keep the richer PoweredByBadge + acquisition banner,
  * and stacking this under them would say the same thing twice. Callers gate on the plan.
  */
-export default function BuiltOnCredit() {
+export default function BuiltOnCredit({ className }: {
+  /** Replaces the colophon's own styling, for a host that sets the credit in its own type and colour — the club's
+   *  footer (Club Tier Stage 4b-1), where it sits on the club's fill. The words never change. */
+  className?: string;
+} = {}) {
   return (
-    <div className={styles.builtOn}>
+    <div className={className ?? styles.builtOn}>
       Built on <Link href="/">FieldLogicHQ</Link>
     </div>
   );

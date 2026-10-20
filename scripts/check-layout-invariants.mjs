@@ -365,6 +365,10 @@ if (has('--changed') && !onlyIds) {
     { side: 'free coach', pick: (s) => s.session === 'freeCoach', re: /^app\/coaches\/layout\.tsx$/ },
     { side: 'coach + marketing', pick: (s) => !s.area,
       re: /^(app\/\[orgSlug\]\/coaches\/coaches\.module\.css|app\/\[orgSlug\]\/coaches\/layout\.tsx|components\/consumer\/warmTheme\.module\.css)/ },
+    // A club's own public site (Club Tier Stage 4b-1): its frame, its kits and its colour roles draw every club page
+    // and no route folder holds them, so a change to any of them sweeps the club-* screens.
+    { side: 'club site', pick: (s) => s.id.startsWith('club-'),
+      re: /^(components\/public\/(ClubFrame|ClubBar|ClubFooter|ClubKit|ClubForm|OrgSectionTabs)\.|app\/\[orgSlug\]\/ClubHome\.module\.css$|lib\/club-(colour-roles|site|page-meta)\.ts$)/ },
     { side: 'admin', pick: (s) => !!s.area,
       re: /^(app\/\[orgSlug\]\/admin\/(layout\.tsx|AdminChrome\.tsx|admin\.module\.css|admin-common\.module\.css)|components\/volunteer\/|lib\/tournament-context\.tsx)/ },
   ];

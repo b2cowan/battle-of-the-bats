@@ -1,0 +1,144 @@
+<title>Club bar staff door</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one question, three answers stacked; each answer shows the club's bar at true size for
+   three visitors, on a phone (390 px) and at a desk (1,280 px, scrolls sideways inside its frame). */
+:root{
+  --bg:#EEECE7; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DCD7CD;
+  --rec:#2C6A2A; --rec-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17150F; --panel:#211E18; --ink:#F1EDE5; --soft:#C9C1B3; --dim:#A49B8C; --line:#3A352C;
+  --rec:#8FCB86; --rec-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17150F; --panel:#211E18; --ink:#F1EDE5; --soft:#C9C1B3; --dim:#A49B8C; --line:#3A352C;
+  --rec:#8FCB86; --rec-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0}
+h3{font:600 16px/1.3 var(--body);margin:0}
+p{margin:0;max-width:68ch}
+.lede{display:flex;flex-direction:column;gap:10px}
+.lede p{color:var(--soft);font-size:16px}
+.opt{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px 16px;display:flex;flex-direction:column;gap:16px}
+.opt-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.tag{font:600 12px/1 var(--body);padding:6px 10px;border-radius:20px;background:var(--bg);color:var(--soft);border:1px solid var(--line)}
+.tag.rec{background:var(--rec-bg);color:var(--rec);border-color:transparent}
+.tag.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 24px}
+.why div{min-width:0}
+.why b{display:block;font:700 12px/1.3 var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:4px}
+.row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.who{display:flex;flex-direction:column;gap:8px;min-width:0}
+.who-label{font:600 14px/1.3 var(--body)}
+.who-label span{display:block;font-weight:400;color:var(--dim);font-size:12px}
+.scroll{overflow-x:auto;max-width:100%;border-radius:6px}
+
+/* ── Fixed light specimens: the club's site never follows the reader's theme (TH-1 / M2). ── */
+.cs{--g-bg:#F6F5F2;--g-card:#FFFFFF;--g-ink:#1F1B16;--g-soft:#4E473D;--g-line:#E4E0D8;
+  --c-fill:#1F3A5F;--c-on:#FFFFFF;--c-ink:#1F3A5F;--c-accent:#E8B33A;--c-title:var(--title);--c-tw:700;
+  background:var(--g-bg);color:var(--g-ink);font:14px/1.5 var(--body);border:1px solid #D6D0C4;border-radius:6px;overflow:hidden}
+.cs.harbour{--c-fill:#F2C230;--c-on:#1F1B16;--c-ink:#886D1B;--c-accent:#1E2A38}
+.phone{width:390px;flex:none}
+.desk{width:1280px;flex:none}
+.hd{background:var(--c-fill);color:var(--c-on);display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;min-height:72px;border-bottom:3px solid var(--c-accent)}
+.desk .hd{padding:0 max(24px,calc((100% - 1200px)/2))}
+.logo{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;flex:none;font:700 16px/1 var(--c-title);letter-spacing:.02em;background:var(--c-accent);color:var(--c-fill)}
+.club{font:var(--c-tw) 20px/1.1 var(--c-title);color:var(--c-on);display:flex;flex-direction:column;min-width:0}
+.desk .club{font-size:24px}
+.club small{font:500 12px/1.3 var(--body);opacity:.88;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.right{margin-left:auto;display:flex;align-items:center;gap:4px;flex:none}
+.word{font:600 14px/1 var(--body);color:var(--c-on);min-height:44px;min-width:44px;padding:0 10px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.door{border:1px solid currentColor;min-height:36px;padding:0 12px;border-radius:18px;opacity:.95}
+.door.icon{width:44px;height:44px;padding:0;border-radius:10px;min-height:44px}
+.glyph{font-size:16px;line-height:1}
+.ring{outline:2px dashed #C2410C;outline-offset:2px}
+.nav{background:var(--g-card);border-bottom:1px solid var(--g-line);display:flex;gap:4px;padding:0 8px}
+.nav span{font:600 14px/1;color:var(--g-soft);padding:15px 8px 12px;border-bottom:3px solid transparent;min-height:44px;box-sizing:border-box}
+.nav span.on{color:var(--g-ink);border-bottom-color:var(--c-ink)}
+.navd{display:flex;gap:6px;margin-left:28px}
+.navd span{font:600 16px/1 var(--body);color:var(--c-on);opacity:.9;padding:12px 10px;border-radius:8px}
+.navd span.on{opacity:1;box-shadow:inset 0 -3px 0 var(--c-accent)}
+.body{padding:16px;display:flex;flex-direction:column;gap:8px}
+.body .t{font:var(--c-tw) 32px/1.05 var(--c-title)}
+.body .l{height:10px;border-radius:4px;background:var(--g-line);width:70%}
+.body .l.s{width:45%}
+/* B's open Account menu */
+.menuwrap{position:relative}
+.menu{position:absolute;right:8px;top:62px;width:240px;background:#fff;color:#1F1B16;border:1px solid #D6D0C4;border-radius:8px;box-shadow:0 8px 24px rgba(31,27,22,.18);padding:6px;display:flex;flex-direction:column;z-index:2}
+.menu .r{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border-radius:6px;font:500 14px/1.2 var(--body)}
+.menu .r.new{background:#F6F5F2;font-weight:600}
+.menu .r small{display:block;font-size:12px;color:#6F675B;font-weight:400}
+.menu .sep{height:1px;background:#E4E0D8;margin:4px 0}
+.menu-pad{height:230px}
+.note{font-size:12px;color:var(--dim)}
+.ask{border-left:3px solid var(--rec);padding:4px 0 4px 14px;display:flex;flex-direction:column;gap:6px}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>The staff door in the club's bar</h1>
+    <p>Club Tier Stage 4b-1 puts each club's own bar on all its pages. The drawings show "Sign in" for a visitor who is not signed in. They never show what a signed-in visitor sees, and in particular a member of the club's staff.</p>
+    <p>Today the bar has a quiet door back to the staff side ("⇄ Admin", "⇄ Coaches Portal", or "Roles" for more than one role). It shows for staff of <b>any</b> club. A coach from Riverbend who looks at Lakeshore's site sees a door into their own club, on Lakeshore's page.</p>
+  </header>
+
+  <section class="ask">
+    <h2>Ask S1 · What does a signed-in member of staff see in the club's bar?</h2>
+    <p class="note">Every option drawn at true size. The dashed ring marks what differs between visitors. Navy is Lakeshore Lynx; yellow is Harbourview FC (dark text on its fill).</p>
+  </section>
+
+  <!-- ── A ── -->
+  <article class="opt">
+    <div class="opt-head"><h2>A · One quiet door, only for this club's staff</h2><span class="tag rec">Recommended</span></div>
+    <div class="why">
+      <div><b>What changes</b>Signed in, every visitor sees "Account". Staff of <i>this</i> club also get one ⇄ door, to the right of Account, at the outer edge. It is an icon on a phone and a labelled outline pill at a desk. Staff of another club, and every family, see no door.</div>
+      <div><b>Why</b>Club staff check their own site all the time, and the door gets them back to work in one tap. Limiting it to this club stops the bar showing a family's page a door into someone else's club.</div>
+      <div><b>Cost</b>It keeps today's door and today's labels; only who sees it gets narrower. On a phone the club's name loses about 48 px when the door shows, and that happens only to staff.</div>
+    </div>
+    <div class="row">
+      <div class="who"><div class="who-label">A family, not signed in<span>Phone · as drawn and ruled</span></div>
+        <div class="scroll"><div class="cs phone"><div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="right"><span class="word">Sign in</span></span></div><div class="nav"><span class="on">Home</span><span>House league</span><span>Past tournaments</span></div><div class="body"><span class="t">Lakeshore Lynx</span><span class="l"></span><span class="l s"></span></div></div></div></div>
+      <div class="who"><div class="who-label">A family, signed in<span>Phone</span></div>
+        <div class="scroll"><div class="cs phone"><div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="right"><span class="word ring">Account</span></span></div><div class="nav"><span class="on">Home</span><span>House league</span><span>Past tournaments</span></div><div class="body"><span class="t">Lakeshore Lynx</span><span class="l"></span><span class="l s"></span></div></div></div></div>
+      <div class="who"><div class="who-label">Lakeshore's own admin, signed in<span>Phone · the door is an icon, named "Admin" for screen readers</span></div>
+        <div class="scroll"><div class="cs phone"><div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="right"><span class="word">Account</span><span class="word door icon ring" aria-label="Admin"><span class="glyph">⇄</span></span></span></div><div class="nav"><span class="on">Home</span><span>House league</span><span>Past tournaments</span></div><div class="body"><span class="t">Lakeshore Lynx</span><span class="l"></span><span class="l s"></span></div></div></div></div>
+      <div class="who"><div class="who-label">Harbourview's own coach, signed in<span>Phone · a light club; the door takes the dark text colour</span></div>
+        <div class="scroll"><div class="cs harbour phone"><div class="hd"><span class="logo">HF</span><span class="club">Harbourview FC<small>Youth soccer since 1987</small></span><span class="right"><span class="word">Account</span><span class="word door icon ring" aria-label="Coaches Portal"><span class="glyph">⇄</span></span></span></div><div class="nav"><span class="on">Home</span><span>House league</span><span>Past tournaments</span></div><div class="body"><span class="t">Harbourview FC</span><span class="l"></span><span class="l s"></span></div></div></div></div>
+    </div>
+    <div class="who"><div class="who-label">Lakeshore's own admin, signed in<span>Desk, 1,280 px · the door is labelled and sits outermost, right of Account: the order every top bar already uses (Account is about you, the door is about somewhere else)</span></div>
+      <div class="scroll"><div class="cs desk"><div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="navd"><span class="on">Home</span><span>House league</span><span>Past tournaments</span></span><span class="right"><span class="word">Account</span><span class="word door ring"><span class="glyph">⇄</span>Admin</span></span></div><div class="body"><span class="t">Lakeshore Lynx</span><span class="l"></span><span class="l s"></span></div></div></div></div>
+    <p class="note">Someone who both runs and coaches at Lakeshore sees "⇄ Roles", which opens a two-row chooser, as it does today. A demo club still shows no Account for its shared demo visitor.</p>
+  </article>
+
+  <!-- ── B ── -->
+  <article class="opt">
+    <div class="opt-head"><h2>B · No door in the bar; it moves into the Account menu</h2><span class="tag">Cleaner bar</span></div>
+    <div class="why">
+      <div><b>What changes</b>Every signed-in visitor sees only "Account". For this club's staff, the menu's first row is the door back ("Admin · Lakeshore Lynx").</div>
+      <div><b>Why you might</b>The bar is entirely the club's, with nothing in it that only staff can see.</div>
+      <div><b>Cost</b>It takes two taps instead of one. It also changes the Account menu that both portals share, so it needs its own walk.</div>
+    </div>
+    <div class="row">
+      <div class="who"><div class="who-label">Lakeshore's own admin, menu open<span>Phone</span></div>
+        <div class="scroll"><div class="cs phone menuwrap"><div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="right"><span class="word">Account</span></span></div><div class="nav"><span class="on">Home</span><span>House league</span><span>Past tournaments</span></div>
+          <div class="menu"><span class="r new ring"><span class="glyph">⇄</span><span>Admin<small>Lakeshore Lynx</small></span></span><div class="sep"></div><span class="r">Notification settings</span><span class="r">Account settings</span><div class="sep"></div><span class="r">Sign out</span></div>
+          <div class="menu-pad"></div></div></div></div>
+    </div>
+  </article>
+
+  <!-- ── C ── -->
+  <article class="opt">
+    <div class="opt-head"><h2>C · Keep today's rule</h2><span class="tag warn">Not recommended</span></div>
+    <div class="why">
+      <div><b>What changes</b>Nothing. Staff of any club get a door, and someone with two or more places anywhere gets a "Workspaces" chooser.</div>
+      <div><b>Cost</b>A Riverbend coach on Lakeshore's site sees Riverbend's door in Lakeshore's bar, which is a door into another club drawn on Lakeshore's own page.</div>
+    </div>
+    <div class="row">
+      <div class="who"><div class="who-label">A Riverbend coach, on Lakeshore's site<span>Desk</span></div>
+        <div class="scroll"><div class="cs desk"><div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="navd"><span class="on">Home</span><span>House league</span><span>Past tournaments</span></span><span class="right"><span class="word">Account</span><span class="word door ring">Coaches Portal</span></span></div><div class="body"><span class="t">Lakeshore Lynx</span><span class="l"></span><span class="l s"></span></div></div></div></div>
+    </div>
+  </article>
+</div>

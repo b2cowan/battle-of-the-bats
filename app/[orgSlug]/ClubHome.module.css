@@ -1,0 +1,215 @@
+/* The club's home on the club's light frame (Club Tier Stage 4b-1).
+
+   Home.module.css is SHARED with the tournament home and MyTournamentCard, so it is not edited. On a club page the
+   frame (components/public/ClubFrame.module.css `.site`) already redefines the tokens those classes read, so most of
+   the page goes light by itself. This file answers only what a shared class still gets wrong on a club's page: the
+   hero's dark decoration, forced capitals, tints, the platform-chrome clearances, and off-step sizes.
+
+   Every rule hangs off `.home.home` (a doubled class: 0,2,0) so it outranks the shared module whichever stylesheet
+   loads last. (The "Live" chip is the club kit's — components/public/ClubKit.module.css.)
+
+   The home is redrawn in 4b-2; this stage changes colour, type, case and size only, never structure. */
+
+/* ── The page ──────────────────────────────────────────────────────────────────────────────────────────────────── */
+/* The shared `.page` reserves the platform's fixed chrome above and its phone bar below. A club page has neither:
+   the club's bar is in the flow and the platform's phone bar leaves club pages (the frame). */
+.home.home {
+  padding: 0;
+}
+
+/* ── The hero: a light band, no decoration ─────────────────────────────────────────────────────────────────────── */
+.home.home .hero {
+  min-height: 0;
+  padding: 3rem 0 1.5rem;
+  background: var(--club-ground);
+}
+
+/* A club's banner photo sits behind a ground-coloured scrim, so the ink title and the Follow button stay readable
+   whatever photo was uploaded (a dark wash would need white type and break the light frame). */
+.home.home .heroBannerOverlay {
+  background: color-mix(in srgb, var(--club-ground) 90%, transparent);
+}
+
+.home.home .hero .heroContent {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.home.home .hero .logo {
+  width: 80px;
+  height: 80px;
+  border: 1px solid var(--club-line);
+  margin-bottom: 1rem;
+}
+
+.home.home .hero .title {
+  margin: 0 0 0.5rem;
+  color: var(--club-text);
+  font-family: var(--club-title-face);
+  font-weight: var(--club-title-weight);
+  font-size: 2rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+  text-transform: none;
+  text-shadow: none;
+  text-wrap: balance;
+  animation: none;
+}
+
+/* The tagline, as the club typed it: no pill, no capitals. */
+.home.home .hero .tagline {
+  margin: 0 0 0.75rem;
+  color: var(--club-soft);
+  font: 400 1rem/1.5 var(--club-text-face);
+}
+
+.home.home .hero .sub {
+  max-width: 560px;
+  margin: 1rem auto 1.5rem;
+  color: var(--club-soft);
+  font: 400 1rem/1.6 var(--club-text-face);
+  animation: none;
+}
+
+/* Social links and Contact us: secondary buttons (rule 8) — a white card, ink text, a field-strength border. */
+.home.home .socialRow {
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.home.home .socialRow .socialLink {
+  min-height: 44px;
+  padding: 0 1rem;
+  gap: 0.5rem;
+  border: 1px solid var(--club-field);
+  border-radius: 8px;
+  background: var(--club-card);
+  color: var(--club-text);
+  font: 600 1rem/1 var(--club-text-face);
+}
+.home.home .socialRow .socialLink:hover {
+  background: var(--club-ground);
+  color: var(--club-text);
+}
+.home.home .socialRow .socialLink:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: 2px;
+}
+
+/* ── Section headings ──────────────────────────────────────────────────────────────────────────────────────────── */
+.home.home .sectionHeader {
+  margin-bottom: 1.5rem;
+}
+
+/* The eyebrow is a band label: capitals stay (DC-06), in the frame's band recipe. */
+.home.home .sectionHeader .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+  color: var(--club-soft);
+  font: 700 0.75rem/1.2 var(--club-text-face);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.home.home .sectionHeader .eyebrow svg {
+  color: var(--club-soft);
+}
+
+.home.home .sectionHeader .sectionTitle {
+  margin: 0;
+  color: var(--club-text);
+  font-family: var(--club-title-face);
+  font-weight: var(--club-title-weight);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  text-transform: none;
+}
+
+.home.home .empty {
+  padding: 2.5rem 1rem;
+}
+.home.home .empty svg {
+  opacity: 1;
+  color: var(--club-dim);
+}
+.home.home .empty p {
+  color: var(--club-soft);
+  font: 400 1rem/1.5 var(--club-text-face);
+}
+
+/* ── Cards: white, a hairline, 8px, no shadow, no lift ─────────────────────────────────────────────────────────── */
+/* A column never wider than the screen: the shared grid asks 280 px, more than a 320 px phone has inside its gutters. */
+.home.home .tournamentCards {
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+}
+
+/* The chip and the date share a line until the card is too narrow (a 320 px phone), then the date wraps under. */
+.home.home .tournamentCardHeader {
+  flex-wrap: wrap;
+}
+
+.home.home .tournamentCard,
+.home.home .archivesCta {
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  box-shadow: none;
+  color: var(--club-text);
+}
+.home.home .tournamentCard:hover,
+.home.home .archivesCta:hover {
+  border-color: var(--club-edge);
+  box-shadow: none;
+  transform: none;
+}
+.home.home .tournamentCard:active,
+.home.home .archivesCta:active {
+  transform: none;
+}
+.home.home .tournamentCard:focus-visible,
+.home.home .archivesCta:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: 2px;
+}
+
+.home.home .tournamentCardDate {
+  color: var(--club-soft);
+  font-size: 0.875rem;
+}
+
+.home.home .tournamentCardName {
+  margin: 0.25rem 0 0;
+  color: var(--club-text);
+  font: 700 1rem/1.3 var(--club-text-face);
+}
+
+.home.home .tournamentCardMeta {
+  color: var(--club-soft);
+  font-size: 0.875rem;
+}
+
+.home.home .tournamentCardCta {
+  color: var(--club-ink);
+  font: 600 0.875rem/1.2 var(--club-text-face);
+}
+
+.home.home .archivesCtaIcon {
+  color: var(--club-ink);
+}
+
+.home.home .archivesCtaTitle {
+  color: var(--club-text);
+  font: 700 1rem/1.3 var(--club-text-face);
+}
+
+.home.home .archivesCtaSub {
+  margin-top: 0.25rem;
+  color: var(--club-soft);
+  font: 400 0.875rem/1.4 var(--club-text-face);
+}
+
+.home.home .archivesCtaChevron {
+  color: var(--club-dim);
+}

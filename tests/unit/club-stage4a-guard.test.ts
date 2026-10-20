@@ -123,13 +123,10 @@ describe('3 · one refusal, never the diagnostic screen (S4-01)', () => {
   it('the refusal is neutral: the club\'s bars step aside while it shows (owner 2026-10-20)', () => {
     const css = readSource('components/public/ClubNotFound.module.css');
     assert.match(css, /:global\(body\):has\(\.refusal\) :global\(\[data-club-chrome\]\)/);
-    assert.match(css, /:global\(body\):has\(\.refusal\) :global\(nav\[aria-label='Primary'\]\)/);
-    // the three bars the rule reaches: the club's top bar, its section tabs, the platform's phone bar
-    assert.match(readCode('components/Navbar.tsx'), /<nav className=\{navClass\} data-club-chrome="">/);
-    assert.match(readCode('components/public/OrgSectionTabs.tsx'), /<nav className=\{styles\.tabs\} aria-label="Sections" data-club-chrome="">/);
-    const consumer = readCode('components/consumer/ConsumerNav.tsx');
-    const orgBranch = consumer.slice(consumer.indexOf('if (onOrgPublicRoute && !onTournamentRoute)'));
-    assert.match(orgBranch.slice(0, 400), /aria-label="Primary"/, 'the phone bar on a club page keeps the label the refusal hides it by');
+    // the bars the rule reaches: the club's own bar (4b-1) and its section tabs. (The platform's phone bar no longer
+    // renders on a club page at all — Ask 8, 4b-1 — so the refusal no longer has to hide it; club-frame-guard pins that.)
+    assert.match(readCode('components/public/ClubBar.tsx'), /data-club-chrome=""/);
+    assert.match(readCode('components/public/OrgSectionTabs.tsx'), /aria-label="Sections" data-club-chrome=""/);
   });
   it('each face is a <div> — the root layout owns the page\'s <main>', () => {
     assert.doesNotMatch(readCode(FACE), /<main/);
@@ -159,7 +156,9 @@ describe('4 · the shortcut addresses (Ask 9)', () => {
 
 describe('5 · the closed tryout\'s Contact us reads the real address (F09)', () => {
   it('the tryout resolver reads the public-site contact', () => {
-    assert.match(readCode('lib/public-tryout.ts'), /getOrgPublicSiteContent\(/);
+    // Through the request-cached read since 4b-1 (lib/club-page-meta.ts getClubSiteContent wraps getOrgPublicSiteContent).
+    assert.match(readCode('lib/public-tryout.ts'), /getClubSiteContent\(/);
+    assert.match(readCode('lib/club-page-meta.ts'), /getOrgPublicSiteContent\(orgId\)/);
   });
   it('no club page or tryout view reads the org\'s contactEmail (a column that does not exist)', () => {
     for (const f of [...CLUB_ROUTES, 'components/rep-teams/TryoutLandingView.tsx', 'components/rep-teams/TryoutRegisterView.tsx']) {

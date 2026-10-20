@@ -1,11 +1,23 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLeagueSeasonBySlug, getDivisionsForSeason, computeStandings } from '@/lib/db';
+import type { Metadata } from 'next';
+import { getDivisionsForSeason, computeStandings } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
+import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import type { LeagueDivision, LeagueStandingsRow } from '@/lib/types';
 import column from '../../league-column.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
+
+// A draft season is hidden by this page, so the tab does not name it either.
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
+  const { orgSlug, seasonSlug } = await params;
+  return clubPageMetadata(orgSlug, async club => {
+    const season = await getClubSeason(club.id, seasonSlug);
+    return season && season.status !== 'draft' ? `${season.name} standings` : null;
+  });
+}
 
 export default async function PublicStandingsPage({
   params,
@@ -20,7 +32,7 @@ export default async function PublicStandingsPage({
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
 
-  const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
+  const season = await getClubSeason(org.id, seasonSlug);
   if (!season) notFound();
   if (season.status === 'draft') notFound();
 
@@ -34,81 +46,32 @@ export default async function PublicStandingsPage({
 
   const standings = await computeStandings(activeDivision.id);
 
+  // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
+    <div>
       {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
         {/* Back */}
-        <Link
-          href={`/${orgSlug}/league/${seasonSlug}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
+        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
           ← {season.name}
         </Link>
 
         {/* Title */}
         <div style={{ marginBottom: '1.75rem' }}>
-          <h1
-            style={{
-              fontSize: '2rem',
-              fontWeight: 900,
-              color: '#f0f0f0',
-              fontFamily: 'var(--font-display, sans-serif)',
-              margin: '0 0 0.25rem',
-              lineHeight: 1.1,
-            }}
-          >
-            Standings
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
-            {season.name}
-          </p>
+          <h1 className={kit.title}>Standings</h1>
+          <p className={kit.sub}>{season.name}</p>
         </div>
 
         {/* Division tabs */}
         {divisions.length > 1 && (
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.4rem',
-              marginBottom: '1.5rem',
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className={column.tabs}>
             {divisions.map(d => {
               const isActive = d.id === activeDivision.id;
               return (
                 <Link
                   key={d.id}
                   href={`/${orgSlug}/league/${seasonSlug}/standings?d=${d.id}`}
-                  style={{
-                    padding: '0.4rem 1rem',
-                    borderRadius: '6px',
-                    fontSize: '0.82rem',
-                    fontWeight: isActive ? 700 : 500,
-                    background: isActive ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.05)',
-                    color: isActive ? '#a3e635' : 'rgba(255,255,255,0.55)',
-                    border: isActive
-                      ? '1px solid rgba(163,230,53,0.3)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    textDecoration: 'none',
-                    transition: 'all 0.15s ease',
-                  }}
+                  className={`${column.tab}${isActive ? ` ${column.tabActive}` : ''}`}
                 >
                   {d.name}
                 </Link>
@@ -119,16 +82,7 @@ export default async function PublicStandingsPage({
 
         {/* Standings table */}
         {standings.length === 0 ? (
-          <div
-            style={{
-              padding: '2.5rem 1.5rem',
-              textAlign: 'center',
-              border: '1px dashed rgba(255,255,255,0.1)',
-              borderRadius: '10px',
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: '0.9rem',
-            }}
-          >
+          <div className={kit.empty}>
             No games have been completed yet. Check back once the season is underway.
           </div>
         ) : (
@@ -138,7 +92,7 @@ export default async function PublicStandingsPage({
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
-                  fontSize: '0.88rem',
+                  fontSize: '0.875rem',
                 }}
               >
                 <thead>
@@ -149,12 +103,11 @@ export default async function PublicStandingsPage({
                         style={{
                           textAlign: i < 2 ? 'left' : 'center',
                           padding: '0.55rem 0.75rem',
-                          fontSize: '0.63rem',
-                          fontWeight: 700,
+                          font: '700 0.75rem var(--club-text-face)',
                           textTransform: 'uppercase',
-                          letterSpacing: '0.08em',
-                          color: 'rgba(255,255,255,0.35)',
-                          borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          letterSpacing: '0.06em',
+                          color: 'var(--club-soft)',
+                          borderBottom: '1px solid var(--club-line-2)',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -173,8 +126,8 @@ export default async function PublicStandingsPage({
             <p
               style={{
                 marginTop: '1rem',
-                fontSize: '0.72rem',
-                color: 'rgba(255,255,255,0.25)',
+                fontSize: '0.75rem',
+                color: 'var(--club-dim)',
               }}
             >
               Pts: W=2, T=1, L=0 &nbsp;·&nbsp; Tiebreaker: run differential, then runs for
@@ -196,25 +149,17 @@ function StandingsRow({
   isFirst: boolean;
 }) {
   const diff = row.runDifferential;
+  // No row tint (DC-02): the leader reads by weight alone.
+  const cell: React.CSSProperties = {
+    padding: '0.6rem 0.75rem',
+    textAlign: 'center',
+    color: 'var(--club-soft)',
+    borderBottom: '1px solid var(--club-line)',
+  };
   return (
-    <tr style={{ background: isFirst ? 'rgba(163,230,53,0.04)' : undefined }}>
-      <td
-        style={{
-          padding: '0.6rem 0.75rem',
-          textAlign: 'left',
-          color: 'rgba(255,255,255,0.3)',
-          fontWeight: 600,
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-        }}
-      >
-        {rank}
-      </td>
-      <td
-        style={{
-          padding: '0.6rem 0.75rem',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-        }}
-      >
+    <tr>
+      <td style={{ ...cell, textAlign: 'left', color: 'var(--club-dim)', fontWeight: 600 }}>{rank}</td>
+      <td style={{ ...cell, textAlign: 'left' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
           {row.team.color && (
             <span
@@ -228,7 +173,7 @@ function StandingsRow({
               }}
             />
           )}
-          <span style={{ fontWeight: 600, color: isFirst ? '#a3e635' : '#f0f0f0' }}>
+          <span style={{ fontWeight: isFirst ? 700 : 600, color: 'var(--club-text)' }}>
             {row.team.name}
           </span>
         </span>
@@ -237,55 +182,24 @@ function StandingsRow({
         <td
           key={i}
           style={{
-            padding: '0.6rem 0.75rem',
-            textAlign: 'center',
-            color: i === 1 ? '#f0f0f0' : 'rgba(255,255,255,0.6)',
+            ...cell,
+            color: i === 1 ? 'var(--club-text)' : 'var(--club-soft)',
             fontWeight: i === 1 ? 700 : 400,
-            borderBottom: '1px solid rgba(255,255,255,0.04)',
           }}
         >
           {val}
         </td>
       ))}
-      <td
-        style={{
-          padding: '0.6rem 0.75rem',
-          textAlign: 'center',
-          fontWeight: 800,
-          color: '#a3e635',
-          fontVariantNumeric: 'tabular-nums',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-        }}
-      >
+      <td style={{ ...cell, fontWeight: 700, color: 'var(--club-text)', fontVariantNumeric: 'tabular-nums' }}>
         {row.points}
       </td>
+      <td style={cell}>{row.runsFor}</td>
+      <td style={cell}>{row.runsAgainst}</td>
       <td
         style={{
-          padding: '0.6rem 0.75rem',
-          textAlign: 'center',
-          color: 'rgba(255,255,255,0.6)',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-        }}
-      >
-        {row.runsFor}
-      </td>
-      <td
-        style={{
-          padding: '0.6rem 0.75rem',
-          textAlign: 'center',
-          color: 'rgba(255,255,255,0.6)',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-        }}
-      >
-        {row.runsAgainst}
-      </td>
-      <td
-        style={{
-          padding: '0.6rem 0.75rem',
-          textAlign: 'center',
+          ...cell,
           fontWeight: 600,
-          color: diff > 0 ? '#4ade80' : diff < 0 ? '#f87171' : 'rgba(255,255,255,0.3)',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
+          color: diff > 0 ? 'var(--club-ok)' : diff < 0 ? 'var(--danger)' : 'var(--club-dim)',
         }}
       >
         {diff > 0 ? '+' : ''}{diff}
@@ -304,53 +218,14 @@ function EmptyState({
   seasonName: string;
 }) {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
+    <div>
       {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
-        <Link
-          href={`/${orgSlug}/league/${seasonSlug}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
+        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
           ← {seasonName}
         </Link>
-        <h1
-          style={{
-            fontSize: '2rem',
-            fontWeight: 900,
-            color: '#f0f0f0',
-            fontFamily: 'var(--font-display, sans-serif)',
-            margin: '0 0 1.5rem',
-          }}
-        >
-          Standings
-        </h1>
-        <div
-          style={{
-            padding: '2.5rem 1.5rem',
-            textAlign: 'center',
-            border: '1px dashed rgba(255,255,255,0.1)',
-            borderRadius: '10px',
-            color: 'rgba(255,255,255,0.35)',
-            fontSize: '0.9rem',
-          }}
-        >
-          No divisions have been set up for this season yet.
-        </div>
+        <h1 className={kit.title} style={{ marginBottom: '1.5rem' }}>Standings</h1>
+        <div className={kit.empty}>No divisions have been set up for this season yet.</div>
       </div>
     </div>
   );

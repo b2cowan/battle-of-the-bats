@@ -1,4 +1,5 @@
 import styles from './RepTeamPublicSchedule.module.css';
+import kit from './ClubKit.module.css';
 import {
   directionsHref,
   isScheduleEntryCompleted,
@@ -23,7 +24,7 @@ import TeamSubscribeButton from './TeamSubscribeButton';
  * that could name a child even by mistake.
  */
 
-/** The dark public token set's rendering of a result tone. The warm consumer view maps the
+/** The club frame's rendering of a result tone (green = the club's one status green). The warm consumer view maps the
  *  same tone to its own tokens — the LABELS are shared, the palettes deliberately are not. */
 const TONE_CLASS: Record<'win' | 'loss' | 'neutral', string> = {
   win: styles.scoreWin,
@@ -70,13 +71,14 @@ export default function RepTeamPublicSchedule({ view, subscribe }: {
   return (
     <div className={styles.section}>
       <div className={styles.kickRow}>
-        <p className={styles.kicker}>Schedule</p>
+        <p className={kit.band} style={{ margin: 0 }}>Schedule</p>
         {subscribe && <TeamSubscribeButton feedPath={subscribe.feedPath} calendarName={subscribe.calendarName} />}
       </div>
 
       {nextUp && (
         <div className={styles.upNext}>
-          <div className={styles.upNextLabel}>Up next</div>
+          {/* A band (DC-06) in the club's ink, the accent that marks the next game. */}
+          <div className={kit.band} style={{ color: 'var(--club-ink)', marginBottom: '0.3rem' }}>Up next</div>
           <div className={styles.row} style={{ borderBottom: 'none', padding: 0 }}>
             <div className={styles.rowMain}>
               <div className={styles.rowTitle}>{scheduleRowTitle(nextUp)}</div>

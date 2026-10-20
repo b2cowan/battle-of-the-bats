@@ -1,45 +1,50 @@
 import Link from 'next/link';
+import { clubSocials } from '@/lib/club-site';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Calendar, ChevronRight, Star, Mail, ExternalLink, Archive, Users } from 'lucide-react';
 import {
   getTournamentsByOrg,
-  getOrgPublicSiteContent, getArchivesByOrg,
+  getArchivesByOrg,
   getLeagueSeasons, getDivisions, getOpenTryoutsByOrg,
 } from '@/lib/db';
 import type { OpenTryout } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { isFreePlan } from '@/lib/plan-config';
 import { isFollowableOrg } from '@/lib/directory';
 import { requirePublicClubPage } from '@/lib/public-club-page';
-import { resolveTheme } from '@/lib/themes';
-import type { Tournament } from '@/lib/types';
+import { clubPageMetadata, getClubSiteContent } from '@/lib/club-page-meta';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
-import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import styles from './Home.module.css';
+import club from './ClubHome.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Each event card wears ITS OWN event's colour, not the org's.
- *
- * This page is the one place several differently-branded events sit side by side, and until now
- * every card inherited the single org-level `--primary` — so a club running a red event and a purple
- * one showed two identical cards, and neither looked like the page it opened. Scoping the theme vars
- * to the card is enough: the badge, hover border and CTA all read `--primary*`, so they retint
- * without touching any rule. Falls back to the org's own theme when an event has set no branding.
+ * The club's home is titled with the club's name alone — the layout's default would pass it through the platform's
+ * title template ("{club} | FieldLogicHQ"); an absolute title fixes that (Club Tier Stage 4b-1).
  */
-function eventCardTheme(t: Pick<Tournament, 'themePreset' | 'themePrimary' | 'themeAccent'>): React.CSSProperties | undefined {
-  if (!t.themePreset && !t.themePrimary) return undefined; // unbranded event → inherit the org's
-  const theme = resolveTheme(t.themePreset, t.themePrimary, t.themeAccent);
-  return {
-    '--primary': theme.primary,
-    '--primary-light': theme.primaryLight,
-    '--primary-rgb': theme.primaryRgb,
-  } as React.CSSProperties;
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
+  const { orgSlug } = await params;
+  return clubPageMetadata(orgSlug, () => null);
 }
 
 /**
- * "Tryouts Are Open" — one card per open tryout, each landing ON that tryout.
+ * The hero's picture, when the club uploaded one. The shared hero also drew blurred orbs and a grid behind the
+ * title; on the club's light frame those are decoration, not structure, and are not drawn (Club Tier Stage 4b-1).
+ */
+function HeroBanner({ url }: { url: string | null }) {
+  if (!url) return null;
+  return (
+    <>
+      <div className={styles.heroBanner} style={{ backgroundImage: `url(${url})` }} />
+      <div className={`${styles.heroBannerOverlay} ${club.heroBannerOverlay}`} />
+    </>
+  );
+}
+
+/**
+ * "Tryouts are open" — one card per open tryout, each landing ON that tryout.
  *
  * ⚠ It used to be one card linking to `/{org}/teams`, which is a redirect to a tournament's team
  * list or back to this page (a loop) — a family could see the invitation and never reach the form
@@ -51,24 +56,24 @@ function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: Op
   return (
     <section className="section">
       <div className="container">
-        <div className="section-header">
-          <span className="eyebrow"><Users size={12} /> Rep teams</span>
-          <h2 className="display-md">Try Out</h2>
+        <div className={`section-header ${club.sectionHeader}`}>
+          <span className={`eyebrow ${club.eyebrow}`}><Users size={12} /> Rep teams</span>
+          <h2 className={club.sectionTitle}>Try out</h2>
         </div>
         <div className={styles.tryoutCards}>
           {tryouts.map(t => (
             <Link
               key={t.programYearId}
               href={`/${orgSlug}/teams/${t.teamSlug}/tryouts`}
-              className={`card ${styles.archivesCta}`}
+              className={`card ${styles.archivesCta} ${club.archivesCta}`}
             >
               <div>
-                <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
-                <div className={styles.archivesCtaSub}>
+                <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>Tryouts are open</div>
+                <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>
                   {t.teamName} — {t.programYearName} is accepting applications
                 </div>
               </div>
-              <ChevronRight size={18} className={styles.archivesCtaChevron} />
+              <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
             </Link>
           ))}
         </div>
@@ -82,12 +87,6 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   // The one rule (Club Tier Stage 4a, lib/public-club-access.ts); a tournament-only org keeps its basic home below.
   const org = await requirePublicClubPage(orgSlug, 'home');
 
-  // WI-10 — the plain org home is in scope for the paid credit (BUSINESS_DECISIONS 2026-07-30).
-  // Same gate the tournament layout uses. A free org's home page carries nothing today and keeps
-  // carrying nothing — this only fills the gap on paid tiers, which were the class with zero
-  // path back to the platform.
-  const showBuiltOnCredit = !isFreePlan(org.planId);
-
   // F1/F3: the hero Follow button shows only when the org passes the SAME eligibility gate a
   // follow write validates against — so the button never offers a follow the API would reject.
   const showFollow = isFollowableOrg(org);
@@ -100,7 +99,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   // ── Public Site module branch ──────────────────────────────────────────────
   if (org && hasModuleEntitlement(org, 'module_public_site')) {
     const [siteContent, archives, leagueSeasons, openTryouts] = await Promise.all([
-      getOrgPublicSiteContent(org.id),
+      getClubSiteContent(org.id),
       getArchivesByOrg(org.id),
       hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id) : Promise.resolve([]),
       hasModuleEntitlement(org, 'module_rep_teams') ? getOpenTryoutsByOrg(org.id) : Promise.resolve([]),
@@ -141,61 +140,45 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
       return `${s.toLocaleDateString('en-CA', { ...opts, year: 'numeric' })} – ${e.toLocaleDateString('en-CA', { ...opts, year: 'numeric' })}`;
     }
 
-    const socialLinks = [
-      siteContent?.socialInstagram && { href: siteContent.socialInstagram, label: 'Instagram' },
-      siteContent?.socialFacebook  && { href: siteContent.socialFacebook,  label: 'Facebook'  },
-      siteContent?.socialX         && { href: siteContent.socialX,         label: 'X'         },
-      siteContent?.socialWebsite   && { href: siteContent.socialWebsite,   label: 'Website'   },
-    ].filter(Boolean) as { href: string; label: string }[];
+    // The same web-addresses-only list the club's footer reads (lib/club-site.ts), in the same order.
+    const SOCIAL_LABEL = { instagram: 'Instagram', facebook: 'Facebook', x: 'X', website: 'Website' } as const;
+    const socialLinks = clubSocials(siteContent).map(({ kind, href }) => ({ href, label: SOCIAL_LABEL[kind] }));
 
     return (
-      <div className={styles.page}>
+      <div className={`${styles.page} ${club.home}`}>
         {/* Hero */}
-        <section className={styles.hero}>
-          {heroBanner ? (
-            <>
-              <div className={styles.heroBanner} style={{ backgroundImage: `url(${heroBanner})` }} />
-              <div className={styles.heroBannerOverlay} />
-            </>
-          ) : (
-            <div className={styles.heroBg}>
-              <div className={styles.heroOrb1} />
-              <div className={styles.heroOrb2} />
-              <div className={styles.heroGrid} />
-            </div>
-          )}
+        <section className={`${styles.hero} ${club.hero}`}>
+          <HeroBanner url={heroBanner} />
 
-          <div className={`container ${styles.heroContent}`}>
+          <div className={`container ${styles.heroContent} ${club.heroContent}`}>
             {org.logoUrl && (
-              <img src={org.logoUrl} alt={org.name} className={styles.orgLogo} />
+              <img src={org.logoUrl} alt={org.name} className={`${styles.orgLogo} ${club.logo}`} />
             )}
-            <h1 className={`display-xl ${styles.heroTitle}`} style={{ textTransform: 'uppercase' }}>
+            <h1 className={`${styles.heroTitle} ${club.title}`}>
               {org.name}
             </h1>
             {siteContent?.tagline && (
-              <p className={styles.heroBadge} style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem' }}>
-                {siteContent.tagline}
-              </p>
+              <p className={club.tagline}>{siteContent.tagline}</p>
             )}
             {siteContent?.description && (
-              <p className={styles.heroSub}>{siteContent.description}</p>
+              <p className={`${styles.heroSub} ${club.sub}`}>{siteContent.description}</p>
             )}
 
             {showFollow && <FollowOrgButton orgSlug={orgSlug} orgName={org.name} />}
 
             {/* Social + contact row */}
             {(socialLinks.length > 0 || siteContent?.contactEmail) && (
-              <div className={styles.socialRow}>
+              <div className={`${styles.socialRow} ${club.socialRow}`}>
                 {socialLinks.map(({ href, label }) => (
-                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
-                    <ExternalLink size={13} />
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" className={`${styles.socialLink} ${club.socialLink}`}>
+                    <ExternalLink size={16} />
                     {label}
                   </a>
                 ))}
                 {siteContent?.contactEmail && (
-                  <a href={`mailto:${siteContent.contactEmail}`} className={styles.socialLink} aria-label={`Contact Us: ${siteContent.contactEmail}`}>
-                    <Mail size={13} />
-                    Contact Us
+                  <a href={`mailto:${siteContent.contactEmail}`} className={`${styles.socialLink} ${club.socialLink}`} aria-label={`Contact us: ${siteContent.contactEmail}`}>
+                    <Mail size={16} />
+                    Contact us
                   </a>
                 )}
               </div>
@@ -207,34 +190,34 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         {siteContent?.showUpcomingTournaments !== false && (
           <section id="tournaments" className="section">
             <div className="container">
-              <div className="section-header">
-                <span className="eyebrow"><Calendar size={12} /> Tournaments</span>
-                <h2 className="display-md">Upcoming Events</h2>
+              <div className={`section-header ${club.sectionHeader}`}>
+                <span className={`eyebrow ${club.eyebrow}`}><Calendar size={12} /> Tournaments</span>
+                <h2 className={club.sectionTitle}>Upcoming events</h2>
               </div>
 
               {tournamentDetails.length === 0 ? (
-                <div className="empty-state">
+                <div className={`empty-state ${club.empty}`}>
                   <Calendar size={40} />
                   <p>No active tournaments right now — check back soon!</p>
                 </div>
               ) : (
-                <div className={styles.tournamentCards}>
+                <div className={`${styles.tournamentCards} ${club.tournamentCards}`}>
                   {tournamentDetails.map(({ tournament: t, ageRange }) => (
-                    <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard}`} style={eventCardTheme(t)}>
-                      <div className={styles.tournamentCardHeader}>
-                        <span className="badge badge-primary">
+                    <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard} ${club.tournamentCard}`}>
+                      <div className={`${styles.tournamentCardHeader} ${club.tournamentCardHeader}`}>
+                        <span className={`${kit.chip} ${kit.chipOk}`}>
                           <Star size={10} fill="currentColor" /> Live
                         </span>
                         {formatDateRange(t.startDate, t.endDate) && (
-                          <span className={styles.tournamentCardDate}>
+                          <span className={`${styles.tournamentCardDate} ${club.tournamentCardDate}`}>
                             {formatDateRange(t.startDate, t.endDate)}
                           </span>
                         )}
                       </div>
-                      <h3 className={styles.tournamentCardName}>{t.name}</h3>
-                      {ageRange && <p className={styles.tournamentCardMeta}>{ageRange}</p>}
-                      <span className={styles.tournamentCardCta}>
-                        View Schedule <ChevronRight size={14} />
+                      <h3 className={`${styles.tournamentCardName} ${club.tournamentCardName}`}>{t.name}</h3>
+                      {ageRange && <p className={`${styles.tournamentCardMeta} ${club.tournamentCardMeta}`}>{ageRange}</p>}
+                      <span className={`${styles.tournamentCardCta} ${club.tournamentCardCta}`}>
+                        View schedule <ChevronRight size={14} />
                       </span>
                     </Link>
                   ))}
@@ -248,16 +231,15 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         {showLeague && (
           <section className="section">
             <div className="container">
-              <div className="section-header">
-                <span className="eyebrow">House league</span>
-                <h2 className="display-md">League Play</h2>
+              <div className={`section-header ${club.sectionHeader}`}>
+                <h2 className={club.sectionTitle}>House league</h2>
               </div>
-              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
+              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
                 <div>
-                  <div className={styles.archivesCtaTitle}>
+                  <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
                     {activeLeagueSeason ? activeLeagueSeason.name : 'House league'}
                   </div>
-                  <div className={styles.archivesCtaSub}>
+                  <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>
                     {activeLeagueSeason
                       ? activeLeagueSeason.status === 'registration_open'
                         ? 'Registration is open — sign up now'
@@ -267,7 +249,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                       : 'View past seasons and results'}
                   </div>
                 </div>
-                <ChevronRight size={18} className={styles.archivesCtaChevron} />
+                <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
               </Link>
             </div>
           </section>
@@ -280,18 +262,17 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         {showArchives && (
           <section className="section">
             <div className="container">
-              <Link href={`/${orgSlug}/archives`} className={`card ${styles.archivesCta}`}>
-                <Archive size={24} className={styles.archivesCtaIcon} />
+              <Link href={`/${orgSlug}/archives`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
+                <Archive size={24} className={`${styles.archivesCtaIcon} ${club.archivesCtaIcon}`} />
                 <div>
-                  <div className={styles.archivesCtaTitle}>Past Tournaments</div>
-                  <div className={styles.archivesCtaSub}>Browse sealed records and past champions</div>
+                  <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>Past tournaments</div>
+                  <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>Champions and results from earlier tournaments</div>
                 </div>
-                <ChevronRight size={18} className={styles.archivesCtaChevron} />
+                <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
               </Link>
             </div>
           </section>
         )}
-        {showBuiltOnCredit && <BuiltOnCredit />}
       </div>
     );
   }
@@ -332,26 +313,14 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
     const showTournamentDraftGuidance = hasTournamentModule && hasDraftTournament;
 
     return (
-      <div className={styles.page}>
-        <section className={styles.hero}>
-          {heroBanner ? (
-            <>
-              <div className={styles.heroBanner} style={{ backgroundImage: `url(${heroBanner})` }} />
-              <div className={styles.heroBannerOverlay} />
-            </>
-          ) : (
-            <div className={styles.heroBg}>
-              <div className={styles.heroOrb1} />
-              <div className={styles.heroOrb2} />
-              <div className={styles.heroGrid} />
-            </div>
-          )}
-          <div className={`container ${styles.heroContent}`}>
-            <div className={styles.heroBadge}>FieldLogicHQ</div>
-            <h1 className={`display-xl ${styles.heroTitle}`} style={{ textTransform: 'uppercase' }}>
+      <div className={`${styles.page} ${club.home}`}>
+        <section className={`${styles.hero} ${club.hero}`}>
+          <HeroBanner url={heroBanner} />
+          <div className={`container ${styles.heroContent} ${club.heroContent}`}>
+            <h1 className={`${styles.heroTitle} ${club.title}`}>
               {org?.name ?? orgSlug}
             </h1>
-            <p className={styles.heroSub}>
+            <p className={`${styles.heroSub} ${club.sub}`}>
               {showTournamentDraftGuidance
                 ? 'A tournament is being set up. Registration opens when it is ready.'
                 : 'No tournaments are running right now.'}
@@ -363,16 +332,15 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         {defaultShowLeague && (
           <section className="section">
             <div className="container">
-              <div className="section-header">
-                <span className="eyebrow">House league</span>
-                <h2 className="display-md">League Play</h2>
+              <div className={`section-header ${club.sectionHeader}`}>
+                <h2 className={club.sectionTitle}>House league</h2>
               </div>
-              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
+              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
                 <div>
-                  <div className={styles.archivesCtaTitle}>
+                  <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
                     {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
                   </div>
-                  <div className={styles.archivesCtaSub}>
+                  <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>
                     {defaultActiveSeason
                       ? defaultActiveSeason.status === 'registration_open'
                         ? 'Registration is open — sign up now'
@@ -382,69 +350,56 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                       : 'View seasons and results'}
                   </div>
                 </div>
-                <ChevronRight size={18} className={styles.archivesCtaChevron} />
+                <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
               </Link>
             </div>
           </section>
         )}
 
         {defaultShowTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={defaultOpenTryouts} />}
-        {showBuiltOnCredit && <BuiltOnCredit />}
       </div>
     );
   }
 
   // 2+ active tournaments — tournament selector
   return (
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        {heroBanner ? (
-          <>
-            <div className={styles.heroBanner} style={{ backgroundImage: `url(${heroBanner})` }} />
-            <div className={styles.heroBannerOverlay} />
-          </>
-        ) : (
-          <div className={styles.heroBg}>
-            <div className={styles.heroOrb1} />
-            <div className={styles.heroOrb2} />
-            <div className={styles.heroGrid} />
-          </div>
-        )}
-        <div className={`container ${styles.heroContent}`}>
+    <div className={`${styles.page} ${club.home}`}>
+      <section className={`${styles.hero} ${club.hero}`}>
+        <HeroBanner url={heroBanner} />
+        <div className={`container ${styles.heroContent} ${club.heroContent}`}>
           {org?.logoUrl && (
-            <img src={org.logoUrl} alt={org.name} className={styles.orgLogo} />
+            <img src={org.logoUrl} alt={org.name} className={`${styles.orgLogo} ${club.logo}`} />
           )}
-          <div className={styles.heroBadge}>FieldLogicHQ</div>
-          <h1 className={`display-xl ${styles.heroTitle}`} style={{ textTransform: 'uppercase' }}>
+          <h1 className={`${styles.heroTitle} ${club.title}`}>
             {org?.name ?? orgSlug}
           </h1>
-          <p className={styles.heroSub}>Select a tournament below to get started.</p>
+          <p className={`${styles.heroSub} ${club.sub}`}>Select a tournament below to get started.</p>
           {showFollow && <FollowOrgButton orgSlug={orgSlug} orgName={org.name} />}
         </div>
       </section>
 
       <section id="tournaments" className="section">
         <div className="container">
-          <div className="section-header">
-            <span className="eyebrow"><Calendar size={12} /> Tournaments</span>
-            <h2 className="display-md">Active Tournaments</h2>
+          <div className={`section-header ${club.sectionHeader}`}>
+            <span className={`eyebrow ${club.eyebrow}`}><Calendar size={12} /> Tournaments</span>
+            <h2 className={club.sectionTitle}>Active tournaments</h2>
           </div>
-          <div className={styles.tournamentCards}>
+          <div className={`${styles.tournamentCards} ${club.tournamentCards}`}>
             {activeTournaments.map(t => (
-              <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard}`} style={eventCardTheme(t)}>
-                <div className={styles.tournamentCardHeader}>
-                  <span className="badge badge-primary">
+              <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard} ${club.tournamentCard}`}>
+                <div className={`${styles.tournamentCardHeader} ${club.tournamentCardHeader}`}>
+                  <span className={`${kit.chip} ${kit.chipOk}`}>
                     <Star size={10} fill="currentColor" /> Live
                   </span>
                   {formatDateRange(t.startDate, t.endDate) && (
-                    <span className={styles.tournamentCardDate}>
+                    <span className={`${styles.tournamentCardDate} ${club.tournamentCardDate}`}>
                       {formatDateRange(t.startDate, t.endDate)}
                     </span>
                   )}
                 </div>
-                <h3 className={styles.tournamentCardName}>{t.name}</h3>
-                <span className={styles.tournamentCardCta}>
-                  View Schedule <ChevronRight size={14} />
+                <h3 className={`${styles.tournamentCardName} ${club.tournamentCardName}`}>{t.name}</h3>
+                <span className={`${styles.tournamentCardCta} ${club.tournamentCardCta}`}>
+                  View schedule <ChevronRight size={14} />
                 </span>
               </Link>
             ))}
@@ -455,16 +410,15 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
       {defaultShowLeague && (
         <section className="section">
           <div className="container">
-            <div className="section-header">
-              <span className="eyebrow">House league</span>
-              <h2 className="display-md">League Play</h2>
+            <div className={`section-header ${club.sectionHeader}`}>
+              <h2 className={club.sectionTitle}>House league</h2>
             </div>
-            <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
+            <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
               <div>
-                <div className={styles.archivesCtaTitle}>
+                <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
                   {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
                 </div>
-                <div className={styles.archivesCtaSub}>
+                <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>
                   {defaultActiveSeason
                     ? defaultActiveSeason.status === 'registration_open'
                       ? 'Registration is open — sign up now'
@@ -474,14 +428,13 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                     : 'View seasons and results'}
                 </div>
               </div>
-              <ChevronRight size={18} className={styles.archivesCtaChevron} />
+              <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
             </Link>
           </div>
         </section>
       )}
 
       {defaultShowTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={defaultOpenTryouts} />}
-      {showBuiltOnCredit && <BuiltOnCredit />}
     </div>
   );
 }

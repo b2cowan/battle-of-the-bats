@@ -2,12 +2,15 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
-import { getOrganizationBySlugForServer } from '@/lib/server-organizations';
 import { resolveTheme } from '@/lib/themes';
+import { clubColourRoles, hexChannels } from '@/lib/club-colour-roles';
+import { clubDescription, clubFace, clubSocials } from '@/lib/club-site';
+import { getClubBySlug, getClubSiteContent } from '@/lib/club-page-meta';
 import { resolveOrgSections } from '@/lib/org-section-availability';
-import { ORG_SECTION_TABS_MIN } from '@/lib/org-public-sections';
+import { isFreePlan } from '@/lib/plan-config';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { OrgNavSync } from '@/components/OrgNavSync';
-import OrgSectionTabs from '@/components/public/OrgSectionTabs';
+import ClubFrame from '@/components/public/ClubFrame';
 import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
@@ -49,8 +52,13 @@ export async function generateMetadata({
   params: Promise<{ orgSlug: string }>;
 }): Promise<Metadata> {
   const { orgSlug } = await params;
-  const org = await getOrganizationBySlugForServer(orgSlug);
+  const org = await getClubBySlug(orgSlug);
   if (!org) return {};
+  // The club describes itself in its own words (End state 8; S4-02: never FieldLogicHQ's sales line). Tournament pages
+  // set their own description, so this reaches the club's pages.
+  const siteContent = isPublicClubSiteOpen(org) && hasModuleEntitlement(org, 'module_public_site')
+    ? await getClubSiteContent(org.id)
+    : null;
   // Sandbox ("See it live") orgs are kept out of search results entirely. Their fan pages are
   // real public tournament pages, so without this they could be indexed and surface in a search
   // for a genuine event — or be mistaken for a real association. `robots.txt` asks crawlers not to
@@ -63,10 +71,13 @@ export async function generateMetadata({
   // EVERY route under /{orgSlug} that fed nothing. Removed while making this layout's Stage F
   // lookups cheap; the metadata below never referenced it.)
   return {
+    // The club's own pages set an ABSOLUTE "page · club" title (lib/club-page-meta.ts); this template is what
+    // tournament pages, which title themselves with a bare name, still read — unchanged by the club's frame.
     title: {
       default: org.name,
       template: `%s | ${org.name}`,
     },
+    description: clubDescription(siteContent, org.name),
     openGraph: org.logoUrl ? { images: [{ url: org.logoUrl }] } : undefined,
     ...demoRobots,
   };
@@ -80,20 +91,28 @@ export default async function OrgLayout({
   children: React.ReactNode;
 }) {
   const { orgSlug } = await params;
-  const org = await getOrganizationBySlugForServer(orgSlug);
+  const org = await getClubBySlug(orgSlug);
   if (!org) notFound();
 
   const theme = resolveTheme(org.themePreset, org.themePrimary, org.themeAccent);
+  // Club Tier Stage 4b-1 (End state 9): the club's colour as the four roles its light site needs, derived from the colour
+  // already saved. Written beside today's vars (tournament pages keep reading those); only the club's frame reads these.
+  const roles = clubColourRoles(org.themePreset, org.themePrimary, org.themeAccent);
+  const siteOpen = isPublicClubSiteOpen(org);
 
   // ── Stage F: the org's section tabs ────────────────────────────────────────────
   // Tier-gated and deliberately CHEAP (see lib/org-section-availability for why it can't be
   // pathname-gated: this layout also wraps admin/coaches/scorekeeper and every tournament page,
   // and a Server Component has no pathname here — proxy.ts intentionally doesn't run on public org
   // routes, which is what keeps an anonymous page free of session work). Two `head:true` counts.
-  const sections = await resolveOrgSections(org);
-  // Fewer than two sections means there is nowhere else to go — a row holding only "Home" is
-  // chrome that says nothing, so it doesn't render.
-  const showSectionTabs = sections.length >= ORG_SECTION_TABS_MIN;
+  // The club's site content (tagline, contact, social links) feeds both the tabs and the club's bar and footer: one read.
+  // Read once, alongside the section checks rather than before them — this layout wraps every route under the club.
+  // The club's own words and contact (tagline, contact email, social links) are the public-site module's: a club on a
+  // plan without it shows its name and logo only, as its pages always did — and its routes skip the read entirely.
+  const siteContentRead = siteOpen && hasModuleEntitlement(org, 'module_public_site')
+    ? getClubSiteContent(org.id)
+    : Promise.resolve(null);
+  const [siteContent, sections] = await Promise.all([siteContentRead, resolveOrgSections(org, siteContentRead)]);
 
   // ── The sandbox hat ────────────────────────────────────────────────────────────
   // Mounted HERE because this one layout wraps both halves of the product for an org — the public
@@ -132,6 +151,16 @@ export default async function OrgLayout({
     `--glow:          0 0 32px rgba(${theme.primaryRgb}, 0.4)`,
     `--glow-sm:       0 0 16px rgba(${theme.primaryRgb}, 0.25)`,
     `--on-primary:    ${theme.onPrimary}`,
+    `--club-fill:     ${roles.fill}`,
+    `--club-fill-rgb: ${hexChannels(roles.fill)}`,
+    `--club-on-fill:  ${roles.onFill}`,
+    `--club-ink:      ${roles.ink}`,
+    `--club-ink-rgb:  ${hexChannels(roles.ink)}`,
+    `--club-edge:     ${roles.edge}`,
+    `--club-accent:   ${roles.accent}`,
+    `--club-mark:     ${roles.mark}`,
+    `--club-tile:     ${roles.tile}`,
+    `--club-tile-ink: ${roles.tileInk}`,
     ...buildFontVars(org.themeFont),
   ].join('; ');
 
@@ -169,11 +198,6 @@ export default async function OrgLayout({
           />
         </Suspense>
       )}
-      {/* Stage F — the org's own section nav. Mounted here because which sections exist is SERVER
-          data; the component itself decides WHERE to render, because this layout also wraps
-          `/admin`, `/coaches`, `/scorekeeper` and every tournament page and cannot read the
-          pathname. It carries NO identity, so it is safe in SW-cached anonymous HTML. */}
-      {showSectionTabs && <OrgSectionTabs sections={sections} />}
       <div
         className={fontClasses}
         data-card-style={org.themeCardStyle ?? 'default'}
@@ -182,8 +206,25 @@ export default async function OrgLayout({
             layout hands it the club: its name, and whether its public site is open (the switch on, not cancelled).
             ⚠ This layout still refuses ONLY a club that does not exist: tournament pages stay up when the site is off
             (BUSINESS_DECISIONS 2026-07-22); each club page asks the one rule itself (lib/public-club-page.ts). */}
-        <PublicClubProvider club={{ slug: orgSlug, name: org.name, siteOpen: isPublicClubSiteOpen(org) }}>
-          {children}
+        <PublicClubProvider club={{ slug: orgSlug, name: org.name, siteOpen }}>
+          {/* Club Tier Stage 4b-1 — the club's site (its bar, its footer, its light ground and type) around every club
+              page. The frame decides WHICH pages wear it (this layout also wraps tournament pages and the signed-in
+              tools, and cannot read the address); it carries no identity, so it is safe in SW-cached anonymous HTML. */}
+          <ClubFrame
+            club={{
+              slug: orgSlug,
+              name: org.name,
+              logoUrl: org.logoUrl ?? null,
+              tagline: siteContent?.tagline?.trim() || null,
+              sections,
+              contactEmail: siteContent?.contactEmail?.trim() || null,
+              socials: clubSocials(siteContent),
+              showCredit: !isFreePlan(org.planId),
+              face: clubFace(org.themeFont),
+            }}
+          >
+            {children}
+          </ClubFrame>
         </PublicClubProvider>
       </div>
     </SandboxProvider>

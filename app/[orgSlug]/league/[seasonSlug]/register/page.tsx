@@ -1,12 +1,24 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
+import type { Metadata } from 'next';
+import { getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
+import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import RegisterForm, { DivisionWithCount } from '@/components/league/RegisterForm';
 import column from '../../league-column.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
+
+// This page does not hide a draft season (it says "not yet opened for registration"), so the tab names it as it stands.
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
+  const { orgSlug, seasonSlug } = await params;
+  return clubPageMetadata(orgSlug, async club => {
+    const season = await getClubSeason(club.id, seasonSlug);
+    return season ? `Register for ${season.name}` : null;
+  });
+}
 
 export default async function RegisterPage({
   params,
@@ -18,7 +30,7 @@ export default async function RegisterPage({
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
 
-  const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
+  const season = await getClubSeason(org.id, seasonSlug);
   if (!season) notFound();
 
   const rawDivisions = await getDivisionsForSeason(season.id);
@@ -36,87 +48,41 @@ export default async function RegisterPage({
 
   const registrationOpen = season.status === 'registration_open';
 
+  // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
+    <div>
       {/* R6: the shared 1200px page column; this page's 640px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '640px' } as React.CSSProperties}>
         {/* Back link */}
-        <Link
-          href={`/${orgSlug}/league/${seasonSlug}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
+        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
           ← Back to {season.name}
         </Link>
 
         {/* Page header */}
         <div style={{ marginBottom: '2rem' }}>
-          <div
-            style={{
-              fontSize: '0.68rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: 'rgba(255,255,255,0.4)',
-              marginBottom: '0.4rem',
-            }}
-          >
-            {org.name}
-          </div>
-          <h1
-            style={{
-              fontSize: '1.75rem',
-              fontWeight: 900,
-              color: '#f0f0f0',
-              fontFamily: 'var(--font-display, sans-serif)',
-              margin: '0 0 0.4rem',
-              lineHeight: 1.1,
-            }}
-          >
-            Register — {season.name}
-          </h1>
+          <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
+          <h1 className={kit.title}>Register — {season.name}</h1>
           {season.division && (
-            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-              Division: {season.division}
-            </div>
+            <div className={kit.sub}>Division: {season.division}</div>
           )}
         </div>
 
         {/* Closed state */}
         {!registrationOpen ? (
-          <div
-            style={{
-              padding: '3rem 2rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.02)',
-            }}
-          >
+          <div className={kit.card} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
             <h2
               style={{
-                fontSize: '1.1rem',
+                fontSize: '1rem',
                 fontWeight: 700,
-                color: 'rgba(255,255,255,0.7)',
+                color: 'var(--club-text)',
                 margin: '0 0 0.5rem',
+                fontFamily: 'var(--club-text-face)',
+                letterSpacing: 0,
               }}
             >
               Registration is not currently open
             </h2>
-            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 }}>
               {season.status === 'draft' &&
                 'This season has not yet opened for registration.'}
               {season.status === 'registration_closed' &&

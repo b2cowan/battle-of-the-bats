@@ -1,23 +1,26 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import {
-  getRepTeamBySlug,
-  getRepProgramYears,
-} from '@/lib/db';
-import { isFreePlan } from '@/lib/plan-config';
-import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
+import { getRepProgramYears } from '@/lib/db';
 import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
 import { getPublicTeamSchedule, publicTeamFeedPath } from '@/lib/public-team-schedule';
 import { teamCalendarName } from '@/lib/export/team-feed-words';
-import publicStyles from '@/components/public/RepTeamPublicSchedule.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 import { publicTryoutSeasonOf } from '@/lib/season-live';
 import { publicTryoutRegisterHref } from '@/lib/public-tryout';
 import { requirePublicClubPage } from '@/lib/public-club-page';
+import { clubPageMetadata, getClubTeam } from '@/lib/club-page-meta';
 import { forwardToRunningTournament } from '@/lib/club-shortcut';
 import { isUuid } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+/** The tab names the team ("15U AAA · Lakeshore Lynx"); a team that cannot be found leaves the club's name alone
+ *  (Club Tier Stage 4b-1). */
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; teamSlug: string }> }): Promise<Metadata> {
+  const { orgSlug, teamSlug } = await params;
+  return clubPageMetadata(orgSlug, async club => (await getClubTeam(club.id, teamSlug))?.name ?? null);
+}
 
 const STATUS_LABEL: Record<string, string> = {
   draft:     'Draft',
@@ -42,7 +45,7 @@ export default async function TeamPublicPage({
   const org = await requirePublicClubPage(orgSlug, 'teams');
 
   // An unknown team is the club's "not found" with a way home; it used to go silently to the club home (S4-07).
-  const team = await getRepTeamBySlug(org.id, teamSlug);
+  const team = await getClubTeam(org.id, teamSlug);
   if (!team) notFound();
 
   const programYears = await getRepProgramYears(team.id);
@@ -61,15 +64,13 @@ export default async function TeamPublicPage({
   const openYear = publicTryoutSeasonOf(team, programYears);
   const pastYears = programYears.filter(y => y.status === 'completed' || y.status === 'archived');
 
+  // The status chip (DC-04), neutral here: a division, "Alumni" and a past season's status are facts about the team, not a
+  // call to act, so none of them takes the green. A team colour is a club's choice and may be any hue, so it appears
+  // only as the strip above the page, never as text or a tint (DC-02).
+  const chip = `${kit.chip} ${kit.chipNeutral}`;
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
+    <div>
       {/* Color accent strip */}
       {team.color && (
         <div style={{ height: '4px', background: team.color }} />
@@ -79,24 +80,9 @@ export default async function TeamPublicPage({
         style={{
           maxWidth: '680px',
           margin: '0 auto',
-          padding: 'calc(var(--nav-height) + 2rem) 1.5rem 5rem',
+          padding: '2rem 1.5rem 5rem',
         }}
       >
-        <Link
-          href={`/${orgSlug}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
-          ← {org.name}
-        </Link>
-
         {/* Team header */}
         <div style={{ marginBottom: '2.5rem' }}>
           <div
@@ -108,59 +94,17 @@ export default async function TeamPublicPage({
               flexWrap: 'wrap',
             }}
           >
-            <h1
-              style={{
-                fontSize: '2rem',
-                fontWeight: 900,
-                color: '#f0f0f0',
-                fontFamily: 'var(--font-display, sans-serif)',
-                margin: 0,
-                lineHeight: 1.1,
-              }}
-            >
+            <h1 className={kit.title} style={{ margin: 0 }}>
               {team.name}
             </h1>
-            {team.division && (
-              <span
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  padding: '0.25rem 0.6rem',
-                  borderRadius: '5px',
-                  background: team.color ? `${team.color}22` : 'rgba(255,255,255,0.07)',
-                  color: team.color ?? 'rgba(255,255,255,0.6)',
-                  border: `1px solid ${team.color ? `${team.color}44` : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
-                {team.division}
-              </span>
-            )}
-            {team.isArchived && (
-              <span
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  padding: '0.25rem 0.6rem',
-                  borderRadius: '5px',
-                  background: 'rgba(255,255,255,0.06)',
-                  color: 'rgba(255,255,255,0.4)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                }}
-              >
-                Alumni
-              </span>
-            )}
+            {team.division && <span className={chip}>{team.division}</span>}
+            {team.isArchived && <span className={chip}>Alumni</span>}
           </div>
           {team.description && (
             <p
               style={{
-                fontSize: '0.95rem',
-                color: 'rgba(255,255,255,0.6)',
-                lineHeight: 1.65,
+                font: '400 16px/1.6 var(--club-text-face)',
+                color: 'var(--club-soft)',
                 margin: '0.5rem 0 0',
                 maxWidth: '520px',
               }}
@@ -175,27 +119,28 @@ export default async function TeamPublicPage({
           <div
             style={{
               padding: '1rem 1.25rem',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '10px',
-              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid var(--club-line)',
+              borderRadius: 8,
+              background: 'var(--club-card)',
               marginBottom: '2rem',
-              fontSize: '0.88rem',
-              color: 'rgba(255,255,255,0.45)',
-              lineHeight: 1.6,
+              font: '400 14px/1.6 var(--club-text-face)',
+              color: 'var(--club-soft)',
             }}
           >
             This program has concluded. The full season history is preserved below.
           </div>
         )}
 
-        {/* Tryouts open banner */}
+        {/* Tryouts open banner — the drawings' "Open now" callout: a white card with the club's edge down its left side
+            (Club Tier Stage 4b-1). Same block as before; the call to act is the club's own button. */}
         {openYear && (
           <div
             style={{
               padding: '1.25rem 1.5rem',
-              border: '1px solid rgba(163,230,53,0.3)',
-              borderRadius: '12px',
-              background: 'rgba(163,230,53,0.05)',
+              border: '1px solid var(--club-line)',
+              borderLeft: '3px solid var(--club-edge)',
+              borderRadius: 8,
+              background: 'var(--club-card)',
               marginBottom: '2rem',
               display: 'flex',
               alignItems: 'center',
@@ -205,42 +150,19 @@ export default async function TeamPublicPage({
             }}
           >
             <div>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  color: 'var(--logic-lime)',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  marginBottom: '0.35rem',
-                }}
-              >
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />{' '}
-                Tryouts Open
+              <div className={`${kit.chip} ${kit.chipOk}`} style={{ marginBottom: '0.5rem' }}>
+                Tryouts open
               </div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f0f0f0' }}>
+              <div style={{ font: '600 16px var(--club-text-face)', color: 'var(--club-text)' }}>
                 {openYear.name}
               </div>
             </div>
             <Link
               href={publicTryoutRegisterHref(orgSlug, team.slug)}
-              style={{
-                display: 'inline-block',
-                padding: '0.65rem 1.5rem',
-                background: 'var(--logic-lime)',
-                color: '#0A0A0A',
-                borderRadius: '8px',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                fontFamily: 'var(--font-display, sans-serif)',
-              }}
+              className={`${kit.btn} ${kit.btnPrimary}`}
+              style={{ whiteSpace: 'nowrap' }}
             >
-              Register now →
+              Register now
             </Link>
           </div>
         )}
@@ -261,16 +183,7 @@ export default async function TeamPublicPage({
         {/* Past seasons */}
         {pastYears.length > 0 && (
           <div>
-            <div
-              style={{
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: 'rgba(255,255,255,0.35)',
-                marginBottom: '0.75rem',
-              }}
-            >
+            <div className={kit.band}>
               Past seasons
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -282,23 +195,15 @@ export default async function TeamPublicPage({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    background: 'rgba(255,255,255,0.02)',
+                    borderRadius: 8,
+                    border: '1px solid var(--club-line)',
+                    background: 'var(--club-card)',
                   }}
                 >
-                  <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.75)' }}>
+                  <span style={{ font: '400 14px var(--club-text-face)', color: 'var(--club-text)' }}>
                     {py.name}
                   </span>
-                  <span
-                    style={{
-                      fontSize: '0.68rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      color: 'rgba(255,255,255,0.35)',
-                    }}
-                  >
+                  <span className={chip}>
                     {STATUS_LABEL[py.status] ?? py.status}
                   </span>
                 </div>
@@ -306,10 +211,6 @@ export default async function TeamPublicPage({
             </div>
           </div>
         )}
-
-        {/* Nav Unification Stage E.5 — the ratified-subtle paid-tier credit, same component
-            and same plan gate as the org home and event pages. */}
-        {!isFreePlan(org.planId) && <BuiltOnCredit />}
       </div>
     </div>
   );

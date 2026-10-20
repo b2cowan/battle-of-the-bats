@@ -1,17 +1,28 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import {
-  getLeagueSeasonBySlug,
   getDivisionsForSeason,
   getTeamsForSeason,
   getGamesForSeason,
 } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
+import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { ORG_TIME_ZONE, addCalendarDays, formatInOrgZone, orgWeekKey } from '@/lib/timezone';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
 import column from '../../league-column.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
+
+// A draft season is hidden by this page, so the tab does not name it either.
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
+  const { orgSlug, seasonSlug } = await params;
+  return clubPageMetadata(orgSlug, async club => {
+    const season = await getClubSeason(club.id, seasonSlug);
+    return season && season.status !== 'draft' ? `${season.name} schedule` : null;
+  });
+}
 
 function formatDateTime(iso: string | null): { date: string; time: string } | null {
   if (!iso) return null;
@@ -54,7 +65,7 @@ export default async function PublicSchedulePage({
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
 
-  const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
+  const season = await getClubSeason(org.id, seasonSlug);
   if (!season) notFound();
   if (season.status === 'draft') notFound();
 
@@ -82,73 +93,34 @@ export default async function PublicSchedulePage({
   }
   const sortedWeeks = [...weekGroups.entries()].sort(([a], [b]) => a.localeCompare(b));
 
+  const teamName: React.CSSProperties = { fontWeight: 700, color: 'var(--club-text)', fontSize: '1rem' };
+
+  // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
+    <div>
       {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
         {/* Back */}
-        <Link
-          href={`/${orgSlug}/league/${seasonSlug}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
+        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
           ← {season.name}
         </Link>
 
         {/* Title */}
         <div style={{ marginBottom: '1.75rem' }}>
-          <h1
-            style={{
-              fontSize: '2rem',
-              fontWeight: 900,
-              color: '#f0f0f0',
-              fontFamily: 'var(--font-display, sans-serif)',
-              margin: '0 0 0.25rem',
-              lineHeight: 1.1,
-            }}
-          >
-            Schedule
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
-            {season.name}
-          </p>
+          <h1 className={kit.title}>Schedule</h1>
+          <p className={kit.sub}>{season.name}</p>
         </div>
 
         {/* Division tabs */}
         {divisions.length > 1 && (
-          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className={column.tabs}>
             {divisions.map(d => {
               const isActive = d.id === activeDivision?.id;
               return (
                 <Link
                   key={d.id}
                   href={`/${orgSlug}/league/${seasonSlug}/schedule?d=${d.id}`}
-                  style={{
-                    padding: '0.4rem 1rem',
-                    borderRadius: '6px',
-                    fontSize: '0.82rem',
-                    fontWeight: isActive ? 700 : 500,
-                    background: isActive ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.05)',
-                    color: isActive ? '#a3e635' : 'rgba(255,255,255,0.55)',
-                    border: isActive
-                      ? '1px solid rgba(163,230,53,0.3)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    textDecoration: 'none',
-                  }}
+                  className={`${column.tab}${isActive ? ` ${column.tabActive}` : ''}`}
                 >
                   {d.name}
                 </Link>
@@ -159,33 +131,14 @@ export default async function PublicSchedulePage({
 
         {/* Game weeks */}
         {filteredGames.length === 0 ? (
-          <div
-            style={{
-              padding: '2.5rem 1.5rem',
-              textAlign: 'center',
-              border: '1px dashed rgba(255,255,255,0.1)',
-              borderRadius: '10px',
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: '0.9rem',
-            }}
-          >
-            No games scheduled yet.
-          </div>
+          <div className={kit.empty}>No games scheduled yet.</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {sortedWeeks.map(([key, weekGames]) => (
               <div key={key}>
                 <div
-                  style={{
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: 'rgba(255,255,255,0.35)',
-                    marginBottom: '0.65rem',
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
-                    paddingBottom: '0.4rem',
-                  }}
+                  className={kit.band}
+                  style={{ borderBottom: '1px solid var(--club-line)', paddingBottom: '0.4rem' }}
                 >
                   {weekLabel(key)}
                 </div>
@@ -199,15 +152,13 @@ export default async function PublicSchedulePage({
                     return (
                       <div
                         key={game.id}
+                        className={kit.card}
                         style={{
                           display: 'grid',
                           gridTemplateColumns: '1fr auto 1fr',
                           alignItems: 'center',
                           gap: '0.75rem',
                           padding: '0.75rem 1rem',
-                          border: '1px solid rgba(255,255,255,0.07)',
-                          borderRadius: '8px',
-                          background: 'rgba(255,255,255,0.02)',
                         }}
                       >
                         {/* Home team */}
@@ -224,9 +175,7 @@ export default async function PublicSchedulePage({
                               }}
                             />
                           )}
-                          <span style={{ fontWeight: 700, color: '#f0f0f0', fontSize: '0.9rem' }}>
-                            {home?.name ?? 'TBD'}
-                          </span>
+                          <span style={teamName}>{home?.name ?? 'TBD'}</span>
                         </div>
 
                         {/* Score / time */}
@@ -234,16 +183,16 @@ export default async function PublicSchedulePage({
                           {isDone ? (
                             <span
                               style={{
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 fontSize: '1rem',
-                                color: '#a3e635',
+                                color: 'var(--club-text)',
                                 fontVariantNumeric: 'tabular-nums',
                               }}
                             >
                               {game.homeScore ?? 0} – {game.awayScore ?? 0}
                             </span>
                           ) : (
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--club-soft)', lineHeight: 1.4 }}>
                               {dt ? (
                                 <>
                                   <div>{dt.date}</div>
@@ -270,9 +219,7 @@ export default async function PublicSchedulePage({
                               }}
                             />
                           )}
-                          <span style={{ fontWeight: 700, color: '#f0f0f0', fontSize: '0.9rem' }}>
-                            {away?.name ?? 'TBD'}
-                          </span>
+                          <span style={teamName}>{away?.name ?? 'TBD'}</span>
                         </div>
                       </div>
                     );

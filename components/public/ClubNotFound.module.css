@@ -2,15 +2,14 @@
 
 /* ── The refusal: neutral, not the club's ─────────────────────────────────────────────────────────
    Drawn without the club's bar (End state 5, first frame): a club that turned its site off, or left,
-   has not asked to keep its name and colours on display. So while it is on screen the club's top bar,
-   its section tabs and the platform's phone bar step aside, and the page wears the platform's own
+   has not asked to keep its name and colours on display. So it wears no club bar or footer, and the page wears the
+   platform's own
    system-screen ground (system-screens.module.css `.page` + bg-pitch-black, the root 404's) — dark by default,
    paper for the warm theme. The sandbox
-   banner (the demo's own way around) is not club chrome and stays. */
-:global(body):has(.refusal) :global([data-club-chrome]),
-/* The phone bar is ConsumerNav's org branch, the only `nav[aria-label="Primary"]` on a club page
-   (club-stage4a-guard pins the label, so a rename fails the build instead of the refusal). */
-:global(body):has(.refusal) :global(nav[aria-label='Primary']) {
+   banner (the demo's own way around) is not club chrome and stays.
+   (Since Club Tier Stage 4b-1 the club's frame is not drawn at all for a closed site, and the platform's phone bar no
+   longer renders on a club page, so this rule is a backstop: nothing marked as the club's may ever frame a refusal.) */
+:global(body):has(.refusal) :global([data-club-chrome]) {
   display: none;
 }
 
@@ -22,13 +21,26 @@
   padding: 2rem 1rem;
 }
 
-/* ── Not found inside a live club: today's club chrome around it; Stage 4b restyles it ─────────── */
+/* ── Not found inside a live club: the club's own frame around it (Club Tier Stage 4b-1, End state 5) ──────────────
+   The club's bar and footer stay; the page says so and offers the way home, full width, in the club's type. */
 .page {
   min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 32px 16px;
+}
+
+.page .title {
+  font-family: var(--club-title-face);
+  font-weight: var(--club-title-weight);
+  font-size: 32px;
+  color: var(--club-text);
+}
+
+.page .text {
+  font-size: 16px;
+  color: var(--club-soft);
 }
 
 .body {
@@ -84,7 +96,18 @@
   color: var(--home-ink-soft);
 }
 
+/* "{club} home" — the drawing's secondary button, full width. */
 .page :global(.btn) {
+  width: 100%;
   min-height: 44px;
-  margin-top: 0.25rem;
+  margin-top: 4px;
+  justify-content: center;
+  background: var(--club-card);
+  color: var(--club-text);
+  border: 1px solid var(--club-field);
+  border-radius: 8px;
+  box-shadow: none;
+  font: 600 16px/1 var(--club-text-face);
+  text-transform: none;
+  letter-spacing: 0;
 }

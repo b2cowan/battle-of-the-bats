@@ -26049,3 +26049,18 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **Owed beside the walk:** `check:layout` on the touched screens (aborted on the machine's free memory 2026-10-20; the probes stand in); `/docs` for the two "Keep editing" help answers, held for 2d (five second-window asks remain there).
 <!-- /§349 -->
+
+## §350 ✅ · Club Tier · Stage 4b-1, the club's frame — **every club page (home, a team, a tryout and its sign-up, the house league, past tournaments, the in-club "not found") is the club's own site: its bar (logo or initials, name, tagline, Sign in / Account, and one ⇄ door for this club's staff only, outermost), tabs Home · House league · Past tournaments, a light page in the club's colours made readable for any colour, and one footer (name, "Questions? Email the club" with Copy, social links, the quiet "Built on FieldLogicHQ"); no Discover, no Pricing, no crumb and no platform phone bar on a club page; tournament pages and the site-off page unchanged**
+
+**Built:** 2026-10-20, on `dev`, after /design, /simplify (one club kit, one form kit, cached reads) and a high-risk /review (10 findings fixed). Plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 4 ("4b-1 as built"); prompt `docs/projects/active/CLUB_TIER_STAGE4B1_BUILD_PROMPT.md`. The staff door was ruled 2026-10-20 (Ask S1, option A — drawing https://claude.ai/artifact/JoYUB7TDUh2sB75owpMJyP; design log entry of that date).
+
+**The walk:** its own page, https://claude.ai/artifact/BaHx5XwXac4VkEisssNno5, source `docs/projects/active/CLUB_TIER_STAGE4B1_WALK.html`, 32 steps in eight parts: 1 the site signed out (navy) · 2 a light colour (yellow, set and put back by the owner) · 3 the footer · 4 past tournaments · 5 a page that isn't there · 6 what must not change (a tournament page, the site-off page) · 7 signed in: Account and the staff door · 8 page titles.
+
+**Sign in:** signed out for Parts 1–6 and 8; Part 7 as `uat-club-admin@uat-rep-club.local`, `uat-club-coach-15aaa@uat-rep-club.local` and `uat-owner@uat-test-org.local` (another club's owner); Part 2 as `uat-club-owner@uat-rep-club.local` (password as every UAT account), on localhost:3000.
+
+**Writes:** Part 2 changes UAT Rep Club's saved colour to a custom yellow; the walk has the owner put it back. Nothing else saves.
+
+**Checked beside the walk (2026-10-20):** `check:layout` on the five new club screens (club-home, club-team, club-tryout, club-house-league, club-past-tournaments) at 320/361/390/768/1440 — 25/25 clean; the anonymous-public invariant (58) and org-return-flip (14, with sign-in setup) UAT specs — all passed; typecheck clean; the full unit suite 8,378/8,379 (the one failure is another session's coaches.module.css ink test).
+
+**✅ PASSED — owner walked 2026-10-20, 32/32, nothing flagged** (paste-back: 1 the site signed out 7/7 · 2 a light colour 6/6 · 3 the footer 4/4 · 4 past tournaments 4/4 · 5 a page that isn't there 2/2 · 6 what must not change 2/2 · 7 signed in, Account and the staff door 4/4 · 8 page titles 3/3). The walk predates the same day's phone ruling (the tab row pins, the colour band scrolls away, no "← club" back links — design log 2026-10-20); it has no step of its own here — the owner confirmed it in the browser when ruling it.
+<!-- /§350 -->

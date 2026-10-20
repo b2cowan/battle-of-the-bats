@@ -1107,45 +1107,64 @@ const orgHelp: HelpPageContent = {
     {
       id: 'public-org-page',
       heading: 'Your public organization page — what visitors see',
-      summary: 'How families move around your public pages: section tabs, the trail back up, the way into the app, and the shortcut back to admin for your own staff.',
+      summary: 'Your pages are your club’s own site: your bar with your name and tabs, your colours, one footer with your contact, and a shortcut back to admin for your own staff.',
       keywords: [
-        'public organization page', 'public page', 'org page', 'what visitors see', 'section tabs',
-        'tabs', 'navigation', 'breadcrumb', 'trail', 'home league archives', 'sections',
-        'discover link', 'back to the app', 'bottom bar', 'phone navigation', 'mobile navigation',
-        'event card colour', 'event card color', 'tinted cards', 'return to admin from public page',
-        'admin shortcut', 'coaches portal shortcut', 'flip', 'public site', 'account menu', 'sign out',
+        'public organization page', 'public page', 'org page', 'club site', 'what visitors see', 'section tabs',
+        'tabs', 'navigation', 'home house league past tournaments', 'sections', 'club bar', 'header',
+        'sign in', 'account', 'phone navigation', 'mobile navigation', 'bottom bar', 'discover', 'pricing',
+        'footer', 'contact email', 'copy email', 'social links', 'built on fieldlogichq', 'colours', 'colors',
+        'light colour', 'readable', 'event card colour', 'event card color',
+        'return to admin from public page', 'admin shortcut', 'coaches portal shortcut', 'flip', 'account menu', 'sign out',
         'page not found', 'couldn’t find that page', 'broken link', 'old link', 'qr code', 'short address', 'site isn’t available',
       ],
-      searchText: 'public organization page what families see visitors see fans see section tabs tab row home league archives navigation between sections breadcrumb trail org name links back to the front page discover link way back into the app account menu sign out stays on your page scores account bottom bar on a phone mobile bottom navigation app bar desktop unchanged event cards wear their own event colour tinted per event branding red event purple event return to admin from my public page shortcut back admin coaches portal flip pill remembers the screen i left league club only tournament plus breadcrumb instead teams tab missing rep teams page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off',
+      searchText: 'public organization page club site what families see visitors see fans see your own site your bar logo initials club name tagline sign in account section tabs tab row home house league past tournaments only the sections you have no tab row with only a home page tabs in the bar on a computer white row under the bar on a phone club name links back to the front page no discover no pricing no breadcrumb no fieldlogichq bottom bar on a phone tournament pages keep the bottom bar light page your colours readable automatically light colour dark text yellow gold sky darker links footer questions email the club copy the address copied social links instagram facebook x website built on fieldlogichq credit paid plans event cards club colours tournament cards account menu sign out stays on your page return to admin from my public page shortcut back admin coaches portal flip door only your own staff staff of another club family never sees it remembers the screen i left page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off',
       content: (
         <>
-          <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. This is what they can do once they are there.</p>
+          <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. Every club page there (your home, a team, a tryout and its sign-up, your house league, your past tournaments) is your club&rsquo;s own site: your bar at the top, your colours on a light page, and one footer at the bottom.</p>
         </>
       ),
       subtopics: [
         {
           id: 'public-org-page-sections',
-          title: 'Moving between your sections',
+          title: 'Your bar and your tabs',
           content: (
-            <p>On <strong>League and Club</strong> plans, a row of tabs sits under your organization&rsquo;s name — <strong>Home</strong>, <strong>League</strong>, <strong>Archives</strong> — so a visitor can move straight between them instead of reversing back to your front page each time. The row appears only when you actually have more than one section to offer. On <strong>Tournament</strong> and <strong>Tournament Plus</strong>, you get a simpler trail instead: your organization&rsquo;s name followed by the section, like <em>Cedarvale Ravens &rsaquo; Archives</em>, with the name itself linking back to your front page.</p>
+            <>
+              <p>The bar at the top of every club page carries your logo (or your initials, if you haven&rsquo;t added one), your club&rsquo;s name and your one-line tagline. Your name links back to your home page from anywhere on your site.</p>
+              <p>Your tabs sit beside your name on a computer and in a white row under the bar on a phone. A visitor sees only the sections you have:</p>
+              <ul>
+                <li><strong>Home</strong></li>
+                <li><strong>House league</strong>, once a season is published</li>
+                <li><strong>Past tournaments</strong>, once you have one and haven&rsquo;t hidden it</li>
+              </ul>
+              <p>With only a home page, there is no tab row. Your pages advertise nothing of ours: no Discover, no Pricing.</p>
+            </>
           ),
         },
         {
           id: 'public-org-page-app-access',
-          title: 'How visitors get into the app from your pages',
+          title: 'Signing in from your pages',
           content: (
             <>
-              <p><strong>On a phone, families keep the app.</strong> On phone-sized screens your public pages carry the FieldLogicHQ bottom bar — <strong>Home</strong>, <strong>Scores</strong> and <strong>Account</strong> (a signed-out visitor sees Home, Scores and Sign In). Before this, a family who reached your league or archive pages on a phone had no route back into the app except the browser&rsquo;s Back button.</p>
-              <p>Your own header sheds its utility links on phones so your organization&rsquo;s name gets the whole row to itself: Discover, Account and Sign In move to that bottom bar, and <strong>our Pricing link is dropped altogether</strong> — your pages are yours, and we don&rsquo;t advertise on them. <strong>Desktop is deliberately unchanged</strong>: no FieldLogicHQ bar sits above your name there.</p>
-              <p><strong>The way into the app on desktop</strong> is a single quiet <strong>Discover</strong> link in your page header, next to Pricing. It opens the public directory of tournaments, teams and organizations. Beside it, a signed-in visitor&rsquo;s <strong>Account</strong> opens their account menu right where they are &mdash; notification settings, feedback, account settings and <strong>Sign out</strong> &mdash; and signing out leaves them on your page.</p>
+              <p><strong>Sign in</strong> sits at the right of your bar on every club page, on a phone and on a computer. Once a visitor is signed in it reads <strong>Account</strong>, and opens their account menu right where they are: notification settings, feedback, account settings and <strong>Sign out</strong>. Signing out leaves them on your page.</p>
+              <p>Your club pages don&rsquo;t carry the FieldLogicHQ bar at the bottom of a phone: the screen is yours. Your tournament pages keep it, as before.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-org-page-footer',
+          title: 'Your footer and your colours',
+          content: (
+            <>
+              <p>The same footer closes every club page: your club&rsquo;s name, <strong>Questions? Email the club</strong> with your contact address and a <strong>Copy</strong> button (an email link does nothing on some phones), your social links, and on a paid plan a quiet <strong>Built on FieldLogicHQ</strong>. A part you haven&rsquo;t filled in is left out. You set the address, tagline and social links in <strong>Public site &rsaquo; Site editor</strong>.</p>
+              <p>Your bar, footer and buttons wear your main colour, and the page keeps it readable for you. A light colour, like a yellow, gets dark text, and your links and outlines are darkened just enough to read on the light page.</p>
             </>
           ),
         },
         {
           id: 'public-org-page-event-colours',
-          title: 'Your events keep their own colours',
+          title: 'Your tournaments on your home page',
           content: (
-            <p>When your front page lists several tournaments, each card wears <em>that event&rsquo;s</em> branding rather than one shared colour — so a red event and a purple event look like themselves, and each card looks like the page it opens.</p>
+            <p>When your home page lists your tournaments, each card is set in your club&rsquo;s colours, like the rest of your site. A card opens that tournament&rsquo;s own pages, which keep the tournament&rsquo;s branding.</p>
           ),
         },
         {
@@ -1153,9 +1172,9 @@ const orgHelp: HelpPageContent = {
           title: 'When a family opens a page that isn’t there',
           content: (
             <>
-              <p>A family who opens an address your organization doesn&rsquo;t have — a mistyped team name, an old link, a league page when you run no house league — sees <strong>We couldn&rsquo;t find that page</strong> inside your site, with a link back to your home page.</p>
+              <p>A family who opens an address your organization doesn&rsquo;t have — a mistyped team name, an old link, a league page when you run no house league — sees <strong>We couldn&rsquo;t find that page</strong> inside your site, with your bar and footer and a button back to your home page.</p>
               <p>The short addresses <code>/teams</code>, <code>/schedule</code>, <code>/standings</code>, <code>/results</code>, <code>/register</code>, <code>/news</code> and <code>/rules</code> open the same page of your running tournament, so printed links and QR codes keep working. With no tournament running, they show <em>We couldn&rsquo;t find that page</em> too.</p>
-              <p>While your public site is switched off in <strong>Settings → Your public site</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead. Your tournament pages stay up.</p>
+              <p>While your public site is switched off in <strong>Settings → Your public site</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead, without your bar or colours. Your tournament pages stay up.</p>
             </>
           ),
         },
@@ -1163,7 +1182,7 @@ const orgHelp: HelpPageContent = {
           id: 'public-org-page-admin-shortcut',
           title: 'Your shortcut back to admin',
           content: (
-            <p>If you help run this organization and you are signed in, a <strong>&#8646;</strong> pill appears in the corner of your own public pages and takes you back to your admin area or Coaches Portal in the same tab. It remembers the exact screen you came from, so a quick look at the public site and back is two taps. Families and signed-out visitors never see it. If you hold more than one role here, the pill opens a short list so you can pick.</p>
+            <p>If you help run this club and you are signed in, a quiet <strong>&#8646;</strong> door sits at the far right of your bar, after Account: labelled on a computer, the &#8646; alone on a phone. It takes you back to your admin area or Coaches Portal in the same tab, to the exact screen you came from. If you hold more than one role here, it opens a short list so you can pick. Families, signed-out visitors and staff of other clubs never see it.</p>
           ),
         },
       ],
@@ -1171,25 +1190,25 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-public-page-no-teams-tab',
           question: 'Why is there no Teams tab on my public page?',
-          answerText: 'Rep teams do not have a public index page yet, so there is nowhere for a Teams tab to lead. Individual team pages exist, each with a link back to your front page, but your front page does not list them. The exception is tryouts: while a team\'s tryout registration is open, your front page shows a Tryouts Are Open card that takes families straight to that tryout\'s page, which links to the team\'s own page. The tab appears once the index page ships. The row deliberately leaves it out rather than offering a tab that would bounce the visitor somewhere unexpected.',
+          answerText: 'Rep teams do not have a public index page yet, so there is nowhere for a Teams tab to lead. Individual team pages exist, each with a link back to your home page, but your home page does not list them. The exception is tryouts: while a team\'s tryout registration is open, your home page shows a Tryouts are open card that takes families straight to that tryout\'s page, which links to the team\'s own page. The tab appears once the index page ships.',
           keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'tryouts link', 'tryouts are open', 'team page link'],
           answer: (
             <>
-              <p>Rep teams don&rsquo;t have a public <em>index</em> page yet — there is no single page listing them — so there is nowhere for a Teams tab to lead. Individual team pages do exist, each with a link back to your front page, but your front page doesn&rsquo;t list them.</p>
-              <p>The exception is tryouts: while a team&rsquo;s tryout registration is open, your front page shows a <strong>Tryouts Are Open</strong> card that takes families straight to that tryout&rsquo;s page, which links on to the team&rsquo;s own page.</p>
-              <p>The tab appears as soon as that index page ships. Until then the row deliberately leaves it out rather than offering a tab that would bounce the visitor somewhere unexpected.</p>
+              <p>Rep teams don&rsquo;t have a public <em>index</em> page yet — there is no single page listing them — so there is nowhere for a Teams tab to lead. Individual team pages do exist, each with a link back to your home page, but your home page doesn&rsquo;t list them.</p>
+              <p>The exception is tryouts: while a team&rsquo;s tryout registration is open, your home page shows a <strong>Tryouts are open</strong> card that takes families straight to that tryout&rsquo;s page, which links on to the team&rsquo;s own page.</p>
+              <p>The tab appears as soon as that index page ships.</p>
             </>
           ),
         },
         {
           id: 'faq-public-page-tabs-missing',
-          question: 'I have League and Archives but I don&rsquo;t see the section tabs — why?',
-          answerText: 'The tab row comes with League and Club plans. On Tournament and Tournament Plus you get the simpler breadcrumb trail instead - your organization name followed by the section, with the name linking back to your front page. The row also needs at least two sections to show at all: if your front page is the only public section you have, there is nowhere to navigate to and the row stays hidden.',
+          question: 'I have a house league and past tournaments but I don&rsquo;t see the tabs — why?',
+          answerText: 'The tabs come with League and Club plans. On Tournament and Tournament Plus your bar carries your name, which links back to your home page, and no tabs. The row also needs at least two sections to show at all: if your home page is the only public section you have, there is nowhere to go and the row stays hidden.',
           keywords: ['tabs missing', 'no section tabs', 'tab row not showing', 'league club only', 'why no tabs'],
           answer: (
             <>
-              <p>Two reasons, and one of them may be your plan. The tab row comes with <strong>League and Club</strong>; on Tournament and Tournament Plus you get the breadcrumb trail instead.</p>
-              <p>The row also needs <strong>at least two sections</strong> to appear at all. If your front page is the only public section you have, there is nowhere to navigate to, so the row stays hidden rather than showing a single tab.</p>
+              <p>Two reasons, and one of them may be your plan. The tabs come with <strong>League and Club</strong>; on Tournament and Tournament Plus your bar carries your name, which links back to your home page, and no tabs.</p>
+              <p>The row also needs <strong>at least two sections</strong> to appear at all. If your home page is the only public section you have, there is nowhere to go, so the row stays hidden rather than showing a single tab.</p>
             </>
           ),
         },

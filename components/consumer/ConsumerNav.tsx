@@ -33,7 +33,7 @@ import flip from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
-import { isWarmSkinPath, showsTournamentChrome, showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
+import { isWarmSkinPath, showsTournamentChrome, signInHrefFor } from '@/lib/consumer-routes';
 import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
@@ -141,12 +141,10 @@ export default function ConsumerNav({
   const onTournamentRoute =
     variant === 'tournament' && showsTournamentChrome(pathname) && !!params?.tournamentSlug;
 
-  // D1 (owner ruling 2026-08-01, settled from mockups): an ORG's public pages take the bottom
-  // bar on a PHONE and nothing above it — see showsOrgPublicChrome for why the asymmetry is the
-  // decision rather than an omission. Same root mount, same bar; only the strip half is skipped.
-  const onOrgPublicRoute = variant === 'tournament' && showsOrgPublicChrome(pathname);
-  // Either public surface resolves identity the same way: client-side, never SSR'd.
-  const onPublicRoute = onTournamentRoute || onOrgPublicRoute;
+  // A CLUB's own public pages take NO platform bar at any width (Club Tier Stage 4b-1, Ask 8, ruled 2026-10-19 —
+  // reversing D1's phone bar of 2026-08-01): the club's own bar carries Sign in, and a family on the club's site sees
+  // the club's site. Tournament pages keep the bar (the carve-out). So the tournament variant renders, and resolves
+  // identity, only on a tournament route — a club page falls out at the `!onTournamentRoute` return below.
 
   // Tournament identity resolves CLIENT-SIDE via the shared hook (getSession = a local
   // cookie read; anonymous visitors never hit the network; re-resolves on SPA sign-in/
@@ -156,7 +154,7 @@ export default function ConsumerNav({
   // prop, below), but for the demo teardown it carries: these tabs are where a "See it live"
   // session used to be read as a login, and a client-side route change into them is the one case
   // the request layer deliberately cannot judge.
-  const clientSignedIn = useClientSignedIn(onPublicRoute || variant === 'consumer');
+  const clientSignedIn = useClientSignedIn(onTournamentRoute || variant === 'consumer');
   const signedIn = variant === 'tournament' ? clientSignedIn : signedInProp;
 
   // Unified cross-tab badge policy (Phase 5, owner-ratified): a red count means "something is
@@ -170,10 +168,8 @@ export default function ConsumerNav({
   // WI-3/WI-4: the tournament strip resolves the operator doors + chat membership
   // CLIENT-side (same rule as identity — never SSR'd into SW-cached tournament HTML).
   // Inert everywhere else and for anonymous visitors (no network).
-  // Strip-only: the doors this feeds exist only on the tournament strip. Gated on
-  // onTournamentRoute (NOT the wider public gate) because on an org public page the org's own
-  // navbar already resolves this same summary for its operator door — asking again here would
-  // be a second identical request for one answer.
+  // Strip-only: the doors this feeds exist only on the tournament strip (a club's own pages draw
+  // their own bar, which resolves its staff door itself — Club Tier Stage 4b-1).
   const roleSummary = useRoleSummary(onTournamentRoute && signedIn);
 
   // ONE operator door on a public event page, and it lives HERE — in the nav, the same slot the
@@ -200,7 +196,7 @@ export default function ConsumerNav({
   // The root-mounted tournament variant renders on every route; bail here — AFTER the
   // hooks (React-safe) but BEFORE building any badges/markup — so it's free off its own
   // routes.
-  if (variant === 'tournament' && !onPublicRoute) return null;
+  if (variant === 'tournament' && !onTournamentRoute) return null;
 
   const cap = (n: number) => (n > 9 ? '9+' : String(n));
   // Chat carries the coach return path when the coach shell provides one (tab-active
@@ -274,20 +270,6 @@ export default function ConsumerNav({
       )}
     </>
   );
-
-  // D1 — org public pages: the bottom bar alone, in the same neutral venue-following skin the
-  // tournament bar uses (no warm classes; the org layout's :root override themes it). Returned
-  // BEFORE the tournament branch so none of the strip's door/flip machinery is built for a
-  // surface that never renders it — the org navbar already owns the operator door here.
-  if (onOrgPublicRoute && !onTournamentRoute) {
-    // Same rule as the tournament bar below: in the demo every one of these tabs is an exit.
-    if (inSandbox) return null;
-    return (
-      <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
-        {bottomTabs}
-      </nav>
-    );
-  }
 
   // Shared top-bar content — the wordmark, the visible tab links, and the organizer
   // utility cluster (consumer/coach variants only since WI-4 — the tournament strip

@@ -6,21 +6,12 @@ import { usePathname, useParams } from 'next/navigation';
 import { User } from 'lucide-react';
 import { useOrgNav } from './OrgNavContext';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
-import { useRoleSummary, resolveOperatorDoor } from '@/lib/use-role-summary';
 import { cn } from '@/lib/utils';
 import { phaseOf, fmtRange, daysUntil } from '@/lib/tournament-phase-display';
 import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
-import FlipPill from '@/components/shared/FlipPill';
-import flipStyles from '@/components/shared/FlipPill.module.css';
-import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
-import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
-import { resolveOrgReturnFlip } from '@/lib/flip-twins';
-import { showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
-import { orgSectionCrumb } from '@/lib/org-public-sections';
-import { reportNavClick } from '@/lib/nav-beacon';
 import { DEMOS_PATH } from '@/lib/sandbox-door';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
@@ -68,14 +59,6 @@ export default function Navbar() {
   // Hide on any /[orgSlug]/admin/* route (computed before the hooks below so their
   // `enabled` gates can reference it — the early return itself stays after all hooks).
   const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
-
-  // Org-home actions (Desktop Public UX Phase 1, WI-6): the plain org homepage's nav gains
-  // Sign In / Pricing / an operator door. Org pages are public — identity + role doors
-  // resolve CLIENT-side (same rule as the tournament chrome; never SSR'd). Both hooks are
-  // inert (`enabled=false`, no network) on marketing, tournament, and admin branches.
-  const onOrgHome = !!orgSlug && !urlTournamentSlug && !isAdmin && !isMarketingPath(pathname);
-  const orgHomeSignedIn = useClientSignedIn(onOrgHome);
-  const orgHomeRoles = useRoleSummary(onOrgHome && orgHomeSignedIn);
 
   // R4 / audit D4 — the marketing bar was AUTH-BLIND. The app strip links to /pricing from every
   // consumer surface, so a signed-in owner tapping it landed on a bar offering "Sign In" and
@@ -265,96 +248,13 @@ export default function Navbar() {
     );
   }
 
-  /* ── Org home nav (/{orgSlug}/* — no tournament in URL) ──
-     WI-6: no longer a logo-only dead end. Pricing is always there; identity resolves
-     client-side, so anonymous fans get Sign In, signed-in fans get Account, and an
-     operator gets their one persistent door (Admin Area outranks Coaches Portal). */
-  if (!urlTournamentSlug) {
-    // Stage D.2, via the shared resolver: 2+ places → the Workspaces popover; 0–1 → the
-    // direct pill as before.
-    const orgHomeDoor = resolveOperatorDoor(orgHomeRoles?.workspaces, orgHomeRoles?.adminHref, orgHomeRoles?.coachHref);
-    // Stage E.3 — one level in, the identity row grows a trail so "up" works a step at a time.
-    // Null at the org root and on any section Stage E doesn't name, which keeps today's identity.
-    const sectionCrumb = orgSectionCrumb(pathname, orgSlug);
-    // Stage E.2 — the return half of the org-level flip, for operators of THIS org only. It takes
-    // the door slot ahead of the Workspaces pill, matching the tournament strip's ratified
-    // precedence (Flip → pill → StartMenu): a flip back to the place you just left beats a chooser
-    // of everywhere you could go. Renders nothing for fans, so the slot falls through unchanged.
-    const orgReturnFlip = resolveOrgReturnFlip(orgHomeRoles?.workspaces, orgSlug);
-    // One flat precedence chain rather than nested JSX branches, so the rule reads in source order.
-    const orgDoorSlot = orgReturnFlip
-      ? <FlipPill resolution={orgReturnFlip} variant="inline" className={`${styles.orgFlip} ${flipStyles.publicLook}`} />
-      : orgHomeDoor?.kind === 'workspaces'
-        ? <WorkspacesPill workspaces={orgHomeDoor.workspaces} className={styles.actionPill} />
-        : orgHomeDoor?.kind === 'pill'
-          ? <Link href={orgHomeDoor.pill.href} className={styles.actionPill}>{orgHomeDoor.pill.label}</Link>
-          : null;
-    return (
-      // data-club-chrome: the club refusal steps this bar aside (components/public/ClubNotFound.module.css).
-      <nav className={navClass} data-club-chrome="">
-        <div className={`container ${styles.inner}`}>
-          {/* The identity block is a row, not a single link: at depth the org name self-links to
-              the org root and the crumb names the section, so the two carry different jobs. */}
-          <div className={styles.logo}>
-            <Link href={`/${orgSlug}`} className={styles.logoLink}>
-              {logoUrl && (
-                <img src={logoUrl} alt={orgName || 'Org logo'} className={styles.logoImg} />
-              )}
-              {orgName && <span className={styles.orgName}>{orgName}</span>}
-            </Link>
-            {sectionCrumb && (
-              <>
-                <span className={styles.crumbSep} aria-hidden>›</span>
-                <span className={styles.crumb}>{sectionCrumb}</span>
-              </>
-            )}
-          </div>
-
-          {/* D1 follow-through: where the phone bottom bar renders, this row sheds its utility
-              links (see .actionsWithBottomBar). Discover/Account/Sign In are duplicates of the bar
-              below; Pricing is DELIBERATELY dropped — the bar never carried it, and a paying
-              customer's public page is not our billboard (ruled 2026-08-01). Without the shed, a
-              390px screen showed the club's own name squeezed to nothing behind four links. */}
-          <div className={`${styles.actions} ${showsOrgPublicChrome(pathname) ? styles.actionsWithBottomBar : ''}`}>
-            {/* The way back into the app. Org pages carry no tab row and no bottom bar at any width,
-                so before this a visitor who arrived here (from search, a follow card, or a link) had
-                no route to Scores/Chat/Account except the browser's Back button. Deliberately a
-                plain link at Pricing's weight, and labelled to match the identical link on the
-                public tournament strip — not a second brand mark competing with the org's own name.
-
-                Stage E.1: the click (never the render) reports to the beacon that feeds the plan's
-                CTR gate — the number that decides whether one link is the permanent answer to the
-                fan gap. The anchor itself is identical for every visitor, signed in or not. */}
-            <Link
-              href="/discover"
-              className={styles.actionLink}
-              onClick={() => reportNavClick('org_discover')}
-            >
-              Discover
-            </Link>
-            <Link href="/pricing" className={styles.actionLink}>Pricing</Link>
-            {/* R7 (top-nav audit D7, 2026-08-01): Account sits INSIDE, the operator door OUTERMOST —
-                the same Zone-3 order every platform strip already uses. This row had them reversed,
-                making the org identity row the one corner in the product that read differently for a
-                multi-hat operator. The two written rules had never been reconciled: the grammar says
-                "everywhere", the Stage G ratification said "across strips", and this branded row fell
-                between them. Ruled: Zone-3 order binds ALL top bars, branded identity rows included. */}
-            {/* The account door is the shared in-place menu here too (owner ask 2026-10-16), its
-                trigger the same quiet word. Hidden in a demo club: the menu carries Sign out, and
-                a shared demo account must never be offered one (the strips' rule). */}
-            {orgHomeSignedIn ? (
-              !isDemoOrgSlug(decodePathSegment(orgSlug)) && (
-                <AccountMenu className={styles.actionLink} wrapClassName={styles.actionAccount} signOutTo="here">Account</AccountMenu>
-              )
-            ) : (
-              <Link href={signInHrefFor(pathname)} className={styles.actionCta}>Sign In</Link>
-            )}
-            {orgDoorSlot}
-          </div>
-        </div>
-      </nav>
-    );
-  }
+  /* ── A club's own pages (/{orgSlug}/* with no tournament in the URL) ──
+     Club Tier Stage 4b-1 (Asks 7 + 8, ruled 2026-10-19): the club draws its OWN bar — its colours, its name, Sign in,
+     and the staff door for its own staff (components/public/ClubBar.tsx, mounted by the org layout's ClubFrame) — so
+     the platform's bar steps aside here entirely. No Discover, no Pricing, no crumb at any width. Every such path is
+     either a club page or an operator shell (which SiteChrome already drops): a club section is a static folder,
+     which Next.js matches before [tournamentSlug], so it never carries that param. */
+  if (!urlTournamentSlug) return null;
 
   /* ── Tournament nav (/[orgSlug]/[tournamentSlug]/*) ── */
   /* The event's slug, taken from the URL when the nav CONTEXT hasn't landed yet.

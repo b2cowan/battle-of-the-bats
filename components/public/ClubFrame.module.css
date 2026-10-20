@@ -1,0 +1,474 @@
+/* The club's site (Club Tier Stage 4b-1) — the ground, the type, the bar and the footer every club page wears.
+   Values are the Stage 4 drawings' (`.cs` specimens, End states 1 and 9, the Design check tab), ruled 2026-10-19.
+
+   THE CLUB'S COLOUR arrives as five roles the org layout writes on :root from the colour the club saved
+   (lib/club-colour-roles.ts): --club-fill (bar, footer, buttons), --club-on-fill (text on it), --club-ink (links, the
+   selected tab — 4.5 : 1 on the ground), --club-edge (3 : 1 on the ground), --club-accent (decoration only: the rule
+   under the bar and over the footer). Nothing here is tinted (DC-02). */
+
+/* ── The site: one light ground for every club, whatever the visitor's theme (TH-1) ─────────────────────────────── */
+.site {
+  /* The ground, the same for every club (the drawings' --g-* values). A fixed palette by ruling — club pages never
+     follow the account theme (TH-1) — so it is declared HERE, once, and every club page reads these names. The ground
+     and card are also lib/club-colour-roles.ts's CLUB_GROUND / CLUB_CARD (the ink is measured against them);
+     club-frame-guard holds the two copies equal. */
+  --club-ground:  #F6F5F2;   /* token-exempt: the club site's fixed ground (Stage 4 drawings, TH-1) */
+  --club-card:    #FFFFFF;   /* token-exempt: the club site's fixed card, light whatever the theme */
+  --club-text:    #1F1B16;   /* token-exempt: the club site's fixed ink (Stage 4 drawings --g-ink) */
+  --club-soft:    #4E473D;   /* token-exempt: the club site's fixed soft ink (--g-soft) */
+  --club-dim:     #6F675B;   /* token-exempt: the club site's fixed dim ink (--g-dim), AA on the ground */
+  --club-line:    #E4E0D8;   /* token-exempt: the club site's fixed hairline (--g-line) */
+  --club-line-2:  #D6D0C4;   /* token-exempt: the club site's fixed strong hairline (--g-line2) */
+  --club-field:   #948B7D;   /* token-exempt: a form field's border on the club site, 3.4 : 1 on white */
+  --club-ok:      #2C6A2A;   /* token-exempt: the club site's one green status, on --club-ok-bg */
+  --club-ok-bg:   #E6F0E2;   /* token-exempt: the green status chip's ground (drawings --ok-tint) */
+
+  /* The type (Ask 1A, Ask 13A): titles in the display face, text in the body face — the warm pair by default. */
+  --club-title-face:   var(--font-barlow), 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --club-text-face:    var(--font-inter), 'Inter', system-ui, sans-serif;
+  --club-title-weight: 700;
+
+  /* ── The platform's names, redefined for the club's site ──
+     The club pages were built on the dark ground's tokens; redefining them HERE (the warm portal's own recipe,
+     globals.css `[data-coach-warm-enabled]`) turns every token-built page light in one place, and only inside a
+     club page — tournament pages, the admin and the portals never carry this class. Each page's own hard-coded
+     dark styles were moved onto these names in the same stage. */
+  --nav-height: 0px;           /* the club's bar is in the page's flow, not fixed over it */
+  --pitch-black:      var(--club-ground);
+  --bg:               var(--club-ground);
+  --bg-2:             var(--club-card);
+  --bg-3:             var(--club-card);
+  --hud-surface:      var(--club-card);
+  --surface:          var(--club-card);
+  --surface-2:        var(--club-card);
+  --bg-surface:       var(--club-card);
+  --bracket-card:     var(--club-card);
+  --structural-slate: var(--club-card);
+  --card-bg:          var(--club-card);
+  --bg-card:          var(--club-card);
+  --bg-inset:         var(--club-ground);
+  --fl-text:          var(--club-text);
+  --data-gray:        var(--club-dim);
+  --white:    var(--club-text);
+  --white-90: var(--club-text);
+  --white-85: var(--club-text);
+  --white-80: var(--club-text);
+  --white-75: var(--club-soft);
+  --white-70: var(--club-soft);
+  --white-65: var(--club-dim);
+  --white-60: var(--club-dim);
+  --white-55: var(--club-dim);
+  --white-50: var(--club-dim);
+  --white-45: var(--club-dim);
+  --white-40: var(--club-dim);
+  --white-35: var(--club-dim);
+  --white-30: var(--club-line-2);
+  --white-25: var(--club-line-2);
+  --white-20: var(--club-line-2);
+  --white-15: var(--club-line);
+  --white-10: var(--club-line);
+  --white-8:  var(--club-ground);
+  --white-5:  var(--club-ground);
+  --white-4:  var(--club-ground);
+  --white-05: var(--club-ground);
+  --white-03: var(--club-ground);
+  --text-primary:   var(--club-text);
+  --text-secondary: var(--club-soft);
+  --text-tertiary:  var(--club-dim);
+  --border:        var(--club-line);
+  --border-2:      var(--club-line);
+  --border-subtle: var(--club-line);
+  /* Accent as TEXT is the club's ink; the dark ground's lime and structural blue have no place on the club's site. */
+  --primary:            var(--club-fill);
+  --primary-rgb:        var(--club-fill-rgb);
+  --on-primary:         var(--club-on-fill);
+  --primary-light:      var(--club-ink);
+  --primary-faint:      transparent;
+  --primary-glow:       transparent;
+  --logic-lime:         var(--club-ink);
+  --logic-lime-rgb:     var(--club-ink-rgb);
+  --lime-strong:        var(--club-ink);
+  --blueprint-blue:     var(--club-ink);
+  --blueprint-blue-rgb: var(--club-ink-rgb);
+  --blueprint-light:    var(--club-ink);
+  --glow:      none;
+  --glow-sm:   none;
+  --shadow-sm: none;
+  --shadow:    none;
+  /* Status words as text, AA on the ground (the warm portal's measured values). */
+  --success:        var(--club-ok);
+  --success-strong: var(--club-ok);
+  --success-light:  var(--club-ok);
+  --danger:         #B03A22; /* token-exempt: the warm portal's measured AA red, fixed on the club ground */
+  --danger-rgb:     176, 58, 34;
+  --danger-strong:  #B03A22; /* token-exempt: as --danger */
+  --danger-light:   #B03A22; /* token-exempt: as --danger */
+  --warning:        #835006; /* token-exempt: the warm portal's measured AA amber */
+  --warning-strong: #835006; /* token-exempt: as --warning */
+  --gold-strong:    #856611; /* token-exempt: the legible-on-light gold */
+  --gold:           #856611; /* token-exempt: as --gold-strong */
+  --gold-rgb:       133, 102, 17;
+  /* No typewriter face on a club's page (DC-03): the data face IS the text face here. */
+  --font-sans:    var(--club-text-face);
+  --font-display: var(--club-title-face);
+  --font-data:    var(--club-text-face);
+  --font-mono:    var(--club-text-face);
+
+  /* Native controls (a date picker's popup, a select's list, scrollbars) follow the page, not the visitor's theme. */
+  color-scheme: light;
+  position: relative;         /* the frame's own skip link positions against the site */
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--club-ground);
+  color: var(--club-text);
+  font-family: var(--club-text-face);
+}
+
+/* The club's chosen font is kept (Ask 1A): DM Serif titles over DM Sans; Inter alone. */
+.site[data-club-face='dm-serif'] {
+  --club-title-face:   var(--font-dm-serif), 'DM Serif Display', Georgia, serif;
+  --club-text-face:    var(--font-dm-sans), 'DM Sans', 'Inter', system-ui, sans-serif;
+  --club-title-weight: 400;
+}
+.site[data-club-face='inter'] {
+  --club-title-face: var(--club-text-face);
+}
+
+/* The page behind the site is the ground too — past the top or bottom of a page on a phone's bounce, and under a page
+   too short to fill the screen. (The 4a refusal wears no frame, so it keeps its own system-screen ground.) */
+:global(body):has(.site) {
+  background: #F6F5F2; /* token-exempt: a copy of --club-ground — <body> is outside the .site that declares it */
+}
+
+.page {
+  flex: 1 0 auto;
+}
+
+.page:focus { outline: none; } /* the skip link's landing point, not a control */
+
+/* The root layout's "Skip to content" targets <main>, whose first child here is the club's bar; the frame draws its own,
+   which skips the bar, so the root one steps aside on a club page. */
+:global(body):has(.site) :global(.skip-link[href='#main-content']) {
+  display: none;
+}
+
+/* No platform phone bar on a club page (Ask 8), so no room is kept for one at the foot of <main> (globals.css reserves
+   --bottom-nav-height on every page ≤900 px; the demo's public side zeroes it the same way). */
+:global(:root):has(.site) {
+  --bottom-nav-height: 0px;
+}
+
+/* Words for a screen reader only (the footer's "Copied"). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Date fields and selects: the platform paints them dark with a lime picker glyph (globals.css), written for the old
+   dark ground — on the club's light page the glyph was a pale ghost. The warm portal's own answer, here too: light
+   colour-scheme and NO filter, so the browser draws its own near-black glyph (re-colouring that glyph is a known trap). */
+.site :global(input[type='date']),
+.site :global(input[type='datetime-local']),
+.site :global(select) {
+  color-scheme: light;
+}
+.site :global(input[type='date'])::-webkit-calendar-picker-indicator,
+.site :global(input[type='datetime-local'])::-webkit-calendar-picker-indicator {
+  filter: none;
+  opacity: 0.65;
+}
+.site :global(input[type='date'])::-webkit-calendar-picker-indicator:hover,
+.site :global(input[type='datetime-local'])::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: var(--club-line);
+}
+
+/* Links on the club's site are the club's ink (End state 9). A page that names its own colour still wins. */
+.page :global(a:not([class])) {
+  color: var(--club-ink);
+}
+
+/* ── The bar (End state 1) ────────────────────────────────────────────────────────────────────────────────────────
+   Phone: the colour band (72 px) holds the identity and the visitor's door; the tabs are a white row beneath, the
+   accent rule between them. Desk: one band, the tabs beside the name, the accent rule under it. One grid, two layouts.
+   The band IS the bar's own background (never a decoration drawn behind it), so whatever reads the page — the layout
+   check, forced colours, a screen magnifier — finds the club's text on the club's fill. */
+.bar {
+  --club-band-h: 72px;        /* the colour band's height; a phone's pinned tab row is measured from it */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'identity actions'
+    'tabs     tabs';
+  background: var(--club-fill);
+  color: var(--club-on-fill);
+  border-bottom: 3px solid var(--club-accent);
+}
+
+.identity {
+  grid-area: identity;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: var(--club-band-h);
+  padding: 0 8px 0 16px;
+  color: var(--club-on-fill);
+  text-decoration: none;
+}
+
+.identity:focus-visible {
+  outline: 2px solid var(--club-on-fill);
+  outline-offset: -4px;
+  border-radius: 10px;
+}
+
+.logo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.initials {
+  display: grid;
+  place-items: center;
+  background: var(--club-tile);
+  color: var(--club-tile-ink);
+  font: 700 16px/1 var(--club-title-face);
+  letter-spacing: 0.02em;
+}
+
+.name {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.nameText {
+  font: var(--club-title-weight) 20px/1.1 var(--club-title-face);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tagline {
+  font: 500 12px/1.3 var(--club-text-face);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabsSlot {
+  grid-area: tabs;
+}
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 0;
+}
+
+/* Sign in / Account — the visitor's own door, 44 × 44 at the least. */
+.word {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: 600 14px/1 var(--club-text-face);
+  color: var(--club-on-fill);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.word:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.word:focus-visible {
+  outline: 2px solid var(--club-on-fill);
+  outline-offset: -2px;
+}
+
+.account {
+  display: inline-flex;
+}
+
+/* Account is the person icon at every width (owner 2026-10-20) — the icon the account menu wears in the app's bars — a
+   bare icon beside the staff door's bare icon. Signed out stays the word "Sign in": to a visitor with no account a
+   person icon could mean profile or join. The menu's trigger is named "Account" for screen readers. */
+.wordIcon { display: block; width: 22px; height: 22px; }
+.account .word { padding: 0; }
+.account .word:hover { text-decoration: none; background: color-mix(in srgb, currentColor 10%, transparent); }
+
+/* The staff door (Ask S1) is the shared FlipPill in its club look (FlipPill.module.css `.clubLook`). */
+
+/* ── The footer (End state 1; /design change 5) ──────────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 0;                 /* globals.css pads every <footer> for the platform phone bar; there is none here */
+  background: var(--club-fill);
+  color: var(--club-on-fill);
+  border-top: 3px solid var(--club-accent);
+}
+
+.footInner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+}
+
+.footName {
+  margin: 0;
+  font: var(--club-title-weight) 20px/1.1 var(--club-title-face);
+}
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contactLabel {
+  font: 500 12px/1.4 var(--club-text-face);
+}
+
+.mailRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.mail {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 600 16px/1.3 var(--club-text-face);
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.copy {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: none;
+  font: 600 14px/1 var(--club-text-face);
+  color: inherit;
+  cursor: pointer;
+}
+
+.mail:focus-visible,
+.copy:focus-visible,
+.social:focus-visible,
+.credit a:focus-visible {
+  outline: 2px solid var(--club-on-fill);
+  outline-offset: 2px;
+}
+
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.social {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  font: 700 12px/1 var(--club-text-face);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The quiet credit (2026-07-30): under a hairline, the club's text on its fill, 12 px. */
+.credit {
+  padding-top: 0;
+  border-top: 1px solid currentColor;
+  font: 500 12px/1.4 var(--club-text-face);
+}
+
+.credit a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;           /* the tap floor, though the words are 12 px */
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* A phone with tabs: the accent rule sits between the band and the white tab row, not under the row.
+   The tab row PINS and the band scrolls away (owner 2026-10-20): the tabs are how a family moves between a club's long
+   pages, while the band is identity, seen once. The whole bar is sticky with its top pulled up by the band's height,
+   so only the accent rule and the tabs (48 px) stay — the tabs live inside the bar, and a sticky child cannot outlast
+   its parent. The demo's pinned chrome, when there is one, stays above. A desk keeps the one band scrolling away. */
+@media (max-width: 900px) {
+  .bar:has(.tabsSlot) {
+    position: sticky;
+    top: calc(var(--sandbox-chrome-h, 0px) - var(--club-band-h));
+    z-index: 90;
+    border-bottom: 0;
+  }
+  .tabsSlot { border-top: 3px solid var(--club-accent); }
+
+  /* An in-page jump (the skip link, a #section) lands below the pinned row, not under it. */
+  :global(html):has(.bar .tabsSlot) {
+    scroll-padding-top: calc(var(--sandbox-chrome-h, 0px) + 48px);
+  }
+}
+
+/* ── Desk (above 900 px): one band, content on the pages' own column ─────────────────────────────────────────────────
+   The bar and footer take the edge of the global `.container` (1,200 px, a 24 px gutter INSIDE it — globals.css), the
+   column every club page sets its content in, so the club's logo stands directly over each page's heading. */
+@media (min-width: 901px) {
+  .bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'identity tabs actions';
+    padding: 0 max(24px, calc((100% - 1200px) / 2 + 24px));
+  }
+
+  .identity { padding: 0; }
+
+  .nameText { font-size: 24px; }
+
+  .actions { padding: 0; }
+
+  .footInner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px max(24px, calc((100% - 1200px) / 2 + 24px)) 22px;
+  }
+
+  .credit { flex-basis: 100%; }
+}

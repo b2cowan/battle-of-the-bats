@@ -124,44 +124,53 @@ test.describe('Q5.4 — SW-cache invariant: server HTML carries no role branchin
   }
 });
 
-test.describe('Stage E.1 — the Discover beacon fires on CLICK, never on render', () => {
+/* Club Tier Stage 4b-1 (Ask 7, ruled 2026-10-19): a club's own pages advertise nothing at ANY width. This replaces
+   Stage E.1's Discover beacon test — the link it measured is gone from club pages; the beacon may never fire on load. */
+test.describe('Stage 4b-1 — a club page advertises nothing, at any width', () => {
   test('no beacon request on an anonymous org page load', async ({ page }) => {
     const requests = await recordRequests(page, ORG);
     expect(requests.filter(u => u.includes('/api/client/nav-beacon'))).toEqual([]);
   });
 
-  test('clicking Discover sends exactly one beacon', async ({ page }) => {
-    const beacons: string[] = [];
-    page.on('request', r => {
-      if (r.url().includes('/api/client/nav-beacon')) beacons.push(r.url());
-    });
-    await page.goto(ORG, { waitUntil: 'networkidle' });
-    await page.getByRole('link', { name: /^Discover$/i }).first().click();
-    await page.waitForTimeout(1000);
-    expect(beacons.length, 'one beacon per Discover click').toBe(1);
-  });
+  for (const [label, width] of [['phone', 390], ['desktop', 1280]] as const) {
+    for (const path of [ORG, CLUB_ORG, `${ORG}/league`]) {
+      test(`${path} carries no Discover and no Pricing (${label})`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path, { waitUntil: 'networkidle' });
+        await expect(page.locator('a[href="/discover"]')).toHaveCount(0);
+        await expect(page.locator('a[href="/pricing"]')).toHaveCount(0);
+        // Sign in sits in the club's own bar.
+        await expect(page.locator('[data-club-bar]').getByRole('link', { name: /^Sign in$/ })).toBeVisible();
+      });
+    }
+  }
 });
 
-test.describe('Stage E.3 — the section crumb is URL-derived, not role-derived', () => {
-  test('the org root keeps its plain identity — no crumb', async ({ page }) => {
+/* Stage E.3's crumb retired with the platform's org bar (4b-1): the tabs, and the page's own title, answer "where
+   am I". What survives is its real job — a way back up from any depth, for an anonymous visitor. */
+test.describe('Stage 4b-1 — the club\'s name is the way home, at any depth', () => {
+  test('no "›" crumb on a club page', async ({ page }) => {
+    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
+    await expect(page.getByText('›', { exact: true })).toHaveCount(0);
+  });
+
+  test('the club\'s name in its bar is a real link back to the club\'s home', async ({ page }) => {
+    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
+    await expect(page.locator(`[data-club-bar] a[href="${TOURNAMENT_TIER_ORG}"]`).first()).toBeVisible();
+  });
+
+  test('every club page names itself: "page · club"', async ({ page }) => {
+    await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
+    await expect(page).toHaveTitle(/^House league · \S/);
+    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
+    await expect(page).toHaveTitle(/^Past tournaments · \S/);
+  });
+
+  test('one footer, with the quiet credit on a paid club', async ({ page }) => {
     await page.goto(ORG, { waitUntil: 'networkidle' });
-    await expect(page.locator('nav').getByText('›', { exact: true })).toHaveCount(0);
-  });
-
-  test('a section one level in shows its crumb to an ANONYMOUS visitor', async ({ page }) => {
-    // Deliberately a TOURNAMENT-tier org: Stage F gave League/Club a section tab row, and where
-    // that row renders the crumb retires (one wayfinding device per page). The crumb is now the
-    // answer for exactly these tier-less pages — so this is where its behaviour is pinned.
-    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
-    await expect(page.getByRole('navigation', { name: 'Sections' })).toHaveCount(0);
-    // Present without sign-in is the point: the crumb is public wayfinding, not operator chrome.
-    await expect(page.locator('nav').getByText('Archives', { exact: true }).first()).toBeVisible();
-  });
-
-  test('the org name at depth is a real link back to the org root', async ({ page }) => {
-    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
-    const home = page.locator(`nav a[href="${TOURNAMENT_TIER_ORG}"]`).first();
-    await expect(home).toBeVisible();
+    const footer = page.locator('[data-club-footer]');
+    await expect(footer).toHaveCount(1);
+    await expect(footer.getByText('Built on', { exact: false })).toBeVisible();
   });
 });
 
@@ -182,23 +191,24 @@ test.describe('Stage E.4 — the sitemap only lists org pages that really render
   });
 });
 
-test.describe('D1 — the phone frame on org public pages (owner ruling 2026-08-01)', () => {
+/* D1 (2026-08-01) gave org pages the app's phone bar; Club Tier Stage 4b-1 (Ask 8, ruled 2026-10-19) takes it off
+   every club page again — Sign in moved into the club's own bar — and keeps it on tournament pages. Both halves are
+   pinned here, so neither ruling can quietly reverse the other. */
+test.describe('Ask 8 — the phone frame: no platform bar on a club page, kept on a tournament page', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('a PHONE gets the app bottom bar, state-based for a signed-out visitor', async ({ page }) => {
-    await page.goto(ORG, { waitUntil: 'networkidle' });
-    const bar = page.getByRole('navigation', { name: 'Primary' });
-    await expect(bar).toBeVisible();
-    // Browsable tabs only — Chat and Account are sign-in walls, collapsed into one door.
-    await expect(bar.getByRole('link', { name: /Home/i })).toBeVisible();
-    await expect(bar.getByRole('link', { name: /Scores/i })).toBeVisible();
-    await expect(bar.getByRole('link', { name: /Sign In/i })).toBeVisible();
-    await expect(bar.getByRole('link', { name: /^Account$/i })).toHaveCount(0);
-    await expect(bar.getByRole('link', { name: /^Chat$/i })).toHaveCount(0);
-  });
+  for (const path of [ORG, `${ORG}/league`, CLUB_ORG]) {
+    test(`${path}: no platform bottom bar; Sign in is in the club's bar`, async ({ page }) => {
+      await page.goto(path, { waitUntil: 'networkidle' });
+      await expect(page.getByRole('navigation', { name: 'Primary' })).toHaveCount(0);
+      const bar = page.locator('[data-club-bar]');
+      await expect(bar.getByRole('link', { name: /^Sign in$/ })).toBeVisible();
+      await expect(bar.getByRole('link', { name: /^Account$/i })).toHaveCount(0);
+    });
+  }
 
-  test('the bar reaches the org\'s deeper public sections too', async ({ page }) => {
-    await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
+  test('the carve-out: a tournament page keeps the platform bar', async ({ page }) => {
+    await page.goto(TOURNAMENT, { waitUntil: 'networkidle' });
     await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible();
   });
 
@@ -229,19 +239,17 @@ test.describe('D1 — desktop is deliberately untouched (no platform strip on a 
 });
 
 test.describe('Stage F — the org section tabs', () => {
-  test('a club with sections gets a tab row, and the crumb steps aside', async ({ page }) => {
+  test('a club with sections gets a tab row, in its own bar', async ({ page }) => {
     await page.goto(ORG, { waitUntil: 'networkidle' });
-    const tabs = page.getByRole('navigation', { name: 'Sections' });
+    const tabs = page.locator('[data-club-bar]').getByRole('navigation', { name: 'Sections' });
     await expect(tabs).toBeVisible();
     await expect(tabs.getByRole('link', { name: 'Home' })).toBeVisible();
-    // One wayfinding device per page: where the row renders, the Stage E crumb is hidden.
-    await expect(page.locator('nav').getByText('›', { exact: true })).toBeHidden();
   });
 
   test('the active tab follows the section, at any depth', async ({ page }) => {
     await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
     const tabs = page.getByRole('navigation', { name: 'Sections' });
-    await expect(tabs.getByRole('link', { name: 'League' })).toHaveAttribute('aria-current', 'page');
+    await expect(tabs.getByRole('link', { name: 'House league' })).toHaveAttribute('aria-current', 'page');
     await expect(tabs.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current', 'page');
   });
 
@@ -335,20 +343,20 @@ test.describe('R3 + R5 — the marketing bar joins the system (top-nav audit D3/
   });
 });
 
-test.describe('R6 — League pages share the column their own tab row aligns to (audit D5)', () => {
+test.describe('R6 — League pages share the column their own bar aligns to (audit D5)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  // The Stage F tab row wears the shared 1200px `.container` SPECIFICALLY to match the identity
-  // row above it. These pages centred their own 560-800px columns on the raw viewport instead —
-  // measured 244-304px of left-edge stagger between the navigation and the content it navigates.
+  // The club's bar centres its content at 1,200 px (4b-1; the tabs sit in the bar beside the name at a desk), so the
+  // club's identity — its logo — is what the page's content lines up under. These pages once centred their own
+  // 560-800px columns on the raw viewport — measured 244-304px of left-edge stagger.
   for (const [label, path] of [
     ['League index', `${ORG}/league`],
   ] as const) {
-    test(`${label}: the tab row and the first heading share a left edge`, async ({ page }) => {
+    test(`${label}: the club's bar and the first heading share a left edge`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'networkidle' });
       await page.waitForTimeout(600);
       const m = await page.evaluate(() => {
-        const tabs = document.querySelector('nav[aria-label="Sections"] a');
+        const tabs = document.querySelector('[data-club-bar] a');
         const heading = document.querySelector('main h1, h1');
         return {
           tabLeft: tabs ? Math.round(tabs.getBoundingClientRect().left) : null,
@@ -389,19 +397,14 @@ test.describe('T1 — one nav-label spec and one pill height across the bars', (
     expect(t.pill).toBe(t.iconDoor);
   });
 
-  test('marketing and the org identity row now render the SAME nav label', async ({ page }) => {
-    const specOf = async (selector: string) => {
-      const el = page.locator(selector).first();
-      return el.evaluate(n => {
-        const cs = getComputedStyle(n);
-        return `${cs.fontSize}/${cs.fontWeight}/${cs.letterSpacing}`;
-      });
-    };
+  // (The org identity row's half of this test retired with that row in Club Tier Stage 4b-1: a club's bar is the
+  // club's, in its own type — the drawings' 14/600 — not the platform's nav label.)
+  test('marketing renders the ratified nav label', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    const marketing = await specOf('nav a[href="/pricing"]');
-    await page.goto(ORG, { waitUntil: 'networkidle' });
-    const orgRow = await specOf('nav a[href="/pricing"]');
+    const marketing = await page.locator('nav a[href="/pricing"]').first().evaluate(n => {
+      const cs = getComputedStyle(n);
+      return `${cs.fontSize}/${cs.fontWeight}/${cs.letterSpacing}`;
+    });
     expect(marketing, 'marketing nav label').toBe('12.48px/600/0.3744px');
-    expect(orgRow, 'org identity row nav label').toBe(marketing);
   });
 });

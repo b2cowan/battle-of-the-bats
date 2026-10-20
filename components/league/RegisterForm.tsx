@@ -5,6 +5,7 @@ import { CheckCircle } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { possessive, registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
+import formKit from '@/components/public/ClubForm.module.css';
 
 export interface DivisionWithCount {
   id: string;
@@ -160,16 +161,16 @@ export default function RegisterForm({
 
   if (success) {
     return (
-      <div className={styles.successPanel}>
-        <div className={styles.successIcon}>
+      <div className={formKit.successPanel}>
+        <div className={formKit.successIcon}>
           <CheckCircle size={28} />
         </div>
-        <h2 className={styles.successTitle}>
-          {success.status === 'active'         && 'Registration Approved!'}
-          {success.status === 'pending_review'  && 'Registration Received'}
-          {success.status === 'waitlisted'      && "You're on the Waitlist"}
+        <h2 className={formKit.successTitle}>
+          {success.status === 'active'         && 'Registration approved'}
+          {success.status === 'pending_review'  && 'Registration received'}
+          {success.status === 'waitlisted'      && "You're on the waitlist"}
         </h2>
-        <p className={styles.successBody}>
+        <p className={formKit.successBody}>
           {success.status === 'active' && (
             <>
               <strong>{possessive(success.playerName)}</strong> registration for{' '}
@@ -193,8 +194,8 @@ export default function RegisterForm({
             </>
           )}
         </p>
-        <div className={styles.refBox}>
-          Reference: <span className={styles.refCode}>{registrationReference(success.id)}</span>
+        <div className={formKit.refBox}>
+          Reference: <span className={formKit.refCode}>{registrationReference(success.id)}</span>
         </div>
         <p className={styles.successStatusLink}>
           <a href={`/${orgSlug}/league/${seasonSlug}/status`}>
@@ -222,13 +223,13 @@ export default function RegisterForm({
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} noValidate>
+    <form className={formKit.form} onSubmit={handleSubmit} noValidate>
 
       {/* ── Section 1: Division ──────────────────────────────────────────── */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Division</h2>
+      <div className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>Division</h2>
         {divisions.length === 0 ? (
-          <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 }}>
             No divisions are available for this season.
           </p>
         ) : singleDivision ? (
@@ -278,58 +279,58 @@ export default function RegisterForm({
                 );
               })}
             </div>
-            {errors.divisionId && <p className={styles.errorMsg}>{errors.divisionId}</p>}
+            {errors.divisionId && <p className={formKit.errorMsg}>{errors.divisionId}</p>}
           </>
         )}
       </div>
 
       {/* ── Section 2: Player Information ───────────────────────────────── */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Player Information</h2>
-        <div className={styles.fieldRow}>
+      <div className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>Player information</h2>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>
-              First Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              First name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.playerFirstName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.playerFirstName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.playerFirstName}
               onChange={set('playerFirstName')}
               maxLength={80}
               autoComplete="given-name"
             />
-            {errors.playerFirstName && <p className={styles.errorMsg}>{errors.playerFirstName}</p>}
+            {errors.playerFirstName && <p className={formKit.errorMsg}>{errors.playerFirstName}</p>}
           </div>
           <div>
-            <label className={styles.label}>
-              Last Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              Last name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.playerLastName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.playerLastName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.playerLastName}
               onChange={set('playerLastName')}
               maxLength={80}
               autoComplete="family-name"
             />
-            {errors.playerLastName && <p className={styles.errorMsg}>{errors.playerLastName}</p>}
+            {errors.playerLastName && <p className={formKit.errorMsg}>{errors.playerLastName}</p>}
           </div>
         </div>
-        <div className={styles.fieldRow}>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>Date of Birth</label>
+            <label className={formKit.label}>Date of birth</label>
             <input
-              className={styles.input}
+              className={formKit.input}
               type="date"
               value={form.playerDateOfBirth}
               onChange={set('playerDateOfBirth')}
             />
           </div>
           <div>
-            <label className={styles.label}>Jersey Number Preference</label>
+            <label className={formKit.label}>Jersey number preference</label>
             <input
-              className={styles.input}
+              className={formKit.input}
               type="text"
               value={form.playerJerseyPref}
               onChange={set('playerJerseyPref')}
@@ -338,10 +339,10 @@ export default function RegisterForm({
             />
           </div>
         </div>
-        <div className={styles.field}>
-          <label className={styles.label}>Position Preference</label>
+        <div className={formKit.field}>
+          <label className={formKit.label}>Position preference</label>
           <input
-            className={styles.input}
+            className={formKit.input}
             type="text"
             value={form.playerPositionPref}
             onChange={set('playerPositionPref')}
@@ -349,72 +350,72 @@ export default function RegisterForm({
             placeholder="e.g. Pitcher, Catcher, Shortstop"
           />
         </div>
-        <div className={styles.field}>
-          <label className={styles.label}>Additional Notes</label>
+        <div className={formKit.field}>
+          <label className={formKit.label}>Additional notes</label>
           <textarea
-            className={styles.textarea}
+            className={formKit.textarea}
             value={form.playerNotes}
             onChange={set('playerNotes')}
             maxLength={500}
             rows={3}
             placeholder="Medical notes, experience level, special requests…"
           />
-          <p className={styles.hint}>Optional. Max 500 characters.</p>
+          <p className={formKit.hint}>Optional. Max 500 characters.</p>
         </div>
       </div>
 
       {/* ── Section 3: Guardian Information ─────────────────────────────── */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Parent / Guardian Information</h2>
-        <div className={styles.fieldRow}>
+      <div className={formKit.section}>
+        <h2 className={formKit.sectionTitle}>Parent or guardian information</h2>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>
-              First Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              First name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.guardianFirstName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.guardianFirstName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.guardianFirstName}
               onChange={set('guardianFirstName')}
               maxLength={80}
               autoComplete="given-name"
             />
-            {errors.guardianFirstName && <p className={styles.errorMsg}>{errors.guardianFirstName}</p>}
+            {errors.guardianFirstName && <p className={formKit.errorMsg}>{errors.guardianFirstName}</p>}
           </div>
           <div>
-            <label className={styles.label}>
-              Last Name <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              Last name <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.guardianLastName ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.guardianLastName ? ` ${formKit.inputError}` : ''}`}
               type="text"
               value={form.guardianLastName}
               onChange={set('guardianLastName')}
               maxLength={80}
               autoComplete="family-name"
             />
-            {errors.guardianLastName && <p className={styles.errorMsg}>{errors.guardianLastName}</p>}
+            {errors.guardianLastName && <p className={formKit.errorMsg}>{errors.guardianLastName}</p>}
           </div>
         </div>
-        <div className={styles.fieldRow}>
+        <div className={formKit.fieldRow}>
           <div>
-            <label className={styles.label}>
-              Email Address <span className={styles.required}>*</span>
+            <label className={formKit.label}>
+              Email address <span className={formKit.required}>*</span>
             </label>
             <input
-              className={`${styles.input}${errors.guardianEmail ? ` ${styles.inputError}` : ''}`}
+              className={`${formKit.input}${errors.guardianEmail ? ` ${formKit.inputError}` : ''}`}
               type="email"
               value={form.guardianEmail}
               onChange={set('guardianEmail')}
               maxLength={200}
               autoComplete="email"
             />
-            {errors.guardianEmail && <p className={styles.errorMsg}>{errors.guardianEmail}</p>}
+            {errors.guardianEmail && <p className={formKit.errorMsg}>{errors.guardianEmail}</p>}
           </div>
           <div>
-            <label className={styles.label}>Phone Number</label>
+            <label className={formKit.label}>Phone number</label>
             <input
-              className={styles.input}
+              className={formKit.input}
               type="tel"
               value={form.guardianPhone}
               onChange={set('guardianPhone')}
@@ -428,8 +429,8 @@ export default function RegisterForm({
 
       {/* ── Section 4: Waiver (conditional) ─────────────────────────────── */}
       {waiverText && (
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Waiver &amp; Agreement</h2>
+        <div className={formKit.section}>
+          <h2 className={formKit.sectionTitle}>Waiver and agreement</h2>
           <div className={styles.waiverBox}>{waiverText}</div>
           <div className={styles.checkRow}>
             <input
@@ -443,7 +444,7 @@ export default function RegisterForm({
             </label>
           </div>
           {errors.waiverAccepted && (
-            <p className={styles.errorMsg} style={{ marginTop: '0.5rem' }}>
+            <p className={formKit.errorMsg} style={{ marginTop: '0.5rem' }}>
               {errors.waiverAccepted}
             </p>
           )}
@@ -457,9 +458,9 @@ export default function RegisterForm({
             Registration fee: <strong>${registrationFee.toFixed(2)}</strong> — payable separately to {orgName}.
           </p>
         )}
-        {globalError && <div className={styles.globalError}>{globalError}</div>}
-        <button type="submit" className={styles.submitBtn} disabled={submitting}>
-          {submitting ? 'Submitting…' : 'Submit Registration'}
+        {globalError && <div className={formKit.globalError}>{globalError}</div>}
+        <button type="submit" className={formKit.submitBtn} disabled={submitting}>
+          {submitting ? 'Submitting…' : 'Submit registration'}
         </button>
       </div>
 

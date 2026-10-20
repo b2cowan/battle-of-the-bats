@@ -1,9 +1,25 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { getArchivesByOrg } from '@/lib/db';
 import { requirePublicClubPage } from '@/lib/public-club-page';
-import { getAuthContextWithScope } from '@/lib/api-auth';
-import { isFreePlan } from '@/lib/plan-config';
-import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
+import { clubPageMetadata } from '@/lib/club-page-meta';
+import kit from '@/components/public/ClubKit.module.css';
+import styles from './archives.module.css';
+
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
+  const { orgSlug } = await params;
+  return clubPageMetadata(orgSlug, () => 'Past tournaments');
+}
+
+// The whole row is the link, so each cell's link fills it and stays a 44px tap target on a phone.
+const cellLink = {
+  color: 'inherit',
+  textDecoration: 'none',
+  display: 'block',
+  padding: '0.75rem 1.5rem 0.75rem 0',
+  minHeight: '44px',
+  boxSizing: 'border-box',
+} as const;
 
 export default async function ArchivesPage({
   params,
@@ -14,202 +30,108 @@ export default async function ArchivesPage({
   // The one rule (Club Tier Stage 4a, lib/public-club-access.ts).
   const org = await requirePublicClubPage(orgSlug, 'archives');
 
-  const [archives, ctx] = await Promise.all([
-    getArchivesByOrg(org.id),
-    getAuthContextWithScope().catch(() => null),
-  ]);
-  const isAdmin = ctx?.org?.id === org.id;
+  const archives = await getArchivesByOrg(org.id);
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        padding: 'calc(var(--nav-height) + 2rem) 2rem 2rem',
-        fontFamily: 'var(--font-data, "IBM Plex Mono", monospace)',
-      }}
-    >
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+    // The pages' own column (`.container`): the club's bar takes the same edge, so the heading sits under its logo.
+    <div className="container" style={{ paddingBlock: '2rem 5rem', fontFamily: 'var(--club-text-face)', color: 'var(--club-text)' }}>
+      <div style={{ maxWidth: '1100px' }}>
 
         {/* Page header */}
         <div
           style={{
-            borderBottom: '1px solid var(--blueprint-blue)',
+            borderBottom: '1px solid var(--club-line)',
             paddingBottom: '1.25rem',
             marginBottom: '2rem',
           }}
         >
-          <div className="hud-label" style={{ marginBottom: '0.375rem' }}>
-            Tournament Archives // {org.name}
-          </div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-sans, Inter, sans-serif)',
-              fontWeight: 800,
-              fontSize: '1.875rem',
-              textTransform: 'uppercase',
-              letterSpacing: '-0.02em',
-              color: 'var(--fl-text)',
-              margin: 0,
-            }}
-          >
-            Digital Ledger
+          <h1 className={kit.title} style={{ margin: 0 }}>
+            Past tournaments
           </h1>
-          <div
-            style={{
-              fontFamily: 'var(--font-data, "IBM Plex Mono", monospace)',
-              fontSize: '0.75rem',
-              color: 'var(--data-gray)',
-              marginTop: '0.375rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1.5rem',
-            }}
-          >
-            <span>{archives.length} SEALED RECORD{archives.length !== 1 ? 'S' : ''} · READ-ONLY</span>
-            {isAdmin && (
-              <Link
-                href={`/${orgSlug}/admin/tournaments/manage`}
-                style={{
-                  fontSize: '0.625rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--data-gray)',
-                  textDecoration: 'none',
-                }}
-              >
-                Admin →
-              </Link>
-            )}
+          <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)', marginTop: '0.375rem' }}>
+            Tournaments {org.name} has hosted
           </div>
         </div>
 
-        {/* Ledger table */}
         {archives.length === 0 ? (
-          <div
-            style={{
-              border: '1px solid rgba(30,58,138,0.3)',
-              padding: '3rem',
-              textAlign: 'center',
-              color: 'var(--data-gray)',
-              fontSize: '0.75rem',
-              letterSpacing: '0.08em',
-            }}
-          >
-            NO SEALED RECORDS. ARCHIVES APPEAR HERE AFTER A TOURNAMENT IS SEALED.
+          <div className={kit.empty}>
+            No past tournaments yet.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <>
+          {/* A phone: one stacked row per tournament, nothing scrolled sideways. */}
+          <ul className={styles.stack}>
+            {archives.map(a => {
+              const facts = [
+                a.totalTeams != null ? `${a.totalTeams} ${a.totalTeams === 1 ? 'team' : 'teams'}` : null,
+                a.totalGames != null ? `${a.totalGames} ${a.totalGames === 1 ? 'game' : 'games'}` : null,
+              ].filter(Boolean);
+              const where = [a.season, a.division].filter(Boolean);
+              return (
+                <li key={a.id} className={styles.stackRow}>
+                  <Link href={`/${orgSlug}/archives/${a.id}`} className={styles.stackLink}>
+                    <span className={styles.stackName}>{a.tournamentName}</span>
+                    {where.length > 0 && <span className={styles.stackLine}>{where.join(' · ')}</span>}
+                    {a.winnerTeamName && (
+                      <span className={styles.stackLine}>
+                        Champion: <span className={styles.stackChampion}>{a.winnerTeamName}</span>
+                      </span>
+                    )}
+                    {facts.length > 0 && <span className={styles.stackLine}>{facts.join(' · ')}</span>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <div className={styles.tableWrap} style={{ overflowX: 'auto' }}>
             <table
               style={{
                 width: '100%',
                 borderCollapse: 'collapse',
-                fontSize: '0.8125rem',
+                fontSize: '0.875rem',
               }}
             >
               <thead>
-                <tr
-                  style={{
-                    borderBottom: '1px solid var(--blueprint-blue)',
-                    color: 'var(--blueprint-light)',
-                    fontSize: '0.625rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                  }}
-                >
-                  <th style={{ textAlign: 'left', paddingBottom: '0.625rem', paddingRight: '1.5rem' }}>Season</th>
-                  <th style={{ textAlign: 'left', paddingBottom: '0.625rem', paddingRight: '1.5rem' }}>Tournament</th>
-                  <th style={{ textAlign: 'left', paddingBottom: '0.625rem', paddingRight: '1.5rem' }}>Division</th>
-                  <th style={{ textAlign: 'left', paddingBottom: '0.625rem', paddingRight: '1.5rem' }}>Champion</th>
-                  <th style={{ textAlign: 'right', paddingBottom: '0.625rem', paddingRight: '1.5rem' }}>Teams</th>
-                  <th style={{ textAlign: 'right', paddingBottom: '0.625rem', paddingRight: '1.5rem' }}>Games</th>
-                  <th style={{ textAlign: 'right', paddingBottom: '0.625rem' }}>Integrity</th>
+                <tr style={{ borderBottom: '1px solid var(--club-line-2)' }}>
+                  <th className={kit.band} style={{ textAlign: 'left', paddingRight: '1.5rem', paddingBottom: '0.625rem' }}>Season</th>
+                  <th className={kit.band} style={{ textAlign: 'left', paddingRight: '1.5rem', paddingBottom: '0.625rem' }}>Tournament</th>
+                  <th className={kit.band} style={{ textAlign: 'left', paddingRight: '1.5rem', paddingBottom: '0.625rem' }}>Division</th>
+                  <th className={kit.band} style={{ textAlign: 'left', paddingRight: '1.5rem', paddingBottom: '0.625rem' }}>Champion</th>
+                  <th className={kit.band} style={{ textAlign: 'right', paddingRight: '1.5rem', paddingBottom: '0.625rem' }}>Teams</th>
+                  <th className={kit.band} style={{ textAlign: 'right', paddingBottom: '0.625rem' }}>Games</th>
                 </tr>
               </thead>
               <tbody>
-                {archives.map((a, i) => (
-                  <tr
-                    key={a.id}
-                    style={{
-                      borderBottom: '1px solid rgba(30,58,138,0.2)',
-                      background: i % 2 !== 0 ? 'rgba(17,24,39,0.3)' : 'transparent',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--data-gray)' }}>
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
-                      >
+                {archives.map(a => (
+                  <tr key={a.id} style={{ borderBottom: '1px solid var(--club-line)' }}>
+                    <td style={{ color: 'var(--club-soft)' }}>
+                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
                         {a.season}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--fl-text)' }}>
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
-                      >
+                    <td style={{ color: 'var(--club-text)' }}>
+                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
                         {a.tournamentName}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--data-gray)' }}>
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
-                      >
+                    <td style={{ color: 'var(--club-soft)' }}>
+                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
                         {a.division ?? '—'}
                       </Link>
                     </td>
-                    <td
-                      style={{
-                        padding: '0.75rem 1.5rem 0.75rem 0',
-                        color: 'var(--logic-lime)',
-                        fontWeight: 700,
-                      }}
-                    >
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
-                      >
+                    <td style={{ color: 'var(--club-text)', fontWeight: 700 }}>
+                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
                         {a.winnerTeamName ?? '—'}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', textAlign: 'right', color: 'var(--data-gray)' }}>
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
-                      >
+                    <td style={{ textAlign: 'right', color: 'var(--club-soft)' }}>
+                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
                         {a.totalTeams ?? '—'}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', textAlign: 'right', color: 'var(--data-gray)' }}>
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
-                      >
+                    <td style={{ textAlign: 'right', color: 'var(--club-soft)' }}>
+                      <Link href={`/${orgSlug}/archives/${a.id}`} style={{ ...cellLink, paddingRight: 0 }}>
                         {a.totalGames ?? '—'}
-                      </Link>
-                    </td>
-                    <td style={{ padding: '0.75rem 0', textAlign: 'right' }}>
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        style={{ textDecoration: 'none', display: 'block' }}
-                      >
-                        {a.integrityHash ? (
-                          <span
-                            style={{
-                              fontSize: '0.625rem',
-                              border: '1px solid rgba(217,249,157,0.4)',
-                              color: 'var(--logic-lime)',
-                              padding: '0.125rem 0.375rem',
-                              letterSpacing: '0.06em',
-                            }}
-                          >
-                            VERIFIED
-                          </span>
-                        ) : (
-                          <span style={{ color: 'rgba(148,163,184,0.3)', fontSize: '0.75rem' }}>—</span>
-                        )}
                       </Link>
                     </td>
                   </tr>
@@ -217,27 +139,8 @@ export default async function ArchivesPage({
               </tbody>
             </table>
           </div>
+          </>
         )}
-
-        {/* Back to org */}
-        <div style={{ marginTop: '3rem', borderTop: '1px solid rgba(30,58,138,0.2)', paddingTop: '1.5rem' }}>
-          <Link
-            href={`/${orgSlug}`}
-            style={{
-              fontSize: '0.625rem',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'var(--data-gray)',
-              textDecoration: 'none',
-            }}
-          >
-            ← {org.name}
-          </Link>
-        </div>
-
-        {/* Nav Unification Stage E.5 — the ratified-subtle paid-tier credit, same component and
-            same plan gate as the org home and event pages. */}
-        {!isFreePlan(org.planId) && <BuiltOnCredit />}
       </div>
     </div>
   );

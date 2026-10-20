@@ -58,71 +58,6 @@
   min-width: 0;
 }
 
-/* ── Org-page identity row (Nav Unification Stage E.3) ──
-   At depth the identity block stops being ONE link: the org name/logo self-links to the org root
-   while the crumb names the section, so `.logo` became a plain row and this carries the link. On
-   the tournament branch `.logo` is still the <Link> itself, which is why this is additive. */
-/* Deliberately NOT `composes: logo` — `.logo` carries `flex: 1 1 0` (its equal-share role as a
-   direct child of `.inner`), which is wrong for a child that should size to its content beside the
-   crumb. The four shared layout lines are restated rather than inherited for that reason. */
-.logoLink {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-  text-decoration: none;
-  color: inherit;
-}
-
-.crumbSep {
-  /* Retires with the crumb it separates (see .crumb). */
-  display: var(--org-crumb-display, inline);
-  flex-shrink: 0;
-  font-size: 1.1rem;
-  line-height: 1;
-  color: var(--white-30);
-}
-
-/* Deliberately quieter than the org name and in the utility row's mono voice: the crumb is
-   orientation, not a second title competing with the club's own name.
-
-   `flex-shrink: 0` with no truncation rule, on purpose: the vocabulary is a closed set of three
-   short section words (see lib/org-public-sections), so the crumb can never be what overflows —
-   a long ORG name is, and that clamps in .orgName as it already did. Naming entities here instead
-   would have needed the ellipsis machinery this deliberately does without. */
-.crumb {
-  /* Stage F: where the section TAB ROW renders, the crumb retires — the two answer the same
-     question and the row answers it better. The org layout sets --org-crumb-display: none when it
-     mounts the tabs, so the two can never both paint; everywhere else the var is unset and this
-     falls back to showing. A CSS handshake rather than nav-context plumbing, deliberately: the
-     org identity channel is the one that blanked an org's name and logo earlier in this project. */
-  display: var(--org-crumb-display, inline-flex);
-  align-items: center;
-  flex-shrink: 0;
-  font-family: var(--font-data, monospace);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-70);
-  white-space: nowrap;
-}
-
-/* The operator's return flip fades in once identity resolves client-side, so the door doesn't pop
-   in hard after hydration. Placement is the actions cluster's; sizing is FlipPill's own. */
-.orgFlip {
-  animation: navFadeIn 0.18s ease both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .orgFlip { animation: none; }
-}
-
-@keyframes navFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
 .logoImg {
   width: 44px;
   height: 44px;
@@ -222,61 +157,6 @@
 /* ── Org-home action cluster (Desktop Public UX Phase 1, WI-6) ──
    Quiet links + one bordered door, in the org's own token vocabulary so per-org
    theming (and light mode's --white remap) carries through untouched. */
-/* T1 (2026-08-01): size + tracking come from the shared nav-label tokens, and the pills
-   from --nav-pill-h. This row was the outlier at 11.52px/0.06em with 32px pills. */
-.actionLink {
-  font-family: var(--font-data, monospace);
-  font-size: var(--nav-label-size);
-  font-weight: var(--nav-label-weight);
-  letter-spacing: var(--nav-label-tracking);
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--white-45);
-  white-space: nowrap;
-  transition: color 0.2s ease;
-}
-.actionLink:hover { color: var(--white); }
-.actionCta {
-  font-family: var(--font-data, monospace);
-  font-size: var(--nav-label-size);
-  /* 700 = the deliberate emphasis step for a pill (see the token block in globals.css). */
-  font-weight: 700;
-  letter-spacing: var(--nav-label-tracking);
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--white);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--nav-pill-h);
-  padding: 0 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  transition: border-color 0.2s ease, color 0.2s ease;
-}
-.actionCta:hover {
-  border-color: rgba(var(--primary-rgb), 0.6);
-  color: var(--primary-light);
-}
-.actionPill {
-  font-family: var(--font-data, monospace);
-  font-size: var(--nav-label-size);
-  font-weight: 700;
-  letter-spacing: var(--nav-label-tracking);
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--primary-light);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--nav-pill-h);
-  padding: 0 0.85rem;
-  border: 1px solid rgba(var(--primary-rgb), 0.45);
-  border-radius: 999px;
-  transition: border-color 0.2s ease;
-}
-.actionPill:hover { border-color: var(--primary-light); }
-
 .actions {
   display: flex;
   align-items: center;
@@ -593,28 +473,6 @@
   .logo { flex: 1 1 auto; }
   .actions { flex: 0 0 auto; }
   .orgName { max-width: none; }
-
-  /* ── D1 follow-through: the phone row sheds its utility links ──
-     On an org public page the bar below carries Home · Scores · Chat · Account (and Sign In when
-     signed out). At 390px four utility links up here squeezed the club's own name off the screen
-     entirely, so the row sheds them — but the two reasons differ and the wording used to blur
-     them (trued up 2026-08-01, top-nav audit D6 / BUSINESS_DECISIONS "Acquisition chrome is for
-     PROSPECTS"):
-
-       • Discover, Account and Sign In are genuinely PROVIDED by the bar below — dropping them
-         here removes a duplicate.
-       • Pricing is DELIBERATELY DROPPED. The bar has never carried it and no footer backstops it,
-         so a phone visitor on a customer's public page has no path to our pricing — and that is
-         the ruling, not a gap: a paying club's page is not our billboard (same boundary as the
-         org-branding and phone-frame rulings). Acquisition on public surfaces stays where it
-         already lives — free-tier event pages carry the banner + powered-by credit.
-
-     What survives is exactly what the bottom bar does NOT have: the operator's door (the ⇄ flip or
-     the Workspaces pill). The class is only applied where that bar actually renders, so operator
-     routes that keep this nav without a bottom bar are untouched. */
-  .actionsWithBottomBar .actionLink,
-  .actionsWithBottomBar .actionCta,
-  .actionsWithBottomBar .actionAccount { display: none; } /* the account menu's whole wrapper, not just its trigger */
 
   /* ── Unified event header takes over the tournament bar (G3) ── */
   .hasEventHead { height: auto; min-height: var(--nav-height); }

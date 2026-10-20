@@ -1,9 +1,8 @@
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getOrgPublicSiteContent } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { orgSectionsFor, type OrgSection } from '@/lib/org-public-sections';
-import type { Organization } from '@/lib/types';
+import type { Organization, OrgPublicSiteContent } from '@/lib/types';
 import { isPublicClubSiteOpen } from './public-club-access';
 
 /**
@@ -56,9 +55,14 @@ async function anyArchive(orgId: string): Promise<boolean> {
  *
  * Gated on the public-site module (League/Club) per the /design ruling: on tournament tiers the only
  * possible entries are Home and Archives — a whole chrome layer for two words, on the tier whose
- * platform-plain org page is correct by design. Those tiers keep the Stage E crumb instead.
+ * platform-plain org page is correct by design. Those tiers get no tabs: the club's name in its bar is the way home.
  */
-export async function resolveOrgSections(org: Organization): Promise<OrgSection[]> {
+export async function resolveOrgSections(
+  org: Organization,
+  /** The club's site content, which the org layout reads for the club's bar and footer too (one read, two uses) —
+   *  passed as the read in flight, so it runs beside the two checks below rather than before them. */
+  siteContentRead: Promise<OrgPublicSiteContent | null>,
+): Promise<OrgSection[]> {
   // A club whose public site is closed (switch off, or cancelled) gets NO section row: every club page refuses
   // (Club Tier Stage 4a, lib/public-club-access.ts), so a row would advertise dead links.
   if (!isPublicClubSiteOpen(org)) return [];
@@ -69,11 +73,11 @@ export async function resolveOrgSections(org: Organization): Promise<OrgSection[
       ? anyLeagueSeasonPublished(org.id)
       : Promise.resolve(false),
     anyArchive(org.id),
-    // The org's own "show archives link" switch. Its home page already hides the Archives CTA when
-    // this is off, and a tab row contradicting the page it sits on is worse than no tab at all.
-    getOrgPublicSiteContent(org.id).catch(() => null),
+    siteContentRead,
   ]);
 
+  // The club's own "show past tournaments" switch: its home already hides that section when it is off, and a tab
+  // contradicting the page it sits on is worse than no tab at all.
   return orgSectionsFor({
     league,
     archives: archivesExist && siteContent?.showArchivesLink !== false,

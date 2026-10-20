@@ -15,11 +15,11 @@ import styles from './ClubNotFound.module.css';
  * Two faces, chosen by `clubNotFoundFace` from the address and the club's site state:
  *   · THE REFUSAL — a club page of a club whose site is off or that was cancelled. Neutral, the same words on every
  *     page, never saying which reason (a family has no use for "cancelled" versus "offline"); the club's name once, so
- *     they know they reached the right place. Drawn WITHOUT the club's bar: while it is on screen the club's top bar,
- *     section tabs and the phone bar step aside, and it wears the platform's system-screen ground (owner 2026-10-20,
- *     on a screenshot of the refusal inside the club's bar).
- *   · NOT FOUND INSIDE THE CLUB — a live club's page that does not exist. It stays in the club's site (today's chrome,
- *     which the layout already draws; 4b restyles it) with a way home.
+ *     they know they reached the right place. Drawn WITHOUT the club's bar or footer (the club's frame is not drawn for
+ *     a closed site — Stage 4b-1), on the platform's system-screen ground (owner 2026-10-20, on a screenshot of the
+ *     refusal inside the club's bar).
+ *   · NOT FOUND INSIDE THE CLUB — a live club's page that does not exist. It stays in the club's site (the club's frame —
+ *     its bar and footer, Stage 4b-1) with a way home.
  * Any other address under the org (a tournament, the signed-in tools) gets the platform's page, as it always had —
  * imported here rather than handed down as a server element, which would ride in every org page's payload.
  * Each face is a <div>: the root layout already owns the page's <main>.

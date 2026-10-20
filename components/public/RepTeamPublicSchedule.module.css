@@ -1,28 +1,18 @@
 /* The standing public team schedule (Chunk D 1.9).
-   Design tokens only — no literal colours. These surfaces render on the org's permanently
-   dark public pages, so they read the platform dark tokens directly rather than the warm
-   consumer set. */
+   Club Tier Stage 4b-1: it renders on the club's light frame, so it reads the club's own tokens (ClubFrame.module.css
+   `.site`) — never the platform's dark set, no typewriter face (DC-03), no tints (DC-02), type steps 12·14·16 (DC-05). */
 
 .section {
   margin-bottom: 2.5rem;
 }
 
-/* The Schedule heading's line (Club Tier 6d, B3): the kicker, and the Subscribe button at its right end. */
+/* The Schedule heading's line (Club Tier 6d, B3): the band (ClubKit), and the Subscribe button at its right end. */
 .kickRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   margin: 0 0 0.75rem;
-}
-
-.kicker {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--white-35);
-  margin: 0;
 }
 
 .list {
@@ -35,15 +25,16 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.7rem 0.25rem;
-  border-bottom: 1px solid var(--white-8);
+  border-bottom: 1px solid var(--club-line);
 }
 
 .row:last-child {
   border-bottom: none;
 }
 
+/* A finished game steps back; 0.75 keeps its small grey line above the 4.5:1 floor on the ground. */
 .rowDone {
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 .rowMain {
@@ -52,14 +43,13 @@
 }
 
 .rowTitle {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--white-85);
+  font: 600 14px var(--club-text-face);
+  color: var(--club-text);
 }
 
 .rowSub {
-  font-size: 0.78rem;
-  color: var(--white-45);
+  font: 400 12px var(--club-text-face);
+  color: var(--club-soft);
   margin-top: 0.12rem;
 }
 
@@ -69,36 +59,29 @@
 
 .score {
   font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: 0.95rem;
-  color: var(--white-85);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--club-text);
   white-space: nowrap;
 }
 
-.scoreWin  { color: var(--success); }
+.scoreWin  { color: var(--club-ok); }
 .scoreLoss { color: var(--danger); }
 
 .upNext {
-  border: 1px solid var(--white-10);
-  border-radius: 12px;
-  background: var(--white-5);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
   padding: 0.8rem 1rem;
   margin-bottom: 0.5rem;
 }
 
-.upNextLabel {
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--primary-light);
-  margin-bottom: 0.3rem;
-}
-
 .link {
-  color: var(--primary-light);
-  font-weight: 600;
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--club-ink);
+  font: 600 14px var(--club-text-face);
   text-decoration: none;
   white-space: nowrap;
 }

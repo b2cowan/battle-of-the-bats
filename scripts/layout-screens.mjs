@@ -1770,6 +1770,29 @@ export const SCREENS = [
   { id: 'mkt-demos',             session: 'anon', path: () => '/demos',                              ready: 'h1', widths: ['320'] },
   { id: 'mkt-walkthrough-coach', session: 'anon', path: () => '/for-coaches/walkthrough',            ready: 'h1', widths: ['320'] },
   { id: 'mkt-walkthrough-tourn', session: 'anon', path: () => '/for-tournament-organizers/walkthrough', ready: 'h1', widths: ['320'] },
+
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * A CLUB'S OWN PUBLIC SITE (Club Tier Stage 4b-1 — the club's frame: its bar, its footer, its light ground). Measured
+   * here so 4b-1 and every later Stage 4 part (4b-2 reshapes these same pages inside the frame) is held to the rules.
+   *
+   * `session: 'anon'` — a family reading the club's site, the case it is built for. The addresses are the club
+   * fixture's own fixed slugs (scripts/seed-club-fixture.mjs: ORG_SLUG `uat-rep-club`, team `15u-aaa`, whose tryouts are
+   * open), named literally because an anonymous entry resolves no admin context — so each names its `route` folder for
+   * `--changed` (a literal slug cannot be turned back into `[orgSlug]`). `uat-rep-club` hosts no finished tournament,
+   * so Past tournaments is read on `free-test-org`, the dev club the anonymous-public spec uses for it.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  { id: 'club-home',              session: 'anon', path: () => '/uat-rep-club',                         ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/page' },
+  { id: 'club-team',              session: 'anon', path: () => '/uat-rep-club/teams/15u-aaa',            ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/teams/[teamSlug]/page' },
+  { id: 'club-tryout',            session: 'anon', path: () => '/uat-rep-club/teams/15u-aaa/tryouts',    ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
+  { id: 'club-house-league',      session: 'anon', path: () => '/uat-rep-club/league',                   ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/league' },
+  { id: 'club-past-tournaments',  session: 'anon', path: () => '/free-test-org/archives',                ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/archives' },
 ];
 
 /**

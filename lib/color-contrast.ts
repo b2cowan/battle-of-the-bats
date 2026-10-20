@@ -34,6 +34,13 @@ export function relativeLuminance(hex: string): number {
   );
 }
 
+/** WCAG contrast ratio between two `#rrggbb` colours (1 to 21, order-independent). */
+export function contrastRatio(a: string, b: string): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
 /**
  * HSL → normalized 0–1 sRGB channels (h, s, l all 0–1). Same standard conversion
  * lib/team-color.ts used inline; extracted so the luminance formula has one home.

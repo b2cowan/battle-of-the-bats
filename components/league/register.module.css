@@ -1,94 +1,7 @@
-/* ── Form container ───────────────────────────────────────────────────────── */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* ── Sections ─────────────────────────────────────────────────────────────── */
-.section {
-  padding: 1.25rem 1.5rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-}
-
-.sectionTitle {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.4);
-  margin: 0 0 1rem;
-}
-
-/* ── Grid rows ────────────────────────────────────────────────────────────── */
-.fieldRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem 1rem;
-  margin-bottom: 0.85rem;
-}
-.fieldRow:last-child { margin-bottom: 0; }
-
-@media (max-width: 480px) {
-  .fieldRow { grid-template-columns: 1fr; }
-}
-
-.field {
-  margin-bottom: 0.85rem;
-}
-.field:last-child { margin-bottom: 0; }
-
-/* ── Labels + inputs ──────────────────────────────────────────────────────── */
-.label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.6);
-  margin-bottom: 0.35rem;
-}
-
-.required {
-  color: var(--danger-light);
-  margin-left: 0.1em;
-}
-
-.input,
-.textarea {
-  width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  color: var(--white-90);
-  font-size: 0.9rem;
-  box-sizing: border-box;
-  transition: border-color 0.15s;
-  font-family: inherit;
-}
-.input:focus,
-.textarea:focus {
-  outline: none;
-  border-color: var(--logic-lime);
-}
-.inputError { border-color: var(--danger-light) !important; }
-.textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.errorMsg {
-  font-size: 0.78rem;
-  color: var(--danger-light);
-  margin: 0.25rem 0 0;
-}
-
-.hint {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
-  margin: 0.25rem 0 0;
-}
+/* The house league's registration form's own pieces (Club Tier Stage 4b-1): the division list, the waiver and the fee
+   note. Everything the two sign-up forms share — sections, fields, inputs, the submit button, the success panel and its
+   reference code — is in components/public/ClubForm.module.css; the club's tokens come from the frame
+   (components/public/ClubFrame.module.css). Type steps only (12 · 14 · 16 · 20 px). */
 
 /* ── Division option cards ────────────────────────────────────────────────── */
 .divisionList {
@@ -101,21 +14,19 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-height: 44px;
   padding: 0.85rem 1rem;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--club-field);
+  background: var(--club-card);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
   user-select: none;
 }
-.divisionOption:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.3);
-  background: rgba(var(--logic-lime-rgb), 0.03);
-}
+/* The chosen division reads by a heavier border in the club's ink, never by a wash (DC-02); the padding gives back the
+   extra pixel so the card does not move. */
 .divisionOptionSelected {
-  border-color: var(--logic-lime) !important;
-  background: rgba(var(--logic-lime-rgb), 0.06) !important;
+  border: 2px solid var(--club-ink) !important;
+  padding: calc(0.85rem - 1px) calc(1rem - 1px);
 }
 
 .divisionOptionLeft {
@@ -126,35 +37,32 @@
 }
 
 .divisionRadio {
-  width: 17px;
-  height: 17px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-  accent-color: var(--logic-lime);
+  accent-color: var(--club-fill);
   cursor: pointer;
 }
 
 .divisionOptionName {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.85);
+  font: 600 1rem var(--club-text-face);
+  color: var(--club-text);
 }
 
 .divisionCapacity {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
+  font-size: 0.875rem;
+  color: var(--club-soft);
   margin-top: 0.1rem;
 }
 
+/* The waitlist badge is a neutral status chip (DC-04). */
 .divisionWaitlistBadge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  background: rgba(251,191,36,0.12);
-  color: var(--warning-light);
-  border: 1px solid rgba(251,191,36,0.25);
+  font: 600 0.75rem/1 var(--club-text-face);
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: var(--club-ground);
+  color: var(--club-soft);
+  border: 1px solid var(--club-line-2);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -165,135 +73,68 @@
   overflow-y: auto;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.6);
-  line-height: 1.6;
+  background: var(--club-ground);
+  border: 1px solid var(--club-line);
+  font: 400 0.875rem/1.6 var(--club-text-face);
+  color: var(--club-soft);
   margin-bottom: 0.85rem;
   white-space: pre-wrap;
-  font-family: var(--font-sans, Inter, sans-serif);
 }
 
 .checkRow {
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
+  min-height: 44px;
 }
+/* The platform's branded checkbox is lime on a dark ground (globals.css); on the club's ground it is a 22px box with a
+   2px field border that fills with the club's colour when ticked. */
 .checkRow input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   margin-top: 0.1rem;
-  accent-color: var(--logic-lime);
+  border: 2px solid var(--club-field);
+  border-radius: 4px;
+  background: var(--club-card);
   cursor: pointer;
+}
+.checkRow input[type='checkbox']::before {
+  width: 6px;
+  height: 11px;
+  border-color: var(--club-on-fill);
+}
+.checkRow input[type='checkbox']:checked {
+  background: var(--club-fill);
+  border-color: var(--club-edge);
+}
+.checkRow input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--club-ink);
 }
 .checkRow label {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.7);
-  line-height: 1.45;
+  font: 400 0.875rem/1.45 var(--club-text-face);
+  color: var(--club-text);
   cursor: pointer;
+  padding-top: 0.2rem;
 }
-
-/* ── Global error ─────────────────────────────────────────────────────────── */
-.globalError {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background: rgba(248,113,113,0.1);
-  border: 1px solid rgba(248,113,113,0.3);
-  color: var(--danger-light);
-  font-size: 0.85rem;
-  margin-bottom: 0.85rem;
-}
-
-/* ── Submit button ────────────────────────────────────────────────────────── */
-.submitBtn {
-  width: 100%;
-  padding: 0.9rem;
-  font-size: 1rem;
-  font-weight: 700;
-  background: var(--logic-lime);
-  color: var(--pitch-black);
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
-  font-family: var(--font-display, sans-serif);
-  letter-spacing: 0.01em;
-}
-.submitBtn:hover:not(:disabled) { opacity: 0.9; }
-.submitBtn:active:not(:disabled) { transform: scale(0.99); }
-.submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Fee note ─────────────────────────────────────────────────────────────── */
 .feeNote {
   text-align: center;
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.875rem;
+  color: var(--club-soft);
   margin-bottom: 0.85rem;
 }
-.feeNote strong { color: rgba(255,255,255,0.8); }
-
-/* ── Success panel ────────────────────────────────────────────────────────── */
-.successPanel {
-  text-align: center;
-  padding: 3rem 2rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.02);
-}
-
-.successIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  color: var(--logic-lime);
-}
-
-.successTitle {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--white-90);
-  margin: 0 0 0.6rem;
-  font-family: var(--font-display, sans-serif);
-}
-
-.successBody {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.6);
-  line-height: 1.65;
-  max-width: 440px;
-  margin: 0 auto 1.5rem;
-}
-
-.refBox {
-  display: inline-block;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.5);
-}
-.refCode {
-  font-weight: 700;
-  color: rgba(255,255,255,0.85);
-  letter-spacing: 0.12em;
-  font-family: var(--font-data, 'IBM Plex Mono', monospace);
-  margin-left: 0.25rem;
-}
+.feeNote strong { color: var(--club-text); }
 
 .successStatusLink {
   margin: 1rem 0 0;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 .successStatusLink a {
-  color: rgba(255,255,255,0.45);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--club-ink);
   text-decoration: underline;
 }

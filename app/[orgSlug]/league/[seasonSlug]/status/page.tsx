@@ -1,11 +1,19 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLeagueSeasonBySlug, getOrgPublicSiteContent } from '@/lib/db';
+import type { Metadata } from 'next';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
+import { clubPageMetadata, getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
 import StatusLookupForm from './StatusLookupForm';
 import column from '../../league-column.module.css';
+import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
+
+// The tab names the page, not the season: a family's lookup page, like the bar's own "Sign in".
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
+  const { orgSlug } = await params;
+  return clubPageMetadata(orgSlug, () => 'Registration status');
+}
 
 export default async function RegistrationStatusPage({
   params,
@@ -20,51 +28,26 @@ export default async function RegistrationStatusPage({
   // Where a family's questions go: the club's public-site contact. Never `org.contactEmail` — that maps a column that
   // does not exist, so the link never showed (F09, Club Tier Stage 4a).
   const [season, siteContent] = await Promise.all([
-    getLeagueSeasonBySlug(org.id, seasonSlug),
-    getOrgPublicSiteContent(org.id),
+    getClubSeason(org.id, seasonSlug),
+    getClubSiteContent(org.id),
   ]);
   if (!season) notFound();
-
-  const containerStyle: React.CSSProperties = {
-    minHeight: '100vh',
-    background: 'var(--pitch-black)',
-    fontFamily: 'var(--font-sans, Inter, sans-serif)',
-    color: 'var(--fl-text)',
-  };
 
   // R6: the shared 1200px page column; this lookup form's 560px measure left-aligns inside it.
   const innerStyle = { '--league-measure': '560px' } as React.CSSProperties;
 
+  // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
-    <div style={containerStyle}>
+    <div>
       <div className={`container ${column.column}`} style={innerStyle}>
-        <Link
-          href={`/${orgSlug}/league/${seasonSlug}`}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-            fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
+        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
           ← Back to {season.name}
         </Link>
 
         <div style={{ marginBottom: '2rem' }}>
-          <div style={{
-            fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.1em',
-            color: 'rgba(255,255,255,0.4)', marginBottom: '0.4rem',
-          }}>
-            {org.name}
-          </div>
-          <h1 style={{
-            fontSize: '1.75rem', fontWeight: 900, color: '#f0f0f0',
-            fontFamily: 'var(--font-display, sans-serif)', margin: '0 0 0.4rem', lineHeight: 1.1,
-          }}>
-            Registration Status
-          </h1>
-          <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-            {season.name}
-          </p>
+          <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
+          <h1 className={kit.title}>Registration status</h1>
+          <p className={kit.sub}>{season.name}</p>
         </div>
 
         <StatusLookupForm
