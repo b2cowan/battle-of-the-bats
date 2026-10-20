@@ -714,11 +714,17 @@ test.describe('Money forms on a desktop', () => {
     await page.locator('main[class*="coachesMain"]').getByRole('button', { name: /see a finished example/i }).click();
     const fence = page.getByTestId('sample-budget-fence');
     await expect(fence).toBeVisible();
+    // The one window (One Window Stage 2c, part 7): its body scrolls and its foot is a sibling below it.
     const clear = await page.evaluate(() => {
       const fenceEl = document.querySelector('[data-testid="sample-budget-fence"]') as HTMLElement;
-      const panel = fenceEl.closest('[class*="modal"]:not([class*="Overlay"])') as HTMLElement;
-      const footer = panel.querySelector('[class*="modalFooter"]') as HTMLElement;
-      panel.scrollTop = panel.scrollHeight; // max scroll
+      const panel = fenceEl.closest('[role="dialog"]') as HTMLElement;
+      // By the class's exact name ("body" also prefixes "bodyWrap", "foot" its children's classes), in both builds' shapes:
+      // the dev server's `KitDialog-module__<hash>__body`, a production build's `KitDialog_body__<hash>`.
+      const byClass = (name: string) => [...panel.querySelectorAll<HTMLElement>(`[class*="${name}"]`)]
+        .find(el => [...el.classList].some(c => c.endsWith(`__${name}`) || c.includes(`_${name}__`)))!;
+      const body = byClass('body');
+      const footer = byClass('foot');
+      body.scrollTop = body.scrollHeight; // max scroll
       const f = fenceEl.getBoundingClientRect();
       const bar = footer.getBoundingClientRect();
       return { fenceBottom: f.bottom, barTop: bar.top };
@@ -782,7 +788,9 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await main.getByRole('button', { name: /see a finished example/i }).click();
     await expect(page.getByTestId('sample-budget-fence')).toBeVisible();
     await expect(page.getByText(/riverdale is invented/i)).toBeVisible();
-    await page.getByRole('button', { name: /^close$/i }).click();
+    // The window's foot Close (the × shares the name on a computer; the foot's is the last).
+    await page.getByRole('dialog', { name: 'Sample season budget' }).getByRole('button', { name: /^close$/i }).last().click();
+    await expect(page.getByTestId('sample-budget-fence')).toHaveCount(0);
 
     // Budget vs. Actual's empty state opens the same sample ON ITS BvA TAB (D4) —
     // the coach on that page came asking what the report becomes.

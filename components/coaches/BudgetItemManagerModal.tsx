@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pencil, Trash2, Plus, Search } from 'lucide-react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import { claimEscape } from '@/components/coaches/escapeOwnership';
 import { budgetItemTier, ITEM_TIER_LABEL } from '@/lib/coach-budget-item-tiers';
 /* ⚠⚠ FROM THE PURE MODULES, NEVER FROM `lib/coach-budget-items.ts`. That one imports
    `supabase-admin`, which builds the service-role client at module load — so a single import line,
@@ -17,7 +18,6 @@ import {
 } from '@/lib/coach-budget-manager-view';
 import type { BudgetCategoryWithItems, BudgetItem, BudgetItemDirection } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 /**
  * CATEGORIES & ITEMS — the coach's vocabulary dialog (owner rulings 2026-09-09, mockup 43698c62
@@ -59,6 +59,12 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
  * PROP on each render, and every write asks the parent to re-read (`onChanged`). The picker's local
  * copy produced the money form's P2 Critical; a fold removes several items and moves records onto
  * another, so a local copy would offer items that no longer exist.
+ *
+ * ⚖ IN THE ONE WINDOW (One Window B6 + B9, 2026-10-19): the ladder's 520 on a computer, a full sheet on a phone, and the
+ * window owns Tab, Escape and the phone's Back. It ASKS only while a name is being typed (a new item or category, or a
+ * rename that differs from the name) — every other act here writes at once. Escape inside a rename or the add form
+ * cancels that edit only (`claimEscape`). The fold screen is a level: ← and the phone's Back return to the list.
+ * Opened from an item picker inside another window, it nests in that window's body and owns its own keys.
  */
 
 /** The door's words — read by the toolbar button, the picker's last row and the forms' hints. */
@@ -91,9 +97,6 @@ export default function BudgetItemManagerModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
-  // Parent conditionally mounts this only while open — one unit for the whole mount.
-  useOverlayOpen(true);
-
   const [filter, setFilter] = useState<ManagerFilter>('team');
   const [query, setQuery] = useState('');
 
@@ -386,27 +389,42 @@ export default function BudgetItemManagerModal({
   }
 
   /* ── Pieces ─────────────────────────────────────────────────────────────────────────────────── */
+  /** A name being typed that closing would lose (B9): a new item or category, or a rename that differs from the name.
+   *  Not gated on the fold screen — an add form left open behind it is still there to lose. */
+  /** A rename only counts while its row still exists and its draft differs (/review 2026-10-20: a rename left open on
+   *  an item a fold then removed kept the window asking with nothing on screen to lose). */
+  const renamed = (draft: string, name: string | undefined) => name !== undefined && draft.trim() !== name;
+  const typing = (adding !== null && (addName.trim() !== '' || (addCatId === NEW_CATEGORY && addNewCat.trim() !== '')))
+    || (renamingId !== null && renamed(renameDraft, ours.find(r => r.item.id === renamingId)?.item.name))
+    || (renamingCatId !== null && renamed(renameCatDraft, categories.find(c => c.id === renamingCatId)?.name));
+
   /**
-   * The one modal shell both screens sit in.
+   * The one window both screens sit in.
    * ⚠⚠ A FUNCTION RETURNING MARKUP, DELIBERATELY NOT A NESTED COMPONENT. A component declared inside
    * this one gets a fresh identity on every render, so React would unmount and remount its whole
    * subtree on each keystroke — the rename input would lose focus mid-word.
-   * ⚠⚠ THE BODY IS THE RECIPE'S SCROLLING PANE. `.modalScrollBody` is overflow-hidden and expects
-   * exactly one child that scrolls; this dialog's body used to be a plain `.formBody`, which is not
-   * one of the recipe's shapes, so everything past the box's bottom edge was unreachable (plan §0).
+   * ⚠ THE WINDOW NEVER CLOSES WHILE A FOLD OR AN ADD IS IN FLIGHT (`busy`; /review, 2026-08-17): a coach who closed it
+   * mid-fold would have had it complete for real with its sentence never shown. The body scrolls; the head and foot stay.
    */
-  function frame(title: string, subtitle: string, body: ReactNode, footer: ReactNode) {
-    /* ⚠ THE BACKDROP AND THE X ARE DEAD WHILE A FOLD IS IN FLIGHT (/review, 2026-08-17): a coach
-       who clicked outside mid-fold would have had it complete for real with its sentence never shown. */
-    const close = () => { if (!foldBusy && !addBusy) onClose(); };
+  function frame({ title, subtitle, body, footer, footerStart, onBack }: {
+    title: string; subtitle: string; body: ReactNode; footer: ReactNode; footerStart?: ReactNode; onBack?: () => void;
+  }) {
     return (
-      <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) close(); }}>
-        <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-          <CoachModalHeader title={title} subtitle={subtitle} onClose={close} />
-          <div className={`${styles.formBody} ${styles.scrollPane}`}>{body}</div>
-          <div className={styles.modalFooter}>{footer}</div>
-        </div>
-      </div>
+      <QuestionShell
+        open
+        onClose={onClose}
+        onBack={onBack}
+        ariaLabel={title}
+        title={title}
+        subtitle={subtitle}
+        dirty={typing}
+        busy={foldBusy || addBusy || busyId !== null}
+        levelKey={folding ? 'fold' : 'list'}
+        footer={footer}
+        footerStart={footerStart}
+      >
+        <div className={`${styles.formBody} ${styles.formBodyTight}`}>{body}</div>
+      </QuestionShell>
     );
   }
 
@@ -464,7 +482,8 @@ export default function BudgetItemManagerModal({
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter' && draft.trim()) onSave();
-            if (e.key === 'Escape') onCancel();
+            // The rename's own Escape: it cancels the edit and the window stays.
+            if (e.key === 'Escape') { claimEscape(e); onCancel(); }
           }}
         />
         <div className={styles.tagManagerActions}>
@@ -564,7 +583,8 @@ export default function BudgetItemManagerModal({
     const isNew = addCatId === NEW_CATEGORY;
     const report = reportingLine(addTarget, side);
     return (
-      <div className={styles.managerAddForm}>
+      // The add form's own Escape, from any of its fields: it cancels the add and the window stays.
+      <div className={styles.managerAddForm} onKeyDown={e => { if (e.key === 'Escape') { claimEscape(e); setAdding(null); } }}>
         <p className={styles.managerAddTitle}>New item, {SIDE_BAND_LABEL[side].toLowerCase()}</p>
         {addError && <p className={styles.errorText}>{addError}</p>}
         <label className={styles.label} htmlFor="manager-add-category">Category</label>
@@ -614,7 +634,7 @@ export default function BudgetItemManagerModal({
           disabled={addBusy}
           placeholder={side === 'in' ? 'e.g. Bottle drive' : 'e.g. Charter bus'}
           onChange={e => { setAddError(''); setAddName(e.target.value); }}
-          onKeyDown={e => { if (e.key === 'Enter') submitAdd(); if (e.key === 'Escape') setAdding(null); }}
+          onKeyDown={e => { if (e.key === 'Enter') submitAdd(); }}
         />
         <p className={styles.formHint}>
           Saved to this team’s list only.{report ? ` ${report}` : ''}
@@ -670,10 +690,10 @@ export default function BudgetItemManagerModal({
     /* ⚠ THE CHIP'S OWN WORD, read from `SIDE_FLOW_SHORT` — this line used to say "money in" on
        one side and "expense" on the other, the same mixed-register bug the picker had. */
     const sideWord = side ? SIDE_FLOW_SHORT[side] : '';
-    return frame(
-      'Use a shared item instead',
-      'Fold your team’s items into one your club or FieldLogicHQ already shares',
-      (
+    return frame({
+      title: 'Use a shared item instead',
+      subtitle: 'Fold your team’s items into one your club or FieldLogicHQ already shares',
+      body: (
         <>
           {error && <p className={styles.errorText}>{error}</p>}
 
@@ -791,7 +811,9 @@ export default function BudgetItemManagerModal({
           )}
         </>
       ),
-      (
+      // A level over the list: ← and the phone's Back go back to it (× still closes the window).
+      onBack: leaveFold,
+      footer: (
         <>
           <button type="button" className={styles.btnGhost} disabled={foldBusy} onClick={leaveFold}>Cancel</button>
           <button
@@ -807,15 +829,15 @@ export default function BudgetItemManagerModal({
           </button>
         </>
       ),
-    );
+    });
   }
 
   /* ══ The dialog ════════════════════════════════════════════════════════════════════════════════ */
   const nothingShown = view.bands.in.length === 0 && view.bands.out.length === 0 && view.orphans.length === 0;
-  return frame(
-    MANAGER_TITLE,
-    'What your budget lines are filed under. Yours to change; the rest shown on request.',
-    (
+  return frame({
+    title: MANAGER_TITLE,
+    subtitle: 'What your budget lines are filed under. Yours to change; the rest shown on request.',
+    body: (
       <>
         {error && <p className={styles.errorText}>{error}</p>}
         {notice && <p className={styles.formHint}>{notice}</p>}
@@ -890,23 +912,20 @@ export default function BudgetItemManagerModal({
         </p>
       </>
     ),
-    (
-      <>
-        {/* ⚠ THE FOLD IS THE ONLY WAY A USED ITEM EVER DISAPPEARS, so its door stays within reach of
-            the sentence offering it. Hidden with nothing to fold ONTO, or nothing of ours to fold. */}
-        {ours.length > 0 && theirs.length > 0 && (
-          <button
-            type="button"
-            className={styles.btnSecondary}
-            style={{ marginRight: 'auto' }}
-            disabled={!!busyId || addBusy}
-            onClick={() => { setError(''); setNotice(''); setFolding(true); }}
-          >
-            Use a shared item instead
-          </button>
-        )}
-        <button type="button" className={styles.btnGhost} onClick={onClose}>Done</button>
-      </>
-    ),
-  );
+    /* ⚠ THE FOLD IS THE ONLY WAY A USED ITEM EVER DISAPPEARS, so its door stays within reach of
+       the sentence offering it — the foot's door at the left. Hidden with nothing to fold ONTO, or nothing of ours
+       to fold. */
+    footerStart: ours.length > 0 && theirs.length > 0 ? (
+      <button
+        type="button"
+        className={styles.btnSecondary}
+        disabled={!!busyId || addBusy}
+        // A rename left open would outlive the item a fold removes: the fold starts from the list as it reads.
+        onClick={() => { setError(''); setNotice(''); setRenamingId(null); setRenamingCatId(null); setFolding(true); }}
+      >
+        Use a shared item instead
+      </button>
+    ) : undefined,
+    footer: <QuestionCancel className={styles.btnGhost}>Done</QuestionCancel>,
+  });
 }

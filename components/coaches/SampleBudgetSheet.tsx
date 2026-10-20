@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './SampleBudgetSheet.module.css';
@@ -20,6 +19,9 @@ import styles from './SampleBudgetSheet.module.css';
  *
  * Holds nothing typed → no discard guard (a confirmation with nothing to protect
  * is friction, not safety — Chunk A rule 4b).
+ *
+ * ⚖ A READ WINDOW IN THE ONE WINDOW (One Window B6, 2026-10-19): it keeps what it shows and its 520 on a computer, fills
+ * a phone (B5), and the window owns Tab, Escape and the phone's Back. Close is the window's own closer; never `dirty`.
  */
 
 interface SampleLine {
@@ -74,108 +76,105 @@ export default function SampleBudgetSheet({
   initialTab?: SampleTab;
   onClose: () => void;
 }) {
-  useOverlayOpen(true);
   const [tab, setTab] = useState<SampleTab>(initialTab);
 
   return (
-    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div className={`${shared.modal} ${shared.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
-        <CoachModalHeader title="Sample season budget" onClose={onClose} />
+    <QuestionShell
+      open
+      onClose={onClose}
+      ariaLabel="Sample season budget"
+      title="Sample season budget"
+      footer={<QuestionCancel className={shared.btnGhost}>Close</QuestionCancel>}
+    >
+      <div className={styles.fence} data-testid="sample-budget-fence">
+        <p className={styles.fenceEyebrow}>Sample — a made-up team</p>
+        <p className={styles.fenceTeam}>
+          {SAMPLE_TEAM}
+          <span className={styles.fenceTeamMeta}>
+            {tab === 'budget' ? ` · ${SAMPLE_PLAYERS} players` : ' · in June — 3 of 4 tournaments paid'}
+          </span>
+        </p>
+        <p className={styles.fenceDisclaimer}>
+          Riverdale is invented and so is every dollar here. Real costs swing hard by region, age
+          and level — copy the structure, never the numbers.
+        </p>
 
-        <div className={styles.fence} data-testid="sample-budget-fence">
-          <p className={styles.fenceEyebrow}>Sample — a made-up team</p>
-          <p className={styles.fenceTeam}>
-            {SAMPLE_TEAM}
-            <span className={styles.fenceTeamMeta}>
-              {tab === 'budget' ? ` · ${SAMPLE_PLAYERS} players` : ' · in June — 3 of 4 tournaments paid'}
-            </span>
-          </p>
-          <p className={styles.fenceDisclaimer}>
-            Riverdale is invented and so is every dollar here. Real costs swing hard by region, age
-            and level — copy the structure, never the numbers.
-          </p>
+        <div className={`${shared.segChoice} ${shared.segChoiceFull} ${styles.tabRow}`}>
+          <button
+            type="button"
+            className={`${shared.segBtn} ${tab === 'budget' ? shared.segBtnActive : ''}`}
+            onClick={() => setTab('budget')}
+          >
+            Season budget
+          </button>
+          <button
+            type="button"
+            className={`${shared.segBtn} ${tab === 'bva' ? shared.segBtnActive : ''}`}
+            onClick={() => setTab('bva')}
+          >
+            Budget vs. Actual
+          </button>
+        </div>
 
-          <div className={`${shared.segChoice} ${shared.segChoiceFull} ${styles.tabRow}`}>
-            <button
-              type="button"
-              className={`${shared.segBtn} ${tab === 'budget' ? shared.segBtnActive : ''}`}
-              onClick={() => setTab('budget')}
-            >
-              Season budget
-            </button>
-            <button
-              type="button"
-              className={`${shared.segBtn} ${tab === 'bva' ? shared.segBtnActive : ''}`}
-              onClick={() => setTab('bva')}
-            >
-              Budget vs. Actual
-            </button>
-          </div>
-
-          {tab === 'budget' ? (
-            <>
-              {SAMPLE_BUDGET.map(group => (
-                <div key={group.category}>
-                  <p className={styles.cat}>{group.category}</p>
-                  {group.lines.map(line => (
-                    <div key={line.name}>
-                      <div className={styles.row}>
-                        <span className={styles.rowName}>{line.name}</span>
-                        <span className={styles.rowAmt}>{fmt(line.amount)}</span>
-                      </div>
-                      {line.note && <p className={styles.rowNote}>↳ {line.note}</p>}
+        {tab === 'budget' ? (
+          <>
+            {SAMPLE_BUDGET.map(group => (
+              <div key={group.category}>
+                <p className={styles.cat}>{group.category}</p>
+                {group.lines.map(line => (
+                  <div key={line.name}>
+                    <div className={styles.row}>
+                      <span className={styles.rowName}>{line.name}</span>
+                      <span className={styles.rowAmt}>{fmt(line.amount)}</span>
                     </div>
-                  ))}
-                </div>
-              ))}
-              <div className={styles.total}>
-                <span>Riverdale&rsquo;s season</span>
-                <span className={styles.totalAmt}>
-                  {fmt(SAMPLE_TOTAL)} · {fmt(Math.round((SAMPLE_TOTAL / SAMPLE_PLAYERS) * 100) / 100)}/player
-                </span>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* The real Budget-vs-Actual idiom: a comparison stays a grid, scrolls in its
-                  own frame with the line pinned, and says so (Chunk A D1 / CoachScrollX). */}
-              <CoachScrollX sticky frame={false} hint="Swipe to compare budget · actual · what's left">
-                <div className={styles.bvaGrid}>
-                  <div className={styles.bvaHead}>
-                    <span className={`${shared.scrollXStickyCell} ${styles.bvaName}`}>Line</span>
-                    <span className={styles.bvaCell}>Budget</span>
-                    <span className={styles.bvaCell}>Actual</span>
-                    <span className={styles.bvaCell}>Left</span>
+                    {line.note && <p className={styles.rowNote}>↳ {line.note}</p>}
                   </div>
-                  {SAMPLE_BVA.map(row => {
-                    const left = row.budget - row.actual;
-                    return (
-                      <div key={row.name} className={styles.bvaRow}>
-                        <span className={`${shared.scrollXStickyCell} ${styles.bvaName}`}>{row.name}</span>
-                        <span className={styles.bvaCell}>{fmt(row.budget)}</span>
-                        <span className={`${styles.bvaCell} ${row.actual > row.budget ? styles.bvaOver : ''}`}>
-                          {fmt(row.actual)}
-                        </span>
-                        <span className={`${styles.bvaCell} ${left < 0 ? styles.bvaOver : styles.bvaOk}`}>
-                          {fmt(left)}
-                        </span>
-                      </div>
-                    );
-                  })}
+                ))}
+              </div>
+            ))}
+            <div className={styles.total}>
+              <span>Riverdale&rsquo;s season</span>
+              <span className={styles.totalAmt}>
+                {fmt(SAMPLE_TOTAL)} · {fmt(Math.round((SAMPLE_TOTAL / SAMPLE_PLAYERS) * 100) / 100)}/player
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* The real Budget-vs-Actual idiom: a comparison stays a grid, scrolls in its
+                own frame with the line pinned, and says so (Chunk A D1 / CoachScrollX). */}
+            <CoachScrollX sticky frame={false} hint="Swipe to compare budget · actual · what's left">
+              <div className={styles.bvaGrid}>
+                <div className={styles.bvaHead}>
+                  <span className={`${shared.scrollXStickyCell} ${styles.bvaName}`}>Line</span>
+                  <span className={styles.bvaCell}>Budget</span>
+                  <span className={styles.bvaCell}>Actual</span>
+                  <span className={styles.bvaCell}>Left</span>
                 </div>
-              </CoachScrollX>
-              <p className={styles.fenceDisclaimer} style={{ marginTop: '0.7rem', marginBottom: 0 }}>
-                Umpire Fees has gone over on purpose — this is the report catching it in June, not
-                in September.
-              </p>
-            </>
-          )}
-        </div>
-
-        <div className={shared.modalFooter}>
-          <button type="button" className={shared.btnGhost} onClick={onClose}>Close</button>
-        </div>
+                {SAMPLE_BVA.map(row => {
+                  const left = row.budget - row.actual;
+                  return (
+                    <div key={row.name} className={styles.bvaRow}>
+                      <span className={`${shared.scrollXStickyCell} ${styles.bvaName}`}>{row.name}</span>
+                      <span className={styles.bvaCell}>{fmt(row.budget)}</span>
+                      <span className={`${styles.bvaCell} ${row.actual > row.budget ? styles.bvaOver : ''}`}>
+                        {fmt(row.actual)}
+                      </span>
+                      <span className={`${styles.bvaCell} ${left < 0 ? styles.bvaOver : styles.bvaOk}`}>
+                        {fmt(left)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CoachScrollX>
+            <p className={styles.fenceDisclaimer} style={{ marginTop: '0.7rem', marginBottom: 0 }}>
+              Umpire Fees has gone over on purpose — this is the report catching it in June, not
+              in September.
+            </p>
+          </>
+        )}
       </div>
-    </div>
+    </QuestionShell>
   );
 }

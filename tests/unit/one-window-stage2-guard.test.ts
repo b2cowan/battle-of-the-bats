@@ -192,8 +192,14 @@ describe('2a · Q2 and Q10 inside a coach window', () => {
   // The two-line dropdown (Give an award's "For", `.convWhatField`) is a one-line field here too, as a FLOOR (owner
   // 2026-10-19: it was 35px on a phone).
   it('its one-line fields are 36px on a computer', () => {
-    // Real fields only — a read-only value drawn as a field (`<span class="input">`) keeps its height (/review).
-    assert.match(css, /@media \(min-width: 769px\) \{\s*\.windowBody :is\(input, select\):is\(\.input, \.select\) \{ height: 36px; \}\s*\.windowBody \.convWhatField \{ min-height: 36px; \}\s*\}/);
+    // Keyed on the ELEMENT, as the phone rule is (owner 2026-10-20): a module's own copy of the field look (the tryout
+    // windows, the budget line, the item picker) is still a field in a window. Real fields only — a read-only value drawn
+    // as a field (`<span class="input">`) keeps its height (/review) — and a review table's cell keeps its compact size.
+    assert.match(css, /@media \(min-width: 769px\) \{\s*\.windowBody input:not\(\[type="checkbox"\]\)[^{]*:not\(td \*\):not\(\[data-search-field\] \*\),\s*\.windowBody select:not\(td \*\) \{ height: 36px; \}\s*\.windowBody \.convWhatField \{ min-height: 36px; \}\s*\}/);
+    assert.doesNotMatch(css, /\.windowBody :is\(input, select\):is\(\.input, \.select\)/, 'the class-keyed rule missed every module copy of the field');
+    for (const css2 of ['TryoutDayCard', 'TryoutCheckIn', 'TryoutRubricCard']) {
+      assert.doesNotMatch(readSource(`components/rep-teams/${css2}.module.css`), /\[data-coach-window\][^{]*height: 36px/, `${css2}: one rule, in the portal's window body`);
+    }
   });
   it('on a phone, its one-line fields are 44px, and the window\'s own foot buttons are 44px', () => {
     assert.match(css, /@media \(max-width: 768px\) \{\s*\.windowBody input:not\(\[type="checkbox"\]\)[^{]*\.windowBody select,\s*\.windowBody \.convWhatField \{ min-height: var\(--tap-min, 44px\); \}/);
@@ -400,6 +406,35 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
     const scrims = tsxWith('scrim').filter(({ file }) => file.startsWith(`${R}/`)).filter(({ code }) => /className=\{[^}]*\.scrim\b/.test(code)).map(({ file }) => file);
     assert.deepEqual(scrims, [], 'a tryout window is QuestionShell: the one window with the coach rules');
   });
+
+  it('B6 + B9: the read and manage windows — Categories & items asks only while a name is typed (part 7)', () => {
+    const manager = readCode('components/coaches/BudgetItemManagerModal.tsx');
+    // It holds while anything writes (a rename or a remove too, /review 2026-10-20), and its two screens are levels: the
+    // fold starts at its top with the keyboard kept in the window.
+    assert.match(manager, /<QuestionShell\s+open\s+onClose=\{onClose\}\s+onBack=\{onBack\}[\s\S]*?dirty=\{typing\}\s+busy=\{foldBusy \|\| addBusy \|\| busyId !== null\}\s+levelKey=\{folding \? 'fold' : 'list'\}/);
+    assert.match(shell, /levelKey=\{levelKey\}/);
+    // The ask is a NAME being typed (a new item, a new category while "New category" is chosen, a rename that differs from
+    // a name still on the list) — never a tick, a filter or a search.
+    assert.match(manager, /const typing = \(adding !== null && \(addName\.trim\(\) !== '' \|\| \(addCatId === NEW_CATEGORY && addNewCat\.trim\(\) !== ''\)\)\)\s*\|\| \(renamingId !== null && renamed\(/);
+    assert.match(manager, /const renamed = \(draft: string, name: string \| undefined\) => name !== undefined && draft\.trim\(\) !== name;/);
+    // Escape in a rename, or anywhere in the add form (its two fields and its category list), cancels that edit and
+    // leaves the window open.
+    assert.match(manager, /<input[\s\S]*?if \(e\.key === 'Escape'\) \{ claimEscape\(e\); onCancel\(\); \}/);
+    assert.match(manager, /<div className=\{styles\.managerAddForm\} onKeyDown=\{e => \{ if \(e\.key === 'Escape'\) \{ claimEscape\(e\); setAdding\(null\); \} \}\}>/);
+    // The fold screen is a level over the list; its door is the foot's door, Done the window's own closer.
+    assert.match(manager, /onBack: leaveFold,/);
+    assert.match(manager, /footerStart: ours\.length > 0 && theirs\.length > 0 \?/);
+    assert.match(manager, /footer: <QuestionCancel className=\{styles\.btnGhost\}>Done<\/QuestionCancel>/);
+    // Nothing typed in the two read windows: they never ask, and neither is a question (they fill a phone).
+    const sample = readCode('components/coaches/SampleBudgetSheet.tsx');
+    assert.match(sample, /<QuestionShell\s+open\s+onClose=\{onClose\}\s+ariaLabel="Sample season budget"[\s\S]*?footer=\{<QuestionCancel className=\{shared\.btnGhost\}>Close<\/QuestionCancel>\}/);
+    const imports = readCode('components/coaches/MoneyImportMenu.tsx');
+    assert.match(imports, /<QuestionShell open onClose=\{onClose\} ariaLabel="Recent imports" title="Recent imports">/);
+    for (const [file, code] of [['BudgetItemManagerModal', manager], ['SampleBudgetSheet', sample], ['MoneyImportMenu', imports]] as const) {
+      assert.doesNotMatch(code, /modalOverlay|useOverlayOpen|CoachModalHeader|modalFooter|kind="question"/, `${file}: the one window owns the overlay, the floor, the head and the foot`);
+    }
+    assert.doesNotMatch(sample + imports, /\bdirty=\{/, 'a read window has nothing typed to ask about');
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -407,7 +442,8 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
   it('no coach file builds a window from .modalOverlay outside the list, and every entry says why', () => {
     // ⚖ Q15 keeps rooms, records and sheets out; the rest move in 2c and 2d and come off as they go.
     const STAYS = 'stays out (Q15): a room, a record or a sheet';
-    const MOVES_2C = 'moves in 2c (no Tab trap or phone Back today)';
+    // ⚰ MOVES_2C emptied 2026-10-19 (One Window 2c part 7): every 2c window is on the one window. A file that comes back
+    // here is not "still to move" — it is a regression.
     const MOVES_2D = 'moves in 2d';
     const ALLOWED = new Map<string, string>([
       ['components/coaches/RoomShell.tsx', STAYS],
@@ -416,9 +452,6 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/DepthChartBoard.tsx', STAYS],
       ['components/coaches/CoachStaffSheet.tsx', STAYS],
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
-      ['components/coaches/BudgetItemManagerModal.tsx', MOVES_2C],
-      ['components/coaches/MoneyImportMenu.tsx', MOVES_2C],
-      ['components/coaches/SampleBudgetSheet.tsx', MOVES_2C],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', MOVES_2D + ' (and the player drawer stays out)'],

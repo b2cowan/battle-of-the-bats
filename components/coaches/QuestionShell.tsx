@@ -69,6 +69,7 @@ export default function QuestionShell({
   open,
   onClose,
   onBack,
+  levelKey,
   ariaLabel,
   title,
   subtitle,
@@ -90,6 +91,9 @@ export default function QuestionShell({
   onClose: () => void;
   /** A view BEHIND this one — the phone's back arrow and its Back gesture go there instead of closing. */
   onBack?: () => void;
+  /** The screen on show, for a window that swaps its whole body in place (Categories & items' list ↔ fold): when it
+   *  changes the body starts at its top and the keyboard stays in the window (KitDialog's `levelKey`). */
+  levelKey?: string;
   /** Names the question for assistive tech — "Edit the amount Avery Test raised". */
   ariaLabel: string;
   title: ReactNode;
@@ -155,6 +159,7 @@ export default function QuestionShell({
         headerExtra={headerExtra}
         onClose={onClose}
         back={isForm && onBack ? { onBack } : undefined}
+        levelKey={levelKey}
         busy={busy}
         size={!isForm ? undefined : widest ? 'wide' : wide ? 'medium' : undefined}
         raised={raised}

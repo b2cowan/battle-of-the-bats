@@ -6,8 +6,7 @@ import type { BudgetCategoryWithItems, RepBudgetPlan, RepTeamExpense, RepTeamImp
 import type { MonthKey } from '@/lib/coach-budget-months';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import { toKnownCategories, existingBudgetLinesFrom } from '@/lib/coach-budget-import';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import {
   CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator,
 } from '@/components/coaches/CoachToolbarMenu';
@@ -272,6 +271,9 @@ const SHAPE_WORDS: Record<RepTeamImportEvent['shape'], string> = {
  * This is the useful half of the coach Data Tools PAGE that the ruling declined: a volunteer
  * between innings is not in a back-office frame of mind, and a destination moves the button away
  * from the moment of need. The history is worth having; the page it would have lived on is not.
+ *
+ * ⚖ A READ WINDOW IN THE ONE WINDOW (One Window B6, 2026-10-19): the ladder's 520, no foot (it never had one — × and
+ * Escape close it), and the window owns Tab, Escape and Back. Only a computer reaches it (the menu is not drawn on a phone).
  */
 function RecentImportsSheet({
   imports,
@@ -282,47 +284,43 @@ function RecentImportsSheet({
   error: string;
   onClose: () => void;
 }) {
-  useOverlayOpen(true);
   return (
-    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={shared.modal}>
-        <CoachModalHeader title="Recent imports" onClose={onClose} titleTag="h2" closeIconSize={18} closeAriaLabel="Close recent imports" />
-        {error ? (
-          <p className={shared.errorText}>{error}</p>
-        ) : imports === null ? (
-          <LoadingState label="Loading recent imports…" inline />
-        ) : imports.length === 0 ? (
-          <p className={shared.muted}>
-            Nothing has been imported into this season yet. When you bring in a budget or a
-            bills schedule, it will be listed here.
-          </p>
-        ) : (
-          <ul className={styles.historyList}>
-            {imports.map(ev => (
-              <li key={ev.id} className={styles.historyItem}>
-                <span className={styles.historyWhat}>
-                  {DATASET_WORDS[ev.dataset]} <span className={styles.historyShape}>· {SHAPE_WORDS[ev.shape]}</span>
-                </span>
-                <span className={styles.historyCounts}>
-                  {[
-                    ev.rowsCreated ? `${ev.rowsCreated} added` : '',
-                    ev.rowsUpdated ? `${ev.rowsUpdated} updated` : '',
-                    ev.rowsSkipped ? `${ev.rowsSkipped} skipped` : '',
-                    ev.rowsFailed ? `${ev.rowsFailed} failed` : '',
-                  ].filter(Boolean).join(' · ')}
-                </span>
-                <span className={styles.historyWho}>
-                  {new Date(ev.createdAt).toLocaleString('en-CA', {
-                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                  })}
-                  {ev.createdByName ? ` · ${ev.createdByName}` : ''}
-                  {ev.sourceFilename ? ` · ${ev.sourceFilename}` : ev.source === 'paste' ? ' · pasted' : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+    <QuestionShell open onClose={onClose} ariaLabel="Recent imports" title="Recent imports">
+      {error ? (
+        <p className={shared.errorText}>{error}</p>
+      ) : imports === null ? (
+        <LoadingState label="Loading recent imports…" inline />
+      ) : imports.length === 0 ? (
+        <p className={shared.muted}>
+          Nothing has been imported into this season yet. When you bring in a budget or a
+          bills schedule, it will be listed here.
+        </p>
+      ) : (
+        <ul className={styles.historyList}>
+          {imports.map(ev => (
+            <li key={ev.id} className={styles.historyItem}>
+              <span className={styles.historyWhat}>
+                {DATASET_WORDS[ev.dataset]} <span className={styles.historyShape}>· {SHAPE_WORDS[ev.shape]}</span>
+              </span>
+              <span className={styles.historyCounts}>
+                {[
+                  ev.rowsCreated ? `${ev.rowsCreated} added` : '',
+                  ev.rowsUpdated ? `${ev.rowsUpdated} updated` : '',
+                  ev.rowsSkipped ? `${ev.rowsSkipped} skipped` : '',
+                  ev.rowsFailed ? `${ev.rowsFailed} failed` : '',
+                ].filter(Boolean).join(' · ')}
+              </span>
+              <span className={styles.historyWho}>
+                {new Date(ev.createdAt).toLocaleString('en-CA', {
+                  month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                })}
+                {ev.createdByName ? ` · ${ev.createdByName}` : ''}
+                {ev.sourceFilename ? ` · ${ev.sourceFilename}` : ev.source === 'paste' ? ' · pasted' : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </QuestionShell>
   );
 }
