@@ -491,6 +491,31 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
       'the window asks and owns its overlay, floor, head and foot; the route guard is the shell\'s');
     assert.doesNotMatch(code, /maxWidth: 620/);
   });
+
+  it('the dues windows: the settlement (800) asks only over an unsaved hold-back, Set refund is the question over it, Send due reminders a small form, the letter a read window (part 4)', () => {
+    const code = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx');
+    // B9: the settlement moves as an 800 form; owner call 2 (2026-10-20): it asks only over a hold-back typed and not saved.
+    assert.match(code, /<QuestionShell\s+open=\{tabActive\}\s+onClose=\{\(\) => setRefundOpen\(false\)\}\s+dirty=\{holdBackDirty\}\s+busy=\{payAllBusy\}\s+widest\b/);
+    assert.match(code, /const holdBackDirty = holdBackEditing && !!settlement\s+&& holdBackInput !== \(settlement\.pot\.holdBack > 0 \? String\(settlement\.pot\.holdBack\) : ''\);/);
+    // B9: Set refund is the one window's small question, on the question layer over the settlement.
+    assert.match(code, /<QuestionShell kind="question" open=\{tabActive\} onClose=\{\(\) => setChoiceFor\(null\)\} busy=\{choiceSaving\}/);
+    // Owner call 3: Send due reminders? is a small form (its letter opens over it), and nothing is typed in it.
+    assert.match(code, /<QuestionShell open=\{tabActive\} onClose=\{\(\) => setConfirmRemindersOpen\(false\)\} busy=\{sendingReminders\}\s+ariaLabel="Send due reminders\?"/);
+    // The player drawer stays out (Q15) and is now the panel's ONLY hand-built window; owner call 1: a receipt being
+    // corrected counts as typing there (it closed with the drawer, and with its own Cancel, with nothing asking).
+    assert.equal((code.match(/className=\{styles\.modalOverlay\}/g) ?? []).length, 1, 'only the player drawer builds a .modalOverlay window');
+    assert.match(code, /const drawerFormDirty = scheduleDirty \|\| creditDirty \|\| payDirty;/);
+    assert.match(code, /onClick=\{\(\) => \{ void cancelPayCorrection\(\); \}\}/);
+    assert.doesNotMatch(code, /settlementPanelRef|choicePanelRef|confirmRemindersPanelRef|modalSettlement|settlementScroll/);
+    // The settlement's window shape left the stylesheet; its content rules key on its own body, its inert Pay on its button.
+    assert.doesNotMatch(coachesCss, /\.modalSettlement\b|\.settlementScroll\b|\.settlementSubtitle\b/);
+    // ⚠ Keyed on the window: two classes alone lose to the Warm lime (two attributes, a class and an element) — measured.
+    assert.match(coachesCss, /\[data-coach-window\] \.btnPrimary\.settlementPay:disabled \{/);
+    // The letter: a read window that fills a phone, never asks, 600 → 640.
+    const letter = readCode('components/coaches/DuesReminderPreviewModal.tsx');
+    assert.match(letter, /<QuestionShell open onClose=\{onClose\} wide ariaLabel=\{title\} title=\{title\}>/);
+    assert.doesNotMatch(letter, /\bdirty=|kind="question"|modalOverlay|useDialogFloor|maxWidth: 600/);
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -508,13 +533,13 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/DepthChartBoard.tsx', STAYS],
       ['components/coaches/CoachStaffSheet.tsx', STAYS],
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', MOVES_2D + ' (and the player drawer stays out)'],
+      // Its settlement, Set refund and reminder confirm moved in 2d part 4; the player drawer is a record and stays.
+      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', STAYS + ' (the player drawer)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx', MOVES_2D + ', the practice page last'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx', MOVES_2D + ', the practice page last (its station and block sheets stay out)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeSendSheet.tsx', MOVES_2D],
       ['components/coaches/CalendarSubscribeWindow.tsx', MOVES_2D],
       ['components/coaches/DrillSheet.tsx', MOVES_2D],
-      ['components/coaches/DuesReminderPreviewModal.tsx', MOVES_2D],
       ['components/coaches/MoneyMonthGrid.tsx', MOVES_2D],
     ]);
     const builds = (src: string) => /className=\{[^}]*\.modalOverlay\b/.test(src) || /\.modalOverlay\}/.test(src);

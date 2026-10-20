@@ -802,8 +802,9 @@ export function PlayerDuesPanel({
 
   useOverlayOpen(!!selected);
   // The bulk-dues generator registers its own overlay — a second one here would double-count.
-  // The two reminder modals register BELOW (one call — they are mutually exclusive); without it
-  // the phone bottom nav stayed tappable under the confirm dialog (/review 2026-08-14).
+  // So do the settlement, Set refund, the reminder confirm and the reminder preview: they are the one window now
+  // (One Window 2d), which registers each with the portal's counter itself. Only the player drawer, which stays out
+  // (Q15, a record), registers here.
 
   // PDF branding and its plan gate both live in MoneyExportButton now — one place for every
   // Money tab, and the branding is fetched on the first PDF export rather than on every mount.
@@ -830,13 +831,9 @@ export function PlayerDuesPanel({
   // "See an example" — what the reminder email says and when it goes out. Read-only, so it
   // carries no unsaved-changes guard and needs none of the tabActive plumbing.
   const [reminderPreviewOpen, setReminderPreviewOpen] = useState(false);
-  // ⚠ Every overlay this panel opens registers here — without it the phone's bottom nav stays
-  // tappable underneath (/review 2026-08-14). The Set-refund sheet joins the same call: they are
-  // mutually exclusive, so one registration covers them.
-  // ⚠ `refundOpen` joined this list when the settlement became a modal (2026-08-14) — as an
-  // accordion it was page content and correctly absent. An unregistered overlay leaves the
-  // portal's chrome (bottom nav, scroll lock) behaving as though nothing is open on top of it.
-  useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen || !!choiceFor || refundOpen);
+  /* ⚰ `useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen || !!choiceFor || refundOpen)` STOOD HERE. An
+     unregistered overlay leaves the portal's chrome (bottom nav, scroll lock) behaving as though nothing is open on top
+     of it (/review 2026-08-14) — and these four are the one window now, which registers each itself (One Window 2d). */
 
   /* ⚠ Monotonic sequence — only the NEWEST load may write (/review, 2026-08-23). The gap is
      pre-existing, but joining the money revision (below) made it consequential: two writes in
@@ -1500,14 +1497,30 @@ export function PlayerDuesPanel({
     && !snapshotEqual({ form, rows: installmentRows }, scheduleBaseline);
   const creditDirty = addingCredit && creditBaseline !== null
     && !snapshotEqual(creditForm, creditBaseline);
-  const drawerFormDirty = scheduleDirty || creditDirty;
+  /** The receipt the correction form is open on (its only opener prefills from it). */
+  const editingReceipt = selected && editingPaymentId
+    ? selected.payments.find(p => p.id === editingPaymentId)
+    : undefined;
+  /* ⚠ THE RECEIPT CORRECTION IS TYPING TOO (One Window 2d, owner call 1, 2026-10-20). It was left out of this count, so
+     a half-corrected receipt closed with the drawer — and with its own Cancel — with nothing asking. Moved off the
+     receipt it opened on, it is dirty. (The drawer itself stays out of the one window, Q15, and keeps its own ask.) */
+  const payDirty = recordingPayment && !!editingReceipt && !snapshotEqual(payForm, {
+    amount: String(editingReceipt.amount), receivedDate: editingReceipt.receivedDate, method: editingReceipt.method, note: editingReceipt.note ?? '',
+  });
+  const drawerFormDirty = scheduleDirty || creditDirty || payDirty;
 
   /** Every way OUT of the drawer goes through this one guarded closer — backdrop, ✕ and the back
    *  arrow alike, exactly as every money-sheet reset goes through closeMoneySheets above. */
   const closeDrawerGuarded = useDiscardGuard({
     dirty: drawerFormDirty,
     close: () => { setSelected(null); setEditingSchedule(false); setScheduleBaseline(null); setCreditBaseline(null); closeMoneySheets(); },
-    noun: scheduleDirty ? 'dues schedule' : 'credit',
+    noun: scheduleDirty ? 'dues schedule' : creditDirty ? 'credit' : 'payment correction',
+  });
+  /** The receipt correction's own Cancel — back to the drawer, asking first when the receipt was changed. */
+  const cancelPayCorrection = useDiscardGuard({
+    dirty: payDirty,
+    close: () => closeMoneySheets(),
+    noun: 'payment correction',
   });
   /** The schedule editor's own Cancel — back to the drawer, not out of it. */
   const cancelScheduleEdit = useDiscardGuard({
@@ -1535,9 +1548,10 @@ export function PlayerDuesPanel({
      MOUNTED under another tab, and a floor left armed there answers a bare Escape meant for
      whatever the coach is actually looking at.
 
-     ⚠ The Set-refund sheet stacks over the settlement window and both are armed at once. They are
-     siblings in the DOM, not nested, so a key with focus inside one never reaches the other, and a
-     key with nothing focused is answered by the last floor opened (`openFloors`). */
+     ⚖ THREE OF THE FOUR ARE THE ONE WINDOW NOW (One Window 2d): the settlement, the Set-refund question and the reminder
+     confirm stand on its floor (open only while the tab shows, `tabActive` in each `open`). Their floors, refs and
+     the Set-refund sheet's stacking note went with them — a question over a form is the one window's own layer
+     order. Only the drawer, which stays out (Q15), keeps this one. */
   /** Writes this drawer OWNS — while one is in flight the floor refuses to dismiss, so a surface
    *  is never torn down under its own request. The credit form's save is `creditSaving`, which
    *  the Question it lives in gates for itself. */
@@ -1548,21 +1562,6 @@ export function PlayerDuesPanel({
     onClose: () => { void closeDrawerGuarded(); },
     busy: drawerBusy,
     focusKey: selected?.player.id ?? null,
-  });
-  const settlementPanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(refundOpen && tabActive, settlementPanelRef, {
-    onClose: () => setRefundOpen(false),
-    busy: payAllBusy,
-  });
-  const choicePanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(!!choiceFor && tabActive, choicePanelRef, {
-    onClose: () => setChoiceFor(null),
-    busy: choiceSaving,
-  });
-  const confirmRemindersPanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(confirmRemindersOpen && tabActive, confirmRemindersPanelRef, {
-    onClose: () => setConfirmRemindersOpen(false),
-    busy: sendingReminders,
   });
 
   /** Open the payment sheet on an existing receipt, prefilled. */
@@ -1810,9 +1809,7 @@ export function PlayerDuesPanel({
 
   /** The receipt the correction form is pointed at — ONE lookup, shared by the form's heading
    *  and its consequence line (each used to run its own .find over the same list). */
-  const editingReceipt = selected && editingPaymentId
-    ? selected.payments.find(p => p.id === editingPaymentId)
-    : undefined;
+  /* ⚰ `editingReceipt` moved up beside the drawer's typed count (One Window 2d), which reads it. */
 
   /* The confirmation's facts, derived from the SAME selector the send itself uses
      (`nextUnpaidInstallment`) so the strip can never name a different bill than the route posts —
@@ -2553,6 +2550,10 @@ export function PlayerDuesPanel({
      SAME selection the send uses, so the button says how many emails, is disabled at zero with the
      reason, and the preview link shows the letter. If that answer cannot be fetched the old
      rule-only wording returns and Send stays live — a network blip must not take the button away. */
+  /* ⚖ THE SETTLEMENT ASKS ONLY OVER AN UNSAVED HOLD-BACK (owner, 2026-10-20, One Window 2d call 2): the hold-back is
+     its one typed thing, and it has its own Save. Typed and not saved, closing asks; otherwise the sheet closes at once. */
+  const holdBackDirty = holdBackEditing && !!settlement
+    && holdBackInput !== (settlement.pot.holdBack > 0 ? String(settlement.pot.holdBack) : '');
   const confirmText = { fontSize: '0.85rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1.1rem' } as const;
   const confirmDim = { margin: 0, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' } as const;
   function reminderConfirmBody() {
@@ -2621,18 +2622,31 @@ export function PlayerDuesPanel({
             </>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* The letter itself — the on-demand variant, which is what THIS button sends. */}
+      </>
+    );
+  }
+  /** The confirm's foot (One Window 2d — the window's own foot, at every scroll): the letter's door at the left, the
+   *  window's closer and Send at the right. Same reading of the count as the body above. */
+  function reminderConfirmFoot() {
+    const loading = reminderPreview === 'loading';
+    const pv = reminderPreview !== null && typeof reminderPreview === 'object' ? reminderPreview : null;
+    const zero = !!pv && pv.families === 0;
+    return {
+      /* The letter itself — the on-demand variant, which is what THIS button sends. */
+      start: (
+        <button
+          type="button"
+          className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
+          onClick={() => { setReminderPreviewVariant('bulk'); setRealEmailPreview(null); setReminderPreviewOpen(true); }}
+        >
+          {zero ? 'See what families receive' : 'See what they\'ll receive'}
+        </button>
+      ),
+      end: (
+        <>
+          <QuestionCancel className={styles.btnGhost}>{zero ? 'Close' : 'Cancel'}</QuestionCancel>
           <button
             type="button"
-            className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
-            style={{ minHeight: 44, marginRight: 'auto' }}
-            onClick={() => { setReminderPreviewVariant('bulk'); setRealEmailPreview(null); setReminderPreviewOpen(true); }}
-          >
-            {zero ? 'See what families receive' : 'See what they\'ll receive'}
-          </button>
-          <button className={styles.btnGhost} onClick={() => setConfirmRemindersOpen(false)}>{zero ? 'Close' : 'Cancel'}</button>
-          <button
             className={styles.btnPrimary}
             /* Waits for a per-family send the same way that button waits for this one. */
             disabled={loading || zero || sendingReminders || !!remindingId}
@@ -2641,9 +2655,9 @@ export function PlayerDuesPanel({
             <Bell size={14} aria-hidden />{' '}
             {pv ? `Send ${pluralize(pv.families, 'email')}` : 'Send reminders'}
           </button>
-        </div>
-      </>
-    );
+        </>
+      ),
+    };
   }
 
   return (
@@ -3112,46 +3126,60 @@ export function PlayerDuesPanel({
             </button>
           </div>
 
+          {/* ⚖ THE ONE WINDOW, 800 WIDE (One Window 2d, call B9: "a statement and one decision, like the club's Close the
+              year"; 900 before). A tap outside does nothing; Escape and Back close it, never while the payouts record.
+              It asks only while a new hold-back amount is typed and not saved (owner, 2026-10-20). Set refund opens over
+              it as the one window's small question. */}
           {refundOpen && (
-            <div
-              className={styles.modalOverlay}
-              onPointerDown={e => { if (e.target === e.currentTarget && !payAllBusy) setRefundOpen(false); }}
-            >
-              <div
-                ref={settlementPanelRef}
-                tabIndex={-1}
-                className={`${styles.modal} ${styles.modalSettlement} ${styles.modalScrollBody} ${styles.modalFlushFooter}`}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Season settlement"
-                aria-busy={payAllBusy || undefined}
-              >
-                <div className={styles.modalHeader}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h2 className={styles.modalTitle}>
-                      {closeOutReady
-                        ? 'Ready to close the budget and pay families back?'
-                        : 'Not ready to close yet'}
-                    </h2>
-                    {/* ⚠ NOT `.muted` — that class is the empty-state helper and carries
-                        `padding: 2rem`, which indented this line 32px and blew the header open.
-                        `.mutedInline` is the colour-only one; this has its own class because it
-                        also sets the size. */}
-                    {/* ⚠ The subtitle no longer restates what is owed. It read "Families still owe
-                        $X", which is now the first line of the checklist beside the summary — and
-                        a blocking figure printed twice invites the reader to check whether the two
-                        agree. The heading says the verdict, the checklist says why. */}
-                    <p className={styles.settlementSubtitle}>
-                      {assignment?.teamName ?? ''}
-                      {closeOutReady ? ' · Nothing is paid until you choose it below' : ''}
-                    </p>
-                  </div>
-                  <button type="button" className={styles.modalCloseBtn} onClick={() => setRefundOpen(false)} aria-label="Close" disabled={payAllBusy}>
-                    <X size={18} />
+            <QuestionShell
+              open={tabActive}
+              onClose={() => setRefundOpen(false)}
+              dirty={holdBackDirty}
+              busy={payAllBusy}
+              widest
+              ariaLabel="Season settlement"
+              title={closeOutReady
+                ? 'Ready to close the budget and pay families back?'
+                : 'Not ready to close yet'}
+              /* ⚠ The subtitle no longer restates what is owed. It read "Families still owe
+                 $X", which is now the first line of the checklist beside the summary — and
+                 a blocking figure printed twice invites the reader to check whether the two
+                 agree. The heading says the verdict, the checklist says why. */
+              subtitle={<>
+                {assignment?.teamName ?? ''}
+                {closeOutReady ? ' · Nothing is paid until you choose it below' : ''}
+              </>}
+              /* ⚠ Only once the season CAN close. While it is still collecting, "$1,011.68 to
+                 4 families" beside a dead button reads as money queued to go out — the exact
+                 impression the close-out gate exists to prevent. What is blocking is already
+                 said, in words, at the top of the sheet. */
+              footerStart={closeOutReady && settlement && settlement.totals.payable > 0.005 ? (
+                <span className={styles.mutedInline} style={{ fontSize: '0.78rem' }}>
+                  {fmt(settlement.totals.payable)} to {payableCount} famil{payableCount === 1 ? 'y' : 'ies'}
+                </span>
+              ) : undefined}
+              /* ⚠ ONE ACTION, AND ONLY WHEN THE SEASON IS DONE COLLECTING (owner ruling
+                 2026-08-14). This used to offer `Pay all` the moment anything was payable —
+                 while families still owed, and for more cash than the team held. The sheet
+                 ALREADY computed that gap and printed a warning beside the live button, which
+                 is not a safeguard. */
+              footer={<>
+                <QuestionCancel className={styles.btnGhost}>{closeOutReady ? 'Not yet' : 'Close'}</QuestionCancel>
+                {settlement && moneyCanWrite && !settlement.readOnly && settlement.totals.payable > 0.005 && (
+                  <button
+                    type="button"
+                    className={`${styles.btnPrimary} ${styles.settlementPay}`}
+                    disabled={payAllBusy || !closeOutReady}
+                    title={closeOutReady ? undefined : 'The season can’t be closed yet — see the note above.'}
+                    onClick={closeOutSeason}
+                  >
+                    {payAllBusy ? 'Recording…' : 'Pay everyone and close the season'}
                   </button>
-                </div>
-                <div className={styles.settlementScroll}>
-                {settlementError && <p className={styles.errorText} style={{ marginTop: 0 }}>{settlementError}</p>}
+                )}
+              </>}
+            >
+                {/* Why the sheet could not load or record, beside its buttons in the foot (One Window 2b). */}
+                <QuestionReason className={styles.errorText}>{settlementError}</QuestionReason>
                 {settlementLoading && !settlement ? (
                   <LoadingState label="Loading the settlement…" inline />
                 ) : !settlement ? null : (
@@ -3546,39 +3574,9 @@ export function PlayerDuesPanel({
                     </div>
                   </div>
                 )}
-                </div>
-                {/* ⚠ ONE ACTION, AND ONLY WHEN THE SEASON IS DONE COLLECTING (owner ruling
-                    2026-08-14). This used to offer `Pay all` the moment anything was payable —
-                    while families still owed, and for more cash than the team held. The sheet
-                    ALREADY computed that gap and printed a warning beside the live button, which
-                    is not a safeguard. */}
-                <div className={styles.modalFooter}>
-                  {/* ⚠ Only once the season CAN close. While it is still collecting, "$1,011.68 to
-                      4 families" beside a dead button reads as money queued to go out — the exact
-                      impression the close-out gate exists to prevent. What is blocking is already
-                      said, in words, at the top of the sheet. */}
-                  {closeOutReady && settlement && settlement.totals.payable > 0.005 && (
-                    <span className={styles.mutedInline} style={{ marginRight: 'auto', fontSize: '0.78rem' }}>
-                      {fmt(settlement.totals.payable)} to {payableCount} famil{payableCount === 1 ? 'y' : 'ies'}
-                    </span>
-                  )}
-                  <button className={styles.btnGhost} style={{ minHeight: 44 }} onClick={() => setRefundOpen(false)} disabled={payAllBusy}>
-                    {closeOutReady ? 'Not yet' : 'Close'}
-                  </button>
-                  {settlement && moneyCanWrite && !settlement.readOnly && settlement.totals.payable > 0.005 && (
-                    <button
-                      className={styles.btnPrimary}
-                      style={{ minHeight: 44 }}
-                      disabled={payAllBusy || !closeOutReady}
-                      title={closeOutReady ? undefined : 'The season can’t be closed yet — see the note above.'}
-                      onClick={closeOutSeason}
-                    >
-                      {payAllBusy ? 'Recording…' : 'Pay everyone and close the season'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+                {/* ⚰ The `.settlementScroll` wrapper and the foot strip stood here: the one window's body scrolls, and the
+                    "$X to N families" sentence, Not yet and Pay everyone are its foot (above). */}
+            </QuestionShell>
           )}
 
         </>
@@ -4149,7 +4147,7 @@ export function PlayerDuesPanel({
                         })()}
                         {payError && <p className={styles.errorText}>{payError}</p>}
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                          <button className={styles.btnGhost} onClick={() => closeMoneySheets()} style={{ fontSize: '0.8rem' }}>Cancel</button>
+                          <button className={styles.btnGhost} onClick={() => { void cancelPayCorrection(); }} disabled={paySaving} style={{ fontSize: '0.8rem' }}>Cancel</button>
                           <button className={styles.btnPrimary} disabled={paySaving} onClick={savePayment} style={{ fontSize: '0.8rem' }}>
                             {paySaving ? 'Saving…' : 'Save correction'}
                           </button>
@@ -4874,25 +4872,28 @@ export function PlayerDuesPanel({
         const row = settlement.rows.find(r => r.playerId === choiceFor.playerId) ?? choiceFor;
         const name = [row.playerFirstName, row.playerLastName].filter(Boolean).join(' ');
         const evenTakers = settlement.rows.filter(r => r.choice === 'even').length;
+        /* ⚖ THE ONE WINDOW'S SMALL QUESTION (One Window 2d, call B9: "one pick, over the settlement"). It stands on the
+           question layer above the settlement form; no ×; Escape, Back and a tap outside are its "no" (Cancel), never
+           while a choice saves. A small centred card on a phone. */
         return (
-          <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setChoiceFor(null))?.(); }}>
-            <div
-              ref={choicePanelRef}
-              tabIndex={-1}
-              role="dialog"
-              aria-modal="true"
-              aria-label={`Set refund — ${name}`}
-              aria-busy={choiceSaving || undefined}
-              className={styles.modal}
-              style={{ maxWidth: 480 }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className={styles.modalHeader}>
-                <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Set refund — {name}</span>
-                <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setChoiceFor(null)}>
-                  <X size={18} />
-                </button>
-              </div>
+          <QuestionShell kind="question" open={tabActive} onClose={() => setChoiceFor(null)} busy={choiceSaving}
+            ariaLabel={`Set refund — ${name}`} title={`Set refund — ${name}`}
+            footer={<>
+              <QuestionCancel className={styles.btnGhost} />
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                disabled={choiceSaving}
+                /* Flagged because saveChoice / saveRowChoice → load(), which reads `loadSeq.current` —
+                   but only in its async body after the click, never during render (the same
+                   stamp-and-drop the expenses panel has always used). False positive; the linter
+                   reports the first such call in the window, which is this one since the foot moved. */
+                // eslint-disable-next-line react-hooks/refs
+                onClick={() => saveChoice(row.playerId)}
+              >
+                {choiceSaving ? 'Saving…' : 'Save'}
+              </button>
+            </>}>
               {/* ⚠ EVERY OPTION STATES WHAT IT PRODUCES, chosen or not (owner Q4, QA §123 Phase E).
                   Only the saved option used to show dollars — and the figure the sheet exists to
                   compare vanished exactly when the coach started comparing. Every figure here is
@@ -4958,10 +4959,6 @@ export function PlayerDuesPanel({
                     className={styles.btnSecondary}
                     disabled={choiceSaving}
                     style={{ fontSize: '0.78rem' }}
-                    /* Flagged because saveRowChoice → load(), which now reads `loadSeq.current` —
-                       but only in its async body after the click, never during render (the same
-                       stamp-and-drop the expenses panel has always used). False positive. */
-                    // eslint-disable-next-line react-hooks/refs
                     onClick={() => saveRowChoice(row.playerId, 'forgive')}
                   >
                     Forgive the {fmt(row.leftToSend)} balance
@@ -4988,49 +4985,26 @@ export function PlayerDuesPanel({
                 </div>
               )}
               {/* The sheet's own failure line — behind it, the settlement window's channel is
-                  invisible while this sheet is open (Phase B). role=alert so a screen reader
-                  hears the refusal the moment it lands. */}
-              {choiceError && (
-                <p className={styles.errorText} role="alert" style={{ margin: '0 0 0.75rem' }}>{choiceError}</p>
-              )}
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                <button className={styles.btnGhost} onClick={() => setChoiceFor(null)}>Cancel</button>
-                <button
-                  className={styles.btnPrimary}
-                  disabled={choiceSaving}
-                  onClick={() => saveChoice(row.playerId)}
-                >
-                  {choiceSaving ? 'Saving…' : 'Save'}
-                </button>
-              </div>
-            </div>
-          </div>
+                  invisible while this sheet is open (Phase B). In the question's foot, beside Save (One Window 2b),
+                  announced the moment it lands. */}
+              <QuestionReason className={styles.errorText}>{choiceError}</QuestionReason>
+          </QuestionShell>
         );
       })()}
 
-      {confirmRemindersOpen && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setConfirmRemindersOpen(false); }}>
-          <div
-            ref={confirmRemindersPanelRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Send due reminders?"
-            aria-busy={sendingReminders || undefined}
-            className={styles.modal}
-            style={{ maxWidth: 460 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Send due reminders?</span>
-              <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setConfirmRemindersOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
+      {/* ⚖ A SMALL FORM, NOT THE QUESTION (owner, 2026-10-20, One Window 2d call 3): it has a door in it — "See what
+          they'll receive" opens the letter OVER it, and a question stands on the top layer, so the letter would open
+          underneath. 460 → the ladder's 520; it fills a phone. Nothing typed: it never asks. */}
+      {confirmRemindersOpen && (() => {
+        const foot = reminderConfirmFoot();
+        return (
+          <QuestionShell open={tabActive} onClose={() => setConfirmRemindersOpen(false)} busy={sendingReminders}
+            ariaLabel="Send due reminders?" title="Send due reminders?"
+            footerStart={foot.start} footer={foot.end}>
             {reminderConfirmBody()}
-          </div>
-        </div>
-      )}
+          </QuestionShell>
+        );
+      })()}
 
       {reminderPreviewOpen && (
         <DuesReminderPreviewModal

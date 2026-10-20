@@ -1,7 +1,5 @@
 'use client';
-import { useRef } from 'react';
-import { X } from 'lucide-react';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import { duesReminderEmail, GUARDIAN_FIRST_NAME_PLACEHOLDER } from '@/lib/dues-reminder-email';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -55,13 +53,11 @@ export default function DuesReminderPreviewModal({
     | { subject: string; html: string; to: string | null; missingEmail: boolean; guardianHidden: boolean };
   onClose: () => void;
 }) {
-  /* The accessibility floor (D7): Escape closes, Tab stays inside, focus returns to the "See an
-     example" link that opened this. Both callers mount this only while it is open, so the floor
-     is armed for its whole life. No busy gate and no discard guard — nothing here is typed and
-     nothing here is saved. */
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(true, panelRef, { onClose });
-
+  /* ⚖ THE ONE WINDOW, A READ WINDOW (One Window 2d, calls B5 / B6): Escape and the phone's Back close it, Tab stays
+     inside, focus returns to the link that opened it, and a tap outside does nothing. 600 → the ladder's 640; it fills
+     a phone. No busy gate and no ask — nothing here is typed and nothing here is saved. Every caller mounts it only
+     while it is open, and it opens AFTER whatever it stands over (the reminder confirm, the dues drawer), so it is the
+     top window of its layer. */
   const today = tournamentToday();
   const bulk = variant === 'bulk';
   const family = variant === 'family';
@@ -109,24 +105,7 @@ export default function DuesReminderPreviewModal({
     : sample.html;
 
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div
-        ref={panelRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={styles.modal}
-        style={{ maxWidth: 600 }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className={styles.modalHeader}>
-          <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>{title}</span>
-          <button className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
+    <QuestionShell open onClose={onClose} wide ariaLabel={title} title={title}>
         <div style={{ fontSize: '0.83rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1rem' }}>
           {family ? (
             <p style={{ margin: 0 }}>
@@ -225,7 +204,6 @@ export default function DuesReminderPreviewModal({
             )}
           </>
         )}
-      </div>
-    </div>
+    </QuestionShell>
   );
 }

@@ -13661,40 +13661,10 @@ div.gdRow { cursor: default; }
   color: var(--text-tertiary);
 }
 
-/* The settlement modal is WIDER than the shared 520px sheet: it carries a money summary and a
-   payout table, and the whole point of the move was that the two sit side by side instead of
-   stacking into the scroll the accordion was.
-   ⚠ The old drawer nested three padded boxes (drawer body → summary card → each row) and pinned
-   the summary to a fixed 460px, which is where the reported "huge padding" and the dead space
-   beside it came from. Here the modal's own 1.5rem is the only outer padding. */
-.modalSettlement { max-width: 900px; }
-
-/* ⚠ The header carries a SUBTITLE, so the X must sit at the top rather than floating halfway
-   down a two-line block — `.modalHeader`'s shared `align-items: center` is right for the
-   one-line headers everywhere else and wrong here. Scoped, so nothing else moves. */
-.modalSettlement > .modalHeader { align-items: flex-start; margin-bottom: 1rem; }
-/* ⚠ The shared `.modalCloseBtn` renders 28px (an 18px glyph + 0.25rem), under the portal's 44px
-   tap floor — the rendered sweep flags it the moment a modal appears on a swept screen. Widened
-   HERE rather than on the shared class: every dialog in the portal inherits that button, and
-   moving it globally is a portal-wide decision, not a side effect of this pass. */
-.modalSettlement > .modalHeader .modalCloseBtn {
-  min-height: var(--tap-min, 44px);
-  min-width: var(--tap-min, 44px);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.settlementSubtitle {
-  margin: 0.15rem 0 0;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-/* The scrolling middle. `.modalScrollBody` (the Add-Expense recipe) pins the header and footer
-   and scrolls exactly one child — that child is named here, the way `.formGrid` is named for the
-   forms. Without it the whole panel scrolls and the footer rides over the table, which is what
-   the first cut shipped. */
-.modalScrollBody > .settlementScroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; margin-inline: -1.5rem; padding-inline: 1.5rem; }
+/* ⚰ THE SETTLEMENT'S OWN WINDOW SHAPE STOOD HERE (`.modalSettlement` 900 wide, its head's top-aligned × and 44px close,
+   `.settlementSubtitle`, the `.settlementScroll` middle). The settlement is the one window now (One Window 2d, call B9:
+   800, `QuestionShell widest`): its head carries the subtitle and a 44px ← on a phone, and its body scrolls between a
+   pinned head and foot. What the sheet's CONTENT needs stays below, keyed on its own body (`.settlementBody`). */
 
 /* ⚠ STACKED, NOT SIDE BY SIDE — and this is arithmetic, not taste. The approved mockup put the
    money summary beside the payout table, and its table was narrower than the real one. Measured
@@ -13763,26 +13733,30 @@ div.gdRow { cursor: default; }
 .settlementCol { min-width: 0; }
 
 /* Names are names: they do not break over two lines while there is width to be had. */
-.modalSettlement .table td:first-child,
-.modalSettlement .table th:first-child { white-space: nowrap; }
+.settlementBody .table td:first-child,
+.settlementBody .table th:first-child { white-space: nowrap; }
 
 /* ⚠ MODAL DENSITY, NOT PAGE DENSITY. The shared table is tuned for a full page — 0.88rem type in
    0.7rem × 1rem cells — and that is right where a table IS the screen. Dropped into a dialog next
    to a 0.84rem summary card it reads a size too large, and eight families then need a scroll to
    see four. Matched to the card it sits beside, so the two halves of the sheet look like one
    document. Type stays well above the portal's floor; only the air comes out. */
-.modalSettlement .table { font-size: var(--type-body); }
-.modalSettlement .th { padding: 0.4rem 0.7rem; font-size: var(--type-label); }
-.modalSettlement .td { padding: 0.45rem 0.7rem; }
+.settlementBody .table { font-size: var(--type-body); }
+.settlementBody .th { padding: 0.4rem 0.7rem; font-size: var(--type-label); }
+.settlementBody .td { padding: 0.45rem 0.7rem; }
 /* The family grouping row is a caption, not a record — it can be quieter still. */
-.modalSettlement .tableFoot td { padding: 0.5rem 0.7rem; }
+.settlementBody .tableFoot td { padding: 0.5rem 0.7rem; }
 
 /* ⚠ A DISABLED CTA MUST LOOK INERT, and the shared `opacity: 0.5` does not deliver that here.
    Halving the opacity of a lime fill works on the portal's dark ground; on warm paper it becomes
    a soft mint panel that reads as a highlighted, pressable button — which is the worst possible
    reading for the one control that must not be pressed while a season is still collecting.
-   Scoped to this modal: retuning the shared disabled state is a portal-wide call. */
-.modalSettlement .modalFooter .btnPrimary:disabled {
+   Scoped to this one button (`settlementPay`, in the one window's foot since 2d): retuning the shared disabled state
+   is a portal-wide call. ⚠ WEIGHT: the Warm lime (`html[data-user-theme="warm"] [data-coach-warm-enabled] .btnPrimary`,
+   two attributes + a class + an element) outweighs two classes and a state — measured, 2d part 4: the dead button drew
+   bright lime again. Keyed on the window it stands in (three attributes-or-classes and a state), as the old
+   `.modalSettlement .modalFooter .btnPrimary` was. */
+[data-coach-window] .btnPrimary.settlementPay:disabled {
   opacity: 1;
   background: var(--home-fill, rgba(255,255,255,0.08));
   color: var(--text-tertiary);
