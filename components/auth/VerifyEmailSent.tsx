@@ -16,11 +16,10 @@ export { requestVerificationLink } from './ResendLink';
  *  - `start` — the one look every account door shares (The first look, Stage 1, 2026-10-19): the email in one white
  *    callout, the resend as the white secondary, "Use a different email" and "Already confirmed? Sign in" on one
  *    44px row. Each door keeps its own last clause in `lead`.
- *  - `auth` — the sign-in card's older look, until the last door leaves it (Stage 1c).
  *  - `register` — the event's public Register page, which wears the organizer's brand and keeps its own look.
  */
 export default function VerifyEmailSent(props: {
-  tone: 'start' | 'auth' | 'register';
+  tone: 'start' | 'register';
   email: string;
   lead: ReactNode;
   after?: ReactNode;
@@ -35,16 +34,16 @@ export default function VerifyEmailSent(props: {
   const { tone, email, lead, after, resendNext, continueName, onChangeEmail, signInHref } = props;
   // The start look takes focus when it opens: the button that submitted the form is gone, and a status line inserted
   // with its text already in it is not reliably spoken (The first look, the Stage 1 screen-reader pass).
-  const leadRef = useRef<HTMLParagraphElement>(null);
+  const blockRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (tone === 'start') leadRef.current?.focus();
+    if (tone === 'start') blockRef.current?.focus();
   }, [tone]);
 
   if (tone === 'start') {
     return (
-      <div className={accountForm.form}>
-        {/* The form this replaces held focus; it moves here so a screen reader reads where the email went. */}
-        <p className={accountForm.body} tabIndex={-1} ref={leadRef}>{lead}</p>
+      // The form this replaces held focus; it moves to the block, so a screen reader reads the sentence and the address.
+      <div className={accountForm.waitBlock} tabIndex={-1} ref={blockRef}>
+        <p className={accountForm.body}>{lead}</p>
         <p className={accountForm.callout} role="status">Sent to <strong>{email}</strong>.{after && <> {after}</>}</p>
         <ResendLink
           email={email}

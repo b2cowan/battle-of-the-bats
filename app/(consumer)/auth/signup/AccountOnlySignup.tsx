@@ -1,13 +1,17 @@
 'use client';
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
 import { safeNextPath } from '@/lib/safe-redirect';
-import styles from '../auth.module.css';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
+import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 
+/**
+ * The account-only sign-up (`/auth/signup?account=1`: fans, the follow nudge, "I was invited") — the one account step
+ * (The first look, Stage 1c, 2026-10-19): the start column, the shared fields, "Create account", and the one
+ * check-your-email. No door and no step line: the account is the whole job.
+ */
 function AccountOnlyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,12 +23,20 @@ function AccountOnlyForm() {
   const [lastName, setLastName]   = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  // Back from "Use a different email": the form opens with the cursor in the email field.
+  const [changingEmail, setChangingEmail] = useState(false);
   // An existing account answers with a tappable Sign-in notice instead of a bare error string.
   const [accountExists, setAccountExists] = useState(false);
+  const setField: Record<keyof AccountValues, (value: string) => void> = {
+    firstName: setFirstName,
+    lastName: setLastName,
+    email: value => { setEmail(value); if (accountExists) setAccountExists(false); },
+    password: setPassword,
+  };
+  const loginHref = safeNext ? `/auth/login?next=${encodeURIComponent(safeNext)}` : '/auth/login';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +81,8 @@ function AccountOnlyForm() {
     }
 
     if (json.requiresEmailVerification) {
+      // The entries stay for "Use a different email"; the password is cleared, as at every door.
+      setPassword('');
       setVerificationEmail(json.email ?? email);
       setLoading(false);
       return;
@@ -88,136 +102,61 @@ function AccountOnlyForm() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M3 21h18M9 21V7l3-3 3 3v14M9 12h6" />
-            </svg>
-          </div>
-          <h1 className={styles.title}>Create your account</h1>
-          {/* Fans are this mode's main audience now (conversion sweep 2026-07-14, Journey B finding 3) — no
-              invitation is implied. */}
-          <p className={styles.sub}>FieldLogicHQ — your teams, scores &amp; alerts in one place</p>
-        </div>
+    <StartColumn>
+      {/* Fans are this mode's main audience now (conversion sweep 2026-07-14, Journey B finding 3) — no invitation is
+          implied. */}
+      <StartHead title="Create your account" sub="Your teams, scores and alerts in one place." />
 
-        {verificationEmail ? (
-          <VerifyEmailSent
-            tone="auth"
-            email={verificationEmail}
-            lead="Your account is almost ready. For security, verify your email to finish."
-            // Neutral for both audiences of account-only signup: fans (the common case) and invited users — /home
-            // surfaces any pending invitation.
-            after="After you confirm, FieldLogicHQ signs you in and takes you to your home screen — any pending invitations will be waiting there."
-            resendNext={safeNext ?? '/discover'}
-            signInHref="/auth/login"
-          />
-        ) : (
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="signup-first-name">First Name</label>
-              <input
-                id="signup-first-name"
-                type="text"
-                className="form-input"
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
-                placeholder="Jordan"
-                required
-                autoComplete="given-name"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="signup-last-name">Last Name</label>
-              <input
-                id="signup-last-name"
-                type="text"
-                className="form-input"
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-                placeholder="Lee"
-                required
-                autoComplete="family-name"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="signup-email">Email</label>
-            <input
-              id="signup-email"
-              type="email"
-              className="form-input"
-              value={email}
-              onChange={e => { setEmail(e.target.value); if (accountExists) setAccountExists(false); }}
-              placeholder="you@example.com"
-              required
-              autoComplete="email"
+      {verificationEmail ? (
+        <VerifyEmailSent
+          tone="start"
+          email={verificationEmail}
+          // Neutral for both audiences of account-only signup: fans (the common case) and invited users — Home
+          // surfaces any pending invitation.
+          lead="Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to your home screen, where any invitations are waiting."
+          after="Open it on any phone or computer."
+          resendNext={safeNext ?? '/discover'}
+          onChangeEmail={() => { setVerificationEmail(''); setChangingEmail(true); }}
+          signInHref={loginHref}
+        />
+      ) : (
+        <>
+          <form onSubmit={handleSubmit} className={accountForm.form}>
+            <AccountFields
+              idPrefix="signup"
+              values={{ firstName, lastName, email, password }}
+              onChange={(field, value) => setField[field](value)}
+              autoFocus={changingEmail ? 'email' : undefined}
+              emailHint={accountExists && (
+                <span role="alert">An account already exists for this email. <Link href={loginHref}>Sign in</Link> instead.</span>
+              )}
             />
-            {accountExists && (
-              <div className={styles.inlineNotice}>
-                An account already exists for this email.{' '}
-                <Link href="/auth/login" className={styles.footerLink}>Sign in</Link> instead.
-              </div>
-            )}
-          </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="signup-password">Password</label>
-            <div className={styles.pwWrap}>
-              <input
-                id="signup-password"
-                type={showPw ? 'text' : 'password'}
-                className="form-input"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-              <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
-                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </div>
+            {error && <p className={accountForm.error} role="alert">{error}</p>}
 
-          {error && <div className={styles.error}>{error}</div>}
+            <button type="submit" className={accountForm.primary} disabled={loading || accountExists} id="signup-submit">
+              {loading ? 'Creating…' : 'Create account'}
+            </button>
 
-          <button
-            type="submit"
-            className={styles.submitBtn}
-            disabled={loading || accountExists}
-            id="signup-submit"
-          >
-            {loading ? 'Creating…' : 'Create account'}
-          </button>
+            <p className={accountForm.fine}>Free to join. No credit card required.</p>
+          </form>
 
-          <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', textAlign: 'center' }}>
-            Free to join. No credit card required.
-          </p>
-        </form>
-        )}
-
-        {!verificationEmail && (
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            Already have an account?{' '}
-            <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
-          </p>
-        </div>
-        )}
-      </div>
-    </div>
+          <StartFoot>
+            <p>
+              Already have an account?{' '}
+              <Link href={loginHref} className={accountForm.footLink}>Sign in</Link>
+            </p>
+          </StartFoot>
+        </>
+      )}
+    </StartColumn>
   );
 }
 
 /** The account-only sign-up (`/auth/signup?account=1`); useSearchParams needs its boundary. */
 export default function AccountOnlySignup() {
   return (
-    <Suspense fallback={<div className={styles.page} />}>
+    <Suspense fallback={<StartColumn><StartHead title="Create your account" /></StartColumn>}>
       <AccountOnlyForm />
     </Suspense>
   );

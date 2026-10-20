@@ -136,10 +136,10 @@ export function EmailField({ id, value, onChange, locked = false, disabled = fal
  * First name, last name, email, password (with the eye), in that order, with the same placeholders and the same hint
  * at every door (plan rule 4). `email={false}` drops the email field for a door that already knows it (an invitation);
  * `emailLocked` shows it fixed (a tournament claim). `emailHint` is the line a door hangs under the email, read with it
- * ("An account already exists…"). `focusEmail` puts the cursor in the email field when the form opens again (from "Use
- * a different email", or from the sign-in form).
+ * ("An account already exists…"). `autoFocus` puts the cursor in a field when the form opens: the first name on an
+ * invitation, the email when the form opens again (from "Use a different email", or from the sign-in form).
  */
-export function AccountFields({ idPrefix, values, onChange, email = true, emailLocked = false, emailHint, disabled = false, focusEmail = false }: {
+export function AccountFields({ idPrefix, values, onChange, email = true, emailLocked = false, emailHint, disabled = false, autoFocus }: {
   idPrefix: string;
   values: AccountValues;
   onChange: (field: keyof AccountValues, value: string) => void;
@@ -147,7 +147,7 @@ export function AccountFields({ idPrefix, values, onChange, email = true, emailL
   emailLocked?: boolean;
   emailHint?: ReactNode;
   disabled?: boolean;
-  focusEmail?: boolean;
+  autoFocus?: 'firstName' | 'email';
 }) {
   return (
     <>
@@ -163,6 +163,7 @@ export function AccountFields({ idPrefix, values, onChange, email = true, emailL
             required
             autoComplete="given-name"
             disabled={disabled}
+            autoFocus={autoFocus === 'firstName'}
           />
         </Field>
         <Field id={`${idPrefix}-last-name`} label="Last name">
@@ -187,7 +188,7 @@ export function AccountFields({ idPrefix, values, onChange, email = true, emailL
           onChange={value => onChange('email', value)}
           locked={emailLocked}
           disabled={disabled}
-          autoFocus={focusEmail}
+          autoFocus={autoFocus === 'email'}
           hint={emailHint}
         />
       )}

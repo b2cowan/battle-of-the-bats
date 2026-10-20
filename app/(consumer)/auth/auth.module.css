@@ -186,70 +186,6 @@
 }
 .errorNote { margin: 0.5rem 0 0; }
 
-/* ── Invitation copy (the accept-invite form). The org sign-up's "You've been invited" branch moved to the start
-   look with Run a tournament's step 1 (Account-First Sign-up Part 2, 2026-10-19; now components/auth/AccountForm.module.css). */
-.inviteBody {
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: var(--data-gray);
-}
-
-/* Field-level, corrective-not-error notice (existing-account case). */
-.inlineNotice {
-  margin-top: 0.5rem;
-  background: rgba(var(--primary-rgb), 0.06);
-  border: 1px solid rgba(var(--primary-rgb), 0.35);
-  border-radius: 0;
-  padding: 0.55rem 0.8rem;
-  font-family: var(--font-data);
-  font-size: 0.73rem;
-  line-height: 1.45;
-  color: var(--data-gray);
-}
-
-.confirmBox {
-  margin-top: 0.75rem;
-  background: rgba(var(--primary-rgb), 0.06);
-  border: 1px solid rgba(var(--primary-rgb), 0.4);
-  border-radius: 0;
-  padding: 0.9rem 1rem;
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: var(--data-gray);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.confirmActions {
-  display: flex;
-  gap: 0.6rem;
-}
-
-/* Ghost/outlined secondary button (reserves the lime submitBtn for the recommended path). */
-.btnGhost {
-  flex: 1;
-  padding: 0.7rem;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: transparent;
-  color: var(--data-gray);
-  border: 1px solid rgba(var(--primary-rgb), 0.5);
-  border-radius: 0;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.btnGhost:hover {
-  color: var(--fl-text);
-  border-color: var(--blueprint-blue);
-}
-
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer {
   margin-top: 1.5rem;
@@ -369,15 +305,6 @@
   border-color: rgba(var(--home-live-rgb), 0.3);
   color: var(--home-live);
 }
-
-/* Navy-tint panels → white cards on paper (the warm card convention). */
-:global(html[data-user-theme="warm"]) .authSurface .inlineNotice,
-:global(html[data-user-theme="warm"]) .authSurface .confirmBox {
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-}
-
-:global(html[data-user-theme="warm"]) .authSurface .btnGhost { border-color: var(--home-line-strong); }
 
 :global(html[data-user-theme="warm"]) .authSurface .footerLink:hover { color: var(--home-ink); }
 

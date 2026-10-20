@@ -1,14 +1,15 @@
 'use client';
 import { Check } from 'lucide-react';
-import styles from './BillingChoice.module.css';
+import styles from './ChoicePair.module.css';
 
 /**
- * THE BILLING CHOICE (The first look, design review D-F3, 2026-10-19): two options side by side, 44px, 14/600, the
- * picked one with a check and a 2px olive edge. A choice, not a toggle switch: one is always picked. Built once so the
- * pricing page's monthly / annual toggle can adopt it (The public face, S4) — Coach Premium's step 2 wears it first.
+ * THE CHOICE PAIR (The first look, design review D-F3, 2026-10-19): two options side by side, 44px, 14/600, the picked
+ * one with a check and a 2px olive edge. A choice, not a toggle switch: one is always picked. Coach Premium's billing
+ * ("$29/month" / "$290/year") and the join page's "Existing team" / "New team" wear it; built once so the pricing
+ * page's monthly / annual toggle can adopt it too (The public face, S4).
  * It reads the warm vocabulary (--home-*) of whatever ground hosts it.
  */
-export default function BillingChoice<V extends string>({ labelledBy, describedBy, value, options, onChange, disabled = false }: {
+export default function ChoicePair<V extends string>({ labelledBy, describedBy, value, options, onChange, disabled = false }: {
   /** The id of the visible label the host shows above it, which names the group (never a second copy of its words). */
   labelledBy: string;
   /** The id of the line under it, when there is one. */

@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
-import styles from '../auth.module.css';
+import LoadingState from '@/components/shared/LoadingState';
+import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 
 type PageState = 'waiting' | 'ready' | 'submitting' | 'joinFailed' | 'retrying' | 'joinRefused' | 'expired';
 type JoinOutcome = 'joined' | 'failed' | 'refused';
@@ -47,7 +47,6 @@ export default function AcceptInviteForm({
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [showPw, setShowPw] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [invite, setInvite] = useState<InviteContext | null>(null);
 
@@ -150,146 +149,87 @@ export default function AcceptInviteForm({
 
   const clubWord = orgName ?? 'the club';
   const title = roleName ? `Join ${clubWord} as ${roleName}` : `Join ${clubWord}`;
+  const setField: Record<keyof AccountValues, (value: string) => void> = {
+    firstName: setFirstName, lastName: setLastName, email: () => {}, password: setPassword,
+  };
 
   if (pageState === 'expired') {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap} aria-hidden>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4M12 16h.01" />
-            </svg>
-          </div>
-          <h1 className={styles.title}>This invitation link has expired</h1>
-          {orgName && <p className={styles.sub}>{orgName}</p>}
-        </div>
-        <p className={styles.inviteBody} style={{ marginBottom: '1.25rem' }}>
-          {orgName
-            ? `Your invitation from ${orgName} is still waiting. Set a password and it will be on your home page.`
-            : 'Your invitation is still waiting. Set a password and it will be on your home page.'}
-        </p>
-        <Link href="/auth/forgot-password" className={styles.submitBtn} style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
-          Set a password
-        </Link>
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            I have a password ·{' '}
-            <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
+      <StartColumn>
+        <StartHead title="This invitation link has expired" sub={orgName ?? undefined} />
+        <div className={accountForm.form}>
+          <p className={accountForm.body}>
+            {orgName
+              ? `Your invitation from ${orgName} is still waiting. Set a password and it will be on your home page.`
+              : 'Your invitation is still waiting. Set a password and it will be on your home page.'}
           </p>
+          <Link href="/auth/forgot-password" className={accountForm.primary}>Set a password</Link>
         </div>
-      </div>
+        <StartFoot>
+          <p>
+            I have a password ·{' '}
+            <Link href="/auth/login" className={accountForm.footLink}>Sign in</Link>
+          </p>
+        </StartFoot>
+      </StartColumn>
     );
   }
 
+  // One account step (The first look, Stage 1c, 2026-10-19): the heading names the club and the role, the inviter is the
+  // one sub line, and the fields are the shared ones without the email the invitation already knows (plan rule 4).
   return (
-    <div className={styles.card}>
-      <div className={styles.header}>
-        <div className={styles.iconWrap} aria-hidden>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-        </div>
-        {orgName && <p className={styles.sub} style={{ marginBottom: '0.4rem' }}>{orgName}</p>}
-        <h1 className={styles.title}>{title}</h1>
-      </div>
+    <StartColumn>
+      <StartHead
+        title={title}
+        sub={inviter ? `${inviter} invited you. Set a password to finish.` : 'Set a password to finish.'}
+      />
 
-      <p className={styles.inviteBody} style={{ marginBottom: invite?.roleOpens ? '0.5rem' : '1.25rem' }}>
-        {inviter ? `${inviter} invited you. Set a password to finish.` : 'Set a password to finish.'}
-      </p>
-      {invite?.roleOpens && (
-        <p className={styles.inviteBody} style={{ marginBottom: '1.25rem' }}>{invite.roleOpens}</p>
-      )}
+      <div className={accountForm.form}>
+        {invite?.roleOpens && <p className={accountForm.body}>{invite.roleOpens}</p>}
 
-      {pageState === 'waiting' && (
-        <p className={styles.inviteBody} style={{ textAlign: 'center' }}>Checking your invitation…</p>
-      )}
+        {pageState === 'waiting' && <LoadingState label="Loading your invitation…" inline />}
 
-      {(pageState === 'joinFailed' || pageState === 'retrying') && (
-        <div className={styles.confirmBox} role="alert">
-          <strong style={{ color: 'var(--fl-text)' }}>
-            Your password is saved. We couldn’t add you to {clubWord} just now.
-          </strong>
-          <span>Try again. If it keeps failing, sign in and accept from your home page.</span>
-          <div className={styles.confirmActions}>
-            <button type="button" className={styles.btnGhost} onClick={retryJoin} disabled={pageState === 'retrying'}>
-              {pageState === 'retrying' ? 'Trying…' : 'Try again'}
-            </button>
+        {(pageState === 'joinFailed' || pageState === 'retrying') && (
+          <div className={accountForm.error} role="alert">
+            <strong>Your password is saved. We couldn’t add you to {clubWord} just now.</strong>
+            <br />
+            Try again. If it keeps failing, sign in and accept from your home page.
           </div>
-        </div>
-      )}
-
-      {pageState === 'joinRefused' && (
-        <div className={styles.confirmBox} role="alert">
-          <strong style={{ color: 'var(--fl-text)' }}>Your password is saved, but you can’t join {clubWord} in this role.</strong>
-          {errorMsg && <span>{errorMsg}</span>}
-          <Link href="/discover" className={styles.footerLink}>Go to your home page</Link>
-        </div>
-      )}
-
-      {(pageState === 'ready' || pageState === 'submitting') && (
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="accept-first-name">First name <span aria-hidden>*</span></label>
-              <input
-                id="accept-first-name"
-                type="text"
-                className="form-input"
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
-                maxLength={60}
-                autoComplete="given-name"
-                required
-                autoFocus
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="accept-last-name">Last name <span aria-hidden>*</span></label>
-              <input
-                id="accept-last-name"
-                type="text"
-                className="form-input"
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-                maxLength={60}
-                autoComplete="family-name"
-                required
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="accept-password">Password <span aria-hidden>*</span></label>
-            <div className={styles.pwWrap}>
-              <input
-                id="accept-password"
-                type={showPw ? 'text' : 'password'}
-                className="form-input"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                className={styles.pwToggle}
-                onClick={() => setShowPw(s => !s)}
-                aria-label={showPw ? 'Hide password' : 'Show password'}
-              >
-                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </div>
-
-          {errorMsg && <div className={styles.error}>{errorMsg}</div>}
-
-          <button type="submit" className={styles.submitBtn} disabled={pageState === 'submitting'}>
-            {pageState === 'submitting' ? 'Joining…' : 'Create password and join'}
+        )}
+        {(pageState === 'joinFailed' || pageState === 'retrying') && (
+          <button type="button" className={accountForm.secondary} onClick={retryJoin} disabled={pageState === 'retrying'}>
+            {pageState === 'retrying' ? 'Trying…' : 'Try again'}
           </button>
-        </form>
-      )}
-    </div>
+        )}
+
+        {pageState === 'joinRefused' && (
+          <div className={accountForm.error} role="alert">
+            <strong>Your password is saved, but you can’t join {clubWord} in this role.</strong>
+            {errorMsg && <><br />{errorMsg}</>}
+          </div>
+        )}
+        {pageState === 'joinRefused' && (
+          <Link href="/discover" className={accountForm.secondary}>Go to your home page</Link>
+        )}
+
+        {(pageState === 'ready' || pageState === 'submitting') && (
+          <form onSubmit={handleSubmit} className={accountForm.form}>
+            <AccountFields
+              idPrefix="accept"
+              values={{ firstName, lastName, email: '', password }}
+              onChange={(field, value) => setField[field](value)}
+              email={false}
+              autoFocus="firstName"
+            />
+
+            {errorMsg && <p className={accountForm.error} role="alert">{errorMsg}</p>}
+
+            <button type="submit" className={accountForm.primary} disabled={pageState === 'submitting'}>
+              {pageState === 'submitting' ? 'Joining…' : 'Create account and join'}
+            </button>
+          </form>
+        )}
+      </div>
+    </StartColumn>
   );
 }

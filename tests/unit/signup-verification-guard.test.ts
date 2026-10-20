@@ -108,7 +108,7 @@ describe('the screens', () => {
   it('the coach join page: returns to itself and, back from the link with nothing to choose, links the registration', () => {
     const src = readCode('app/coaches/join/page.tsx');
     assert.match(src, /next: verifyReturnPath\(\),/);
-    assert.match(src, /<VerifyEmailSent\s+tone="auth"/);
+    assert.match(src, /<VerifyEmailSent\s+tone="start"/, 'the one check-your-email (The first look, rule 5)');
     assert.match(src, /&verified=1`/);
   });
   it('the join page links only on a team list that LOADED, and sends one request per visit (review 2026-10-16)', () => {
@@ -158,7 +158,7 @@ describe('the screens', () => {
     assert.match(readCode('app/(consumer)/start/tournament/StartTournamentForm.tsx'), /<StartDoorForm door="organization"/);
     assert.match(readCode('next.config.ts'), /source: '\/auth\/signup', missing: \[\{ type: 'query', key: 'account', value: '1' \}\], destination: '\/start\/tournament'/);
     const src = readCode('app/(consumer)/auth/signup/AccountOnlySignup.tsx');
-    assert.match(src, /<VerifyEmailSent\s+tone="auth"/);
+    assert.match(src, /<VerifyEmailSent\s+tone="start"/, 'the one check-your-email (The first look, rule 5)');
     assert.match(src, /resendNext=\{safeNext \?\? '\/discover'\}/);
   });
 });

@@ -2,10 +2,9 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, CheckCircle, UserPlus } from 'lucide-react';
-import { HudSkeleton } from '@/components/ui/HudSkeleton';
+import LoadingState from '@/components/shared/LoadingState';
+import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 import { STAFF_KIND_COPY, type StaffKind } from '@/lib/coach-capabilities';
-import styles from '../auth.module.css';
 
 interface InviteInfo {
   status: string;
@@ -36,7 +35,6 @@ function AcceptForm() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -121,31 +119,32 @@ function AcceptForm() {
     window.location.reload();
   }
 
-  if (loading) return <div className={styles.card}><HudSkeleton message="LOADING YOUR INVITE..." rows={3} /></div>;
+  if (loading) return <StartColumn><LoadingState label="Loading your invitation…" /></StartColumn>;
 
   if (fatal || !invite) {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}><h1 className={styles.title}>Invite unavailable</h1>
-          <p className={styles.sub}>{fatal || 'This invite could not be found.'}</p></div>
-      </div>
+      <StartColumn>
+        <StartHead title="Invite unavailable" sub={fatal || 'This invite could not be found.'} />
+      </StartColumn>
     );
   }
 
   if (invite.status === 'accepted') {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}><h1 className={styles.title}>Already accepted</h1>
-          <p className={styles.sub}>This invite has already been used. <Link href="/auth/login" className={styles.footerLink}>Sign in</Link> to open your team.</p></div>
-      </div>
+      <StartColumn>
+        <StartHead title="Already accepted" sub="This invite has already been used. Sign in to open your team." />
+        <Link href="/auth/login" className={accountForm.primary}>Sign in</Link>
+      </StartColumn>
     );
   }
   if (invite.expired || (invite.status !== 'pending')) {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}><h1 className={styles.title}>Invite expired</h1>
-          <p className={styles.sub}>This invite is no longer available. Ask {invite.sentBy === 'club' ? 'the club' : 'the head coach'} to send a new one.</p></div>
-      </div>
+      <StartColumn>
+        <StartHead
+          title="Invite expired"
+          sub={`This invite is no longer available. Ask ${invite.sentBy === 'club' ? 'the club' : 'the head coach'} to send a new one.`}
+        />
+      </StartColumn>
     );
   }
 
@@ -165,7 +164,13 @@ function AcceptForm() {
    */
   const club = invite.sentBy === 'club';
   const clubTitle = `${verb.replace(/^to /, '').replace(/^./, c => c.toUpperCase())} ${teamLabel} as ${kind.asA}`;
-  const clubInviter = invite.invitedByName ? `${invite.invitedByName} invited you.` : `${invite.orgName ?? 'The club'} invited you.`;
+  // The club's name leads the sentence now that the column has no eyebrow over the heading (The first look, Stage 1c).
+  const clubInviter = invite.invitedByName
+    ? `${invite.invitedByName} invited you${invite.orgName ? ` to ${invite.orgName}` : ''}.`
+    : `${invite.orgName ?? 'The club'} invited you.`;
+  const setField: Record<keyof AccountValues, (value: string) => void> = {
+    firstName: setFirstName, lastName: setLastName, email: () => {}, password: setPassword,
+  };
 
   const loginHref = `/auth/login?next=${encodeURIComponent(`/auth/accept-assistant-invite?token=${token}`)}&email=${encodeURIComponent(invite.invitedEmail)}`;
 
@@ -180,44 +185,35 @@ function AcceptForm() {
 
   if (signedInMismatch) {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}><UserPlus size={20} /></div>
-          <h1 className={styles.title}>You&apos;re signed in as a different account</h1>
-          <p className={styles.sub}>
-            This invite was sent to <strong>{invite.invitedEmail}</strong>, but you&apos;re signed in as{' '}
+      <StartColumn>
+        <StartHead
+          title="You're signed in as a different account"
+          sub={<>This invite was sent to <strong>{invite.invitedEmail}</strong>, but you&apos;re signed in as{' '}
             <strong>{signedInEmail}</strong>. Sign out and continue with the invited email to join{' '}
-            <strong>{teamLabel}</strong>.
-          </p>
-        </div>
-        <div className={styles.form}>
-          <button type="button" className="btn btn-lime" style={{ width: '100%' }} onClick={switchAccount}>
-            Sign out &amp; continue as {invite.invitedEmail}
-          </button>
-        </div>
-      </div>
+            <strong>{teamLabel}</strong>.</>}
+        />
+        <button type="button" className={accountForm.primary} onClick={switchAccount}>
+          Sign out &amp; continue as {invite.invitedEmail}
+        </button>
+      </StartColumn>
     );
   }
 
   // Signed in as the invited coach → one-tap accept.
   if (signedIn) {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}><UserPlus size={20} /></div>
-          {club && invite.orgName && <p className={styles.sub} style={{ marginBottom: '0.4rem' }}>{invite.orgName}</p>}
-          <h1 className={styles.title}>{club ? clubTitle : `Join ${teamLabel}`}</h1>
-          <p className={styles.sub}>
-            {club ? clubInviter : <>{byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as {kind.asA}.</>}
-          </p>
-        </div>
-        <div className={styles.form}>
-          {error && <div className={styles.error}>{error}</div>}
-          <button type="button" className="btn btn-lime" style={{ width: '100%' }} disabled={busy} onClick={acceptForSignedInUser}>
-            {busy ? 'Joining…' : club ? `Accept and join ${teamLabel}` : 'Accept & join team'}
+      <StartColumn>
+        <StartHead
+          title={club ? clubTitle : `Join ${teamLabel}`}
+          sub={club ? clubInviter : <>{byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as {kind.asA}.</>}
+        />
+        <div className={accountForm.form}>
+          {error && <p className={accountForm.error} role="alert">{error}</p>}
+          <button type="button" className={accountForm.primary} disabled={busy} onClick={acceptForSignedInUser}>
+            {busy ? 'Joining…' : 'Accept and join team'}
           </button>
         </div>
-      </div>
+      </StartColumn>
     );
   }
 
@@ -227,94 +223,61 @@ function AcceptForm() {
   // behind a footnote link, so the whole form had to be filled in before the 409 revealed it.
   if (accountExists) {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(var(--success-rgb), 0.12)', border: '1px solid rgba(var(--success-rgb), 0.25)' }}>
-            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
-          </div>
-          <h1 className={styles.title}>Welcome back</h1>
-          <p className={styles.sub}>
-            {byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as{' '}
+      <StartColumn>
+        <StartHead
+          title="Welcome back"
+          sub={<>{byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as{' '}
             {kind.asA}. You already have a FieldLogicHQ account for <strong>{invite.invitedEmail}</strong> —
-            sign in to join the team.
-          </p>
-        </div>
-        <div className={styles.form}>
-          <Link href={loginHref} className="btn btn-lime" style={{ width: '100%', display: 'block', textAlign: 'center' }}>
-            Sign in to join {teamLabel}
-          </Link>
-        </div>
-        <div className={styles.footer}>
-          {/* NOT "create a new account instead": the create form below is hard-locked to the
-              invited email, so for an address that already has an account it can only 409 and
-              bounce back here. The real dead end on this screen is a forgotten password. */}
-          <p className={styles.footerText}>
+            sign in to join the team.</>}
+        />
+        <Link href={loginHref} className={accountForm.primary}>Sign in to join {teamLabel}</Link>
+        {/* NOT "create a new account instead": the create form below is hard-locked to the
+            invited email, so for an address that already has an account it can only 409 and
+            bounce back here. The real dead end on this screen is a forgotten password. */}
+        <StartFoot>
+          <p>
             Can&apos;t remember your password?{' '}
-            <Link href="/auth/forgot-password" className={styles.footerLink}>Reset it</Link>
+            <Link href="/auth/forgot-password" className={accountForm.footLink}>Reset it</Link>
           </p>
-        </div>
-      </div>
+        </StartFoot>
+      </StartColumn>
     );
   }
 
-  // Not signed in, no account yet → create one under the invited email, then accept.
+  // Not signed in, no account yet → create one under the invited email, then accept. The shared fields without the
+  // email the invitation already knows (The first look, plan rule 4); one button wording for both invitations.
   return (
-    <div className={styles.card}>
-      <div className={styles.header}>
-        <div className={styles.iconWrap}><UserPlus size={20} /></div>
-        {club && invite.orgName && <p className={styles.sub} style={{ marginBottom: '0.4rem' }}>{invite.orgName}</p>}
-        <h1 className={styles.title}>{club ? clubTitle : 'Set up your account'}</h1>
-        <p className={styles.sub}>
-          {club ? `${clubInviter} Set a password to finish.` : <>{byLabel} {verb} <strong>{teamLabel}</strong> as {kind.asA}. Create your account to accept.</>}
-        </p>
-      </div>
-      <form onSubmit={createAccountAndAccept} className={styles.form}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="ai-first">First Name</label>
-            <input id="ai-first" type="text" className="form-input" value={firstName} onChange={e => setFirstName(e.target.value)} required autoComplete="given-name" />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="ai-last">Last Name</label>
-            <input id="ai-last" type="text" className="form-input" value={lastName} onChange={e => setLastName(e.target.value)} required autoComplete="family-name" />
-          </div>
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="ai-email">Email</label>
-          <input id="ai-email" type="email" className="form-input" value={invite.invitedEmail} readOnly disabled />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="ai-pw">Password</label>
-          <div className={styles.pwWrap}>
-            <input id="ai-pw" type={showPw ? 'text' : 'password'} className="form-input" value={password}
-              onChange={e => setPassword(e.target.value)} placeholder="Create a password" required minLength={8} autoComplete="new-password" />
-            <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
-              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-            </button>
-          </div>
-          <p style={{ margin: '0.3rem 0 0', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Minimum 8 characters</p>
-        </div>
-        {error && <div className={styles.error}>{error}</div>}
-        <button type="submit" className="btn btn-lime" style={{ width: '100%' }} disabled={busy}>
-          {busy ? 'Setting up…' : club ? `Create password and join ${teamLabel}` : 'Create account & join'}
+    <StartColumn>
+      <StartHead
+        title={club ? clubTitle : 'Set up your account'}
+        sub={club ? `${clubInviter} Set a password to finish.` : <>{byLabel} {verb} <strong>{teamLabel}</strong> as {kind.asA}. Create your account to accept.</>}
+      />
+      <form onSubmit={createAccountAndAccept} className={accountForm.form}>
+        <AccountFields
+          idPrefix="ai"
+          values={{ firstName, lastName, email: invite.invitedEmail, password }}
+          onChange={(field, value) => setField[field](value)}
+          email={false}
+        />
+        {error && <p className={accountForm.error} role="alert">{error}</p>}
+        <button type="submit" className={accountForm.primary} disabled={busy}>
+          {busy ? 'Setting up…' : 'Create account and join'}
         </button>
       </form>
-      <div className={styles.footer}>
-        <p className={styles.footerText}>
+      <StartFoot>
+        <p>
           Already have an account?{' '}
-          <Link href={loginHref} className={styles.footerLink}>Sign in instead</Link>
+          <Link href={loginHref} className={accountForm.footLink}>Sign in</Link>
         </p>
-      </div>
-    </div>
+      </StartFoot>
+    </StartColumn>
   );
 }
 
 export default function AcceptAssistantInvitePage() {
   return (
-    <div className={styles.page}>
-      <Suspense fallback={<div className={styles.card}><HudSkeleton message="LOADING..." rows={3} /></div>}>
-        <AcceptForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<StartColumn><LoadingState label="Loading your invitation…" /></StartColumn>}>
+      <AcceptForm />
+    </Suspense>
   );
 }

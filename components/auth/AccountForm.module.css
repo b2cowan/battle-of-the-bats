@@ -13,6 +13,9 @@
    centred column, no card around the form (plan rule 1). */
 .page {
   composes: warm warmVars from '../consumer/warmTheme.module.css';
+  /* The product's one loading line (LoadingState) inks with the shell's greys; on this paper they are the warm ones. */
+  --text-tertiary: var(--home-dim);
+  --white-35: var(--home-line-strong);
   display: flex;
   justify-content: center;
   padding: 1.75rem 1rem 2.5rem;
@@ -118,6 +121,7 @@
   overflow-wrap: anywhere;
 }
 .hint strong { color: var(--home-olive); font-weight: 600; }
+.hint a { color: var(--home-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
 .pwWrap { position: relative; }
 .pwWrap .input { padding-right: 3rem; }
@@ -140,6 +144,7 @@
 
 /* The screen's one lime (plan rule 2): Inter 700 16, 48px. */
 .primary {
+  overflow-wrap: anywhere;
   width: 100%;
   min-height: 48px;
   margin-top: 0.25rem;
@@ -204,8 +209,11 @@
   line-height: 1.5;
   color: var(--home-ink);
 }
-/* A sentence that takes focus so a screen reader reads it (the wait block opening) is not a control: no ring. */
-.body[tabindex='-1']:focus { outline: none; }
+/* The check-your-email block takes focus when it opens, so a screen reader reads it; it is not a control: no ring. */
+.waitBlock {
+  composes: form;
+}
+.waitBlock:focus { outline: none; }
 
 /* The white callout with an olive edge (tinted panels are retired): where the email went, the pricing page's plan. */
 .callout {
@@ -285,6 +293,7 @@
 /* Inside a form column the gap already spaces it; the rule above the row stays 18px under the last control. */
 .form > .foot, .form > .footSplit { margin-top: 0.25rem; }
 .footLink {
+  overflow-wrap: anywhere;
   display: inline-flex;
   align-items: center;
   min-height: 44px;

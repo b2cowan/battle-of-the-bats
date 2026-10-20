@@ -1,7 +1,7 @@
 /* The check-your-email block (verify every sign-up, owner 2026-10-16; hub SIGNUP_EMAIL_VERIFICATION_HUB.html).
    The start look every account door shares is the one account step's own (AccountForm.module.css, The first look
-   Stage 1); these are the two older grounds: the sign-in card (auth.module.css: mono, uppercase controls) and the
-   event's public Register page (its success card). */
+   Stage 1); this is the one other ground: the event's public Register page (its success card), which wears the
+   organizer's brand. */
 
 .root {
   display: flex;
@@ -56,41 +56,6 @@
   text-decoration: none;
 }
 .footLink:hover { text-decoration: underline; }
-
-/* ── the sign-in card (auth.module.css) ───────────────────────────────────────────────────────────── */
-.auth .lead { font-family: var(--font-data); font-size: 0.82rem; color: var(--fl-text); }
-.auth .sent {
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-}
-.auth .after { font-family: var(--font-data); font-size: 0.72rem; color: var(--data-gray); }
-.auth .resend {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--fl-text);
-  border: 1px solid rgba(var(--primary-rgb), 0.5);
-}
-.auth .sentAgain {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--data-gray);
-  border: 1px dashed rgba(var(--primary-rgb), 0.4);
-}
-.auth .error { font-family: var(--font-data); font-size: 0.72rem; color: var(--danger-light); }
-.auth .foot {
-  border-top: 1px solid rgba(var(--primary-rgb), 0.2);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  color: var(--data-gray);
-}
-.auth .footLink { color: var(--logic-lime); }
 
 /* ── the event's public Register page (register.module.css's success card) ────────────────────────── */
 .register .lead { font-size: 0.95rem; color: var(--white-60); }

@@ -24,7 +24,7 @@ import {
   accountForm,
   type AccountValues,
 } from '@/components/auth/AccountForm';
-import BillingChoice from '@/components/shared/BillingChoice';
+import ChoicePair from '@/components/shared/ChoicePair';
 
 type BillingCycle = 'monthly' | 'annual';
 type AuthMode = 'signup' | 'signin';
@@ -405,7 +405,7 @@ export default function TeamSignupClient({
                   emailLocked={!!claim}
                   emailHint={claimEmailHint}
                   disabled={busy}
-                  focusEmail={focusEmail}
+                  autoFocus={focusEmail ? 'email' : undefined}
                 />
               ) : (
                 <>
@@ -468,7 +468,7 @@ export default function TeamSignupClient({
 
             <div className={accountForm.field}>
               <span className={accountForm.label} id="premium-billing">{founding ? 'After the Founding Season' : 'Billing'}</span>
-              <BillingChoice
+              <ChoicePair
                 labelledBy="premium-billing"
                 describedBy={founding ? 'premium-billing-hint' : undefined}
                 value={billingCycle}

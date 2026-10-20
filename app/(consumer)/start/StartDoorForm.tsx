@@ -234,7 +234,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
               idPrefix={door}
               values={{ firstName, lastName, email: signupEmail, password }}
               onChange={(field, value) => setField[field](value)}
-              focusEmail={changingEmail}
+              autoFocus={changingEmail ? 'email' : undefined}
             />
 
             {error && <p className={accountForm.error} role="alert">{error}</p>}

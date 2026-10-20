@@ -1,44 +1,18 @@
-/* app/coaches/join/join.module.css
-   /coaches/join keeps the global marketing nav (app/coaches/layout.tsx — a
-   signup/marketing pass-through route), unlike the /auth/* pages this page
-   borrows its card styling from (auth.module.css), where SiteChrome hides the
-   nav entirely. The shared .page rule has no nav clearance, so the fixed
-   Navbar was overlapping the card. This adds it back, scoped to this page only
-   — auth.module.css itself stays untouched for the chrome-less /auth/* pages
-   that correctly rely on it having none. */
-/* Doubled selector (not a typo) — bumps specificity above auth.module.css's
-   .page shorthand `padding` so this longhand `padding-top` always wins,
-   regardless of which CSS module the bundler happens to emit first. */
-.pageWithNav.pageWithNav {
-  padding-top: calc(var(--nav-height) + 1.75rem);
-}
+/* app/coaches/join/join.module.css — the one line of its own the join page keeps; everything else is the one account
+   step's (components/auth/AccountForm.module.css, The first look Stage 1c, 2026-10-19).
 
-/* The line that says what New Team (or Continue, when nothing can be chosen) makes — E3, owner H1–H3
-   2026-10-19, drawn on the Register Your Existing Team hub. It states what a choice is about to do, so it
-   is a consequence, not small print (design log 2026-08-14): one step above this page's grey lines
-   (auth.module.css .footerText, 0.7rem, all grey) with its lead in the page's white, tying it to the
-   button it names. Defined whole here rather than layered on .footerText, so no bundler order decides
-   which size wins. Never a warning colour: red is this page's error, and E3 warns, never blocks. */
+   The line that says what New team (or Continue, when nothing can be chosen) makes — E3, owner H1–H3 2026-10-19,
+   drawn on the Register Your Existing Team hub. It states what a choice is about to do, so it is a consequence, not
+   small print (design log 2026-08-14): the hint's size with its lead in the ink, tying it to the button it names.
+   Never a warning colour: red is this page's error, and E3 warns, never blocks. */
 .consequence {
   margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  line-height: 1.6;
-  letter-spacing: 0.06em;
-  color: var(--data-gray);
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-dim);
 }
 .consequence strong {
-  color: var(--fl-text);
+  color: var(--home-ink);
   font-weight: 700;
-}
-/* Under the pair: 8px below the buttons (the grid drops its own bottom margin), 12px above the team list,
-   inside the form group's 0.4rem gap — it groups with the choice it explains, not with the list. */
-.underPair {
-  margin: 0.1rem 0 0.35rem;
-}
-/* Above Continue: pulled 0.4rem closer to the button than the form's gap (0.9rem on a phone → about 8px;
-   1.25rem on a computer → about 14px), so it reads as the button's caption and not as another locked line.
-   A link error, when one shows, sits between the two with the same pull. */
-.aboveContinue {
-  margin-bottom: -0.4rem;
 }

@@ -1,17 +1,23 @@
 'use client';
 import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, CheckCircle, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import { HudSkeleton } from '@/components/ui/HudSkeleton';
+import LoadingState from '@/components/shared/LoadingState';
+import ChoicePair from '@/components/shared/ChoicePair';
+import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
 } from '@/lib/coaches-portal-routes';
 import { alreadyRegisteredLine, differentTeamSentence, isChoosableTeam, whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
-import styles from '../../(consumer)/auth/auth.module.css';
-import navStyles from './join.module.css';
+import joinStyles from './join.module.css';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
+
+/** The pair on Choose a team profile: an existing Coaches Portal team, or a new team profile. */
+const LINK_MODE_OPTIONS = [
+  { value: 'existing', label: 'Existing team' },
+  { value: 'new', label: 'New team' },
+] as const satisfies readonly { value: 'new' | 'existing'; label: string }[];
 
 type PendingRegistration = {
   id: string;
@@ -48,7 +54,10 @@ function JoinForm() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState(firstNameInit);
   const [lastName, setLastName]   = useState(lastNameInit);
-  const [showPw, setShowPw]     = useState(false);
+  // Back from "Use a different email": the form opens with the cursor in the email field.
+  const [changingEmail, setChangingEmail] = useState(false);
+  // "Create a new account" from "You're already set up": the form opens with the cursor in the first name.
+  const [startingFresh, setStartingFresh] = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   // Verify every sign-up (owner 2026-10-16): the address the link went to, while the card says "check your email".
@@ -285,6 +294,10 @@ function JoinForm() {
     window.location.reload();
   }
 
+  const setField: Record<keyof AccountValues, (value: string) => void> = {
+    firstName: setFirstName, lastName: setLastName, email: setEmail, password: setPassword,
+  };
+
   const loginNext = registrationId
     ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(emailParam)}&next=${encodeURIComponent(nextParam)}`
     : nextParam;
@@ -292,9 +305,9 @@ function JoinForm() {
 
   if (checkingSession || redirecting) {
     return (
-      <div className={styles.card}>
-        <HudSkeleton message={redirecting ? 'OPENING YOUR TEAM...' : 'CHECKING ACCOUNT...'} rows={3} />
-      </div>
+      <StartColumn>
+        <LoadingState label={redirecting ? 'Loading your team…' : 'Loading your account…'} />
+      </StartColumn>
     );
   }
 
@@ -304,37 +317,23 @@ function JoinForm() {
   if (existingAccount && registrationId) {
     const existingLoginHref = `/auth/login?next=${encodeURIComponent(nextParam)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ''}`;
     return (
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
-            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
-          </div>
-          <h1 className={styles.title}>You&apos;re Already Set Up</h1>
-          <p className={styles.sub}>
-            {existingAccount.teamName
-              ? <>Your Coaches Portal account is ready. Sign in to see <strong>{existingAccount.teamName}</strong> and track its status.</>
-              : <>Your Coaches Portal account is ready. Sign in to see your team and track its status.</>}
-          </p>
-        </div>
-        <div className={styles.form}>
-          <Link href={existingLoginHref} className="btn btn-lime" style={{ width: '100%', display: 'block', textAlign: 'center' }}>
-            Sign in to your Coaches Portal
-          </Link>
-        </div>
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
+      <StartColumn>
+        <StartHead
+          title="You're already set up"
+          sub={existingAccount.teamName
+            ? <>Your Coaches Portal account is ready. Sign in to see <strong>{existingAccount.teamName}</strong> and track its status.</>
+            : <>Your Coaches Portal account is ready. Sign in to see your team and track its status.</>}
+        />
+        <Link href={existingLoginHref} className={accountForm.primary}>Sign in to your Coaches Portal</Link>
+        <StartFoot>
+          <p>
             Not you, or need a different account?{' '}
-            <button
-              type="button"
-              className={styles.footerLink}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              onClick={() => setExistingAccount(null)}
-            >
+            <button type="button" className={accountForm.footLink} onClick={() => { setExistingAccount(null); setStartingFresh(true); }}>
               Create a new account
             </button>
           </p>
-        </div>
-      </div>
+        </StartFoot>
+      </StartColumn>
     );
   }
 
@@ -342,7 +341,7 @@ function JoinForm() {
   // resolved) — the classic "already signed in as a DIFFERENT coach than the invite is addressed
   // to". The link POST would 403 with a cryptic "not linked to your signed-in email" and the
   // interstitial's subtitle silently degrades to the generic "This registration". Detect it and
-  // offer to switch accounts instead of showing a doomed "Choose Team Profile" form.
+  // offer to switch accounts instead of showing a doomed "Choose a team profile" form.
   const signedInMismatch =
     Boolean(signedInEmail) &&
     Boolean(registrationId) &&
@@ -351,98 +350,73 @@ function JoinForm() {
 
   if (signedInMismatch) {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <h1 className={styles.title}>You&apos;re Signed In As a Different Account</h1>
-          <p className={styles.sub}>
-            {emailParam ? (
-              <>This invite is for <strong>{emailParam}</strong>, but you&apos;re signed in as{' '}
-              <strong>{signedInEmail}</strong>. Sign out and continue with the invited email to open this team.</>
-            ) : (
-              <>You&apos;re signed in as <strong>{signedInEmail}</strong>, which isn&apos;t linked to this registration.</>
-            )}
+      <StartColumn>
+        <StartHead
+          title="You're signed in as a different account"
+          sub={emailParam ? (
+            <>This invite is for <strong>{emailParam}</strong>, but you&apos;re signed in as{' '}
+            <strong>{signedInEmail}</strong>. Sign out and continue with the invited email to open this team.</>
+          ) : (
+            <>You&apos;re signed in as <strong>{signedInEmail}</strong>, which isn&apos;t linked to this registration.</>
+          )}
+        />
+        <button type="button" className={accountForm.primary} onClick={handleSwitchAccount}>
+          {emailParam ? `Sign out & continue as ${emailParam}` : 'Sign out & use a different account'}
+        </button>
+        <StartFoot>
+          <p>
+            <Link href={nextParam} className={accountForm.footLink}>Stay signed in as {signedInEmail}</Link>
           </p>
-        </div>
-        <div className={styles.form}>
-          <button type="button" className="btn btn-lime" style={{ width: '100%' }} onClick={handleSwitchAccount}>
-            {emailParam ? `Sign out & continue as ${emailParam}` : 'Sign out & use a different account'}
-          </button>
-          <Link href={nextParam} className={styles.footerLink} style={{ textAlign: 'center', display: 'block', marginTop: '0.75rem' }}>
-            Stay signed in as {signedInEmail}
-          </Link>
-        </div>
-      </div>
+        </StartFoot>
+      </StartColumn>
     );
   }
 
   if (signedInEmail && registrationId) {
     return (
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
-            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
-          </div>
-          <h1 className={styles.title}>Choose Team Profile</h1>
-          <p className={styles.sub}>
-            {pendingRegistration?.name ?? 'This registration'} will appear in your Coaches Portal.
-          </p>
-        </div>
+      <StartColumn>
+        <StartHead
+          title="Choose a team profile"
+          sub={<>{pendingRegistration?.name ?? 'This registration'} will appear in your Coaches Portal.</>}
+        />
 
-        <form onSubmit={handleLinkSubmit} className={styles.form}>
+        <form onSubmit={handleLinkSubmit} className={accountForm.form}>
           {basicCoachTeams.length > 0 && (
-            <div className="form-group">
-              <label className="form-label">Coaches Portal Team</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: portalTeams.length > 0 ? 0 : '0.75rem' }}>
-                <button
-                  type="button"
-                  className={`btn ${linkMode === 'existing' ? 'btn-lime' : 'btn-ghost'}`}
-                  onClick={() => setLinkMode('existing')}
-                  disabled={loading}
-                >
-                  Existing Team
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${linkMode === 'new' ? 'btn-lime' : 'btn-ghost'}`}
-                  onClick={() => {
-                    setLinkMode('new');
-                    setSelectedBasicTeamId('');
-                  }}
-                  disabled={loading}
-                >
-                  New Team
-                </button>
-              </div>
-              {/* What New Team makes (E3, owner H1–H3 2026-10-19): under the pair and OUTSIDE the Existing Team
-                  branch, so it shows before any tap and stays put when New Team is tapped. The form's own
+            <div className={accountForm.field}>
+              <span className={accountForm.label} id="join-team-choice">Coaches Portal team</span>
+              <ChoicePair
+                labelledBy="join-team-choice"
+                describedBy={portalTeams.length > 0 ? 'join-new-team-consequence' : undefined}
+                value={linkMode}
+                options={LINK_MODE_OPTIONS}
+                onChange={mode => {
+                  setLinkMode(mode);
+                  if (mode === 'new') setSelectedBasicTeamId('');
+                }}
+                disabled={loading}
+              />
+              {/* What New team makes (E3, owner H1–H3 2026-10-19): under the pair and OUTSIDE the Existing team
+                  branch, so it shows before any tap and stays put when New team is tapped. The form's own
                   sentence, from its one home; the pair is the old form's F4 shape, which made the original case. */}
               {portalTeams.length > 0 && (
-                <p className={`${navStyles.consequence} ${navStyles.underPair}`}>
-                  <strong>New Team</strong> — {differentTeamSentence(portalTeams)}
+                <p className={joinStyles.consequence} id="join-new-team-consequence">
+                  <strong>New team</strong> — {differentTeamSentence(portalTeams)}
                 </p>
               )}
               {linkMode === 'existing' && (
-                <div className="select-wrapper">
-                  <select
-                    className="form-input"
-                    value={selectedBasicTeamId}
-                    onChange={e => setSelectedBasicTeamId(e.target.value)}
-                    disabled={loading}
-                    required
-                  >
-                    <option value="" disabled>Select a team</option>
-                    {basicCoachTeams.map(team => (
-                      <option key={team.basicCoachTeamId} value={team.basicCoachTeamId}>{team.name}{team.isPortalTeam ? ' · Coaches Portal' : ''}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={16} className="select-icon" />
-                </div>
+                <select
+                  className={accountForm.select}
+                  value={selectedBasicTeamId}
+                  onChange={e => setSelectedBasicTeamId(e.target.value)}
+                  disabled={loading}
+                  required
+                  aria-label="Existing team"
+                >
+                  <option value="" disabled>Select a team</option>
+                  {basicCoachTeams.map(team => (
+                    <option key={team.basicCoachTeamId} value={team.basicCoachTeamId}>{team.name}{team.isPortalTeam ? ' · Coaches Portal' : ''}</option>
+                  ))}
+                </select>
               )}
             </div>
           )}
@@ -451,12 +425,12 @@ function JoinForm() {
               switch: named, with who can file it, so its absence from the list never reads as
               "make a new team" (F5). A select cannot carry a greyed row, so it is a line here. */}
           {lockedTeams.map(team => (
-            <p key={team.basicCoachTeamId} className={styles.footerText} style={{ margin: '0 0 0.75rem' }}>
+            <p key={team.basicCoachTeamId} className={accountForm.hint}>
               <strong>{team.name}</strong> · Coaches Portal — {whoRegistersSentence(team)}
             </p>
           ))}
           {alreadyInTeams.map(team => (
-            <p key={team.basicCoachTeamId} className={styles.footerText} style={{ margin: '0 0 0.75rem' }}>
+            <p key={team.basicCoachTeamId} className={accountForm.hint}>
               <strong>{team.name}</strong> — {alreadyRegisteredLine(team.name, team.alreadyIn!)}
             </p>
           ))}
@@ -464,161 +438,78 @@ function JoinForm() {
               person, or already in this tournament — so Continue alone files the entry under a new free team.
               The same sentence, directly above the button it describes. Warn, never block (E3). */}
           {basicCoachTeams.length === 0 && portalTeams.length > 0 && (
-            <p className={`${navStyles.consequence} ${navStyles.aboveContinue}`}>
+            <p className={joinStyles.consequence}>
               <strong>Continue</strong> — {differentTeamSentence(portalTeams)}
             </p>
           )}
 
           {registrableTeams === null && (
-            <div className={styles.error}>We couldn’t load your teams just now, so we won’t guess. Reload the page to choose one.</div>
+            <p className={accountForm.error} role="alert">We couldn’t load your teams just now, so we won’t guess. Reload the page to choose one.</p>
           )}
-          {error && <div className={styles.error}>{error}</div>}
+          {error && <p className={accountForm.error} role="alert">{error}</p>}
 
-          <button type="submit" className="btn btn-lime" style={{ width: '100%' }} disabled={loading || registrableTeams === null}>
-            {loading ? 'Linking...' : 'Continue'}
+          <button type="submit" className={accountForm.primary} disabled={loading || registrableTeams === null}>
+            {loading ? 'Linking…' : 'Continue'}
           </button>
         </form>
-      </div>
+      </StartColumn>
     );
   }
 
+  // Signed out: the one account step (The first look, Ask 5a, 2026-10-19), in the app's frame. "Registration
+  // submitted" keeps its job in the sub line: the organizer's entry went through, and the account follows it.
   return (
-    <div className={styles.card}>
-      {fromReg ? (
-        <div className={styles.header}>
-          <div className={styles.iconWrap} style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
-            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
-          </div>
-          <h1 className={styles.title}>Registration Submitted</h1>
-          <p className={styles.sub}>
-            Create a free Coaches Portal account to track your registration status, view your schedule, and receive announcements.
-          </p>
-        </div>
-      ) : (
-        <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <h1 className={styles.title}>Create Your Coaches Portal Account</h1>
-          <p className={styles.sub}>Track your registrations, schedule, and tournament history.</p>
-        </div>
-      )}
+    <StartColumn>
+      <StartHead
+        title="Create your account"
+        sub={fromReg
+          ? 'Your registration is in. Your account shows its status, schedule and results.'
+          : 'Your account shows your team’s registrations, schedule and results.'}
+      />
 
       {verifyEmail ? (
         <VerifyEmailSent
-          tone="auth"
+          tone="start"
           email={verifyEmail}
-          lead={<>Your account is almost ready. Open the link we sent and your team will be waiting in your Coaches Portal.</>}
+          lead={<>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to your team&apos;s registration.</>}
+          after={<>Open it on any phone or computer.</>}
           resendNext={verifyReturnPath()}
-          onChangeEmail={() => setVerifyEmail(null)}
+          onChangeEmail={() => { setVerifyEmail(null); setChangingEmail(true); }}
           signInHref={loginHref}
         />
       ) : (
-      <>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="join-first-name">First Name</label>
-            <input
-              id="join-first-name"
-              type="text"
-              className="form-input"
-              value={firstName}
-              onChange={e => setFirstName(e.target.value)}
-              placeholder="Jordan"
-              required
-              autoComplete="given-name"
+        <>
+          <form onSubmit={handleSubmit} className={accountForm.form}>
+            <AccountFields
+              idPrefix="join"
+              values={{ firstName, lastName, email, password }}
+              onChange={(field, value) => setField[field](value)}
+              autoFocus={changingEmail ? 'email' : startingFresh ? 'firstName' : undefined}
             />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="join-last-name">Last Name</label>
-            <input
-              id="join-last-name"
-              type="text"
-              className="form-input"
-              value={lastName}
-              onChange={e => setLastName(e.target.value)}
-              placeholder="Lee"
-              required
-              autoComplete="family-name"
-            />
-          </div>
-        </div>
 
-        <div className="form-group">
-          <label className="form-label" htmlFor="join-email">Email</label>
-          <input
-            id="join-email"
-            type="email"
-            className="form-input"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            autoComplete="email"
-          />
-        </div>
+            {error && <p className={accountForm.error} role="alert">{error}</p>}
 
-        <div className="form-group">
-          <label className="form-label" htmlFor="join-password">Password</label>
-          <div className={styles.pwWrap}>
-            <input
-              id="join-password"
-              type={showPw ? 'text' : 'password'}
-              className="form-input"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Create a password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-            <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
-              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+            <button type="submit" className={accountForm.primary} disabled={loading}>
+              {loading ? 'Creating…' : 'Create account'}
             </button>
-          </div>
-          <p style={{ margin: '0.3rem 0 0', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-            Minimum 8 characters
-          </p>
-        </div>
+          </form>
 
-        {error && <div className={styles.error}>{error}</div>}
-
-        <button
-          type="submit"
-          className="btn btn-lime"
-          style={{ width: '100%' }}
-          disabled={loading}
-        >
-          {loading ? 'Creating account...' : 'Create Account'}
-        </button>
-      </form>
-
-      <div className={styles.footer}>
-        <p className={styles.footerText}>
-          Already have an account?{' '}
-          <Link href={loginHref} className={styles.footerLink}>Sign in instead</Link>
-        </p>
-      </div>
-      </>
+          <StartFoot>
+            <p>
+              Already have an account?{' '}
+              <Link href={loginHref} className={accountForm.footLink}>Sign in</Link>
+            </p>
+          </StartFoot>
+        </>
       )}
-    </div>
+    </StartColumn>
   );
 }
 
 export default function CoachesJoinPage() {
   return (
-    <div className={`${styles.page} ${navStyles.pageWithNav}`}>
-      <Suspense fallback={
-        <div className={styles.card}>
-          <HudSkeleton message="LOADING..." rows={3} />
-        </div>
-      }>
-        <JoinForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<StartColumn><LoadingState label="Loading your account…" /></StartColumn>}>
+      <JoinForm />
+    </Suspense>
   );
 }

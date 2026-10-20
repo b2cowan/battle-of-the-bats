@@ -276,7 +276,7 @@ describe('the start forms', () => {
     assert.match(form, /<VerifyEmailSent\s+tone="start"/);
     // back to the form, entries kept, the cursor in the email field (the Stage 1 screen-reader pass)
     assert.match(form, /onChangeEmail=\{\(\) => \{ setVerifyEmail\(null\); setChangingEmail\(true\); \}\}/);
-    assert.match(form, /focusEmail=\{changingEmail\}/);
+    assert.match(form, /autoFocus=\{changingEmail \? 'email' : undefined\}/);
     assert.match(form, /resendNext=\{startDoorLinkPath\(door\)\}/);
   });
   it('step 2 is the name, empty and focused (A3), confirmed in a plain sentence (D5), one tap to create (V1)', () => {
@@ -452,7 +452,7 @@ describe('Coach Premium, account first (Part 3)', () => {
     assert.match(card, /`Premium Coaches Portal\. Free through \$\{FOUNDING_SEASON_END_LABEL\}, then \$\{MONTHLY\}\.`/);
     assert.match(card, /const MONTHLY = `\$\{formatPriceAmount\(PLAN_CONFIG\.team\.monthlyPrice\)\}\/month`;/);
     assert.doesNotMatch(card, /Seasonal/, '"Seasonal" becomes the annual price wording');
-    assert.match(card, /<BillingChoice\b/, 'the shared billing choice (D-F3)');
+    assert.match(card, /<ChoicePair\b/, 'the shared choice pair (D-F3)');
     assert.match(card, /founding \? 'Create team' : 'Continue to checkout'/, 'D-F6');
     assert.equal(existsSync(new URL('../../app/team/page.module.css', import.meta.url)), false, 'the card carries no form styles of its own');
   });
@@ -478,5 +478,41 @@ describe('sign-in offers the link again (A7)', () => {
     assert.match(readCode('components/auth/VerifyEmailSent.tsx'), /<ResendLink\b/, 'the check-your-email block renders the same control');
     assert.match(readCode('components/auth/ResendLink.tsx'), /<p className=\{classes\.sent\} role="status">Sent again at \{clock\}\. Check your spam folder too\.<\/p>/, 'D12, announced');
     assert.match(readCode('app/(consumer)/auth/auth.module.css'), /\.errorAction \{[^}]*min-height: 44px;/);
+  });
+});
+
+/**
+ * THE FIRST LOOK, STAGE 1c (owner rulings 2026-10-19): the account-only sign-up, both invitations and the coach join
+ * page wear the one account step — the start column, the shared fields, the one check-your-email.
+ */
+describe('The first look 1c: every other door that makes an account is the one account step', () => {
+  it('the invitations drop the email they already know, and say "Create account and join" (Ask 2)', () => {
+    for (const f of ['app/(consumer)/auth/accept-invite/AcceptInviteForm.tsx', 'app/(consumer)/auth/accept-assistant-invite/page.tsx']) {
+      const src = readCode(f);
+      assert.match(src, /<AccountFields[\s\S]{0,260}?email=\{false\}/, f);
+      assert.match(src, /'Create account and join'/, f);
+      assert.doesNotMatch(src, /Create password and join|Create account & join|auth\.module\.css|HudSkeleton/, f);
+    }
+    assert.match(readCode('app/(consumer)/auth/accept-assistant-invite/page.tsx'), /'Accept and join team'/);
+  });
+  it('the account-only sign-up and the join page wear the start look and the one check-your-email', () => {
+    for (const f of ['app/(consumer)/auth/signup/AccountOnlySignup.tsx', 'app/coaches/join/page.tsx']) {
+      const src = readCode(f);
+      assert.match(src, /<StartColumn>/, f);
+      assert.match(src, /<AccountFields\b/, f);
+      assert.match(src, /'Create account'/, f);
+      assert.doesNotMatch(src, /auth\.module\.css|HudSkeleton|Create Account/, f);
+    }
+    // the join page's own last clause (rule 5)
+    assert.match(readCode('app/coaches/join/page.tsx'), /It brings you straight to your team&apos;s registration\./);
+    // the sign-in card's look is gone with its last door; the register page keeps its own
+    assert.doesNotMatch(readCode('components/auth/VerifyEmailSent.tsx'), /'auth'/);
+    assert.doesNotMatch(readCode('app/(consumer)/auth/auth.module.css'), /\.(inviteBody|inlineNotice|confirmBox|confirmActions|btnGhost)\b/);
+  });
+  it('the join page is in the app’s frame, never the marketing bar and footer (Ask 5a)', () => {
+    assert.match(readCode('app/coaches/join/layout.tsx'), /<CoachJourneyChrome>\{children\}<\/CoachJourneyChrome>/);
+    assert.match(readCode('lib/consumer-routes.ts'), /WARM_JOURNEY_PREFIXES = \[[^\]]*'\/coaches\/join'/);
+    // checkout complete shares the old pass-through but is Stage 3 (Ask 5b): not on the journey list yet
+    assert.doesNotMatch(readCode('lib/consumer-routes.ts'), /'\/coaches\/checkout/);
   });
 });

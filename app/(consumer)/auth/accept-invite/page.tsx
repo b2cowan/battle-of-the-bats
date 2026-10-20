@@ -1,7 +1,6 @@
 import { getOrganizationBySlug } from '@/lib/db';
 import { roleLabel } from '@/lib/member-access';
 import AcceptInviteForm from './AcceptInviteForm';
-import styles from '../auth.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +27,11 @@ export default async function AcceptInvitePage({
   const org = linkOrgSlug ? await getOrganizationBySlug(linkOrgSlug).catch(() => null) : null;
 
   return (
-    <div className={styles.page}>
-      <AcceptInviteForm
-        linkOrgSlug={linkOrgSlug}
-        linkOrgName={org?.name ?? null}
-        linkRoleLabel={linkRole ? roleLabel(linkRole) : null}
-        linkInviter={linkInviter}
-      />
-    </div>
+    <AcceptInviteForm
+      linkOrgSlug={linkOrgSlug}
+      linkOrgName={org?.name ?? null}
+      linkRoleLabel={linkRole ? roleLabel(linkRole) : null}
+      linkInviter={linkInviter}
+    />
   );
 }

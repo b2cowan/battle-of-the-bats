@@ -1,4 +1,4 @@
-/* The billing choice (The first look, D-F3, 2026-10-19): two options, 44px, 14/600, the picked one with a check and a
+/* The choice pair (The first look, D-F3, 2026-10-19): two options, 44px, 14/600, the picked one with a check and a
    2px olive edge on white. Warm vocabulary, so it follows the host's Warm / Dark. */
 .choice {
   display: flex;
