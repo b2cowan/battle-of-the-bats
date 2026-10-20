@@ -146,6 +146,9 @@ const SCOPES = {
       // The first look, Stage 1 (2026-10-19) — the one account step every door wears (the start column, the heading,
       // the account fields, the buttons, the foot row). Consumer for the same reason: warm tokens, a consumer account.
       'components/auth/AccountForm.module.css',
+      // The show/hide eye on a password box (640d27031, 2026-10-20) — one component, worn by the account step above AND
+      // the public registration forms. Consumer like its siblings in this folder: it wears its host's warm tokens.
+      'components/auth/PasswordInput.module.css',
     ],
     excludeSegments: new Set(),
     excludeFiles: new Set(['components/consumer/ConsumerShell.module.css']),
