@@ -201,7 +201,10 @@ export const POST = withObservability(async (req: Request) => {
       // No name yet (it is asked on step 2), so the email reads "finish creating your account".
       // Note: the founding-season welcome email is NOT sent here — it fires ~1 day after the user
       // actually selects Tournament Plus on the plan step (app/api/billing/create-checkout).
-      await sendSignupVerificationEmail({ to: normalizedEmail, origin, actionLink, firstName: normalizedFirstName });
+      await sendSignupVerificationEmail({
+        to: normalizedEmail, origin, actionLink, next: returnPath, door: organizationDoor ? 'organization' : null,
+        firstName: normalizedFirstName,
+      });
     }
 
     // `next`: where an instant (verification-off) account-only sign-up goes; the follow nudge reads it.

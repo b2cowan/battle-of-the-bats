@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Loader, ArrowLeft, Send, RotateCcw, Check, Undo2, X } from 'lucide-react';
 import { renderHeadingAndBody } from '@/lib/email-markup';
+import { emailLookFor, warmEmailBody } from '@/lib/email-envelope-warm';
 import styles from '../email-templates.module.css';
 
 type Template = {
@@ -27,7 +28,9 @@ type Template = {
 // This understands the full markup — paragraphs, **bold**, - bullets, ::callout,
 // ::button, ::link, ::if — so a rich campaign previews exactly as it will send. A
 // dedicated cta_label (used by the transactional templates) is appended as a ::button.
+// The account emails (verification, password reset) preview in the warm envelope they send in.
 function buildPreviewHtml(fields: {
+  key: string;
   heading: string;
   body: string;
   cta_label: string | null;
@@ -35,7 +38,9 @@ function buildPreviewHtml(fields: {
   const body = fields.cta_label
     ? `${fields.body}\n\n::button ${fields.cta_label} | #`
     : fields.body;
-  const inner = renderHeadingAndBody({ heading: fields.heading, body, mode: 'chip' });
+  const look = emailLookFor(fields.key);
+  const inner = renderHeadingAndBody({ heading: fields.heading, body, mode: 'chip', look });
+  if (look === 'warm') return warmEmailBody(inner);
 
   return `
 <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
@@ -185,7 +190,7 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
   if (!tmpl)   return <p className={styles.errorMsg}>Template not found.</p>;
 
   const isBusy = saving || resetting || testing;
-  const preview = buildPreviewHtml({ heading, body, cta_label: ctaLabel || null });
+  const preview = buildPreviewHtml({ key: templateKey, heading, body, cta_label: ctaLabel || null });
   const dirty =
     subject !== tmpl.subject ||
     heading !== tmpl.heading ||

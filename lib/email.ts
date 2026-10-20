@@ -10,6 +10,10 @@ import {
   formatPriceAmount,
 } from '@/lib/plan-config';
 import { INVITATION_EMAIL_WORDS as INVITE } from '@/lib/invite-only-words';
+import {
+  warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall,
+} from '@/lib/email-envelope-warm';
+import { VERIFICATION_NEXT_STEP, type VerificationNextStep } from '@/lib/verification-next-step';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
@@ -18,6 +22,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
 function htmlToText(html: string): string {
   return html
+    // A whole-document email (the warm envelope, lib/email-envelope-warm.ts) has a head with a style block: none of
+    // it is words.
+    .replace(/<head\b[\s\S]*?<\/head>/i, '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
     .replace(/<\/div>/gi, '\n')
@@ -88,6 +95,8 @@ export { coachEmailsPaused, coachEmailEnabled, coachEmailBlock, resolveCoachReci
 
 // ── Email templates ────────────────────────────────────────────────────────────
 
+// The shared dark envelope. The two account emails (verification, password reset) wear the warm one instead
+// (lib/email-envelope-warm.ts); moving the rest onto it is The public face's S3.
 export const wrap = (content: string) => `
 <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
   <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
@@ -939,39 +948,35 @@ export function tryoutRegistrationConfirmationHtml(input: {
 
 
 // Every account holder gets this one (the forgot-password page and support's reset from the platform admin
-// both send it), so it never words the reader as staff. Its words match the `password_reset` template's default.
+// both send it), so it never words the reader as staff and has no greeting: it goes to an address, not a person.
+// The warm envelope and words ruled 2026-10-20 (The first look, U5). ⚠ "1 hour" is Supabase's email-link expiry
+// (3600 s on dev and production, checked 2026-10-20): if that setting changes, change this sentence with it.
 export function platformPasswordResetHtml(resetLink: string) {
-  return `
-<div style="font-family:monospace,sans-serif;background:#090d09;color:#e8efe8;max-width:480px;margin:0 auto;padding:2rem;border:1px solid rgba(163,230,53,0.2);">
-  <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(163,230,53,0.12);">
-    <span style="font-size:0.65rem;font-weight:900;color:#D9F99D;letter-spacing:0.18em;text-transform:uppercase;">FIELDLOGICHQ</span>
-  </div>
-  <h2 style="color:#F1F5F9;font-size:1rem;font-weight:700;margin:0 0 1rem;letter-spacing:0.04em;text-transform:uppercase;">Reset Your Password</h2>
-  <p style="color:rgba(241,245,249,0.6);font-size:0.85rem;line-height:1.65;margin:0 0 1.5rem;">We received a request to reset the password for your FieldLogicHQ account. Click the button below to set a new password. This link expires in 1 hour.</p>
-  <a href="${resetLink}" style="display:inline-block;background:#D9F99D;color:#090d09;padding:0.7rem 1.5rem;text-decoration:none;font-weight:800;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Reset Password &rarr;</a>
-  <p style="color:rgba(241,245,249,0.22);font-size:0.75rem;margin:1.75rem 0 0;line-height:1.55;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
-</div>`;
+  return warmEmailDocument([
+    warmEmailHeading('Reset your password'),
+    warmEmailParagraph('We got a request to reset the password for your FieldLogicHQ account.'),
+    warmEmailParagraph('Use the button to choose a new one. The link works for 1 hour.'),
+    warmEmailButton('Reset my password', resetLink),
+    warmEmailSmall('If you didn’t ask for this, ignore this email. Your password won’t change.'),
+  ].join('\n'));
 }
 
+// The confirmation email (The first look, Ask 8 2026-10-19, U6 2026-10-20). `firstName` arrives escaped. It names the
+// next step (lib/verification-next-step.ts), never a typed team or organization. ⚠ "1 hour" is the same Supabase
+// email-link expiry as the reset email's (owner call 2, 2026-10-20).
 export function signupVerificationHtml(p: {
-  // orgName is omitted for account-only signups (decoupled flow): the person is
-  // creating an account before any org exists (e.g. to accept an invite), so there
-  // is nothing to "continue setting up" yet — use neutral copy in that case.
-  orgName?: string | null;
   verifyUrl: string;
   firstName?: string;
+  nextStep: VerificationNextStep;
 }) {
-  const greeting = p.firstName ? `Hi ${p.firstName} — welcome to <strong>FieldLogicHQ</strong>.` : 'Welcome to <strong>FieldLogicHQ</strong>.';
-  const continueLine = p.orgName
-    ? `Confirm your email address to continue setting up <strong>${p.orgName}</strong>.`
-    : 'Confirm your email address to finish creating your account.';
-  return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Verify Your Email</h2>
-    <p>${greeting}</p>
-    <p>${continueLine}</p>
-    <a href="${p.verifyUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.5rem 0;">Verify Email &rarr;</a>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
-  `);
+  return warmEmailDocument([
+    warmEmailHeading('Confirm your email'),
+    warmEmailParagraph(p.firstName ? `Hi ${p.firstName}, welcome to FieldLogicHQ.` : 'Welcome to FieldLogicHQ.'),
+    warmEmailParagraph(`Confirm your email to finish your account. ${VERIFICATION_NEXT_STEP[p.nextStep]}`),
+    warmEmailButton('Confirm my email', p.verifyUrl),
+    warmEmailSmall('The link works for 1 hour.'),
+    warmEmailSmall('If you didn’t create this account, you can ignore this email.'),
+  ].join('\n'));
 }
 
 export function schedulePublishedHtml(p: {

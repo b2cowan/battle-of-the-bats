@@ -43,7 +43,8 @@ export const POST = withObservability(async (req: NextRequest) => {
   if (!user || user.email_confirmed_at) return NextResponse.json(SENT);
 
   const origin = resolveTrustedAppOrigin(req);
-  const next = verificationReturnPath(body.next, '/home', readStartDoor(user.user_metadata)?.door);
+  const door = readStartDoor(user.user_metadata)?.door;
+  const next = verificationReturnPath(body.next, '/home', door);
   const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
     type: 'magiclink',
     email,
@@ -60,6 +61,10 @@ export const POST = withObservability(async (req: NextRequest) => {
     to: email,
     origin,
     actionLink: link.properties.action_link,
+    next,
+    door,
+    // Only the tournament registration's resend sends its team name: that is a registration.
+    registration: typeof body.continueName === 'string' && body.continueName.trim() !== '',
     firstName: typeof meta.first_name === 'string' ? meta.first_name : undefined,
     continueName: typeof body.continueName === 'string' ? body.continueName : null,
   });

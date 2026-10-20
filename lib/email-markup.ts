@@ -28,15 +28,21 @@
  *   ::if token                 → render the enclosed block only if `token` is truthy
  *   ::else                     → (optional) alternate block for the enclosing ::if
  *
+ * The same markup renders in either envelope's look (`EmailLook`): the house dark one by
+ * default, or the warm account-email one for the templates that wear it.
+ *
  * The markup itself is authored by trusted operators / our own seeds, so it is NOT
  * HTML-escaped. VARIABLE VALUES (which may carry customer-entered text like an org
  * name) ARE escaped before interpolation.
  */
 
+import { WARM_MARKUP_LOOK } from './email-envelope-warm';
+
 /**
  * Local copy of the standard HTML escape (mirrors lib/email.ts `escapeHtml`). Kept
- * inline so this module stays a dependency-free leaf — it is imported by both the
- * server send path AND the browser live-preview, and unit-tested in isolation.
+ * inline so this module stays a framework-free leaf — it is imported by both the
+ * server send path AND the browser live-preview, and unit-tested in isolation. Its one
+ * import, the warm envelope's styles, is a framework-free leaf too.
  */
 function escapeHtml(value: string): string {
   return value
@@ -63,6 +69,30 @@ const BTN_STYLE = 'display:inline-block;background:#D9F99D;color:#0b0f14;text-de
 const LINK_STYLE = 'display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;';
 const CHIP_STYLE = 'background:rgba(30,58,138,0.35);border:1px solid rgba(30,58,138,0.6);padding:0 3px;font-family:monospace;font-size:0.9em;color:#93c5fd;';
 
+/**
+ * Which envelope the markup is rendered for. `house` is every email's dark `wrap()` (the default, unchanged); `warm`
+ * is the account emails' envelope, whose white card needs ink, not light text. Each envelope owns its look: the warm
+ * one lives with its envelope (lib/email-envelope-warm.ts `WARM_MARKUP_LOOK`).
+ */
+export type EmailLook = 'house' | 'warm';
+
+export type LookStyles = {
+  p: string; h: string; ul: string;
+  calloutBase: string; calloutLime: string; calloutBlue: string; calloutLabel: string;
+  link: string; chip: string;
+  button: (label: string, href: string) => string;
+};
+
+const LOOKS: Record<EmailLook, LookStyles> = {
+  house: {
+    p: P_STYLE, h: H_STYLE, ul: UL_STYLE,
+    calloutBase: CALLOUT_BASE, calloutLime: CALLOUT_LIME, calloutBlue: CALLOUT_BLUE, calloutLabel: CALLOUT_LABEL,
+    link: LINK_STYLE, chip: CHIP_STYLE,
+    button: (label, href) => `<a href="${href}" style="${BTN_STYLE}">${label}</a>`,
+  },
+  warm: WARM_MARKUP_LOOK,
+};
+
 // ── Token fill ─────────────────────────────────────────────────────────────────
 
 /** A variable is "truthy" (for ::if) when present and not empty / "0" / "false". */
@@ -79,10 +109,10 @@ function isTruthyVar(v: string | number | null | undefined): boolean {
  * - 'chip': render every token as a styled monospace chip (used by the editor's live
  *   preview so operators see where variables will land).
  */
-function fillTokens(text: string, vars: EmailVars, mode: TokenMode): string {
+function fillTokens(text: string, vars: EmailVars, mode: TokenMode, look: LookStyles): string {
   return text.replace(/\{\{(\w+)\}\}/g, (_m, key: string) => {
     if (mode === 'chip') {
-      return `<span style="${CHIP_STYLE}">{{${key}}}</span>`;
+      return `<span style="${look.chip}">{{${key}}}</span>`;
     }
     const val = vars[key];
     if (val === null || val === undefined) return `{{${key}}}`;
@@ -91,8 +121,8 @@ function fillTokens(text: string, vars: EmailVars, mode: TokenMode): string {
 }
 
 /** Inline formatting for a run of paragraph/label/button text: tokens then **bold**. */
-function inline(text: string, vars: EmailVars, mode: TokenMode): string {
-  const filled = fillTokens(text, vars, mode);
+function inline(text: string, vars: EmailVars, mode: TokenMode, look: LookStyles): string {
+  const filled = fillTokens(text, vars, mode, look);
   return filled.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
@@ -116,21 +146,21 @@ type Cursor = { lines: string[]; i: number };
  * or end-of-input. Returns the rendered HTML and leaves the cursor positioned ON the
  * terminator line (caller consumes it).
  */
-function parseBlocks(cur: Cursor, vars: EmailVars, mode: TokenMode): string {
+function parseBlocks(cur: Cursor, vars: EmailVars, mode: TokenMode, look: LookStyles): string {
   const out: string[] = [];
   let para: string[] = [];
   let bullets: string[] = [];
 
   const flushPara = () => {
     if (para.length) {
-      out.push(`<p style="${P_STYLE}">${para.map(l => inline(l, vars, mode)).join('<br>')}</p>`);
+      out.push(`<p style="${look.p}">${para.map(l => inline(l, vars, mode, look)).join('<br>')}</p>`);
       para = [];
     }
   };
   const flushBullets = () => {
     if (bullets.length) {
-      const items = bullets.map(b => `<li>${inline(b, vars, mode)}</li>`).join('');
-      out.push(`<ul style="${UL_STYLE}">${items}</ul>`);
+      const items = bullets.map(b => `<li>${inline(b, vars, mode, look)}</li>`).join('');
+      out.push(`<ul style="${look.ul}">${items}</ul>`);
       bullets = [];
     }
   };
@@ -154,13 +184,13 @@ function parseBlocks(cur: Cursor, vars: EmailVars, mode: TokenMode): string {
     const btn = line.match(/^::button\s+(.*)$/);
     if (btn) {
       flushPara();
-      out.push(renderCta(btn[1], vars, mode, 'button'));
+      out.push(renderCta(btn[1], vars, mode, look, 'button'));
       cur.i++; continue;
     }
     const lnk = line.match(/^::link\s+(.*)$/);
     if (lnk) {
       flushPara();
-      out.push(renderCta(lnk[1], vars, mode, 'link'));
+      out.push(renderCta(lnk[1], vars, mode, look, 'link'));
       cur.i++; continue;
     }
 
@@ -171,11 +201,11 @@ function parseBlocks(cur: Cursor, vars: EmailVars, mode: TokenMode): string {
       const variant = callout[1] ? 'blue' : 'lime';
       const label = callout[2].trim();
       cur.i++; // consume the ::callout line
-      const inner = parseBlocks(cur, vars, mode);
+      const inner = parseBlocks(cur, vars, mode, look);
       consumeEnd(cur); // consume the matching ::end
-      const border = variant === 'blue' ? CALLOUT_BLUE : CALLOUT_LIME;
-      const labelHtml = label ? `<p style="${CALLOUT_LABEL}">${inline(label, vars, mode)}</p>` : '';
-      out.push(`<div style="${CALLOUT_BASE}${border}">${labelHtml}${inner}</div>`);
+      const border = variant === 'blue' ? look.calloutBlue : look.calloutLime;
+      const labelHtml = label ? `<p style="${look.calloutLabel}">${inline(label, vars, mode, look)}</p>` : '';
+      out.push(`<div style="${look.calloutBase}${border}">${labelHtml}${inner}</div>`);
       continue;
     }
 
@@ -185,11 +215,11 @@ function parseBlocks(cur: Cursor, vars: EmailVars, mode: TokenMode): string {
       flushPara();
       const token = ifMatch[1];
       cur.i++; // consume ::if
-      const thenHtml = parseBlocks(cur, vars, mode);
+      const thenHtml = parseBlocks(cur, vars, mode, look);
       let elseHtml = '';
       if (cur.i < cur.lines.length && cur.lines[cur.i].trim() === '::else') {
         cur.i++; // consume ::else
-        elseHtml = parseBlocks(cur, vars, mode);
+        elseHtml = parseBlocks(cur, vars, mode, look);
       }
       consumeEnd(cur); // consume ::end
       // In chip (preview) mode, show both branches so the operator sees all content.
@@ -214,12 +244,11 @@ function consumeEnd(cur: Cursor): void {
   if (cur.i < cur.lines.length && cur.lines[cur.i].trim() === '::end') cur.i++;
 }
 
-function renderCta(spec: string, vars: EmailVars, mode: TokenMode, kind: 'button' | 'link'): string {
+function renderCta(spec: string, vars: EmailVars, mode: TokenMode, look: LookStyles, kind: 'button' | 'link'): string {
   const [labelPart, urlPart] = splitOnLastPipe(spec);
-  const label = inline(labelPart.trim(), vars, mode);
+  const label = inline(labelPart.trim(), vars, mode, look);
   const href = urlPart ? fillUrl(urlPart.trim(), vars) : '#';
-  const style = kind === 'button' ? BTN_STYLE : LINK_STYLE;
-  return `<a href="${href}" style="${style}">${label}</a>`;
+  return kind === 'button' ? look.button(label, href) : `<a href="${href}" style="${look.link}">${label}</a>`;
 }
 
 /**
@@ -253,7 +282,13 @@ export function fillSubjectTokens(text: string, vars: EmailVars = {}): string {
  * Render body markup to the inner HTML (no envelope). Exported for unit tests and for
  * callers that compose their own wrapper.
  */
-export function renderMarkupToHtml(markup: string, vars: EmailVars = {}, mode: TokenMode = 'fill'): string {
+export function renderMarkupToHtml(
+  markup: string, vars: EmailVars = {}, mode: TokenMode = 'fill', look: EmailLook = 'house',
+): string {
+  return renderBlocks(markup, vars, mode, LOOKS[look]);
+}
+
+function renderBlocks(markup: string, vars: EmailVars, mode: TokenMode, styles: LookStyles): string {
   const cur: Cursor = { lines: (markup ?? '').replace(/\r\n/g, '\n').split('\n'), i: 0 };
   // parseBlocks returns when it hits a terminator (`::end` / `::else`) or end-of-input.
   // At the TOP level any such terminator is UNMATCHED (no enclosing ::callout / ::if) —
@@ -262,7 +297,7 @@ export function renderMarkupToHtml(markup: string, vars: EmailVars = {}, mode: T
   // by their opener before control ever returns here.)
   const parts: string[] = [];
   while (cur.i < cur.lines.length) {
-    parts.push(parseBlocks(cur, vars, mode));
+    parts.push(parseBlocks(cur, vars, mode, styles));
     if (cur.i >= cur.lines.length) break;
     const t = cur.lines[cur.i].trim();
     if (t === '::end' || t === '::else') { cur.i++; continue; } // drop the stray marker
@@ -281,12 +316,14 @@ export function renderHeadingAndBody(p: {
   body: string;
   vars?: EmailVars;
   mode?: TokenMode;
+  look?: EmailLook;
 }): string {
   const vars = p.vars ?? {};
   const mode = p.mode ?? 'fill';
+  const styles = LOOKS[p.look ?? 'house'];
   const headingHtml = p.heading?.trim()
-    ? `<h2 style="${H_STYLE}">${inline(p.heading, vars, mode)}</h2>`
+    ? `<h2 style="${styles.h}">${inline(p.heading, vars, mode, styles)}</h2>`
     : '';
-  const bodyHtml = renderMarkupToHtml(p.body, vars, mode);
+  const bodyHtml = renderBlocks(p.body, vars, mode, styles);
   return `${headingHtml}\n${bodyHtml}`;
 }

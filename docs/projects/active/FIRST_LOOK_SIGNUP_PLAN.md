@@ -363,6 +363,56 @@ every screen and aborted on memory, 2026-10-20) on staging at the next promote (
 help quotes "Create Team", Premium's "Create / Sign in", "Run a Tournament" on the strip, and "Sign In" for the phone
 bar.
 
+## As built, Stage 2 (2026-10-20 →)
+
+Built from `FIRST_LOOK_STAGE2_BUILD_PROMPT.md`, in three parts (2a, 2b, 2c), each committed alone.
+
+**Owner calls answered at the gate, 2026-10-20 (all three as recommended).** (1) The league door's sentence is "Then
+you'll name your league." (step 2 asks only for the name). (2) The confirmation email says "The link works for 1 hour."
+in a small line under its button. (3) An account made alone reads "Then you'll land on your Home page." only when its
+link returns to Home (`/discover`, or `/home`, which redirects there); a link that returns anywhere else (a tournament
+the fan followed, an invitation, a team claim) reads "Then you're in." `/marketing`'s Home-page sentence was untrue for
+those people, because the account-only sign-up carries their `next`.
+
+**2a — the warm envelope and the two emails.**
+- **The envelope is a module of its own** (`lib/email-envelope-warm.ts`), not a change to `wrap()`, which every other
+  email still wears. It sits beside `wrap()` and not inside `lib/email.ts` because the template editor's live preview
+  (a client component) renders it too. Moving the other emails onto it is The public face's S3.
+- It is a whole document, so its head can ask mail apps for light only and tighten the padding on a phone (U8). Both
+  are progressive: the inline styles alone are the full design. That one phone rule needs a class hook, a deliberate
+  exception to "no CSS classes". The 600px Outlook table and the button drawn in a table cell are both for Outlook's
+  desktop app. The plain-text part now drops the head (it never had one before, so no other email changes).
+- **The next step** (`lib/verification-next-step.ts`) is chosen from facts the senders already hold: the account's
+  start door, else a registration (the tournament registration's sign-up and resend say so; the join page's return
+  carries its `registrationId`), else Home or onward by where the link returns. The typed team no longer reaches the
+  built-in email, and `continueName` is a template variable only (Coach Premium passes a fixed "your Coaches Portal",
+  which must never make a team claim read as a registration; `/simplify` caught that).
+- Which templates wear the envelope is one decision (`emailLookFor`), asked by the send, the preview, the editor and
+  test-send; the renderer requires the key, so a new caller cannot quietly render an account email dark.
+- **A customised template wears the envelope on every path:** the send (`renderResolvedEmail`), the preview route
+  (`renderTemplateEmail`), test-send (with a note readable on the white card) and the editor's live preview. The
+  markup renderer gained a `warm` look (ink on the card, the envelope's button). The `house` look is the default and
+  its output is unchanged, byte for byte (pinned).
+- **Subject** "Confirm your FieldLogicHQ email". ⚠ **Kept apart on purpose, not fixed here:** the template rows' seed
+  words (mig 083) still say "Verify your email — FieldLogicHQ" / "Verify Your Email" / "Verify Email", and the seed body
+  says "continue setting up {{orgName}}" while the sender fills `orgName` with "your account". They show only in the
+  platform admin's editor and only reach a customer once someone saves a customisation. Bringing the seed in step with
+  the built-in email is a data migration, owed when The public face's S3 moves the templates (or sooner on the
+  owner's word).
+- **For The public face's S3 (moving the other emails onto the envelope):** the marketing transport keeps its own copy
+  of the plain-text conversion (`lib/email-sender.ts`), which does not drop a head yet; and the campaign preview route
+  (`/api/admin/email/preview`) drops server HTML straight into the admin page, so a warm document there would carry its
+  head's style into the page. Neither is reachable by the two account emails today. The envelope is table cells, not
+  divs, because Outlook's desktop app drops a div's padding (`/review`, 2026-10-20).
+- Coach Premium's email now greets by first name (the sign-up collects it; it was simply not passed before).
+- **Findings, not fixed:** the assistant-coach invitation page sends no `next` to the coach sign-up, so an invited
+  person who signs up with a different address than the invitation's gets a link that lands on `/coaches` with no
+  invitation to accept. It is an existing gap, separate from the email's words.
+- **Owed for 2a:** the real-inbox check (Gmail, Apple Mail and Outlook, light and dark, phone) through the platform
+  admin's test-send, plus a customised copy of each template sent and then removed. Localhost has no mail key, so
+  this runs on staging. The renders from the real builders at 600 and 390, light and dark, are in
+  `.probe/first-look/out-2a/` (`cap-stage2a.mjs`).
+
 ## /design review of the drawings (2026-10-19)
 
 Run before hand-off; its changes are in the drawings and listed on the hub's Your answers tab. D-F1 and D-F2 became

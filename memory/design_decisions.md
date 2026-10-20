@@ -7,6 +7,39 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — THE WAIT AND THE WAY BACK: THE ACCOUNT EMAILS WEAR ONE WARM ENVELOPE, AND EVERY REFUSAL ON SIGN-IN SAYS THE WAY FORWARD (owner, The first look Stage 2, U1–U8 as recommended, after `/design`; `/marketing` read the words; three owner calls at the build gate, as recommended)
+
+**Decision:** The eight states the Stage 2 drawings left out (page https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ):
+- **U1 wrong password:** keep the red edge (red is for a wrong password only). "That email and password don't match." /
+  "Try again, or use "Forgot your password?" below."
+- **U2 an existing address handed to sign-in:** the neutral (amber) notice above the fields, "You already have an
+  account with that email." / "Sign in below."
+- **U3 a broken confirm link:** no screen of its own; sign-in with the same expired-link notice.
+- **U4 forgot and reset:** the start column, the shared fields and the Continue page's wording ("Reset my password" on
+  the tap page), every state drawn.
+- **U5 the reset email:** the warm envelope, no greeting (it goes to an address, not a person), "The link works for 1
+  hour." (true: Supabase's link expiry, 3600 s).
+- **U6 the confirmation email:** one fixed sentence per way in, naming the next step, never a typed name. The league door
+  "names its league" (gate call 1: step 2 asks only that). An account made alone says Home only when its link goes
+  Home, else "Then you're in." (gate call 3). The email also says the link works for 1 hour (gate call 2).
+- **U7 after "Email me a new link":** "Check your email." / "If that address is waiting to be confirmed, a new link is on
+  its way. Check your spam folder too." Never "Sent".
+- **U8 the email on a phone and in a dark mail app:** one light layout that asks mail apps for light only, tightened on
+  a phone; no second dark design.
+- **The envelope** (D-F11): 600px warm ground `#f6f1ea` with a 1px `#c9c1b2` edge, a white card, ink `#211c15`, Arial;
+  the Courier wordmark (FIELD ink, LOGIC olive `#55641c`, HQ `#4b463f`); a lime button with a 1px olive edge; the footer
+  word outside the card.
+- **The notices** (D-F8/F9): a white box with a coloured left edge, amber `#b7791f` for everything that is not an error,
+  red `#b23b2e` for the wrong password alone; in Dark the edges are lifted (the light values read about 2.4:1 there).
+**Rationale:** an expired link, a waiting account or a wrong password is where a new customer gives up, and the old
+screens said nothing about what to do next. Saying the next step in one sentence keeps the promise the last screen made.
+The emails cannot know Warm or Dark or load the fonts, so one fixed warm layout is the honest version of the product's
+look. A link the system cannot promise (the resend answers the same whether or not an account waits, on purpose) is
+worded so it never claims to have sent one. A customised template wears the same envelope, so a platform admin's
+edit can never bring back the old dark card.
+**Applies to:** sign-in, the Continue page, forgot and reset, `/auth/callback`'s failure path, the verification and
+password-reset emails (`lib/email-envelope-warm.ts`; every other email keeps `wrap()` until The public face's S3).
+
 ### 2026-10-20 — NO ADMIN HOME PAGE FOR SOMEONE WHO CANNOT SEE TOURNAMENTS: THEIR FIRST DOOR, ELSE "ACCESS RESTRICTED" (owner, admin type sweep Stage 5 E1, as recommended)
 
 **Decision:** On a tournament-only organization, a member who cannot see tournaments no longer gets the pre-redesign

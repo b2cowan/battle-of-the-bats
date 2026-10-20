@@ -25,6 +25,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { wrap, sendEmail, type SendEmailResult } from '@/lib/email';
+import { emailLookFor, warmEmailDocument } from '@/lib/email-envelope-warm';
 import {
   renderHeadingAndBody,
   fillSubjectTokens,
@@ -34,7 +35,9 @@ import {
 
 /**
  * Render a full platform email (heading + body markup) inside the shared FieldLogicHQ
- * brand envelope. Used by the send path and the server-side preview so both render
+ * brand envelope — or, for the account emails (`signup_verification`, `password_reset`), the
+ * warm envelope their built-in builders wear (The first look, Stage 2a), so a customised
+ * template never brings back the old dark card. Used by the send path and the server-side preview so both render
  * through the exact same pipeline. `footerHtml` is appended inside the envelope (e.g. a
  * sample unsubscribe block for previews); real marketing sends get their unsubscribe
  * footer injected downstream by lib/email-sender.ts, so send callers pass none.
@@ -45,9 +48,12 @@ export function renderPlatformEmailHtml(p: {
   vars?: EmailVars;
   footerHtml?: string;
   mode?: TokenMode;
+  /** The template's key: it decides the envelope. Required, so no caller can quietly render an account email dark. */
+  key: string;
 }): string {
-  const inner = renderHeadingAndBody({ heading: p.heading, body: p.body, vars: p.vars, mode: p.mode });
-  return wrap(`${inner}\n${p.footerHtml ?? ''}`);
+  const look = emailLookFor(p.key);
+  const inner = renderHeadingAndBody({ heading: p.heading, body: p.body, vars: p.vars, mode: p.mode, look });
+  return (look === 'warm' ? warmEmailDocument : wrap)(`${inner}\n${p.footerHtml ?? ''}`);
 }
 
 export type PlatformEmailTemplate = {
@@ -115,6 +121,7 @@ export function renderTemplateEmail(
     body: bodyWithCta(row),
     vars,
     footerHtml: opts?.footerHtml,
+    key: row.key,
   });
   return { subject: fillSubjectTokens(row.subject, vars), html };
 }
@@ -151,6 +158,7 @@ export async function renderResolvedEmail(opts: {
     heading: row.heading,
     body: bodyWithCta(row),
     vars,
+    key,
   });
   const subject = fillSubjectTokens(row.subject, vars);
   return { subject, html, source: row.is_customised ? 'customised' : 'template' };

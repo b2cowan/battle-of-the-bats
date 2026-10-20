@@ -131,7 +131,9 @@ export const POST = withObservability(async (req: NextRequest) => {
       return json({ error: 'Account could not be created. Please try again.' }, 500);
     }
     await sendSignupVerificationEmail({
-      to: email, origin, actionLink: linkData.properties.action_link, firstName, continueName: continueName || null,
+      // Only the tournament registration form sends a team name (`continueName`): that is a registration.
+      to: email, origin, actionLink: linkData.properties.action_link, next, door: startDoor, registration: !!continueName,
+      firstName, continueName: continueName || null,
     });
     return json({ ok: true, requiresEmailVerification: true, email });
   }

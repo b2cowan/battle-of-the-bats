@@ -158,7 +158,11 @@ export const POST = withObservability(async (req: Request) => {
         );
       }
 
-      await sendSignupVerificationEmail({ to: normalizedEmail, origin, actionLink, continueName: 'your Coaches Portal' });
+      // A claim sign-up remembers no door, so its email names no Premium step: the link returns to the claim.
+      await sendSignupVerificationEmail({
+        to: normalizedEmail, origin, actionLink, next: safeNext, door: startRecord?.door ?? null,
+        firstName: first || undefined, continueName: 'your Coaches Portal',
+      });
 
       return NextResponse.json({
         success: true,

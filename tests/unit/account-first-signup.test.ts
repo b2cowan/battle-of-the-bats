@@ -174,7 +174,7 @@ describe('the coach sign-up remembers the door', () => {
     // the registration form's resend names the join page that links its registration; it must never lose it (/review)
     assert.match(readCode('lib/signup-verification.ts'), /return safeNextPath\(next, door \? startDoorLinkPath\(door\) : fallback\);/);
     const resend = readCode('app/api/auth/resend-verification/route.ts');
-    assert.match(resend, /const next = verificationReturnPath\(body\.next, '\/home', readStartDoor\(user\.user_metadata\)\?\.door\);/);
+    assert.match(resend, /const door = readStartDoor\(user\.user_metadata\)\?\.door;\s*const next = verificationReturnPath\(body\.next, '\/home', door\);/);
   });
 });
 
@@ -187,8 +187,8 @@ describe('Run a tournament: the organization sign-up makes the account alone (Pa
     assert.match(route, /const returnPath = organizationDoor \? startDoorLinkPath\('organization'\) : safeNextPath\(next, '\/discover'\);/);
     assert.match(route, /redirectTo: verificationRedirect\(origin, returnPath\),/);
     assert.match(route, /user_metadata: userMetadata,/, 'the instant path (localhost) remembers it too');
-    // no name in the email: it is asked on step 2
-    assert.match(route, /await sendSignupVerificationEmail\(\{ to: normalizedEmail, origin, actionLink, firstName: normalizedFirstName \}\);/);
+    // no name in the email: it is asked on step 2 (the email names the door's next step instead, The first look U6)
+    assert.match(route, /await sendSignupVerificationEmail\(\{\s*to: normalizedEmail, origin, actionLink, next: returnPath, door: organizationDoor \? 'organization' : null,\s*firstName: normalizedFirstName,\s*\}\);/);
   });
   it('keeps the Sign-up Invite Guard and the staff refusal', () => {
     assert.match(route, /return NextResponse\.json\(\{ inviteBranch: 'invited', orgName: pendingInvite\.orgName \}\);/);

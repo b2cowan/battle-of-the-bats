@@ -16,7 +16,10 @@ import {
   announcementHtml,
   acceptanceFeeLine,
   teamWorkspaceWelcomeHtml,
+  signupVerificationHtml,
+  platformPasswordResetHtml,
 } from '@/lib/email';
+import { VERIFICATION_NEXT_STEP } from '@/lib/verification-next-step';
 import { INVITATION_EMAIL_WORDS } from '@/lib/invite-only-words';
 
 // Sample "amount due" line (deposit-first), as the acceptance email now shows (J5-063).
@@ -261,6 +264,26 @@ const TO_THE_ORGANIZER: Preview[] = [
   },
 ];
 
+// The two account emails, in the warm envelope (The first look, Stage 2a). The confirmation email's one changing line
+// is its next step, so the trigger lists every door's.
+const ACCOUNT: Preview[] = [
+  {
+    id: 'signup-verification',
+    label: 'Confirm your email',
+    subject: 'Confirm your FieldLogicHQ email',
+    trigger: 'Any sign-up while email confirmation is on, and every "Send the link again". Shown for Start a team. '
+      + 'The next step by door: ' + Object.values(VERIFICATION_NEXT_STEP).join(' · '),
+    html: signupVerificationHtml({ verifyUrl: 'https://dev.fieldlogichq.ca/auth/signup-confirm?link=sample', firstName: 'Jordan', nextStep: 'team' }),
+  },
+  {
+    id: 'password-reset',
+    label: 'Reset your password',
+    subject: 'Reset your FieldLogicHQ password',
+    trigger: 'Forgot password, or support’s reset from the platform admin.',
+    html: platformPasswordResetHtml('https://dev.fieldlogichq.ca/auth/reset-confirm?link=sample'),
+  },
+];
+
 function EmailCard({ p }: { p: Preview }) {
   return (
     <section id={p.id} style={{ marginBottom: '2.5rem', scrollMarginTop: '1rem' }}>
@@ -285,6 +308,7 @@ export default function CoachEmailPreviewPage() {
     { title: 'Automatic — fired by organizer actions', note: 'These send on their own when the organizer acts (accept, mark paid, publish, complete).', items: AUTOMATIC },
     { title: 'Organizer-initiated', note: 'These only send when the organizer chooses to send them.', items: ORGANIZER_INITIATED },
     { title: 'To the organizer', note: 'Not a coach email: what the organizer receives about a registration.', items: TO_THE_ORGANIZER },
+    { title: 'Account emails', note: 'Everyone’s: confirming a new account and resetting a password. They wear the warm envelope.', items: ACCOUNT },
   ];
 
   return (

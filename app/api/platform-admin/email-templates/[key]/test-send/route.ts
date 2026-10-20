@@ -2,6 +2,7 @@ import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { sendEmail } from '@/lib/email';
 import { renderPlatformEmailHtml } from '@/lib/platform-email-templates';
 import { fillSubjectTokens } from '@/lib/email-markup';
+import { warmEmailSmall, wearsWarmEnvelope } from '@/lib/email-envelope-warm';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getMarketingEmailDefault } from '@/lib/marketing-email-defaults';
 import { withObservability } from '@/lib/observability';
@@ -65,12 +66,15 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   // A dedicated cta_label (transactional templates) becomes an inline ::button so the
   // shared renderer handles it; marketing campaigns carry CTAs inline already.
   const bodyMarkup = ctaLabel ? `${bodyText}\n\n::button ${ctaLabel} | #` : bodyText;
-  const testNote =
-    `<p style="margin:2rem 0 0;font-size:0.72rem;color:rgba(241,245,249,0.3);letter-spacing:0.04em;">` +
-    `Test email sent from Platform Admin · Template key: ${key}</p>`;
+  // The account emails' warm envelope has a white card, so its note is the envelope's small grey line, not the dark
+  // card's faint white.
+  const noteText = `Test email sent from Platform Admin · Template key: ${key}`;
+  const testNote = wearsWarmEnvelope(key)
+    ? warmEmailSmall(noteText)
+    : `<p style="margin:2rem 0 0;font-size:0.72rem;color:rgba(241,245,249,0.3);letter-spacing:0.04em;">${noteText}</p>`;
 
   // Render through the SAME pipeline as send/preview so the test matches production.
-  const html = renderPlatformEmailHtml({ heading, body: bodyMarkup, vars, footerHtml: testNote });
+  const html = renderPlatformEmailHtml({ heading, body: bodyMarkup, vars, footerHtml: testNote, key });
   const filledSubject = fillSubjectTokens(subject, vars);
 
   await sendEmail(user.email, `[TEST] ${filledSubject}`, html);

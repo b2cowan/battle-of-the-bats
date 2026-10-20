@@ -27,9 +27,9 @@ describe('one rule', () => {
     }
   });
   it('the email escapes what an anonymous form typed, and the link is wrapped against mail scanners', () => {
-    // the built-in email escapes; a customised template escapes its variables itself, so it gets the raw name
-    assert.match(lib, /orgName: continueName \? escapeHtml\(continueName\) : null,/);
-    assert.match(lib, /firstName: p\.firstName \? escapeHtml\(p\.firstName\) : undefined,/);
+    // the built-in email escapes the name it greets and never carries a typed team (The first look U6: it names the
+    // next step); a customised template escapes its variables itself, so it gets the raw name
+    assert.match(lib, /defaultHtml: signupVerificationHtml\(\{\s*verifyUrl,\s*firstName: p\.firstName \? escapeHtml\(p\.firstName\) : undefined,\s*nextStep: verificationNextStep\(\{ door: p\.door, next: p\.next, registration: p\.registration \}\),\s*\}\),/);
     assert.match(lib, /vars: \{ verifyUrl, orgName: continueName \?\? 'your account' \},/);
     assert.match(lib, /`\$\{p\.origin\}\/auth\/signup-confirm\?link=\$\{encodeURIComponent\(p\.actionLink\)\}`/);
     // a start door's step 2 first (Account-First Sign-up, 2026-10-18), else a same-site path
