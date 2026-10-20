@@ -25733,3 +25733,18 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **Owed beside the walk:** the whole-product layout sweep on staging (1d touched the shared bar and the palette; the dev-server run widened to every screen and aborted on memory 2026-10-20); the screen-reader pass on the shared form; `/docs` (help quotes the old words); `/marketing` on the sentences the rulings did not fix word for word.
 <!-- /§348 -->
+
+## §349 · One window · Stage 2, part 2c (walk B) — **the coaches portal's own windows behave like every other window: the roster's, the awards', Money's tools, the schedule import, the practice and lineup pickers and the five tryout windows open in the one window, keep Tab inside, close on Esc and the phone's Back without moving the page, ignore a tap outside, and ask in their own foot when something is typed; Delete a budget line and Which session are the small centred question; every field in a coach window is 36px on a computer**
+
+**Built:** seven parts, each committed on the owner's OK, `cb83e3b6` … `83278609` 2026-10-19/20, after /simplify and /review (plan `docs/projects/active/ONE_WINDOW_PLAN.md`, "Stage 2c — as built"). Not a re-run of §346 (2a + 2b, the shell windows).
+
+**The walk:** its own page, https://claude.ai/artifact/29LZVZrLGbk3mEoxWoXc3v (the 10-19 index-hub ruling: walks are their own artifacts), source `docs/projects/active/ONE_WINDOW_STAGE2C_WALK.html`, 30 steps in seven parts: A roster and awards · B Money · C schedule, practice plans, lineups · D tryouts · E phone · F Dark · G optional (only with the setup).
+
+**Sign in:** `uat-coach@uat-test-org.local` (password as every UAT account), head coach of UAT Test Team, on localhost:3000.
+
+**Writes:** Part D saves two tryout sessions and one walk-up player on the UAT tryout (it had none). The walk has the owner delete the two sessions; the walk-up is removed from the dev database at paste-back. Nothing else saves.
+
+**Not walkable on the UAT team (checked in code and guards):** Start next season and Close the season (head coach of a team no club runs); Your starting budget and Sample season budget (a team with no budget lines) — Part G, optional.
+
+**Owed beside the walk:** `check:layout` on the touched screens (aborted on the machine's free memory 2026-10-20; the probes stand in); `/docs` for the two "Keep editing" help answers, held for 2d (five second-window asks remain there).
+<!-- /§349 -->

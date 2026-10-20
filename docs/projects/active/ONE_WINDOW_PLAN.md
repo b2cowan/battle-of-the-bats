@@ -10,7 +10,9 @@ notes; hub QA tab, QA ledger §339). Stage 1 is closed but for the layout check 
 2026-10-19** (census and calls B1–B9 on the hub, before-figures; **asks A–D ruled as recommended 2026-10-19**); **part
 2a (the one piece) committed `ada213b3` 2026-10-19** after /simplify and /review ("Stage 2a — as built" below); walked with 2b. **Part 2b (the
 foot) built 2026-10-19, /simplify and /review run the same day** ("Stage 2b — as built" below); walk A (2a + 2b) on the
-hub's QA tab — **owner walk A ✅ passed 2026-10-19 (20 of 20, no notes; QA ledger §346)**. Still open: the layout
+hub's QA tab — **owner walk A ✅ passed 2026-10-19 (20 of 20, no notes; QA ledger §346)**. **Part 2c (the hand-built
+coach windows) built in seven parts, each committed on the owner's OK, `cb83e3b6` … `83278609` 2026-10-19/20**, after
+/simplify and /review ("Stage 2c — as built" below); walk B on its own page, https://claude.ai/artifact/29LZVZrLGbk3mEoxWoXc3v (QA ledger §349; the hub is left as it stands, owner 2026-10-20). Still open: the layout
 check on the screens Stage 1 touched (warm-theme sweep of the whole product ran on staging at the 2026-10-19 promote, master job 282, owner accepted its findings; the dark-theme sweep was not run, owner accepted the skip, run it on staging).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
@@ -414,6 +416,95 @@ Groups from another practice) are forms that fill a phone, and tryouts' Which se
   Message a family included. Guarded; hub drawing, walk A and Decisions updated (hub version 19).
 - **Help:** two coach articles still say "Keep editing" (Money's forms; the discard question). The shell windows say
   "Keep writing" since 2a; the hand-built ones still say "Keep editing" until they move (2c / 2d) — /docs owed.
+
+#### Stage 2c — as built 2026-10-19/20 (the hand-built coach windows; seven parts, each committed on the owner's OK)
+Built from `ONE_WINDOW_STAGE2C_BUILD_PROMPT.md` and `ONE_WINDOW_STAGE2C_PARTS3_7_BUILD_PROMPT.md`. Every 2c window is now
+`QuestionShell` (the one window with the coach rules): Tab stays inside, Escape and the phone's Back close only the top
+window and leave the page where it was, a tap outside a form does nothing (outside a question it is the "no"), and none
+closes while it writes. **No window's words changed** except the ask's one sentence (B1). The guard's "still to move in
+2c" list is empty (`MOVES_2C` retired); 2d's list is unchanged.
+- **Part 1 `cb83e3b6`** — Add players (paste a list), Give / Edit an award, Start next season ask when typed (B3); Start
+  next season fills a phone (B5). **Choose an icon moved with Give an award** (pulled from part 3): a `.modalOverlay`
+  window (200) would have opened UNDER the one window (400) — rule: a window that opens over a moved window moves with it.
+- **Part 2 `b5758dba`** — `QuestionShell kind="question"` (KitDialog's small centred question, coach rules; no ×, no ask,
+  no size, off the pill's foot stack): Close the season and Delete a budget line (answer D). Close the season's "Not yet
+  — take me to Money" became a link: a button that closed then `router.push`ed had the window's Back step cancel it.
+- **Part 3 `f2ae1d35`** — Export (no foot, held while a file builds, 360 → 520) and Upload a document (asks with a file
+  chosen, B3).
+- **Part 4 `0a721d9a`** — Add a player (route guard kept), Add / edit a budget line (720 → 640), Bring in a schedule and
+  Import a spreadsheet (780 → 800, `widest` added), Your starting budget: they asked in `useDiscardGuard`'s second window;
+  now in their own foot (B1). Bring in a schedule also asks over an unreviewed paste (it was dropped silently). A
+  month-grid link over a dirty budget line is dropped, never asked about in a second window. Folded in on the owner's
+  word: Give an award's "For" dropdown is 44 on a phone / 36 on a computer. KitDialog: a coach window's foot buttons
+  floor at 34 on a computer (a lone Cancel was 26.5).
+- **Part 5 `24f76335`** — Add from a past season and Apply a lineup template to… (B9 list pickers): forms that fill a
+  phone, held while a tap writes, **never ask** (each tap writes; nothing is typed). The `useConfirm` window (z 1000)
+  stands over the one window and owns Tab, Escape and Back (measured).
+- **Part 6 `502d287e`** — the five tryout windows: Add / Edit session (460 → 520), Add an evaluator (the "Link ready"
+  screen closes silently), the Evaluation scorecard (840 → 800, the running total is the foot's sentence), the check-in
+  desk's walk-up Add player (its refusal moved from the page's error pop-up to the foot), Which session is this sheet
+  for? (`kind="question"`, B9). All four forms' `useDiscardGuard` gone (B1). The tryout stylesheets' window shape
+  (`.scrim` · `.modal` · `.modalTitle` · `.modalActions`) is tombstoned; the guard fails if one comes back.
+- **Part 7 `83278609`** — Categories & items (asks only while a NAME is typed — a new item, a new category while "New
+  category" is chosen, a rename that differs from a name still on the list; Escape in a rename or the add form cancels
+  that edit; the fold screen is a level: ← / Back return to the list, `levelKey` starts it at its top; held while a fold,
+  add, rename or remove saves; opened from the item picker it nests over the budget-line window and owns its keys),
+  Sample season budget (Close is the window's closer), Recent imports (no foot, computer only). `QuestionShell` passes
+  KitDialog's `levelKey`.
+- **⚖ Q10 field rule keyed on the element (owner, 2026-10-20, open call 3: "bring them down to match our model").** The
+  computer rule (`.windowBody` 36px) keyed on the coach module's `.input` / `.select`, so fields wearing a module's own
+  copy of the look were missed: tryout windows 37.5–41, the budget line 36.5–38.5, the item picker, the money date
+  field. It now keys on the element, like the phone rule; left out: a field in a `<td>` (Import a spreadsheet's review
+  cells stay 28–30) and the shared search pill's input (its pill is its height). One rule in one file, not a copy per
+  module (/simplify's altitude finding).
+
+**Before → after** (`.probe/ow2/{before,after}-2c*.md`; phone = fields · foot buttons · close; computer = width ·
+fields · foot buttons · ×; ‹ the back arrow):
+
+| Window | Phone 390 | Computer 1280 |
+|---|---|---|
+| Add players | – · 41 · ‹44 → – · 44 · ‹44 | 520 · – · 41 · 24 → 520 · – · 34 · 32 |
+| Give an award | 37 · 31.5 · ‹44 → 44 · 44 · ‹44 | 520 · 37 · 34 · 24 → 520 · 36 · 34 · 32 |
+| Choose an icon | 38.5 · – · ×44 → 44 · – · ‹44 | 380 · 38.5 · – · 24 → 520 · 36 · – · 32 |
+| Delete a budget line (question) | – · 32 · ×44 → – · 44 · none | 380 · – · 32 · 24 → 416 · – · 32 · none |
+| Export (roster / budget) | 37 · – · ×44 → 44 · – · ‹44 | 360 · 37 · – · 26 → 520 · 36 · – · 32 |
+| Upload a document | 37 · 41 · ×44 → 44 · 44 · ‹44 | 520 · 37 · 41 · 26 → 520 · 36 · 34 · 32 |
+| Add a player | 35–37 · 41 · ‹44 → 44 · 44 · ‹44 | 520 · 35–37 · 41 · 24 → 520 · 36 · 34 · 32 |
+| Budget line (add / edit) | 36.5–44 · 22.5–31.5 · ‹44 → 44 · 44 · ‹44 | 720 · 36.5–38.5 · 22.5–34 · 24 → 640 · 36 · 34 · 32 |
+| Bring in a schedule | – · 26.5 · ‹44 → – · 44 · ‹44 | 780 · – · 26.5 · 24 → 800 · – · 34 · 32 |
+| Import a spreadsheet | computer only | 780 · – · 26.5 · 24 → 800 · – · 34 · 32 |
+| Add from a past season | – · 31.5 · ×44 → – · 44 · ‹44 | 520 · – · 34 · 26 → 520 · – · 34 · 32 |
+| Apply a lineup template | – · – · ‹44 → – · – · ‹44 | 520 · – · – · 26 → 520 · – · – · 32 |
+| Tryout session (add / edit) | 38–41 · – · – → 44 · 44 · ‹44 | 460 · 38–41 · – · – → 520 · 36 · 34 · 32 |
+| Evaluation scorecard | 37.5 · 41 · ×32 → 44 · 44 · ‹44 | 840 · 37.5 · 41 · 32 → 800 · 36 · 34 · 32 |
+| Add an evaluator | 38 · – · – → 44 · 44 · ‹44 | 460 · 38 · – · – → 520 · 36 · 34 · 32 |
+| Walk-up Add player | 38 · – · – → 44 · 44 · ‹44 | 420 · 38 · – · – → 520 · 36 · 34 · 32 |
+| Which session (question) | – · – · – → – · 44 · none | 420 → 416 · – · 34 · none |
+| Categories & items | 44 · 33.5 · ‹44 → 44 · 44 · ‹44 (from the picker) | 520 · 35 · 34 · 24 → 520 · 36 · 34 · 32 |
+| Sample season budget | – · 26.5 · ‹44 → – · 44 · ‹44 | 520 · – · 26.5 · 24 → 520 · – · 34 · 32 |
+| Recent imports | computer only | 520 · – · – · 26 → 520 · – · – · 32 |
+
+- **Calls made in the build:** the budget line 640 (`wide`; the part 4 commit records it); the two imports 800
+  (`widest`); Categories & items, Sample and Recent imports keep 520 (B6: "they keep how wide they are");
+  the budget line's Delete line + period total sit at the foot's left, the fix counter · Cancel · main act at its right.
+- **Skipped, with reasons:** Start next season and Close the season are reachable only by the head coach of a STANDALONE
+  team (the UAT team and `riverdale-ridge` are club-managed) — checked in code and guards; walk B asks for the owner's
+  own standalone team. Your starting budget and Sample season budget open only on an empty budget (the probe faked an
+  empty plan in its own browser; nothing in the database changed). The phone money smoke spec was restated, not run.
+  **`check:layout` skipped at part 7:** it aborted on the machine's free memory (the restarted dev server sat at
+  11.8 GB, ~1 GB free, under the 1.5 GB floor); no swept screen opens these windows — the probes stand in.
+- **/simplify + /review (part 7, both portals' window untouched):** fixed — the ask could stick with nothing typed (a
+  rename left open on an item a fold removed; a new-category name after switching away from "New category"), the fold
+  screen lost focus and kept the list's scroll (`levelKey`), a rename in flight met a misleading ask (now `busy`), the
+  smoke spec's class match broke on a production build, the shared search pill would have been squashed. Accepted:
+  closing Categories & items from the picker hands focus back to the picker, whose list opens on focus (the coach is
+  back at the list they came to pick from). Latent, noted: a window mounted inside a `<td>` would leave the 36 rule;
+  Escape on the fold screen closes the window (KitDialog's rule at every level).
+- **Still open, carried:** the scorecard keeps 24 under-44 body controls on a phone (grips, steppers, the 1–5 / 1–10
+  switch) and the file input stays 40 on a phone (Q10 skips `type="file"`) — body controls, reported as 2a/2b did; an
+  extra Back after Start next season navigates the page (low, recorded). **/docs held for 2d:** five `useDiscardGuard`
+  second windows remain (Generate installments, the club panel, dues, Record money in expenses — all 2d — and the staff
+  sheet, which stays out, Q15), so the two "Keep editing" help answers change once, when 2d moves them.
 
 ### Stage 3 · One question
 What changes on screen: every "are you sure" in all three areas looks the same; no browser grey boxes; Saved / Done

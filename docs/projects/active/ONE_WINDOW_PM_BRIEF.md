@@ -39,7 +39,10 @@ front of paying customers.
 ## Stages
 1. **One look:** fields, widths, spacing, edge, labels, and the dimmed page.
 2. **One behaviour:** coach windows, the hand-built ones included (moved up from stage 4, ruled 2026-10-19), gain the
-   admin's behaviour.
+   admin's behaviour. Built in parts: 2a and 2b (the shell windows and their foot, walked 2026-10-19); **2c (the 23
+   hand-built coach windows, the tryouts' and the money tools' included) built 2026-10-19/20**, with every field in a
+   coach window 36px on a computer whatever its stylesheet (owner 2026-10-20); 2d (the money and practice windows that
+   still ask in a second window) next.
 3. **One question:** one confirm everywhere; notices fade.
 4. **Strays join:** House league, the tournament's old windows, one-offs.
 
