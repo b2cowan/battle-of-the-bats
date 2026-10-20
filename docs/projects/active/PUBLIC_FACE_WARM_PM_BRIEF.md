@@ -1,7 +1,9 @@
 # The public face, warm — marketing, sign-in and emails — PM brief
 
 Plan: `PUBLIC_FACE_WARM_PLAN.md` · Status: **queued 2026-10-19**. It starts after Club Tier. Whether it runs ahead of
-Platform admin is to be confirmed at kickoff; the recommendation is yes.
+Platform admin is to be confirmed at kickoff; the recommendation is yes. **2026-10-19:** the sign-in and sign-up
+screens and the two account emails moved to The first look (`FIRST_LOOK_SIGNUP_PM_BRIEF.md`); this project keeps the
+marketing site, the other emails and the system screens.
 
 **What changes.** Inside the product, coaches and organizers already work in a warm, calm design: cream pages, plain
 sentence-case headings and friendly buttons. Before they get inside, they meet something else.

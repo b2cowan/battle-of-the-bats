@@ -510,7 +510,7 @@ const orgHelp: HelpPageContent = {
           <ul>
             <li><strong>Public Organization Page</strong> — A branded public landing page listing your tournaments, results, and registration links. Included on League Plus and above.</li>
             <li><strong>House league</strong> — Registration, divisions, seasons, game scheduling, standings, and league communications. Included on League Plus and above.</li>
-            <li><strong>Accounting</strong> — Org ledger, team invoicing, payment reconciliation, and expense tracking. Included on Club.</li>
+            <li><strong>Accounting</strong> — The club’s ledger, budgets and budget vs. actual, costs shared across teams, and coaches’ payment requests. Included on Club.</li>
             <li><strong>Rep teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
           </ul>
           <p>Modules appear automatically once your plan includes them — there is no separate activation step. If you expect a module and don't see it, confirm your plan on <strong>Plan &amp; billing</strong>, or contact support.</p>
@@ -549,7 +549,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>The club&rsquo;s schedules:</strong> once a schedule is final, its practices show on each team, named for the schedule. A slot two teams share is one booking naming both. Its window has a <strong>From</strong> row that opens the schedule, for the owner and admins (see <a href="#club-schedules">Schedules</a>).</li>
               </ul>
               <p>A <strong>cancelled</strong> booking, and a <strong>postponed</strong> house-league game, stay on the calendar, struck through and marked <strong>Cancelled</strong> or <strong>Postponed</strong>, so a called-off game never looks like an empty evening. Neither counts as a clash.</p>
-              <p>A place the club doesn&rsquo;t own (an away park, a school field) shows exactly as the coach typed it. Every time is in <strong>Eastern time</strong>, and the page says so once. A Sunday game at 9:30 p.m. stays in its own week, on any device.</p>
+              <p>A place the club doesn&rsquo;t own (an away park, a school field) shows exactly as the coach typed it. Every time is in your club&rsquo;s own time zone (<strong>Eastern time</strong>), whatever device reads it. A Sunday game at 9:30 p.m. stays in its own week, on any device.</p>
             </>
           ),
         },
@@ -1047,8 +1047,8 @@ const orgHelp: HelpPageContent = {
       id: 'settings',
       heading: 'Settings and your web address',
       summary: 'The owner-only Settings page: your public site switches, web address, branding, hero banner, fonts, and account deletion.',
-      keywords: ['settings', 'web address', 'org slug', 'url slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'public site editor'],
-      searchText: 'org settings owner only name web address url slug org slug change redirect branding logo stock logos stock logo colour circle main colour logo follows colour hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why',
+      keywords: ['settings', 'web address', 'org slug', 'url slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up'],
+      searchText: 'org settings owner only name web address url slug org slug change redirect branding logo stock logos stock logo colour circle main colour logo follows colour hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why turn the site off take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note',
       content: (
         <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your organization&rsquo;s name, web address, whether your public site is switched on, and the look of your public pages.</p>
       ),
@@ -1060,7 +1060,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p><strong>Your public site</strong> is two separate switches, and each saves the moment you set it — there&rsquo;s nothing to save separately below.</p>
               <ul>
-                <li><strong>Public site</strong> — takes your whole home page and league pages online or offline. Turning it off asks first, and names exactly what goes offline today: the home page and the league pages (team pages and tryout forms aren&rsquo;t affected yet). Turned off, families who open your pages see that they aren&rsquo;t available.</li>
+                <li><strong>Public site</strong> — takes all of your club&rsquo;s pages online or offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Your <strong>tournament pages stay up</strong> either way. Turning it off asks first. While it&rsquo;s off, families who open any of those pages see one page — <em>This club&rsquo;s site isn&rsquo;t available</em> — tryout sign-ups stop, and families&rsquo; subscribed team calendars go empty. Your coaches see a note in their team&rsquo;s <strong>Sharing</strong> settings that their team&rsquo;s public page isn&rsquo;t open.</li>
                 <li><strong>Listed in the directory</strong> — controls whether families searching FieldLogicHQ&rsquo;s public directory can find you. Your site stays online either way; this switch is off, and greyed out, whenever the public site itself is off.</li>
               </ul>
               <p>The <strong>Public site</strong> editor is where you fill in that home page&rsquo;s content — a tagline, sections and more. It shows an <strong>Online</strong>/<strong>Offline</strong> chip reading the switch above; the switch itself is only ever set here, in Settings.</p>
@@ -1114,8 +1114,9 @@ const orgHelp: HelpPageContent = {
         'discover link', 'back to the app', 'bottom bar', 'phone navigation', 'mobile navigation',
         'event card colour', 'event card color', 'tinted cards', 'return to admin from public page',
         'admin shortcut', 'coaches portal shortcut', 'flip', 'public site', 'account menu', 'sign out',
+        'page not found', 'couldn’t find that page', 'broken link', 'old link', 'qr code', 'short address', 'site isn’t available',
       ],
-      searchText: 'public organization page what families see visitors see fans see section tabs tab row home league archives navigation between sections breadcrumb trail org name links back to the front page discover link way back into the app account menu sign out stays on your page scores account bottom bar on a phone mobile bottom navigation app bar desktop unchanged event cards wear their own event colour tinted per event branding red event purple event return to admin from my public page shortcut back admin coaches portal flip pill remembers the screen i left league club only tournament plus breadcrumb instead teams tab missing rep teams',
+      searchText: 'public organization page what families see visitors see fans see section tabs tab row home league archives navigation between sections breadcrumb trail org name links back to the front page discover link way back into the app account menu sign out stays on your page scores account bottom bar on a phone mobile bottom navigation app bar desktop unchanged event cards wear their own event colour tinted per event branding red event purple event return to admin from my public page shortcut back admin coaches portal flip pill remembers the screen i left league club only tournament plus breadcrumb instead teams tab missing rep teams page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off',
       content: (
         <>
           <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. This is what they can do once they are there.</p>
@@ -1145,6 +1146,17 @@ const orgHelp: HelpPageContent = {
           title: 'Your events keep their own colours',
           content: (
             <p>When your front page lists several tournaments, each card wears <em>that event&rsquo;s</em> branding rather than one shared colour — so a red event and a purple event look like themselves, and each card looks like the page it opens.</p>
+          ),
+        },
+        {
+          id: 'public-org-page-not-found',
+          title: 'When a family opens a page that isn’t there',
+          content: (
+            <>
+              <p>A family who opens an address your organization doesn&rsquo;t have — a mistyped team name, an old link, a league page when you run no house league — sees <strong>We couldn&rsquo;t find that page</strong> inside your site, with a link back to your home page.</p>
+              <p>The short addresses <code>/teams</code>, <code>/schedule</code>, <code>/standings</code>, <code>/results</code>, <code>/register</code>, <code>/news</code> and <code>/rules</code> open the same page of your running tournament, so printed links and QR codes keep working. With no tournament running, they show <em>We couldn&rsquo;t find that page</em> too.</p>
+              <p>While your public site is switched off in <strong>Settings → Your public site</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead. Your tournament pages stay up.</p>
+            </>
           ),
         },
         {

@@ -68,6 +68,42 @@ drawn and rejected for that reason. All-condensed keeps the order but closes up 
 reason). Stage 3's A3 moves cited "as the coaches portal's sections do", which was false; A3 stands on its own.
 **Applies to:** every heading in both portals; the notifications toggle; the account notification settings page.
 
+### 2026-10-19 — A CLUB'S PUBLIC SITE: LIGHT GROUND, THE CLUB'S COLOURS AS FOUR ROLES, OPEN NOW FIRST, ONE REFUSAL (owner, Club Tier Stage 4, asks 1–17 all as recommended)
+
+**Decision (as drawn at https://claude.ai/artifact/QhdgL1QnfRndu4ZAoTB67k, round 2):**
+- **Look (Ask 1).** A club's own public pages (home, Teams, a team, a tryout, the club Tryouts page, house league, past
+  tournaments, About) sit on a light ground with the warm faces as the default; the club's chosen font is kept; the warm
+  treatment rules (sentence case, no typewriter face) apply to every club. Tournament pages are untouched ("the venue").
+- **The club's colour (End state 9).** From the club's main colour: the fill (bar, footer, buttons), the text on the fill
+  (white or near-black, whichever is clearer), the ink (darkened to 4.5 : 1 on the page ground, for links, the selected tab,
+  Up next) and the edge (3 : 1, keeps a light button and the Open now card visible). The accent is decoration only (the rule
+  under the bar, the logo tile). No tints. A colour that fails 4.5 : 1 with both texts has its fill darkened, and the editor
+  says so.
+- **The branded bar** stays 72 px with a 44 px logo; Sign in sits in it. No Discover or Pricing at any width; the platform's
+  phone bar is removed from club pages and kept on tournament pages (Asks 7, 8). One footer on every page: the club's contact
+  (copyable), social links, "Contacts and documents", the quiet "Built on FieldLogicHQ" credit.
+- **Home (Ask 3):** Open now (open tryouts, an open house-league sign-up; one "tryouts" row when several teams are involved;
+  absent when nothing is open) → Teams → House league → Tournaments → About. A program the club does not run is absent, never
+  "check back soon". Open now and the tryout door are the white callout with the club's edge.
+- **Status (DC rulings, Ask 13):** one green status chip at 12 px, one phrase per meaning (Tryouts open · Not open yet ·
+  Finished · Tryouts closed · Registration open). The chip is the product's Inter pill (DC-04). No mono on the club's pages
+  (DC-03). Only the product's type steps (DC-05). Bands and column headings use the club's text face in capitals (DC-06).
+  The home's team grid is its own treatment: no tile chevrons, one column when a name is too long for half the width (DC-01).
+  No "Past seasons" list on the public team page (DC-07).
+- **Dated rows** lead with the date as plain text (the one calendar recipe); finished games above Up next; Directions is its
+  own 44 px button; ranges "9:00–11:00 a.m.".
+- **One refusal (Ask 5):** a neutral page in plain words for a club that is offline, cancelled or not entitled, the same on
+  every public page; a page a live club does not have stays inside its site with a way on. **⚖ Amended 2026-10-20 (owner,
+  agreeing to the 4a build's recommendation):** "not entitled" takes the refusal only when the site is closed — a LIVE club
+  whose plan does not carry a page gets the in-club "not found", because the refusal's words ("has turned off its public
+  site") would be false while its home is up. Also 2026-10-20 (owner, on a screenshot): the refusal wears no club bar.
+- **Names:** "Past tournaments" everywhere (tab, page, home section, editor row).
+**Rationale:** the walk found five products on one site (a dark hero home, a hard-coded dark team page, a lime tryout page, a
+"digital ledger"), FieldLogicHQ's chrome and sales line on a paying club's pages, and a system error as the refusal. Ten real
+club sites (Milton Girls Softball in depth) showed families need sign-up, division, tonight's status and tryout dates, and that
+every club fails on stale seasonal words; a site built from live data is the fix. The colour roles exist because the presets
+were tuned for a dark ground and light colours (gold, yellow, sky) fail on a light one.
+**Applies to:** every public page a club owns; the Public Site editor; the coach's Sharing door. Not tournament pages.
 
 ### 2026-10-19 — A STATUS WORD HAS ONE SPELLING, SENTENCE CASE, EVERYWHERE; A SCREEN'S NAME IN A SENTENCE IS SPELLED AS THE MENU SPELLS IT (owner, Admin type sweep Stage 3, C2 + C3)
 
@@ -83,7 +119,6 @@ review" on tryouts, house league email and the printed schedule); the words are 
 one spelling is safe, and sentence case is the house rule and the newer screens' choice. C3 — the shipped money
 screens already name screens this way and a build check holds it; lowering four buttons would make two rules.
 **Applies to:** every status word and every in-sentence screen name, both portals.
-
 
 ### 2026-10-19 — A TIMELINE BLOCK READS LIKE ITS DAY ROW, AT FOUR LENGTHS; A FINAL GAME'S CARD TURNS WHITE (owner, Timeline game cards round 1)
 

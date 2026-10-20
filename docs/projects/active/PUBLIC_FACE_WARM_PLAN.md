@@ -1,6 +1,7 @@
 # The public face, warm — marketing, sign-in and emails — plan
 
-**Status:** QUEUED 2026-10-19 (owner). Not started, nothing drawn.
+**Status:** QUEUED 2026-10-19 (owner). Not started, nothing drawn. **Scope trimmed 2026-10-19:** S2 (sign-in and
+sign-up) and the two account emails moved to The first look (`FIRST_LOOK_SIGNUP_PLAN.md`, its Ask 1).
 **Starts:** owner, 2026-10-19: *"after the club tier readiness or platform admin projects finish"*. **To confirm at
 kickoff:** whether it runs after Club Tier and ahead of (or beside) Platform admin, or after both. **Recommended: right
 after Club Tier, ahead of Platform admin.** Platform admin's own brief puts internal tooling behind "the projects
@@ -122,11 +123,9 @@ in-app sign-up journey (`/start`, `/coaches/start`).
 
 ## Coordination (in flight on 2026-10-19; re-check at kickoff)
 
-- **Account-first sign-up, Parts 2–3** (`ACCOUNT_FIRST_SIGNUP_PLAN.md`) will rebuild the sign-up door, `/start`, the
-  resend link and `/coaches/start` **before** this project starts.
-  - *Their side:* build on today's shared styles and invent no third look.
-  - *This project's side:* restyle what they leave.
-  - *Do not* restyle their screens mid-build.
+- **Account-first sign-up** is closed and archived (2026-10-19, `docs/projects/archive/ACCOUNT_FIRST_SIGNUP_PLAN.md`).
+  Its sign-up screens' look and shape continue in **The first look** (`FIRST_LOOK_SIGNUP_PLAN.md`), which now owns
+  this project's S2 (see the ladder below). Its public type rules feed S1 here.
 - **Verify every sign-up** owns the verify email template and kept its dark layout on purpose. Its walk is merged into
   §336.
 - **Feedback window** ask A1 (public pages wear the coach window on the Warm / Dark setting) is with the owner.
@@ -157,11 +156,15 @@ in-app sign-up journey (`/start`, `/coaches/start`).
 1. **Provisional ladder (the walk decides it):**
    - **S1 — The written identity and public type rules.** `/design` + `/marketing`: type, case, colour, the wordmark,
      the voice. Small, and it lands with the drawing.
-   - **S2 — Sign-in and sign-up.**
-     - Covers: `/auth/*`, the check-your-inbox block, `/coaches/join`, checkout-complete and the consumer bar.
-     - Timing: after Account-first lands.
-   - **S3 — Emails.** One warm envelope and one palette, with every builder and copy folded in. Covers the family email
-     (Q5), the words pass and a test across Gmail, Apple Mail and Outlook in light and dark.
+   - **S2 — Sign-in and sign-up. → MOVED to The first look (owner, 2026-10-19, its Ask 1).** `/auth/*`, the
+     check-your-inbox block, `/coaches/join`, checkout complete and the consumer bar are reviewed there as one journey
+     (`FIRST_LOOK_SIGNUP_PLAN.md`, hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx), together with the
+     verification and password-reset emails. The first look also writes the public type rules this project's S1 starts
+     from, and rules that the consumer bar and phone tabs go to sentence case (its Ask 13).
+   - **S3 — Emails.** One palette, with every builder and copy folded in. Covers the family email (Q5), the words pass
+     and a test across Gmail, Apple Mail and Outlook in light and dark. **The warm envelope itself is built once by The
+     first look** (its Stage 2, for the two account emails); S3 moves the other builders onto it rather than designing a
+     second one.
    - **S4 — The marketing site, as one set.** The marketing bar, the footer, home, pricing, the four `/for-*` pages,
      the walkthroughs, `/demos` and the changelog.
    - **S5 — System screens and link previews.** 404, crash, global-error, offline, unsubscribe and the OG images.

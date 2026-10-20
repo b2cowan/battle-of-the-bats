@@ -1,5 +1,5 @@
 /**
- * ACCOUNT-FIRST SIGN-UP (owner rulings A1–A7, 2026-10-18; hub docs/projects/active/ACCOUNT_FIRST_SIGNUP_HUB.html).
+ * ACCOUNT-FIRST SIGN-UP (owner rulings A1–A7, 2026-10-18; hub docs/projects/archive/ACCOUNT_FIRST_SIGNUP_HUB.html).
  * Every start sign-up asks for the account alone; the team, league or organization is named after the email link, on
  * the door's step 2. The account remembers its door (lib/start-door.ts) so the link, every resend and Home's waiting
  * workspace (A4, revised 2026-10-19) all lead back there, wherever the link is opened.

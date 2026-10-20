@@ -39,8 +39,9 @@
 }
 .gripMark { flex: none; }
 
-/* Touch widths: the tap floor. A numbered handle becomes the lineup builder's square — the number in a bordered 44px
-   box with a small grip mark (coaches.module.css `.lineupBatHandle`). */
+/* Touch widths: the tap floor. A numbered handle becomes the lineup builder's square — the number in a 44px box with a
+   small grip mark (coaches.module.css `.lineupBatHandle`). No border (owner, 2026-10-19): the handle already sits in a
+   bordered row, so a box inside it is noise; the grip mark says "hold to drag", and a tap still tints it olive. */
 @media (max-width: 768px) {
   .handle { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
   .handleNumber {
@@ -49,9 +50,7 @@
     height: var(--tap-min, 44px);
     padding: 0;
     justify-content: center;
-    border: 1px solid var(--home-line-strong);
     border-radius: 8px;
-    background: var(--card-bg);
   }
   .handleNumber .handleN { min-width: 0; color: var(--text-primary); font-weight: 800; text-align: center; }
   .handleNumber .gripMark { margin-left: -3px; color: var(--text-tertiary); }

@@ -718,6 +718,14 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → r
 id (uuid), org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id NOT NULL, sent_by (uuid), sent_at
 - Indexes: family_messages_org_idx, family_messages_person_sent_idx
 
+### family_notes
+id (uuid), org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id NOT NULL, body NOT NULL, created_by (uuid), created_at, edited_at
+- Indexes: family_notes_org_idx, family_notes_person_idx
+
+### family_payment_handoffs
+id (uuid), org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id NOT NULL, roster_player_id (uuid) → rep_roster_players.id, player_name NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, amount (numeric) NOT NULL, received_date NOT NULL, method, note, sent_by (uuid), sent_at, sent_to, state, resolved_by (uuid), resolved_at, payment_id (uuid) → rep_dues_payments.id
+- Indexes: family_payment_handoffs_org_idx, family_payment_handoffs_payment_uniq, family_payment_handoffs_person_idx, family_payment_handoffs_player_sent_idx, family_payment_handoffs_team_idx, family_payment_handoffs_year_idx
+
 ### family_recap_views
 id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, link_id (uuid) → family_links.id NOT NULL, first_viewed_at
 - Indexes: family_recap_views_link_season_uniq, family_recap_views_org_id_idx, family_recap_views_season_idx, family_recap_views_team_idx
@@ -844,7 +852,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **204 tables** across 10 modules.
+Total: **206 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -855,4 +863,4 @@ Total: **204 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 58 tables
+- Other: 60 tables

@@ -72,9 +72,10 @@ Findings 2026-07-28; **counsel briefing memo ready: `FACILITATED_PAYMENTS_COUNSE
 
 ### 5 — Product surface + sequencing ✅ FIRST FLOW IDENTIFIED (tier attachment OPEN)
 - **First money flow (Proposed):** tournament **registration fees** — richest existing surface (fee schedules, deposits, Command Center, payment-reminder dunning already built). Team dues and other flows follow.
+- **⚖ 2026-10-19 (owner): house-league registration is a named flow too, and payments processing is inside the Club release** — built as Club Tier **Stage 12** (12a foundation · 12b house league · 12c tournaments · 12d hardening), `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6.
 - **Hybrid rule:** online collection feeds the same paid/deposit fields the manual path writes; manual mark-paid stays. No org is forced onto Connect.
 - [x] **Tier attachment — DECIDED 2026-07-28 (owner via decision prompt): ALL PAID ORG TIERS — Tournament Plus, League Plus, Club (incl. Club · Association).** Free org tiers + Coaches Portal excluded. Recorded in `PLAN_PRICING_FACTS.md` (Decided/not-yet-built line) + BUSINESS_DECISIONS.md 2026-07-28.
-- **Sequencing (unchanged):** launch H1 2027, after the Jan 2027 cliff. Build may start earlier; launch may not (amend the 2026-07-28 log entry to change this).
+- ~~**Sequencing (unchanged):** launch H1 2027, after the Jan 2027 cliff. Build may start earlier; launch may not (amend the 2026-07-28 log entry to change this).~~ **Superseded 2026-10-19 (owner, BUSINESS_DECISIONS "The Club release has NO date…"):** no date; payments ship inside the Club release, which waits for every stage. Counsel sign-off stays the launch gate.
 
 ## Effort model (from the 2026-07-28 investigation)
 
@@ -88,7 +89,7 @@ Phasing: **Phase 0** decisions (1–2 days) → **Phase 1 MVP** 15–22 days (on
 2. [ ] Owner: **counsel session** (memo ready; RPAA/FINTRAC/ToS) — the long-lead item.
 3. [ ] Owner: accountant GST/HST confirmation; insurance broker quote.
 4. [x] Rate number + family-pays default RATIFIED 2026-07-28 (Option B — recorded in `PLAN_PRICING_FACTS.md`; plan config at build). Remaining riders: "+ tax" display (accountant), international-card policy, org-absorb override.
-5. [ ] → `/plan`: build plan + PM brief for the H1 2027 build (MVP = registration fees, gated at the three paid org tiers).
+5. [x] → `/plan`: build plan + PM brief — **slot reserved 2026-10-19 as Club Tier Stage 12** (its own PLAN/PM-brief pair is written when it opens; MVP = registration fees, house league and tournaments, gated at the paid org tiers).
 
 ## Open Questions
 - [ ] Does facilitated payments change the subscription pricing thesis (payment revenue subsidizing lower/zero subscription tiers)? Flag for `/strategy`, do not assume.

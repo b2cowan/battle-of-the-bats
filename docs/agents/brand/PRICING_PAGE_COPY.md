@@ -644,12 +644,12 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 
 **Feature List:**
 - Everything in League
-- Accounting — org ledger, invoicing, expense tracking, and payment reconciliation
+- Accounting — club ledger, budget vs. actual, and costs split across teams, with coach reminders *(was: "org ledger, invoicing, expense tracking, and payment reconciliation" — neither invoicing nor reconciliation exists; changed 2026-10-19, BUSINESS_DECISIONS "Marketing claims only what ships". Reconciliation returns when bank reconciliation ships.)*
 - Rep teams — tryouts, rosters, player documents, and season history
 - Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee *(was: "3 team accounts; additional at $19/mo" — retired 2026-06-22)*
 
 **"Why most popular" blurb (shown within or beneath the card):**
-> Most organizations choose Club because of what they stop doing: hunting down payments, managing tryouts over email, reconciling team finances in spreadsheets. Club eliminates the manual work that takes up treasurer and executive time all season. If your organization runs rep teams or manages money, it pays for itself quickly.
+> Most organizations choose Club because of what they stop doing: hunting down payments, managing tryouts over email, tracking team money in spreadsheets. Club eliminates the manual work that takes up treasurer and executive time all season. If your organization runs rep teams or manages money, it pays for itself quickly.
 
 ---
 
@@ -726,8 +726,8 @@ Full breakdown, grouped by category. Shown below the pricing cards with a "Compa
 |---------|-----------|-----------------|--------|------|
 | Accounting module | — | — | — | ✓ |
 | Organization ledger | — | — | — | ✓ |
-| Team invoicing | — | — | — | ✓ |
-| Payment reconciliation | — | — | — | ✓ |
+| Costs split across teams, with reminders | — | — | — | ✓ |
+| Budget vs. actual | — | — | — | ✓ |
 | Expense tracking | — | — | — | ✓ |
 
 ---
@@ -790,7 +790,7 @@ Three short blocks, placed between cards or after the comparison table. Each mak
 > Still managing rep team finances in spreadsheets?
 
 **Body:**
-> Club adds full accounting and rep team management — the two things that consume the most volunteer time in any organization. Invoicing, payment tracking, tryout coordination, roster management, player documents, and a coaches portal are all included. Most Club organizations recover that time within the first season.
+> Club adds full accounting and rep team management — the two things that consume the most volunteer time in any organization. A club ledger with budget vs. actual, club costs split across teams with reminders, tryout coordination, roster management, player documents, and a coaches portal are all included. Most Club organizations recover that time within the first season.
 
 **CTA:** Start Free Trial
 
@@ -848,7 +848,7 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 > House League management is included on the League plan. Upgrade to run registrations, manage divisions, and publish standings publicly.
 
 **When a user accesses a gated feature (accounting):**
-> The Accounting module is included on the Club plan. Track payments, reconcile invoices, and manage your org ledger in one place.
+> The Accounting module is included on the Club plan. Keep the club's ledger, check spending against your budget, and split club costs across teams in one place.
 
 **When a user accesses a gated feature (rep teams):**
 > Rep Team management is included on the Club plan — tryouts, rosters, documents, and a coaches portal, all connected.

@@ -1,5 +1,13 @@
 # Owner QA Ledger — unverified LIVE behaviour, ordered by what it costs if it's wrong
 
+> # ✅ 2026-10-19 — EVERY WALK WRITTEN BEFORE SEPTEMBER IS CLOSED, NOT WALKED
+>
+> The owner closed them in one ruling: *"close up any qa items that were created prior to september"*. **126 sections** that were still open, each now marked **CLOSED UNWALKED 2026-10-19**: 1.5 · 1.6b · 1.7 · 1.9b · 1.9c · 1.11 · 2.6a · 1.2 · 1.3 · 2.3 · 12 · 13 · 13b · 14 · 15 · 16 · 17 · 19 · 20 · 21 · 22 · 23 · 24 · 24 · 25 · 26 · 1.12 · 1.13 · 1.14 · 1.16 · 1.15 · 1.17 · 1.18 · 1.1 · 1.1b · 1.10 · 1.4 · 1.8 · 1.9 · 2.1 · 2.2 · 2.5 · 2.6 · 3.1 · 8 · 9 · 9b · 6 · 1.6 · 2.4 · 4 · 5.1 · 5.2 · 5.3 · 5.4 · 5.5 · §28 · §29 · §30 · §31 · §32 · §33 · §34 · §35 · §36 · §37 · §38 · §41 · §43 · §44 · §45 · §46 · §47 · §48 · §49 · §51 · §54 · §55 · §56 · §57 · §58 · §59 · §60 · §61 · §62 · §65 · §66 · §68 · §68 · §68b · §69 · §70 · §71 · §72 · §73 · §74 · §75 · §76 · §77 · §78 · §79 · §82 · §83 · §84 · §86 · §91 · §92 · §93 · §94 · §95 · §96 · §97 · §99 · §91 · §102 · §106 · §107 · §108 · §109 · §111 · §110 · §112 · §115 · §116 · §120 · §124. Also closed: the re-checks still owed inside the passed walks §1.19 (steps 9 and 9b), §11 (the second-pass checks) and §50 (Part G).
+>
+> **Not a pass.** These shipped months ago under the 2026-08-17 ship-ahead-of-QA ruling below and nobody walked them; their boxes stay unticked as the honest record. That ruling's "Nothing here is retired" line is superseded **for these sections only**. Walks written from September on are untouched.
+>
+> **Kept open on purpose: §1.6c, the guardian tier.** It is not a backlog walk of shipped work; it is the walk that must run before that switched-off feature is turned on (it is still waiting on counsel). Close it only by a separate owner word.
+
 > # ⚠⚠ EVERY "ON DEV" LABEL BELOW IS STALE AS OF 2026-08-17 — IT IS ALL LIVE
 >
 > **The 2026-08-17 promote (prod HEAD `5ae39f10`, Amplify job 257 SUCCEED, tag
@@ -202,6 +210,8 @@
 
 ## The running order at a glance
 
+> **✅ 2026-10-19: every walk in this table is closed** — passed where it says so, otherwise **closed unwalked on the owner's word** (*"close up any qa items that were created prior to september"*). **§1.6c alone stays open** (see the banner at the top). The table is kept as the record of what was there.
+
 Ten groups, in the order to work them. **§ numbers are historical and do not sort** — this table is
 the sequence.
 
@@ -301,6 +311,8 @@ needs a throwaway org and a platform-admin sign-in, so it batches with nothing e
 alone, while you still have the patience for a before/after.
 
 ### 1.19 ✅ A cancelled subscription actually stops — **PASSED 2026-08-12** (17 of 19 steps) · LIVE ON PRODUCTION
+
+> **✅ The re-check still owed in this section was CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). The walk's own pass stands as recorded; the owed steps were never confirmed by a tick.
 
 > ## ✅ Owner QA PASSED 2026-08-12 — 17 of 19 steps
 >
@@ -530,7 +542,10 @@ standing invariant across all of these: **if you ever see a child's name on a fa
 stop and say so.** §2.6a closes the group because it needs a real iPhone — park it for the phone sitting
 if you have not got one to hand.
 
-### 1.5 🖥 Player documents & guardian PII gating — **LIVE ON PRODUCTION**
+### 1.5 🖥 Player documents & guardian PII gating — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *A signed medical form now needs BOTH Documents and Contacts access — an assistant with Documents
 alone no longer sees any child's signed forms.* Plan stays ACTIVE (its migration is applied on dev
 to prod on 2026-08-03 along with the code): `active/COACH_PLAYER_DOCUMENTS_PII_PLAN.md`. *(No owner
@@ -552,7 +567,10 @@ checklist in the doc — sketch below.)*
 - [ ] Turning ON Tryouts or Internal-notes access now asks for confirmation first.
       *Yours — a confirmation dialog is a judgement about wording, not a boundary.*
 
-### 1.6b 🖥📱 Families follow the team (Chunk D Slices 0–2) — **LIVE ON PRODUCTION**
+### 1.6b 🖥📱 Families follow the team (Chunk D Slices 0–2) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *One link a coach shares; grandparents follow the schedule; nobody sees a child.*
 Plan: `COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` §9 (build record + the six deviations).
 ~~⚠ Migrations 214–217 are DEV-ONLY.~~ **Applied to prod 2026-08-03.** ⚠ **The guardian tier — a parent connected to their own
@@ -711,7 +729,10 @@ correct behaviour is refusal, which is the only thing worth checking now:
 - [ ] Guardian sees: their child's band, the announcements archive, and — once the season closes —
       the season recap (§1.7).
 
-### 1.7 🖥 The coach byproducts (Chunk D Slice 3) — **LIVE ON PRODUCTION**
+### 1.7 🖥 The coach byproducts (Chunk D Slice 3) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Four things your coaching work now produces on its own: an after-game email already written, a
 season recap per player, printable certificates, and two "is anyone using this?" counts.*
 Plan: `COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` §9.4 (build record + deviations).
@@ -759,7 +780,9 @@ coach-side half and works today.
   seasons, so a rolled-over team includes last season's guardians; and family-adoption counts have
   no row cap for a very large club (matches the existing sibling behaviour).
 
-### 1.9b 🖥📱 Helpers — the parent who runs a station (Practice Plans Phase 4) — **LIVE ON PRODUCTION**
+### 1.9b 🖥📱 Helpers — the parent who runs a station (Practice Plans Phase 4) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **Mockups you approved:** `claude.ai/code/artifact/ebf2b469-88d7-4b09-b1e8-151c3e7d4773` (10 frames).
 > **Where:** Team → **Staff** (the invite) · and a second sign-in as the helper.
@@ -817,7 +840,9 @@ what you see is the only verification these screens will get.
       neither the child's name nor the guardian address. This is the first time a real helper
       account has been probed; the existing helper spec covers only the head coach's side of it.*
 
-### 1.9c 🖥 A1 — the roster switch is gone (2026-08-03) — **ON DEV `d8316e87`** · no migration
+### 1.9c 🖥 A1 — the roster switch is gone (2026-08-03) — **ON DEV `d8316e87`** · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **Mockups you approved:** `claude.ai/code/artifact/1f7c75ac-b7bc-42c7-b4bf-69fe71a70a5a`
 > **Where:** Team → **Staff** (the duty grid) · the Roster and Insights pages · a second sign-in as a helper.
@@ -898,7 +923,9 @@ switch that actually protects something (Contacts & birthdates) is untouched.
 - [ ] **Open a finished season's Staff list.** The family note should be **absent** there — it
       describes today, and a past season should only ever show you what was true at the time.
 
-### 1.11 🖥📱 Tryout Insights — report · development baseline · candidate memory — **LIVE ON PRODUCTION**
+### 1.11 🖥📱 Tryout Insights — report · development baseline · candidate memory — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **Mockups you approved (binding):** https://claude.ai/code/artifact/3b8bf1f9-c1c5-407c-9fa6-376a5bf8fee2
 > **Where:** Coaches → **Tryouts** → the **Decide** and **Build team** tabs, plus any player's
@@ -977,7 +1004,10 @@ what this kid looked like the last time they stood in front of you.
 - [ ] Read the guide: **Help → How to run tryout day**, and the new FAQ *"Can I see how a returning
       player did at last year's tryout?"*
 
-### 2.6a 📱 The family experience on a real phone (Chunk D) — **LIVE ON PRODUCTION**
+### 2.6a 📱 The family experience on a real phone (Chunk D) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Moved out of §2.6 on 2026-08-03. These four are the only phone passes in the ledger where being
 wrong reaches a child rather than a layout. Wording unchanged.*
 **⚠ A real iPhone. Headless Chromium cannot answer any of these** — two defects in this repo's
@@ -1000,7 +1030,10 @@ recorded corpus existed only on a notched iPhone and in iOS Safari's touch handl
 A family billed wrongly, or a coach handed a number we invented. The rule that runs through all three:
 **no dollar figure ever originates from us** — template amount cells ship empty.
 
-### 1.2 🖥 Budget starter (Chunk G) — **LIVE ON PRODUCTION** · ⚠ review funnel still owed
+### 1.2 🖥 Budget starter (Chunk G) — **LIVE ON PRODUCTION** · ⚠ review funnel still owed — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *First-season coach answers 5 tap-only questions → seeded budget worksheet; no dollar figure ever comes from us.*
 Plan stays ACTIVE (its /simplify → /review → /docs pass is still owed; QA can proceed — expect a
 possible small follow-up after the funnel). Plan: `archive/COACH_PORTAL_CHUNK_G_BUDGET_STARTER_PLAN.md`. *(No owner checklist in the doc — steps below are the sketch.)*
@@ -1016,7 +1049,10 @@ possible small follow-up after the funnel). Plan: `archive/COACH_PORTAL_CHUNK_G_
 - [ ] Eyeball the five flagged mockup deviations (segmented control, square tick, olive text,
       conditional ×N helper, arithmetic-in-note) — approve or flag.
 
-### 1.3 🖥 Money by Month (Chunk H) — **LIVE ON PRODUCTION**
+### 1.3 🖥 Money by Month (Chunk H) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Spreadsheet-shaped months view + generalized payables page + 3-template import/export.*
 Archived plan: `archive/COACH_PORTAL_CHUNK_H_MONEY_BY_MONTH_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
 - [ ] Months view on a data-rich team: rows/columns/totals sane; four lenses cycle; Difference
@@ -1032,6 +1068,9 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_H_MONEY_BY_MONTH_PLAN.md`. *(No owner
   purpose (undated budget no longer smeared across months) — flag, don't file.
 
 ### 11 🖥📱 The Money Overview on a season that hasn't started — ✅ **OWNER QA PASSED 2026-08-12** (two passes) · no migration
+
+> **✅ The re-check still owed in this section was CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). The walk's own pass stands as recorded; the owed steps were never confirmed by a tick.
+
 > **Close-out note, 2026-08-12.** The owner walked both passes and passed them, then asked for `/review`.
 > The review then **changed behaviour they had already looked at** — the two-column fold threshold was
 > raised because the first value folded on tablets and flickered on resize. What the owner verified on a
@@ -1120,7 +1159,10 @@ on resize — measured widths below are post-fix and are what to check against.*
       not built (a touchscreen laptop reports a mouse, and would have been served small targets).
 - [ ] **Both columns end level-ish.** No stray gap under one column's last row that the other lacks.
 
-### 2.3 📱 Money on a phone (Chunk A) — **LIVE ON PRODUCTION**
+### 2.3 📱 Money on a phone (Chunk A) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
 - [ ] Budget line with period splits: full-width tappable fields; backdrop tap asks "Discard
       changes?"; "Keep editing" preserves everything.
@@ -1133,7 +1175,10 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
 - [ ] Desktop: Budget vs. Actual uses the window width (no ~960px inner scroll column).
 - [ ] No native browser alert anywhere in Money (a failed delete shows an inline error).
 
-### 12 🖥📱 Every button in Money moved — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **231** ✅ on prod
+### 12 🖥📱 Every button in Money moved — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **231** ✅ on prod — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Page-level action ruling 2026-08-13 (Phase 1). The hub header gains constant `Import ▾ / Export ▾`;
 every tab's create drops into that tab's own control row; three exports that never existed were
 written; the tab bar becomes navigation only.* Plan:
@@ -1218,7 +1263,9 @@ rather than hand you an empty sheet (that message is itself worth seeing once).
 
 ---
 
-### 13 🖥📱 A dues payment is a record — Pass 1, the receipt book — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **232** ✅ on prod
+### 13 🖥📱 A dues payment is a record — Pass 1, the receipt book — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **232** ✅ on prod — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** a payment is now its own record. Player Dues gains a **Record payment** button in
 each player's drawer (amount · date received · method · note); the sheet states where the money
@@ -1297,7 +1344,9 @@ books-safety hardening). Two review checks join the walk:
 - [ ] **Read-only money assistant**: sees Payments list, no Record payment, no trash cans, no
       Mark Paid (that button was reachable read-only before this pass; the server always refused).
 
-### 13b 🖥📱 The ledger says where the money went — **ON DEV 2026-08-14**, not yet released · no migration
+### 13b 🖥📱 The ledger says where the money went — **ON DEV 2026-08-14**, not yet released · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 Pass 4 of the payment record, all from one owner review of the screenshot above. Binding mockup:
 `claude.ai/code/artifact/e73e9842-300d-484c-808e-f3c76bacf780`. Same fixture as §13.
@@ -1417,7 +1466,9 @@ every player the identical schedule, flattening any per-player arrangement in si
       must never tell you to "re-enter" the payment, only to check the Payments list first.
 - [ ] **Read-only money assistant** still sees no pencils, no banknote ticks, no confirm dialog.
 
-### 14 🖥📱 The Money hub's old doors close — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
+### 14 🖥📱 The Money hub's old doors close — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** the seven standalone Money pages the tabbed hub replaced (the ones with no tab
 bar — you hit one from "view player dues") no longer exist as destinations. Every old URL forwards
@@ -1456,7 +1507,9 @@ changed. Admin-side accounting is deliberately untouched (it was never made a hu
 
 ---
 
-### 15 🖥📱 The Budget Plan reads as three figures — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
+### 15 🖥📱 The Budget Plan reads as three figures — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** the budget page's tall summary ladder became a two-line **plan card**: Planned
 costs · Expected fundraising · Player installments, side by side. The third figure is tagged
@@ -1498,7 +1551,9 @@ findings all fixed, 16 old layout-baseline defects retired.
 
 ---
 
-### 16 🖥📱 The Overview's Budget card shows plan vs. actual — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
+### 16 🖥📱 The Overview's Budget card shows plan vs. actual — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** the Money Overview's Budget card stopped quoting a computed **$/player** — an
 even split of the plan that no family was actually billed (it read $700 while every schedule said
@@ -1530,7 +1585,9 @@ keeps the ordinary fill and gets "✓ $X past goal" instead.
       "nothing scheduled" state it must show **no** "Generate installments" door there (live
       seasons keep it).
 
-### 17 🖥📱 Player Dues gains a "By installment" lens — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
+### 17 🖥📱 Player Dues gains a "By installment" lens — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** the Player Dues tab now has a view toggle on its toolbar — **Season totals**
 (the existing table, untouched, still the default) and **By installment**. The new lens opens
@@ -1892,7 +1949,9 @@ re-checked in a browser. Worth spot-checking these specifically:
 - [ ] The contents page has no trail above its title at all — it would have repeated the heading
       directly beneath it.
 
-### 19 🖥📱 Fundraising pays the bill — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **233** ✅ on prod
+### 19 🖥📱 Fundraising pays the bill — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **233** ✅ on prod — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** a credit is now **money the team owes a family**, and it lands on their real
 installments instead of only lowering a balance column. An $800 installment with $500 of
@@ -1962,7 +2021,9 @@ Pass 3 seeded the Bottle Drive into the sandbox, but a seed change does not trav
 release, so the PRODUCTION demo still has no fundraiser (see §21's note). Full build + review log
 in the plan's Pass 1 section.
 
-### 20 🖥📱 Money goes out — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **234** ✅ on prod
+### 20 🖥📱 Money goes out — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **234** ✅ on prod — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** the books gain an **outbox**. Until now a credit could only ever lower a family's
 bills; now the coach can hand it back in cash, and a family who pays for something out of pocket
@@ -2018,7 +2079,9 @@ log in the plan.
 
 ---
 
-### 21 🖥📱 The season settlement sheet — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **235** ✅ on prod
+### 21 🖥📱 The season settlement sheet — **LIVE ON PRODUCTION 2026-08-14** (job 256) · migration **235** ✅ on prod — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed:** the **Season Refund Calculator is gone** — the box you typed the pot into, and
 the Calculate button. In its place, at the foot of Player Dues, is a **settlement sheet** that is
@@ -2087,7 +2150,9 @@ $152.50 each**. Use **`QA Mid Season U14`** to prove the sheet is honest *before
 **On production 2026-08-14** (job 256; migrations 230–235 applied to prod; prod HEAD `8fe59ded`).
 This completes the three-pass money model; full build log in the plan.
 
-### 22 🖥📱 Team settings becomes six closed groups, and the dues settings move into it — **ON DEV 2026-08-14**, not yet released · no migration
+### 22 🖥📱 Team settings becomes six closed groups, and the dues settings move into it — **ON DEV 2026-08-14**, not yet released · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 The two team-wide dues settings — **Automatic Dues Reminders** and **Credits reduce** — used to sit
 as two cards at the bottom of Player Dues, a screen a coach opens every week to chase money. They
@@ -2140,7 +2205,9 @@ stating its current value on its own header line.
 **Help was updated in the same change** — the Team settings guide now describes the Money and
 Sharing groups, and a new question answers *"Where did the dues reminder and credit settings go?"*
 
-### 23 🖥📱 A fundraiser opens inside Money, and a past one tells the truth — **ON DEV 2026-08-14**, not yet released · no migration
+### 23 🖥📱 A fundraiser opens inside Money, and a past one tells the truth — **ON DEV 2026-08-14**, not yet released · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 Opening a fundraiser was the last screen in Money that threw a coach **out** of the hub — the tab
 row, the Import door and the season chip all left with it. It now opens **where the list was**, as
@@ -2184,7 +2251,9 @@ season's fundraiser used to be shown beside **this** season's players, with the 
 - [ ] Sign in as an assistant with money **View only**: they can open a drive and read every figure,
       and there is no Settings button and no way to log an amount. Reading was never the issue.
 
-### 24 🖥📱 Sponsors sit beside fundraisers, and the budget can tell them apart — **ON DEV 2026-08-15**, not yet released · migration **237** (dev only)
+### 24 🖥📱 Sponsors sit beside fundraisers, and the budget can tell them apart — **ON DEV 2026-08-15**, not yet released · migration **237** (dev only) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 A bottle drive and a sponsor cheque are both money in, and the portal had one shape for them — the
 drive's. Recording a $500 sponsor meant inventing a "fundraiser" and logging it against one player
@@ -2271,7 +2340,9 @@ payout ceiling and can be opened for a finished season, so the settlement delibe
 out and says so**. The alternative is to start recording those requests against a season, which
 means a migration and a backfill. Worth deciding before a club-linked team settles a season.
 
-### 24 🖥📱 The dues grid quietens, and the settlement becomes a close-out — **ON DEV 2026-08-14**, not yet released · no migration
+### 24 🖥📱 The dues grid quietens, and the settlement becomes a close-out — **ON DEV 2026-08-14**, not yet released · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed, in one line:** you asked why the dues table had so much text; fixing that turned up
 **two things that were wrong on production**, and the settlement changed shape as a result.
@@ -2367,7 +2438,9 @@ for a season that must refuse. Re-seed with
 
 ---
 
-### 25 🖥📱 A budget line stops reporting the whole category's spending — **ON DEV 2026-08-15**, not yet released · no migration
+### 25 🖥📱 A budget line stops reporting the whole category's spending — **ON DEV 2026-08-15**, not yet released · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed, in one line:** on Budget vs. Actual, expanding a budget line showed money spent
 against its payment periods — and that money was the whole **category's**, copied onto every line
@@ -2431,7 +2504,9 @@ them split into payment periods, and one **paid** expense filed under that categ
 
 ---
 
-### 26 🖥📱 Table column headings stop being the faintest words on the screen — **ON DEV 2026-08-15**, not yet released · no migration
+### 26 🖥📱 Table column headings stop being the faintest words on the screen — **ON DEV 2026-08-15**, not yet released · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed, in one line:** the heading row on every coaches-portal table — DESCRIPTION, CATEGORY,
 AMOUNT — sat on a tinted band that made it the brightest strip on the page while carrying the
@@ -2495,7 +2570,10 @@ numbers, P3 fills it from the tournament, and the Club Shared Book opens it to s
 exposure here is **notes about other people's children** and, in §1.16, a boundary between two clubs.
 Test them on one team with a repeated opponent and you get all four for the price of the setup.
 
-### 1.12 🖥📱 Opponent Scouting Book — Phase 1 — **ON DEV `72034c15`** · ✅ mig 225 on prod 2026-08-06
+### 1.12 🖥📱 Opponent Scouting Book — Phase 1 — **ON DEV `72034c15`** · ✅ mig 225 on prod 2026-08-06 — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Log a one-line observation right after the score; it files itself under that opponent; the book resurfaces on the schedule the week you meet them again.*
 
 Where: **Insights → "Who are we up against?"** tile, and any game's drawer → **Scouting** tab.
@@ -2542,7 +2620,10 @@ season; or name the same opponent on two games and score them).
       1,197 unit tests, verify:changed. Rendered layout check NOT run (no dev server) — worth
       one visual glance during this QA.
 
-### 1.13 🖥📱 Opponent Scouting Book — Phase 2 — **ON DEV `d87fb31b`** · ✅ mig 225 on prod 2026-08-06
+### 1.13 🖥📱 Opponent Scouting Book — Phase 2 — **ON DEV `d87fb31b`** · ✅ mig 225 on prod 2026-08-06 — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Merge two spellings into one opponent; the card writes its own scouting lines from your results
 and lineups; one tap briefs the staff room; the masthead nags once in game week.*
 
@@ -2608,7 +2689,10 @@ scored games against one of them.
       call if wanted). All green after: typecheck, 1,234 unit tests, verify:changed.
       Rendered layout check NOT run — worth one visual glance during this QA.
 
-### 1.14 🖥📱 Opponent Scouting Book — Phase 3 — **ON DEV `d87fb31b`** · ✅ mig 225 on prod 2026-08-06
+### 1.14 🖥📱 Opponent Scouting Book — Phase 3 — **ON DEV `d87fb31b`** · ✅ mig 225 on prod 2026-08-06 — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *The book fills itself: a mirrored tournament game's Scouting tab shows the opponent's other
 results this weekend, assembled from the tournament we host; and the week you build practice,
 Saturday's book meets Tuesday's plan.*
@@ -2674,7 +2758,9 @@ tournament (published division) whose opponent has 2+ scored games that weekend.
       typecheck, 1,266 unit tests, verify:changed. Rendered layout check NOT run — worth one
       visual glance during this QA.
 
-### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **ON DEV `d9add3cd` + `0ad5d2cc`** · ✅ mig 227 on prod 2026-08-06
+### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **ON DEV `d9add3cd` + `0ad5d2cc`** · ✅ mig 227 on prod 2026-08-06 — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **⚙ FIRST WALKED 2026-09-29 as §249 W9 — ✅ 9 of 9** (the Club Tier fixture's two teams in one club). Covered, from the list below: the admin's key · the coach's key and its words · one team reading the other's book · read-only across team lines · the list marker · reciprocity (one team's switch off removes the club layer on both sides at once) · the admin's switch off removes the team setting entirely. **Still unwalked:** "All N from {team}" · the phone glance · the gate on a non-Club org · the archive untouched · different spellings finding each other · nothing leaking between clubs · the record agreeing on both screens · two spellings keeping both book lines · a club hiccup not breaking the page · the help guide.
 
@@ -2790,7 +2876,10 @@ Set one game's start time near now, open the console on a phone, and walk §1.15
 putting it down. The bench-order check that §1.15 flags as a deviation is answered in §1.18 — do not
 test it twice.
 
-### 1.15 📱🖥 Game-Day Mode P1 — the bench console — **ON DEV `bcd695a3`** · no migration
+### 1.15 📱🖥 Game-Day Mode P1 — the bench console — **ON DEV `bcd695a3`** · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *One phone screen for running a game: who's on the field right now, tap-to-substitute, the
 score, attendance — every change saved into the same lineup the reports already read. Families
 hear exactly once, at End game.*
@@ -2886,7 +2975,10 @@ arithmetic, nothing is stored).
       the schedule tab still shows the player's note; deactivate a rostered player who's in
       tonight's lineup, open the console, make a sub, confirm it saves.
 
-### 1.17 📱 Game-Day Mode P2 — moments — **ON DEV `f03e0e46`** · ✅ mig 228 on prod 2026-08-06
+### 1.17 📱 Game-Day Mode P2 — moments — **ON DEV `f03e0e46`** · ✅ mig 228 on prod 2026-08-06 — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *One line a coach types at the bench because they want to remember it. It reads back in the
 end-game wrap, on the tagged player's page, and as one quoted line on Season Wrapped — and it
 feeds nothing else, ever.*
@@ -2993,7 +3085,10 @@ get the live window.
 - Notes: **mig 228 is DEV-ONLY / PROD-PENDING**, so the schema-parity gate is red for this
   table (and for the Club Shared Book's 227) until both are promoted — expected, not a defect.
 
-### 1.18 📱 Game-Day Mode P3 — playing-time polish — **ON DEV `d8316e87`** · no migration
+### 1.18 📱 Game-Day Mode P3 — playing-time polish — **ON DEV `d8316e87`** · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Three small things on the same bench console: the bench puts the longest-sitting player on top,
 the arm-care chip finally works for teams that set one season-wide pitching cap, and the screen
 stops going dark between pitches.*
@@ -3091,7 +3186,10 @@ first week with a new team. Wrong here is friction and lost trust, not harm.
 Overview, asking about your team, the archive, and both halves of Practice Plans. One sitting at a
 desktop window.
 
-### 1.1 🖥 Overview says ONE thing (Chunk I) — **LIVE ON PRODUCTION**
+### 1.1 🖥 Overview says ONE thing (Chunk I) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *One priority card, a six-tile board, a quiet tail — replacing nine contradicting bands.*
 Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's "not started" header is stale — trust the plan).
 - [ ] As head coach, open Overview on four teams: game-today · game-this-week · quiet 3+ weeks ·
@@ -3111,7 +3209,10 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's 
 - [ ] A finished tournament sits in the tail with a "Finished" chip, never in the anchor slot.
 - Note: two coaches on the same team correctly see DIFFERENT anchors — not a bug.
 
-### 1.1b 🖥📱 The game-day card stops contradicting itself — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration
+### 1.1b 🖥📱 The game-day card stops contradicting itself — **LIVE ON PRODUCTION 2026-08-14** (job 256) · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Owner-reported: the card showed "✓ Lineup ready" and a "Build lineup" button at the same time,
 offered "Take attendance" beside a headcount proving attendance was taken, and named the venue
 "1". Mockup + diagnosis: Claude artifact `137039b5` (option B). Deployment state lives in the
@@ -3138,7 +3239,10 @@ release-history record, not here.*
 - [ ] The "Next up" tile below and the card now use the SAME words: "Lineup set" / "Lineup not set".
 - [ ] A practice (not a game) shows no chips, and stops offering "Take attendance" once taken.
 
-### 1.10 🖥 Ask the Front Office, Phase A — **LIVE ON PRODUCTION**
+### 1.10 🖥 Ask the Front Office, Phase A — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Archived plan: `archive/ASK_FRONT_OFFICE_PLAN.md` + `_PM_BRIEF.md`. Mockups (binding):
 https://claude.ai/code/artifact/14a812e8-1fe0-429c-9c54-beab7a581038
 
@@ -3171,7 +3275,10 @@ team**. It opens six ready-made questions; each answers in a sentence with the r
 - [ ] **In a completed season:** the ask bar is **absent from Insights**, not an empty box.
 - [ ] Read the guide: **Help → Asking about your team**, and confirm the Insights help "?" opens it.
 
-### 1.4 🖥📱 The frozen past season (Chunk F) — **LIVE ON PRODUCTION**
+### 1.4 🖥📱 The frozen past season (Chunk F) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Open any season you coached, read-only, exactly as you could see it then.*
 Archived plan: `archive/COACH_PORTAL_CHUNK_F_FROZEN_SEASON_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
 **The one rule: switch seasons with the IN-APP switcher, then go TWO screens deep — the worst bug
@@ -3187,7 +3294,9 @@ this chunk ever had was invisible to fresh-page-load testing.**
 - [ ] Phone: season switcher lives in the More sheet; the chip doubles as the exit (open
       micro-item D-F3 — does the chip feel tappable enough?).
 
-### 1.8 🖥📱 The drill library (Practice Plans Phase 2) — **LIVE ON PRODUCTION**
+### 1.8 🖥📱 The drill library (Practice Plans Phase 2) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **Mockups you approved:** `claude.ai/code/artifact/d0f7ea26-c159-49ce-b5ec-6af60bd24173`.
 > **Where:** Development → **Your drills**, plus the picker inside any practice plan.
@@ -3231,7 +3340,9 @@ and adding it to a practice becomes four taps instead of retyping the same warm-
 - [ ] **As an assistant coach** (schedule access, not head coach): the library should be **readable**
       with no write buttons, and **Save to my drills…** should not appear anywhere.
 
-### 1.9 🖥📱 Plan templates, the recap & looking back (Practice Plans Phase 3) — **LIVE ON PRODUCTION**
+### 1.9 🖥📱 Plan templates, the recap & looking back (Practice Plans Phase 3) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **Mockups you approved:** `claude.ai/code/artifact/7ac29440-1e16-4b0e-a22b-9e0093470107` (12 frames).
 > **Where:** Development → **Plan templates** · any practice plan · Insights → **Development**.
@@ -3306,7 +3417,10 @@ say how it went afterwards, so "what did we do about hitting last spring?" has a
 is about arm's length in daylight — do it standing up, one-handed, ideally outside. The other three are
 ordinary phone passes and can be done anywhere.
 
-### 2.1 📱 Mobile overlay safety + Tournaments revival (Batch 1) — **LIVE ON PRODUCTION**
+### 2.1 📱 Mobile overlay safety + Tournaments revival (Batch 1) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH1_PLAN.md`.
 - [ ] Every add/edit form (Add Player, Add Expense, dues credit/schedule, budget line, payment
       request, fundraiser) opens as a full-height sheet, back-arrow header, Save visible above the
@@ -3321,7 +3435,10 @@ Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH1_PLAN.md`.
 - [ ] Budget modals on desktop got a slight chrome change (shared panel background) — eyeball, not
       a regression. Roster initials avatars removed on purpose.
 
-### 2.2 📱 The "first week" bundle (Batch 2) — **LIVE ON PRODUCTION**
+### 2.2 📱 The "first week" bundle (Batch 2) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`.
 - [ ] Bulk add on an empty roster: paste mixed formats (`12 Jordan Smith` / `Jordan Smith` /
       `Jordan Smith 12`) → preview reads them; fix one row, remove one, commit. Then the
@@ -3338,7 +3455,10 @@ Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`.
 - Note: paste captures names + numbers ONLY (no emails/DOB — by design); 200-row cap with a
   visible truncation warning.
 
-### 2.5 📱 Running a practice at the field (Practice Plans 1b) — **LIVE ON PRODUCTION**
+### 2.5 📱 Running a practice at the field (Practice Plans 1b) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *Tuesday night, one hand, gloves on: the plan you wrote now reads one block at a time.* 1a (writing
 the plan) already PASSED your QA and is committed; **this is the second half only.**
 Plan: `archive/COACH_PRACTICE_PLANS_PLAN.md`.
@@ -3367,7 +3487,9 @@ toolbar). No plan handy? Ask the agent to seed a probe practice — it prints a 
       **absent entirely** (not a link that errors). *(This closed an existing bug; your call.)*
 - [ ] Help "?" on the run screen opens a guide about **that** screen, not the builder.
 
-### 2.6 📱 Phone passes of the desktop items (quick)
+### 2.6 📱 Phone passes of the desktop items (quick) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > The four **Chunk D** lines that used to sit here moved to **§2.6a in Tier 1** — a family reaching a
 > child's schedule on a phone is an exposure question, not a layout one. Wording unchanged.
@@ -3403,7 +3525,10 @@ toolbar). No plan handy? Ask the agent to seed a probe practice — it prints a 
 The only section in the ledger about the free tier. Needs free-tier coach accounts in the coherence
 states.
 
-### 3.1 📱 FREE coach portal — Overview coherence (DF-1…DF-7) — **LIVE ON PRODUCTION**
+### 3.1 📱 FREE coach portal — Overview coherence (DF-1…DF-7) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Archived plan: `archive/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md` (its PM brief's "nothing built" header is stale).
 - [ ] One accepted upcoming tournament: ONE "Your tournament" block with the ⇄ fan-view link,
       no duplicate event card, 2-up tiles, Tournaments tile full-width with "See all →".
@@ -3433,7 +3558,10 @@ games with typed locations like "Maple Grove Park — Diamond 1", which is delib
 the typed-text path). The org venue library starts **empty everywhere**, and that is the first step,
 not an obstacle.
 
-### 8 🖥 House league fields + double-booking protection — **ON DEV** (mig 229 ✅ on prod)
+### 8 🖥 House league fields + double-booking protection — **ON DEV** (mig 229 ✅ on prod) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Plan: `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md` Phase 4. Owner rulings baked in: fields come from the
 org Venue Library (not per-season copies); games and practices are ONE booking pool; "TBD" is not a
 field name.
@@ -3495,7 +3623,10 @@ Setup: any dev org with a tournament that has venues configured (e.g. the Summer
 PLUS one tournament with **zero venues** (Bye Demo / Free Cup are the natural labs — they're the
 fixtures this failure minted). For the library lead, one League/Club org with `org_venues` rows.
 
-### 9 🖥 Tournament field picking + clear + import report — **ON DEV** (no migration)
+### 9 🖥 Tournament field picking + clear + import report — **ON DEV** (no migration) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Plan: `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md` Phase 2. Owner rulings baked in: League/Club get the
 Venue Library lead in the zero-venue prompt; setup copy says "venues", the sport noun stays on
 surface picking; import auto-resolves EXACT name matches only.
@@ -3565,7 +3696,10 @@ surface picking; import auto-resolves EXACT name matches only.
 - Known + accepted: `check:demos`' coach-sandbox attendance drift pre-dates this work (seeded coach
   data; the tournament sandbox passes and its tour copy was re-checked against these screens).
 
-### 9b 🖥 Matching typed locations to real fields — **ON DEV** (no migration)
+### 9b 🖥 Matching typed locations to real fields — **ON DEV** (no migration) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Plan: `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md` Phase 3. Built to the owner-approved mockups
 (Artifact *Phase 3 — Matching typed locations to real fields*). Owner decisions baked in: banner on
 the schedule page; Undo now plus re-point forever; **completed games do convert**.
@@ -3696,7 +3830,10 @@ annoying, and costs nobody anything they cannot get back.
 it is a reading exercise, and nine invented phrases are waiting on your veto. The other three are live
 damage-finding.
 
-### 6 🖥📱 The words the app uses about playing time — **ON DEV `d8316e87`** · no migration
+### 6 🖥📱 The words the app uses about playing time — **ON DEV `d8316e87`** · no migration — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *A copy-only sweep. Every playing-time metric is identical; only the framing changed. The app now
 says where minutes went — it never says whether that was fair. Your ruling, 2026-08-04.*
 
@@ -3755,7 +3892,10 @@ of the roster", and the lineup pill borrowing the Overview's "Evenly spread" / "
 across rest, facility moves, daily load, and time slots." That is scheduling equity between teams,
 not playing time — out of scope here. Say if it deserves its own ruling.
 
-### 1.6 🖥 Findability, desktop half (Chunk B) — **LIVE ON PRODUCTION**
+### 1.6 🖥 Findability, desktop half (Chunk B) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 Code-verified built. Archived plan: `archive/COACH_PORTAL_CHUNK_B_FINDABILITY_PLAN.md`.
 - [ ] Sidebar reads **"Email families"** (not "Announcements") and it's obvious which door reaches
       parents vs. staff (Chat).
@@ -3765,13 +3905,19 @@ Code-verified built. Archived plan: `archive/COACH_PORTAL_CHUNK_B_FINDABILITY_PL
       good; tour still reachable from Help. (Needs a genuinely fresh account — dismissal is
       permanent.)
 
-### 2.4 📱 Findability, phone half (Chunk B) — **LIVE ON PRODUCTION**
+### 2.4 📱 Findability, phone half (Chunk B) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 - [ ] More sheet: **Notifications** row at top with unread count; count also badges the More tab;
       the feed opens; "Notification settings" reaches account settings.
 - [ ] More sheet reads "Email families"; sheet still fits its height cap at 361px.
 - [ ] As an assistant: rows/icons present, nothing offers an action they can't perform.
 
-### 4 🖥📱 Cross-cutting: the dismiss/Escape sweep — **LIVE ON PRODUCTION**
+### 4 🖥📱 Cross-cutting: the dismiss/Escape sweep — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *One shared close-behavior for ~19 menus/panels; Escape now works where it didn't; iOS tap-to-dismiss fixed.*
 Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 - [ ] Desktop spot-check ~6 converted panels (both More menus, notification bell, an admin schedule
@@ -3904,7 +4050,10 @@ The creation preview and both no-login demos. ⚠ **This group is only mostly po
 tournaments, and §5.4 is the newest thing in the ledger. Everything else here costs a prospect's
 impression and nothing more.
 
-### 5.1 🖥 Tournament creation live preview (v1 + colour presets v1.1) — **LIVE ON PRODUCTION**
+### 5.1 🖥 Tournament creation live preview (v1 + colour presets v1.1) — **LIVE ON PRODUCTION** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *While an organizer fills in the setup wizard, a phone beside the form assembles their public
 tournament page in real time. Desktop-only; below ~1280px the wizard is untouched.*
 Plan (with build notes): `archive/TOURNAMENT_CREATION_LIVE_PREVIEW_PLAN.md`.
@@ -3971,7 +4120,10 @@ Sign in as an org admin. Do this at a window **wider than 1280px** unless a step
 - Note: there is deliberately **no colour picker** in the wizard. Custom colours are a paid feature
   and putting the swatches in free signup is a pricing decision you haven't made yet.
 
-### 5.2 🖥📱 The "See it live" sandbox — **PHASE 1 LIVE; the tour rebuild, live pill, health panel and Playoffs tab are ON DEV `21b8e0e8`**
+### 5.2 🖥📱 The "See it live" sandbox — **PHASE 1 LIVE; the tour rebuild, live pill, health panel and Playoffs tab are ON DEV `21b8e0e8`** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *A stranger with no login and no email walks into a real tournament that is running right now, on
 both sides of the product: the fan pages ticking on their own, and the actual admin portal as a
 demo organizer. Nothing they do is saved and nothing is ever sent to anyone.*
@@ -4253,7 +4405,9 @@ organizer's seat?"* naming your email, with a lime **Continue** button and a qui
 account — watch as a fan"**. Decline → you're on the fan page, still signed in. Press again and
 continue → you're the demo organizer; signing back into your own account works normally after.
 
-### 5.3 🖥📱 The moments dock (Phase 2) — **ON DEV `c1aed60c`**
+### 5.3 🖥📱 The moments dock (Phase 2) — **ON DEV `c1aed60c`** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 The demo's year in three tabs. One org, three tournaments; nothing about the write block, the
 outbound silence or the door changed. ⚠ *The dev scheduler still doesn't reach this environment —
@@ -4305,7 +4459,9 @@ run the tick by hand before QA if the countdown looks stale.*
 - [ ] Signed out entirely, the two new events' public pages render read-only; registering on the
       Invitational is blocked with the toast; no email of any kind arrives for anything above.
 
-### 5.4 🖥📱 The Coach Sandbox — five moments + the guided tour — **ON DEV · P1 `7a7092ea` · P2 `c57f6462` · P3 `a2923e5b`**
+### 5.4 🖥📱 The Coach Sandbox — five moments + the guided tour — **ON DEV · P1 `7a7092ea` · P2 `c57f6462` · P3 `a2923e5b`** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 The coach twin of the "See it live" demo: one tap, no login, into the real premium Coaches Portal
 on the fictional **Riverdale Ridge Baseball** — five teams frozen at five moments of a year, a warm
@@ -4432,7 +4588,10 @@ you got to for the rest of the browser session.
   That is the product working as designed, but it means the moment's most interesting screen is one
   tab away and not linkable. The tour's step 1 points at what the hub actually opens.
 
-### 5.5 🖥📱 Marketing pages — "live products lead" + the availability sweep — **ON DEV, uncommitted**
+### 5.5 🖥📱 Marketing pages — "live products lead" + the availability sweep — **ON DEV, uncommitted** — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
+
 *The homepage, /pricing, /for-tournament-organizers and the nav were rebalanced (2026-08-08,
 owner-ratified) so the two promoted products lead everywhere and nothing hand-writes "coming soon"
 any more. Covers Batches 1 + 1.5 of `HOMEPAGE_TRUTH_AND_ENTRY_POINTS_PLAN.md`. All anonymous — no
@@ -4790,7 +4949,9 @@ it needs a record that already existed on dev.
 **If Part D or Part E fails, treat it as blocking** — everything else here is a correction to how a
 screen reads, but those two are the books being wrong.
 
-## §28 · Practice plans get a front door
+## §28 · Practice plans get a front door — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed.**
 Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 1). Mockups: artifact `ed56fe2c`.
@@ -4868,7 +5029,9 @@ the next couple of hours.
 **If part G fails, treat it as blocking** — a list of archive practices whose plans all refuse to
 open is the "link that 404s wearing a politer face" this portal has a standing rule against.
 
-## §29 · The budget speaks in category + item, and so does spending
+## §29 · The budget speaks in category + item, and so does spending — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-15 · not on production · ⚠ carries migration 240, which must reach prod
 BEFORE this code does.** Plan: `COACH_BUDGET_ITEM_ALIGNMENT_PLAN.md`. Mockups: artifact `945391e9`.
@@ -4957,7 +5120,9 @@ something the plan never mentions**. The demo is seeded exactly this way.
 **If C's totals disagree, treat it as blocking.** A season total larger than the sum of its
 categories is unplanned spending counted twice — the exact failure this design set out to remove.
 
-## §30 · Sponsorships, the follow-ups — two doors, tags on money coming in
+## §30 · Sponsorships, the follow-ups — two doors, tags on money coming in — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-15 · not on production · ⚠ carries migration 239, which must reach prod
 BEFORE this code does.** Plan: `COACH_SPONSORSHIPS_PLAN.md` §8. Proposal + mockups: artifact
@@ -5030,7 +5195,9 @@ world — the shop window — could not show the distinction at all.
 coach who visits Fundraising a week later and sees half their records missing, with nothing on
 screen saying a filter is on, has no way to work out what happened.
 
-## §31 · The Attendance page answers once
+## §31 · The Attendance page answers once — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed.**
 Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 2). Mockups: artifact `ed56fe2c`, §01.
@@ -5104,7 +5271,9 @@ Schedule, inside a game or practice — this page never recorded anything. The "
 shortcut still points at your next (or most recent) event. The back link to Insights is untouched
 here; a later phase removes it when Attendance moves into Insights.
 
-## §32 · Attendance becomes a report inside Insights
+## §32 · Attendance becomes a report inside Insights — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed.**
 Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 3). Mockups: artifact `ed56fe2c`, §04.
@@ -5182,7 +5351,9 @@ game or practice.
 **Where this leaves the sidebar:** Attendance is gone, Practice plans arrived (§28), and the full
 regroup landed too (§33).
 
-## §33 · The sidebar stops rearranging itself
+## §33 · The sidebar stops rearranging itself — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-15 · not on production · no migration, no new API, no route removed, no item
 renamed.** Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` (Phase 4). Mockups: artifact `ed56fe2c`, §03.
@@ -5245,7 +5416,9 @@ the optional tools on. That is a different thing entirely and is deliberately un
 probably outranks Money. Money sits above Communication because it's the bigger product pillar. Say
 the word if you'd rather they swap.
 
-## §34 · The lineup builder tells the time at the field
+## §34 · The lineup builder tells the time at the field — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-16 · not on production · no migration, no new API, no route change, nothing
 renamed.** Plan: `COACH_NAV_AND_PRACTICE_PLANS_PLAN.md` §6 and §6a. No mockups — this is the
@@ -5305,7 +5478,9 @@ reloading is enough.
 **Nothing here is user-facing beyond A–C.** If B and C read the same on both devices, this section
 passes.
 
-## §35 · Club money screens explain themselves, and a payment request becomes a record
+## §35 · Club money screens explain themselves, and a payment request becomes a record — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-16 · not on production · NO migration.** ⚠ **One NEW server capability: a
 coach can now change a PENDING payment request.** Mockups: artifacts `2c74c60d` (empty states) and
@@ -5405,7 +5580,9 @@ floor — recorded as a deliberate exception, because it is drawn once per row a
 a full-size control on a twelve-row list out-shouts the figures beside it. It **is** raised at tablet
 widths, and on a phone it is already a full-width labelled button.
 
-## §36 · A past season shows that season — ⚠⚠ RETIRED UNWALKED, superseded by §40
+## §36 · A past season shows that season — ⚠⚠ RETIRED UNWALKED, superseded by §40 — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **RETIRED 2026-08-16 without ever being walked.** This section walked the SEASON DIAL: open a
 finished season, check the page describes that season and not this one. The owner then deleted the
@@ -5487,7 +5664,9 @@ Ideally do part C with a second sign-in that no longer coaches that team.
 
 **If A and C both read correctly, this section passes.** B is polish; D is the regression check.
 
-## §37 · Insights learns which season it is describing — ⚠⚠ RETIRED UNWALKED, superseded by §40
+## §37 · Insights learns which season it is describing — ⚠⚠ RETIRED UNWALKED, superseded by §40 — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **RETIRED 2026-08-16 without ever being walked**, for the same reason as §36: it walked the archive's
 own nav and the season switcher, both of which are deleted.
@@ -5597,7 +5776,9 @@ the list of years, that is a defect — tell me.
 **If A, B and D read correctly, this section passes.** C is the awards fix (worth its own look
 because it corrects a live-season number too); E is the regression check.
 
-## §38 · Money in, money out, money back
+## §38 · Money in, money out, money back — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-16 · not on production · ⚠ carries migration 243, which must reach prod
 BEFORE this code does.** Plans: `COACH_MONEY_IN_TAXONOMY_PLAN.md` (which absorbed
@@ -5936,7 +6117,9 @@ with a shorter one that dropped Settings, Chat, Email families and Staff.
 
 ---
 
-## §41 · Money splits in two — Transactions and Payables (money redesign, Phase 1)
+## §41 · Money splits in two — Transactions and Payables (money redesign, Phase 1) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-16 · not on production · NO migration, no new table, no new API route.**
 Plan: `COACH_MONEY_TAB_REDESIGN_PLAN.md` §10 P1. Naming mockup: artifact `eca99e68`.
@@ -6211,7 +6394,9 @@ team with a finished season behind it serves for the second half.
 
 ---
 
-## §43 · The money form learns two pills, one search box, and a straight answer (money redesign, Phase 2)
+## §43 · The money form learns two pills, one search box, and a straight answer (money redesign, Phase 2) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-16 · not on production · migration 246 applied to DEV ONLY.**
 Plan: `COACH_MONEY_TAB_REDESIGN_PLAN.md` §2 + §10 P2. Binding form proposal: artifact `b618c784`.
@@ -6333,7 +6518,9 @@ inside the form keeping its name (§B), the family being named rather than calle
 
 ---
 
-## §44 · Nobody deletes a word out from under the records using it (budget item integrity, P1)
+## §44 · Nobody deletes a word out from under the records using it (budget item integrity, P1) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-17 · not on production · migration 248 applied to DEV ONLY.**
 Plan: `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` §4 P1. Mockup: artifact `484b5971`.
@@ -6399,7 +6586,9 @@ dev holds almost no team-created vocabulary, and every check below is invisible 
 
 ---
 
-## §45 · You can tell whose word it is (budget item integrity, P2 — the tags)
+## §45 · You can tell whose word it is (budget item integrity, P2 — the tags) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-17 · not on production · no migration.**
 Plan: `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` §4 P2. Mockup: artifact `484b5971` §3.
@@ -6434,7 +6623,9 @@ in warm caught.
 instead* now sits above your own words. It uses the same tags, in a third place: beside the target
 picker, once you have chosen one. Nothing above changed; there is simply one more row to look at.
 
-## §46 · One dated book, and a balance that is finally the truth (money redesign, Phase 3)
+## §46 · One dated book, and a balance that is finally the truth (money redesign, Phase 3) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-17 · not on production · migration 247 applied to DEV ONLY.**
 Plan: `COACH_MONEY_REGISTER_P3_PLAN.md` (and `COACH_MONEY_TAB_REDESIGN_PLAN.md` §4).
@@ -6609,7 +6800,9 @@ vanished. The merged Club tab now renders between seasons with every write contr
 **If §A and §B read correctly, this section passes.** C and D are the controls; E–G are what moved
 around them; H is the money that changed underneath and is the part worth a second opinion.
 
-## §47 · Falling in line with the club, when the team decides to (budget item integrity, P3 — the fold)
+## §47 · Falling in line with the club, when the team decides to (budget item integrity, P3 — the fold) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-17 · not on production · no migration.**
 Plan: `COACH_BUDGET_ITEM_INTEGRITY_PLAN.md` §4 P3. Mockup: artifact `484b5971` §4.
@@ -6685,7 +6878,9 @@ one on this screen — which is why everything above it is about reading the sen
 
 ---
 
-## §48 · Tryouts Set up becomes one checklist, and the guide owns "Do this next"
+## §48 · Tryouts Set up becomes one checklist, and the guide owns "Do this next" — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-17 · not on production · no migration.**
 Mockup (approved, binding): artifact `7b578986` §1–§5. Design log entry 2026-08-17.
@@ -6758,7 +6953,9 @@ expanded rows are the coverage.
 **Warm skin (tryouts run in sunlight):** the done-marks and "Take me there" keep solid lime + dark
 ink; the tags and notes go olive-tint. Worth one glance at the checklist in warm before calling it.
 
-## §49 · Where the team stands with its club — one tab, and money that finally reaches the report (money redesign, Phase 4)
+## §49 · Where the team stands with its club — one tab, and money that finally reaches the report (money redesign, Phase 4) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-17 · not on production · migration 250 applied to DEV ONLY.**
 Plan: `COACH_MONEY_TAB_REDESIGN_PLAN.md` §5 + the P4 ruling log at §0b.
@@ -6984,6 +7181,8 @@ and the plumbing. **§C and §G are the two worth a second opinion.**
 
 ## §50 ✅ The scorecard says what a category is worth (tryout weights) — **OWNER QA PASSED 2026-08-17**
 
+> **✅ The re-check still owed in this section was CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). The walk's own pass stands as recorded; the owed steps were never confirmed by a tick.
+
 **Built on dev 2026-08-17 · ✅ QA PASSED same day · awaiting production · no migration.**
 
 ⚠⚠ **A SHORT RE-WALK IS OWED — `/review` ran AFTER this passed and changed behaviour in three places.**
@@ -7125,7 +7324,9 @@ short re-walk owed after the review.**
 
 ---
 
-## §51 · The report stops telling three stories about one season (money — one arithmetic)
+## §51 · The report stops telling three stories about one season (money — one arithmetic) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-17 · awaiting QA · no migration.** Plan + PM brief:
 `COACH_MONEY_ONE_ARITHMETIC_PLAN.md`. Evidence artifact: `bd12805c`.
@@ -7680,7 +7881,9 @@ that passed QA on dev. *(225, 227 and 228 cleared this queue on 2026-08-06; **22
 2026-08-08** — the coach re-anchor is scheduled on both databases and both demo worlds are live on
 production.)*
 
-## §54 · The Families Book opens — worklist, family page, duplicate queue (P2, chunks 0/A–F) — **superseded by §329** (Club Tier Stage 5, Ask 25: walked once, against the redrawn screens)
+## §54 · The Families Book opens — worklist, family page, duplicate queue (P2, chunks 0/A–F) — **superseded by §329** (Club Tier Stage 5, Ask 25: walked once, against the redrawn screens) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **⚠ Truth-up 2026-09-25 (Club Tier Readiness Stage 0):** P1 + P2 are **on production** — their commits (`5f75006e`, `c58ccfed`, `53402943`) are ancestors of the prod promote `6b9c8c06`; tables 251–253 show zero dev↔prod schema drift; the function-only migration 254 is **verified on prod 2026-09-25** (`families_attach_people` and `families_merge_people` both present in `pg_proc`). The "DEV ONLY" line below is history. **This walk has never passed** — it is re-run with §56 as one walk in Club Tier Stage 5, after the four HIGH defects (plan §4E, E01–E04) are fixed.
 
@@ -7700,7 +7903,9 @@ production.)*
 
 ⚠ **Release gate:** migrations **252 + 253** join the dev-only queue (with 251). The Families routes read `org_people`/`waiver_accepted_at`/`org_person_match_rejections` unconditionally — code must not reach master ahead of them.
 
-## §55 · The coach shell slimdown — the strip owns identity, the rail owns navigation
+## §55 · The coach shell slimdown — the strip owns identity, the rail owns navigation — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **✅ OWNER QA PASSED 2026-08-17 (all parts A–E, including D2's four /review fixes). Committed `075a42d8` 2026-08-18.** The re-baseline flagged at the foot is still owed.
 
@@ -7722,7 +7927,9 @@ production.)*
 
 **§54 addendum — post-build `/simplify` + `/review` (2026-08-17, before any QA walk):** all confirmed findings fixed, so walk the CURRENT build. Changes that affect the steps above: **migration 254 joins the dev-only queue** (252 + 253 + 254 — the merge is now one transaction); step D's merge can additionally be probed by double-clicking Merge in two tabs (second gets a clean "Person not found", exactly one audit row); step E's suppression now lives in the shared send path itself; a **revoked guardian is excluded everywhere** (page, export, message — worth one explicit probe: revoke a family link, confirm the person drops off the family page); league-only families now show their waiver consent line; tryout-only people appear under the All lens and in search; all dates render in the org's timezone.
 
-## §56 · An unsubscribe finally means the same thing everywhere (family email audit + fixes) — **superseded by §329** (Club Tier Stage 5, Ask 25: its Families half walked there; its team-announcement half is held by `tests/unit/family-email-guard.test.ts`)
+## §56 · An unsubscribe finally means the same thing everywhere (family email audit + fixes) — **superseded by §329** (Club Tier Stage 5, Ask 25: its Families half walked there; its team-announcement half is held by `tests/unit/family-email-guard.test.ts`) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > **⚠ Truth-up 2026-09-25 (Club Tier Readiness Stage 0):** on production with the rest of Families P2 (see §54's note). **Never passed** — re-run with §54 as one walk in Club Tier Stage 5.
 
@@ -7804,7 +8011,9 @@ its registration lookup stops at 1000 rows, so a season larger than that would s
 registrants. **If you test with a large season and numbers look short, suspect these before the
 new code.**
 
-## §57 · Closing the season — one page, and the end of read-only-everywhere
+## §57 · Closing the season — one page, and the end of read-only-everywhere — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built 2026-08-18 · plan `COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN.md` · mockups artifact `57e9bfd3`
 · NO migration.**
@@ -7968,7 +8177,9 @@ record it with a reason.
 
 ---
 
-## §58 · Insights becomes a reports portal — seven tabs, no money, no Ask bar
+## §58 · Insights becomes a reports portal — seven tabs, no money, no Ask bar — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What changed for a coach.** Insights was a scoreboard, a findings strip, an "Ask about your team"
 bar and seven question-titled tiles that each navigated away to a separate page. It is now **one
@@ -8087,7 +8298,9 @@ Attendance table reflows to cards; the Awards toolbar buttons and the past-seaso
   the deepest drill-in in the portal and one level down from a door, which is exactly where Chunk F's
   expensive defects lived. Stated in `scripts/layout-screens.mjs` rather than left to look covered.
 
-## §59 · The two header rows go on a diet — the team bar slims as you scroll, the page title stops shouting
+## §59 · The two header rows go on a diet — the team bar slims as you scroll, the page title stops shouting — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-18.** No migration, no new screen, no route moved. Premium org coach portal.
 Plan: `docs/projects/active/COACH_HEADER_VERTICAL_SPACE_PLAN.md`. Mockup (approved directions A/B/C/E):
@@ -8222,7 +8435,9 @@ and `coach-finished-season-surfaces.test.ts` now fails if they do.
 
 ---
 
-## §60 · A record is spelled one way now — `12-4-2`, everywhere a coach reads it
+## §60 · A record is spelled one way now — `12-4-2`, everywhere a coach reads it — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Built on dev 2026-08-19.** No migration, no new screen, no route moved, nothing gated. Premium org
 coach portal. Decision logged in `memory/design_decisions.md`; mockup:
@@ -8284,7 +8499,9 @@ phone-and-tablet debt it exposed is tracked in `COACH_TOUCH_TARGET_DEBT_PLAN.md`
 
 ---
 
-## §61 · Insights P2 — the sessions behind an attendance number, and where a player has actually stood
+## §61 · Insights P2 — the sessions behind an attendance number, and where a player has actually stood — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What shipped:** the two report drill-ins from the Insights portal plan's Phase 2 —
 **Attendance** gains four season figures and a per-player receipts drill-in; **Playing Time** gains
@@ -8512,7 +8729,9 @@ trade at this row count.
 
 ---
 
-## §62 · Insights P3 — the charts, and the three calls a mockup could not settle by itself
+## §62 · Insights P3 — the charts, and the three calls a mockup could not settle by itself — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **What shipped:** the three chart shapes from the portal's original mockup — a season momentum line
 on the Dashboard, a run-differential trend with a result strip on Results, and a month-by-month bar
@@ -9578,7 +9797,9 @@ that this feature could reverse by accident.
 
 ---
 
-## §65 · The 90-second walkthrough — a pitch page whose pictures are the real product
+## §65 · The 90-second walkthrough — a pitch page whose pictures are the real product — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-19, awaiting the walk.** Plan: `PRESALES_WALKTHROUGH_PLAN.md`. PM brief:
 `PRESALES_WALKTHROUGH_PM_BRIEF.md`. Mockup (approved spec):
@@ -9643,7 +9864,9 @@ to email afterwards. Walk on desktop; present mode also works on a phone (tap ad
 
 ---
 
-## §66 · The coach walkthrough — the same pitch page, a coach's season
+## §66 · The coach walkthrough — the same pitch page, a coach's season — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-20, awaiting the walk.** Plan: `PRESALES_WALKTHROUGH_PLAN.md` (P3). Mockup
 (approved spec): `claude.ai/code/artifact/6f16bc17-d5f3-45b6-bd03-b6df54231f15`, coach tab.
@@ -9927,7 +10150,9 @@ team's-money summary that sits inside the crop.
 
 ---
 
-## §68 · The marketing header cuts off "Get Started" on most phones
+## §68 · The marketing header cuts off "Get Started" on most phones — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **FOUND 2026-08-20 during the §67 walk. ✅ BUILT ON `dev` 2026-08-21 — this section is now a walk,
 not a defect report.** Unrelated to the slide library; it predates it and lives in the site's shared
@@ -9955,7 +10180,9 @@ clears by four pixels.
 
 ---
 
-## §68 (as built) — the header fits, and the gate that was blind to it can now see
+## §68 (as built) — the header fits, and the gate that was blind to it can now see — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT ON `dev` 2026-08-21. No migration. Two things shipped: the header, and the seventh house
 rule.** Build prompt: `MARKETING_HEADER_PHONE_FIX_BUILD_PROMPT.md`.
@@ -10021,7 +10248,9 @@ today, which is the answer you want from a new rule on old code.
 
 ---
 
-## §68b · The 664, triaged — the phone taps that turn a visitor into a signup
+## §68b · The 664, triaged — the phone taps that turn a visitor into a signup — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT ON `dev` 2026-08-21. No migration.** Owner-directed follow-up to §68: the first rendered
 sweep of the marketing site surfaced 664 findings with nothing to do with the header, and the call
@@ -10102,7 +10331,9 @@ answer — the labels simply never moved onto it. Neither is a new design decisi
 
 ---
 
-## §69 · The coach deck's nine new pictures — and the empty screens a prospect was already finding
+## §69 · The coach deck's nine new pictures — and the empty screens a prospect was already finding — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-20 (dev).** Plan: `PITCH_SLIDE_LIBRARY_PLAN.md` (P2a). Approved spec: the library
 artifact `claude.ai/code/artifact/a5dd16a5-519b-4b92-8958-d36195b9df3e`.
@@ -10202,7 +10433,9 @@ one-lime-action rule.
 
 ---
 
-## §70 · Seven drawings, both decks finished — and the sentence that came off ten pages
+## §70 · Seven drawings, both decks finished — and the sentence that came off ten pages — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Plan: `PITCH_SLIDE_LIBRARY_PLAN.md` (P2b). Approved in the mockup
 round: `claude.ai/code/artifact/a4029d16-43ac-41cc-97cb-1d70e36afdcd`.
@@ -10259,7 +10492,9 @@ Open a walkthrough page and press **▸ Present the full deck**. Arrow through i
 
 ---
 
-## §71 · The three pictures a phone could not read are now drawings
+## §71 · The three pictures a phone could not read are now drawings — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Closes the last open item from §69. Approved in the mockup round:
 `claude.ai/code/artifact/8d21b533-1e31-4691-81a0-30f226f45df0`.
@@ -10309,7 +10544,9 @@ Open the coach walkthrough → **▸ Present the full deck** → arrow through. 
 
 ---
 
-## §72 · The room where you can finally see what we own — and the twelve outside both page pulls
+## §72 · The room where you can finally see what we own — and the twelve outside both page pulls — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Stage A of the Pitch Deck Studio
 ([plan](PITCH_DECK_STUDIO_PLAN.md)) — **the library view, read-only.** No editing, no save button,
@@ -10387,7 +10624,9 @@ no composer; those are stage B and C, and stage B is where all the risk lives.
 
 ---
 
-## §73 · The three open questions, answered — and every subscription line comes off the pitch
+## §73 · The three open questions, answered — and every subscription line comes off the pitch — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Closes the riders open since §67 and §69. Mockup that produced the
 answers: `claude.ai/code/artifact/a41cb126-e200-4e4d-bc8f-31e9bdb25c0a`.
@@ -10440,7 +10679,9 @@ answers: `claude.ai/code/artifact/a41cb126-e200-4e4d-bc8f-31e9bdb25c0a`.
 
 ---
 
-## §74 · The map goes on both pitch pages — and the studio followed it without being told
+## §74 · The map goes on both pitch pages — and the studio followed it without being told — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Your call from the decision brief
 (`claude.ai/code/artifact/719d58d2-c779-43c1-ade6-2b75c426156c`), Decision 1, Option B.
@@ -10468,7 +10709,9 @@ answers: `claude.ai/code/artifact/a41cb126-e200-4e4d-bc8f-31e9bdb25c0a`.
 
 ---
 
-## §75 · Every picture now says how old it is — and what that does not prove
+## §75 · Every picture now says how old it is — and what that does not prove — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Your Decision 2, Option B, from the brief
 (`claude.ai/code/artifact/719d58d2-c779-43c1-ade6-2b75c426156c`).
@@ -10505,7 +10748,9 @@ answers: `claude.ai/code/artifact/a41cb126-e200-4e4d-bc8f-31e9bdb25c0a`.
 
 ---
 
-## §76 · Which slides go on which page is now yours — and the pages can no longer lie about themselves
+## §76 · Which slides go on which page is now yours — and the pages can no longer lie about themselves — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Pitch Deck Studio stage B — the phase that carried the risk: the two
 public walkthrough pages now read their composition from a saved record, with the code version as
@@ -10550,7 +10795,9 @@ a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
       and the fallback behind it). That is the cost of “save now, live now”; if you ever feel the
       pages are slow, say so and we cache harder.
 
-## §77 · The running order is yours now — and reordering a deck reorders the live page, on purpose
+## §77 · The running order is yours now — and reordering a deck reorders the live page, on purpose — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Pitch Deck Studio stage C — the composer. Plan:
 `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
@@ -10579,7 +10826,9 @@ a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
       it from both audiences freely — mixing is by design, the club pitch is the whole reason.
       It appears as its own card with the same composer, and **Delete** asks twice.
 
-## §78 · A deck for one prospect: an unlisted link and a PDF that cannot disagree
+## §78 · A deck for one prospect: an unlisted link and a PDF that cannot disagree — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-21 (dev).** Pitch Deck Studio stage D. Plan:
 `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
@@ -10599,7 +10848,9 @@ a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
 - [ ] **A deck with nothing left to render** (every slide removed or rotted) also answers
       "not found" on its link — and the studio card says why, in words.
 
-## §79 · Every PDF knows whose paper it is — and a coach can make it theirs
+## §79 · Every PDF knows whose paper it is — and a coach can make it theirs — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-23, committed `d2b1e469` (dev; incl. /simplify + /review passes and the help-guide sync).** PDF Export Quality Phase 1 (D1–D4 + honest menus). Plan:
 `docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4. Approved mockup:
@@ -10808,7 +11059,9 @@ scorer, the face flips and both redirects are owner-QA-only coverage.
 (a deliberate instrument-card look — same surface as the volunteer door, sunlight posture and
 all). If it reads as a hole in the warm theme rather than an instrument, that's a theming
 session, not a bug fix.
-## §82 · Every register survives being emailed to a treasurer
+## §82 · Every register survives being emailed to a treasurer — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 1 of 6: Registers**. Plan:
 `docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
@@ -10887,7 +11140,9 @@ owed — a printable register is not a story beat for a three-minute walk.
 working sheets including the practice run-sheet, schedules, posters/cards/brackets). Each gets its
 own rendered sign-off session.
 
-## §83 · The Months cash strip tells the whole cash truth — and is chained to the register
+## §83 · The Months cash strip tells the whole cash truth — and is chained to the register — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-23 (dev).** Owner ruling of the same day (reversing 2026-07-30's "Money in is
 player dues only"), go given on the mockup artifact
@@ -10922,7 +11177,9 @@ cost — the UAT fixture has all five; a dues-only team proves nothing here.
 **Not in this pass, on purpose:** income rows in the month GRID itself (Phase 2 — its own mockup
 session, owner-ruled from drawings, separately gated build).
 
-## §84 · A coach can hand one family their own money — and nobody else's
+## §84 · A coach can hand one family their own money — and nobody else's — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 2 of 6: Statements & handouts**.
 Plan: `docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
@@ -11114,7 +11371,9 @@ Team settings → Money, read on the register and in Cash on hand. Both are D-2,
 tall at 768px (floor 44) on Budget vs. Actual, Transactions and Payables alike — a money
 centralization P1 leftover, unbaselined. Not fixed here because it belongs to that programme.
 
-## §86 · A coach can pin the roster up without publishing fourteen birthdates
+## §86 · A coach can pin the roster up without publishing fourteen birthdates — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 3 of 6: Rosters**. Plan:
 `docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
@@ -11535,7 +11794,9 @@ carries the same 40px. This fix is **scoped to Add players on purpose** — remo
 probably right, but it is a portal-wide visual change and belongs to a decision rather than to a
 one-sheet fix. Owner to say whether to sweep it.
 
-## §91 · A coach can run practice off the sheet, and a volunteer has a box to tick
+## §91 · A coach can run practice off the sheet, and a volunteer has a box to tick — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-24 (dev).** PDF Export Quality **Phase 2, pass 4 of 6: Working sheets**. Plan:
 `docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4 + `PRACTICE_SHEET_STRUCTURE_PLAN.md`; build
@@ -11676,7 +11937,9 @@ check (harness and scanner carried forward again, productionisation still owed).
 
 ---
 
-## §92 · The Export box asks which document, then which file
+## §92 · The Export box asks which document, then which file — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-24 (dev).** Owner ruling of the same day, from rendered mockups:
 https://claude.ai/code/artifact/8b768b64-ea8a-47a9-948b-d6637a76f03e (*"I like this option but we
@@ -11731,7 +11994,9 @@ the tournament/house-league export menus. This is the coaches portal's control o
 
 ---
 
-## §93 · The roster is the first thing on the roster page again — on a phone
+## §93 · The roster is the first thing on the roster page again — on a phone — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-24 (dev).** Plan `docs/projects/active/COACH_ROSTER_PHONE_CHROME_PLAN.md` + PM brief.
 Approved mockup (interactive, true 390px, self-measuring):
@@ -11802,7 +12067,9 @@ See `docs/projects/active/COACH_PAGE_TITLE_BAND_PLAN.md` — planning only, owne
       deliberately: a coach whose phone stopped showing it searches exactly that, so deleting the
       term would have hidden the answer instead of correcting it.
 
-## §94 · The roster's view switcher stops wrapping on a phone
+## §94 · The roster's view switcher stops wrapping on a phone — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-24 (dev).** Owner ruling of the same day, from a phone screenshot. No migration.
 
@@ -11843,7 +12110,9 @@ items deliberately left unticked, neither a blocker:
 Money hub's Record button was left pointing at the old name because that file is carrying another
 session's in-flight work; point it at the new name and delete the alias once that lands.
 
-## §95 · A tryout sits in the schedule like everything else on it
+## §95 · A tryout sits in the schedule like everything else on it — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-24 (dev).** Owner question of the same day, from a screenshot: *"why is the format
 of a tryout event on the schedule different than the rest?"* No migration.
@@ -11868,7 +12137,9 @@ those was not a formatting problem at all.
 **⚠ The tryout's stored time was NOT the moment it claimed to be — that is fixed in §96 below,
 built the same day once you confirmed no real club has tryout sessions on production.**
 
-## §96 · A tryout happens when it says it happens
+## §96 · A tryout happens when it says it happens — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-24 (dev).** Owner go the same day, on the evidence below, having confirmed **no
 production club has tryout sessions** — so there is no customer data to migrate. No migration.
@@ -11917,7 +12188,9 @@ dropdown of events reads each event's day by slicing its stored moment, so an ev
 after 8 p.m. is offered under the **next day's** date. Same defect class, different feature, one
 line to correct. Say the word and it goes in.
 
-## §97 · The Money Excel files start dressing like spreadsheets
+## §97 · The Money Excel files start dressing like spreadsheets — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-25 (dev), v2 the same day from the owner's rendered file.** Plan:
 `COACH_EXCEL_EXPORT_FORMATTING_PLAN.md`. No migration; CSV and PDF byte-identical throughout.
@@ -12004,7 +12277,9 @@ Officials). Drawn as Option B and not taken — it cannot stand alone (money pai
 no row to hang a marker from) and the Statement does not currently carry which costs a family paid.
 If it is ever built, the bridge keeps the arithmetic and the markers carry the pointer.
 
-## §99 · /review on the Working-sheets pass — four defects, two of them mine to have caught
+## §99 · /review on the Working-sheets pass — four defects, two of them mine to have caught — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **REVIEWED + FIXED 2026-08-24 (dev).** High-risk tier, five lenses. Nothing here is a new feature —
 these are corrections to §91/§92/§96, and every one was found by an adversarial lens rather than by
@@ -12129,7 +12404,9 @@ scope for this ruling.
 
 ---
 
-## §91 · Two ways to make the same thing stop competing for space
+## §91 · Two ways to make the same thing stop competing for space — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-25 (dev).** Page-level action consistency **Phase 3** — Plan templates and Drills.
 Plan: `COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`. Reconciliation sheet:
@@ -12315,7 +12592,9 @@ build's**; neither is baselined, so `check:layout` reports them:
 - **The Statement's cash-bridge `summary` at 28px** — the §98 disclosure line; that build did not
   re-run the layout sweep. Both are one CSS line each if you want them taken.
 
-## §102 · The schedule reads like a weekend, not like a database — BUILT, awaiting QA
+## §102 · The schedule reads like a weekend, not like a database — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 *PDF Export Quality, Phase 2, pass 5 of 6 (Schedules). Built 2026-08-25 on dev. Two owner
 checkpoints walked from rendered paper; the decision gallery and the built gallery are both
@@ -13067,7 +13346,9 @@ guide or tour sentence describes keyboard operation.
 
 ---
 
-## §106 · Paper you read from across a field — and two "defects" that were never real — BUILT, awaiting QA
+## §106 · Paper you read from across a field — and two "defects" that were never real — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **PDF Export Quality, Phase 2, pass 6 of 6 — the last group.** The lineup poster, the batting-order
 card, the playoff bracket and the blank bracket. These four are not read, they are **glanced at, in
@@ -13315,7 +13596,9 @@ the two reds are in `tests/unit/family-email-guard.test.ts`, owned by another se
 `lib/email.ts` / `lib/family-email.ts` edits are in the tree. Not this pass's, and not to be
 signed off as this pass's.
 
-## §107 · The paper finally gets a gate — and the gate's first finding was wrong — BUILT, awaiting QA
+## §107 · The paper finally gets a gate — and the gate's first finding was wrong — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **PDF Export Quality, Phase 3 — the last phase. The programme closes with this.**
 
@@ -13425,7 +13708,9 @@ changing it moves column widths on every table in the product.
 
 ---
 
-## §108 · The platform stops writing the offer letter — tryout decision emails removed outright — BUILT, awaiting QA
+## §108 · The platform stops writing the offer letter — tryout decision emails removed outright — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Checkable walkthrough:** https://claude.ai/code/artifact/da851169-d44d-4fa6-b21c-e4e098a5f982
 
@@ -13653,7 +13938,9 @@ verified in a real browser.
 
 ---
 
-## §109 · Three piles, one tap, and a door that opens both ways — BUILT, awaiting QA
+## §109 · Three piles, one tap, and a door that opens both ways — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Checkable walkthrough:** https://claude.ai/code/artifact/d62f6ac0-db91-4852-bb3f-622d323c10e0
 
@@ -13729,7 +14016,9 @@ the retired fee-prefill returns 405.
 
 **No migration.** The accept RPC still accepts a dues argument; it is simply never passed one.
 
-## §111 · A filter count is a promise about the list — BUILT, awaiting QA
+## §111 · A filter count is a promise about the list — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **BUILT 2026-08-26 (dev).** Money centralization **P3 follow-on**, found while walking §104.
 **No migration.** ⚠ Read **§104 phase A** alongside this — it changes the number that phase asks
@@ -13797,7 +14086,9 @@ run; none touches this change.
 
 ---
 
-## §110 · The head coach is never blind — and the receipt stops claiming otherwise — BUILT, awaiting QA
+## §110 · The head coach is never blind — and the receipt stops claiming otherwise — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Owner ruling 2026-08-26.** *"Head coaches know everyone that is trying out, plain and simple…
 former teams, birth years, etc. all play in to their decision making process."* Blind evaluation is
@@ -13860,7 +14151,9 @@ parity stays red** on migrations from other work.
 
 ---
 
-## §112 · The coach's Add player form stops being the thinnest door — BUILT, awaiting QA
+## §112 · The coach's Add player form stops being the thinnest door — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 **Walkthrough:** https://claude.ai/code/artifact/6537e900-caac-4679-b755-20a6ad864b28
 
@@ -14465,7 +14758,9 @@ phase.
 a combobox open over the schedule, "Saving…", a refused rename, the unsaved-changes guard — are
 **this walk's job alone**.
 
-## §115 · The 641–768 band — what a tablet is, settled — BUILT, awaiting QA
+## §115 · The 641–768 band — what a tablet is, settled — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/7345c02e-a2bb-4f6c-866b-7e883e442a12`
 >
@@ -14667,7 +14962,9 @@ of them were three controls repeated per player and per inning.
 
 ---
 
-## §116 · A payment learns who paid it — and the question the form already asked starts working — BUILT, awaiting QA
+## §116 · A payment learns who paid it — and the question the form already asked starts working — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/a9c99bab-d975-40f2-92d5-9cff64224068`
 >
@@ -15368,7 +15665,9 @@ all land under this closure, and the fold project is COMPLETE: plan + PM brief m
 `docs/projects/archive/`, committed to dev the same day. The walk's own findings (A3, Part E,
 G2/G3, round 3) were all fixed-in-session and are recorded above.
 
-## §120 · An entry is an arrival — the sponsor keeps its promise in cheques — BUILT, awaiting QA
+## §120 · An entry is an arrival — the sponsor keeps its promise in cheques — BUILT, awaiting QA — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/9b72eeb4-7b7f-431a-b452-875f0bec9208`
 >
@@ -16099,7 +16398,9 @@ only when you give the word.
 
 ---
 
-## §124 · The dues forms, built — the floor, the grammar, the name and the shape — BUILT, awaiting QA · committed `2d430bad` 2026-09-01 (carried by the fundraiser-band commit)
+## §124 · The dues forms, built — the floor, the grammar, the name and the shape — BUILT, awaiting QA · committed `2d430bad` 2026-09-01 (carried by the fundraiser-band commit) — ✅ **CLOSED UNWALKED 2026-10-19** (owner)
+
+> **✅ CLOSED 2026-10-19, not walked, on the owner's word** (*"close up any qa items that were created prior to september"*). Written before September 2026 and shipped long since; nobody walked it, so this is **not a pass** and no step below was confirmed by a tick. A defect found here later is a new item, not a re-open of this walk. Any owner decision this section raises is **not** ruled by this close.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/0b7619dc-a4ea-41dc-a9b6-e124bbf0ecc1`
 >

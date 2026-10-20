@@ -1,5 +1,11 @@
 # Club Tier Production Readiness — Implementation Plan
 
+> **📇 Project index (from 2026-10-19): https://claude.ai/artifact/MBKRySURVFu3V9cZJvmjVr** — each stage's state, anchor,
+> summary and decisions, and a dated log, kept in the page's own database (update a stage or add a log row with
+> ArtifactData; never republish for news). Drawings, QA walks and decision rounds are their own artifacts, linked from
+> their stage. The all-in-one hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 is the frozen archive (up to
+> 2026-10-19; not republished).
+
 > **Status:** PLANNED 2026-09-25 — this is the owner-started **full Club capability evaluation** that
 > `PROGRAM_LEAGUE_AND_CLUB.md` parked on 2026-07-28 ("once the Coach Portal work is finalised").
 > **Created:** 2026-09-25 · **Branch:** dev
@@ -1018,7 +1024,8 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > the owner wants the ruled face. (2) The phantom `organizations.contact_email` mapping (`lib/db.ts` `mapOrg`,
 > `lib/server-organizations.ts`, `lib/api-auth.ts`) feeds about 20 other readers: tournament pages’ contact fallback, game-day
 > reminders, schedule publish, the coach’s ended-subscription wall. Fixed only on the club’s own pages; wiring it at the source would
-> change tournament pages and family emails, so it is an owner finding.
+> change tournament pages and family emails, so it is an owner finding. **⚖ Both RULED 2026-10-20 as recommended (owner: "agree
+> with your recommendations"):** (1) stands as built (design log entry 2026-10-19 amended); (2) becomes its own TODO item.
 > **Demo:** `riverdale-ridge` is seeded `is_public: false` on purpose and `check-demo-coach` asserts it; no tour step or dock line
 > opens a public page, so its public tryout now refuses and nothing changes. **Gates:** red run first (the guard 36 of 51 failing,
 > the rule test unloadable); after: `club-stage4a-access` + `club-stage4a-guard` 65 of 65; typecheck clean; `npm test` 8,298 of
@@ -2153,6 +2160,20 @@ boxes taking the Opponent Picker (F13); an arrival after the start flagged under
 Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No.
 
 ### Stage 7 — Tournaments inside a club + one door to every family
+> **DRAWN 2026-10-20, asks 1–13 open (nothing ruled, nothing built).** Drawings (round 1, through `/design`, 15 drawing changes
+> applied): https://claude.ai/artifact/MLqvD7TXbLM5QX8H9mmapZ (source `CLUB_TIER_STAGE7_DRAWINGS.html`, captures
+> `club-tier-stage7/`). Re-verified at HEAD `658cb84e5`: **G01 fixed** 2026-09-26 (`69ee4101`, the club's own Overview) and
+> **G04 fixed** 2026-09-29 (`00865a6d`, the program-year pages are a redirect), so both leave this stage; G03, C18 and G02 still
+> true (G02's "no cap" is stale: Families' one-household message has had a cap, log and Reply-To since 5a). Proposed ladder:
+> **7a** the tournament's money (Asks 1–4) · **7b** Add our teams (Ask 5) · **7c** Email families (Asks 6–7) · **7d** the coach's
+> Tournaments (Asks 8–12) · walk (Ask 13). **The drawings argue with this section's recommendation:** fees land in the
+> tournament's OWN book (it already exists, needs a word on every line, and counts in Cash on hand), the tournament becomes one
+> category on the club's budget so By activity is the coach's shape unchanged (Asks 1, 3); the club's own team enters with no fee
+> (Ask 2); the fee write is shared with the house league, whose six defects ride it (Ask 4); "message every family" is an EMAIL on
+> Families through the one club send window (scheduler Ask 9), not the chat pause's Messages (E2) (Ask 6). New findings: an
+> assistant coach can save the event's head coach (the server checks no role); the coach record's Registered date is formatted
+> on the server's clock. Ask 1 decides 7a, and Stage 12c waits on it.
+
 **Closes:** G01–G04 · C18 (decision) · the org-wide announcement gap.
 - [ ] Hub banner logic for a club (G01); "Add my team" for a club org (one click; today two steps — G03); tournament fees → the club ledger **by decision** (recommend: an automatic income entry on the org ledger when a fee is marked paid, source_module `tournament_fee`, voided with the payment — the house-league pattern done right, fixing the fire-and-forget/void/revive defects with it).
 - [ ] **Message every family** (G02): one org-wide announcement door on the hub (audience = every guardian across rep rosters + league registrations + Families, through the family-email choke point with suppression, a preview count, a send log, a cap). Reuses the house-league broadcast sender once it is batched.
@@ -2174,7 +2195,34 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 - [ ] **The formatting standard** (§6 "Across every stage — formatting"): written, with its exception register, and every club screen measured against it. Its **calendar section** (the 6c recipe C1–C13 and register R1–R11, ruled 2026-10-10) is written by the 6c build's Part 0; Stage 8 confirms every calendar against it.
 **Exit:** owner go/no-go on the nine-point definition in §3.
 
+### Bank reconciliation — both portals (⚖ owner 2026-10-06: both portals, planned and drawn before Stage 8; inside the release 2026-10-12)
+> This section reserves the slot (added 2026-10-19 — the stage was on the project index and in §7's "inside, by name" list but had
+> no section here). Owner rulings only: **both portals** (2026-10-06), **planned and drawn before Stage 8** (2026-10-06), **inside
+> the Club release** (2026-10-12, BUSINESS_DECISIONS 2026-10-16). Its own PLAN/PM-brief pair, owner mockup session and walk come
+> when it opens.
+**What it is (the index's words):** a treasurer checks each club book against the bank statement and marks the period done; a coach
+does the same with the team's Ledger.
+- [ ] Planned (its own PLAN/PM brief) and drawn (owner mockup session) — before Stage 8.
+- [ ] Built for the club (Accounting) and for the coach (the team's Ledger).
+- [ ] Walked (its own checkable page, a § in the Owner QA Ledger).
+- [ ] **Marketing truth:** "payment reconciliation" comes back into the Club copy (pricing section, Club plan article, homepage,
+  the in-app help's plan list, `PRICING_PAGE_COPY.md`) once it ships — taken out 2026-10-19 until it exists (BUSINESS_DECISIONS
+  2026-10-19, "Marketing claims only what ships"). Route through `/marketing`.
+**Until it exists, no page may claim it.**
+
 ### Stage 9 — House league (last; ⚖ inside the Club release since 2026-10-12, §7)
+> **💳 Owner ask 2026-10-19 (raised with the Stage 4 ruling): research, in this stage, what it takes for families to PAY for a
+> house-league sign-up on the site.** Not a fresh investigation: the 2026-07-28 facilitated-payments decisions stand (direct
+> charges on the club's own Stripe Express account, the club nets the full fee, family-pays rates cards 3.5% + $1.50 / bank debit
+> 2.5% + $1.00, all paid org tiers, counsel sign-off the launch gate — `FACILITATED_PAYMENTS_SCOPING_PLAN.md`). **⚖ 2026-10-19 (owner):
+> payments processing is inside the Club release, which has no date (§7)**, so this flow is release work, not a follow-up.
+> What this stage adds is the house-league flow, which that plan never named (its first flow is tournament registration): pay at
+> submit vs on acceptance given auto-approve, capacity and waitlists; a fee per division (a season holds one fee today; Milton's
+> run $145–$340 by division) and early-bird pricing; refunds for a decline, a waitlist or a withdrawal, and who carries the
+> processing fee; one checkout for two children without becoming household money (2026-10-19 ruling); waiver and CASL consent at
+> checkout; the payment landing in the club's books; offline payment kept alongside. **Built as Stage 12b** (planned 2026-10-19;
+> the data it needs — a fee per division, early-bird dates — lands here in Stage 9). Evidence from the ten club sites: Stage 4
+> drawings, "Ten club sites". The H1 2027 date no longer binds the Club release (§7, /strategy 2026-10-19); counsel sign-off does.
 Inventory in §4I. Scope: the trust-plan defect list re-verified (comms that email nobody, the
 vanishing season, schedule honesty, parent payment loop, schedule generator, email injection), the
 coupling check for a standalone League Plus org (house league with no rep teams / no accounting),
@@ -2371,17 +2419,60 @@ slots (block, team or program, locked), a send log; the team-schedule link per A
 **Not in the first cut (proposed):** families requesting or swapping slots, coaches trading slots with each other, a
 public schedule page, paying for time per slot, any optimizer beyond the listed rules.
 
+### Stage 12 — Payments processing: families pay online (⚖ added by the owner 2026-10-19; inside the release, no date)
+> **Why this stage exists:** the owner, 2026-10-19 — *"will release when the product is fully ready, and that includes payments
+> processing"* (BUSINESS_DECISIONS 2026-10-19, "The Club release has NO date…"). Ten real club sites reviewed the same day: 6 of 10
+> confirmed card payment at house-league sign-up, none offline-only; a club leaving TeamSnap, SportsEngine or RAMP would otherwise
+> give up online payment. **The decisions are already made** (2026-07-28, `FACILITATED_PAYMENTS_SCOPING_PLAN.md` + PM brief +
+> `FACILITATED_PAYMENTS_COUNSEL_BRIEF.md`): Stripe Connect **direct charges** on the club's own Express account (FieldLogicHQ never
+> holds the funds); the club nets the full fee; **family-pays** cards 3.5% + $1.50 / bank debit (PAD) 2.5% + $1.00 all-in; **all paid
+> org tiers** (Tournament Plus, League Plus, Club, Club · Association; free tiers and the standalone Coaches Portal excluded);
+> **counsel sign-off is the launch gate**. This stage is the build those decisions handed to `/plan` (the scoping plan's item 5);
+> its own PLAN/PM-brief pair is written when it opens, from the scoping plan's effort model, and this section reserves the slot.
+**Closes:** every fee flow being manual bookkeeping (the scoping plan's starting point) · Stage 9's "parent payment loop" defect.
+- [ ] **12a · The foundation (the scoping plan's Phase 0 + Phase 1 core):** the club connects its payout account (Stripe Express
+  onboarding, by the owner or treasurer, from the club's settings); one checkout the flows share (card and bank debit, the family-pays
+  rate shown before paying, a receipt email in the club's name); webhooks that mark a payment paid; test mode; a payment lands in the
+  club's books (the ledger seam the manual path already uses — the hybrid rule: online collection writes the same paid fields as
+  mark-paid, and **mark-paid stays**; no club is forced onto online payment). Gated by `hasPlanFeature` at the four paid org tiers.
+- [ ] **12b · House-league registration (needs Stage 9's data):** the questions recorded in Stage 9's note, answered at the owner
+  mockup session: pay at submit vs on acceptance given auto-approve, capacity and waitlists (a card hold expires in days, so a
+  waitlist likely means a pay-later link); a **fee per division** and **early-bird pricing** (a season holds one fee today); refunds
+  for a decline, a waitlist and a withdrawal, and who carries the processing fee on a refund; **one checkout for two children
+  without becoming household money** (2026-10-19: no sibling discount, assistance, payment plan or credit move — two registrations,
+  one payment, nothing more); waiver and CASL consent at checkout (both exist on the form); the payment in the club's books.
+- [ ] **12c · Tournament registration (the scoping plan's first flow; needs Stage 7's tournament-fees decision):** a team pays its
+  entry or deposit at registration, feeding the Registration Command Center's paid and deposit fields and its reminders.
+- [ ] **12d · Hardening (the scoping plan's Phase 2):** partial refunds, disputes and negative balances, payout support, the bank-debit
+  rail's timing, the "+ tax" display rider (accountant) and the international-card policy.
+- [ ] **Owner steps (long-lead, not code):** the counsel session (memo ready: RPAA / FINTRAC / terms) — **no live charge before it**;
+  the accountant's GST/HST confirmation; the insurance broker quote.
+- [ ] **Owner mockup session** (drawn before any build): the club's payout setup, the family checkout at 390 (house league and a
+  tournament team), the receipt, the paid record in the club's books, a refund, and the offline path beside the online one.
+- [ ] **Open questions for that session:** a rep team's dues paid online through the club's account (a Club org's team; the
+  2026-07-28 tier ruling excludes only the standalone Coaches Portal — not decided either way); whether a family can save a card;
+  what the family sees when a club has not connected payouts (absent, never a dead button).
+**Effort (2026-07-28 model):** MVP 15–22 days, full 30–48 days, solo + AI; 12b's house-league questions add their own estimate when
+drawn. **Migrations:** payment records and the club's connected account; a fee per house-league division and early-bird dates — each
+**with** its data-dictionary line and snapshot refresh. **Definition of done:** counsel's sign-off recorded; a club connects payouts; a
+family completes a house-league sign-up and a team a tournament registration with payment, on a phone, in test mode and then live; the
+club nets the full fee and the payment shows in its books with nobody typing it; a refund works from the record; mark-paid still works;
+unit tests for the paid-state rules and the gate; the layout sweep on the checkout screens; **the Stage 12 walk** (its own checkable
+page, a § in the Owner QA Ledger) passed.
+
 ## 7. Sequencing & dependencies
 
 ```
 Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ──┬─ Stage 3a ─ 3b ─ 3c (money) ─┐
          │                               │                          │                               │
-         │                               ├─ Stage 4 (public face) ──┤                               ├─ Stage 10 (permits) ─ Stage 8 ─ release
+         │                               ├─ Stage 4 (public face, 4a–4e) ┤                           ├─ Stage 10 (permits) ─ Stage 8 ─ release
          │                               │                          ├─ Stage 5 (families) ──────────┤
          │                               │                          ├─ Stage 6 (venues/calendar) ───┤
          │                               │                          └─ Stage 7 (tournaments+comms) ─┘
          └─ rulings D1/D2/D8 RULED 2026-09-25 ───────────────────────► Stage 3 may start once Stages 1–2 land
 Stage 9 (house league) ─── its own plan and release track; may run alongside Stage 10
+Stage 12 (payments, ⚖ 2026-10-19): 12a foundation (any time; no live charge before counsel) ─► 12b house league (after Stage 9) ·
+                   12c tournaments (after Stage 7) ─► 12d hardening ─► Stage 8 ─► release (the release waits for Stage 12)
 Stage 6 (built) ─► 6c one calendar (review + the coach desk schedule) ─► Stage 10 + Stage 11 drawn in ONE session
                    (permits → the club's schedules) ─► built as two ─► Stage 8 ─► release (⚖ 2026-10-08: the release
                    waits for Stage 11 too)
@@ -2394,6 +2485,12 @@ Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─
 ⚖ **2026-09-25: the release waits for Stage 10 (permits).** ⚖ **2026-10-08: and for Stage 11 (the club scheduler)**
 (owner: *"the release will wait until this is all done"*). Stage 8's go/no-go therefore comes after Stages 3, 6, 10 and
 11 at the earliest.
+⚖ **2026-10-19 (owner): payments processing and a club's own web address are inside the Club release too, and the release has NO
+date** — *"I am not married to any specific dates but will release when the product is fully ready, and that includes payments
+processing. The release will depend on all of these being complete."* So: **Stage 12** (payments processing: house-league
+registration as a flow, beside tournament registration; planned 2026-10-19) and **Stage 4e** (a club's own web address, carried by
+every plan with the public site at no extra charge) are release work like every stage here. The 2026-07-28 "launch H1 2027" line no longer sets a date for the Club release (logged via /strategy 2026-10-19); counsel
+sign-off stays the payments launch gate.
 ⚖ **2026-10-12 (owner): EVERYTHING in this plan is inside the Club release** — *"everything is inside the club release,
 those will be done months before we are ready to release club anyways"*, completing the owner's 2026-10-10 rule (*"the club
 release will only happen when all of this work is either complete or deemed cancelled by me"*). Inside, by name: Stage 9
@@ -2405,6 +2502,9 @@ same release — logged there as Proposed, confirmed when Stage 9 opens (D11's o
 - Stage 1 before everything: no other walk is honest while admins/treasurers are tournament-only users.
 - Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
 - Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.
+- Stage 12 (payments): 12a can be built any time but charges nothing live before counsel signs off; 12b needs Stage 9 (the
+  house-league data it charges against: a fee per division, early-bird dates); 12c needs Stage 7's tournament-fees decision; all
+  of it precedes Stage 8's go/no-go. Stage 4e (own web address) needs only its hosting spike and Stage 4b's pages.
 - Stage 6's venue book is a prerequisite for Stage 9's league scheduling, not for the Club release.
 - **⚖ 2026-10-09 — the coach Schedule deep dive merged in (owner).** 6c (one calendar, with the deep dive's stage 2 drawn
   inside it) comes **before** the Stage 10 + 11 drawing session, because Stage 11's draft grid wears the club calendar's

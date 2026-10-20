@@ -23,8 +23,30 @@ edits nothing, commits nothing and publishes nothing.** If you find a record tha
   next message to a chat that is already open: a build after its gate, the next part of a staged build), goes in a
   **separate group below it**, headed as not yet (for example **"Later in this wave · don't start yet"**). Each item
   there says which chat it belongs in and what it waits for, and is never numbered in sequence with the run-now items.
+- **A plain request means the last seven days** (owner, 2026-10-19: *"whenever I ask for a simple updated task list,
+  only incorporate projects that have been worked on in the past 7 days"*). A plain `/tasks` (or "give me an updated
+  list") covers only projects with a commit, a ruling or a record in the last seven days; check git and the records,
+  not memory. Their walks, owner calls, prompts and later waves come with them; everything else stays out of the
+  waves, the walk table and "waiting on you". A stage of a project in scope is in scope even when it has had no work
+  of its own (a Club Tier stage not yet drawn). End with **one line** naming what the rule left out that still gates a
+  release (for example a Club-release item untouched this week), so the window never hides a blocker. The full list,
+  every project, is for when the owner asks for it ("full list", "everything").
 - **Wave 1 lists every open QA walk with its link** (owner, 2026-10-14): a table of walk · what it checks · where to open
   it (the page's URL, the tab, and the walk's number or name).
+- **Every Wave 1 session carries its prompt link; a paste block only when the prompt alone isn't enough** (owner,
+  2026-10-19: *"I want to see this list like this with the exact build prompt links and the text I need to paste into
+  another chat (i.e. if I need to tell the chat to execute build prompt A but start at stage 3, then ensure that is there
+  for me to paste)"*; narrowed the same evening: *"I only need full prompts like this if there is something specific I
+  need to send with the actual prompt link that is not simply in that prompt file, this is too much and your lists need
+  to be more concise"*). Each numbered Wave 1 item gets a clickable link to its prompt file. Add a paste block **only**
+  when the owner must tell the chat something the prompt file doesn't already say (start at stage 3; skip parts already
+  committed since the prompt was written; a promote is in flight), and keep it to those lines. Never restate the
+  prompt's own instructions or the standing repo rules (explicit paths, ask before committing, never push).
+- **Concise** (owner, 2026-10-19: *"your lists need to be more concise"*). One line per item where possible; no
+  paragraph of reasoning per item; housekeeping and owner questions as short bullets. If a section is empty, drop it. Check a prompt's precondition and its staleness (rulings made after it was
+  written) before pointing at it; a stale prompt is named as stale, not pasted around. An item with no prompt says
+  "no prompt yet". On 2026-10-19 the owner also asked that run to write the missing ones; that was a one-off request,
+  not a change to this agent's read-only rule.
 - **Product-owner voice.** Say what the owner sees and does, not file paths, function names or commit hashes. Name things
   the way the product and the plans name them.
 - Start with **what moved since the last list** (two to five lines), then anything urgent (a security fix not yet on
@@ -120,7 +142,8 @@ project the owner started belongs in the list.
 6. **Fillers.**
 7. **Still waiting on you:** each a question with your recommendation.
 8. **Housekeeping:** uncommitted records worth committing, and by whose session.
-9. If the owner wants prompts for the next sessions, link them at the end. Don't paste them.
+9. Prompts: Wave 1's items carry their links and paste blocks in place (see the 2026-10-19 format ruling above). Later
+   waves link their prompts at the end. Never paste a prompt's body.
 
 Keep it scannable: headings, numbered waves, short bullets, one table for the walks. No file paths in the body except
 the walk and prompt links. End by asking nothing unless a decision is truly blocking.

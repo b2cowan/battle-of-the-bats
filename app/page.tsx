@@ -109,7 +109,7 @@ const MODULE_CARDS: Array<{
       'Coaches manage their own roster, lineups, and team budget',
       'Organization-wide visibility into rosters, documents, and finances',
       'Tryout registration and program year management',
-      'Organization ledger, team invoicing, and financial reporting',
+      'Club ledger, budget vs. actual, and costs split across teams',
     ],
     stripLine: 'The whole organization under one roof.',
   },

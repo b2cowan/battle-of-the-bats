@@ -220,11 +220,10 @@ describe('8. one spelling; the zone read from the zone; the olive switch', () =>
     assert.match(readCode(COACH_VIEWS), /<span className=\{styles\.calNavSizer\} aria-hidden>/);
     assert.match(readCode(CLUB_PAGE), /<ScheduleDateNav view=\{view === 'month' \? 'month' : 'week'\} cursor=\{cursor\} onStep=\{step\} \/>/);
   });
-  it('the zone sentence is read from the zone, never written into the page', () => {
+  it('the zone sentence is read from the zone, never written into the words (the exports say it; the page does not — owner 2026-10-19)', () => {
     assert.equal(timesInZoneSentence(), 'Times in Eastern time.');
     assert.equal(timesInZoneSentence('America/Vancouver'), 'Times in Pacific time.');
     assert.equal(timesInZoneSentence('America/Regina'), 'Times in Central time.');
-    assert.match(readCode(CLUB_VIEW_LIB), /timesNote: \(timeZone\?: string\) => timesInZoneSentence\(timeZone\),/);
     assert.doesNotMatch(readCode(CLUB_VIEW_LIB), /'Times in Eastern time\.'/);
   });
   it('ONE switch and ONE date row on every calendar, both white — none hand-rolls its own (Ask 13; owner 2026-10-10, §289)', () => {
@@ -259,7 +258,7 @@ describe('8. one spelling; the zone read from the zone; the olive switch', () =>
     const line = page.map(c => c + (255 - c) * white20);
     assert.ok((lum(line) + 0.05) / (lum(card) + 0.05) >= 1.4, 'the dark Month line stands off the card');
     // A browser that reads scrollbar-width stops reading ::-webkit-scrollbar for the element — a width alone draws its default, light bar.
-    assert.match(readCode(ADMIN_FRAME_CSS), /scrollbar-width: thin;\s*scrollbar-color: var\(--home-line-strong, rgba\(255, 255, 255, 0\.18\)\) transparent;/);
+    assert.match(readCode(ADMIN_FRAME_CSS), /scrollbar-width: thin;\s*scrollbar-color: var\(--home-line-strong\) transparent;/);
   });
   it('the state words: one source, styled as chips', () => {
     assert.match(readCode(RECIPE), /export const STATE_WORDS = \{ cancelled: 'Cancelled', postponed: 'Postponed' \} as const;/);

@@ -5,9 +5,9 @@
  * rows. The server half (`lib/club-calendar.ts`) reads the three programs and runs 6a's one clash rule; the page draws
  * what this module decides.
  *
- * ⚖ ONE CLOCK, SAID ONCE: every day is the org's (`orgDayKey`), every time is read in the platform zone, and the page
- *   says so once — the sentence READ FROM the zone (`timesInZoneSentence`, Club Tier 6c Ask 10), never written into the
- *   words. A per-club zone is a platform item (S6-13), not this page's.
+ * ⚖ ONE CLOCK: every day is the org's (`orgDayKey`) and every time is read in the platform zone. The page does not say
+ *   which (owner 2026-10-19, as the schedule's page 2026-10-12 — its readers are the club's own admins). A per-club zone
+ *   is a platform item (S6-13), not this page's.
  * ⚖ NOTHING HIDDEN (6c Ask 9, C9): a called-off booking stays on the calendar with its word (`state`), never a clash.
  * ⚖ ONE SPELLING (6c Ask 8, C8): the day, week and month words are the calendar recipe's (`lib/calendar-recipe`).
  * ⚖ A BOOKING'S COLOUR IS ITS TEAM (design log (3)): the portal's one-team schedule colours by kind; a club page's
@@ -17,7 +17,7 @@
  *   drawn dashed and is not counted: it MAY clash.
  */
 import {
-  addCalendarDays, addCalendarMonths, formatInOrgZone, lastDayOfMonth, mondayOfDay, timesInZoneSentence, utcToZonedInputs,
+  addCalendarDays, addCalendarMonths, formatInOrgZone, lastDayOfMonth, mondayOfDay, utcToZonedInputs,
 } from './timezone.ts';
 import { STATE_WORDS, monthWords, weekRangeWords } from './calendar-recipe.ts';
 import { formatTimeRange, formatTime, pluralize, possessive } from './utils.ts';
@@ -144,8 +144,6 @@ export const KIND_EYEBROW: Record<CalendarKind, string> = {
 
 export const CALENDAR_WORDS = {
   title: 'Calendar',
-  /** The date row's one line about the clock (Ask 7) — read from the zone (6c Ask 10) on every call, never frozen here. */
-  timesNote: (timeZone?: string) => timesInZoneSentence(timeZone),
   clashes: (n: number) => pluralize(n, 'clash', 'clashes'),
   /** The Venue filter's last row: bookings on a team's own place or typed words. */
   elsewhere: 'Places the club doesn’t own',

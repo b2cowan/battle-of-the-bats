@@ -1,5 +1,12 @@
 # Account-First Sign-up — plan
 
+**✅ CLOSED 2026-10-19 (owner, The first look Ask 11) and archived.** Its last owed item, the review of the sign-up
+screens still on the old look, is owned by The first look (`docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`, hub
+https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx), which also carries this project's two remaining owner calls (the
+reading of "first plan choice" and the production orphan organization) under *Inherited from Account-First*. The claim
+link's reachability is parked and routed to `/strategy` (the same session's Ask 7). Release state of Parts 2–3 lives in
+the release-history record.
+
 **Status:** drawn 2026-10-18 and design-reviewed the same day (hub: https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx v1,
 source `docs/projects/active/ACCOUNT_FIRST_SIGNUP_HUB.html`, built by `.probe/account-first/build-hub.cjs`). **A1–A7
 ruled as recommended by the owner 2026-10-18** (see Rulings). **Part 1 (shared pieces + Start a team + Start a
@@ -398,3 +405,51 @@ two steps. Accepted: the shared sign-up limit can be spent by a spammer (as the 
 exists" tells that one does (as every sign-up); the existing-account check scans the account list (as every sign-up);
 an account that began the old one-form Premium sign-up before this release and checks out after December 31 has no
 lock (it checked out at the link in the old flow); after an in-card sign-in the remembered billing is not re-applied.
+
+## Owed before this project closes: review the sign-up screens still on the old look (owner, 2026-10-19, walking §343)
+
+The plan step a new organization lands on after naming itself (`/admin/onboarding?choosePlan=1`) gets its own review
+toward the end of this project, before the plan is archived. The owner's notes from W5:
+
+- **Old type and colours.** It is still on the pre-warm look (the monospace pricing cards), not the portal's.
+- **Too much feature list.** Four cards of plan descriptions, twice-stated heading ("Start free or choose an upgrade"
+  as the page title AND the card title), for a person who already chose a plan on the pricing page.
+- **The buttons are far below the fold.** The choose buttons sit under the descriptions and prices, out of sight on a
+  laptop screen.
+- **Nothing is highlighted when the plan picked is not on sale.** W5 arrived with `plan=league&billing=annual`: Annual
+  was chosen, but no card was featured. That is the code's rule, not a regression: `PricingSection` never features a
+  gated card (`isFeatured = !isGated && …`), and League Plus is "Not open yet", so the chooser shows no highlight at all
+  (Tournament Plus loses its default one too). The walk's expectation was written without checking that. The real
+  question for the review: **what should someone who came for League Plus see when League Plus is not open?** Today
+  nothing at the top says so; their plan is the third card, labelled Not open yet. Decide that in the review (likely
+  candidates: say it plainly above the cards and offer the interest form, or keep them off this step entirely until
+  League opens) rather than patching the highlight alone.
+
+**The coach join page too (owner, 2026-10-19, walking W15).** The free "Create Your Coaches Portal Account" page
+(`/coaches/join`, where an organizer's coach email lands) is still the old dark terminal look, while every other
+sign-up step in this project is warm. Review it with the plan chooser. Note the overlap with the queued "public face,
+warm" project (marketing, sign-in and emails onto warm type): decide in the review whether these two screens move here
+or there, rather than doing them twice.
+
+Draw them as whole-screen before/afters on the hub and run `/design` on them before asking the owner.
+
+**Moved to its own project, 2026-10-19:** the review grew into an end-to-end walk of the whole first run (both screens
+above included, with the plan chooser re-framed: nobody can arrive having picked League Plus, so the question is the
+step's length, fold and the two plans that door cannot sell). See `FIRST_LOOK_SIGNUP_PLAN.md` (hub
+https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx). Its Ask 11 proposes that this project closes once that one owns the
+review.
+
+## Found walking §343 W15 (2026-10-19): no organizer can send a claim link
+
+W15 step 1 ("as the organizer, send a team's coach a Coaches Portal claim link") describes an action the product does
+not have. The organizer's coach email (resend access, the sign-ups reminder) links to the FREE join page
+(`/coaches/join`), which is where the owner landed. A claim (`/coaches/claim/<token>`) is created only by
+`createTournamentTeamWorkspaceClaim`, whose one caller is the platform-admin Dev Tools card "Coaches Portal Claim Link"
+(the newest team in `dev-tournament-2026` with a contact email). Nothing in the product emails a claim URL.
+
+- The walk is re-run through Dev Tools (set that team's contact to the walk's address first).
+- **The Part 3 note above that "the organizer's claim email is the way back" is wrong**: there is no such email. A claim
+  sign-up that loses its tab has only the verification email's link back. Flagged to the owner rather than corrected
+  silently, because it bears on the /review call that a claim remembers no door.
+- Open question for the owner, outside this project: is the claim funnel meant to be reachable by customers (an
+  organizer action, or the registration emails), or parked? Today it is built end to end and unreachable.

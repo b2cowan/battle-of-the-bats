@@ -1,0 +1,1368 @@
+<title>Club Tier Stage 7 Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds specimens of a club's public site
+   (the product: the admin and the coaches portal, warm). The chrome and the specimens deliberately do not share a ground. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --accent-soft:#DCEAE5; --flag:#A8361F; --flag-soft:#F7E2DC; --fix:#2B672A; --fix-soft:#DFEEDB;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --f-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-serif:'DM Serif Display',Georgia,serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 80px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+.doc h2{font-size:24px;margin:40px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:18px;margin:28px 0 6px}
+.doc p,.doc li{max-width:78ch}
+.lede{font-size:17px;color:var(--ink)}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:10px 20px 0;display:flex;flex-direction:column;gap:8px}
+@media (max-width:600px){.top-in{padding:8px 16px 0}}
+.top-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.top-row h1{font-size:19px;margin:0}
+.top-row .st{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -4px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:12px 10px 11px;min-height:44px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button .n{font:600 11px/1 var(--f-mono);background:var(--ask-soft);color:var(--ask);border-radius:9px;padding:2px 6px;margin-left:5px;vertical-align:1px}
+section.tab{padding-top:8px}
+/* cards in the document */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.grid2>*,.grid3>*{min-width:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--flag);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict.ok{border-left-color:var(--fix)}
+.verdict h2,.verdict h3{margin-top:0}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+table.t{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface)}
+table.t th{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tw table.t tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font:600 12px/1.4 var(--f-doc);border-radius:20px;padding:2px 10px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{background:var(--fix-soft);color:var(--fix);border-color:transparent}
+.pill.bad{background:var(--flag-soft);color:var(--flag);border-color:transparent}
+.pill.half{background:var(--ask-soft);color:var(--ask);border-color:transparent}
+/* annotation chips: every one opens its explanation on click */
+.fl,.fx,.mk{font:700 11px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:5px 7px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);vertical-align:middle;white-space:nowrap;min-height:24px}
+.fl{color:var(--flag);background:var(--flag-soft);border-color:transparent}
+.fx{color:var(--fix);background:var(--fix-soft);border-color:transparent}
+.fl::before{content:"▲ ";font-size:9px}
+.fx::before{content:"✓ fixes "}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 10px}
+/* specimen stages */
+.stage{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin:14px 0 8px}
+.stage>.col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.cap{font-size:13px;color:var(--muted);max-width:390px}
+.cap b{color:var(--ink)}
+.ph-wrap{position:relative;width:390px;max-width:100%}
+@media (max-width:440px){.ph-wrap{width:auto;max-width:none;margin-inline:-16px;overflow-x:auto}}
+.ph{position:relative;width:390px;flex:none;background:#fff;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+@media (max-width:440px){.ph{border-radius:0;outline:0}}
+.fold{position:absolute;left:0;right:0;top:844px;border-top:2px dashed #D9431F;z-index:5;pointer-events:none}
+.fold span{position:absolute;right:6px;top:-21px;font:700 10.5px/1 var(--f-mono);color:#fff;background:#D9431F;border-radius:4px;padding:4px 6px}
+.shot{display:block;width:390px;max-width:none;height:auto}
+.shot-wrap{position:relative;width:390px;flex:none;border-radius:14px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow);background:#0b0b0b}
+@media (max-width:440px){.shot-wrap{border-radius:0;outline:0;margin-inline:-16px;width:auto;max-width:none;overflow-x:auto}}
+.shot-scroll{max-height:1100px;overflow-y:auto}
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.btn-d{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d:hover{border-color:var(--accent)}
+.btn-d.pri{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);background:#fff;max-width:100%}
+.dt{width:1440px;background:#fff}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.dt-shot{display:block;width:1440px;max-width:none}
+.dt-wrap.fit .dt-shot{zoom:var(--z,1)}
+/* stations */
+.station{border-top:1px solid var(--line);margin-top:34px;padding-top:4px}
+.station>h3 .no{font:600 12px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.read{display:grid;grid-template-columns:1fr;gap:10px;max-width:560px;flex:1 1 380px;min-width:0}
+.read h4{margin:4px 0 2px;font-size:13px;font-family:var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.read ul{margin:0;padding-left:18px}
+.read li{margin:0 0 6px}
+.measure{font:500 12.5px/1.5 var(--f-mono);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink)}
+.shape{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.shape b{font-size:14px}
+.shape .k{display:inline-block;font:700 11px/1 var(--f-mono);padding:4px 7px;border-radius:4px;margin-right:6px}
+.k.keep{background:var(--fix-soft);color:var(--fix)} .k.reshape{background:var(--ask-soft);color:var(--ask)} .k.notyet{background:var(--surface-2);color:var(--muted)}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask.decides{border-left-color:var(--flag)}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:6px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:8px 10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer;border:1px solid transparent}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted)}
+.ask textarea{width:100%;box-sizing:border-box;min-height:60px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{position:sticky;bottom:12px;z-index:20;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;box-shadow:var(--shadow);margin-top:20px}
+.paste textarea{width:100%;min-height:140px;font:12.5px/1.45 var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-2);color:var(--ink)}
+/* explanation dialog */
+dialog.note{max-width:min(560px,calc(100vw - 32px));border:1px solid var(--line);border-radius:14px;padding:0;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog.note::backdrop{background:rgba(15,20,25,.45)}
+dialog.note .nh{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:16px 18px 6px}
+dialog.note .nh h3{margin:0;font-size:17px}
+dialog.note .nb{padding:0 18px 18px;font-size:14.5px}
+dialog.note .nb h4{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+dialog.note .nb p{margin:0 0 6px}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px;margin:-10px -10px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);align-items:center}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<style>
+/* ══ The product, drawn (end state). Fixed light specimens in the warm portal look: they do not follow the reader's
+   theme, because the product screens drawn here are light. Headings are the plain body face (Admin type sweep D1,
+   ruled 2026-10-19: every heading plain, both portals); labels and column heads keep today's look. ══ */
+.wm{--w-paper:#F8F4ED;--w-card:#FFFFFF;--w-ink:#241E15;--w-soft:#4F4636;--w-dim:#6F6553;--w-line:#E5DDCD;--w-field:#D7CFBD;
+  --w-olive:#57651E;--w-olive-ink:#4A561A;--w-olive-soft:#EEF1E1;--w-lime:#D9F07A;--w-red:#A3321E;--w-red-soft:#F7E3DD;--w-amber:#8A5300;--w-amber-soft:#F8ECD3;
+  --w-ok:#2C6A2A;--w-ok-soft:#E6F0E2;--w-blue:#2F4F8A;--w-blue-soft:#E3EAF6;
+  background:var(--w-paper);color:var(--w-ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.wm *{box-sizing:border-box}
+.wm a{color:var(--w-olive-ink);text-decoration:none}
+/* desktop chrome */
+.wm .tb{height:48px;background:#fff;border-bottom:1px solid var(--w-line);display:flex;align-items:center;gap:14px;padding:0 20px}
+.wm .tb .lg{font:700 14px/1 'IBM Plex Mono',monospace;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.wm .tb .lg i{width:22px;height:22px;background:#241E15;border-radius:3px;display:inline-block}
+.wm .tb .ar{font:600 11px/1 'Inter';letter-spacing:.1em;text-transform:uppercase;color:var(--w-soft);border-left:1px solid var(--w-line);padding-left:14px}
+.wm .tb .rt{margin-left:auto;display:flex;gap:16px;color:var(--w-soft);font-size:13px}
+.wm .shell{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:760px}
+.wm .sb{background:#fff;border-right:1px solid var(--w-line);padding:12px 10px;display:flex;flex-direction:column;gap:1px}
+.wm .sb .it{font:500 14px/1 'Inter';color:var(--w-soft);padding:11px 10px;border-radius:7px;display:flex;align-items:center;gap:10px}
+.wm .sb .it::before{content:"";width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;opacity:.6;flex:none}
+.wm .sb .it.on{background:var(--w-olive-soft);color:var(--w-ink);font-weight:650}
+.wm .sb .grp{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);padding:16px 10px 6px}
+.wm .phd{background:#fff;border-bottom:1px solid var(--w-line);padding:14px 32px 14px}
+.wm .phd .ey{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--w-soft);display:flex;gap:8px;align-items:center}
+.wm .phd h1{font:700 20px/1.25 'Inter';margin:6px 0 0}
+.wm .phd.club h1{margin:0}
+.wm .body{padding:24px 50px 60px;display:flex;flex-direction:column;gap:14px}
+.wm .h-row{display:flex;align-items:center;gap:10px}
+.wm .h-row h2{font:700 20px/1.2 'Inter';margin:0;flex:1}
+.wm .tabs-w{display:flex;gap:4px;border-bottom:1px solid var(--w-line)}
+.wm .tabs-w span{padding:10px 13px 11px;font:500 14px/1 'Inter';color:var(--w-soft);border-bottom:2px solid transparent;margin-bottom:-1px}
+.wm .tabs-w span.on{color:var(--w-olive-ink);border-bottom-color:var(--w-olive);font-weight:600}
+/* controls */
+.wm .b{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:0 14px;border-radius:6px;border:1px solid var(--w-field);background:#fff;font:600 14px/1 'Inter';color:var(--w-ink);white-space:nowrap}
+.wm .b.lime{background:var(--w-lime);border-color:#C5DD5E}
+.wm .b.danger{color:var(--w-red);border-color:#E4B9AE}
+.wm .b.ic{width:36px;padding:0}
+.wm .pillsel{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:20px;background:var(--w-olive-soft);border:1px solid #CFD6B0;font:500 13px/1 'Inter';color:var(--w-soft)}
+.wm .pillsel b{color:var(--w-ink);font-weight:600}
+.wm .pillsel::after{content:"";width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:-3px 0 0 4px}
+.wm .srch{display:flex;align-items:center;min-height:36px;border:1px solid var(--w-field);border-radius:20px;padding:0 14px;color:var(--w-dim);background:#fff;font-size:14px;min-width:220px}
+.wm .tool{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wm .tool .gap{flex:1}
+.wm .cnt{font:500 14px/1.3 'Inter';color:var(--w-soft)}
+.wm .cnt b{color:var(--w-ink)}
+/* chips: the product's sentence-case pill */
+.wm .chip{display:inline-flex;align-items:center;gap:6px;font:700 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;border-radius:20px;padding:5px 8px;vertical-align:2px;white-space:nowrap;background:var(--w-paper);color:var(--w-soft);border:1px solid var(--w-line)}
+.wm .chip.ok{background:var(--w-ok-soft);color:var(--w-ok);border-color:transparent}
+.wm .chip.amb{background:var(--w-amber-soft);color:var(--w-amber);border-color:transparent}
+.wm .chip.own{background:var(--w-olive-soft);color:var(--w-olive-ink);border-color:#CFD6B0}
+.wm .chip.blue{background:var(--w-blue-soft);color:var(--w-blue);border-color:transparent}
+/* the table, as the admin draws it today */
+.wm .wt{background:#fff;border:1px solid var(--w-line);border-radius:8px;overflow:hidden}
+.wm table.x{width:100%;border-collapse:collapse;font-size:14px}
+.wm table.x th{font:700 12.5px/1.2 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--w-soft);text-align:left;padding:11px 16px;border-bottom:1px solid var(--w-line);background:#fff}
+.wm table.x th.r,.wm table.x td.r{text-align:right}
+.wm table.x td{padding:10px 16px;border-top:1px solid var(--w-line);vertical-align:middle;font-variant-numeric:tabular-nums}
+.wm table.x tr:first-child td{border-top:0}
+.wm table.x td.nm{font-weight:600}
+.wm table.x tr.band td{font:700 12.5px/1.2 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--w-soft);background:var(--w-paper);padding:8px 16px}
+.wm table.x tr.sum td{font-weight:700;border-top:1.5px solid var(--w-field)}
+.wm table.x tr.void td{color:var(--w-dim)}
+.wm table.x tr.void td .amt{text-decoration:line-through}
+.wm table.x tr.grp td{font:700 15px/1.3 'Inter';background:#F1EDE3;border-top:1px solid var(--w-line)}
+.wm table.x tr.sub td{font:500 13px/1.3 'Inter';color:var(--w-soft);padding-top:8px;padding-bottom:4px}
+.wm table.x td.nw{white-space:nowrap}
+.wm .cv{display:inline-block;width:7px;height:7px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(-45deg);margin:0 10px 1px 2px}
+.wm .cv.dn{transform:rotate(45deg);margin-bottom:4px}
+.wm table.x tr.hl td{background:#FBFAF3}
+.wm .neg{color:var(--w-red)} .wm .pos{color:var(--w-ok)}
+.wm .src{font:500 12px/1.2 'Inter';color:var(--w-dim)}
+/* the one window (KitDialog): head, body, foot with the sentence left and buttons right */
+.wm .scrim{position:absolute;inset:0;background:rgba(36,30,21,.42);z-index:4}
+.wm .win{position:absolute;z-index:5;background:#fff;border-radius:12px;box-shadow:0 24px 60px rgba(36,30,21,.32);display:flex;flex-direction:column;overflow:hidden}
+.wm .win .wh{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--w-line)}
+.wm .win .wh h3{font:700 18px/1.25 'Inter';margin:0;flex:1}
+.wm .win .wh .x{font-size:22px;line-height:1;color:var(--w-soft);width:36px;height:36px;display:grid;place-items:center}
+.wm .win .wb{padding:16px 20px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.wm .win .wf{display:flex;align-items:center;gap:10px;padding:12px 20px;border-top:1px solid var(--w-line);background:#fff}
+.wm .win .wf .say{flex:1;font-size:13.5px;color:var(--w-soft);line-height:1.4}
+.wm .fld label{display:block;font:650 12px/1.3 'Inter';color:var(--w-soft);margin:0 0 6px}
+.wm .inp{display:flex;align-items:center;min-height:36px;border:1px solid var(--w-field);border-radius:6px;padding:0 10px;background:#fff;font-size:14px;color:var(--w-ink)}
+.wm .inp.pl{color:var(--w-dim)}
+.wm .inp.sel{justify-content:space-between}
+.wm .inp.sel::after{content:"";width:6px;height:6px;border:solid var(--w-soft);border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin-top:-3px}
+.wm .inp.area{min-height:104px;align-items:flex-start;padding:9px 10px;line-height:1.45}
+.wm .hint{font-size:12.5px;color:var(--w-dim);margin-top:5px}
+.wm .opt{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--w-line);border-radius:8px;min-height:44px}
+.wm .opt.on{border-color:var(--w-olive);background:var(--w-olive-soft)}
+.wm .opt i{width:18px;height:18px;border-radius:50%;border:2px solid var(--w-field);flex:none;margin-top:1px;background:#fff}
+.wm .opt.on i{border:5px solid var(--w-olive)}
+.wm .opt .tt{font-weight:600}
+.wm .opt .sub{font-size:12.5px;color:var(--w-dim)}
+.wm .tick{width:18px;height:18px;border:2px solid var(--w-field);border-radius:4px;flex:none;background:#fff;display:inline-block;vertical-align:-4px}
+.wm .tick.on{background:var(--w-olive);border-color:var(--w-olive);position:relative}
+.wm .tick.on::after{content:"";position:absolute;left:4px;top:0;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.wm .tick.dim{opacity:.45}
+.wm .callout{border:1px solid var(--w-line);border-left:3px solid var(--w-amber);background:#fff;border-radius:0 6px 6px 0;padding:9px 12px;font-size:13.5px}
+.wm .callout.info{border-left-color:var(--w-olive)}
+.wm .band4{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid var(--w-line);border-radius:8px}
+.wm .band4>div{padding:12px 16px;border-left:1px solid var(--w-line)}
+.wm .band4>div:first-child{border-left:0}
+.wm .band4 .k{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--w-soft)}
+.wm .band4 .v{font:700 24px/1.2 'Inter';margin-top:6px;font-variant-numeric:tabular-nums}
+.wm .band4 .s{font-size:13px;color:var(--w-dim)}
+.wm .pill-saved{position:absolute;right:20px;bottom:86px;z-index:6;background:#241E15;color:#F8F4ED;border-radius:999px;padding:8px 14px;font:600 13px/1 'Inter';box-shadow:0 8px 20px rgba(36,30,21,.22)}
+/* coaches portal: phone */
+.wm.cp{width:390px}
+.wm.cp .pt{height:52px;background:#fff;border-bottom:1px solid var(--w-line);display:flex;align-items:center;padding:0 4px 0 16px;font:700 16px/1 'Inter'}
+.wm.cp .pt .q{margin-left:auto;width:44px;height:44px;display:grid;place-items:center}
+.wm.cp .pt .q span,.wm .qm{width:22px;height:22px;border:1.8px solid var(--w-ink);border-radius:50%;display:grid;place-items:center;font:700 12px/1 'Inter'}
+.wm.cp .pb{padding:14px 16px 96px;display:flex;flex-direction:column;gap:14px}
+.wm.cp .bn{position:absolute;left:0;right:0;bottom:0;height:68px;background:#fff;border-top:1px solid var(--w-line);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;text-align:center;font:600 11.5px/1.2 'Inter';color:var(--w-soft);z-index:3}
+.wm.cp .bn span::before{content:"";display:block;width:20px;height:20px;border:1.6px solid currentColor;border-radius:5px;margin:0 auto 5px;opacity:.75}
+.wm.cp .bn span.on{color:var(--w-olive-ink)}
+.wm .back{display:inline-flex;align-items:center;gap:8px;min-height:44px;font:600 14px/1 'Inter';color:var(--w-olive-ink);margin:-8px 0 -10px}
+.wm .back::before{content:"";width:8px;height:8px;border:solid currentColor;border-width:0 0 2px 2px;transform:rotate(45deg)}
+.wm .tt-h{display:flex;align-items:flex-start;gap:8px}
+.wm .tt-h h1{font:700 24px/1.2 'Inter';margin:0;flex:1;text-wrap:balance}
+.wm .tt-h .ic44{width:44px;height:44px;display:grid;place-items:center;flex:none;margin:-6px -8px 0 0}
+.wm .meta{color:var(--w-soft);font-size:14px;margin-top:-6px}
+.wm .sec{display:flex;flex-direction:column;gap:8px}
+.wm .sec>h2{font:700 16px/1.25 'Inter';margin:0;display:flex;align-items:center;gap:8px}
+.wm .sec>h2 .aside{margin-left:auto;font:600 14px/1 'Inter';color:var(--w-olive-ink);min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:flex-end;margin-block:-10px}
+.wm .card{background:#fff;border:1px solid var(--w-line);border-radius:8px;padding:0;box-shadow:none}
+.wm .rw{position:relative;display:flex;align-items:center;gap:12px;padding:10px 40px 10px 16px;min-height:56px;border-top:1px solid var(--w-line)}
+.wm .card>.rw:first-child,.wm .card>.bd+.rw{border-top:0}
+.wm .rw.nochev{padding-right:16px}
+.wm .rw .grow{flex:1;min-width:0}
+.wm .rw .nm{font:600 15px/1.3 'Inter'}
+.wm .rw .sub{font-size:13px;color:var(--w-dim);margin-top:1px}
+.wm .rw .dc{width:110px;flex:none;font-size:14px;line-height:1.35;color:var(--w-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wm .chev{position:absolute;right:16px;top:50%;width:8px;height:8px;border:solid var(--w-dim);border-width:2px 2px 0 0;transform:translateY(-50%) rotate(45deg)}
+.wm .bd{font:700 12.5px/1.2 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--w-soft);background:var(--w-paper);padding:8px 16px;border-top:1px solid var(--w-line)}
+.wm .card>.bd:first-child{border-top:0;border-radius:8px 8px 0 0}
+.wm .score{font:700 14px/1 'Inter';font-variant-numeric:tabular-nums;white-space:nowrap}
+.wm .score.w{color:var(--w-ok)}
+.wm .kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:0;font-size:14px}
+.wm .kv>*{padding:11px 16px;border-top:1px solid var(--w-line);min-height:44px;display:flex;align-items:center}
+.wm .kv>:nth-child(-n+2){border-top:0}
+.wm .kv dt{color:var(--w-soft);padding-right:0}
+.wm .kv dd{margin:0;gap:8px;flex-wrap:wrap}
+.wm .ro{font-size:13px;color:var(--w-dim);padding:0 16px 12px}
+.wm .cfld{padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+.wm.cp .inp{min-height:44px;font-size:16px}
+.wm .door44{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 40px 10px 16px;position:relative;border:1px solid var(--w-line);border-radius:8px;background:#fff}
+.wm .door44 .nm{font:600 15px/1.3 'Inter'}
+.wm .door44 .sub{font-size:13px;color:var(--w-dim)}
+/* coaches portal: desktop */
+.wm.cd .shell{grid-template-columns:220px minmax(0,1fr)}
+.wm.cd .tm{background:#fff;border-bottom:1px solid var(--w-line);padding:14px 32px;display:flex;align-items:center}
+.wm.cd .tm b{font:700 17px/1.2 'Inter';display:block}
+.wm.cd .tm small{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--w-soft)}
+.wm.cd .tm .nx{margin-left:auto;text-align:right;font:600 13px/1.3 'Inter'}
+.wm.cd .tm .nx span{display:block;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--w-soft)}
+.wm.cd .col{width:960px;margin:0 auto;padding:24px 0 60px;display:flex;flex-direction:column;gap:16px}
+.wm.cd .two{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.wm.cd .two>div{display:flex;flex-direction:column;gap:16px;min-width:0}
+.dt-wrap .wm{width:1440px}
+/* what a tag points at */
+.spot{outline:2.5px dashed #7A4CC2;outline-offset:3px;border-radius:6px}
+.figs{display:flex;flex-direction:column;gap:6px;max-width:440px}
+.figs .row2{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ladder td:first-child{white-space:nowrap;font-weight:600}
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.compare .card h3{margin:0 0 6px;font-size:16px}
+.compare .card p{margin:0 0 6px;font-size:14px}
+.wm .lnk44{display:inline-flex;align-items:center;min-height:44px;font:600 14px/1 'Inter';color:var(--w-olive-ink)}
+/* fixed-width specimens scroll inside their own box on a narrow screen; the page never scrolls sideways */
+.wm{box-sizing:border-box}
+.stage>.col{max-width:100%}
+.stage>.col>.wm{max-width:100%;overflow-x:auto}
+.stage>.col>.wm>.win,.stage>.col>.wm>.card{min-width:0}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="top-row">
+      <h1>Club Tier · Stage 7 · Tournaments inside a club, and one email to every family</h1>
+      <span class="st">Drawn 2026-10-20 · round 1 · asks open · nothing built</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="start" aria-selected="true">Start here</button>
+      <button role="tab" data-tab="today">Today</button>
+      <button role="tab" data-tab="end">The end state</button>
+      <button role="tab" data-tab="notdrawn">Not drawn</button>
+      <button role="tab" data-tab="check">Design check</button>
+      <button role="tab" data-tab="asks">Asks<span class="n" id="ask-count">13</span></button>
+    </nav>
+  </div>
+</header>
+<main class="doc">
+
+<section class="tab" id="tab-start" data-tab="start">
+<p class="eyebrow" style="margin-top:22px">Start here</p>
+<h2 style="margin-top:6px">What Stage 7 makes true</h2>
+<p class="lede">A club that hosts a tournament gets its own teams into it in one step, and its entry fees land in the club's books by themselves, where the Budget vs. Actual can answer "did the tournament pay for itself?". A club can email every family it has in one send. And a coach's Tournaments pages work on a phone and are named after the tournament.</p>
+<div class="grid2" style="margin-top:14px">
+  <div class="card"><b>For the club admin</b><p style="margin:6px 0 0">"Add our teams" on a tournament's Teams page enters any of the club's teams at once: accepted, linked to the team, and on its coach's schedule once games are set. Marking a visiting team paid writes the fee into the tournament's book, filed under a word the club picked once. Budget vs. Actual gains <i>By activity</i>. Families gains <i>Email families</i>, with one log of every email the club sent a family.</p></div>
+  <div class="card"><b>For the head coach</b><p style="margin:6px 0 0">Tournaments is a short list with the dates in front. A tournament's page is titled by the tournament, has a help door, says the team's status once, leads to the team's games on its Schedule, and saves the event's head coach as it is typed. Every change lands in the free portal too: it shares the page.</p></div>
+</div>
+
+<h2>What moved since the plan was written</h2>
+<p>The plan's Stage 7 box was written on 2026-09-25. Three helpers re-read the code on 2026-10-20 (HEAD <code>658cb84e5</code>), and I opened the lines each drawing rests on.</p>
+<div class="tw"><table class="t">
+<thead><tr><th>Item</th><th>The plan says</th><th>The code says today</th></tr></thead>
+<tbody>
+<tr><td><button class="fx" data-finding="G01">G01</button></td><td>The hub's "First tournament setup" banner shows forever for a club.</td><td><b>Fixed 2026-09-26.</b> A club gets its own Overview: no banner, and Tournaments joins "Your programs" once the club runs one. Leaves Stage 7.</td></tr>
+<tr><td><button class="fx" data-finding="G04">G04</button></td><td>A dead "Coming soon" branch on the program-year page.</td><td><b>Fixed 2026-09-29</b>: the page is a redirect now. Leaves Stage 7.</td></tr>
+<tr><td><button class="fl" data-finding="G03">G03</button></td><td>A club's own team takes two steps into its own tournament.</td><td><b>Still true.</b> "Add my team" is for a coaches portal only. A club adds a team by hand, then links it to a rep team from inside the team's record.</td></tr>
+<tr><td><button class="fl" data-finding="C18">C18</button></td><td>Tournament fees never reach a ledger.</td><td><b>Still true.</b> Marking paid sends an email and a notice; no book changes.</td></tr>
+<tr><td><button class="fl" data-finding="G02">G02</button></td><td>No way to message every family; Families has "no cap".</td><td><b>Still true that no send reaches every family.</b> The cap line is stale: Families' one-household message has had a cap (3 per family a day), a log and a Reply-To since Stage 5a.</td></tr>
+<tr><td><button class="fl" data-finding="BA">By activity</button></td><td>Joins once a hosted tournament's money joins the budget.</td><td>Still waiting. The club's Budget vs. Actual has Statement and Months only.</td></tr>
+<tr><td><button class="fl" data-finding="T2">Coach Tournaments</button></td><td>The deep dive's stage 3 findings.</td><td><b>All still true</b> except two: the list's Fan view line is 44 px now, and the record's install banner is gone. One new defect: the record's "Registered" date is formatted on the server's clock.</td></tr>
+</tbody></table></div>
+
+<h2>Where I widen the question</h2>
+<div class="verdict">
+<h3>1 · The plan sends a tournament's fees to the wrong book (Ask 1 decides the rest)</h3>
+<p>The plan recommends "an automatic income entry on the org ledger". But a club's tournament already has its own book. The Accounting door on a tournament opens it, it counts in the club's Cash on hand, and every line in it already needs a budget word (3b's rule). Only the club's own book counts in the Statement today; the code says a tournament's book "keeps its own money until Stage 7 decides how it joins the budget". So the right question is not "which ledger gets the fee?". It is "how does the tournament's book join the club's year?". My answer: fees land in the tournament's book; the tournament becomes one category on the club's budget (named for it, holding its entry fees and its costs), exactly as a coach files a team's tournament; the book's lines join the Statement through the words they already carry; and By activity is the coach's report shape, unchanged. That is what makes "did it pay for itself?" answerable at all. A fee in the club's general book would mix one event's money into everything else.</p>
+</div>
+<div class="verdict">
+<h3>2 · A club's own team is not a customer</h3>
+<p>Today the club's own 15U AAA sits in its own Invitational's table reading <b>Paid</b> and coach <b>"—"</b>, while the coach's page for the same entry reads "No fee set by the organizer". If fees post automatically, a club charging its own team would record income that is only money moving inside the club, and the team's own book is the coach's (D3). So an own team enters with no fee, and the table says "Our team". If a club wants its teams to pay toward hosting, that is an allocation, which Stage 3 already built.</p>
+</div>
+<div class="verdict">
+<h3>3 · "Message every family" is the email the chat pause already kept, not the Messages product</h3>
+<p>The chat pause (ruled 2026-10-18) says messaging returns later as "Messages", announcements with replies, for families, after counsel. It also says the email tools stay as they are, and folding them into one screen is the first step of that later project. The scheduler's Ask 9 (ruled 2026-10-08) already said Stage 7's family send uses the one club send window and its log shape. So Stage 7 draws an <b>email</b>: no replies, no push, no new name. It lives on Families, because the de-duplicated list of every household already lives there. I do not call it "Messages": that word belongs to E2. The tournament's phone bar already calls Communications "Messages"; that collision is noted, not fixed here.</p>
+</div>
+<div class="verdict ok">
+<h3>4 · Where the plan is right</h3>
+<p>The coach's Tournaments findings all hold, and the deep dive's shape still fits. The real risk there is not design: an assistant coach can change the event's head coach today, because the server never checks the role. The drawing fixes the screen and the build must fix the server. The fee write is the other risk: the house league's version of it (the pattern the plan says to copy) still has six defects, so Ask 4 asks whether Stage 7 builds the one write both use.</p>
+</div>
+
+<h2>The stage ladder</h2>
+<div class="tw"><table class="t ladder">
+<thead><tr><th>Part</th><th>Covers</th><th>Asks</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>7a · The tournament's money</td><td>Fees into the tournament's book (C18), the own team's no-fee entry, the book joining the Statement, By activity on the club's Budget vs. Actual, one fee write for tournaments and house league.</td><td>1–4</td><td>First: Stage 12c (families and teams paying online) needs its decision.</td></tr>
+<tr><td>7b · Add our teams</td><td>G03: the club enters its teams in one step; "Our team" on the table; the coach column filled.</td><td>5</td><td>Small. Depends only on 7a's own-team rule.</td></tr>
+<tr><td>7c · Email families</td><td>G02: one send to every family or a chosen part, on the one club send window, with one log of every family email.</td><td>6, 7</td><td>Independent.</td></tr>
+<tr><td>7d · The coach's Tournaments</td><td>The deep dive's stage 3: the list, the record, the road to the games, the event's head coach, clocks and spellings. Both portals.</td><td>8–12</td><td>Independent; fills any gap. Builds after Admin type sweep Stage 4 lands, which changes the same headings.</td></tr>
+</tbody></table></div>
+
+<h2>How to read the drawings</h2>
+<ul>
+<li><b>Before</b> is a capture of today (dev, 2026-10-20, UAT Rep Club). <b>After</b> is drawn at true size in a fixed frame: phones at 390 with the 44 px tap floor, computers at 1440 (Fit or True size).</li>
+<li>Tags: <button class="mk new" data-note="Something that does not exist today.">NEW</button> <button class="mk res" data-note="Exists today and changes shape or words.">RESTYLED</button> <button class="mk unc" data-note="Drawn for context; stays as it is.">UNCHANGED</button>. Red flags are findings, green chips the drawing that answers one. Every flag, chip and tag opens on click.</li>
+<li>New customer sentences are placements, tagged for <code>/marketing</code>. Times are written "8:00 a.m.".</li>
+<li><b>Open this page on a phone too.</b> The coach's screens are phone first.</li>
+</ul>
+</section>
+
+<section class="tab" id="tab-today" data-tab="today" hidden>
+<h2>Today, in the order a club meets it</h2>
+<p>Captured on dev 2026-10-20 as the UAT Rep Club owner and its 15U AAA head coach. The club hosts one tournament (UAT Rep Club Invitational 2026, Oct 17–19) with four 15U teams, one of them its own.</p>
+
+<div class="station"><h3><span class="no">1</span>The club's Overview</h3>
+<div class="stage">
+  <div class="dt-col" style="flex:1 1 640px;min-width:0">
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><img class="dt-shot" src="img/s7-hub-1440-view.jpg" alt="The club's Overview at 1440 with Tournaments under Your programs" loading="lazy"></div>
+  </div>
+  <div class="read">
+    <h4>As built</h4>
+    <ul><li>The club gets its own Overview. Tournaments appears under Your programs because the club runs one; a club with none sees "Tournaments: none yet · Run a tournament" in the quiet line.</li></ul>
+    <h4>My read</h4>
+    <ul><li><button class="fx" data-finding="G01">G01</button> is fixed. Nothing to draw here.</li></ul>
+    <div class="shape"><span class="k keep">Keep</span><b>Leaves Stage 7.</b> The plan's Stage 7 box gets G01 and G04 struck as fixed.</div>
+  </div>
+</div></div>
+
+<div class="station"><h3><span class="no">2</span>The club's own team in its own tournament</h3>
+<div class="stage">
+  <div class="dt-col" style="flex:1 1 640px;min-width:0">
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><img class="dt-shot" src="img/s7-registrations-1440-view.jpg" alt="The tournament's Teams table at 1440" loading="lazy"></div>
+  </div>
+  <div class="read">
+    <h4>As built</h4>
+    <ul><li>Header: Export, + Add team, help. "+ Add team" opens "Add team manually". Linking the team to the club's 15U AAA is a line inside the team's record ("Link to a rep team").</li>
+    <li>The club's own team reads like a visitor: coach "—" (the link knows the head coach; the table does not show it), payment "Paid".</li></ul>
+    <h4>My read</h4>
+    <ul><li><button class="fl" data-finding="G03">G03</button> Two steps, with an unlinked team in between: until the link is made, the coach never sees the tournament.</li>
+    <li><button class="fl" data-finding="S7-01">S7-01</button> "Paid" on a team that owes the club nothing, while the coach's page says "No fee set by the organizer".</li></ul>
+    <div class="shape"><span class="k reshape">Reshape</span><b>"Add our teams"</b>: one window, any of the club's teams, entered, accepted and linked at once (Ask 5). "Our team" on the row, the head coach in Coach, "No fee" in Payment (Ask 2).</div>
+  </div>
+</div></div>
+
+<div class="station"><h3><span class="no">3</span>Where a fee goes, and Budget vs. Actual</h3>
+<div class="stage">
+  <div class="dt-col" style="flex:1 1 640px;min-width:0">
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><img class="dt-shot" src="img/s7-club-bva-1440-full.jpg" alt="The club's Budget vs. Actual, Statement view" loading="lazy"></div>
+  </div>
+  <div class="read">
+    <h4>As built</h4>
+    <ul><li>Marking a team paid (the row, the bulk "Paid in full" / "Deposit paid", or check-in) changes the team's paid figures and sends an email. No book changes.</li>
+    <li>The tournament has a book only if someone opened one by hand. Its lines need a budget word, count in Cash on hand, and never count in the Statement. On Months they are one row, "The club's other books".</li>
+    <li>View offers Statement and Months. The coach's Budget vs. Actual also has By activity: one block per category, revenue, costs and the net.</li></ul>
+    <h4>My read</h4>
+    <ul><li><button class="fl" data-finding="C18">C18</button> A club cannot see what its tournament earned without adding up the Teams table by hand.</li>
+    <li><button class="fl" data-finding="BA">By activity</button> waits on the book joining the year.</li>
+    <li><button class="fl" data-finding="HL">HL</button> The plan says copy the house league's fee pattern "done right". Its write has six defects today.</li>
+    <li><button class="fl" data-finding="S7-02">S7-02</button> The club's plan already has an expense category called "Tournaments" ($3,000: entry fees the club pays for its teams elsewhere). Hosting money needs a name that cannot be confused with it.</li></ul>
+    <div class="shape"><span class="k reshape">Reshape</span><b>Fees land in the tournament's book</b> (Ask 1); the book joins the Statement and By activity (Ask 3); one fee write for both programs (Ask 4).</div>
+  </div>
+</div></div>
+
+<div class="station"><h3><span class="no">4</span>Reaching every family</h3>
+<div class="stage">
+  <div class="dt-col" style="flex:1 1 640px;min-width:0">
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><img class="dt-shot" src="img/s7-families-1440-view.jpg" alt="Families at 1440" loading="lazy"></div>
+  </div>
+  <div class="read">
+    <h4>As built</h4>
+    <ul><li>Families lists 95 households (here filtered to the 12 children with no family on file). One household at a time can be messaged from its page.</li>
+    <li>Every other family send is narrower: a head coach's Email families (one team), the house league's season email (one season; no cap; a family with two registrations gets it twice), the tournament's Communications (registered teams' coaches only).</li></ul>
+    <h4>My read</h4>
+    <ul><li><button class="fl" data-finding="G02">G02</button> Picture day, the AGM, a field closure across the club: today an admin asks every coach to forward it.</li>
+    <li><button class="fl" data-finding="E2">E2</button> The ruled shape for later is "Messages". The send drawn here is email only and does not take that word.</li></ul>
+    <div class="shape"><span class="k reshape">Reshape</span><b>Email families</b> on Families, through the one club send window, with an Emails log (Asks 6, 7).</div>
+  </div>
+</div></div>
+
+<div class="station"><h3><span class="no">5</span>The coach's Tournaments list</h3>
+<div class="stage">
+  <div class="col"><div class="shot-wrap"><img class="shot" src="img/s7-coach-tournaments-390-view.jpg" alt="The coach's Tournaments list at 390" loading="lazy"></div><p class="cap"><b>390 · today.</b> 916 px; one card.</p></div>
+  <div class="read">
+    <h4>As built</h4>
+    <ul><li>Header with help. A one-line intro. One card per entry: tournament, organizer, entry name, dates, status, and a chip ("COMPLETE"). "⇄ Fan view" under the list.</li></ul>
+    <h4>My read</h4>
+    <ul><li><button class="fl" data-finding="T11">D-3</button> With this short name the card fits. A longer name still runs off the screen: the title never wraps and the list's column grows to fit it.</li>
+    <li><button class="fl" data-finding="T12">F-30</button> The row recipe (ruled 2026-09-16) already moves this card stack to a row list; Stage 7 draws it that way so it is done once.</li>
+    <li>The meta repeats the team ("UAT Rep Club 15U AAA") on the team's own page.</li></ul>
+    <div class="shape"><span class="k reshape">Reshape</span><b>A row list with the dates in front</b>, banded Coming up / Finished (Ask 8).</div>
+  </div>
+</div></div>
+
+<div class="station"><h3><span class="no">6</span>The coach's tournament page</h3>
+<div class="stage">
+  <div class="col"><div class="shot-wrap"><div class="shot-scroll"><img class="shot" src="img/s7-coach-record-390-full.jpg" alt="The coach's tournament page at 390, full length" loading="lazy"></div></div><p class="cap"><b>390 · today, full length (scroll inside).</b> 2,175 px. 12 controls under 44 px. The bottom bar landed mid-page in the full capture.</p></div>
+  <div class="read">
+    <h4>As built</h4>
+    <ul><li>Titled by the team ("UAT Rep Club 15U AAA"), with "UAT Rep Club Invitational 2026 (2026) - UAT Rep Club" under it.</li>
+    <li>A tinted hero, then Status &amp; Payment, Schedule, Your Team (the head coach form with its own Save), From the Organizer.</li></ul>
+    <div class="measure">390: height 2,175 · under 44 px: back link 22 · ⇄ 31 · View final standings 19 · Share your team 29 · the organizer's email 38 · See all 19 · two inputs 42 · four pill links 32–36<br>1440: height 1,964</div>
+    <h4>My read</h4>
+    <ul><li><button class="fl" data-finding="T1">Title</button> <button class="fl" data-finding="T3">No help</button> <button class="fl" data-finding="T4">Accepted ×2</button> <button class="fl" data-finding="T2">Length</button></li>
+    <li><button class="fl" data-finding="T5">Head coach</button> Its own Save, against the edit-autosaves ruling, and an assistant can save it.</li>
+    <li><button class="fl" data-finding="T6">No road</button> Nothing leads to the games on the team's Schedule, and a mirrored game's sheet sends the coach to the public page in a new tab.</li>
+    <li><button class="fl" data-finding="T7">Clock</button> <button class="fl" data-finding="T8">LIVE</button> <button class="fl" data-finding="T9">vs / @ / at</button> <button class="fl" data-finding="T10">Breakpoints</button></li></ul>
+    <div class="shape"><span class="k reshape">Reshape</span><b>Titled by the tournament</b>, one status, a door to the games, an autosaving head coach for the head coach and team manager, one help door (Asks 9–11).</div>
+  </div>
+</div>
+<div class="dt-tools" style="margin-top:10px"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+<div class="dt-wrap fit"><img class="dt-shot" src="img/s7-coach-record-1440-full.jpg" alt="The coach's tournament page at 1440, full length" loading="lazy"></div>
+</div>
+
+<div class="station"><h3><span class="no">7</span>The free portal shares it</h3>
+<div class="stage">
+  <div class="col"><div class="shot-wrap"><img class="shot" src="img/s7-free-tournaments-390-view.jpg" alt="The free portal's Tournaments at 390" loading="lazy"></div><p class="cap"><b>390 · the free portal today.</b> The same card; the record is the same page with the free shell's header.</p></div>
+  <div class="read">
+    <h4>As built</h4>
+    <ul><li>The free portal's list wears the same card; its record is the same page, switched by six settings (upsell, money hidden, staff access, back link, welcome banner, header).</li></ul>
+    <h4>My read</h4>
+    <ul><li>Every change in 7d lands on both. The free shell already titles the page by the team with the tournament above it; the drawn title order applies there too (Ask 12).</li></ul>
+    <div class="shape"><span class="k keep">Keep</span><b>One page, two shells.</b> No fork.</div>
+  </div>
+</div></div>
+
+<h2>Standing back</h2>
+<ul>
+<li><b>(a) One book per activity.</b> A club's tournament is its own activity with its own money; the year's report reads it as such.</li>
+<li><b>(b) A club's own team is not a customer.</b> No fee, no "Paid", and its coach is named.</li>
+<li><b>(c) One send window, one log.</b> Every club send to families goes through the family choke point and its opt-outs, and is recorded where Families can show it.</li>
+<li><b>(d) A record is named for what it records</b> (R4): the tournament's page names the tournament.</li>
+<li><b>(e) The phone first</b> for the coach, and nothing changes in one portal without the other.</li>
+</ul>
+</section>
+
+<section class="tab" id="tab-end" data-tab="end" hidden>
+<h2>The end state</h2>
+<p>All of Stage 7 as it would look built, part by part. Each part's tag names the ladder step that delivers it (7a to 7d). Figures are illustrative and add up inside each drawing.</p>
+<p class="legend"><a href="#" data-jump="e-add">1 · Add our teams</a> · <a href="#" data-jump="e-fee">2 · A fee in the books</a> · <a href="#" data-jump="e-bva">3 · By activity</a> · <a href="#" data-jump="e-mail">4 · Email families</a> · <a href="#" data-jump="e-log">5 · The Emails log</a> · <a href="#" data-jump="e-list">6 · The coach's list</a> · <a href="#" data-jump="e-rec">7 · The coach's tournament page</a> · <a href="#" data-jump="e-road">8 · The road back</a></p>
+
+<!-- ══════════ 1 · ADD OUR TEAMS ══════════ -->
+<h2 id="e-add">1 · Add our teams <span class="pill">7b</span></h2>
+<div class="chips"><button class="fx" data-finding="G03">G03</button><button class="fx" data-finding="S7-01">S7-01</button><button class="mk new" data-note="&quot;Add our teams&quot; replaces the coaches portal's &quot;Add my team&quot; star for a club, which has many teams. It shows when the tournament's organization is a club with active teams. Words for /marketing.">NEW · Add our teams</button><button class="mk res" data-note="The club's own team carries the Our team chip, its head coach in Coach (read from the link), and No fee in Payment. The rest of the table is unchanged.">RESTYLED · own team row</button></div>
+<div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+<div class="dt-wrap fit"><div class="dt"><div class="wm">
+  <div class="tb"><span class="lg"><i></i>FIELDLOGICHQ</span><span class="ar">Admin area</span><span class="rt">🔔 · 👤</span></div>
+  <div class="shell">
+    <div class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><span class="grp">Tournament</span><span class="it" style="font-weight:600;color:var(--w-ink)">UAT Rep Club Invitational 2…</span><span class="grp">Operations</span><span class="it">Dashboard</span><span class="it on">Teams</span><span class="it">Schedule</span><span class="it">Results</span><span class="it">Check-in</span><span class="it">Staff kit</span><span class="it">Communications</span><span class="grp">Setup</span><span class="it">Event settings</span><span class="it">Venues &amp; facilities</span><span class="it">Divisions</span></div>
+    <div>
+      <div class="phd"><div class="ey">UAT Rep Club · Oct 17–19, 2026 <span class="chip ok" style="font-family:'IBM Plex Mono';font-size:10.5px;padding:3px 7px">Open</span></div><h1>UAT Rep Club Invitational 2026</h1></div>
+      <div class="body">
+        <div class="h-row"><h2>Teams</h2><span class="b">Export</span><span class="b spot">Add our teams</span><span class="b lime">+ Add team</span><span class="b ic qm-b"><span class="qm">?</span></span></div>
+        <div class="tool"><span class="inp sel" style="min-width:260px;border-radius:20px">15U</span><span class="gap"></span><span class="srch">Search teams or coaches…</span><span class="b">Filter</span><span class="b">Tools</span></div>
+        <div class="wt"><table class="x">
+          <thead><tr><th style="width:52%">Team</th><th>Coach</th><th>Payment</th><th style="width:40px"></th></tr></thead>
+          <tbody>
+            <tr class="band"><td colspan="4">Accepted 4</td></tr>
+            <tr><td class="nm">Milton Mustangs 15U</td><td>Dana Ruiz</td><td>Paid · $475.00</td><td>›</td></tr>
+            <tr><td class="nm">Guelph Royals 15U</td><td>Ken Ito</td><td>Deposit · $100.00 of $475.00</td><td>›</td></tr>
+            <tr class="hl"><td class="nm"><span class="spot" style="display:inline-flex;gap:8px;align-items:center">UAT Rep Club 15U AAA <span class="chip own">Our team</span></span></td><td class="spot">Jordan Lee</td><td class="spot">No fee</td><td>›</td></tr>
+            <tr><td class="nm">Oakville Otters 15U</td><td>Pat Moore</td><td>Not paid · $475.00</td><td>›</td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div></div></div>
+<p class="cap" style="max-width:none">1440 · the tournament's Teams. Visiting teams keep today's payment words. The At a glance card above the table is unchanged and left out of the drawing.</p>
+
+<div class="stage">
+  <div class="col">
+    <div class="wm" style="width:640px;background:transparent">
+      <div class="win" style="position:relative;width:640px">
+        <div class="wh"><h3>Add our teams</h3><span class="x">×</span></div>
+        <div class="wb">
+          <p style="margin:0;color:var(--w-soft)">Each team you tick is entered in the division you choose, accepted and linked to the team. Its coaches see the tournament in their portal, and its games join their Schedule once you set them.</p>
+          <div class="wt"><table class="x">
+            <thead><tr><th style="width:36px"></th><th>Team</th><th>Division</th></tr></thead>
+            <tbody>
+              <tr class="band"><td colspan="3">Already in</td></tr>
+              <tr><td><span class="tick on dim"></span></td><td class="nm">15U AAA</td><td style="color:var(--w-dim)">15U · entered Oct 7</td></tr>
+              <tr class="band"><td colspan="3">Your teams</td></tr>
+              <tr><td><span class="tick on"></span></td><td class="nm">15U AA</td><td><span class="inp sel">15U</span></td></tr>
+              <tr><td><span class="tick"></span></td><td class="nm">14U AA</td><td><span class="inp sel pl">Choose a division</span></td></tr>
+              <tr><td><span class="tick"></span></td><td class="nm">16U AA</td><td><span class="inp sel pl">Choose a division</span></td></tr>
+              <tr><td><span class="tick"></span></td><td class="nm">13U AAA</td><td><span class="inp sel pl">Choose a division</span></td></tr>
+            </tbody></table></div>
+          <p class="hint" style="margin:0">Only this season's active teams. A division picks itself when its name matches the team's.</p>
+        </div>
+        <div class="wf"><span class="say">1 team ticked. Our teams enter with no fee.</span><span class="b">Cancel</span><span class="b lime">Add 1 team</span></div>
+      </div>
+    </div>
+    <p class="cap" style="max-width:640px"><b>The window, 640 on a computer</b> (the ladder's form width, which holds a short table). On a phone it fills the screen like every form window. A tap outside does nothing; with a team ticked, closing asks in the foot (Keep choosing · Discard).</p>
+  </div>
+  <div class="col">
+    <div class="ph-wrap"><div class="ph" style="height:844px"><div class="wm cp" style="height:844px">
+      <div class="win" style="inset:0;border-radius:0;box-shadow:none">
+        <div class="wh" style="padding:4px 4px 4px 16px;min-height:56px"><h3>Add our teams</h3><span class="x" style="width:44px;height:44px">×</span></div>
+        <div class="wb" style="flex:1;padding:14px 16px;gap:10px">
+          <p style="margin:0;color:var(--w-soft)">Each team you tick is entered in the division you choose, accepted and linked to the team.</p>
+          <div class="card">
+            <div class="bd">Already in</div>
+            <div class="rw nochev" style="color:var(--w-dim)"><span class="tick on dim"></span><div class="grow"><div class="nm">15U AAA</div><div class="sub">15U · entered Oct 7</div></div></div>
+            <div class="bd">Your teams</div>
+            <div class="rw nochev" style="flex-wrap:wrap"><span class="tick on"></span><div class="grow"><div class="nm">15U AA</div></div><span class="inp sel" style="flex-basis:100%">15U</span></div>
+            <div class="rw nochev" style="flex-wrap:wrap"><span class="tick"></span><div class="grow"><div class="nm">14U AA</div></div><span class="inp sel pl" style="flex-basis:100%">Choose a division</span></div>
+            <div class="rw nochev"><span class="tick"></span><div class="grow"><div class="nm">16U AA</div></div></div>
+            <div class="rw nochev"><span class="tick"></span><div class="grow"><div class="nm">13U AAA</div></div></div>
+          </div>
+        </div>
+        <div class="wf" style="flex-wrap:wrap;padding:10px 16px 14px"><span class="say" style="flex-basis:100%">1 team ticked. Our teams enter with no fee.</span><span class="b" style="min-height:44px;flex:1">Cancel</span><span class="b lime" style="min-height:44px;flex:1">Add 1 team</span></div>
+      </div>
+    </div></div></div>
+    <p class="cap"><b>390 · the window fills the phone.</b> Each team is a row: the tick and the name, and once ticked a full-width 44 px division field under it.</p>
+  </div>
+  <div class="read">
+    <h4>What changes</h4>
+    <ul><li>One step instead of two, and no unlinked team in between: the link is made as the team is entered.</li>
+    <li>The coach learns about it from their own Tournaments list (drawing 6); no email is sent to the club's own coach.</li>
+    <li>"+ Add team" keeps today's "Add team manually" for visiting teams. The record's "Link to a rep team" stays for a team that registered itself on the public form.</li></ul>
+    <h4>Who sees it</h4>
+    <ul><li>Whoever can add teams to the tournament today (the tournament's own capability). A head coach cannot enter the club's tournament from the coach portal: a club team's tournament registration is the club's (it is switched off for club teams today, and stays off).</li></ul>
+    <div class="shape"><span class="k reshape">Ask 5</span>Multi-pick in one window, with the division per team. Alternative: one team at a time.</div>
+  </div>
+</div>
+
+<!-- ══════════ 2 · A FEE IN THE BOOKS ══════════ -->
+<h2 id="e-fee">2 · A paid fee writes itself into the tournament's book <span class="pill">7a</span></h2>
+<div class="chips"><button class="fx" data-finding="C18">C18</button><button class="fx" data-finding="HL">HL</button><button class="fx" data-finding="S7-02">S7-02</button><button class="mk new" data-note="Every way a fee is marked paid (the row, the bulk actions, check-in, and later Stage 12's online payment) goes through one write that also writes the line, files it, and voids it when the mark is undone. Lines it writes read 'From Teams' and open the team.">NEW · the line</button><button class="mk new" data-note="The tournament's book is opened by itself the first time a fee is marked paid (today a person opens one by hand). Its name is the tournament's.">NEW · book opens itself</button><button class="mk unc" data-note="Today's Ledger: columns, filters, Book pill and totals unchanged.">UNCHANGED · the Ledger</button></div>
+<div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+<div class="dt-wrap fit"><div class="dt"><div class="wm">
+  <div class="tb"><span class="lg"><i></i>FIELDLOGICHQ</span><span class="ar">Admin area</span><span class="rt">🔔 · 👤</span></div>
+  <div class="shell">
+    <div class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><span class="grp">Programs</span><span class="it">Rep teams</span><span class="it">House league</span><span class="it on">Accounting</span><span class="it">Families</span><span class="it">Public site</span><span class="it">Tournaments</span><span class="grp">Organization</span><span class="it">Organization</span></div>
+    <div>
+      <div class="phd club"><h1>UAT Rep Club</h1></div>
+      <div class="body" style="padding-left:32px;padding-right:32px">
+        <div class="h-row"><h2>Accounting</h2></div>
+        <div class="tabs-w"><span>Overview</span><span>Budget</span><span>Teams</span><span class="on">Ledger</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span></div>
+        <div class="tool"><span class="pillsel spot">Book <b>UAT Rep Club Invitational 2026</b></span><span class="gap"></span><span class="b">Export</span><span class="b">··· Tools</span><span class="b lime">+ Add entry</span></div>
+        <div class="tool"><span class="b">Type</span><span class="b">Status</span><span class="b">Category</span><span class="b">Item</span><span class="b">Date</span><span class="gap"></span><span class="cnt">Balance <b style="color:var(--w-ok)">$1,925.00</b></span></div>
+        <div class="wt"><table class="x">
+          <thead><tr><th>Date</th><th>What</th><th>Category</th><th>Item</th><th class="r">Money out</th><th class="r">Money in</th><th class="r">Balance</th><th></th></tr></thead>
+          <tbody>
+            <tr class="band"><td colspan="6">Starting balance · Sep 1, 2026</td><td class="r">$0.00</td><td></td></tr>
+            <tr><td>Sep 12</td><td><span class="spot">Deposit · Guelph Royals 15U</span> <span class="src">· From Teams</span></td><td>Invitational 2026</td><td>Entry fees</td><td></td><td class="r pos">$100.00</td><td class="r">$100.00</td><td>›</td></tr>
+            <tr><td>Sep 30</td><td>Paid in full · Milton Mustangs 15U <span class="src">· From Teams</span></td><td>Invitational 2026</td><td>Entry fees</td><td></td><td class="r pos">$475.00</td><td class="r">$575.00</td><td>›</td></tr>
+            <tr class="void"><td>Oct 2</td><td>Deposit · Oakville Otters 15U <span class="chip">Voided</span><div class="src">Oct 3 · marked unpaid by Sam Owner</div></td><td>Invitational 2026</td><td>Entry fees</td><td></td><td class="r"><span class="amt">$100.00</span></td><td class="r">$575.00</td><td>›</td></tr>
+            <tr><td>Oct 4</td><td>Sponsor · Halton Hardware · Cheque 118</td><td>Invitational 2026</td><td>Sponsorship</td><td></td><td class="r pos">$500.00</td><td class="r">$1,075.00</td><td>›</td></tr>
+            <tr><td>Oct 6</td><td>Paid in full · Burlington Bulls 15U <span class="src">· From Teams</span></td><td>Invitational 2026</td><td>Entry fees</td><td></td><td class="r pos">$850.00</td><td class="r">$1,925.00</td><td>›</td></tr>
+            <tr class="band"><td colspan="6">Ending balance · Oct 31, 2026</td><td class="r">$1,925.00</td><td></td></tr>
+          </tbody></table></div>
+              </div>
+    </div>
+  </div>
+</div></div></div>
+<p class="cap" style="max-width:none">1440 · Accounting › Ledger with the tournament's book open. The lines reading "From Teams" are written by the product (the outlined one, for example). Burlington paid for two teams in one e-transfer, so its line carries both entries. The umpires, permits and trophies were paid from the club's general book and filed under Invitational 2026: By activity reads the category, whichever book paid.</p>
+
+<div class="stage">
+  <div class="col">
+    <div class="wm" style="width:520px;background:transparent">
+      <div class="card">
+        <div style="padding:14px 16px 4px;font:700 16px/1.25 Inter">Payments</div>
+        <div class="cfld">
+          <div style="display:flex;gap:12px;align-items:center"><span class="sw" style="width:44px;height:26px;border-radius:13px;background:var(--w-olive);position:relative;display:inline-block"></span><span><b>Track payments here</b><br><span class="hint" style="margin:0">Off means "Not tracked here", and nothing is written to the books.</span></span></div>
+          <div class="fld spot"><label>Paid fees are filed under</label><span class="inp sel">Invitational 2026 › Entry fees</span>
+          <p class="hint">On the club's budget. A fee marked paid is written to this tournament's book under it; a fee marked unpaid is voided there.</p></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap"><b>Event settings › Payments.</b> The category and its Entry fees item are made with the tournament's name the first time a fee is marked paid; the club can pick another. A change saves as it is made (the transient "Saved" pill). <button class="mk unc" data-note="Track payments here is today's switch, unchanged.">UNCHANGED · the switch</button> <button class="mk new" data-note="One new setting. Shown only when the organization has the club's Accounting. A tournament-only organization has no books: the setting is absent, never empty.">NEW</button></p>
+  </div>
+  <div class="read">
+    <h4>The rules the drawing shows</h4>
+    <ul>
+      <li><b>One write.</b> Every way of marking a fee paid writes one line per payment (a deposit, then the balance). Undoing a mark voids its line with who and when; it never deletes, and a voided line can never come back to life.</li>
+      <li><b>A refund is not an undo.</b> A team that paid and withdrew is refunded with a money-out line someone types (Stage 12 handles refunds paid online).</li>
+      <li><b>The club's own team writes nothing</b> (Ask 2).</li>
+      <li><b>The same write serves the house league</b> (Ask 4): its fee lines move from "pending on approval" to "written when paid", and its six defects go with it.</li>
+      <li>The tournament's category is a <b>revenue and cost</b> category like a coach's event: Entry fees and Sponsorship in, Officials, Facilities and Trophies out. Its name never says "Tournaments", so it cannot be mistaken for the club's existing expense category of that name (S7-02).</li>
+    </ul>
+    <div class="shape"><span class="k reshape">Ask 1 decides the rest</span>Fees land in the tournament's own book. Alternatives: the club's general book (the plan's wording), or nothing written.</div>
+  </div>
+</div>
+
+<!-- ══════════ 3 · BY ACTIVITY ══════════ -->
+<h2 id="e-bva">3 · Budget vs. Actual › View › By activity <span class="pill">7a</span></h2>
+<div class="chips"><button class="fx" data-finding="BA">By activity</button><button class="mk new" data-note="The coach's third report shape, the same component and the same arithmetic: one block per category, its revenue, its costs and its net. Closed blocks show the net only; Expand all opens them.">NEW · By activity</button><button class="mk res" data-note="The tournament's book now counts in the Statement through the words its lines carry. The four figures include it. A closed fiscal year reads the same way, locked.">RESTYLED · the four figures include the tournament</button></div>
+<div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+<div class="dt-wrap fit"><div class="dt"><div class="wm">
+  <div class="tb"><span class="lg"><i></i>FIELDLOGICHQ</span><span class="ar">Admin area</span><span class="rt">🔔 · 👤</span></div>
+  <div class="shell">
+    <div class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><span class="grp">Programs</span><span class="it">Rep teams</span><span class="it">House league</span><span class="it on">Accounting</span><span class="it">Families</span><span class="it">Public site</span><span class="it">Tournaments</span><span class="grp">Organization</span><span class="it">Organization</span></div>
+    <div>
+      <div class="phd club"><h1>UAT Rep Club</h1></div>
+      <div class="body" style="padding-left:32px;padding-right:32px">
+        <div class="h-row"><h2>Accounting</h2></div>
+        <div class="tabs-w"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span>Allocations</span><span>Payment requests</span><span class="on">Budget vs. Actual</span></div>
+        <div class="band4">
+          <div><div class="k">Collected</div><div class="v">$7,105.00</div><div class="s">of $49,433.00 planned</div></div>
+          <div><div class="k">Spent</div><div class="v">$6,242.00</div><div class="s">of $48,940.00 planned</div></div>
+          <div><div class="k">Off-plan</div><div class="v" style="color:var(--w-amber)">$1,768.00</div><div class="s">nobody budgeted this</div></div>
+          <div><div class="k">Cash on hand</div><div class="v">$6,192.00</div><div class="s">the club's books · as of today</div></div>
+        </div>
+        <div class="tool"><span class="pillsel">Fiscal year <b>2026–27</b></span><span class="pillsel spot">View <b>By activity</b></span><span class="b" style="border-radius:20px">Compare <b style="margin-left:4px">Whole year</b></span><span style="color:var(--w-soft);font-weight:500;margin-left:8px">Expand all</span><span class="gap"></span><span class="b">Export</span></div>
+        <div class="wt"><table class="x">
+          <thead><tr><th>Activity / line item</th><th class="r">Budgeted</th><th class="r">Actual</th><th class="r">Variance</th></tr></thead>
+          <tbody>
+            <tr class="grp"><td><span class="cv dn"></span>Invitational 2026 <span class="src">Oct 17–19</span></td><td></td><td></td><td></td></tr>
+            <tr class="sub"><td style="padding-left:34px">Revenue</td><td></td><td></td><td></td></tr>
+            <tr><td style="padding-left:44px">Entry fees</td><td class="r">$3,325.00</td><td class="r">$1,425.00</td><td class="r neg">−$1,900.00</td></tr>
+            <tr><td style="padding-left:44px">Sponsorship</td><td class="r">$500.00</td><td class="r">$500.00</td><td class="r">$0.00</td></tr>
+            <tr class="sub"><td style="padding-left:34px">Costs</td><td></td><td></td><td></td></tr>
+            <tr><td style="padding-left:44px">Officials</td><td class="r">$1,440.00</td><td class="r">$720.00</td><td class="r pos">$720.00 under</td></tr>
+            <tr><td style="padding-left:44px">Diamond permits</td><td class="r">$1,200.00</td><td class="r">$1,200.00</td><td class="r">$0.00</td></tr>
+            <tr><td style="padding-left:44px">Trophies</td><td class="r">$300.00</td><td class="r">$284.00</td><td class="r pos">$16.00 under</td></tr>
+            <tr class="sum spot"><td>Net for Invitational 2026</td><td class="r">$885.00</td><td class="r neg">($279.00)</td><td class="r neg">−$1,164.00</td></tr>
+            <tr class="band"><td colspan="4">The club's other activities</td></tr>
+            <tr class="grp"><td><span class="cv"></span>From the teams <span class="src">revenue</span></td><td class="r">$40,608.00</td><td class="r">$5,180.00</td><td class="r neg">−$35,428.00</td></tr>
+            <tr class="grp"><td><span class="cv"></span>Sponsorship <span class="src">revenue</span></td><td class="r">$5,000.00</td><td class="r">$0.00</td><td class="r neg">−$5,000.00</td></tr>
+            <tr class="grp"><td><span class="cv"></span>Facilities</td><td class="r">$36,000.00</td><td class="r">$3,470.00</td><td class="r pos">$32,530.00 under</td></tr>
+            <tr class="grp"><td><span class="cv"></span>Officials · Admin · Tournaments · Team support · Not filed</td><td class="r">$10,000.00</td><td class="r">$568.00</td><td class="r pos">$9,432.00 under</td></tr>
+            <tr class="sum"><td>Net for 2026–27</td><td class="r">$493.00</td><td class="r">$863.00</td><td class="r pos">+$370.00</td></tr>
+          </tbody></table></div>
+        <p class="hint" style="margin:0">Variance reads as the Statement's does: revenue +/− against plan; costs under / over. A category with both halves shows its net; the rest show their one side.</p>
+      </div>
+    </div>
+  </div>
+</div></div></div>
+<p class="cap" style="max-width:none">1440 · the club's Budget vs. Actual, By activity. The Invitational is open; the other categories are closed rows (the last row stands in for four, to keep the drawing short).</p>
+<div class="read" style="max-width:none">
+  <ul>
+    <li><b>The answer the owner asked for is one row:</b> "Net for Invitational 2026: ($279.00) against $885.00 planned", with half the visiting teams still to pay.</li>
+    <li><b>No eighth named difference.</b> 3b listed seven ways the club's report differs from the coach's; By activity adds none, because a club's tournament is filed the way a coach files a team's tournament.</li>
+    <li><b>House league joins the same way in Stage 9</b> (each season its category). Until then a season's book stays outside the Statement, as today.</li>
+  </ul>
+  <div class="shape"><span class="k reshape">Ask 3</span>The tournament's book joins the Statement and By activity through its category. Alternative: one block per book, a club-only shape.</div>
+</div>
+
+<!-- ══════════ 4 · EMAIL FAMILIES ══════════ -->
+<h2 id="e-mail">4 · Families › Email families <span class="pill">7c</span></h2>
+<div class="chips"><button class="fx" data-finding="G02">G02</button><button class="fx" data-finding="E2">E2</button><button class="mk new" data-note="A button in the Families toolbar, beside Ask the coaches. It opens the one club send window (the scheduler's Ask 9): what sending does, who is told, Nobody to send to, a sample, Last sent, and the lime that counts. Families go through the family choke point, so opt-outs and the unsubscribe footer hold.">NEW · Email families</button><button class="mk new" data-note="Families gains a third tab, Emails: every email the club sent from Families, club-wide and one-household (the 5a messages already logged), newest first.">NEW · Emails tab</button></div>
+<div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+<div class="dt-wrap fit"><div class="dt"><div class="wm" style="min-height:900px">
+  <div class="tb"><span class="lg"><i></i>FIELDLOGICHQ</span><span class="ar">Admin area</span><span class="rt">🔔 · 👤</span></div>
+  <div class="shell" style="min-height:852px">
+    <div class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><span class="grp">Programs</span><span class="it">Rep teams</span><span class="it">House league</span><span class="it">Accounting</span><span class="it on">Families</span><span class="it">Public site</span><span class="it">Tournaments</span></div>
+    <div>
+      <div class="phd club"><h1>UAT Rep Club</h1></div>
+      <div class="body" style="padding-left:32px;padding-right:32px">
+        <div class="h-row"><h2>Families</h2></div>
+        <div class="tabs-w"><span class="on">Families</span><span>Duplicates</span><span class="spot">Emails</span></div>
+        <div class="tool"><span class="pillsel">Show <b>All families 95</b></span><span class="gap"></span><span class="srch">Search children…</span><span class="b">Ask the coaches</span><span class="b spot">Email families</span></div>
+        <div class="wt"><table class="x"><thead><tr><th>Family</th><th>Children</th><th class="r">Balance</th><th>Chased</th><th style="width:40px"></th></tr></thead><tbody>
+          <tr><td class="nm">Patel</td><td>Riya · Dev</td><td class="r">$0.00</td><td>—</td><td>›</td></tr>
+          <tr><td class="nm">Okafor</td><td>Chidi</td><td class="r">$240.00</td><td>Oct 12</td><td>›</td></tr>
+          <tr><td class="nm">Tremblay</td><td>Léa</td><td class="r">$0.00</td><td>—</td><td>›</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="win" style="left:420px;top:60px;width:640px;height:790px">
+    <div class="wh"><h3>Email families</h3><span class="x">×</span></div>
+    <div class="wb" style="flex:1">
+      <p style="margin:0;color:var(--w-soft)">Sends one email to each family you choose, from the club, with your address to reply to. A family that opted out of club email is skipped.</p>
+      <div class="fld"><label>Who</label>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="opt on"><i></i><div><div class="tt">Every family · 95</div><div class="sub">Rep teams and house league, each family once</div></div></div>
+          <div class="opt"><i></i><div><div class="tt">Some rep teams</div><div class="sub">Pick the teams</div></div></div>
+          <div class="opt"><i></i><div><div class="tt">A house league season</div><div class="sub">Fall 2026 · 24 families</div></div></div>
+        </div></div>
+      <div style="display:flex;gap:10px;align-items:center"><span class="tick on"></span><span>Copy each team's head coach <span class="hint" style="margin:0">· 9 coaches, as colleagues</span></span></div>
+      <div class="fld"><label>Subject</label><span class="inp">Picture day is Saturday, October 24</span></div>
+      <div class="fld"><label>Message</label><span class="inp area">Photos run 9:00 a.m. to 2:00 p.m. at Bronte Park, in the order on the club's site. Wear the home jersey and bring the team cap.</span></div>
+      <div class="callout info"><b>Nobody to send to:</b> 12 children have no family on file. <a>Show them</a></div>
+      <a style="font-weight:600">See the email</a>
+      <p class="hint" style="margin:0">Last sent Oct 12 by Sam Owner · "Field closures this week" · 87 families</p>
+    </div>
+    <div class="wf"><span class="say">88 families get it. 7 opted out and won't.</span><span class="b">Cancel</span><span class="b lime">Send to 88</span></div>
+  </div>
+</div></div></div>
+<p class="cap" style="max-width:none">1440 · Families with Email families open (640, the ladder's form width). The Families table behind it is shortened for the drawing.</p>
+
+<div class="stage">
+  <div class="col">
+    <div class="ph-wrap"><div class="ph" style="height:844px"><div class="wm cp" style="height:844px">
+      <div class="win" style="inset:0;border-radius:0;box-shadow:none">
+        <div class="wh" style="padding:4px 4px 4px 16px;min-height:56px"><h3>Email families</h3><span class="x" style="width:44px;height:44px">×</span></div>
+        <div class="wb" style="flex:1;padding:14px 16px">
+          <div class="fld"><label>Who</label>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="opt on"><i></i><div><div class="tt">Every family · 95</div><div class="sub">Each family once</div></div></div>
+              <div class="opt"><i></i><div><div class="tt">Some rep teams</div></div></div>
+              <div class="opt"><i></i><div><div class="tt">A house league season</div></div></div>
+            </div></div>
+          <div style="display:flex;gap:10px;align-items:center;min-height:44px"><span class="tick on"></span><span>Copy each team's head coach</span></div>
+          <div class="fld"><label>Subject</label><span class="inp">Picture day is Saturday, October 24</span></div>
+          <div class="fld"><label>Message</label><span class="inp area" style="min-height:120px">Photos run 9:00 a.m. to 2:00 p.m. at Bronte Park…</span></div>
+          <a class="lnk44">Nobody to send to: 12</a>
+          <a class="lnk44" style="margin-top:-14px">See the email</a>
+        </div>
+        <div class="wf" style="flex-wrap:wrap;padding:10px 16px 14px"><span class="say" style="flex-basis:100%">88 families get it. 7 opted out and won't.</span><span class="b" style="min-height:44px;flex:1">Cancel</span><span class="b lime" style="min-height:44px;flex:1">Send to 88</span></div>
+      </div>
+    </div></div></div>
+    <p class="cap"><b>390 · the window fills the phone.</b> Fields and foot buttons 44 px. The sentence sits above the buttons at this width.</p>
+  </div>
+  <div class="read">
+    <h4>What the window does</h4>
+    <ul>
+      <li><b>The audience comes from Families</b>, the club's one de-duplicated list of households: a guardian with two children on two teams gets it once. "Every family" counts only families with a child on a live team or in an open season, never a tryout-only applicant.</li>
+      <li><b>Email only.</b> No replies, no push, no family login. The reply goes to the sender's own inbox (Reply-To), as Families' one-household message does today.</li>
+      <li><b>Opt-outs and the footer hold</b>: it goes through the same family email path as every other family send.</li>
+      <li><b>The press re-counts on the server</b> and records the send before the first email leaves (the send window's rule).</li>
+      <li><b>Who can send:</b> anyone with Families access (owners always; others by the per-person grant). <b>A cap:</b> 3 club-wide sends a day (Ask 7).</li>
+      <li>League Plus carries Families too; its "Every family" is every season's families. That is a plan-inclusion line for <code>/strategy</code> to confirm, not a new gate.</li>
+    </ul>
+    <div class="shape"><span class="k reshape">Ask 6</span>Email families now, on the one send window. Alternative: wait for the Messages product (E2), which has no date.</div>
+  </div>
+</div>
+
+<!-- ══════════ 5 · THE EMAILS LOG ══════════ -->
+<h2 id="e-log">5 · Families › Emails <span class="pill">7c</span></h2>
+<div class="stage">
+  <div class="col" style="flex:1 1 640px">
+    <div class="wm" style="width:100%;max-width:900px;padding:16px;border-radius:12px;outline:1px solid var(--line)">
+      <div class="tabs-w" style="margin-bottom:12px"><span>Families</span><span>Duplicates</span><span class="on">Emails</span></div>
+      <div class="tool" style="margin-bottom:10px"><span class="cnt">14 emails this fiscal year</span></div>
+      <div class="wt"><table class="x">
+        <thead><tr><th>Sent</th><th>Subject</th><th>To</th><th>By</th><th class="r">Reached</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="nw">Oct 18 · 4:12 p.m.</td><td class="nm">Picture day is Saturday, October 24</td><td>Every family</td><td class="nw">Sam Owner</td><td class="r nw">86 of 88</td><td>›</td></tr>
+          <tr><td class="nw">Oct 15 · 9:40 a.m.</td><td class="nm">Your balance for 13U AAA</td><td>Okafor family</td><td class="nw">Alex Admin</td><td class="r nw">2 of 2</td><td>›</td></tr>
+          <tr><td class="nw">Oct 12 · 7:05 a.m.</td><td class="nm">Field closures this week</td><td>Every family</td><td class="nw">Sam Owner</td><td class="r nw">87 of 87</td><td>›</td></tr>
+          <tr><td class="nw">Oct 3 · 6:30 p.m.</td><td class="nm">Winter dome sign-up</td><td>15U AAA · 15U AA · 14U AA</td><td class="nw">Alex Admin</td><td class="r nw">31 of 32</td><td>›</td></tr>
+        </tbody></table></div>
+    </div>
+    <p class="cap" style="max-width:none">The Emails tab. A row opens the email as sent and its list: who got it, who opted out, who bounced. One-household messages (Stage 5a) and club-wide sends share the list.</p>
+  </div>
+  <div class="read">
+    <ul><li><button class="mk new" data-note="A read of what is already logged (one-household messages since Stage 5a) plus the new club-wide sends. Nothing here is editable.">NEW</button> "Reached" is delivered of sent, the way the coach's Email families counts it.</li>
+    <li>The season email on House league keeps its own log for now: folding every club send into one screen is the first step of the Messages project (E6), not Stage 7.</li></ul>
+    <div class="shape"><span class="k reshape">Ask 7</span>Who sends, the cap, and this tab.</div>
+  </div>
+</div>
+
+<!-- ══════════ 6 · THE COACH'S LIST ══════════ -->
+<h2 id="e-list">6 · The coach's Tournaments list <span class="pill">7d</span></h2>
+<div class="chips"><button class="fx" data-finding="T11">D-3</button><button class="fx" data-finding="T12">F-30</button><button class="mk res" data-note="The card stack becomes the portal's row list (the recipe in the table standard, section 3.10): one frame, bands, the chip beside the name, the chevron last. On a phone the dates move onto the caption line; on a computer they lead as a plain column. The intro line goes; the help door explains the order.">RESTYLED · row list</button><button class="mk res" data-note="The meta says who runs it and, for the club's own tournament, 'Your club's tournament'. The team's own name leaves the meta: the coach is already on the team.">RESTYLED · meta</button><button class="mk unc" data-note="Tournaments you run stays for the people who can run tournaments, below the list.">UNCHANGED · Tournaments you run</button></div>
+<div class="stage">
+  <div class="col">
+    <div class="ph-wrap"><div class="ph" style="height:844px"><div class="wm cp" style="height:844px">
+      <div class="pt">15U AAA<span class="q"><span>?</span></span></div>
+      <div class="pb">
+        <div class="tt-h"><h1>Tournaments</h1></div>
+        <div class="card">
+          <div class="bd">Coming up</div>
+          <div class="rw"><div class="grow"><div class="nm">Guelph Fall Classic <span class="chip amb">Waiting on them</span></div><div class="sub">Nov 6–8 · Guelph Minor Ball</div></div><span class="chev"></span></div>
+          <div class="rw"><div class="grow"><div class="nm">Winter Dome Showcase <span class="chip ok">Accepted</span></div><div class="sub">Jan 15–17 · Burlington Minor Ball</div></div><span class="chev"></span></div>
+          <div class="bd">Finished</div>
+          <div class="rw"><div class="grow"><div class="nm">UAT Rep Club Invitational 2026</div><div class="sub">Oct 17–19 · Your club's tournament · 2nd of 4</div></div><span class="chev"></span></div>
+        </div>
+        <a class="lnk44">⇄ Fan view of every tournament</a>
+      </div>
+      <div class="bn"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span class="on">More</span></div>
+    </div></div></div>
+    <p class="cap"><b>390.</b> Rows 56 px or more; a long name wraps inside its row, so nothing runs off the screen. "Waiting on them" is a placement for the pending state (<code>/marketing</code>).</p>
+  </div>
+  <div class="col" style="flex:1 1 560px;min-width:0">
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><div class="dt"><div class="wm cd" style="min-height:640px">
+      <div class="tb"><span class="lg"><i></i>FIELDLOGICHQ</span><span class="ar">Coaches portal</span><span class="rt">🔔 · 👤</span></div>
+      <div class="shell" style="min-height:592px">
+        <div class="sb"><span class="it">Overview</span><span class="grp">Season</span><span class="it">Schedule</span><span class="it">Practice plans</span><span class="it">Lineups</span><span class="it on">Tournaments</span><span class="grp">Progress</span><span class="it">Skills &amp; goals</span><span class="it">Insights</span><span class="grp">Money</span><span class="it">Money</span></div>
+        <div>
+          <div class="tm"><div><b>15U AAA</b><small>UAT Rep Club · 2026 Season</small></div><div class="nx"><span>NEXT</span>Sun 8:00 a.m. practice</div></div>
+          <div class="col">
+            <div class="tt-h" style="align-items:center"><h1>Tournaments</h1><span class="qm">?</span></div>
+            <div class="card">
+              <div class="bd">Coming up</div>
+              <div class="rw"><div class="dc">Nov 6–8</div><div class="grow"><div class="nm">Guelph Fall Classic <span class="chip amb">Waiting on them</span></div><div class="sub">Guelph Minor Ball</div></div><span class="chev"></span></div>
+              <div class="rw"><div class="dc">Jan 15–17</div><div class="grow"><div class="nm">Winter Dome Showcase <span class="chip ok">Accepted</span></div><div class="sub">Burlington Minor Ball</div></div><span class="chev"></span></div>
+              <div class="bd">Finished</div>
+              <div class="rw"><div class="dc">Oct 17–19</div><div class="grow"><div class="nm">UAT Rep Club Invitational 2026</div><div class="sub">Your club's tournament · 2nd of 4</div></div><span class="chev"></span></div>
+            </div>
+            <a class="lnk44">⇄ Fan view of every tournament</a>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <p class="cap" style="max-width:none">1440. The date leads as a plain column; the chevron is the door, last, as on a phone.</p>
+  </div>
+</div>
+<div class="shape" style="max-width:780px"><span class="k reshape">Ask 8</span>The list as a row list, banded Coming up / Finished; this season only, as today.</div>
+
+<!-- ══════════ 7 · THE COACH'S TOURNAMENT PAGE ══════════ -->
+<h2 id="e-rec">7 · The coach's tournament page <span class="pill">7d</span></h2>
+<div class="chips"><button class="fx" data-finding="T1">Title</button><button class="fx" data-finding="T2">Length</button><button class="fx" data-finding="T3">Help</button><button class="fx" data-finding="T4">Accepted ×2</button><button class="fx" data-finding="T5">Head coach</button><button class="fx" data-finding="T6">Road</button><button class="fx" data-finding="T7">Clock</button><button class="fx" data-finding="T8">LIVE</button><button class="fx" data-finding="T9">vs / at</button><button class="mk res" data-note="The title is the tournament's name; the meta is the team, the dates and who runs it. The year in brackets and the dash-joined line go.">RESTYLED · title</button><button class="mk new" data-note="A plain door row to the team's own Schedule, opened on the tournament's first day; the Schedule's sheet for each game leads back here (drawing 8).">NEW · Games on your Schedule</button><button class="mk res" data-note="The tinted hero, the Status &amp; Payment card and the facts grid become one status chip under the title and one Registration card: the fee, check-in, who to ask, when it was registered. Roster submission stays where it is when the organizer requires it.">RESTYLED · Registration</button><button class="mk res" data-note="The head coach for this event autosaves (the edit-autosaves ruling) and shows as a form only to the head coach and the team manager. An assistant reads it. The server refuses anyone else; today it does not.">RESTYLED · head coach</button><button class="mk res" data-note="The four pill links become 44 px rows: Tournament home, Rules, Share this tournament; Standings moves up beside Your games.">RESTYLED · From the organizer</button></div>
+<div class="stage">
+  <div class="col">
+    <div class="ph-wrap"><div class="ph" style="height:1350px"><div class="wm cp" style="height:1350px">
+      <div class="pt">15U AAA<span class="q"><span>?</span></span></div>
+      <div class="pb">
+        <a class="back">Tournaments</a>
+        <div class="tt-h"><h1>UAT Rep Club Invitational 2026</h1><span class="ic44">⇄</span></div>
+        <div class="meta">15U AAA · Oct 17–19 · Your club's tournament</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip ok">Accepted</span><span class="chip">Finished · 2nd of 4</span></div>
+        <a class="door44"><div class="grow"><div class="nm">Games on your Schedule</div><div class="sub">4 games · opens on Sat Oct 17</div></div><span class="chev"></span></a>
+        <div class="sec"><h2>Your games<a class="aside">Standings</a></h2>
+          <div class="card">
+            <div class="rw"><div class="grow"><div class="nm">vs Guelph Royals 15U</div><div class="sub">Sat Oct 17 · 6:00 p.m. · Bronte Park · Field 2</div></div><span class="score w">W 7–4</span><span class="chev"></span></div>
+            <div class="rw"><div class="grow"><div class="nm">at Milton Mustangs 15U</div><div class="sub">Sun Oct 18 · 9:00 a.m. · Bronte Park · Field 1</div></div><span class="score">L 2–5</span><span class="chev"></span></div>
+            <div class="rw"><div class="grow"><div class="nm">vs Oakville Otters 15U</div><div class="sub">Sun Oct 18 · 2:30 p.m. · Bronte Park · Field 2</div></div><span class="score w">W 6–1</span><span class="chev"></span></div>
+            <div class="rw"><div class="grow"><div class="nm">Final · at Milton Mustangs 15U</div><div class="sub">Mon Oct 19 · 11:00 a.m. · Bronte Park · Field 1</div></div><span class="score">L 3–4</span><span class="chev"></span></div>
+          </div>
+          <a class="lnk44">Add the games to a calendar</a>
+        </div>
+        <div class="sec"><h2>Registration</h2>
+          <div class="card"><dl class="kv" style="margin:0">
+            <dt>Fee</dt><dd>No fee · your club's team</dd>
+            <dt>Check-in</dt><dd>Checked in Oct 17</dd>
+            <dt>Questions</dt><dd><span>Sam Owner · <a style="font-weight:600">uat-club-owner@uat-rep-club.local</a></span></dd>
+            <dt>Registered</dt><dd>Oct 7</dd>
+          </dl></div>
+        </div>
+        <div class="sec"><h2>Head coach for this event</h2>
+          <div class="card"><div class="cfld">
+            <div class="fld"><label>Name <span aria-hidden="true">*</span></label><span class="inp">Jordan Lee</span></div>
+            <div class="fld"><label>Email the organizer uses</label><span class="inp pl">Your sign-in email</span><p class="hint">Acceptance, payment and schedule updates go here. Blank uses your sign-in email.</p></div>
+          </div></div>
+        </div>
+        <div class="sec"><h2>From the organizer</h2>
+          <div class="card">
+            <div class="rw"><div class="grow"><div class="nm">Tournament home</div></div><span class="chev"></span></div>
+            <div class="rw"><div class="grow"><div class="nm">Rules</div></div><span class="chev"></span></div>
+            <div class="rw"><div class="grow"><div class="nm">Share this tournament</div></div><span class="chev"></span></div>
+          </div>
+          <p class="hint" style="margin:0">No announcements from the organizer.</p>
+        </div>
+      </div>
+      <div class="pill-saved" style="bottom:84px;right:16px">Saved</div>
+      <div class="bn"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span class="on">More</span></div>
+    </div></div></div>
+    <p class="cap"><b>390, full length: about 1,350 px (today 2,175).</b> Every control 44 px or more. "Saved" is the transient pill after the name was typed. ⇄ is the public page (Fan view), as today.</p>
+  </div>
+  <div class="read">
+    <h4>What changes, top to bottom</h4>
+    <ul>
+      <li><b>Titled by the tournament</b>, with the team in the meta (R4). The tab title follows: "Invitational 2026 · 15U AAA".</li>
+      <li><b>One help door</b> in the top bar, opening the Tournaments help.</li>
+      <li><b>Status once</b>, as a chip under the title; the tinted hero goes. Before the event the second chip is the countdown ("In 10 days"); during it, "Playing now" by the shared rule (C6-09).</li>
+      <li><b>Games on your Schedule</b> opens the team's Schedule on the tournament's first day.</li>
+      <li><b>Your games</b> reads the booking's own clock and the house time ("6:00 p.m."), with one spelling: "vs" at home, "at" away, in rows, the change notice and the calendar file. On a phone the day and time ride the caption line.</li>
+      <li><b>Registration</b> is one card. A visiting entry reads "$475.00 · paid Sep 12" or "Deposit paid · $375.00 owing"; an assistant without money access sees no Fee row, as today. Dates in one short form.</li>
+      <li><b>Head coach for this event</b> autosaves. The head coach and the team manager see the form; an assistant sees "Head coach for this event: Jordan Lee" as a line.</li>
+      <li><b>From the organizer</b> as rows; Standings moved up beside Your games.</li>
+    </ul>
+    <div class="shape"><span class="k reshape">Asks 9–11</span>The shape, the head coach's editor and who sees it, the clock and spelling fixes.</div>
+  </div>
+</div>
+
+<div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+<div class="dt-wrap fit"><div class="dt"><div class="wm cd" style="min-height:900px">
+  <div class="tb"><span class="lg"><i></i>FIELDLOGICHQ</span><span class="ar">Coaches portal</span><span class="rt">🔔 · 👤</span></div>
+  <div class="shell" style="min-height:852px">
+    <div class="sb"><span class="it">Overview</span><span class="grp">Season</span><span class="it">Schedule</span><span class="it">Practice plans</span><span class="it">Lineups</span><span class="it on">Tournaments</span><span class="grp">Progress</span><span class="it">Skills &amp; goals</span><span class="it">Insights</span><span class="grp">Money</span><span class="it">Money</span><span class="grp">Communication</span><span class="it">Email families</span></div>
+    <div>
+      <div class="tm"><div><b>15U AAA</b><small>UAT Rep Club · 2026 Season</small></div><div class="nx"><span>NEXT</span>Sun 8:00 a.m. practice</div></div>
+      <div class="col">
+        <a class="back" style="margin:0">Tournaments</a>
+        <div class="tt-h" style="align-items:center"><h1>UAT Rep Club Invitational 2026</h1><span class="b" style="border-radius:20px">⇄ Fan view</span><span class="qm" style="margin-left:6px">?</span></div>
+        <div class="meta" style="margin-top:-10px">15U AAA · Oct 17–19 · Your club's tournament</div>
+        <div style="display:flex;gap:8px"><span class="chip ok">Accepted</span><span class="chip">Finished · 2nd of 4</span></div>
+        <div class="two">
+          <div>
+            <a class="door44"><div class="grow"><div class="nm">Games on your Schedule</div><div class="sub">4 games · opens on Sat Oct 17</div></div><span class="chev"></span></a>
+            <div class="sec"><h2>Your games<a class="aside">Standings</a></h2>
+              <div class="card">
+                <div class="rw"><div class="dc" style="width:150px">Oct 17 · 6:00 p.m.</div><div class="grow"><div class="nm">vs Guelph Royals 15U</div><div class="sub">Bronte Park · Field 2</div></div><span class="score w">W 7–4</span><span class="chev"></span></div>
+                <div class="rw"><div class="dc" style="width:150px">Oct 18 · 9:00 a.m.</div><div class="grow"><div class="nm">at Milton Mustangs 15U</div><div class="sub">Bronte Park · Field 1</div></div><span class="score">L 2–5</span><span class="chev"></span></div>
+                <div class="rw"><div class="dc" style="width:150px">Oct 18 · 2:30 p.m.</div><div class="grow"><div class="nm">vs Oakville Otters 15U</div><div class="sub">Bronte Park · Field 2</div></div><span class="score w">W 6–1</span><span class="chev"></span></div>
+                <div class="rw"><div class="dc" style="width:150px">Oct 19 · 11:00 a.m.</div><div class="grow"><div class="nm">Final · at Milton Mustangs 15U</div><div class="sub">Bronte Park · Field 1</div></div><span class="score">L 3–4</span><span class="chev"></span></div>
+              </div>
+              <a class="lnk44">Add the games to a calendar</a>
+            </div>
+            <div class="sec"><h2>From the organizer</h2>
+              <div class="card">
+                <div class="rw"><div class="grow"><div class="nm">Tournament home</div></div><span class="chev"></span></div>
+                <div class="rw"><div class="grow"><div class="nm">Rules</div></div><span class="chev"></span></div>
+                <div class="rw"><div class="grow"><div class="nm">Share this tournament</div></div><span class="chev"></span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="sec"><h2>Registration</h2>
+              <div class="card"><dl class="kv" style="margin:0;grid-template-columns:104px minmax(0,1fr)">
+                <dt>Fee</dt><dd>No fee · your club's team</dd>
+                <dt>Check-in</dt><dd>Checked in Oct 17</dd>
+                <dt>Questions</dt><dd>Sam Owner</dd>
+                <dt>Registered</dt><dd>Oct 7</dd>
+              </dl></div>
+            </div>
+            <div class="sec"><h2>Head coach for this event</h2>
+              <div class="card"><div class="cfld">
+                <div class="fld"><label>Name <span aria-hidden="true">*</span></label><span class="inp">Jordan Lee</span></div>
+                <div class="fld"><label>Email the organizer uses</label><span class="inp pl">Your sign-in email</span></div>
+              </div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div></div>
+<p class="cap" style="max-width:none">1440 · the same page in two columns inside the 960 column: the games on the left, the registration and the event's head coach on the right. Today: one column, 1,964 px.</p>
+
+<!-- ══════════ 8 · THE ROAD BACK ══════════ -->
+<h2 id="e-road">8 · From the Schedule back to the tournament <span class="pill">7d</span></h2>
+<div class="stage">
+  <div class="col">
+    <div class="ph-wrap"><div class="ph" style="height:520px"><div class="wm cp" style="height:520px;background:#5c5446">
+      <div class="win" style="left:0;right:0;bottom:0;border-radius:14px 14px 0 0">
+        <div class="wh" style="padding:4px 4px 4px 16px;min-height:56px"><h3>vs Guelph Royals 15U</h3><span class="x" style="width:44px;height:44px">×</span></div>
+        <div class="wb" style="padding:12px 16px 16px">
+          <div style="color:var(--w-soft)">Sat Oct 17 · 6:00 p.m. · Bronte Park · Field 2</div>
+          <a class="door44 spot"><div class="grow"><div class="nm">UAT Rep Club Invitational 2026</div><div class="sub">The organizer sets the time, place and score</div></div><span class="chev"></span></a>
+          <div class="card"><div class="rw nochev"><div class="grow"><div class="nm">Arrive</div></div><span>5:15 p.m.</span></div><div class="rw nochev"><div class="grow"><div class="nm">Uniform</div></div><span>Home whites</span></div></div>
+        </div>
+      </div>
+    </div></div></div>
+    <p class="cap"><b>390 · a tournament game's sheet on the Schedule (the bottom of it).</b> The row opens the tournament's page in the portal; the public page stays one tap further, as Fan view.</p>
+  </div>
+  <div class="read">
+    <ul><li><button class="fx" data-finding="T6">Road</button> Today the sheet says "From X · organizer's schedule — View on the tournament page ↗" and opens the public page in a new tab. <button class="mk res" data-note="One row on the existing event sheet; the organizer-owned fields still read as theirs (time, place, opponent, score) and the coach's own fields stay editable (arrival, uniform, attendance, lineup).">RESTYLED</button></li>
+    <li>The free portal's schedule gets the same row.</li></ul>
+  </div>
+</div>
+</section>
+
+<section class="tab" id="tab-notdrawn" data-tab="notdrawn" hidden>
+<h2>Not drawn: what the build carries, and where other things go</h2>
+<h3>The build carries (no screen of its own)</h3>
+<ul>
+<li><b>7a.</b> The one fee write (tournament and house league): a line per payment, written when paid, voided with who and when on an undo, never revived, never fire-and-forget; the tournament's book opened by itself on the first paid fee (no race when two people mark at once); the setting's category and item made on first use; "Not tracked here" writes nothing; the club's own team writes nothing. The house league's approval-day "pending" line, its missing line for a family that signed up itself, and its never-voided declined lines all move onto the write. The tournament's book counted in the Statement and the arithmetic check; By activity reused from the coach's report. Tests that fail on today's code for each house-league defect.</li>
+<li><b>7b.</b> Entering and linking in one step (the link is the existing rep-team link, made explicitly); the Teams table reads the head coach through the link.</li>
+<li><b>7c.</b> The send through the family email path (opt-outs, footer, Reply-To); the audience from Families' live households, one email per address; the server re-count and the claim before the first email; the cap; the log rows. No new chat, push or family login.</li>
+<li><b>7d.</b> The head coach editor's server check (head coach and team manager only; today any staff member with the page can save it); the "Registered" and announcement dates on the club's clock (today the server's); the game rows on the booking's clock and the shared live rule; "vs / at" in rows, the change notice and the calendar file; the breakpoints onto 640 / 768 / 900; the paid and free records moving together.</li>
+<li><b>Help</b> (<code>/docs</code>): the Tournaments article gains the page's help door and the road to the games; Families gains Email families and Emails; Accounting gains By activity and how a tournament's fees are filed; the tournament's Payments article says where paid fees go.</li>
+<li><b>The walk</b>: its own checkable page after the build (Ask 13).</li>
+</ul>
+<h3>Decided elsewhere</h3>
+<div class="tw"><table class="t"><thead><tr><th>Item</th><th>Where</th></tr></thead><tbody>
+<tr><td>Families and teams paying a tournament online</td><td>Stage 12c. It needs Ask 1: an online payment goes through the same fee write.</td></tr>
+<tr><td>Refunds paid online; a withdrawn team's refund</td><td>Stage 12. Until then a refund is a typed money-out line.</td></tr>
+<tr><td>House league's season email folding into one screen with Email families</td><td>The Messages project's first step (chat pause E6), not Stage 7.</td></tr>
+<tr><td>Messages: replies, push, families in rooms</td><td>E2 and E3 (chat pause, ruled 2026-10-18): no date; families need counsel and their own business entry.</td></tr>
+<tr><td>The tournament phone bar's "Messages" label for Communications</td><td>Noted for E2: when Messages returns, that word must mean one thing. Not changed here.</td></tr>
+<tr><td>League Plus getting "Every family" through Families</td><td><code>/strategy</code> to confirm as a plan line; no gate changes.</td></tr>
+<tr><td>Copy: "Add our teams", "Our team", "No fee", "Waiting on them", "Email families" window sentences, "Games on your Schedule"</td><td><code>/marketing</code>: placements drawn, words theirs.</td></tr>
+<tr><td>The coaches' row-list recipe's B2 session (F-30)</td><td>Stage 7d builds the Tournaments list in the recipe; B2 drops it from its own list.</td></tr>
+<tr><td>Admin type sweep Stage 4 (headings plain, both portals)</td><td>Already ruled; 7d is drawn in its result and builds after it.</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="tab" id="tab-check" data-tab="check" hidden>
+<h2>Design check</h2>
+<p>Round 1 went through the <code>/design</code> review (2026-10-20) before you saw it: it checked the drawings against the table and list standard, the coaches' row-list recipe, the one-window rules, edit-autosaves, the money band, the Admin type sweep's plain headings and the spelling gate. It found 15 things; every change below is already in the drawings. These are proposals until you rule them; nothing is in the design log.</p>
+<h3>What it confirmed</h3>
+<ul><li>Headings are plain (D1); every window's foot has the sentence left and the buttons right; the Budget vs. Actual figures are the one joined band in the ruled words; fields are 36 px on a computer and 44 px on a phone; times read "9:00 a.m."; no spelling-gate word; the By activity and Ledger figures add up.</li></ul>
+<h3>What it changed (10 rule breaks, 5 judgement calls)</h3>
+<div class="tw"><table class="t"><thead><tr><th>#</th><th>Drawing</th><th>Change</th><th>Rule</th></tr></thead><tbody>
+<tr><td>1</td><td>All</td><td>Status chips in the product's typewriter capitals (as today's "COMPLETE" and "OPEN"), not sentence-case pills. "Voided" is the chip; who and when is a caption line.</td><td>Table standard §3.2 badge row</td></tr>
+<tr><td>2</td><td>All tables and bands</td><td>Column headings and band rows in the condensed display face, as the real screens draw them.</td><td>§3.2; Admin type sweep A4</td></tr>
+<tr><td>3</td><td>Every form</td><td>Field labels 12 px, secondary ink.</td><td>One window Q1 (2026-10-18)</td></tr>
+<tr><td>4</td><td>Coach list, Your games</td><td>On a phone the date rides the caption line and the chip sits beside the name, so names stop wrapping to three lines. On a computer the date is a plain one-line column.</td><td>§3.10.8; "a row's chip has one place"</td></tr>
+<tr><td>5</td><td>Coach list, Your games (1440)</td><td>The chevron is drawn on a computer too; the caption that said otherwise misread the recipe.</td><td>§3.10.6</td></tr>
+<tr><td>6</td><td>By activity</td><td>Each activity is a group row (larger, filled, chevron); Revenue and Costs are sub-rows; the net closes the block.</td><td>§3.2 group and closing rows</td></tr>
+<tr><td>7</td><td>Families</td><td>Today's toolbar (the Show pill at the left) and today's columns (Balance, Chased) kept; the drawing had invented "Owes" and "Programs".</td><td>Club Stage 5 Ask 2; toolbar rules</td></tr>
+<tr><td>8</td><td>Emails log</td><td>The Show pill with one choice is gone (nothing to narrow); date, sender and count columns no longer wrap.</td><td>Toolbar rules (2026-10-17)</td></tr>
+<tr><td>9</td><td>Coach page (390)</td><td>"Standings" gets a 44 px box.</td><td>Phone tap floor</td></tr>
+<tr><td>10</td><td>Payments setting</td><td>A drawing note ("Unchanged.") had been written as product copy; it is a tag now.</td><td>Annotations stay outside the product</td></tr>
+<tr><td>11</td><td>Coach screens, email</td><td>Weekdays corrected: the test tournament runs Sat Oct 17 to Mon Oct 19; picture day is Saturday, October 24.</td><td>Judgement</td></tr>
+<tr><td>12</td><td>Coach page</td><td>The Status row left the Registration card (the chip already says it); one short date form; the required mark on Name; three rows for From the organizer on a computer.</td><td>Judgement; required mark (2026-10-18)</td></tr>
+<tr><td>13</td><td>Coach page, game sheet</td><td>"Games on your Schedule" is a plain door row, not a row with a coloured rail.</td><td>§3.10.7</td></tr>
+<tr><td>14</td><td>Add our teams</td><td>640 wide (a short table), a phone version drawn, and "Our teams enter with no fee" said once, in the foot.</td><td>Judgement; one window widths</td></tr>
+<tr><td>15</td><td>Club frames</td><td>No glyph on Add our teams or Email families (Ask the coaches already wears the envelope); "See the email" apart from the Nobody callout; the Ledger's sample-data note moved to the caption and its row tint dropped (the product has none); the Payments setting says it autosaves; the Teams caption says At a glance is left out.</td><td>Judgement</td></tr>
+</tbody></table></div>
+<p class="muted">Not changed: the Email families window's 640 width matches the other send windows (the one send window, 2026-10-11).</p>
+</section>
+
+<section class="tab" id="tab-asks" data-tab="asks" hidden>
+<h2>The asks</h2>
+<p>Each ask is drawn to its recommendation. <b>Ask 1 decides the rest of 7a</b>, and Stage 12c waits on it. Your picks stay in this browser; <b>Copy all answers</b> makes one block to paste back.</p>
+
+<div class="ask decides" data-ask="1">
+  <h3><span class="no">Ask 1</span>Where a tournament's fee lands <span class="pill bad">decides 7a</span></h3>
+  <p>Marking a team paid writes nothing today. The club's tournament already has a book of its own that the tournament's Accounting door opens.</p>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a1" value="A"> <span><b>The tournament's own book</b>, opened by itself on the first paid fee, filed under the word the club picks once (drawing 2). The plan's "org ledger" wording is replaced.</span></label>
+    <label><input type="radio" name="a1" value="B"> <span><b>The club's general book</b>, as the plan wrote it. Simpler to find, but one event's money mixes into everything else and "did it pay for itself?" needs a filter.</span></label>
+    <label><input type="radio" name="a1" value="C"> <span><b>Write nothing;</b> the treasurer types the fees. Today's behaviour.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> Asks 2–4, By activity, and Stage 12c (an online payment writes the same line).</p>
+  <textarea id="n1" placeholder="Notes for Ask 1"></textarea>
+</div>
+
+<div class="ask" data-ask="2">
+  <h3><span class="no">Ask 2</span>The club's own team in its own tournament</h3>
+  <p>Today it reads "Paid" on the admin's table and "No fee set" on the coach's page. A fee from the club's own team is money moving inside the club.</p>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a2" value="A"> <span><b>No fee, said as such:</b> "Our team" on the row, "No fee" in Payment, "No fee · your club's team" on the coach's page; nothing written to any book. A club that wants its teams to pay toward hosting bills them through an allocation (Stage 3).</span></label>
+    <label><input type="radio" name="a2" value="B"> <span><b>A fee like a visitor's</b>, written to the tournament's book as income; the coach records the payment in the team's own book.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> the own-team row (drawing 1), the coach's Registration card (drawing 7).</p>
+  <textarea id="n2" placeholder="Notes for Ask 2"></textarea>
+</div>
+
+<div class="ask" data-ask="3">
+  <h3><span class="no">Ask 3</span>How the tournament joins the club's year, and By activity</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a3" value="A"> <span><b>By category, the coach's way:</b> the tournament is one category on the club's budget holding its revenue and its costs; its book's lines count in the Statement through the words they carry; By activity is the coach's report shape, unchanged (drawing 3). A cost paid from the general book and filed under the tournament counts toward it.</span></label>
+    <label><input type="radio" name="a3" value="B"> <span><b>By book:</b> one By activity block per book (the club, each tournament), a club-only shape. A cost paid from the general book never counts toward the tournament.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> the Statement's figures, the setting in drawing 2, Stage 9's house-league seasons (they join the same way).</p>
+  <textarea id="n3" placeholder="Notes for Ask 3"></textarea>
+</div>
+
+<div class="ask" data-ask="4">
+  <h3><span class="no">Ask 4</span>One fee write for the tournament and the house league</h3>
+  <p>The plan says copy the house league's fee pattern "done right". Its write has six defects today: it fires and forgets, writes a pending line on approval instead of when paid, writes nothing for a family that signed up itself, never voids a declined or withdrawn registration, brings a voided line back to life, and can open a season's book twice.</p>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a4" value="A"> <span><b>Build one write in 7a and move the house league onto it,</b> fixing the six with a failing test for each.</span></label>
+    <label><input type="radio" name="a4" value="B"> <span><b>Tournaments only in 7a;</b> the house league's write waits for Stage 9.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> 7a's size (A is larger), the house league's books between now and Stage 9, Stage 12b.</p>
+  <textarea id="n4" placeholder="Notes for Ask 4"></textarea>
+</div>
+
+<div class="ask" data-ask="5">
+  <h3><span class="no">Ask 5</span>Add our teams</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a5" value="A"> <span><b>One window, many teams</b>, a division per team, each entered, accepted and linked at once (drawing 1). The admin enters; the coach sees it appear. A head coach cannot enter the club's tournament from the coach portal.</span></label>
+    <label><input type="radio" name="a5" value="B"> <span><b>One team at a time</b> (pick a team, pick a division, Add).</span></label>
+    <label><input type="radio" name="a5" value="C"> <span><b>As A, and the head coach may ask to join</b> from their Tournaments list; the admin accepts.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> G03 closes; the coach-side tournament registration stays off for club teams unless C.</p>
+  <textarea id="n5" placeholder="Notes for Ask 5"></textarea>
+</div>
+
+<div class="ask" data-ask="6">
+  <h3><span class="no">Ask 6</span>Email every family</h3>
+  <p>The chat pause ruled that messaging returns later as Messages (announcements with replies, for families after counsel), with no date. The scheduler's Ask 9 ruled that Stage 7's family send uses the one club send window.</p>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a6" value="A"> <span><b>Email families now,</b> on Families, through the one send window: every family, some rep teams, or a house-league season; each family once; head coaches copied; email only, no replies, no push (drawing 4). It does not take the word "Messages".</span></label>
+    <label><input type="radio" name="a6" value="B"> <span><b>Wait for Messages (E2)</b>; Stage 7 drops G02.</span></label>
+    <label><input type="radio" name="a6" value="C"> <span><b>As A, without the house-league choice</b> (the season email already covers a season).</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> G02; the Club release's "one door to every family"; nothing in E2 is decided by it.</p>
+  <textarea id="n6" placeholder="Notes for Ask 6"></textarea>
+</div>
+
+<div class="ask" data-ask="7">
+  <h3><span class="no">Ask 7</span>Who sends, how often, and where it is recorded</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a7" value="A"> <span><b>Anyone with Families access; 3 club-wide sends a day; an Emails tab on Families</b> listing every club-wide and one-household email, with delivered of sent (drawing 5).</span></label>
+    <label><input type="radio" name="a7" value="B"> <span><b>Owners and admins only;</b> otherwise as A.</span></label>
+    <label><input type="radio" name="a7" value="C"> <span><b>As A, with no tab;</b> the window's "Last sent" line is the only record on screen.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> the Families grant's meaning (today it already allows one-household messages).</p>
+  <textarea id="n7" placeholder="Notes for Ask 7"></textarea>
+</div>
+
+<div class="ask" data-ask="8">
+  <h3><span class="no">Ask 8</span>The coach's Tournaments list</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a8" value="A"> <span><b>A row list in the portal's recipe</b>: dates in front, banded Coming up / Finished, a chip only where it says something, the intro line gone, Fan view under the list (drawing 6).</span></label>
+    <label><input type="radio" name="a8" value="B"> <span><b>Keep the cards</b> and fix only the overflow.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> the free portal's list (same row); the recipe's B2 list loses one item.</p>
+  <textarea id="n8" placeholder="Notes for Ask 8"></textarea>
+</div>
+
+<div class="ask" data-ask="9">
+  <h3><span class="no">Ask 9</span>The coach's tournament page</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a9" value="A"> <span><b>As drawn:</b> titled by the tournament, one status, Games on your Schedule, Your games, one Registration card, From the organizer as rows, a help door; two columns on a computer; the Schedule's game sheet leads back (drawings 7–8).</span></label>
+    <label><input type="radio" name="a9" value="B"> <span><b>As A, one column on a computer too.</b></span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> the deep dive's Q 7.1 (closes), the free portal's record.</p>
+  <textarea id="n9" placeholder="Notes for Ask 9"></textarea>
+</div>
+
+<div class="ask" data-ask="10">
+  <h3><span class="no">Ask 10</span>The head coach for an event</h3>
+  <p>Today it is a form with its own Save that any staff member who can open the page can save; the server never checks the role.</p>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a10" value="A"> <span><b>Autosaves on the page;</b> a form only for the head coach and the team manager; an assistant reads it as a line; the server refuses everyone else.</span></label>
+    <label><input type="radio" name="a10" value="B"> <span><b>Moves to the team's Settings</b> as a default for every event, with a per-event override on the page.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> a server fix that ships with 7d whichever you pick.</p>
+  <textarea id="n10" placeholder="Notes for Ask 10"></textarea>
+</div>
+
+<div class="ask" data-ask="11">
+  <h3><span class="no">Ask 11</span>Clocks, the live rule and one spelling</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a11" value="A"> <span><b>Fix all of them in 7d:</b> game rows on the booking's clock and "6:00 p.m."; Registered and announcement dates on the club's clock; "Playing now" by the shared rule; "vs" at home and "at" away in rows, the change notice and the calendar file; breakpoints onto 640 / 768 / 900.</span></label>
+    <label><input type="radio" name="a11" value="B"> <span><b>Ship the clock fixes now,</b> ahead of 7d (they are invisible except on a wrong day).</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> nothing else; small.</p>
+  <textarea id="n11" placeholder="Notes for Ask 11"></textarea>
+</div>
+
+<div class="ask" data-ask="12">
+  <h3><span class="no">Ask 12</span>Both portals</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a12" value="A"> <span><b>Every 7d change lands in the free portal too</b> (one page, two shells), including the title order: the free shell's header names the tournament, with the team under it.</span></label>
+    <label><input type="radio" name="a12" value="B"> <span><b>The paid portal first;</b> the free portal follows in its own pass.</span></label>
+  </div>
+  <p class="rides"><b>What rides on it:</b> the free portal's next walk.</p>
+  <textarea id="n12" placeholder="Notes for Ask 12"></textarea>
+</div>
+
+<div class="ask" data-ask="13">
+  <h3><span class="no">Ask 13</span>The Stage 7 walk</h3>
+  <div class="opts">
+    <label class="rec"><input type="radio" name="a13" value="A"> <span><b>Its own checkable walk page after each part's build</b> (7a to 7d), one purpose per walk.</span></label>
+    <label><input type="radio" name="a13" value="B"> <span><b>One walk for all of Stage 7</b> at the end.</span></label>
+  </div>
+  <textarea id="n13" placeholder="Notes for Ask 13"></textarea>
+</div>
+
+<div class="paste">
+  <div><b><span id="answered">0</span> of 13 answered</b> <span class="muted" style="font-size:13px">· kept in this browser</span></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-d" id="clear">Clear answers</button><button class="btn-d pri" id="copy">Copy all answers</button></div>
+  <textarea id="out" readonly hidden aria-label="Answers to paste back"></textarea>
+</div>
+</section>
+</main>
+
+<dialog class="note" id="note" aria-labelledby="note-t">
+  <div class="nh"><h3 id="note-t"></h3><button class="x" id="note-x" aria-label="Close">×</button></div>
+  <div class="nb" id="note-b"></div>
+</dialog>
+<script>
+/* Navigation: tabs and bare-token hashes. Kept apart from every other script so nothing else can stop it. */
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.tabs [data-tab]'));
+  var secs=[].slice.call(document.querySelectorAll('section.tab'));
+  function show(name,scrollTo){
+    if(!secs.some(function(s){return s.dataset.tab===name})) name='start';
+    secs.forEach(function(s){s.hidden=s.dataset.tab!==name});
+    tabs.forEach(function(t){t.setAttribute('aria-selected',t.dataset.tab===name?'true':'false')});
+    document.dispatchEvent(new CustomEvent('s7tab',{detail:name}));
+    if(scrollTo){var el=document.getElementById(scrollTo); if(el){setTimeout(function(){el.scrollIntoView({block:'start'})},0); return;}}
+    window.scrollTo(0,0);
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.dataset.tab); try{history.replaceState(null,'','#'+t.dataset.tab)}catch(e){}})});
+  document.addEventListener('click',function(e){
+    var g=e.target.closest('[data-goto]'); if(g){e.preventDefault(); show(g.dataset.goto); try{history.replaceState(null,'','#'+g.dataset.goto)}catch(x){} return;}
+    var j=e.target.closest('[data-jump]'); if(j){e.preventDefault(); show('end',j.dataset.jump);}
+  });
+  var h=(location.hash||'').slice(1);
+  var ids={'e-add':1,'e-fee':1,'e-bva':1,'e-mail':1,'e-log':1,'e-list':1,'e-rec':1,'e-road':1};
+  if(ids[h]) show('end',h); else show(h||'start');
+})();
+</script>
+<script>
+/* Desktop frames: fit to the column, or true size. */
+(function(){
+  function fit(){
+    document.querySelectorAll('.dt-wrap').forEach(function(w){
+      var z=Math.min(1,(w.clientWidth||1440)/1440);
+      w.style.setProperty('--z',z.toFixed(4));
+      var tools=w.previousElementSibling, zl=tools&&tools.querySelector('.zl');
+      if(zl) zl.textContent=w.classList.contains('fit')?('Shown at '+Math.round(z*100)+'% of true size'):'True size: scroll sideways inside the frame';
+    });
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-fit]'); if(!b) return;
+    var w=b.closest('.dt-tools').nextElementSibling; if(!w) return;
+    w.classList.toggle('fit'); b.textContent=w.classList.contains('fit')?'Show at true size':'Fit to the window'; fit();
+  });
+  window.addEventListener('resize',fit); document.addEventListener('s7tab',function(){setTimeout(fit,0)}); fit();
+})();
+</script>
+<script type="application/json" id="s7data">{"findings":{
+"G01":{"title":"G01 · The hub's tournament banner","today":"Fixed 2026-09-26. A club gets its own Overview (no banner, no setup tile); Tournaments joins Your programs only once the club runs one, and a club with none sees a quiet 'Tournaments: none yet · Run a tournament'. The old banner's code is still in the tournament-only hub, which a club never reaches.","proposal":"Nothing. Struck from Stage 7."},
+"G03":{"title":"G03 · A club's own team takes two steps","today":"'Add my team' (the star) shows only for a coaches portal, which has exactly one team. A club adds its team by hand ('Add team manually'), then opens the team's record and uses 'Link to a rep team'. Until the link is made the coach never sees the tournament and its games never reach the team's Schedule.","proposal":"'Add our teams': one window, the club's active teams, a division each; entered, accepted and linked in one step (Ask 5)."},
+"G04":{"title":"G04 · The program-year page's dead branch","today":"Fixed 2026-09-29: the old program-year pages are one redirect now.","proposal":"Nothing. Struck from Stage 7."},
+"C18":{"title":"C18 · Tournament fees never reach a book","today":"A fee is marked paid from the team's row ('Mark paid · $475'), the bulk 'Paid in full' / 'Deposit paid', or check-in. Each changes the team's paid figures and sends an email and a notice. No line is written anywhere. A tournament's own book exists only if someone opened one by hand.","proposal":"One fee write: each paid amount is a line in the tournament's book, filed under the word the club picked, voided on an undo (Ask 1)."},
+"G02":{"title":"G02 · No send reaches every family","today":"Every family send is narrower: Families messages one household (capped at 3 a day per family, logged, with a Reply-To since Stage 5a, so the plan's 'no cap' is stale); a head coach emails one team; the house league emails one season (no cap, not de-duplicated: a family with two registrations gets two); the tournament's Communications reaches registered teams' coaches only. The club's rail has no send at all.","proposal":"Email families on Families, through the one club send window, to every family or a chosen part, each family once (Asks 6, 7)."},
+"BA":{"title":"By activity on the club's Budget vs. Actual","today":"The club's View offers Statement and Months; the code says the club has no By activity 'until Stage 7'. A tournament's book counts in Cash on hand but not in the Statement; on Months it is one row, 'The club's other books'. The coach's By activity is one block per budget category: its revenue, its costs, its net.","proposal":"The tournament's lines count in the Statement through their words; By activity is the coach's shape, reused (Ask 3)."},
+"HL":{"title":"The house league's fee write, which the plan says to copy","today":"Six defects: the line is written fire-and-forget (an error is only logged); it is written as pending on approval, not when paid; a family that signs up itself gets no line; a declined or withdrawn registration never voids its line; marking paid again brings a voided line back; two people can open a season's book twice. Stage 5c's 'one write' made the paid mark consistent but kept the line's behaviour.","proposal":"One fee write for both programs, each defect with a test that fails today (Ask 4)."},
+"E2":{"title":"The chat pause's Messages (E2) and families (E3)","today":"Ruled 2026-10-18: chat is paused; messaging returns later as 'Messages', announcements with replies, push where it works, email elsewhere, audiences the product already knows; families come back only after counsel and a new business entry. The email tools stay as they are, and folding them into one screen is Messages' first step. No date. The tournament's phone bar already calls Communications 'Messages'.","proposal":"Stage 7 sends email only, under 'Email families', and leaves the word Messages to E2."},
+"S7-01":{"title":"S7-01 · The club's own team reads like a customer","today":"In its own Invitational, UAT Rep Club 15U AAA reads coach '—' and payment 'Paid' on the admin's table, while the coach's page for the same entry says 'No fee set by the organizer'. The link to the club's team knows its head coach; the table does not read it.","proposal":"'Our team', the head coach's name, and 'No fee' (Ask 2)."},
+"S7-02":{"title":"S7-02 · Two meanings of 'Tournaments' in the club's money","today":"The club's budget already has an expense category named Tournaments ($3,000 planned: fees the club pays to enter its teams in other clubs' events). A hosted tournament's money has no name on the budget at all.","proposal":"A hosted tournament's category is named for the tournament ('Invitational 2026'), never 'Tournaments'."},
+"T1":{"title":"Titled by the team","today":"The page's heading is the team ('UAT Rep Club 15U AAA') with 'UAT Rep Club Invitational 2026 (2026) - UAT Rep Club' under it; the browser tab says 'Tournament Record'. The free portal's shell also titles it by the team.","proposal":"Titled by the tournament; the team, dates and host in the meta; the tab 'Invitational 2026 · 15U AAA' (R4)."},
+"T2":{"title":"Length and tap targets","today":"At 390 the page is 2,175 px and 12 controls are under 44 px: the back link (22), ⇄ (31), View final standings (19), Share your team (29), the organizer's email (38), See all (19), both inputs (42) and four pill links (32 to 36). At 1440 it is 1,964 px in one column.","proposal":"About 1,360 px at 390 with every control 44 px; two columns on a computer."},
+"T3":{"title":"No help door on the page","today":"The list has a help door; the tournament's page has none, on the page a tournament weekend starts from.","proposal":"One help door in the top bar."},
+"T4":{"title":"'Accepted' twice, and a tinted hero","today":"The hero card and the Status & Payment card both say the status; the hero is a tinted panel, which the portal retired.","proposal":"One status chip under the title; one Registration card."},
+"T5":{"title":"The event's head coach","today":"A form inside a collapsible section with its own 'Save head coach' button, against the edit-autosaves ruling. Any staff member who can open the page can save it: the server checks access to the entry, not the role.","proposal":"Autosaves; a form only for the head coach and the team manager; the server refuses anyone else (Ask 10)."},
+"T6":{"title":"No road between the page and the games","today":"Game rows open the public game page. Nothing opens the team's own Schedule on the tournament's days. A mirrored game's sheet on the Schedule says 'View on the tournament page ↗' and opens the public page in a new tab.","proposal":"'Games on your Schedule' on the page; the game sheet's row opens the page in the portal."},
+"T7":{"title":"Clocks","today":"Game dates and times are spelled by the device's locale rather than the product's one formatter (C8, C10). 'Registered' and the announcement dates are formatted on the server's clock, so an evening entry can read as the next day.","proposal":"The booking's clock and '6:00 p.m.' for games; the club's clock for dates."},
+"T8":{"title":"'LIVE' by its own rule","today":"The page decides a game is live when a score was submitted today (C6-09), not by the product's shared game-status rule.","proposal":"'Playing now' by the shared rule."},
+"T9":{"title":"vs / @ / at","today":"Rows say 'vs' and '@'; the change notice says 'vs' and 'at'; the calendar file says '@'.","proposal":"'vs' at home, 'at' away, everywhere."},
+"T10":{"title":"Breakpoints","today":"The page switches at 600 and 901, and its parts at 700, 701 to 1120, 1120 and 380, none on the portal's 640 / 768 / 900.","proposal":"Onto 640 / 768 / 900 in both portals."},
+"T11":{"title":"D-3 · The card runs off a phone","today":"The card's title never wraps and the list's column grows to fit it, so a long tournament name pushes the card past a 390 screen. With today's test name ('UAT Rep Club Invitational 2026') it fits.","proposal":"A row whose name wraps inside it."},
+"T12":{"title":"F-30 · The row-list recipe","today":"Ruled 2026-09-16: the coaches portal's card stacks become one row list (one frame, bands, a plain date column, no card per row on a computer). Its second build session, which includes this list, has not started.","proposal":"Stage 7d builds this list in the recipe."}
+}}</script>
+<script>
+/* Explanations: every finding flag, fix chip and tag opens on click (never a hover title). */
+(function(){
+  var data={findings:{}}; try{data=JSON.parse(document.getElementById('s7data').textContent)}catch(e){}
+  var dlg=document.getElementById('note'), t=document.getElementById('note-t'), b=document.getElementById('note-b');
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function open(title,html){t.textContent=title; b.innerHTML=html; try{dlg.showModal()}catch(e){dlg.setAttribute('open','')}}
+  document.getElementById('note-x').addEventListener('click',function(){dlg.close()});
+  dlg.addEventListener('click',function(e){if(e.target===dlg) dlg.close()});
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('.fl,.fx,.mk'); if(!el) return;
+    e.preventDefault(); e.stopPropagation();
+    if(el.dataset.finding){
+      var f=data.findings[el.dataset.finding]||{title:el.dataset.finding,today:'',proposal:''};
+      var html='<h4>What the code does today</h4><p>'+esc(f.today)+'</p><h4>What the proposal does</h4><p>'+esc(f.proposal)+'</p>';
+      if(el.classList.contains('fx')) html='<p><b>The drawing that answers it.</b></p>'+html;
+      open(f.title,html);
+    } else {
+      var kindName=el.classList.contains('new')?'New':el.classList.contains('res')?'Restyled':'Unchanged';
+      open(kindName+' · '+el.textContent.trim(),'<p>'+esc(el.dataset.note||'')+'</p>');
+    }
+  },true);
+})();
+</script>
+<script>
+/* Asks: picks and notes kept in this browser; one block to paste back. */
+(function(){
+  var KEY='s7-asks-v1', st={};
+  try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){st={}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+  var asks=[].slice.call(document.querySelectorAll('.ask[data-ask]'));
+  function count(){var n=asks.filter(function(a){return st['a'+a.dataset.ask]}).length; document.getElementById('answered').textContent=n;}
+  asks.forEach(function(a){
+    var k=a.dataset.ask;
+    a.querySelectorAll('input[type=radio]').forEach(function(r){
+      if(st['a'+k]===r.value) r.checked=true;
+      r.addEventListener('change',function(){st['a'+k]=r.value; save(); count();});
+    });
+    var ta=a.querySelector('textarea'); if(ta){ ta.value=st['n'+k]||''; ta.addEventListener('input',function(){st['n'+k]=ta.value; save();}); }
+  });
+  count();
+  function block(){
+    var lines=['Club Tier Stage 7 drawings — answers (round 1)'];
+    asks.forEach(function(a){
+      var k=a.dataset.ask, h=a.querySelector('h3').cloneNode(true);
+      [].slice.call(h.querySelectorAll('.pill,.no')).forEach(function(x){x.remove()});
+      var pick=st['a'+k], txt='(no pick)';
+      if(pick){var r=a.querySelector('input[value="'+pick+'"]'); var lab=r&&r.closest('label'); var bt=lab&&lab.querySelector('b'); txt=pick+' — '+(bt?bt.textContent.trim():''); if(lab&&lab.classList.contains('rec')) txt+=' (recommended)';}
+      lines.push('Ask '+k+' · '+h.textContent.trim()+': '+txt);
+      if(st['n'+k]) lines.push('   Note: '+st['n'+k].replace(/\s+/g,' ').trim());
+    });
+    return lines.join('\n');
+  }
+  var out=document.getElementById('out');
+  document.getElementById('copy').addEventListener('click',function(){
+    var text=block(); var btn=this;
+    function shown(){out.hidden=false; out.value=text; out.focus(); out.select();}
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy all answers'},1800); shown();},shown);
+    } else shown();
+  });
+  var armed=false, clr=document.getElementById('clear');
+  clr.addEventListener('click',function(){
+    if(!armed){armed=true; clr.textContent='Tap again to clear'; setTimeout(function(){armed=false; clr.textContent='Clear answers'},3000); return;}
+    st={}; save(); asks.forEach(function(a){a.querySelectorAll('input').forEach(function(r){r.checked=false}); var ta=a.querySelector('textarea'); if(ta) ta.value='';}); count(); armed=false; clr.textContent='Clear answers'; out.hidden=true;
+  });
+})();
+</script>

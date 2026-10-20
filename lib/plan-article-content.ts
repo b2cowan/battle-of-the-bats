@@ -340,7 +340,8 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
         num: '04',
         label: 'Accounting',
         title: 'Finances in one place — not three spreadsheets.',
-        body: 'Org ledger, team invoicing, expense tracking, payment reconciliation, and board-ready PDF exports. The treasurer stops living in spreadsheets.',
+        // Says only what ships (BUSINESS_DECISIONS 2026-10-19): no invoicing or reconciliation until each exists.
+        body: 'One ledger for the club’s money, a budget checked against what was actually spent, and club costs split across teams, with a reminder to each head coach and a tick when the payment arrives. The treasurer stops living in spreadsheets.',
       },
     ],
     featuresLabel: 'Included',
@@ -348,7 +349,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       'Everything in League (tournaments, house league, public org page)',
       'Unlimited staff / admin seats',
       'Accounting module — org ledger and expense tracking',
-      'Team invoicing and payment reconciliation',
+      'Club costs split across teams, with reminders and payment tracking',
       'Rep teams module — tryout registration and roster management',
       'Player documents and season history',
       'Team financial management',

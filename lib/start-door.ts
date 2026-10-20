@@ -1,6 +1,6 @@
 /**
  * THE START DOOR — an account remembers which "start something" sign-up made it (Account-First Sign-up, owner
- * rulings A3 + A4 2026-10-18; hub docs/projects/active/ACCOUNT_FIRST_SIGNUP_HUB.html).
+ * rulings A3 + A4 2026-10-18; hub docs/projects/archive/ACCOUNT_FIRST_SIGNUP_HUB.html).
  *
  * Every start sign-up asks for the account alone; the team, league or organization is named after the email link.
  * The door is written onto the auth user at sign-up (`user_metadata.start`), so the link, every resend and Home all

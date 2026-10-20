@@ -162,14 +162,15 @@ const PLANS: Plan[] = [
     trialNote: clubTrialLine(),
     features: [
       'Everything in League Plus',
-      'Accounting — org ledger, invoicing, expense tracking, and payment reconciliation',
+      // Says only what ships (BUSINESS_DECISIONS 2026-10-19): no invoicing or reconciliation until each exists.
+      'Accounting — club ledger, budget vs. actual, and costs split across teams, with coach reminders',
       'Rep teams — tryouts, rosters, player documents, and season history',
       'Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee',
       'Up to 15 teams — or up to 30 on Club · Association',
     ],
     compactFeatures: [
       'Everything in League Plus',
-      'Accounting — org ledger, invoicing & reconciliation',
+      'Accounting — ledger, budgets & team cost splits',
       'Rep teams — tryouts, rosters & documents',
       'Whole coaching staff included — no per-team fee',
     ],

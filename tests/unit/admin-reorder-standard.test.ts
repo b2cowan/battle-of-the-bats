@@ -64,10 +64,12 @@ describe('the one part', () => {
     assert.match(moveBy, /onMove\(idx, to\)/);
     assert.match(moveBy, /setMenu\(null\);\n\s+openerRef\.current\?\.focus/);
   });
-  test('the handle is 44px at touch widths, and a numbered handle is the lineup builder\'s bordered square', () => {
+  test('the handle is 44px at touch widths, and a numbered handle is the lineup builder\'s square, with no border', () => {
     const css = read('components/admin/tournament/ReorderList.module.css');
     assert.match(css, /@media \(max-width: 768px\) \{\n\s+\.handle \{ width: var\(--tap-min, 44px\); min-height: var\(--tap-min, 44px\); \}/);
-    assert.match(css, /\.handleNumber \{\n\s+width: var\(--tap-min, 44px\);[\s\S]{0,200}border: 1px solid var\(--home-line-strong\);/);
+    assert.match(css, /\.handleNumber \{\n\s+width: var\(--tap-min, 44px\);[\s\S]{0,200}border-radius: 8px;\n\s+\}/);
+    // No box inside the bordered row (owner, 2026-10-19).
+    assert.doesNotMatch(css, /\.handleNumber \{[^}]*border: 1px/);
   });
 });
 
