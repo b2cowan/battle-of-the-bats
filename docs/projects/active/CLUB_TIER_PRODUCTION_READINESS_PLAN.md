@@ -2096,6 +2096,14 @@ Completed, no chip for a scheduled game (C8, C9); a reader's click opens a read 
 division leads as the olive scope pill, then the views, then Generate, Export and Add Game (C4). **The public league schedule**
 shows the place, Cancelled struck through and Postponed in words (today a postponed game reads as on and a cancelled one
 disappears — defect C6-04, sooner if house league ships first), opens on this week, and says "Times in Eastern time." once.
+**Option for this stage's drawing session — a house league schedule health score (owner, 2026-10-19).** The tournament
+schedule now wears **Schedule health** as its header's first button, opening one window (score with its scale, the four figures,
+the issues with "Show them", team detail, the rules at the end), and the tournament dashboard opens the same window
+(`SCHEDULE_HEALTH_HEADER_PLAN.md`, archived; `59c1cf58`, `ac8c4b82`). **House league has no score at all** — only a clash
+warning box from its own check, shown when there are conflicts. The option: give the admin league schedule the same button
+and window, scored by the same engine across divisions (max games a day, least rest, target games per team all fit a league
+week), its own clash check becoming the window's issues. Not ruled — the Stage 9 session draws it beside its C1–C12 and
+decides it, or leaves the warning box.
 
 ### Stage 10 — Permits & bookings (⚖ D4 ruled IN scope 2026-09-25; release-gating; end of the walk)
 > **🎨 DRAWN 2026-10-10 with Stage 11 — its own plan now holds it:** `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` (+ `_PM_BRIEF.md`),
