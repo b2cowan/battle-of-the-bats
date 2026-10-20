@@ -41,7 +41,7 @@ describe('A71 · the look: every card like Fees & payments', () => {
   });
   it('the kit\'s card title is the house\'s 16px heading (P2: the shared card, Event settings and Public site alike)', () => {
     const css = read('components/admin/CollapsibleCard.module.css');
-    assert.match(css, /:global\(\[data-admin-kit\]\) \.title \{\n\s+font-family: var\(--font-display\);\n\s+font-size: var\(--type-heading\);/);
+    assert.match(css, /:global\(\[data-admin-kit\]\) \.title \{\n\s+font-family: var\(--font-sans, system-ui, sans-serif\);\n\s+font-size: var\(--type-heading\);/, 'the body face, as every heading is (D1, owner 2026-10-19)');
   });
   it('the turnover example ends on the clock\'s own period (F114: "a.m..")', () => {
     assert.match(page, /no earlier than \{formatTime\(minutesToTime\(8 \* 60 \+ gameDurationMinutes \+ bufferMinutes\)\)\}\n/);

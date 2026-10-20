@@ -63,11 +63,11 @@
   color: var(--text-primary);
 }
 .count {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: readout */
   font-size: var(--type-label);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--text-tertiary);
 }
 .body { padding: 0.4rem 1.1rem 1.05rem; }
@@ -85,11 +85,11 @@
 .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem 1.25rem; margin-top: 0.9rem; }
 .factCol { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
 .eye {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
 .factText { margin: 0.25rem 0 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-primary); }

@@ -55,8 +55,10 @@
 
 .title {
   font-size: 1.5rem;
-  font-weight: 900;
-  font-family: var(--font-data);
+  font-weight: 700;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--white-90);
   margin: 0;
   line-height: 1.15;
@@ -197,7 +199,7 @@
   align-items: center;
   gap: 0.85rem;
   margin-bottom: 1rem;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
 }
 
 .wizardProgressBar {
@@ -453,9 +455,11 @@
 .modalTitle {
   margin: 0;
   color: var(--white-90);
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 1.2rem;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .modalSub {
@@ -554,9 +558,9 @@
 }
 
 .foundingSeasonBannerEyebrow {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
 }
 
 .foundingSeasonBannerTitle {
@@ -585,7 +589,7 @@
 }
 .title,
 .modalTitle {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -675,7 +679,7 @@
 
 /* The wizard's progress: the kit's eyebrow and the olive bar. */
 .wizardChrome {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;

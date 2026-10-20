@@ -157,7 +157,7 @@
 }
 .headTitle {
   margin: 0 auto 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-title);
   font-weight: 700;
   line-height: 1.1;
@@ -214,12 +214,13 @@
 }
 .segBtn:last-child { border-right: none; }
 .segBtn:hover { background: var(--home-olive-soft, var(--white-8)); }
+/* Chosen: the shared view pill's look exactly (ViewPills.module.css) — one rule for every portal and theme
+   (the lime fill and the coaches' warm dark-ink override are gone). */
 .segBtnActive,
-.segBtnActive:hover { background: var(--logic-lime); color: var(--on-lime); }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive:hover {
-  background: var(--home-ink);
-  color: var(--home-paper);
+.segBtnActive:hover {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  box-shadow: inset 0 0 0 1px var(--home-olive); /* the pill's olive edge, drawn inside: these halves carry no border of their own */
+  color: var(--home-olive);
 }
 
 /* The list's own scroller. Room at the foot for the Undo note, so it never sits on the last row. */

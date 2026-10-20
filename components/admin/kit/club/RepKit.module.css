@@ -67,11 +67,11 @@
   color: var(--text-primary);
 }
 .sectionMeta {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: readout */
   font-size: var(--type-label);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--text-tertiary);
   white-space: nowrap;
 }
@@ -184,7 +184,7 @@
 .rowFrame > .rowListInset + .rowListInset > .rowBand:first-child { border-top: 1px solid var(--home-line); }
 /* The band's one figure ("To finalize 2", "U11 Girls 2 of 6 in"): the data face at the label step. */
 .rowBandCount {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: readout */
   font-size: var(--type-label);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -365,7 +365,7 @@
   font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: column heading */
   color: var(--text-secondary);
   background: var(--card-bg);
   border-bottom: 1px solid var(--home-line-strong);
@@ -463,11 +463,11 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: chip */
   font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: chip */
   padding: 0.14rem 0.5rem;
   border-radius: 999px;
   border: 1px solid var(--home-line-strong);

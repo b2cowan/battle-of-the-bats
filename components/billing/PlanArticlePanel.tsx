@@ -57,7 +57,7 @@ export default function PlanArticlePanel({
         : billingCycle === 'annual'
           ? `$${config.annualPrice} CAD / year`
           : `$${config.monthlyPrice} CAD / month`;
-  const loadingLabel = promoActive ? 'Applying...' : 'Redirecting...';
+  const loadingLabel = promoActive ? 'Applying…' : 'Redirecting…';
 
   return (
     <>

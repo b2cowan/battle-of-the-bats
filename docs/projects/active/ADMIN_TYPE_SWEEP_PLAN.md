@@ -2,7 +2,7 @@
 
 **Census + plan drafted 2026-10-19** (owner: "have the helper list every admin screen that still uses the old
 fonts and capitals, then make a plan to address each of them"). **A1–A14 ruled 2026-10-19, all as
-recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked; the owner marked it Pass 2026-10-19 (P2), so the Stage 1 walk is closed.** **Stage 2 drawn 2026-10-19 (bracket editor first, through `/design`); B1–B6 + P1 ruled as recommended 2026-10-19; Stage 2 built and committed `956eea005` 2026-10-19; owner walk ✅ 2026-10-19 — 22 of 22 steps ticked, Parts A–G all marked Pass, no notes, so the Stage 2 walk is closed. Stage 3 (club admin) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/8Ypx95Zk9NP8ceihUGdw5F, from `ADMIN_TYPE_SWEEP_STAGE3_BUILD_PROMPT.md`); C1–C5 RULED as recommended 2026-10-19; Stage 3 BUILT 2026-10-19 (not committed), owner walk ✅ 2026-10-19 (25 of 25, Parts A–H Pass, no notes) https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM** (§4, "Stage 2 — drawn").
+recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked; the owner marked it Pass 2026-10-19 (P2), so the Stage 1 walk is closed.** **Stage 2 drawn 2026-10-19 (bracket editor first, through `/design`); B1–B6 + P1 ruled as recommended 2026-10-19; Stage 2 built and committed `956eea005` 2026-10-19; owner walk ✅ 2026-10-19 — 22 of 22 steps ticked, Parts A–G all marked Pass, no notes, so the Stage 2 walk is closed. Stage 3 (club admin) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/8Ypx95Zk9NP8ceihUGdw5F, from `ADMIN_TYPE_SWEEP_STAGE3_BUILD_PROMPT.md`); C1–C5 RULED as recommended 2026-10-19; Stage 3 BUILT and committed `e83c58223` 2026-10-19, owner walk ✅ 2026-10-19 (25 of 25, Parts A–H Pass, no notes) https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM** **Stage 4 (new-look drift) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/YQ9CZWXgL9pjo8GvXpw2wH, from `ADMIN_TYPE_SWEEP_STAGE4_BUILD_PROMPT.md`); D1–D3 RULED as recommended 2026-10-19 — every heading the plain face incl. the page title, both portals; one chosen look for the toggle; the account notification settings page swept too (§4 "Stage 4 — drawn"); build prompt rewritten for the build. Stage 4 BUILT 2026-10-20, /review done, owner walk owed (https://claude.ai/artifact/21EACBfw6L6dTkbPVNAfGD; §4 "Stage 4 — as built").** (§4, "Stage 2 — drawn").
 Hub (list, asks, brief, plan, decisions): https://claude.ai/artifact/QcQCe3yy4oqRUnUEf9uMCb (source
 `ADMIN_TYPE_SWEEP_HUB.html`; the list and the asks live in its two `application/json` blocks — change them
 with a parse-and-rewrite script, then `JSON.parse` both blocks before publishing).
@@ -244,7 +244,7 @@ Declined — a larger Ledger balance label (K-01 dense register; a 14 px label b
 flipping Stage 1's hub "GUIDES" to a band (it heads the one card set; Rename splits one list); "STATUS" on the season
 lifecycle bar stays an eyebrow (it names the bar). Open for S4: the season card title's condensed display face.
 
-### Stage 3 — as built 2026-10-19 (NOT committed; owner walk ✅ 2026-10-19 — 25 of 25 steps ticked, Parts A–H all Pass, no notes: https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM, source `ADMIN_TYPE_SWEEP_STAGE3_WALK.html`)
+### Stage 3 — as built 2026-10-19 (committed `e83c58223` 2026-10-19; owner walk ✅ 2026-10-19 — 25 of 25 steps ticked, Parts A–H all Pass, no notes: https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM, source `ADMIN_TYPE_SWEEP_STAGE3_WALK.html`)
 
 Four parallel helpers on disjoint files (3a house league · 3b/3c rep teams, money, PDF, billing, onboarding · C2 words +
 help content · 3d shared parts), then the main session. File list: `.probe/ats3/files.txt` plus the review fixes below.
@@ -290,6 +290,126 @@ help content · 3d shared parts), then the main session. File list: `.probe/ats3
   and the changelog title (/marketing); the coach portal's own "Add Game / Add Practice" help mentions (its screens not
   swept); "Season Registrations" PDF title and the Excel headings (A7); the editor's "Access Restricted" (Club Tier Stage 4,
   C1); onboarding's "Free League includes…" and the League billing page's "outside your tournament" copy (/marketing).
+
+### Stage 4 — drawn 2026-10-19 through `/design`; ⚖ D1–D3 RULED AS RECOMMENDED 2026-10-19 (owner paste-back; design log entry the same day); build prompt `ADMIN_TYPE_SWEEP_STAGE4_BUILD_PROMPT.md`
+
+Drawings (own artifact): https://claude.ai/artifact/YQ9CZWXgL9pjo8GvXpw2wH — source `ADMIN_TYPE_SWEEP_STAGE4.html`,
+built by `node .probe/ats4/prep.cjs && node .probe/ats4/build.mjs`; captures `.probe/ats4/pairs.mjs` + `page24.mjs`
+(read-only; proposed = the live page with the face/CSS changed in the browser). Hub v10 links it. `npm test` at the
+start: 8225 / 8227, the same two red as Stage 3 (club-stage6c rail scrollbar; coach-semantic-ink).
+
+- **The re-check of §7 S4 (29 rows):** done 5 (C59, S12, S13, S18, S19) · partly 5 (T09 — the dashboard pill went with
+  Schedule health `ac8c4b82`, the Schedule's `.healthJumpChip` remains; T38 — "Editing bracket" is a heading, the Tiers
+  sentence at `BracketEditor.tsx:497` remains; T46 — one placeholder `registrations/page.tsx:2251` + four more typed
+  "..." found: onboarding `Saving...`, billing `Applying...` / `Redirecting...`, `ExportMenu.tsx:295` `Exporting...`;
+  C45 — `.productEyebrow` / `.foundingSeasonEyebrow` / `.nextSeasonChosenEyebrow` remain, `.nextSeasonPlanLabel`'s
+  comment at :951 is stale; S17 — `.helpRoleLine` :632, `.helpDrawerShortcutsTitle` :1694, toc heads :388/:438 at 0.1em)
+  · still true 18 · **moved 1: C65 is `/account/notifications` (`AccountNotificationsClient.tsx:18`), not org settings
+  → D3.** S13's sibling `.dropCount` (`CoachesBottomNav.module.css:276`, 800) joins the chips. "Event Settings" /
+  "Tournament Settings" / "Tournament Branding" / "Org Notifications" remain in `AdminTitleManager.tsx:29-40` (tab
+  titles); chat's `NewRoomDialog.tsx:98` too. House league `.draftTitle` (`house-league.module.css:1454`) = display face.
+- **Handed-over lines (Stage 3's unmarked):** mostly ALLOWED roles → `type-ok` only (RepKit `.sectionMeta` face,
+  `.rowBandCount`, `.table th`, `.chip`; Schedules `.reviewChip`, `.bandLabel`, `.dayBand`, `.gh`, `.fairTable th`,
+  `.pdayHead`; onboarding `.foundingSeasonBannerEyebrow`, `.wizardChrome` = step readout; billing `.productEyebrow`,
+  `.comingSoonBadge` (chip), `.foundingSeasonEyebrow`, `.nextSeasonChosenEyebrow`; rep-teams `.badge`,
+  `.renameCurrentSlug`, `.renamePreview`; bring-in `.count`, `.eye`; PlanArticlePanel `.stepNum`). DRIFT: RepKit
+  `.sectionMeta` caps; Schedules `.score` 800; onboarding `.title` / `.modalTitle` (data face 900), `.wizardChrome`
+  caps, page.tsx:1090 sentence; billing heavies (`.billingNudgeTitle`, `.sectionTitle`, `.planCardName`,
+  `.comingSoonBadge`, `.cancelImpactSection h3`, `.foundingSeasonTitle`) + 0.12/0.14em eyebrows; bring-in `.count`
+  caps, `.eye` 600/0.05em. DEAD → S5: billing `.priceUnit`, rep-teams `.pageTitle`, `.summaryCardLabel`, `.sectionTitle`.
+- **D1 — the census widened the page-title question.** `app/globals.css:1605` sets h1–h6 to `--font-display` 800; the
+  admin override (:1615) changes only weight/tracking; so page titles (`AdminPageHeader.module.css:39`, coaches
+  `.pageTitle` :1552), club card titles (`ClubKit .sectionTitle`, `Settings .cardTitle`, `Billing .planName/.cardTitle`),
+  every window title (`KitDialog .title`, house league `.modalTitle`), coach `.pageSectionTitle` (inherits) and the
+  coach headlines are condensed. Stage 3's A3 moves (house league `.sectionTitle`, `.detailSectionTitle`, PDF h2s) are
+  plain; its cited reason "as the coaches portal's sections do" was false (coach sections are condensed); A3 stands
+  on its own. **Measured on screen: the condensed face reads ~a size smaller than Inter, so a condensed 20 px page title
+  over Inter 16 px card titles loses the hierarchy, and at 24 px only just clears it** (drawings tab 1, "the step").
+  Recommendation therefore = **option 1, every heading in the plain face incl. the page title, both portals** (the
+  written target F2 / A3 / §2). Options: 2 every heading condensed (~10 places, reverses A3; 16 px lowercase closes up) ·
+  3 condensed page title only at 24 px · 4 as is. In every option a team's name stays plain (coach `.teamHeaderName`,
+  owner pick 2026-08-02) and a condensed BUTTON (coach Money "Build your budget") goes plain. If ruled 1: its own part
+  + walk; the global rule scoped to `[data-admin-kit]` + the coaches shell, plus ~30 explicit `--font-display` title rules.
+- **D2** the Unread / All toggle: page `.segBtnActive` (`notifications-page.module.css:120`, blueprint-blue 0.35 → khaki
+  on Warm) vs drawer (`notifications.module.css:217`, `--logic-lime` → solid olive on the admin; coach warm override
+  :219 → dark ink). Rec: both take the ViewPills chosen look (`ViewPills.module.css:28`).
+- **D3** Account → Notification settings is every signed-in person's page, mono sentences throughout; nobody owns it
+  (`PUBLIC_FACE_WARM_PLAN.md:33` treats the account tab as done). Rec: the whole page in Stage 4 (PreferencesTable,
+  the account client, PushDeviceTester).
+- **`/design` (helper, 15 findings, all applied or answered):** D1 recommendation moved from "condensed page title only"
+  to "every heading plain" after the hierarchy finding (verified with a 24 px capture); D1 reframed from the written
+  target; team-name caveat; C46 savings line = body 12/650 olive, not a chip (A1); T22 foot = mono 12 px readout; T38
+  sentence = 12 px secondary caption; two invisible tracking moves tagged UNCHANGED; D2 notes (replaces the coach
+  drawer's dark ink; two tinted "All"s told apart by shape); **C36 reversed to UNCHANGED** — the Send email sample draws
+  the real family email (`lib/family-email.ts:140`: Inter 900 0.14em caps), so it stays matched, `type-ok` only. Build
+  notes: `KIT_INK.head` (`kit-inline.ts:68`) is body 650 no caps while standard §3.2 says the display face — reconcile
+  before C24/C29/C66; C23 chips must fit the 6.7rem kind column and not stretch on a phone.
+- Build parts after the rulings (disjoint files, as the prompt): tournament admin · club kit + money · billing +
+  onboarding + handed-over lines · shared parts (FormTable, FilterPill, PayeeCombobox, help, notifications, plan drawer,
+  the toggle) · the heading face (D1) as its own part · the account page (D3).
+
+### Stage 4 — as built 2026-10-20 (owner walk owed: https://claude.ai/artifact/21EACBfw6L6dTkbPVNAfGD, source `ADMIN_TYPE_SWEEP_STAGE4_WALK.html`)
+
+Five parallel helpers on disjoint files (4a tournament · 4b club kit + money · 4c billing + onboarding · 4d shared parts + the
+toggle · 4e the account page), then 4f in the main session after a read-only census of every `--font-display` rule. File
+list: `.probe/ats4b/files.txt`; the 4f edit script `.probe/ats4b/d1.cjs` (+ `pin.cjs`).
+- **4a:** `.healthJumpChip` + `.nowLabel` chips (700); Match typed locations' label = eyebrow, its count a 12 px readout;
+  Tiers = eyebrow "Tiers" + caption "Split the N seeds into separate brackets."; "…" in the payment-instructions
+  placeholder; browser tab titles in sentence case — the four listed plus "Organization settings", "Preview site",
+  "Tournament dashboard", "Rules & resources" (the rail's words); chat's "Event settings".
+- **4b:** `.sectionMeta` / bring-in `.count` caps off (readouts); `.eye`, `.bandLabel`, VenueLibrary `.sectionHead`,
+  FiscalYear `.qHead` / `.pathKey` = eyebrows; `.attentionKind` = an amber chip — `.attentionRow` became a grid
+  (`6.7rem 1fr auto`) so the chip sizes to its words, own row on a phone (the 13-letter kinds fit with ~3 px to spare);
+  `.fairTable th`, `TeamBudgetItems .th` = column headings; `.optTier` chip (it also renders in the coaches portal's
+  budget pickers); Settings labels at `--type-label`; `.score` 700; every handed-over allowed line marked.
+  **C36:** `.envelopeKicker` unchanged and marked, but it is NOT an exact match to the email (sample 800 / 0.12em,
+  email 900 / 0.14em, `lib/family-email.ts:140`) — left as drawn; a finding, not a fix.
+- **4c:** billing eyebrows + "Coming soon" chip; `.savingsBadge` body face 12 px / 650 olive (still a bordered tint —
+  design call); heavies 700; onboarding titles body face 700 (the kit layer set the display face too); the public-link
+  hint a 12 px sentence with only `/league/{slug}` in the data face (the address lost its lime); "Saving…", "Applying…",
+  "Redirecting…" (the last two live in the plan drawer, `PlanArticlePanel.tsx`), "Exporting…" (`components/admin/ExportMenu.tsx`).
+- **4d:** PayeeCombobox group label = band heading at the menu's `--type-label`; FilterPill custom-range label = eyebrow
+  (the coaches' DateRangeDropdown wears the same module); FormTable heads/bands = display face (callers: Allocation, New
+  schedule, the tournament setup wizard); help role line + shortcuts title = eyebrows, contents group heads 0.09em;
+  `.dropCount` 700. **D2:** the page's and the drawer's `.segBtnActive` and the coaches page's own `.segBtnNarrowOn`
+  (the coaches Notifications page has its OWN toggle in `coaches.module.css`, not the shared one) = the view pill's
+  tint + olive word, the pill's 1 px olive edge drawn as an inset ring (these halves have no border of their own); the
+  coach drawer's dark-ink override deleted; a Warm `.segBtnNarrowOn` rule so hover keeps the olive look.
+- **4e (D3):** the page is `app/(consumer)/account/notifications/`; column headings + band rows in the display face,
+  sentences, notes, "Signed in as…", "Organization access" body face, role tag + "This device" chips, heavies 700.
+  ⚠ The consumer shell does not remap `--text-secondary` (only the coach marker does) — those headings use `--home-dim`.
+  The account page's own title stays condensed (consumer shell, outside D1's two portals) — raised to the owner.
+- **4f (D1):** a face-only rule `:where([data-admin-kit], [data-coach-warm-enabled]) :is(h1…h6)` (public preview exempt)
+  in `app/globals.css`, beside the A5 weight rule; the legacy admin `.modal-header h3` body face; 43 module title/figure
+  rules + the coaches `.pageTitle` + the schedule's inline window-title style → body face (figures tabular); the
+  coaches `.calNavLabel` normal tracking. **Wider than the prompt's list (inside D1's own words):** the coaches portal's
+  ~70 GLOBAL `.btn` uses ("Build your budget", "Start session", "Done") kept the display face — the admin and the
+  coach window had moved; a face-and-tracking rule `[data-coach-warm-enabled] .btn` (sizes kept). **The global rule's
+  reverse side (review):** capitals headings with no face of their own fell to Inter — `.formSectionTitle` (18 form
+  section heads), `.roomZoneLabel`, the helper home's `.sectionLabel` now set the display face themselves; the award
+  certificate and the development handout PREVIEWS keep the condensed face so they match the printed sheet;
+  `.detailSectionTitle` / `.sectionKicker` were left to fall (mostly worn by non-headings, so the odd `<h2>` now matches
+  its siblings). Left: PrintedPage, mock portal, public pages, chat (paused), dead rules (branding's second
+  `.sectionTitle`, rep-teams `.summaryCardValue`, coaches `.lineupAnalyticsSummary` → S5), the sign-up form title
+  (`AccountForm`, The first look). CollapsibleCard's comment corrected (it cited F2 for the display face).
+- **Findings for the owner:** `KIT_INK.head` (body 650, no caps) has two callers, both house league tables
+  (notifications `page.tsx:386`, registrations `page.tsx:626` → :794) — the standard says display-face capitals;
+  unchanged. The scorekeeper/gate window titles (`.sheetTitle`, empty-state `h2`) go plain with the rule (the
+  volunteer shells carry the admin marker); their `h1 .title` keeps its own display face.
+- **Checks:** typecheck ✓ (after `next typegen`); `npm test` at the start 8230 / 8234 (the two known + two in the coach
+  join page, First look 1c); at the end 8273 / 8299 — every failure outside Stage 4 (Club Tier Stage 4a's guard, being
+  built; First look 1d's warm page base; the two known; the join page). Two tests encoded the old look and now hold the
+  ruled one (toolbar-rules `.segBtnNarrowOn`, event-settings card title). spelling, css purity, public tokens,
+  contrast ×2 ✓; css-selectors red only on the pre-existing GuidanceRail `.context`; eslint 0 errors. admin-type
+  `--init`: **type 69 files · face 112 · caps 103 · track 3 · heavy 40** (Stage 3: 83 · 154 · 141 · 8 · 57); old-look
+  held (kitScope 414). `check:layout` NOT run: shared chrome in both portals → the whole-product sweep on staging (the
+  coach `.btn` face widens buttons a little; `.attentionKind`'s fit wants a look there). Dev server restarted (inner
+  process), 200.
+- **`/review` 2026-10-20 (2 lenses, no Critical/High after fixes):** fixed — capitals headings losing the condensed face
+  (above); the paper previews; the Warm coach hover turning the chosen half ink; the toggle's olive edge inert (no
+  border) → inset ring; Match typed locations' label colour a silent no-op under the kit layer; BracketEditor's stale
+  comment. Known, left: `.dayBand` / `.gh` / `.pdayHead` at 0.04em (recipe 0.05em, invisible); house league's base
+  rules still say display under their kit layers (always in the kit); `.savingsBadge`'s box.
 
 ## 5. Parked (owned elsewhere — not this sweep)
 

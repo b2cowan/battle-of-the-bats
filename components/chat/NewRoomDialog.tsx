@@ -95,7 +95,7 @@ export default function NewRoomDialog({ divisions, busy, error, onCancel, onCrea
             <span className={styles.label}>Divisions this room covers</span>
             {noDivisions ? (
               <p className={styles.note}>
-                This tournament has no divisions yet. Add divisions in Event Settings to create a division room.
+                This tournament has no divisions yet. Add divisions in Event settings to create a division room.
               </p>
             ) : (
               <div className={styles.divList} role="group" aria-label="Divisions">

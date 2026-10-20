@@ -24,13 +24,16 @@
    table standard — a heading sits on its card — and this stays for the row's own identity.) */
 .table thead tr { background: var(--home-paper); }
 
+/* Column heading: the global th recipe. Colour stays --home-dim, not --text-secondary — the
+   consumer .warm shell does not remap --text-secondary (only the coach warm marker does), so
+   it would resolve to the dark ramp's white-70 on cream. */
 .table th {
   padding: 0.6rem 1rem;
-  font-family: var(--font-data, monospace);
+  font-family: var(--font-display, sans-serif); /* type-ok: column heading */
   font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em; /* type-ok: column heading */
+  text-transform: uppercase; /* type-ok: column heading */
   color: var(--home-dim);
   border-bottom: 1px solid var(--home-line);
   text-align: left;
@@ -51,13 +54,15 @@
   gap: 0.3rem;
 }
 
-/* Shown in Push column header when the browser doesn't support Web Push. */
+/* Shown in Push column header when the browser doesn't support Web Push. A body sentence
+   sitting inside a heading cell: it says so in the body face and resets what the th hands down. */
 .unsupportedNote {
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-family: var(--font-sans, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--home-dim);
-  text-transform: uppercase;
   margin-left: 0.2rem;
 }
 
@@ -73,11 +78,11 @@
 
 .sectionHeaderCell {
   padding: 0.5rem 1rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.66rem;
+  font-family: var(--font-display, sans-serif); /* type-ok: band heading */
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em; /* type-ok: band heading */
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--home-dim);
 }
 
@@ -153,7 +158,6 @@
 /* Mobile-only affordance shown in place of the description until tapped (desktop hides it). */
 .descHint {
   display: none;
-  font-family: var(--font-data, monospace);
   color: var(--home-dim);
 }
 
@@ -255,11 +259,11 @@
   padding: 0.6rem 1rem 0.4rem;
   background: var(--home-paper);
   border-bottom: 1px solid var(--home-line);
-  font-family: var(--font-data, monospace);
-  font-size: 0.66rem;
+  font-family: var(--font-display, sans-serif); /* type-ok: band heading */
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em; /* type-ok: band heading */
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--home-dim);
 }
 .groupsHead span:not(:first-child) { text-align: center; }
@@ -296,10 +300,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
+  font-size: var(--type-support);
   font-weight: 600;
-  letter-spacing: 0.04em;
   color: var(--home-dim);
   background: transparent;
   border: 1px solid var(--home-line-strong);

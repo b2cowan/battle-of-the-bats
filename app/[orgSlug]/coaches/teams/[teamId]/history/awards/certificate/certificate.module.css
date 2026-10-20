@@ -63,6 +63,7 @@
 }
 
 .award {
+  font-family: var(--font-display, sans-serif); /* D1: the paper preview matches the printed sheet, which keeps the condensed face */
   font-size: clamp(1.6rem, 4.2vw, 2.6rem);
   font-weight: 800;
   letter-spacing: -0.01em;

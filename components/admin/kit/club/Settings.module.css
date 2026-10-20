@@ -14,14 +14,14 @@
 }
 .cardTitle {
   margin: 0 0 0.6rem;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   font-weight: 700;
   letter-spacing: normal;
   text-transform: none;
   color: var(--text-primary);
 }
-.url { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-secondary); word-break: break-all; }
+.url { font-family: var(--font-data); /* type-ok: an address */ font-size: var(--type-support); color: var(--text-secondary); word-break: break-all; }
 .hiddenInput { display: none; }
 
 /* ── Logo and banner ── */
@@ -77,7 +77,7 @@
   background: var(--bg-2, var(--card-bg));
   color: var(--text-secondary);
 }
-.previewLabel { font-family: var(--font-data); font-size: var(--type-token); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); }
+.previewLabel { font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow */
 .previewRow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .previewBorder { padding: 0.4rem 0.7rem; border: 1px solid rgba(var(--primary-rgb), 0.45); border-radius: 6px; font-size: var(--type-support); }
 .previewBtn { padding: 0.4rem 0.9rem; border-radius: 6px; background: var(--primary); color: var(--on-primary, var(--card-bg)); font-size: var(--type-support); font-weight: 650; }
@@ -155,7 +155,7 @@
 
 /* ── Stock logos ── */
 .stockGroup { margin-bottom: 0.9rem; }
-.stockCategory { margin: 0 0 0.4rem; font-family: var(--font-data); font-size: var(--type-token); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); }
+.stockCategory { margin: 0 0 0.4rem; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow */
 .stockGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 0.5rem; }
 .stockTile {
   position: relative;
@@ -184,7 +184,7 @@
 .stockLock { position: absolute; top: 0.35rem; right: 0.35rem; color: var(--text-tertiary); }
 
 .lockedCard { margin-top: 1.5rem; padding: 1.5rem 1.25rem; border: 1px dashed var(--home-line-strong); border-radius: 8px; background: var(--card-bg); }
-.lockedTitle { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; text-transform: none; letter-spacing: normal; color: var(--text-primary); }
+.lockedTitle { margin: 0 0 0.35rem; font-family: var(--font-sans, system-ui, sans-serif); font-size: var(--type-heading); font-weight: 700; text-transform: none; letter-spacing: normal; color: var(--text-primary); }
 .lockedBody { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
 
 @media (max-width: 768px) {

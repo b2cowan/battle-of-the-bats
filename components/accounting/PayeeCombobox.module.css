@@ -119,9 +119,11 @@
 }
 
 .sectionLabel {
+  /* A menu band heading: the band recipe at the compact menu's label size. */
+  font-family: var(--font-display); /* type-ok: band heading */
   font-size: var(--type-label);
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: band heading */
   letter-spacing: 0.05em;
   color: var(--home-dim, rgba(255,255,255,0.3));
   padding: 0.3rem 0.85rem 0.15rem;

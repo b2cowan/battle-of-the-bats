@@ -399,7 +399,7 @@
   /* A nav group heading (NAV_STANDARD; Admin type sweep A11, 2026-10-19). */
   font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase; /* type-ok: nav group heading */
   padding: 7px 6px 7px 4px;
   /* The contents menu is the guide's primary control now (on a phone it is the
@@ -438,7 +438,7 @@
 .helpTocSubLabel {
   margin: 5px 0 2px 14px;
   font-size: var(--type-label);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase; /* type-ok: nav group heading */
   color: var(--white-40, rgba(255, 255, 255, 0.4));
   font-weight: 700;
@@ -622,7 +622,7 @@
 .helpPageTitle {
   font-size: 1.75rem;
   font-weight: 700;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--primary-light);
   margin: 0 0 0.3rem;
   line-height: 1.15;
@@ -630,10 +630,11 @@
 
 /* "For: Admin" quiet role line — not a badge, just a muted line */
 .helpRoleLine {
-  font-size: 0.72rem;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  letter-spacing: 0.09em;
   color: var(--info);
   margin: 0 0 0.7rem;
 }
@@ -1266,7 +1267,7 @@
 .helpHubTitle {
   font-size: 1.75rem;
   font-weight: 700;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--fl-text, rgba(255, 255, 255, 0.9));
   margin: 0 0 0.35rem;
   line-height: 1.15;
@@ -1639,7 +1640,7 @@
   font-size: 1.05rem;
   margin: 0.2rem 0 0;
   color: var(--primary-light);
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-sans, system-ui, sans-serif);
 }
 .helpDrawerClose {
   margin-left: auto;
@@ -1693,11 +1694,11 @@
 }
 .helpDrawerShortcutsTitle {
   margin: 0 0 0.55rem;
-  font-family: var(--font-data, inherit);
-  font-size: 0.66rem;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  letter-spacing: 0.09em;
   color: var(--logic-lime);
 }
 .helpDrawerShortcutList {

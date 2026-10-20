@@ -249,7 +249,7 @@
 
 /* A small mono readout ("01", "02") — mono stays, in the accent. */
 .stepNum {
-  font-family: var(--font-data, monospace);
+  font-family: var(--font-data, monospace); /* type-ok: readout */
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--home-olive);

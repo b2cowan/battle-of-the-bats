@@ -91,7 +91,7 @@
 .titleBlock { flex: 1; min-width: 0; }
 .title {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   font-weight: 700;
   line-height: 1.25;

@@ -107,11 +107,11 @@
 /* A question’s small-capitals heading (What changes · Still open). */
 .qHead {
   margin: 0 0 0.3rem;
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
 
@@ -191,18 +191,19 @@
 }
 .pathCell { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; padding: 0.5rem 0.6rem; }
 .pathKey {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
 .pathYear {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
   font-size: var(--type-title);
   font-weight: 700;
   line-height: 1.15;

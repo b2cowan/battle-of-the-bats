@@ -363,7 +363,7 @@ describe('Toolbar Rules · Rules 1 and 2 — find and narrow sit right (Stage 3)
     assert.match(bar.children, /^\s*<NotificationZones feed=\{feed\} \/>\s*$/, 'the zones alone on the left');
   });
 
-  it('Unread · All narrows, so it keeps its square corners at every width (Rule 4) and the coach’s chosen half is the olive tint', () => {
+  it('Unread · All narrows, so it keeps its square corners at every width (Rule 4) and the coach’s chosen half is the view pill’s olive tint (D2)', () => {
     const css = readCode(NOTIFY_CSS);
     assert.doesNotMatch(css, /\.segToggle \{ border-radius: 999px; \}|\.segBtn \{ border-radius: 999px/);
     assert.match(ruleOf(css, '.segToggle'), /border-radius: 6px;/);
@@ -372,7 +372,7 @@ describe('Toolbar Rules · Rules 1 and 2 — find and narrow sit right (Stage 3)
     assert.equal((coach.match(/styles\.segBtnNarrowOn/g) ?? []).length, 2);
     assert.doesNotMatch(coach, /styles\.segBtnActive/);
     const sheet = readCode(COACH_CSS);
-    assert.match(sheet, /\.segBtnActive, \.segBtnActive:hover \{[^}]*\}\s*\.segBtnNarrowOn, \.segBtnNarrowOn:hover \{ background: var\(--home-olive-soft[^}]*color: var\(--home-olive/, 'after the solid face, so order wins');
+    assert.match(sheet, /\.segBtnActive, \.segBtnActive:hover \{[^}]*\}\s*\.segBtnNarrowOn, \.segBtnNarrowOn:hover \{ background: rgba\(var\(--logic-lime-rgb\), 0\.16\); box-shadow: inset 0 0 0 1px var\(--home-olive\); color: var\(--home-olive\); \}/, 'after the solid face, so order wins — and the shared view pill’s chosen look exactly (D2, owner 2026-10-19)');
   });
 
   it('Insights › Results: one Tag pill, its counts at each row’s end — no row of tag chips (census C6)', () => {

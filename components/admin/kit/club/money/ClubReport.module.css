@@ -53,7 +53,7 @@
   padding: 1.1rem 1.2rem;
   margin: 0 0 1rem;
 }
-.emptyYearTitle { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.emptyYearTitle { margin: 0 0 0.35rem; font-family: var(--font-sans, system-ui, sans-serif); font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
 .emptyYearBody { margin: 0 0 0.85rem; line-height: 1.5; color: var(--text-secondary); }
 .emptyYearActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 

@@ -1616,6 +1616,16 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: normal;
   font-weight: 700;
 }
+/* ⚖ EVERY HEADING IS THE BODY FACE, BOTH PORTALS (Admin type sweep D1, owner 2026-10-19). The condensed display face
+   above stays for the public pages, and inside the portals only on capitals (column and band headings, which set their
+   own face). Measured: condensed letters read about a size smaller than Inter, so a condensed page title over Inter card
+   titles lost its place at the top. `[data-coach-warm-enabled]` is the coaches portal's marker (both shells, and the
+   drawers they portal); the admin carries it too. Face only: the weight and size stay each portal's. (0,0,1) like the
+   bare element above, and after it; a module class that sets its own face still wins, so those rules say the body face
+   themselves. The public-site preview keeps the public look. */
+:where([data-admin-kit], [data-coach-warm-enabled]) :is(h1, h2, h3, h4, h5, h6):where(:not([data-public-preview] *)) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
 
 .display-xl  { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; line-height: 1; }
 .display-lg  { font-size: clamp(2.25rem, 6vw, 4rem); font-weight: 800; }
@@ -1957,8 +1967,7 @@ h1, h2, h3, h4, h5, h6 {
    face at the body step; the ratified drawings draw the same. No glow and no lift: the kit is calm.
    ⚖ AND INSIDE A COACH WINDOW (One Window Stage 2a, 2026-10-19): a window the coaches portal opens on the one window
    (`KitDialog`, marked `data-coach-window`) wears the same face, so its Keep writing / Discard and any global `.btn` a
-   coach form draws (Join a club, Done) match the form's own body-face buttons; the rest of the coaches portal's global
-   `.btn` keeps the older display face until its own sweep. */
+   coach form draws (Join a club, Done) match the form's own body-face buttons. */
 [data-admin-kit] .btn:where(:not([data-public-preview] *)),
 [data-coach-window] .btn {
   font-family: var(--font-sans, system-ui, sans-serif);
@@ -1975,6 +1984,14 @@ h1, h2, h3, h4, h5, h6 {
 /* The coach window's size: the portal's own `.btnPrimary` / `.btnSecondary`, without the admin's control height (the
    coaches portal sets no `--admin-control-h`; a phone's 44px comes from the window's foot). */
 [data-coach-window] .btn { padding: 0.45rem 0.9rem; line-height: 1.25; }
+/* ⚖ A BUTTON IS THE BODY FACE, THE REST OF THE COACHES PORTAL TOO (Admin type sweep D1, owner 2026-10-19: "a button set
+   in the condensed face is a fault"). The portal's global `.btn` uses (~70: "Build your budget", "Start session", "Done")
+   kept the display face above. Face and tracking only — each keeps its size, so `.btn-sm` stays small. (0,2,0), above
+   the bare `.btn`. */
+[data-coach-warm-enabled] .btn:where(:not([data-public-preview] *)) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+}
 /* ONE BUTTON SIZE ACROSS THE ADMIN — the portal's (owner, 2026-10-01, option A). The admin had three:
    `.btn` (~43px, the club screens), `.btn-data` (~30px, the tournament screens' page and row actions,
    and the shared Export) and `.btn-sm`; a club toolbar showed Export at 30px beside Transfer at 43px.
@@ -2597,7 +2614,7 @@ tbody tr:last-child td { border-bottom: none; }
 :where([data-admin-kit]) .modal-header:where(:not([data-public-preview] *)),
 :where([data-admin-kit]) .modal-footer:where(:not([data-public-preview] *)) { border-color: var(--home-line); }
 :where([data-admin-kit]) .modal-header:where(:not([data-public-preview] *)) h3:where(:not([data-public-preview] *)) {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif); /* D1 (2026-10-19): a window title is the body face */
   font-size: var(--type-heading);
   letter-spacing: normal;
   text-transform: none;

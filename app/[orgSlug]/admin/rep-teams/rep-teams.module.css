@@ -123,12 +123,12 @@
    chip; live is green. The one chip that IS a verdict — an installment overdue — has its own class
    (`.badgeOverdue`), because the allocation page used to borrow "completed" for it. ── */
 .badge {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: chip */
   font-size: var(--type-token);
   font-weight: 700;
   padding: 0.14rem 0.5rem;
   border-radius: 999px;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: chip */
   letter-spacing: 0.06em;
   border: 1px solid transparent;
 }
@@ -356,14 +356,14 @@
 .renameCurrentSlug {
   font-size: 0.75rem;
   color: var(--text-tertiary);
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: an address */
 }
 
 .renameInputGroup { display: flex; flex-direction: column; gap: 0.3rem; }
 .renamePreview {
   font-size: 0.72rem;
   color: var(--text-tertiary);
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: an address */
 }
 .renamePreviewChanged { color: var(--home-olive); }
 .renameInputError { font-size: 0.75rem; color: var(--danger-light); margin: 0; }

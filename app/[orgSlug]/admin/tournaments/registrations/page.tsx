@@ -2248,7 +2248,7 @@ export default function UnifiedTeamsPage() {
               value={paymentInstructions}
               onChange={e => setPaymentInstructions(e.target.value)}
               rows={6}
-              placeholder="E-transfer, cheque, or payment-link instructions..."
+              placeholder="E-transfer, cheque, or payment-link instructions…"
             />
           </label>
         </KitDialog>

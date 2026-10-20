@@ -1238,7 +1238,7 @@
 :global([data-admin-kit]) .seasonName,
 :global([data-admin-kit]) .divisionName { color: var(--text-primary); }
 :global([data-admin-kit]) .seasonHeaderName {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-title);
   font-weight: 700;
   color: var(--text-primary);
@@ -1393,7 +1393,7 @@
   box-shadow: var(--shadow-lg);
 }
 :global([data-admin-kit]) .modalTitle {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   font-weight: 700;
   letter-spacing: normal;
@@ -1452,7 +1452,7 @@
 :global([data-admin-kit]) .draftFooter { border-color: var(--home-line); }
 :global([data-admin-kit]) .draftPickOrder { border-bottom-color: var(--home-line); }
 :global([data-admin-kit]) .draftTitle {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   font-weight: 700;
   color: var(--text-primary);

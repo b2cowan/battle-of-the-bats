@@ -90,11 +90,12 @@
 }
 .letterhead img { height: 28px; width: auto; max-width: 96px; object-fit: contain; }
 .eyebrow { font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.08em; color: var(--paper-muted); }
-.name { margin: 0.1rem 0 0; font-size: var(--type-title, 1.4rem); font-weight: 800; line-height: 1.2; }
+/* D1: the paper preview matches the handout as printed, in the condensed face. */
+.name { font-family: var(--font-display, sans-serif); margin: 0.1rem 0 0; font-size: var(--type-title, 1.4rem); font-weight: 800; line-height: 1.2; }
 .name span { font-weight: 500; color: var(--paper-muted); font-size: 0.75em; }
 .prepared { margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--paper-muted); }
 .section { margin-top: 1.1rem; }
-.section h3 { margin: 0 0 0.35rem; font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.06em; color: var(--paper-muted); }
+.section h3 { font-family: var(--font-display, sans-serif); margin: 0 0 0.35rem; font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.06em; color: var(--paper-muted); }
 .section p { margin: 0 0 0.3rem; }
 .section table { width: 100%; border-collapse: collapse; margin-bottom: 0.35rem; }
 /* ⚠ the global `td` sets text-primary, which is white in dark mode — on white paper. Ink is set here. */

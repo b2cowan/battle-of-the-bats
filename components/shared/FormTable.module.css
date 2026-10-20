@@ -29,11 +29,11 @@
 }
 .table thead th {
   border-top: 0;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
+  font-family: var(--font-display); /* type-ok: column heading */
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: column heading */
   color: var(--text-secondary);
   white-space: nowrap;
 }
@@ -81,11 +81,11 @@
 .groupRow > th,
 .groupRow > td { background: var(--home-paper); }
 .groupName {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
+  font-family: var(--font-display); /* type-ok: band heading */
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--text-secondary);
 }
 .groupCount { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
@@ -169,11 +169,11 @@
   padding: 0.45rem 0.75rem;
   border-bottom: 1px solid var(--home-line);
   background: var(--home-paper);
-  font-family: var(--font-data);
-  font-size: var(--type-label);
+  font-family: var(--font-display); /* type-ok: band heading */
+  font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--text-secondary);
 }
 .record {

@@ -614,7 +614,7 @@ function BillingPagePlans() {
   }
 
   function getUpgradeLoadingLabel(planKey: OrgPlan): string {
-    return isFoundingSeasonPromoActive(planKey) ? 'Applying...' : 'Redirecting...';
+    return isFoundingSeasonPromoActive(planKey) ? 'Applying…' : 'Redirecting…';
   }
 
   // ── Cancelled-state view: stripped page with reactivate CTA ──────────────

@@ -35,6 +35,12 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
 .note{padding:12px 16px;border-left:3px solid var(--blue);background:var(--soft);font-size:14px;margin:0 0 14px;border-radius:0 6px 6px 0}
 .note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
 .prog{font-weight:700;margin:16px 0}
+.signin{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:0 0 14px}
+.signin .eyebrow{margin-bottom:8px}
+.cred{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.cred .who{min-width:200px;font-weight:650}
+.signin code{font:500 13px/1.4 var(--f-data);background:var(--soft);padding:2px 7px;border-radius:5px;user-select:all;overflow-wrap:anywhere}
+.signin .meta{margin:8px 0 0}
 .part{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px}
 .part h2{margin:0 0 6px;font-size:16px}
 .step{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14px}
@@ -56,6 +62,12 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
   <h1>The tournament screens read in the new lettering</h1>
   <p>One purpose: the tournament admin and volunteer screens match the drawings you ruled. Headings, buttons and numbers are in the normal font, words are in sentence case, and the bracket editor’s open game is a full-size form. Nothing else about how the screens work has changed.</p>
   <div class="note"><strong>Where:</strong> the dev site (localhost:3000). For the bracket, sign in as an admin of the test org “UAT Plus Org” and open the tournament “UAT Stage 3 Playoffs Only” (an 8-team bracket in U13 Boys; U15 Open is empty). For the game-day screens, use the live demo with no sign-in (<em>/see-it-live</em>). Use a computer in Warm unless a step says otherwise.</div>
+  <div class="signin" aria-label="Sign in as">
+    <div class="eyebrow">Sign in as · dev site · localhost:3000/auth/login</div>
+    <div class="cred"><span class="who">Admin (Parts A–D, F step 1, G)</span><code>uat-owner@uat-test-org.local</code><code>UATPassword2026!</code></div>
+    <div class="cred"><span class="who">Coach (Part F step 2)</span><code>uat-coach@uat-test-org.local</code><code>UATPassword2026!</code></div>
+    <p class="meta">The admin holds several test workspaces. Open “UAT Plus Org” from the Workspaces pill, or go straight to <code>localhost:3000/uat-plus-org/admin/tournaments/schedule</code> and pick “UAT Stage 3 Playoffs Only” at the top left. Part E needs no sign-in: open the live demo on a phone and choose Game day, then the scorekeeper.</p>
+  </div>
   <div class="note warn"><strong>One step saves.</strong> Part B step 3 saves a bracket on the UAT test tournament (the demo refuses saves). It renames nothing, so the bracket stays as it was.</div>
   <p class="prog" id="count"></p>
   <div id="parts"></div>

@@ -7,6 +7,27 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-19 — EVERY HEADING IS THE PLAIN FACE, THE PAGE TITLE INCLUDED, IN BOTH PORTALS; THE CONDENSED FACE IS FOR CAPITALS; ONE "CHOSEN" LOOK FOR A TOGGLE (owner, Admin type sweep Stage 4 calls D1–D3, all as recommended, by paste-back — https://claude.ai/artifact/YQ9CZWXgL9pjo8GvXpw2wH)
+
+**Decision:**
+- **D1** Every mixed-case heading — page titles, card and section titles, window titles, the coaches portal's
+  headlines — is the body face (Inter), 700, in the admin AND the coaches portal. The condensed display face stays
+  on capitals only (column headings, band headings) and on the public pages. A team's name stays the body face
+  (unchanged, the 2026-08-02 pick); a button set in the condensed face is a fault, not a heading.
+- **D2** A segmented toggle's chosen half wears the shared view pill's chosen look (olive tint, olive edge, olive
+  word) — the notifications page AND the bell drawer, both portals. Replaces the drawer's solid lime/olive fill and the
+  coaches portal's warm dark-ink fill.
+- **D3** Account → Notification settings (every signed-in person's page) is swept in Stage 4 under the same rules:
+  sentences to the body face, column headings, chips.
+
+**Rationale:** F2 and A3 already put titles in the body face; a global h1–h6 rule had kept nearly every title
+condensed. Measured on screen: the condensed face reads about a size smaller than Inter, so a condensed page title over
+body-face card titles loses the hierarchy (at 20 px, and barely clears at 24 px) — "condensed page title only" was
+drawn and rejected for that reason. All-condensed keeps the order but closes up lowercase at 16 px (the 2026-08-02
+reason). Stage 3's A3 moves cited "as the coaches portal's sections do", which was false; A3 stands on its own.
+**Applies to:** every heading in both portals; the notifications toggle; the account notification settings page.
+
+
 ### 2026-10-19 — A STATUS WORD HAS ONE SPELLING, SENTENCE CASE, EVERYWHERE; A SCREEN'S NAME IN A SENTENCE IS SPELLED AS THE MENU SPELLS IT (owner, Admin type sweep Stage 3, C2 + C3)
 
 **Decision:** (C2) A status the product shows — "Pending review", "Registration open", "Registration closed",

@@ -80,10 +80,11 @@ import { type IssueAction } from './components/ScheduleHealthPanel';
 import sd from './components/ScheduleDay.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
-// The two plain windows' titles (Add / Edit Game, Resolve Temporary Facilities) in the kit's display face — the kit
-// half of what was a `kx()` patch, folded (Stage 3 Part 2; the global `.modal-header h3` is written at zero weight).
+// The two plain windows' titles (Add / Edit Game, Resolve Temporary Facilities) in the body face, as every heading is
+// (D1, owner 2026-10-19) — the kit half of what was a `kx()` patch, folded (Stage 3 Part 2; the global
+// `.modal-header h3` is written at zero weight).
 const modalTitleStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-display)', fontSize: 'var(--type-heading)', fontWeight: 700, textTransform: 'none',
+  fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--type-heading)', fontWeight: 700, textTransform: 'none',
   letterSpacing: 'normal', color: 'var(--text-primary)', margin: 0,
 };
 

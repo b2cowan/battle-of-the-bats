@@ -29,7 +29,7 @@
 }
 .title {
   margin: 0;
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 1.3125rem;
   font-weight: 700;
   line-height: 1.15;

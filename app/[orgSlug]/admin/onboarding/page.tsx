@@ -1058,7 +1058,7 @@ function OnboardingPageLegacy() {
               )}
               {!options.hidePrimaryAction && (
                 <button type="button" className="btn btn-primary" onClick={options.onSave} disabled={stepSaving || options.saveDisabled}>
-                  {stepSaving ? 'Saving...' : options.saveLabel}
+                  {stepSaving ? 'Saving…' : options.saveLabel}
                 </button>
               )}
             </div>
@@ -1087,8 +1087,8 @@ function OnboardingPageLegacy() {
                   placeholder="2026 House League" // spelling-ok: an example season name, like the default above
                   autoFocus
                 />
-                <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.3rem' }}>
-                  Public link: <span style={{ color: 'var(--logic-lime)' }}>/league/{leagueSeasonForm.slug || 'your-season'}</span> — auto-generated; editable later in season settings.
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
+                  Public link: <span style={{ fontFamily: 'var(--font-data)' /* type-ok: an address */ }}>/league/{leagueSeasonForm.slug || 'your-season'}</span> — auto-generated; editable later in season settings.
                 </span>
               </label>
               <label className={styles.fieldLabel}>

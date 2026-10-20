@@ -292,7 +292,7 @@ export default function ExportMenu({
         title={label}
       >
         <Download size={14} aria-hidden />
-        <span className={styles.triggerLabel}>{loading ? 'Exporting...' : label}</span>
+        <span className={styles.triggerLabel}>{loading ? 'Exporting…' : label}</span>
       </button>
 
       {/* ── Dropdown menu ─────────────────────────────────────────────── */}

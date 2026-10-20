@@ -836,7 +836,7 @@
   box-shadow: var(--home-shadow);
 }
 :global([data-admin-kit]) .legendTitle {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-body);
   font-weight: 700;
   color: var(--text-primary);

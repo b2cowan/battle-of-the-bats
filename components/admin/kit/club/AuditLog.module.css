@@ -35,5 +35,5 @@
   border-radius: 8px;
   background: var(--card-bg);
 }
-.emptyTitle { margin: 0 0 0.35rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); text-transform: none; letter-spacing: normal; font-family: var(--font-display); }
+.emptyTitle { margin: 0 0 0.35rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); text-transform: none; letter-spacing: normal; font-family: var(--font-sans, system-ui, sans-serif); }
 .emptyBody { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }

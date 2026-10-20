@@ -1565,7 +1565,9 @@
      22.4px mixed-case. */
   font-size: var(--type-title);
   font-weight: 700;
-  font-family: var(--font-display);
+  /* ⚖ D1 (Admin type sweep, owner 2026-10-19): every heading is the body face, both portals — condensed
+     letters read a size smaller, so a condensed title lost its place over the Inter cards beneath it. */
+  font-family: var(--font-sans, system-ui, sans-serif);
   margin: 0;
   color: var(--text-primary);
   line-height: 1.1;
@@ -1889,7 +1891,7 @@
 /* Headline stat strip above the tiles — big number + small uppercase label, dot-separated. */
 .statStrip { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem 0.85rem; margin: 0 0 1.25rem; }
 .statStripItem { font-size: var(--type-support); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
-.statStripItem strong { font-family: var(--font-display); font-size: var(--type-title); font-weight: 800; color: var(--text-primary); margin-right: 0.35rem; }
+.statStripItem strong { font-family: var(--font-sans, system-ui, sans-serif); font-variant-numeric: tabular-nums; font-size: var(--type-title); font-weight: 800; color: var(--text-primary); margin-right: 0.35rem; }
 /* ⚠ The deliberate holdouts from the 2026-08-18 semantic-ink sweep — now TWO, not three
    (.statStripDot, .wltSep; .lineupZero left the list 2026-09-22, see its own rule). Every one
    renders PUNCTUATION, not text — a separator dot and the middot between W-L-T. They convey no
@@ -1996,7 +1998,7 @@
   .sectionKicker { margin: 0.75rem 0 0.4rem; }
 }
 .figureRowFigure {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-title);
   /* Bold, not the tile's extra-bold (B6): still the loudest thing on its row, no longer shouting
      across all six — the row is 52px, the tile was a 175px box. */
@@ -2531,7 +2533,7 @@ a.insightsStat:focus-visible { outline-offset: -2px; }
 
 .oneHeadline {
   margin: 0.1rem 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-weight: 800;
   font-size: var(--type-title);
   letter-spacing: -0.01em;
@@ -2544,7 +2546,8 @@ a.insightsStat:focus-visible { outline-offset: -2px; }
 /* Once a score exists it is the most-wanted fact on the card, so it outsizes the meta line. */
 .oneScoreline {
   margin: 0.3rem 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
   font-weight: 800;
   font-size: var(--type-figure);
   letter-spacing: -0.01em;
@@ -2586,7 +2589,7 @@ a.insightsStat:focus-visible { outline-offset: -2px; }
   text-decoration: none;
   white-space: nowrap;
 }
-.oneChip strong { font-family: var(--font-display); font-weight: 800; color: currentColor; }
+.oneChip strong { font-family: var(--font-sans, system-ui, sans-serif); font-variant-numeric: tabular-nums; font-weight: 800; color: currentColor; }
 .oneChip svg { flex: none; }
 .oneChip[data-state="done"] {
   color: var(--success);
@@ -2657,7 +2660,7 @@ a.oneChip:hover { border-color: currentColor; }
   }
   .oneDoorBody { flex: 1 1 auto; min-width: 0; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
   .oneDoorBody > span { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
-  .oneDoorBody strong { font-family: var(--font-display); font-weight: 800; color: currentColor; }
+  .oneDoorBody strong { font-family: var(--font-sans, system-ui, sans-serif); font-variant-numeric: tabular-nums; font-weight: 800; color: currentColor; }
   .oneDoorBody svg { flex: none; }
   .oneDoorChevron { flex: none; color: currentColor; opacity: 0.7; }
 }
@@ -2807,7 +2810,7 @@ a.oneChip:hover { border-color: currentColor; }
 
 .nowHeadline {
   margin: 0.1rem 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-weight: 800;
   font-size: var(--type-title);
   letter-spacing: -0.01em;
@@ -5024,6 +5027,7 @@ a.oneChip:hover { border-color: currentColor; }
 .formBody > .formSection + .discToggle,
 .formBody > .discToggle + .formSection { margin-top: 0.45rem; }
 .formSectionTitle {
+  font-family: var(--font-display, sans-serif); /* D1: capitals keep the condensed face — set here, the global heading rule is the body face in the portals */
   margin: 0;
   font-size: var(--type-label);
   font-weight: 700;
@@ -5402,8 +5406,10 @@ a.oneChip:hover { border-color: currentColor; }
 .segBtnActive, .segBtnActive:hover { background: var(--logic-lime); color: var(--on-lime); }
 /* The chosen half of a toggle that NARROWS (Notifications' Unread · All — owner 2026-10-19, Toolbar Rules Stage 3, on
    /design's review): the soft olive tint a narrowing wears when it is on, never the solid fill, which outshouted the view
-   pills that pick the list. Square, as every narrowing is (Rule 4). Worn instead of `.segBtnActive`, after it here. */
-.segBtnNarrowOn, .segBtnNarrowOn:hover { background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.12)); color: var(--home-olive, var(--logic-lime)); }
+   pills that pick the list. Square, as every narrowing is (Rule 4). Worn instead of `.segBtnActive`, after it here.
+   ⚖ D2 (Admin type sweep Stage 4, owner 2026-10-19): the shared view pill's chosen look exactly
+   (`components/shared/ViewPills.module.css`), as the admin page's and both drawers' Unread · All wear it. */
+.segBtnNarrowOn, .segBtnNarrowOn:hover { background: rgba(var(--logic-lime-rgb), 0.16); box-shadow: inset 0 0 0 1px var(--home-olive); color: var(--home-olive); }
 
 /* The Paste/Upload switch on the intake sheets (Add players, Import budget, Sample budget) reuses
    the portal's own segmented control — the same one Roster's List/Depth-chart toggle uses, so a
@@ -5913,7 +5919,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   border-radius: 10px;
 }
 .statBoxValue {
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
   font-size: var(--type-title);
   font-weight: 800;
   color: var(--text-primary);
@@ -5936,7 +5943,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   margin: 0 0 0.6rem; font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary);
 }
 .figItem b {
-  font-family: var(--font-display); font-size: var(--type-title); font-weight: 800;
+  font-family: var(--font-sans, system-ui, sans-serif); font-size: var(--type-title); font-weight: 800;
   color: var(--text-primary); font-variant-numeric: tabular-nums; margin-right: 0.2rem;
 }
 /* Present · late · absent in proportion — a 6px bar that reads "mostly here" without reading. The
@@ -5956,7 +5963,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .duesLedger > .duesLedgerTotal { border-top: 1.5px solid var(--text-primary); margin-top: 0.3rem; padding-top: 0.55rem; }
 .duesLedgerTotal dt { color: var(--text-primary); font-weight: 800; }
-.duesLedgerTotal dd { font-family: var(--font-display); font-size: var(--type-title); font-weight: 800; }
+.duesLedgerTotal dd { font-family: var(--font-sans, system-ui, sans-serif); font-variant-numeric: tabular-nums; font-size: var(--type-title); font-weight: 800; }
 .duesLedgerTotal dd[data-tone="danger"] { color: var(--danger); }
 .duesLedgerTotal dd[data-tone="good"]   { color: var(--success); }
 
@@ -6272,7 +6279,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .calNavBtn:hover { background: var(--home-olive-soft); color: var(--text-primary); }
 .calNavLabel {
   display: inline-flex; flex-direction: column; align-items: center;
-  font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; letter-spacing: 0.02em;
+  font-family: var(--font-sans, system-ui, sans-serif); font-size: var(--type-heading); font-weight: 700; letter-spacing: normal; font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums; color: var(--text-primary); white-space: nowrap;
 }
 /* ONE WIDTH while the arrows step (owner, 2026-10-10): the widest words the control can show sit unseen under the dates
@@ -9302,6 +9309,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtn:hover { background: var(--home-olive-soft); color: var(--text-primary); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive:hover { background: var(--home-ink); color: var(--home-paper); }
+/* D2 (2026-10-19): the chosen half of a narrowing toggle keeps the view pill's olive look on hover — the plain
+   `.segBtn:hover` above outweighs the base `.segBtnNarrowOn` rule and would turn its word to ink. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnNarrowOn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnNarrowOn:hover { background: rgba(var(--logic-lime-rgb), 0.16); box-shadow: inset 0 0 0 1px var(--home-olive); color: var(--home-olive); }
 
 
 /* ── Warm coaches portal (TH-5) — org-vs-own MONEY chips ──────────────────
@@ -15287,6 +15298,7 @@ div.gdRow { cursor: default; }
   border-radius: 8px;
 }
 .roomZoneLabel {
+  font-family: var(--font-display, sans-serif); /* D1: capitals keep the condensed face — set here, the global heading rule is the body face in the portals */
   margin: 0 0 0.6rem;
   font-size: var(--type-label);
   font-weight: 700;

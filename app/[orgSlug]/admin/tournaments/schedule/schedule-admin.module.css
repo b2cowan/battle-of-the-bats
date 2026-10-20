@@ -1084,9 +1084,11 @@
   margin-left: 0.6rem;
   padding: 0.12rem 0.4rem;
   border-radius: 2px;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
+  font-family: var(--font-data); /* type-ok: chip */
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: chip */
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -1352,11 +1354,12 @@
 
 .resolveLocationsSectionLabel {
   padding-top: 0.35rem;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-30);
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--text-secondary);
 }
 
 .resolveLocationsNote {
@@ -1386,9 +1389,9 @@
 .resolveLocationsEmptyTitle { color: var(--white-70); font-size: 0.8rem; font-weight: 600; }
 
 .resolveLocationsCount {
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  letter-spacing: 0.04em;
+  font-family: var(--font-data); /* type-ok: readout */
+  font-size: var(--type-support);
+  letter-spacing: normal;
   color: var(--white-45);
 }
 
@@ -1850,7 +1853,7 @@
 
 /* "Already linked to a diamond" — a genuine section-label eyebrow (introduces a group, not a
    button or a field label), so mono stays; only its ink moves. */
-:global([data-admin-kit]) .resolveLocationsSectionLabel { color: var(--text-tertiary); }
+:global([data-admin-kit]) .resolveLocationsSectionLabel { color: var(--text-secondary); }
 
 :global([data-admin-kit]) .resolveLocationsNote {
   border-color: var(--home-line-strong);

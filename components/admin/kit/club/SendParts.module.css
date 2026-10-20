@@ -18,7 +18,7 @@
 /* A standing reason in Send's place, at the foot's left (the 2026-10-12 rulings): amber, the count first. */
 .standing { margin: 0; align-self: center; min-width: 0; font-size: var(--type-support); font-weight: 600; line-height: 1.35; color: var(--warning-light); }
 /* The family envelope inside a sample: the club as its kicker, the message as typed, the footer lines. */
-.envelopeKicker { display: block; margin: 0 0 0.4rem; font-size: var(--type-label); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); }
+.envelopeKicker { display: block; margin: 0 0 0.4rem; font-size: var(--type-label); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow — a sample of the family email's own kicker (lib/family-email.ts), matched to the email, not the kit */
 .envelopeBody { white-space: pre-wrap; overflow-wrap: anywhere; }
 .sample .envelopeFoot { margin: 0.75rem 0 0; color: var(--text-tertiary); }
 

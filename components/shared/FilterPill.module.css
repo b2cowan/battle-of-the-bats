@@ -180,7 +180,9 @@
 .dateRangeOptionDates { font-size: var(--type-label); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .dateRangeCustom { padding: 0.25rem 0.5rem 0.35rem; }
 .dateRangeCustomLabel {
-  font-size: var(--type-token); letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-tertiary); margin-bottom: 0.35rem; position: relative;
 }
 .dateRangeCustom[data-active] .dateRangeCustomLabel { color: var(--text-primary); padding-left: 0.85rem; }

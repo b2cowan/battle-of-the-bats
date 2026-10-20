@@ -38,7 +38,7 @@
 .header .titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .title {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-title);
   font-weight: 700;
   line-height: 1.1;

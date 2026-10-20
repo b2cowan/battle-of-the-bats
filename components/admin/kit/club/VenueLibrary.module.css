@@ -24,11 +24,11 @@
 /* The window's sections: a quiet heading in the display face (the drawing's), then rows on hairlines. */
 .sectionHead {
   margin: 1.25rem 0 0.4rem;
-  font-family: var(--font-display);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
 /* The drawing's facility card: one bordered card, its rows on hairlines (name · kind · upcoming). */

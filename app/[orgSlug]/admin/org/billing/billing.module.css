@@ -61,7 +61,7 @@
   color: var(--text-primary);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: none;
 }
 
@@ -369,7 +369,7 @@
 .sectionTitle {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 1.1rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: normal;
   color: var(--text-primary);
   text-transform: none;
@@ -430,7 +430,7 @@
 .planCardName {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -440,16 +440,16 @@
   gap: 0.6rem;
 }
 
-/* A true eyebrow (uppercase + letter-spaced, labels the plan name below it) — mono stays, in the accent. */
+/* A true eyebrow (labels the plan name below it) — the eyebrow recipe, in the accent. */
 .productEyebrow {
   margin: 0 0 0.25rem;
   color: var(--home-olive);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
   line-height: 1.2;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
 }
 
 .productValueProp {
@@ -597,11 +597,12 @@
   color: var(--text-secondary);
   background: var(--home-olive-soft);
   padding: 0.15rem 0.45rem;
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-family: var(--font-data); /* type-ok: chip */
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: chip */
   white-space: nowrap;
 }
 
@@ -626,7 +627,7 @@
   color: var(--text-primary);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: normal;
   text-transform: none;
 }
@@ -667,11 +668,10 @@
   background: var(--danger);
 }
 
-/* A "savings" tag is a promo accent → olive. Chips keep the console face (F2). */
+/* A "savings" tag is a promo accent → olive. Not a chip (design review): a plain sentence in the body face. */
 .savingsBadge {
-  font-family: var(--font-data); /* type-ok: chip */
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 650;
   color: var(--home-olive);
   background: var(--home-olive-soft);
   border: 1px solid var(--home-olive);
@@ -876,11 +876,11 @@
 }
 
 .foundingSeasonEyebrow {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--home-olive);
   margin: 0 0 0.3rem;
 }
@@ -889,7 +889,7 @@
 .foundingSeasonTitle {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 0.3rem;
   text-transform: none;
@@ -948,7 +948,7 @@
   outline-offset: 2px;
 }
 
-/* A true eyebrow ("MONTHLY" / "ANNUAL", labels the price below it) — mono stays. */
+/* A body-face label ("Monthly" / "Annual", labels the price below it) — sentence case, no caps, no data face. */
 .nextSeasonPlanLabel {
   display: flex;
   align-items: center;
@@ -1042,11 +1042,11 @@
 }
 
 .nextSeasonChosenEyebrow {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--success-light);
   margin: 0 0 0.3rem;
 }

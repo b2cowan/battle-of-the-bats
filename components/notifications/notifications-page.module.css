@@ -117,10 +117,12 @@
   color: var(--fl-text);
 }
 
+/* Chosen: the shared view pill's look exactly (ViewPills.module.css) — olive on a lime wash, in every portal and theme. */
 .segBtnActive,
 .segBtnActive:hover {
-  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
-  color: var(--fl-text);
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  box-shadow: inset 0 0 0 1px var(--home-olive); /* the pill's olive edge, drawn inside: these halves carry no border of their own */
+  color: var(--home-olive);
 }
 
 /* ── List + zone headers ─────────────────────────────────────────────────────── */
@@ -371,7 +373,7 @@
 }
 
 .emptyHeadline {
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading, 1rem);
   font-weight: 700;
   color: var(--fl-text);

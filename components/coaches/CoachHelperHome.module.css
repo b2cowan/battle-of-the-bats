@@ -64,6 +64,7 @@
 
 /* ── Coming up ───────────────────────────────────────────────────────────── */
 .sectionLabel {
+  font-family: var(--font-display, sans-serif); /* D1: capitals keep the condensed face — set here, the global heading rule is the body face in the portals */
   margin: 0 0 0.2rem;
   font-size: var(--type-label);
   font-weight: 700;

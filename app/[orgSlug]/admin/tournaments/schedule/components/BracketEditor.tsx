@@ -72,7 +72,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
     { borderBottom: '1px solid var(--home-line)', background: 'var(--card-bg)' },
   );
   const trophyIconStyle = kx({ color: 'var(--logic-lime)', flexShrink: 0 }, KIT_INK.accent);
-  // The two lime console labels ("Editing bracket", the tier setup's heading) — one accent eyebrow.
+  // The tier setup's "Tiers" label — the accent eyebrow (its sentence is a caption under it, Stage 4 T38).
   const accentLabelStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.eyebrowAccent);
   const orderIssuesStyle = kx({ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#f87171', fontSize: '0.75rem', fontWeight: 700 }, KIT_INK.danger);
   const tierSetupPanelStyle = kx(
@@ -492,10 +492,13 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
             {/* Manual tier setup — split overall seeds into N contiguous tiered brackets */}
             {showTierSetup && (
               <div style={tierSetupPanelStyle}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
                   <Layers size={14} style={layersIconStyle} />
-                  <span className="text-label" style={accentLabelStyle}>Tiers — split the {tierEligibleCount} seeds into separate brackets</span>
+                  <span style={accentLabelStyle}>Tiers</span>
                 </div>
+                <p style={{ margin: '0 0 0.5rem', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  Split the {tierEligibleCount} seeds into separate brackets.
+                </p>
                 <p className="text-sm text-muted" style={{ margin: '0 0 0.85rem', maxWidth: '46rem', lineHeight: 1.5 }}>
                   Each tier is its own bracket, seeded from the division&apos;s overall standings (top seeds in the first tier).
                   Set how many teams go in each tier; ranges fill in order.

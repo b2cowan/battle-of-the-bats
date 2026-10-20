@@ -284,9 +284,9 @@
     border-radius: 999px;
     background: var(--logic-lime);
     color: var(--pitch-black);
-    font-family: var(--font-data);
+    font-family: var(--font-data); /* type-ok: chip */
     font-size: var(--type-token);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
     flex-shrink: 0;
   }

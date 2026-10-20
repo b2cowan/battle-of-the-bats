@@ -596,11 +596,11 @@
   border-radius: 3px;
   background: var(--logic-lime);
   color: var(--bg);
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-family: var(--font-data); /* type-ok: chip */
+  font-size: var(--type-token);
+  font-weight: 700;
+  text-transform: uppercase; /* type-ok: chip */
+  letter-spacing: 0.06em;
   pointer-events: none;
 }
 

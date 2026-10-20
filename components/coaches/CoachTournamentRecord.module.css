@@ -97,7 +97,7 @@
 
 .zoneTitle {
   margin: 0.12rem 0 0;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-title);
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -563,7 +563,7 @@
 }
 
 .standRank {
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-figure);
   font-weight: 800;
   line-height: 1;

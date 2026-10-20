@@ -60,7 +60,6 @@
 }
 
 .rowBlurb {
-  font-family: var(--font-data, monospace);
   font-size: 0.7rem;
   color: var(--home-dim);
   margin-top: 0.15rem;
@@ -77,7 +76,6 @@
   margin: 0;
   padding-top: 0.85rem;
   border-top: 1px dashed var(--home-line);
-  font-family: var(--font-data, monospace);
   font-size: 0.72rem;
   line-height: 1.5;
   color: var(--home-dim);
@@ -88,7 +86,6 @@
 /* Device-level caveat after a save (account pref stored; this device can't receive). */
 .deviceNote {
   margin: 0;
-  font-family: var(--font-data, monospace);
   font-size: 0.72rem;
   line-height: 1.5;
   color: var(--home-amber);

@@ -154,7 +154,7 @@
   align-items: center;
   gap: 0.3rem;
   min-width: 0;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-title);
   font-weight: 800;
   line-height: 1.15;
@@ -425,7 +425,7 @@
 
 .railTeamName {
   margin: 0.2rem 0 0.3rem;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   font-weight: 800;
   line-height: 1.2;

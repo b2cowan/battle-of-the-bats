@@ -46,7 +46,7 @@
 .stepBody { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 .stepTitle {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-body);
   font-weight: 700;
   letter-spacing: normal;
