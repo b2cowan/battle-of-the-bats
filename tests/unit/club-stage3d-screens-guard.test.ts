@@ -176,7 +176,8 @@ describe('3. an allocation is ONE window, opened from every door (Asks 3–5)', 
     assert.match(tab, /const arriving = askedId !== null && askedId !== ownAsk;/);
     assert.match(tab, /useEffect\(\(\) => \{\s*if \(!arriving\) return;/);
     const dialog = readCode(`${KIT}/KitDialog.tsx`);
-    assert.match(dialog, /address: address \?\? null \}\);/, 'the kit hands the place to the floor\'s Back step');
+    // (One Window 2d: the floor's `opener` follows it in the same call.)
+    assert.match(dialog, /address: address \?\? null, opener \}\);/, 'the kit hands the place to the floor\'s Back step');
     const win = readCode(ALLOC_WINDOW);
     assert.match(win, /key=\{theBill\.splitId\}\s*address=\{addressOf\?\.\(theBill\.splitId\)\}/, 'each bill is its own place');
     assert.match(win, /address=\{addressOf\?\.\(null\)\}/);

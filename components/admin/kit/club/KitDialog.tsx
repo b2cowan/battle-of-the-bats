@@ -104,7 +104,7 @@
  * its controls (the preview's colour swatches) and a click in it is not "outside". The panel moves left by the
  * aside's width so the pair is centred; a phone never shows it.
  */
-import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
@@ -191,6 +191,7 @@ export default function KitDialog({
   openOn = 'field',
   ownType = false,
   onFootHeight,
+  opener,
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
@@ -263,6 +264,10 @@ export default function KitDialog({
   /** Told the foot's height in px (0 with no foot) as it changes — the coach shell places the page's save pill by it.
    *  Keep it stable (`useCallback`): a new function re-attaches the watch. */
   onFootHeight?: (height: number) => void;
+  /** Where focus goes home when the window closes, when that is not whatever was focused as it opened — a window opened
+   *  from a MENU item, which is gone by then (the coach's Subscribe in your calendar app, from the Schedule's Export).
+   *  The floor's own `opener` (useDialogFloor). */
+  opener?: RefObject<HTMLElement | null>;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -308,7 +313,7 @@ export default function KitDialog({
   // Mounted = open. Called BEFORE the focus effect below, so the floor records the opener while it
   // still has focus, then that effect moves the cursor into the first field. A level inside the window
   // gives the phone's Back somewhere to go first (`back`); the floor re-seats focus when the level changes.
-  useDialogFloor(true, panelRef, { onClose: requestClose, onBack: back?.onBack, busy, focusKey: levelKey ?? null, address: address ?? null });
+  useDialogFloor(true, panelRef, { onClose: requestClose, onBack: back?.onBack, busy, focusKey: levelKey ?? null, address: address ?? null, opener });
 
   // A new level starts at its top (Previous / Next do the same through `step` below).
   const shownLevel = useRef(levelKey);

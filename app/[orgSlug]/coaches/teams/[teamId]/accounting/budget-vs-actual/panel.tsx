@@ -1198,8 +1198,12 @@ function duesNotSetCaption(
  */
 export function BudgetVsActualPanel({
   params: paramsPromise,
+  tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Is this tab the one on screen? The hub keeps a visited panel mounted, hidden — the month grid's cell windows
+   *  show only while it is (One Window 2d; see MoneyMonthGrid's `tabActive`). */
+  tabActive?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -2221,6 +2225,7 @@ export function BudgetVsActualPanel({
                 monthStart={monthStart}
                 expanded={monthCatsOpen}
                 onToggle={k => setMonthCatsOpen(prev => toggleKey(prev, k))}
+                tabActive={tabActive}
               />
               {/* ⚠ UNDER THE GRID'S OWN NOTES, not above them. Those notes state what the lens
                   MEANS; this states why two figures on the screen differ. Basis first, then the

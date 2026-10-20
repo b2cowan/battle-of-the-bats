@@ -3,30 +3,15 @@
    look; plain words for the last read, no colour; the pill, never a box). Hub
    https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6d → 2 · The Subscribe window.
 
-   ⚠ Every rule that sits on a shared class (`.btnSecondary`, `.modal`) is written TWO classes deep (`.window .door`,
+   ⚠ Every rule that sits on a shared class (`.btnSecondary`) is written TWO classes deep (`.deskBody .door`,
    `.sheetBody .door`): two CSS modules at one specificity resolve by BUNDLE ORDER, the repo's known trap. ═══ */
 
-/* ── The desk window: the portal's `.modal`, 520 wide (its own max-width), the drawing's own inset ── */
-.window.window { padding: 18px 20px 18px; }
-
-.head {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 0 0 10px;
-}
+/* ⚰ THE DESK WINDOW'S OWN SHAPE STOOD HERE (`.window.window`'s inset over the portal's `.modal`, its `.head` and the
+   `.context` line over the title). At a desk it is the one window now (One Window 2d): its head carries the context as
+   the eyebrow and the title, its body the inset; `.deskBody` is only the body's name for the two-classes-deep rules. */
 .headWords { flex: 1; min-width: 0; }
 
-/* The record head's context line, over the title at a desk (the portal's eyebrow: mono, small capitals). */
-.context {
-  margin: 0 0 5px;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
+/* The phone sheet's title (the desk title is the one window's own). */
 .title {
   margin: 0;
   font-family: var(--font-sans, system-ui, sans-serif);
@@ -52,7 +37,7 @@
   gap: 8px;
   margin: 0 0 10px;
 }
-.window .door,
+.deskBody .door,
 .sheetBody .door {
   justify-content: center;
   gap: 7px;
@@ -64,9 +49,9 @@
   text-decoration: none;
   white-space: nowrap;
 }
-.window .door > svg,
+.deskBody .door > svg,
 .sheetBody .door > svg,
-.window .copy > svg { color: var(--text-secondary); flex: none; }
+.deskBody .copy > svg { color: var(--text-secondary); flex: none; }
 
 /* The link, quiet and read-only, with Copy beside it — for any other app. */
 .linkRow {
@@ -89,7 +74,7 @@
   text-overflow: ellipsis;
 }
 .linkField:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
-.window .copy {
+.deskBody .copy {
   flex: none;
   gap: 6px;
   min-height: 34px;

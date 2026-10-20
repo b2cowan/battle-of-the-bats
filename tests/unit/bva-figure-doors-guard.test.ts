@@ -274,9 +274,11 @@ test('no surface counts the lines behind a merged row — not a caption, not a s
  * menu. So the door exists exactly when the lines are not links.
  */
 test('the plan panel gives a read-only coach a door, and gives a writer none', () => {
+  // ⚖ Since One Window 2d the door is the plan WINDOW's own foot (`footer={!canWrite ? (<Link …` on KitDialog), not a
+  // strip in its body — the same door, the same gate.
   assert.match(
     grid,
-    /!canWrite && \(\s*<div className={shared\.modalFooter}>[\s\S]{0,320}?moneySectionHref\(base, 'budget'\)/,
+    /footer=\{!canWrite \? \(\s*<Link[\s\S]{0,320}?moneySectionHref\(base, 'budget'\)/,
     'The plan panel no longer offers a read-only coach any way out. Every line in it is a link only '
     + 'when the coach can write, so without this door an assistant opens the panel, reads it, and '
     + 'can go nowhere — while the spent-figure panel two inches away hands them "Open the Ledger". '
@@ -285,7 +287,7 @@ test('the plan panel gives a read-only coach a door, and gives a writer none', (
   assert.ok(
     // ⚠ THE BANG IS THE WHOLE ASSERTION, so the pattern has to refuse to match it: without the
     // lookbehind, "!canWrite" contains "canWrite" and this fires on the very door above.
-    !/(?<![!\w])canWrite && \(\s*<div className={shared\.modalFooter}>/.test(grid),
+    !/footer=\{(?<![!\w])canWrite \?/.test(grid) && !/(?<![!\w])canWrite && \(\s*<div className={shared\.modalFooter}>/.test(grid),
     'The plan panel is offering its budget door to a coach who can WRITE. Their lines already open '
     + 'the exact budget line; a button beside them is a second door to the same screen that lands '
     + 'further from the work.',

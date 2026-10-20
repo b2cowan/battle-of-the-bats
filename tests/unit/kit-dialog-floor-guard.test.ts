@@ -33,7 +33,8 @@ describe('the club windows stand on the dialog floor', () => {
     // the level changes (`focusKey`) — still the floor's own keys, never a listener here.
     // One Window Stage 2 (owner A, 2026-10-19): Escape and Back go through the window's one closer, which asks in the
     // foot first when the caller says something is typed (`dirty`).
-    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose: requestClose, onBack: back\?\.onBack, busy, focusKey: levelKey \?\? null, address: address \?\? null \}\);/);
+    // One Window 2d: a window opened from a menu item names where focus goes home (`opener`, the floor's own).
+    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose: requestClose, onBack: back\?\.onBack, busy, focusKey: levelKey \?\? null, address: address \?\? null, opener \}\);/);
     assert.doesNotMatch(dialog, /addEventListener\(\s*'keydown'/, 'Escape and Tab belong to the floor — a second listener would answer twice');
   });
 

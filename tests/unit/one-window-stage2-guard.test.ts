@@ -516,6 +516,34 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
     assert.match(letter, /<QuestionShell open onClose=\{onClose\} wide ariaLabel=\{title\} title=\{title\}>/);
     assert.doesNotMatch(letter, /\bdirty=|kind="question"|modalOverlay|useDialogFloor|maxWidth: 600/);
   });
+
+  it('B5 + B6: the read windows — the month grid\'s two (both portals) and Subscribe at a desk — fill a phone and never ask (part 5)', () => {
+    // KitDialog itself, not the coach shell: the month grid renders in the CLUB admin's Budget vs. Actual too, and the
+    // Subscribe part is built for the club and the family view. The coach shell's own props for a coach window.
+    const grid = readCode('components/coaches/MoneyMonthGrid.tsx');
+    const tags = openingTags(grid, 'KitDialog', 'MoneyMonthGrid');
+    assert.equal(tags.length, 2, 'the cell window and the plan window');
+    for (const tag of tags) {
+      assert.match(tag, /kind="form"/);
+      assert.match(tag, /openOn="panel"/);
+      assert.match(tag, /\bownType\b/);
+      assert.doesNotMatch(tag, /\bdirty=|\bsize=/, 'a read window: nothing typed, the ladder\'s 520');
+    }
+    // ⚠ Shown only while the caller's tab is on screen: the cell window's doors navigate WITHOUT closing it (kept),
+    // and the coach hub keeps the panel mounted, hidden — open there, the one window would hold the bars and the page.
+    assert.match(grid, /\{detail && tabActive && \(\s*<KitDialog/);
+    assert.match(grid, /\{plan && tabActive && \(\s*<KitDialog/);
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx'), /<MoneyMonthGrid[\s\S]*?tabActive=\{tabActive\}/);
+    assert.doesNotMatch(grid, /modalOverlay|centeredOnMobile|useDialogFloor|maxWidth: 460/);
+    const cal = readCode('components/coaches/CalendarSubscribeWindow.tsx');
+    // At a desk: the context is the window's eyebrow, focus goes home to the door that opened it (a menu item is gone).
+    assert.match(cal, /<KitDialog kind="form" eyebrow=\{context\} title=\{title\} onClose=\{onClose\} busy=\{resetting\} opener=\{opener\}\s+openOn="panel" ownType>/);
+    assert.match(kit, /useDialogFloor\(true, panelRef, \{[^}]*\bopener \}\);/, 'the window hands its opener to the floor');
+    // The phone keeps its sheet (Sheet Frame governs sheets; answer D: "opens on a computer only").
+    assert.match(cal, /<SheetFrame onClose=\{onClose\} opener=\{opener\}/);
+    assert.doesNotMatch(cal, /modalOverlay|useDialogFloor|useOverlayOpen|function DeskWindow/);
+    assert.doesNotMatch(readSource('components/coaches/CalendarSubscribeWindow.module.css'), /^\s*\.(window|head|context)\b[^{]*\{/m, 'the desk window\'s own shape is gone');
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -538,9 +566,7 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx', MOVES_2D + ', the practice page last'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx', MOVES_2D + ', the practice page last (its station and block sheets stay out)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeSendSheet.tsx', MOVES_2D],
-      ['components/coaches/CalendarSubscribeWindow.tsx', MOVES_2D],
       ['components/coaches/DrillSheet.tsx', MOVES_2D],
-      ['components/coaches/MoneyMonthGrid.tsx', MOVES_2D],
     ]);
     const builds = (src: string) => /className=\{[^}]*\.modalOverlay\b/.test(src) || /\.modalOverlay\}/.test(src);
     const found = tsxWith('modalOverlay')

@@ -1,10 +1,10 @@
 'use client';
 import { Fragment, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight, X, CalendarClock } from 'lucide-react';
+import { ChevronDown, ChevronRight, CalendarClock } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import ReportNotes, { NoteText } from '@/components/coaches/ReportNotes';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { useOpenOnNow } from '@/components/coaches/useOpenOnNow';
 import { monthGridNotesFor, type ReportNote } from '@/lib/coach-money-report-notes';
 import {
@@ -355,8 +355,15 @@ export default function MoneyMonthGrid({
   club,
   expanded,
   onToggle,
+  tabActive = true,
 }: {
   data: MonthGridPayload;
+  /** ⚠ Is the caller's tab the one on screen? The coach's Money hub keeps a visited panel MOUNTED (display:none), and a
+   *  cell's window stays open across its doors (they navigate to another tab without closing it — see the detail
+   *  window): open on a hidden tab, the one window would keep the portal's bars hidden and the page locked on the tab
+   *  the coach went to. The window shows only while this is true; what it shows is kept for the coach's return. The
+   *  club's page has no tabs (the default). */
+  tabActive?: boolean;
   lens: MoneyLens;
   /** The categories open now — the PAGE's, so its Expand all / Collapse all reaches them (see
    *  `monthGridFoldKeys`). Empty at first: the grid opens folded. */
@@ -447,15 +454,14 @@ export default function MoneyMonthGrid({
     moreCount: number;
   } | null>(null);
 
-  /* ⚠⚠ THE SHARED DIALOG FLOOR (List · Room · Question, D7) — Escape closes, Tab stays inside, focus
-     lands on the panel and returns to the opener (owner-found 2026-09-21, QA walk on the plan-panel
-     filtering fix: neither of this grid's two hand-rolled overlays had ever taken it, so Escape did
-     nothing on either). See `useDialogFloor` for the mechanism; every other coach overlay in the
-     portal already stands on it. */
-  const detailPanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(!!detail, detailPanelRef, { onClose: () => setDetail(null) });
-  const planPanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(!!plan, planPanelRef, { onClose: () => setPlan(null) });
+  /* ⚖ THE ONE WINDOW (One Window 2d, calls B5 / B6 — the owner's D: forms that fill a phone, not small cards). Both
+     of this grid's windows stand on its floor (Escape and the phone's Back close the top window, Tab stays inside,
+     focus returns to the cell; owner-found 2026-09-21: neither hand-rolled overlay had ever answered Escape), and a
+     tap outside does nothing. ⚠ `KitDialog` ITSELF, NOT THE COACH SHELL: this grid also renders in the CLUB admin's
+     Budget vs. Actual (Club Tier Stage 3b), and `QuestionShell` is the coaches portal's wrapper (its field rules and
+     its phone save-pill bookkeeping are coach concerns; these read windows have neither a field nor a pill to ride).
+     The props are the shell's own for a coach window — `openOn="panel"` (no phone keyboard on open) and `ownType`
+     (the grid's panels draw their own type) — so the window reads the same in both portals. */
 
   /* ⚠⚠ THE MONTHS ARE WINDOWED; THE TOTALS ARE NOT (owner ruling 2026-08-21). A repeating cost
      stretches this grid past any screen — fifteen columns the day it was found — and `Total`,
@@ -1252,22 +1258,27 @@ export default function MoneyMonthGrid({
       {/* Drill-in: what a single Actual or Scheduled cell is made of. Read-only by design —
           the grid is a way to REACH the forms, never a second editor. Visible to read-only
           coaches, who can already see every number on this page. */}
-      {detail && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => setDetail(null))?.(); }}>
-          <div
-            ref={detailPanelRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-label={detail.title}
-            className={shared.modal}
-            style={{ maxWidth: 460 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className={shared.modalHeader}>
-              <h3 className={shared.modalTitle}>{detail.title}</h3>
-              <button className={shared.modalCloseBtn} onClick={() => setDetail(null)} aria-label="Close"><X size={16} /></button>
-            </div>
+      {detail && tabActive && (
+        <KitDialog
+          kind="form"
+          title={detail.title}
+          ariaLabel={detail.title}
+          onClose={() => setDetail(null)}
+          openOn="panel"
+          ownType
+          /* ⚠ THESE DOORS DO NOT CLOSE THE WINDOW, and that is kept (One Window 2d): the cell's explanation stands
+             while the coach visits the tab a door names (`tabActive` hides it there, and it is back on return). The
+             plan window's lines and door below DO close it — each panel keeps its own behaviour. */
+          footer={detail.doors.length > 0 ? detail.doors.map(door => (
+            <Link
+              key={door.label}
+              href={club && door.extra?.href ? door.extra.href : moneySectionHref(base, door.section, door.extra)}
+              className={shared.btnSecondary}
+            >
+              {door.label}
+            </Link>
+          )) : undefined}
+        >
             <ul className={styles.detailList}>
               {detail.items.map(item => {
                 /* ⚠ THE ROW'S NAME IS WANTED ON BOTH PANELS, for two different reasons: a GROUP's
@@ -1305,19 +1316,7 @@ export default function MoneyMonthGrid({
                 <span className={styles.detailAmt}>{fmtSignedAmount(Math.round(detail.items.reduce((s, i) => s + i.amount, 0) * 100) / 100)}</span>
               </li>
             </ul>
-            <div className={shared.modalFooter}>
-              {detail.doors.map(door => (
-                <Link
-                  key={door.label}
-                  href={club && door.extra?.href ? door.extra.href : moneySectionHref(base, door.section, door.extra)}
-                  className={shared.btnSecondary}
-                >
-                  {door.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
+        </KitDialog>
       )}
 
       {/* WHAT MAKES UP A PLAN FIGURE (owner ruling 2026-09-04, QA §132).
@@ -1329,25 +1328,35 @@ export default function MoneyMonthGrid({
           ⚠ READ-ONLY, LIKE ITS TWIN. The panel opens for everyone; only the DOORS are gated on
           write access, so an assistant reads the same explanation without being shown controls the
           server would refuse. */}
-      {plan && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) setPlan(null); }}>
-          <div
-            ref={planPanelRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-label={plan.title}
-            className={shared.modal}
-            style={{ maxWidth: 460 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className={shared.modalHeader}>
-              <h3 className={shared.modalTitle}>
-                {plan.title} · {plan.when === UNDATED_CELL ? 'no date yet'
-                  : plan.when === SEASON_CELL ? `whole ${span}` : formatMonthLong(plan.when)}
-              </h3>
-              <button className={shared.modalCloseBtn} onClick={() => setPlan(null)} aria-label="Close"><X size={16} /></button>
-            </div>
+      {plan && tabActive && (
+        <KitDialog
+          kind="form"
+          title={<>
+            {plan.title} · {plan.when === UNDATED_CELL ? 'no date yet'
+              : plan.when === SEASON_CELL ? `whole ${span}` : formatMonthLong(plan.when)}
+          </>}
+          ariaLabel={plan.title}
+          onClose={() => setPlan(null)}
+          openOn="panel"
+          ownType
+          /* ⚠⚠ THE READ-ONLY DOOR, AND IT IS THE ONLY WAY OUT THIS PANEL HAS FOR AN ASSISTANT
+             (owner ruling 2026-09-04). Every line below is a link for a coach who can write —
+             a better door than any button, because it lands on the line itself — so a button
+             beside them would be a second, worse door to the same screen. Take the links away
+             and nothing replaces them: this panel was the only one in the set that dead-ended,
+             while its twin's doors ("Open the Ledger", "Open Sponsors") are ungated and an
+             assistant gets them. So the door appears exactly when the lines are not links.
+             ⚠ It names the TAB, like every door on the other panel does. It closes the window as it goes. */
+          footer={!canWrite ? (
+            <Link
+              href={club ? club.planDoor.href : moneySectionHref(base, 'budget')}
+              className={shared.btnSecondary}
+              onClick={() => setPlan(null)}
+            >
+              {club ? club.planDoor.label : 'Open the Budget'}
+            </Link>
+          ) : undefined}
+        >
             {/* The figure the coach actually tapped, said back to them before the breakdown — the
                 panel is explaining THIS number, and a list that opens without it makes the reader
                 check they are still looking at the right cell.
@@ -1438,27 +1447,8 @@ export default function MoneyMonthGrid({
                 ? ' Open it to change its payment dates.'
                 : ' Open one to change its payment dates.') : ''}
             </p>
-            {/* ⚠⚠ THE READ-ONLY DOOR, AND IT IS THE ONLY WAY OUT THIS PANEL HAS FOR AN ASSISTANT
-                (owner ruling 2026-09-04). Every line above is a link for a coach who can write —
-                a better door than any button, because it lands on the line itself — so a button
-                beside them would be a second, worse door to the same screen. Take the links away
-                and nothing replaces them: this panel was the only one in the set that dead-ended,
-                while its twin's doors ("Open the Ledger", "Open Sponsors") are ungated and an
-                assistant gets them. So the door appears exactly when the lines are not links.
-                ⚠ It names the TAB, like every door on the other panel does. */}
-            {!canWrite && (
-              <div className={shared.modalFooter}>
-                <Link
-                  href={club ? club.planDoor.href : moneySectionHref(base, 'budget')}
-                  className={shared.btnSecondary}
-                  onClick={() => setPlan(null)}
-                >
-                  {club ? club.planDoor.label : 'Open the Budget'}
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
+            {/* ⚰ The read-only door's strip stood here: it is the window's foot now (`footer`, above). */}
+        </KitDialog>
       )}
     </div>
   );

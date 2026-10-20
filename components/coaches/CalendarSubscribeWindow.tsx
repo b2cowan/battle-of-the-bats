@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useState, type ReactNode, type RefObject } from 'react';
 import { CalendarDays, Check, Copy, RotateCcw, X } from 'lucide-react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import {
   CALENDAR_APP_NAMES,
@@ -11,7 +11,6 @@ import {
 } from '@/lib/calendar-subscribe';
 import { SUBSCRIBE_WORDS as W } from '@/lib/calendar-subscribe-words';
 import SheetFrame from './SheetFrame';
-import { useDialogFloor } from './useDialogFloor';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CalendarSubscribeWindow.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -29,7 +28,7 @@ import LoadingState from '@/components/shared/LoadingState';
  * red: nothing is deleted, only the old link stops), which the caller asks about first. After a reset the floating
  * pill says "New link made" and fades (a success fades; only an error stays).
  *
- *   At a desk  the portal's window, 520 wide over the dimmed page, doors at the one control height (34).
+ *   At a desk  the one window, 520 wide over the dimmed page, doors at the one control height (34).
  *   On a phone a tall MENU-layer sheet on the Sheet Frame — nothing in it is typed, so a stray tap on the bar loses
  *              nothing and the bar stays live (the frame's test, D1) — with a record head and the 44px × a tall menu
  *              keeps (D2), four 44px doors with THIS PHONE'S OWN calendar app first and Copy the link last; no link
@@ -149,39 +148,17 @@ export default function CalendarSubscribeWindow({
       </SheetFrame>
     );
   }
+  /* ⚖ AT A DESK IT IS THE ONE WINDOW (One Window 2d, calls B5 / B6): 520, the record head's context over the title (the
+     window's eyebrow), a plain ×, no foot; Escape and Back close it, Tab stays inside, a tap outside does nothing, and
+     focus goes home to the door that opened it (`opener` — it opens from a menu item, gone by the time it closes).
+     Held while a reset is in flight. `KitDialog` itself, not the coach shell, because this part is built for the club
+     admin and the family view too (the header). The phone keeps its sheet above (Sheet Frame governs sheets; the owner's
+     D recorded this window as "opens on a computer only"). */
   return (
-    <DeskWindow titleId={titleId} opener={opener} busy={resetting} onClose={onClose}>
-      <div className={styles.head}>
-        <div className={styles.headWords}>
-          <p className={styles.context}>{context}</p>
-          <h2 id={titleId} className={styles.title}>{title}</h2>
-        </div>
-        <button type="button" className={shared.modalCloseBtn} aria-label={W.close} onClick={onClose}>
-          <X size={18} aria-hidden />
-        </button>
-      </div>
-      {body}
-    </DeskWindow>
-  );
-}
-
-/** The portal's window (`.modalOverlay` + `.modal`, 520 wide), on the dialog floor: Escape, Back, focus in and home. */
-function DeskWindow({ titleId, opener, busy, onClose, children }: {
-  titleId: string; opener: RefObject<HTMLElement | null>; busy: boolean; onClose: () => void; children: ReactNode;
-}) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  useOverlayOpen(true);
-  useDialogFloor(true, panelRef, { onClose, busy, opener, trap: true });
-  return (
-    <div
-      className={`${shared.modalOverlay} ${shared.centeredOnMobile}`}
-      onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}
-    >
-      <div ref={panelRef} className={`${shared.modal} ${styles.window}`} role="dialog" aria-modal="true"
-        aria-labelledby={titleId} tabIndex={-1}>
-        {children}
-      </div>
-    </div>
+    <KitDialog kind="form" eyebrow={context} title={title} onClose={onClose} busy={resetting} opener={opener}
+      openOn="panel" ownType>
+      <div className={styles.deskBody}>{body}</div>
+    </KitDialog>
   );
 }
 
