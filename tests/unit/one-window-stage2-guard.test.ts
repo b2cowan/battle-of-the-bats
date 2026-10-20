@@ -474,6 +474,23 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
       'both windows ask and own their overlay, floor and head; no second window');
     assert.match(code, /<UnsavedChangesGuard\s+active=\{showForm && formDirty\}/);
   });
+
+  it('B1: Set dues for all players asks in its own foot, its levels are Back steps, and its links close it (part 3)', () => {
+    const code = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx');
+    // Open only while the caller's tab shows; held while the run writes; 620 → the ladder's 640.
+    assert.match(code, /<QuestionShell\s+open=\{tabActive\}\s+onClose=\{onClose\}\s+onBack=\{onBack\}\s+levelKey=\{level\}\s+dirty=\{dirty\}\s+busy=\{generating\}\s+wide\b/);
+    // The preview and the replace question are levels: the phone's ← and Back go up one, never out.
+    assert.match(code, /const onBack = level === 'replace' \? leaveReplace : level === 'preview' \? \(\) => invalidatePreview\(\) : undefined;/);
+    // The route guard rides with the window (a link, a reload), one door for both callers.
+    assert.match(code, /leaveGuard=\{\{ message: "You haven't saved what you entered on this form\. Leave without saving it\?", tabActive \}\}/);
+    // ⚠ Every link out closes the window as it leaves: the hub keeps hidden tabs mounted.
+    const links = openingTags(code, 'Link');
+    assert.ok(links.length >= 4, `expected the window's links, found ${links.length}`);
+    for (const tag of links) assert.match(tag, /onClick=\{onClose\}/, `a link that does not close the window: ${tag}`);
+    assert.doesNotMatch(code, /useDiscardGuard\(|useOverlayOpen|useDialogFloor|CoachModalHeader|modalOverlay|modalFooter|UnsavedChangesGuard/,
+      'the window asks and owns its overlay, floor, head and foot; the route guard is the shell\'s');
+    assert.doesNotMatch(code, /maxWidth: 620/);
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -491,7 +508,6 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/DepthChartBoard.tsx', STAYS],
       ['components/coaches/CoachStaffSheet.tsx', STAYS],
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', MOVES_2D + ' (and the player drawer stays out)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx', MOVES_2D + ', the practice page last'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx', MOVES_2D + ', the practice page last (its station and block sheets stay out)'],

@@ -2,12 +2,8 @@
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
-import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import {
   computeBudgetTotals, describeInstallmentBases, splitPerPlayer, gapIsRoundingOnly,
   type InstallmentBasis,
@@ -194,23 +190,19 @@ export default function GenerateInstallmentsModal({
   // exactly the collision the server can no longer silently swallow.
   const generatingRef = useRef(false);
 
-  useOverlayOpen(true);
-
   const dirty = !result && installments.some(i => i.date || i.amount);
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'installment schedule' });
 
-  /* The accessibility floor (D7): Escape closes, Tab stays inside, focus returns to the door that
-     opened this. It rides WITH the modal for the same reason its route guard does — one door,
-     two callers (the Budget Plan tab and the dues list), and a floor added at one call site is a
-     floor the other silently lacks.
-     ⚠ Escape goes through `close`, the DISCARD guard, never `onClose`: this window can hold a
-     typed hardship plan, the most expensive typing in the hub.
-     ⚠ Gated on `tabActive` for the same reason the click interception below is — the hub keeps a
+  /* ⚖ THE ONE WINDOW (One Window 2d, call B1) — `useOverlayOpen`, `useDiscardGuard` (the second window, "Discard
+     this installment schedule?" · Keep editing) and `useDialogFloor` stood here. The window's floor rides WITH it for
+     the same reason its route guard does — one door, two callers (the Budget Plan tab and the dues list), and a floor
+     added at one call site is a floor the other silently lacks: Escape closes, Tab stays inside, focus returns to the
+     door that opened it.
+     ⚠ With a schedule typed, every way out ASKS in the window's foot: this window can hold a typed hardship plan, the
+     most expensive typing in the hub.
+     ⚠ Open only while the caller's tab is on screen, for the same reason the click interception is — the hub keeps a
      hidden tab MOUNTED, and a floor armed there would answer a key meant for the tab on screen.
-     ⚠ Busy-gated on `generating`: a write in flight must not have its window torn out from under
-     it, and a second Escape during "Working…" is exactly the impatient press that would. */
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(tabActive, panelRef, { onClose: () => { void close(); }, busy: generating });
+     ⚠ Held while `generating`: a write in flight must not have its window torn out from under it, and a second
+     Escape during "Working…" is exactly the impatient press that would. */
 
   /* The failures that get the GENERIC could-not-save sentence — payout-floor refusals are
      excluded because they carry their own sentence (and their old schedule still stands).
@@ -759,36 +751,126 @@ export default function GenerateInstallmentsModal({
     return parts;
   })();
 
-  return (
-    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
-      {/* The discard guard covers dismissing this modal; this covers walking away from it. It
-          rides WITH the modal rather than sitting in each caller — that is the point of one door. */}
-      <UnsavedChangesGuard
-        active={dirty}
-        interceptClicks={dirty && tabActive}
-        message="You haven't saved what you entered on this form. Leave without saving it?"
-      />
-      <div
-        ref={panelRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Set dues for all players"
-        aria-busy={generating || undefined}
-        className={`${shared.modal} ${shared.modalFlushFooter}`}
-        style={{ maxWidth: 620 }}
-        onClick={e => e.stopPropagation()}
+  /* The window's levels (One Window 2d). The preview and the replace question are levels over the form — the phone's
+     ← and its Back gesture go up one (the replace question → the preview, the preview → the form, which keeps what was
+     typed); × still closes the whole window, through the ask when a schedule is typed. Each level's buttons are the
+     window's own foot. */
+  const level = loading || loadError ? 'loading' : result ? 'result' : replaceFacts ? 'replace' : blocker ? 'blocker' : preview ? 'preview' : 'form';
+  const leaveReplace = () => { setReplaceFacts(null); setGenerateError(''); };
+  const onBack = level === 'replace' ? leaveReplace : level === 'preview' ? () => invalidatePreview() : undefined;
+  const footer = level === 'result' ? (
+    /* ⚠ A LINK OUT CLOSES THE WINDOW AS IT LEAVES (One Window 2c part 2's rule): the hub keeps hidden tabs mounted, so a
+       link that only navigated would leave this window open, behind, over the tab it was opened from. */
+    duesHref
+      ? <Link href={duesHref} className={shared.btnPrimary} onClick={onClose}>View Player dues →</Link>
+      : <QuestionCancel className={shared.btnPrimary}>Done</QuestionCancel>
+  ) : level === 'replace' && replaceFacts ? (
+    <>
+      <button type="button" className={shared.btnGhost} onClick={leaveReplace}>
+        Back
+      </button>
+      {/* ⚠ KEEPING THE HAND-SET SCHEDULES IS THE PRIMARY, and "everyone" the quieter
+          button. The destructive answer is still one click away for the coach who means
+          it — it is simply no longer the only one, and no longer the default. */}
+      {replaceFacts.handSetPlayers.length > 0 ? (
+        <>
+          <button
+            type="button"
+            className={shared.btnSecondary}
+            onClick={() => handleGenerate(true)}
+            disabled={generating}
+          >
+            {generating ? 'Working…' : 'Apply to everyone'}
+          </button>
+          <button
+            type="button"
+            className={shared.btnPrimary}
+            onClick={() => handleGenerate(true, replaceFacts.handSetPlayers.map(p => p.id))}
+            disabled={generating}
+          >
+            {generating
+              ? 'Working…'
+              : `Keep the ${replaceFacts.handSetPlayers.length} I set by hand`}
+          </button>
+        </>
+      ) : (
+        <button type="button" className={shared.btnPrimary} onClick={() => handleGenerate(true)} disabled={generating}>
+          {generating ? 'Replacing…' : 'Replace the dues schedule'}
+        </button>
+      )}
+    </>
+  ) : level === 'form' ? (
+    <>
+      <QuestionCancel className={shared.btnGhost} />
+      <button type="button" className={shared.btnSecondary} onClick={loadPreview} disabled={previewLoading}>
+        {previewLoading ? 'Loading preview…' : 'Preview'}
+      </button>
+    </>
+  ) : level === 'preview' ? (
+    <>
+      {/* ⚠ DISABLED WHILE THE WRITE IS IN FLIGHT (/review 2026-09-01). Back only drops
+          the preview — it cannot recall a POST — so a coach who pressed Confirm and
+          then Back got the form again, kept typing, and was thrown onto the success
+          screen when the write they thought they had abandoned landed. There is no
+          cancel here to offer; the honest thing is not to offer one. */}
+      <button
+        type="button"
+        className={shared.btnGhost}
+        onClick={() => invalidatePreview()}
+        disabled={generating}
       >
-        <CoachModalHeader
-          /* Stable title. Whether this run replaces anything is the SERVER's answer, not a guess
-             from the plan flag — and when it is a replace, that step carries its own heading.
-             ⚠ ONE NAME FOR THE BULK ACT (owner Q20, QA §123): "Set dues for all players" — the
-             same words on every door that opens this window, in the help articles, and here.
-             This was "Generate Player Installments", the last Title-Cased window in money. */
-          title="Set dues for all players"
-          onClose={close}
-        />
+        Back
+      </button>
+      {/* ⚠ A PREVIEWED RUN CARRIES ITS OWN ANSWERS (owner Q1). `replace` is resolved
+          here from what the preview READ — the coach has already been shown what a
+          replace destroys and has answered the keep question above — so the
+          ALREADY_HAS_DUES 409 stops being a step and becomes the BELT: it still fires
+          for a stale preview (someone generated dues in another tab) or any
+          non-previewed caller, and `replaceFacts` still renders that question. It is
+          never removed.
 
+          An onClick of `handleGenerate` alone would pass React's event object as the
+          `replace` argument, which is truthy. */}
+      <button
+        type="button"
+        className={shared.btnPrimary}
+        onClick={() => handleGenerate(runPlan?.hasExistingDues ?? false, skipPlayerIds)}
+        disabled={generating || willWrite === 0}
+      >
+        {generating
+          ? 'Setting dues…'
+          : willWrite === 0
+            // Every player is kept or refused — there is nothing left to write, and a
+            // button promising "0 players" is a button that should not be pressable.
+            ? 'Nothing left to set'
+            : `Set dues for ${pluralize(willWrite, 'player')}`}
+      </button>
+    </>
+  ) : undefined;
+
+  return (
+    <QuestionShell
+      open={tabActive}
+      onClose={onClose}
+      onBack={onBack}
+      levelKey={level}
+      dirty={dirty}
+      busy={generating}
+      /* 620 → the ladder's 640 (One Window Q3): its rows put two fields side by side (a due date beside an amount); the
+         player-by-player grid below renders only when amounts vary, which no door can make true today. */
+      wide
+      ariaLabel="Set dues for all players"
+      /* Stable title. Whether this run replaces anything is the SERVER's answer, not a guess
+         from the plan flag — and when it is a replace, that step carries its own heading.
+         ⚠ ONE NAME FOR THE BULK ACT (owner Q20, QA §123): "Set dues for all players" — the
+         same words on every door that opens this window, in the help articles, and here.
+         This was "Generate Player Installments", the last Title-Cased window in money. */
+      title="Set dues for all players"
+      footer={footer}
+      /* Closing asks in the foot; this covers walking away from it (a link, a reload). It rides WITH the window rather
+         than sitting in each caller — that is the point of one door. */
+      leaveGuard={{ message: "You haven't saved what you entered on this form. Leave without saving it?", tabActive }}
+    >
         {loading ? (
           <LoadingState label="Loading your budget…" inline />
         ) : loadError ? (
@@ -838,7 +920,7 @@ export default function GenerateInstallmentsModal({
                 ))}
                 <p className={shared.formHint} style={{ margin: 0 }}>
                   {duesHref
-                    ? <>Their payouts are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player dues</Link> — open the player&apos;s record.</>
+                    ? <>Their payouts are on <Link href={duesHref} onClick={onClose} style={{ textDecoration: 'underline' }}>Player dues</Link> — open the player&apos;s record.</>
                     : <>Open the player&apos;s record on this list — their payouts are listed there.</>}
                 </p>
               </div>
@@ -855,7 +937,7 @@ export default function GenerateInstallmentsModal({
                 ))}
                 <p className={shared.formHint} style={{ margin: 0 }}>
                   {duesHref
-                    ? <>Their adjustments are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player dues</Link> — open the player&apos;s record.</>
+                    ? <>Their adjustments are on <Link href={duesHref} onClick={onClose} style={{ textDecoration: 'underline' }}>Player dues</Link> — open the player&apos;s record.</>
                     : <>Open the player&apos;s record on this list — their adjustments are listed there.</>}
                 </p>
               </div>
@@ -873,9 +955,7 @@ export default function GenerateInstallmentsModal({
                 the player’s own row, or run this again.
               </p>
             )}
-            {duesHref
-              ? <Link href={duesHref} className={shared.btnPrimary} style={{ marginTop: '1rem' }}>View Player dues →</Link>
-              : <button type="button" className={shared.btnPrimary} style={{ marginTop: '1rem' }} onClick={onClose}>Done</button>}
+            {/* ⚰ "View Player dues →" / Done stood here: they are the window's foot now (`footer`, above). */}
           </div>
         ) : replaceFacts ? (
           /* The server said dues already exist. This is the coach's decision, asked once, with
@@ -919,41 +999,8 @@ export default function GenerateInstallmentsModal({
               </div>
             )}
             {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
-            {generateError && <p className={styles.errorText} style={{ marginTop: '0.6rem' }}>{generateError}</p>}
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={() => { setReplaceFacts(null); setGenerateError(''); }}>
-                Back
-              </button>
-              {/* ⚠ KEEPING THE HAND-SET SCHEDULES IS THE PRIMARY, and "everyone" the quieter
-                  button. The destructive answer is still one click away for the coach who means
-                  it — it is simply no longer the only one, and no longer the default. */}
-              {replaceFacts.handSetPlayers.length > 0 ? (
-                <>
-                  <button
-                    type="button"
-                    className={shared.btnSecondary}
-                    onClick={() => handleGenerate(true)}
-                    disabled={generating}
-                  >
-                    {generating ? 'Working…' : 'Apply to everyone'}
-                  </button>
-                  <button
-                    type="button"
-                    className={shared.btnPrimary}
-                    onClick={() => handleGenerate(true, replaceFacts.handSetPlayers.map(p => p.id))}
-                    disabled={generating}
-                  >
-                    {generating
-                      ? 'Working…'
-                      : `Keep the ${replaceFacts.handSetPlayers.length} I set by hand`}
-                  </button>
-                </>
-              ) : (
-                <button type="button" className={shared.btnPrimary} onClick={() => handleGenerate(true)} disabled={generating}>
-                  {generating ? 'Replacing…' : 'Replace the dues schedule'}
-                </button>
-              )}
-            </div>
+            {/* Why the run was refused, beside its buttons in the foot (One Window 2b). */}
+            <QuestionReason className={styles.errorText}>{generateError}</QuestionReason>
           </div>
         ) : blocker ? (
           <div className={styles.successState}>
@@ -1053,7 +1100,7 @@ export default function GenerateInstallmentsModal({
                 reaching this sheet from Player dues with no budget is no longer turned away —
                 but the offer that used to block them is still the first thing under the picker. */}
             {bases.budget.unavailable && bases.estimate.unavailable && (
-              <Link href={budgetHref} className={styles.basisNudge}>
+              <Link href={budgetHref} className={styles.basisNudge} onClick={onClose}>
                 Build your budget first →
               </Link>
             )}
@@ -1142,16 +1189,11 @@ export default function GenerateInstallmentsModal({
                 preview is up, the compact copy beside Confirm is the one that matters. */}
             {!preview && reconcileLine(false)}
 
-            {previewError && <p className={styles.errorText}>{previewError}</p>}
+            {/* Why the preview could not load, beside Preview in the foot (One Window 2b). */}
+            <QuestionReason className={styles.errorText}>{previewError}</QuestionReason>
 
-            {!preview ? (
-              <div className={shared.modalFooter}>
-                <button type="button" className={shared.btnGhost} onClick={close}>Cancel</button>
-                <button type="button" className={shared.btnSecondary} onClick={loadPreview} disabled={previewLoading}>
-                  {previewLoading ? 'Loading preview…' : 'Preview'}
-                </button>
-              </div>
-            ) : (
+            {/* ⚰ The form's Cancel · Preview strip stood here: they are the window's foot now (`footer`, above). */}
+            {preview && (
               <>
                 {/* ⚠ ONE SENTENCE FOR THE COMMON CASE (owner Q3, 2026-09-01). This screen used to
                     open with a table whose every row was identical — the information of one row
@@ -1314,52 +1356,13 @@ export default function GenerateInstallmentsModal({
                 )}
 
                 {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
-                {generateError && <p className={styles.errorText}>{generateError}</p>}
-
-                <div className={shared.modalFooter}>
-                  {/* ⚠ DISABLED WHILE THE WRITE IS IN FLIGHT (/review 2026-09-01). Back only drops
-                      the preview — it cannot recall a POST — so a coach who pressed Confirm and
-                      then Back got the form again, kept typing, and was thrown onto the success
-                      screen when the write they thought they had abandoned landed. There is no
-                      cancel here to offer; the honest thing is not to offer one. */}
-                  <button
-                    type="button"
-                    className={shared.btnGhost}
-                    onClick={() => invalidatePreview()}
-                    disabled={generating}
-                  >
-                    Back
-                  </button>
-                  {/* ⚠ A PREVIEWED RUN CARRIES ITS OWN ANSWERS (owner Q1). `replace` is resolved
-                      here from what the preview READ — the coach has already been shown what a
-                      replace destroys and has answered the keep question above — so the
-                      ALREADY_HAS_DUES 409 stops being a step and becomes the BELT: it still fires
-                      for a stale preview (someone generated dues in another tab) or any
-                      non-previewed caller, and `replaceFacts` still renders that question. It is
-                      never removed.
-
-                      An onClick of `handleGenerate` alone would pass React's event object as the
-                      `replace` argument, which is truthy. */}
-                  <button
-                    type="button"
-                    className={shared.btnPrimary}
-                    onClick={() => handleGenerate(runPlan?.hasExistingDues ?? false, skipPlayerIds)}
-                    disabled={generating || willWrite === 0}
-                  >
-                    {generating
-                      ? 'Setting dues…'
-                      : willWrite === 0
-                        // Every player is kept or refused — there is nothing left to write, and a
-                        // button promising "0 players" is a button that should not be pressable.
-                        ? 'Nothing left to set'
-                        : `Set dues for ${pluralize(willWrite, 'player')}`}
-                  </button>
-                </div>
+                {/* Why the run was refused, beside Set dues in the foot (One Window 2b). The Back · Set dues strip that
+                    stood below is the window's foot now (`footer`, above). */}
+                <QuestionReason className={styles.errorText}>{generateError}</QuestionReason>
               </>
             )}
           </>
         )}
-      </div>
-    </div>
+    </QuestionShell>
   );
 }
