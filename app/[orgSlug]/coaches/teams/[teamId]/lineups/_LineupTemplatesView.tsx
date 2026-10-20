@@ -7,10 +7,9 @@ import {
 import type { LineupBadge } from '@/lib/lineup-analysis';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import type { SportPack } from '@/lib/sports';
 import { formatInOrgZone, formatOrgDayMonth } from '@/lib/timezone';
@@ -94,8 +93,6 @@ export default function LineupTemplatesView({
   // The template whose "apply to a game" picker is open (null = closed).
   const [applyTemplate, setApplyTemplate] = useState<RepTeamLineupTemplate | null>(null);
   const [applyBusyGameId, setApplyBusyGameId] = useState<string | null>(null);
-  // Nav-hide + body-scroll-lock while the apply-template picker is open.
-  useOverlayOpen(!!applyTemplate);
 
   // Guarded against a stale response landing on the wrong TEAM — this view does not unmount when
   // only the team segment changes (the hub's own note explains the race).
@@ -331,34 +328,36 @@ export default function LineupTemplatesView({
         )}
       </section>
 
-      {/* ── Apply-to-game picker ── */}
-      {applyTemplate && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !applyBusyGameId) setApplyTemplate(null); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title={<>Apply &ldquo;{applyTemplate.name}&rdquo; to&hellip;</>} onClose={() => setApplyTemplate(null)} closeIconSize={18} closeAriaLabel="Close" />
-            <p className={styles.bodyNote} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
-            {/* A row that is a BUTTON (it applies the template), on the same recipe as the games
-                list — `CoachRow as="button"` is the row-list component's own second face. Inset:
-                the modal paints the ground. */}
-            <CoachRowList inset label="Games">
-              {games.map(g => (
-                <CoachRow
-                  key={g.id}
-                  as="button"
-                  disabled={!!applyBusyGameId}
-                  onClick={() => applyToGame(g)}
-                  lead={formatOrgDayMonth(g.startsAt)}
-                  leadKind="date"
-                  title={gameTitle(g)}
-                  caption={`${formatWeekday(g.startsAt)} · ${formatTime(g.startsAt)}`}
-                  trail={(lineupStatus[g.id] && lineupStatus[g.id] !== 'not_started') ? <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Has lineup</span> : undefined}
-                  door={{ label: applyBusyGameId === g.id ? 'Applying…' : 'Apply', icon: <ArrowRight size={14} aria-hidden /> }}
-                />
-              ))}
-            </CoachRowList>
-          </div>
-        </div>
-      )}
+      {/* ── Apply-to-game picker ── a list picker in the one window (One Window 2c, B9): a form that fills a phone.
+          Nothing is typed, so it never asks; it holds while a game is being applied (and while its confirm is up). ── */}
+      <QuestionShell
+        open={!!applyTemplate}
+        onClose={() => setApplyTemplate(null)}
+        ariaLabel={`Apply “${applyTemplate?.name ?? ''}” to…`}
+        title={<>Apply &ldquo;{applyTemplate?.name}&rdquo; to&hellip;</>}
+        busy={!!applyBusyGameId}
+      >
+        <p className={styles.bodyNote} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
+        {/* A row that is a BUTTON (it applies the template), on the same recipe as the games
+            list — `CoachRow as="button"` is the row-list component's own second face. Inset:
+            the window paints the ground. */}
+        <CoachRowList inset label="Games">
+          {games.map(g => (
+            <CoachRow
+              key={g.id}
+              as="button"
+              disabled={!!applyBusyGameId}
+              onClick={() => applyToGame(g)}
+              lead={formatOrgDayMonth(g.startsAt)}
+              leadKind="date"
+              title={gameTitle(g)}
+              caption={`${formatWeekday(g.startsAt)} · ${formatTime(g.startsAt)}`}
+              trail={(lineupStatus[g.id] && lineupStatus[g.id] !== 'not_started') ? <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Has lineup</span> : undefined}
+              door={{ label: applyBusyGameId === g.id ? 'Applying…' : 'Apply', icon: <ArrowRight size={14} aria-hidden /> }}
+            />
+          ))}
+        </CoachRowList>
+      </QuestionShell>
     </div>
   );
 }

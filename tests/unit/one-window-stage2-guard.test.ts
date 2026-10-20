@@ -359,6 +359,21 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
     const budget = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx');
     assert.match(budget, /<QuestionShell kind="question" open onClose=\{closeDelete\} busy=\{deleting\}\s+ariaLabel="Delete Budget Line\?"/);
   });
+
+  it('B9: the list pickers are forms that fill a phone, hold while they write, and never ask (part 5)', () => {
+    const pickers: Array<[string, RegExp]> = [
+      // One piece serves the drill, plan-template and circuit libraries; Done is the window's own closer.
+      ['components/coaches/PastSeasonImport.tsx', /<QuestionShell\s+open=\{state\.open\}\s+onClose=\{state\.close\}[\s\S]*?busy=\{state\.importingKey !== null\}\s+footer=\{<QuestionCancel className=\{styles\.btnPrimary\}>Done<\/QuestionCancel>\}/],
+      ['app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupTemplatesView.tsx', /<QuestionShell\s+open=\{!!applyTemplate\}\s+onClose=\{\(\) => setApplyTemplate\(null\)\}[\s\S]*?busy=\{!!applyBusyGameId\}\s*>/],
+    ];
+    for (const [file, re] of pickers) {
+      const code = readCode(file);
+      assert.match(code, re, file);
+      // A picker writes on each tap: nothing typed, so no ask; not a question, so it fills a phone.
+      assert.doesNotMatch(code, /\bdirty=\{|kind="question"/, `${file}: a list picker neither asks nor is a question`);
+      assert.doesNotMatch(code, /modalOverlay|useOverlayOpen|CoachModalHeader|modalCloseBtn/, `${file}: the one window owns the overlay, the floor and the head`);
+    }
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -375,10 +390,8 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/DepthChartBoard.tsx', STAYS],
       ['components/coaches/CoachStaffSheet.tsx', STAYS],
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupTemplatesView.tsx', MOVES_2C + ' (Apply to…)'],
       ['components/coaches/BudgetItemManagerModal.tsx', MOVES_2C],
       ['components/coaches/MoneyImportMenu.tsx', MOVES_2C],
-      ['components/coaches/PastSeasonImport.tsx', MOVES_2C],
       ['components/coaches/SampleBudgetSheet.tsx', MOVES_2C],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx', MOVES_2D],

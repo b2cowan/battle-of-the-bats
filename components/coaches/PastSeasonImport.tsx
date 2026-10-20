@@ -1,7 +1,7 @@
 'use client';
 import { useState, type ReactNode } from 'react';
-import { X } from 'lucide-react';
 import { LibraryCard } from '@/components/coaches/LibraryRow';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -82,47 +82,43 @@ export function PastSeasonImportDialog<Row extends PastSeasonRow>({
   emptyText: ReactNode;
   describe: (row: Row) => { name: string; facts: string; line?: string | null };
 }) {
-  if (!state.open) return null;
+  /* A list picker in the one window (One Window 2c, B9): a form that fills a phone. Nothing is typed — each Add writes
+     at once — so it never asks; it holds while an add is in flight. */
   return (
-    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Add from a past season"
-      onPointerDown={e => { if (e.target === e.currentTarget) state.close(); }}>
-      <div className={`${styles.modal} ${styles.modalScrollBody}`}>
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Add from a past season</h3>
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={state.close}>
-            <X size={18} />
-          </button>
-        </div>
-        <div className={styles.ppDrillWrite}>
-          <p className={styles.formHint}>{hint}</p>
-          {state.error && <p className={styles.errorText} role="alert">{state.error}</p>}
-          {state.rows === null && !state.error && <p className={styles.formHint}>Looking…</p>}
-          {state.rows?.length === 0 && <p className={styles.formHint}>{emptyText}</p>}
-          {state.rows?.map(row => {
-            const d = describe(row);
-            return (
-              <LibraryCard
-                key={row.key}
-                name={d.name}
-                retired={row.alreadyInLibrary}
-                facts={d.facts}
-                line={d.line}
-                actions={row.alreadyInLibrary
-                  ? <span className={styles.libCardFacts}>Already in your library</span>
-                  : (
-                    <button type="button" className={styles.btnSecondary} disabled={state.importingKey === row.key}
-                      onClick={() => state.add(row)}>
-                      {state.importingKey === row.key ? 'Adding…' : 'Add'}
-                    </button>
-                  )}
-              />
-            );
-          })}
-        </div>
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnPrimary} onClick={state.close}>Done</button>
-        </div>
+    <QuestionShell
+      open={state.open}
+      onClose={state.close}
+      ariaLabel="Add from a past season"
+      title="Add from a past season"
+      busy={state.importingKey !== null}
+      footer={<QuestionCancel className={styles.btnPrimary}>Done</QuestionCancel>}
+    >
+      <div className={styles.ppDrillWrite}>
+        <p className={styles.formHint}>{hint}</p>
+        {state.error && <p className={styles.errorText} role="alert">{state.error}</p>}
+        {state.rows === null && !state.error && <p className={styles.formHint}>Looking…</p>}
+        {state.rows?.length === 0 && <p className={styles.formHint}>{emptyText}</p>}
+        {state.rows?.map(row => {
+          const d = describe(row);
+          return (
+            <LibraryCard
+              key={row.key}
+              name={d.name}
+              retired={row.alreadyInLibrary}
+              facts={d.facts}
+              line={d.line}
+              actions={row.alreadyInLibrary
+                ? <span className={styles.libCardFacts}>Already in your library</span>
+                : (
+                  <button type="button" className={styles.btnSecondary} disabled={state.importingKey === row.key}
+                    onClick={() => state.add(row)}>
+                    {state.importingKey === row.key ? 'Adding…' : 'Add'}
+                  </button>
+                )}
+            />
+          );
+        })}
       </div>
-    </div>
+    </QuestionShell>
   );
 }

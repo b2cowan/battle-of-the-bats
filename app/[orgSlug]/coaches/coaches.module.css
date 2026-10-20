@@ -4914,6 +4914,10 @@ a.oneChip:hover { border-color: currentColor; }
   .windowBody select,
   .windowBody .convWhatField { min-height: var(--tap-min, 44px); }
 }
+/* The practice windows' body column (`.ppDrillWrite`) carried its own 0.9rem inset inside the hand-built card; the one
+   window's body has its side padding already, so inside it the column keeps its gap and drops the second inset (One
+   Window 2c: Add from a past season first, the practice page's windows as they move in 2d). */
+.windowBody > .ppDrillWrite { padding: 0; }
 /* ⚰ THE STAGE 2a SHIM (→ 2026-10-19, One Window 2b): `.windowBody .modalFooter` laid a consumer's own foot strip out
    as the window's foot — pinned with side shadows, standing down while the window asked, and a `scroll-margin-bottom`
    so the keyboard never left a field under it. Every coach window's buttons are now the window's `footer`, a sibling
