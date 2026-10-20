@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
-import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { touched } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
 import { utcToZonedInputs, addCalendarDays } from '@/lib/timezone';
 import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
@@ -16,6 +16,7 @@ import { permitLine } from '@/lib/permit-words';
 import type { ClubVenueOption, RepTryout, RepTryoutSession } from '@/lib/types';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './TryoutDayCard.module.css';
 
 /**
@@ -121,17 +122,12 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  useOverlayOpen(modalOpen);
   // In ADD mode the whole form opens seeded (start + end); clearing a seeded end back to empty is
-  // not the coach's work either, so it must not trip the guard. Edit mode keeps the strict compare:
+  // not the coach's work either, so it must not trip the ask. Edit mode keeps the strict compare:
   // clearing a SAVED end time is a real change worth protecting.
   const dirtyForm = !editingId && form.endsAt === '' ? { ...form, endsAt: formBaseline.endsAt } : form;
-  const guardedClose = useDiscardGuard({
-    dirty: touched(dirtyForm, formBaseline),
-    close: () => setModalOpen(false),
-    noun: 'tryout session',
-    detail: form.startsAt ? `a session on ${formatTryoutSessionWhen({ startsAt: form.startsAt, endsAt: form.endsAt || null } as RepTryoutSession)}` : undefined,
-  });
+  // The one window asks in its own foot (One Window 2c, B1) — was useDiscardGuard's second window.
+  const formDirty = touched(dirtyForm, formBaseline);
 
   // Latest-ref for onError so `load` never re-arms on a parent re-render (the siblings' pattern).
   // Without this, the page's focus-driven overview refresh handed down a new onError identity,
@@ -371,95 +367,90 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
         </>
       )}
 
-      {modalOpen && (
-        <div className={styles.scrim} onClick={() => !saving && guardedClose()}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>{editingId ? 'Edit session' : 'Add session'}</h3>
-
-            <div className={styles.field}>
-              <label className={styles.label}>Date &amp; start time</label>
-              <input
-                className={styles.input}
-                type="datetime-local"
-                value={form.startsAt}
-                onChange={e => {
-                  const next = e.target.value;
-                  setForm(f => {
-                    // End FOLLOWS start, keeping the session length (calendar convention,
-                    // owner 2026-08-17) — moving a 6–8pm session to 4pm makes it 4–6pm.
-                    // With NO length to keep — an empty end field — it fills to start + 2h
-                    // (owner 2026-08-25) rather than staying blank, which is what a coach who
-                    // cleared it, or opened a session saved without one, used to be left with.
-                    // The two are deliberately NOT collapsed into "always +2h": that would eat a
-                    // deliberate 3-hour end the moment the coach corrected the date.
-                    if (!next) return { ...f, startsAt: next };
-                    // ⚠ ONLY an EMPTY end gets filled. This read `!f.startsAt || !f.endsAt`, which
-                    // also fired when the START was blank and the end held a real value — clearing
-                    // and re-picking the date on a 6:00–9:30pm session silently shrank it to two
-                    // hours, the exact clobber the comment above swears off (/review 2026-08-25).
-                    if (!f.endsAt) return { ...f, startsAt: next, endsAt: addMinutes(next, 120) };
-                    // No old start to measure a length from — keep the end the coach chose.
-                    if (!f.startsAt) return { ...f, startsAt: next };
-                    const oldStart = new Date(f.startsAt), oldEnd = new Date(f.endsAt), newStart = new Date(next);
-                    if (isNaN(oldStart.getTime()) || isNaN(oldEnd.getTime()) || isNaN(newStart.getTime())) {
-                      return { ...f, startsAt: next, endsAt: addMinutes(next, 120) };
-                    }
-                    const shiftedEnd = new Date(newStart.getTime() + (oldEnd.getTime() - oldStart.getTime()));
-                    return { ...f, startsAt: next, endsAt: toLocalInput(shiftedEnd) };
-                  });
-                }}
-              />
-            </div>
-
-            {windowNotice && (
-              <div className={styles.warnWrap}>
-                <HelpCallout variant="warning" title="Outside the usual tryout window" body={windowNotice} />
-              </div>
-            )}
-
-            <div className={styles.field}>
-              <label className={styles.label}>End time <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
-              <input
-                className={styles.input}
-                type="datetime-local"
-                value={form.endsAt}
-                onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))}
-              />
-            </div>
-
-            {/* Where — the one Venue field (Club Tier Stage 6a, Ask 13): the club's venues (in a club), or typed
-                words; the facility under the sport's word beside it; the clash line under them. ⚰ "Location" and
-                the "Field / diamond" box (→ 2026-10-08). */}
-            <div className={styles.field}>
-              <WhereField
-                idPrefix="tryout"
-                sport={sport}
-                value={form.where}
-                onChange={w => setForm(f => ({ ...f, where: w }))}
-                clubVenues={clubVenues.venues}
-                inClub={clubVenues.inClub}
-                classes={{ field: styles.field, label: styles.label, input: styles.input, select: styles.input }}
-                line={whereLine}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label}>Label <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
-              <input className={styles.input} type="text" maxLength={80} value={form.label}
-                onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="e.g. Day 1 — skills" />
-            </div>
-
-            {formError && <p style={{ color: 'var(--danger-light)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
-
-            <div className={styles.modalActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={saveSession} disabled={saving || checking}>
-                {saving ? 'Saving…' : editingId ? 'Save' : 'Add session'}
-              </button>
-            </div>
-          </div>
+      {/* Add or edit a session in the one window (One Window 2c): a form that fills a phone, the ladder's 520 on a
+          computer (460 before). Typed changes ask in the foot; a tap outside does nothing; it holds while it saves. */}
+      <QuestionShell open={modalOpen} onClose={() => setModalOpen(false)} dirty={formDirty} busy={saving}
+        ariaLabel={editingId ? 'Edit session' : 'Add session'} title={editingId ? 'Edit session' : 'Add session'}
+        footer={<>
+          <QuestionCancel className="btn btn-ghost" />
+          <button type="button" className="btn btn-primary" onClick={saveSession} disabled={saving || checking}>
+            {saving ? 'Saving…' : editingId ? 'Save' : 'Add session'}
+          </button>
+        </>}>
+        <div className={styles.field}>
+          <label className={styles.label}>Date &amp; start time</label>
+          <input
+            className={styles.input}
+            type="datetime-local"
+            value={form.startsAt}
+            onChange={e => {
+              const next = e.target.value;
+              setForm(f => {
+                // End FOLLOWS start, keeping the session length (calendar convention,
+                // owner 2026-08-17) — moving a 6–8pm session to 4pm makes it 4–6pm.
+                // With NO length to keep — an empty end field — it fills to start + 2h
+                // (owner 2026-08-25) rather than staying blank, which is what a coach who
+                // cleared it, or opened a session saved without one, used to be left with.
+                // The two are deliberately NOT collapsed into "always +2h": that would eat a
+                // deliberate 3-hour end the moment the coach corrected the date.
+                if (!next) return { ...f, startsAt: next };
+                // ⚠ ONLY an EMPTY end gets filled. This read `!f.startsAt || !f.endsAt`, which
+                // also fired when the START was blank and the end held a real value — clearing
+                // and re-picking the date on a 6:00–9:30pm session silently shrank it to two
+                // hours, the exact clobber the comment above swears off (/review 2026-08-25).
+                if (!f.endsAt) return { ...f, startsAt: next, endsAt: addMinutes(next, 120) };
+                // No old start to measure a length from — keep the end the coach chose.
+                if (!f.startsAt) return { ...f, startsAt: next };
+                const oldStart = new Date(f.startsAt), oldEnd = new Date(f.endsAt), newStart = new Date(next);
+                if (isNaN(oldStart.getTime()) || isNaN(oldEnd.getTime()) || isNaN(newStart.getTime())) {
+                  return { ...f, startsAt: next, endsAt: addMinutes(next, 120) };
+                }
+                const shiftedEnd = new Date(newStart.getTime() + (oldEnd.getTime() - oldStart.getTime()));
+                return { ...f, startsAt: next, endsAt: toLocalInput(shiftedEnd) };
+              });
+            }}
+          />
         </div>
-      )}
+
+        {windowNotice && (
+          <div className={styles.warnWrap}>
+            <HelpCallout variant="warning" title="Outside the usual tryout window" body={windowNotice} />
+          </div>
+        )}
+
+        <div className={styles.field}>
+          <label className={styles.label}>End time <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
+          <input
+            className={styles.input}
+            type="datetime-local"
+            value={form.endsAt}
+            onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))}
+          />
+        </div>
+
+        {/* Where — the one Venue field (Club Tier Stage 6a, Ask 13): the club's venues (in a club), or typed
+            words; the facility under the sport's word beside it; the clash line under them. ⚰ "Location" and
+            the "Field / diamond" box (→ 2026-10-08). */}
+        <div className={styles.field}>
+          <WhereField
+            idPrefix="tryout"
+            sport={sport}
+            value={form.where}
+            onChange={w => setForm(f => ({ ...f, where: w }))}
+            clubVenues={clubVenues.venues}
+            inClub={clubVenues.inClub}
+            classes={{ field: styles.field, label: styles.label, input: styles.input, select: styles.input }}
+            line={whereLine}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Label <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
+          <input className={styles.input} type="text" maxLength={80} value={form.label}
+            onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="e.g. Day 1 — skills" />
+        </div>
+        <QuestionReason className={coach.errorText}>{formError}</QuestionReason>
+      </QuestionShell>
     </>
   );
 }

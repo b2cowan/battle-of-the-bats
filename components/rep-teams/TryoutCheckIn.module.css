@@ -110,18 +110,11 @@
 
 .empty { font-size: var(--type-body); color: rgba(255,255,255,0.45); padding: 1.5rem 0; text-align: center; }
 
-/* Walk-up sheet (reuses the TryoutDayCard modal shape) */
-.scrim {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-  display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 200;
-}
-.modal {
-  width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
-  background: #141414; /* token-exempt: modal surface tone, no --surface-family match */
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px; padding: 1.25rem 1.5rem;
-}
-.modalTitle { font-size: var(--type-heading); font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
+/* ⚰ THE MODAL SHAPE (→ 2026-10-19, One Window 2c): `.scrim` · `.modal` · `.modalTitle` · the sticky `.modalActions`
+   bar and its phone bottom-sheet rules, with their warm twins. The walk-up Add player and "Which session is this sheet
+   for?" open in the one window (QuestionShell): its overlay, head, scrolling body, pinned foot and full-screen phone
+   sheet are the window's own. The fields inside stay here. */
+/* The walk-up's fields */
 .field { margin-bottom: 0.85rem; }
 .label { display: block; font-size: var(--type-support); font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 0.35rem; }
 .input,
@@ -137,30 +130,6 @@
    the field styling cannot drift away from the first. */
 .textarea { resize: vertical; min-height: 4.5rem; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-/* ⚖ STICKY ACTION BAR — the coach-portal house rule, brought to this stylesheet.
-   `coaches.module.css` pins every panel's button strip so Save stays on screen while a long form
-   scrolls, and made it automatic in 2026-08-21 (owner-directed, on seeing a partial fix: "why
-   didn't you fix all of them?"). That rule is a `:has()` selector inside THAT module, and CSS
-   modules are scoped — this file holds its own copy of the modal shape, so the fix never reached
-   it. Nobody noticed while Add player was three fields and could not scroll.
-
-   ⚠ `padding-bottom: 0` on the panel is load-bearing, not tidying. A sticky strip inside a
-   scrolling panel pins to the top of the panel's bottom PADDING, not to its edge, so it hovers
-   one padding-width up with bare background beneath it (measured at 25px on the money sheet that
-   first exposed this). Killing the padding lands it on the edge; the bottom bleed then has
-   nothing to bleed into and is omitted with it. */
-.modal:has(.modalActions) { padding-bottom: 0; }
-.modalActions {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  display: flex; gap: 0.5rem; justify-content: flex-end;
-  margin: 1.25rem -1.5rem 0;   /* bleed to the side edges (modal side padding = 1.5rem) */
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  background: #141414;   /* token-exempt: must match .modal's surface exactly, or the strip shows a seam */
-}
-
 /* ⚖ NO `.required` CLASS HERE, DELIBERATELY. The required marker is a PLAIN asterisk written
    inline in the label text (` *`), exactly as `CoachStartInterest`/`HeadCoachEditor` write it —
    `.labelRequired` was RETIRED portal-wide (owner 2026-08-25) and deleted rather than left unused
@@ -190,18 +159,7 @@
 .fieldNote { font-size: var(--type-support); color: rgba(255,255,255,0.42); margin: 0.3rem 0 0; }
 
 @media (max-width: 640px) {
-  .scrim { align-items: flex-end; padding: 0; }
-  .modal { max-width: none; border-radius: 14px 14px 0 0; }
   .row2 { grid-template-columns: 1fr; }
-  /* ⚠ Deliberately NOT `display: flex` on the panel here, unlike the house rule in
-     `coaches.module.css`. That rule adds a flex column so a short form's bar still reaches the
-     sheet's bottom edge — but those sheets are stretched to a minimum height, and this one is
-     not: the scrim bottom-aligns it and it hugs its content, so the bar is already last. Adding
-     flex would only introduce the risk that a tall child shrinks instead of scrolling. */
-  .modalActions {
-    /* Clear the home indicator, or the phone's gesture bar sits on top of Add & check in. */
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-  }
 }
 
 /* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
@@ -213,7 +171,6 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .progressText,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bib,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .name,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalTitle,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn:hover {
   color: var(--home-ink);
 }
@@ -230,8 +187,7 @@
 }
 
 /* Candidate rows: white cards on paper; checked row keeps its olive left edge + faint olive wash */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .row,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modal {
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .row {
   background: var(--home-card);
   border-color: var(--home-line);
 }
@@ -247,12 +203,6 @@
   background: var(--home-paper);
   border-color: var(--home-line);
   color: var(--home-ink);
-}
-/* The sticky action bar is part of the modal surface, so it takes the modal's warm paper — a
-   mismatch here reads as a seam across the bottom of the sheet rather than as a divider. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalActions {
-  background: var(--home-card);
-  border-top-color: var(--home-line);
 }
 /* The reveal + its provenance note. The required asterisk needs no rule — it is inline in the
    label text and inherits its ink, which the warm block above already moves to --home-ink-soft. */
@@ -279,11 +229,6 @@
   border-color: var(--home-line-strong);
 }
 
-
-/* Warm ink scrim behind the walk-up sheet */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {
-  background: rgba(var(--home-line-rgb), 0.50);
-}
 
 /* Session chooser — "which morning is this paper for?" (Working-sheets pass, 2026-08-24).
    Rows, not a dropdown: each choice is a full sentence (label · date · time · place), which is

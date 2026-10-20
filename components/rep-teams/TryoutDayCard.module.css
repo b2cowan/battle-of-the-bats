@@ -119,23 +119,10 @@
 }
 .addBtn:hover { border-color: var(--logic-lime); color: var(--white-90); }
 
-/* Modal */
-.scrim {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex; align-items: center; justify-content: center;
-  padding: 1rem;
-  z-index: 200;
-}
-.modal {
-  width: 100%; max-width: 460px;
-  max-height: 92vh; overflow-y: auto;
-  background: #141414; /* token-exempt: modal surface tone, no --surface-family match */
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px;
-  padding: 1.25rem 1.5rem;
-}
-.modalTitle { font-size: var(--type-heading); font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
+/* ⚰ THE MODAL SHAPE (→ 2026-10-19, One Window 2c): `.scrim` · `.modal` · `.modalTitle` · the sticky `.modalActions`
+   bar and its phone bottom-sheet rules, with their warm twins. Add or edit a session and Add an evaluator open in the
+   one window (QuestionShell): its overlay, head, scrolling body, pinned foot and full-screen phone sheet are the
+   window's own. The fields inside stay here. */
 .field { margin-bottom: 0.85rem; }
 .label {
   display: block; font-size: var(--type-support); font-weight: 600;
@@ -153,41 +140,7 @@
 .input:focus { outline: none; border-color: var(--logic-lime); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
-/* ⚖ STICKY ACTION BAR — the coach-portal house rule, brought to this stylesheet. See the fuller
-   note in `TryoutCheckIn.module.css`: `coaches.module.css` pins every panel's button strip and
-   made it automatic in 2026-08-21 (owner-directed: "why didn't you fix all of them?"), but that
-   rule is a `:has()` inside THAT module and CSS modules are scoped, so this file's own copy of the
-   modal shape never received it. This one shape serves the whole tryout flow — the day card, the
-   decision board, evaluators, the rubric, the baseline and the report — so any of their dialogs
-   tall enough to scroll was scrolling its buttons off the bottom.
-
-   ⚠ `padding-bottom: 0` on the panel is load-bearing: a sticky strip pins to the top of the
-   panel's bottom PADDING, not its edge, and hovers one padding-width up without it. */
-.modal:has(.modalActions) { padding-bottom: 0; }
-.modalActions {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  display: flex; gap: 0.5rem; justify-content: flex-end;
-  margin: 1.25rem -1.5rem 0;   /* bleed to the side edges (modal side padding = 1.5rem) */
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  background: #141414;   /* token-exempt: must match .modal's surface exactly, or the strip seams */
-}
 .warnWrap { margin: 0.25rem 0 0.85rem; }
-
-@media (max-width: 640px) {
-  .scrim { align-items: flex-end; padding: 0; }
-  .modal { max-width: none; border-radius: 14px 14px 0 0; max-height: 90vh; }
-  /* ⚠ Deliberately NOT `display: flex` on the panel — see the note in `TryoutCheckIn.module.css`.
-     The scrim bottom-aligns this sheet and it hugs its content, so the bar is already last; flex
-     would only risk a tall child shrinking instead of scrolling, and this shape serves seven
-     different dialogs. */
-  .modalActions {
-    /* Clear the phone's home indicator, or the gesture bar sits on top of the primary button. */
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-  }
-}
 
 /* ── Live scoreboard (Phase 2B.2) ─────────────────────────────────────────── */
 .pollDot {
@@ -432,16 +385,9 @@
 
 /* White cards on paper; accent-bar rows keep their olive left edge */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .card,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modal,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tally {
   background: var(--home-card);
   border-color: var(--home-line);
-}
-/* The sticky action bar is part of the modal surface — a mismatch here reads as a seam across the
-   bottom of the sheet rather than as a divider. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalActions {
-  background: var(--home-card);
-  border-top-color: var(--home-line);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionRow,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scoreRow {
@@ -449,11 +395,6 @@
   border-color: var(--home-line);
   border-left-color: var(--home-olive);
 }
-/* Warm ink scrim behind modals (round-2 spec) */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {
-  background: rgba(var(--home-line-rgb), 0.50);
-}
-
 /* Text tiers */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionWhen,
@@ -462,7 +403,6 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catLabel b,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catNum,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalScore b,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalTitle,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tallyItem strong,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn:hover,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn:hover {

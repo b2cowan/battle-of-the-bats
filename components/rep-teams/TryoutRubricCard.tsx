@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Trash2, Pencil, X, ChevronUp, ChevronDown, AlertTriangle, Info } from 'lucide-react';
-import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import { Plus, Trash2, Pencil, ChevronUp, ChevronDown, AlertTriangle, Info } from 'lucide-react';
+import { snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTryoutRubric, RepTryoutRubricCategory } from '@/lib/types';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
 import day from './TryoutDayCard.module.css';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './TryoutRubricCard.module.css';
 
 interface Props {
@@ -106,17 +107,15 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
   // not the coach's work, so an untouched seeded form still closes silently (Chunk G rider).
   const [baseline, setBaseline] = useState<BuilderSnapshot | null>(null);
   const [saving, setSaving] = useState(false);
-  // True while THIS modal is waiting on a confirm dialog. The builder now raises TWO of them —
-  // the discard guard and the reset-to-equal ask — and `ConfirmProvider` holds a SINGLE resolver
-  // slot, so a second confirm() raised while the first is open overwrites it: dialog A's promise
-  // never settles and the coach's answer lands on a question they were never shown. It also stops
-  // the form being driven behind the dialog (FeedbackModal does not trap Tab), which is what kept
-  // the quoted "your weighting is X, Y, Z" honest.
+  // True while THIS window is waiting on the reset-to-equal confirm. `ConfirmProvider` holds a SINGLE resolver slot,
+  // so a second confirm() raised while the first is open overwrites it: the first promise never settles and the coach's
+  // answer lands on a question they were never shown. It also keeps the form from being driven behind the confirm, which
+  // is what keeps the quoted "your weighting is X, Y, Z" honest. (The discard ask was the other confirm; since One
+  // Window 2c it is the window's own foot, B1.)
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const confirm = useConfirm();
-  useOverlayOpen(open);
 
   // ONE shape for the dirty baseline and the live form (the one-mapping rule, Chunk A D4),
   // minus the UI-only row fields. Returns the OBJECT: snapshotEqual serialises for us, and
@@ -130,18 +129,8 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
     [name, scaleMax, cats],
   );
 
-  const catCount = cats.filter(c => c.label.trim()).length;
-  const rawGuardedClose = useDiscardGuard({
-    dirty: baseline != null && !snapshotEqual(snapshot(), baseline),
-    close: () => setOpen(false),
-    noun: 'scorecard',
-    detail: catCount > 0 ? `${catCount} categor${catCount === 1 ? 'y' : 'ies'} and how they count` : undefined,
-  });
-  const guardedClose = async () => {
-    if (awaitingConfirm || saving) return;
-    setAwaitingConfirm(true);
-    try { await rawGuardedClose(); } finally { setAwaitingConfirm(false); }
-  };
+  // Typed changes ask in the window's own foot (One Window 2c, B1) — was useDiscardGuard's second window.
+  const builderDirty = baseline != null && !snapshotEqual(snapshot(), baseline);
 
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
@@ -316,8 +305,23 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
   // over 3 is not, and a figure that is almost right is worse than none.
   const evenEach = namedCats.length > 0 && 100 % namedCats.length === 0 ? Math.round(100 / namedCats.length) : null;
 
+  // The running total, the window foot's sentence: how many categories, the scale, how they count.
+  const footSummary = (
+    <span className={styles.summary}>
+      <b>{namedCats.length}</b> categor{namedCats.length === 1 ? 'y' : 'ies'} · scored <b>1–{scaleMax}</b><br />
+      {equal
+        ? `Weighted equally${evenEach != null ? ` · ${evenEach}% each` : ''}`
+        : rankedCount > 0
+          ? <>
+              <b>{rankedCount}</b> ranked · shares total <b>100%</b>
+              {rankedCount < namedCats.length && ` · ${namedCats.length - rankedCount} notes only`}
+            </>
+          : 'Nothing ranked'}
+    </span>
+  );
+
   // Row-body form (2026-08-17): the checklist row bar owns the title/status; this renders only
-  // the manager — the category list, its actions, and the builder modal.
+  // the manager — the category list, its actions, and the builder window.
   return (
     <>
       {hasRubric ? (
@@ -356,247 +360,216 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
         </>
       )}
 
-      {open && (
-        <div className={styles.scrim} onClick={() => !saving && guardedClose()}>
-          <div
-            className={styles.modal}
-            onClick={e => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="rubric-builder-title"
-          >
-            <div className={styles.head}>
-              <h3 className={styles.title} id="rubric-builder-title">Evaluation scorecard</h3>
-              <button type="button" className={styles.closeBtn} onClick={() => !saving && guardedClose()} aria-label="Close">
-                <X size={16} />
-              </button>
-            </div>
+      {/* The scorecard builder in the one window (One Window 2c): the ladder's widest, 800 on a computer (840 before), the
+          fields beside the helpers' preview; a form that fills a phone. The running total is the foot's sentence at the
+          left, Cancel and Save at the right; typed changes ask in the foot; it holds while it saves. */}
+      <QuestionShell open={open} onClose={() => setOpen(false)} dirty={builderDirty} busy={saving} widest
+        ariaLabel="Evaluation scorecard" title="Evaluation scorecard"
+        footerStart={footSummary}
+        footer={<>
+          <QuestionCancel className="btn btn-ghost" />
+          <button type="button" className="btn btn-primary" onClick={save} disabled={saving || awaitingConfirm}>{saving ? 'Saving…' : 'Save scorecard'}</button>
+        </>}>
+        {/* Everything inside is inert while the reset confirm is up, so the rows it quotes cannot change under it.
+            The one window's body scrolls; the fieldset stays a plain inert wrapper. */}
+        <fieldset className={styles.body} disabled={awaitingConfirm}>
+          <div className={styles.grid}>
+            <div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="rubric-name">
+                  Name <span className={styles.labelSoft}>· optional</span>
+                </label>
+                <input className={styles.input} id="rubric-name" value={name} maxLength={120}
+                  onChange={e => setName(e.target.value)} placeholder="e.g. U15 AAA tryout scorecard" />
+              </div>
 
-            {/* Everything inside is inert while a confirm dialog is up. FeedbackModal does not
-                trap Tab, so without this the coach could keyboard past the dialog and edit the
-                very rows it was quoting — or trigger the OTHER confirm and strand this one.
-                Scrolling lives on this wrapping div, not the fieldset — fieldsets don't reliably
-                clip overflow, so the fieldset stays a plain inert wrapper. */}
-            <div className={styles.bodyScroll}>
-            <fieldset className={styles.body} disabled={awaitingConfirm}>
-              <div className={styles.grid}>
-                <div>
-                  <div className={styles.field}>
-                    <label className={styles.label} htmlFor="rubric-name">
-                      Name <span className={styles.labelSoft}>· optional</span>
-                    </label>
-                    <input className={styles.input} id="rubric-name" value={name} maxLength={120}
-                      onChange={e => setName(e.target.value)} placeholder="e.g. U15 AAA tryout scorecard" />
-                  </div>
-
-                  <div className={styles.field}>
-                    <span className={styles.label} id="rubric-scale-label">Rating scale</span>
-                    <div className={styles.seg} role="group" aria-labelledby="rubric-scale-label">
-                      {[5, 10].map(s => (
-                        <button
-                          key={s}
-                          type="button"
-                          className={`${styles.segBtn} ${scaleMax === s ? styles.segOn : ''}`}
-                          aria-pressed={scaleMax === s}
-                          onClick={() => setScaleMax(s)}
-                        >
-                          1–{s}
-                        </button>
-                      ))}
-                    </div>
-                    <p className={styles.hint}>
-                      {scaleMax === 5
-                        ? '1–5 is faster to tap in the field.'
-                        : '1–10 separates similar players more finely.'}
-                    </p>
-                  </div>
-
-                  <div className={styles.field}>
-                    <span className={styles.label}>How categories count</span>
-                    <div className={styles.toggleRow}>
-                      <button
-                        type="button"
-                        className={`${styles.track} ${equal ? styles.trackOn : ''}`}
-                        role="switch"
-                        aria-checked={equal}
-                        aria-label="Count every category equally"
-                        onClick={toggleEqual}
-                      />
-                      <span className={styles.toggleText}>
-                        <span className={styles.toggleLabel}>Count every category equally</span>
-                        <span className={styles.toggleHint}>
-                          {equal
-                            ? `All ${namedCats.length} categor${namedCats.length === 1 ? 'y counts' : 'ies count'} the same${evenEach != null ? ` — ${evenEach}% each` : ''}.`
-                            : 'Set each category’s share below. Switching this back on resets them to an even split.'}
-                        </span>
-                      </span>
-                    </div>
-
-                    {allNotesOnly && (
-                      <p className={styles.noteWarn}>
-                        <AlertTriangle size={14} style={{ flex: '0 0 auto', marginTop: 2 }} />
-                        <span>
-                          Every category is set to notes only, so there’s nothing left to rank on — the board
-                          will fall back to counting them all equally. Give at least one category a share, or
-                          switch equal counting back on.
-                        </span>
-                      </p>
-                    )}
-                    {hasScores && (
-                      <p className={styles.noteInfo}>
-                        <Info size={14} style={{ flex: '0 0 auto', marginTop: 2 }} />
-                        <span>Players have already been scored — changing how categories count re-orders your board.</span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className={`${styles.field} ${styles.fieldLast}`}>
-                    <span className={styles.label}>
-                      Categories <span className={styles.labelSoft}>· the order your helpers score them in</span>
-                    </span>
-                    <ul className={styles.cats}>
-                      {cats.map((c, i) => {
-                        // A row with no name has no share: it isn't a category until it's named,
-                        // and showing it one would be showing a number the save won't honour.
-                        const pct = pctByUid.get(c.uid);
-                        const notesOnly = !equal && c.weight === 0;
-                        const rowName = c.label.trim() || `category ${i + 1}`;
-                        return (
-                          <li key={c.uid} className={styles.cat}>
-                            <div className={styles.catTop}>
-                              <span className={styles.grip}>
-                                <button type="button" className={styles.gripBtn} disabled={i === 0}
-                                  onClick={() => moveCat(i, -1)} aria-label={`Move ${rowName} up`}>
-                                  <ChevronUp size={11} strokeWidth={3} />
-                                </button>
-                                <button type="button" className={styles.gripBtn} disabled={i === cats.length - 1}
-                                  onClick={() => moveCat(i, 1)} aria-label={`Move ${rowName} down`}>
-                                  <ChevronDown size={11} strokeWidth={3} />
-                                </button>
-                              </span>
-                              <span className={styles.catName}>
-                                <input className={styles.input} value={c.label} maxLength={60}
-                                  aria-label={`Category ${i + 1} name`}
-                                  placeholder="Category name"
-                                  onChange={e => patchCat(c.uid, { label: e.target.value })} />
-                              </span>
-                              <button type="button" className={styles.iconBtn} onClick={() => removeCat(c.uid)}
-                                aria-label={`Remove ${rowName}`}>
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-
-                            {pct != null && (
-                              <div className={styles.share}>
-                                {!equal && (
-                                  <span className={styles.stepper} role="group" aria-label={`${rowName} — share of the total`}>
-                                    <button type="button" className={styles.stepBtn} disabled={c.weight <= 0}
-                                      onClick={() => stepWeight(c.uid, -1)} aria-label={`Less weight for ${rowName}`}>−</button>
-                                    <span className={styles.stepVal}>{c.weight}</span>
-                                    <button type="button" className={styles.stepBtn}
-                                      onClick={() => stepWeight(c.uid, 1)} aria-label={`More weight for ${rowName}`}>+</button>
-                                  </span>
-                                )}
-                                {notesOnly ? (
-                                  <>
-                                    <span className={styles.notesOnly}>Notes only · not ranked</span>
-                                    <span className={styles.pctMuted}>—</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span className={styles.bar}>
-                                      <span className={styles.barFill} style={{ width: `${pct}%` }} />
-                                    </span>
-                                    <span className={equal ? `${styles.pct} ${styles.pctEqual}` : styles.pct}>
-                                      {pct}%
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            )}
-
-                            <div className={styles.noteLine}>
-                              {c.noteOpen ? (
-                                <input className={styles.input} style={{ fontSize: '0.82rem' }} value={c.instructions}
-                                  maxLength={500} autoFocus
-                                  aria-label={`Note for evaluators on ${rowName}`}
-                                  placeholder="What should evaluators look for?"
-                                  onChange={e => patchCat(c.uid, { instructions: e.target.value })}
-                                  onBlur={() => patchCat(c.uid, { noteOpen: false })} />
-                              ) : c.instructions.trim() ? (
-                                <span className={styles.noteRead}>
-                                  <span className={styles.noteReadLabel}>Note</span>
-                                  <span className={styles.noteReadText}>{c.instructions}</span>
-                                  <button type="button" className={styles.noteBtn}
-                                    onClick={() => patchCat(c.uid, { noteOpen: true })}>Edit</button>
-                                </span>
-                              ) : (
-                                <button type="button" className={styles.noteBtn}
-                                  onClick={() => patchCat(c.uid, { noteOpen: true })}>
-                                  + Add a note for evaluators
-                                </button>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <button type="button" className={styles.addBtn} onClick={addCat}>
-                      <Plus size={13} /> Add category
+              <div className={styles.field}>
+                <span className={styles.label} id="rubric-scale-label">Rating scale</span>
+                <div className={styles.seg} role="group" aria-labelledby="rubric-scale-label">
+                  {[5, 10].map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`${styles.segBtn} ${scaleMax === s ? styles.segOn : ''}`}
+                      aria-pressed={scaleMax === s}
+                      onClick={() => setScaleMax(s)}
+                    >
+                      1–{s}
                     </button>
-                    {formError && <p className={styles.formError}>{formError}</p>}
-                  </div>
+                  ))}
+                </div>
+                <p className={styles.hint}>
+                  {scaleMax === 5
+                    ? '1–5 is faster to tap in the field.'
+                    : '1–10 separates similar players more finely.'}
+                </p>
+              </div>
+
+              <div className={styles.field}>
+                <span className={styles.label}>How categories count</span>
+                <div className={styles.toggleRow}>
+                  <button
+                    type="button"
+                    className={`${styles.track} ${equal ? styles.trackOn : ''}`}
+                    role="switch"
+                    aria-checked={equal}
+                    aria-label="Count every category equally"
+                    onClick={toggleEqual}
+                  />
+                  <span className={styles.toggleText}>
+                    <span className={styles.toggleLabel}>Count every category equally</span>
+                    <span className={styles.toggleHint}>
+                      {equal
+                        ? `All ${namedCats.length} categor${namedCats.length === 1 ? 'y counts' : 'ies count'} the same${evenEach != null ? ` — ${evenEach}% each` : ''}.`
+                        : 'Set each category’s share below. Switching this back on resets them to an even split.'}
+                    </span>
+                  </span>
                 </div>
 
-                <div className={styles.preview}>
-                  <span className={styles.previewCap}>What your helpers will see</span>
-                  <div className={styles.phone}>
-                    <div className={styles.phoneHead}>
-                      <span className={styles.phoneBib}>#14</span>
-                      <span className={styles.phoneName}>Player 14</span>
-                    </div>
-                    <div className={styles.phoneBody}>
-                      {namedCats.length === 0 ? (
-                        <p className={styles.previewEmpty}>Name a category to see it here.</p>
-                      ) : namedCats.map(c => (
-                        <div key={c.uid}>
-                          <div className={styles.pCatLabel}>{c.label}</div>
-                          {c.instructions.trim() && <div className={styles.pCatHint}>{c.instructions}</div>}
-                          <div className={styles.pScale} aria-hidden>
-                            {Array.from({ length: scaleMax }, (_, n) => <span key={n}>{n + 1}</span>)}
-                          </div>
+                {allNotesOnly && (
+                  <p className={styles.noteWarn}>
+                    <AlertTriangle size={14} style={{ flex: '0 0 auto', marginTop: 2 }} />
+                    <span>
+                      Every category is set to notes only, so there’s nothing left to rank on — the board
+                      will fall back to counting them all equally. Give at least one category a share, or
+                      switch equal counting back on.
+                    </span>
+                  </p>
+                )}
+                {hasScores && (
+                  <p className={styles.noteInfo}>
+                    <Info size={14} style={{ flex: '0 0 auto', marginTop: 2 }} />
+                    <span>Players have already been scored — changing how categories count re-orders your board.</span>
+                  </p>
+                )}
+              </div>
+
+              <div className={`${styles.field} ${styles.fieldLast}`}>
+                <span className={styles.label}>
+                  Categories <span className={styles.labelSoft}>· the order your helpers score them in</span>
+                </span>
+                <ul className={styles.cats}>
+                  {cats.map((c, i) => {
+                    // A row with no name has no share: it isn't a category until it's named,
+                    // and showing it one would be showing a number the save won't honour.
+                    const pct = pctByUid.get(c.uid);
+                    const notesOnly = !equal && c.weight === 0;
+                    const rowName = c.label.trim() || `category ${i + 1}`;
+                    return (
+                      <li key={c.uid} className={styles.cat}>
+                        <div className={styles.catTop}>
+                          <span className={styles.grip}>
+                            <button type="button" className={styles.gripBtn} disabled={i === 0}
+                              onClick={() => moveCat(i, -1)} aria-label={`Move ${rowName} up`}>
+                              <ChevronUp size={11} strokeWidth={3} />
+                            </button>
+                            <button type="button" className={styles.gripBtn} disabled={i === cats.length - 1}
+                              onClick={() => moveCat(i, 1)} aria-label={`Move ${rowName} down`}>
+                              <ChevronDown size={11} strokeWidth={3} />
+                            </button>
+                          </span>
+                          <span className={styles.catName}>
+                            <input className={styles.input} value={c.label} maxLength={60}
+                              aria-label={`Category ${i + 1} name`}
+                              placeholder="Category name"
+                              onChange={e => patchCat(c.uid, { label: e.target.value })} />
+                          </span>
+                          <button type="button" className={styles.iconBtn} onClick={() => removeCat(c.uid)}
+                            aria-label={`Remove ${rowName}`}>
+                            <Trash2 size={15} />
+                          </button>
                         </div>
-                      ))}
+
+                        {pct != null && (
+                          <div className={styles.share}>
+                            {!equal && (
+                              <span className={styles.stepper} role="group" aria-label={`${rowName} — share of the total`}>
+                                <button type="button" className={styles.stepBtn} disabled={c.weight <= 0}
+                                  onClick={() => stepWeight(c.uid, -1)} aria-label={`Less weight for ${rowName}`}>−</button>
+                                <span className={styles.stepVal}>{c.weight}</span>
+                                <button type="button" className={styles.stepBtn}
+                                  onClick={() => stepWeight(c.uid, 1)} aria-label={`More weight for ${rowName}`}>+</button>
+                              </span>
+                            )}
+                            {notesOnly ? (
+                              <>
+                                <span className={styles.notesOnly}>Notes only · not ranked</span>
+                                <span className={styles.pctMuted}>—</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className={styles.bar}>
+                                  <span className={styles.barFill} style={{ width: `${pct}%` }} />
+                                </span>
+                                <span className={equal ? `${styles.pct} ${styles.pctEqual}` : styles.pct}>
+                                  {pct}%
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        <div className={styles.noteLine}>
+                          {c.noteOpen ? (
+                            <input className={styles.input} style={{ fontSize: '0.82rem' }} value={c.instructions}
+                              maxLength={500} autoFocus
+                              aria-label={`Note for evaluators on ${rowName}`}
+                              placeholder="What should evaluators look for?"
+                              onChange={e => patchCat(c.uid, { instructions: e.target.value })}
+                              onBlur={() => patchCat(c.uid, { noteOpen: false })} />
+                          ) : c.instructions.trim() ? (
+                            <span className={styles.noteRead}>
+                              <span className={styles.noteReadLabel}>Note</span>
+                              <span className={styles.noteReadText}>{c.instructions}</span>
+                              <button type="button" className={styles.noteBtn}
+                                onClick={() => patchCat(c.uid, { noteOpen: true })}>Edit</button>
+                            </span>
+                          ) : (
+                            <button type="button" className={styles.noteBtn}
+                              onClick={() => patchCat(c.uid, { noteOpen: true })}>
+                              + Add a note for evaluators
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <button type="button" className={styles.addBtn} onClick={addCat}>
+                  <Plus size={13} /> Add category
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.preview}>
+              <span className={styles.previewCap}>What your helpers will see</span>
+              <div className={styles.phone}>
+                <div className={styles.phoneHead}>
+                  <span className={styles.phoneBib}>#14</span>
+                  <span className={styles.phoneName}>Player 14</span>
+                </div>
+                <div className={styles.phoneBody}>
+                  {namedCats.length === 0 ? (
+                    <p className={styles.previewEmpty}>Name a category to see it here.</p>
+                  ) : namedCats.map(c => (
+                    <div key={c.uid}>
+                      <div className={styles.pCatLabel}>{c.label}</div>
+                      {c.instructions.trim() && <div className={styles.pCatHint}>{c.instructions}</div>}
+                      <div className={styles.pScale} aria-hidden>
+                        {Array.from({ length: scaleMax }, (_, n) => <span key={n}>{n + 1}</span>)}
+                      </div>
                     </div>
-                    <div className={styles.phoneFoot}>
-                      Shares never appear here — helpers score every category, and the scorecard decides what each is worth.
-                    </div>
-                  </div>
+                  ))}
+                </div>
+                <div className={styles.phoneFoot}>
+                  Shares never appear here — helpers score every category, and the scorecard decides what each is worth.
                 </div>
               </div>
-            </fieldset>
-            </div>
-
-            <div className={styles.foot}>
-              <span className={styles.summary}>
-                <b>{namedCats.length}</b> categor{namedCats.length === 1 ? 'y' : 'ies'} · scored <b>1–{scaleMax}</b><br />
-                {equal
-                  ? `Weighted equally${evenEach != null ? ` · ${evenEach}% each` : ''}`
-                  : rankedCount > 0
-                    ? <>
-                        <b>{rankedCount}</b> ranked · shares total <b>100%</b>
-                        {rankedCount < namedCats.length && ` · ${namedCats.length - rankedCount} notes only`}
-                      </>
-                    : 'Nothing ranked'}
-              </span>
-              <span className={styles.footActions}>
-                <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving || awaitingConfirm}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={save} disabled={saving || awaitingConfirm}>{saving ? 'Saving…' : 'Save scorecard'}</button>
-              </span>
             </div>
           </div>
-        </div>
-      )}
+        </fieldset>
+        <QuestionReason className={coach.errorText}>{formError}</QuestionReason>
+      </QuestionShell>
     </>
   );
 }

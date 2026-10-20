@@ -374,6 +374,32 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
       assert.doesNotMatch(code, /modalOverlay|useOverlayOpen|CoachModalHeader|modalCloseBtn/, `${file}: the one window owns the overlay, the floor and the head`);
     }
   });
+
+  it('the tryout windows: four forms ask in their own foot, and Which session is the small centred question (part 6)', () => {
+    const R = 'components/rep-teams';
+    const forms: Array<[string, RegExp]> = [
+      [`${R}/TryoutDayCard.tsx`, /<QuestionShell open=\{modalOpen\} onClose=\{\(\) => setModalOpen\(false\)\} dirty=\{formDirty\} busy=\{saving\}/],
+      // The minted link is a done-screen: it closes silently (the ask is the typed name's only).
+      [`${R}/TryoutEvaluatorsCard.tsx`, /<QuestionShell open=\{open\} onClose=\{\(\) => setOpen\(false\)\} dirty=\{nameDirty\} busy=\{saving\}/],
+      // The fields beside the helpers' preview: the ladder's widest; the running total is the foot's sentence.
+      [`${R}/TryoutRubricCard.tsx`, /<QuestionShell open=\{open\} onClose=\{\(\) => setOpen\(false\)\} dirty=\{builderDirty\} busy=\{saving\} widest\s+ariaLabel="Evaluation scorecard"[\s\S]*?footerStart=\{footSummary\}/],
+      [`${R}/TryoutCheckIn.tsx`, /<QuestionShell open=\{walkupOpen\} onClose=\{\(\) => setWalkupOpen\(false\)\} dirty=\{walkupDirty\} busy=\{savingWalkup\}/],
+    ];
+    for (const [file, re] of forms) {
+      const code = readCode(file);
+      assert.match(code, re, file);
+      assert.doesNotMatch(code, /useDiscardGuard\(|useOverlayOpen|styles\.scrim|styles\.modal\b|modalActions/, `${file}: the window asks and owns its overlay; no second window, no hand-built card`);
+    }
+    assert.match(readCode(`${R}/TryoutEvaluatorsCard.tsx`), /const nameDirty = !freshLink && name\.trim\(\)\.length > 0;/);
+    assert.match(readCode(`${R}/TryoutCheckIn.tsx`), /<QuestionShell kind="question" open=\{sessionChoices !== null\} onClose=\{\(\) => setSessionChoices\(null\)\}/);
+    // The tryout stylesheets keep no window shape of their own: a `.scrim` card can no longer drift back unnoticed (the
+    // still-to-move scan below keys on `.modalOverlay`; the tryouts built theirs from these).
+    for (const css of ['TryoutDayCard', 'TryoutCheckIn', 'TryoutRubricCard']) {
+      assert.doesNotMatch(readSource(`${R}/${css}.module.css`), /^\s*\.(scrim|modal|modalActions)\s*[{,:]/m, `${css}.module.css: a hand-built window shape is back`);
+    }
+    const scrims = tsxWith('scrim').filter(({ file }) => file.startsWith(`${R}/`)).filter(({ code }) => /className=\{[^}]*\.scrim\b/.test(code)).map(({ file }) => file);
+    assert.deepEqual(scrims, [], 'a tryout window is QuestionShell: the one window with the coach rules');
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {

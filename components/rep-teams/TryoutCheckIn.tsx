@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, ChevronRight, Plus, Printer } from 'lucide-react';
-import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { touched } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import {
   downloadPDF, buildFilename, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
@@ -13,6 +13,7 @@ import { describeTryoutSession, tryoutSessionDay } from '@/lib/tryout-session-la
 import type { RepTryoutRegistration, RepTryoutSession } from '@/lib/types';
 import SearchField from '@/components/shared/SearchField';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './TryoutCheckIn.module.css';
 
 /**
@@ -130,6 +131,8 @@ export default function TryoutCheckIn({
   const [walkupOpen, setWalkupOpen] = useState(false);
   const [walkup, setWalkup] = useState(BLANK_WALKUP);
   const [savingWalkup, setSavingWalkup] = useState(false);
+  /** Why the add was refused — said beside the button, in the window's foot (One Window 2c). */
+  const [walkupError, setWalkupError] = useState('');
   /** Are the extra fields showing? Seeded from the session habit each time the sheet opens. */
   const [moreOpen, setMoreOpen] = useState(false);
   /** Which season a pre-filled "Last season's team" came from — the note under the box. Null once
@@ -139,12 +142,8 @@ export default function TryoutCheckIn({
   /** Non-null while the coach is choosing WHICH session this sheet is for. */
   const [sessionChoices, setSessionChoices] = useState<RepTryoutSession[] | null>(null);
 
-  useOverlayOpen(walkupOpen || sessionChoices !== null);
-  const guardedWalkupClose = useDiscardGuard({
-    dirty: touched(walkup, BLANK_WALKUP),
-    close: () => setWalkupOpen(false),
-    noun: 'player',
-  });
+  // The walk-up asks in its own foot when something is typed (One Window 2c, B1) — was useDiscardGuard's second window.
+  const walkupDirty = touched(walkup, BLANK_WALKUP);
 
   const fail = useCallback((m: string) => { onError ? onError(m) : console.error(m); }, [onError]);
 
@@ -329,6 +328,7 @@ export default function TryoutCheckIn({
     lastSeasonTouched.current = false;
     priorSeq.current++;   // discard any lookup still in flight from the previous player
     setMoreOpen(readMorePref());
+    setWalkupError('');
     setWalkupOpen(true);
   }
 
@@ -339,6 +339,7 @@ export default function TryoutCheckIn({
   async function addWalkup() {
     if (!walkup.first.trim()) return;
     setSavingWalkup(true);
+    setWalkupError('');
     try {
       const res = await fetch(apiBase, {
         method: 'POST',
@@ -371,7 +372,7 @@ export default function TryoutCheckIn({
       await load();
       onChanged?.();
     } catch (e: any) {
-      fail(e.message ?? 'Failed to add player.');
+      setWalkupError(e.message ?? 'Failed to add player.');
     } finally {
       setSavingWalkup(false);
     }
@@ -574,144 +575,140 @@ export default function TryoutCheckIn({
         </div>
       )}
 
-      {walkupOpen && (
-        <div className={styles.scrim} onClick={() => !savingWalkup && guardedWalkupClose()}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>Add player</h3>
-            <div className={styles.row2}>
-              <div className={styles.field}>
-                {/* The ONLY marked field on this form — it is the only one that gates the save.
-                    ⚖ A plain asterisk written INLINE in the label text, never a span with its own
-                    class: `.labelRequired` was retired portal-wide (owner 2026-08-25) and deleted
-                    so the next form could not find it, and a class + wrapper span is that same
-                    abstraction under a new name. Red in this portal means something has gone
-                    WRONG, and a field is not in error for being required. Nothing else carries an
-                    "optional" tag, because optional is a field's resting state and tagging every
-                    row hides the one that matters (owner 2026-08-26). */}
-                <label className={styles.label} htmlFor="walkup-first">First name *</label>
-                <input id="walkup-first" className={styles.input} required value={walkup.first} maxLength={80} onChange={e => setWalkup(w => ({ ...w, first: e.target.value }))} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="walkup-last">Last name</label>
-                <input id="walkup-last" className={styles.input} value={walkup.last} maxLength={80} onChange={e => setWalkup(w => ({ ...w, last: e.target.value }))} />
-              </div>
-            </div>
-
-            {/* ⚠ THE LINE NAMES WHAT IS BEHIND IT rather than saying "more", and that wording is
-                the mitigation for this design's one real cost: a coach who never notices the
-                reveal goes on entering thin records. (Why the reveal exists at all is on
-                `MORE_PREF_KEY` above.) */}
-            <button
-              type="button"
-              className={styles.moreToggle}
-              onClick={toggleMore}
-              aria-expanded={moreOpen}
-              aria-controls="walkup-more"
-            >
-              <span className={`${styles.moreChevron} ${moreOpen ? styles.moreChevronOpen : ''}`} aria-hidden>
-                <ChevronRight size={14} />
-              </span>
-              <span>More details — birthdate, last season&apos;s team, contact</span>
-            </button>
-
-            {moreOpen && (
-              <div id="walkup-more">
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="walkup-dob">Date of birth</label>
-                  {/* Not decoration: the printed check-in sheet's Age column is computed from
-                      this, and confident returning-player matching needs it. */}
-                  <input id="walkup-dob" className={styles.input} type="date" value={walkup.dob} onChange={e => setWalkup(w => ({ ...w, dob: e.target.value }))} />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="walkup-last-season">Last season&apos;s team</label>
-                  {/* ⚠ FREE TEXT, never a dropdown of levels — A/AA/AAA/Rep/House mean different
-                      things in different sports and associations, and a fixed list would be wrong
-                      for somebody on day one. Pre-filled for a returning player and always
-                      editable: it is the family's claim, not a verified fact. */}
-                  <input
-                    id="walkup-last-season"
-                    className={styles.input}
-                    value={walkup.lastSeasonTeam}
-                    maxLength={120}
-                    placeholder="Club and age group"
-                    onChange={e => {
-                      lastSeasonTouched.current = true;
-                      setPriorSeasonLabel(null);   // theirs now — the provenance note goes with it
-                      setWalkup(w => ({ ...w, lastSeasonTeam: e.target.value }));
-                    }}
-                  />
-                  {priorSeasonLabel && (
-                    <p className={styles.fieldNote}>
-                      Filled from {priorSeasonLabel} — edit if it&apos;s wrong.
-                    </p>
-                  )}
-                </div>
-                <div className={styles.field}>
-                  {/* One box, split into the record's two name columns on save. */}
-                  <label className={styles.label} htmlFor="walkup-guardian">Guardian name</label>
-                  <input id="walkup-guardian" className={styles.input} value={walkup.guardianName} maxLength={160} onChange={e => setWalkup(w => ({ ...w, guardianName: e.target.value }))} />
-                </div>
-                <div className={styles.field}>
-                  {/* Above the email on purpose: the decision board tells a coach with no address
-                      on file to "reach them by phone", and until now there was nowhere to have
-                      written the number down. */}
-                  <label className={styles.label} htmlFor="walkup-phone">Phone</label>
-                  <input id="walkup-phone" className={styles.input} type="tel" value={walkup.phone} maxLength={30} placeholder="Add now or later" onChange={e => setWalkup(w => ({ ...w, phone: e.target.value }))} />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="walkup-email">Email</label>
-                  <input id="walkup-email" className={styles.input} type="email" value={walkup.email} maxLength={200} placeholder="Add now or later" onChange={e => setWalkup(w => ({ ...w, email: e.target.value }))} />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="walkup-notes">Notes</label>
-                  {/* Surfaces as "family's note" on the decision board, one tap from the row. */}
-                  <textarea id="walkup-notes" className={styles.textarea} rows={2} value={walkup.notes} maxLength={500} placeholder="Anything you want on their row" onChange={e => setWalkup(w => ({ ...w, notes: e.target.value }))} />
-                </div>
-              </div>
-            )}
-
-            <div className={styles.modalActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => guardedWalkupClose()} disabled={savingWalkup}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={addWalkup} disabled={savingWalkup || !walkup.first.trim()}>
-                {savingWalkup ? 'Adding…' : 'Add & check in'}
-              </button>
-            </div>
+      {/* Add a walk-up player in the one window (One Window 2c): a form that fills a phone, the ladder's 520 on a computer
+          (420 before). Something typed asks in the foot; a tap outside does nothing; a refused add says why beside the
+          button; it holds while it saves. */}
+      <QuestionShell open={walkupOpen} onClose={() => setWalkupOpen(false)} dirty={walkupDirty} busy={savingWalkup}
+        ariaLabel="Add player" title="Add player"
+        footer={<>
+          <QuestionCancel className="btn btn-ghost" />
+          <button type="button" className="btn btn-primary" onClick={addWalkup} disabled={savingWalkup || !walkup.first.trim()}>
+            {savingWalkup ? 'Adding…' : 'Add & check in'}
+          </button>
+        </>}>
+        <div className={styles.row2}>
+          <div className={styles.field}>
+            {/* The ONLY marked field on this form — it is the only one that gates the save.
+                ⚖ A plain asterisk written INLINE in the label text, never a span with its own
+                class: `.labelRequired` was retired portal-wide (owner 2026-08-25) and deleted
+                so the next form could not find it, and a class + wrapper span is that same
+                abstraction under a new name. Red in this portal means something has gone
+                WRONG, and a field is not in error for being required. Nothing else carries an
+                "optional" tag, because optional is a field's resting state and tagging every
+                row hides the one that matters (owner 2026-08-26). */}
+            <label className={styles.label} htmlFor="walkup-first">First name *</label>
+            <input id="walkup-first" className={styles.input} required value={walkup.first} maxLength={80} onChange={e => setWalkup(w => ({ ...w, first: e.target.value }))} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="walkup-last">Last name</label>
+            <input id="walkup-last" className={styles.input} value={walkup.last} maxLength={80} onChange={e => setWalkup(w => ({ ...w, last: e.target.value }))} />
           </div>
         </div>
-      )}
+
+        {/* ⚠ THE LINE NAMES WHAT IS BEHIND IT rather than saying "more", and that wording is
+            the mitigation for this design's one real cost: a coach who never notices the
+            reveal goes on entering thin records. (Why the reveal exists at all is on
+            `MORE_PREF_KEY` above.) */}
+        <button
+          type="button"
+          className={styles.moreToggle}
+          onClick={toggleMore}
+          aria-expanded={moreOpen}
+          aria-controls="walkup-more"
+        >
+          <span className={`${styles.moreChevron} ${moreOpen ? styles.moreChevronOpen : ''}`} aria-hidden>
+            <ChevronRight size={14} />
+          </span>
+          <span>More details — birthdate, last season&apos;s team, contact</span>
+        </button>
+
+        {moreOpen && (
+          <div id="walkup-more">
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="walkup-dob">Date of birth</label>
+              {/* Not decoration: the printed check-in sheet's Age column is computed from
+                  this, and confident returning-player matching needs it. */}
+              <input id="walkup-dob" className={styles.input} type="date" value={walkup.dob} onChange={e => setWalkup(w => ({ ...w, dob: e.target.value }))} />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="walkup-last-season">Last season&apos;s team</label>
+              {/* ⚠ FREE TEXT, never a dropdown of levels — A/AA/AAA/Rep/House mean different
+                  things in different sports and associations, and a fixed list would be wrong
+                  for somebody on day one. Pre-filled for a returning player and always
+                  editable: it is the family's claim, not a verified fact. */}
+              <input
+                id="walkup-last-season"
+                className={styles.input}
+                value={walkup.lastSeasonTeam}
+                maxLength={120}
+                placeholder="Club and age group"
+                onChange={e => {
+                  lastSeasonTouched.current = true;
+                  setPriorSeasonLabel(null);   // theirs now — the provenance note goes with it
+                  setWalkup(w => ({ ...w, lastSeasonTeam: e.target.value }));
+                }}
+              />
+              {priorSeasonLabel && (
+                <p className={styles.fieldNote}>
+                  Filled from {priorSeasonLabel} — edit if it&apos;s wrong.
+                </p>
+              )}
+            </div>
+            <div className={styles.field}>
+              {/* One box, split into the record's two name columns on save. */}
+              <label className={styles.label} htmlFor="walkup-guardian">Guardian name</label>
+              <input id="walkup-guardian" className={styles.input} value={walkup.guardianName} maxLength={160} onChange={e => setWalkup(w => ({ ...w, guardianName: e.target.value }))} />
+            </div>
+            <div className={styles.field}>
+              {/* Above the email on purpose: the decision board tells a coach with no address
+                  on file to "reach them by phone", and until now there was nowhere to have
+                  written the number down. */}
+              <label className={styles.label} htmlFor="walkup-phone">Phone</label>
+              <input id="walkup-phone" className={styles.input} type="tel" value={walkup.phone} maxLength={30} placeholder="Add now or later" onChange={e => setWalkup(w => ({ ...w, phone: e.target.value }))} />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="walkup-email">Email</label>
+              <input id="walkup-email" className={styles.input} type="email" value={walkup.email} maxLength={200} placeholder="Add now or later" onChange={e => setWalkup(w => ({ ...w, email: e.target.value }))} />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="walkup-notes">Notes</label>
+              {/* Surfaces as "family's note" on the decision board, one tap from the row. */}
+              <textarea id="walkup-notes" className={styles.textarea} rows={2} value={walkup.notes} maxLength={500} placeholder="Anything you want on their row" onChange={e => setWalkup(w => ({ ...w, notes: e.target.value }))} />
+            </div>
+          </div>
+        )}
+        <QuestionReason className={coach.errorText}>{walkupError}</QuestionReason>
+      </QuestionShell>
 
       {/* Which morning is this paper for? Only asked when the tryout has more than one session —
-          two sessions on one weekend used to print identical, undated sheets. */}
-      {sessionChoices && (
-        <div className={styles.scrim} onClick={() => setSessionChoices(null)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>Which session is this sheet for?</h3>
-            <div className={styles.sessionList}>
-              {sessionChoices.map(s => {
-                const suggested = s.id === suggestedId;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className={styles.sessionBtn}
-                    autoFocus={suggested}
-                    onClick={() => printForSession(s)}
-                  >
-                    <span className={styles.sessionWhen}>{describeTryoutSession(s)}</span>
-                    {suggested && <span className={styles.sessionHint}>Most likely</span>}
-                  </button>
-                );
-              })}
-            </div>
-            <div className={styles.modalActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => setSessionChoices(null)}>Cancel</button>
-              <button type="button" className="btn btn-ghost" onClick={() => printForSession(null)}>
-                No session — just today’s date
+          two sessions on one weekend used to print identical, undated sheets. The one window's small centred question
+          (One Window 2c, B9): no ×; Escape, the phone's Back and a tap outside are its Cancel. */}
+      <QuestionShell kind="question" open={sessionChoices !== null} onClose={() => setSessionChoices(null)}
+        ariaLabel="Which session is this sheet for?" title="Which session is this sheet for?"
+        footer={<>
+          <QuestionCancel className="btn btn-ghost" />
+          <button type="button" className="btn btn-ghost" onClick={() => printForSession(null)}>
+            No session — just today’s date
+          </button>
+        </>}>
+        <div className={styles.sessionList}>
+          {(sessionChoices ?? []).map(s => {
+            const suggested = s.id === suggestedId;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                className={styles.sessionBtn}
+                autoFocus={suggested}
+                onClick={() => printForSession(s)}
+              >
+                <span className={styles.sessionWhen}>{describeTryoutSession(s)}</span>
+                {suggested && <span className={styles.sessionHint}>Most likely</span>}
               </button>
-            </div>
-          </div>
+            );
+          })}
         </div>
-      )}
+      </QuestionShell>
     </div>
   );
 }

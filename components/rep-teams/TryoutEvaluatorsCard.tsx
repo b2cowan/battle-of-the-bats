@@ -2,9 +2,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Copy, Check, Ban, RefreshCw } from 'lucide-react';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './TryoutDayCard.module.css';
 import { possessive } from '@/lib/utils';
 
@@ -54,14 +54,10 @@ export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [reissuingId, setReissuingId] = useState<string | null>(null);
 
-  useOverlayOpen(open);
-  // Light guard (WI-2): one typed name is still typed work — but once the link is minted the
-  // modal is a done-screen and closes silently (the BudgetStarterSheet post-save exemption).
-  const guardedClose = useDiscardGuard({
-    dirty: !freshLink && name.trim().length > 0,
-    close: () => setOpen(false),
-    noun: 'evaluator link',
-  });
+  // Light ask (WI-2): one typed name is still typed work — but once the link is minted the
+  // window is a done-screen and closes silently (the BudgetStarterSheet post-save exemption). The one window asks in
+  // its own foot (One Window 2c, B1) — was useDiscardGuard's second window.
+  const nameDirty = !freshLink && name.trim().length > 0;
 
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
@@ -257,46 +253,43 @@ export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError
         </div>
       )}
 
-      {open && (
-        <div className={styles.scrim} onClick={() => !saving && guardedClose()}>
-          <div className={styles.modal} onClick={ev => ev.stopPropagation()}>
-            {!freshLink ? (
-              <>
-                <h3 className={styles.modalTitle}>Add an evaluator</h3>
-                <div className={styles.field}>
-                  <label className={styles.label}>Evaluator name</label>
-                  <input className={styles.input} value={name} maxLength={80} autoFocus
-                    placeholder="e.g. Coach Dave" onChange={e => setName(e.target.value)} />
-                </div>
-                <p className={styles.subtitle} style={{ margin: '0 0 0.6rem' }}>
-                  They’ll get a private link that works for 48 hours. No login, no app.
-                </p>
-                {formError && <p style={{ color: 'var(--danger-light)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
-                <div className={styles.modalActions}>
-                  <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving}>Cancel</button>
-                  <button type="button" className="btn btn-primary" onClick={create} disabled={saving}>{saving ? 'Creating…' : 'Create link'}</button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className={styles.modalTitle}>Link ready for {freshFor}</h3>
-                <p className={styles.subtitle} style={{ margin: '0 0 0.6rem' }}>
-                  Copy it now and text or email it to them — for their privacy we don’t show it again.
-                </p>
-                <div className={styles.field}>
-                  <input className={styles.input} readOnly value={freshLink} onFocus={e => e.currentTarget.select()} />
-                </div>
-                <div className={styles.modalActions}>
-                  <button type="button" className={styles.addBtn} onClick={copyLink}>
-                    {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy link</>}
-                  </button>
-                  <button type="button" className="btn btn-primary" onClick={() => setOpen(false)}>Done</button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Add an evaluator, then the link once minted, in the one window (One Window 2c): a form that fills a phone, the
+          ladder's 520 on a computer (460 before). A typed name asks in the foot; the done-screen closes silently. */}
+      <QuestionShell open={open} onClose={() => setOpen(false)} dirty={nameDirty} busy={saving}
+        ariaLabel={freshLink ? `Link ready for ${freshFor}` : 'Add an evaluator'}
+        title={freshLink ? `Link ready for ${freshFor}` : 'Add an evaluator'}
+        footer={!freshLink ? <>
+          <QuestionCancel className="btn btn-ghost" />
+          <button type="button" className="btn btn-primary" onClick={create} disabled={saving}>{saving ? 'Creating…' : 'Create link'}</button>
+        </> : <>
+          <button type="button" className={styles.addBtn} onClick={copyLink}>
+            {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy link</>}
+          </button>
+          <QuestionCancel className="btn btn-primary">Done</QuestionCancel>
+        </>}>
+        {!freshLink ? (
+          <>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="evaluator-name">Evaluator name</label>
+              <input id="evaluator-name" className={styles.input} value={name} maxLength={80} autoFocus
+                placeholder="e.g. Coach Dave" onChange={e => setName(e.target.value)} />
+            </div>
+            <p className={styles.subtitle} style={{ margin: 0 }}>
+              They’ll get a private link that works for 48 hours. No login, no app.
+            </p>
+            <QuestionReason className={coach.errorText}>{formError}</QuestionReason>
+          </>
+        ) : (
+          <>
+            <p className={styles.subtitle} style={{ margin: '0 0 0.6rem' }}>
+              Copy it now and text or email it to them — for their privacy we don’t show it again.
+            </p>
+            <div className={styles.field}>
+              <input className={styles.input} readOnly value={freshLink} aria-label="Scoring link" onFocus={e => e.currentTarget.select()} />
+            </div>
+          </>
+        )}
+      </QuestionShell>
     </>
   );
 }
