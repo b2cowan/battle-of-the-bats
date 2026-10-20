@@ -308,7 +308,7 @@ export default async function ForClubsPage() {
               Express interest in Club
             </EarlyAccessModalTrigger>
             <Link
-              href="/auth/signup"
+              href="/start/tournament"
               className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
             >
               Start free with Tournament →

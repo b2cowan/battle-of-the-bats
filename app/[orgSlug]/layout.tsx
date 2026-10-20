@@ -12,6 +12,7 @@ import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
 import SandboxChrome from '@/components/sandbox/SandboxChrome';
+import { getCoachStartHref } from '@/lib/start-menu';
 
 // Pre-load all font options at module level (next/font requirement).
 // Each uses a unique CSS variable so they don't conflict with the root layout fonts.
@@ -108,9 +109,16 @@ export default async function OrgLayout({
   // org render is exactly the cost this layout is careful to avoid (see the Stage F note above);
   // paying it on one fictional org, whose whole traffic is people looking at invented teams, is
   // free in the way that matters.
-  const isDemoOrganizer = demoOrg
-    ? (await getAuthUserCached())?.email?.trim().toLowerCase() === demoOrg.organizerEmail
-    : false;
+  //
+  // The demo's start button opens the sign-up its own story is about (The first look, rule 8 / F14, owner
+  // 2026-10-19: one door per thing): the coach demo the one "Coach a team" rule (it opened the organization
+  // sign-up), the tournament demo Run a tournament. Only the coach demo reads gating; the two lookups are
+  // independent, so they run side by side.
+  const [demoUser, demoStartHref] = await Promise.all([
+    demoOrg ? getAuthUserCached() : null,
+    demoOrg?.kind === 'coach' ? getCoachStartHref().catch(() => '/start') : '/start/tournament',
+  ]);
+  const isDemoOrganizer = !!demoOrg && demoUser?.email?.trim().toLowerCase() === demoOrg.organizerEmail;
 
   const cssVars = [
     `--primary:       ${theme.primary}`,
@@ -155,6 +163,7 @@ export default async function OrgLayout({
             slug={demoOrg.slug}
             landingPath={demoOrg.landingPath}
             isDemoOrganizer={isDemoOrganizer}
+            startHref={demoStartHref}
           />
         </Suspense>
       )}

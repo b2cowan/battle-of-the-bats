@@ -5,7 +5,7 @@
  *
  * THE DEFECT: the app strip links to /pricing from every consumer surface, so a signed-in owner
  * tapping Pricing from their own chrome landed on a page whose plan cards funnelled them into
- * `/auth/signup?plan=club` — the sign-up path for someone who does not have an account, offered
+ * `/start/tournament?plan=club` — the sign-up path for someone who does not have an account, offered
  * to someone who already pays. Highest-traffic seam-crossing in the product, with no continuity.
  *
  * THE RULE, three states:
@@ -69,7 +69,7 @@ export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatin
   }, [billingHref, currentPlan]);
 
   // ⚠ THE WINDOW MATTERS. Until the role summary lands we cannot tell an operator from a fan, and
-  // the prospect markup's CTA is a LIVE link into `/auth/signup?plan=…`. Rendering it during that
+  // the prospect markup's CTA is a LIVE link into `/start/tournament?plan=…`. Rendering it during that
   // window hands a signed-in operator the exact sign-up funnel this feature exists to keep them out
   // of — and a fast clicker can take it. So while a signed-in visitor's answer is in flight the
   // cards hold a non-navigating placeholder; prospects and anonymous visitors never reach this

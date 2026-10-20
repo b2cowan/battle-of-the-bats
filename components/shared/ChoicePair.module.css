@@ -13,7 +13,7 @@
   justify-content: center;
   gap: 0.375rem;
   padding: 0 0.75rem;
-  border: 1px solid var(--home-line-strong);
+  border: 1px solid var(--home-field-edge, var(--home-line-strong));
   border-radius: 8px;
   background: var(--home-card);
   font-family: var(--font-sans);

@@ -11,6 +11,7 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { isCoachesPortalPurchasable } from '@/lib/plan-gating-server';
+import { COACH_DOOR_HREF, coachStartDoor } from '@/lib/start-menu';
 import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_YEAR_LABEL } from '@/lib/plan-config';
 import styles from './start.module.css';
 
@@ -77,41 +78,30 @@ const INVITE_ASIDE = {
 // (door + $0 Premium comp path + copy) turns on together per environment when the gate reopens —
 // never a "Free" door landing on a gated dead end. Open → the live free team setup; gated → the
 // express-interest explainer.
+const FREE_TEAM_BODY = 'A free team home for your season — no organization needed. Track your registrations and team.';
+
 function coachOption(checkoutOpen: boolean, promoActive: boolean): StartOption {
+  // Where the card leads AND which words it wears come from THE one coach rule (lib/start-menu.ts): the top bar's
+  // menu and the coach demo read it too, so every "Coach a team" opens the same door (The first look, rule 8).
+  const door = coachStartDoor(checkoutOpen, promoActive);
+  const base = { href: COACH_DOOR_HREF[door], icon: Users, title: 'Coach a team' };
   // Founding Season 2027 (owner-approved 2026-09-07): while the signup window is open the coach
   // door opens the PREMIUM Coaches Portal — the product every "Start free" advertises — instead
   // of the free Basic team (which kept the homepage's own offer button from delivering the offer).
   // The Basic door survives as the quiet line beneath the cards. Post-window, today's Basic door
   // and "Free" pill return on their own.
-  if (checkoutOpen && promoActive) {
+  if (door === 'premium') {
     return {
-      href: '/coaches/start?source=start',
-      icon: Users,
+      ...base,
       accent: 'coach',
       label: 'Premium Coaches Portal',
-      title: 'Coach a team',
       body: `Your team's operations HQ — roster, lineups, budget, schedule, and documents. Free through ${FOUNDING_SEASON_END_LABEL}, no organization needed.`,
       tag: { text: `${FOUNDING_SEASON_YEAR_LABEL} season free`, tone: 'free' },
     };
   }
-  return checkoutOpen
-    ? {
-        href: '/start/team',
-        icon: Users,
-        accent: 'free',
-        label: 'Coach',
-        title: 'Coach a team',
-        body: 'A free team home for your season — no organization needed. Track your registrations and team.',
-        tag: { text: 'Free', tone: 'free' },
-      }
-    : {
-        href: '/for-coaches',
-        icon: Users,
-        label: 'Coach',
-        title: 'Coach a team',
-        body: 'A free team home for your season — no organization needed. Track your registrations and team.',
-        tag: { text: 'Coming soon', tone: 'soon' },
-      };
+  return door === 'free'
+    ? { ...base, accent: 'free', label: 'Coach', body: FREE_TEAM_BODY, tag: { text: 'Free', tone: 'free' } }
+    : { ...base, label: 'Coach', body: FREE_TEAM_BODY, tag: { text: 'Coming soon', tone: 'soon' } };
 }
 
 // S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — no League or

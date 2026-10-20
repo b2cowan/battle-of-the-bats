@@ -51,7 +51,10 @@ describe('what counts as inside the demo world', () => {
   });
 
   test('the main app is outside — including the surfaces that leaked', () => {
-    for (const path of ['/discover', '/account', '/following', '/scores', '/chat', '/auth/signup', '/']) {
+    // The sign-up doors too: the demo's start button opens one of them (The first look 1d — the coach demo the one
+    // "Coach a team" rule, the tournament demo Run a tournament), and arriving there must end the demo.
+    const signUpDoors = ['/auth/signup', '/start', '/start/tournament', '/start/team', '/coaches/start', '/for-coaches'];
+    for (const path of ['/discover', '/account', '/following', '/scores', '/chat', ...signUpDoors, '/']) {
       assert.equal(isSandboxSurfacePath(path), false, `${path} must be outside the demo`);
     }
   });
@@ -72,7 +75,10 @@ describe('what counts as inside the demo world', () => {
 describe('when the rule fires', () => {
   test('a page visit outside the demo, carrying the marker, ends the demo', () => {
     assert.equal(leaving(), true);
-    assert.equal(leaving({ pathname: '/auth/signup' }), true); // the demo's own CTA
+    // The demo's own start buttons (The first look 1d).
+    for (const pathname of ['/start/tournament', '/coaches/start', '/start/team', '/for-coaches']) {
+      assert.equal(leaving({ pathname }), true, pathname);
+    }
   });
 
   test('a browser that never opened a sandbox is never touched', () => {
@@ -208,5 +214,16 @@ describe('the wiring that makes the rule reachable', () => {
     assert.equal(isSupabaseAuthCookieName('sb-qcttcboqysynwcdyghil-auth-token.0'), true);
     assert.equal(isSupabaseAuthCookieName('sb-qcttcboqysynwcdyghil-auth-token-code-verifier'), true);
     assert.equal(isSupabaseAuthCookieName('flhq-theme'), false);
+  });
+});
+
+describe("the demo's start buttons leave by a full page load (The first look 1d, /review 2026-10-20)", () => {
+  // The proxy ends the demo only on a DOCUMENT navigation. A soft <Link> navigation renders the sign-up's step 2
+  // signed in as the shared demo account, one tap from making a team or a checkout on it.
+  test('both start buttons are plain links to the start href, never a client-side Link', async () => {
+    const src = await readFile(new URL('../../components/sandbox/SandboxChrome.tsx', import.meta.url), 'utf8');
+    assert.match(src, /<a href=\{startHref\} className=\{styles\.cta\}>/);
+    assert.match(src, /<a href=\{startHref\} className=\{styles\.toastCta\}>/);
+    assert.doesNotMatch(src, /<Link[^>]*href=\{startHref\}/);
   });
 });

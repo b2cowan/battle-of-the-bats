@@ -9,10 +9,14 @@
    zooms into a field); labels, hints, fine print and foot links at the body step. Monospace never appears here.
    Every colour is the warm --home-* vocabulary, so the column follows whatever ground its host gives it. */
 
-/* The start column on the warm paper (its ground and the paper strip under the phone tab bar come from .warm): the 420px
-   centred column, no card around the form (plan rule 1). */
+/* The start column on the paper (its ground and the paper strip under the phone tab bar come from .warm): the 420px
+   centred column, no card around the form (plan rule 1). It FOLLOWS THE SETTING (Ask 10, owner 2026-10-19), the way
+   sign-in does: `.warmTab` resolves every --home-* token to the dark shell under an explicit Dark choice, and a newcomer
+   (no setting) sees warm. All three are listed because Turbopack's `composes` is not transitive. Inside /auth the
+   layout's own warmTab wraps this one; the nesting is safe because --home-lime is captured from --logic-lime-fixed,
+   which the auth surface never re-points. */
 .page {
-  composes: warm warmVars from '../consumer/warmTheme.module.css';
+  composes: warm warmVars warmTab from '../consumer/warmTheme.module.css';
   /* The product's one loading line (LoadingState) inks with the shell's greys; on this paper they are the warm ones. */
   --text-tertiary: var(--home-dim);
   --white-35: var(--home-line-strong);
@@ -84,7 +88,7 @@
   height: 48px;
   padding: 0 0.875rem;
   background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
+  border: 1px solid var(--home-field-edge);
   border-radius: 10px;
   font-family: var(--font-sans);
   font-size: var(--type-heading);
@@ -172,7 +176,7 @@
 .secondary {
   composes: primary;
   background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
+  border: 1px solid var(--home-field-edge);
   color: var(--home-ink);
   margin-top: 0;
 }
@@ -258,7 +262,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.4rem 0.75rem;
-  border: 1px dashed var(--home-line-strong);
+  border: 1px dashed var(--home-field-edge);
   border-radius: 10px;
   font-family: var(--font-sans);
   font-size: var(--type-body);

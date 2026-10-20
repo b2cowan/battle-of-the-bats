@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { DemoOrgKind } from '@/lib/demo-org';
 import { useScrollCollapsed } from '@/lib/use-scroll-collapsed';
@@ -266,6 +265,7 @@ export default function SandboxChrome({
   slug,
   landingPath,
   isDemoOrganizer,
+  startHref,
 }: {
   kind: DemoOrgKind;
   slug: string;
@@ -273,6 +273,12 @@ export default function SandboxChrome({
   /** Is this visitor holding the demo organizer's session? Decides where the operator steps POINT
    *  — straight at the real screens for them, at the door for everybody else. */
   isDemoOrganizer: boolean;
+  /** Where the banner's and the toast's start button leads: the sign-up THIS demo is about, resolved by the
+   *  org layout (the coach demo reads the one "Coach a team" rule, the tournament demo opens Run a tournament).
+   *  ⚠ Rendered as a PLAIN <a>, never <Link>: leaving the demo ends the demo in the proxy only on a DOCUMENT
+   *  navigation (lib/sandbox-exit.ts). A soft <Link> navigation would render the sign-up's step 2 signed in as the
+   *  shared demo account, one tap from creating a team or a checkout on it (/review 2026-10-20). */
+  startHref: string;
 }) {
   const pathname = usePathname();
   // Reactive, unlike window.location: a query-only navigation (a Money-hub tab switch) changes no
@@ -800,7 +806,7 @@ export default function SandboxChrome({
                 <span className={styles.handleChev} aria-hidden="true">▾</span>
               </button>
             )}
-            <Link href="/auth/signup" className={styles.cta}>{copy.cta}</Link>
+            <a href={startHref} className={styles.cta}>{copy.cta}</a>
           </span>
         </div>
 
@@ -961,7 +967,7 @@ export default function SandboxChrome({
           <span className={styles.toastText}>
             <strong>Nothing is saved here.</strong> {copy.toastText}
           </span>
-          <Link href="/auth/signup" className={styles.toastCta}>Start free →</Link>
+          <a href={startHref} className={styles.toastCta}>Start free →</a>
         </div>
       )}
     </>

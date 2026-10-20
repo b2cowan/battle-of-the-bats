@@ -3,7 +3,8 @@
    tokens are composed in from the canonical warm stylesheet (not redefined). */
 
 .page {
-  composes: warmVars from '../../../components/consumer/warmTheme.module.css';
+  /* Follows the Warm / Dark setting with the bar above it (The first look, Ask 10): see .warmTab. */
+  composes: warmVars warmTab from '../../../components/consumer/warmTheme.module.css';
   flex: 1 1 auto;
   position: relative;
   display: flex;

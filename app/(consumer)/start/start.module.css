@@ -7,7 +7,8 @@
 
 .page {
   /* Bring the --home-* tokens into scope for the whole page subtree without redefining them. */
-  composes: warmVars from '../../../components/consumer/warmTheme.module.css';
+  /* Follows the Warm / Dark setting with the bar above it (The first look, Ask 10): see .warmTab. */
+  composes: warmVars warmTab from '../../../components/consumer/warmTheme.module.css';
   flex: 1 1 auto;
   display: flex;
   justify-content: center;

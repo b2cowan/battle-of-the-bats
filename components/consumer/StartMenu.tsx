@@ -1,15 +1,15 @@
 'use client';
 /**
- * components/consumer/StartMenu.tsx — the "Run a tournament" persona menu (Desktop Public UX
- * Phase 1, WI-2). The CTA label the owner ratified stays exactly as it was; on desktop it now
- * opens a small menu where organizing leads and a quieter "More ways to start" group names the
- * paths the old single link mislabelled (coach / join / league). Desktop-only by placement —
+ * components/consumer/StartMenu.tsx — the top bar's "Get started" menu (Desktop Public UX Phase 1, WI-2;
+ * renamed from "Run a tournament" by The first look, Ask 13, owner 2026-10-19: the marketing bar already says
+ * Get started, and the old label stood over the team sign-up too). Running a tournament leads; a quieter
+ * "More ways to start" group names the other doors (coach / join / league), each by the same words /start uses. Desktop-only by placement —
  * it lives in the top bar's utility cluster, which the shell hides ≤900px (mobile keeps the
  * bottom tabs and reaches /start through content CTAs).
  *
  * Gating: props default to the SAFE routes (coach → the /start chooser, league hidden) so a
  * mount that can't resolve plan gating server-side never promotes a gated door; dynamic mounts
- * pass `getStartMenuConfig()` for the direct hrefs. (S1-1 rider — see lib/start-menu.ts.)
+ * pass `getStartMenuConfig()` for the direct hrefs — the ONE coach rule (lib/start-menu.ts).
  */
 import { useRef, useState } from 'react';
 import Link from 'next/link';
@@ -50,13 +50,13 @@ export default function StartMenu({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        Run a tournament
+        Get started
         <ChevronDown size={13} className={`${styles.startCaret} ${open ? styles.startCaretOpen : ''}`} aria-hidden />
       </button>
       {open && (
         <div className={styles.startMenu} role="menu" aria-label="Get started">
           <Link href="/start/tournament" role="menuitem" className={styles.startItem} onClick={close}>
-            <span className={styles.startItemTitle}>Organize a tournament</span>
+            <span className={styles.startItemTitle}>Run a tournament</span>
             <span className={styles.startItemSub}>Teams, schedule, brackets, and a public site — free to start.</span>
           </Link>
           <div className={styles.startGroup} aria-hidden>More ways to start</div>
@@ -70,7 +70,7 @@ export default function StartMenu({
           </Link>
           {showLeague && (
             <Link href="/start/league" role="menuitem" className={styles.startItem} onClick={close}>
-              <span className={styles.startItemTitle}>Run a league season</span>
+              <span className={styles.startItemTitle}>Start a league season</span>
               <span className={styles.startItemSub}>Registration, draft, scheduling, standings, and parent comms.</span>
             </Link>
           )}

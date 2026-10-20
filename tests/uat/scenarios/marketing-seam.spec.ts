@@ -15,6 +15,9 @@ import path from 'path';
 
 test.use({ storageState: path.join(process.cwd(), 'tests/uat/.auth/org-owner.json') });
 
+/** A plan button that opens a sign-up: Run a tournament's door, or the old address that forwards to it. */
+const SIGNUP_LINKS = '#org-plans a[href^="/start/tournament"], #org-plans a[href^="/auth/signup"]';
+
 test.describe('R4 — the marketing bar, signed in', () => {
   for (const marketingPath of ['/', '/pricing']) {
     test(`${marketingPath} offers Account + Open app, never Sign In`, async ({ page }) => {
@@ -48,7 +51,7 @@ test.describe('R4 — the plan cards point at real actions for an operator', () 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/pricing', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1500);
-    const signupCtas = await page.locator('#org-plans a[href^="/auth/signup"]').count();
+    const signupCtas = await page.locator(SIGNUP_LINKS).count();
     expect(signupCtas, 'sign-up CTAs shown to an account that already operates here').toBe(0);
   });
 
@@ -74,6 +77,8 @@ test.describe('R4 — the plan cards point at real actions for an operator', () 
     // The role-summary response is delayed deliberately so the window is wide enough to observe.
     // What is asserted is the guarantee the fix actually makes: from the moment we know the
     // visitor is SIGNED IN, no sign-up href is exposed until their real state is known.
+    // The plan buttons open Run a tournament's sign-up directly since The first look 1d (the old /auth/signup
+    // forwards there); both are counted, or this would pass vacuously the day the links moved.
     await page.route('**/api/me/role-summary', async route => {
       await new Promise(r => setTimeout(r, 2500));
       await route.continue();
@@ -83,7 +88,7 @@ test.describe('R4 — the plan cards point at real actions for an operator', () 
     // Wait for hydration to have resolved the local session read (the placeholder label appears).
     await expect(page.locator('#org-plans').getByText('…').first()).toBeVisible({ timeout: 10_000 });
     expect(
-      await page.locator('#org-plans a[href^="/auth/signup"]').count(),
+      await page.locator(SIGNUP_LINKS).count(),
       'sign-up CTA exposed to a signed-in operator while their state was resolving',
     ).toBe(0);
     // …and it settles into the real operator state rather than staying pending forever.
@@ -95,7 +100,7 @@ test.describe('R4 — the plan cards point at real actions for an operator', () 
     const page = await ctx.newPage();
     await page.goto('/pricing', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1200);
-    expect(await page.locator('#org-plans a[href^="/auth/signup"]').count()).toBeGreaterThan(0);
+    expect(await page.locator(SIGNUP_LINKS).count()).toBeGreaterThan(0);
     expect(await page.locator('#org-plans a[href*="/admin/org/billing"]').count()).toBe(0);
     await ctx.close();
   });
@@ -112,14 +117,14 @@ test.describe('R11 — acquisition chrome leaves an operator\'s everyday bar (au
   // PROSPECTS"): a permanent sales link in the chrome of someone who already operates here reads
   // as being marketed to inside a tool they've adopted. Prospects keep BOTH doors — Pricing is the
   // research door, the persona menu is the action door, and that pairing was ratified separately.
-  test('a workspace-holder sees neither Pricing nor "Run a tournament" on the consumer strip', async ({ page }) => {
+  test('a workspace-holder sees neither Pricing nor "Get started" on the consumer strip', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/discover', { waitUntil: 'networkidle' });
     await page.waitForTimeout(800);
     const strip = page.locator('#consumer-topbar');
     await expect(strip).toBeVisible();
     await expect(strip.getByRole('link', { name: /^Pricing$/i })).toHaveCount(0);
-    await expect(strip.getByRole('button', { name: /run a tournament/i })).toHaveCount(0);
+    await expect(strip.getByRole('button', { name: /get started/i })).toHaveCount(0);
     // …but their own operator door is still there. Removing the sales links must not leave the
     // utility cluster empty — that would be a regression, not a simplification.
     await expect(strip.locator('a, button').filter({ hasText: /workspaces|admin area|coaches portal/i }).first()).toBeVisible();
@@ -133,7 +138,7 @@ test.describe('R11 — acquisition chrome leaves an operator\'s everyday bar (au
     await page.waitForTimeout(800);
     const strip = page.locator('#consumer-topbar');
     await expect(strip.getByRole('link', { name: /^Pricing$/i })).toBeVisible();
-    await expect(strip.getByRole('button', { name: /run a tournament/i })).toBeVisible();
+    await expect(strip.getByRole('button', { name: /get started/i })).toBeVisible();
     await ctx.close();
   });
 });

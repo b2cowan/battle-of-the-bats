@@ -12,7 +12,7 @@
  * Home lives at /discover (the canonical, SEO-bearing directory URL — unchanged);
  * only its label/icon change. It absorbs the retired Discover + Following tabs and
  * the /home workspace launchpad. On desktop the header also carries the organizer
- * affordances (Pricing + the "Run a tournament" persona menu + one operator pill +
+ * affordances (Pricing + the "Get started" persona menu + one operator pill +
  * Sign In) so desktop visitors who land here from search can still convert or sign in.
  *
  * ⚖ CHAT IS PAUSED (owner, 2026-10-18 — lib/chat-pause.ts; ruling P2): the Chat tab, the tournament strip's chat
@@ -33,7 +33,7 @@ import flip from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
-import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome, showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
+import { isWarmSkinPath, showsTournamentChrome, showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
 import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
@@ -54,7 +54,8 @@ const TABS = ALL_TABS.filter(t => !(CHAT_PAUSED && t.href === '/chat'));
 // suspended — is INSIDE that set and follows the user's theme like every other tab: the old R1-4
 // "auth stays dark" carve-out was superseded once warm became the platform default
 // (design_decisions 2026-07-23), and leaving the note here described a rule the code stopped
-// following. Corrected 2026-08-01 (top-nav audit §4).
+// following. Corrected 2026-08-01 (top-nav audit §4). Since The first look 1d (Ask 10, owner 2026-10-19) the
+// journey follows the setting too: a Dark account stays dark from a sign-up's first screen to its last.
 const underPrefix = (path: string, p: string) => path === p || path.startsWith(p + '/');
 
 /** Space-holder for the strip's operator slot while the answer is in flight. FlipPill's own
@@ -183,7 +184,7 @@ export default function ConsumerNav({
   //   1. the Flip — page-matched and scoped to THIS event, so it beats a global pill outright;
   //   2. the global operator pill — for an operator who is a plain fan of this particular event
   //      (their own workspace is still one click away);
-  //   3. the "Run a tournament" menu — fans and anonymous visitors, unchanged.
+  //   3. the "Get started" menu — fans and anonymous visitors, unchanged.
   // Shares one cached request per event with the phone-width header Flip, and stays silent for
   // anonymous visitors.
   // Both values come from the ONE hook, so the "still waiting" flag can never conclude the answer
@@ -268,7 +269,7 @@ export default function ConsumerNav({
             <LogIn size={22} strokeWidth={isActive('/auth/login') ? 2.5 : 1.8} />
             {isActive('/auth/login') && <span className={styles.activeDot} />}
           </span>
-          <span className={styles.label}>Sign In</span>
+          <span className={styles.label}>Sign in</span>
         </Link>
       )}
     </>
@@ -378,12 +379,12 @@ export default function ConsumerNav({
         {operatorDoor?.kind === 'pill' && (
           <Link href={operatorDoor.pill.href} className={styles.utilCoach}>{operatorDoor.pill.label}</Link>
         )}
-        {/* Signed-out visitors keep a "Sign In" affordance (never ON the sign-in pages).
-            Casing is canon: "Sign In" everywhere in chrome — the phone tab, the org identity
-            row and the marketing bar all said "Sign In" while these two desktop CTAs said
-            "Sign in" (top-nav audit §D12, 2026-08-01). */}
+        {/* Signed-out visitors keep a "Sign in" affordance (never ON the sign-in pages). Sentence case like
+            the phone tab (The first look, Ask 13, owner 2026-10-19: this bar and the tabs read in sentence
+            case for every visitor). It supersedes top-nav audit §D12's "Sign In" here; the marketing bar and
+            the org identity row set it in capitals and move with The public face, warm. */}
         {!signedIn && !pathname.startsWith('/auth') && (
-          <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign In</Link>
+          <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign in</Link>
         )}
       </div>
     </>
@@ -454,7 +455,7 @@ export default function ConsumerNav({
                     no theme block (the venue's colors rule here), and signing out keeps the fan on
                     this event rather than throwing them to the sign-in page. */}
                 {signedIn && <AccountMenu className={styles.stripIcon} signOutTo="here" />}
-                {!signedIn && <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign In</Link>}
+                {!signedIn && <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign in</Link>}
               </>
             )}
             {/* The operator flip stays. It is the tour's third beat and the demo's whole point. */}
@@ -478,11 +479,10 @@ export default function ConsumerNav({
   // its routes aren't in isWarmSkinPath (that predicate also drives footer/theme-color for
   // the (consumer) group), so the variant itself carries the warm decision (warmRoute,
   // computed above the pill block since the Workspaces popover shares it).
-  // The four consumer TABS follow the user's theme preference (Dark⇄Warm); the always-warm
-  // sign-up JOURNEY does not. The `…WarmTab` marker lets the CSS dark-gate repaint only the tab
-  // nav under `data-user-theme="dark"`, leaving the journey nav warm. (TH-1/TH-3.)
-  const prefGated = isConsumerShellPath(pathname) || variant === 'coach';
-  const bottomNavCls = `${styles.bottomNav}${warmRoute ? ` ${warm.warmVars} ${styles.bottomNavWarm}${prefGated ? ` ${styles.bottomNavWarmTab}` : ''}` : ''}`;
+  // Every warm bar follows the user's theme preference (Dark⇄Warm): the four consumer TABS (TH-1/TH-3), the coach
+  // shell, and since The first look 1d (Ask 10, owner 2026-10-19) the sign-up JOURNEY too, whose pages now wear the
+  // same pref-gated surface, so the bar and the page agree.
+  const bottomNavCls = `${styles.bottomNav}${warmRoute ? ` ${warm.warmVars} ${styles.bottomNavWarm}` : ''}`;
 
   // The free coaches portal keeps only the PHONE bar (owner ruling 2026-10-13, Free coach header parity): on a
   // computer it wears the paid portal's strip (CoachTopStrip, mounted by CoachPortalShell) — the fan app's
@@ -496,11 +496,10 @@ export default function ConsumerNav({
     );
   }
 
-  const topbarCls = `${styles.topbar}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}${prefGated ? ` ${styles.topbarWarmTab}` : ''}` : ''}`;
+  const topbarCls = `${styles.topbar}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}` : ''}`;
   // Tells globals.css to paint <body> the paper under a warm page, so the end-of-page bounce shows
-  // paper instead of the near-black base. 'pref' follows the theme preference (the tabs); 'always'
-  // is the warm journey.
-  const warmBase = warmRoute ? (prefGated ? 'pref' : 'always') : undefined;
+  // paper instead of the near-black base. 'pref': it follows the theme preference, like every warm page now.
+  const warmBase = warmRoute ? 'pref' : undefined;
 
   return (
     <>

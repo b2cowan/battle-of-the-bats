@@ -9,8 +9,9 @@
 import { RESERVED_ORG_SLUGS } from './reserved-slugs';
 import { safeNextPath } from './safe-redirect';
 
-// NOTE: this is the pref-gated consumer-shell set — it drives the shell layout, the
-// marketing Navbar/Footer suppression, the warm nav skin, AND the theme-color tint.
+// NOTE: this is the consumer-shell set — it drives the shell layout, the marketing Navbar/Footer
+// suppression, the warm nav skin, AND the theme-color tint (which follows the preference here and, since
+// The first look 1d, on the sign-up journey too).
 // /auth is included (design_decisions 2026-07-23): once warm became the platform default,
 // the sign-in family staying dark was a jarring island — auth now follows the user theme
 // exactly like the tabs (its pages wear the warmTab surface via app/(consumer)/auth/layout.tsx).

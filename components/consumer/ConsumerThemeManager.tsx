@@ -10,9 +10,8 @@
  *     choice) leaves the device preference untouched.
  *
  *  2. Dynamic `theme-color` meta: the OS status bar follows the active theme on consumer routes
- *     (warm journey always warm; the four tabs AND the auth group follow the preference — /auth
- *     is in CONSUMER_SHELL_PREFIXES since 2026-07-23). Restores the default when leaving the
- *     consumer shell.
+ *     (the four tabs, the auth group and, since The first look 1d, the sign-up journey all follow
+ *     the preference). Restores the default when leaving the consumer shell.
  */
 
 import { useEffect } from 'react';
@@ -25,7 +24,7 @@ import {
   THEME_COLORS,
   type UserTheme,
 } from '@/lib/user-theme';
-import { isConsumerShellPath, isWarmJourneyPath } from '@/lib/consumer-routes';
+import { isWarmSkinPath } from '@/lib/consumer-routes';
 
 // The root-layout default (dark); restored whenever no consumer-route rule applies.
 const DEFAULT_THEME_COLOR = '#0a0a0f';
@@ -49,8 +48,7 @@ export default function ConsumerThemeManager({ accountTheme }: { accountTheme: U
     const compute = () => {
       const active = getEffectiveTheme();
       let color = DEFAULT_THEME_COLOR;
-      if (isWarmJourneyPath(pathname)) color = THEME_COLORS.warm;               // journey = always warm
-      else if (isConsumerShellPath(pathname)) color = active === 'dark' ? THEME_COLORS.dark : THEME_COLORS.warm;
+      if (isWarmSkinPath(pathname)) color = active === 'dark' ? THEME_COLORS.dark : THEME_COLORS.warm;
       meta.setAttribute('content', color);
     };
     compute();

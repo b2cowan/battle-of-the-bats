@@ -221,9 +221,11 @@ describe('warm palette — legible by construction', () => {
       rule[1].includes('html:not([data-user-theme="dark"]):has([data-warm-base="pref"]) body,'),
       'the fan tabs left the warm page-base rule',
     );
+    // The sign-up journey rides the 'pref' marker since The first look 1d (Ask 10, owner 2026-10-19): a Dark
+    // account stays dark through a sign-up, so no page base is painted warm regardless of the setting any more.
     assert.ok(
-      rule[1].includes('html:has([data-warm-base="always"]) body,'),
-      'the warm sign-up journey left the warm page-base rule',
+      !css.includes('data-warm-base="always"'),
+      'a page base is painted warm under Dark again; the sign-up journey follows the setting (Ask 10)',
     );
     const consumerPaper = readPalette(CONSUMER_PALETTE).paper;
     assert.ok(consumerPaper, '--home-paper not found in the consumer warm theme');

@@ -72,7 +72,7 @@ const PLANS: Plan[] = [
       '3 staff / admin seats',
     ],
     cta: 'Get Started Free',
-    ctaHref: '/auth/signup',
+    ctaHref: '/start/tournament',
   },
   {
     key: 'tournament_plus',
@@ -113,7 +113,7 @@ const PLANS: Plan[] = [
       'Unlimited tournaments and staff seats',
     ],
     cta: 'Start free — no credit card required',
-    ctaHref: '/auth/signup',
+    ctaHref: '/start/tournament',
   },
   {
     key: 'league',
@@ -142,7 +142,7 @@ const PLANS: Plan[] = [
       'Advanced member roles and permissions',
     ],
     cta: 'Start free — no credit card required',
-    ctaHref: '/auth/signup',
+    ctaHref: '/start/tournament',
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
   },
@@ -174,7 +174,7 @@ const PLANS: Plan[] = [
       'Whole coaching staff included — no per-team fee',
     ],
     cta: 'Start your Club trial',
-    ctaHref: '/auth/signup',
+    ctaHref: '/start/tournament',
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
   },
@@ -324,7 +324,8 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
 
   function getSignupHref(plan: Plan) {
     // Tournament's CTA is plain sign-up; the coaches card owns its own destination (the coach
-    // start flow takes no plan/billing params).
+    // start flow takes no plan/billing params). The others ride their plan to Run a tournament's sign-up, which
+    // shows it as the plan chip (The first look, Ask 6: every plan button keeps its plan).
     if (plan.key === 'tournament' || plan.key === 'team') return plan.ctaHref;
 
     const params = new URLSearchParams({

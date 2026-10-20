@@ -391,7 +391,7 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
   const org = normalizeOrg(member);
   const slug = org?.slug;
 
-  if (!slug) return '/auth/signup';
+  if (!slug) return '/start/tournament';
 
   const orgId = org?.id ?? member.organization_id;
   const planId = org?.plan_id;

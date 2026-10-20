@@ -85,7 +85,7 @@ const UPGRADE_BRIDGES = [
     to: 'Tournament Plus',
     label: 'Tournament → Tournament Plus',
     cta: 'Start Free — No Credit Card',
-    href: '/auth/signup',
+    href: '/start/tournament?plan=tournament_plus&billing=monthly',
     earlyAccess: false,
   },
   {
@@ -360,7 +360,7 @@ export default async function PricingPage() {
                     {b.cta} →
                   </EarlyAccessModalTrigger>
                 ) : (
-                  <Link href={b.href ?? '/auth/signup'} className={styles.bridgeCta}>
+                  <Link href={b.href ?? '/start/tournament'} className={styles.bridgeCta}>
                     {b.cta} →
                   </Link>
                 )}
@@ -473,7 +473,7 @@ export default async function PricingPage() {
           </p>
           <div className={styles.ctaActions}>
             <Link
-              href="/auth/signup"
+              href="/start/tournament"
               className="tap-target font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
               Get Started Free

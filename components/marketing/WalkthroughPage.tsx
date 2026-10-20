@@ -117,7 +117,7 @@ export default function WalkthroughPage({
   const askThenDoor = (
     <>
       <Link
-        href="/auth/signup"
+        href="/start/tournament"
         className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
       >
         Start free

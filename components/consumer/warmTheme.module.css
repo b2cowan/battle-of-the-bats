@@ -36,6 +36,7 @@
   --home-dim:          #615A54;                 /* secondary / meta text */
   --home-line:         rgba(70, 55, 30, 0.12);  /* hairline */
   --home-line-strong:  rgba(70, 55, 30, 0.20);  /* stronger hairline */
+  --home-field-edge:   var(--home-line-strong);  /* where to type: a field's edge (its own step in Dark, below) */
   --home-olive:        #57651E;                 /* darkened-lime accent: links, active tab, filled star */
   --home-olive-soft:   rgba(87, 101, 30, 0.10); /* olive tint fill */
   --home-live:         #B03A22;                 /* live red — AA-corrected 2026-08-02 (was #D9482B,
@@ -128,8 +129,8 @@
    equivalents here — so every surface consuming those tokens (directly, or via a scoped remap
    like ChatPanel `.panelWarm`) renders dark with NO per-component change and no flash. Because
    the dark values funnel through this one block, it is the single injection point for consumer
-   dark. The warm sign-up JOURNEY (/start, /coaches/*) uses plain `.warm`, never `.warmTab`, so
-   it stays warm regardless of preference. Non-choosers (attribute absent) never match the dark
+   dark. The sign-up JOURNEY (/start, /coaches/start, claim, join, welcome) wears it too since The
+   first look 1d (Ask 10, owner 2026-10-19): a Dark account stays dark through a sign-up. Non-choosers (attribute absent) never match the dark
    rule, so their surfaces are pixel-identical to today. `--home-lime` stays true lime (a lime
    CTA reads on any ground) and `--home-radius*` are theme-agnostic, so neither is remapped. */
 /* Compose BOTH warm and warmVars explicitly — Turbopack's `composes` is NOT transitive
@@ -147,6 +148,10 @@
   --home-dim:         var(--white-60);
   --home-line:        var(--white-10);
   --home-line-strong: var(--white-20);
+  /* A field's edge shows where to type, so it reaches 3:1 on the dark field (The first look D-F10: --white-20 is
+     about 1.6:1, --white-40 about 3.8:1; the drawing's #646b77 is 3.4:1). Decorative hairlines stay quiet. */
+  --home-field-edge:  var(--white-40);
+  --home-fill:        var(--white-05);
   --home-olive:       var(--primary-light);
   --home-olive-soft:  rgba(var(--logic-lime-rgb), 0.12);
   --home-live:        var(--danger);

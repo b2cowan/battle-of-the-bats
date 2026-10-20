@@ -4,7 +4,9 @@
    old dark card (which read as a seam under the warm nav). --home-* tokens are composed in. */
 
 .wrap {
-  composes: warmVars from '../consumer/warmTheme.module.css';
+  /* Follows the Warm / Dark setting with the bar above it, which it was warmed to match (The first look, Ask 10):
+     see .warmTab. */
+  composes: warmVars warmTab from '../consumer/warmTheme.module.css';
   flex: 1 1 auto;
   position: relative;
   display: flex;
@@ -83,7 +85,7 @@
   font: inherit;
   color: var(--text-primary);
   background: var(--home-paper);
-  border: 1px solid var(--home-line-strong);
+  border: 1px solid var(--home-field-edge);
   border-radius: var(--home-radius-sm);
   padding: 0 0.7rem;
   width: 100%;

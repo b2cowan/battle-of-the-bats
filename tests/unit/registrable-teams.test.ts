@@ -396,9 +396,11 @@ describe('what a separate team costs: one sentence, both screens (E3)', () => {
   });
 
   it('the join page shows it under the pair, outside the Existing Team branch, before any tap', () => {
-    const src = read('app', 'coaches', 'join', 'page.tsx');
-    const pairEnd = src.search(/New Team\s*<\/button>\s*<\/div>/);
-    const line = src.indexOf('<strong>New Team</strong> — {differentTeamSentence(portalTeams)}');
+    const src = read('app', 'coaches', 'join', 'page.tsx').replace(/\r\n/g, '\n');
+    // The pair is the shared two-option control since The first look 1c, and its words are sentence case (rule 3).
+    const pair = /<ChoicePair[\s\S]*?\/>\n/.exec(src);
+    const pairEnd = pair ? pair.index + pair[0].length : -1;
+    const line = src.indexOf('<strong>New team</strong> — {differentTeamSentence(portalTeams)}');
     const branch = src.indexOf("{linkMode === 'existing' && (");
     assert.ok(pairEnd > 0 && line > pairEnd && branch > line, 'the pair, then the line, then the Existing Team list');
     assert.doesNotMatch(src.slice(pairEnd, line), /linkMode/, 'the line never waits on which button is chosen');
@@ -409,7 +411,7 @@ describe('what a separate team costs: one sentence, both screens (E3)', () => {
     const src = read('app', 'coaches', 'join', 'page.tsx');
     const lockedLines = src.indexOf('alreadyRegisteredLine(team.name, team.alreadyIn!)');
     const line = src.indexOf('<strong>Continue</strong> — {differentTeamSentence(portalTeams)}');
-    const button = src.indexOf("{loading ? 'Linking...' : 'Continue'}");
+    const button = src.indexOf("{loading ? 'Linking…' : 'Continue'}");
     assert.ok(lockedLines > 0 && line > lockedLines && button > line, 'the locked lines, then the line, then Continue');
     assert.match(src.slice(lockedLines, line), /\{basicCoachTeams\.length === 0 && portalTeams\.length > 0 && \(/,
       'only when nothing can be chosen and a Coaches Portal team exists');

@@ -123,7 +123,7 @@ export default async function ForTournamentOrganizersPage() {
                 is NOT lost — the sub-line directly above answers it, and the trust list below says
                 it a third time, which is where it belongs. */}
             <Link
-              href="/auth/signup"
+              href="/start/tournament"
               className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
               Start free
@@ -240,7 +240,7 @@ export default async function ForTournamentOrganizersPage() {
                   </div>
                 ))}
               </div>
-              <Link href="/auth/signup" className={`${styles.planCta} ${styles.planCtaFree}`}>
+              <Link href="/start/tournament" className={`${styles.planCta} ${styles.planCtaFree}`}>
                 Start free →
               </Link>
             </div>
@@ -285,7 +285,7 @@ export default async function ForTournamentOrganizersPage() {
               {/* Same relabel as the hero, and for the same reason — a page whose hero says
                   "Start free" and whose plan card says something longer reads as two hands. This
                   matches the Premium Coaches Portal card's "Start free →" exactly. */}
-              <Link href="/auth/signup" className={`${styles.planCta} ${styles.planCtaPaid}`}>
+              <Link href="/start/tournament?plan=tournament_plus&billing=monthly" className={`${styles.planCta} ${styles.planCtaPaid}`}>
                 Start free →
               </Link>
             </div>
@@ -326,7 +326,7 @@ export default async function ForTournamentOrganizersPage() {
               </p>
               <div className={styles.foundingSeasonActions}>
                 <Link
-                  href="/auth/signup"
+                  href="/start/tournament"
                   className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
                 >
                   Start free
@@ -392,7 +392,7 @@ export default async function ForTournamentOrganizersPage() {
           </p>
           <div className={styles.ctaActions}>
             <Link
-              href="/auth/signup"
+              href="/start/tournament"
               className="tap-target font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
               Get Started Free

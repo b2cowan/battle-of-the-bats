@@ -42,7 +42,7 @@ const FOOTER_GROUPS = [
   {
     heading: 'Get started',
     links: [
-      ['Start Free', '/auth/signup'],
+      ['Start Free', '/start/tournament'],
       ['Coaches', '/coaches/start'],
       ['Sign In', '/auth/login'],
     ],
