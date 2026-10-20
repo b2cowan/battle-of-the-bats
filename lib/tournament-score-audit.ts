@@ -2,7 +2,7 @@ import type { ScoreSubmissionSource } from './types';
 
 export function scoreSubmissionSourceLabel(source?: ScoreSubmissionSource | null) {
   if (source === 'scorekeeper') return 'Scorekeeper';
-  if (source === 'admin_results') return 'Results & Scoring';
+  if (source === 'admin_results') return 'Results & scoring';
   if (source === 'system') return 'System';
   return 'Unknown source';
 }

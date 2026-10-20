@@ -363,7 +363,7 @@ const tournamentsHelp: HelpPageContent = {
       links: [
         { label: 'Venues', href: '../tournaments/venues' },
         { label: 'Communications', href: '../tournaments/communication' },
-        { label: 'Rules & Resources', href: '../tournaments/rules' },
+        { label: 'Rules & resources', href: '../tournaments/rules' },
       ],
       content: (
         <>
@@ -421,11 +421,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-rules-resources',
           question: 'How do I show rules or resources to teams?',
-          answerText: 'Add rules and documents from Rules & Resources so they appear on the public tournament site. On the public Rules page, uploaded documents open in a new tab (so a PDF views in the browser instead of downloading), and long rule sets get jump-links so fans can skip to a section.',
+          answerText: 'Add rules and documents from Rules & resources so they appear on the public tournament site. On the public Rules page, uploaded documents open in a new tab (so a PDF views in the browser instead of downloading), and long rule sets get jump-links so fans can skip to a section.',
           keywords: ['rules', 'resources', 'documents', 'public site', 'pdf', 'jump links'],
           answer: (
             <>
-              <p>Open <strong>Rules & Resources</strong> and add the text, links, or documents teams need. These become part of the tournament public experience.</p>
+              <p>Open <strong>Rules & resources</strong> and add the text, links, or documents teams need. These become part of the tournament public experience.</p>
               <p>On the public <strong>Rules</strong> page, uploaded documents open in a new tab — a PDF views right in the browser instead of forcing a download — and when you have several rule sections, fans get quick jump-links to skip straight to the one they need.</p>
             </>
           ),
@@ -531,7 +531,7 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['score finalization', 'pending review', 'scorekeepers', 'scoring settings', 'final alert', 'admin review', 'final immediately'],
           answer: (
             <>
-              <p>Open <strong>Event settings</strong>, then <strong>Schedule rules</strong>. <strong>Score finalization</strong> is <strong>Admin review</strong> (scorekeeper submissions wait in Pending review until an admin finalizes them in Results) or <strong>Final immediately</strong> (a submission is final as soon as it&rsquo;s saved). Admin score entry from Results &amp; Scoring remains an admin action and can always finalize or correct scores.</p>
+              <p>Open <strong>Event settings</strong>, then <strong>Schedule rules</strong>. <strong>Score finalization</strong> is <strong>Admin review</strong> (scorekeeper submissions wait in Pending review until an admin finalizes them in Results) or <strong>Final immediately</strong> (a submission is final as soon as it&rsquo;s saved). Admin score entry from Results &amp; scoring remains an admin action and can always finalize or correct scores.</p>
               <p>If you&rsquo;ve turned on fan score alerts (Tournament Plus), the &ldquo;Final&rdquo; alert is sent when a score becomes final. For tournaments on Admin review, that&rsquo;s the moment an admin finalizes the score.</p>
             </>
           ),
@@ -1549,7 +1549,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li>Type both scores. The line above the button says what saving does: <em>This score is final as soon as you save it</em>, or <em>The organizer reviews this score before it&rsquo;s final</em>.</li>
                 <li>Tap <strong>Finalize score</strong> (or <strong>Submit for review</strong>). A short notice confirms it — &ldquo;Final · Wolves 7, Royals 4&rdquo; — and the list stays where it was.</li>
               </HelpSteps>
-              <p>A tap outside the sheet does nothing, so a stray thumb can&rsquo;t lose a score; <strong>Cancel</strong> (or the phone&rsquo;s Back) closes it. If you send a score back from Results &amp; Scoring while their screen is open, they see &ldquo;Sent back to score again&rdquo; with the game&rsquo;s teams, and the game returns to To score. A forfeit sits under Final and can&rsquo;t be scored there.</p>
+              <p>A tap outside the sheet does nothing, so a stray thumb can&rsquo;t lose a score; <strong>Cancel</strong> (or the phone&rsquo;s Back) closes it. If you send a score back from Results &amp; scoring while their screen is open, they see &ldquo;Sent back to score again&rdquo; with the game&rsquo;s teams, and the game returns to To score. A forfeit sits under Final and can&rsquo;t be scored there.</p>
               <p>The <strong>⇄ Public site</strong> pill in the header opens the public schedule for the event being scored, so a volunteer can check a posted score is live. If two of your events run that day, it opens a small chooser.</p>
             </>
           ),
@@ -1595,10 +1595,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-open-scorekeeper-view',
           question: 'How do I open the volunteers’ screens myself?',
-          answerText: 'On Results & Scoring, the Scorekeeper button opens Field scores in a new tab, on every plan. On the free Tournament plan there is no Check-in page or Staff kit; the host, admins and staff enter scores there. On Tournament Plus and above, on the admin Check-in page, Gate view opens the gate volunteer’s board. The Staff kit’s Open buttons do the same. They are the volunteers’ own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.',
+          answerText: 'On Results & scoring, the Scorekeeper button opens Field scores in a new tab, on every plan. On the free Tournament plan there is no Check-in page or Staff kit; the host, admins and staff enter scores there. On Tournament Plus and above, on the admin Check-in page, Gate view opens the gate volunteer’s board. The Staff kit’s Open buttons do the same. They are the volunteers’ own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.',
           keywords: ['open scorekeeper view', 'scorekeeper view', 'scorekeeper route', 'day of scoring', 'gate view', 'field scores', 'try the volunteer screen', 'test scoring before game day'],
           answer: (
-            <p>On <strong>Results &amp; Scoring</strong>, the <strong>Scorekeeper</strong> button opens <strong>Field scores</strong> in a new tab, on every plan. On the free Tournament plan there is no Check-in page or Staff kit; the host, admins and staff enter scores on Field scores. On Tournament Plus and above, on the admin <strong>Check-in</strong> page, <strong>Gate view</strong> opens the gate volunteer&rsquo;s board. The Staff kit&rsquo;s <strong>Open</strong> buttons do the same. They&rsquo;re the volunteers&rsquo; own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.</p>
+            <p>On <strong>Results &amp; scoring</strong>, the <strong>Scorekeeper</strong> button opens <strong>Field scores</strong> in a new tab, on every plan. On the free Tournament plan there is no Check-in page or Staff kit; the host, admins and staff enter scores on Field scores. On Tournament Plus and above, on the admin <strong>Check-in</strong> page, <strong>Gate view</strong> opens the gate volunteer&rsquo;s board. The Staff kit&rsquo;s <strong>Open</strong> buttons do the same. They&rsquo;re the volunteers&rsquo; own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.</p>
           ),
         },
         {
@@ -1633,11 +1633,11 @@ const tournamentsHelp: HelpPageContent = {
       keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'playing now', 'up next', 'needs a score', 'to finalize', 'game-day dashboard', 'needs you', 'all games', 'correct a final score', 'score submitted notification', 'no games found', 'results is empty', 'nothing in results', 'show all games', 'results filters', 'why cant i see my games', 'game row', 'columns', 'when game field division status', 'tie', 'level score', 'who can change a final score', 'who can finalize', 'this game is final', 'read-only final game'],
       searchText: 'teams checked in count open check-in from the dashboard where is check-in on my phone check-in in more game day more sheet shortcut tiles check-in tile staff kit tile teams tile where is staff kit on my phone bottom bar dashboard results schedule messages enter scores finalize scores scorekeeper submissions pending review results scoring final games public standings correctscore revert scheduled score to finalize needs a score playing now up next game day dashboard game-day board overdue live game what is on now lists hidden when empty one tap open score editor one row per game columns when game field division status finalize in the status column day under the time needs you all games lens scheduled cancelled correct an already final score score submitted notification opens results with the game ready no games found results is empty nothing shows in results why cant i see my games all my games are missing show all games button tie level score scores are level forfeit pending review final export status column word customize this board show hide checkboxes drag to reorder who can finalize who can change a final score this game is final only someone who can finalize scores can change it read-only final game staff cannot change a final result save score stays off seal archive tournaments permission forfeit under final scorekeeper volunteer field scores scorekeeper button opens field scores',
       links: [
-        { label: 'Results & Scoring', href: '../tournaments/results' },
+        { label: 'Results & scoring', href: '../tournaments/results' },
         { label: 'Field scores', href: '../../scorekeeper' },
       ],
       content: (
-        <p>Admins can enter, review, finalize, correct, export, or revert scores from <strong>Results &amp; Scoring</strong>. It opens on <strong>Needs you</strong> — games waiting to finalize, needing a score, or playing right now — with <strong>All games</strong> one tap away.</p>
+        <p>Admins can enter, review, finalize, correct, export, or revert scores from <strong>Results &amp; scoring</strong>. It opens on <strong>Needs you</strong> — games waiting to finalize, needing a score, or playing right now — with <strong>All games</strong> one tap away.</p>
       ),
       subtopics: [
         {
@@ -1651,7 +1651,7 @@ const tournamentsHelp: HelpPageContent = {
           id: 'results-needs-you-all-games',
           title: 'Needs you and All games',
           content: (
-            <p><strong>Results &amp; Scoring</strong> opens on <strong>Needs you</strong> — every division&rsquo;s games waiting to finalize, needing a score, or playing right now. Tap <strong>All games</strong> to also see games not yet due and games already final. On a computer each game is one row with <strong>When</strong>, <strong>Game</strong>, <strong>Field</strong>, <strong>Division</strong> and <strong>Status</strong>; a game from another day shows its day under its time. Tap any game&rsquo;s row to open its score editor in that same place in the list, or tap <strong>Scorekeeper</strong> to open <strong>Field scores</strong>, the volunteers&rsquo; screen, in a new tab. On the free Tournament plan there are no volunteers, so Field scores is the scoring screen for you, your admins and staff.</p>
+            <p><strong>Results &amp; scoring</strong> opens on <strong>Needs you</strong> — every division&rsquo;s games waiting to finalize, needing a score, or playing right now. Tap <strong>All games</strong> to also see games not yet due and games already final. On a computer each game is one row with <strong>When</strong>, <strong>Game</strong>, <strong>Field</strong>, <strong>Division</strong> and <strong>Status</strong>; a game from another day shows its day under its time. Tap any game&rsquo;s row to open its score editor in that same place in the list, or tap <strong>Scorekeeper</strong> to open <strong>Field scores</strong>, the volunteers&rsquo; screen, in a new tab. On the free Tournament plan there are no volunteers, so Field scores is the scoring screen for you, your admins and staff.</p>
           ),
         },
         {
@@ -1693,7 +1693,7 @@ const tournamentsHelp: HelpPageContent = {
           id: 'results-stays-current',
           title: 'It stays current, and one word everywhere',
           content: (
-            <p>Results &amp; Scoring re-checks itself every 30 seconds while it&rsquo;s open, so a scorekeeper&rsquo;s submission from the field appears without a reload — it never refreshes while you have an editor, the view sheet, or a confirm dialog open. Every screen that names a game&rsquo;s state — this page, the game-day dashboard, the schedule&rsquo;s game tags, and the scorekeeper — uses the same five words: <strong>Needs a score, Pending review, Final, Forfeit,</strong> and <strong>Tie</strong>. The export&rsquo;s Status column says the same words, adding <strong>Scheduled</strong> and <strong>Cancelled</strong> for games that aren&rsquo;t due yet or were called off.</p>
+            <p>Results &amp; scoring re-checks itself every 30 seconds while it&rsquo;s open, so a scorekeeper&rsquo;s submission from the field appears without a reload — it never refreshes while you have an editor, the view sheet, or a confirm dialog open. Every screen that names a game&rsquo;s state — this page, the game-day dashboard, the schedule&rsquo;s game tags, and the scorekeeper — uses the same five words: <strong>Needs a score, Pending review, Final, Forfeit,</strong> and <strong>Tie</strong>. The export&rsquo;s Status column says the same words, adding <strong>Scheduled</strong> and <strong>Cancelled</strong> for games that aren&rsquo;t due yet or were called off.</p>
           ),
         },
       ],
@@ -1701,11 +1701,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-score-submitted-notification',
           question: 'Where does a “score submitted” notification take me?',
-          answerText: 'When a scorekeeper submits a score, admins get a notification. Tapping it opens Results & Scoring for that tournament with the game expanded and ready to review, finalize, or correct — no hunting for it. If you are signed out when you tap, you sign in first and then land on the same game.',
+          answerText: 'When a scorekeeper submits a score, admins get a notification. Tapping it opens Results & scoring for that tournament with the game expanded and ready to review, finalize, or correct — no hunting for it. If you are signed out when you tap, you sign in first and then land on the same game.',
           keywords: ['score submitted notification', 'score alert', 'notification takes me', 'where does the score notification go', 'scorekeeper submitted', 'review submitted score', 'notification opens results'],
           answer: (
             <>
-              <p>When a scorekeeper submits a score, admins get a notification. <strong>Tapping it opens Results &amp; Scoring</strong> for that tournament with the game <strong>expanded and ready</strong> to review, finalize, or correct — no hunting for it.</p>
+              <p>When a scorekeeper submits a score, admins get a notification. <strong>Tapping it opens Results &amp; scoring</strong> for that tournament with the game <strong>expanded and ready</strong> to review, finalize, or correct — no hunting for it.</p>
               <p>If you happen to be signed out when you tap, you&rsquo;ll sign in first and then land on that same game.</p>
             </>
           ),
@@ -1717,7 +1717,7 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['correct final score', 'correct final score on phone', 'mobile results', 'all games', 'needs you', 'fix a final score', 'no games found', 'results looks empty', 'results empty', 'show all games', 'nothing in results', 'who can change a final score', 'this game is final', 'read-only final game'],
           answer: (
             <>
-              <p>Open <strong>Results &amp; Scoring</strong> and tap <strong>All games</strong>. <strong>Final</strong> and <strong>Forfeit</strong> games are there alongside <strong>Scheduled</strong> ones — the page opens on <strong>Needs you</strong>, which only shows what still needs your attention: games waiting to finalize, needing a score, or playing now.</p>
+              <p>Open <strong>Results &amp; scoring</strong> and tap <strong>All games</strong>. <strong>Final</strong> and <strong>Forfeit</strong> games are there alongside <strong>Scheduled</strong> ones — the page opens on <strong>Needs you</strong>, which only shows what still needs your attention: games waiting to finalize, needing a score, or playing now.</p>
               <p>Find the game and tap its row — the score editor opens in that same place in the list. Correct it there, or use <strong>Revert score</strong> to send it back to Scheduled and re-enter.</p>
               <p>Changing a final result takes someone who can finalize scores &mdash; owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>. Anyone else sees the final game read-only.</p>
             </>
@@ -1750,7 +1750,7 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['pending review', 'finalize', 'score finalization'],
           popular: true,
           answer: (
-            <p>It means a score was submitted but is waiting for admin confirmation. Use <strong>Finalize</strong> in Results &amp; Scoring to mark it complete.</p>
+            <p>It means a score was submitted but is waiting for admin confirmation. Use <strong>Finalize</strong> in Results &amp; scoring to mark it complete.</p>
           ),
         },
         {
@@ -1765,11 +1765,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-undo-score',
           question: 'Can I undo a score?',
-          answerText: 'Yes — Revert score in Results & Scoring clears the score and sends the game back to Scheduled so it can be entered again. A score still Pending review can be reverted by anyone who can score; a final score only by someone who can finalize scores (owners and admins, or a member given Seal (archive) tournaments).',
+          answerText: 'Yes — Revert score in Results & scoring clears the score and sends the game back to Scheduled so it can be entered again. A score still Pending review can be reverted by anyone who can score; a final score only by someone who can finalize scores (owners and admins, or a member given Seal (archive) tournaments).',
           keywords: ['undo score', 'revert score', 'clear score', 'revert a final score'],
           answer: (
             <>
-              <p>Yes. Revert the game to Scheduled from Results &amp; Scoring, then enter the corrected score. Reverting clears the existing score and current submission metadata, so confirm before doing it.</p>
+              <p>Yes. Revert the game to Scheduled from Results &amp; scoring, then enter the corrected score. Reverting clears the existing score and current submission metadata, so confirm before doing it.</p>
               <p>A score still <strong>Pending review</strong> can be reverted by anyone who can score. A <strong>final</strong> score can be reverted only by someone who can finalize scores &mdash; owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
             </>
           ),
@@ -1777,12 +1777,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-scorekeeper-edit-final',
           question: 'Can volunteers change a score after submitting it?',
-          answerText: 'Volunteers can correct a Pending review score before it is finalized, but not a final result — a completed score or a forfeit. On Field scores a forfeited game sits under Final and cannot be scored. A final result is changed in Results & Scoring by someone who can finalize scores: owners and admins, or a member given Seal (archive) tournaments.',
+          answerText: 'Volunteers can correct a Pending review score before it is finalized, but not a final result — a completed score or a forfeit. On Field scores a forfeited game sits under Final and cannot be scored. A final result is changed in Results & scoring by someone who can finalize scores: owners and admins, or a member given Seal (archive) tournaments.',
           keywords: ['edit score', 'correct score', 'finalized score', 'pending review', 'forfeit', 'final result', 'forfeit under final', 'scorekeeper edit score', 'volunteer correct score', 'save correction'],
           answer: (
             <>
               <p>Volunteers can correct a <strong>Pending review</strong> score before it&rsquo;s finalized, but not a final result &mdash; a completed score or a forfeit. On Field scores a forfeited game sits under <strong>Final</strong> and can&rsquo;t be scored.</p>
-              <p>A final result is changed in <strong>Results &amp; Scoring</strong> by someone who can finalize scores: owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
+              <p>A final result is changed in <strong>Results &amp; scoring</strong> by someone who can finalize scores: owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
             </>
           ),
         },
