@@ -82,7 +82,8 @@ export default function OrgSectionTabs({ sections }: { sections: OrgSection[] })
     <>
       <style dangerouslySetInnerHTML={{ __html: GEOMETRY }} />
       {aTabIsCurrent && <style dangerouslySetInnerHTML={{ __html: RETIRE_CRUMB }} />}
-      <nav className={styles.tabs} aria-label="Sections">
+      {/* data-club-chrome: the club refusal steps this row aside (components/public/ClubNotFound.module.css). */}
+      <nav className={styles.tabs} aria-label="Sections" data-club-chrome="">
         <div className={styles.scroller}>
           {/* The global `container` class is what aligns these tabs with the org's name in the
               identity row above — the same content column every other nav uses. */}

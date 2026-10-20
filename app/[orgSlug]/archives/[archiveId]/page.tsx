@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getArchiveById, getOrganizationBySlug } from '@/lib/db';
+import { getArchiveById } from '@/lib/db';
+import { requirePublicClubPage } from '@/lib/public-club-page';
 import { getAuthContextWithScope } from '@/lib/api-auth';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
@@ -62,12 +63,12 @@ export default async function ArchiveDetailPage({
   params: Promise<{ orgSlug: string; archiveId: string }>;
 }) {
   const { orgSlug, archiveId } = await params;
-  const [archive, org] = await Promise.all([
+  // The one rule (Club Tier Stage 4a, lib/public-club-access.ts); a refusal throws out of the Promise.all.
+  const [org, archive] = await Promise.all([
+    requirePublicClubPage(orgSlug, 'archives'),
     getArchiveById(archiveId),
-    getOrganizationBySlug(orgSlug),
   ]);
   if (!archive) notFound();
-  if (!org || org.subscriptionStatus === 'canceled') notFound();
   // The archive is loaded by id alone — without this, any org's archive rendered under the name
   // in the URL (Club Tier Readiness F07).
   if (archive.orgId !== org.id) notFound();

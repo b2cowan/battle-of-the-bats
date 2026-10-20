@@ -15,7 +15,7 @@ export default async function TryoutRegisterPage({
   const { orgSlug, teamSlug, yearId } = await params;
   const resolved = await resolvePublicTryout(orgSlug, teamSlug);
   if (!resolved) notFound();
-  const { org, team, seasons, live } = resolved;
+  const { org, team, seasons, live, contactEmail } = resolved;
   if (!seasons.some(s => s.id === yearId)) notFound();
   if (live?.id === yearId) redirect(publicTryoutRegisterHref(orgSlug, teamSlug));
   return (
@@ -23,6 +23,7 @@ export default async function TryoutRegisterPage({
       orgSlug={orgSlug}
       teamSlug={teamSlug}
       org={org}
+      contactEmail={contactEmail}
       team={team}
       season={null}
       backHref={publicTryoutHref(orgSlug, teamSlug)}

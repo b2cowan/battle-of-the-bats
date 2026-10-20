@@ -1,10 +1,8 @@
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import {
-  getOrganizationBySlug,
   getRepTeamBySlug,
   getRepProgramYears,
-  getActiveTournamentByOrg,
 } from '@/lib/db';
 import { isFreePlan } from '@/lib/plan-config';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
@@ -14,8 +12,12 @@ import { teamCalendarName } from '@/lib/export/team-feed-words';
 import publicStyles from '@/components/public/RepTeamPublicSchedule.module.css';
 import { publicTryoutSeasonOf } from '@/lib/season-live';
 import { publicTryoutRegisterHref } from '@/lib/public-tryout';
+import { requirePublicClubPage } from '@/lib/public-club-page';
+import { forwardToRunningTournament } from '@/lib/club-shortcut';
+import { isUuid } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
+
 
 const STATUS_LABEL: Record<string, string> = {
   draft:     'Draft',
@@ -31,18 +33,17 @@ export default async function TeamPublicPage({
 }) {
   const { orgSlug, teamSlug } = await params;
 
-  const org = await getOrganizationBySlug(orgSlug);
-  if (!org) notFound();
+  // An old tournament-team link (`/{org}/teams/{team id}`, printed before tournament teams moved under the event) still
+  // forwards while a tournament runs, like the shortcut addresses (Ask 9) — BEFORE the club rule, because tournament
+  // pages stay up when the club's site is off (2026-07-22) and a tournament-only org carries no rep teams.
+  if (isUuid(teamSlug)) await forwardToRunningTournament(orgSlug, `teams/${teamSlug}`);
 
-  // Try to resolve as a rep team slug first
+  // The one rule (Club Tier Stage 4a, lib/public-club-access.ts).
+  const org = await requirePublicClubPage(orgSlug, 'teams');
+
+  // An unknown team is the club's "not found" with a way home; it used to go silently to the club home (S4-07).
   const team = await getRepTeamBySlug(org.id, teamSlug);
-
-  if (!team) {
-    // Fall back to legacy tournament team redirect (teamSlug may be a UUID from an old link)
-    const active = await getActiveTournamentByOrg(org.id);
-    if (active?.slug) redirect(`/${orgSlug}/${active.slug}/teams/${teamSlug}`);
-    redirect(`/${orgSlug}`);
-  }
+  if (!team) notFound();
 
   const programYears = await getRepProgramYears(team.id);
 

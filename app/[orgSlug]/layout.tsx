@@ -12,6 +12,8 @@ import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
 import SandboxChrome from '@/components/sandbox/SandboxChrome';
+import { PublicClubProvider } from '@/components/public/PublicClubContext';
+import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { getCoachStartHref } from '@/lib/start-menu';
 
 // Pre-load all font options at module level (next/font requirement).
@@ -176,7 +178,13 @@ export default async function OrgLayout({
         className={fontClasses}
         data-card-style={org.themeCardStyle ?? 'default'}
       >
-        {children}
+        {/* Club Tier Stage 4a — the club's "not found" (app/[orgSlug]/not-found.tsx) receives no params, so this
+            layout hands it the club: its name, and whether its public site is open (the switch on, not cancelled).
+            ⚠ This layout still refuses ONLY a club that does not exist: tournament pages stay up when the site is off
+            (BUSINESS_DECISIONS 2026-07-22); each club page asks the one rule itself (lib/public-club-page.ts). */}
+        <PublicClubProvider club={{ slug: orgSlug, name: org.name, siteOpen: isPublicClubSiteOpen(org) }}>
+          {children}
+        </PublicClubProvider>
       </div>
     </SandboxProvider>
   );

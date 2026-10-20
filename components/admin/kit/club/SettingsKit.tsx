@@ -7,9 +7,9 @@
  *   NEW — "Your public site": the one mislabelled checkbox ("Listed on /discover", which really
  *   switched the WHOLE site, A09/F04) becomes the two real settings — the site's master switch and
  *   the directory listing (`isDiscoverable`, which had no control at all). The directory switch is off
- *   and greyed while the site is off. Taking the site offline ASKS first, and the question names ONLY
- *   what goes offline today — the home page and the league pages (team pages and tryout forms do not
- *   check the switch yet, F06/Stage 4; promising more would be false). Both switches save the moment
+ *   and greyed while the site is off. Taking the site offline ASKS first, and the question names what
+ *   goes offline — since Club Tier Stage 4a that is every public club page (home, teams, tryouts and their
+ *   sign-up, league, archives, the team calendars), never the tournaments. Both switches save the moment
  *   they are set: a switch that waited for a Save below the fold would read as done when it was not.
  *
  *   RESTYLED — everything else the page did, the same fields, words and actions on the kit: the logo
@@ -412,8 +412,8 @@ export default function SettingsKit() {
                 <span className={ck.switchName} id="settings-site-label">Public site</span>
                 <p className={ck.hint}>
                   {siteOn
-                    ? <>{possessive(settings.name)} home page at <span className={styles.url}>{siteUrl}</span> is online. Turning it off takes the home page and league pages offline.</>
-                    : <>{possessive(settings.name)} home page at <span className={styles.url}>{siteUrl}</span> is offline. Families who open it see that the page isn’t available.</>}
+                    ? <>{possessive(settings.name)} public site at <span className={styles.url}>{siteUrl}</span> is online. Turning it off takes all of the club’s pages offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Tournament pages stay up.</>
+                    : <>{possessive(settings.name)} public site at <span className={styles.url}>{siteUrl}</span> is offline. Families who open any of its pages see that the club’s site isn’t available. Tournament pages stay up.</>}
                 </p>
               </div>
               <button
@@ -676,9 +676,9 @@ export default function SettingsKit() {
             </>
           }
         >
-          {/* ⚠ ONLY what goes offline today: the home page and the league pages. Team pages and tryout
-              forms do not check this switch yet (F06); they learn to in Stage 4, and this grows then. */}
-          <p>Families who open your home page or league pages will see that the page isn’t available. You can turn it back on at any time.</p>
+          {/* What goes offline (Club Tier Stage 4a, words through /marketing 2026-10-20): every public club page asks
+              the one rule (lib/public-club-access.ts) — never the tournaments, which the switch does not gate. */}
+          <p>Families who open your home, team, tryout, league or archive pages will see that the site isn’t available. Tryout sign-ups stop, and team calendars go empty. Tournament pages stay up. You can turn it back on at any time.</p>
         </KitDialog>
       )}
 

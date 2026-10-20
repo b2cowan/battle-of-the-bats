@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { getOrganizationBySlug, getArchivesByOrg } from '@/lib/db';
+import { getArchivesByOrg } from '@/lib/db';
+import { requirePublicClubPage } from '@/lib/public-club-page';
 import { getAuthContextWithScope } from '@/lib/api-auth';
 import { isFreePlan } from '@/lib/plan-config';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
@@ -11,9 +11,8 @@ export default async function ArchivesPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = await params;
-  const org = await getOrganizationBySlug(orgSlug);
-  if (!org) notFound();
-  if (org.subscriptionStatus === 'canceled') notFound();
+  // The one rule (Club Tier Stage 4a, lib/public-club-access.ts).
+  const org = await requirePublicClubPage(orgSlug, 'archives');
 
   const [archives, ctx] = await Promise.all([
     getArchivesByOrg(org.id),

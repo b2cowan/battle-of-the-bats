@@ -1,0 +1,90 @@
+/* A club's "not found" and its refusal (Club Tier Stage 4a). */
+
+/* ── The refusal: neutral, not the club's ─────────────────────────────────────────────────────────
+   Drawn without the club's bar (End state 5, first frame): a club that turned its site off, or left,
+   has not asked to keep its name and colours on display. So while it is on screen the club's top bar,
+   its section tabs and the platform's phone bar step aside, and the page wears the platform's own
+   system-screen ground (system-screens.module.css `.page` + bg-pitch-black, the root 404's) — dark by default,
+   paper for the warm theme. The sandbox
+   banner (the demo's own way around) is not club chrome and stays. */
+:global(body):has(.refusal) :global([data-club-chrome]),
+/* The phone bar is ConsumerNav's org branch, the only `nav[aria-label="Primary"]` on a club page
+   (club-stage4a-guard pins the label, so a rename fails the build instead of the refusal). */
+:global(body):has(.refusal) :global(nav[aria-label='Primary']) {
+  display: none;
+}
+
+.refusal {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/* ── Not found inside a live club: today's club chrome around it; Stage 4b restyles it ─────────── */
+.page {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.body {
+  width: 100%;
+  max-width: 34rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.club {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--data-gray);
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--fl-text);
+}
+
+.text {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--data-gray);
+  max-width: 34ch;
+}
+
+.quiet {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fl-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+:global(html[data-user-theme='warm']) .refusal .title,
+:global(html[data-user-theme='warm']) .refusal .quiet {
+  color: var(--home-ink);
+}
+
+:global(html[data-user-theme='warm']) .refusal .club,
+:global(html[data-user-theme='warm']) .refusal .text {
+  color: var(--home-ink-soft);
+}
+
+.page :global(.btn) {
+  min-height: 44px;
+  margin-top: 0.25rem;
+}

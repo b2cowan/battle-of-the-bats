@@ -290,7 +290,8 @@ export default function Navbar() {
           ? <Link href={orgHomeDoor.pill.href} className={styles.actionPill}>{orgHomeDoor.pill.label}</Link>
           : null;
     return (
-      <nav className={navClass}>
+      // data-club-chrome: the club refusal steps this bar aside (components/public/ClubNotFound.module.css).
+      <nav className={navClass} data-club-chrome="">
         <div className={`container ${styles.inner}`}>
           {/* The identity block is a row, not a single link: at depth the org name self-links to
               the org root and the crumb names the section, so the two carry different jobs. */}

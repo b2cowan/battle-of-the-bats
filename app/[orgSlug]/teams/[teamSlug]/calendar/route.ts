@@ -2,6 +2,7 @@ import { withObservability } from '@/lib/observability';
 import { getOrganizationBySlug, getRepTeamBySlug } from '@/lib/db';
 import { resolveSameHostOrigin } from '@/lib/app-origin';
 import { getPublicTeamSchedule } from '@/lib/public-team-schedule';
+import { publicClubRefusal } from '@/lib/public-club-access';
 import { teamCalendarName, teamFeedEntries } from '@/lib/export/team-feed-words';
 import { PUBLIC_FEED_CACHE, refusedFeedResponse, calendarResponse } from '@/lib/calendar-feed-response';
 
@@ -29,7 +30,9 @@ export const GET = withObservability(async (req: Request,
   if (!org || !team) return refusedFeedResponse(req);
 
   const calendarName = teamCalendarName(team.name, org.name);
-  const view = await getPublicTeamSchedule({ org, team });
+  // The one rule first (Club Tier Stage 4a): a refused club answers like any stopped feed — an empty calendar, so
+  // subscribed families' entries leave (F10). Then the page's own question (Public link, the family layer, a live season).
+  const view = publicClubRefusal(org, 'teams') ? null : await getPublicTeamSchedule({ org, team });
   if (!view) return calendarResponse({ calendarName, entries: [], cacheControl: PUBLIC_FEED_CACHE });
 
   const page = `${resolveSameHostOrigin(req).replace(/\/$/, '')}/${orgSlug}/teams/${teamSlug}`;

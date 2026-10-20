@@ -43,7 +43,7 @@ export const POST = withObservability(async (req: Request,
   // Gate the public register API exactly like the league index/sub-pages (audit J3-068):
   // a private, canceled, or non-entitled org must not accept public registrations.
   const org = await resolvePublicLeagueContext(orgSlug);
-  if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  if (!org) return NextResponse.json({ error: 'This club’s site isn’t available.' }, { status: 404 });
 
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });

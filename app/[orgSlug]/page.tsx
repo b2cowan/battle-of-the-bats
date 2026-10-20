@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { Calendar, ChevronRight, Star, Mail, ExternalLink, Archive, Users } from 'lucide-react';
 import {
-  getOrganizationBySlug, getTournamentsByOrg,
+  getTournamentsByOrg,
   getOrgPublicSiteContent, getArchivesByOrg,
   getLeagueSeasons, getDivisions, getOpenTryoutsByOrg,
 } from '@/lib/db';
@@ -10,6 +10,7 @@ import type { OpenTryout } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreePlan } from '@/lib/plan-config';
 import { isFollowableOrg } from '@/lib/directory';
+import { requirePublicClubPage } from '@/lib/public-club-page';
 import { resolveTheme } from '@/lib/themes';
 import type { Tournament } from '@/lib/types';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
@@ -78,9 +79,8 @@ function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: Op
 
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
-  const org = await getOrganizationBySlug(orgSlug);
-  if (!org || !org.isPublic) notFound();
-  if (org?.subscriptionStatus === 'canceled') notFound();
+  // The one rule (Club Tier Stage 4a, lib/public-club-access.ts); a tournament-only org keeps its basic home below.
+  const org = await requirePublicClubPage(orgSlug, 'home');
 
   // WI-10 — the plain org home is in scope for the paid credit (BUSINESS_DECISIONS 2026-07-30).
   // Same gate the tournament layout uses. A free org's home page carries nothing today and keeps

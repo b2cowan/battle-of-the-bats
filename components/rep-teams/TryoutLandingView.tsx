@@ -10,11 +10,13 @@ import HelpCallout from '@/components/help/HelpCallout';
  * old address named a season that is not the live one).
  */
 export default function TryoutLandingView({
-  orgSlug, teamSlug, org, team, season, registerHref,
+  orgSlug, teamSlug, org, contactEmail, team, season, registerHref,
 }: {
   orgSlug: string;
   teamSlug: string;
-  org: { name: string; contactEmail?: string | null };
+  org: { name: string };
+  /** The club's public-site contact (resolvePublicTryout), never the org's phantom `contactEmail` (F09). */
+  contactEmail: string | null;
   team: { name: string; division?: string | null };
   season: { name: string; tryoutDescription: string | null; tryoutOpen: boolean } | null;
   registerHref: string;
@@ -151,9 +153,9 @@ export default function TryoutLandingView({
             body={
               <>
                 {team.name} isn’t taking tryout sign-ups right now.
-                {org.contactEmail && (
+                {contactEmail && (
                   // token-exempt: moved verbatim from the season-numbered tryout page (Club Tier Stage 2, B07) — the public pages' look is Stage 4's
-                  <> Questions? <a href={`mailto:${org.contactEmail}`} style={{ color: '#4fa3e0' }}>Contact us</a>.</>
+                  <> Questions? <a href={`mailto:${contactEmail}`} style={{ color: '#4fa3e0' }}>Contact us</a>.</>
                 )}
               </>
             }

@@ -15,6 +15,7 @@ import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import { normalizeArrivalDefault } from '@/lib/coach-arrival';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { denyUnless, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import {
@@ -126,6 +127,12 @@ export const GET = withObservability(async (_req: Request,
      * `clubBook.showSwitch` above. `canEdit` is schedule MANAGEMENT — publishing the schedule is
      * a schedule act.
      */
+    /**
+     * The club's public site is off (the owner's switch, or the club cancelled) — so the team's public page does not
+     * open for anyone, whatever Schedule visibility says (Club Tier Stage 4a, S4-08). Read here, on the server, so
+     * Sharing can say so; there is nothing for the coach to set.
+     */
+    clubSiteOff: !isPublicClubSiteOpen(ctx.org),
     scheduleVisibility: (await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))
       ? { value: team.scheduleVisibility, canEdit: canManageSchedule(assignment.capabilities) }
       : null,

@@ -17,12 +17,13 @@ export default async function TeamTryoutsPage({
   const { orgSlug, teamSlug } = await params;
   const resolved = await resolvePublicTryout(orgSlug, teamSlug);
   if (!resolved) notFound();
-  const { org, team, open } = resolved;
+  const { org, team, open, contactEmail } = resolved;
   return (
     <TryoutLandingView
       orgSlug={orgSlug}
       teamSlug={teamSlug}
       org={org}
+      contactEmail={contactEmail}
       team={team}
       season={open}
       registerHref={publicTryoutRegisterHref(orgSlug, teamSlug)}

@@ -42,6 +42,9 @@ export default async function LeagueIndexPage({
 
   const allSeasons = await getLeagueSeasons(org.id);
   const visibleSeasons = allSeasons.filter(s => s.status !== 'draft');
+  // A club that runs no house league here has no league page: the club's "not found" says so, inside its site (F09,
+  // Club Tier Stage 4a). This page used to say "No seasons have been published yet. Check back soon."
+  if (visibleSeasons.length === 0) notFound();
 
   const ACTIVE_STATUSES = ['registration_open', 'registration_closed', 'active'];
   const featured = visibleSeasons.find(s => ACTIVE_STATUSES.includes(s.status)) ?? null;
@@ -135,20 +138,6 @@ export default async function LeagueIndexPage({
                 <PastSeasonRow key={s.id} season={s} orgSlug={orgSlug} />
               ))}
             </div>
-          </div>
-        )}
-
-        {visibleSeasons.length === 0 && (
-          <div
-            style={{
-              padding: '3rem 1.5rem',
-              textAlign: 'center',
-              border: '1px dashed rgba(255,255,255,0.1)',
-              borderRadius: '10px',
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            No seasons have been published yet. Check back soon.
           </div>
         )}
 

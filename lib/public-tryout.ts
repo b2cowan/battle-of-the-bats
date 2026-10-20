@@ -1,5 +1,6 @@
 import 'server-only';
-import { getOrganizationBySlug, getRepProgramYears, getRepTeamBySlug } from './db';
+import { getOrgPublicSiteContent, getRepProgramYears, getRepTeamBySlug } from './db';
+import { resolvePublicClub } from './public-club-page';
 import { liveSeasonOf, publicTryoutSeasonOf } from './season-live';
 import type { Organization, RepProgramYear, RepTeam } from './types';
 
@@ -23,16 +24,27 @@ export interface PublicTryoutContext {
   live: RepProgramYear | null;
   /** The season a family can sign up for right now, or null. */
   open: RepProgramYear | null;
+  /**
+   * Where a family's questions go: the club's public-site contact (Admin › Public site, "Families' questions go to").
+   * ⚠ Never `org.contactEmail` — it maps `organizations.contact_email`, a column that does not exist, so it is always
+   * empty and the closed tryout's "Contact us" never showed (F09, Club Tier Stage 4a).
+   */
+  contactEmail: string | null;
 }
 
 export async function resolvePublicTryout(orgSlug: string, teamSlug: string): Promise<PublicTryoutContext | null> {
-  const org = await getOrganizationBySlug(orgSlug);
+  // The one rule (Club Tier Stage 4a, lib/public-club-access.ts): every tryout address and the sign-up form come through
+  // here, so none of them renders for a club that refuses it.
+  const org = await resolvePublicClub(orgSlug, 'teams');
   if (!org) return null;
   const team = await getRepTeamBySlug(org.id, teamSlug);
   if (!team) return null;
-  const seasons = await getRepProgramYears(team.id);
+  // Read beside the seasons (no added wait). Always read: the old season-numbered pages show the closed state whatever
+  // the live season is doing, and their "Contact us" needs it too.
+  const [seasons, siteContent] = await Promise.all([getRepProgramYears(team.id), getOrgPublicSiteContent(org.id)]);
   return {
     org, team, seasons,
+    contactEmail: siteContent?.contactEmail ?? null,
     live: liveSeasonOf(seasons),
     open: publicTryoutSeasonOf(team, seasons),
   };

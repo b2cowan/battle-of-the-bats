@@ -10,11 +10,13 @@ import TryoutRegisterForm from '@/components/rep-teams/TryoutRegisterForm';
  * API, which re-asks the same public rule (a stale form cannot sign up to a season that closed).
  */
 export default function TryoutRegisterView({
-  orgSlug, teamSlug, org, team, season, backHref, privacyPolicyHref,
+  orgSlug, teamSlug, org, contactEmail, team, season, backHref, privacyPolicyHref,
 }: {
   orgSlug: string;
   teamSlug: string;
-  org: { name: string; contactEmail?: string | null };
+  org: { name: string };
+  /** The club's public-site contact (resolvePublicTryout), never the org's phantom `contactEmail` (F09). */
+  contactEmail: string | null;
   team: { name: string; division?: string | null };
   season: { id: string; name: string } | null;
   backHref: string;
@@ -106,11 +108,11 @@ export default function TryoutRegisterView({
             <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 1rem' }}>
               {team.name} isn’t taking tryout sign-ups right now.
             </p>
-            {org.contactEmail && (
+            {contactEmail && (
               <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                 Questions?{' '}
                 <a
-                  href={`mailto:${org.contactEmail}`}
+                  href={`mailto:${contactEmail}`}
                   style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'underline' }}
                 >
                   Contact us

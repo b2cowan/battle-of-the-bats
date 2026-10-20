@@ -4,6 +4,7 @@ import { getOrgPublicSiteContent } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { orgSectionsFor, type OrgSection } from '@/lib/org-public-sections';
 import type { Organization } from '@/lib/types';
+import { isPublicClubSiteOpen } from './public-club-access';
 
 /**
  * lib/org-section-availability.ts — which section tabs an org actually has (Nav Unification Stage F).
@@ -58,12 +59,9 @@ async function anyArchive(orgId: string): Promise<boolean> {
  * platform-plain org page is correct by design. Those tiers keep the Stage E crumb instead.
  */
 export async function resolveOrgSections(org: Organization): Promise<OrgSection[]> {
-  // A non-public org gets NO section row. Its org home and league pages already 404 for visitors,
-  // so a row there would advertise sections whose links are dead — and `/{org}/archives` does NOT
-  // check isPublic, so that page renders and would otherwise carry a row disclosing that a private
-  // org has league seasons. The sibling public surfaces (app/[orgSlug]/page.tsx,
-  // lib/public-league.ts) both apply this gate; this one has to as well.
-  if (!org.isPublic) return [];
+  // A club whose public site is closed (switch off, or cancelled) gets NO section row: every club page refuses
+  // (Club Tier Stage 4a, lib/public-club-access.ts), so a row would advertise dead links.
+  if (!isPublicClubSiteOpen(org)) return [];
   if (!hasModuleEntitlement(org, 'module_public_site')) return [];
 
   const [league, archivesExist, siteContent] = await Promise.all([

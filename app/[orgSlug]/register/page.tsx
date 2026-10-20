@@ -1,14 +1,4 @@
-import { redirect } from 'next/navigation';
-import { getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
+import { clubShortcutPage } from '@/lib/club-shortcut';
 
-export default async function RegisterRedirect({
-  params,
-}: {
-  params: Promise<{ orgSlug: string }>;
-}) {
-  const { orgSlug } = await params;
-  const org = await getOrganizationBySlug(orgSlug);
-  const active = org ? await getActiveTournamentByOrg(org.id) : null;
-  if (active?.slug) redirect(`/${orgSlug}/${active.slug}/register`);
-  redirect(`/${orgSlug}`);
-}
+/** `/{org}/register` — the club's running tournament, else the club's "not found" (Ask 9, lib/club-shortcut.ts). */
+export default clubShortcutPage('register');

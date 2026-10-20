@@ -19,6 +19,7 @@ import type { ScheduleVisibility } from '@/lib/family-access';
 import { ARRIVAL_PRESET_MINUTES, arrivalPresetLabel } from '@/lib/coach-arrival';
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import ClubSiteOffNotice from '@/components/coaches/ClubSiteOffNotice';
 
 interface SettingsData {
   team: { id: string; name: string; division: string | null; sport: string };
@@ -37,6 +38,8 @@ interface SettingsData {
    *  absent (never locked), exactly like `clubBook`. Moved here from the Roster page's retired
    *  "Team family access" card (2026-09-12). */
   scheduleVisibility: { value: ScheduleVisibility; canEdit: boolean } | null;
+  /** The club's public site is off, so the team's public page opens for no one (Club Tier Stage 4a, S4-08). */
+  clubSiteOff: boolean;
   /** The team's arrival habit (mig 307): minutes before a game / a practice a new event starts at. */
   arrivalDefaults: { game: number | null; practice: number | null; canEdit: boolean };
   /** Null when this coach has no money access — the server omits the figures entirely. */
@@ -954,6 +957,9 @@ export default function TeamSettingsPage({
                     )}
                   </div>
                 </div>
+              )}
+              {data.scheduleVisibility && data.clubSiteOff && (
+                <div className={styles.settingRow}><ClubSiteOffNotice /></div>
               )}
               {visibilityError && (
                 <div className={styles.settingRow}>

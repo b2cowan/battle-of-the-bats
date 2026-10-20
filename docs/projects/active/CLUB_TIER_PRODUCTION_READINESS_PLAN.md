@@ -990,6 +990,97 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 >   - **Gates 2026-10-08:** typecheck clean · lint 0 errors · `npm test` 6,017 of 6,017 · `verify:changed` green except Schema parity (mig 318 dev-only, pre-existing) · spelling, CSS selectors, old look, club money arithmetic, contrast, text contrast, public tokens, export catalog · `club-stage3d-screens-guard` (28) and the repointed guards · `check:layout` Warm and Dark on the sixteen accounting screens (the allocation and bill windows added at 361/390/768/1440; nine Ask 11 group ticks baselined with measured reasons, six stale entries retired) · `/simplify`, `/review` high-risk, `/design` at 1440 and 390.
 
 ### Stage 4 — The club's public face
+> **📝 Drawing prompt written 2026-10-19:** `CLUB_TIER_STAGE4_MOCKUP_PROMPT.md`, for a new chat. F01–F10 were re-verified against
+> the code the same day: F01 and F04 are fixed, F05, F06, F07 and F10 partly, and F02, F03, F08 and F09 are still true. The
+> drawings will be their own artifact, linked from the project index.
+> **⚖ RULED 2026-10-19: all 17 asks as recommended (owner paste-back, option A on every ask; DC-01…07 as recommended).** Design log
+> entry 2026-10-19 "A club's public site". Next: the build prompts, one per sub-stage (4a → 4b → 4c, then 4d sponsors).
+> **📝 4a build prompt written 2026-10-19:** `CLUB_TIER_STAGE4A_BUILD_PROMPT.md` (one rule, one refusal; for a new chat). 4b–4e prompts
+> are written as each one before them lands.
+> **✅ 4a BUILT 2026-10-20** (one session, from `CLUB_TIER_STAGE4A_BUILD_PROMPT.md`; words through /marketing 2026-10-20, owner "looks
+> good"). **One rule:** `lib/public-club-access.ts` (`publicClubRefusal`: no club · site off or cancelled · plan does not carry the
+> page — rep teams for team and tryout pages, house league for league, tournaments for archives; the home needs only the switch)
+> with its server door `lib/public-club-page.ts` (`requirePublicClubPage` / `resolvePublicClub`). Asked by the home, the team page,
+> the team calendar feed (a refused club answers an empty calendar, the F10 stopped-feed rule), all four tryout addresses and the
+> sign-up form (through `resolvePublicTryout`), the sign-up submit (before the body is read), every league page and API (through
+> `resolvePublicLeagueContext`), both archives pages. **One refusal:** `app/[orgSlug]/not-found.tsx`, inside the org layout, which
+> hands it the club (a not-found file gets no params) through `PublicClubProvider`; `lib/club-not-found-face.ts` picks the neutral
+> refusal (site closed), "We couldn’t find that page" inside a live club (an unknown team, `/league` with no published season, an
+> unknown archive, a shortcut with nothing running, a page the plan does not carry), or the platform page (tournament, admin, coach
+> and volunteer addresses, untouched). A real 404: nothing above the club pages streams. **Shortcuts (Ask 9):** one helper,
+> `lib/club-shortcut.ts`; forward to the running tournament, else "not found"; `/results` → Standings was intended (Ask 9's question
+> answered: the tournament's Results and Standings are one page, its `/results` only forwards there). An old tournament-team link (`/{org}/teams/{uuid}`) still forwards while a tournament runs. **Contact (F09):**
+> the tryout pages and the league status page read `org_public_site_content.contact_email`. **Coach (S4-08):** the team settings API
+> serves `clubSiteOff`; Sharing shows the notice under Schedule visibility. **Owner:** the switch’s hint and offline dialog name
+> every club page, never the tournaments.
+> **⚖ Judgement calls, told to the owner 2026-10-20:** (1) a LIVE club whose plan does not carry a page gets "not found" inside its
+> site, not the "site isn’t available" refusal — those words would be false while its home is up; one branch in `clubNotFoundFace` if
+> the owner wants the ruled face. (2) The phantom `organizations.contact_email` mapping (`lib/db.ts` `mapOrg`,
+> `lib/server-organizations.ts`, `lib/api-auth.ts`) feeds about 20 other readers: tournament pages’ contact fallback, game-day
+> reminders, schedule publish, the coach’s ended-subscription wall. Fixed only on the club’s own pages; wiring it at the source would
+> change tournament pages and family emails, so it is an owner finding.
+> **Demo:** `riverdale-ridge` is seeded `is_public: false` on purpose and `check-demo-coach` asserts it; no tour step or dock line
+> opens a public page, so its public tryout now refuses and nothing changes. **Gates:** red run first (the guard 36 of 51 failing,
+> the rule test unloadable); after: `club-stage4a-access` + `club-stage4a-guard` 65 of 65; typecheck clean; `npm test` 8,298 of
+> 8,300 (the two failures are other sessions’ uncommitted stylesheets); the rest of `verify:changed` green except schema parity
+> (Families 5c dev-only tables) and one CSS selector clash in a committed tournament stylesheet, neither 4a. Browser probe on dev at
+> 390: a cancelled club, its team and archives, the demo’s sign-up form → the refusal, 404; an unknown team and archive → not found
+> in the club, 404; live team and league pages 200; no diagnostic anywhere. `check:layout` coach-settings clean at all four widths;
+> admin-org-settings held findings only, with two widths lost to the owner session redirecting. **No public club page is in the
+> layout sweep** (a gap for 4b).
+> **Owner 2026-10-20, on a screenshot of the refusal inside the club's bar: fixed in 4a.** The drawn refusal is neutral, so while it
+> shows the club's top bar, section tabs and the phone bar step aside (`body:has(.refusal) [data-club-chrome]`; the phone bar by
+> its `aria-label='Primary'` until ConsumerNav's other session commits, then a `data-club-chrome` there) and it wears the root
+> 404's system-screen ground (paper in warm, dark in Dark). The rest of the bar (Discover, Pricing, typewriter capitals, dark
+> ground on live pages) is 4b's, as ruled. **/simplify (4 lenses) applied:** the face reads `showsOrgPublicChrome` (one list
+> with the chrome), the section tabs ask `isPublicClubSiteOpen` (a cancelled club's row no longer renders), `isUuid`, one
+> shortcut page factory, the archive read beside the rule again, the tryout contact read only when sign-ups are closed, the
+> coach notice wears SaveOverQuestion's `.warn`, the guard's shortcut loophole closed. Skipped, recorded: `resolvePublicLeagueContext`
+> kept as a thin name (deleting it reaches 8 files outside 4a); `getOrgPublicSiteContent` and the org-by-slug lookups are not
+> request-cached (pre-existing, two reads per page — a follow-up); the `contactEmail` phantom at its source (owner finding).
+> **/review (high-risk, 4 lenses) 2026-10-20 — gate green (typecheck, lint 0 errors, purity, spelling, contrast, demos); fixed:**
+> (High) a standalone coach's team (`team` plan, rep teams per team via team_entitlements) would have lost its public team page,
+> feed and tryouts — the rule now lets a team workspace through on `teams` and the schedule stays gated per team downstream; (High)
+> old tournament-team links now forward BEFORE the club rule (tournaments stay up when the site is off; a tournament-only org has no
+> rep teams); (Medium) "doesn't run a house league" only on `/league` itself, a missing season is a plain not-found; (Low) the old
+> season-numbered tryout pages keep their Contact us (the contact is always read); the league sign-up refuses in the approved words
+> too. Accepted, recorded: a refused club's team feed keeps the team's name on its empty calendar (its subscribers already know it);
+> the club's logo URL and colours stay in the layout's payload under the refusal (only the name shows). 131 tests across the 4a and
+> neighbouring guards pass; browser probe re-run.
+> **⚖ Ruled the same day (owner): a club's own web address is Stage 4e, inside the release, as recommended; payments
+> processing is inside the release and the release has no date (§7).** The evidence behind both: **a club's own web address** (evidence 2026-10-19: 8 of the 10 club sites use their own
+> domain; the 2 that do not are on free or low-end tools; every platform that documents it hosts the site on the club's domain
+> through its DNS with automatic certificates, none frames it; TeamLinkt allows it on its free plan; recommended as **4e** inside
+> the release, packaging → /strategy), and house-league registration as a facilitated-payments flow (Stage 9; the 2026-07-28
+> payments decisions stand; 6 of the 10 confirmed card payment at sign-up, 4 unconfirmed, none offline-only).
+> **4e · a club's own web address (ruled 2026-10-19):** the club owner connects their own domain once in Settings; the club's
+> pages, shared links, previews and sitemap use it; sign-in and the admin stay on FieldLogicHQ; a hosting spike first (how the host
+> serves many club domains with automatic certificates); **every plan with the public site carries it, no extra charge** (owner via /strategy 2026-10-19). Forwarding a domain needs no build and
+> gets a help article now; masking is not offered.
+> **Security fix found on the way (owner "fix it now", 2026-10-19):** every response now sends frame-ancestors 'self',
+> X-Frame-Options SAMEORIGIN and HSTS (this host only); production sent none, leaving admin and coach screens open to
+> clickjacking. Guard: tests/unit/security-headers.test.ts. Committed `7b28c175` 2026-10-19 (local, not pushed); verified on dev.
+> **🎨 DRAWN 2026-10-19 (round 2 the same day):** https://claude.ai/artifact/QhdgL1QnfRndu4ZAoTB67k (source
+> `CLUB_TIER_STAGE4_DRAWINGS.html`, captures in `club-tier-stage4/`). Today walked at 390 and 1440 on `uat-rep-club`; research on
+> ten club-site platforms, real Canadian club sites, minors' privacy, link previews and colour contrast; the end state drawn whole
+> (home in two shapes, Teams index, team page, tryout, refusals, the editor, the coach's door, previews, colour roles, house league
+> and past tournaments); `/design` run and its 14 changes applied. Proposed ladder: **4a** one rule and one refusal (server) → **4b**
+> the face → **4c** who runs it (editor, coach's door, tryout blurb editor). New findings beyond F01–F10: **S4-01** every refused
+> club page is the platform's diagnostic 404 · **S4-02** every club page shares FieldLogicHQ's sales line as its description ·
+> **S4-03** every active tournament says "Live" · **S4-04** tryout days (date, time, venue) never reach the tryout page, and the
+> tryout blurb has no editor · **S4-05** the coach never sees their team page's address · **S4-07** /teams forwards to a
+> tournament's visiting teams · **S4-08** once the team page honours the site switch, a club going offline stops every coach's
+> Public link sharing silently · **S4-09** the platform's phone bar puts a second "Home" (to the directory) on every club page.
+> ⚠ **Before 4a ships:** the coach demo club (`riverdale-ridge`) has its site off and a live public tryout whose form accepts
+> sign-ups today; 4a makes it refuse, so check the demo tour first. Ask 3 (the home's order) decides the rest.
+> **Round 2, same day (owner: "look at 10 sports team sites, one of them Milton Girls Softball"):** ten real club sites read at
+> 390 and 1440 (Milton in depth; Oakville, Burlington, Brampton, Guelph, Halton Hills, Milton Minor Baseball, a Spordle default, an
+> Australian PlayHQ club, a US soccer club). Added, each with its own ask (now **asks 1–17 open**): a club Tryouts page whose
+> tryouts read open / not open yet / finished by themselves (Ask 14) · optional born-in years on teams and house-league divisions
+> with a Born in picker (Ask 15, a small schema change) · a club notice for field closures, posted not autosaved (Ask 16) ·
+> sponsors as a small **4d** (Ask 17) · Ask 10 widened to an About page (role contacts, documents and policies, the club's FAQ).
+> Findings R-01…R-06 on the drawings page. ⚠ Outside the product: Milton's own site still publishes 2023–24 recruiting pages
+> with minors' photos, schools, grades and parents' phone numbers (told to the owner 2026-10-19).
 **Closes:** F01–F10 · J4-042/043/044/048 · the "no rep-teams index page" gap recorded 2026-08-01.
 - [ ] **Mockups:** the club home for a rep-only club (programs first, tournaments last and absent when none; the club's colours; a footer with contact); a **Teams index** (`/{org}/teams` becomes a page, and "Teams" becomes a tab); the team page in the club's colours with a title; tryouts findable (home card → the tryout; index → team → tryout); the Public Site editor with section controls (show/hide + order: teams, tryouts, league, tournaments, news); the coach's settings showing the public URL with a copy button.
 - [ ] **Lettering (handed over by the Admin type sweep, owner ruling C1 2026-10-19):** the rebuilt Public Site editor ships in the admin's lettering — its card titles ("Page Content", "Social Links", "Display Options", today small typewriter capitals) as sentence-case section titles in the body face, and its words in sentence case ("Page content", "Social links", "Display options", "Access restricted", and the "Org Settings" link named for the page it opens, "Settings"). Its "Access Restricted" is the last Title Case refusal heading left after Admin type sweep Stage 3. List items C50/C51 in `ADMIN_TYPE_SWEEP_PLAN.md` §7.

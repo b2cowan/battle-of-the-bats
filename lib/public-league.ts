@@ -1,5 +1,4 @@
-import { getOrganizationBySlug } from './db';
-import { hasModuleEntitlement } from './module-entitlements';
+import { resolvePublicClub } from './public-club-page';
 import type { Organization } from './types';
 
 /**
@@ -15,9 +14,6 @@ import type { Organization } from './types';
  * URL and accepting registrations to downgraded orgs.
  */
 export async function resolvePublicLeagueContext(orgSlug: string): Promise<Organization | null> {
-  const org = await getOrganizationBySlug(orgSlug);
-  if (!org || !org.isPublic) return null;
-  if (org.subscriptionStatus === 'canceled') return null;
-  if (!hasModuleEntitlement(org, 'module_house_league')) return null;
-  return org;
+  // Since Club Tier Stage 4a the gate itself is the one rule every public club page asks (lib/public-club-access.ts).
+  return resolvePublicClub(orgSlug, 'league');
 }

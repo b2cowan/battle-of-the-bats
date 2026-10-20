@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLeagueSeasonBySlug } from '@/lib/db';
+import { getLeagueSeasonBySlug, getOrgPublicSiteContent } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import StatusLookupForm from './StatusLookupForm';
 import column from '../../league-column.module.css';
@@ -17,7 +17,12 @@ export default async function RegistrationStatusPage({
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
 
-  const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
+  // Where a family's questions go: the club's public-site contact. Never `org.contactEmail` — that maps a column that
+  // does not exist, so the link never showed (F09, Club Tier Stage 4a).
+  const [season, siteContent] = await Promise.all([
+    getLeagueSeasonBySlug(org.id, seasonSlug),
+    getOrgPublicSiteContent(org.id),
+  ]);
   if (!season) notFound();
 
   const containerStyle: React.CSSProperties = {
@@ -65,7 +70,7 @@ export default async function RegistrationStatusPage({
         <StatusLookupForm
           orgSlug={orgSlug}
           seasonSlug={seasonSlug}
-          contactEmail={org.contactEmail ?? null}
+          contactEmail={siteContent?.contactEmail ?? null}
         />
       </div>
     </div>
