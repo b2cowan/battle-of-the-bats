@@ -32,9 +32,13 @@
   flex: 1 1 auto;
 }
 
+/* The Account area's headings ("Account", the Appearance / Get the app / Help pane headings) are plain:
+   the body face at 700 (owner 2026-10-20, admin type sweep Stage 5a). Named here because the global
+   h1–h6 rule would otherwise hand them the condensed display face — the consumer shell carries no
+   admin or coach marker. */
 .title {
-  font-family: var(--font-display, sans-serif);
-  font-weight: 800;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 700;
   font-size: 1.5rem;
   letter-spacing: -0.01em;
   color: var(--home-ink);

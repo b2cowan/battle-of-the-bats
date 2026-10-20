@@ -22,8 +22,9 @@
 
 .header { margin-bottom: 0.25rem; }
 
+/* Plain like the Account area's own headings (owner 2026-10-20, admin type sweep Stage 5a). */
 .title {
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-weight: 700;
   font-size: 1.6rem;
   letter-spacing: -0.01em;

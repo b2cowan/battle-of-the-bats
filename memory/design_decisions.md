@@ -7,6 +7,20 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — NO ADMIN HOME PAGE FOR SOMEONE WHO CANNOT SEE TOURNAMENTS: THEIR FIRST DOOR, ELSE "ACCESS RESTRICTED" (owner, admin type sweep Stage 5 E1, as recommended)
+
+**Decision:** On a tournament-only organization, a member who cannot see tournaments no longer gets the pre-redesign
+tile page. They go straight to the first area whose own gate admits them (Organization admin → Public site →
+Accounting → House league → Rep teams); with none, one "Access restricted" card ("…Ask your organization's owner for
+access."). The Account area's headings ("Account", the pane headings, Notification settings) are the body face at 700
+(E2, the same day).
+**Rationale:** the tile page listed doors the member could open, so a blanket card could strand someone with one; a
+door that asks the same rule as its page never bounces back. On the Tournament / Tournament Plus plans Organization
+admin does not exist (every page of it goes to tournaments), so there the card is the honest answer. Families is never
+a door here: its gate also refuses a member limited to some teams.
+**Applies to:** the admin home only. Members who can see tournaments keep their routing (dashboard, list or setup).
+
+
 ### 2026-10-20 — THE FIRST RUN'S EIGHT RULES: ONE FRAME, ONE TYPE, ONE WORDING, ONE ACCOUNT FORM, ONE STEP LINE AND WAIT, THE BUTTON IN VIEW, EVERY FAILURE SAYS WHAT TO DO, ONE DOOR PER THING; THE APP'S BAR IN SENTENCE CASE; DARK STAYS DARK (owner, The first look, rules 1–8 + Asks 3, 10, 12, 13, ruled 2026-10-19 as recommended; built as Stage 1, 2026-10-20 — hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx)
 
 **Decision (for `/design`; the words for `/marketing`, Ask 3 — written rules, no build guard).** Every screen a newcomer

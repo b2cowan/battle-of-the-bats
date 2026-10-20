@@ -64,8 +64,10 @@ export const KIT_INK = {
   success: { color: 'var(--success-light)' },
   warning: { color: 'var(--warning-light)' },
   info: { color: 'var(--info-light)' },
-  /** A table's column heading — the standard's quiet head. */
-  head: { fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--type-support)', fontWeight: 650, letterSpacing: 'normal', textTransform: 'none', color: 'var(--text-tertiary)' },
+  /** A table's column heading set by hand — the standard's column heading, the global `th` rule's values
+   *  (owner 2026-10-20, admin type sweep Stage 5a: it was a quiet body-face head until then). */
+  // type-ok: column heading
+  head: { fontFamily: 'var(--font-display, sans-serif)', fontSize: 'var(--type-support)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' },
   /** A required field's asterisk: the label's own ink (portal ruling 2026-08-25 — red means something went wrong). */
   asterisk: { color: 'inherit' },
   /** A label over a figure — the kit's eyebrow. */

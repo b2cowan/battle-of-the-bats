@@ -1,21 +1,15 @@
 'use client';
-import { useEffect, useState, type ElementType } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, AlertCircle, Rocket, Lock, Contact } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement, isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasCapability, type Capability } from '@/lib/roles';
-import { usePlanGating } from '@/lib/use-plan-gating';
-import { closedProgramPlansSentence } from '@/lib/plan-config';
+import { isTournamentTier } from '@/lib/billing-urls';
 import LoadingState from '@/components/shared/LoadingState';
-
-interface AttentionSummary {
-  pendingTournamentCount: number;
-  pendingLeagueCount: number;
-  openLeagueSeasonId: string | null;
-  pendingTryoutCount: number;
-}
+import HelpCallout from '@/components/help/HelpCallout';
+import s from '@/app/[orgSlug]/admin/admin-common.module.css';
 
 interface StartupProgress {
   tasks: Record<'plan' | 'tournament' | 'divisions' | 'welcome' | 'venues' | 'contacts', 'pending' | 'complete' | 'skipped'>;
@@ -26,50 +20,42 @@ interface StartupProgress {
   firstTournament: { id: string } | null;
 }
 
+/**
+ * The admin home for a workspace with no club hub (`AdminHub` mounts this for a tournament-only plan).
+ * There is no home page here: a member who can see tournaments goes to them (or to setup), and a member who
+ * cannot goes to the first area they can open. Only someone who can open nothing sees a page — the
+ * "Access restricted" card. ⚖ Owner 2026-10-20 (admin type sweep Stage 5, E1): this replaced the
+ * pre-redesign tile page, the last screen still drawn in the old console lettering.
+ */
 export default function AdminHubClient() {
   const router = useRouter();
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
-  // The locked-programs note says which plans are closed from the LIVE gate (BUSINESS_DECISIONS 2026-09-28).
-  const gating = usePlanGating();
-  const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
 
   const canUseModule = (capability: Capability) => !loading && currentOrg && userRole
     ? hasCapability(userRole, userCapabilities, capability) && hasModuleEntitlement(currentOrg, capability)
     : false;
 
-  const canSeeTournaments = !loading && userRole
-    ? canUseModule('module_tournaments')
-    : false;
-
-  const canSeeOrgAdmin = !loading && userRole
+  const canSeeTournaments = canUseModule('module_tournaments');
+  // ⚠ A Tournament / Tournament Plus organization has NO /admin/org: its layout (and proxy.ts) send every page of
+  // it to /admin/tournaments — the very area this member cannot see — so it is never a door here (the rail hides
+  // it for the same reason, `useAdminKitNav`).
+  const canSeeOrgAdmin = !loading && userRole && !isTournamentTier(currentOrg?.planId)
     ? (userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')) && canUseModule('module_members')
     : false;
 
-  const canSeePublicSite = !loading && userRole
-    ? canUseModule('module_public_site')
-    : false;
+  // The areas this member can open, in the order the old tiles listed them, each asking the same rule its
+  // destination's own gate asks (`canOpenModule`), so a door never bounces back here. Families is not offered:
+  // its gate also refuses a member limited to some teams, which this context cannot see, and a refused door
+  // would loop through this page. On a tournament-only plan almost every member lands on the card below.
+  const firstDoor = [
+    canSeeOrgAdmin && `${base}/org`,
+    canUseModule('module_public_site') && `${base}/public-site`,
+    canUseModule('module_accounting') && `${base}/accounting`,
+    canUseModule('module_house_league') && `${base}/house-league`,
+    canUseModule('module_rep_teams') && `${base}/rep-teams`,
+  ].find((href): href is string => typeof href === 'string') ?? null;
 
-  const canSeeAccounting = !loading && userRole
-    ? canUseModule('module_accounting')
-    : false;
-
-  const canSeeHouseLeague = !loading && userRole
-    ? canUseModule('module_house_league')
-    : false;
-
-  const canSeeRepTeams = !loading && userRole
-    ? canUseModule('module_rep_teams')
-    : false;
-
-  // Off by default for every role — visible only to owners and members explicitly
-  // granted module_families. No teaser tile when absent: the area concentrates
-  // household PII, and a door that cannot open is not advertised (plan §5.3).
-  const canSeeFamilies = !loading && userRole
-    ? canUseModule('module_families')
-    : false;
-
-  const [attention, setAttention] = useState<AttentionSummary | null>(null);
   const [startupProgress, setStartupProgress] = useState<StartupProgress | null>(null);
   const [startupErrorOrgSlug, setStartupErrorOrgSlug] = useState<string | null>(null);
   const [startupTimeoutOrgSlug, setStartupTimeoutOrgSlug] = useState<string | null>(null);
@@ -110,6 +96,12 @@ export default function AdminHubClient() {
     router.replace(`${base}/onboarding?continueSetup=1`);
   }, [loading, userRole, currentOrg, hasOnlyTournamentWorkspace, startupProgress, base, router]);
 
+  // A member who cannot see tournaments goes to the first area they can open.
+  useEffect(() => {
+    if (loading || !userRole || !currentOrg || hasOnlyTournamentWorkspace || !firstDoor) return;
+    router.replace(firstDoor);
+  }, [loading, userRole, currentOrg, hasOnlyTournamentWorkspace, firstDoor, router]);
+
   useEffect(() => {
     if (!hasOnlyTournamentWorkspace || startupProgress || loading || !currentOrg) {
       return;
@@ -121,13 +113,7 @@ export default function AdminHubClient() {
   }, [hasOnlyTournamentWorkspace, startupProgress, loading, currentOrg]);
 
   useEffect(() => {
-    if (loading || !currentOrg) return;
-    const orgQuery = currentOrg.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-    fetch(`/api/admin/attention-summary${orgQuery}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setAttention(data); })
-      .catch(() => {});
-
+    if (loading || !currentOrg || !hasOnlyTournamentWorkspace) return;
     const orgSlug = currentOrg.slug;
     fetch(`/api/admin/org/startup-tasks?orgSlug=${encodeURIComponent(orgSlug)}`)
       .then(r => {
@@ -140,9 +126,9 @@ export default function AdminHubClient() {
         setStartupTimeoutOrgSlug(current => current === orgSlug ? null : current);
       })
       .catch(() => setStartupErrorOrgSlug(orgSlug));
-  }, [loading, currentOrg]);
+  }, [loading, currentOrg, hasOnlyTournamentWorkspace]);
 
-  if (loading || !userRole) {
+  if (loading || !userRole || !currentOrg) {
     return (
       <LoadingState label="Loading the admin home…" />
     );
@@ -183,216 +169,19 @@ export default function AdminHubClient() {
     );
   }
 
-  const tiles = [
-    canSeeTournaments && {
-      label: 'Tournament Management',
-      desc: 'Schedule, results, registrations, and day-to-day tournament operations',
-      icon: Trophy,
-      href: `${base}/tournaments`,
-    },
-    canSeeOrgAdmin && {
-      label: 'Organization Admin',
-      desc: 'Members, subscription, settings, venues, and tournament records',
-      icon: Building2,
-      href: `${base}/org`,
-    },
-    canSeePublicSite && {
-      label: 'Public site',
-      desc: 'Edit your org-branded public page: tagline, description, and social links',
-      icon: Globe,
-      href: `${base}/public-site`,
-    },
-    canSeeAccounting && {
-      label: 'Accounting',
-      desc: 'Track income, expenses, and financial activity across the org and each tournament',
-      icon: DollarSign,
-      href: `${base}/accounting`,
-    },
-    canSeeHouseLeague && {
-      label: 'House league',
-      desc: 'Manage recreational seasons, player registrations, team placement, scheduling, and standings',
-      icon: CalendarDays,
-      href: `${base}/house-league`,
-    },
-    canSeeRepTeams && {
-      label: 'Rep teams',
-      desc: 'Manage competitive team programs - tryouts, rosters, player documents, schedules, and team finances',
-      icon: Users,
-      href: `${base}/rep-teams`,
-    },
-    canSeeFamilies && {
-      label: 'Families',
-      desc: 'Every household the club holds - who owes, who is missing forms, who cannot be reached, across rep teams and house league',
-      icon: Contact,
-      href: `${base}/families`,
-    },
-    canSeeRepTeams && {
-      label: 'Coaches Portal',
-      desc: 'Switch to the coach-facing view - schedules, rosters, and player documents for assigned teams',
-      icon: UserCheck,
-      href: `/${currentOrg?.slug ?? ''}/coaches`,
-    },
-  ].filter(Boolean) as { label: string; desc: string; icon: ElementType; href: string }[];
-
-  const attentionItems: { label: string; href: string }[] = [];
-  if (attention) {
-    if (attention.pendingTournamentCount > 0) {
-      attentionItems.push({
-        label: `${attention.pendingTournamentCount} pending tournament registration${attention.pendingTournamentCount === 1 ? '' : 's'}`,
-        href: `${base}/tournaments/registrations`,
-      });
-    }
-    if (canSeeHouseLeague && attention.pendingLeagueCount > 0) {
-      attentionItems.push({
-        label: `${attention.pendingLeagueCount} pending league registration${attention.pendingLeagueCount === 1 ? '' : 's'}`,
-        href: attention.openLeagueSeasonId
-          ? `${base}/house-league/seasons/${attention.openLeagueSeasonId}/registrations`
-          : `${base}/house-league`,
-      });
-    }
-    if (canSeeRepTeams && attention.pendingTryoutCount > 0) {
-      attentionItems.push({
-        label: `${attention.pendingTryoutCount} open tryout application${attention.pendingTryoutCount === 1 ? '' : 's'}`,
-        href: `${base}/rep-teams`,
-      });
-    }
+  if (firstDoor) {
+    return (
+      <LoadingState label="Loading the admin home…" />
+    );
   }
 
   return (
-    <div className="p-8 max-w-4xl">
-      <header className="border-b border-blueprint-blue/60 pb-4 mb-8">
-        <div className="hud-label mb-1">Admin</div>
-        <h1 className="font-mono font-bold text-2xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
-          {currentOrg?.name ?? 'Admin'}
-        </h1>
-      </header>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {tiles.map(({ label, desc, icon: Icon, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className="card p-6 flex gap-4 items-start hover:border-blueprint-blue transition-colors"
-          >
-            <div className="text-blueprint-blue mt-0.5">
-              <Icon size={28} />
-            </div>
-            <div>
-              <div className="font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
-              <div className="text-data-gray text-sm mt-1">{desc}</div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* F3 — Soft upsell: show teaser tiles for modules not on the current plan */}
-      {!loading && userRole === 'owner' && currentOrg && !canSeeAccounting && !canSeeRepTeams && (
-        <div style={{ marginTop: '2rem' }}>
-          <div style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            color: 'var(--white-30)',
-            marginBottom: '0.75rem',
-          }}>
-            In League Plus and Club
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {([
-              { label: 'Public site', desc: 'Branded org page with registration and news — League Plus plan', icon: Globe, plan: 'league', capability: 'module_public_site' },
-              { label: 'House league', desc: 'Recreational seasons, registrations, scheduling, and standings — League Plus plan', icon: CalendarDays, plan: 'league', capability: 'module_house_league' },
-              { label: 'Accounting', desc: 'Income, expenses, and financial activity across the org and tournaments — Club plan', icon: DollarSign, plan: 'club', capability: 'module_accounting' },
-              { label: 'Rep teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club', capability: 'module_rep_teams' },
-            ] as const)
-              // Don't tease a module the org already has — e.g. a League Starter free-floor org
-              // already runs House League, so it shouldn't also appear under "coming soon".
-              .filter(({ capability }) => !canUseModule(capability))
-              .map(({ label, desc }) => (
-              <Link
-                key={label}
-                href={`${base}/org/billing`}
-                className="card p-6 flex gap-4 items-start"
-                style={{ opacity: 0.45, cursor: 'default', pointerEvents: 'none' }}
-                tabIndex={-1}
-                aria-hidden="true"
-              >
-                <div style={{ color: 'var(--white-30)', marginTop: '0.125rem', flexShrink: 0 }}>
-                  <Lock size={20} />
-                </div>
-                <div>
-                  <div className="font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
-                  <div className="text-data-gray text-sm mt-1">{desc}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-          <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--white-30)' }}>
-            {closedPlansLine && <>{closedPlansLine}{' '}</>}
-            <Link href={`${base}/org/billing`} style={{ color: 'var(--white-50)', textDecoration: 'underline' }}>
-              View billing and upgrade options →
-            </Link>
-          </p>
-        </div>
-      )}
-
-      {startupProgress && startupProgress.wizardAvailable && !startupProgress.allFinished && (
-        <Link
-          href={`${base}/onboarding?continueSetup=1`}
-          style={{
-            marginTop: '2rem',
-            padding: '1rem 1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.85rem',
-            background: 'rgba(var(--blueprint-blue-rgb),0.08)',
-            border: '1px solid rgba(var(--blueprint-blue-rgb),0.28)',
-            borderRadius: '2px',
-            color: 'var(--white-80)',
-            textDecoration: 'none',
-          }}
-        >
-          <Rocket size={18} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>
-              First tournament setup available
-            </div>
-            <div style={{ color: 'var(--white-50)', fontSize: '0.82rem', marginTop: '0.15rem' }}>
-              Start the guided setup wizard and save everything at the final review.
-            </div>
-          </div>
-          <span style={{ color: 'var(--logic-lime)', fontSize: '0.82rem', fontWeight: 700 }}>Start setup →</span>
-        </Link>
-      )}
-
-      {attentionItems.length > 0 && (
-        <div style={{
-          marginTop: '2rem',
-          padding: '1rem 1.25rem',
-          background: 'rgba(var(--warning-rgb),0.07)',
-          border: '1px solid rgba(var(--warning-rgb),0.25)',
-          borderRadius: '2px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-            <AlertCircle size={15} style={{ color: 'rgba(var(--warning-rgb),0.8)', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(var(--warning-rgb),0.8)' }}>
-              Needs attention
-            </span>
-          </div>
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            {attentionItems.map(item => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  style={{ fontSize: '0.88rem', color: 'var(--white-80)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-                >
-                  {item.label} -&gt;
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+    <div className={s.page}>
+      <HelpCallout
+        variant="warning"
+        title="Access restricted"
+        body="You don't have access to any area here yet. Ask your organization's owner for access."
+      />
     </div>
   );
 }
