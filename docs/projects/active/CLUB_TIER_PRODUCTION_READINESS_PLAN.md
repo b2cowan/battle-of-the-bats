@@ -1063,7 +1063,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > the club's logo URL and colours stay in the layout's payload under the refusal (only the name shows). 131 tests across the 4a and
 > neighbouring guards pass; browser probe re-run.
 > **✅ 4b-1 BUILT 2026-10-20 (on `dev`; one session from `CLUB_TIER_STAGE4B1_BUILD_PROMPT.md`; walk §350
-> https://claude.ai/artifact/BaHx5XwXac4VkEisssNno5 — ✅ PASSED 32/32, owner 2026-10-20).** **Ask S1 RULED 2026-10-20, option A** (drawing
+> https://claude.ai/artifact/BaHx5XwXac4VkEisssNno5 — ✅ PASSED 32/32, owner 2026-10-20; COMMITTED `6affb4e4e` 2026-10-20).** **Ask S1 RULED 2026-10-20, option A** (drawing
 > https://claude.ai/artifact/JoYUB7TDUh2sB75owpMJyP): one quiet ⇄ door for THIS club's staff only, OUTERMOST, right of Account
 > (the prompt's "left of Account" would have broken the ratified door order); never the Workspaces chooser on a club's bar. Words
 > through /marketing 2026-10-20 (Sign in · House league · Past tournaments · "Questions? Email the club" · Copy/Copied · "page · club"
@@ -1093,7 +1093,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > left cards; the team colour strip under the phone tab row; an uploaded banner sits under a 90 % ground scrim (untested — no
 > fixture has a banner); the team's own colour no longer tints its division chip (DC-02). **Findings for the owner:** (1) a
 > handful of standalone platform pages (the root 404, unsubscribe confirmation, the pitch deck, the tryout scorer) used to fall into
-> the old org branch and wore a nameless bar with Discover/Pricing/Sign In; they now have no top bar (recommended: keep);
+> the old org branch and wore a nameless bar with Discover/Pricing/Sign In; they now have no top bar (recommended: keep — owner confirmed 2026-10-20);
 > (2) the admin's door to the public page still reads "Public ledger" while the page is "Past tournaments" (one-name rule — for
 > 4c's editor pass); (3) the root 404's "script tag" console warning on every not-found (pre-existing); (4) a club page still reads
 > the club twice (`resolvePublicClub` uncached — pre-existing, follow-up); (5) a "page not found" tab title is not possible for a
