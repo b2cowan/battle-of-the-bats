@@ -3074,6 +3074,8 @@ export interface OpenTryout {
   teamSlug: string;
   programYearId: string;
   programYearName: string;
+  /** The season's year — the club home's Open now says "For the 2027 season" (Club Tier Stage 4b-2a). */
+  programYearYear: number | null;
 }
 
 /**
@@ -3085,7 +3087,7 @@ export interface OpenTryout {
 export async function getOpenTryoutsByOrg(orgId: string): Promise<OpenTryout[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
-    .select('id, name, team_id, status, created_at, tryout_open, rep_teams!team_id(name, slug, is_archived)')
+    .select('id, name, year, team_id, status, created_at, tryout_open, rep_teams!team_id(name, slug, is_archived)')
     .eq('org_id', orgId)
     .in('status', [...LIVE_SEASON_STATUSES]);
   if (error) throw error;
@@ -3109,6 +3111,7 @@ export async function getOpenTryoutsByOrg(orgId: string): Promise<OpenTryout[]> 
       teamSlug: team?.slug ?? '',
       programYearId: open.id,
       programYearName: open.name,
+      programYearYear: open.year ?? null,
     });
   }
   return out;

@@ -12,6 +12,8 @@ export interface PublicClub {
   slug: string;
   name: string;
   siteOpen: boolean;
+  /** The club has a Teams page (its Teams tab is up) — the "not found" for an unknown team offers it (Stage 4b-2a). */
+  teamsPage: boolean;
 }
 
 const PublicClubContext = createContext<PublicClub | null>(null);

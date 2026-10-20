@@ -13,22 +13,23 @@ import {
 
 test('one name per thing: the tabs say what the pages say (Club Tier Stage 4, "Names")', () => {
   assert.deepEqual(
-    orgSectionsFor({ league: true, archives: true }).map(s => s.label),
-    ['Home', 'House league', 'Past tournaments'],
+    orgSectionsFor({ league: true, archives: true, teams: true }).map(s => s.label),
+    ['Home', 'Teams', 'House league', 'Past tournaments'],
   );
 });
 
 test('orgSectionsFor: Home is always present; the rest follow availability', () => {
   assert.deepEqual(
-    orgSectionsFor({ league: true, archives: true }).map(s => s.key),
-    ['', 'league', 'archives'],
+    orgSectionsFor({ league: true, archives: true, teams: true }).map(s => s.key),
+    ['', 'teams', 'league', 'archives'],
   );
-  assert.deepEqual(orgSectionsFor({ league: true, archives: false }).map(s => s.key), ['', 'league']);
-  assert.deepEqual(orgSectionsFor({ league: false, archives: true }).map(s => s.key), ['', 'archives']);
+  assert.deepEqual(orgSectionsFor({ league: true, archives: false, teams: false }).map(s => s.key), ['', 'league']);
+  assert.deepEqual(orgSectionsFor({ league: false, archives: true, teams: false }).map(s => s.key), ['', 'archives']);
+  assert.deepEqual(orgSectionsFor({ league: false, archives: false, teams: true }).map(s => s.key), ['', 'teams']);
 });
 
 test('orgSectionsFor: an org with nothing else falls below the render floor', () => {
-  const sections = orgSectionsFor({ league: false, archives: false });
+  const sections = orgSectionsFor({ league: false, archives: false, teams: false });
   assert.deepEqual(sections.map(s => s.key), ['']);
   // A row holding only "Home" is chrome that says nothing — the gate is what stops it rendering.
   assert.ok(sections.length < ORG_SECTION_TABS_MIN);
@@ -51,10 +52,9 @@ test('activeOrgSectionKey: an unnamed section highlights NOTHING rather than lyi
   assert.equal(activeOrgSectionKey('/ravens/league', ''), null);
 });
 
-test('a NAMED but non-tabbable section highlights no tab either', () => {
-  // `teams` resolves as a section but the tab row never offers it (no index page until 4b-2),
-  // so its key matches no rendered tab — no tab reads as current on a rep-team page.
+test('a team page reads as inside the Teams tab (Club Tier Stage 4b-2a, End state 3)', () => {
+  // Until 4b-2a `teams` was named but never a tab (no index page); a team's page is now one level under the Teams page.
   assert.equal(activeOrgSectionKey('/ravens/teams/u14-select', 'ravens'), 'teams');
-  const tabs = orgSectionsFor({ league: true, archives: true });
-  assert.ok(!tabs.some(t => t.key === activeOrgSectionKey('/ravens/teams/u14-select', 'ravens')));
+  const tabs = orgSectionsFor({ league: true, archives: true, teams: true });
+  assert.ok(tabs.some(t => t.key === activeOrgSectionKey('/ravens/teams/u14-select', 'ravens')));
 });

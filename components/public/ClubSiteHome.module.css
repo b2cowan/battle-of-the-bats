@@ -1,0 +1,129 @@
+/* A club's home (Club Tier Stage 4b-2a; End state 1). The club's light frame supplies the --club-* tokens
+   (ClubFrame.module.css `.site`); the shared list, row and section pieces are the club kit's (ClubKit.module.css).
+   Here: the page's column, the desk-only banner strip, the team grid and the Follow button's place. Type steps only
+   (12 · 14 · 16), no tints, no shadows, no typewriter face (DC-02, DC-03, DC-05). */
+
+/* ── The banner (Ask 7A): a strip under the bar on a DESK only, never behind the name, so it carries no text and needs
+   no scrim (4b-1 left the photo under a 90 % ground wash it could not test). A phone does not draw it: Open now keeps
+   screen one. The photo is cropped to the strip, centred. */
+.bannerStrip {
+  display: none;
+}
+
+/* ── The column: one on a phone (16 px gutter), two at a desk — the programs, and About beside them (1,200 px, the
+   frame's own edge, so the club's logo stands over the first heading). */
+.column {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ── The team grid (DC-01): a two-column grid of doors under the club's group bands; one column for a group whose
+   names will not fit half the width (names never truncate). No tile chevrons. */
+.grid {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tiles.one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tileBand {
+  grid-column: 1 / -1;
+  padding: 6px 2px 0;
+  font: 700 0.75rem/1.2 var(--club-text-face);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--club-soft);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  font: 600 1rem/1.2 var(--club-text-face);
+  color: var(--club-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.tile:hover {
+  border-color: var(--club-field);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: 2px;
+}
+
+/* Follow, at the end of About the club (owner 2026-10-20). */
+.follow {
+  padding: 0 16px 14px;
+}
+
+.follow:first-child {
+  padding-top: 14px;
+}
+
+@media (min-width: 901px) {
+  /* /design 2026-10-20: the height scales with the width (a 3:1 photo shows about the same share at every desk width),
+     the crop sits a little above centre (faces and players are in a photo's upper half), and a hairline under it so a
+     pale photo does not bleed into the ground. */
+  .bannerStrip {
+    display: block;
+    height: clamp(140px, 14vw, 200px);
+    background-size: cover;
+    background-position: center 40%;
+    background-color: var(--club-ground);
+    border-bottom: 1px solid var(--club-line);
+  }
+
+  .column {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: start;
+    gap: 28px;
+    padding: 28px 24px 40px;
+  }
+
+  /* A club with no About: the programs take the whole width. */
+  .main:only-child {
+    grid-column: 1 / -1;
+  }
+
+  /* As many columns as fit (four at 1440); never a tile too narrow for its name and the Tryouts open chip. */
+  .tiles {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .tiles.one {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}

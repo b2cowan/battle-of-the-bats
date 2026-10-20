@@ -1,42 +1,43 @@
-/* components/public/FollowOrgButton.module.css — Phase 6 (F1/F3)
-   Org-hero Follow button. The org landing page is FieldLogicHQ-branded (global tokens);
-   token-only (public token ratchet). Same ghost→pillOn recipe as the event follow strip. */
+/* components/public/FollowOrgButton.module.css — Phase 6 (F1/F3); on the club's own site since Club Tier Stage 4b-2a.
+   The button renders only on an org's home — a club's (the end of About the club, owner 2026-10-20) or a
+   tournament-only org's hero — and every org home wears the club's light frame (ClubFrame.module.css `.site` supplies
+   the --club-* tokens): so it wears the club kit's buttons — "Follow" the secondary one, "Following" the club's fill —
+   in the club's text face, sentence case. No lime, no typewriter capitals (DC-03). */
 
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  min-height: var(--tap-min, 44px);
-  margin-top: 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  border-radius: var(--radius-sm);
-  padding: 0.5rem 1rem;
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  min-height: 44px;
+  border: 1px solid var(--club-field);
+  border-radius: 8px;
+  padding: 0 1rem;
+  background: var(--club-card);
+  color: var(--club-text);
+  font: 600 0.875rem/1 var(--club-text-face);
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s, opacity 0.12s;
 }
 
 .btn:hover {
-  background: rgba(var(--logic-lime-rgb), 0.16);
-  border-color: rgba(var(--logic-lime-rgb), 0.55);
+  background: var(--club-ground);
 }
 
-/* "Following" — solid lime fill with ink text (pillOn / E3). */
+.btn:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: 2px;
+}
+
+/* "Following" — the club's own fill (the kit's primary button). */
 .btnOn {
-  border-color: var(--logic-lime);
-  background: var(--logic-lime);
-  color: var(--pitch-black);
+  border: 1.5px solid var(--club-edge);
+  background: var(--club-fill);
+  color: var(--club-on-fill);
 }
 
 .btnOn:hover {
-  background: rgba(var(--logic-lime-rgb), 0.85);
-  border-color: rgba(var(--logic-lime-rgb), 0.85);
+  background: var(--club-fill);
+  opacity: 0.9;
 }
 
 .saving {

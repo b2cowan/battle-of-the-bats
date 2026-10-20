@@ -16,24 +16,16 @@ export interface OrgSection {
 }
 
 /**
- * The section table. `''` (the club's home) is the first tab.
- *
- * `tabbable` separates a section the visitor can be IN from one the row can SEND them to. `teams` is
- * nameable but not navigable until 4b-2's Teams page: `/{orgSlug}/teams` is a redirect shim with no index page (the org home's
- * "Tryouts Are Open" card pointing at it is a known broken link on the platform defect list), while
- * `/{orgSlug}/teams/{team}` is a real page the visitor can be in (no tab reads as current there).
- * Putting a TAB on a redirect would launder that bug into navigation. Hence the flag rather than a second table.
+ * The section table, in tab order: Home · Teams · House league · Past tournaments (Club Tier Stage 4b-2a, Ask 9A; the
+ * club Tryouts tab joins third in 4b-2b). `''` (the club's home) is the first tab. Every section is a real page: until
+ * 4b-2a `/{orgSlug}/teams` was a redirect shim, nameable but never a tab (a tab on a redirect would have laundered that
+ * into navigation); a section must have its page before it joins this table.
  */
-interface OrgSectionEntry extends OrgSection {
-  /** Can this section be a tab destination — i.e. does a real index page exist for it? */
-  tabbable: boolean;
-}
-
-const ORG_SECTIONS: OrgSectionEntry[] = [
-  { key: '',         label: 'Home',             tabbable: true  },
-  { key: 'league',   label: 'House league',     tabbable: true  },
-  { key: 'teams',    label: 'Teams',            tabbable: false }, // no index page until 4b-2
-  { key: 'archives', label: 'Past tournaments', tabbable: true  },
+const ORG_SECTIONS: OrgSection[] = [
+  { key: '',         label: 'Home' },
+  { key: 'teams',    label: 'Teams' },
+  { key: 'league',   label: 'House league' },
+  { key: 'archives', label: 'Past tournaments' },
 ];
 
 /**
@@ -59,15 +51,13 @@ export function activeOrgSectionKey(pathname: string, orgSlug: string): string |
  * Returns fewer than 2 entries when the org has nothing to navigate between; the caller treats
  * that as "render no tab row" rather than showing a row with a single Home tab in it.
  */
-export function orgSectionsFor(available: { league: boolean; archives: boolean }): OrgSection[] {
-  return ORG_SECTIONS
-    .filter(s => {
-      if (!s.tabbable) return false; // a section with no index page can be named, never linked to
-      if (s.key === 'league') return available.league;
-      if (s.key === 'archives') return available.archives;
-      return true; // Home is always present
-    })
-    .map(({ key, label }) => ({ key, label }));
+export function orgSectionsFor(available: { league: boolean; archives: boolean; teams: boolean }): OrgSection[] {
+  return ORG_SECTIONS.filter(s => {
+    if (s.key === 'teams') return available.teams;
+    if (s.key === 'league') return available.league;
+    if (s.key === 'archives') return available.archives;
+    return true; // Home is always present
+  });
 }
 
 /** The Stage F render gate: a tab row is only honest when there is somewhere else to go. */

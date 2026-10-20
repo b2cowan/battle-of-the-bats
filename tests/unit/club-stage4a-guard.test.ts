@@ -39,7 +39,8 @@ const CLUB_APIS = [
  *  tournament — so it can't stand in for it: only the seven shortcut pages, by name, may use it instead.) */
 const ASKS = /\b(requirePublicClubPage|resolvePublicClub|publicClubRefusal|resolvePublicTryout|resolvePublicLeagueContext)\(/;
 
-const SHORTCUTS = ['teams', 'news', 'rules', 'schedule', 'standings', 'register', 'results'];
+/** Six since Stage 4b-2a: `/teams` became the club's Teams page (Ask 9A) — pinned in §4 below. */
+const SHORTCUTS = ['news', 'rules', 'schedule', 'standings', 'register', 'results'];
 const SHORTCUT_PAGES = new Set(SHORTCUTS.map(d => `${ORG}/${d}/page.tsx`));
 
 describe('1 · every public club page and route asks the one question', () => {
@@ -143,6 +144,14 @@ describe('4 · the shortcut addresses (Ask 9)', () => {
       assert.match(readCode(`${ORG}/${dir}/page.tsx`), new RegExp(`export default clubShortcutPage\\('${dir}'\\);`));
     });
   }
+  it('/teams is the club\'s Teams page for a club whose plan carries rep teams; any other org keeps the forward (4b-2a)', () => {
+    const code = readCode(`${ORG}/teams/page.tsx`);
+    const decide = code.indexOf('clubTeamsAddress(');
+    assert.ok(decide > 0, 'decides through the one rule (lib/public-club-access.ts)');
+    assert.match(code, /forwardClubShortcut\(orgSlug, 'teams'\)/, 'an org without rep teams still forwards (printed QR codes)');
+    assert.match(code, /requirePublicClubPage\(orgSlug, 'teams'\)/, 'the Teams page asks the one question');
+    assert.ok(decide < code.indexOf("requirePublicClubPage(orgSlug, 'teams')"));
+  });
   it('the helper forwards to a running tournament, otherwise not found — never home', () => {
     const code = readCode('lib/club-shortcut.ts');
     assert.match(code, /notFound\(\)/);

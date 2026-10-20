@@ -1348,34 +1348,6 @@
   margin-bottom: 1rem;
 }
 
-.socialRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.socialLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 20px;
-  background: var(--white-8);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.75);
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-.socialLink:hover {
-  background: rgba(var(--primary-rgb), 0.25);
-  color: var(--white);
-}
-
 .tournamentCards {
   display: grid;
   gap: 1rem;
@@ -1442,11 +1414,6 @@
 .tryoutCards {
   display: grid;
   gap: 0.75rem;
-}
-
-.archivesCtaIcon {
-  color: var(--primary-light);
-  flex-shrink: 0;
 }
 
 .archivesCtaTitle {

@@ -1087,7 +1087,7 @@ const orgHelp: HelpPageContent = {
           title: 'Branding and appearance',
           content: (
             <>
-              <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image across the top of your organization&rsquo;s home page. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
+              <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> photo, shown as a strip under your bar on your home page on a computer (a phone leaves it out, so what&rsquo;s open now stays on the first screen). This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
               <p>A stock logo is drawn on a circle in your main colour, so it shows up on light pages and on printed and exported documents. The picker shows each one exactly as you&rsquo;ll get it. Change your colour theme and save, and your stock logo is remade in the new colour; a logo you uploaded is never changed.</p>
             </>
           ),
@@ -1116,8 +1116,10 @@ const orgHelp: HelpPageContent = {
         'light colour', 'readable', 'event card colour', 'event card color',
         'return to admin from public page', 'admin shortcut', 'coaches portal shortcut', 'flip', 'account menu', 'sign out',
         'page not found', 'couldn’t find that page', 'broken link', 'old link', 'qr code', 'short address', 'site isn’t available',
+        'home page', 'open now', 'teams tab', 'teams page', 'team page', 'about the club', 'follow', 'tournament status',
+        'live now', 'this weekend', 'finished', 'see all teams', 'team schedule', 'earlier this season', 'banner photo',
       ],
-      searchText: 'public organization page club site what families see visitors see fans see your own site your bar logo initials club name tagline sign in account section tabs tab row home house league past tournaments only the sections you have no tab row with only a home page tabs in the bar on a computer white row under the bar on a phone club name links back to the front page no discover no pricing no breadcrumb no fieldlogichq bottom bar on a phone tournament pages keep the bottom bar light page your colours readable automatically light colour dark text yellow gold sky darker links footer questions email the club copy the address copied social links instagram facebook x website built on fieldlogichq credit paid plans event cards club colours tournament cards account menu sign out stays on your page return to admin from my public page shortcut back admin coaches portal flip door only your own staff staff of another club family never sees it remembers the screen i left page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off',
+      searchText: 'public organization page club site what families see visitors see fans see your own site your bar logo initials club name tagline sign in account section tabs tab row home teams house league past tournaments only the sections you have teams tab teams page every team not archived club groups other teams tryouts open chip home page order open now registration open tryouts teams grid house league tournaments about the club follow button registration open this weekend live now finished banner strip computer only team page back to teams division season dot tryout details and sign-up isn’t taking tryout sign-ups right now schedule public link earlier this season up next directions cancelled show the rest of the season about the team see all teams no tab row with only a home page tabs in the bar on a computer white row under the bar on a phone club name links back to the front page no discover no pricing no breadcrumb no fieldlogichq bottom bar on a phone tournament pages keep the bottom bar light page your colours readable automatically light colour dark text yellow gold sky darker links footer questions email the club copy the address copied social links instagram facebook x website built on fieldlogichq credit paid plans event cards club colours tournament cards account menu sign out stays on your page return to admin from my public page shortcut back admin coaches portal flip door only your own staff staff of another club family never sees it remembers the screen i left page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off',
       content: (
         <>
           <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. Every club page there (your home, a team, a tryout and its sign-up, your house league, your past tournaments) is your club&rsquo;s own site: your bar at the top, your colours on a light page, and one footer at the bottom.</p>
@@ -1133,6 +1135,7 @@ const orgHelp: HelpPageContent = {
               <p>Your tabs sit beside your name on a computer and in a white row under the bar on a phone. A visitor sees only the sections you have:</p>
               <ul>
                 <li><strong>Home</strong></li>
+                <li><strong>Teams</strong>, when your plan includes rep teams and you have a team that isn&rsquo;t archived</li>
                 <li><strong>House league</strong>, once a season is published</li>
                 <li><strong>Past tournaments</strong>, once you have one and haven&rsquo;t hidden it</li>
               </ul>
@@ -1161,10 +1164,46 @@ const orgHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'public-org-page-home',
+          title: 'Your home page',
+          content: (
+            <>
+              <p>Your home page shows, from the top, only what your club has:</p>
+              <ol>
+                <li><strong>Open now</strong>: every house-league season taking registrations and every team taking tryout sign-ups, the nearest deadline first. When nothing is open, the section isn&rsquo;t there.</li>
+                <li><strong>Teams</strong>: your teams, under the groups you give them in <strong>Rep teams</strong>. A team taking tryout sign-ups shows <strong>Tryouts open</strong>.</li>
+                <li><strong>House league</strong>, when you run one.</li>
+                <li><strong>Tournaments</strong>, when you host one (see below).</li>
+                <li><strong>About the club</strong>: the description you write in the Site editor, and a <strong>Follow</strong> button when your club is listed in Discover.</li>
+              </ol>
+              <p>Your contact address and social links are in the footer. On a computer, your banner photo shows as a strip under your bar; a phone leaves it out.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-org-page-teams',
+          title: 'Your Teams page and each team’s page',
+          content: (
+            <>
+              <p>The <strong>Teams</strong> tab lists every team that isn&rsquo;t archived, under your groups (teams you haven&rsquo;t put in a group come last, under <strong>Other teams</strong>), and says which ones are taking tryout sign-ups. An archived team isn&rsquo;t listed, but its page still opens for old links.</p>
+              <p>A team&rsquo;s page shows, from the top:</p>
+              <ul>
+                <li><strong>&larr; Teams</strong>, then the team&rsquo;s name with its colour as a dot, and its division and season.</li>
+                <li>Its tryouts: <strong>Tryout details and sign-up</strong> while sign-ups are open, otherwise one sentence saying it isn&rsquo;t taking sign-ups right now, with your contact address.</li>
+                <li>Its schedule, only when the coach has set the schedule to <strong>Public link</strong>. Games already played fold into <strong>Earlier this season</strong>, the next event is marked <strong>Up next</strong> with a <strong>Directions</strong> button, a cancelled event stays crossed out, and <strong>Show the rest of the season</strong> opens the rest.</li>
+                <li><strong>About the team</strong>, the description you write on the team.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
           id: 'public-org-page-event-colours',
           title: 'Your tournaments on your home page',
           content: (
-            <p>When your home page lists your tournaments, each card is set in your club&rsquo;s colours, like the rest of your site. A card opens that tournament&rsquo;s own pages, which keep the tournament&rsquo;s branding.</p>
+            <>
+              <p>Each tournament on your home page says where it stands: <strong>Registration open</strong>, <strong>This weekend</strong>, <strong>Live now</strong> (only while its dates include today) or <strong>Finished</strong>. A finished tournament stays for 30 days, then lives under <strong>Past tournaments</strong> once you archive it. The <strong>Show upcoming tournaments</strong> switch in the Site editor hides the section.</p>
+              <p>A tournament opens its own pages, which keep the tournament&rsquo;s branding.</p>
+            </>
           ),
         },
         {
@@ -1172,8 +1211,8 @@ const orgHelp: HelpPageContent = {
           title: 'When a family opens a page that isn’t there',
           content: (
             <>
-              <p>A family who opens an address your organization doesn&rsquo;t have — a mistyped team name, an old link, a league page when you run no house league — sees <strong>We couldn&rsquo;t find that page</strong> inside your site, with your bar and footer and a button back to your home page.</p>
-              <p>The short addresses <code>/teams</code>, <code>/schedule</code>, <code>/standings</code>, <code>/results</code>, <code>/register</code>, <code>/news</code> and <code>/rules</code> open the same page of your running tournament, so printed links and QR codes keep working. With no tournament running, they show <em>We couldn&rsquo;t find that page</em> too.</p>
+              <p>A family who opens an address your organization doesn&rsquo;t have — a mistyped team name, an old link, a league page when you run no house league — sees <strong>We couldn&rsquo;t find that page</strong> inside your site, with your bar and footer and a button back to your home page. An old team address also offers <strong>See all teams</strong> when you have a Teams page.</p>
+              <p>The short addresses <code>/schedule</code>, <code>/standings</code>, <code>/results</code>, <code>/register</code>, <code>/news</code> and <code>/rules</code> open the same page of your running tournament, so printed links and QR codes keep working. With no tournament running, they show <em>We couldn&rsquo;t find that page</em> too. <code>/teams</code> is your Teams page when you have one; otherwise it works like the others.</p>
               <p>While your public site is switched off in <strong>Settings → Your public site</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead, without your bar or colours. Your tournament pages stay up.</p>
             </>
           ),
@@ -1190,13 +1229,13 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-public-page-no-teams-tab',
           question: 'Why is there no Teams tab on my public page?',
-          answerText: 'Rep teams do not have a public index page yet, so there is nowhere for a Teams tab to lead. Individual team pages exist, each with a link back to your home page, but your home page does not list them. The exception is tryouts: while a team\'s tryout registration is open, your home page shows a Tryouts are open card that takes families straight to that tryout\'s page, which links to the team\'s own page. The tab appears once the index page ships.',
-          keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'tryouts link', 'tryouts are open', 'team page link'],
+          answerText: 'The Teams tab shows when your plan includes rep teams and you have at least one team that is not archived. It opens your Teams page, which lists every team that is not archived under your groups and says which are taking tryout sign-ups. If every team is archived, there is no list to show, so there is no tab; the archived teams\' pages still open for old links. Your home page lists your teams too, and an open tryout appears under Open now.',
+          keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'teams page', 'tryouts link', 'tryouts open', 'team page link', 'archived teams'],
           answer: (
             <>
-              <p>Rep teams don&rsquo;t have a public <em>index</em> page yet — there is no single page listing them — so there is nowhere for a Teams tab to lead. Individual team pages do exist, each with a link back to your home page, but your home page doesn&rsquo;t list them.</p>
-              <p>The exception is tryouts: while a team&rsquo;s tryout registration is open, your home page shows a <strong>Tryouts are open</strong> card that takes families straight to that tryout&rsquo;s page, which links on to the team&rsquo;s own page.</p>
-              <p>The tab appears as soon as that index page ships.</p>
+              <p>The <strong>Teams</strong> tab shows when your plan includes rep teams and you have at least one team that isn&rsquo;t archived. It opens your Teams page, which lists every team that isn&rsquo;t archived under your groups and says which are taking tryout sign-ups.</p>
+              <p>If every team is archived, there is no list to show, so there is no tab. The archived teams&rsquo; pages still open for old links.</p>
+              <p>Your home page lists your teams too, and an open tryout appears under <strong>Open now</strong>.</p>
             </>
           ),
         },

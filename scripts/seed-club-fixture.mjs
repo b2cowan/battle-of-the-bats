@@ -70,6 +70,7 @@
  * Run:   node --env-file=.env.local scripts/seed-club-fixture.mjs           (build if absent)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --reset   (delete + rebuild)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --calendar-club   (rebuild ONLY the calendar club)
+ *        node --env-file=.env.local scripts/seed-club-fixture.mjs --rep-only-club   (rebuild ONLY the rep-only club, Stage 4b-2a)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --club-venues     (ADD the Stage 6a venues + bookings)
  *   · Club Tier Stage 6a (the venue book and the clash check, 2026-10-08): the club's Venue library — Lions Park
  *     (Diamonds 1–3), Kinsmen Park (Diamonds A, B), Westfield School (no facilities) — 13U AAA's own places (its own
@@ -160,6 +161,15 @@ const CAL_OWNER = {
   name: 'Jamie Laurent', title: 'Treasurer',
   email: (process.env.UAT_CALENDAR_CLUB_OWNER_EMAIL ?? 'uat-calendar-owner@uat-rep-club.local').toLowerCase(),
   password: process.env.UAT_CALENDAR_CLUB_OWNER_PASSWORD ?? DEFAULT_PASSWORD,
+};
+// Club Tier Stage 4b-2a — the rep-only club (`--rep-only-club`; built by buildRepOnlyClub at the end of this file).
+const REP_ONLY_SLUG = 'uat-rep-only';
+const REP_ONLY_NAME = 'UAT Lakeshore Lynx';
+const REP_ONLY_MARKER = '[UAT_PROTECTED] Club Tier Stage 4b-2a rep-only club — scripts/seed-club-fixture.mjs (rebuild with --rep-only-club). Do not wipe.';
+const REP_ONLY_OWNER = {
+  name: 'Dana Whitfield',
+  email: (process.env.UAT_REP_ONLY_OWNER_EMAIL ?? 'uat-rep-only-owner@uat-rep-club.local').toLowerCase(),
+  password: process.env.UAT_REP_ONLY_OWNER_PASSWORD ?? DEFAULT_PASSWORD,
 };
 // Club Tier Stage 6a (`--club-venues` and the full build) — the club's venues and a week of bookings on them; the step
 // itself is `addClubVenues`, at the end of this file.
@@ -282,6 +292,15 @@ if (process.argv.includes('--calendar-club')) {
   await buildCalendarClub();
   head('Done');
   printCalendarClub();
+  process.exit(0);
+}
+
+// ── Club Tier Stage 4b-2a — `--rep-only-club`: rebuild ONLY the rep-only club, and stop ──────────────────────────
+if (process.argv.includes('--rep-only-club')) {
+  head(`Rebuilding ${REP_ONLY_NAME} (${REP_ONLY_SLUG}) — UAT Rep Club untouched`);
+  await buildRepOnlyClub();
+  head('Done');
+  printRepOnlyClub();
   process.exit(0);
 }
 
@@ -1238,4 +1257,144 @@ function printClubVenues() {
   console.log(`  Stage 6a walks — the seeded Tuesday is ${sixaDates.tue} (and ${sixaDates.tue2}); Wednesday ${sixaDates.wed}; Thursday ${sixaDates.thu}`);
   console.log(`  head coach 13U AAA   uat-club-coach-13aaa@uat-rep-club.local  /  ${DEFAULT_PASSWORD}`);
   console.log('  house league         the OWNER (the house-league schedule saves for the owner or a league admin)');
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════════
+// Club Tier Stage 4b-2a — `--rep-only-club`: THE REP-ONLY CLUB, its own org (owner 2026-10-20, as recommended). The
+// club home's first shape (End state 1: rep only, a tryout open, no house league, no tournaments) and the navy club for
+// /design, with a banner photo for the desk-only strip (Ask 7A). UAT Rep Club (the yellow one, with a house league and a
+// tournament) is never touched, so nobody's saved sign-in ends. Rebuilt whole each time.
+//   · Navy and gold; three groups — AAA, AA, and Development (one long name, so its group falls back to one column on
+//     the home grid, DC-01); an archived 18U AA (not listed; its page still opens).
+//   · 15U AAA: tryouts OPEN, schedule on Public link, a live season with games played, an Up next, a cancelled practice
+//     and more than four events to come (the schedule's two folds); an about line.
+//   · 13U AAA: a quiet team (no tryouts, schedule not public), an about line. The rest: names and seasons only.
+//   · For the "nothing open" shape, the owner turns 15U AAA's tryouts off in the admin during the walk.
+// ════════════════════════════════════════════════════════════════════════════════════════════════════
+/** A field-and-sky banner drawn here, so the strip has a photo-sized image to crop (no stock photo lives in the repo). */
+async function repOnlyBanner() {
+  const sharp = (await import('sharp')).default;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="800" viewBox="0 0 2400 800">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FB6E6"/><stop offset="1" stop-color="#D9ECF7"/></linearGradient>
+      <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5E9B3F"/><stop offset="1" stop-color="#3F7A2B"/></linearGradient>
+    </defs>
+    <rect width="2400" height="800" fill="url(#sky)"/>
+    <ellipse cx="420" cy="160" rx="220" ry="40" fill="#FFFFFF" opacity=".7"/>
+    <ellipse cx="1780" cy="120" rx="300" ry="46" fill="#FFFFFF" opacity=".6"/>
+    <rect y="330" width="2400" height="70" fill="#2F5D3A"/>
+    <rect y="390" width="2400" height="410" fill="url(#grass)"/>
+    <path d="M1200 420 L1640 640 L1200 800 L760 640 Z" fill="#B9835A"/>
+    <path d="M1200 500 L1520 650 L1200 790 L880 650 Z" fill="#5E9B3F"/>
+    <circle cx="1200" cy="640" r="34" fill="#B9835A"/>
+    <g fill="#FFFFFF"><rect x="1190" y="410" width="20" height="20"/><rect x="1630" y="630" width="20" height="20"/><rect x="750" y="630" width="20" height="20"/></g>
+    <path d="M0 360 C 300 300, 600 320, 900 340 S 1500 300, 1800 330 S 2200 320, 2400 340 L2400 400 L0 400 Z" fill="#244A2E"/>
+  </svg>`;
+  return sharp(Buffer.from(svg)).jpeg({ quality: 82 }).toBuffer();
+}
+
+async function buildRepOnlyClub() {
+  const prior = await one('find rep-only club', db.from('organizations').select('id, internal_notes').eq('slug', REP_ONLY_SLUG).maybeSingle());
+  if (prior) {
+    if (!String(prior.internal_notes ?? '').includes('seed-club-fixture.mjs')) {
+      console.error(`✗ Refusing to delete ${REP_ONLY_SLUG}: it was not made by this script (no marker in internal_notes).`);
+      process.exit(1);
+    }
+    // Its banner lives in storage under the old id, which the org's delete does not reach.
+    await db.storage.from('org-assets').remove([`${prior.id}/hero-banner.jpg`]);
+    die('delete rep-only club', (await db.from('organizations').delete().eq('id', prior.id)).error);
+    ok('old rep-only club deleted (its sign-in kept; it is re-used)');
+  }
+
+  const club = await one('rep-only club', db.from('organizations').insert({
+    name: REP_ONLY_NAME, slug: REP_ONLY_SLUG, plan_id: 'club', subscription_status: 'active', account_kind: 'organization',
+    // Discoverable, so the home's Follow button (in About the club) shows: it follows the same gate a follow write checks.
+    is_public: true, is_discoverable: true, theme_preset: 'platform', theme_primary: '#1F3A5F', theme_accent: '#E8B33A',
+    internal_notes: REP_ONLY_MARKER, tournament_limit: 9999, team_limit: 15, onboarding_completed_at: nowIso,
+  }).select('id').single());
+  const owner = await ensureUser(REP_ONLY_OWNER.email, REP_ONLY_OWNER.password, REP_ONLY_OWNER.name);
+  die('rep-only owner', (await db.from('organization_members').insert({
+    organization_id: club.id, user_id: owner.id, role: 'owner', status: 'active',
+    display_name: REP_ONLY_OWNER.name, title: 'President', invited_at: nowIso, accepted_at: nowIso,
+  })).error);
+
+  die('rep-only public site', (await db.from('org_public_site_content').insert({
+    org_id: club.id,
+    tagline: 'Rep baseball · ages 9 to 16',
+    description: 'The Lakeshore Lynx are a volunteer-run rep baseball club. Nine teams from 9U to 16U play in the provincial AA and AAA divisions from April to August, with winter training at Lakeshore Dome. (Walk fixture — not a real club.)',
+    contact_email: 'info@uat-lakeshore-lynx.local',
+    show_upcoming_tournaments: true, show_archives_link: true,
+  })).error);
+
+  // The banner, stored where the admin's upload puts it (app/api/admin/org-hero-banner/route.ts).
+  const { data: buckets } = await db.storage.listBuckets();
+  if (!buckets?.some(b => b.name === 'org-assets')) die('banner bucket', (await db.storage.createBucket('org-assets', { public: true })).error);
+  const bannerPath = `${club.id}/hero-banner.jpg`;
+  die('banner upload', (await db.storage.from('org-assets').upload(bannerPath, await repOnlyBanner(), { contentType: 'image/jpeg', upsert: true })).error);
+  const bannerUrl = db.storage.from('org-assets').getPublicUrl(bannerPath).data.publicUrl;
+  die('banner url', (await db.from('organizations').update({ hero_banner_url: bannerUrl }).eq('id', club.id)).error);
+
+  const groupIds = {};
+  for (const [i, name] of ['AAA', 'AA', 'Development'].entries()) {
+    groupIds[name] = (await one(`group ${name}`, db.from('rep_team_groups').insert({ org_id: club.id, name, display_order: i }).select('id').single())).id;
+  }
+  const teams = [
+    { name: '15U AAA', slug: '15u-aaa', group: 'AAA', division: 'Provincial AAA', color: '#1E3A8A', tryouts: true, schedule: 'public_link',
+      about: 'Our top 15U group. Winter practices on Sundays at Lakeshore Dome; the season runs April to August.' },
+    { name: '13U AAA', slug: '13u-aaa', group: 'AAA', division: 'Provincial AAA', color: '#7A1F2B',
+      about: 'A 13U AAA group of 13 players. Practices move to Lakeshore Dome from November.' },
+    { name: '16U AA', slug: '16u-aa', group: 'AA', division: 'Provincial AA', color: '#0F766E' },
+    { name: '15U AA', slug: '15u-aa', group: 'AA', division: 'Provincial AA', color: '#9D174D' },
+    { name: '14U AA', slug: '14u-aa', group: 'AA', division: 'Provincial AA', color: '#065F46' },
+    { name: '12U AA', slug: '12u-aa', group: 'AA', division: 'Provincial AA', color: '#0E7490' },
+    { name: '11U AA', slug: '11u-aa', group: 'AA', division: 'Provincial AA', color: '#7C3AED' },
+    { name: '9U AA', slug: '9u-aa', group: 'AA', division: 'Provincial AA', color: '#CA8A04' },
+    { name: 'Lakeshore Lynx 10U Development', slug: '10u-development', group: 'Development', division: null, color: '#6B7280' },
+    { name: '18U AA', slug: '18u-aa', group: 'AA', division: 'Provincial AA', color: '#6B7280', archived: true },
+  ];
+  let open = null;
+  for (const t of teams) {
+    const row = await one(`team ${t.name}`, db.from('rep_teams').insert({
+      org_id: club.id, name: t.name, slug: t.slug, sport: 'baseball', division: t.division, color: t.color,
+      group_id: groupIds[t.group], is_archived: !!t.archived, description: t.about ?? null,
+      schedule_visibility: t.schedule ?? 'families',
+    }).select('id').single());
+    const py = await one(`season ${t.name}`, db.from('rep_program_years').insert({
+      team_id: row.id, org_id: club.id, name: `${Y} Season`, year: Y, status: t.archived ? 'completed' : 'active',
+      tryout_open: !!t.tryouts,
+      tryout_description: t.tryouts ? `Tryouts for the ${t.name} ${Y} roster. Bring a glove, cleats and water.` : null,
+    }).select('id').single());
+    if (t.tryouts) open = { teamId: row.id, yearId: py.id };
+  }
+
+  // 15U AAA's season: three played (two games with scores, a practice), then Up next and more than four to come — a
+  // cancelled practice among them — so both folds show. Dates are found from today, so the shape holds whenever it runs.
+  const sunday = onOrAfter(daysFromNow(1), 0);
+  const at = (day, from, to) => ({ starts_at: torontoInstant(day, from), ends_at: torontoInstant(day, to) });
+  const dome = { location: 'Lakeshore Dome', location_address: '100 Lakeshore Rd W, Oakville, ON' };
+  const base = { program_year_id: open.yearId, team_id: open.teamId, org_id: club.id, status: 'scheduled' };
+  const practice = (day, extra = {}) => ({ ...base, event_type: 'practice', name: 'Practice', ...at(day, '08:00', '10:00'), ...dome, ...extra });
+  const game = (day, time, opponent, homeAway, where, score) => ({
+    ...base, event_type: 'league_game', name: `${homeAway === 'away' ? 'at' : 'vs'} ${opponent}`, opponent, home_away: homeAway,
+    ...at(day, time, `${String(Number(time.slice(0, 2)) + 2).padStart(2, '0')}${time.slice(2)}`), ...where,
+    ...(score ? { team_score: score[0], opponent_score: score[1], result: score[0] > score[1] ? 'win' : score[0] < score[1] ? 'loss' : 'tie' } : {}),
+  });
+  const events = [
+    game(addDays(sunday, -15), '13:00', 'Burlington Bulls', 'home', dome, [6, 3]),
+    game(addDays(sunday, -8), '11:00', 'Mississauga Tigers', 'away', { location: 'Mississauga Sports Dome', location_address: '5600 Rose Cherry Pl, Mississauga, ON' }, [2, 4]),
+    practice(addDays(sunday, -7)),
+    practice(sunday),
+    game(addDays(sunday, 6), '13:00', 'Milton Mustangs', 'home', dome),
+    practice(addDays(sunday, 7), { status: 'cancelled' }),
+    game(addDays(sunday, 13), '11:00', 'Oakville Otters', 'away', { location: 'Oakville Sports Dome', location_address: '2260 Speers Rd, Oakville, ON' }),
+    ...Array.from({ length: 6 }, (_, i) => practice(addDays(sunday, 14 + i * 7))),
+  ];
+  die('15U AAA events', (await db.from('rep_team_events').insert(events)).error);
+
+  ok(`${REP_ONLY_NAME} (${REP_ONLY_SLUG}): navy, a banner, 9 listed teams in AAA · AA · Development (+ 18U AA archived); 15U AAA tryouts open, schedule public (${events.length} events); owner ${REP_ONLY_OWNER.email}`);
+}
+
+function printRepOnlyClub() {
+  console.log(`  Rep-only club: http://localhost:3000/${REP_ONLY_SLUG}   (the home, Teams, /teams/15u-aaa, /teams/13u-aaa, /teams/18u-aa)`);
+  console.log(`  owner             ${REP_ONLY_OWNER.email}  /  ${REP_ONLY_OWNER.password}   (turn 15U AAA's tryouts off for "nothing open")`);
 }

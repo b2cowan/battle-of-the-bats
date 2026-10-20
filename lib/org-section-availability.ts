@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { orgSectionsFor, type OrgSection } from '@/lib/org-public-sections';
 import type { Organization, OrgPublicSiteContent } from '@/lib/types';
-import { isPublicClubSiteOpen } from './public-club-access';
+import { clubTeamsAddress, isPublicClubSiteOpen } from './public-club-access';
 
 /**
  * lib/org-section-availability.ts — which section tabs an org actually has (Nav Unification Stage F).
@@ -16,7 +16,7 @@ import { isPublicClubSiteOpen } from './public-club-access';
  * this runs on more routes than render the row, and the honest answer is to make it cheap rather
  * than to pretend we can skip it.
  *
- * The row only ever asks two yes/no questions, so these ask the DATABASE two yes/no questions —
+ * The row only ever asks yes/no questions, so these ask the DATABASE yes/no questions —
  * `head: true` counts that transfer no row data. The obvious alternative, reusing `getLeagueSeasons`
  * + `getArchivesByOrg`, pulls every season and every archive row, and archive rows each carry a full
  * sealed-tournament JSON snapshot — fetched, mapped and thrown away to learn whether a count was
@@ -33,6 +33,21 @@ async function anyLeagueSeasonPublished(orgId: string): Promise<boolean> {
     .neq('status', 'draft'); // a draft season is not public — it must not put a League tab up
   if (error) {
     console.error('[org-sections] league availability check failed', error);
+    return false;
+  }
+  return (count ?? 0) > 0;
+}
+
+/** Does the club list a team — one that is not archived (Club Tier Stage 4b-2a: the Teams tab's own question; an archived
+ *  team's page still opens for old links, but it is not listed, so it puts no tab up). */
+export async function anyListedTeam(orgId: string): Promise<boolean> {
+  const { count, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .eq('is_archived', false);
+  if (error) {
+    console.error('[org-sections] teams availability check failed', error);
     return false;
   }
   return (count ?? 0) > 0;
@@ -68,10 +83,13 @@ export async function resolveOrgSections(
   if (!isPublicClubSiteOpen(org)) return [];
   if (!hasModuleEntitlement(org, 'module_public_site')) return [];
 
-  const [league, archivesExist, siteContent] = await Promise.all([
+  const [league, teams, archivesExist, siteContent] = await Promise.all([
     hasModuleEntitlement(org, 'module_house_league')
       ? anyLeagueSeasonPublished(org.id)
       : Promise.resolve(false),
+    // The Teams tab (Stage 4b-2a): the plan carries rep teams (the same question the Teams page asks —
+    // `clubTeamsAddress`) and the club lists at least one. A tab that opens an empty list is worse than no tab.
+    clubTeamsAddress(org) === 'teams-page' ? anyListedTeam(org.id) : Promise.resolve(false),
     anyArchive(org.id),
     siteContentRead,
   ]);
@@ -80,6 +98,7 @@ export async function resolveOrgSections(
   // contradicting the page it sits on is worse than no tab at all.
   return orgSectionsFor({
     league,
+    teams,
     archives: archivesExist && siteContent?.showArchivesLink !== false,
   });
 }

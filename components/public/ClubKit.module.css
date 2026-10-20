@@ -147,3 +147,147 @@
   color: var(--club-soft);
   font: 400 0.875rem var(--club-text-face);
 }
+
+/* ── Stage 4b-2a: the pieces the home, the Teams page and the team page share (End states 1–3) ─────────────────────
+   A section heading sits LEFT, over left-aligned cards (4b-1 left them centred). A list is ONE frame with hairlined
+   rows: the whole row is the door and the chevron, last, says so (the table standard's phone form). The edge — the
+   club's colour down the left side of a white card — is the one "open" signal (Open now, the tryout door; DC-02: no
+   tint). */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.sectionTitle {
+  margin: 0;
+  font: 700 1rem/1.25 var(--club-text-face);
+  color: var(--club-text);
+}
+
+.list {
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  overflow: hidden;
+}
+.edge {
+  border-left: 3px solid var(--club-edge);
+  border-radius: 0 8px 8px 0;
+}
+.listBand {
+  padding: 8px 16px;
+  border-top: 1px solid var(--club-line);
+  background: var(--club-ground);
+  font: 700 0.75rem/1.2 var(--club-text-face);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--club-soft);
+}
+.list > .listBand:first-child { border-top: 0; }
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 40px 12px 16px;
+  border-top: 1px solid var(--club-line);
+  color: var(--club-text);
+  text-decoration: none;
+}
+.list > .row:first-child,
+.listBand + .row { border-top: 0; }
+a.row:hover { background: var(--club-ground); }
+a.row:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: -2px;
+}
+/* The chevron, last: the row's door (drawn, so it takes the dim ink and no icon font). */
+.row::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border: solid var(--club-dim);
+  border-width: 2px 2px 0 0;
+  transform: translateY(-50%) rotate(45deg);
+}
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+.rowName {
+  display: block;
+  font: 600 1rem/1.3 var(--club-text-face);
+  color: var(--club-text);
+  overflow-wrap: anywhere;
+}
+.rowSub {
+  display: block;
+  margin-top: 2px;
+  font: 400 0.75rem/1.4 var(--club-text-face);
+  color: var(--club-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A door: the white card with the club's edge, its heading, a line, and one button (the team page's tryout door). */
+.door {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--club-line);
+  border-left: 3px solid var(--club-edge);
+  border-radius: 0 8px 8px 0;
+  background: var(--club-card);
+}
+.doorTitle {
+  margin: 0;
+  font: 700 1rem/1.25 var(--club-text-face);
+  color: var(--club-text);
+}
+.btnFull { width: 100%; }
+
+/* A card's own heading and words at the list's padding ("Tryouts" on a quiet team, About). */
+.cardHead {
+  margin: 0;
+  padding: 14px 16px 4px;
+  font: 700 1rem/1.25 var(--club-text-face);
+  color: var(--club-text);
+}
+.cardText {
+  margin: 0;
+  padding: 4px 16px 14px;
+  font: 400 1rem/1.5 var(--club-text-face);
+  color: var(--club-soft);
+  white-space: pre-line;
+}
+.cardHead + .cardText { padding-top: 0; }
+.cardText:first-child { padding-top: 14px; }
+.cardText b { color: var(--club-text); font-weight: 600; }
+
+/* A row whose trailing chip drops under its words on a phone, so a long name keeps the width (a tournament's status). */
+@media (max-width: 480px) {
+  .rowStack {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Words for a screen reader only (the home's heading, an empty table cell's meaning). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

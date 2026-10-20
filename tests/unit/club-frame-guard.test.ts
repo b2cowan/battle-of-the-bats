@@ -26,8 +26,9 @@ const NOT_CLUB = [`${ORG}/[tournamentSlug]/`, `${ORG}/admin/`, `${ORG}/coaches/`
 const CLUB_PAGES = filesUnder(ORG, '.tsx')
   .filter(f => f.endsWith('/page.tsx'))
   .filter(f => !NOT_CLUB.some(prefix => f.startsWith(prefix)));
-/** The seven shortcut addresses forward or show "not found" — they render no page of their own to title. */
-const SHORTCUTS = new Set(['teams', 'news', 'rules', 'schedule', 'standings', 'register', 'results']
+/** The six shortcut addresses forward or show "not found" — they render no page of their own to title. (`/teams` is
+ *  the club's Teams page since 4b-2a, so it names itself like any other.) */
+const SHORTCUTS = new Set(['news', 'rules', 'schedule', 'standings', 'register', 'results']
   .map(d => `${ORG}/${d}/page.tsx`));
 
 const BAR = 'components/public/ClubBar.tsx';
@@ -44,6 +45,13 @@ const CLUB_SURFACES = [
   `${ORG}/league/[seasonSlug]/status/StatusLookupForm.tsx`,
   'components/public/RepTeamPublicSchedule.tsx',
   'components/public/RepTeamPublicSchedule.module.css',
+  // Stage 4b-2a: the club's home, its Teams page and the team page's own styles.
+  'components/public/ClubSiteHome.tsx',
+  'components/public/ClubSiteHome.module.css',
+  'components/public/FollowOrgButton.tsx',
+  'components/public/FollowOrgButton.module.css',
+  `${ORG}/teams/ClubTeams.module.css`,
+  `${ORG}/teams/[teamSlug]/TeamPage.module.css`,
   'components/rep-teams/TryoutLandingView.tsx',
   'components/rep-teams/TryoutRegisterView.tsx',
   'components/rep-teams/TryoutRegisterForm.tsx',

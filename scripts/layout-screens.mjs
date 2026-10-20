@@ -1802,6 +1802,11 @@ export const SCREENS = [
     route: 'app/[orgSlug]/league' },
   { id: 'club-past-tournaments',  session: 'anon', path: () => '/free-test-org/archives',                ready: 'h1', widths: ['320'],
     route: 'app/[orgSlug]/archives' },
+  // Club Tier Stage 4b-2a: the Teams page, and the home's rep-only shape (the navy club, `seed-club-fixture.mjs --rep-only-club`).
+  { id: 'club-teams',             session: 'anon', path: () => '/uat-rep-club/teams',                   ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/teams/page' },
+  { id: 'club-home-rep-only',     session: 'anon', path: () => '/uat-rep-only',                         ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/page' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

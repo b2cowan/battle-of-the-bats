@@ -111,3 +111,9 @@
   text-transform: none;
   letter-spacing: 0;
 }
+
+/* "See all teams" — the drawing's primary button above "{club} home" (Stage 4b-2a), the club kit's own, full width. */
+.wide {
+  width: 100%;
+  margin-top: 4px;
+}

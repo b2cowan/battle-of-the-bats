@@ -8,7 +8,8 @@
    Every rule hangs off `.home.home` (a doubled class: 0,2,0) so it outranks the shared module whichever stylesheet
    loads last. (The "Live" chip is the club kit's — components/public/ClubKit.module.css.)
 
-   The home is redrawn in 4b-2; this stage changes colour, type, case and size only, never structure. */
+   Since Stage 4b-2a a club whose plan carries the public site has its own home (components/public/ClubSiteHome.tsx);
+   this file now styles only the tournament-only org's home (no public-site module), which keeps its hero. */
 
 /* ── The page ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 /* The shared `.page` reserves the platform's fixed chrome above and its phone bar below. A club page has neither:
@@ -69,32 +70,6 @@
   color: var(--club-soft);
   font: 400 1rem/1.6 var(--club-text-face);
   animation: none;
-}
-
-/* Social links and Contact us: secondary buttons (rule 8) — a white card, ink text, a field-strength border. */
-.home.home .socialRow {
-  justify-content: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-.home.home .socialRow .socialLink {
-  min-height: 44px;
-  padding: 0 1rem;
-  gap: 0.5rem;
-  border: 1px solid var(--club-field);
-  border-radius: 8px;
-  background: var(--club-card);
-  color: var(--club-text);
-  font: 600 1rem/1 var(--club-text-face);
-}
-.home.home .socialRow .socialLink:hover {
-  background: var(--club-ground);
-  color: var(--club-text);
-}
-.home.home .socialRow .socialLink:focus-visible {
-  outline: 2px solid var(--club-ink);
-  outline-offset: 2px;
 }
 
 /* ── Section headings ──────────────────────────────────────────────────────────────────────────────────────────── */
@@ -193,10 +168,6 @@
 .home.home .tournamentCardCta {
   color: var(--club-ink);
   font: 600 0.875rem/1.2 var(--club-text-face);
-}
-
-.home.home .archivesCtaIcon {
-  color: var(--club-ink);
 }
 
 .home.home .archivesCtaTitle {

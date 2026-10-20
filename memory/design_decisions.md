@@ -7,6 +7,19 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — A CLUB'S HOME: FOLLOW SITS AT THE END OF ABOUT THE CLUB; NO "QUESTIONS?" CARD AT A DESK; THE BANNER IS A DESK STRIP WITH NOTHING ON IT (owner, Club Tier Stage 4b-2a build gate, both as recommended; the banner settled by /design)
+
+**Decision:** The club home's **Follow** button (shown only for a club listed in Discover) sits at the **end of the About the
+club card**, as the club kit's secondary button ("Follow"; the club's fill when "Following"), sentence case. The desktop home
+has **no "Questions? Email the club" card** beside About: the footer carries the contact once. A club's uploaded banner photo
+shows only on a desk, only on the home, as a **strip under the bar 140–200 px tall** (it scales with the window), cropped a little
+above centre, a hairline under it, **nothing on it and no scrim**; a phone does not draw it.
+**Rationale:** the drawings placed Follow nowhere, so building them as drawn would have deleted how a family follows a club;
+About keeps it off screen one, which Open now and the teams own. The desktop drawing's Questions card repeated the footer —
+the same repetition the 4b-1 leftover (the hero's contact) was removed for. A strip that carries no words needs no scrim.
+**Applies to:** `components/public/ClubSiteHome.tsx`, `FollowOrgButton`. Not the tournament-only org's home (no public site),
+which keeps its hero.
+
 ### 2026-10-20 — THE SIDE DOOR'S ICON NAMES WHERE IT GOES: A GLOBE FOR THE PUBLIC SIDE, THE CLUB OFFICE FOR YOUR SIDE; THE ⇄ CHARACTER IS RETIRED; AN ICON-ONLY DOOR IS A BARE ICON, AND ON THE PUBLIC PAGES THE DOOR AND ACCOUNT ARE BARE ICONS AT EVERY WIDTH (owner, 2026-10-20; no mockup, owner waived it; the own-side icon picked from eight drawn options, https://claude.ai/artifact/8H43QjyqxT2cQBCi2ikz69)
 
 **Decision:** The flip door (every surface that carries it: the club's bar, a tournament's public header and the platform

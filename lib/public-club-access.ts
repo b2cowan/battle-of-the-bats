@@ -51,6 +51,21 @@ export function isPublicClubSiteOpen(org: Pick<Organization, 'isPublic' | 'subsc
  */
 export type PublicClubRefusal = 'no-club' | 'site-closed' | 'not-in-plan';
 
+/**
+ * What `/{org}/teams` is (Club Tier Stage 4b-2a, Ask 9A). For a club whose plan carries a public site AND rep teams it is
+ * the club's Teams page (which then asks the one rule like any club page — a closed site is the refusal). For any other
+ * org (a tournament-only org, a League-plan club, a standalone coaches-portal team) it stays the shortcut it was: it
+ * forwards into the running tournament's teams, because printed tournament links and QR codes carry that address, and
+ * with none running it is the club's "not found" (lib/club-shortcut.ts). The Teams tab asks this too, so the tab and the
+ * page cannot disagree.
+ */
+export function clubTeamsAddress(org: PublicClubAccessOrg): 'teams-page' | 'shortcut' {
+  if (isTeamWorkspaceOrg(org)) return 'shortcut';
+  return hasModuleEntitlement(org, 'module_public_site') && hasModuleEntitlement(org, 'module_rep_teams')
+    ? 'teams-page'
+    : 'shortcut';
+}
+
 export function publicClubRefusal(org: PublicClubAccessOrg | null, page: PublicClubPage): PublicClubRefusal | null {
   if (!org) return 'no-club';
   if (!isPublicClubSiteOpen(org)) return 'site-closed';

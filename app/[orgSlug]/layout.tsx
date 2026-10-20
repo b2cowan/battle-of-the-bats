@@ -206,7 +206,8 @@ export default async function OrgLayout({
             layout hands it the club: its name, and whether its public site is open (the switch on, not cancelled).
             ⚠ This layout still refuses ONLY a club that does not exist: tournament pages stay up when the site is off
             (BUSINESS_DECISIONS 2026-07-22); each club page asks the one rule itself (lib/public-club-page.ts). */}
-        <PublicClubProvider club={{ slug: orgSlug, name: org.name, siteOpen }}>
+        {/* `teamsPage`: the Teams tab is up exactly when the club has a Teams page to send a lost visitor to (4b-2a). */}
+        <PublicClubProvider club={{ slug: orgSlug, name: org.name, siteOpen, teamsPage: sections.some(s => s.key === 'teams') }}>
           {/* Club Tier Stage 4b-1 — the club's site (its bar, its footer, its light ground and type) around every club
               page. The frame decides WHICH pages wear it (this layout also wraps tournament pages and the signed-in
               tools, and cannot read the address); it carries no identity, so it is safe in SW-cached anonymous HTML. */}

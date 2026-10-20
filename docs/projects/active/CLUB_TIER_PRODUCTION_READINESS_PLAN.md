@@ -1098,6 +1098,36 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > 4c's editor pass); (3) the root 404's "script tag" console warning on every not-found (pre-existing); (4) a club page still reads
 > the club twice (`resolvePublicClub` uncached — pre-existing, follow-up); (5) a "page not found" tab title is not possible for a
 > segment not-found in Next 16 (only `global-not-found` takes metadata) — such a page carries the club's name.
+> **⚖ 4b-2 SPLIT BY SEASON 2026-10-20 (owner, both as recommended):** **4b-2a the year-round club** (the home's two shapes with
+> the desk-only banner strip, the Teams page at `/teams` and its tab, the team page's recipe, the five 4b-1 leftovers above) →
+> **4b-2b tryout season** (the club Tryouts page and its seasonal tab, tryout days, the "not open yet" and "finished" states, the
+> days lines on the home and the team page, then preview cards and the sitemap). **Born-in years with the Born in picker, and
+> the team page's Coaches section, MOVE TO 4c**, each with the place it is entered (4c already held the birth-year entry and the
+> coach's door): nothing is built that no club could switch on. **📝 Both build prompts written 2026-10-20:**
+> `CLUB_TIER_STAGE4B2A_BUILD_PROMPT.md` (for a new chat) and `CLUB_TIER_STAGE4B2B_BUILD_PROMPT.md` (start after 4b-2a is
+> committed and walked).
+> **🔨 4b-2a BUILT 2026-10-20 (the year-round club; walk §352 owed, commit on the owner's word):** the public-site home is its own
+> view (`components/public/ClubSiteHome.tsx`) in the ruled order — Open now (open house-league registrations + one row per open
+> tryout, nearest deadline first, absent when nothing is open) → Teams (the club's groups as bands, a two-column grid of doors,
+> one column per group when a name passes ~14 characters, DC-01) → House league → Tournaments (Registration open · This weekend
+> · Live now · Finished, S4-03; running and coming first, a finished one for 30 days) → About the club (+ Follow); the old hero
+> (repeated contact, socials) and the Try out / Past tournaments cards left the home; a desk-only banner strip (/design: 140–200
+> px, crop above centre, hairline, no scrim). `/{org}/teams` is the **Teams page** for a club whose plan carries the public
+> site + rep teams (phone list / desk table Team · Tryouts, "Other teams" band, division only where the band and name don't say
+> it); any other org, a closed site, or a club listing no team keeps the old forward into the running tournament. Tabs Home ·
+> Teams · House league · Past tournaments (Teams absent when the club lists no unarchived team — the tab, the page, the team
+> page's "← Teams" and the "not found"'s **See all teams** ask one rule). Team page recipe without Coaches (4c): "← Teams", the
+> colour dot, division · season, the tryout door ("Tryout details and sign-up") or the quiet sentence with the club's public
+> contact, the schedule reworked (Earlier this season fold, Up next + Directions, Cancelled chip, Show the rest — a game in
+> progress stays in view), About the team; no Past seasons (DC-07). The five 4b-1 leftovers closed (hero contact, centred
+> headings, the colour strip, the 90 % scrim, the chip tint). Follow restyled to the club kit (it was lime and capitals).
+> **Owner calls 2026-10-20 at the build gate (all as recommended):** a rep-only fixture club `uat-rep-only` (navy, a drawn banner,
+> AAA · AA · Development, 15U AAA tryouts open + a Public link schedule) via `seed-club-fixture.mjs --rep-only-club` (UAT Rep Club
+> untouched); Follow at the end of About the club; no desktop "Questions?" card (the footer carries the contact). Words through
+> /marketing; /design, /simplify and /review (4 lenses) run; tests `club-stage4b2a.test.ts` + `club-stage4b2a-guard.test.ts`.
+> **Findings recorded, not fixed:** the house-league admin stores a close time as typed with a Z (the season page shows it in the
+> viewer's zone); the admin billing page spells "canceled" (one L) against the public "Cancelled"; a tournament with no end
+> date reads as one day; `resolvePublicClub` still reads the org uncached (4b-1 finding 4).
 > **⚖ Ruled the same day (owner): a club's own web address is Stage 4e, inside the release, as recommended; payments
 > processing is inside the release and the release has no date (§7).** The evidence behind both: **a club's own web address** (evidence 2026-10-19: 8 of the 10 club sites use their own
 > domain; the 2 that do not are on free or low-end tools; every platform that documents it hosts the site on the club's domain

@@ -6,10 +6,14 @@ import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
 import { getPublicTeamSchedule, publicTeamFeedPath } from '@/lib/public-team-schedule';
 import { teamCalendarName } from '@/lib/export/team-feed-words';
 import kit from '@/components/public/ClubKit.module.css';
-import { publicTryoutSeasonOf } from '@/lib/season-live';
-import { publicTryoutRegisterHref } from '@/lib/public-tryout';
+import { liveSeasonOf, publicTryoutSeasonOf } from '@/lib/season-live';
+import { publicTryoutHref } from '@/lib/public-tryout';
 import { requirePublicClubPage } from '@/lib/public-club-page';
-import { clubPageMetadata, getClubTeam } from '@/lib/club-page-meta';
+import { clubPageMetadata, getClubSiteContent, getClubTeam } from '@/lib/club-page-meta';
+import { clubTeamsAddress } from '@/lib/public-club-access';
+import { anyListedTeam } from '@/lib/org-section-availability';
+import { teamMetaLine, teamPageParts } from '@/lib/club-team-page';
+import styles from './TeamPage.module.css';
 import { forwardToRunningTournament } from '@/lib/club-shortcut';
 import { isUuid } from '@/lib/utils';
 
@@ -21,13 +25,6 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   const { orgSlug, teamSlug } = await params;
   return clubPageMetadata(orgSlug, async club => (await getClubTeam(club.id, teamSlug))?.name ?? null);
 }
-
-const STATUS_LABEL: Record<string, string> = {
-  draft:     'Draft',
-  active:    'Active',
-  completed: 'Completed',
-  archived:  'Archived',
-};
 
 export default async function TeamPublicPage({
   params,
@@ -56,122 +53,61 @@ export default async function TeamPublicPage({
   // cancelled-club check the feed made, so a cancelled club's Public link schedule kept showing here (D07, S6D-09).
   // The visibility check still runs first, off the already-loaded team row, so a team that never turned Public link on
   // pays no extra query on a page that gets public traffic.
-  const publicSchedule = await getPublicTeamSchedule({ org, team });
+  const [publicSchedule, siteContent] = await Promise.all([
+    getPublicTeamSchedule({ org, team }),
+    // The club's public contact (the Public Site editor's), for the quiet tryout sentence — never the org row (F09).
+    getClubSiteContent(org.id),
+  ]);
 
   // THE ONE PUBLIC TRYOUT RULE (Club Tier B07): the team's LIVE season with tryouts open, never
   // an archived team. This page used to accept only an ACTIVE season while the sign-up form
   // accepted any — so the two could disagree about which season a family was applying to.
   const openYear = publicTryoutSeasonOf(team, programYears);
-  const pastYears = programYears.filter(y => y.status === 'completed' || y.status === 'archived');
+  // The season under the name is the team's live one; an archived team has none.
+  const liveYear = team.isArchived ? null : liveSeasonOf(programYears);
+  const meta = teamMetaLine(team.division, liveYear?.year);
+  const about = team.description?.trim() || null;
+  const email = siteContent?.contactEmail?.trim() || null;
+  // The Teams page exists exactly when the Teams tab does: the plan carries it and the club lists a team. This team, if
+  // not archived, is one; an archived team's page asks (a club whose teams are all archived has no list to go up to).
+  const teamsPage = clubTeamsAddress(org) === 'teams-page' && (!team.isArchived || await anyListedTeam(org.id));
 
-  // The status chip (DC-04), neutral here: a division, "Alumni" and a past season's status are facts about the team, not a
-  // call to act, so none of them takes the green. A team colour is a club's choice and may be any hue, so it appears
-  // only as the strip above the page, never as text or a tint (DC-02).
-  const chip = `${kit.chip} ${kit.chipNeutral}`;
+  // End state 3: a part with nothing to show is absent. No Past seasons (DC-07: a door to an old season would be a new
+  // look-back surface); no Coaches (4c, with the coach's own switch).
+  const parts = teamPageParts({ archived: team.isArchived, tryoutOpen: !!openYear, schedule: !!publicSchedule, about: !!about });
 
-  return (
-    <div>
-      {/* Color accent strip */}
-      {team.color && (
-        <div style={{ height: '4px', background: team.color }} />
-      )}
-
-      <div
-        style={{
-          maxWidth: '680px',
-          margin: '0 auto',
-          padding: '2rem 1.5rem 5rem',
-        }}
-      >
-        {/* Team header */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              marginBottom: '0.5rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            <h1 className={kit.title} style={{ margin: 0 }}>
-              {team.name}
-            </h1>
-            {team.division && <span className={chip}>{team.division}</span>}
-            {team.isArchived && <span className={chip}>Alumni</span>}
-          </div>
-          {team.description && (
-            <p
-              style={{
-                font: '400 16px/1.6 var(--club-text-face)',
-                color: 'var(--club-soft)',
-                margin: '0.5rem 0 0',
-                maxWidth: '520px',
-              }}
-            >
-              {team.description}
-            </p>
-          )}
-        </div>
-
-        {/* Alumni notice */}
-        {team.isArchived && (
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              border: '1px solid var(--club-line)',
-              borderRadius: 8,
-              background: 'var(--club-card)',
-              marginBottom: '2rem',
-              font: '400 14px/1.6 var(--club-text-face)',
-              color: 'var(--club-soft)',
-            }}
-          >
-            This program has concluded. The full season history is preserved below.
-          </div>
-        )}
-
-        {/* Tryouts open banner — the drawings' "Open now" callout: a white card with the club's edge down its left side
-            (Club Tier Stage 4b-1). Same block as before; the call to act is the club's own button. */}
-        {openYear && (
-          <div
-            style={{
-              padding: '1.25rem 1.5rem',
-              border: '1px solid var(--club-line)',
-              borderLeft: '3px solid var(--club-edge)',
-              borderRadius: 8,
-              background: 'var(--club-card)',
-              marginBottom: '2rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            <div>
-              <div className={`${kit.chip} ${kit.chipOk}`} style={{ marginBottom: '0.5rem' }}>
-                Tryouts open
-              </div>
-              <div style={{ font: '600 16px var(--club-text-face)', color: 'var(--club-text)' }}>
-                {openYear.name}
-              </div>
-            </div>
-            <Link
-              href={publicTryoutRegisterHref(orgSlug, team.slug)}
-              className={`${kit.btn} ${kit.btnPrimary}`}
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              Register now
-            </Link>
-          </div>
-        )}
-
-        {/* Standing public schedule (Chunk D 1.9). This page's job is to answer "where is the
-            game", and a family that only ever uses this page is a retention win, not a funnel
-            failure. ⚠ Until 2026-09-12 a footnote here told families to "ask the coach for the
-            team's family link"; that link was removed with the follower tier (owner), so the
-            page now simply shows the schedule and asks for nothing. */}
+  // The parts in the phone's order, which is also the reading order; at a desk the schedule takes the left column and
+  // the rest stand beside it (TeamPage.module.css grid areas) — the layout moves them, never the order a reader hears.
+  const body = parts.map(part => {
+    if (part === 'concluded') return (
+      <div key={part} className={kit.list}>
+        <p className={kit.cardText}>This program has concluded.</p>
+      </div>
+    );
+    if (part === 'tryoutDoor' && openYear) return (
+      // The drawings' door: a white card with the club's edge, the one green chip, one button (the tryout's days line
+      // is Stage 4b-2b). The button opens the tryout's own page — the details first, then its sign-up.
+      <div key={part} className={`${kit.door} ${styles.tryouts}`}>
+        <span className={`${kit.chip} ${kit.chipOk}`}>Tryouts open</span>
+        <h2 className={kit.doorTitle}>
+          {openYear.year ? `Tryouts for the ${openYear.year} season` : `Tryouts for the ${openYear.name}`}
+        </h2>
+        <Link href={publicTryoutHref(orgSlug, team.slug)} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnFull}`}>
+          Tryout details and sign-up
+        </Link>
+      </div>
+    );
+    if (part === 'tryoutQuiet') return (
+      <div key={part} className={`${kit.list} ${styles.tryouts}`}>
+        <h2 className={kit.cardHead}>Tryouts</h2>
+        <p className={kit.cardText}>
+          {team.name} isn’t taking tryout sign-ups right now.
+          {email && <> Questions? Email the club at <b>{email}</b>.</>}
+        </p>
+      </div>
+    );
+    if (part === 'schedule') return (
+      <div key={part} className={styles.schedule}>
         {publicSchedule && (
           <RepTeamPublicSchedule
             view={publicSchedule}
@@ -179,39 +115,35 @@ export default async function TeamPublicPage({
             subscribe={{ feedPath: publicTeamFeedPath(orgSlug, team.slug), calendarName: teamCalendarName(team.name, org.name) }}
           />
         )}
-
-        {/* Past seasons */}
-        {pastYears.length > 0 && (
-          <div>
-            <div className={kit.band}>
-              Past seasons
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {pastYears.map(py => (
-                <div
-                  key={py.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem 1rem',
-                    borderRadius: 8,
-                    border: '1px solid var(--club-line)',
-                    background: 'var(--club-card)',
-                  }}
-                >
-                  <span style={{ font: '400 14px var(--club-text-face)', color: 'var(--club-text)' }}>
-                    {py.name}
-                  </span>
-                  <span className={chip}>
-                    {STATUS_LABEL[py.status] ?? py.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+    );
+    if (part === 'about') return (
+      <section key={part} className={`${kit.section} ${styles.about}`} aria-labelledby="about-team">
+        <h2 id="about-team" className={kit.sectionTitle}>About the team</h2>
+        <div className={kit.list}><p className={kit.cardText}>{about}</p></div>
+      </section>
+    );
+    return null;
+  });
+
+  return (
+    <div className={styles.page}>
+      {/* One level up (design log 2026-10-20) — to the club's Teams page, where the club has one. */}
+      {teamsPage && (
+        <Link href={`/${orgSlug}/teams`} className={kit.back}>← Teams</Link>
+      )}
+
+      <div className={styles.head}>
+        <h1 className={`${kit.title} ${styles.name}`}>
+          {/* The team's own colour is a dot beside its name, never a tint or a strip: the club's colour carries the page
+              (DC-02). A colour is a club's choice and may be any hue, so it never colours text. */}
+          {team.color && <span className={styles.teamDot} style={{ background: team.color }} aria-hidden="true" />}
+          {team.name}
+        </h1>
+        {meta && <p className={kit.sub}>{meta}</p>}
+      </div>
+
+      <div className={`${styles.body} ${parts.includes('schedule') ? styles.withSchedule : ''}`}>{body}</div>
     </div>
   );
 }

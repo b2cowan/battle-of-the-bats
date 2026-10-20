@@ -1,19 +1,24 @@
 import Link from 'next/link';
-import { clubSocials } from '@/lib/club-site';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { Calendar, ChevronRight, Star, Mail, ExternalLink, Archive, Users } from 'lucide-react';
+import { Calendar, ChevronRight, Star, Users } from 'lucide-react';
 import {
   getTournamentsByOrg,
-  getArchivesByOrg,
   getLeagueSeasons, getDivisions, getOpenTryoutsByOrg,
+  getTeams,
 } from '@/lib/db';
 import type { OpenTryout } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { requirePublicClubPage } from '@/lib/public-club-page';
+import { clubTeamsAddress } from '@/lib/public-club-access';
+import { clubHomeTournaments, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
+import { readClubTeams } from '@/lib/club-public-teams';
+import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { getRegistrationState } from '@/lib/registration-state';
 import { clubPageMetadata, getClubSiteContent } from '@/lib/club-page-meta';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
+import ClubSiteHome from '@/components/public/ClubSiteHome';
 import styles from './Home.module.css';
 import club from './ClubHome.module.css';
 import kit from '@/components/public/ClubKit.module.css';
@@ -96,184 +101,94 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   const hasTournamentModule = org ? hasModuleEntitlement(org, 'module_tournaments') : false;
   const hasDraftTournament = allTournaments.some(t => t.status === 'draft');
 
-  // ── Public Site module branch ──────────────────────────────────────────────
+  // ── Public Site module branch: the club's home (Club Tier Stage 4b-2a, End state 1) ──────────────
+  // This reads and shapes; ClubSiteHome draws, in the ruled order, with every empty program absent.
   if (org && hasModuleEntitlement(org, 'module_public_site')) {
-    const [siteContent, archives, leagueSeasons, openTryouts] = await Promise.all([
+    const withTeams = clubTeamsAddress(org) === 'teams-page';
+    const [siteContent, leagueSeasons, clubTeams] = await Promise.all([
       getClubSiteContent(org.id),
-      getArchivesByOrg(org.id),
       hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id) : Promise.resolve([]),
-      hasModuleEntitlement(org, 'module_rep_teams') ? getOpenTryoutsByOrg(org.id) : Promise.resolve([]),
+      // The club's listed teams and its open tryouts — the same read the Teams page makes.
+      withTeams ? readClubTeams(org.id) : Promise.resolve({ bands: [], count: 0, openTryouts: [] }),
+    ]);
+    const today = tournamentToday();
+    const thisYear = today.slice(0, 4);
+    const day = (value: string) => formatStoredDate(value, { withYear: !value.startsWith(thisYear) });
+
+    // House league: a draft season is not public; the section's door is the league page.
+    const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
+    const runningSeason = publicLeagueSeasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status));
+    const league = publicLeagueSeasons.length === 0 ? null : {
+      href: `/${orgSlug}/league`,
+      title: runningSeason?.name ?? 'House league',
+      // Words through /marketing 2026-10-20: "open" is said once, by Open now, so this line says what the door gives.
+      sub: !runningSeason ? 'Past seasons and results'
+        : runningSeason.status === 'active' ? 'Schedule and standings'
+        : runningSeason.seasonStartDate ? `Schedule and standings from ${day(runningSeason.seasonStartDate)}`
+        : 'Schedule and standings when the season starts',
+    };
+
+    // Open now: every open house-league registration and every open tryout (the one public tryout rule), nearest
+    // deadline first. A tryout's days line is Stage 4b-2b; until then its row names the season it recruits for.
+    const openNow = orderOpenNow([
+      ...publicLeagueSeasons.filter(s => s.status === 'registration_open').map(s => {
+        // The admin's form stores the close time as typed, with a Z on the end (house-league page), so its date part is
+        // the day the club typed. A day already behind today is not said: "Sign up by" a past date is not a deadline.
+        const closes = s.registrationCloseAt?.slice(0, 10) ?? null;
+        const deadline = closes && closes >= today ? closes : null;
+        return {
+          key: `league-${s.id}`,
+          href: `/${orgSlug}/league/${s.slug}`,
+          title: s.name,
+          sub: [
+            deadline ? `Sign up by ${day(deadline)}` : null,
+            // The fee as the season's own page writes it.
+            s.registrationFee != null ? `$${s.registrationFee.toFixed(2)}` : null,
+          ].filter(Boolean).join(' · ') || null,
+          deadline,
+        };
+      }),
+      ...clubTeams.openTryouts.map(t => ({
+        key: `tryout-${t.programYearId}`,
+        href: `/${orgSlug}/teams/${t.teamSlug}/tryouts`,
+        title: `${t.teamName} tryouts`,
+        sub: t.programYearYear ? `For the ${t.programYearYear} season` : t.programYearName,
+        deadline: null,
+      })),
     ]);
 
-    const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
-    const activeLeagueSeason  = publicLeagueSeasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status));
-    const showLeague          = publicLeagueSeasons.length > 0;
-    const showTryouts         = openTryouts.length > 0;
-
-    const heroBanner  = org.heroBannerUrl ?? null;
-    const showArchives = siteContent?.showArchivesLink !== false && archives.length > 0;
-
-    // Per-tournament age range helper
-    async function tournamentAgeRange(tId: string) {
-      const groups = await getDivisions(tId, { admin: true });
-      const sorted = [...groups].sort((a, b) => a.order - b.order);
-      if (sorted.length === 0) return null;
-      return sorted.length === 1 ? sorted[0].name : `${sorted[0].name} – ${sorted[sorted.length - 1].name}`;
-    }
-
-    const tournamentDetails = await Promise.all(
-      activeTournaments.map(async t => ({
-        tournament: t,
-        ageRange: await tournamentAgeRange(t.id),
-      }))
-    );
-
-    function formatDateRange(start?: string, end?: string) {
-      if (!start) return null;
-      const s = new Date(start + 'T12:00:00');
-      const e = end ? new Date(end + 'T12:00:00') : null;
-      const opts: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' };
-      if (!e) return s.toLocaleDateString('en-CA', opts);
-      if (s.getFullYear() === e.getFullYear()) {
-        return `${s.toLocaleDateString('en-CA', opts)} – ${e.toLocaleDateString('en-CA', opts)}, ${e.getFullYear()}`;
-      }
-      return `${s.toLocaleDateString('en-CA', { ...opts, year: 'numeric' })} – ${e.toLocaleDateString('en-CA', { ...opts, year: 'numeric' })}`;
-    }
-
-    // The same web-addresses-only list the club's footer reads (lib/club-site.ts), in the same order.
-    const SOCIAL_LABEL = { instagram: 'Instagram', facebook: 'Facebook', x: 'X', website: 'Website' } as const;
-    const socialLinks = clubSocials(siteContent).map(({ kind, href }) => ({ href, label: SOCIAL_LABEL[kind] }));
+    // Tournaments, with a status true to their dates (S4-03), chosen and ordered by `clubHomeTournaments` (running and
+    // coming first; one that just finished after). The club's own "show upcoming tournaments" switch still hides the
+    // section. Registration is asked only of an event that has not started and whose register page is not hidden.
+    const shownTournaments = siteContent?.showUpcomingTournaments === false ? [] : clubHomeTournaments(allTournaments, today);
+    const tournaments = await Promise.all(shownTournaments.map(async t => {
+      const asksRegistration = t.status === 'active' && !!t.startDate && today < t.startDate && !t.publicHiddenPages?.includes('register');
+      const registrationOpen = asksRegistration
+        ? await Promise.all([getDivisions(t.id, { admin: true }), getTeams(t.id, { admin: true })])
+            .then(([divisions, teams]) => getRegistrationState(t, divisions, teams.filter(x => x.status !== 'rejected')).state === 'open')
+        : false;
+      const status = tournamentHomeStatus(t, today, registrationOpen);
+      return {
+        id: t.id,
+        href: `/${orgSlug}/${t.slug}`,
+        name: t.name,
+        dates: t.startDate ? formatEventDateRange(t.startDate, t.endDate, !t.startDate.startsWith(thisYear)) : null,
+        status,
+      };
+    }));
 
     return (
-      <div className={`${styles.page} ${club.home}`}>
-        {/* Hero */}
-        <section className={`${styles.hero} ${club.hero}`}>
-          <HeroBanner url={heroBanner} />
-
-          <div className={`container ${styles.heroContent} ${club.heroContent}`}>
-            {org.logoUrl && (
-              <img src={org.logoUrl} alt={org.name} className={`${styles.orgLogo} ${club.logo}`} />
-            )}
-            <h1 className={`${styles.heroTitle} ${club.title}`}>
-              {org.name}
-            </h1>
-            {siteContent?.tagline && (
-              <p className={club.tagline}>{siteContent.tagline}</p>
-            )}
-            {siteContent?.description && (
-              <p className={`${styles.heroSub} ${club.sub}`}>{siteContent.description}</p>
-            )}
-
-            {showFollow && <FollowOrgButton orgSlug={orgSlug} orgName={org.name} />}
-
-            {/* Social + contact row */}
-            {(socialLinks.length > 0 || siteContent?.contactEmail) && (
-              <div className={`${styles.socialRow} ${club.socialRow}`}>
-                {socialLinks.map(({ href, label }) => (
-                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" className={`${styles.socialLink} ${club.socialLink}`}>
-                    <ExternalLink size={16} />
-                    {label}
-                  </a>
-                ))}
-                {siteContent?.contactEmail && (
-                  <a href={`mailto:${siteContent.contactEmail}`} className={`${styles.socialLink} ${club.socialLink}`} aria-label={`Contact us: ${siteContent.contactEmail}`}>
-                    <Mail size={16} />
-                    Contact us
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Active tournaments */}
-        {siteContent?.showUpcomingTournaments !== false && (
-          <section id="tournaments" className="section">
-            <div className="container">
-              <div className={`section-header ${club.sectionHeader}`}>
-                <span className={`eyebrow ${club.eyebrow}`}><Calendar size={12} /> Tournaments</span>
-                <h2 className={club.sectionTitle}>Upcoming events</h2>
-              </div>
-
-              {tournamentDetails.length === 0 ? (
-                <div className={`empty-state ${club.empty}`}>
-                  <Calendar size={40} />
-                  <p>No active tournaments right now — check back soon!</p>
-                </div>
-              ) : (
-                <div className={`${styles.tournamentCards} ${club.tournamentCards}`}>
-                  {tournamentDetails.map(({ tournament: t, ageRange }) => (
-                    <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard} ${club.tournamentCard}`}>
-                      <div className={`${styles.tournamentCardHeader} ${club.tournamentCardHeader}`}>
-                        <span className={`${kit.chip} ${kit.chipOk}`}>
-                          <Star size={10} fill="currentColor" /> Live
-                        </span>
-                        {formatDateRange(t.startDate, t.endDate) && (
-                          <span className={`${styles.tournamentCardDate} ${club.tournamentCardDate}`}>
-                            {formatDateRange(t.startDate, t.endDate)}
-                          </span>
-                        )}
-                      </div>
-                      <h3 className={`${styles.tournamentCardName} ${club.tournamentCardName}`}>{t.name}</h3>
-                      {ageRange && <p className={`${styles.tournamentCardMeta} ${club.tournamentCardMeta}`}>{ageRange}</p>}
-                      <span className={`${styles.tournamentCardCta} ${club.tournamentCardCta}`}>
-                        View schedule <ChevronRight size={14} />
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* House League CTA */}
-        {showLeague && (
-          <section className="section">
-            <div className="container">
-              <div className={`section-header ${club.sectionHeader}`}>
-                <h2 className={club.sectionTitle}>House league</h2>
-              </div>
-              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
-                <div>
-                  <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
-                    {activeLeagueSeason ? activeLeagueSeason.name : 'House league'}
-                  </div>
-                  <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>
-                    {activeLeagueSeason
-                      ? activeLeagueSeason.status === 'registration_open'
-                        ? 'Registration is open — sign up now'
-                        : activeLeagueSeason.status === 'active'
-                          ? 'Season in progress — view standings and schedule'
-                          : 'Registration closed — season starting soon'
-                      : 'View past seasons and results'}
-                  </div>
-                </div>
-                <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
-              </Link>
-            </div>
-          </section>
-        )}
-
-        {/* Rep Teams Tryouts CTA */}
-        {showTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={openTryouts} />}
-
-        {/* Archives CTA */}
-        {showArchives && (
-          <section className="section">
-            <div className="container">
-              <Link href={`/${orgSlug}/archives`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
-                <Archive size={24} className={`${styles.archivesCtaIcon} ${club.archivesCtaIcon}`} />
-                <div>
-                  <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>Past tournaments</div>
-                  <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>Champions and results from earlier tournaments</div>
-                </div>
-                <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
-              </Link>
-            </div>
-          </section>
-        )}
-      </div>
+      <ClubSiteHome
+        orgSlug={orgSlug}
+        orgName={org.name}
+        bannerUrl={org.heroBannerUrl ?? null}
+        openNow={openNow}
+        teamBands={clubTeams.bands}
+        league={league}
+        tournaments={tournaments}
+        about={siteContent?.description?.trim() || null}
+        showFollow={showFollow}
+      />
     );
   }
 

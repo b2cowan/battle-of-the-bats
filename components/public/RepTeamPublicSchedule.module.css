@@ -1,60 +1,78 @@
 /* The standing public team schedule (Chunk D 1.9).
    Club Tier Stage 4b-1: it renders on the club's light frame, so it reads the club's own tokens (ClubFrame.module.css
-   `.site`) — never the platform's dark set, no typewriter face (DC-03), no tints (DC-02), type steps 12·14·16 (DC-05). */
+   `.site`) — never the platform's dark set, no typewriter face (DC-03), no tints (DC-02), type steps 12·14·16 (DC-05).
+   Stage 4b-2a: the one calendar recipe (C5/C8) — the date and time lead each row as plain text in a 96 px column; Up next
+   is marked by the club's edge and its words (C7); played games fold above it (C3); the rest of the season is on
+   demand; a cancelled event stays, struck through, with its Cancelled chip (C9). The frame is the club kit's `.list`. */
 
-.section {
-  margin-bottom: 2.5rem;
-}
-
-/* The Schedule heading's line (Club Tier 6d, B3): the band (ClubKit), and the Subscribe button at its right end. */
+/* The Schedule heading's line (Club Tier 6d, B3): the heading, and the Subscribe button at its right end. */
 .kickRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin: 0 0 0.75rem;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
 }
 
 .row {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 0.25rem;
-  border-bottom: 1px solid var(--club-line);
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--club-line);
 }
 
-.row:last-child {
-  border-bottom: none;
+/* Every row draws the line above it, except the first in the frame. */
+.row:first-child { border-top: 0; }
+
+.when {
+  font: 400 0.875rem/1.35 var(--club-text-face);
+  color: var(--club-dim);
+  font-variant-numeric: tabular-nums;
 }
 
-/* A finished game steps back; 0.75 keeps its small grey line above the 4.5:1 floor on the ground. */
-.rowDone {
-  opacity: 0.75;
-}
-
-.rowMain {
-  flex: 1;
+.what {
   min-width: 0;
 }
 
-.rowTitle {
-  font: 600 14px var(--club-text-face);
+.title {
+  font: 600 1rem/1.3 var(--club-text-face);
   color: var(--club-text);
+  overflow-wrap: anywhere;
 }
 
-.rowSub {
-  font: 400 12px var(--club-text-face);
-  color: var(--club-soft);
-  margin-top: 0.12rem;
+.where {
+  margin-top: 2px;
+  font: 400 0.75rem/1.4 var(--club-text-face);
+  color: var(--club-dim);
 }
 
-.rowCancelled {
+/* Up next: the club's edge down its left side, and the words in the club's ink. */
+.next {
+  box-shadow: inset 3px 0 0 var(--club-edge);
+}
+
+.nextLabel {
+  display: block;
+  margin-bottom: 2px;
+  font: 700 0.75rem/1.2 var(--club-text-face);
+  color: var(--club-ink);
+}
+
+.cancelled .title {
   text-decoration: line-through;
+  color: var(--club-dim);
+}
+
+.cancelChip {
+  padding: 6px 9px;
+  border: 1px solid var(--club-line-2);
+  border-radius: 20px;
+  font: 600 0.75rem/1 var(--club-text-face);
+  color: var(--club-soft);
+  white-space: nowrap;
 }
 
 .score {
@@ -68,24 +86,30 @@
 .scoreWin  { color: var(--club-ok); }
 .scoreLoss { color: var(--danger); }
 
-.upNext {
-  border: 1px solid var(--club-line);
-  border-radius: 8px;
-  background: var(--club-card);
-  padding: 0.8rem 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.link {
-  display: inline-flex;
+/* The two folds: "Earlier this season (3)" above, "Show the rest of the season (16 more)" below — each a 48 px line. */
+.fold > summary {
+  display: flex;
   align-items: center;
-  min-height: 44px;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  font: 600 0.875rem/1 var(--club-text-face);
   color: var(--club-ink);
-  font: 600 14px var(--club-text-face);
-  text-decoration: none;
-  white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
 }
 
-.link:hover {
-  text-decoration: underline;
+.fold > summary::-webkit-details-marker { display: none; }
+
+.fold > summary:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: -2px;
 }
+
+/* The fold above is quieter than the one below (the drawing's soft ink); the one below draws its own line — once
+   opened it hides, and the first row it revealed draws the line instead. */
+.fold > .foldTop { color: var(--club-soft); }
+.fold > .foldBottom { border-top: 1px solid var(--club-line); }
+
+/* The rest of the season, once shown, stays shown: its line would otherwise sit above the rows it revealed. */
+.fold[open] > .foldBottom { display: none; }

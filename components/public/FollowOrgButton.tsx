@@ -4,8 +4,8 @@
  *
  * The org-hero "Follow" button on `/{orgSlug}`. Following an organization is the year-round
  * relationship — the org's card then persists on the fan's Home so their NEXT event finds them.
- * One tap, no account (free-first). States: ghost-star "Follow" → dimmed saving beat →
- * ink-on-lime "★ Following". Tap again unfollows.
+ * One tap, no account (free-first). States: outlined "Follow" → dimmed saving beat →
+ * the club's fill "★ Following" (the club kit's buttons since Club Tier 4b-2a). Tap again unfollows.
  *
  * The org landing page is SSR'd + SW-cached as anonymous HTML (F3: page content unchanged), so
  * this island hydrates its own device + account state CLIENT-SIDE — no per-user data is SSR'd.

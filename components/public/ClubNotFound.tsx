@@ -8,6 +8,7 @@ import RootNotFound from '@/app/not-found';
 import warm from '@/components/consumer/warmTheme.module.css';
 import system from '@/app/system-screens.module.css';
 import styles from './ClubNotFound.module.css';
+import kit from './ClubKit.module.css';
 
 /**
  * A club's "not found" (Club Tier Stage 4a; Ask 5 ruled 2026-10-19; words through /marketing 2026-10-20).
@@ -50,11 +51,16 @@ export default function ClubNotFound() {
     : face.variant === 'teams' ? 'The link may be old, or the team may have a new name.'
     : 'The link may be old, or the page may have moved.';
 
+  // An unknown team's address offers the Teams page first, when the club has one (Stage 4b-2a, End state 5): the family
+  // was looking for a team, and the list is where they find its new name.
+  const seeTeams = face.variant === 'teams' && club.teamsPage;
+
   return (
     <div className={styles.page}>
       <div className={styles.body}>
         <h1 className={styles.title}>We couldn’t find that page</h1>
         <p className={styles.text}>{text}</p>
+        {seeTeams && <Link href={`/${club.slug}/teams`} className={`${kit.btn} ${kit.btnPrimary} ${styles.wide}`}>See all teams</Link>}
         <Link href={`/${club.slug}`} className="btn btn-outline">{club.name} home</Link>
       </div>
     </div>

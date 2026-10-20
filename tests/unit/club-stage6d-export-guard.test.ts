@@ -65,7 +65,8 @@ describe('without the prop, the control is as it was', () => {
 describe('the public page\'s button reads the one question', () => {
   it('the page passes Subscribe only beside the schedule it renders from getPublicTeamSchedule', () => {
     const page = readCode('app/[orgSlug]/teams/[teamSlug]/page.tsx');
-    assert.match(page, /\{publicSchedule && \(\s*<RepTeamPublicSchedule\s+view=\{publicSchedule\}/);
+    // Stage 4b-2a wraps the schedule in the desk layout's column; it still renders only from the one answer.
+    assert.match(page, /\{publicSchedule && \([\s\S]{0,80}?<RepTeamPublicSchedule\s+view=\{publicSchedule\}/);
     assert.match(page, /subscribe=\{\{ feedPath: publicTeamFeedPath\(orgSlug, team\.slug\)/);
   });
 });

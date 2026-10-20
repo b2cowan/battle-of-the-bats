@@ -1,0 +1,80 @@
+/* The public team page (Club Tier Stage 4b-2a; End state 3). The club's tokens come from its frame
+   (ClubFrame.module.css `.site`); the back link, title, door, list and section pieces are the club kit's.
+   Phone: one column — the tryout door, the schedule, About. Desk: the schedule first, the door and About beside it. */
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.page > :global(a):first-child {
+  align-self: flex-start;
+  margin-bottom: 0;
+}
+
+/* The title block follows the portal's page header: a hairline under the back link, the name, then division · season. */
+.head {
+  padding-top: 12px;
+  margin-bottom: 16px;
+  border-top: 1px solid var(--club-line);
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+/* The team's own colour, beside its name (DC-02: a dot, never a tint or a strip). */
+.teamDot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  /* A near-white team colour still shows on the light ground (/design). */
+  outline: 1px solid var(--club-line-2);
+  outline-offset: -1px;
+}
+
+/* The parts stand in the phone's order, which is the reading order. At a desk, with a schedule, the schedule takes the
+   left column and the door, the concluded notice and About stack beside it (grid areas: the layout moves them, never
+   the order a screen reader hears). Without a schedule the page stays one column. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 901px) {
+  .page {
+    padding: 20px 24px 40px;
+  }
+
+  /* The name stays at 32 px: the drawing's 40 is not one of the club pages' type steps (DC-05). */
+  .body {
+    max-width: 744px;
+  }
+
+  .body.withSchedule {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    /* The side's parts size to themselves; the last row takes the schedule's extra height. */
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'schedule tryouts'
+      'schedule about'
+      'schedule .';
+    align-items: start;
+    column-gap: 28px;
+    row-gap: 16px;
+  }
+
+  .withSchedule .schedule { grid-area: schedule; min-width: 0; }
+  .withSchedule .tryouts { grid-area: tryouts; }
+  .withSchedule .about { grid-area: about; }
+}

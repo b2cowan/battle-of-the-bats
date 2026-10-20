@@ -26081,3 +26081,18 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **Owed beside the walk:** the whole-product layout sweep on staging. `/docs` for all of Stage 2 done `d53812198` 2026-10-20 (the coaches, tournaments and platform-admin guides speak the new words; a new "I forgot my password" answer in the coaches guide).
 <!-- /§351 -->
+
+## §352 · Club Tier · Stage 4b-2a, the year-round club — **a club's home leads with Open now (open house-league registrations and open tryouts; absent when nothing is open), then its teams under its own groups, its house league, its tournaments with a status true to their dates (Registration open · This weekend · Live now · Finished), and About the club with Follow; a new Teams page and Teams tab (Home · Teams · House league · Past tournaments); the team page reads ← Teams, the name with its colour dot, division · season, the tryout door or one quiet sentence, the schedule with Earlier this season / Up next / Directions / Cancelled / Show the rest, and About the team; an old team address offers See all teams; a desk-only banner strip; on a phone the tab row stays pinned while the colour band scrolls away**
+
+**Built:** 2026-10-20, on `dev`, uncommitted (commit on the owner's word), after /marketing (the words), /design (banner, grid, Teams width, tournament row), /simplify (one team-list read, the kit's band/srOnly/rowStack, house date helpers) and a high-risk /review (4 lenses; the closed-site `/teams` forward, a stale "active" tournament, a game in progress, the typed close day and band keys fixed). Plan `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 4 ("4b-2a BUILT"); prompt `docs/projects/active/CLUB_TIER_STAGE4B2A_BUILD_PROMPT.md`.
+
+**The walk:** its own page, https://claude.ai/artifact/WLtvZYM7BS9yBe6hCxUbpe, source `docs/projects/active/CLUB_TIER_STAGE4B2A_WALK.html`, 42 steps in ten parts: 1 a rep-only home (navy) · 2 the same club with nothing open · 3 a club with a house league and a tournament (yellow) · 4 the Teams page · 5 a team page with tryouts open and a public schedule · 6 a quiet team and an archived one · 7 on a phone, the tabs stay and the band scrolls away (the 2026-10-20 phone ruling's own step, and no "← club" link) · 8 a page that isn't there · 9 what must not change · 10 page titles. Plus four calls (team order in a group, how long a finished tournament stays, how many coming events show, the banner strip).
+
+**Sign in:** signed out for every part but 2; Part 2 as `uat-rep-only-owner@uat-rep-club.local` (password as every UAT account), on localhost:3000.
+
+**Fixture:** `node --env-file=.env.local scripts/seed-club-fixture.mjs --rep-only-club` built `uat-rep-only` (UAT Lakeshore Lynx) on dev 2026-10-20 with the owner's yes; UAT Rep Club untouched, no sign-in reset.
+
+**Writes:** Part 2 closes and re-opens 15U AAA's tryout sign-ups on UAT Lakeshore Lynx. Part 1's Follow writes a follow for the browser (tap again to undo). Nothing else saves.
+
+**Checked beside the walk (2026-10-20):** `check:layout` on the club screens (club-home, club-home-rep-only, club-teams, club-team, club-tryout, club-house-league, club-past-tournaments) at 361, 390, 768 and 1440 — 28/28 clean (the 768 run first stopped itself for low memory; it ran clean after the dev server restart); `check:demos` ✓; unit tests: the club suite 1,657/1,657.
+<!-- /§352 -->
