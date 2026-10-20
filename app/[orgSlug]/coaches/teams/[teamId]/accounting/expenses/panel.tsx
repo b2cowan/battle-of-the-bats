@@ -7500,18 +7500,27 @@ function MoneyRecordsPanel({
 
       {/* ⚖ THE TEAM'S LISTS, OVER THE LEDGER (round 3, D8 + D10). ⚠ DRAWN BEFORE EVERY OTHER WINDOW ON
           PURPOSE: a bill opened from a payee's entries must open OVER the Payees window, so closing it
-          returns to the payee. Opened from a picker INSIDE an open form, it is `raised` above that form. */}
-      <PayeesWindow
-        orgSlug={orgSlug}
-        teamId={teamId}
-        open={!!payeesFrom && !!tabActive}
-        raised={payeesFrom === 'picker'}
-        canWrite={canWriteMoney}
-        money={payeeMoney}
-        renderRows={renderPayeeRows}
-        onClose={() => setPayeesFrom(null)}
-        onChanged={onPayeeChange}
-      />
+          returns to the payee. Opened from a picker INSIDE an open form, it is `raised` above that form.
+          ⚠ FROM RECORD MONEY IT FOLLOWS THAT FORM'S PORTAL (/review, One Window 2d): the hub's Record button opens the
+          form over ANY tab, and "Manage payees…" did nothing there — this window lived in the hidden panel and was gated
+          on the Ledger being on screen. Its rows are not doors in picker mode, so no bill has to open over it. */}
+      {(() => {
+        const overForm = payeesFrom === 'picker' && formOpen;
+        const payees = (
+          <PayeesWindow
+            orgSlug={orgSlug}
+            teamId={teamId}
+            open={!!payeesFrom && (!!tabActive || overForm)}
+            raised={payeesFrom === 'picker'}
+            canWrite={canWriteMoney}
+            money={payeeMoney}
+            renderRows={renderPayeeRows}
+            onClose={() => setPayeesFrom(null)}
+            onChanged={onPayeeChange}
+          />
+        );
+        return overForm ? createPortal(payees, document.querySelector('[data-coach-warm-enabled]') ?? document.body) : payees;
+      })()}
       {listOpen === 'categories' && tabActive && (
         <BudgetItemManagerModal orgSlug={orgSlug} teamId={teamId} categories={categories}
           onClose={() => setListOpen(null)} onChanged={bumpMoneyRevision} />

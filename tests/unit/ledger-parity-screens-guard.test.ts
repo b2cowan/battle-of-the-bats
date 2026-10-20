@@ -183,7 +183,10 @@ describe('Ledger Parity round 3 — Payees over the Ledger, a payee’s record, 
     assert.match(coach, /onManage=\{\(\) => setPayeesFrom\('picker'\)\}/, 'the money form’s picker');
     assert.match(coach, /onManagePayees=\{\(\) => setPayeesFrom\('picker'\)\}/, 'the bill’s picker');
     assert.match(coach, /raised=\{payeesFrom === 'picker'\}/);
-    assert.match(coach, /open=\{!!payeesFrom && !!tabActive\}/);
+    // On screen with its tab — or over Record money, which the hub opens over ANY tab, following its portal (/review 2d).
+    assert.match(coach, /const overForm = payeesFrom === 'picker' && formOpen;/);
+    assert.match(coach, /open=\{!!payeesFrom && \(!!tabActive \|\| overForm\)\}/);
+    assert.match(coach, /return overForm \? createPortal\(payees, document\.querySelector\('\[data-coach-warm-enabled\]'\) \?\? document\.body\) : payees;/);
     assert.match(coach, /if \(!tabActive\) \{ setPayeesFrom\(null\); setListOpen\(null\); \}/, 'closed, never just hidden, when the tab goes');
     // Its questions stand with it; the raise is one number, inline, in both frames.
     // The room, its two questions where the window opens them, and each question's own frame.
