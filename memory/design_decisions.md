@@ -7,6 +7,47 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — THE FIRST RUN'S EIGHT RULES: ONE FRAME, ONE TYPE, ONE WORDING, ONE ACCOUNT FORM, ONE STEP LINE AND WAIT, THE BUTTON IN VIEW, EVERY FAILURE SAYS WHAT TO DO, ONE DOOR PER THING; THE APP'S BAR IN SENTENCE CASE; DARK STAYS DARK (owner, The first look, rules 1–8 + Asks 3, 10, 12, 13, ruled 2026-10-19 as recommended; built as Stage 1, 2026-10-20 — hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx)
+
+**Decision (for `/design`; the words for `/marketing`, Ask 3 — written rules, no build guard).** Every screen a newcomer
+passes on the way in follows these, and The public face, warm starts its S1 from them:
+1. **One frame.** Every first-run screen sits in the consumer shell (the white top bar, the phone tabs) on the paper
+   ground, in one centred 420px column with no card around the form. Never the marketing bar or footer.
+2. **One type, on the ladder.** Heading: the display face, 700, sentence case, at `--type-display` (32px). This is the
+   ladder's one named exception: "a first-run page heading, one per screen, no back arrow, takes the display step"
+   (Ask 12). Sub: Inter 16, dim. Labels: Inter 600 14. Fields: 48px, white, 10px radius, 16px text. Button: Inter 700 16,
+   48px, lime. Fine print and foot links: Inter 14. Monospace only on the wordmark and a plan chip. The step line keeps
+   uppercase Inter 12 (D2, a named exception).
+3. **One wording** (`/marketing`). The heading names what the person came to do, in the words of the button they
+   tapped. Step 1's button is **Create account** at every door. Step 2's names the thing ("Create team", "Create
+   organization", "Start your season"; Premium says "Create team" while the comp applies, "Continue to checkout" when a
+   card is needed). Sign-in says **Sign in**. No arrows on buttons. The password rule is a hint under the field ("At least
+   8 characters."), never a placeholder. One email placeholder, `you@example.com`. "Already confirmed?", not "Already
+   verified?". Invitations say "Create account and join".
+4. **One account form.** First name, last name, email, password (with the eye), in that order, everywhere an account is
+   made. A door adds only what it must.
+5. **One step line, one check-your-email, one email.**
+6. **The button is in view** on a 390 × 844 phone and a 1366 × 768 laptop.
+7. **Every failure says what to do, in one sentence, with the way forward beside it.**
+8. **One door per thing.** Every "Coach a team" leads to the same place (`coachStartDoor()` in `lib/start-menu.ts`); a
+   demo's start button opens its own kind of door; a pricing plan opens the door that makes it, carrying its plan.
+
+(The build prompt called these "rules 1–9"; the plan writes eight. Nothing is missing.)
+
+**And two that reach past the first run:**
+- **The app's top bar and phone tabs read in sentence case for every visitor and fan** (Ask 13): Home · Scores ·
+  Pricing · Get started ▾ · Sign in, the body face at T1's label size and weight, one 30px pill. This supersedes top-nav
+  audit §D12's "Sign In" on those two bars. **The tournament pages' slim strip and the marketing bar keep the typewriter
+  capitals** (their menu included) until The public face, warm moves the public bars' idiom at once (Admin type sweep P1).
+- **Dark stays dark** (Ask 10). The whole sign-up journey follows the Warm / Dark setting, page and bar together; a
+  newcomer with no setting sees Warm. **A field's edge reaches 3:1 in Dark** (D-F10). It is its own warm-palette token,
+  `--home-field-edge` (`--white-40` in Dark, about 3.8:1), so decorative hairlines stay quiet. Discover's search and
+  the Warm field edge (about 1.4:1) are below that today, an open call (§348 Part C).
+
+**Why:** the walk found one form drawn six ways, five spellings of one button, two heading cases, and a top-bar menu
+that said "Run a tournament" over the team sign-up. A newcomer reads that as six products. A Dark account flashed
+cream for the whole sign-up.
+
 ### 2026-10-19 — EVERY HEADING IS THE PLAIN FACE, THE PAGE TITLE INCLUDED, IN BOTH PORTALS; THE CONDENSED FACE IS FOR CAPITALS; ONE "CHOSEN" LOOK FOR A TOGGLE (owner, Admin type sweep Stage 4 calls D1–D3, all as recommended, by paste-back — https://claude.ai/artifact/YQ9CZWXgL9pjo8GvXpw2wH)
 
 **Decision:**

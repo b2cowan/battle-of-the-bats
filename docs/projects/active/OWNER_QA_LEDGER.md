@@ -25718,3 +25718,18 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 - Not changed: what any form saves, the Remove / Remove event / Remove fee questions, the Practice · Game · Event choice, tournament games on the schedule (still read-only rows), the help page's What's New and search box (accepted, below), the global small button, the help button's own size.
 - **Accepted on the owner's word (Q5, Q6), with written reasons in the layout baseline:** the help page's What's New (19px) and Search this guide (42px) at 361/390/768 — every help page's, owned by the touch-target debt plan; the free Notifications "?" at 768 (34 wide) — the paid page header's F-21.
 <!-- /§347 -->
+
+## §348 · The first look · Stage 1, one account step — **every door asks for the account with the same form, heading and "Create account" (Start a team, Start a league season, Run a tournament with no intro page, Coach Premium in one column, the account-only sign-up, both invitations, the coach join page in the app's frame); the app's top bar and phone tabs read in sentence case with a "Get started ▾" menu; every "Coach a team" leads to the same place, the coach demo's button included; an account set to Dark stays dark through the whole sign-up**
+
+**Built 2026-10-19 → 2026-10-20** to the owner's rulings (all asks as recommended, plus R1; hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx; plan `docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`, *As built, Stage 1*). Commits: 1a `f45f7d019`, 1b `df295fdc6`, 1c `658cb84e5`, 1d `5ca0b8242`.
+
+**The walk:** https://claude.ai/artifact/RtyhSgLER7LmhxtvAsFFCC (source `docs/projects/active/FIRST_LOOK_STAGE1_WALK.html`). It has seven walks of one job each and 47 steps, Part C (the open calls) included: W1 start something new · W2 Coach Premium looks like the other doors · W3 the account-only sign-up and the two invitations · W4 the coach join page · W5 the top bar and the phone tabs · W6 every "Coach a team" leads to the same place · W7 Dark stays dark · Part C the four calls, one box per option.
+
+**Sign in:** http://localhost:3000. Most walks are signed out (a private window). W2 uses `fchp-free-host@dev.local` (`devpass123`) and `uat-free-coach@uat-free-coach.local`; W4 and W7 use `uat-coach@uat-test-org.local` (password as every test account).
+
+**Writes:** W1 step 2 makes one dev account (e.g. `firstlook.team.1020@example.com`). Check it exists in `auth.users` before recording a pass. Nothing else in the walk writes.
+
+**Not walkable on localhost (staging after the next promote):** "Check your email" (dev skips confirmation), the email itself, a live invitation's "Create account and join".
+
+**Owed beside the walk:** the whole-product layout sweep on staging (1d touched the shared bar and the palette; the dev-server run widened to every screen and aborted on memory 2026-10-20); the screen-reader pass on the shared form; `/docs` (help quotes the old words); `/marketing` on the sentences the rulings did not fix word for word.
+<!-- /§348 -->
