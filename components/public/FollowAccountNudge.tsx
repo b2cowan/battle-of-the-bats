@@ -14,6 +14,7 @@ import { Star } from 'lucide-react';
 import { readFollowedTeam, syncFollowToAccount, type FollowedTeam } from '@/lib/follow';
 import { getSession, signIn } from '@/lib/auth';
 import BottomSheet from '@/components/admin/BottomSheet';
+import PasswordInput from '@/components/auth/PasswordInput';
 import styles from './FollowAccountNudge.module.css';
 
 interface Props {
@@ -188,11 +189,11 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
               <input className={styles.input} type="email" value={email} onChange={e => setEmail(e.target.value)}
                 autoComplete="email" required />
             </label>
-            <label className={styles.field}>
-              <span className={styles.label}>Password</span>
-              <input className={styles.input} type="password" value={password} onChange={e => setPassword(e.target.value)}
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="follow-account-password">Password</label>
+              <PasswordInput id="follow-account-password" className={styles.input} value={password} onChange={e => setPassword(e.target.value)}
                 autoComplete="new-password" minLength={8} required />
-            </label>
+            </div>
 
             {error && <p className={styles.error} role="alert">{error}</p>}
 

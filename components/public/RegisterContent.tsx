@@ -18,6 +18,7 @@ import {
 import { SIGN_IN_ERROR_COPY, isValidEmail } from '@/lib/auth-errors';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import VerifyEmailSent, { requestVerificationLink } from '@/components/auth/VerifyEmailSent';
+import PasswordInput from '@/components/auth/PasswordInput';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
 /**
@@ -1106,9 +1107,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       {!signedIn && (
         <div className="form-group" style={{ marginBottom: '1rem' }}>
           <label className="form-label" htmlFor="reg-password">Create a Password *</label>
-          <input
+          <PasswordInput
             className="form-input"
-            type="password"
             placeholder="At least 8 characters"
             value={form.password}
             onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
@@ -1625,9 +1625,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                     <p className={styles.lead}>This email has a FieldLogicHQ account. Sign in to register one of your teams.</p>
                     <div className="form-group" style={{ marginBottom: '1rem' }}>
                       <label className="form-label" htmlFor="reg-signin-password">Password *</label>
-                      <input
+                      <PasswordInput
                         className="form-input"
-                        type="password"
                         value={form.password}
                         onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setStepError(''); }}
                         required
