@@ -266,12 +266,14 @@
   margin-bottom: 1rem;
 }
 
+/* A section's title (A3): the body face, sentence case, the standard heading weight. */
 .sectionTitle {
-  font-size: 0.75rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-40);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -1047,10 +1049,10 @@
 }
 
 .gameVs {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 400;
   color: rgba(255,255,255,0.25);
-  text-transform: uppercase;
 }
 
 .gameScore {
@@ -1245,11 +1247,11 @@
 :global([data-admin-kit]) .seasonDates { border-top-color: var(--home-line); }
 :global([data-admin-kit]) .divisionLinks { border-top-color: var(--home-line); }
 
-/* Labels over a figure → the kit eyebrow; the figure → the body face, tabular. */
+/* Labels over a figure → the kit eyebrow; the figure → the body face, tabular.
+   (A section's title is not one of them: .sectionTitle is the A3 section title, set once above.) */
 :global([data-admin-kit]) .statLabel,
 :global([data-admin-kit]) .dateLabel,
 :global([data-admin-kit]) .capacityLabel,
-:global([data-admin-kit]) .sectionTitle,
 :global([data-admin-kit]) .lifecycleLabel,
 :global([data-admin-kit]) .automationSectionTitle,
 :global([data-admin-kit]) .weekLabel,
@@ -1258,7 +1260,7 @@
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
 :global([data-admin-kit]) .statValue { color: var(--text-primary); font-variant-numeric: tabular-nums; }

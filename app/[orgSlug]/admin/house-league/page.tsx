@@ -37,8 +37,8 @@ function formatDate(iso: string | null): string {
 type StatusClass = keyof typeof STATUS_LABELS;
 const STATUS_LABELS: Record<string, string> = {
   draft:                'Draft',
-  registration_open:    'Registration Open',
-  registration_closed:  'Registration Closed',
+  registration_open:    'Registration open',
+  registration_closed:  'Registration closed',
   active:               'Active',
   completed:            'Completed',
   archived:             'Archived',
@@ -53,10 +53,10 @@ const STATUS_CSS: Record<string, string> = {
 };
 
 const NEXT_TRANSITION: Record<string, { status: LeagueSeasonStatus; label: string; danger?: boolean } | null> = {
-  draft:               { status: 'registration_open',   label: 'Open Registration' },
-  registration_open:   { status: 'registration_closed', label: 'Close Registration' },
-  registration_closed: { status: 'active',              label: 'Start Season' },
-  active:              { status: 'completed',           label: 'Mark Complete' },
+  draft:               { status: 'registration_open',   label: 'Open registration' },
+  registration_open:   { status: 'registration_closed', label: 'Close registration' },
+  registration_closed: { status: 'active',              label: 'Start season' },
+  active:              { status: 'completed',           label: 'Mark complete' },
   completed:           { status: 'archived',            label: 'Archive', danger: true },
   archived:            null,
 };
@@ -210,7 +210,7 @@ export default function HouseLeaguePage() {
     return (
       <div className={styles.accessDenied}>
         <Users size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the House league module. Contact your organization owner to enable it.</p>
       </div>
     );
@@ -225,7 +225,7 @@ export default function HouseLeaguePage() {
         title="House league"
         actions={isAdmin ? (
           <button type="button" className="btn btn-primary" onClick={openCreate}>
-            + Create Season
+            + Create season
           </button>
         ) : undefined}
         legacy={
@@ -239,7 +239,7 @@ export default function HouseLeaguePage() {
         </div>
         {isAdmin && (
           <button type="button" className="btn btn-primary" onClick={openCreate}>
-            + Create Season
+            + Create season
           </button>
         )}
       </div>
@@ -282,12 +282,12 @@ export default function HouseLeaguePage() {
         </div>
       )}
 
-      {/* Create Season modal */}
+      {/* Create season modal */}
       {createOpen && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setCreateOpen(false))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Create Season</h3>
+              <h3 className={styles.modalTitle}>Create season</h3>
               <button className={styles.modalCloseBtn} onClick={() => setCreateOpen(false)}><X size={16} /></button>
             </div>
 
@@ -493,7 +493,7 @@ export default function HouseLeaguePage() {
                 onClick={handleCreate}
                 disabled={creating || !form.name.trim() || !form.slug.trim()}
               >
-                {creating ? 'Creating…' : 'Create Season'}
+                {creating ? 'Creating…' : 'Create season'}
               </button>
             </div>
           </div>
@@ -581,7 +581,7 @@ function SeasonCard({
           </span>
           <HelpTooltip
             title="Season statuses"
-            body="Draft: configuration only, not visible publicly. Registration Open: public form is live for parents. Registration Closed: building teams and schedule. Active: games underway. Completed: season is over. Archived: season is retired."
+            body="Draft: configuration only, not visible publicly. Registration open: public form is live for parents. Registration closed: building teams and schedule. Active: games underway. Completed: season is over. Archived: season is retired."
           />
         </span>
       </div>
@@ -619,7 +619,7 @@ function SeasonCard({
 
       <div className={styles.seasonCardActions}>
         <Link href={href} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>
-          View Season →
+          View season →
         </Link>
 
         {isAdmin && next && (

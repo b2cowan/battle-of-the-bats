@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic';
 
 const STATUS_LABEL: Record<string, string> = {
   draft:                'Draft',
-  registration_open:    'Registration Open',
-  registration_closed:  'Registration Closed',
-  active:               'Season Active',
-  completed:            'Season Complete',
+  registration_open:    'Registration open',
+  registration_closed:  'Registration closed',
+  active:               'Season active',
+  completed:            'Season complete',
   archived:             'Archived',
 };
 
@@ -188,7 +188,7 @@ export default async function LeagueSeasonPage({
                     marginBottom: '0.2rem',
                   }}
                 >
-                  Season Dates
+                  Season dates
                 </div>
                 <div style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
                   {formatDate(season.seasonStartDate)} — {formatDate(season.seasonEndDate)}
@@ -206,7 +206,7 @@ export default async function LeagueSeasonPage({
                     marginBottom: '0.2rem',
                   }}
                 >
-                  Registration Fee
+                  Registration fee
                 </div>
                 <div style={{ fontSize: '0.88rem', color: '#a3e635', fontWeight: 700 }}>
                   ${season.registrationFee.toFixed(2)}
@@ -321,7 +321,7 @@ export default async function LeagueSeasonPage({
                 letterSpacing: '0.01em',
               }}
             >
-              Register Now →
+              Register now →
             </Link>
             {season.registrationCloseAt && (
               <p
@@ -377,7 +377,7 @@ export default async function LeagueSeasonPage({
                       : '1px solid rgba(255,255,255,0.1)',
                   }}
                 >
-                  {season.status === 'completed' || season.status === 'archived' ? 'Final Standings →' : 'Standings →'}
+                  {season.status === 'completed' || season.status === 'archived' ? 'Final standings →' : 'Standings →'}
                 </Link>
                 <Link
                   href={`/${orgSlug}/league/${seasonSlug}/schedule`}

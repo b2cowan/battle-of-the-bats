@@ -2304,7 +2304,7 @@ export function BudgetVsActualPanel({
               </colgroup>
               <thead>
                 <tr>
-                  <th scope="col" className={styles.lead}>Category / Line Item</th>
+                  <th scope="col" className={styles.lead}>Category / line item</th>
                   {/* ⚠ THE HEADING MOVES WITH THE BASIS, so a reader who has scrolled past the
                       control can still tell which span these figures cover. "Budgeted" alone over a
                       to-date column is how one report ends up meaning two things. */}

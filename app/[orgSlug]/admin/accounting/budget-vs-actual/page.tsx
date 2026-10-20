@@ -370,7 +370,7 @@ export default function BudgetVsActualTab() {
                 </colgroup>
                 <thead>
                   <tr>
-                    <th scope="col" className={bvaStyles.lead}>Category / Line Item</th>
+                    <th scope="col" className={bvaStyles.lead}>Category / line item</th>
                     <th scope="col">{planColumnLabel(basis)}</th>
                     <th scope="col">Actual</th>
                     <th scope="col">Variance</th>
@@ -519,7 +519,7 @@ function CompareTable({ compare, thisYear, open, onToggle, note }: {
           </colgroup>
           <thead>
             <tr>
-              <th scope="col" className={bvaStyles.lead}>Category / Line Item</th>
+              <th scope="col" className={bvaStyles.lead}>Category / line item</th>
               {head(thisYear, compare.thisSpan)}
               {head(compare.lastYear.name, compare.lastSpan)}
               <th scope="col">{W.change}</th>

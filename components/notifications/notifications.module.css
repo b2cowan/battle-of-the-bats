@@ -248,11 +248,12 @@
   align-items: baseline;
   gap: 0.4rem;
   padding: 0.6rem 20px 0.4rem;
-  font-family: var(--font-data);
-  font-size: 0.64rem;
+  /* A band heading, the standard's one recipe (Admin type sweep A4); the attention ink is kept below. */
+  font-family: var(--font-display, sans-serif);
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--text-tertiary);
 }
 
@@ -262,7 +263,7 @@
 }
 
 .sectionCount {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: count */
   font-size: 0.64rem;
   font-weight: 700;
   color: var(--warning);

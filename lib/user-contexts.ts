@@ -85,8 +85,8 @@ const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
   staff: 'Staff',
   official: 'Volunteer',
-  league_admin: 'League Admin',
-  league_registrar: 'Registrar',
+  league_admin: 'League admin',
+  league_registrar: 'League registrar',
   treasurer: 'Treasurer',
   coach: 'Coach',
 };

@@ -10,6 +10,7 @@ import s from '@/app/[orgSlug]/admin/admin-common.module.css';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { tournamentToday } from '@/lib/timezone';
 import LoadingState from '@/components/shared/LoadingState';
+import { repKit } from '@/components/admin/kit/club/RepKit';
 
 // ── Placeholder data for the preview PDF ─────────────────────────────────────
 const PREVIEW_HEADERS = ['Team', 'Division', 'Coach', 'Status', 'Payment'];
@@ -116,7 +117,7 @@ export default function PdfSettingsPage() {
         { identity: currentOrg?.name },
       );
     } catch {
-      setFeedback({ isOpen: true, title: 'Preview Error', message: 'Could not generate preview PDF. Please try again.', type: 'danger' });
+      setFeedback({ isOpen: true, title: 'Preview error', message: 'Could not generate preview PDF. Please try again.', type: 'danger' });
     } finally {
       setPreviewing(false);
     }
@@ -152,7 +153,7 @@ export default function PdfSettingsPage() {
         <HelpCallout
           variant="warning"
           title="Access restricted"
-          body="PDF settings can only be changed by Owners and Admins."
+          body="PDF settings can only be changed by owners and admins."
         />
       </div>
     );
@@ -176,7 +177,7 @@ export default function PdfSettingsPage() {
         style={{ gap: '0.4rem' }}
       >
         <Save size={14} />
-        {saving ? 'Saving…' : 'Save Settings'}
+        {saving ? 'Saving…' : 'Save settings'}
       </button>
     </>
   );
@@ -196,7 +197,7 @@ export default function PdfSettingsPage() {
           variant="info"
           title="Limited customization on free plan"
           body="You can configure header text, footer, and privacy settings. FieldLogicHQ branding is always shown on the free Tournament plan. Upgrade to Tournament Plus to use your own logo and suppress FieldLogicHQ branding."
-          cta={{ label: 'View Upgrade Options', href: `/${currentOrg?.slug}/admin/org/billing` }}
+          cta={{ label: 'View upgrade options', href: `/${currentOrg?.slug}/admin/org/billing` }}
         />
       )}
 
@@ -204,14 +205,14 @@ export default function PdfSettingsPage() {
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <section>
-          <h2 style={sectionTitle}>Header</h2>
+          <h2 className={repKit.sectionTitle} style={sectionGap}>Header</h2>
           <div className="form-group" style={{ marginBottom: '0.875rem' }}>
             <label className="form-label">Organization name in header</label>
             <input
               className="form-input"
               type="text"
               value={form.headerLine1}
-              placeholder={currentOrg?.name ?? 'Your Organization'}
+              placeholder={currentOrg?.name ?? 'Your organization'}
               onChange={e => set('headerLine1', e.target.value)}
             />
             <p style={hint}>
@@ -236,7 +237,7 @@ export default function PdfSettingsPage() {
             automatically — there is nothing to configure, so nothing pretends otherwise.
             The old "PDF-specific logo override — coming soon" dead radio is gone. */}
         <section>
-          <h2 style={sectionTitle}>Logo</h2>
+          <h2 className={repKit.sectionTitle} style={sectionGap}>Logo</h2>
           <div style={logoCard}>
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>
@@ -244,8 +245,8 @@ export default function PdfSettingsPage() {
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.15rem' }}>
                 {currentOrg?.logoUrl
-                  ? 'The logo uploaded in Org Settings appears in the header of every document, sized for print automatically.'
-                  : 'Upload a logo in Org Settings and it will appear in the header of every document. Until then, the header shows your org name as text.'}
+                  ? 'The logo uploaded in Settings appears in the header of every document, sized for print automatically.'
+                  : 'Upload a logo in Settings and it will appear in the header of every document. Until then, the header shows your org name as text.'}
                 {' '}A team that sets its own crest in its coaches portal shows that crest on its own documents.
               </div>
             </div>
@@ -254,7 +255,7 @@ export default function PdfSettingsPage() {
 
         {/* ── Footer ──────────────────────────────────────────────────────── */}
         <section>
-          <h2 style={sectionTitle}>Footer</h2>
+          <h2 className={repKit.sectionTitle} style={sectionGap}>Footer</h2>
           <div className="form-group" style={{ marginBottom: '0.875rem' }}>
             <label className="form-label">Footer text <span style={{ color: 'var(--text-tertiary)' }}>(optional)</span></label>
             <textarea
@@ -300,7 +301,7 @@ export default function PdfSettingsPage() {
 
         {/* ── Appearance ──────────────────────────────────────────────────── */}
         <section>
-          <h2 style={sectionTitle}>Appearance</h2>
+          <h2 className={repKit.sectionTitle} style={sectionGap}>Appearance</h2>
           <div className="form-group" style={{ marginBottom: '0.875rem' }}>
             <label className="form-label">Accent colour</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -319,7 +320,7 @@ export default function PdfSettingsPage() {
                 type="text"
                 value={form.accentColor}
                 onChange={e => set('accentColor', e.target.value)}
-                style={{ width: '120px', fontFamily: 'monospace', fontSize: '0.88rem' }}
+                style={{ width: '120px', fontFamily: 'var(--font-data)', fontWeight: 400, fontSize: '0.88rem' }} /* type-ok: code */
                 maxLength={7}
                 placeholder="#1e293b"
               />
@@ -365,7 +366,7 @@ export default function PdfSettingsPage() {
 
         {/* ── Privacy ─────────────────────────────────────────────────────── */}
         <section>
-          <h2 style={sectionTitle}>Privacy defaults</h2>
+          <h2 className={repKit.sectionTitle} style={sectionGap}>Privacy defaults</h2>
           <p style={{ fontSize: '0.82rem', color: 'var(--white-50)', marginBottom: '0.875rem', lineHeight: 1.55 }}>
             These control which sensitive fields appear in PDF exports by default. You can override per-export from the export menu.
           </p>
@@ -398,13 +399,13 @@ export default function PdfSettingsPage() {
 
         {/* ── Filename preview ─────────────────────────────────────────────── */}
         <section>
-          <h2 style={sectionTitle}>Filename pattern</h2>
+          <h2 className={repKit.sectionTitle} style={sectionGap}>Filename pattern</h2>
           <div style={{
             padding: '0.65rem 0.875rem',
             background: 'var(--card-bg)',
             border: '1px solid var(--home-line)',
             borderRadius: '8px',
-            fontFamily: 'var(--font-data)',
+            fontFamily: 'var(--font-data)', // type-ok: code (the filename)
             fontSize: '0.83rem',
             color: 'var(--text-secondary)',
           }}>
@@ -455,16 +456,8 @@ function Toggle({
 
 // ── Inline styles ─────────────────────────────────────────────────────────────
 
-// A section's name — the kit's eyebrow.
-const sectionTitle: React.CSSProperties = {
-  fontSize: 'var(--type-label)',
-  fontWeight: 700,
-  letterSpacing: '0.09em',
-  textTransform: 'uppercase',
-  color: 'var(--text-secondary)',
-  marginBottom: '0.875rem',
-  fontFamily: 'var(--font-data)',
-};
+// A section's name wears the kit's section title (repKit.sectionTitle); this is only the step down to its first field.
+const sectionGap: React.CSSProperties = { margin: '0 0 1rem' };
 
 const hint: React.CSSProperties = {
   fontSize: '0.75rem',

@@ -134,8 +134,6 @@
 }
 .register tr.balRow > td.balLabel {
   font-size: var(--type-support);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 .register tr.balEnd > td { border-top: 2px solid var(--home-line-strong); color: var(--text-primary); }
 /* ⚖ THE VOID ROW (owner, Ask 5d — standard §3.5): struck through in the faintest ink, a Void chip, the

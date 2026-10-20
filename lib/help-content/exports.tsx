@@ -4,7 +4,7 @@ import { HelpNote } from '@/components/help/HelpBlocks';
 import ExportAvailabilityTable from '@/components/help/ExportAvailabilityTable';
 
 const exportsHelp: HelpPageContent = {
-  title: 'Exports & Downloads',
+  title: 'Exports & downloads',
   role: 'Admin, Owner, Staff, Treasurer, Coach',
   searchPlaceholder: 'Search export help',
   intro:
@@ -106,7 +106,7 @@ const exportsHelp: HelpPageContent = {
                 team's Coaches Portal show the <strong>team's name</strong>, with the team's own crest
                 and colours if the coach has set them (in the portal's Team settings, under{' '}
                 <em>How your documents look</em>) — or the club's look until they do. Header text,
-                accent colour and footer are configured in <strong>Org Settings → PDF Settings</strong>.
+                accent colour and footer are configured in <strong>Organization → PDF settings</strong>.
               </p>
               <HelpNote variant="warning" title="PDF needs a paid plan">
                 <p>
@@ -248,11 +248,11 @@ const exportsHelp: HelpPageContent = {
             as a PDF or a spreadsheet. That choice appears only for coaches who have been granted
             family contacts; for anyone else there is no dropdown at all, because there is only one
             document to give them. If your club has switched
-            guardian contacts off in PDF Settings, the contacts sheet keeps dates of birth and drops
+            guardian contacts off in PDF settings, the contacts sheet keeps dates of birth and drops
             the guardian columns.
           </p>
           <p>
-            PDF privacy defaults can be configured in <strong>Org Settings → PDF Settings</strong>
+            PDF privacy defaults can be configured in <strong>Organization → PDF settings</strong>
             — set your preferences once and every PDF export follows those defaults unless you
             override them at export time.
           </p>

@@ -47,7 +47,7 @@ export default function AdminHelpHubPage() {
         keywords: ['season', 'division', 'draft', 'teams', 'standings', 'schedule'],
       },
       {
-        title: 'House league Registrations',
+        title: 'House league registrations',
         desc:  'Handle player registrations, review submissions, and manage payment status.',
         href:  `${helpBase}/registrations`,
         topicCount: 6,
@@ -87,14 +87,14 @@ export default function AdminHelpHubPage() {
       keywords: ['family', 'families', 'household', 'guardian', 'parent', 'duplicates', 'merge', 'opt out', 'export', 'privacy', 'ask the coaches', 'no family on file'],
     }] : []),
     ...(canOrgAdmin ? [{
-      title: 'Org Admin & Setup',
+      title: 'Org admin & setup',
       desc:  'Configure your organization settings, manage members, plan & billing, and venues.',
       href:  `${helpBase}/org`,
       topicCount: 8,
       keywords: ['members', 'roles', 'invite', 'plan & billing', 'subscription', 'billing', 'settings', 'venues', 'set up your club'],
     }] : []),
     {
-      title: 'Exports & Downloads',
+      title: 'Exports & downloads',
       desc:  'Export registrations, schedules, rosters, and reports to Excel, CSV, iCal, or PDF.',
       href:  `${helpBase}/exports`,
       topicCount: 6,
@@ -104,7 +104,7 @@ export default function AdminHelpHubPage() {
 
   const rolePaths: HelpHubRolePath[] = [
     ...(canOrgAdmin ? [{
-      title: 'Owner / Org Admin',
+      title: 'Owner / Admin',
       steps: [
         ...(isClub ? [{ label: 'Set up your club', href: `${helpBase}/org#recipe-set-up-your-club` }] : []),
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
@@ -122,7 +122,7 @@ export default function AdminHelpHubPage() {
       ],
     }] : []),
     {
-      title: 'Tournament Admin',
+      title: 'Tournament admin',
       steps: [
         { label: 'Open team registration', href: `${helpBase}/tournaments#recipe-open-tournament-registration` },
         { label: 'Review team registrations', href: `${helpBase}/tournaments#recipe-review-tournament-teams` },
@@ -136,7 +136,7 @@ export default function AdminHelpHubPage() {
     },
     ...(canHouseLeague ? [
       {
-        title: 'League Admin',
+        title: 'League admin',
         steps: [
           { label: 'Launch a house league season', href: `${helpBase}/house-league#recipe-launch-season` },
           { label: 'Open, pause, or close registration', href: `${helpBase}/house-league#recipe-open-close-registration` },
@@ -146,7 +146,7 @@ export default function AdminHelpHubPage() {
         ],
       },
       {
-        title: 'League Registrar',
+        title: 'League registrar',
         steps: [
           { label: 'Work the daily review queue', href: `${helpBase}/registrations#recipe-daily-review-queue` },
           { label: 'Promote a waitlisted player', href: `${helpBase}/registrations#recipe-promote-waitlisted-player` },
@@ -157,7 +157,7 @@ export default function AdminHelpHubPage() {
     ] : []),
     ...(canRepTeams ? [
       {
-        title: 'Rep Program Admin',
+        title: 'Rep program admin',
         steps: [
           { label: 'Add a team and start its first season', href: `${helpBase}/rep-teams#recipe-create-team-program-year` },
           { label: 'Open tryouts and review applicants', href: `${helpBase}/rep-teams#recipe-open-tryouts-review-applicants` },
@@ -193,7 +193,7 @@ export default function AdminHelpHubPage() {
 
   return (
     <HelpHubClient
-      title="Help & Guides"
+      title="Help & guides"
       subtitle="Search for what you need, or browse the guides for your organization."
       cards={cards}
       rolePaths={rolePaths}

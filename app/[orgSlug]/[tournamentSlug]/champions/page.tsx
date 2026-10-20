@@ -180,7 +180,7 @@ export default async function ChampionsPage({
                   {/* Final standings */}
                   {rows.length > 0 && (
                     <div className={styles.standingsBlock}>
-                      <h3 className={styles.blockTitle}>Final Standings</h3>
+                      <h3 className={styles.blockTitle}>Final standings</h3>
                       <ol className={styles.standingsList}>
                         {rows.map((r, idx) => (
                           <li key={r.teamId} className={idx === 0 ? styles.rankFirst : undefined}>

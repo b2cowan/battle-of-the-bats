@@ -527,11 +527,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-score-finalization-setting',
           question: 'Where do I control whether scores need admin review?',
-          answerText: 'Open Event settings, then Schedule rules. Score finalization is Admin review (scorekeeper submissions wait in Pending Review until an admin finalizes them in Results) or Final immediately (a submission is final as soon as it is saved). If fan score alerts are on (Tournament Plus), the Final alert is sent when a score becomes final — for tournaments on Admin review, that is when an admin finalizes it.',
+          answerText: 'Open Event settings, then Schedule rules. Score finalization is Admin review (scorekeeper submissions wait in Pending review until an admin finalizes them in Results) or Final immediately (a submission is final as soon as it is saved). If fan score alerts are on (Tournament Plus), the Final alert is sent when a score becomes final — for tournaments on Admin review, that is when an admin finalizes it.',
           keywords: ['score finalization', 'pending review', 'scorekeepers', 'scoring settings', 'final alert', 'admin review', 'final immediately'],
           answer: (
             <>
-              <p>Open <strong>Event settings</strong>, then <strong>Schedule rules</strong>. <strong>Score finalization</strong> is <strong>Admin review</strong> (scorekeeper submissions wait in Pending Review until an admin finalizes them in Results) or <strong>Final immediately</strong> (a submission is final as soon as it&rsquo;s saved). Admin score entry from Results &amp; Scoring remains an admin action and can always finalize or correct scores.</p>
+              <p>Open <strong>Event settings</strong>, then <strong>Schedule rules</strong>. <strong>Score finalization</strong> is <strong>Admin review</strong> (scorekeeper submissions wait in Pending review until an admin finalizes them in Results) or <strong>Final immediately</strong> (a submission is final as soon as it&rsquo;s saved). Admin score entry from Results &amp; Scoring remains an admin action and can always finalize or correct scores.</p>
               <p>If you&rsquo;ve turned on fan score alerts (Tournament Plus), the &ldquo;Final&rdquo; alert is sent when a score becomes final. For tournaments on Admin review, that&rsquo;s the moment an admin finalizes the score.</p>
             </>
           ),
@@ -1668,7 +1668,7 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>Finalizing a waiting score and changing a result that&rsquo;s already final belong to the same people: owners and admins, plus any member you&rsquo;ve given <strong>Seal (archive) tournaments</strong> in their member settings &mdash; that one permission covers both.</p>
               <ul>
-                <li><strong>Staff</strong> can enter scores, and correct or revert a score that&rsquo;s still <strong>Pending Review</strong>. On a waiting score they haven&rsquo;t changed, <strong>Save score</strong> stays off until the numbers actually change. Volunteers enter scores, and correct one that&rsquo;s still Pending Review, on Field scores instead.</li>
+                <li><strong>Staff</strong> can enter scores, and correct or revert a score that&rsquo;s still <strong>Pending review</strong>. On a waiting score they haven&rsquo;t changed, <strong>Save score</strong> stays off until the numbers actually change. Volunteers enter scores, and correct one that&rsquo;s still Pending review, on Field scores instead.</li>
                 <li><strong>A final game</strong> &mdash; Final or Forfeit &mdash; opens read-only for them, saying <em>&ldquo;This game is final. Only someone who can finalize scores can change it.&rdquo;</em> They don&rsquo;t see <strong>Finalize</strong>.</li>
                 <li>On <strong>Field scores</strong>, a forfeited game sits under <strong>Final</strong>, not To score, and can&rsquo;t be scored there.</li>
               </ul>
@@ -1677,9 +1677,9 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'results-pending-review',
-          title: 'Pending Review, and what’s public',
+          title: 'Pending review, and what’s public',
           content: (
-            <p><strong>Pending Review</strong> means a score has been submitted but still needs admin confirmation before it is treated as final. If finalization is disabled, scorekeeper submissions become completed scores immediately. Public result pages update from the same game data — Pending Review scores may appear as submitted results, but only completed scores are treated as final for playoff advancement.</p>
+            <p><strong>Pending review</strong> means a score has been submitted but still needs admin confirmation before it is treated as final. If finalization is disabled, scorekeeper submissions become completed scores immediately. Public result pages update from the same game data — Pending review scores may appear as submitted results, but only completed scores are treated as final for playoff advancement.</p>
           ),
         },
         {
@@ -1693,7 +1693,7 @@ const tournamentsHelp: HelpPageContent = {
           id: 'results-stays-current',
           title: 'It stays current, and one word everywhere',
           content: (
-            <p>Results &amp; Scoring re-checks itself every 30 seconds while it&rsquo;s open, so a scorekeeper&rsquo;s submission from the field appears without a reload — it never refreshes while you have an editor, the view sheet, or a confirm dialog open. Every screen that names a game&rsquo;s state — this page, the game-day dashboard, the schedule&rsquo;s game tags, and the scorekeeper — uses the same five words: <strong>Needs a score, Pending Review, Final, Forfeit,</strong> and <strong>Tie</strong>. The export&rsquo;s Status column says the same words, adding <strong>Scheduled</strong> and <strong>Cancelled</strong> for games that aren&rsquo;t due yet or were called off.</p>
+            <p>Results &amp; Scoring re-checks itself every 30 seconds while it&rsquo;s open, so a scorekeeper&rsquo;s submission from the field appears without a reload — it never refreshes while you have an editor, the view sheet, or a confirm dialog open. Every screen that names a game&rsquo;s state — this page, the game-day dashboard, the schedule&rsquo;s game tags, and the scorekeeper — uses the same five words: <strong>Needs a score, Pending review, Final, Forfeit,</strong> and <strong>Tie</strong>. The export&rsquo;s Status column says the same words, adding <strong>Scheduled</strong> and <strong>Cancelled</strong> for games that aren&rsquo;t due yet or were called off.</p>
           ),
         },
       ],
@@ -1745,8 +1745,8 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'faq-pending-review',
-          question: 'What does Pending Review mean?',
-          answerText: 'Pending Review means a scorekeeper submitted a score and an admin still needs to finalize it when score finalization is enabled.',
+          question: 'What does Pending review mean?',
+          answerText: 'Pending review means a scorekeeper submitted a score and an admin still needs to finalize it when score finalization is enabled.',
           keywords: ['pending review', 'finalize', 'score finalization'],
           popular: true,
           answer: (
@@ -1765,23 +1765,23 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-undo-score',
           question: 'Can I undo a score?',
-          answerText: 'Yes — Revert score in Results & Scoring clears the score and sends the game back to Scheduled so it can be entered again. A score still Pending Review can be reverted by anyone who can score; a final score only by someone who can finalize scores (owners and admins, or a member given Seal (archive) tournaments).',
+          answerText: 'Yes — Revert score in Results & Scoring clears the score and sends the game back to Scheduled so it can be entered again. A score still Pending review can be reverted by anyone who can score; a final score only by someone who can finalize scores (owners and admins, or a member given Seal (archive) tournaments).',
           keywords: ['undo score', 'revert score', 'clear score', 'revert a final score'],
           answer: (
             <>
               <p>Yes. Revert the game to Scheduled from Results &amp; Scoring, then enter the corrected score. Reverting clears the existing score and current submission metadata, so confirm before doing it.</p>
-              <p>A score still <strong>Pending Review</strong> can be reverted by anyone who can score. A <strong>final</strong> score can be reverted only by someone who can finalize scores &mdash; owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
+              <p>A score still <strong>Pending review</strong> can be reverted by anyone who can score. A <strong>final</strong> score can be reverted only by someone who can finalize scores &mdash; owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
             </>
           ),
         },
         {
           id: 'faq-scorekeeper-edit-final',
           question: 'Can volunteers change a score after submitting it?',
-          answerText: 'Volunteers can correct a Pending Review score before it is finalized, but not a final result — a completed score or a forfeit. On Field scores a forfeited game sits under Final and cannot be scored. A final result is changed in Results & Scoring by someone who can finalize scores: owners and admins, or a member given Seal (archive) tournaments.',
+          answerText: 'Volunteers can correct a Pending review score before it is finalized, but not a final result — a completed score or a forfeit. On Field scores a forfeited game sits under Final and cannot be scored. A final result is changed in Results & Scoring by someone who can finalize scores: owners and admins, or a member given Seal (archive) tournaments.',
           keywords: ['edit score', 'correct score', 'finalized score', 'pending review', 'forfeit', 'final result', 'forfeit under final', 'scorekeeper edit score', 'volunteer correct score', 'save correction'],
           answer: (
             <>
-              <p>Volunteers can correct a <strong>Pending Review</strong> score before it&rsquo;s finalized, but not a final result &mdash; a completed score or a forfeit. On Field scores a forfeited game sits under <strong>Final</strong> and can&rsquo;t be scored.</p>
+              <p>Volunteers can correct a <strong>Pending review</strong> score before it&rsquo;s finalized, but not a final result &mdash; a completed score or a forfeit. On Field scores a forfeited game sits under <strong>Final</strong> and can&rsquo;t be scored.</p>
               <p>A final result is changed in <strong>Results &amp; Scoring</strong> by someone who can finalize scores: owners and admins, or a member you&rsquo;ve given <strong>Seal (archive) tournaments</strong>.</p>
             </>
           ),
@@ -2472,7 +2472,7 @@ const tournamentsHelp: HelpPageContent = {
       keywords: ['export', 'xlsx', 'csv', 'ical', 'pdf', 'spreadsheet', 'download', 'check-in', 'insurance'],
       searchText: 'export xlsx csv excel spreadsheet ical calendar pdf report check-in insurance registrations schedule results download',
       links: [
-        { label: 'Exports & Downloads guide', href: '../help/exports' },
+        { label: 'Exports & downloads guide', href: '../help/exports' },
       ],
       content: (
         <>
@@ -2487,7 +2487,7 @@ const tournamentsHelp: HelpPageContent = {
             <li><strong>Results</strong> — Excel or CSV, including who submitted each score, when, and through which door; PDF post-event board report grouped by division (Tournament Plus). The PDF prints the games and scores only — the score-submission trail is working data and stays in Excel and CSV.</li>
           </ul>
           <p>
-            See the <a href="../help/exports">Exports &amp; Downloads guide</a> for format details,
+            See the <a href="../help/exports">Exports &amp; downloads guide</a> for format details,
             plan requirements, calendar import instructions, and privacy defaults.
           </p>
         </>

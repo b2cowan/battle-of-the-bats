@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 const STATUS_LABEL: Record<string, string> = {
   active:         'Confirmed',
-  pending_review: 'Pending Review',
+  pending_review: 'Pending review',
   waitlisted:     'Waitlisted',
 };
 

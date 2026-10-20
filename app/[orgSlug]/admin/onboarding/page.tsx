@@ -1326,7 +1326,7 @@ function OnboardingPageLegacy() {
               Set up a tournament after this league season is saved
             </label>
             <div className={styles.emptyModalState}>
-              Leaving this unchecked keeps the league workflow focused. You can create tournaments later from Tournament Management.
+              Leaving this unchecked keeps the league workflow focused. You can create tournaments later from the Tournaments page.
             </div>
           </div>
         ),
@@ -1545,7 +1545,7 @@ function OnboardingPageLegacy() {
 
       <div className={styles.footer}>
         <button className="btn btn-primary" onClick={complete} disabled={completing}>
-          {completing ? 'Finishing…' : allDone ? 'Go to Dashboard' : 'Leave setup for now'}
+          {completing ? 'Finishing…' : allDone ? 'Go to Overview' : 'Leave setup for now'}
           {!completing && <ArrowRight size={15} />}
         </button>
       </div>

@@ -42,8 +42,8 @@ function formatDateTime(iso: string) {
 
 function buildPayload(subject: string, message: string, audience: Audience) {
   if (audience === 'all')      return { subject, message, scope: 'all' };
-  if (audience === 'waitlist') return { subject, message, scope: 'status', status: 'waitlist' };
-  return                              { subject, message, scope: 'status', status: 'pending' };
+  if (audience === 'waitlist') return { subject, message, scope: 'status', status: 'waitlisted' };
+  return                              { subject, message, scope: 'status', status: 'pending_review' };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export default function NotificationsPage() {
     return (
       <div className={styles.accessDenied}>
         <Mail size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the House league module.</p>
       </div>
     );
@@ -131,7 +131,7 @@ export default function NotificationsPage() {
     return (
       <div className={styles.accessDenied}>
         <Mail size={32} />
-        <h2>Admin Only</h2>
+        <h2>Admin only</h2>
         <p>Only league admins and owners can send notifications.</p>
       </div>
     );
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
           <div className={styles.pageHeaderLeft}>
             <div className={styles.headerIcon}><Mail size={20} /></div>
             <div>
-              <h1 className={styles.pageTitle}>Preview Email</h1>
+              <h1 className={styles.pageTitle}>Preview email</h1>
               <p className={styles.pageSub}>To: {selectedAudience.label}</p>
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function NotificationsPage() {
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Mail size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Send Notification</h1>
+            <h1 className={styles.pageTitle}>Send notification</h1>
             <p className={styles.pageSub}>Email registrants for this season</p>
           </div>
         </div>
@@ -369,7 +369,7 @@ export default function NotificationsPage() {
       <div style={{ marginTop: '3rem' }}>
         <div className={styles.sectionHeader} style={{ marginBottom: '1rem' }}>
           <span className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Clock size={15} /> Sent History
+            <Clock size={15} /> Sent history
           </span>
         </div>
 

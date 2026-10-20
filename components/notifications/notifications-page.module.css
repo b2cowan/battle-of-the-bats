@@ -103,11 +103,10 @@
   border: none;
   background: none;
   cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  /* The drawer's own toggle values (Admin type sweep 3d, 2026-10-19): body face, no capitals. */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 600;
   color: var(--text-tertiary);
   padding: 0.28rem 0.75rem;
   border-radius: 4px;
@@ -141,11 +140,12 @@
   flex-wrap: wrap;
   gap: 0.4rem;
   padding: 0.7rem 1.1rem 0.5rem;
-  font-family: var(--font-data);
-  font-size: 0.66rem;
+  /* A band heading, the standard's one recipe (Admin type sweep A4); the attention ink is kept below. */
+  font-family: var(--font-display, sans-serif);
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--text-tertiary);
 }
 
@@ -154,7 +154,7 @@
 }
 
 .sectionCount {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: count */
   font-size: 0.66rem;
   font-weight: 700;
   color: var(--warning);
@@ -253,7 +253,7 @@
 }
 
 .itemTime {
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif); /* a figure: body face, tabular (A1) */
   font-size: var(--type-support, 0.7rem);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
@@ -280,11 +280,10 @@
   border-radius: 999px;
   background: var(--surface);
   cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  /* A small button in the body face, sentence case — the drawer's own (Admin type sweep 3d, 2026-10-19). */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--text-secondary);
   transition: color 0.15s, background 0.15s, border-color 0.15s;
 }

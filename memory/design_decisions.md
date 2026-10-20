@@ -7,6 +7,22 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-19 — A STATUS WORD HAS ONE SPELLING, SENTENCE CASE, EVERYWHERE; A SCREEN'S NAME IN A SENTENCE IS SPELLED AS THE MENU SPELLS IT (owner, Admin type sweep Stage 3, C2 + C3)
+
+**Decision:** (C2) A status the product shows — "Pending review", "Registration open", "Registration closed",
+"Declined / withdrawn" — is written in sentence case on every surface: tournaments (results, scorekeeper, a team's
+status), house league, the public league pages and status lookup, emails, help articles, and the values in an
+export's Status column (the export's column HEADINGS stay as they are, A7). (C3) Where a button or sentence names a
+screen, the screen's name is spelled as the menu spells it, wherever it sits: "Open Families", "Go to Overview",
+"Open Allocations", "Open the Ledger", "Loading the Venue library…". A label that names no screen ("Go to Dashboard",
+where nothing is called Dashboard) is corrected, not kept.
+**Rationale:** C2 — the drawings found two spellings already live ("Pending Review" on the older screens, "Pending
+review" on tryouts, house league email and the printed schedule); the words are display-only (stored as codes), so
+one spelling is safe, and sentence case is the house rule and the newer screens' choice. C3 — the shipped money
+screens already name screens this way and a build check holds it; lowering four buttons would make two rules.
+**Applies to:** every status word and every in-sentence screen name, both portals.
+
+
 ### 2026-10-19 — A TIMELINE BLOCK READS LIKE ITS DAY ROW, AT FOUR LENGTHS; A FINAL GAME'S CARD TURNS WHITE (owner, Timeline game cards round 1)
 
 **Decision:**

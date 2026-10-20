@@ -164,11 +164,11 @@ test.describe('Plan gating / an admin opens every program the plan carries (D8)'
     test(`${label} opens for an org-admin`, async ({ adminPage }) => {
       await adminPage.goto(`/${CLUB_ORG_SLUG}/admin/${segment}`);
       await expect(adminPage).not.toHaveURL(/\/auth\/login/);
-      // The program's own title is the positive signal (a refusal would be "Access Restricted",
+      // The program's own title is the positive signal (a refusal would be "Access restricted",
       // and a refused Rep Teams layout redirects to the hub, which this URL check also catches).
       await expect(adminPage.getByRole('heading', { name: heading, level: 1 })).toBeVisible({ timeout: 20_000 });
       await expect(adminPage).toHaveURL(new RegExp(`/${CLUB_ORG_SLUG}/admin/${segment}`));
-      await expect(adminPage.getByRole('heading', { name: 'Access Restricted' })).toHaveCount(0);
+      await expect(adminPage.getByRole('heading', { name: 'Access restricted' })).toHaveCount(0);
     });
   }
 

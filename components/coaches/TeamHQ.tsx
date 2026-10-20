@@ -48,7 +48,7 @@ type StandaloneTeamHQProps = {
 type TournamentTeamHQProps = {
   variant: 'tournament';
   phase: CoachTournamentPhase;
-  /** Registration status pill label (e.g. "Accepted", "Pending Review"). */
+  /** Registration status pill label (e.g. "Accepted", "Pending review"). */
   statusLabel: string;
   /** Global badge class for the pill (e.g. "badge-success"). */
   statusBadgeClass: string;

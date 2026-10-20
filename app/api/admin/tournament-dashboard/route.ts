@@ -421,7 +421,7 @@ export const GET = withObservability(async (req: Request) => {
     String(a.game_date ?? '').localeCompare(String(b.game_date ?? ''))
     || String(a.game_time ?? '').localeCompare(String(b.game_time ?? ''));
 
-  // TO FINALIZE — a score a scorekeeper submitted, waiting for the organizer (Pending Review).
+  // TO FINALIZE — a score a scorekeeper submitted, waiting for the organizer (Pending review).
   // Its own list since Stage 1 (G2): it used to sit under Now Playing as "IN REVIEW", so the board
   // opened on scores nobody was playing, filed as live games.
   const allToFinalizeGames = activeGames.filter(g => g.status === 'submitted').sort(byStartAsc);

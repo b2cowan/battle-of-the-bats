@@ -2,7 +2,7 @@
 
 **Census + plan drafted 2026-10-19** (owner: "have the helper list every admin screen that still uses the old
 fonts and capitals, then make a plan to address each of them"). **A1–A14 ruled 2026-10-19, all as
-recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked; the owner marked it Pass 2026-10-19 (P2), so the Stage 1 walk is closed.** **Stage 2 drawn 2026-10-19 (bracket editor first, through `/design`); B1–B6 + P1 ruled as recommended 2026-10-19; Stage 2 build in progress** (§4, "Stage 2 — drawn").
+recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked; the owner marked it Pass 2026-10-19 (P2), so the Stage 1 walk is closed.** **Stage 2 drawn 2026-10-19 (bracket editor first, through `/design`); B1–B6 + P1 ruled as recommended 2026-10-19; Stage 2 built and committed `956eea005` 2026-10-19; owner walk ✅ 2026-10-19 — 22 of 22 steps ticked, Parts A–G all marked Pass, no notes, so the Stage 2 walk is closed. Stage 3 (club admin) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/8Ypx95Zk9NP8ceihUGdw5F, from `ADMIN_TYPE_SWEEP_STAGE3_BUILD_PROMPT.md`); C1–C5 RULED as recommended 2026-10-19; Stage 3 BUILT 2026-10-19 (not committed), owner walk ✅ 2026-10-19 (25 of 25, Parts A–H Pass, no notes) https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM** (§4, "Stage 2 — drawn").
 Hub (list, asks, brief, plan, decisions): https://claude.ai/artifact/QcQCe3yy4oqRUnUEf9uMCb (source
 `ADMIN_TYPE_SWEEP_HUB.html`; the list and the asks live in its two `application/json` blocks — change them
 with a parse-and-rewrite script, then `JSON.parse` both blocks before publishing).
@@ -129,7 +129,7 @@ square · B6 typed names as typed, automatic names in the generator's words · P
 and coach bars now, public bars handed to `PUBLIC_FACE_WARM_PLAN.md` (Coordination) · P2 Part C Pass. Design log
 entry 2026-10-19 ("THE BRACKET EDITOR'S CARD IS A REAL FORM…").
 
-**BUILT 2026-10-19, not committed (owner walk owed: https://claude.ai/artifact/AsKKADRzuoVnkZJmg8uTHw, source
+**BUILT 2026-10-19, committed `956eea005` 2026-10-19 (owner walk ✅ 2026-10-19, 22 of 22, Parts A–G Pass, no notes: https://claude.ai/artifact/AsKKADRzuoVnkZJmg8uTHw, source
 `ADMIN_TYPE_SWEEP_STAGE2_WALK.html`).** Main session: the bracket editor (BracketBuilder card restructure + CSS folded
 into base rules, BracketEditor title + B6 save compare + dirty baseline), `displayRoundTitle` house words
 (`lib/playoff-bracket.ts`, tests), the clock fix, NumberStepper, P1 pills (CoachTopStrip `.pill`; FlipPill base = body
@@ -187,6 +187,109 @@ the Game window's does; the round name's hover outline exists today, so it is no
   tournament `TournamentFlipPill`, `ConsumerNav`), whose own links are mono caps and belong to the queued
   "public face, warm" project. The admin/coach strip's pill lettering comes from the strip's own class
   (`CoachTopStrip.module.css:103`), so the signed-in bars can change alone.
+
+### Stage 3 — drawn 2026-10-19; ⚖ C1–C5 RULED AS RECOMMENDED 2026-10-19 (owner paste-back); building
+
+Drawings + calls: https://claude.ai/artifact/8Ypx95Zk9NP8ceihUGdw5F (source `ADMIN_TYPE_SWEEP_STAGE3.html`; build
+`.probe/ats3/build.mjs`, captures `.probe/ats3/pairs.mjs`). Linked from the hub (v6). Today = read-only captures of the
+live dev screens (navigate, scroll, and the help search box only; nothing clicked or saved): `uat-rep-club` owner +
+treasurer, `dev-league-org` (League Plus) for Plan & billing. Proposed = the same live page with the proposed CSS (kit
+tokens) and words applied in the browser. Drawn from code values instead: the next-season chooser (only inside the
+founding-season card window) and first-run setup's Automation / Review rows (needs a League-plan owner with no seasons).
+Tournament-plan orgs never reach `/admin/org/billing` (`proxy.ts` bounces `admin/org/*`), so "non-Club plans" = League.
+
+**Rulings (owner paste-back 2026-10-19, all option 1):** C1 the editor's lettering handed to Club Tier Stage 4 (one
+line added to its Stage 4 entry; its "Access Restricted" is the last Title Case refusal heading until then) · C2 status
+words one spelling, sentence case, product-wide · C3 a screen's name in a sentence keeps the menu's spelling · C4 all
+five fixed in Stage 3 · C5 done 2026-10-19 (dev `tournaments` row `uat-phase2c-plus-championship-2026`
+theme_primary/theme_accent back to NULL). Design log entry 2026-10-19 (C2 + C3).
+
+**Calls (as asked):** C1 public-site editor → hand to Club Tier Stage 4 (4c rebuilds it; rec) · C2 status words one spelling
+product-wide, sentence case (rec) · C3 a screen's name inside a button keeps the menu's spelling (rec: C27, C34 "Open
+Allocations", C35 = no change) · C4 four untrue words + one defect, fix in Stage 3 (rec) · C5 put Stage 2's stray theme
+colours on `uat-phase2c-plus-championship-2026` back to NULL (rec).
+
+**Census corrections found drawing (each re-read in code):**
+- **C2's premise was wrong.** "Pending Review" already has two spellings: Title Case in `lib/game-day-words.ts:41`,
+  `lib/coaches-status.ts:17`, HL registrations `:30,:80`, `StatusLookupForm.tsx:7`; sentence case in rep tryouts
+  `:58`, `TryoutDialogs.tsx:26`, HL notifications `:31`, the HL email route `:137`, `lib/tournament-schedule-status.ts:36`,
+  `lib/registration-attention.ts:101`. "Registration Open/Closed": Title Case in four duplicate maps (HL ×2, public
+  `league/page.tsx:13`, `league/[seasonSlug]/page.tsx:13`); tournaments say "Registration open" (`lib/registration-words.ts:29`).
+  All display-only (stored codes `pending_review`, `registration_open`); tests pin some (`game-day-rule`, `schedule-day`,
+  `registrable-teams`). `REG_STATUS_LABEL` also fills the registrations export's Status cells (A7 covers headings only).
+- **C05** is not Past seasons / Team history: `.detailSectionTitle` = Shared library cards; `.renameSectionLabel` =
+  Rename web addresses, drawn as the A4 band heading (it splits one list), not a section title. `.summaryCardLabel` and
+  `.sectionTitle` in `rep-teams.module.css` are unused → S5.
+- **C64:** only `.helpLink` renders; the panel/entry/highlight/see-all classes in `whats-new.module.css` are dead → S5.
+- **C56–C58:** zone pills already done (Toolbar Rules, shared ViewPills); Stage 1 fixed Done in the drawer only, the page's
+  `.clearBtn` is still mono caps. Beyond the list: both `.sectionHeader` rules (page and drawer) → band face, amber kept.
+- **C61:** group heads → band heading (olive, like the contents rail); the per-result label → kit eyebrow (olive). Not
+  "normal font" as the census said.
+- **C12, C52, C53, C28:** the words underneath are already sentence case; only the capitals CSS goes.
+- **Found beyond the list:** HL Send notification's Waitlist / Pending review audiences send to nobody (page posts
+  `waitlist`/`pending`, real statuses `waitlisted`/`pending_review`; the route returns `{sent:0}`, no error) — C4(5);
+  billing "via Manage Subscription below" names no button (C4(1)); onboarding "Go to Dashboard" (C4(2)); PDF "in Org
+  Settings" (C4(3)); history `[yearId]:312` shows every non-head staff member as "Assistant Coach" (C4(4)); onboarding
+  "Free League includes…" and the League billing page's "outside your tournament" copy → /marketing.
+- **Build notes:** "Access Restricted" is matched case-sensitively by `scripts/admin-identity.mjs:207` and
+  `scripts/check-layout-invariants.mjs:244` (not watched automation; add the new spelling); `scripts/layout-screens.mjs:374`
+  finds HL "Add Game" exactly and fails silently; `scripts/.layout-baseline.json` keys on button text (re-baseline);
+  the onboarding placeholder "2026 House League" mirrors the saved default name (`:110`) — keep both.
+
+**`/design` 2026-10-19 (15 findings):** applied — help search group heads as band headings (they had matched the
+labels inside them); card prices onto the ladder (`--type-title`; the chooser's bare figure `--type-figure`); the page's
+Unread/All toggle to the drawer's (`--type-body` 600) and both Needs-attention heads together; Review values to 14 px;
+the colour-code capture re-taken; build notes for the PDF section part, the Shared library indent, long result labels.
+Declined — a larger Ledger balance label (K-01 dense register; a 14 px label beside a 12 px amount splits the row);
+flipping Stage 1's hub "GUIDES" to a band (it heads the one card set; Rename splits one list); "STATUS" on the season
+lifecycle bar stays an eyebrow (it names the bar). Open for S4: the season card title's condensed display face.
+
+### Stage 3 — as built 2026-10-19 (NOT committed; owner walk ✅ 2026-10-19 — 25 of 25 steps ticked, Parts A–H all Pass, no notes: https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM, source `ADMIN_TYPE_SWEEP_STAGE3_WALK.html`)
+
+Four parallel helpers on disjoint files (3a house league · 3b/3c rep teams, money, PDF, billing, onboarding · C2 words +
+help content · 3d shared parts), then the main session. File list: `.probe/ats3/files.txt` plus the review fixes below.
+- **3a:** base `.sectionTitle` = section title (also Player / Guardian / parent / Assignment in Add registration, Sent
+  history, Player pool — all group titles); the eyebrow group keeps the labels over values (`type-ok: eyebrow`); `.gameVs`
+  body face; the Generate window's kx leak fixed; LeagueCapUpgrade heading; every word in the §4 words table; C4(5) the
+  Send notification payload sends `waitlisted` / `pending_review`; scripts accept "Access restricted", layout-screens finds
+  "Add game".
+- **3b/3c:** `.detailSectionTitle` section title (+ the description's indent); `.renameSectionLabel` band heading;
+  type-ok markers in RepKit / Schedules; Ledger `balLabel` caps off; "Category / line item" (admin + coach twin); PDF
+  settings h2s use `repKit.sectionTitle` + a 1rem step, the colour code on `--font-data` 400; billing figures (card price
+  `--type-title`, next-season price `--type-figure`, unit/save/guarantee/plan label on the body face); onboarding
+  Automation + Review rows; C4(1)–(4): "Payment method & invoices", "Go to Overview" (+ "from the Tournaments page."),
+  "in Settings", the past-season staff role via `staffKindWord(resolveCoachCapabilities(...))`.
+- **C2 + help:** `game-day-words`, `coaches-status` ("Pending review", "Not accepted" — owner C2's rule covers every
+  status word), StatusLookupForm, event settings hint, release notes, public league pages (status map + "View season",
+  "Season dates", "Registration fee", "Register now", "Final standings", "Current / Past seasons", "Season active /
+  complete"), tests (`game-day-rule`, `schedule-day`, `registrable-teams`); help: status words, the house league tab
+  names as the screen shows them, "Org admin & setup", "Exports & downloads" (+ link labels, platform console hub), role
+  names per A8, Accounting's refusal described as the redirect it is, "Organization → PDF settings", the renamed buttons
+  help quotes (house league, registrations).
+- **3d:** notifications page toggle = the drawer's (`--type-body` 600), Done = the drawer's small button, time body
+  face, both Needs-attention heads band face (amber kept); help search group heads band, result label eyebrow (one line;
+  the list column `minmax(0,1fr)` so it truncates), hub count body face, "Search results"; What's new link body face,
+  "What’s new"; hub titles + role paths per A8.
+- **Review fixes (main session):** "League admin" / "League registrar" on the workspace badges (`lib/user-contexts.ts`);
+  Organization tile "PDF settings"; public team page "Register now →", "Past seasons"; champions "Final standings";
+  coach budget "Save changes" + its help; platform help "Coach or rep program admin".
+- **Departures:** the census's C61 "normal font" → band + eyebrow (`/design`); C05 → Shared library + Rename; "Not
+  accepted" added under C2's rule.
+- **Checks:** typecheck ✓ (after `next typegen`); `npm test` 8222 pass, the same 2 failures as at the start (club-stage6c
+  rail scrollbar; coach-semantic-ink), both in files this stage does not touch; spelling ✓; admin-type + old-look `--init`:
+  **type 83 files · face 154 · caps 141 · track 8 · heavy 57** (Stage 2: 87 · 177 · 165 · 8 · 61); old-look kitScope 414;
+  css purity, public tokens, contrast ×2 ✓; css-selectors red only on the pre-existing GuidanceRail `.context`; eslint 0
+  errors on changed files. `check:layout` NOT run: help and notifications are shared chrome (whole-product sweep → staging).
+  Dev server restarted (inner process; the supervisor brought it back) and answers 200.
+- **`/review` 2026-10-19 (3 lenses, no Critical/High):** fixed — the help result list could widen at 390 px; the review
+  fixes above. Known, left: `scripts/.layout-baseline.json` keys ~25 entries by renamed button text (renew at the staging
+  sweep, with their reasons); a send to an empty audience says "Email sent — 0 delivered" with no explanation; the past
+  season's staff word comes from the grants fallback (no stored staff kind on that record); the notifications page's
+  selected toggle is blue, the drawer's lime (colour, not lettering); house league's legacy `.pageTitle` / data-face
+  branches (old-look, S5); `lib/email.ts` "Go to Dashboard →" (email, public face warm); the public footer's "What’s New"
+  and the changelog title (/marketing); the coach portal's own "Add Game / Add Practice" help mentions (its screens not
+  swept); "Season Registrations" PDF title and the Excel headings (A7); the editor's "Access Restricted" (Club Tier Stage 4,
+  C1); onboarding's "Free League includes…" and the League billing page's "outside your tournament" copy (/marketing).
 
 ## 5. Parked (owned elsewhere — not this sweep)
 

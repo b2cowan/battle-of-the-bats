@@ -114,7 +114,7 @@
   font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--text-secondary);
   background: var(--home-paper);
   border-top: 1px solid var(--home-line);
@@ -397,7 +397,7 @@
   font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: band heading */
   color: var(--text-secondary);
   background: var(--home-paper);
   border-bottom: 1px solid var(--home-line);
@@ -445,11 +445,11 @@
 .recordRow { display: grid; grid-template-columns: minmax(0, 16rem); margin: 0 0 0.9rem; }
 .detailList { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.45rem 1rem; margin: 0; font-size: var(--type-body); }
 .detailList dt {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
   padding-top: 0.15rem;
 }
@@ -704,11 +704,11 @@
 .factsLabel {
   display: block;
   margin-bottom: 0.25rem;
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
 .factsNext { margin-top: 0.75rem; }

@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { hasDecidedGames, rosterCountOf, seasonRecordOf } from '@/lib/team-season-figures';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import { resolveCoachCapabilities, staffKindWord, type AssistantCapabilityGrants } from '@/lib/coach-capabilities';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
@@ -15,6 +16,8 @@ interface EnrichedCoach {
   id: string;
   userId: string;
   coachRole: string;
+  /** The season's stored grants (the route spreads the whole row) — what makes "Team manager" read as one. */
+  capabilities?: AssistantCapabilityGrants | null;
   displayName: string | null;
   email: string;
 }
@@ -31,7 +34,7 @@ const STATUS_CSS: Record<string, string> = {
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
   practice: 'Practice', league_game: 'Game', tournament_game: 'Game (Tournament)',
-  external_tournament: 'Tournament', team_event: 'Team Event', other: 'Other',
+  external_tournament: 'Tournament', team_event: 'Team event', other: 'Other',
 };
 /** A scrimmage is a Game with the box ticked (mig 306) — the word comes from the box, not the kind. */
 function eventTypeLabel(e: { eventType: string; isScrimmage: boolean }): string {
@@ -113,7 +116,7 @@ export default function PastYearDetailPage({
     return (
       <div className={styles.accessDenied}>
         <Archive size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the Rep teams module.</p>
       </div>
     );
@@ -195,7 +198,7 @@ export default function PastYearDetailPage({
             className={`${styles.tab} ${tab === t ? styles.tabActive : ''}`}
             onClick={() => setTab(t)}
           >
-            {t === 'roster' ? 'Roster' : t === 'schedule' ? 'Schedule & Results' : t === 'coaches' ? 'Coaches' : 'Documents'}
+            {t === 'roster' ? 'Roster' : t === 'schedule' ? 'Schedule & results' : t === 'coaches' ? 'Coaches' : 'Documents'}
           </button>
         ))}
       </div>
@@ -309,7 +312,7 @@ export default function PastYearDetailPage({
                   <tr key={c.id} className={styles.tr}>
                     <td className={styles.td}>{c.displayName ?? c.email}</td>
                     <td className={styles.td} style={{ color: 'var(--white-50)', fontSize: '0.78rem' }}>
-                      {c.coachRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach'}
+                      {staffKindWord(resolveCoachCapabilities(c.coachRole === 'head_coach' ? 'head_coach' : 'assistant_coach', c.capabilities))}
                     </td>
                     <td className={styles.td} style={faintCell}>
                       {c.email}

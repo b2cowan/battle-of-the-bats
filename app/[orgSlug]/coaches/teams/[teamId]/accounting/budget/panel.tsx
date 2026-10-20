@@ -3684,7 +3684,7 @@ export function BudgetPlanPanel({
               money joins something they already budgeted. */}
           <button type="button" className={shared.btnPrimary} onClick={handleSaveLine} disabled={saving}>
             {saving ? 'Saving…'
-              : editingLine ? 'Save Changes'
+              : editingLine ? 'Save changes'
               : addingToLine ? `Add to ${form.itemName}`
               : 'Add Line'}
           </button>

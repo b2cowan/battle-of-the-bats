@@ -86,7 +86,7 @@ export type TeamEntryInTournament = {
   /** The name it was entered under — what the organizer's schedule shows, which may not be the team's own. */
   name: string;
   division: string;
-  /** 'pending' | 'waitlist' | 'accepted' | 'rejected' ("Not Accepted"); null on an old row with no status (the line then names none). */
+  /** 'pending' | 'waitlist' | 'accepted' | 'rejected' ("Not accepted"); null on an old row with no status (the line then names none). */
   status: string | null;
 };
 
@@ -98,7 +98,7 @@ export type TeamEntryInTournament = {
 export const isChoosableTeam = (team: Pick<RegistrableTeam, 'locked' | 'alreadyIn'>): boolean =>
   !team.locked && !team.alreadyIn;
 
-/** Where the entry is, in the portal's status words: "U12 · Pending Review". */
+/** Where the entry is, in the portal's status words: "U12 · Pending review". */
 function entryWhere(entry: TeamEntryInTournament): string {
   return [entry.division, entry.status && registrationStatusLabel(entry.status)].filter(Boolean).join(' · ');
 }
@@ -110,7 +110,7 @@ function enteredAs(teamName: string, entry: TeamEntryInTournament): string {
 
 /**
  * The line under a card whose team is already in this tournament: "Already registered · U12 · Pending
- * Review", or "Already registered as “Walk Team” · U12 · Pending Review" when it was entered under another
+ * Review", or "Already registered as “Walk Team” · U12 · Pending review" when it was entered under another
  * name — the name the person will find on the schedule.
  */
 export function alreadyRegisteredLine(teamName: string, entry: TeamEntryInTournament): string {
@@ -119,7 +119,7 @@ export function alreadyRegisteredLine(teamName: string, entry: TeamEntryInTourna
 
 /**
  * The server's refusal when the team got in while the form was open (someone else on the staff, or
- * another tab): "Milton Bats is already registered in this tournament (U12 · Pending Review), so it
+ * another tab): "Milton Bats is already registered in this tournament (U12 · Pending review), so it
  * has NOT been registered again."
  */
 export function alreadyRegisteredRefusal(teamName: string, entry: TeamEntryInTournament): string {

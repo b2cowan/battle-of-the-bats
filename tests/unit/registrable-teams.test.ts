@@ -522,7 +522,7 @@ describe('one team, one entry (owner, 2026-10-16)', () => {
   it('a rejected entry still counts — letting the team back in is the organizer’s (owner, 2026-10-16)', () => {
     const found = matchTeamEntries([{ basicCoachTeamId: 'twin-a' }], [byTwin('twin-a', row('e1', { status: 'rejected' }))]);
     assert.equal(found.get('twin-a')?.status, 'rejected');
-    assert.equal(alreadyRegisteredLine('Milton Bats', found.get('twin-a')!), 'Already registered · U12 · Not Accepted');
+    assert.equal(alreadyRegisteredLine('Milton Bats', found.get('twin-a')!), 'Already registered · U12 · Not accepted');
   });
 
   it('a live entry is named before a rejected one, even a later one', () => {
@@ -575,11 +575,11 @@ describe('one team, one entry (owner, 2026-10-16)', () => {
   });
 
   it('the card says where the team already is, in the portal’s status words — and the other name when it has one', () => {
-    assert.equal(alreadyRegisteredLine('Milton Bats', entry()), 'Already registered · U12 · Pending Review');
-    assert.equal(alreadyRegisteredLine('milton  bats ', entry()), 'Already registered · U12 · Pending Review', 'same name, however spaced');
+    assert.equal(alreadyRegisteredLine('Milton Bats', entry()), 'Already registered · U12 · Pending review');
+    assert.equal(alreadyRegisteredLine('milton  bats ', entry()), 'Already registered · U12 · Pending review', 'same name, however spaced');
     assert.equal(
       alreadyRegisteredLine('UAT Standalone Team (No Metrics)', entry({ name: 'No Metrics - Walk' })),
-      'Already registered as “No Metrics - Walk” · U12 · Pending Review',
+      'Already registered as “No Metrics - Walk” · U12 · Pending review',
     );
     assert.equal(alreadyRegisteredLine('Milton Bats', entry({ status: 'waitlist' })), 'Already registered · U12 · Waitlisted');
     assert.equal(alreadyRegisteredLine('Milton Bats', entry({ status: null })), 'Already registered · U12', 'no status, no word');
@@ -588,7 +588,7 @@ describe('one team, one entry (owner, 2026-10-16)', () => {
   it('the server’s refusal says the same, and that nothing was registered', () => {
     assert.equal(
       alreadyRegisteredRefusal('UAT Standalone Team (No Metrics)', entry({ name: 'No Metrics - Walk' })),
-      'UAT Standalone Team (No Metrics) is already registered in this tournament as “No Metrics - Walk” (U12 · Pending Review), so it has NOT been registered again.',
+      'UAT Standalone Team (No Metrics) is already registered in this tournament as “No Metrics - Walk” (U12 · Pending review), so it has NOT been registered again.',
     );
     assert.equal(
       alreadyRegisteredRefusal('Milton Bats', entry({ division: '', status: null })),

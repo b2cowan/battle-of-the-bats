@@ -3,7 +3,7 @@ import type { HelpPageContent } from './index';
 import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
 
 const orgHelp: HelpPageContent = {
-  title: 'Org Admin & Setup',
+  title: 'Org admin & setup',
   role: 'Owner, Admin',
   intro: 'This guide covers your organization\'s setup — who can do what, how to invite members, and how to manage your org settings.',
   sections: [
@@ -47,7 +47,7 @@ const orgHelp: HelpPageContent = {
     {
       id: 'roles',
       heading: 'Roles explained — who can do what',
-      summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League Admin, League Registrar, Coach, and Volunteer one by one.',
+      summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League admin, League registrar, Coach, and Volunteer one by one.',
       keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'volunteer', 'scorekeeper', 'gate', 'helping with', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families', 'who can finalize scores', 'change a final score'],
       searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner only what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows volunteer helping with scoring the gate both field scores check-in',
       content: (
@@ -98,12 +98,12 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and branding. Cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
                 <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
-                <li><strong>League Admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
-                <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons, schedules, or the member list.</li>
+                <li><strong>League admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
+                <li><strong>League registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons, schedules, or the member list.</li>
                 <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
                 <li><strong>Volunteer</strong> — Enters scores, checks teams in at the gate, or both, from their phone: whatever they&rsquo;re <strong>helping with</strong>, chosen when you invite them. Scoring opens <strong>Field scores</strong>, the gate opens <strong>Check-in</strong>. Doesn&rsquo;t access the admin panel at all.</li>
               </ul>
-              <p><strong>A rep club has no registrar role.</strong> The registration-type work on a rep team — forms, documents, keeping the roster tidy — belongs to that team&rsquo;s <strong>team manager</strong>: a staff member the head coach adds on the team&rsquo;s <strong>Staff</strong> page in the Coaches Portal. League Registrar is for house league only.</p>
+              <p><strong>A rep club has no registrar role.</strong> The registration-type work on a rep team — forms, documents, keeping the roster tidy — belongs to that team&rsquo;s <strong>team manager</strong>: a staff member the head coach adds on the team&rsquo;s <strong>Staff</strong> page in the Coaches Portal. League registrar is for house league only.</p>
               <p>Owners can grant or revoke individual programs on any member from <strong>Members → Manage</strong> — a chip on their row marks anything different from their role&rsquo;s defaults. A volunteer&rsquo;s Manage shows <strong>Helping with</strong> instead, which anyone who can invite members can change.</p>
             </>
           ),
@@ -155,22 +155,22 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-best-role-for-helper',
           question: 'What role should I give a new volunteer?',
-          answerText: 'Choose the narrowest role that lets them do their job. Use Volunteer for scoring games or checking teams in at the gate (choose which under Helping with), Staff for wider day-of operations, Treasurer for accounting, League Registrar for registration review, and Coach for team portal access.',
+          answerText: 'Choose the narrowest role that lets them do their job. Use Volunteer for scoring games or checking teams in at the gate (choose which under Helping with), Staff for wider day-of operations, Treasurer for accounting, League registrar for registration review, and Coach for team portal access.',
           keywords: ['role', 'volunteer', 'permissions', 'least access', 'scorekeeper', 'gate', 'helping with'],
           popular: true,
           answer: (
-            <p>Choose the narrowest role that lets them do their job. Use <strong>Volunteer</strong> for scoring games or checking teams in at the gate (choose which under <strong>Helping with</strong>), <strong>Staff</strong> for wider day-of tournament help, <strong>Treasurer</strong> for accounting, <strong>League Registrar</strong> for registration review, and <strong>Coach</strong> for coach portal access.</p>
+            <p>Choose the narrowest role that lets them do their job. Use <strong>Volunteer</strong> for scoring games or checking teams in at the gate (choose which under <strong>Helping with</strong>), <strong>Staff</strong> for wider day-of tournament help, <strong>Treasurer</strong> for accounting, <strong>League registrar</strong> for registration review, and <strong>Coach</strong> for coach portal access.</p>
           ),
         },
         {
           id: 'faq-scorekeeper-member-access',
           question: 'What access does a volunteer get?',
-          answerText: 'Volunteers are Tournament Plus and above; the free Tournament plan has no volunteers. A volunteer gets one or both of two phone screens, by what they are helping with: Field scores for scoring, Check-in for the gate. On Field scores they can enter scores and correct one that is still Pending Review, but they cannot change a result that is already final. They do not get the main admin panel.',
+          answerText: 'Volunteers are Tournament Plus and above; the free Tournament plan has no volunteers. A volunteer gets one or both of two phone screens, by what they are helping with: Field scores for scoring, Check-in for the gate. On Field scores they can enter scores and correct one that is still Pending review, but they cannot change a result that is already final. They do not get the main admin panel.',
           keywords: ['volunteer', 'scorekeeper', 'official', 'gate', 'volunteer access', 'scorekeeper access', 'field scores', 'check-in', 'change a final score', 'what they can open'],
           answer: (
             <>
               <p>Volunteers are part of <strong>Tournament Plus</strong> and above; the free Tournament plan has no volunteers. A volunteer gets one or both of two phone screens, by what they&rsquo;re <strong>helping with</strong>: <strong>Field scores</strong> for scoring, <strong>Check-in</strong> for the gate. Members&rsquo; &ldquo;What they can open&rdquo; reads <strong>Scores</strong>, <strong>The gate</strong>, or <strong>Scores and the gate</strong>.</p>
-              <p>On Field scores they can enter scores and correct one that&rsquo;s still <strong>Pending Review</strong>, but they can&rsquo;t change a result that&rsquo;s already final. They don&rsquo;t get registrations, settings, billing, exports, communications, or the main admin panel.</p>
+              <p>On Field scores they can enter scores and correct one that&rsquo;s still <strong>Pending review</strong>, but they can&rsquo;t change a result that&rsquo;s already final. They don&rsquo;t get registrations, settings, billing, exports, communications, or the main admin panel.</p>
             </>
           ),
         },
@@ -427,7 +427,7 @@ const orgHelp: HelpPageContent = {
       keywords: ['notifications', 'notification settings', 'manage notifications', 'turn off notifications', 'email alerts', 'push', 'bell', 'notification drawer', 'open a notification', 'read the whole message', 'message cut off', 'where does it go', 'open the request', 'open the bill', 'notifications on my phone', 'where are my notifications', 'no bell on my phone', 'needs attention', 'clears when it’s handled', 'why did it disappear', 'who gets notified', 'activity feed', 'earlier this week', 'done', 'mark done', 'clear a notification', 'still showing after i read it', 'mark all read', 'delete a notification', 'trash', 'undo', 'unread', 'load more', 'where did see all go', 'see all', 'bundled', 'audit log', 'member history', 'when who what to whom', 'time zone', 'export audit log', 'rep teams group change', 'volunteer job change', 'helping with'],
       searchText: 'turn on notifications turn on alerts get alerts on this device phone alerts push notifications will not turn on couldn’t turn on notifications in this window allow prompt notifications are blocked address bar in the app reinstall the app install app home screen iphone ipad signed out couldn’t save this device notifications notification preferences notification settings one page for everything you are part ofcard per organization team you coach manage notifications turn off notifications change how i am notified account notifications your devices in-app bell email push per event type on a computer the bell opens a drawer down the right side whole list load more no see all link where did see all go settings gear in the drawer header on a phone no bell more notifications page more account notification settings click a notification to open it where you are opens beside the list sheet above the bottom bar small window whole message day and time marked read nothing loads until you choose button names the page open the request open the bill open teams open the team second click needs attention activity feed grouped today yesterday earlier this week earlier pinned until it’s handled leaves by itself clears when it’s handled handled by someone else why did it disappear from needs attention what happened who did it when settled accepted declined withdrawn closed paid done button takes it off sooner opening it is not dealing with it still in needs attention after i read it who gets notified failed payment goes to the owners assistant coach approval rep teams no-show check-in read seen done dealt with delete gone from your list mark all read marks everything read delete a notification trash undo a few seconds your own list only everyone else copy request or payment untouched no are you sure unread all toggle inbox you empty filter chips on the page bundled repeated 6 new registrations opens as its list member audit log history who changed role owner only export members when who what happened to whom columns house time zone role changes program access turned on turned off invitations sent resent suspensions reinstatements removals rep teams group change no member changes yet did not load try again export excel csv',
       content: (
-        <p>Two record-keeping areas sit under Org Admin: your own notification preferences, and — for the owner — the club or organization&rsquo;s audit log of member changes.</p>
+        <p>Two kinds of record: your own notification preferences, and, for the owner, the club or organization&rsquo;s audit log of member changes (Organization → Audit log).</p>
       ),
       subtopics: [
         {

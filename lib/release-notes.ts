@@ -158,7 +158,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: "Your registration list stays clean: a Coaches Portal team can be entered in your tournament only once, in any division, whoever on its staff registers it. A team you didn't accept can't register itself back in, and its card says Not Accepted.",
+        text: "Your registration list stays clean: a Coaches Portal team can be entered in your tournament only once, in any division, whoever on its staff registers it. A team you didn't accept can't register itself back in, and its card says Not accepted.",
       },
       {
         category: 'improved',
@@ -266,7 +266,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'fixed',
-        text: 'A forfeit can no longer be scored over from the scorekeeper screen, and only someone who can finalize can change a final result. Everyone else can still correct scores that are Pending Review.',
+        text: 'A forfeit can no longer be scored over from the scorekeeper screen, and only someone who can finalize can change a final result. Everyone else can still correct scores that are Pending review.',
       },
       {
         category: 'fixed',
@@ -416,7 +416,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: 'Every game-day screen now calls a game the same thing: Needs a score, Pending Review, Final, Forfeit or Tie.',
+        text: 'Every game-day screen now calls a game the same thing: Needs a score, Pending review, Final, Forfeit or Tie.',
       },
       {
         category: 'fixed',

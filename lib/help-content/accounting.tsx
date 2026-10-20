@@ -15,7 +15,7 @@ const accountingHelp: HelpPageContent = {
       searchText: 'accounting access club plan add-on enable module treasurer admin owner permission capability access restricted who can use unlock contact owner allocations payment requests moved from rep teams admin with rep teams cannot see allocations',
       content: (
         <>
-          <p>Accounting is included with the <strong>Club</strong> plan. If your organization doesn’t have it, the Accounting area shows an <strong>Access Restricted</strong> message — ask your organization owner about moving to Club.</p>
+          <p>Accounting is included with the <strong>Club</strong> plan. If your organization doesn’t have it, Accounting stays out of the menu, and opening its address takes you back to the <strong>Overview</strong> — ask your organization owner about moving to Club.</p>
           <p>Once it’s enabled, who can do what:</p>
           <ul>
             <li><strong>Owners and treasurers</strong> — everything: the books, allocations, payment requests, reminders and the budget.</li>
@@ -168,7 +168,7 @@ const accountingHelp: HelpPageContent = {
       keywords: ['board report', 'budget vs actual', 'treasurer report', 'export pdf', 'year pill'],
       searchText: 'board report treasurer report overview export board report budget vs actual year pill categories export pdf csv xlsx financial report monthly meeting where the club stands held by the team',
       links: [
-        { label: 'Exports & Downloads guide', href: '../help/exports' },
+        { label: 'Exports & downloads guide', href: '../help/exports' },
       ],
       content: (
         <>
@@ -685,7 +685,7 @@ const accountingHelp: HelpPageContent = {
       searchText:
         'export xlsx csv excel pdf spreadsheet download board report ledger book whole period signed amount money out negative void marked void left out of totals total money in total money out net teams tab teams group allocations coming due allocation payment requests team account statement budget budget-vs-actual print treasurer tournament plus board report overview year-end report against last year',
       links: [
-        { label: 'Exports & Downloads guide', href: '../help/exports' },
+        { label: 'Exports & downloads guide', href: '../help/exports' },
       ],
       content: (
         <>
@@ -702,7 +702,7 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Budget vs. Actual">The Statement or Months you are reading — Against last year too. The PDF is always the whole-year statement.</HelpDef>
           </HelpDefs>
           <p>
-            See the <a href="../help/exports">Exports &amp; Downloads guide</a> for format details,
+            See the <a href="../help/exports">Exports &amp; downloads guide</a> for format details,
             plan requirements, and PDF configuration.
           </p>
         </>

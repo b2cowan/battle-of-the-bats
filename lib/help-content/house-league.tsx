@@ -3,7 +3,7 @@ import type { HelpPageContent } from './index';
 
 const houseLeagueHelp: HelpPageContent = {
   title: 'House league',
-  role: 'League Admin, Admin',
+  role: 'League admin, Admin',
   intro: 'House league manages the full seasonal workflow for recreational leagues — from opening registration to recording final scores. Each season runs independently with its own registrations, teams, schedule, and standings. The free League plan runs one capped season; League Plus and Club remove the caps and add exports.',
   searchPlaceholder: 'Search House league help',
   sections: [
@@ -11,7 +11,7 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'lifecycle',
       group: 'Getting started',
       heading: 'Understanding the season lifecycle',
-      summary: 'A season moves through Draft → Registration Open → Closed → Active → Completed → Archived, by hand.',
+      summary: 'A season moves through Draft → Registration open → Closed → Active → Completed → Archived, by hand.',
       keywords: ['season lifecycle', 'status', 'draft', 'registration open', 'active', 'archived'],
       searchText: 'season lifecycle status draft registration open registration closed active completed archived transition advance manually activate season',
       content: (
@@ -19,13 +19,13 @@ const houseLeagueHelp: HelpPageContent = {
           <p>Every season moves through these statuses in order:</p>
           <ul>
             <li><strong>Draft</strong> — setup mode. Create divisions, set capacity limits, and configure automation before going public. Nothing is visible to families yet, and the season has no public page.</li>
-            <li><strong>Registration Open</strong> — the public registration form is live. Families can submit registrations for any division in this season.</li>
-            <li><strong>Registration Closed</strong> — the public form no longer accepts new submissions. Use this phase to build teams and prepare the schedule while reviewing any pending registrations.</li>
+            <li><strong>Registration open</strong> — the public registration form is live. Families can submit registrations for any division in this season.</li>
+            <li><strong>Registration closed</strong> — the public form no longer accepts new submissions. Use this phase to build teams and prepare the schedule while reviewing any pending registrations.</li>
             <li><strong>Active</strong> — games are underway. Scores can be submitted and standings update automatically.</li>
             <li><strong>Completed</strong> — the season is over. It stays visible but no longer takes changes.</li>
             <li><strong>Archived</strong> — the season is retired from active views. Historical data is preserved.</li>
           </ul>
-          <p>You advance the status manually with the transition button on the season detail page (for example, <strong>Activate Season</strong> moves a closed season to Active). Each step is intentional — there is no auto-advance — and you can move back where the product allows it.</p>
+          <p>You advance the status manually with the transition button on the season detail page (for example, <strong>Activate season</strong> moves a closed season to Active). Each step is intentional — there is no auto-advance — and you can move back where the product allows it.</p>
         </>
       ),
     },
@@ -58,7 +58,7 @@ const houseLeagueHelp: HelpPageContent = {
       searchText: 'create season setup name slug sport division registration opens closes fee waiver automation auto approve waitlist accounting divisions capacity public url',
       content: (
         <>
-          <p>From the House league page, click <strong>Create Season</strong>. The create form collects the season basics (name, URL slug, sport, an age/division label) and lets you set the <strong>registration open and close dates</strong>, a <strong>registration fee</strong>, <strong>waiver text</strong>, and the <strong>automation</strong> toggles right away. The slug appears in public URLs — choose it carefully.</p>
+          <p>From the House league page, click <strong>Create season</strong>. The create form collects the season basics (name, URL slug, sport, an age/division label) and lets you set the <strong>registration open and close dates</strong>, a <strong>registration fee</strong>, <strong>waiver text</strong>, and the <strong>automation</strong> toggles right away. The slug appears in public URLs — choose it carefully.</p>
           <p>After creating the season, open it and add <strong>divisions</strong>. Each division is a sub-group within the season (e.g., "Division A", "Girls U11") with its own registration list, teams, schedule, and standings. Set a capacity per division to automatically cap registrations and start a waitlist. (On the free League plan, a season includes one division.)</p>
           <p>The <strong>Automation</strong> settings control whether registrations are auto-approved when a division has open spots, whether the waitlist auto-promotes when a spot opens, and whether accounting entries are auto-generated on approval. Auto-generating fee entries needs the Accounting module.</p>
         </>
@@ -82,7 +82,7 @@ const houseLeagueHelp: HelpPageContent = {
             <li>Add the divisions families should be able to register for (the free League plan includes one).</li>
             <li>Set capacity for each division so the system knows when to start a waitlist.</li>
             <li>Review automation: auto-approve, waitlist promotion, and accounting entry creation.</li>
-            <li>Move the season to <strong>Registration Open</strong>. A public season page becomes available once it leaves Draft.</li>
+            <li>Move the season to <strong>Registration open</strong>. A public season page becomes available once it leaves Draft.</li>
             <li>Share the registration link from your website, email list, or social media after confirming the form is live.</li>
           </ol>
           <p>Do not open registration until divisions and capacities are ready. Changing those after families start registering can make the review queue harder to manage.</p>
@@ -92,11 +92,11 @@ const houseLeagueHelp: HelpPageContent = {
         {
           id: 'faq-house-league-before-opening',
           question: 'What should be done before I open house league registration?',
-          answerText: 'Create the season, add divisions, set capacities, review automation, and confirm the public form before changing the season to Registration Open.',
+          answerText: 'Create the season, add divisions, set capacities, review automation, and confirm the public form before changing the season to Registration open.',
           keywords: ['open registration', 'launch checklist', 'division capacity'],
           popular: true,
           answer: (
-            <p>Create the season, add divisions, set capacities, review automation, and confirm the registration form. Then change the season status to <strong>Registration Open</strong>.</p>
+            <p>Create the season, add divisions, set capacities, review automation, and confirm the registration form. Then change the season status to <strong>Registration open</strong>.</p>
           ),
         },
       ],
@@ -116,8 +116,8 @@ const houseLeagueHelp: HelpPageContent = {
           <p>Registration availability is controlled by the season status.</p>
           <ol>
             <li>Open the season detail page.</li>
-            <li>Use the status transition control to move from <strong>Draft</strong> to <strong>Registration Open</strong> when the form should go live.</li>
-            <li>To stop new submissions, move the season to <strong>Registration Closed</strong>.</li>
+            <li>Use the status transition control to move from <strong>Draft</strong> to <strong>Registration open</strong> when the form should go live.</li>
+            <li>To stop new submissions, move the season to <strong>Registration closed</strong>.</li>
             <li>After registration closes, continue reviewing pending players, promoting waitlisted players, and building teams.</li>
             <li>Move to <strong>Active</strong> only when teams and the schedule are ready for game operations.</li>
           </ol>
@@ -137,12 +137,12 @@ const houseLeagueHelp: HelpPageContent = {
           <p>Build teams after most registrations are reviewed and the division player pool is clean. Only <strong>Active</strong> registrations appear in the pool — pending, declined, waitlisted, and withdrawn players are excluded.</p>
           <ol>
             <li>Open the season, go to <strong>Teams</strong>, and select a division.</li>
-            <li>Click <strong>Create Teams</strong>. You choose how many teams to create and type their names in one step (on the free League plan you can create up to eight). Set each team&apos;s <strong>colour</strong> and <strong>coach name</strong> afterward with <strong>Edit Team</strong>.</li>
+            <li>Click <strong>Create teams</strong>. You choose how many teams to create and type their names in one step (on the free League plan you can create up to eight). Set each team&apos;s <strong>colour</strong> and <strong>coach name</strong> afterward with <strong>Edit team</strong>.</li>
             <li>Assign players from the pool by dragging them onto a team — or use <strong>Randomize</strong> to spread all unassigned players evenly (it asks you to confirm first, and won&apos;t move already-assigned players).</li>
-            <li>For a structured draft, click <strong>Start Draft</strong>. Teams take turns picking from the pool; picks can be undone one at a time. If you leave mid-draft, a <strong>Resume Draft</strong> button picks it back up.</li>
-            <li>Click <strong>Finalize Draft</strong> to apply the assignments. Finalize stays disabled until every player has been picked.</li>
+            <li>For a structured draft, click <strong>Start draft</strong>. Teams take turns picking from the pool; picks can be undone one at a time. If you leave mid-draft, a <strong>Resume draft</strong> button picks it back up.</li>
+            <li>Click <strong>Finalize draft</strong> to apply the assignments. Finalize stays disabled until every player has been picked.</li>
           </ol>
-          <p>You can re-assign players any time by dragging them to a different team or back to the pool, and <strong>Clear All Assignments</strong> wipes assignments (and any in-progress draft) to start over.</p>
+          <p>You can re-assign players any time by dragging them to a different team or back to the pool, and <strong>Clear all assignments</strong> wipes assignments (and any in-progress draft) to start over.</p>
         </>
       ),
       faqs: [
@@ -170,10 +170,10 @@ const houseLeagueHelp: HelpPageContent = {
           <p>Generate a schedule only after the division&apos;s teams are created.</p>
           <ol>
             <li>Open the season, go to <strong>Schedule</strong>, and select the division.</li>
-            <li>Click <strong>Generate Schedule</strong> to build a round-robin (every team plays every other team once).</li>
+            <li>Click <strong>Generate schedule</strong> to build a round-robin (every team plays every other team once).</li>
             <li>Enter the first game date, default time, <strong>rounds per week</strong>, and a default field.</li>
             <li>Preview the generated games and look for date, field, or matchup problems.</li>
-            <li>Save the schedule. Edit individual games afterward for exceptions, or use <strong>Add Game</strong> for one-off games. A game can carry an optional <strong>end time</strong>; without one, the schedule assumes 90 minutes when checking for overlaps. To call a game off, open it, set <strong>Status</strong> to <strong>Cancelled</strong> and <strong>Save</strong>; it stays on the schedule, marked cancelled, and frees its diamond. To remove a game that should never have been on the schedule, open it and choose <strong>Delete this game</strong> at the end of the window; it asks first, then leaves the schedule and the public page for good, and a played game&apos;s score comes out of the standings.</li>
+            <li>Save the schedule. Edit individual games afterward for exceptions, or use <strong>Add game</strong> for one-off games. A game can carry an optional <strong>end time</strong>; without one, the schedule assumes 90 minutes when checking for overlaps. To call a game off, open it, set <strong>Status</strong> to <strong>Cancelled</strong> and <strong>Save</strong>; it stays on the schedule, marked cancelled, and frees its diamond. To remove a game that should never have been on the schedule, open it and choose <strong>Delete this game</strong> at the end of the window; it asks first, then leaves the schedule and the public page for good, and a played game&apos;s score comes out of the standings.</li>
           </ol>
           <p><strong>Where games are played.</strong> Every game and practice window asks <strong>Venue</strong>, then the diamond beside it. For one of your club&apos;s venues the label is what the Venue library says its facilities are (for example <strong>Diamond</strong> or <strong>Field</strong>), or <strong>Facility</strong> where a venue has more than one kind; for a typed venue it&apos;s your season&apos;s sport&apos;s own word. Type to find one of your club&apos;s venues from the <strong>Venue library</strong> (under Organization), set up once for every season, then pick its diamond. An archived venue leaves this list; the games already on it keep it. <strong>Not set</strong> means anywhere at that venue. A venue you just type, for an away facility, saves as plain text, but typed venues can only be matched against identically typed text, so picking from the library is what makes clash checking reliable.</p>
           <p><strong>Double-booking protection.</strong> The schedule treats games and practices as one pool of bookings. When the date, time and diamond are set, the window checks before you press <strong>Create</strong>: another league game or practice on that diamond at that time shows in <strong>red</strong> under the field, naming it, and <strong>Create</strong> stays greyed until you change the time or the diamond. A recurring practice series names the date it clashes on. The schedule page also shows a warning strip listing any existing clashes, and a count of bookings with no diamond set (those can&apos;t be checked at all). The generator is the one exception: it saves and <em>warns</em> instead of blocking, because a generated round places several games at the same default time on purpose. Spread them across times or diamonds afterward.</p>
@@ -226,13 +226,13 @@ const houseLeagueHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Registrations arrive via the public form while a season is in <strong>Registration Open</strong>. Each lands in <strong>Pending Review</strong> unless auto-approve is on. On the Registrations page, the tabs (Pending / Active / Waitlist / Declined &amp; Withdrawn) and the search box help you work a large list.</p>
+          <p>Registrations arrive via the public form while a season is in <strong>Registration open</strong>. Each lands in <strong>Pending review</strong> unless auto-approve is on. On the Registrations page, the tabs (Pending review, Active, Waitlist, Declined / withdrawn) and the search box help you work a large list.</p>
           <ul>
             <li><strong>Approve</strong> — moves the player to Active and emails the family. They&apos;re eligible for team assignment.</li>
             <li><strong>Waitlist</strong> — holds the registration in queue and emails the family their position. If auto-promote is on, the next waitlisted player advances when a spot opens.</li>
             <li><strong>Decline</strong> — asks you to confirm, then emails a decline notice to the family.</li>
           </ul>
-          <p>Each row has a <strong>Fee Paid</strong> toggle so you can track payment alongside status. <strong>Add Registration</strong> manually enters a player outside the public form (walk-ins or carry-overs). <strong>Message Registrants</strong> (owners and admins) emails a group — everyone active, or filtered by division, team, or status.</p>
+          <p>Each row has a <strong>Fee paid</strong> toggle so you can track payment alongside status. <strong>Add registration</strong> manually enters a player outside the public form (walk-ins or carry-overs). <strong>Message registrants</strong> (owners and admins) emails a group — everyone active, or filtered by division, team, or status.</p>
           <p>For the full registration workflow, see the <a href="../help/registrations">Registrations guide</a>.</p>
         </>
       ),
@@ -270,7 +270,7 @@ const houseLeagueHelp: HelpPageContent = {
       searchText: 'public season page url share registration link schedule standings view public page draft no public page',
       content: (
         <>
-          <p>A season has no public page while it&apos;s in <strong>Draft</strong>. Once you move it to Registration Open or beyond, a <strong>View public page</strong> button appears on the season detail page. That public page is where families register and, later, follow the schedule and standings — share its link directly.</p>
+          <p>A season has no public page while it&apos;s in <strong>Draft</strong>. Once you move it to Registration open or beyond, a <strong>View public page</strong> button appears on the season detail page. That public page is where families register and, later, follow the schedule and standings — share its link directly.</p>
         </>
       ),
     },

@@ -14,9 +14,9 @@
 
 export const REGISTRATION_STATUS_LABEL: Record<string, string> = {
   accepted: 'Accepted',
-  pending:  'Pending Review',
+  pending:  'Pending review',
   waitlist: 'Waitlisted',
-  rejected: 'Not Accepted',
+  rejected: 'Not accepted',
 };
 
 export const REGISTRATION_STATUS_BADGE: Record<string, string> = {

@@ -421,6 +421,7 @@
 
 /* The slot's small window and the windows' read rows. */
 .read2 { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.45rem 1rem; margin: 0 0 0.9rem; font-size: var(--type-body); }
+/* type-ok: eyebrow — the window's read-row labels */
 .read2 dt { font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-secondary); padding-top: 0.15rem; }
 .read2 dd { margin: 0; color: var(--text-primary); }
 .read2 dd small { display: block; color: var(--text-tertiary); font-size: var(--type-support); }

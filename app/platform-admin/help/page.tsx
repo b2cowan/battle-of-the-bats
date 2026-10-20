@@ -20,7 +20,7 @@ export default function PlatformAdminHelpPage() {
       keywords: ['customer', 'house league', 'season', 'division', 'standings', 'draft'],
     },
     {
-      title: 'House league Registrations',
+      title: 'House league registrations',
       desc: 'Customer-facing guide for reviewing player submissions, payment status, registration exports, and follow-up.',
       href: '/platform-admin/help/registrations',
       topicCount: 6,
@@ -57,14 +57,14 @@ export default function PlatformAdminHelpPage() {
       keywords: ['customer', 'family', 'families', 'household', 'guardian', 'duplicates', 'merge', 'opt out', 'export', 'privacy'],
     },
     {
-      title: 'Org Admin & Setup',
+      title: 'Org admin & setup',
       desc: 'Customer-facing guide for members, roles, plan & billing, settings, modules, and org setup — including Club plan & billing and the Club setup checklist.',
       href: '/platform-admin/help/org',
       topicCount: 8,
       keywords: ['customer', 'members', 'roles', 'plan & billing', 'subscription', 'settings', 'billing', 'set up your club'],
     },
     {
-      title: 'Exports & Downloads',
+      title: 'Exports & downloads',
       desc: 'Customer-facing guide for Excel, CSV, PDF, and calendar exports, including privacy and plan rules.',
       href: '/platform-admin/help/exports',
       topicCount: 6,
@@ -153,7 +153,7 @@ export default function PlatformAdminHelpPage() {
       ],
     },
     {
-      title: 'Coach or Rep Program Admin',
+      title: 'Coach or rep program admin',
       steps: [
         { label: 'Add a team and start its first season', href: '/platform-admin/help/rep-teams#recipe-create-team-program-year' },
         { label: 'Open tryouts and review applicants', href: '/platform-admin/help/rep-teams#recipe-open-tryouts-review-applicants' },

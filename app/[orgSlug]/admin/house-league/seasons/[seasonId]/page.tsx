@@ -50,8 +50,8 @@ function formatDate(iso: string | null): string {
 
 const STATUS_LABELS: Record<string, string> = {
   draft:                'Draft',
-  registration_open:    'Registration Open',
-  registration_closed:  'Registration Closed',
+  registration_open:    'Registration open',
+  registration_closed:  'Registration closed',
   active:               'Active',
   completed:            'Completed',
   archived:             'Archived',
@@ -68,11 +68,11 @@ const STATUS_CSS: Record<string, string> = {
 
 // The next allowed transition for each status (single forward step)
 const NEXT_TRANSITION: Record<string, { status: LeagueSeasonStatus; label: string } | null> = {
-  draft:                { status: 'registration_open',   label: 'Open Registration' },
-  registration_open:    { status: 'registration_closed', label: 'Close Registration' },
-  registration_closed:  { status: 'active',              label: 'Activate Season' },
-  active:               { status: 'completed',           label: 'Complete Season' },
-  completed:            { status: 'archived',            label: 'Archive Season' },
+  draft:                { status: 'registration_open',   label: 'Open registration' },
+  registration_open:    { status: 'registration_closed', label: 'Close registration' },
+  registration_closed:  { status: 'active',              label: 'Activate season' },
+  active:               { status: 'completed',           label: 'Complete season' },
+  completed:            { status: 'archived',            label: 'Archive season' },
   archived:             null,
 };
 
@@ -342,7 +342,7 @@ export default function SeasonDetailPage() {
     return (
       <div className={styles.accessDenied}>
         <Users size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the House league module. Contact your organization owner to enable it.</p>
       </div>
     );
@@ -362,7 +362,7 @@ export default function SeasonDetailPage() {
           href={`${base}/house-league`}
           style={kx({ fontSize: '0.82rem', color: 'var(--white-40)', textDecoration: 'none' }, { color: 'var(--text-secondary)', fontWeight: 600 })}
         >
-          ← All Seasons
+          ← All seasons
         </Link>
       </div>
 
@@ -381,7 +381,7 @@ export default function SeasonDetailPage() {
                 </span>
                 <HelpTooltip
                   title="Season statuses"
-                  body="Draft: configuration only, not visible publicly. Registration Open: public form is live for parents. Registration Closed: building teams and schedule. Active: games underway. Completed: season is over. Archived: season is retired."
+                  body="Draft: configuration only, not visible publicly. Registration open: public form is live for parents. Registration closed: building teams and schedule. Active: games underway. Completed: season is over. Archived: season is retired."
                 />
               </span>
             </div>
@@ -445,7 +445,7 @@ export default function SeasonDetailPage() {
           <div className={styles.seasonDates}>
             {(season.seasonStartDate || season.seasonEndDate) && (
               <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Season Dates</span>
+                <span className={styles.dateLabel}>Season dates</span>
                 <span className={styles.dateValue}>
                   {formatDate(season.seasonStartDate)} — {formatDate(season.seasonEndDate)}
                 </span>
@@ -453,19 +453,19 @@ export default function SeasonDetailPage() {
             )}
             {season.registrationOpenAt && (
               <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Registration Opens</span>
+                <span className={styles.dateLabel}>Registration opens</span>
                 <span className={styles.dateValue}>{formatDate(season.registrationOpenAt)}</span>
               </div>
             )}
             {season.registrationCloseAt && (
               <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Registration Closes</span>
+                <span className={styles.dateLabel}>Registration closes</span>
                 <span className={styles.dateValue}>{formatDate(season.registrationCloseAt)}</span>
               </div>
             )}
             {season.registrationFee != null && (
               <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Registration Fee</span>
+                <span className={styles.dateLabel}>Registration fee</span>
                 <span className={styles.dateValue}>${season.registrationFee.toFixed(2)}</span>
               </div>
             )}
@@ -516,7 +516,7 @@ export default function SeasonDetailPage() {
             onClick={openAddDiv}
           >
             <Plus size={13} style={{ marginRight: 3 }} />
-            Add Division
+            Add division
           </button>
         )}
       </div>
@@ -548,12 +548,12 @@ export default function SeasonDetailPage() {
         </div>
       )}
 
-      {/* Edit Season modal */}
+      {/* Edit season modal */}
       {editOpen && editForm && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setEditOpen(false))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Edit Season</h3>
+              <h3 className={styles.modalTitle}>Edit season</h3>
               <button className={styles.modalCloseBtn} onClick={() => setEditOpen(false)}><X size={16} /></button>
             </div>
 
@@ -708,19 +708,19 @@ export default function SeasonDetailPage() {
                 onClick={handleSave}
                 disabled={saving || !editForm.name.trim()}
               >
-                {saving ? 'Saving…' : 'Save Changes'}
+                {saving ? 'Saving…' : 'Save changes'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Add Division modal */}
+      {/* Add division modal */}
       {addDivOpen && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setAddDivOpen(false))?.(); }}>
           <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Division</h3>
+              <h3 className={styles.modalTitle}>Add division</h3>
               <button className={styles.modalCloseBtn} onClick={() => setAddDivOpen(false)}><X size={16} /></button>
             </div>
 
@@ -761,19 +761,19 @@ export default function SeasonDetailPage() {
                 onClick={handleAddDivision}
                 disabled={addingDiv || !newDivName.trim()}
               >
-                {addingDiv ? 'Adding…' : 'Add Division'}
+                {addingDiv ? 'Adding…' : 'Add division'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Division modal */}
+      {/* Edit division modal */}
       {editDivId && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setEditDivId(null))?.(); }}>
           <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Edit Division</h3>
+              <h3 className={styles.modalTitle}>Edit division</h3>
               <button className={styles.modalCloseBtn} onClick={() => setEditDivId(null)}><X size={16} /></button>
             </div>
 
@@ -819,12 +819,12 @@ export default function SeasonDetailPage() {
         </div>
       )}
 
-      {/* Delete Division confirm */}
+      {/* Delete division confirm */}
       {deleteDivId && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setDeleteDivId(null))?.(); }}>
           <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Delete Division</h3>
+              <h3 className={styles.modalTitle}>Delete division</h3>
               <button className={styles.modalCloseBtn} onClick={() => setDeleteDivId(null)}><X size={16} /></button>
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--white-70)', margin: '0 0 1rem' }}>
@@ -838,7 +838,7 @@ export default function SeasonDetailPage() {
                 onClick={handleDeleteDivision}
                 disabled={deletingDiv}
               >
-                {deletingDiv ? 'Deleting…' : 'Delete Division'}
+                {deletingDiv ? 'Deleting…' : 'Delete division'}
               </button>
             </div>
           </div>

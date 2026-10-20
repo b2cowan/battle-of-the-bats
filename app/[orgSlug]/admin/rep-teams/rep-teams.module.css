@@ -309,12 +309,12 @@
 }
 
 .detailSectionTitle {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
   margin: 0 0 1rem;
 }
 
@@ -368,12 +368,13 @@
 .renamePreviewChanged { color: var(--home-olive); }
 .renameInputError { font-size: 0.75rem; color: var(--danger-light); margin: 0; }
 
+/* A band heading (A4) with its rule line. */
 .renameSectionLabel {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
+  font-family: var(--font-display); /* type-ok: band heading */
+  font-size: var(--type-support);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: band heading */
+  letter-spacing: 0.05em;
   color: var(--text-secondary);
   display: flex;
   align-items: center;

@@ -139,7 +139,7 @@ export default function RenameSlugPage() {
     return (
       <div className={styles.accessDenied}>
         <Link2 size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the Rep teams module.</p>
       </div>
     );
@@ -171,7 +171,7 @@ export default function RenameSlugPage() {
         <>
           {activeRows.length > 0 && (
             <>
-              <div className={styles.renameSectionLabel}>Active Teams</div>
+              <div className={styles.renameSectionLabel}>Active teams</div>
               <div className={styles.renameList}>
                 {activeRows.map(({ team }) => (
                   <TeamSlugRow
@@ -190,7 +190,7 @@ export default function RenameSlugPage() {
 
           {archivedRows.length > 0 && (
             <>
-              <div className={styles.renameSectionLabel}>Archived Teams</div>
+              <div className={styles.renameSectionLabel}>Archived teams</div>
               <div className={styles.renameList}>
                 {archivedRows.map(({ team }) => (
                   <TeamSlugRow
@@ -215,7 +215,7 @@ export default function RenameSlugPage() {
                 onClick={handleSave}
                 disabled={!canSave}
               >
-                {saving ? 'Saving…' : 'Save All Renames'}
+                {saving ? 'Saving…' : 'Save all renames'}
               </button>
               <span className={styles.changeCount}>
                 {changedRenames.length === 0

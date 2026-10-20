@@ -1657,7 +1657,7 @@ export default function TournamentEventSettingsPage() {
               <option value="final">Final immediately</option>
             </select>
             <span className={ck.hint}>
-              Admin review holds scorekeeper submissions in Pending Review until an admin finalizes them in Results.
+              Admin review holds scorekeeper submissions in Pending review until an admin finalizes them in Results.
               Final immediately makes a submission final as soon as it&apos;s saved.
             </span>
           </label>

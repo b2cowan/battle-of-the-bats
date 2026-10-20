@@ -153,7 +153,7 @@ function scoreFromRealtime(value: unknown, fallback: number | null | undefined) 
   return fallback;
 }
 
-/** Every status a game can hold — a finalized forfeit too (F63: it used to keep Pending Review until a refresh). */
+/** Every status a game can hold — a finalized forfeit too (F63: it used to keep Pending review until a refresh). */
 function statusFromRealtime(value: unknown, fallback: GameStatus): GameStatus {
   if (value === 'scheduled' || value === 'submitted' || value === 'completed' || value === 'cancelled' || value === 'forfeit') {
     return value;

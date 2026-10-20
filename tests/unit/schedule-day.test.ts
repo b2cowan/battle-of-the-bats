@@ -57,7 +57,7 @@ describe('one state per game (G5\'s words)', () => {
   });
   test('every state has its word', () => {
     for (const s of ['needsScore', 'pendingReview', 'playingNow', 'scheduled', 'final', 'forfeit', 'cancelled'] as const) assert.ok(W.states[s]);
-    assert.equal(W.states.pendingReview, 'Pending Review');
+    assert.equal(W.states.pendingReview, 'Pending review');
     assert.equal(W.states.needsScore, 'Needs a score');
   });
 });

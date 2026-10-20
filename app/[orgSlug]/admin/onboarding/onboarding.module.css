@@ -294,10 +294,11 @@
 }
 
 .setupBlockHeader span {
-  font-size: 0.82rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .setupBlockHeader small {
@@ -424,14 +425,16 @@
 }
 
 .reviewItem span {
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-secondary);
 }
 
 .reviewItem strong {
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   text-align: right;
 }
 

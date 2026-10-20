@@ -2,21 +2,21 @@ import type { HelpPageContent } from './index';
 
 const registrationsHelp: HelpPageContent = {
   title: 'Registrations',
-  role: 'League Registrar, League Admin',
+  role: 'League registrar, League admin',
   intro: 'The Registrations page is the day-to-day hub for managing who gets into a house league season. This guide covers what each status means, how to work the review queue, and how to handle waitlists and outreach. (Tournament team registrations are managed separately under Tournaments.)',
   sections: [
     {
       id: 'statuses',
       group: 'How registrations work',
       heading: 'What each registration status means',
-      summary: 'Pending, Active, Waitlisted, Declined, and Withdrawn — what each one does.',
+      summary: 'Pending review, Active, Waitlisted, Declined, and Withdrawn — what each one does.',
       keywords: ['status', 'pending review', 'active', 'waitlisted', 'declined', 'withdrawn'],
       searchText: 'registration status pending review active waitlisted declined withdrawn capacity queue position decline email approved',
       content: (
         <>
           <p>Every registration sits in one of five states:</p>
           <ul>
-            <li><strong>Pending Review</strong> — the family submitted the form but no one has acted on it yet. This is the default unless auto-approve is enabled.</li>
+            <li><strong>Pending review</strong> — the family submitted the form but no one has acted on it yet. This is the default unless auto-approve is enabled.</li>
             <li><strong>Active</strong> — approved. The player is eligible for team assignment and counts against the division capacity.</li>
             <li><strong>Waitlisted</strong> — the division is full or you placed the player on the waitlist manually. The player holds a numbered position. If auto-promote is on, the next waitlisted player advances to Active automatically when a spot opens.</li>
             <li><strong>Declined</strong> — you declined the registration; a decline email goes to the family. The player does not count against capacity.</li>
@@ -35,13 +35,13 @@ const registrationsHelp: HelpPageContent = {
       searchText: 'daily review queue pending registrations approve waitlist decline fee paid payment search player name parent email status tabs duplicate confirm',
       content: (
         <>
-          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the status tabs (Pending / Active / Waitlist / Declined &amp; Withdrawn) plus the search box are how you move through it.</p>
+          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the status tabs (Pending review, Active, Waitlist, Declined / withdrawn) plus the search box are how you move through it.</p>
           <ol>
-            <li>Open <strong>Registrations</strong> and start on the <strong>Pending Review</strong> tab.</li>
+            <li>Open <strong>Registrations</strong> and start on the <strong>Pending review</strong> tab.</li>
             <li>Use the <strong>search box</strong> (player name or parent email) to find a specific family or spot duplicates.</li>
             <li>Check each row&apos;s player, guardian contact, and division before acting.</li>
             <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row.</li>
-            <li>Use the <strong>Fee Paid</strong> toggle to track payment separately from status.</li>
+            <li>Use the <strong>Fee paid</strong> toggle to track payment separately from status.</li>
           </ol>
           <p>During peak registration, clear the pending list at least once a day so families know where they stand and the waitlist order stays clean.</p>
         </>
@@ -102,10 +102,10 @@ const registrationsHelp: HelpPageContent = {
         <>
           <p>Use manual registration for walk-ins, migrated records, late approvals, or players collected outside the public form.</p>
           <ol>
-            <li>Click <strong>Add Registration</strong>.</li>
+            <li>Click <strong>Add registration</strong>.</li>
             <li>Enter player and guardian details exactly as you want them in exports and communications.</li>
             <li>Select the correct season division.</li>
-            <li>Choose the starting status — <strong>Active</strong>, <strong>Pending Review</strong>, or <strong>Waitlisted</strong>.</li>
+            <li>Choose the starting status — <strong>Active</strong>, <strong>Pending review</strong>, or <strong>Waitlisted</strong>.</li>
             <li>Mark the fee paid if payment has already been received.</li>
             <li>Save and confirm the player appears in the expected status tab.</li>
           </ol>
@@ -149,13 +149,13 @@ const registrationsHelp: HelpPageContent = {
               </p>
               <p>
                 Taking registrations in person on one device? Enter them yourself with{' '}
-                <strong>Add Registration</strong>, which has no such limit. No guardian sees the
+                <strong>Add registration</strong>, which has no such limit. No guardian sees the
                 waiver on a manual entry, so it shows no acceptance.
               </p>
             </>
           ),
           answerText:
-            'The public registration form and the status lookup limit how many times they can be used from one internet connection, and how many confirmation emails one address can receive, within an hour, to stop automated abuse such as flooding a stranger\'s inbox. A family normally meets it only when many registrations go in from the same connection in a short time (a registration table running everyone through one laptop) or the same email is sent again and again. Ask them to wait a few minutes and try again. For in-person registration on one device, use Add Registration, which has no such limit; a manual entry shows no waiver acceptance.',
+            'The public registration form and the status lookup limit how many times they can be used from one internet connection, and how many confirmation emails one address can receive, within an hour, to stop automated abuse such as flooding a stranger\'s inbox. A family normally meets it only when many registrations go in from the same connection in a short time (a registration table running everyone through one laptop) or the same email is sent again and again. Ask them to wait a few minutes and try again. For in-person registration on one device, use Add registration, which has no such limit; a manual entry shows no waiver acceptance.',
           keywords: ['too many attempts', 'try again later', 'form limit', 'cannot register', 'form blocked', 'rate limit', 'registration night', 'status lookup'],
         },
       ],
@@ -168,18 +168,18 @@ const registrationsHelp: HelpPageContent = {
       keywords: ['message registrants', 'email', 'export registrations', 'target audience', 'download'],
       searchText: 'message registrants email active waitlisted pending by division by team by status export registration list csv xlsx excel contact details download targeted audience league plus',
       links: [
-        { label: 'Exports & Downloads guide', href: '../help/exports' },
+        { label: 'Exports & downloads guide', href: '../help/exports' },
       ],
       content: (
         <>
           <p>Before sending email or exporting data, narrow to the group you actually need.</p>
           <ol>
             <li>Use the status tabs and the search box to confirm the target group.</li>
-            <li>For email, click <strong>Message Registrants</strong> and choose the audience: all active, by division, by team, or by status.</li>
+            <li>For email, click <strong>Message registrants</strong> and choose the audience: all active, by division, by team, or by status.</li>
             <li>Review the recipient count before sending. If it looks off, cancel and adjust the audience.</li>
             <li>For exports, use the <strong>Export</strong> action on the table. The standard Excel/CSV omits contact details for privacy; a separate &quot;with contact details&quot; option is there when you need them.</li>
           </ol>
-          <p><strong>Messaging is owner/admin-only</strong> — a league registrar won&apos;t see the Message Registrants button. <strong>Exports are part of League Plus</strong>; on the free League plan the export menu is replaced with an upgrade badge. Registration exports contain family contact information, so store them carefully.</p>
+          <p><strong>Messaging is owner/admin-only</strong> — a league registrar won&apos;t see the Message registrants button. <strong>Exports are part of League Plus</strong>; on the free League plan the export menu is replaced with an upgrade badge. Registration exports contain family contact information, so store them carefully.</p>
         </>
       ),
     },
@@ -187,13 +187,13 @@ const registrationsHelp: HelpPageContent = {
       id: 'pending-day-to-day',
       group: 'How registrations work',
       heading: 'Handling pending registrations day-to-day',
-      summary: 'The page opens on Pending Review; act on each row and track fees with the toggle.',
+      summary: 'The page opens on Pending review; act on each row and track fees with the toggle.',
       keywords: ['pending', 'review', 'search', 'fee paid', 'add registration'],
       searchText: 'pending review default tab search box player name parent email fee paid toggle add registration walk-in row actions decline confirm',
       content: (
         <>
-          <p>The Registrations page opens on the <strong>Pending Review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining asks you to confirm first, and tells you whether auto-promote will fill the spot.</p>
-          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. If a family pays later, use the <strong>Fee Paid</strong> toggle to track payment separately from status. To add a player outside the public form, use <strong>Add Registration</strong>.</p>
+          <p>The Registrations page opens on the <strong>Pending review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining asks you to confirm first, and tells you whether auto-promote will fill the spot.</p>
+          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. If a family pays later, use the <strong>Fee paid</strong> toggle to track payment separately from status. To add a player outside the public form, use <strong>Add registration</strong>.</p>
         </>
       ),
     },
@@ -220,7 +220,7 @@ const registrationsHelp: HelpPageContent = {
       searchText: 'message registrants email all active by division by team by status recipient count send immediately notifications page sent email history log owner admin only',
       content: (
         <>
-          <p>Owners and admins can use <strong>Message Registrants</strong> to email a targeted audience:</p>
+          <p>Owners and admins can use <strong>Message registrants</strong> to email a targeted audience:</p>
           <ul>
             <li><strong>All active</strong> — everyone with an Active status.</li>
             <li><strong>By division</strong> — active registrants in one division.</li>

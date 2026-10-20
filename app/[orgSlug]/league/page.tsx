@@ -10,10 +10,10 @@ import column from './league-column.module.css';
 export const dynamic = 'force-dynamic';
 
 const STATUS_LABEL: Record<string, string> = {
-  registration_open:   'Registration Open',
-  registration_closed: 'Registration Closed',
-  active:              'Season Active',
-  completed:           'Season Complete',
+  registration_open:   'Registration open',
+  registration_closed: 'Registration closed',
+  active:              'Season active',
+  completed:           'Season complete',
   archived:            'Archived',
 };
 
@@ -109,7 +109,7 @@ export default async function LeagueIndexPage({
                 marginBottom: '0.75rem',
               }}
             >
-              Current Season
+              Current season
             </div>
             <FeaturedSeasonCard season={featured} orgSlug={orgSlug} />
           </div>
@@ -128,7 +128,7 @@ export default async function LeagueIndexPage({
                 marginBottom: '0.75rem',
               }}
             >
-              Past Seasons
+              Past seasons
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {past.map(s => (
@@ -255,7 +255,7 @@ function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug
             border: '1px solid rgba(255,255,255,0.1)',
           }}
         >
-          View Season
+          View season
         </Link>
         {season.status === 'active' && (
           <Link

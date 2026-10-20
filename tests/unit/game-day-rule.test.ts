@@ -69,13 +69,13 @@ describe('a game-day row says the day only when it is not today', () => {
 });
 
 describe('one word per game state (G5, /marketing 2026-09-29)', () => {
-  test('the five words, and "Pending Review" exactly as the product spells it', () => {
+  test('the five words, and "Pending review" exactly as the product spells it', () => {
     assert.deepEqual(
       [GAME_STATE_WORD.needsScore, GAME_STATE_WORD.pendingReview, GAME_STATE_WORD.final, GAME_STATE_WORD.forfeit, GAME_STATE_WORD.tie],
-      ['Needs a score', 'Pending Review', 'Final', 'Forfeit', 'Tie'],
+      ['Needs a score', 'Pending review', 'Final', 'Forfeit', 'Tie'],
     );
   });
   test('a pending forfeit is the two words, never a third', () => {
-    assert.equal(PENDING_FORFEIT, 'Forfeit · Pending Review');
+    assert.equal(PENDING_FORFEIT, 'Forfeit · Pending review');
   });
 });

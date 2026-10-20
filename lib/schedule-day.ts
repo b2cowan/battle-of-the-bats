@@ -24,7 +24,7 @@ export const SCHEDULE_STATES: readonly ScheduleState[] = ['needsScore', 'pending
 
 /**
  * A game's state now. A cancelled game is cancelled; a played one Final or Forfeit; a score waiting for the organizer
- * Pending Review; an unscored game Playing now inside its window (THE length chain, A39), Needs a score after it,
+ * Pending review; an unscored game Playing now inside its window (THE length chain, A39), Needs a score after it,
  * Scheduled before it.
  */
 export function scheduleStateOf(

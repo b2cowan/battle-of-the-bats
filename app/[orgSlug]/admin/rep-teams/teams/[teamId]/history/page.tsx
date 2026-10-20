@@ -56,7 +56,7 @@ export default function TeamHistoryPage({
     return (
       <div className={styles.accessDenied}>
         <Archive size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the Rep teams module.</p>
       </div>
     );

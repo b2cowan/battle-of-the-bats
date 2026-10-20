@@ -28,7 +28,7 @@ import styles from './GameTable.module.css';
 /** The drawing's columns (hub screen 15), in px. The CSS reads the template from here, so the width the row needs
  *  (`MIN_WIDTH`) and the columns it draws are one set of numbers. */
 const COL = { when: 92, gameMin: 254, gameMax: 314, fieldMin: 190, divisionMin: 120, arrow: 16, gap: 13.6, padX: 17.6 };
-/** The Status column: the Day view's chips ("Pending Review", "Tight turnover"), Results' Finalize. */
+/** The Status column: the Day view's chips ("Pending review", "Tight turnover"), Results' Finalize. */
 const STATUS_WIDTH = { day: 124, results: 112 } as const;
 export type GameTableKind = keyof typeof STATUS_WIDTH;
 

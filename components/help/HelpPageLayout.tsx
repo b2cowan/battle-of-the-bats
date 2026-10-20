@@ -524,7 +524,7 @@ export default function HelpPageLayout({
                 their own and would otherwise be the only screen in the guide
                 with no top-level heading. */}
             <div className={styles.helpResultHeader}>
-              <h1>Search Results</h1>
+              <h1>Search results</h1>
               <span>{resultCount} result{resultCount === 1 ? '' : 's'}</span>
             </div>
 

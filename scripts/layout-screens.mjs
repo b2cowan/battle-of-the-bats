@@ -374,7 +374,7 @@ async function openVenueList(page) {
 }
 /** Club Tier Stage 6a: house league's Add Game window, opened from its toolbar (the field and its line). */
 async function openLeagueAddGame(page) {
-  const add = page.getByRole('button', { name: 'Add Game', exact: true }).first();
+  const add = page.getByRole('button', { name: 'Add game', exact: true }).first();
   if (await add.count() === 0) return;
   await add.click();
   await page.locator('[role="dialog"][aria-modal="true"]').waitFor({ state: 'attached', timeout: 15_000 });

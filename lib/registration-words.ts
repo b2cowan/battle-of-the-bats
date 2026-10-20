@@ -4,8 +4,8 @@
  * P1 and P2 at the build's start). Plain strings and small functions only — no React — so a unit test
  * and the help content's search keywords can read the same word.
  *
- * ⚠ A team WAITING FOR A DECISION is never called "Pending Review" on Teams: the band says "To review"
- * and the chip "Pending". "Pending Review" is the GAME state's name (lib/game-day-words.ts, §245).
+ * ⚠ A team WAITING FOR A DECISION is never called "Pending review" on Teams: the band says "To review"
+ * and the chip "Pending". "Pending review" is the GAME state's name (lib/game-day-words.ts, §245).
  */
 
 /** The plan a Teams lock names (the Facts doc's spelling). */

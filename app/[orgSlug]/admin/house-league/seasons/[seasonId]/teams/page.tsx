@@ -258,7 +258,7 @@ function CreateTeamsModal({
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Create Teams — {divisionName}</h2>
+          <h2 className={styles.modalTitle}>Create teams — {divisionName}</h2>
           <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
         </div>
 
@@ -310,7 +310,7 @@ function CreateTeamsModal({
             <LeagueUpgradeCta className="btn btn-lime" orgId={orgId} capHit="league_team" />
           ) : (
             <button style={B.primary} onClick={handleSubmit} disabled={saving}>
-              {saving ? 'Creating…' : `Create ${count} Team${count !== 1 ? 's' : ''}`}
+              {saving ? 'Creating…' : `Create ${count} team${count !== 1 ? 's' : ''}`}
             </button>
           )}
         </div>
@@ -358,7 +358,7 @@ function EditTeamModal({
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Edit Team</h2>
+          <h2 className={styles.modalTitle}>Edit team</h2>
           <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
         </div>
 
@@ -423,14 +423,14 @@ function DraftOverlay({
     <div className={styles.draftOverlay}>
       <div className={styles.draftHeader}>
         <div className={styles.draftTitleGroup}>
-          <span className={styles.draftTitle}>Draft Mode</span>
+          <span className={styles.draftTitle}>Draft mode</span>
           {!allPicked && (
             <span className={styles.draftPickMeta}>
               Round {draft.round} · Pick {draft.pickNumber} · {possessive(currentTeam?.name ?? '…')} turn
             </span>
           )}
         </div>
-        <button style={B.secondary} onClick={onClose}>Exit Draft</button>
+        <button style={B.secondary} onClick={onClose}>Exit draft</button>
       </div>
 
       <div className={styles.draftPickOrder}>
@@ -449,7 +449,7 @@ function DraftOverlay({
           <div className={styles.draftComplete}>
             <div className={styles.draftCompleteTitle}>All players picked!</div>
             <div className={styles.draftCompleteMsg}>
-              Click &quot;Finalize Draft&quot; to apply all picks and close the draft.
+              Click &quot;Finalize draft&quot; to apply all picks and close the draft.
             </div>
           </div>
         ) : (
@@ -478,7 +478,7 @@ function DraftOverlay({
             onClick={onUndo}
             disabled={saving || draft.picks.length === 0}
           >
-            ↩ Undo Last Pick
+            ↩ Undo last pick
           </button>
         </div>
         <button
@@ -487,7 +487,7 @@ function DraftOverlay({
           disabled={saving || !allPicked}
           title={!allPicked ? 'All players must be picked before finalizing' : undefined}
         >
-          {saving ? 'Finalizing…' : 'Finalize Draft'}
+          {saving ? 'Finalizing…' : 'Finalize draft'}
         </button>
       </div>
     </div>
@@ -820,7 +820,7 @@ export default function TeamsPage() {
     return (
       <div className={styles.accessDenied}>
         <Users size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the House league module.</p>
       </div>
     );
@@ -844,7 +844,7 @@ export default function TeamsPage() {
           </Link>
           <div className={styles.headerIcon}><Users size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Teams &amp; Draft</h1>
+            <h1 className={styles.pageTitle}>Teams &amp; draft</h1>
             {season && <p className={styles.pageSub}>{season.name}</p>}
           </div>
         </div>
@@ -880,7 +880,7 @@ export default function TeamsPage() {
             {canManage && (
               <button style={B.secondary} onClick={() => setShowCreateModal(true)}>
                 <Plus size={14} style={{ marginRight: 4 }} />
-                {divTeams.length === 0 ? 'Create Teams' : 'Add Teams'}
+                {divTeams.length === 0 ? 'Create teams' : 'Add teams'}
               </button>
             )}
 
@@ -894,14 +894,14 @@ export default function TeamsPage() {
             {canManage && divTeams.length > 0 && !draft && (
               <button style={B.secondary} onClick={handleStartDraft} disabled={saving}>
                 <Swords size={14} style={{ marginRight: 4 }} />
-                Start Draft
+                Start draft
               </button>
             )}
 
             {draft && (
               <button style={B.primary} onClick={() => setDraftOpen(true)}>
                 <Swords size={14} style={{ marginRight: 4 }} />
-                Resume Draft
+                Resume draft
               </button>
             )}
 
@@ -916,7 +916,7 @@ export default function TeamsPage() {
               <>
                 <div style={{ marginLeft: 'auto' }} />
                 <button style={B.danger} onClick={() => setShowClearConfirm(true)} disabled={saving}>
-                  Clear All Assignments
+                  Clear all assignments
                 </button>
               </>
             )}
@@ -932,7 +932,7 @@ export default function TeamsPage() {
               {/* Pool */}
               <div className={styles.poolPanel}>
                 <div className={styles.poolHeader}>
-                  <span className={styles.sectionTitle}>Player Pool</span>
+                  <span className={styles.sectionTitle}>Player pool</span>
                   <span className={styles.poolCount}>{pool.length} unassigned</span>
                 </div>
                 <DroppablePool isOver={overPoolId}>
@@ -1005,7 +1005,7 @@ export default function TeamsPage() {
         <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && setDeleteTeam(null)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Delete Team</h2>
+              <h2 className={styles.modalTitle}>Delete team</h2>
               <button className={styles.modalCloseBtn} onClick={() => setDeleteTeam(null)}><X size={18} /></button>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
@@ -1015,7 +1015,7 @@ export default function TeamsPage() {
             <div className={styles.modalFooter}>
               <button style={B.secondary} onClick={() => setDeleteTeam(null)}>Cancel</button>
               <button style={B.danger} onClick={() => handleDeleteTeam(deleteTeam)} disabled={saving}>
-                {saving ? 'Deleting…' : 'Delete Team'}
+                {saving ? 'Deleting…' : 'Delete team'}
               </button>
             </div>
           </div>
@@ -1026,7 +1026,7 @@ export default function TeamsPage() {
         <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && setShowRandomizeConfirm(false)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Randomize Players?</h2>
+              <h2 className={styles.modalTitle}>Randomize players?</h2>
               <button className={styles.modalCloseBtn} onClick={() => setShowRandomizeConfirm(false)}><X size={18} /></button>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
@@ -1046,7 +1046,7 @@ export default function TeamsPage() {
         <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && setShowClearConfirm(false)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Clear All Assignments?</h2>
+              <h2 className={styles.modalTitle}>Clear all assignments?</h2>
               <button className={styles.modalCloseBtn} onClick={() => setShowClearConfirm(false)}><X size={18} /></button>
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
@@ -1055,7 +1055,7 @@ export default function TeamsPage() {
             </p>
             <div className={styles.modalFooter}>
               <button style={B.secondary} onClick={() => setShowClearConfirm(false)}>Cancel</button>
-              <button style={B.danger} onClick={handleClearAll}>Clear All</button>
+              <button style={B.danger} onClick={handleClearAll}>Clear all</button>
             </div>
           </div>
         </div>

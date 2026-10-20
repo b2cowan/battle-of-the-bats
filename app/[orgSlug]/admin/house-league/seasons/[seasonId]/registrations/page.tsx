@@ -27,10 +27,10 @@ type Tab = 'pending_review' | 'active' | 'waitlisted' | 'declined_withdrawn' | '
 /** The list strip — module scope so the PDF's subtitle names the list from the SAME source the
  *  registrar tapped, rather than a second copy that can drift from it. */
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'pending_review',     label: 'Pending Review' },
+  { key: 'pending_review',     label: 'Pending review' },
   { key: 'active',             label: 'Active' },
   { key: 'waitlisted',         label: 'Waitlist' },
-  { key: 'declined_withdrawn', label: 'Declined / Withdrawn' },
+  { key: 'declined_withdrawn', label: 'Declined / withdrawn' },
   { key: 'all',                label: 'All' },
 ];
 
@@ -77,7 +77,7 @@ function formatDate(iso: string): string {
 }
 
 const REG_STATUS_LABEL: Record<LeagueRegistrationStatus, string> = {
-  pending_review: 'Pending Review',
+  pending_review: 'Pending review',
   active:         'Active',
   waitlisted:     'Waitlisted',
   declined:       'Declined',
@@ -306,7 +306,7 @@ export default function RegistrationsPage() {
     all:                regs.length,
   }), [regs]);
 
-  // Lazy-load teams when "By Team" scope is selected
+  // Lazy-load teams when "By team" scope is selected
   useEffect(() => {
     if (composeScope === 'team' && !teamsLoaded && seasonId) {
       fetch(`/api/admin/house-league/seasons/${seasonId}/teams${orgQuery}`)
@@ -668,7 +668,7 @@ export default function RegistrationsPage() {
           onClick={() => setComposeOpen(true)}
         >
           <Mail size={14} />
-          Message Registrants
+          Message registrants
         </button>
         <button
           className={styles.iconBtn}
@@ -676,7 +676,7 @@ export default function RegistrationsPage() {
           onClick={() => { setAddForm(BLANK_FORM); setAddOpen(true); }}
         >
           <Plus size={14} />
-          Add Registration
+          Add registration
         </button>
     </>
   );
@@ -788,7 +788,7 @@ export default function RegistrationsPage() {
                 {[
                   'Player', 'Division', 'Guardian', 'Registered',
                   'Status',
-                  'Fee Paid',
+                  'Fee paid',
                   ...(activeTab !== 'declined_withdrawn' && canManageRegs ? ['Actions'] : []),
                 ].map(h => (
                   <th key={h} style={headCellStyle}>
@@ -880,7 +880,7 @@ export default function RegistrationsPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modal} style={{ maxWidth: 380 }}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Decline Registration</h2>
+              <h2 className={styles.modalTitle}>Decline registration</h2>
               <button className={styles.modalCloseBtn} onClick={() => setConfirmDeclineId(null)}>
                 <X size={18} />
               </button>
@@ -919,7 +919,7 @@ export default function RegistrationsPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Add Registration</h2>
+              <h2 className={styles.modalTitle}>Add registration</h2>
               <button className={styles.modalCloseBtn} onClick={() => setAddOpen(false)}>
                 <X size={18} />
               </button>
@@ -956,7 +956,7 @@ export default function RegistrationsPage() {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <p className={styles.sectionTitle} style={{ marginBottom: '0.75rem' }}>Guardian / Parent</p>
+              <p className={styles.sectionTitle} style={{ marginBottom: '0.75rem' }}>Guardian / parent</p>
               <div className={styles.formGrid}>
                 <div className={styles.field}>
                   <label className={styles.label}>First name *</label>
@@ -991,7 +991,7 @@ export default function RegistrationsPage() {
                   <label className={styles.label}>Status</label>
                   <select className={styles.select} value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value as LeagueRegistrationStatus }))}>
                     <option value="active">Active</option>
-                    <option value="pending_review">Pending Review</option>
+                    <option value="pending_review">Pending review</option>
                     <option value="waitlisted">Waitlisted</option>
                   </select>
                 </div>
@@ -1008,7 +1008,7 @@ export default function RegistrationsPage() {
                 disabled={adding}
                 onClick={handleManualAdd}
               >
-                {adding ? 'Adding…' : 'Add Registration'}
+                {adding ? 'Adding…' : 'Add registration'}
               </button>
             </div>
           </div>
@@ -1020,7 +1020,7 @@ export default function RegistrationsPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modal} style={{ maxWidth: 520 }}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Message Registrants</h2>
+              <h2 className={styles.modalTitle}>Message registrants</h2>
               <button className={styles.modalCloseBtn} onClick={() => setComposeOpen(false)}>
                 <X size={18} />
               </button>
@@ -1033,10 +1033,10 @@ export default function RegistrationsPage() {
                 value={composeScope}
                 onChange={e => setComposeScope(e.target.value as typeof composeScope)}
               >
-                <option value="all">All Active Registrants</option>
-                <option value="division">By Division</option>
-                <option value="team">By Team</option>
-                <option value="status">By Status</option>
+                <option value="all">All active registrants</option>
+                <option value="division">By division</option>
+                <option value="team">By team</option>
+                <option value="status">By status</option>
               </select>
             </div>
 
@@ -1066,7 +1066,7 @@ export default function RegistrationsPage() {
                 <select className={styles.select} value={composeStatus} onChange={e => setComposeStatus(e.target.value as LeagueRegistrationStatus)}>
                   <option value="active">Active</option>
                   <option value="waitlisted">Waitlisted</option>
-                  <option value="pending_review">Pending Review</option>
+                  <option value="pending_review">Pending review</option>
                   <option value="declined">Declined</option>
                 </select>
               </div>

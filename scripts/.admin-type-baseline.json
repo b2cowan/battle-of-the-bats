@@ -10,7 +10,7 @@
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "heavy": 4,
     "face": 9,
-    "caps": 15
+    "caps": 12
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
     "heavy": 2,
@@ -24,31 +24,26 @@
     "face": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
-    "caps": 1,
     "face": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
     "heavy": 1
   },
   "app/[orgSlug]/admin/onboarding/onboarding.module.css": {
-    "heavy": 4,
+    "heavy": 2,
     "face": 4,
-    "caps": 4
+    "caps": 2
   },
   "app/[orgSlug]/admin/onboarding/page.tsx": {
     "face": 1
   },
   "app/[orgSlug]/admin/org/billing/billing.module.css": {
-    "heavy": 9,
-    "face": 11,
+    "heavy": 7,
+    "face": 4,
     "track": 3,
-    "caps": 5
+    "caps": 4
   },
   "app/[orgSlug]/admin/org/billing/mock-portal/mock-portal.module.css": {
-    "caps": 1
-  },
-  "app/[orgSlug]/admin/org/settings/pdf/page.tsx": {
-    "face": 3,
     "caps": 1
   },
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
@@ -62,8 +57,8 @@
   },
   "app/[orgSlug]/admin/rep-teams/rep-teams.module.css": {
     "heavy": 1,
-    "face": 8,
-    "caps": 5
+    "face": 6,
+    "caps": 3
   },
   "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
     "face": 1,
@@ -140,9 +135,6 @@
   "components/admin/ExportMenu.module.css": {
     "face": 1
   },
-  "components/admin/LeagueCapUpgrade.tsx": {
-    "caps": 1
-  },
   "components/admin/TournamentCreationPreview.module.css": {
     "heavy": 3,
     "track": 1,
@@ -174,8 +166,8 @@
     "caps": 1
   },
   "components/admin/kit/club/RepKit.module.css": {
-    "face": 5,
-    "caps": 7
+    "face": 3,
+    "caps": 3
   },
   "components/admin/kit/club/SendParts.module.css": {
     "caps": 1,
@@ -197,12 +189,9 @@
     "face": 2,
     "caps": 2
   },
-  "components/admin/kit/club/money/Money.module.css": {
-    "caps": 1
-  },
   "components/admin/kit/club/schedules/Schedules.module.css": {
-    "face": 4,
-    "caps": 8,
+    "face": 3,
+    "caps": 7,
     "heavy": 1
   },
   "components/admin/kit/kit-inline.ts": {
@@ -273,8 +262,8 @@
     "caps": 1
   },
   "components/help/help.module.css": {
-    "caps": 7,
-    "face": 3
+    "caps": 5,
+    "face": 2
   },
   "components/notifications/FanAlertsCard.module.css": {
     "face": 3
@@ -291,13 +280,8 @@
     "heavy": 3,
     "caps": 1
   },
-  "components/notifications/notifications-page.module.css": {
-    "face": 5,
-    "caps": 3
-  },
   "components/notifications/notifications.module.css": {
-    "face": 4,
-    "caps": 1
+    "face": 2
   },
   "components/shared/AccountMenu.module.css": {
     "face": 1

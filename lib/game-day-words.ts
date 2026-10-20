@@ -2,12 +2,12 @@
  * GAME DAY'S WORDS — one home (Tournament admin redesign Stage 1, 2026-09-29).
  *
  * G5 "one word per game state": the same four states used to read ten ways across the screens an
- * organizer and a scorekeeper use in the same hour (IN REVIEW · Reviewing · Review · Pending Review;
+ * organizer and a scorekeeper use in the same hour (IN REVIEW · Reviewing · Review · Pending review;
  * NEEDS SCORE · Unscored · To Score · To Be Scored). Every surface that NAMES a game's state — the
  * organizer's board, Results, the schedule's game tags, the scorekeeper — reads it from here, so a
  * sixth spelling cannot appear on one screen and not the others. The words are `/marketing`'s; the
- * placement is the owner's ruling. ⚠ "Pending Review" is the product-wide name (help, house league,
- * tryouts): never recase it.
+ * placement is the owner's ruling. ⚠ "Pending review" is the product-wide name (help, house league, the public league pages,
+ * the status lookup): sentence case, never title-cased (owner C2, 2026-10-19).
  *
  * Plain strings and small functions only — no React — so a server route, a unit test and the help
  * content's search keywords can all read the same word.
@@ -38,7 +38,7 @@ export const GAME_STATE_WORD = {
   /** No score yet, and its time has passed. */
   needsScore: 'Needs a score',
   /** A scorekeeper's score, waiting for the organizer to finalize it. */
-  pendingReview: 'Pending Review',
+  pendingReview: 'Pending review',
   final: 'Final',
   forfeit: 'Forfeit',
   /** A level score (a word on the row and in the editor, not a status of its own). */
@@ -88,7 +88,7 @@ export const GAME_DAY_WORDS = {
   boardEmpty: 'Nothing needs you yet.',
   /** The top note while the dates have passed and not every game is final (no counts, no button):
    *  a fact, then the step, which reads bold. The rule is `isReadyToFinalize` — every game final or
-   *  forfeit (a Pending Review score must be finalized); payments are not part of it. */
+   *  forfeit (a Pending review score must be finalized); payments are not part of it. */
   datesPassedNote: { fact: 'The event’s dates have passed.', step: 'Once every score is finalized, you can mark it complete.' },
   /** The rain-delay door (G8). The window opens on the first day with games still to play — today,
    *  or a later day when today's are done — so the line does not say "today's". */

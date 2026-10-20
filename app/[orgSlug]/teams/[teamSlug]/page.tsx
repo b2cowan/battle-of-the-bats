@@ -239,7 +239,7 @@ export default async function TeamPublicPage({
                 fontFamily: 'var(--font-display, sans-serif)',
               }}
             >
-              Register Now →
+              Register now →
             </Link>
           </div>
         )}
@@ -270,7 +270,7 @@ export default async function TeamPublicPage({
                 marginBottom: '0.75rem',
               }}
             >
-              Past Seasons
+              Past seasons
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {pastYears.map(py => (

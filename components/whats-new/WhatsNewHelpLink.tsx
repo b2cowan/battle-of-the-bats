@@ -19,7 +19,7 @@ export default function WhatsNewHelpLink({ className }: { className?: string }) 
       className={`${styles.helpLink}${className ? ` ${className}` : ''}`}
     >
       <Sparkles size={13} aria-hidden />
-      What’s New
+      What’s new
       <ReleaseDot />
     </Link>
   );

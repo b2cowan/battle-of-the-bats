@@ -241,7 +241,7 @@ const VISIBLE_LANDING_FAILURES = ['ROUTE_NOT_FOUND', 'You do not have permission
  * ⚠ Not in the list above because coach panels print "don't have access" as a legitimate state
  * (the awards certificate, the depth chart), and a global entry would fail screens that are right.
  */
-const ADMIN_LANDING_FAILURES = ['Access Restricted', 'don\'t have access', 'don’t have access'];
+const ADMIN_LANDING_FAILURES = ['Access Restricted', 'Access restricted', 'don\'t have access', 'don’t have access'];
 
 // ── args ──────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);

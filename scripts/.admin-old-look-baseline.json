@@ -3,7 +3,7 @@
     "kitScope": 20
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
-    "kitScope": 130
+    "kitScope": 129
   },
   "app/[orgSlug]/admin/house-league/page.tsx": {
     "kx": 1,

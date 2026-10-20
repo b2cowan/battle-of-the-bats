@@ -31,7 +31,7 @@ import LoadingState from '@/components/shared/LoadingState';
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
   active:   'Active',
   trialing: 'Trialing',
-  past_due: 'Past Due',
+  past_due: 'Past due',
   canceled: 'Canceled',
 };
 
@@ -181,7 +181,7 @@ const METER = { ok: 'var(--home-olive)', near: 'var(--warning)', full: 'var(--ho
 
 function BillingPagePlans() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
-  usePageTitle('Plan & Billing');
+  usePageTitle('Plan & billing');
   const { tournaments, refresh: refreshTournaments }  = useTournament();
   const searchParams     = useSearchParams();
   const router           = useRouter();
@@ -659,7 +659,7 @@ function BillingPagePlans() {
               </p>
             </div>
             <Link className="btn btn-outline btn-data" href="/coaches/tournaments">
-              Open Tournament Records
+              Open tournament records
             </Link>
           </div>
         )}
@@ -951,7 +951,7 @@ function BillingPagePlans() {
 
       {status === 'past_due' && (
         <p className={`${styles.statusNote} ${styles.statusNoteWarning}`}>
-          Your last payment failed. Your access remains active during the grace period — please update your payment method via <strong>Manage Subscription</strong> below to avoid service interruption.
+          Your last payment failed. Your access remains active during the grace period — please update your payment method via <strong>Payment method & invoices</strong> below to avoid service interruption.
         </p>
       )}
 

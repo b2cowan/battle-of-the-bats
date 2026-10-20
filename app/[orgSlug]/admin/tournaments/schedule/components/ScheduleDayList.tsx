@@ -5,7 +5,7 @@
  * Every game of the day in one frame, by time: both divisions, both stages, every state. The row is Results' row
  * (Stage 1, G4) — the kit's one row recipe (`ClubRow`) with Results' own title (`GameTeams`, the two teams with their
  * scores) and where-line — never a second row. It adds what Results' bands say for it: the one state the score can't
- * say, as a chip (Playing now, Pending Review, Needs a score, Forfeit, Cancelled; a level final says Tie, as Results
+ * say, as a chip (Playing now, Pending review, Needs a score, Forfeit, Cancelled; a level final says Tie, as Results
  * does). No coloured rail (a list draws none, §3.10.7). The whole row opens the game.
  *
  * All games is the same rows in day bands ("Fri, Oct 9 · 4 games"), then the games with no day yet. The Bracket view's

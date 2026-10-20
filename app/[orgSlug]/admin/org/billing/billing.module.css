@@ -182,7 +182,8 @@
 }
 
 .usageCount {
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -468,9 +469,10 @@
 
 /* The big price figure is a readout (F2) — the console face stays. */
 .priceAmount {
-  font-family: var(--font-data);
-  font-size: 1.15rem;
-  font-weight: 900;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-title);
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
 }
@@ -667,7 +669,7 @@
 
 /* A "savings" tag is a promo accent → olive. Chips keep the console face (F2). */
 .savingsBadge {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: chip */
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--home-olive);
@@ -951,37 +953,40 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--text-secondary);
 }
 
 .nextSeasonPlanActive .nextSeasonPlanLabel { color: var(--home-olive); }
 
 .nextSeasonPrice {
-  font-family: var(--font-data);
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-figure);
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0.45rem 0 0.1rem;
-  letter-spacing: -0.02em;
+  letter-spacing: normal;
 }
 
 .nextSeasonPriceUnit {
-  font-size: 0.78rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
   font-weight: 500;
   color: var(--text-tertiary);
   letter-spacing: 0;
 }
 
 .nextSeasonSave {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--home-olive);
-  letter-spacing: 0.03em;
+  letter-spacing: normal;
 }
 
 .nextSeasonActions {
@@ -995,10 +1000,11 @@
 /* The promise, printed where the customer can hold us to it — and derived from the same constant
    the checkout builder pins its first-charge instant to. Never a literal date in this file. */
 .nextSeasonGuarantee {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 400;
   color: var(--home-olive);
-  letter-spacing: 0.03em;
+  letter-spacing: normal;
   margin: 0;
 }
 

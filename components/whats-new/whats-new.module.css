@@ -57,11 +57,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  /* A text link in the body face, sentence case (Admin type sweep 3d, 2026-10-19). */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--logic-lime);
   text-decoration: none;
 }

@@ -48,7 +48,7 @@ export default function OrgAdminHub() {
     }] : []),
     ...(userRole === 'owner' || userRole === 'admin' ? [
       {
-        label: 'PDF Settings',
+        label: 'PDF settings',
         desc: 'Configure header, logo, footer, and branding for all PDF exports',
         icon: FileText,
         href: `${base}/settings/pdf`,

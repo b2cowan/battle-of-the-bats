@@ -115,7 +115,7 @@ function TagSection({
   return (
     <div className={styles.detailSection} style={{ marginBottom: '1.25rem' }}>
       <p className={styles.detailSectionTitle}>{label}</p>
-      <p className={styles.muted} style={{ margin: '0 0 0.75rem', fontSize: '0.8rem' }}>{hint}</p>
+      <p className={styles.muted} style={{ margin: '0 0 0.75rem', padding: 0, fontSize: '0.8rem' }}>{hint}</p>
 
       {loading ? <LoadingState inline label={`Loading ${label.toLowerCase()}…`} /> : (
         <>

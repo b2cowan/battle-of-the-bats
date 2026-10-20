@@ -66,7 +66,7 @@ export default function CoachRegistrationCard({
   // When a lifecycle chip is present, the registration status demotes to trailing meta — and on a
   // LIVE row the chip wins. But the chip only *implies* a status when that status is `accepted`:
   // "Live" on a pending, waitlisted or rejected row says the EVENT is running, not that this team
-  // is in it. Suppressing "Not Accepted" there states a fact the team can act on nowhere else.
+  // is in it. Suppressing "Not accepted" there states a fact the team can act on nowhere else.
   //   This mattered less when the card was one row among many — the accepted registration was
   //   visible on the same screen. The free Overview now shows exactly ONE of these cards, so a
   //   swallowed status is the difference between a record and a false claim.

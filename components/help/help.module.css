@@ -1092,15 +1092,19 @@
 .helpResultGroup h3 {
   margin: 0 0 0.65rem;
   color: var(--info);
-  font-size: 0.72rem;
-  font-weight: 850;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  /* A band heading, the standard's one recipe (Admin type sweep A4, 3d). Weight is set here on
+     purpose: this selector outranks the kit's heading rule. */
+  font-family: var(--font-display, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: band */
 }
 
 .helpResultList {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, …): a one-line result label (below) truncates instead of widening the column. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.55rem;
 }
 
@@ -1128,10 +1132,17 @@
 
 .helpResultButton span {
   color: var(--info);
-  font-size: 0.68rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  /* The label over each result's title: the kit eyebrow (Admin type sweep 3d). One line with an
+     ellipsis, so a whole guide title used as the label cannot wrap on a phone. */
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .helpResultButton strong {
@@ -1389,9 +1400,11 @@
 }
 
 .helpHubCardCount {
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--white-40, rgba(255, 255, 255, 0.4));
-  font-family: ui-monospace, monospace;
+  /* A figure: body face, tabular (Admin type sweep A1). */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
 }
 
 .helpHubCardRead {

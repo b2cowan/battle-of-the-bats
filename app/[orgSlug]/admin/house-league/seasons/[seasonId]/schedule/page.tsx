@@ -399,9 +399,9 @@ function GameModal({
 
   return (
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={isCreate ? 'Add Game' : 'Edit Game'}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={isCreate ? 'Add game' : 'Edit game'}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>{isCreate ? 'Add Game' : 'Edit Game'}</h2>
+          <h2 className={styles.modalTitle}>{isCreate ? 'Add game' : 'Edit game'}</h2>
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
@@ -494,7 +494,7 @@ function GameModal({
               onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
               disabled={saving || refused || checking}
             >
-              {saving ? 'Saving…' : isCreate ? 'Create Game' : 'Save'}
+              {saving ? 'Saving…' : isCreate ? 'Create game' : 'Save'}
             </button>
           </div>
         )}
@@ -551,7 +551,7 @@ function GenerateModal({
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={`${styles.modal} ${styles.generateModal}`}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Generate Schedule — {divisionName}</h2>
+          <h2 className={styles.modalTitle}>Generate schedule — {divisionName}</h2>
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
@@ -590,7 +590,7 @@ function GenerateModal({
         {!preview && (
           <div style={{ textAlign: 'center', padding: '0.5rem 0 1rem' }}>
             <button style={B.secondary} onClick={handlePreview} disabled={previewing || !config.startDate}>
-              {previewing ? 'Generating…' : 'Preview Schedule'}
+              {previewing ? 'Generating…' : 'Preview schedule'}
             </button>
           </div>
         )}
@@ -598,7 +598,7 @@ function GenerateModal({
         {preview && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={kx({ margin: 0, fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
+              <h3 style={kx({ margin: 0, fontSize: '0.78rem', fontWeight: 700, color: 'var(--white-40)' }, { fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--type-heading)', letterSpacing: 'normal', textTransform: 'none', color: 'var(--text-primary)' })}>
                 Preview — {preview.length} games
               </h3>
               <button style={{ ...B.secondary, padding: '0.2rem 0.5rem', fontSize: '0.72rem' }} onClick={() => setPreview(null)}>
@@ -637,7 +637,7 @@ function GenerateModal({
           <button style={B.secondary} onClick={onClose} disabled={saving}>Cancel</button>
           {preview && (
             <button style={B.primary} onClick={() => onSave(config)} disabled={saving}>
-              {saving ? 'Saving…' : `Save ${preview.length} Games`}
+              {saving ? 'Saving…' : `Save ${preview.length} games`}
             </button>
           )}
         </div>
@@ -697,9 +697,9 @@ function PracticeModal({
 
   return (
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Add Practice — ${team.name}`}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Add practice — ${team.name}`}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Add Practice — {team.name}</h2>
+          <h2 className={styles.modalTitle}>Add practice — {team.name}</h2>
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
@@ -714,7 +714,7 @@ function PracticeModal({
             style={{ ...(form.recurring ? B.primary : B.secondary), flex: 1 }}
             onClick={() => set('recurring', true)}
           >
-            Recurring Series
+            Recurring series
           </button>
         </div>
 
@@ -775,7 +775,7 @@ function PracticeModal({
             onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
             disabled={saving || refused || checking}
           >
-            {saving ? 'Saving…' : form.recurring ? 'Create Series' : 'Create Practice'}
+            {saving ? 'Saving…' : form.recurring ? 'Create series' : 'Create practice'}
           </button>
         </div>
       </div>
@@ -783,7 +783,7 @@ function PracticeModal({
   );
 }
 
-// ── Cancel Practice Modal ─────────────────────────────────────────────────────
+// ── Cancel practice modal ─────────────────────────────────────────────────────
 
 function CancelPracticeModal({
   practice,
@@ -808,7 +808,7 @@ function CancelPracticeModal({
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={styles.modal} style={{ maxWidth: 420 }}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Cancel Practice</h2>
+          <h2 className={styles.modalTitle}>Cancel practice</h2>
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
@@ -844,7 +844,7 @@ function CancelPracticeModal({
         <div className={styles.modalFooter}>
           <button style={B.secondary} onClick={onClose} disabled={saving}>Back</button>
           <button style={B.danger} onClick={() => onConfirm(scope)} disabled={saving}>
-            {saving ? 'Cancelling…' : 'Cancel Practice'}
+            {saving ? 'Cancelling…' : 'Cancel practice'}
           </button>
         </div>
       </div>
@@ -1290,7 +1290,7 @@ export default function SchedulePage() {
     return (
       <div className={styles.accessDenied}>
         <Calendar size={32} />
-        <h2>Access Restricted</h2>
+        <h2>Access restricted</h2>
         <p>You don&apos;t have access to the House league module.</p>
       </div>
     );
@@ -1364,12 +1364,12 @@ export default function SchedulePage() {
             {teams.length >= 2 && (
               <button style={B.secondary} onClick={() => setShowGenerate(true)}>
                 <Wand2 size={14} style={{ marginRight: 4 }} />
-                Generate Schedule
+                Generate schedule
               </button>
             )}
             <button style={B.secondary} onClick={openCreate}>
               <Plus size={14} style={{ marginRight: 4 }} />
-              Add Game
+              Add game
             </button>
           </>
         )}
@@ -1419,7 +1419,7 @@ export default function SchedulePage() {
                 <div className={styles.toolbarSep} />
                 <button style={B.secondary} onClick={() => setShowPracticeModal(true)}>
                   <Plus size={14} style={{ marginRight: 4 }} />
-                  Add Practice
+                  Add practice
                 </button>
               </>
             )}
@@ -1618,7 +1618,7 @@ export default function SchedulePage() {
             <div className={styles.emptyState}>
               <p>
                 {canManage
-                  ? 'No practices scheduled for this team. Use "Add Practice" to get started.'
+                  ? 'No practices scheduled for this team. Use "Add practice" to get started.'
                   : 'No practices scheduled yet.'}
               </p>
             </div>
