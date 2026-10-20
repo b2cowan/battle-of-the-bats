@@ -997,7 +997,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > entry 2026-10-19 "A club's public site". Next: the build prompts, one per sub-stage (4a → 4b → 4c, then 4d sponsors).
 > **📝 4a build prompt written 2026-10-19:** `CLUB_TIER_STAGE4A_BUILD_PROMPT.md` (one rule, one refusal; for a new chat). 4b–4e prompts
 > are written as each one before them lands.
-> **✅ 4a BUILT 2026-10-20** (one session, from `CLUB_TIER_STAGE4A_BUILD_PROMPT.md`; words through /marketing 2026-10-20, owner "looks
+> **✅ 4a BUILT + COMMITTED `d82ad01a3` 2026-10-20** (local, not pushed; one session, from `CLUB_TIER_STAGE4A_BUILD_PROMPT.md`; words through /marketing 2026-10-20, owner "looks
 > good"). **One rule:** `lib/public-club-access.ts` (`publicClubRefusal`: no club · site off or cancelled · plan does not carry the
 > page — rep teams for team and tryout pages, house league for league, tournaments for archives; the home needs only the switch)
 > with its server door `lib/public-club-page.ts` (`requirePublicClubPage` / `resolvePublicClub`). Asked by the home, the team page,
