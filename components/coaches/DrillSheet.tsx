@@ -1,11 +1,9 @@
 'use client';
-import { useRef } from 'react';
 import { Archive, RotateCcw } from 'lucide-react';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { FieldLabel, TeachingFields } from '@/components/coaches/PracticeFields';
 import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import {
   MAX_DRILL_MINUTES, MAX_DRILL_NAME_LEN, MAX_DRILL_POINTS, MAX_DRILL_POINT_LEN, MAX_DRILL_TEXT_LEN,
   type DrillInput,
@@ -17,9 +15,15 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * stage 4, owner ruling L6, 2026-09-16). The name in the head, typeable, as the modal's is; then
  * the library's own two facts first — Tags · Usually — because they are the two things the plan
  * never asks and the row always shows; then the SAME five teaching fields in the same order and
- * words as a station (`TeachingFields`); then the foot: *Retire this drill* (Restore on a retired
- * one) where the station modal keeps *Delete this station* — the portal's one place for the
- * destructive act, never on the row — beside Cancel · Save.
+ * words as a station (`TeachingFields`); then *Retire this drill* (Restore on a retired one) —
+ * the portal's one place for the lifecycle act, never on the row.
+ *
+ * ⚖ THE ONE WINDOW (One Window 2d, call B4 — it moves as a form and ASKS): 640, a tap outside does nothing, and
+ * with the drill changed (`dirty`, each caller's own measure) ×, ←, Cancel, Escape and Back ask in the foot first.
+ * Held while a save runs. The foot is the main act only — "what saving reaches" (`saveNote`) at its left, Cancel ·
+ * Save at its right — and Retire / Restore ENDS THE BODY (the 2026-10-09 rare-door ruling: a lifecycle door never
+ * takes a foot row, and a two-ended row stays only when it is one row at 390 wide, which the note beside it never
+ * let this one be).
  *
  * ⚠ What the station has and a drill never does — who runs it, who's at it, just for tonight — is
  * simply not here. "Not in a plan yet · In 8 plans" is not repeated here either: the row said it.
@@ -32,7 +36,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 export default function DrillSheet({
   draft, isActive = true, isNew, readOnly = false, tags, onCreateTag, equipmentTags, onCreateEquipmentTag,
   focusManage, onFocusTagsChanged, equipmentManage, onEquipmentTagsChanged,
-  busy, error, onChange, onSubmit, onClose, onRetire, onRestore, saveNote,
+  busy, error, dirty = false, onChange, onSubmit, onClose, onRetire, onRestore, saveNote,
 }: {
   draft: DrillInput;
   isActive?: boolean;
@@ -49,6 +53,8 @@ export default function DrillSheet({
   onEquipmentTagsChanged?: () => void;
   busy: boolean;
   error: string;
+  /** The drill was changed since it opened — every way out asks first (B4). The caller's own measure. */
+  dirty?: boolean;
   onChange: (next: DrillInput) => void;
   onSubmit: () => void;
   onClose: () => void;
@@ -62,29 +68,28 @@ export default function DrillSheet({
    */
   saveNote?: string | null;
 }) {
-  /* The dialog floor (stage 2, D9), busy-gated: Escape closes, Tab stays inside, focus returns to
-     the row that opened it; while a save is in flight the sheet holds. */
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(true, panelRef, { onClose, busy });
   const retired = !isActive;
   const locked = retired || readOnly;
+  const lifecycle = !isNew && (retired ? onRestore : onRetire);
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={isNew ? 'New drill' : `${draft.name || 'Drill'} — drill`}
-        aria-busy={busy || undefined}
-        className={`${styles.modal} ${styles.modalWide} ${styles.modalScrollBody} ${styles.ppStationModal}`}>
-        <CoachModalHeader
-          onClose={onClose}
-          closeAriaLabel="Close"
-          title={(
-            <input className={`${styles.input} ${styles.ppStationTitle}`} value={draft.name} disabled={locked}
-              maxLength={MAX_DRILL_NAME_LEN} placeholder="What do you call it?" aria-label="Drill name"
-              autoFocus={isNew}
-              onChange={e => onChange({ ...draft, name: e.target.value })} />
-          )}
-        />
-
-        <div className={`${styles.scrollPane} ${styles.ppStationBody}`}>
+    <QuestionShell open onClose={onClose} dirty={dirty && !locked} busy={busy} wide
+      ariaLabel={isNew ? 'New drill' : `${draft.name || 'Drill'} — drill`}
+      title={(
+        <input className={`${styles.input} ${styles.ppStationTitle}`} value={draft.name} disabled={locked}
+          maxLength={MAX_DRILL_NAME_LEN} placeholder="What do you call it?" aria-label="Drill name"
+          autoFocus={isNew}
+          onChange={e => onChange({ ...draft, name: e.target.value })} />
+      )}
+      footerStart={saveNote && !locked ? <p className={styles.formHint}>{saveNote}</p> : undefined}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost} />
+        {!locked && (
+          <button type="button" className={styles.btnPrimary} disabled={busy || !draft.name.trim()} onClick={onSubmit}>
+            {busy ? 'Saving…' : 'Save'}
+          </button>
+        )}
+      </>}>
+        <div className={styles.ppStationBody}>
           {readOnly && !retired && <p className={styles.formHint}>A club drill — your club’s administrator manages it. You can use it in any practice.</p>}
           {retired && <p className={styles.formHint}>Retired — it stays out of the picker until you restore it. Every plan that used it keeps reading.</p>}
           {/* The library's own two facts, first. Coach-typed vocabulary, offered from what they've
@@ -117,26 +122,18 @@ export default function DrillSheet({
             onPatch={patch => onChange({ ...draft, ...patch })}
           />
 
-          {error && <p className={styles.errorText} role="alert">{error}</p>}
-        </div>
-
-        <div className={`${styles.modalFooter}${saveNote && !locked ? ` ${styles.modalFooterNoted}` : ''}`}>
-          {saveNote && !locked && <p className={styles.modalFooterNote}>{saveNote}</p>}
-          {/* Retire lives here now — where the station modal keeps "Delete this station" and the
-              goal sheet "Remove goal". Retired, not deleted: every plan that used it keeps reading. */}
-          {!isNew && (retired ? onRestore : onRetire) && (
-            <button type="button" className={styles.deleteRecordBtn} disabled={busy} onClick={retired ? onRestore : onRetire}>
-              {retired ? <><RotateCcw size={14} aria-hidden /> Restore this drill</> : <><Archive size={14} aria-hidden /> Retire this drill</>}
-            </button>
-          )}
-          <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          {!locked && (
-            <button type="button" className={styles.btnPrimary} disabled={busy || !draft.name.trim()} onClick={onSubmit}>
-              {busy ? 'Saving…' : 'Save'}
-            </button>
+          {/* Retire / Restore ENDS THE BODY (see the header) — where the goal sheet's Remove goal and the station's
+              Delete would sit under the same ruling. Retired, not deleted: every plan that used it keeps reading. */}
+          {lifecycle && (
+            <div className={styles.ppSheetLifecycle}>
+              <button type="button" className={styles.deleteRecordBtn} disabled={busy} onClick={retired ? onRestore : onRetire}>
+                {retired ? <><RotateCcw size={14} aria-hidden /> Restore this drill</> : <><Archive size={14} aria-hidden /> Retire this drill</>}
+              </button>
+            </div>
           )}
         </div>
-      </div>
-    </div>
+        {/* Why Save was refused, beside it in the foot (One Window 2b). */}
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
+    </QuestionShell>
   );
 }

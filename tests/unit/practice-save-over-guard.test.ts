@@ -34,13 +34,14 @@ describe('D1 — the name decides, and the question stays in the window', () => 
     assert.match(page, /plan-templates\/\$\{replace\.id\}`, \{\s*method: 'PATCH'/);
     // D2: a replace carries this practice's tags, as a new template does.
     assert.match(page, /body: JSON\.stringify\(\{ tagIds: planTagIds, plan \}\)/);
-    assert.match(page, /useBackStep\(!!replacing, backToName\)/);
+    // The question's own Back step: since One Window 2d the window's level (`onBack`), its Back step the window's own.
+    assert.match(page, /onBack=\{replacing \? backToName : undefined\} backLabel="Save as template"/);
   });
 
   it('Save to my drills / circuits has a Name field whose match turns the button into Update', () => {
     assert.match(editor, /libraryNameMatch\(targets, name\)/);
     assert.match(editor, /Update &ldquo;\{match\.name\}&rdquo;…/);
-    assert.match(editor, /useBackStep\(!!updating, backToForm\)/);
+    assert.match(editor, /onBack=\{updating \? backToForm : undefined\} backLabel=\{`Save to my \$\{noun\}`\}/);
     assert.match(editor, /<SaveOverQuestion/);
   });
 
@@ -53,17 +54,23 @@ describe('D1 — the name decides, and the question stays in the window', () => 
   });
 
   it('a save window is not torn down under its own request — × waits while it saves (review 2026-10-02)', () => {
+    // One Window 2d: the window's `busy` holds ×, ←, Cancel, Escape and Back while it saves (KitDialog's one closer).
     const promote = editor.slice(editor.indexOf('function PromoteDialog('), editor.indexOf('function PromoteDialog(') + 12000);
-    assert.match(promote, /className=\{styles\.modalCloseBtn\} aria-label="Close" disabled=\{busy\} onClick=\{onClose\}/);
+    assert.match(promote, /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\} busy=\{busy\}/);
     const templateWindow = page.slice(page.indexOf('function SaveAsTemplateDialog('));
-    assert.match(templateWindow, /className=\{styles\.modalCloseBtn\} aria-label="Close" disabled=\{busy\} onClick=\{onClose\}/);
+    assert.match(templateWindow, /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\} busy=\{busy\}/);
   });
 
   it('on the question, Back is the window bar — never a link at the top of the body (owner, 2026-10-02)', () => {
     const question = stripComments(readSource('components/coaches/SaveOverQuestion.tsx'));
     assert.doesNotMatch(question, /> Back\b|ChevronLeft|ArrowLeft/, 'the shared question carries no Back of its own');
-    assert.match(page, /\{replacing \? \(\s*<button type="button" className=\{`\$\{styles\.modalBackBtn\} \$\{styles\.modalBackLabelled\}`\}\s*aria-label="Back to Save as template"/);
-    assert.match(editor, /\{updating \? \(\s*<button type="button" className=\{`\$\{styles\.modalBackBtn\} \$\{styles\.modalBackLabelled\}`\}\s*aria-label=\{`Back to Save to my \$\{noun\}`\}/);
+    // Since One Window 2d the bar's Back is the window's named back ("‹ Save as template" at a desk, "Back to …" on a
+    // phone's ←), the question the window's title — and the body no longer says the question twice (`titled`).
+    assert.match(page, /backLabel="Save as template" levelKey=\{replacing \? 'replace' : 'name'\}\s+ariaLabel="Save as template" title=\{replacing \? `Replace “\$\{replacing\.name\}”\?` : 'Save as template'\}/);
+    assert.match(editor, /backLabel=\{`Save to my \$\{noun\}`\} levelKey=\{updating \? 'update' : 'form'\}\s+ariaLabel=\{`Save to my \$\{noun\}`\} title=\{updating \? `Update “\$\{updating\.name\}”\?` : `Save to my \$\{noun\}`\}/);
+    assert.match(page, /question=\{`Replace “\$\{replacing\.name\}”\?`\} titled/);
+    assert.match(editor, /question=\{`Update “\$\{updating\.name\}”\?`\} titled/);
+    assert.match(readSource('components/coaches/QuestionShell.tsx'), /back=\{isForm && onBack \? \{ onBack, label: backLabel \} : undefined\}/);
   });
 
   it('no window asks with a pop-up', () => {

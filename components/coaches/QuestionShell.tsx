@@ -70,6 +70,7 @@ export default function QuestionShell({
   open,
   onClose,
   onBack,
+  backLabel,
   levelKey,
   ariaLabel,
   eyebrow,
@@ -93,6 +94,9 @@ export default function QuestionShell({
   onClose: () => void;
   /** A view BEHIND this one — the phone's back arrow and its Back gesture go there instead of closing. */
   onBack?: () => void;
+  /** Names the view behind it — "‹ Save to my drills" in the head at a desk, "Back to …" on a phone's ← (KitDialog's
+   *  named back). A labelled back in the window's bar (owner, 2026-10-02: the save-over question's Back lives there). */
+  backLabel?: string;
   /** The screen on show, for a window that swaps its whole body in place (Categories & items' list ↔ fold): when it
    *  changes the body starts at its top and the keyboard stays in the window (KitDialog's `levelKey`). */
   levelKey?: string;
@@ -164,7 +168,7 @@ export default function QuestionShell({
         identity={subtitle}
         headerExtra={headerExtra}
         onClose={onClose}
-        back={isForm && onBack ? { onBack } : undefined}
+        back={isForm && onBack ? { onBack, label: backLabel } : undefined}
         levelKey={levelKey}
         busy={busy}
         size={!isForm ? undefined : widest ? 'wide' : wide ? 'medium' : undefined}

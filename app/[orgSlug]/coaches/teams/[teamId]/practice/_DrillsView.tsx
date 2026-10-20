@@ -1,7 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { History, Library, NotebookPen, Plus } from 'lucide-react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -124,7 +123,8 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
   const importer = usePastSeasonImport<ImportRow>({
     readUrl: `${apiBase}/past-seasons`, rowsKey: 'drills', createUrl: apiBase, bodyOf: row => row.drill, onAdded: load, noun: 'drill',
   });
-  useOverlayOpen(!!editing || importer.open);
+  /* ⚰ `useOverlayOpen(!!editing || importer.open)` STOOD HERE: the drill sheet and the past-season importer are both
+     the one window now (One Window 2c part 5, 2d part 6), which registers each with the portal's counter itself. */
   // Read only once the coach has edited — opening a drill to look at it, or to retire it, asks nothing.
   const openTeamDrillId = editing && editing.id && !editing.shared && editing.isActive && editing.touched ? editing.id : null;
   useEffect(() => {
@@ -342,7 +342,7 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
         </>
       )}
 
-      {/* ── The drill sheet (L6) — new, or a row's; Retire / Restore in its foot ── */}
+      {/* ── The drill sheet (L6) — new, or a row's; Retire / Restore ends its body ── */}
       {editing && (
         <DrillSheet
           draft={editing.draft}
@@ -359,6 +359,8 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
           onEquipmentTagsChanged={reloadEquipmentTags}
           busy={formBusy}
           error={formError}
+          // B4: changed since it opened (`touched`), every way out asks first.
+          dirty={editing.touched}
           onChange={draft => setEditing(e => (e ? { ...e, draft, touched: true } : e))}
           onSubmit={saveDrill}
           onClose={() => setEditing(null)}

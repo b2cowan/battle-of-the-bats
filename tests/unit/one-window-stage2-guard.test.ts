@@ -354,7 +354,8 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
 
   it('answer D: Close the season and Delete a budget line are the one window\'s small centred question', () => {
     // The shell passes the kind through; a question carries none of a form's things (no ×, no ask, no pill foot).
-    assert.match(shell, /back=\{isForm && onBack \? \{ onBack \} : undefined\}/);
+    // (2d part 6: a level may be named, `backLabel` — the save-over question's "‹ Save to my drills".)
+    assert.match(shell, /back=\{isForm && onBack \? \{ onBack, label: backLabel \} : undefined\}/);
     assert.match(shell, /dirty=\{isForm && dirty\}/);
     assert.match(shell, /onFootHeight=\{isForm \? onFootHeight : undefined\}/);
     assert.match(shell, /if \(!open \|\| !isForm\) return;/, 'a question never goes on the page pill\'s foot stack');
@@ -544,6 +545,38 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
     assert.doesNotMatch(cal, /modalOverlay|useDialogFloor|useOverlayOpen|function DeskWindow/);
     assert.doesNotMatch(readSource('components/coaches/CalendarSubscribeWindow.module.css'), /^\s*\.(window|head|context)\b[^{]*\{/m, 'the desk window\'s own shape is gone');
   });
+
+  it('the practice page, last: the drill sheet asks (B4), the two saves ask off their pre-fill (B3), the pickers and Send never ask (part 6)', () => {
+    const P = 'app/[orgSlug]/coaches/teams/[teamId]/practice';
+    const drill = readCode('components/coaches/DrillSheet.tsx');
+    // B4: a form that asks — each caller's own measure; a locked (club or retired) drill has nothing to lose.
+    assert.match(drill, /<QuestionShell open onClose=\{onClose\} dirty=\{dirty && !locked\} busy=\{busy\} wide\b/);
+    assert.match(readCode(`${P}/_DrillsView.tsx`), /dirty=\{editing\.touched\}/);
+    assert.match(readCode(`${P}/_PracticePlanEditor.tsx`), /dirty=\{!snapshotEqual\(openNewDrill, emptyDrillDraft\(\)\)\}/, 'the docked "+ New drill" asks too (it had no flag)');
+    // The rare-door ruling: Retire / Restore ENDS THE BODY; the foot is "what saving reaches" + Cancel · Save.
+    assert.match(drill, /footerStart=\{saveNote && !locked \? <p className=\{styles\.formHint\}>\{saveNote\}<\/p> : undefined\}/);
+    assert.ok(drill.indexOf('ppSheetLifecycle') > drill.indexOf('<TeachingFields'), 'Retire / Restore comes after the fields');
+    // B3: the two saves ask only once something moved off the pre-fill.
+    const editor = readCode(`${P}/_PracticePlanEditor.tsx`);
+    const page = readCode(`${P}/[eventId]/page.tsx`);
+    assert.match(editor, /const dirty = name\.trim\(\) !== defaultName\.trim\(\) \|\| tagPick !== null \|\| picked\.size > 0;/);
+    assert.match(page, /const dirty = name\.trim\(\) !== defaultName\.trim\(\);/);
+    assert.match(page, /<form id="save-as-template"/);
+    assert.equal((page.match(/type="submit" form="save-as-template"/g) ?? []).length, 2, 'Save template and Replace… name their form');
+    // B9: the list pickers and Send to staff never ask (a pick writes; Send holds choices, nothing typed).
+    const send = readCode(`${P}/_PracticeSendSheet.tsx`);
+    assert.match(send, /<QuestionShell open onClose=\{onClose\} busy=\{busy\} ariaLabel="Send to staff" title="Send to staff"/);
+    assert.match(page, /<QuestionShell open onClose=\{\(\) => setCopyOpen\(false\)\} ariaLabel="Start this plan from" title="Start this plan from…">/);
+    assert.match(editor, /<QuestionShell open onClose=\{onClose\} ariaLabel="Groups from another practice" title="Groups from another practice">/);
+    assert.match(editor, /<QuestionShell open onClose=\{onClose\} ariaLabel=\{title\} title=\{title\}>/, 'the drill picker');
+    assert.match(editor, /<QuestionShell open onClose=\{\(\) => setAttach\(null\)\} ariaLabel="Choose players" title="Choose players"/);
+    for (const [file, code] of [['DrillSheet', drill], ['_PracticeSendSheet', send], ['page', page]] as const) {
+      assert.doesNotMatch(code, /modalOverlay|useDialogFloor|useOverlayOpen|CoachModalHeader|useBackStep\(/, `${file}: the one window owns the overlay, the floor, the head and the Back step`);
+    }
+    // The editor keeps exactly its two sheets that stay out (the station modal, the block sheet) — and counts only them.
+    assert.equal((editor.match(/className=\{styles\.modalOverlay\}/g) ?? []).length, 2, 'only the station and block sheets build a .modalOverlay window');
+    assert.match(editor, /useOverlayOpen\(!!openStationRow \|\| !!openSetRow \|\| !!sheetBlock\);/);
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -551,9 +584,9 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
   it('no coach file builds a window from .modalOverlay outside the list, and every entry says why', () => {
     // ⚖ Q15 keeps rooms, records and sheets out; the rest move in 2c and 2d and come off as they go.
     const STAYS = 'stays out (Q15): a room, a record or a sheet';
-    // ⚰ MOVES_2C emptied 2026-10-19 (One Window 2c part 7): every 2c window is on the one window. A file that comes back
-    // here is not "still to move" — it is a regression.
-    const MOVES_2D = 'moves in 2d';
+    // ⚰ MOVES_2C emptied 2026-10-19 (One Window 2c part 7) and MOVES_2D 2026-10-20 (2d part 6, the practice page): every
+    // hand-built coach window that moves is on the one window. Only Q15's rooms, records and sheets remain, and a file
+    // that comes back here is not "still to move" — it is a regression.
     const ALLOWED = new Map<string, string>([
       ['components/coaches/RoomShell.tsx', STAYS],
       ['components/coaches/ScheduleEventSheet.tsx', STAYS],
@@ -563,10 +596,8 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
       // Its settlement, Set refund and reminder confirm moved in 2d part 4; the player drawer is a record and stays.
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', STAYS + ' (the player drawer)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx', MOVES_2D + ', the practice page last'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx', MOVES_2D + ', the practice page last (its station and block sheets stay out)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeSendSheet.tsx', MOVES_2D],
-      ['components/coaches/DrillSheet.tsx', MOVES_2D],
+      // Its pickers, Save to my … and the docked "+ New drill" moved in 2d part 6; the station and block sheets stay.
+      ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx', STAYS + ' (its station and block sheets)'],
     ]);
     const builds = (src: string) => /className=\{[^}]*\.modalOverlay\b/.test(src) || /\.modalOverlay\}/.test(src);
     const found = tsxWith('modalOverlay')

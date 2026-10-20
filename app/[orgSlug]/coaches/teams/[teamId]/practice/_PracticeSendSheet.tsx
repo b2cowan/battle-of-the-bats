@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import {
   AUDIENCE_LABEL, FIELD_KINDS, MAX_CHOSEN_RECIPIENTS, PRACTICE_PLAN_AUDIENCES, PRACTICE_PLAN_GROUP_AUDIENCES, mineTagIdsOf, myLabelsOnPlan,
   practicePlanRecipients, practicePlanSentMessage, sanitizeChosenUserIds,
@@ -44,9 +43,8 @@ import styles from '../../../coaches.module.css';
  * answers a question, at the moment of deciding whether to send again. The words are the page's
  * one copy (`lastSent`), never a second sentence.
  *
- * The shape is the portal's sheet recipe, whole: the shared header (← on a phone, × above 640),
- * one `.scrollPane` that lines up with the title, and the foot OUTSIDE it, so Cancel · Send pin
- * to the bottom of the screen instead of scrolling with the list.
+ * The shape is the one window's (One Window 2d): its head (← on a phone, × at a desk), a body that scrolls, and its
+ * foot, so Cancel · Send pin to the bottom of the screen instead of scrolling with the list.
  */
 export type SendSheetChoice = { audience: PracticePlanSendAudience; email: boolean; userIds?: string[] };
 
@@ -112,8 +110,6 @@ export default function PracticeSendSheet({
   const [email, setEmail] = useState(remembered?.email ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(true, panelRef, { onClose, busy });
 
   // Radios, so the arrow keys move between the four and Space picks — the first is focused on
   // open by the floor's rule (nothing inside took focus), then Tab reaches the list, Also email
@@ -168,12 +164,18 @@ export default function PracticeSendSheet({
     onClose();
   }
 
+  /* ⚖ THE ONE WINDOW (One Window 2d): a tap outside does nothing; Escape, Back, ×, Cancel close it, never while it
+     sends. It NEVER ASKS — everything in it is a choice (who, which names, Also email), nothing is typed, and the team's
+     last choice is what it reopens on anyway (ruling B). */
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Send to staff"
-        aria-busy={busy || undefined} className={`${styles.modal} ${styles.modalScrollBody}`}>
-        <CoachModalHeader title="Send to staff" onClose={onClose} closeAriaLabel="Close" />
-        <div className={`${styles.scrollPane} ${styles.ppSendBody}`}>
+    <QuestionShell open onClose={onClose} busy={busy} ariaLabel="Send to staff" title="Send to staff"
+      footer={<>
+        <QuestionCancel className={styles.btnGhost} />
+        <button type="button" className={styles.btnPrimary} disabled={busy || count === 0} onClick={submit}>
+          {busy ? 'Sending…' : count === 0 ? (audience === 'chosen' && reachable.length > 0 ? 'Tick someone' : 'Nobody to send to') : `Send to ${count}`}
+        </button>
+      </>}>
+        <div className={styles.ppSendBody}>
           {lastSent && <p className={styles.ppSendLast} data-testid="send-sheet-last">{lastSent}</p>}
           <p className={styles.formHint}>
             A bell and a push, with a link to this plan. Never you; never someone whose access
@@ -254,16 +256,8 @@ export default function PracticeSendSheet({
 
         </div>
 
-        {/* Outside the scroll, beside the foot, so a refusal is seen wherever the list was left. */}
-        {error && <p className={`${styles.errorText} ${styles.ppSendError}`} role="alert">{error}</p>}
-
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          <button type="button" className={styles.btnPrimary} disabled={busy || count === 0} onClick={submit}>
-            {busy ? 'Sending…' : count === 0 ? (audience === 'chosen' && reachable.length > 0 ? 'Tick someone' : 'Nobody to send to') : `Send to ${count}`}
-          </button>
-        </div>
-      </div>
-    </div>
+        {/* Beside the button in the foot, so a refusal is seen wherever the list was left (One Window 2b's reason). */}
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
+    </QuestionShell>
   );
 }

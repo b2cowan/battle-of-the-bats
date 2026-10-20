@@ -6,7 +6,7 @@ import {
   type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import {
-  ArrowLeft, Check, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
+  Check, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
 } from 'lucide-react';
 import {
   MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_GROUPS, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
@@ -34,7 +34,6 @@ import {
   type CircuitInput, type RepTeamCircuit, type TickRow,
 } from '@/lib/rep-circuits';
 import SaveOverQuestion, { SaveOverMatchLine } from '@/components/coaches/SaveOverQuestion';
-import { useBackStep } from '@/components/coaches/useBackStep';
 import TagPicker, { type PickablePerson, type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
 import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
@@ -46,6 +45,8 @@ import {
   DrillPreviewBody, CircuitPreviewBody,
 } from '@/components/coaches/LibraryRow';
 import DrillSheet from '@/components/coaches/DrillSheet';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
+import { snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -1640,18 +1641,16 @@ function GroupsFromPracticeSheet({ sets, nameOf, onPick, onClose }: {
   onPick: (from: GroupingElsewhere) => void;
   onClose: () => void;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(true, panelRef, { onClose });
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const shown = q ? sets.filter(s => `${s.set.name} ${s.eventName}`.toLowerCase().includes(q)) : sets;
   const dayOf = (iso: string | null) => (iso ? formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
+  /* ⚖ THE ONE WINDOW, A LIST PICKER (One Window 2d, call B9): a form that fills a phone, standing over the groups room
+     it opens from (which stays out); a tap outside does nothing, Escape and Back close it. It never asks: "Use these"
+     writes, and a search is not typing. */
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Groups from another practice"
-        className={`${styles.modal} ${styles.modalScrollBody}`}>
-        <CoachModalHeader onClose={onClose} closeAriaLabel="Close" title="Groups from another practice" />
-        <div className={`${styles.scrollPane} ${styles.ppGroupsBody}`}>
+    <QuestionShell open onClose={onClose} ariaLabel="Groups from another practice" title="Groups from another practice">
+        <div className={styles.ppGroupsBody}>
           {sets.length > 4 && (
             <SearchField room="coach" layout="fill" value={query} onChange={setQuery} label="Search practices or groups" />
           )}
@@ -1675,8 +1674,7 @@ function GroupsFromPracticeSheet({ sets, nameOf, onPick, onClose }: {
           })}
           <p className={styles.formHint}>Newest first, this season only. Anyone no longer on the team is left behind.</p>
         </div>
-      </div>
-    </div>
+    </QuestionShell>
   );
 }
 
@@ -1724,22 +1722,12 @@ function DrillPickerSheet({
   // One face and nothing to switch to — no tab row.
   const tabbed = !!onWriteOne || (!!circuits && !!onPickCircuit);
 
-  /* The portal's dialog floor (stage 2, D9): Escape closes, Tab stays inside, focus returns to the
-     link that opened this. Mounted only while open, so the floor is armed for its whole life. */
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(true, panelRef, { onClose });
-
+  /* ⚖ THE ONE WINDOW, A LIST PICKER (One Window 2d, call B9): a form that fills a phone; it opens OVER the station
+     and block sheets (which stay out) and stands above them on the one window's layer. Escape and Back close it,
+     Tab stays inside, focus returns to the link that opened it, and a tap outside does nothing. It never asks: Add
+     writes, and a search or a tab is not typing. */
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
-        className={`${styles.modal} ${styles.modalScrollBody}`}>
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>{title}</h3>
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
+    <QuestionShell open onClose={onClose} ariaLabel={title} title={title}>
         {tabbed && (
           <div className={styles.ppDrillTabsWrap}>
             <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist">
@@ -1778,8 +1766,7 @@ function DrillPickerSheet({
             <LibraryBrowser kind="drills" drills={drills} equipmentTags={equipmentTags} addLabel="Add" onAddDrill={onPick} />
           </div>
         )}
-      </div>
-    </div>
+    </QuestionShell>
   );
 }
 
@@ -2095,13 +2082,12 @@ function PromoteDialog({
   /** The item the question is about — set by "Update “X”…", cleared by Back / Keep it. */
   const [updating, setUpdating] = useState<SaveOverTarget | null>(null);
   const [reach, setReach] = useState<{ id: string; reach: DrillReach | null } | null>(null);
-  /* The dialog floor (D9), busy-gated: while the save is in flight the sheet holds, so a write is
-     never torn down under its own request. The tag list inside claims its own Escape while open
-     (`escapeOwnership.ts`) — it closes itself, not the sheet. */
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(true, panelRef, { onClose, busy });
+  /* ⚖ THE ONE WINDOW (One Window 2d, call B3 — it asks as it moves): busy-gated, so a write is never torn down under its
+     own request; the tag list inside claims its own Escape while open (`escapeOwnership.ts`) — it closes itself, not
+     the window. The "Update “X”?" question is a LEVEL (`onBack` + `backLabel`): the head's "‹ Save to my …" at a desk,
+     the phone's ← and its Back gesture go up to the form — the window's own Back step, which stood here as a
+     `useBackStep` of its own. */
   const backToForm = () => setUpdating(null);
-  useBackStep(!!updating, backToForm);
   /* The question's reach, read when it opens; a late answer for an item no longer asked about is
      dropped by the id it carries. */
   useEffect(() => {
@@ -2128,29 +2114,35 @@ function PromoteDialog({
   function toggleRow(id: string) {
     setPicked(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }
+  /* ⚠ ASKS ONLY ONCE SOMETHING MOVED OFF THE PRE-FILL (B3, measured on what the coach did, not on what is there): the
+     name differs from the one the window opened with, a tag was picked, or a station was ticked. A pre-filled name
+     alone is not typed words — a coach who opened this and thought better of it closes it at once. */
+  const dirty = name.trim() !== defaultName.trim() || tagPick !== null || picked.size > 0;
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Save to my ${noun}`}
-        aria-busy={busy || undefined} className={styles.modal}>
-        <div className={styles.modalHeader}>
-          {/* On the question the bar is a Back that names where it goes (the portal's labelled back). */}
-          {updating ? (
-            <button type="button" className={`${styles.modalBackBtn} ${styles.modalBackLabelled}`}
-              aria-label={`Back to Save to my ${noun}`} disabled={busy} onClick={backToForm}>
-              <ArrowLeft size={20} aria-hidden /><span className={styles.modalBackWord}>Save to my {noun}</span>
+    /* Busy-gated like Escape and the head's ×: closed mid-save, the editor would be editable again while the save is
+       still landing, and the follow-up (followDrill) would lay the plan as it was BEFORE those edits back over them. */
+    <QuestionShell open onClose={onClose} dirty={dirty} busy={busy}
+      onBack={updating ? backToForm : undefined} backLabel={`Save to my ${noun}`} levelKey={updating ? 'update' : 'form'}
+      ariaLabel={`Save to my ${noun}`} title={updating ? `Update “${updating.name}”?` : `Save to my ${noun}`}
+      footer={updating ? undefined : (
+        <>
+          <QuestionCancel className={styles.btnGhost} />
+          {match ? (
+            <button type="button" className={styles.btnDanger} disabled={busy} onClick={() => setUpdating(match)}>
+              Update &ldquo;{match.name}&rdquo;…
             </button>
-          ) : <h3 className={styles.modalTitle}>Save to my {noun}</h3>}
-          {/* Busy-gated like Escape and the backdrop: closed mid-save, the editor would be editable
-              again while the save is still landing, and the follow-up (followDrill) would lay the
-              plan as it was BEFORE those edits back over them. */}
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" disabled={busy} onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
+          ) : (
+            <button type="button" className={styles.btnPrimary} disabled={busy || !name.trim() || !!limitLine}
+              onClick={() => onSave(name.trim(), tagIds, pickedIds, null)}>
+              {busy ? 'Saving…' : `Save to my ${noun}`}
+            </button>
+          )}
+        </>
+      )}>
         {updating ? (
           <div className={styles.ppDrillWrite}>
             <SaveOverQuestion
-              question={`Update “${updating.name}”?`}
+              question={`Update “${updating.name}”?`} titled
               sub={kind === 'drill'
                 ? 'Its words, coaching points, equipment and tags become tonight’s.'
                 : 'Its stations, their setup, points and kit, and its tags become this block’s.'}
@@ -2216,25 +2208,13 @@ function PromoteDialog({
               )}
               {kind === 'circuit' && tick?.fromLine && <p className={styles.ppTickFrom}>{tick.fromLine}</p>}
               <p className={styles.formHint}>{sentence}</p>
-              {error && <p className={styles.errorText}>{error}</p>}
             </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-              {match ? (
-                <button type="button" className={styles.btnDanger} disabled={busy} onClick={() => setUpdating(match)}>
-                  Update &ldquo;{match.name}&rdquo;…
-                </button>
-              ) : (
-                <button type="button" className={styles.btnPrimary} disabled={busy || !name.trim() || !!limitLine}
-                  onClick={() => onSave(name.trim(), tagIds, pickedIds, null)}>
-                  {busy ? 'Saving…' : `Save to my ${noun}`}
-                </button>
-              )}
-            </div>
+            {/* Why the save was refused, beside its button in the foot (One Window 2b). The question's own refusal
+                stays under its own answers (SaveOverQuestion: that view has no foot). */}
+            <QuestionReason className={styles.errorText}>{error}</QuestionReason>
           </>
         )}
-      </div>
-    </div>
+    </QuestionShell>
   );
 }
 
@@ -4353,7 +4333,10 @@ export default function PracticePlanEditor({
     : setDrillSheet({ kind: 'station', blockId }));
   const sheetIndex = phoneSheet && openId ? plan.blocks.findIndex(b => b.id === openId) : -1;
   const sheetBlock = sheetIndex >= 0 ? plan.blocks[sheetIndex] : undefined;
-  useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openSetRow || fromPracticeOpen || !!openNewDrill || !!sheetBlock);
+  // ⚖ One Window 2d: the picker, the drill picker, Save to my …, Groups from another practice and the drill sheet are
+  // the one window now and register themselves — one registration per overlay, at the overlay. The station modal and
+  // the block sheet stay out (Q15) and are counted here; the groups room is a room (it registers itself too).
+  useOverlayOpen(!!openStationRow || !!openSetRow || !!sheetBlock);
   /* When the block's sheet closes, the list picks out the block the coach was LAST on (K2); gone →
      the add row. */
   useFocusLastShownOnClose(sheetBlock?.id ?? null, blockRowFor);
@@ -4363,11 +4346,9 @@ export default function PracticePlanEditor({
     openStationRow && openStation ? JSON.stringify([openStation.blockId, openStationRow.id]) : null,
     stationDoorFor,
   );
-  /* The roster picker's dialog floor (stage 2, D9) — armed while it is open; Escape closes it
-     and hands focus back to the "Choose players…" that opened it. ⚠ Escape never closes an open
-     BLOCK: a row is not a sheet, and the floor is mounted on the sheets alone. */
-  const pickerPanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(!!pickerTarget, pickerPanelRef, { onClose: () => setAttach(null) });
+  /* ⚰ The roster picker's own dialog floor stood here: Choose players is the one window now (One Window 2d), on its
+     floor — Escape closes it and hands focus back to the "Choose players…" that opened it. ⚠ Escape never closes an
+     open BLOCK: a row is not a sheet. */
 
   /* The BAG (stage 2, D11): the practice's equipment line is the union of the coach's own list and
      every block's and station's kit, derived at read time — `practiceKitBag`, the same walk the
@@ -4932,16 +4913,29 @@ export default function PracticePlanEditor({
           used to print under the name here (D27, 2026-08); the owner removed them 2026-09-15:
           choosing who is at a block is a roster question, and one player's line under twelve
           names read as a stray note. The rail under the plan is where focus areas are read. ── */}
+      {/* ⚖ THE ONE WINDOW, A LIST PICKER (One Window 2d, call B9): a form that fills a phone, over the station and block
+          sheets it opens from (which stay out); a tap outside does nothing, Escape and Back close it and hand focus
+          back to the "Choose players…" that opened it. Each tap writes, so it never asks. */}
       {pickerTarget && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setAttach(null); }}>
-          <div ref={pickerPanelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Choose players"
-            className={`${styles.modal} ${styles.modalScrollBody}`}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Choose players</h3>
-              <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={() => setAttach(null)}>
-                <X size={18} />
+        <QuestionShell open onClose={() => setAttach(null)} ariaLabel="Choose players" title="Choose players"
+          footer={<>
+            {/* The way BACK to "Whole team" (owner, 2026-09-15): the block's line returns to
+                that word when every name is cleared, and unticking twelve names one at a time
+                was the only way to clear them. One press, the picker closes on the answer.
+                A block's picker — or its ONLY station's, which IS the block (stage 3, D1); a
+                station among several or a group has no "whole team" to return to. */}
+            {(pickerTarget.kind === 'block' || pickerIsSoleStation) && selectedIds.length > 0 && (
+              <button type="button" className={styles.btnGhost}
+                onClick={() => {
+                  if (pickerTarget.kind === 'station') patchStation(pickerTarget.blockId, pickerTarget.stationId, { playerIds: [], groupingId: undefined });
+                  else patchBlock(pickerTarget.blockId, { playerIds: [], groupingId: undefined });
+                  setAttach(null);
+                }}>
+                Whole team
               </button>
-            </div>
+            )}
+            <QuestionCancel className={styles.btnPrimary}>Done</QuestionCancel>
+          </>}>
             <div className={styles.ppPickList}>
               {roster.length === 0 && <p className={styles.formHint}>No players on the roster yet.</p>}
               {roster.map(player => {
@@ -4965,26 +4959,7 @@ export default function PracticePlanEditor({
                 );
               })}
             </div>
-            <div className={styles.modalFooter}>
-              {/* The way BACK to "Whole team" (owner, 2026-09-15): the block's line returns to
-                  that word when every name is cleared, and unticking twelve names one at a time
-                  was the only way to clear them. One press, the picker closes on the answer.
-                  A block's picker — or its ONLY station's, which IS the block (stage 3, D1); a
-                  station among several or a group has no "whole team" to return to. */}
-              {(pickerTarget.kind === 'block' || pickerIsSoleStation) && selectedIds.length > 0 && (
-                <button type="button" className={styles.btnGhost}
-                  onClick={() => {
-                    if (pickerTarget.kind === 'station') patchStation(pickerTarget.blockId, pickerTarget.stationId, { playerIds: [], groupingId: undefined });
-                    else patchBlock(pickerTarget.blockId, { playerIds: [], groupingId: undefined });
-                    setAttach(null);
-                  }}>
-                  Whole team
-                </button>
-              )}
-              <button type="button" className={styles.btnPrimary} onClick={() => setAttach(null)}>Done</button>
-            </div>
-          </div>
-        </div>
+        </QuestionShell>
       )}
 
       {/* ── The drill picker (Phase 2; the circuits tab at stage 4) ── */}
@@ -5078,6 +5053,8 @@ export default function PracticePlanEditor({
           focusManage={focusManage} onFocusTagsChanged={onFocusTagsChanged}
           equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
           busy={newDrillBusy} error={newDrillError}
+          // B4: anything written into the blank drill (it opens on `emptyDrillDraft`) asks before it is dropped.
+          dirty={!snapshotEqual(openNewDrill, emptyDrillDraft())}
           onChange={setNewDrill} onSubmit={saveNewDrill} onClose={() => setNewDrill(null)}
         />
       )}

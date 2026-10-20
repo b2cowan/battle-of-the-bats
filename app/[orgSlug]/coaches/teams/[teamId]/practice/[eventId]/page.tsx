@@ -1,11 +1,10 @@
 'use client';
 import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookMarked, Check, ChevronRight, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
+import { BookMarked, Check, ChevronRight, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -25,14 +24,13 @@ import {
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import { HowItWent, NoPlanRecord, PracticeScheduleLink, PracticeWhenDoor, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import {
   MAX_TEMPLATE_NAME_LEN, MAX_TEMPLATES_PER_TEAM, templateBlocksLine, templateShapeLabel, templateToPlan,
 } from '@/lib/rep-plan-templates';
 import { filterTagged, libraryLimitLine, libraryNameMatch } from '@/lib/rep-drills';
-import { useBackStep } from '@/components/coaches/useBackStep';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import SaveOverQuestion, { SaveOverList, SaveOverMatchLine } from '@/components/coaches/SaveOverQuestion';
 import { practicePlansHref } from '@/lib/practice-plans-address';
@@ -276,8 +274,9 @@ export default function CoachPracticePlanPage({
    *  Done editing so the save it started can still say "Saved" (or fail out loud). See the pill. */
   const [editedThisVisit, setEditedThisVisit] = useState(false);
   const startEditing = () => { setEditing(true); setEditedThisVisit(true); };
-  // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
-  useOverlayOpen(copyOpen || saveTemplateOpen || sendOpen);
+  /* ⚰ `useOverlayOpen(copyOpen || saveTemplateOpen || sendOpen)` STOOD HERE (nav-hide + body-scroll lock): Start this
+     plan from…, Save as template and Send to staff are the one window now (One Window 2d), which registers each with
+     the portal's counter itself. */
   /**
    * THE DOCKED LIBRARY (practices re-evaluation stage 4, owner ruling L5, 2026-09-16 — A).
    *
@@ -326,11 +325,8 @@ export default function CoachPracticePlanPage({
     ro.observe(target);
     return () => ro.disconnect();
   }, [loading]);
-  /* "Start this plan from…" stands on the portal's dialog floor (stage 2, D9) — Escape closes it
-     and focus returns to the ghost row's link. The editor's three sheets and "Save as template…"
-     take the same floor; leaving one would be two sheets on one page that close differently. */
-  const copyPanelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(copyOpen, copyPanelRef, { onClose: () => setCopyOpen(false) });
+  /* ⚰ "Start this plan from…"'s own dialog floor stood here: it is the one window now (One Window 2d), on its floor —
+     Escape closes it and focus returns to the ghost row's link, as every other window on this page does. */
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
   // "How it went" appears once the practice has STARTED (stage 1, D7) — a plan left open on a
@@ -1591,17 +1587,10 @@ export default function CoachPracticePlanPage({
           argument — a coach reaching for last October is asking the same question again, and
           before C2 the only answer was to import the practice into the template library first
           (five steps, and a library permanently grown to reuse one night). */}
+      {/* ⚖ THE ONE WINDOW, A LIST PICKER (One Window 2d, call B9): a form that fills a phone; a tap outside does
+          nothing, Escape and Back close it. It never asks — a pick writes, and a tab or a search is not typing. */}
       {copyOpen && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setCopyOpen(false); }}>
-          <div ref={copyPanelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Start this plan from"
-            className={`${styles.modal} ${styles.modalScrollBody}`}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Start this plan from…</h3>
-              <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={() => setCopyOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
+      <QuestionShell open onClose={() => setCopyOpen(false)} ariaLabel="Start this plan from" title="Start this plan from…">
             {/* All three tabs are always offered; a source with nothing in it says so inside
                 rather than vanishing, so the routes stay learnable. ⚠ "A past season" is offered
                 even when this team has none — its empty state is the sentence that teaches a
@@ -1631,8 +1620,7 @@ export default function CoachPracticePlanPage({
                 sources" it implements, and a fourth would have been threaded through by matching
                 brackets. */}
             <div className={styles.ppPickList}>{renderPickList()}</div>
-          </div>
-        </div>
+      </QuestionShell>
       )}
 
       {/* ── "Send to staff" — exactly ONE question: who (and whether your email goes with it) ── */}
@@ -1706,13 +1694,15 @@ function SaveAsTemplateDialog({
   const [replacing, setReplacing] = useState<PlanTemplateOption | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  /* The dialog floor (stage 2, D9), busy-gated: Escape closes, never mid-save; the name field's
-     own autoFocus keeps the cursor (the floor seats focus on the panel only when nothing inside
-     took it). */
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogFloor(true, panelRef, { onClose, busy });
+  /* ⚖ THE ONE WINDOW (One Window 2d, call B3 — it asks as it moves), busy-gated: Escape closes, never mid-save; the
+     name field's own autoFocus keeps the cursor. "Replace “X”?" is a LEVEL (`onBack` + `backLabel`): the head's
+     "‹ Save as template" at a desk, the phone's ← and its Back gesture go up to the name — the window's own Back step,
+     which stood here as a `useBackStep` of its own. */
   const backToName = () => { setReplacing(null); setError(''); };
-  useBackStep(!!replacing, backToName);
+  /* ⚠ ASKS ONLY ONCE THE NAME MOVED OFF ITS PRE-FILL (B3): the practice's own name is not typed words, so a coach who
+     opened this and thought better of it closes it at once. (Tapping a template to replace sets its name: that is a
+     choice made, and asks.) */
+  const dirty = name.trim() !== defaultName.trim();
 
   const match = libraryNameMatch(templates, name);
   const atLimit = !match && templates.length >= MAX_TEMPLATES_PER_TEAM;
@@ -1734,26 +1724,25 @@ function SaveAsTemplateDialog({
   }
 
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Save as template"
-        aria-busy={busy || undefined} className={`${styles.modal} ${styles.modalScrollBody}`}>
-        <div className={styles.modalHeader}>
-          {/* On the question the bar is a Back that names where it goes — the portal's labelled back
-              (on a phone the bare arrow, which takes the × with it, as every sheet's does). */}
-          {replacing ? (
-            <button type="button" className={`${styles.modalBackBtn} ${styles.modalBackLabelled}`}
-              aria-label="Back to Save as template" disabled={busy} onClick={backToName}>
-              <ArrowLeft size={20} aria-hidden /><span className={styles.modalBackWord}>Save as template</span>
+    <QuestionShell open onClose={onClose} dirty={dirty} busy={busy}
+      onBack={replacing ? backToName : undefined} backLabel="Save as template" levelKey={replacing ? 'replace' : 'name'}
+      ariaLabel="Save as template" title={replacing ? `Replace “${replacing.name}”?` : 'Save as template'}
+      footer={replacing ? undefined : (
+        <>
+          <QuestionCancel className={styles.btnGhost} />
+          {match ? (
+            <button type="submit" form="save-as-template" className={styles.btnDanger}>Replace “{match.name}”…</button>
+          ) : (
+            <button type="submit" form="save-as-template" className={styles.btnPrimary} disabled={busy || !name.trim() || atLimit}>
+              {busy ? 'Saving…' : 'Save template'}
             </button>
-          ) : <h3 className={styles.modalTitle}>Save as template</h3>}
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" disabled={busy} onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
+          )}
+        </>
+      )}>
         {replacing ? (
           <div className={styles.ppDrillWrite}>
             <SaveOverQuestion
-              question={`Replace “${replacing.name}”?`}
+              question={`Replace “${replacing.name}”?`} titled
               sub="Its blocks, stations, timings, what it’s about and its tags become this practice’s."
               now={describe(replacing)} after={after}
               confirmLabel="Replace template" busyLabel="Replacing…" busy={busy} error={error}
@@ -1762,7 +1751,7 @@ function SaveAsTemplateDialog({
             </SaveOverQuestion>
           </div>
         ) : (
-          <form className={styles.ppDrillWrite} onSubmit={e => { e.preventDefault(); submit(); }}>
+          <form id="save-as-template" className={styles.ppDrillWrite} onSubmit={e => { e.preventDefault(); submit(); }}>
             <label className={styles.ppField}>
               <span className={styles.ppFieldLabel}>Name</span>
               <input className={styles.input} value={name} maxLength={MAX_TEMPLATE_NAME_LEN} autoFocus
@@ -1781,7 +1770,8 @@ function SaveAsTemplateDialog({
               supplies those. You can change the template&apos;s name and tags on the Templates tab.
             </p>
 
-            {error && <p className={styles.errorText} role="alert">{error}</p>}
+            {/* Why the save was refused, beside its button in the foot (One Window 2b). */}
+            <QuestionReason className={styles.errorText}>{error}</QuestionReason>
 
             {newestFirst.length > 0 && (
               <SaveOverList label="Your templates · tap one to replace it">
@@ -1793,20 +1783,8 @@ function SaveAsTemplateDialog({
                 </CoachRowList>
               </SaveOverList>
             )}
-
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-              {match ? (
-                <button type="submit" className={styles.btnDanger}>Replace “{match.name}”…</button>
-              ) : (
-                <button type="submit" className={styles.btnPrimary} disabled={busy || !name.trim() || atLimit}>
-                  {busy ? 'Saving…' : 'Save template'}
-                </button>
-              )}
-            </div>
           </form>
         )}
-      </div>
-    </div>
+    </QuestionShell>
   );
 }

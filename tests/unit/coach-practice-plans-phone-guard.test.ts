@@ -527,21 +527,21 @@ describe('practice plans on a phone · stage 4 (N1–N4) — the head of the pag
     assert.match(page, /\{canSend && \(\s*<button type="button" className=\{styles\.ppLinkBtn\} onClick=\{\(\) => setSendOpen\(true\)\}>Send again<\/button>/);
   });
 
-  it('N2, revised — the send sheet is the portal\'s sheet recipe whole: the shared header, one pane, the foot outside it', () => {
+  it('N2, revised — the send sheet is the one window: its head, a body that scrolls, the refusal and the buttons in its foot', () => {
+    // ⚖ One Window 2d: the shared header + one pane + a foot outside it are the one window's own head, body and foot
+    // (← on a phone, × at a desk; Cancel · Send pinned; a refusal beside Send at any scroll) — the same promise.
     const sheet = readCode('app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeSendSheet.tsx');
-    assert.match(sheet, /<CoachModalHeader title="Send to staff" onClose=\{onClose\} closeAriaLabel="Close" \/>/, '← on a phone, × above 640 — a hand-rolled × alone sat beside the title');
+    assert.match(sheet, /<QuestionShell open onClose=\{onClose\} busy=\{busy\} ariaLabel="Send to staff" title="Send to staff"/);
     assert.doesNotMatch(sheet, /ppDrillWrite/, 'its 2.4rem inset put the body 14px inside the title on a phone');
-    const pane = sheet.indexOf('<div className={`${styles.scrollPane} ${styles.ppSendBody}`}>');
+    const pane = sheet.indexOf('<div className={styles.ppSendBody}>');
     const last = sheet.indexOf('{lastSent && <p className={styles.ppSendLast} data-testid="send-sheet-last">{lastSent}</p>}');
     const hint = sheet.indexOf('A bell and a push, with a link to this plan.');
-    const error = sheet.indexOf('{error && <p className={`${styles.errorText} ${styles.ppSendError}`} role="alert">{error}</p>}');
-    const foot = sheet.indexOf('<div className={styles.modalFooter}>');
-    assert.ok(pane > 0 && pane < last && last < hint && hint < error && error < foot, 'pane → the last send → the hint … → the error → the foot');
-    // The pane closes BEFORE the error: nothing but the pane's own `</div>` (and a stripped comment's
-    // `{ }`) between the preview's end and the error line.
-    assert.match(sheet, /\)\}\s*<\/div>\s*(\{ \}\s*)?\{error && <p className=\{`\$\{styles\.errorText\} \$\{styles\.ppSendError\}`\}/, 'the error and the foot sit outside the scroll');
-    // The edge-to-edge rule's gutter skips every fixed child of the page.
-    assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \.page > :not\(\.ppSheetCol\):not\(\.modalOverlay\):not\(\.savePill\),\s*\.coachesMain:has\(\.ppSheetPair\) \.ppSheetCol > :not\(\.ppSheetPair\):not\(\.modalOverlay\) \{ margin-inline: 1rem; \}/);
+    const error = sheet.indexOf('<QuestionReason className={styles.errorText}>{error}</QuestionReason>');
+    assert.ok(pane > 0 && pane < last && last < hint && hint < error, 'the body → the last send → the hint … → the refusal (into the foot)');
+    assert.doesNotMatch(sheet, /modalFooter|scrollPane|CoachModalHeader/);
+    // The edge-to-edge rule's gutter skips every fixed child of the page — the one window's overlay included (it is
+    // skipped by what it holds: a margin on a fixed overlay stopped a dialog 16px short of the glass, 2026-09-25).
+    assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \.page > :not\(\.ppSheetCol\):not\(\.modalOverlay\):not\(\.savePill\):not\(:has\(> \[data-kit-dialog\]\)\),\s*\.coachesMain:has\(\.ppSheetPair\) \.ppSheetCol > :not\(\.ppSheetPair\):not\(\.modalOverlay\):not\(:has\(> \[data-kit-dialog\]\)\) \{ margin-inline: 1rem; \}/);
   });
 
   it('N3 — About renders under the timeline on a phone, before the focus rail; in JS order', () => {

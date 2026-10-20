@@ -23,10 +23,13 @@ import styles from './SaveOverQuestion.module.css';
  * own rhythm (the lineup's tight 0.45rem, the practice dialogs' 0.7rem).
  */
 export default function SaveOverQuestion({
-  question, sub, now, after, children, warning = 'This can’t be undone.',
+  question, titled = false, sub, now, after, children, warning = 'This can’t be undone.',
   confirmLabel, busyLabel, busy, error, onConfirm, onBack,
 }: {
   question: string;
+  /** The window itself titles this view with the question (the one window's level: "‹ Save to my drills" over
+   *  "Update “Cone weave”?", One Window 2d) — the body then opens on the sub line rather than saying it twice. */
+  titled?: boolean;
   /** What the saved one takes from this one, in a line. */
   sub: string;
   now: ReactNode;
@@ -45,7 +48,7 @@ export default function SaveOverQuestion({
   return (
     <>
       <div className={styles.question}>
-        <strong>{question}</strong>
+        {!titled && <strong>{question}</strong>}
         <span>{sub}</span>
       </div>
       <dl className={styles.facts}>
