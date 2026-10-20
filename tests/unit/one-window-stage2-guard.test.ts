@@ -459,6 +459,21 @@ describe('2d · the rest of the hand-built coach windows move onto the one windo
     assert.match(kitCss, /\.footStart:has\(> \[role="alertdialog"\]\) \{ flex: 1 1 100%; margin-right: 0; \}/);
     assert.match(kitCss, /\.footStart > \[role="alertdialog"\] \{ flex: 1 1 100%; margin: 0; \}/);
   });
+
+  it('B1 + B3: the club request asks in its own foot; the "installment sent" window asks as it moves (part 2)', () => {
+    const code = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx');
+    // Open only while its tab shows (the hub keeps the panel mounted, hidden); the filing write holds it too.
+    assert.match(code, /<QuestionShell\s+open=\{tabActive\}\s+onClose=\{closeForm\}\s+dirty=\{formDirty\}\s+busy=\{busy \|\| filingBusy\}/);
+    // The Withdraw confirm stays docked in the foot, whole, with the window's buttons gone while it shows.
+    assert.match(code, /footerStart=\{confirmWithdraw && editing \? \(\s*<div className=\{styles\.dangerConfirm\} role="alertdialog" aria-label="Confirm withdraw">/);
+    assert.match(code, /footer=\{confirmWithdraw && editing \? undefined : \(/);
+    // "We've sent it" stands over the bill's room and asks when the day, how or the reference moved off what it opened with.
+    assert.match(code, /const dirty = sentOn !== today \|\| method !== '' \|\| reference !== '';/);
+    assert.match(code, /<QuestionShell open onClose=\{onCancel\} dirty=\{dirty\} busy=\{busy\}/);
+    assert.doesNotMatch(code, /useDiscardGuard|useOverlayOpen|useDialogFloor|CoachModalHeader|modalOverlay|modalFooter/,
+      'both windows ask and own their overlay, floor and head; no second window');
+    assert.match(code, /<UnsavedChangesGuard\s+active=\{showForm && formDirty\}/);
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -477,7 +492,6 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/CoachStaffSheet.tsx', STAYS],
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],
-      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', MOVES_2D + ' (and the player drawer stays out)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx', MOVES_2D + ', the practice page last'],
       ['app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx', MOVES_2D + ', the practice page last (its station and block sheets stay out)'],

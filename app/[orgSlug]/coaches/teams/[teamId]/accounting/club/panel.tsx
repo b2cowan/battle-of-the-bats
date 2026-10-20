@@ -10,18 +10,15 @@ import { EARLIER_SEASON_WORDS, coachWhatTheClubReads, stillOwedFromSeasonWord } 
 import { useOrg } from '@/lib/org-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import RoomShell, { type RoomTile } from '@/components/coaches/RoomShell';
 import { useRoomAddress } from '@/components/coaches/useRoomAddress';
-import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { roomNeighbours } from '@/lib/room-neighbours';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useSharedMoneyRead, useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
   CLUB_MONEY_ITEM_DIRECTION, CLUB_MONEY_IN_ASK, clubMoneyInWord, clubRequestItemDirection,
@@ -509,6 +506,8 @@ function Filing({ category, item }: { category: string | null; item: string | nu
  * the club's books — the club confirms it when it arrives — so until then it is not Paid, and the coach
  * can take it back. Stacks over the bill's room (the floor's top-window rule: Escape and Back close it
  * alone).
+ * ⚖ THE ONE WINDOW (One Window 2d, call B3): it never asked, and a stray tap dropped what was typed. Now a tap outside
+ * does nothing, and with the day, how or the reference changed from what it opened with, every way out asks in its foot.
  */
 function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSend }: {
   installmentNumber: number;
@@ -524,11 +523,10 @@ function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSen
   const [method, setMethod] = useState('');
   const [reference, setReference] = useState('');
   const [error, setError] = useState('');
-  const panelRef = useRef<HTMLDivElement>(null);
   // `busy` arrives a render late; a second tap inside that render would tell the club twice, and the
   // loser would read "someone on your team already told the club" about its own tap.
   const firing = useRef(false);
-  useDialogFloor(true, panelRef, { onClose: onCancel, busy });
+  const dirty = sentOn !== today || method !== '' || reference !== '';
 
   const send = async () => {
     if (busy || firing.current) return;
@@ -544,12 +542,14 @@ function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSen
   };
 
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onCancel(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Tell the club you’ve sent installment ${installmentNumber}`}
-        className={`${styles.modal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
-        <CoachModalHeader title={`Tell the club you’ve sent installment ${installmentNumber}`} subtitle={fmt(amount)} onClose={busy ? () => {} : onCancel} />
+    <QuestionShell open onClose={onCancel} dirty={dirty} busy={busy}
+      ariaLabel={`Tell the club you’ve sent installment ${installmentNumber}`}
+      title={`Tell the club you’ve sent installment ${installmentNumber}`} subtitle={fmt(amount)}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost} />
+        <button type="button" className={styles.btnPrimary} onClick={() => void send()} disabled={busy}>{busy ? 'Telling the club…' : 'Tell the club'}</button>
+      </>}>
         <div className={styles.formGrid}>
-          {error && <p className={`${styles.errorText} ${styles.formGridFull}`} role="alert">{error}</p>}
           <label className={styles.field} htmlFor="sent-on">
             <span className={styles.label}>Sent on<span aria-hidden> *</span></span>
             <input id="sent-on" type="date" className={styles.input} value={sentOn} max={today} onChange={e => setSentOn(e.target.value)} />
@@ -572,12 +572,9 @@ function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSen
             <strong>{clubName ?? 'The club'} confirms it when it arrives.</strong> Until then it isn’t counted as paid, and you can take it back.
           </p>
         </div>
-        <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={onCancel} disabled={busy}>Cancel</button>
-          <button type="button" className={styles.btnPrimary} onClick={() => void send()} disabled={busy}>{busy ? 'Telling the club…' : 'Tell the club'}</button>
-        </div>
-      </div>
-    </div>
+        {/* Why Tell the club was refused, beside the button (One Window 2b). */}
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
+    </QuestionShell>
   );
 }
 
@@ -735,8 +732,8 @@ export function ClubPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const today = tournamentToday();
 
-  // A form covers the nav — the request window, and the "We've sent it" window over a bill's room.
-  useOverlayOpen(showForm || sending != null);
+  /* ⚰ `useOverlayOpen(showForm || sending != null)` STOOD HERE. The request window and the "We've sent it" window are
+     the one window now (One Window 2d), which registers each with the portal's counter itself (a form covers the nav). */
 
   /* Money is three-state (off|read|write), and a finished season withdraws every write regardless.
      Read off `assignments`/`closedAssignments` directly because this is needed ABOVE the
@@ -796,19 +793,13 @@ export function ClubPanel({
     (formItem?.itemId ?? '') !== original.itemId
   );
 
-  const closeForm = useDiscardGuard({
-    dirty: formDirty,
-    close: () => { setShowForm(false); setConfirmWithdraw(false); },
-    noun: 'club request',
-  });
-  /* The request window stands on the same accessibility floor as a room (D7): Escape closes
-     (through the discard guard, never past it), Tab stays inside, focus returns to the row. */
-  const formPanelRef = useRef<HTMLDivElement>(null);
-  /* ⚠ Gated on `tabActive` (`/review`, 2026-09-02): the hub keeps this panel mounted, hidden, when a
-     coach leaves the tab with the window open, and a floor left armed on a hidden panel answered a
-     bare Escape on whatever tab they were on — closing an invisible window, or raising its discard
-     question over an unrelated screen. The window's filing write counts as busy too. */
-  useDialogFloor(showForm && tabActive, formPanelRef, { onClose: () => { void closeForm(); }, busy: busy || filingBusy });
+  const closeForm = () => { setShowForm(false); setConfirmWithdraw(false); };
+  /* ⚰ `useDiscardGuard` (the second window, "Discard this club request?" · Keep editing) and `useDialogFloor` STOOD
+     HERE. The request window is the one window (One Window 2d, call B1): with something typed, ×, ←, Cancel, Escape
+     and the phone's Back ask in its own foot; Tab stays inside, focus returns to the row. ⚠ Open only while its tab
+     is on screen (`/review`, 2026-09-02): the hub keeps this panel mounted, hidden, when a coach leaves the tab with
+     the window open, and a floor left armed on a hidden panel answered a bare Escape on whatever tab they were on —
+     closing an invisible window, or asking over an unrelated screen. The window's filing write counts as busy too. */
 
 
   /* ⚠⚠ EVERY LOAD CARRIES A SEQUENCE AND DISCARDS STALE RESPONSES (the P3 review finding, inherited
@@ -2198,31 +2189,84 @@ export function ClubPanel({
           mode — money access is refreshed state, so it can fall away between the render that drew
           the door and the tap that opens it. */}
       {showForm && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (busy ? undefined : closeForm)?.(); }}>
-          {/* ⚠ `modalFlushFooter` IS REQUIRED ON ANY MODAL TALL ENOUGH TO SCROLL, and this one is —
-              the direction picker, the item picker, four fields and a notes box clear 90vh on a
-              laptop. Without it the footer's bottom bleed sits inside the panel's own bottom padding
-              (a band of dead space under the buttons) AND shortens the scroll extent, so the last
-              field can never quite be scrolled into view. */}
-          <div
-            ref={formPanelRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-label={editing ? (readOnly ? 'Club request details' : 'Edit club request') : 'New club request'}
-            className={`${styles.modal} ${styles.modalFlushFooter}`}
-            onClick={e => e.stopPropagation()}
-          >
-            <CoachModalHeader
-              title={editing ? 'Club request' : 'New club request'}
-              subtitle={editing
-                ? `Raised ${fmtDate(editing.createdAt)}${
-                    editing.reviewedAt
-                      ? ` · ${editing.status === 'denied' ? 'declined' : editing.status} ${fmtDate(editing.reviewedAt)}`
-                      : ' · not yet answered'}`
-                : seasonName}
-              onClose={busy ? () => {} : closeForm}
-            />
+        <QuestionShell
+          open={tabActive}
+          onClose={closeForm}
+          dirty={formDirty}
+          busy={busy || filingBusy}
+          ariaLabel={editing ? (readOnly ? 'Club request details' : 'Edit club request') : 'New club request'}
+          title={editing ? 'Club request' : 'New club request'}
+          subtitle={editing
+            ? `Raised ${fmtDate(editing.createdAt)}${
+                editing.reviewedAt
+                  ? ` · ${editing.status === 'denied' ? 'declined' : editing.status} ${fmtDate(editing.reviewedAt)}`
+                  : ' · not yet answered'}`
+            : seasonName}
+          /* ⚠⚠ THE CONFIRMATION IS THE FOOT'S OTHER STATE — it stood in the scrolling body
+              above the buttons and the owner could not find it (§134 walk): on a long request the
+              block appeared BELOW THE FOLD, so pressing Withdraw looked like it did nothing while
+              the only control still on screen (Cancel) had gone dead to stop a coach saving the
+              edit they were abandoning. A dead button and an invisible explanation is how someone
+              gets stranded in a modal.
+              Now the question REPLACES the buttons it suspends, in the one band that is always
+              visible: whole at the foot's left, across its row, with the window's buttons gone while it
+              shows (One Window 2d; RoomShell's doors slot makes the same promise). Nothing is disabled
+              because nothing competing is rendered, and there are three ways out: Keep it, the head's
+              ×, and Escape.
+              ⚠ IT NAMES THE REQUEST AND SAYS WHAT SURVIVES, never a bare "Are you sure?".
+              Withdrawing removes the request outright — the club never sees it and there is
+              nothing to restore — so that has to be said before a coach can agree to it. */
+          footerStart={confirmWithdraw && editing ? (
+            <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm withdraw">
+              <p className={styles.dangerConfirmTitle}>{editing.handBack ? HB.withdrawQuestion : <>Withdraw “{editing.description}”?</>}</p>
+              <p className={styles.dangerConfirmBody}>
+                {editing.handBack ? HB.withdrawWhat(editing.handBack.count, !!editing.handBack.late) : <>This takes the request off the club&apos;s list for good — there&apos;s no record
+                kept and no way to bring it back. You can always make a new one.</>}
+              </p>
+              <div className={styles.dangerConfirmActions}>
+                <button type="button" className={styles.btnGhost} disabled={withdrawing} onClick={() => setConfirmWithdraw(false)}>Keep it</button>
+                <button type="button" className={styles.btnDanger} disabled={withdrawing} onClick={handleWithdraw}>
+                  {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
+                </button>
+              </div>
+            </div>
+          /* Withdraw sits in the FORM's foot, never on the row — the rule Budget Plan set and
+             the money screens follow, and the reason a row needs only one control. */
+          ) : editing && canWriteMoney && (!readOnly || canWithdrawAsk) ? (
+            <button type="button" className={styles.deleteRecordBtn} onClick={() => setConfirmWithdraw(true)} disabled={busy}>
+              <Trash2 size={13} aria-hidden /> {editing.handBack ? HB.withdrawDoor : 'Withdraw request'}
+            </button>
+          ) : undefined}
+          /* ⚠ THE LONE ACTION IS NEVER THE BORDERLESS ONE. On a locked record "Close" is not the
+             quiet alternative to Save — it is the only thing in the foot, and a ghost control
+             with no edge reads as unfinished text floating in the band. It takes a shape when it
+             stands alone and steps back to the ghost beside Save.
+             ⚰ `disabled={… || confirmWithdraw}` STOOD ON THIS BUTTON AND ON SAVE, and is gone
+             (§134 walk): the confirmation REPLACES this whole row, so there is nothing to disable. */
+          footer={confirmWithdraw && editing ? undefined : (
+            <>
+              <QuestionCancel className={readOnly ? styles.btnSecondary : styles.btnGhost}>{readOnly ? 'Close' : 'Cancel'}</QuestionCancel>
+              {canEditRecord && canWriteMoney && (
+                <button
+                  type="button"
+                  className={styles.btnPrimary}
+                  onClick={handleSubmit}
+                  /* ⚠⚠ EVERY REQUIRED FIELD GATES THIS BUTTON THE SAME WAY (owner-found
+                     2026-09-01). The ask was checked inside the submit handler instead, so a missing
+                     amount left the button visibly disabled while a missing ANSWER left it looking
+                     live and doing nothing — two behaviours for one situation, and the dead one
+                     teaches a coach the product is broken. The house rule is the foreseeable-refusal
+                     ruling (§118): a control that cannot work says so before it is pressed. The
+                     server still enforces the answer; this is what a coach is offered. */
+                  disabled={busy || !formAmount || !formDesc.trim()
+                    || (formType === 'charge_to_org' && !formMeaning)}
+                >
+                  {saving ? 'Saving…' : (editing ? 'Save changes' : 'Submit request')}
+                </button>
+              )}
+            </>
+          )}
+        >
 
             <div className={styles.formGrid}>
               {/* The club's answer comes FIRST on a declined request — it is the only thing the coach
@@ -2494,87 +2538,10 @@ export function ClubPanel({
                 <p className={`${styles.formGridFull} ${styles.formHint} ${styles.formHintConsequence}`}>{consequenceLine()}</p>
               )}
 
-              {formError && <p className={`${styles.errorText} ${styles.formGridFull}`}>{formError}</p>}
             </div>
-
-            {/* ⚠⚠ THE CONFIRMATION IS THE FOOTER'S OTHER STATE — it stood in the scrolling body
-                above this band and the owner could not find it (§134 walk): on a long request the
-                block appeared BELOW THE FOLD, so pressing Withdraw looked like it did nothing while
-                the only control still on screen (Cancel) had gone dead to stop a coach saving the
-                edit they were abandoning. A dead button and an invisible explanation is how someone
-                gets stranded in a modal.
-                Now the question REPLACES the buttons it suspends, in the one band that is always
-                visible — the same contract RoomShell gives its doors slot. Nothing is disabled any
-                more because nothing competing is rendered, and there are three ways out: Keep it,
-                the header X, and Escape.
-                ⚠ IT NAMES THE REQUEST AND SAYS WHAT SURVIVES, never a bare "Are you sure?".
-                Withdrawing removes the request outright — the club never sees it and there is
-                nothing to restore — so that has to be said before a coach can agree to it. */}
-            <div className={styles.modalFooter}>
-              {confirmWithdraw && editing ? (
-                <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm withdraw">
-                  <p className={styles.dangerConfirmTitle}>{editing.handBack ? HB.withdrawQuestion : <>Withdraw “{editing.description}”?</>}</p>
-                  <p className={styles.dangerConfirmBody}>
-                    {editing.handBack ? HB.withdrawWhat(editing.handBack.count, !!editing.handBack.late) : <>This takes the request off the club&apos;s list for good — there&apos;s no record
-                    kept and no way to bring it back. You can always make a new one.</>}
-                  </p>
-                  <div className={styles.dangerConfirmActions}>
-                    <button type="button" className={styles.btnGhost} disabled={withdrawing} onClick={() => setConfirmWithdraw(false)}>Keep it</button>
-                    <button type="button" className={styles.btnDanger} disabled={withdrawing} onClick={handleWithdraw}>
-                      {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-              {/* Withdraw sits in the FORM's footer, never on the row — the rule Budget Plan set and
-                  the money screens follow, and the reason a row needs only one control. */}
-              {editing && canWriteMoney && (!readOnly || canWithdrawAsk) && (
-                <button type="button" className={styles.deleteRecordBtn} onClick={() => setConfirmWithdraw(true)} disabled={busy}>
-                  <Trash2 size={13} aria-hidden /> {editing.handBack ? HB.withdrawDoor : 'Withdraw request'}
-                </button>
-              )}
-              {/* ⚠ THE LONE ACTION IS NEVER THE BORDERLESS ONE. On a locked record "Close" is not the
-                  quiet alternative to Save — it is the only thing in the footer, and a ghost control
-                  with no edge reads as unfinished text floating in the band. It takes a shape when it
-                  stands alone and steps back to the ghost beside Save.
-                  ⚰ `disabled={… || confirmWithdraw}` STOOD ON THIS BUTTON AND ON SAVE, and is gone
-                  (§134 walk). The reasoning was sound — a live "Save changes" under an unanswered
-                  question let a coach save the very edit they were abandoning — but disabling was the
-                  wrong instrument: the question that explained the dead buttons was in the scrolling
-                  body, often off screen, so the coach saw only a Cancel that no longer worked. The
-                  confirmation now REPLACES this whole row, so there is nothing to disable. */}
-              <button
-                type="button"
-                className={readOnly ? styles.btnSecondary : styles.btnGhost}
-                onClick={closeForm}
-                disabled={busy}
-              >
-                {readOnly ? 'Close' : 'Cancel'}
-              </button>
-              {canEditRecord && canWriteMoney && (
-                <button
-                  type="button"
-                  className={styles.btnPrimary}
-                  onClick={handleSubmit}
-                  /* ⚠⚠ EVERY REQUIRED FIELD GATES THIS BUTTON THE SAME WAY (owner-found
-                     2026-09-01). The ask was checked inside the submit handler instead, so a missing
-                     amount left the button visibly disabled while a missing ANSWER left it looking
-                     live and doing nothing — two behaviours for one situation, and the dead one
-                     teaches a coach the product is broken. The house rule is the foreseeable-refusal
-                     ruling (§118): a control that cannot work says so before it is pressed. The
-                     server still enforces the answer; this is what a coach is offered. */
-                  disabled={busy || !formAmount || !formDesc.trim()
-                    || (formType === 'charge_to_org' && !formMeaning)}
-                >
-                  {saving ? 'Saving…' : (editing ? 'Save changes' : 'Submit request')}
-                </button>
-              )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+            {/* Why the button was refused, beside it in the foot, at any scroll (One Window 2b). */}
+            <QuestionReason className={styles.errorText}>{formError}</QuestionReason>
+        </QuestionShell>
       )}
 
       <UnsavedChangesGuard
