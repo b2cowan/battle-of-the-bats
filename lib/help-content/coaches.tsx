@@ -216,18 +216,40 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-coach-confirm-email',
           question: 'I just made an account — why do I have to open an email?',
-          answerText: 'New accounts confirm their email address before they open, so no one can make an account in your name and collect what is sent to you. After you create your account (starting a free team home, setting up the Premium Coaches Portal, registering a team for a tournament, or from an organizer\'s link to your team) we email a link to the address you typed. Open it on any phone or computer and you are signed in and taken on: to step 2, where you name the team you started (for Premium: the team, the sport and the plan), or straight to your team in your Coaches Portal. No email after a few minutes? Check your spam folder, then press Send the link again on the same screen. Tried to sign in first and were told to verify your email? Press Send the link again in that message. Typed the wrong address? On the start-a-team and Premium screens, Use a different email takes you back to the form with everything you entered. A tournament registration never waits for this: the organizer gets it the moment you submit. Joining from an assistant coach invitation? That email already proves your address, so there is no second one.',
-          keywords: ['confirm email', 'verify email', 'verification email', 'check your email', 'confirmation link', 'send the link again', 'resend link', 'no email', 'didn\'t get the email', 'email not arrived', 'spam', 'use a different email', 'wrong email', 'account not ready', 'verify your email before signing in', 'new account', 'sign in resend', 'link expired', 'name your team', 'coach premium', 'premium sign up'],
+          answerText: 'New accounts confirm their email address before they open, so no one can make an account in your name and collect what is sent to you. After you create your account (starting a free team home, setting up the Premium Coaches Portal, registering a team for a tournament, or from an organizer\'s link to your team) we email a link to the address you typed. Open it on any phone or computer and press Confirm my email on the page it opens: you are signed in and taken on, to step 2, where you name the team you started (for Premium: the team, the sport and the plan), or straight to your team in your Coaches Portal. No email after a few minutes? Check your spam folder, then press Send the link again on the same screen. Tried to sign in first? Sign-in says Confirm your email first, with Send the link again right under it. Link expired or already used? The link works for 1 hour; an old one opens sign-in, which says so, and Email me a new link sends a fresh one. Typed the wrong address? On the start-a-team and Premium screens, Use a different email takes you back to the form with everything you entered. A tournament registration never waits for this: the organizer gets it the moment you submit. Joining from an assistant coach invitation? That email already proves your address, so there is no second one.',
+          keywords: ['confirm email', 'verify email', 'verification email', 'check your email', 'confirmation link', 'send the link again', 'resend link', 'no email', 'didn\'t get the email', 'email not arrived', 'spam', 'use a different email', 'wrong email', 'create account', 'account not ready', 'verify your email before signing in', 'confirm your email first', 'confirm my email', 'email me a new link', 'link already used', 'link works for 1 hour', 'new account', 'sign in resend', 'link expired', 'name your team', 'coach premium', 'premium sign up'],
           popular: true,
           answer: (
             <>
-              <p>New accounts confirm their email address before they open, so no one can make an account in your name and collect what&apos;s sent to you. After you create your account (starting a free team home, setting up the Premium Coaches Portal, registering a team for a tournament, or from an organizer&apos;s link to your team) we email a link to the address you typed. Open it on any phone or computer and you&apos;re signed in and taken on: to step 2, where you name the team you started (for Premium: the team, the sport and the plan), or straight to your team in your Coaches Portal.</p>
+              <p>New accounts confirm their email address before they open, so no one can make an account in your name and collect what&apos;s sent to you. After you create your account (starting a free team home, setting up the Premium Coaches Portal, registering a team for a tournament, or from an organizer&apos;s link to your team) we email a link to the address you typed. Open it on any phone or computer and press <strong>Confirm my email</strong> on the page it opens: you&apos;re signed in and taken on, to step 2, where you name the team you started (for Premium: the team, the sport and the plan), or straight to your team in your Coaches Portal.</p>
               <ul>
                 <li><strong>No email after a few minutes?</strong> Check your spam folder, then press <strong>Send the link again</strong> on the same screen.</li>
-                <li><strong>Tried to sign in first?</strong> Sign-in tells you to verify your email, and <strong>Send the link again</strong> sits right in that message.</li>
+                <li><strong>Tried to sign in first?</strong> Sign-in says <strong>Confirm your email first</strong>, with <strong>Send the link again</strong> right under it.</li>
+                <li><strong>Link expired or already used?</strong> The link works for 1 hour. An old one opens sign-in, which says so; press <strong>Email me a new link</strong> there.</li>
                 <li><strong>Typed the wrong address?</strong> On the start-a-team and Premium screens, <strong>Use a different email</strong> takes you back to the form with everything you entered.</li>
                 <li><strong>Registering for a tournament?</strong> Your registration never waits for this &mdash; the organizer gets it the moment you submit.</li>
                 <li><strong>Joining from an assistant coach invitation?</strong> That email already proves your address, so there&apos;s no second one.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'faq-coach-forgot-password',
+          question: 'I forgot my password — how do I get back in?',
+          answerText: 'On the sign-in page, press Forgot your password?, type your email and press Send me a reset link. Open the email (Reset your FieldLogicHQ password) and press its button, then Reset my password on the page it opens. Choose a new password (at least 8 characters) and press Save password; you are taken into your account. The link works for 1 hour. An old or already-used link opens the forgot-password page, which says so: ask for a new one there. Started from a registration form? After the new password you come back to that registration, signed in. No email? The page says a link is on its way if an account exists for that address, so check your spam folder and the spelling of the address.',
+          keywords: ['forgot password', 'reset password', 'reset my password', 'send me a reset link', 'choose a new password', 'save password', 'cannot sign in', 'can\'t log in', 'password not working', 'wrong password', 'don\'t match', 'reset link expired', 'reset link already used', 'no reset email', 'change password'],
+          answer: (
+            <>
+              <ol>
+                <li>On the sign-in page, press <strong>Forgot your password?</strong></li>
+                <li>Type your email and press <strong>Send me a reset link</strong>.</li>
+                <li>Open the email (<em>Reset your FieldLogicHQ password</em>), press its button, then <strong>Reset my password</strong> on the page it opens.</li>
+                <li>Choose a new password (at least 8 characters) and press <strong>Save password</strong>. You&apos;re taken into your account.</li>
+              </ol>
+              <ul>
+                <li><strong>Link expired or already used?</strong> The link works for 1 hour. An old one opens the forgot-password page, which says so: ask for a new one there.</li>
+                <li><strong>Started from a registration form?</strong> After the new password you come back to that registration, signed in.</li>
+                <li><strong>No email?</strong> The page says a link is on its way <em>if</em> an account exists for that address, so check your spam folder and the spelling of the address.</li>
               </ul>
             </>
           ),

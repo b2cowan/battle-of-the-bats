@@ -55,7 +55,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>FieldLogicHQ emails the reset link straight to the customer. You'll see a <strong>&ldquo;Reset email sent to&hellip;&rdquo;</strong> confirmation &mdash; no link is shown to you, and there is nothing to copy or forward.</li>
             <li>Tell the customer to check their inbox and open the email to set a new password. Do not set or ask for the customer's password.</li>
           </ol>
-          <p>The reset action is audit-logged as <strong>Send Password Reset Email</strong>. If the customer doesn't receive the email, confirm their email address and auth status in Customer Users (use <strong>Edit Info</strong> to correct a wrong address), and/or have them use the normal <strong>Forgot password</strong> flow from the login page.</p>
+          <p>The reset action is audit-logged as <strong>Send Password Reset Email</strong>. If the customer doesn't receive the email, confirm their email address and auth status in Customer Users (use <strong>Edit Info</strong> to correct a wrong address), and/or have them press <strong>Forgot your password?</strong> on the sign-in page, which sends the same kind of link (<strong>Send me a reset link</strong>, then the email&rsquo;s <strong>Reset my password</strong>, then <strong>Save password</strong>).</p>
           <p>If the customer belongs to multiple organizations, resetting the password affects the same login across all of their FieldLogicHQ memberships.</p>
         </>
       ),
@@ -64,10 +64,10 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-reset-link-expiry',
           question: 'How long does the emailed reset link last?',
           answer: (
-            <p>Supabase controls the recovery-link lifetime for the project. Treat the emailed link as short-lived and ask the customer to open it right away. Send a new reset if they report that it expired.</p>
+            <p>One hour, and the reset email says so. An expired or already-used link opens the forgot-password page with an amber notice (&ldquo;That link has expired or was already used. Request a new one below.&rdquo;), where the customer can ask for a new one themselves; or send a new reset from here.</p>
           ),
-          answerText: 'Supabase controls the recovery-link lifetime. Ask the customer to open the emailed link right away and send a new reset if it expires.',
-          keywords: ['expire', 'expiry', 'reset link', 'reset email'],
+          answerText: 'One hour, and the reset email says so. An expired or already-used link opens the forgot-password page with a notice that it expired or was already used, where the customer can request a new one; or send a new reset.',
+          keywords: ['expire', 'expiry', 'reset link', 'reset email', '1 hour', 'one hour', 'already used', 'request a new one'],
           popular: true,
         },
         {
@@ -97,7 +97,7 @@ const platformAdminHelp: HelpPageContent = {
           <ul>
             <li><strong>Ban User</strong> immediately blocks sign-in. Use it for abuse, fraud, or a security hold. The user keeps their data but cannot log in. Choose <strong>Unban User</strong> to restore access.</li>
             <li><strong>Revoke Sessions</strong> signs the user out of all devices and invalidates active sessions without banning them. Use it after a suspected account compromise or when the user asks to be logged out everywhere.</li>
-            <li><strong>Confirm Email</strong> force-confirms an unconfirmed email so the user can proceed without the verification message. It only appears when the user&apos;s auth status is <code>unconfirmed</code>. Verify you are talking to the real account holder first.</li>
+            <li><strong>Confirm Email</strong> force-confirms an unconfirmed email so the user can sign in without opening the confirmation email. It only appears when the user&apos;s auth status is <code>unconfirmed</code>. Verify you are talking to the real account holder first.</li>
             <li><strong>Edit Info</strong> corrects a user&apos;s email address or display name. Changing the email changes the address they sign in with — confirm the new address with the customer first.</li>
             <li><strong>Notes</strong> opens <strong>Support Notes</strong> for that user, for person-level context. These are separate from an organization&apos;s internal notes: use org notes for account history and user notes for person-specific history.</li>
           </ul>
@@ -117,12 +117,12 @@ const platformAdminHelp: HelpPageContent = {
         },
         {
           id: 'faq-confirm-email-safe',
-          question: 'Is it safe to use Confirm Email for a customer who never received the verification email?',
+          question: 'Is it safe to use Confirm Email for a customer who never received the confirmation email?',
           answer: (
-            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as verified so they can continue. If you cannot verify their identity, have them get a fresh link themselves: <strong>Send the link again</strong> is on the screen they saw after signing up, and in the &ldquo;verify your email&rdquo; message sign-in shows them. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under <strong>Workspaces</strong> and marked <strong>Not named yet</strong> (a Coach Premium setup is marked <strong>Setup not finished</strong>), until it does.</p>
+            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as confirmed so they can continue. If you cannot verify their identity, have them get a fresh link themselves: <strong>Send the link again</strong> is on the screen they saw after signing up, and under the amber &ldquo;Confirm your email first&rdquo; notice sign-in shows them. A link older than an hour opens sign-in with an expired-link notice and <strong>Email me a new link</strong>. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under <strong>Workspaces</strong> and marked <strong>Not named yet</strong> (a Coach Premium setup is marked <strong>Setup not finished</strong>), until it does.</p>
           ),
-          answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise have them press Send the link again, on the screen they saw after signing up or in the verify-your-email message on sign-in. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under Workspaces and marked Not named yet (a Coach Premium setup is marked Setup not finished), until it does.',
-          keywords: ['confirm email', 'verification', 'unconfirmed', 'send the link again', 'sign in resend', 'not named yet', 'finish creating your team', 'setup not finished', 'run a tournament'],
+          answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise have them press Send the link again, on the screen they saw after signing up or under the Confirm your email first notice on sign-in. A link older than an hour opens sign-in with an expired-link notice and Email me a new link. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under Workspaces and marked Not named yet (a Coach Premium setup is marked Setup not finished), until it does.',
+          keywords: ['confirm email', 'verification', 'unconfirmed', 'send the link again', 'sign in resend', 'confirm your email first', 'email me a new link', 'expired link', 'not named yet', 'finish creating your team', 'setup not finished', 'run a tournament', 'create account', 'create team'],
         },
       ],
     },
