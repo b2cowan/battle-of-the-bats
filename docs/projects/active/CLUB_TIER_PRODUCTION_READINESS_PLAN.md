@@ -1106,7 +1106,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > coach's door): nothing is built that no club could switch on. **📝 Both build prompts written 2026-10-20:**
 > `CLUB_TIER_STAGE4B2A_BUILD_PROMPT.md` (for a new chat) and `CLUB_TIER_STAGE4B2B_BUILD_PROMPT.md` (start after 4b-2a is
 > committed and walked).
-> **🔨 4b-2a BUILT 2026-10-20 (the year-round club; walk §352 owed, commit on the owner's word):** the public-site home is its own
+> **🔨 4b-2a BUILT 2026-10-20 (the year-round club; COMMITTED `468ba1199` 2026-10-20; walk §352 owed):** the public-site home is its own
 > view (`components/public/ClubSiteHome.tsx`) in the ruled order — Open now (open house-league registrations + one row per open
 > tryout, nearest deadline first, absent when nothing is open) → Teams (the club's groups as bands, a two-column grid of doors,
 > one column per group when a name passes ~14 characters, DC-01) → House league → Tournaments (Registration open · This weekend
