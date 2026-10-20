@@ -18,9 +18,11 @@ export const SIGN_IN_ERROR_COPY: Readonly<Record<string, string>> = {
 
 /**
  * Why a screen sent someone to sign-in (`/auth/login?reason=…`), so sign-in can say so above its fields (The first
- * look 2b). `expiredLink`: the auth callback met a link that cannot be used (expired, already used, or broken); the
- * Continue page's broken link (U3) joins it in 2c. An organization invitation's failed link goes to its own page. `accountExists`: a sign-up handed over an address that already has an account (the 409). A plain
- * redirect carries no reason and shows no notice.
+ * look 2b). `expiredLink`: a confirmation link that cannot be used (expired, already used, or broken), from the auth
+ * callback or the Continue page (U3); a reset link that cannot be used carries the same reason to the forgot screen
+ * instead (U4, `expiredResetLinkHref`). An organization invitation's failed link goes to its own page.
+ * `accountExists`: a sign-up handed over an address that already has an account (the 409). A plain redirect carries no
+ * reason and shows no notice.
  */
 export const SIGN_IN_REASON = {
   expiredLink: 'expired-link',
@@ -32,10 +34,16 @@ export const SIGN_IN_REASON = {
 export const accountExistsSignInHref = (next: string, email: string): string =>
   `/auth/login?next=${encodeURIComponent(next)}&email=${encodeURIComponent(email)}&reason=${SIGN_IN_REASON.accountExists}`;
 
+const expiredLinkHref = (path: string, next: string | null): string =>
+  `${path}?reason=${SIGN_IN_REASON.expiredLink}${next ? `&next=${encodeURIComponent(next)}` : ''}`;
+
 /** Where a link that cannot be used sends the person (F09, U3): sign-in with the reason, and where the link was headed
  *  when it said (already checked same-origin by the caller), so a new link from there returns to the same place. */
-export const expiredLinkSignInHref = (next: string | null): string =>
-  `/auth/login?reason=${SIGN_IN_REASON.expiredLink}${next ? `&next=${encodeURIComponent(next)}` : ''}`;
+export const expiredLinkSignInHref = (next: string | null): string => expiredLinkHref('/auth/login', next);
+
+/** Where a reset link that cannot be used sends the person (U4 screen 3): the forgot screen with the same notice, and
+ *  the registration the reset started from (already checked by the caller), so the new link returns there too. */
+export const expiredResetLinkHref = (next: string | null): string => expiredLinkHref('/auth/forgot-password', next);
 
 /** The one email shape check for a form and the route behind it — they must accept the same addresses. */
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

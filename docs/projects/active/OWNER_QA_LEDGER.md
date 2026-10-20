@@ -26064,3 +26064,20 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **✅ PASSED — owner walked 2026-10-20, 32/32, nothing flagged** (paste-back: 1 the site signed out 7/7 · 2 a light colour 6/6 · 3 the footer 4/4 · 4 past tournaments 4/4 · 5 a page that isn't there 2/2 · 6 what must not change 2/2 · 7 signed in, Account and the staff door 4/4 · 8 page titles 3/3). The walk predates the same day's phone ruling (the tab row pins, the colour band scrolls away, no "← club" back links — design log 2026-10-20); it has no step of its own here — the owner confirmed it in the browser when ruling it. **Committed `6affb4e4e` 2026-10-20** (the owner also confirmed the standalone platform pages keep no top bar).
 <!-- /§350 -->
+
+## §351 · The first look · Stage 2, the wait and the way back — **the confirmation and reset emails wear one warm envelope that says what comes next (Gmail, Apple Mail and Outlook, light and dark, and a customised copy of each); sign-in, the Continue page ("Confirm my email"), forgot password and reset read like the sign-up that sent the person there; the wrong password is the one red notice, an existing address is handed to sign-in with an olive notice, a waiting account is told to confirm with the resend under it; an expired, used or broken link says so in one sentence and lands on sign-in (a confirmation link), the forgot screen (a reset link) or the invitation's own expired screen (an organization invitation)**
+
+**Built 2026-10-20** to the owner's rulings (U1–U8 as recommended, after `/design`; `/marketing` read the words; three owner calls at the 2a gate, four at 2b, three at 2c, all as recommended; plan `docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`, *As built, Stage 2*). Commits: 2a `d1a5742c2`, 2b `04c0ea1c2`, 2c see the plan.
+
+**The walk:** https://claude.ai/artifact/Gw7a23Ud1FRXoGevpHbvr7 (source `docs/projects/active/FIRST_LOOK_STAGE2_WALK.html`). Eight walks of one job each and 40 steps, Part C included: W1 the Continue page · W2 forgot password · W3 sign-in says the way forward · W4 two existing screens' bold names · W5 real links that cannot be used (staging) · W6 a waiting account (staging) · W7 forgot and reset end to end (staging) · W8 the two emails in three mail apps, plus a customised copy of each template sent and then removed (staging; owed from 2a) · Part C one call (a bold name in a heading's sub line: full ink everywhere, or the reset screen only).
+
+**Sign in:** W1–W4 on http://localhost:3000, mostly signed out (a private window); W3 and W4 use `uat-coach@uat-test-org.local` (password as every UAT account). W5–W8 on staging after the next promote, with a real inbox and a staging platform admin for W8.
+
+**Writes:** W8 customises the two templates and removes the customisation; W6 and W8 make staging accounts. Nothing on localhost saves.
+
+**⚠ Release:** 2a and 2c reach production in the same release (the email's button opens the Continue page).
+
+**Checked beside the walk (2026-10-20):** the 2c captures, phone + laptop, Warm + Dark, with browser-answered auth calls (`.probe/first-look/cap-stage2c.mjs`): every screen in the drawn words, the button in view at 390 × 844 and 1366 × 768, every broken link landing on its notice with the registration kept; `check:layout` on the six new anonymous entries, clean but for the known 27px app-bar link; the screen-reader tree (notice before the field, the sent block takes focus); typecheck clean; the auth unit tests 116 of 116.
+
+**Owed beside the walk:** `/docs` for all of Stage 2 (help still says the resend sits "in" the message and quotes the old sign-in words); the whole-product layout sweep on staging.
+<!-- /§351 -->

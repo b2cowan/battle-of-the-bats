@@ -292,7 +292,7 @@ face, warm (its S1) so marketing and email follow the same rules.
 | Stage | Covers | Asks | State |
 |---|---|---|---|
 | **1 — One account step** | The rules; the account form at every door (team, league, tournament with the intro folded in, account-only, both Coach Premium steps (R1), the join page, both invitations); step 2 naming; the one check-your-email; the door links (F14) | 1, 2, 3, 5 (join), 6, 10, 12, 13 | **Built 2026-10-20** (1a `f45f7d019`, 1b `df295fdc6`, 1c `658cb84e5`, 1d see *As built, Stage 1*); owner walk §348 |
-| **2 — The wait and the way back** | The verification and password-reset emails on the warm envelope; the Continue page; the expired / invalid link; sign-in (waiting account, wrong password); forgot / reset | 1, 8 | Drawn + ruled 2026-10-19 |
+| **2 — The wait and the way back** | The verification and password-reset emails on the warm envelope; the Continue page; the expired / invalid link; sign-in (waiting account, wrong password); forgot / reset | 1, 8 | Drawn + ruled 2026-10-19; build prompt written 2026-10-20 (`FIRST_LOOK_STAGE2_BUILD_PROMPT.md`); its eight undrawn states (U1–U8) drawn 2026-10-20, after `/design`, at https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ, **all eight ruled 2026-10-20 as recommended**; **Built 2026-10-20** (2a `d1a5742c2`, 2b `04c0ea1c2`, 2c see *As built, Stage 2*); owner walk §351 https://claude.ai/artifact/Gw7a23Ud1FRXoGevpHbvr7 |
 | **3 — The first screen inside** | The plan step (two choices, in view); the welcome card with checkout complete folded in; Home's fan line; the pricing buttons' doors (F08) | 4, 5 (checkout), 9 | Drawn + ruled 2026-10-19 |
 | **4 — Not yet** | The free team's first home (F16: belongs to the free coach portal's tap-target work, `FREE_COACH_TAP_TARGETS_PROMPT.md`, handed there); a league's first season and the club setup kit (neither on sale); the claim link (Ask 7) | 7 | Reported, not drawn; claim link parked (Ask 7) |
 
@@ -454,6 +454,47 @@ those people, because the account-only sign-up carries their `next`.
   change touching 17 files); help (`coaches.tsx` ~L219–227, `tournaments.tsx` ~L724–729, `platform-admin.tsx`
   ~L122–124) still says the resend sits "in" the message and that sign-in says "verify" — `/docs` after 2c;
   `.claude/commands/helpdesk.md` matches the old error text.
+
+**2c — the Continue page, forgot and reset.**
+- **All four screens are the one account step** (`StartColumn` / `StartHead` / `EmailField` / `PasswordField`, the 48px
+  lime, `StartFoot`, the one loading line: "Loading confirmation…", "Loading password reset…"), in the Reset screens
+  row's words. Only `suspended` still imports `auth.module.css`; the form, field, eye, error-box and foot-link rules
+  went, and with them the warm lime-button and skeleton re-pins and two token remaps nothing read any more. The file
+  and `.authSurface` stay (the layout's).
+- **A link that cannot be used has no screen of its own** (U3, U4): the Continue page's broken or missing link
+  `router.replace`s to sign-in's expired-link notice (`expiredLinkSignInHref(null)`: the link carries no destination of
+  its own); the tap page's broken link and reset-password's expired, used or missing one go to the forgot screen with
+  the same notice (`expiredResetLinkHref`, new in `lib/auth-errors.ts`, both built on one private helper), keeping the
+  registration a reset started from (from the URL on the tap page, from the tab's note on reset-password, which clears
+  the note: the forgot screen's address carries it and the next tap page notes it again).
+- **Kept exactly:** `verifyLink()` and `authActionLink()`, the tap-only navigation on both one-tap pages, the
+  return-path stamp, the destination after a saved password (platform admin first, then the registration, then the
+  resolver), the always-`{ok:true}` forgot route. Pinned in `tests/unit/first-look-stage2c-reset.test.ts`.
+- **Owner calls at the 2c gate (all as recommended):** (1) the sent screen keeps "Once you set a new password, you'll
+  come back to your registration." for the coach who started from one, and only for them; (2) the forgot page's
+  coach note ("Registered a team for a tournament?…") is dropped, like sign-in's coach lines at 2b; (3) the undrawn
+  failures take 2b's rule, amber and one sentence: a save the provider refuses in plain words (the current password,
+  a weak one, too many tries, anything else "We couldn't save your password."), a reset whose session is gone goes to
+  the forgot screen's notice, and a forgot send that did not happen says "We couldn't send the link." rather than
+  "Check your email" (it used to hang on "Sending…").
+- **Departures and small decisions:** the new-password field has no placeholder ("Your new password" was drawn), as at
+  2b; the cursor starts in the forgot field except under the expired notice (a screen reader would start below the
+  sentence that says why the person is there); the email field is held while sending; reset-password's fifth state
+  (`error`) was declared and never set, and is removed rather than kept as a state that would now render an endless
+  loading line; the kit gained `PasswordField`'s `label` / `autoFocus`, `.sub strong` (bold ink), `.focusBlock` and one
+  rule so a foot straight under the heading shares its line. ⚠ `.sub strong` also reaches two existing screens (the
+  join page's and the assistant-coach invitation's "You're signed in as a different account"): the walk's Part C asks.
+- **Hardened at `/review`:** a failed PKCE code exchange asks for the session before calling the link expired (the
+  client may have exchanged the code itself; "expired" now leaves the page, where it used to heal on
+  `PASSWORD_RECOVERY`). Today's emails never take that path: both reset senders use `admin.generateLink`, which returns
+  hash tokens.
+- **Layout sweep:** six anonymous entries (the Continue page, its broken link, forgot, forgot sent, the tap page, its
+  broken link), clean at every width but for the known 27px app-bar link. Choose a new password is not in the sweep
+  (it needs a recovery session); the captures (`.probe/first-look/cap-stage2c.mjs`, phone + laptop, Warm + Dark) reach
+  it with browser-answered auth calls.
+- **Findings, not fixed:** the forgot route has no rate limit (and an existing account answers slower, because the
+  send is awaited: a timing side channel); `SIGN_IN_REASON` now names a reason the forgot screen also reads (a rename
+  touches 2b's sign-in page and test); the reset's 1.5-second hop to the account has no cancel (pre-existing).
 
 ## /design review of the drawings (2026-10-19)
 

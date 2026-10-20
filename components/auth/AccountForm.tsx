@@ -60,19 +60,22 @@ export interface AccountValues {
 
 /**
  * The password field with the eye. `create` is a new password: the rule as a hint under it (D-F4, never a placeholder)
- * and the browser's new-password fill; `current` is a sign-in, with nothing under it.
+ * and the browser's new-password fill; `current` is a sign-in, with nothing under it. `label` is "New password" on the
+ * reset screen (U4), where the person already has one.
  */
-export function PasswordField({ id, value, onChange, purpose = 'create', disabled = false }: {
+export function PasswordField({ id, value, onChange, purpose = 'create', disabled = false, label = 'Password', autoFocus = false }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
   purpose?: 'create' | 'current';
   disabled?: boolean;
+  label?: string;
+  autoFocus?: boolean;
 }) {
   const [showPw, setShowPw] = useState(false);
   const creating = purpose === 'create';
   return (
-    <Field id={id} label="Password" hint={creating ? 'At least 8 characters.' : undefined}>
+    <Field id={id} label={label} hint={creating ? 'At least 8 characters.' : undefined}>
       <div className={styles.pwWrap}>
         <input
           id={id}
@@ -85,6 +88,7 @@ export function PasswordField({ id, value, onChange, purpose = 'create', disable
           autoComplete={creating ? 'new-password' : 'current-password'}
           aria-describedby={creating ? hintId(id) : undefined}
           disabled={disabled}
+          autoFocus={autoFocus}
         />
         <button
           type="button"

@@ -72,6 +72,12 @@ entry, and the Flip entries of July. ⇄ inside prose ("List ⇄ Depth chart") i
   amber notice in their own sentence; the Forgot row is hidden while the waiting-account notice shows (their password
   was right); an organization invitation's failed link goes to the invitation's own expired screen ("Set a password"),
   never sign-in's notice, whose "new link" would be a confirmation email or nothing.
+- **At the 2c build gate (owner, 2026-10-20, all as recommended):** forgot's sent screen keeps "Once you set a new
+  password, you'll come back to your registration." for the coach who started from one, and only for them (their one
+  worry is their place); the forgot page's coach note is dropped, as sign-in's coach lines were; the undrawn failures
+  on forgot and reset take the 2b rule, amber and one sentence with the way forward, never the provider's own English
+  and never "Check your email" when nothing was sent. A bold name in a heading's sub line reads in full ink (U4's sent
+  screen draws the address that way); whether that reaches the two existing screens with one is the §351 walk's call.
 **Rationale:** an expired link, a waiting account or a wrong password is where a new customer gives up, and the old
 screens said nothing about what to do next. Saying the next step in one sentence keeps the promise the last screen made.
 The emails cannot know Warm or Dark or load the fonts, so one fixed warm layout is the honest version of the product's

@@ -1,21 +1,46 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 import { RESET_RETURN_KEY, readResetReturn } from '@/lib/consumer-routes';
-import styles from '../auth.module.css';
+import { expiredResetLinkHref } from '@/lib/auth-errors';
+import { PasswordField, StartColumn, StartHead, accountForm } from '@/components/auth/AccountForm';
+import LoadingState from '@/components/shared/LoadingState';
 
-type PageState = 'waiting' | 'ready' | 'expired' | 'success' | 'error';
+// A fifth state, 'error', was declared and never set; a save the provider refuses is the ready form with its notice
+// (The first look 2c).
+type PageState = 'waiting' | 'ready' | 'expired' | 'success';
 
+/** The one loading line while the link is read, and while a link that cannot be used is on its way to the forgot screen. */
+const LOADING = <StartColumn><LoadingState label="Loading password reset…" /></StartColumn>;
+
+/** The provider's codes for a reset whose session is gone: the link has to be asked for again, like an expired one. */
+const SESSION_GONE = new Set(['session_not_found', 'session_expired', 'bad_jwt', 'refresh_token_not_found', 'refresh_token_already_used']);
+
+/**
+ * A save the provider refused, in plain words with the way forward (owner at the 2c gate: the drawings leave these out,
+ * and 2b's rule for undrawn failures stands — amber, one sentence). Never the provider's own English.
+ */
+function saveFailure(code: string | undefined): ReactNode {
+  switch (code) {
+    case 'same_password':
+      return <><strong>That’s your current password.</strong>{' '}Choose a different one.</>;
+    case 'weak_password':
+      return <><strong>That password is too easy to guess.</strong>{' '}Try a longer one, or mix in numbers and symbols.</>;
+    case 'over_request_rate_limit':
+      return <><strong>Too many tries.</strong>{' '}Wait a moment and try again.</>;
+    default:
+      return <><strong>We couldn’t save your password.</strong>{' '}Check your connection and try again.</>;
+  }
+}
+
+/** CHOOSE A NEW PASSWORD (The first look 2c, U4 screens 5–6). */
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [pageState, setPageState] = useState<PageState>('waiting');
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [failure, setFailure] = useState<ReactNode>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -38,8 +63,13 @@ export default function ResetPasswordPage() {
       setPageState('expired');
     } else if (code) {
       // PKCE flow — exchange code; PASSWORD_RECOVERY fires via onAuthStateChange above.
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) setPageState('expired');
+      supabase.auth.exchangeCodeForSession(code).then(async ({ error }) => {
+        if (!error) return;
+        // The client may already have exchanged this code itself (and spent its verifier), so a failure here is not
+        // proof the link is dead. "Expired" now leaves the page (2c), where it used to heal on PASSWORD_RECOVERY: ask
+        // for the session before giving up on it (/review 2026-10-20).
+        const { data } = await supabase.auth.getSession();
+        setPageState(data.session ? 'ready' : 'expired');
       });
     } else if (accessToken && refreshToken) {
       // Implicit/admin flow — set session manually since the PKCE client won't process the hash.
@@ -57,18 +87,35 @@ export default function ResetPasswordPage() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // U4: a link that cannot be used has no screen of its own — the forgot screen with the expired-link notice. A reset
+  // started from a registration keeps it: the note moves into the forgot screen's address, which the new link carries
+  // and its tap page notes again, so it is cleared here (a stale note must not ride a later, unrelated reset).
+  useEffect(() => {
+    if (pageState !== 'expired') return;
+    let returnTo: string | null = null;
+    try {
+      returnTo = readResetReturn(sessionStorage.getItem(RESET_RETURN_KEY));
+      sessionStorage.removeItem(RESET_RETURN_KEY);
+    } catch { /* storage blocked */ }
+    router.replace(expiredResetLinkHref(returnTo));
+  }, [pageState, router]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 8) {
-      setErrorMsg('Password must be at least 8 characters.');
+      setFailure(<><strong>That password is too short.</strong>{' '}Use at least 8 characters.</>);
       return;
     }
     setLoading(true);
-    setErrorMsg('');
+    setFailure(null);
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
-      setErrorMsg(error.message);
+      if (error.name === 'AuthSessionMissingError' || SESSION_GONE.has(error.code ?? '')) {
+        setPageState('expired');
+        return;
+      }
+      setFailure(saveFailure(error.code));
       setLoading(false);
     } else {
       setPageState('success');
@@ -105,80 +152,30 @@ export default function ResetPasswordPage() {
     }
   }
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <h1 className={styles.title}>Set New Password</h1>
-          {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
-          <p className={styles.sub}>FieldLogicHQ</p>
+  if (pageState === 'success') {
+    return (
+      <StartColumn>
+        <div role="status">
+          <StartHead title="Password saved" sub="Taking you to your account…" />
         </div>
+      </StartColumn>
+    );
+  }
 
-        {pageState === 'waiting' && (
-          <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--data-gray)', textAlign: 'center' }}>
-            Verifying reset link…
-          </p>
-        )}
+  if (pageState !== 'ready') return LOADING;
 
-        {pageState === 'expired' && (
-          <>
-            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--danger-light)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              This link has expired or is invalid. Request a new one below.
-            </p>
-            <div className={styles.footer}>
-              <p className={styles.footerText}>
-                <Link href="/auth/forgot-password" className={styles.footerLink}>Request a new reset link</Link>
-              </p>
-            </div>
-          </>
-        )}
+  return (
+    <StartColumn>
+      <StartHead title="Choose a new password" />
+      <form onSubmit={handleSubmit} className={accountForm.form}>
+        <PasswordField id="reset-password" label="New password" value={password} onChange={setPassword} autoFocus />
 
-        {pageState === 'ready' && (
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="reset-password">New Password</label>
-              <div className={styles.pwWrap}>
-                <input
-                  id="reset-password"
-                  type={showPw ? 'text' : 'password'}
-                  className="form-input"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  autoFocus
-                />
-                <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
-                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
+        {failure && <div className={accountForm.noticeWarn} role="alert">{failure}</div>}
 
-            {errorMsg && <div className={styles.error}>{errorMsg}</div>}
-
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              disabled={loading}
-            >
-              {loading ? 'Saving…' : 'Set New Password'}
-            </button>
-          </form>
-        )}
-
-        {pageState === 'success' && (
-          <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--logic-lime)', textAlign: 'center', lineHeight: 1.6 }}>
-            Password updated. Redirecting…
-          </p>
-        )}
-      </div>
-    </div>
+        <button type="submit" className={accountForm.primary} disabled={loading}>
+          {loading ? 'Saving…' : 'Save password'}
+        </button>
+      </form>
+    </StartColumn>
   );
 }

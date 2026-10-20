@@ -1,8 +1,10 @@
 'use client';
-import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import styles from '../auth.module.css';
+import { expiredLinkSignInHref } from '@/lib/auth-errors';
+import { StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
+import LoadingState from '@/components/shared/LoadingState';
 
 // Every sign-up's email lands here, so the page follows only a link to our own Supabase project's verify step —
 // never an address the link parameter was crafted to carry (a `javascript:` URL would run on this origin; any other
@@ -18,63 +20,52 @@ function verifyLink(raw: string | null): string | null {
   }
 }
 
+/** The one loading line while the URL is read, and while a broken link is on its way to sign-in. */
+const LOADING = <StartColumn><LoadingState label="Loading confirmation…" /></StartColumn>;
+
+/**
+ * THE CONTINUE PAGE (The first look 2c, F11): the confirmation email's button opens this one tap, which stays so a mail
+ * scanner that opens links cannot spend the one-time link before the person does.
+ */
 function SignupConfirmInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const link = verifyLink(searchParams.get('link'));
 
-  if (!link) {
-    return (
-      <>
-        <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--danger-light)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-          This verification link is invalid. Return to sign up and request a new one.
-        </p>
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            <Link href="/auth/signup" className={styles.footerLink}>Create account</Link>
-          </p>
-        </div>
-      </>
-    );
-  }
+  // U3: a broken or missing link has no screen of its own. It opens sign-in with the expired-link notice and "Email me a
+  // new link", the one place a failed link is answered. This link carries no destination of its own to keep.
+  useEffect(() => {
+    if (!link) router.replace(expiredLinkSignInHref(null));
+  }, [link, router]);
+
+  if (!link) return LOADING;
 
   return (
-    <>
-      <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-        This confirms your email and takes you back to finish setting up.
-      </p>
-      <button
-        className={styles.submitBtn}
-        onClick={() => { window.location.href = link; }}
-      >
-        Continue
-      </button>
-      <div className={styles.footer}>
-        <p className={styles.footerText}>
-          Already confirmed?{' '}
-          <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
-        </p>
+    <StartColumn>
+      <StartHead title="Confirm your email" sub="One tap and you’re back to finish setting up." />
+      <div className={accountForm.form}>
+        <button
+          type="button"
+          className={accountForm.primary}
+          onClick={() => { window.location.href = link; }}
+        >
+          Confirm my email
+        </button>
       </div>
-    </>
+      <StartFoot>
+        <p>
+          Already confirmed?{' '}
+          <Link href="/auth/login" className={accountForm.footLink}>Sign in</Link>
+        </p>
+      </StartFoot>
+    </StartColumn>
   );
 }
 
 export default function SignupConfirmPage() {
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <h1 className={styles.title}>Verify Email</h1>
-          <p className={styles.sub}>FieldLogicHQ - Account Security</p>
-        </div>
-        <Suspense fallback={null}>
-          <SignupConfirmInner />
-        </Suspense>
-      </div>
-    </div>
+    <Suspense fallback={LOADING}>
+      <SignupConfirmInner />
+    </Suspense>
   );
 }

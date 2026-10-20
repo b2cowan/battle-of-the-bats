@@ -60,6 +60,15 @@
  * `undefined` in it, which renders as a 404 the sweep reports as a layout failure.
  */
 
+/**
+ * The emailed link the Continue page and the reset tap page follow, on the app's own Supabase host: both pages refuse
+ * any other host and send the person on (The first look 2c). Read at call time — every runner of this list loads
+ * `.env.local` through `uat-fixture-context.mjs` first. A wrong or missing host fails the entry as "did not render"
+ * (its `ready` waits for the page's own button), never a quiet sweep of the screen it was sent on to.
+ */
+const supabaseActionLink = (type) =>
+  encodeURIComponent(`${process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://missing-supabase-url.invalid'}/auth/v1/verify?token=layout-sweep&type=${type}`);
+
 const team = (c) => `/${c.orgSlug}/coaches/teams/${c.teamId}`;
 /** The team whose WORKING season has finished — see the block above `coach-season-end`. */
 const finished = (c) => `/${c.orgSlug}/coaches/teams/${c.finishedTeamId}`;
@@ -1823,6 +1832,35 @@ export const SCREENS = [
       await page.locator('#login-submit').click();
       await page.getByRole('alert').filter({ hasText: 'don’t match' }).waitFor({ timeout: 15_000 });
     } },
+
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE CONTINUE PAGE, FORGOT AND RESET (The first look, Stage 2c). Anonymous, 320 like sign-in: every one is opened
+   * from an email on whatever phone it reached. A broken link has no screen of its own, so the two "broken" entries
+   * sweep where it lands (sign-in, and the forgot screen, each with the amber notice), attributed to the page that
+   * sent it there. Choose a new password is NOT here: it needs a recovery session from a real reset link — the Stage 2
+   * walk reaches it end to end.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  { id: 'auth-continue',             session: 'anon', path: () => `/auth/signup-confirm?link=${supabaseActionLink('signup')}`, ready: 'text=Confirm my email', widths: ['320'],
+    route: 'app/(consumer)/auth/signup-confirm/page' },
+  { id: 'auth-continue-broken',      session: 'anon', path: () => '/auth/signup-confirm',         ready: 'text=That link has expired or was already used.', widths: ['320'],
+    route: 'app/(consumer)/auth/signup-confirm/page', note: 'lands on sign-in with the amber notice (U3)' },
+  { id: 'auth-forgot',               session: 'anon', path: () => '/auth/forgot-password',        ready: 'text=Send me a reset link', widths: ['320'],
+    route: 'app/(consumer)/auth/forgot-password/page' },
+  { id: 'auth-forgot-sent',          session: 'anon', path: () => '/auth/forgot-password',        ready: 'text=Send me a reset link', widths: ['320'],
+    route: 'app/(consumer)/auth/forgot-password/page', note: 'Check your email, a long address in bold, the two ways out on one row',
+    interact: async (page) => {
+      // Answered here: the route would ask the auth service for a link (and a real address would get an email).
+      await page.route('**/api/auth/forgot-password', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }));
+      await page.locator('#forgot-email').fill('a.rather.long.address.for.the.layout.sweep@example-club-name.org');
+      await page.getByRole('button', { name: 'Send me a reset link' }).click();
+      await page.getByRole('heading', { name: 'Check your email' }).waitFor({ timeout: 15_000 });
+    } },
+  { id: 'auth-reset-tap',            session: 'anon', path: () => `/auth/reset-confirm?link=${supabaseActionLink('recovery')}`, ready: 'text=Reset my password', widths: ['320'],
+    route: 'app/(consumer)/auth/reset-confirm/page' },
+  { id: 'auth-reset-tap-broken',     session: 'anon', path: () => '/auth/reset-confirm',          ready: 'text=That link has expired or was already used.', widths: ['320'],
+    route: 'app/(consumer)/auth/reset-confirm/page', note: 'lands on the forgot screen with the amber notice (U4 screen 3)' },
 ];
 
 /**
