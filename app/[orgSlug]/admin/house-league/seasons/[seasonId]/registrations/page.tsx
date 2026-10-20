@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { X, Plus, ChevronLeft, Mail } from 'lucide-react';
-import Link from 'next/link';
+import { X, Plus, Mail } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -690,27 +689,6 @@ export default function RegistrationsPage() {
         title="Registrations"
         backTo={{ href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season?.name ?? 'Season' }}
         actions={kit && isAdminOrOwner ? headerActions : undefined}
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <Link
-            href={`/${orgSlug}/admin/house-league/seasons/${seasonId}`}
-            style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
-          >
-            <ChevronLeft size={16} />
-          </Link>
-          <div>
-            <h1 className={styles.pageTitle}>Registrations</h1>
-            {season && <p className={styles.pageSub}>{season.name}</p>}
-          </div>
-        </div>
-        {isAdminOrOwner && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {headerActions}
-          </div>
-        )}
-      </div>
-        }
       />
 
       {/* ── Empty state help cue ──────────────────────────────────────────── */}

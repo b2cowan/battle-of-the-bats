@@ -29,11 +29,8 @@ export default function CheckInPage() {
   return (
     <div className={s.page}>
       <TournamentAdminHeader
-        eyebrow="Game Day"
         title="Check-in"
-        subtitle={currentTournament ? currentTournament.name : loading ? undefined : 'Select a tournament'}
         locked={isLocked}
-        mobileActionsInline
         actions={currentOrg && (
           <Link
             href={`/${currentOrg.slug}/check-in`}

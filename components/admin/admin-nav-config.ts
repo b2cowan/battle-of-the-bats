@@ -36,7 +36,7 @@ export const TOUR_GROUPS: TourGroup[] = [
       { key: 'schedule',      icon: Calendar,        label: 'Schedule'       },
       { key: 'results',       icon: Medal,           label: 'Results'        },
       { key: 'check-in',      icon: UserCheck,       label: 'Check-in'       },
-      { key: 'staff-kit',     icon: QrCode,          label: 'Staff Kit'      },
+      { key: 'staff-kit',     icon: QrCode,          label: 'Staff kit'      },
       { key: 'communication', icon: Mail,            label: 'Communications' },
       { key: 'chat',          icon: MessageSquare,   label: 'Chat'           },
     ],
@@ -46,10 +46,10 @@ export const TOUR_GROUPS: TourGroup[] = [
     label: 'Setup',
     defaultOpenFor: ['draft'],
     items: [
-      { key: 'settings/event', icon: Settings2,  label: 'Event Settings',     roles: ['owner', 'admin'] },
-      { key: 'venues',         icon: MapPin,     label: 'Venues & Facilities'                            },
+      { key: 'settings/event', icon: Settings2,  label: 'Event settings',     roles: ['owner', 'admin'] },
+      { key: 'venues',         icon: MapPin,     label: 'Venues & facilities'                            },
       { key: 'divisions',      icon: Tag,        label: 'Divisions'                                      },
-      { key: 'rules',          icon: BookOpen,   label: 'Rules & Resources'                              },
+      { key: 'rules',          icon: BookOpen,   label: 'Rules & resources'                              },
       { key: 'branding',       icon: Globe,      label: 'Public site'                                    },
     ],
   },
@@ -59,7 +59,7 @@ export const TOUR_GROUPS: TourGroup[] = [
     defaultOpenFor: [],
     items: [
       // ⚰ Data tools retired (Stage 5, E10, A59): each import lives with its data — Teams' Export, the schedule's Tools.
-      { key: 'settings',   icon: Settings, label: 'Settings & Access' },
+      { key: 'settings',   icon: Settings, label: 'Settings & access' },
       // The one Tournaments list (D7, ruled 2026-10-06): it took Past tournaments' place here — an occasional
       // destination, so a row in Admin, not the top of the rail (D7a). The trophy, Tournaments' icon everywhere (N5).
       { key: 'manage',     icon: Trophy,   label: 'Tournaments'       },

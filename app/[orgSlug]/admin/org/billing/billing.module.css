@@ -477,12 +477,6 @@
   line-height: 1.2;
 }
 
-.priceUnit {
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  color: var(--white-40);
-}
-
 .featureList {
   list-style: none;
   padding: 0;

@@ -43,7 +43,7 @@ import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useSidebarStrip } from '@/lib/sidebar-strip';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
-import { isKitLinkActive, kitTournamentLabel, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
 import { STATUS_WORD } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
@@ -498,7 +498,7 @@ function TournamentRail({ labelled }: { labelled: boolean }) {
     <RailRow
       key={i.key}
       href={i.href}
-      label={kitTournamentLabel(i.label)}
+      label={i.label}
       active={itemActive(i.key)}
       icon={i.icon}
       count={worklist[i.key] ?? 0}

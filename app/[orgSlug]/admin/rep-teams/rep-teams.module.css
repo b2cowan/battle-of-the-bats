@@ -14,50 +14,8 @@
    components/admin/kit/club/ClubKit.module.css). */
 .page { max-width: 960px; margin-inline: auto; }
 
-/* The money pages' OLD header (allocations, payment requests, Allocate to teams): read only inside a `legacy`
-   prop AdminPageHeader no longer renders — Club Tier Stage 3 retires both with those pages. */
-.pageHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.pageHeaderLeft {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.pageTitle {
-  font-size: 1.75rem;
-  font-weight: 900;
-  font-family: var(--font-data);
-  margin: 0;
-  color: var(--white-90);
-  line-height: 1.1;
-}
-
-.pageSub {
-  margin: 0.25rem 0 0;
-  color: var(--white-40);
-  font-size: 0.9rem;
-}
+/* ⚰ The money pages' OLD header (`.pageHeader` … `.pageSub`) and the summary cards went with admin type sweep
+   Stage 5 (2026-10-20): nothing wore them. */
 
 .muted {
   color: var(--text-tertiary);
@@ -214,45 +172,6 @@
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 0.75rem;
   margin-bottom: 2rem;
-}
-
-.summaryCard {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.summaryCardLabel {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-}
-
-.summaryCardValue {
-  font-family: var(--font-display);
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Section divider — the kit's eyebrow ──────────────────────────────────── */
-.sectionTitle {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  margin: 2rem 0 0.75rem;
 }
 
 /* ── Table → the table standard's ground: quiet body-face heads, hairline rows ── */

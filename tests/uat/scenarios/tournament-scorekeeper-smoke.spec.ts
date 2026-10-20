@@ -344,7 +344,7 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
     const ownerPage = await ownerContext.newPage()
 
     await ownerPage.goto(`/${smoke.orgSlug}/admin/tournaments/results`)
-    await expect(ownerPage.getByRole('heading', { name: 'Results & Scoring' })).toBeVisible({ timeout: 30_000 })
+    await expect(ownerPage.getByRole('heading', { name: 'Results & scoring' })).toBeVisible({ timeout: 30_000 })
     await expect(ownerPage.getByText(smoke.review.homeTeamName)).toBeVisible({ timeout: 20_000 })
     // Scoring rows expand via the Edit/Enter-score pencil button (the team name is now a plain span).
     await ownerPage.getByRole('button', { name: /Edit score|Enter score/ }).first().click()

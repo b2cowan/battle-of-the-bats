@@ -131,15 +131,6 @@ export default function PublicSitePage() {
           not a fact on it, and the page's first card already says what it edits and where the rest
           lives; on the kit it is not re-homed (listed in the slice 1 handoff). */}
       <AdminPageHeader
-        legacy={(
-          <div className={styles.pageHeader}>
-            <div className={styles.headerIcon}><Globe size={20} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Public site</h1>
-              <p className={styles.pageSub}>Edit your org&apos;s public-facing home page</p>
-            </div>
-          </div>
-        )}
         title="Public site"
         // Club Tier Stage 1 (specimen 9): the site's on/off state, read-only here; it is SET in
         // Settings › Your public site. A state chip, never a switch — one door per write.

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { AlertTriangle, Calendar, ChevronLeft, Plus, X, Wand2 } from 'lucide-react';
+import { AlertTriangle, Calendar, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, formatInOrgZone, orgWeekKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
@@ -1306,20 +1306,6 @@ export default function SchedulePage() {
         eyebrow="House league"
         title="Schedule"
         backTo={{ href: backHref, label: season?.name ?? 'Season' }}
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <Link href={backHref} style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center' }}>
-            <ChevronLeft size={18} />
-          </Link>
-          <div className={styles.headerIcon}><Calendar size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Schedule</h1>
-            {season && <p className={styles.pageSub}>{season.name}</p>}
-          </div>
-        </div>
-      </div>
-        }
       />
 
       {/* Toolbar */}

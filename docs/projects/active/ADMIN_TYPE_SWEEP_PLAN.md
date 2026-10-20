@@ -2,7 +2,7 @@
 
 **Census + plan drafted 2026-10-19** (owner: "have the helper list every admin screen that still uses the old
 fonts and capitals, then make a plan to address each of them"). **A1–A14 ruled 2026-10-19, all as
-recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked; the owner marked it Pass 2026-10-19 (P2), so the Stage 1 walk is closed.** **Stage 2 drawn 2026-10-19 (bracket editor first, through `/design`); B1–B6 + P1 ruled as recommended 2026-10-19; Stage 2 built and committed `956eea005` 2026-10-19; owner walk ✅ 2026-10-19 — 22 of 22 steps ticked, Parts A–G all marked Pass, no notes, so the Stage 2 walk is closed. Stage 3 (club admin) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/8Ypx95Zk9NP8ceihUGdw5F, from `ADMIN_TYPE_SWEEP_STAGE3_BUILD_PROMPT.md`); C1–C5 RULED as recommended 2026-10-19; Stage 3 BUILT and committed `e83c58223` 2026-10-19, owner walk ✅ 2026-10-19 (25 of 25, Parts A–H Pass, no notes) https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM** **Stage 4 (new-look drift) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/YQ9CZWXgL9pjo8GvXpw2wH, from `ADMIN_TYPE_SWEEP_STAGE4_BUILD_PROMPT.md`); D1–D3 RULED as recommended 2026-10-19 — every heading the plain face incl. the page title, both portals; one chosen look for the toggle; the account notification settings page swept too (§4 "Stage 4 — drawn"); build prompt rewritten for the build. Stage 4 BUILT 2026-10-20, /review done, committed `eb0a2609e` 2026-10-20, owner walk owed (https://claude.ai/artifact/21EACBfw6L6dTkbPVNAfGD; §4 "Stage 4 — as built").** (§4, "Stage 2 — drawn").
+recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked; the owner marked it Pass 2026-10-19 (P2), so the Stage 1 walk is closed.** **Stage 2 drawn 2026-10-19 (bracket editor first, through `/design`); B1–B6 + P1 ruled as recommended 2026-10-19; Stage 2 built and committed `956eea005` 2026-10-19; owner walk ✅ 2026-10-19 — 22 of 22 steps ticked, Parts A–G all marked Pass, no notes, so the Stage 2 walk is closed. Stage 3 (club admin) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/8Ypx95Zk9NP8ceihUGdw5F, from `ADMIN_TYPE_SWEEP_STAGE3_BUILD_PROMPT.md`); C1–C5 RULED as recommended 2026-10-19; Stage 3 BUILT and committed `e83c58223` 2026-10-19, owner walk ✅ 2026-10-19 (25 of 25, Parts A–H Pass, no notes) https://claude.ai/artifact/VEFsFQkei7kJA52bb5sVJM** **Stage 4 (new-look drift) DRAWN 2026-10-19 through `/design` (https://claude.ai/artifact/YQ9CZWXgL9pjo8GvXpw2wH, from `ADMIN_TYPE_SWEEP_STAGE4_BUILD_PROMPT.md`); D1–D3 RULED as recommended 2026-10-19 — every heading the plain face incl. the page title, both portals; one chosen look for the toggle; the account notification settings page swept too (§4 "Stage 4 — drawn"); build prompt rewritten for the build. Stage 4 BUILT 2026-10-20, /review done, committed `eb0a2609e` 2026-10-20, owner walk ✅ 2026-10-20 — 30 of 30 steps ticked, Parts A–J all Pass, no notes (https://claude.ai/artifact/21EACBfw6L6dTkbPVNAfGD; §4 "Stage 4 — as built").** (§4, "Stage 2 — drawn").
 Hub (list, asks, brief, plan, decisions): https://claude.ai/artifact/QcQCe3yy4oqRUnUEf9uMCb (source
 `ADMIN_TYPE_SWEEP_HUB.html`; the list and the asks live in its two `application/json` blocks — change them
 with a parse-and-rewrite script, then `JSON.parse` both blocks before publishing).
@@ -348,7 +348,7 @@ start: 8225 / 8227, the same two red as Stage 3 (club-stage6c rail scrollbar; co
   onboarding + handed-over lines · shared parts (FormTable, FilterPill, PayeeCombobox, help, notifications, plan drawer,
   the toggle) · the heading face (D1) as its own part · the account page (D3).
 
-### Stage 4 — as built 2026-10-20 (committed `eb0a2609e` 2026-10-20; owner walk owed: https://claude.ai/artifact/21EACBfw6L6dTkbPVNAfGD, source `ADMIN_TYPE_SWEEP_STAGE4_WALK.html`)
+### Stage 4 — as built 2026-10-20 (committed `eb0a2609e` 2026-10-20; owner walk ✅ 2026-10-20 — 30 of 30 steps ticked, Parts A–J all Pass, no notes: https://claude.ai/artifact/21EACBfw6L6dTkbPVNAfGD, source `ADMIN_TYPE_SWEEP_STAGE4_WALK.html`)
 
 Five parallel helpers on disjoint files (4a tournament · 4b club kit + money · 4c billing + onboarding · 4d shared parts + the
 toggle · 4e the account page), then 4f in the main session after a read-only census of every `--font-display` rule. File
@@ -392,6 +392,13 @@ list: `.probe/ats4b/files.txt`; the 4f edit script `.probe/ats4b/d1.cjs` (+ `pin
   its siblings). Left: PrintedPage, mock portal, public pages, chat (paused), dead rules (branding's second
   `.sectionTitle`, rep-teams `.summaryCardValue`, coaches `.lineupAnalyticsSummary` → S5), the sign-up form title
   (`AccountForm`, The first look). CollapsibleCard's comment corrected (it cited F2 for the display face).
+- **Stage 5 build prompt written 2026-10-20** (`ADMIN_TYPE_SWEEP_STAGE5_BUILD_PROMPT.md`) from a re-check of §7 S5: six census rows are NOT dead (D02 eyebrows, D04, D05, D06, D10 — live on public, consumer or platform-admin surfaces; D16 parked), D01 is reachable (owner call E1), D14 has two dead `.sectionTitle`s, onboarding has none.
+- **⚖ Owner rulings 2026-10-20 on the hand-off's three calls:** (1) the account notification page's TITLE goes plain
+  too — YES; (2) `KIT_INK.head` becomes the standard column heading (display face, capitals) — YES; both are Stage 5's
+  part 5a (`ADMIN_TYPE_SWEEP_STAGE5_BUILD_PROMPT.md`). (3) the Send email sample kicker: owner "not sure what the
+  difference is" — re-framed: the sample is drawn in the kit's colours (grey kicker on the warm card), the real email
+  is a navy card with a blue 900 / 0.14em kicker, so one line matching would change nothing visible; rec leave the
+  sample, and the family email's own old navy look belongs to `PUBLIC_FACE_WARM_PLAN.md` ("the other emails").
 - **Findings for the owner:** `KIT_INK.head` (body 650, no caps) has two callers, both house league tables
   (notifications `page.tsx:386`, registrations `page.tsx:626` → :794) — the standard says display-face capitals;
   unchanged. The scorekeeper/gate window titles (`.sheetTitle`, empty-state `h2`) go plain with the rule (the
@@ -410,6 +417,62 @@ list: `.probe/ats4b/files.txt`; the 4f edit script `.probe/ats4b/d1.cjs` (+ `pin
   border) → inset ring; Match typed locations' label colour a silent no-op under the kit layer; BracketEditor's stale
   comment. Known, left: `.dayBand` / `.gh` / `.pdayHead` at 0.04em (recipe 0.05em, invisible); house league's base
   rules still say display under their kit layers (always in the kit); `.savingsBadge`'s box.
+
+### Stage 5 — as built 2026-10-20 (not committed yet; owner walk owed: https://claude.ai/artifact/H4STQyxxQQYkszGuyk9mbg, source `ADMIN_TYPE_SWEEP_STAGE5_WALK.html`)
+
+Built from `ADMIN_TYPE_SWEEP_STAGE5_BUILD_PROMPT.md`. Every "dead" claim re-proved by two read-only helpers and a
+main-session spot-check (each same-named use traced to a different module); the cut scripts and their logs are in
+`.probe/ats5/` (`deadcss.cjs` + `deadcss-run.txt`, `legacy.cjs` + `legacy-removed-*.txt`, `navlabels.cjs`, `callers.cjs`).
+- **⚖ E1 RULED 2026-10-20 — owner chose "go to their first door" over the prompt's "always the card"** (session push-back:
+  the tile page listed doors the member could open). The tile page, its attention box, upsell teaser and setup link are
+  gone; a member who cannot see tournaments goes to the first area whose own gate admits them (Organization admin →
+  Public site → Accounting → House league → Rep teams), else the "Access restricted" card. **Review correction:** a
+  Tournament / Tournament Plus organization has NO `/admin/org` (proxy + the org layout send it to tournaments — the area
+  this member cannot see), so the hub never offers it there; Families is not offered (its gate also refuses a member
+  limited to some teams, which the client cannot see — a refused door would loop). **Net:** on the tournament plans, which
+  carry neither Organization admin nor Public site, such a member sees the card — the prompt's original rec, reached by the
+  owner's rule. The old Organization Admin tile was itself a dead door on those plans. No fixture account is this
+  person; the walk's Part B says how to make one.
+- **⚖ Account title RULED 2026-10-20 (asked at the start, rec yes):** `account.module.css .title` is shared through
+  `composes` by the desktop "Account" heading and the Appearance / Get the app / Help pane headings — all to the body
+  face at 700 (was display 800), with the notification page's title. The face is NAMED (`--font-sans`), not deleted: the
+  consumer shell has no marker, so the global `h1…h6` rule would hand the display face back.
+- **5a:** `KIT_INK.head` = the global `th` values (display, `--type-support`, 700, 0.05em, capitals, `--text-secondary`),
+  marked `type-ok: column heading`; its two callers' words are all short nouns. Call 3: the family email's old look is
+  already in `PUBLIC_FACE_WARM_PLAN.md` (S3 Emails, Q5) — no line added.
+- **5b:** D02's five global classes; D07 the tournament header's console branch (the kit is always on — only the
+  `tournaments/preview` island turns it off, and no preview page renders the header) + the props only it read (`icon`,
+  `eyebrow`, `subtitle`, `mobileActionsInline`, `className`) from the five callers, and `kitTitle` (Results' title is now
+  "Results & scoring" itself; the UAT smoke spec follows); D08 ten unused toolbar parts + their 800 lines of module CSS
+  (the module is now `.kitLockedBanner` alone, unscoped; off `ADMIN_COLOUR_DEBT`; off the overlay guard's list); D09 the
+  config holds the sentence-case words, `KIT_TOURNAMENT_LABELS` / `kitTournamentLabel` deleted (nothing keyed on the
+  words; the nav test now asserts sentence case in the config); D11–D14 (+ branding's dead `.segmentedControl`, schedule's
+  dead `@keyframes liveChipPulse`); D15 the nine `legacy` blocks + the prop + their classes; billing `.priceUnit`;
+  rep-teams' old header + summary cards (`.pageHeader` … `.summaryCard*`, `.sectionTitle`); coaches
+  `.lineupAnalyticsSummary`; What's new's 20 panel classes. House league's three base titles took their kit values and
+  lost the layer copy. Branding's `.modeToggle` / `.modeToggleBtn` took their kit values too (the trimmed group rules
+  had left each declared twice — `check:css-selectors`, caught by review).
+- **5c NOT done — not invisible:** inside the kit every `.btn-data` property is overridden except `gap` (0.28rem vs
+  `.btn`'s 0.5rem): stripping it from ~96 buttons widens every icon + word button by ~3.5 px. Left for the FeedbackModal /
+  One Window retirement, with the base rule (live outside the kit).
+- **Checks:** typecheck ✓ (after `next typegen`); `npm test` at the start 8296 / 8297 (coach-semantic-ink, another
+  session's), at the end every failure in `club-frame-guard` (Club Tier 4b-1, untracked, in flight) + coach-semantic-ink;
+  the edited files' tests 131 / 131. **admin-type `--init`: 61 files · face 77 · caps 80 · track 1 · heavy 25** (Stage 4:
+  69 · 112 · 103 · 3 · 40); **old-look `--init`: 18 files · useAdminKit 6 · kx 75 · helpers 25 · legacy 0 · kitScope 354**
+  (Stage 4: 20 · 7 · 75 · 25 · 9 · 414). spelling, css purity, contrast ×2 ✓; public tokens ✓ for these files (red only
+  on another session's new `ClubFrame.module.css`); css-selectors red only on the pre-existing GuidanceRail `.context`
+  and another session's `Navbar.module.css` (its baseline still lists the classes deleted here — harmless, not
+  re-initialised so the other session's dead classes are not swallowed). `check:layout --only=admin-hl-notifications,
+  admin-hl-registrations`: no new defect — its 6 "new" entries are the status tabs' baseline keys still in Title Case
+  ("Pending Review", "Declined / Withdrawn"), the same 34 px tabs under their sentence-case names; re-key at the next
+  staging sweep. No account screen is in the layout list. `globals.css` changed → the whole-product sweep at the next
+  staging release. Dev server restarted (inner process), 200.
+- **`/review` 2026-10-20 (3 lenses: live-use hunt for every deleted class, prop and label; the hub rewrite + folds):**
+  no live use of anything deleted. Fixed: the hub's Organization admin door on tournament plans (Medium), the Families
+  door's possible loop (Low), the no-org moment flashing the card (Low), branding's duplicated rules (Medium, a gate), a
+  stale test comment, and three pages that still handed Title Case to the browser tab (`usePageTitle` on Results,
+  Rules, Venues — Stage 4's walk saw the sentence-case tab, so the shell's title manager usually wins; the words now
+  agree either way).
 
 ## 5. Parked (owned elsewhere — not this sweep)
 
@@ -626,6 +689,17 @@ band-heading row rewritten per A4; exception register K-10 narrowed to the platf
 | S19 | Plan upgrade drawer (Plan & billing and every plan-gate prompt) | Drawer eyebrows, section eyebrows, headlines and step labels | eyebrow style at off-standard sizes and 0.10–0.14em spacing; headlines extra-bold (800); step label in capitals | the standard eyebrow and heading weight | drift |  | 4 | none | `components/billing/PlanArticlePanel.module.css:67,79,177,189,257` |
 
 ### S5 — dead old look (15 items, 161 elements)
+
+> **⚠ Corrected 2026-10-20 (Stage 5 re-check — the census was wrong on six rows; read this before the table):**
+> **NOT dead, left in place:** D02's two eyebrows (`.public-page-header .eyebrow`, `.section-header .eyebrow` — the public
+> site, 5 pages + the club home); D04 `.form-label` base (public registration, `RegisterContent.tsx`); D05 `.modal-header
+> h3`, `.modal p`, `.modal-footer` (the Send feedback widget renders them outside any marker); D06 `.table-cards
+> td[data-label]::before` (three platform-admin screens); D10 CollapsibleCard `.title` / `.meta` and ExportMenu
+> `.menuItemLabel` (platform-admin renders both without the kit); D16 parked (One Window Stage 3). **Reachable, not
+> dead:** D01 — owner call E1, replaced (Stage 5 as built). **D03 not done** — `.btn-data`'s `gap` still shows inside the
+> kit (Stage 5, 5c). **D14** had two dead `.sectionTitle`s, both deleted. Everything else in the table was deleted in
+> Stage 5, plus dead neighbours the re-check found (rep-teams' old header + summary cards, branding
+> `.segmentedControl`, `@keyframes liveChipPulse`, What's new's panel classes).
 
 | id | screen | element | today | fix | kind | ask | n | owner | ref |
 |---|---|---|---|---|---|---|---|---|---|

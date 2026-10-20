@@ -224,7 +224,7 @@ export default function AdminCommunicationPage() {
       <Plus size={15} aria-hidden /><span className={screenParts.headerButtonLabel}>{W.newMessage}</span>
     </button>
   );
-  const header = <TournamentAdminHeader title="Communications" mobileActionsInline actions={newButton} />;
+  const header = <TournamentAdminHeader title="Communications" actions={newButton} />;
 
   // The header stays while the list loads (the portal's Money screen): only the body waits.
   if (loading) return <div className={styles.page}>{header}<LoadingState label="Loading communications…" /></div>;

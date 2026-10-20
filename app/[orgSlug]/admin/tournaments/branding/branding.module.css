@@ -17,34 +17,6 @@
   margin-bottom: 0.75rem;
 }
 
-.sectionTitle {
-  margin: 0 0 0.75rem;
-}
-
-.segmentedControl {
-  display: inline-flex;
-  align-self: flex-start;  /* prevent stretching when inside a flex column */
-  gap: 0.25rem;
-  padding: 0.2rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  background: var(--bg-2);
-}
-
-.segmentButton {
-  padding: 0.25rem 0.6rem;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--data-gray);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 /* ── Logo ──────────────────────────────────── */
 .logoRow {
   display: flex;
@@ -310,23 +282,25 @@
   margin: 0;
 }
 
+/* The kit values folded in (admin type sweep Stage 5): the old console twin and its later override are one rule. */
 .modeToggle {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
   padding: 0.25rem;
-  border-radius: 2px;
-  background: var(--bg-2);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
 }
 
 .modeToggleBtn {
   min-width: 4.5rem;
   padding: 0.42rem 0.8rem;
   border: 0;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--white-50);
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.76rem;
   font-weight: 650;
   cursor: pointer;
@@ -493,16 +467,6 @@
     flex-direction: column;
   }
 
-  .segmentedControl,
-  .segmentButton {
-    width: 100%;
-  }
-
-  .segmentButton {
-    flex: 1;
-    min-height: 38px;
-  }
-
   .logoRow {
     flex-direction: column;
     align-items: flex-start;
@@ -512,16 +476,6 @@
 /* ── The kit's look for the cards, labels and controls above (folded from its `[data-admin-kit]` layer; it comes after
    the rules it overrode, so it still wins over them). The organization's own colours stay exactly as set: the swatches,
    the custom-colour wheel, the app-icon tile and its chips, the font samples' face, the logo and banner images. ── */
-
-/* A card's own title — a real heading, not a shouted mono label. */
-.sectionTitle {
-  font-family: var(--font-display);
-  font-size: var(--type-body);
-  font-weight: 700;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
 
 /* A label over a value, or a group header within a card, → the kit eyebrow. */
 .modeToggleLabel {
@@ -545,19 +499,7 @@
   color: var(--text-primary);
 }
 
-/* ── Segmented controls / mode toggle → the chosen-option idiom ── */
-.segmentedControl,
-.modeToggle {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line-strong);
-  border-radius: var(--radius-sm);
-}
-.segmentButton,
-.modeToggleBtn {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-  border-radius: var(--radius-sm);
-}
+/* ── Mode toggle → the chosen-option idiom (its ground and ink are on the base rules above) ── */
 .modeToggleBtn:hover { color: var(--text-primary); }
 /* The chosen mode: after the rule above, which inks every mode button tertiary (same specificity — order decides). */
 .modeToggleBtnActive {
@@ -664,15 +606,8 @@
 .iconSizeSlider { height: var(--admin-control-h); }
 @media (max-width: 768px) {
   .iconBgOption,
-  .modeToggleBtn,
-  .segmentButton { min-height: var(--tap-min, 44px); }
+  .modeToggleBtn { min-height: var(--tap-min, 44px); }
   .swatch,
   .colorInput { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .iconSizeSlider { height: var(--tap-min, 44px); }
-}
-/* A tablet keeps the choices side by side at their words' width ("ON" was 40px wide); a phone stretches them full width
-   already. Only here: a min-width replaces a flex item's own floor, and on a phone the long "Tournament-wide" would then
-   squeeze under its words. */
-@media (min-width: 601px) and (max-width: 768px) {
-  .segmentButton { min-width: var(--tap-min, 44px); }
 }

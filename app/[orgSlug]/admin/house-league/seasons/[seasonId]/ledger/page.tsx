@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
@@ -101,34 +100,6 @@ export default function LedgerPage() {
         crumbs={[{ href: `/${orgSlug}/admin/house-league`, label: 'House league' }]}
         title="Ledger"
         backTo={season ? { href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}>
-            <DollarSign size={22} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginBottom: '0.2rem' }}>
-              <Link href={`/${orgSlug}/admin/house-league`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                House league
-              </Link>
-              {season && (
-                <>
-                  {' / '}
-                  <Link
-                    href={`/${orgSlug}/admin/house-league/seasons/${seasonId}`}
-                    style={{ color: 'inherit', textDecoration: 'none' }}
-                  >
-                    {season.name}
-                  </Link>
-                </>
-              )}
-            </div>
-            <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#f0f0f0' }}>Ledger</h1>
-          </div>
-        </div>
-      </div>
-        }
       />
 
       {/* Summary tiles */}

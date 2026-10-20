@@ -14,10 +14,8 @@
  * that sat under a title moves to the body it describes; a required framing line moves into the card
  * it frames. Every move is listed in the slice's handoff — a fact is re-homed, never dropped.
  *
- * ⚠ `legacy` IS READ BY NOTHING (Admin Design Continuity Part B, 2026-09-29). It held each page's old
- * header for the dev-only switch; since the release this header is the only one that renders. The prop
- * stays accepted while the cleanup runs area by area — each area deletes its pages' old header markup
- * in its own pass — and the last area deletes the prop. Never pass it on a new page.
+ * ⚰ The `legacy` prop (each page's old header, kept for the dev-only switch and read by nothing since Part B,
+ * 2026-09-29) went with its last callers in admin type sweep Stage 5 (2026-10-20).
  */
 import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
@@ -40,8 +38,6 @@ export default function AdminPageHeader({
    *  of their own — the tournament screens' header (Tournament admin redesign G1, 2026-09-29), whose
    *  actions are icons on a phone. Other areas keep the row until their own redesign says otherwise. */
   inlineActions?: boolean;
-  /** @deprecated Read by nothing — the page's old header, deleted by its area's Part B pass (above). */
-  legacy?: ReactNode;
   /** The program or tournament the page sits in. Never a count — that is a subtitle wearing a hat. */
   eyebrow?: ReactNode;
   /** The eyebrow as a PATH — "Rep Teams · Northfield Minor Ball", each step with an `href` a link back —

@@ -1,20 +1,12 @@
 {
-  "app/[orgSlug]/admin/AdminHubClient.tsx": {
-    "caps": 2
-  },
-  "app/[orgSlug]/admin/admin-common.module.css": {
-    "face": 8,
-    "track": 1,
-    "caps": 5
-  },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
-    "heavy": 4,
-    "face": 9,
-    "caps": 12
+    "caps": 10,
+    "face": 5,
+    "heavy": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
-    "heavy": 2,
-    "caps": 1
+    "caps": 1,
+    "heavy": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx": {
     "caps": 1
@@ -26,28 +18,12 @@
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "face": 1
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
-    "heavy": 1
-  },
-  "app/[orgSlug]/admin/org/billing/billing.module.css": {
-    "face": 1
-  },
   "app/[orgSlug]/admin/org/billing/mock-portal/mock-portal.module.css": {
     "caps": 1
   },
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
-    "heavy": 1,
-    "face": 3,
-    "caps": 1
-  },
-  "app/[orgSlug]/admin/rep-teams/rep-teams.module.css": {
-    "heavy": 1,
-    "face": 3,
-    "caps": 2
-  },
-  "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
-    "face": 1,
-    "caps": 1
+    "caps": 1,
+    "face": 2
   },
   "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": {
     "caps": 1,
@@ -67,11 +43,6 @@
   "app/[orgSlug]/admin/tournaments/rules/rules.module.css": {
     "caps": 1
   },
-  "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
-    "face": 1,
-    "heavy": 1,
-    "caps": 1
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketView.module.css": {
     "caps": 2
   },
@@ -79,9 +50,9 @@
     "face": 2
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "face": 16,
-    "caps": 11,
-    "heavy": 7
+    "face": 9,
+    "caps": 6,
+    "heavy": 4
   },
   "app/[orgSlug]/admin/tournaments/settings/event/event-settings.module.css": {
     "face": 1
@@ -169,12 +140,6 @@
   },
   "components/admin/tournament/ReorderList.module.css": {
     "heavy": 1
-  },
-  "components/admin/tournament/TournamentAdminUI.module.css": {
-    "face": 9,
-    "track": 1,
-    "caps": 5,
-    "heavy": 4
   },
   "components/admin/tournament/VenueRecord.module.css": {
     "caps": 1

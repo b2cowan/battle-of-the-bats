@@ -92,7 +92,7 @@ const NO_FILTER: ResultsFilter = { divisions: [], stages: [] };
 export default function AdminResultsPage() {
   const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
-  usePageTitle('Results & Scoring');
+  usePageTitle('Results & scoring');
   // Finalizing a pending score and changing a final one are the same power (the games route enforces it).
   const canFinalize = !!userRole && hasCapability(userRole, userCapabilities, 'seal_tournaments');
   const tournamentId = currentTournament?.id;
@@ -493,10 +493,7 @@ export default function AdminResultsPage() {
   return (
     <div className={`${s.page} ${s.pageWide}`}>
       <TournamentAdminHeader
-        icon={<Trophy size={20} />}
-        title="Results & Scoring"
-        kitTitle="Results & scoring"
-        mobileActionsInline
+        title="Results & scoring"
         help={{
           module: 'tournaments',
           sectionIds: ['scores-and-results', 'recipe-finalize-tournament-scores'],

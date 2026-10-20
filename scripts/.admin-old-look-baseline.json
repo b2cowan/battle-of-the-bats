@@ -1,26 +1,23 @@
 {
   "app/[orgSlug]/admin/admin-common.module.css": {
-    "kitScope": 20
+    "kitScope": 11
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
-    "kitScope": 129
+    "kitScope": 126
   },
   "app/[orgSlug]/admin/house-league/page.tsx": {
     "kx": 1,
-    "helpers": 2,
-    "legacy": 1
+    "helpers": 2
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
     "useAdminKit": 1,
     "kx": 10,
-    "helpers": 2,
-    "legacy": 1
+    "helpers": 2
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx": {
     "useAdminKit": 1,
     "kx": 12,
-    "helpers": 1,
-    "legacy": 2
+    "helpers": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx": {
     "kx": 1,
@@ -29,28 +26,23 @@
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx": {
     "useAdminKit": 2,
     "kx": 18,
-    "helpers": 1,
-    "legacy": 1
+    "helpers": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "useAdminKit": 1,
     "kx": 9,
-    "helpers": 8,
-    "legacy": 1
+    "helpers": 8
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
     "kx": 7,
-    "helpers": 1,
-    "legacy": 1
+    "helpers": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx": {
     "kx": 2,
-    "helpers": 6,
-    "legacy": 1
+    "helpers": 6
   },
   "app/[orgSlug]/admin/public-site/page.tsx": {
-    "useAdminKit": 1,
-    "legacy": 1
+    "useAdminKit": 1
   },
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
     "kitScope": 24
@@ -70,15 +62,9 @@
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "kitScope": 109
+    "kitScope": 100
   },
   "components/admin/NumberStepper.module.css": {
     "kitScope": 5
-  },
-  "components/admin/tournament/TournamentAdminUI.module.css": {
-    "kitScope": 39
-  },
-  "components/admin/tournament/TournamentAdminUI.tsx": {
-    "useAdminKit": 1
   }
 }

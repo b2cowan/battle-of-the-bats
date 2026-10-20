@@ -1505,23 +1505,14 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .card:where(:not([data-pu
   color: var(--blueprint-light);
 }
 
-.data-mono {
-  font-family: var(--font-data);
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-}
-
 /* ── Tabular numerals ─────────────────────────────────────────────────────────
    Fixed-width figures so scores/records/times/standings line up like a real
    scoreboard and don't reflow when a digit changes during live refresh.
-   `.score` is the full scoreboard treatment; `.tabular` is the bare figure rule
-   to drop onto any numeric run (module CSS also opts in its own score classes). */
+   `.tabular` is the bare figure rule to drop onto any numeric run (module CSS opts
+   in its own score classes). The global `.score`, `.data-mono`, `.tab-btn` and
+   `.segmented-control` / `.segment` rules went with admin type sweep Stage 5
+   (2026-10-20) — nothing wore them. */
 .tabular { font-variant-numeric: tabular-nums; }
-.score {
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-}
 
 /* (The old lime `.live-dot::before` pulse was removed 2026-07-15 — zero consumers,
    and lime is the wrong family for live: red owns live. The canonical red
@@ -2360,58 +2351,6 @@ select optgroup {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 2rem;
-}
-
-.tab-btn {
-  padding: 0.5rem 1.25rem;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-display, sans-serif);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  border: none;
-  background: transparent;
-  color: var(--white-60);
-  transition: var(--transition);
-}
-
-.tab-btn:hover { color: var(--white); background: var(--white-10); }
-
-.tab-btn.active {
-  background: var(--primary);
-  color: var(--white);
-  box-shadow: var(--glow-sm);
-}
-
-/* ─── Segmented Control ──────────────────────────────────────────────────────── */
-.segmented-control {
-  display: inline-flex;
-  padding: 0.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  gap: 0.25rem;
-}
-
-.segment {
-  padding: 0.375rem 1rem;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-display, sans-serif);
-  font-size: 0.875rem;
-  font-weight: 700;
-  border: none;
-  background: transparent;
-  color: var(--white-60);
-  transition: var(--transition);
-  white-space: nowrap;
-}
-
-.segment:hover { color: var(--white); background: var(--white-10); }
-
-.segment.active {
-  background: var(--primary);
-  color: var(--white);
-  box-shadow: var(--glow-sm);
 }
 
 /* ─── Empty State ───────────────────────────────────────────────────────────── */

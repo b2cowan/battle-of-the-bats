@@ -93,7 +93,7 @@ const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
   // (MoneyKit.tsx left 2026-10-19: FormError is KitDialog's own refusal line now, `DialogReason`, One Window 2b.)
   'components/admin/tournament/PrintedPage.tsx': { notAForm: 'a print-only portal; never on screen' },
   'components/admin/tournament/ReorderList.tsx': { notAForm: 'a MENU: the row\'s options (move up, move down), a SheetFrame menu on a phone' },
-  'components/admin/tournament/TournamentAdminUI.tsx': { notAForm: 'a MENU: the status legend popover, read-only' },
+  // (TournamentAdminUI.tsx left 2026-10-20: its status legend popover went with admin type sweep Stage 5.)
 };
 
 const SIGNAL = /aria-modal|createPortal\(|modal-overlay|\.modalOverlay\b|role="dialog"/;

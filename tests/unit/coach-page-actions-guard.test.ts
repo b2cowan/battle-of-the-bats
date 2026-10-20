@@ -553,7 +553,7 @@ const EXPORT_MODULES = [
   'components/coaches/CoachExportButton',
   'components/coaches/MoneyExportButton',
   'components/coaches/CoachScheduleCalendarButton',
-  'components/admin/tournament/TournamentAdminUI', // the admin `ExportMenu` these screens dropped
+  'components/admin/tournament/TournamentAdminUI', // the old admin toolbar menu these screens dropped (the file keeps only the page header since admin type sweep Stage 5)
 ];
 
 /**

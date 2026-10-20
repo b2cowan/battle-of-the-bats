@@ -27,7 +27,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { readCode, readSource, functionBody, callbackBody, cssRule } from './_source-code.ts';
 import { ADMIN_PAGE } from '../../lib/notification-view.ts';
-import { accountingTabs, kitOrgLinks, kitPrograms, kitTournamentLabel } from '../../lib/admin-kit-nav.ts';
+import { accountingTabs, kitOrgLinks, kitPrograms } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { BRING_IN_PAGE_TITLE } from '../../lib/team-move-words.ts';
 
@@ -177,7 +177,7 @@ describe('D4 · the admin button words are the admin\'s own page names', () => {
     const label = (key: string) => {
       const item = TOUR_GROUPS.flatMap(g => g.items).find(i => i.key === key);
       assert.ok(item, `the tournament nav lost ${key}`);
-      return kitTournamentLabel(item.label);
+      return item.label;
     };
     assert.equal(ADMIN_PAGE.tournamentTeams, label('registrations'));
     assert.equal(ADMIN_PAGE.results, label('results'));

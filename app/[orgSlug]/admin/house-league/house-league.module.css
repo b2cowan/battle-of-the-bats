@@ -3,50 +3,6 @@
    components/admin/kit/club/ClubKit.module.css). */
 .page { max-width: 960px; margin-inline: auto; }
 
-.pageHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.pageHeaderLeft {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.pageTitle {
-  font-size: 1.75rem;
-  font-weight: 900;
-  font-family: var(--font-data);
-  margin: 0;
-  color: var(--logic-lime);
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.pageSub {
-  margin: 0.25rem 0 0;
-  color: var(--white-40);
-  font-size: 0.9rem;
-}
-
 .muted {
   color: var(--white-40);
   padding: 2rem;
@@ -208,11 +164,13 @@
 
 .seasonHeaderLeft { flex: 1; }
 
+/* The kit layer's values folded into the base (admin type sweep Stage 5): house league renders only
+   inside the admin shell, which always carries the kit marker, so the console base never showed. */
 .seasonHeaderName {
-  font-size: 1.5rem;
-  font-weight: 900;
-  font-family: var(--font-data);
-  color: var(--white-90);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-title);
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0 0 0.5rem;
 }
 
@@ -568,12 +526,10 @@
 }
 
 .modalTitle {
-  font-family: var(--font-data);
-  font-size: 0.9rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--logic-lime);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -879,10 +835,10 @@
 .draftTitleGroup { display: flex; flex-direction: column; gap: 0.15rem; }
 
 .draftTitle {
-  font-size: 1rem;
-  font-weight: 800;
-  font-family: var(--font-data);
-  color: var(--white-90);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .draftPickMeta {
@@ -1237,12 +1193,6 @@
 :global([data-admin-kit]) .seasonCard:hover { border-color: var(--home-line-strong); }
 :global([data-admin-kit]) .seasonName,
 :global([data-admin-kit]) .divisionName { color: var(--text-primary); }
-:global([data-admin-kit]) .seasonHeaderName {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-title);
-  font-weight: 700;
-  color: var(--text-primary);
-}
 :global([data-admin-kit]) .seasonCardActions,
 :global([data-admin-kit]) .seasonDates { border-top-color: var(--home-line); }
 :global([data-admin-kit]) .divisionLinks { border-top-color: var(--home-line); }
@@ -1392,14 +1342,6 @@
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
 }
-:global([data-admin-kit]) .modalTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
 :global([data-admin-kit]) .modalCloseBtn { color: var(--text-tertiary); }
 :global([data-admin-kit]) .modalCloseBtn:hover { color: var(--text-primary); }
 :global([data-admin-kit]) .modalFooter { border-top-color: var(--home-line); }
@@ -1451,12 +1393,6 @@
 :global([data-admin-kit]) .draftHeader,
 :global([data-admin-kit]) .draftFooter { border-color: var(--home-line); }
 :global([data-admin-kit]) .draftPickOrder { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .draftTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-}
 :global([data-admin-kit]) .draftPickMeta { color: var(--home-olive); }
 :global([data-admin-kit]) .draftTeamChip {
   background: var(--card-bg);

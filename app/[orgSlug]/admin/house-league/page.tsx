@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { CalendarDays, X, Users } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -228,22 +228,6 @@ export default function HouseLeaguePage() {
             + Create season
           </button>
         ) : undefined}
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><CalendarDays size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>House league</h1>
-            <p className={styles.pageSub}>{currentOrg?.name} — all seasons</p>
-          </div>
-        </div>
-        {isAdmin && (
-          <button type="button" className="btn btn-primary" onClick={openCreate}>
-            + Create season
-          </button>
-        )}
-      </div>
-        }
       />
 
       {fetching ? (

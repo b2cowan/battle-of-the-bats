@@ -874,16 +874,6 @@
 
 .sheetSection:last-of-type { border-bottom: none; }
 
-.sheetSectionLabel {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.65);
-  margin-bottom: 0.6rem;
-}
-
 .sheetSegments { display: flex; gap: 0.35rem; }
 
 .sheetSeg {
@@ -903,21 +893,6 @@
 }
 
 .sheetSeg:hover { border-color: rgba(var(--logic-lime-rgb), 0.35); color: var(--fl-text); }
-
-/* Venue nested modal */
-
-.sheetDone {
-  margin-top: 1rem; width: 100%; height: 42px;
-  font-family: var(--font-data); font-size: 0.7rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
-  border-radius: 2px;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-  cursor: pointer; transition: background 0.15s;
-}
-
-.sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
 
 /* ─── Add Game button — icon-only collapse on mobile ─────────────────────── */
 
@@ -979,15 +954,6 @@
 
 /* Spans all grid columns — used for Notes textarea */
 
-.formLabel {
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--white-30);
-}
-
 .formInput,
 .formSelect {
   width: 100%;
@@ -1034,29 +1000,6 @@
   outline: none;
   border-color: var(--blueprint-blue);
   box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.15);
-}
-
-.saveError {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--danger);
-}
-
-/* Gate check-in: a team marked no-show, flagged on its games. */
-.noShowTag {
-  display: inline-block;
-  flex-shrink: 0;
-  margin: 0 0.3rem;
-  padding: 0.05rem 0.3rem;
-  border-radius: 3px;
-  background: rgba(var(--danger-rgb), 0.14);
-  color: var(--danger);
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  vertical-align: middle;
 }
 
 /* ─── Conflict visualization (C5) ────────────────────────────────────────────
@@ -1108,32 +1051,6 @@
 }
 
 .healthJumpChip[data-tone="warning"]:hover { background: rgba(var(--warning-rgb), 0.2); }
-
-.liveChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.22rem;
-  flex-shrink: 0;
-  padding: 0.04rem 0.32rem;
-  border: 1px solid currentColor;
-  border-radius: 2px;
-  font-family: var(--font-data);
-  font-size: 0.5rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.liveChip[data-live="live"]    { color: var(--logic-lime); background: rgba(var(--logic-lime-rgb), 0.1); }
-.liveChip[data-live="overdue"] { color: var(--warning);    background: rgba(var(--warning-rgb), 0.1); }
-.liveChip[data-live="next"]    { color: var(--info);       background: rgba(var(--info-rgb), 0.1); }
-
-@keyframes liveChipPulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.3; }
-}
 
 /* ── Mobile-visible stage toggle (Round Robin / Playoffs) ────
    Pulled out of the settings sheet onto the Division row so the most important
@@ -1432,24 +1349,12 @@
    (the extra attribute selector adds a point), but ties with another KIT rule of the same shape — so
    every modifier a base class carries in the legacy sheet above is restated here, base rule first. */
 
-/* ── Live-game chip + row stripe — "Live = the portal's red", not the brand lime ── */
-:global([data-admin-kit]) .liveChip[data-live="live"]    { color: var(--home-live); background: var(--home-live-soft); }
-:global([data-admin-kit]) .liveChip[data-live="overdue"] { color: var(--warning-light); }
-:global([data-admin-kit]) .liveChip[data-live="next"]    { color: var(--info-light); }
-
-/* ── The no-show tag beside a team's name (a planning row) ── */
-:global([data-admin-kit]) .noShowTag {
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger-light);
-}
-
 /* ── Planning inline edit panel — the expanded row's ground + fields ── */
 :global([data-admin-kit]) .expanded { background: var(--home-olive-soft); }
 :global([data-admin-kit]) .inlineForm {
   background: var(--home-olive-soft);
   border-top-color: var(--home-line);
 }
-:global([data-admin-kit]) .formLabel { color: var(--text-tertiary); }
 :global([data-admin-kit]) .formInput,
 :global([data-admin-kit]) .formSelect,
 :global([data-admin-kit]) .formTextarea {
@@ -1475,9 +1380,6 @@
 :global(html[data-user-theme="warm"] [data-admin-kit]) .formSelect {
   color-scheme: light;
 }
-
-/* ── Inline form footer actions ── */
-:global([data-admin-kit]) .saveError { color: var(--danger-light); }
 
 /* ═══ ON THE KIT — the schedule itself (Admin Design Continuity slice 4c, only with the switch on) ═══
    Everything in this sheet the game list block above does not dress: the Schedule page (header tag,
@@ -1521,10 +1423,6 @@
   box-shadow: var(--home-shadow);
 }
 :global([data-admin-kit]) .sheetHandle { background: var(--home-line-strong); }
-:global([data-admin-kit]) .sheetSectionLabel {
-  font-family: var(--font-data);
-  color: var(--text-secondary);
-}
 :global([data-admin-kit]) .sheetSection { border-bottom-color: var(--home-line); }
 :global([data-admin-kit]) .sheetSeg {
   font-family: var(--font-sans, system-ui, sans-serif);
@@ -1538,16 +1436,6 @@
 :global([data-admin-kit]) .sheetSeg:hover { border-color: var(--home-olive); color: var(--text-primary); }
 /* The sheet's Venue row — opens the nested venue list; olive once a venue is chosen (the same
    choice recipe as a segment). Added in review: the page builder's layer had no rule for it. */
-/* "Done" dismisses the sheet — a quiet secondary action, not the view's one primary (the sheet has
-   no competing primary, but a loud lime "Done" reads as a commit button, which this isn't).
-   DECIDED AT BUILD TIME: moved off the lime CTA the legacy button wore. */
-:global([data-admin-kit]) .sheetDone {
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .sheetDone:hover { background: var(--home-olive-soft); border-color: var(--home-olive); color: var(--home-olive); }
-
 /* ── Add Game button icon-collapse (mobile) — layout only, no colour in the legacy rule; nothing
    to restate here (its colour comes from the already-kit `.btn-lime`). ── */
 

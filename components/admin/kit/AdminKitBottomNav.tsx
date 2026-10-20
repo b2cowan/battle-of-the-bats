@@ -38,7 +38,7 @@ import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles, { type SheetTile } from '@/components/coaches/MoreSheetTiles';
 import MoreSheetFoot from '@/components/coaches/MoreSheetFoot';
 import { clubPhoneNav, tournamentSheetTiles } from '@/lib/nav-tiles';
-import { isKitLinkActive, kitTournamentLabel, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
 import { isGameDay, resolvePhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefProgramCount } from './club/ClubBriefProvider';
@@ -105,7 +105,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     .filter((i): i is TourItem => Boolean(i));
   const primaryKeys = new Set(tourPrimary.map(i => i.key));
   const tourDoor = (i: TourItem): KitLink => ({
-    key: i.key, label: kitTournamentLabel(i.label), href: i.href, icon: i.icon,
+    key: i.key, label: i.label, href: i.href, icon: i.icon,
     // A door with a query (Accounting's `?tournamentId=`) lights on its page's path.
     ...(i.href.includes('?') ? { also: [i.href.split('?')[0]] } : {}),
   });

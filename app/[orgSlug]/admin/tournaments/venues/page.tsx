@@ -55,7 +55,7 @@ type ListVenue = Omit<RecordVenue, 'facilities'> & { facilities?: Array<RecordFa
 export default function TournamentVenuesPage() {
   const { currentTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
-  usePageTitle('Venues & Facilities');
+  usePageTitle('Venues & facilities');
   const orgSlug = currentOrg?.slug ?? '';
   const canWrite = Boolean(userRole && hasCapability(userRole, userCapabilities, 'create_tournaments'));
   const kind = facilityKindForSport(currentTournament?.sport ?? null);

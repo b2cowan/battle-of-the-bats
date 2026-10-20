@@ -159,17 +159,6 @@ export default function NotificationsPage() {
         <AdminPageHeader
           eyebrow="House league"
           title="Preview email"
-          legacy={
-        <div className={styles.pageHeader}>
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><Mail size={20} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Preview email</h1>
-              <p className={styles.pageSub}>To: {selectedAudience.label}</p>
-            </div>
-          </div>
-        </div>
-          }
         />
 
         {/* Email preview */}
@@ -251,17 +240,6 @@ export default function NotificationsPage() {
         eyebrow="House league"
         title="Send notification"
         backTo={{ href: `${base}/house-league/seasons/${seasonId}/registrations`, label: 'Registrations' }}
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Mail size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Send notification</h1>
-            <p className={styles.pageSub}>Email registrants for this season</p>
-          </div>
-        </div>
-      </div>
-        }
       />
 
       {result && (

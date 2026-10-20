@@ -31,7 +31,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { AlertCircle, ArrowLeftRight, Check, ChevronDown, ClipboardList, Link2, ListChecks, MoreHorizontal, Plus, RefreshCw, Search, Shuffle, SlidersHorizontal, Star, Upload, Users, X } from 'lucide-react';
+import { AlertCircle, ArrowLeftRight, Check, ChevronDown, ClipboardList, Link2, ListChecks, MoreHorizontal, Plus, RefreshCw, Search, Shuffle, SlidersHorizontal, Star, Upload, X } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -1730,9 +1730,7 @@ export default function UnifiedTeamsPage() {
   return (
     <div className={`${s.page} ${styles.teamsPage}`} data-selecting={selectionModeActive && selectedRegistrationIds.size > 0 ? '' : undefined}>
       <TournamentAdminHeader
-        icon={<Users size={20} />}
         title="Teams"
-        mobileActionsInline
         locked={isLocked}
         help={{
           module: 'tournaments',

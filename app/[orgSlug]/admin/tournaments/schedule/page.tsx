@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Calendar, Plus, Pencil, X, Trophy, MapPin, Globe, Wrench } from 'lucide-react';
+import { Plus, Pencil, X, Trophy, MapPin, Globe, Wrench } from 'lucide-react';
 import { bracketGameLabel, findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
@@ -1345,9 +1345,7 @@ export default function AdminSchedulePage() {
         message="You have unsaved changes to the Schedule Health rules. Leave without saving them?"
       />
       <TournamentAdminHeader
-        icon={<Calendar size={20} />}
         title={W.title}
-        mobileActionsInline
         locked={isLocked}
         help={{
           module: 'tournaments',

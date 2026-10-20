@@ -306,19 +306,6 @@
   color: var(--text-primary);
 }
 
-.roundTitleText {
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.9rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  display: block;
-  text-align: center;
-  width: 100%;
-  padding: 0.25rem;
-}
-
 /* Measured bracket connectors (C2) — desktop only; hidden in the mobile carousel. */
 .connectors {
   position: absolute;

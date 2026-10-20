@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
-  kitPrograms, kitOrgLinks, isKitLinkActive, activeKitSection, kitTournamentLabel,
+  kitPrograms, kitOrgLinks, isKitLinkActive, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
   familiesTabs, familiesTabFor,
 } from '../../lib/admin-kit-nav.ts';
@@ -204,11 +204,12 @@ describe('the admin kit nav — where you are', () => {
     assert.equal(activeKitSection(`${BASE}/help`, BASE), null);
   });
 
-  it('the tournament rail keeps its words, in the kit case', () => {
+  it('the tournament rail\'s words are in sentence case in the config itself (the old map retired, Stage 5)', () => {
     for (const item of TOUR_GROUPS.flatMap(g => g.items)) {
-      const kit = kitTournamentLabel(item.label);
-      assert.equal(kit.toLowerCase(), item.label.toLowerCase(), `${item.label} changed a WORD, not a capital`);
-      assert.equal(kit[0], item.label[0], 'the first letter keeps its capital');
+      // Only the first letter is a capital; every later word starts lower case.
+      const laterWords = item.label.split(/\s+/).slice(1).filter(w => /^[A-Za-z]/.test(w));
+      for (const w of laterWords) assert.equal(w[0], w[0].toLowerCase(), `${item.label}: "${w}" is Title Case`);
+      assert.equal(item.label[0], item.label[0].toUpperCase(), 'the first letter keeps its capital');
     }
   });
 });

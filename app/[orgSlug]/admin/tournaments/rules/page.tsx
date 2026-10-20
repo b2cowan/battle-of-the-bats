@@ -8,7 +8,7 @@ import LoadingState from '@/components/shared/LoadingState';
 export default function RulesAdminPage() {
   const { currentTournament, loading } = useTournament();
   const { currentOrg } = useOrg();
-  usePageTitle('Rules & Resources');
+  usePageTitle('Rules & resources');
 
   if (!currentTournament) {
     // The tournament itself still loading is a wait, not "no tournament" (the rules' own words).

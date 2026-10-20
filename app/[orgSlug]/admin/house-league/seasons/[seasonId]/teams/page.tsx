@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { X, Plus, Users, Shuffle, Swords, Trash2, Pencil, ChevronLeft } from 'lucide-react';
-import Link from 'next/link';
+import { X, Plus, Users, Shuffle, Swords, Trash2, Pencil } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -836,20 +835,6 @@ export default function TeamsPage() {
         eyebrow="House league"
         title="Teams & draft"
         backTo={{ href: backHref, label: season?.name ?? 'Season' }}
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <Link href={backHref} style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center' }}>
-            <ChevronLeft size={18} />
-          </Link>
-          <div className={styles.headerIcon}><Users size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Teams &amp; draft</h1>
-            {season && <p className={styles.pageSub}>{season.name}</p>}
-          </div>
-        </div>
-      </div>
-        }
       />
 
       {divisions.length === 0 && (

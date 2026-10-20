@@ -301,24 +301,9 @@ export function activeKitSection(pathname: string, base: string): AdminProgramKe
   return keys.includes(first) ? (first as AdminProgramKey) : null;
 }
 
-/**
- * The tournament rail's labels in the kit's case (ADC specimens 2 and 4 draw "Event settings",
- * "Venues & facilities", "Past tournaments" — the coaches portal's sentence case). The SAME words;
- * only the capitals move. `admin-nav-config.ts` still holds the old console rail's Title Case, which
- * that rail rendered; the rail went in Part B (2026-09-29), so the words can move into the config and
- * this map can go — owed to the tournaments' Part B pass. Anything not listed is already in sentence case.
- */
-const KIT_TOURNAMENT_LABELS: Readonly<Record<string, string>> = {
-  'Staff Kit': 'Staff kit',
-  'Event Settings': 'Event settings',
-  'Venues & Facilities': 'Venues & facilities',
-  'Rules & Resources': 'Rules & resources',
-  'Settings & Access': 'Settings & access',
-};
-
-export function kitTournamentLabel(label: string): string {
-  return KIT_TOURNAMENT_LABELS[label] ?? label;
-}
+/* ⚰ KIT_TOURNAMENT_LABELS / kitTournamentLabel (the map from the old console rail's Title Case to the kit's
+   sentence case) retired with admin type sweep Stage 5 (2026-10-20): `admin-nav-config.ts` holds the
+   sentence-case words itself. */
 
 /**
  * ⚖ THE TOURNAMENT PHONE BAR FOLLOWS THE EVENT'S PHASE (owner, 2026-10-16 — hub 5zEgCokKRD5KfBsHRmwqFx, A1–A4 as
