@@ -53,10 +53,26 @@ describe('schedule health is one number on the Schedule and the dashboard', () =
   test('the Schedule wears health as its header button, opening the one window — never a row at the day\'s foot', () => {
     assert.match(SCHEDULE, /<HealthButton\s+data-sandbox-tour="schedule-health"/, 'the button carries the tour anchor literally');
     assert.doesNotMatch(SCHEDULE, /<HealthRow\b/, 'the foot row is gone');
-    assert.match(SCHEDULE, /useState\(false\);\s*const \[rulesEditing/, 'the window never arrives open, the demo included');
+    assert.match(SCHEDULE, /const \[healthOpen, setHealthOpen\] = useState\(false\);/, 'the window never arrives open, the demo included');
     const WINDOW = read('app/[orgSlug]/admin/tournaments/schedule/components/ScheduleHealthWindow.tsx');
     assert.match(WINDOW, /<KitDialog kind="form" size="wide"[^>]*dirty=\{dirty\}/, 'the one form window; unsaved rules ask first');
     assert.match(SCHEDULE, /<ScheduleHealthWindow[\s\S]{0,200}dirty=\{healthRulesDirty\}/);
+  });
+
+  test('the dashboard opens the SAME window, from both boards — never its own panel in place (owner 2026-10-19, A5)', () => {
+    const PAGE = read('app/[orgSlug]/admin/tournaments/dashboard/page.tsx');
+    const GAME_DAY = read('app/[orgSlug]/admin/tournaments/dashboard/GameDayBoard.tsx');
+    const WEEKS = read('app/[orgSlug]/admin/tournaments/dashboard/WeeksBeforeBoard.tsx');
+    const LOADER = read('app/[orgSlug]/admin/tournaments/schedule/components/TournamentHealthWindow.tsx');
+    assert.match(PAGE, /<TournamentHealthWindow\b/);
+    assert.doesNotMatch(PAGE, /renderScheduleHealthBody|healthBody=/, "the board's own copy of the panel is gone");
+    assert.match(GAME_DAY, /onOpen=\{onOpenHealth\}/);
+    assert.match(WEEKS, /as="button" onClick=\{onOpenHealth\}/);
+    assert.match(LOADER, /buildEventScheduleHealth\(/, 'the one number');
+    assert.match(LOADER, /<ScheduleHealthWindow\b/, 'the one window');
+    assert.match(LOADER, /useScheduleHealthRules\(/, 'the one copy of the rules');
+    assert.match(SCHEDULE, /useScheduleHealthRules\(/);
+    assert.match(SCHEDULE, /searchParams\.get\('show'\)/, '"Show them" from the dashboard lands filtered');
   });
 
   test('the window\'s rules door ends its body (A3); the panel\'s gear keeps its editor on top', () => {

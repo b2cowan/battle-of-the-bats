@@ -114,7 +114,7 @@ function AddCard({ items, open, onToggle, onAdd }: {
 
 export default function WeeksBeforeBoard({
   base, daysUntil, tournamentId, orgQuery, subscriptionHref, paymentTools, inviteOnly,
-  reg, followUps, pay, fees, chat, chatSettled, onRetryChat, canRemind, comms, health, teams, divisions,
+  reg, followUps, pay, fees, chat, chatSettled, onRetryChat, canRemind, comms, health, onOpenHealth, teams, divisions,
   panels, customizing, onReorder, onHide, onShow,
 }: {
   /** An invite-only event (the free tournament tier, screen 4): the Registration card is the Teams card, and the Payments
@@ -141,6 +141,8 @@ export default function WeeksBeforeBoard({
   canRemind: boolean;
   comms: { total: number; emailsSent: number; latestTitle: string | null; latestDate: string | null };
   health: { tone: 'good' | 'warning' | 'danger'; issueCount: number; topIssue: string | null; totalGames: number; timedGames: number };
+  /** Opens Schedule health's window — the one the Schedule's header button opens (owner 2026-10-19, A5). */
+  onOpenHealth: () => void;
   teams: number;
   divisions: number;
   /** Every card, in the organizer's order, with whether it is shown. */
@@ -369,7 +371,7 @@ export default function WeeksBeforeBoard({
         <ClubRowList inset label={W.schedule} data-sandbox-tour="schedule-health">
           {health.timedGames === 0
             ? <ClubRow as="link" href={href} title={W.noTimes} caption={W.teamsIn(teams, divisions)} chevron />
-            : <ClubRow as="link" href={href} title={W.timed(health.timedGames, health.totalGames)} caption={health.topIssue ?? W.healthLine(health.tone, health.issueCount)} chevron />}
+            : <ClubRow as="button" onClick={onOpenHealth} aria-haspopup="dialog" title={W.timed(health.timedGames, health.totalGames)} caption={health.topIssue ?? W.healthLine(health.tone, health.issueCount)} chevron />}
         </ClubRowList>
       </ClubSection>
     );

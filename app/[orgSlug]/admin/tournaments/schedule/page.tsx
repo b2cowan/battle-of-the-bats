@@ -16,7 +16,7 @@ import ScheduleGenerator from './Generator';
 import PlayoffGenerator from './PlayoffGenerator';
 import BracketEditor from './components/BracketEditor';
 import ShiftDayModal, { type RainDelayDone } from './components/ShiftDayModal';
-import { type ScheduleHealthRulesDraft } from './components/ScheduleHealthPanel';
+import { DEFAULT_HEALTH_RULES, useScheduleHealthRules } from './useScheduleHealthRules';
 import PlayoffBracketView from './components/PlayoffBracketView';
 import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Venue, PoolSlot } from '@/lib/types';
@@ -26,7 +26,7 @@ import { formatTime } from '@/lib/utils';
 import ZeroVenuePrompt from './components/ZeroVenuePrompt';
 import ResolveLocationsModal from './components/ResolveLocationsModal';
 import { buildLocationResolvePlan, type LocationResolvePlan } from '@/lib/tournament-location-resolve';
-import { buildEventScheduleHealth, getScheduleHealthRules } from '@/lib/schedule-metrics';
+import { buildEventScheduleHealth } from '@/lib/schedule-metrics';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -87,9 +87,6 @@ const modalTitleStyle: React.CSSProperties = {
   letterSpacing: 'normal', color: 'var(--text-primary)', margin: 0,
 };
 
-// Engine defaults for the Schedule Health rules editor (matches lib/schedule-metrics.ts).
-const DEFAULT_HEALTH_RULES: ScheduleHealthRulesDraft = { maxGamesPerDay: 2, minRestMinutes: 15, targetGamesPerTeam: null };
-
 export default function AdminSchedulePage() {
   const { currentTournament, isLocked, loading: tournamentLoading, setCurrentTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
@@ -135,7 +132,6 @@ export default function AdminSchedulePage() {
   // is what reacts.
   const isSandbox = useIsSandbox();
   const [healthOpen, setHealthOpen] = useState(false);
-  const [rulesEditing, setRulesEditing] = useState(false);
   const [resolveFacilitiesOpen, setResolveFacilitiesOpen] = useState(false);
   const [resolveLocationsOpen, setResolveLocationsOpen] = useState(false);
   const [locationBannerDismissed, setLocationBannerDismissed] = useState(false);
@@ -164,12 +160,19 @@ export default function AdminSchedulePage() {
   // The coin toss being recorded (S7) — opened from the bracket's note.
   const [tossOpen, setTossOpen] = useState<PendingToss | null>(null);
 
-  // ── Schedule Health rules (organizer-defined thresholds) ──────────────────
-  // `healthRules` is the live/draft value driving the panel preview; `savedHealthRules`
-  // is the last-persisted baseline (for dirty detection + Discard).
-  const [healthRules, setHealthRules] = useState<ScheduleHealthRulesDraft>(() => getScheduleHealthRules(currentTournament));
-  const [savedHealthRules, setSavedHealthRules] = useState<ScheduleHealthRulesDraft>(healthRules);
-  const [savingHealthRules, setSavingHealthRules] = useState(false);
+  // ── Schedule Health rules (organizer-defined thresholds) — the one copy the dashboard's window shares ──
+  // `healthRules` is the live/draft value driving the panel preview; `savedHealthRules` the last-persisted baseline.
+  const healthRulesState = useScheduleHealthRules({
+    tournament: currentTournament,
+    orgSlug,
+    // Keep the in-memory tournament fresh so the auto-Generator seeds from the new rules.
+    onSaved: saved => { if (currentTournament) setCurrentTournament({ ...currentTournament, settings: { ...currentTournament.settings, schedule_health_rules: saved } }); },
+    onSaveError: message => setFeedback({ isOpen: true, title: 'Could not save rules', message, type: 'warning' }),
+  });
+  const {
+    rules: healthRules, setRules: setHealthRules, saved: savedHealthRules, saving: savingHealthRules, dirty: healthRulesDirty,
+    save: saveHealthRules, editing: rulesEditing, setEditing: setRulesEditing,
+  } = healthRulesState;
 
   // Sport-pack surface noun for every field-picking label (never hard-coded — R "sport-neutral").
   const fieldNoun = fieldNounFor(currentTournament?.sport);
@@ -277,6 +280,20 @@ export default function AdminSchedulePage() {
     setFilter(NO_SCHEDULE_FILTER);
     setBracketDivisionId('');
   }, [tournamentId]);
+
+  // `?show=overlap|buffer` — Schedule health's "Show them" from the dashboard's window (owner 2026-10-19, A5): the
+  // schedule arrives with that clash filter on, once per visit, after the games load. Declared AFTER the switch's
+  // reset above, so the filter it sets is the one that stands. Only while a game still to play wears that clash — the
+  // Schedule's own door's rule (walk §294): a flag the Filter can't find lands unfiltered, never on an empty list.
+  const showParam = searchParams.get('show');
+  const showAppliedRef = useRef(false);
+  useEffect(() => {
+    if (showAppliedRef.current || tournamentLoading || gamesLoading || !tournamentId) return;
+    if (showParam !== 'overlap' && showParam !== 'buffer') return;
+    showAppliedRef.current = true;
+    if (scheduled.some(g => conflictOf(g) === showParam)) showConflicts(showParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showParam, tournamentLoading, gamesLoading, tournamentId]);
 
   // The format decides the stages: a bracket-only event has no round robin; an Exhibition has no playoffs, and so no
   // Stage filter, no Bracket view and no playoff generator — each absent, never locked.
@@ -981,53 +998,7 @@ export default function AdminSchedulePage() {
       rules: healthRules,
     });
   }, [currentTournament, scheduled, teams, divisions, healthRules]);
-  const healthScope = W.healthScope(new Set(scheduled.map(g => g.divisionId)).size);
-  const healthCaption = healthMetrics && healthMetrics.timedGames > 0
-    ? [GAME_DAY_WORDS.healthCaption(healthMetrics.healthTone, healthMetrics.issues.length), healthScope].filter(Boolean).join(' · ')
-    : GAME_DAY_WORDS.healthNotBuilt;
 
-  // Re-seed the rules editor from the tournament's saved settings when the tournament changes.
-  useEffect(() => {
-    const resolved = getScheduleHealthRules(currentTournament);
-    setHealthRules(resolved);
-    setSavedHealthRules(resolved);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTournament?.id]);
-
-  const healthRulesDirty =
-    healthRules.maxGamesPerDay !== savedHealthRules.maxGamesPerDay ||
-    healthRules.minRestMinutes !== savedHealthRules.minRestMinutes ||
-    healthRules.targetGamesPerTeam !== savedHealthRules.targetGamesPerTeam;
-
-  async function saveHealthRules() {
-    if (!tournamentId) return;
-    setSavingHealthRules(true);
-    try {
-      const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-      const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'patch-settings', id: tournamentId, data: { settings: { schedule_health_rules: healthRules } } }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setFeedback({
-          isOpen: true,
-          title: 'Could not save rules',
-          message: data.error || 'The schedule health rules could not be saved. Please try again.',
-          type: 'warning',
-        });
-        return;
-      }
-      setSavedHealthRules(healthRules);
-      // Keep the in-memory tournament fresh so the auto-Generator seeds from the new rules.
-      if (currentTournament) {
-        setCurrentTournament({ ...currentTournament, settings: { ...currentTournament.settings, schedule_health_rules: healthRules } });
-      }
-    } finally {
-      setSavingHealthRules(false);
-    }
-  }
   function clearScheduleFilters() {
     setSearch('');
     setFilter(NO_SCHEDULE_FILTER);
@@ -1154,8 +1125,7 @@ export default function AdminSchedulePage() {
   // Closing Schedule health's window drops an unsaved draft of the rules (the window asked first) and folds the editor.
   function closeHealth() {
     setHealthOpen(false);
-    setHealthRules(savedHealthRules);
-    setRulesEditing(false);
+    healthRulesState.close();
   }
 
   // The day's row (its arrows step through the event's days) — or, in the Bracket view, the division's (S6: a
@@ -1634,7 +1604,7 @@ export default function AdminSchedulePage() {
       {healthOpen && healthMetrics && (
         <ScheduleHealthWindow
           eyebrow={currentTournament?.name}
-          caption={healthCaption}
+          divisionCount={new Set(scheduled.map(g => g.divisionId)).size}
           timedGames={healthMetrics.timedGames}
           dirty={healthRulesDirty}
           onClose={closeHealth}
@@ -1644,7 +1614,9 @@ export default function AdminSchedulePage() {
           isSandbox={isSandbox}
           // The sandbox's own undo: nothing was ever persisted, so "put it back" is a re-read of the server's copy.
           onSandboxReset={() => { void refresh(); }}
-          showRulesEditor={!isLocked}
+          // Saving the rules is a tournament-settings write (create_tournaments): staff see their effect, not an editor
+          // the server refuses (/review 2026-10-19).
+          showRulesEditor={!isLocked && !!userRole && hasCapability(userRole, userCapabilities, 'create_tournaments')}
           editing={rulesEditing}
           rules={healthRules}
           rulesDirty={healthRulesDirty}

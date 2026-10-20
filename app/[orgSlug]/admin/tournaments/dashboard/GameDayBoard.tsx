@@ -23,7 +23,7 @@
  * `CoachDoorCard` (as the Club hub renders them). Customize shows and hides the parts (owner
  * 2026-09-29: "show/hide the parts"); the order is the day's and does not move.
  */
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Lock, Trophy } from 'lucide-react';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure } from '@/components/coaches/kit';
@@ -213,7 +213,7 @@ function divisionLine(d: BoardDivision, champ: Champion | undefined): ReactNode 
 }
 
 export default function GameDayBoard({
-  base, planHref, gd, arrived, champions, health, healthBody, canRainDelay, locked, visible, customizing, onCustomize,
+  base, planHref, gd, arrived, champions, health, onOpenHealth, canRainDelay, locked, visible, customizing, onCustomize,
 }: {
   /** `/{org}/admin/tournaments` */
   base: string;
@@ -225,9 +225,8 @@ export default function GameDayBoard({
   arrived: { checkedIn: number; accepted: number } | null;
   champions: Champion[];
   health: Health;
-  /** Schedule health's panel body, opened in place under its row (the page's, shared with the
-   *  before-the-event board's panel). */
-  healthBody: ReactNode;
+  /** Opens Schedule health's window — the one the Schedule's header button opens (owner 2026-10-19, A5). */
+  onOpenHealth: () => void;
   canRainDelay: boolean;
   /** A completed event is read-only: nothing to delay. */
   locked: boolean;
@@ -236,7 +235,6 @@ export default function GameDayBoard({
   /** Opens Customize; null while it is open. */
   onCustomize: (() => void) | null;
 }) {
-  const [healthOpen, setHealthOpen] = useState(false);
   const today = tournamentToday();
   const gameHref = (id: string) => `${base}/results?gameId=${encodeURIComponent(id)}`;
   const needsYou = `${base}/results`;
@@ -320,18 +318,15 @@ export default function GameDayBoard({
     ? GAME_DAY_WORDS.healthCaption(health.tone, health.issueCount)
     : GAME_DAY_WORDS.healthNotBuilt;
   const healthRow = visible('gdScheduleHealth') ? (
-    // The demo tour's "Break the schedule" step rings this row (and the schedule's own, at its day's foot).
+    // The demo tour's "Break the schedule" step rings this row (and the Schedule's header button).
     <HealthRow
       data-sandbox-tour="schedule-health"
       score={health.timedGames > 0 ? health.score : null}
       tone={health.tone}
       title={GAME_DAY_WORDS.healthTitle}
       caption={healthCaption}
-      open={healthOpen}
-      onToggle={() => setHealthOpen(o => !o)}
-    >
-      {healthBody}
-    </HealthRow>
+      onOpen={onOpenHealth}
+    />
   ) : null;
 
   return (

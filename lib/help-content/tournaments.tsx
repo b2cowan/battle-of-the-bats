@@ -1169,7 +1169,7 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-schedule-health',
           question: 'What is Schedule health, and where do I find it?',
-          answerText: 'Schedule health scores the whole schedule out of 100: every division, pool and playoff games alike. It is the first button at the top of the Schedule page, before Export. The score is green at 85 and up (Healthy), amber from 70 to 84 (Review) and red under 70 (Needs work), and an amber count shows how many issues it found. On a phone the button is a pulse icon with the count on its corner. Tap it to open the window: the score and how many issues, the four figures (Teams, Back-to-back, Max/day, Warnings), the issues themselves — a clash has Show them, which closes the window and filters the schedule to those games — and Team detail. At the end, Adjust the rules sets what the score checks: the most games a team plays in a day, the least rest between a team\'s games, and a target number of games per team. The score changes as you adjust; Save rules keeps them for this tournament. If you close the window with rules changed but not saved, it asks first. The dashboard shows the same score.',
+          answerText: 'Schedule health scores the whole schedule out of 100: every division, pool and playoff games alike. It is the first button at the top of the Schedule page, before Export. The score is green at 85 and up (Healthy), amber from 70 to 84 (Review) and red under 70 (Needs work), and an amber count shows how many issues it found. On a phone the button is a pulse icon with the count on its corner. Tap it to open the window: the score and how many issues, the four figures (Teams, Back-to-back, Max/day, Warnings), the issues themselves — a clash has Show them, which closes the window and filters the schedule to those games — and Team detail. At the end, Adjust the rules sets what the score checks: the most games a team plays in a day, the least rest between a team\'s games, and a target number of games per team. The score changes as you adjust; Save rules keeps them for this tournament. If you close the window with rules changed but not saved, it asks first. The dashboard shows the same score, and its Schedule health row opens the same window.',
           keywords: ['schedule health', 'health score', 'health button', 'score out of 100', '/100', 'healthy', 'review', 'needs work', 'issues', 'adjust the rules', 'health rules', 'max games per day', 'min rest', 'minimum rest', 'target games per team', 'back-to-back', 'team detail', 'show them', 'no timed schedule'],
           popular: true,
           answer: (
@@ -1182,7 +1182,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li><strong>Team detail</strong>: each team&rsquo;s games, rest and moves.</li>
                 <li>At the end, <strong>Adjust the rules</strong>: the most games a team plays in a day, the least rest between its games, and a target number of games per team. The score changes as you adjust; <strong>Save rules</strong> keeps them for this tournament.</li>
               </ul>
-              <p>If you close the window with rules changed but not saved, it asks first. The dashboard shows the same score.</p>
+              <p>If you close the window with rules changed but not saved, it asks first. The dashboard shows the same score, and its Schedule health row opens the same window.</p>
             </>
           ),
         },

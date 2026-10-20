@@ -17,6 +17,9 @@ export function useScheduleData({ tournamentId, tournamentLoading, orgSlug }: {
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [facilityLanes, setFacilityLanes] = useState<ScheduleFacilityLane[]>([]);
+  // A read that failed in part or whole — said as an error by a reader that would otherwise show a calm empty
+  // (Schedule health's window on the dashboard, /review 2026-10-19). The Schedule page does not read it.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // A quiet re-read of the games only — no loading state, so an open inline row or the generator's open draft survives
   // it. Used after a refusal that can mean the schedule changed underneath (Stage 3 defects pass, /review).
@@ -61,6 +64,9 @@ export function useScheduleData({ tournamentId, tournamentLoading, orgSlug }: {
       setDivisions(groups);
       setVenues(venues);
       setFacilityLanes(lanes);
+      setLoadFailed(![gamesRes, teamsRes, groupsRes, venuesRes, lanesRes].every(r => r.ok));
+    } catch {
+      setLoadFailed(true);
     } finally {
       setGamesLoading(false);
     }
@@ -71,5 +77,5 @@ export function useScheduleData({ tournamentId, tournamentLoading, orgSlug }: {
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
-  return { games, setGames, gamesLoading, teams, divisions, setDivisions, venues, setVenues, facilityLanes, setFacilityLanes, refresh, reloadGames };
+  return { games, setGames, gamesLoading, loadFailed, teams, divisions, setDivisions, venues, setVenues, facilityLanes, setFacilityLanes, refresh, reloadGames };
 }

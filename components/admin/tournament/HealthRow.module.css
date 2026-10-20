@@ -1,5 +1,5 @@
-/* Schedule health as one row that opens its panel in place (a down chevron: it expands). Moved here from the
-   game-day board's sheet when the schedule's foot wore the same row (Tournament admin redesign Stage 3, S1). */
+/* Schedule health as one row on the game-day board that opens the health window (a right chevron: it goes somewhere,
+   owner 2026-10-19, A5). It used to open its panel in place. */
 .health { background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 8px; }
 .healthRow {
   display: flex;
@@ -30,7 +30,4 @@
 .healthText { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
 .healthTitle { font-size: var(--type-body); font-weight: 650; }
 .healthCaption { font-size: var(--type-support); color: var(--text-tertiary); }
-.healthChevron { flex: none; color: var(--text-tertiary); transition: transform 0.15s; }
-.healthRow[aria-expanded='true'] .healthChevron { transform: rotate(180deg); }
-.healthBody { padding: 0.75rem 0.8rem 0.85rem; border-top: 1px solid var(--home-line); }
-@media (prefers-reduced-motion: reduce) { .healthChevron { transition: none; } }
+.healthChevron { flex: none; color: var(--text-tertiary); }

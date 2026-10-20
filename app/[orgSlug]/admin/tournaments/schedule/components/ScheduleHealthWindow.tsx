@@ -5,26 +5,33 @@
  * to carry, then the panel's body unchanged, its rules door at the end (A3). A tap outside does nothing — it holds the
  * rules form — and unsaved rules ask in the foot before it closes (`dirty`).
  */
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { SCHEDULE_DAY_WORDS } from '@/lib/schedule-words';
 import { ScheduleHealthBody } from './ScheduleHealthPanel';
 import styles from '../schedule-admin.module.css';
 
-export default function ScheduleHealthWindow({ eyebrow, caption, timedGames, dirty, busy, onClose, ...body }: {
+export default function ScheduleHealthWindow({ eyebrow, divisionCount, timedGames, dirty, busy, notice, onClose, ...body }: {
   /** The tournament's name, over the title. */
   eyebrow?: string;
-  /** "Review · 3 issues · both divisions", or the not-built sentence. */
-  caption: string;
+  /** Divisions with games, for the caption's scope ("both divisions"). */
+  divisionCount: number;
   /** Games with a day and a time; none scores nothing ("—"). */
   timedGames: number;
   /** Unsaved rules: the close asks first. */
   dirty?: boolean;
   /** Rules saving: the window holds until the save lands, so a close cannot cross it (/review 2026-10-19). */
   busy?: boolean;
+  /** A refused save, said under the score. */
+  notice?: ReactNode;
   onClose: () => void;
 } & ComponentProps<typeof ScheduleHealthBody>) {
   const scored = timedGames > 0;
+  // "Review · 3 issues · both divisions", or the not-built sentence — worded here, once, for every place that opens it.
+  const caption = scored
+    ? [GAME_DAY_WORDS.healthCaption(body.metrics.healthTone, body.metrics.issues.length), SCHEDULE_DAY_WORDS.healthScope(divisionCount)].filter(Boolean).join(' · ')
+    : GAME_DAY_WORDS.healthNotBuilt;
   return (
     // The wide window: its team table's seven columns fit without scrolling sideways (owner 2026-10-19).
     <KitDialog kind="form" size="wide" eyebrow={eyebrow} title={GAME_DAY_WORDS.healthTitle} onClose={onClose} dirty={dirty} busy={busy}>
@@ -35,6 +42,7 @@ export default function ScheduleHealthWindow({ eyebrow, caption, timedGames, dir
           </span>
           <span>{caption}</span>
         </p>
+        {notice}
         {/* Unscored, the figures have nothing to say — but the rules stay in reach (/review 2026-10-19). */}
         <ScheduleHealthBody {...body} showFigures={scored} />
       </div>

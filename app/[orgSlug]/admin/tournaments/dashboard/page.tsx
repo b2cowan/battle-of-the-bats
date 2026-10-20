@@ -12,7 +12,7 @@
  * Customize choices (the weeks-before cards' order and the game-day parts) in their browser.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { AlertCircle, CheckCircle2, RotateCcw, Settings } from 'lucide-react';
+import { RotateCcw, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
@@ -49,6 +49,7 @@ import GameDayBoard, {
   BoardNote, CustomizeLink, EMPTY_GAME_DAY, GAME_DAY_PARTS, type GameDayPartId, type GameDayStats,
 } from './GameDayBoard';
 import LoadingState from '@/components/shared/LoadingState';
+import TournamentHealthWindow from '../schedule/components/TournamentHealthWindow';
 
 // ── Each board's "?" (A56): its own help sub-topic ─────────────────────────────────────────────────────────────
 const DRAFT_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-open-tournament-registration'], subtopicId: 'launch-draft-board' };
@@ -298,7 +299,7 @@ const EMPTY_STATS: DashboardStats = {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const { currentTournament, tournaments, isLocked, loading: tournamentLoading, refresh: refreshTournaments } = useTournament();
+  const { currentTournament, tournaments, isLocked, loading: tournamentLoading, refresh: refreshTournaments, setCurrentTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const { openInto } = useSetupWizard();
   usePageTitle('Dashboard');
@@ -318,6 +319,8 @@ export default function AdminDashboard() {
   const [statsError, setStatsError] = useState('');
   /** Bumped by a panel-level "Try again" (and by "into this draft" landing) so the stats effect re-runs. */
   const [statsReloadKey, setStatsReloadKey] = useState(0);
+  // Schedule health's window — the Schedule's own, opened from either board (owner 2026-10-19, A5).
+  const [healthWindowOpen, setHealthWindowOpen] = useState(false);
   // The coin toss being recorded from the nudge (S7: it opens the recorder in place, not the standings preview).
   const [tossOpen, setTossOpen] = useState<PendingToss | null>(null);
   /**
@@ -550,77 +553,6 @@ export default function AdminDashboard() {
     .slice(0, 3);
   const otherEvents = tournaments.filter(t => t.id !== currentTournament?.id);
 
-  // Schedule health's body — what the game-day board's health row opens in place (G2: "Schedule health as a row that
-  // expands in place").
-  function renderScheduleHealthBody() {
-    const health = visibleStats.scheduleHealth;
-    const healthLabel = health.tone === 'good' ? 'Healthy' : health.tone === 'warning' ? 'Review' : 'Needs work';
-    const gameRange = health.participantCount === 0
-      ? 'No teams'
-      : health.minGamesPerParticipant === health.maxGamesPerParticipant
-        ? `${health.minGamesPerParticipant} games each`
-        : `${health.minGamesPerParticipant}-${health.maxGamesPerParticipant} games`;
-    const attentionMetric = health.unresolvedFacilities > 0
-      ? { value: health.unresolvedFacilities, label: 'TBD facilities', tone: 'warning' as const }
-      : health.travelBufferWarnings > 0
-        ? { value: health.travelBufferWarnings, label: 'Travel buffer', tone: 'warning' as const }
-        : { value: health.conflicts, label: 'Conflicts', tone: health.conflicts > 0 ? 'danger' as const : 'good' as const };
-    if (health.timedGames === 0) {
-      return (
-        <div className={styles.emptyPanel}>
-          <span>No games have times yet.</span>
-          <Link href={`${base}/schedule`} className={styles.panelLink}>Open the schedule →</Link>
-        </div>
-      );
-    }
-    return (
-      <>
-        <div className={styles.scheduleHealthTopline}>
-          <div className={styles.scheduleHealthScore} data-tone={health.tone}>
-            <span>{health.score}</span>
-            <small>/100</small>
-          </div>
-          <div className={styles.scheduleHealthSummary}>
-            <strong>{healthLabel}</strong>
-            <span>{health.timedGames}/{health.totalGames} timed games - {gameRange}</span>
-          </div>
-          <span className={styles.scheduleHealthIssuePill} data-tone={health.issueCount > 0 ? health.tone : 'good'}>
-            {health.issueCount} issue{health.issueCount === 1 ? '' : 's'}
-          </span>
-        </div>
-        <div className={styles.scheduleHealthMiniGrid}>
-          <span className={styles.scheduleHealthMiniMetric} data-tone={health.backToBack > 0 ? 'warning' : 'good'}>
-            <small>Back-to-back</small>
-            <strong>{health.backToBack}</strong>
-          </span>
-          <span className={styles.scheduleHealthMiniMetric} data-tone={health.maxGamesInDay > (health.maxGamesPerDay || 2) ? 'warning' : 'good'}>
-            <small>Max/day</small>
-            <strong>{health.maxGamesInDay}</strong>
-          </span>
-          <span className={styles.scheduleHealthMiniMetric} data-tone={health.venueChanges > 0 ? 'info' : 'good'}>
-            <small>Venue moves</small>
-            <strong>{health.venueChanges}</strong>
-          </span>
-          <span className={styles.scheduleHealthMiniMetric} data-tone={attentionMetric.tone}>
-            <small>{attentionMetric.label}</small>
-            <strong>{attentionMetric.value}</strong>
-          </span>
-        </div>
-        {health.topIssue ? (
-          <Link href={`${base}/schedule`} className={styles.scheduleHealthIssueLink} data-tone={health.tone}>
-            <AlertCircle size={13} />
-            <span>{health.topIssue}</span>
-          </Link>
-        ) : (
-          <div className={styles.scheduleHealthIssueLink} data-tone="good">
-            <CheckCircle2 size={13} />
-            <span>No major schedule health issues.</span>
-          </div>
-        )}
-      </>
-    );
-  }
-
   // ── Customize's toolbar ───────────────────────────────────────────────────
   // On the game-day board Customize shows and hides the board's parts (owner 2026-09-29): one checkbox per part, in
   // the day's order, which Customize never changes. The weeks-before board keeps its drag-to-reorder cards.
@@ -765,12 +697,7 @@ export default function AdminDashboard() {
             arrived={checkInShown ? { checkedIn: visibleStats.checkIn.checkedIn, accepted: visibleStats.checkIn.accepted } : null}
             champions={visibleStats.champions}
             health={visibleStats.scheduleHealth}
-            healthBody={
-              <>
-                {renderScheduleHealthBody()}
-                <Link href={`${base}/schedule`} className={styles.panelLink}>Review →</Link>
-              </>
-            }
+            onOpenHealth={() => setHealthWindowOpen(true)}
             canRainDelay={canRainDelay}
             locked={isLocked}
             visible={gameDayPartShown}
@@ -806,6 +733,7 @@ export default function AdminDashboard() {
             }
             comms={visibleStats.communications}
             health={visibleStats.scheduleHealth}
+            onOpenHealth={() => setHealthWindowOpen(true)}
             teams={visibleStats.teams}
             divisions={visibleStats.divisions}
             panels={layout.panels}
@@ -817,6 +745,24 @@ export default function AdminDashboard() {
           <LiveEventLog tournamentId={currentTournament.id} orgSlug={currentOrg?.slug} className={styles.recentEvents} />
           {openCustomize && <CustomizeLink onClick={openCustomize} />}
         </>
+      )}
+
+      {/* Schedule health's window, the Schedule's own (owner 2026-10-19, A5): it reads the schedule as it opens; saved
+          rules re-read the board's summary so the row's score follows. */}
+      {healthWindowOpen && currentTournament && (
+        <TournamentHealthWindow
+          tournament={currentTournament}
+          orgSlug={currentOrg?.slug}
+          scheduleHref={`${base}/schedule`}
+          locked={isLocked}
+          canEditRules={canCreate}
+          onClose={() => setHealthWindowOpen(false)}
+          onRulesSaved={saved => {
+            // The Schedule seeds its rules from the in-memory tournament: keep it fresh, then re-read the board.
+            setCurrentTournament({ ...currentTournament, settings: { ...currentTournament.settings, schedule_health_rules: saved } });
+            setStatsReloadKey(k => k + 1);
+          }}
+        />
       )}
 
       {/* ── AFTER THE EVENT (completed; archived is unreachable — the context lists no archived event) —
