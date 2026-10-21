@@ -61,6 +61,13 @@ describe('the attention buckets and the health score', () => {
     assert.equal(count(summary, 'past_due'), 0);
   });
 
+  it("the club's own team pays no fee, so it is never Unpaid or Past due", () => {
+    const withOwn = [...teams, { id: 'own', divisionId: 'u13', status: 'accepted', paymentStatus: 'pending', depositPaid: 0, totalPaid: 0, email: 'own@x.ca', feeExempt: true }];
+    const summary = buildRegistrationAttentionSummary(withOwn, context());
+    assert.equal(count(summary, 'past_due'), 2, 'only the two fee-paying teams');
+    assert.equal(count(buildRegistrationAttentionSummary(withOwn, { ...context(), feeSchedule: { totalFeeAmount: 450, totalFeeDueDate: '2026-12-01' } }), 'unpaid'), 2, 'the two fee-paying teams, not the club team');
+  });
+
   it('not tracked, the health score has no Payments figure and scores nothing against payments', () => {
     const attention = buildRegistrationAttentionSummary(teams, context());
     const health = buildRegistrationHealth({ attention, teamsTotal: 2, accepted: 2, paymentsTracked: true, eventTracksPayments: false, capacityGaps: [] });

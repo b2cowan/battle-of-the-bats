@@ -39,6 +39,8 @@ export type RegistrationAttentionTeam = {
   waitlistPosition?: number | null;
   customAnswers?: RegistrationAttentionAnswer[];
   email?: string | null;
+  /** The host club's own team (linked to one of its rep teams): it pays no entry fee, so it is never Unpaid or Past due. */
+  feeExempt?: boolean;
 };
 
 export type RegistrationAttentionDivision = {
@@ -201,6 +203,7 @@ export function computeRegistrationAttentionPaymentStatus(
   fee: RegistrationAttentionFeeSchedule,
   today: string,
 ): RegistrationPaymentStatus {
+  if (team.feeExempt) return 'no-schedule';
   const totalFee = Number(fee.totalFeeAmount ?? 0);
   const depositAmount = Number(fee.depositAmount ?? 0);
   const depositPaid = Number(team.depositPaid ?? 0);

@@ -235,6 +235,9 @@ export default function UnifiedTeamsPage() {
   const [repLinkSearch, setRepLinkSearch] = useState('');
   const orgHasRepTeams = useMemo(() => (currentOrg ? hasModuleEntitlement(currentOrg, 'module_rep_teams') : false), [currentOrg]);
   const orgCarriesAccounting = Boolean(currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting'));
+  // The club's own team pays no entry fee — the row says "No fee", and the money tiles, the attention counts and
+  // the payment filter all leave it out by this one answer.
+  const isClubOwnTeam = useCallback((registrationId: string) => orgCarriesAccounting && repLinks.has(registrationId), [orgCarriesAccounting, repLinks]);
   // "Add my team" (2026-09-13) — a tournament run from a coaches PORTAL has exactly one team that
   // is the host's own; the rep-link picker above is gated off for it on purpose (a one-team org
   // needs no picker), and this is that picker collapsed to a button. `ownTeam` is null off a
@@ -1226,6 +1229,7 @@ export default function UnifiedTeamsPage() {
     let scheduled = 0;
 
     for (const team of accepted) {
+      if (isClubOwnTeam(team.id)) continue;
       const fee = feeOf(team);
       const status = computePaymentStatus(team, fee, today);
       const paidFull = fee.totalFeeAmount != null && team.totalPaid >= fee.totalFeeAmount;
@@ -1253,7 +1257,7 @@ export default function UnifiedTeamsPage() {
     }
 
     return { accepted: accepted.length, scheduled, expected, collected, outstanding, depositRequired, depositComplete, paidInFull, pastDue, pastDueAmount };
-  }, [divRegs, feeOf, today]);
+  }, [divRegs, feeOf, today, isClubOwnTeam]);
 
   const slotConfiguredDivisionIds = useMemo(() => {
     const ids = new Set(allPoolSlots.map(slot => slot.divisionId).filter(Boolean));
@@ -1290,9 +1294,10 @@ export default function UnifiedTeamsPage() {
       waitlistPosition: team.waitlistPosition,
       customAnswers: team.customAnswers,
       email: team.email,
+      feeExempt: isClubOwnTeam(team.id),
     })),
     attentionContext,
-  ), [attentionContext, regs]);
+  ), [attentionContext, regs, isClubOwnTeam]);
   const activeAttentionBucket = activeAttentionKey ? getRegistrationAttentionBucket(attentionSummary, activeAttentionKey) : null;
   const activeAttentionLocked = Boolean(activeAttentionBucket?.plusOnly && !commandCenterAvailable);
 
@@ -1328,7 +1333,7 @@ export default function UnifiedTeamsPage() {
     const matchesSearch = search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || (r.coach ?? '').toLowerCase().includes(search.toLowerCase());
     // Only an accepted team pays (T5): a payment filter never lists a team whose Payment reads "—".
     const matchesPayment = !paymentToolsAvailable || paymentFilters.length === 0
-      || (r.status === 'accepted' && paymentFilters.some(f => matchesPaymentFilter(computePaymentStatus(r, feeOf(r), today), f)));
+      || (r.status === 'accepted' && !isClubOwnTeam(r.id) && paymentFilters.some(f => matchesPaymentFilter(computePaymentStatus(r, feeOf(r), today), f)));
     const matchesAttention = !activeAttentionKey || activeAttentionLocked || teamMatchesRegistrationAttentionKey({
       id: r.id,
       divisionId: r.division_id,
@@ -1340,9 +1345,10 @@ export default function UnifiedTeamsPage() {
       waitlistPosition: r.waitlistPosition,
       customAnswers: r.customAnswers,
       email: r.email,
+      feeExempt: isClubOwnTeam(r.id),
     }, activeAttentionKey, attentionContext);
     return matchesStatus && matchesSearch && matchesPayment && matchesAttention;
-  }), [divRegs, selectedStatuses, search, feeOf, today, paymentToolsAvailable, paymentFilters, activeAttentionKey, activeAttentionLocked, attentionContext]);
+  }), [divRegs, selectedStatuses, search, feeOf, today, paymentToolsAvailable, paymentFilters, activeAttentionKey, activeAttentionLocked, attentionContext, isClubOwnTeam]);
   const statusesNarrowed = !(selectedStatuses.length === DEFAULT_STATUSES.length && DEFAULT_STATUSES.every(x => selectedStatuses.includes(x)));
   // A payment filter left set where payments are not tracked narrows nothing (the list ignores it), so it is not on.
   const paymentsNarrowed = paymentToolsAvailable && paymentFilters.length > 0;
@@ -1394,7 +1400,7 @@ export default function UnifiedTeamsPage() {
   /** What a row says: its caption (Check-in's words for money), a chip where its status differs from its
    *  band, and its one worded action (A13; the Tournament plan's Promote/Place is a lock in the record, P1). */
   const rowFacts = (team: TeamRecord, slot: PoolSlot | null, band: BandKind): RowFacts => {
-    const clubOwnTeam = orgCarriesAccounting && repLinks.has(team.id);
+    const clubOwnTeam = isClubOwnTeam(team.id);
     const pay = tracksPayments ? paymentFact(team, feeOf(team)) : null;
     const payNode = clubOwnTeam ? <span>No fee</span>
       : pay ? <span className={pay.owes ? styles.owes : undefined}>{pay.text}</span> : null;
@@ -2103,7 +2109,7 @@ export default function UnifiedTeamsPage() {
           canPlace={waitlistAutomationAvailable}
           planHref={planHref}
           isOwnTeam={ownTeam?.registrationId === openTeam.id}
-          isClubOwnTeam={orgCarriesAccounting && repLinks.has(openTeam.id)}
+          isClubOwnTeam={isClubOwnTeam(openTeam.id)}
           repLink={orgHasRepTeams ? renderRepLinkControl(openTeam, working === openTeam.id) : null}
           prev={openIndex > 0 ? order[openIndex - 1] : null}
           next={openIndex >= 0 && openIndex < order.length - 1 ? order[openIndex + 1] : null}
