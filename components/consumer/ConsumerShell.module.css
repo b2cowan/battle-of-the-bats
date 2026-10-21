@@ -94,6 +94,11 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+/* The mark is the way home, so under a finger it is a fingertip (release sweep 2026-10-20: 27px tall on all ten sign-in
+   screens). The bar centres its children at a fixed height, so a taller link grows nothing — only its hit area. */
+@media (max-width: 900px), (pointer: coarse) {
+  a.wordmark { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
 .wm1 { color: var(--fl-text); }
 .wm2 { color: var(--primary-light); }
 .wm3 { color: var(--white-45); }

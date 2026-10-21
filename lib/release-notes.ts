@@ -44,6 +44,56 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-20',
+    title: "One account step for every way in, a numbered sponsor invoice on your team's paper, and Schedule health in one window",
+    highlights: [
+      {
+        category: 'new',
+        text: 'Every way into FieldLogicHQ now starts the same way: your account alone. Running a tournament or starting a Premium Coaches Portal, you open the link in your email, then name your organization, team and plan. Nothing you typed is lost, and sign-in and password reset look the same. Account emails share one design and say what comes next.',
+      },
+      {
+        category: 'new',
+        text: "In the Premium Coaches Portal, you can now give a sponsor a numbered invoice on your team's own paper, ready for their accounting department. It always comes from the team, with no tax added.",
+      },
+      {
+        category: 'new',
+        text: 'In the tournament admin, a Schedule health button in the Schedule header opens one window with the score, the issues, the team detail and the rules. The dashboard and the Schedule now show the same score, including for a tournament with only playoffs.',
+      },
+      {
+        category: 'improved',
+        text: 'Forms in the Premium Coaches Portal (Record money, Add a bill, dues, tryout sessions, imports, awards, Start next season) now open in the same window as the tournament admin. It fills a phone, a tap outside no longer throws away what you typed, and closing with something typed asks "Close without saving?" Buttons stay in view at the bottom, and a refused save says why beside the button.',
+      },
+      {
+        category: 'improved',
+        text: "Timeline and bracket read at a glance: a game shows its time, its status, one team per line with scores, and the winner in green. A slot still waiting on a team, like \"Quarterfinal 2 winner\", is grey italic everywhere, and a decided game's loser fades.",
+      },
+      {
+        category: 'improved',
+        text: 'You can enter a score right in the game window, and the window now ends under its last row.',
+      },
+      {
+        category: 'improved',
+        text: 'On a phone, every control in the free Coaches Portal is now a full fingertip, and a Roster, Schedule or Fee row opens its form with one tap. Removing a scouting observation asks first, and tryout session rows open to edit with one tap.',
+      },
+      {
+        category: 'improved',
+        text: 'Password boxes on tournament registration and the follow prompt now have a show/hide eye. The top bar reads in sentence case with a Get started menu, and every Coach a team button opens the same place.',
+      },
+      {
+        category: 'improved',
+        text: 'The tournament picker now only switches between tournaments; start a new one from the Tournaments page.',
+      },
+      {
+        category: 'fixed',
+        text: 'A house league email that used to reach nobody now reaches its families.',
+      },
+      {
+        category: 'fixed',
+        text: "A losing record's red chip stays readable under the mouse, the Bracket Filter no longer fights its arrows, and device alert prompts show only on phones and tablets.",
+      },
+    ],
+  },
+  {
     date: '2026-10-19',
     title: 'Start with your account and name your team after, one look for every window, and chat paused while we rebuild messaging',
     highlights: [
