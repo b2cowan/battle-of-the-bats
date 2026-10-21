@@ -4495,6 +4495,41 @@
     "indexdef": "CREATE INDEX tournament_archives_winner_team_id_idx ON public.tournament_archives USING btree (winner_team_id)"
   },
   {
+    "tablename": "tournament_fee_book_settings",
+    "indexname": "tournament_fee_book_settings_org_id_idx",
+    "indexdef": "CREATE INDEX tournament_fee_book_settings_org_id_idx ON public.tournament_fee_book_settings USING btree (org_id)"
+  },
+  {
+    "tablename": "tournament_fee_book_settings",
+    "indexname": "tournament_fee_book_settings_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_book_settings_pkey ON public.tournament_fee_book_settings USING btree (tournament_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipt_allocations",
+    "indexname": "tournament_fee_allocations_team_idx",
+    "indexdef": "CREATE INDEX tournament_fee_allocations_team_idx ON public.tournament_fee_receipt_allocations USING btree (team_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipt_allocations",
+    "indexname": "tournament_fee_receipt_allocations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipt_allocations_pkey ON public.tournament_fee_receipt_allocations USING btree (receipt_id, team_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipts",
+    "indexname": "tournament_fee_receipts_entry_id_key",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipts_entry_id_key ON public.tournament_fee_receipts USING btree (entry_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipts",
+    "indexname": "tournament_fee_receipts_event_idx",
+    "indexdef": "CREATE INDEX tournament_fee_receipts_event_idx ON public.tournament_fee_receipts USING btree (tournament_id)"
+  },
+  {
+    "tablename": "tournament_fee_receipts",
+    "indexname": "tournament_fee_receipts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipts_pkey ON public.tournament_fee_receipts USING btree (id)"
+  },
+  {
     "tablename": "tournament_notification_preferences",
     "indexname": "tournament_notif_prefs_tournament_idx",
     "indexdef": "CREATE INDEX tournament_notif_prefs_tournament_idx ON public.tournament_notification_preferences USING btree (tournament_id)"

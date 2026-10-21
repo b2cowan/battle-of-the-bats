@@ -253,6 +253,7 @@ const W = {
   sponsors: { categoryId: 'c-spon', categoryName: 'Sponsorship', itemId: 'w-spon', itemName: 'Club sponsors' },
   banquet: { categoryId: 'c-events', categoryName: 'Events', itemId: 'w-banquet', itemName: 'Year-end banquet deposit' },
   umpires: { categoryId: 'c-off', categoryName: 'Officials', itemId: 'w-ump', itemName: 'Umpires association fees' },
+  hosted: { categoryId: 'c-hosted-event', categoryName: 'Hosted tournament · Invitational 2026', itemId: 'w-entry-fees', itemName: 'Entry fees' },
 };
 const PL = (id, w, total, direction, periods = []) => ({
   id, categoryId: w?.categoryId ?? 'c-admin', categoryName: w?.categoryName ?? 'Administration',
@@ -327,6 +328,9 @@ const bookLines = [
   BL({ date: '2026-03-01', amount: 250, type: 'transfer_out', partner: 'team' }),                          // by hand to a team, before 3a refused it
   BL({ date: '2026-08-20', amount: 1440, type: 'income', book: 'harvest', kind: 'tournament' }),
   BL({ date: '2026-08-25', amount: 100, type: 'expense', book: 'harvest', kind: 'tournament' }),
+  BL({ date: '2026-09-05', amount: 150, type: 'income', book: 'harvest', kind: 'tournament', w: W.hosted, src: 'tournament_fee_receipt' }),
+  BL({ date: '2026-09-15', amount: 450, type: 'income', book: 'harvest', kind: 'tournament', w: W.hosted, src: 'tournament_fee_receipt' }),
+  BL({ date: '2026-09-20', amount: 300, type: 'expense', w: W.hosted }),
   BL({ date: '2026-04-10', amount: 800, type: 'income', src: 'league_registration', book: 'league', kind: 'league_season' }),
 ];
 const openingByBook = { general: 21000, harvest: 762, league: 0, sponsorships: 0 };
@@ -341,7 +345,7 @@ const plan = buildClubPlan({ year: YEAR, today: TODAY, lines: planLines, allocat
 // Cash on hand's caption is today's: every pending line on the Club books, whatever its date — last year's
 // uncleared cheque included (it is not in the year's lines).
 const priorPending = [BL({ date: '2025-12-20', amount: 75, type: 'expense', status: 'pending', w: W.umpires })];
-const pendingLines = [...bookLines, ...priorPending].filter(l => l.status === 'pending' && l.bookKind === 'org');
+const pendingLines = [...bookLines, ...priorPending].filter(l => l.status === 'pending' && ['org','tournament'].includes(l.bookKind));
 const rep = buildClubReport({ year: YEAR, setting: JAN, today: TODAY, lines: planLines, allocations, requests, bookLines, pendingLines, books: books3b, openingBalance: opening3b, categoryOrder: order });
 
 // Each shape is READ OFF the fixture (never declared), so an edit that loses one exits 2.
@@ -373,6 +377,8 @@ shapeIf('book:by hand to a team', bookLines.some(l => isTransfer3b(l) && l.partn
 shapeIf('book:named club book', bookLines.some(l => l.bookKind === 'org' && l.ledgerId !== 'general'));
 shapeIf('book:other books', bookLines.some(l => l.bookKind !== 'org' && l.status === 'posted' && !isTransfer3b(l)));
 shapeIf('book:house league fee', bookLines.some(l => l.sourceModule === 'league_registration'));
+shapeIf('book:tournament fee filed with club cost', bookLines.some(l => l.sourceModule === 'tournament_fee_receipt' && l.budgetCategoryId === W.hosted.categoryId)
+  && bookLines.some(l => l.bookKind === 'org' && l.entryType === 'expense' && l.budgetCategoryId === W.hosted.categoryId));
 shapeIf('word:off-plan', bookLines.some(l => l.budgetItemId && !l.sourceModule && !planLines.some(p => p.itemId === l.budgetItemId)));
 shapeIf('word:not filed', bookLines.some(l => !l.budgetItemId && !isTransfer3b(l) && !l.sourceModule && l.bookKind === 'org'));
 shapeIf('installment:overdue', allocations.some(a => a.splits.some(s => s.installments.some(i => !i.paidAt && !i.sentAt && i.dueDate < TODAY))));
@@ -411,7 +417,7 @@ for (const l of planLines.filter(x => x.periods.length)) check(`plan ${l.id} per
 
 // 7. Budget vs. Actual. The naive filing: the loop by source; a typed line by its word; else Not filed.
 const own = new Set(['org', 'tournament', 'league_season']);
-const counted = bookLines.filter(l => l.status === 'posted' && l.bookKind === 'org'
+const counted = bookLines.filter(l => l.status === 'posted' && ['org','tournament'].includes(l.bookKind)
   && !((l.entryType === 'transfer_in' || l.entryType === 'transfer_out') && own.has(l.partnerKind)));
 const isIn = l => l.entryType === 'income' || l.entryType === 'transfer_in';
 const naiveIn = counted.filter(isIn).reduce((x, l) => x + Math.round(l.amount * 100), 0) / 100;
@@ -432,6 +438,9 @@ const naiveOffPlan = counted.filter(l => !isIn(l)).filter(l => { const it = naiv
   .reduce((x, l) => x + Math.round(l.amount * 100), 0) / 100;
 check('Off-plan = spending on a word with no line + Not filed', rep.band.offPlan, naiveOffPlan);
 check('the year\'s Net', rep.statement.net.actual, (Math.round(naiveIn * 100) - Math.round(naiveOut * 100)) / 100);
+const hostedActivity = rep.statement.activities.find(a => a.categoryId === W.hosted.categoryId);
+check('7a By activity joins fees from the event book with costs in General',
+  hostedActivity?.net?.actual ?? null, 300);
 
 // 8. Months: every column opens + nets = closes; the Cash lens closes this month on Cash on hand.
 const naiveCash = books3b.reduce((x, b) => x + Math.round(b.balance * 100), 0) / 100;
@@ -452,14 +461,14 @@ const naiveScheduledIn = (allocations
   .flatMap(a => a.splits.flatMap(s => s.installments)).filter(i => !i.paidAt && inYEAR(i.dueDate)).reduce((x, i) => x + Math.round(i.amount * 100), 0)
   + requests.filter(r => r.status === 'pending' && r.requestType === 'payment_to_org').reduce((x, r) => x + Math.round(r.amount * 100), 0)) / 100;
 const movesMoney = l => !(isTransfer3b(l) && own.has(l.partnerKind));
-const naiveScheduledOut = (bookLines.filter(l => l.status === 'pending' && l.bookKind === 'org' && !isIn(l) && movesMoney(l)).reduce((x, l) => x + Math.round(l.amount * 100), 0)
+const naiveScheduledOut = (bookLines.filter(l => l.status === 'pending' && ['org','tournament'].includes(l.bookKind) && !isIn(l) && movesMoney(l)).reduce((x, l) => x + Math.round(l.amount * 100), 0)
   + requests.filter(r => r.status === 'pending' && r.requestType === 'charge_to_org').reduce((x, r) => x + Math.round(r.amount * 100), 0)) / 100;
 check('Months · Scheduled money in: unreceived installments due in the year + waiting To-club requests', rep.months.revenueGrid.totals.total.scheduled, naiveScheduledIn);
 const naiveWaiting = pendingLines.filter(movesMoney);
 check('Cash on hand\'s caption: every pending Club-book line that moves money, ANY date (count)', rep.pending.count, naiveWaiting.length);
 check('Cash on hand\'s caption: money out waiting', rep.pending.moneyOut, naiveWaiting.filter(l => !isIn(l)).reduce((x, l) => x + Math.round(l.amount * 100), 0) / 100);
 check('Months · Scheduled money out: pending lines + waiting requests to pay a team', rep.months.monthGrid.totals.total.scheduled, naiveScheduledOut);
-const otherNet = bookLines.filter(l => l.status === 'posted' && l.bookKind !== 'org'
+const otherNet = bookLines.filter(l => l.status === 'posted' && !['org','tournament'].includes(l.bookKind)
   && !((l.entryType === 'transfer_in' || l.entryType === 'transfer_out') && own.has(l.partnerKind))).reduce((x, l) => x + walkSigned(l), 0) / 100;
 check('Months · the club\'s other books (transfers left out)', rep.months.otherBooks.actual.reduce((x, m) => x + Math.round(m.net * 100), 0) / 100, otherNet);
 check('Months · Cash: the year closes on opening + every book\'s movement', rep.months.balances.actual.ending, naiveCash);
@@ -551,8 +560,8 @@ const SEP = { firstMonth: 9, rows: [{ id: 'fy-25', name: '2025–26', firstDay: 
 const Y25 = fiscalYearOf('2026-03-01', SEP), Y26 = fiscalYearOf(TODAY_S, SEP);
 const inY = y => d => d >= y.firstDay && d <= y.lastDay;
 const sYearLines = y => sLines.filter(l => inY(y)(l.entryDate));
-const sPending = sLines.filter(l => l.status === 'pending' && l.bookKind === 'org');
-const sCounted = l => l.status === 'posted' && l.bookKind === 'org' && !(isTransfer3b(l) && own.has(l.partnerKind));
+const sPending = sLines.filter(l => l.status === 'pending' && ['org','tournament'].includes(l.bookKind));
+const sCounted = l => l.status === 'posted' && ['org','tournament'].includes(l.bookKind) && !(isTransfer3b(l) && own.has(l.partnerKind));
 const sSum = (from, to, side) => sLines.filter(l => sCounted(l) && l.entryDate >= from && l.entryDate <= to && (side === 'in' ? isIn(l) : !isIn(l)))
   .reduce((x, l) => x + Math.round(l.amount * 100), 0) / 100;
 const naiveMonths = (first, n) => Array.from({ length: n }, (_, k) => { const t = +first.slice(0, 4) * 12 + (+first.slice(5, 7) - 1) + k; return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, '0')}`; });
@@ -645,7 +654,7 @@ const ye = buildYearEndReport({ year: Y25, closedByName: 'Treasurer', opening: s
   snapshot: { installments: { count: 0, amount: 0, overdue: 0, sent: 0, upcoming: 0 }, requests: { count: 0, amount: 0 }, unfiled: { count: 0, amount: 0 },
     pending: { count: 1, amount: 80 }, teams: [], totals: { billed: 0, collected: 0, owed: 0 } },
   nextYear: nextFiscalYear(Y25, SEP) });
-const otherNet25 = sPostedC(Y25.firstDay, Y25.lastDay, l => l.bookKind !== 'org' && !(isTransfer3b(l) && own.has(l.partnerKind))) / 100;
+const otherNet25 = sPostedC(Y25.firstDay, Y25.lastDay, l => !['org','tournament'].includes(l.bookKind) && !(isTransfer3b(l) && own.has(l.partnerKind))) / 100;
 check('3c year-end: closes on the stored closing', ye.atAGlance.closing, sClosing25);
 check('3c year-end: the books at the start add to the opening', ye.booksTotal.atStart, sOpening25);
 check('3c year-end: the books at the end add to the closing', ye.booksTotal.atEnd, sClosing25);
@@ -755,6 +764,7 @@ const REQUIRED = [
   'request:approved', 'request:reversed', 'book:>1000 rows', 'book:pending', 'book:void', 'book:transfers',
   '3b plan:many allocations per line', '3b plan:billed above its total', '3b plan:revenue line', '3b loop:before-3a link',
   '3b book:own transfer', '3b book:other books', '3b word:off-plan', '3b word:not filed', '3b request:waiting both ways',
+  '3b book:tournament fee filed with club cost',
   '3b book:pending own transfer', '3b book:pending from last year', '3b installment:last year\'s bill still owed',
   '3c year crosses a New Year', '3c closed predecessor', '3c line on the first day', '3c line on the last day',
   '3c last year bill paid this year', '3c off-plan bill straddles the close', '3c own transfer in the closed year',

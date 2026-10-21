@@ -27,7 +27,8 @@ import { statementNotes, type NoteSegment, type ReportNote } from './coach-money
 import { planColumnLabel, type CompareBasis } from './coach-budget-basis';
 import { PLAN_LADDER_LABEL } from './coach-budget-totals';
 import type { ExportColumnDef } from './export';
-import type { ExportRow, MoneyRowKind } from './coach-money-exports';
+import { bvaActivityRows, bvaExportColumns, type ExportRow, type MoneyRowKind } from './coach-money-exports';
+import type { MoneyReport } from '../components/coaches/MoneyStatementRows';
 import type { ClubMonthsFeed } from './club-budget-report';
 import type { AgainstLastYear, YearEndReport } from './club-year-compare';
 import { AGAINST_LAST_YEAR_WORDS, OTHER_BOOKS_WORD, YEAR_END_NO_TEAM_CASH, YEAR_END_WORDS, netForYearWord } from './club-money-words';
@@ -166,7 +167,7 @@ export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
   if (input.otherBooks) {
     out.push(note('club-other-books', [
       { text: OTHER_BOOKS_WORD, bold: true },
-      { text: ' is what a tournament’s or the house league’s book took in or paid on its own. It is in the balance, which covers every book the club owns, and in none of the rows above it.' },
+      { text: ' is what the house league’s book took in or paid on its own (a tournament’s book is counted in the rows above, by the budget word its lines carry). It is in the balance, which covers every book the club owns, and in none of the rows above it.' },
     ]));
   }
   if (input.lens !== 'difference' && input.lens !== 'spending') {
@@ -216,6 +217,15 @@ export function clubStatementFile(
   band(PLAN_LADDER_LABEL.expensesBand, statement.expenses, PLAN_LADDER_LABEL.totalExpenses);
   push({ item: clubNetRowLabel(basis, year), budgeted: statement.net.budgeted, actual: statement.net.actual, variance: statement.net.variance }, 'total');
   return { columns, rows, kinds };
+}
+
+/** By activity is the coach's file shape, with the club's fiscal-year net label. */
+export function clubActivityFile(report: MoneyReport, basis: CompareBasis, year: string) {
+  const built = bvaActivityRows({ activities: report.activities, buffer: 0, net: report.net }, basis, () => false);
+  if (built.rows.length) built.rows[built.rows.length - 1] = {
+    ...built.rows[built.rows.length - 1], item: clubNetRowLabel(basis, year),
+  };
+  return { columns: bvaExportColumns(basis), rows: built.rows, kinds: built.kinds };
 }
 
 /** The Months file at the lens on screen — every month, never the window (the coach's rule). */

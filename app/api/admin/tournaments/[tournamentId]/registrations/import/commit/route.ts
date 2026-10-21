@@ -232,6 +232,7 @@ async function validateCurrentState(input: {
 }
 
 async function applyRows(input: {
+  actorId: string;
   batchId: string;
   tournamentId: string;
   createRows: PreparedTournamentTeamCommitRow[];
@@ -242,7 +243,7 @@ async function applyRows(input: {
   const createRecords = input.createRows.map(row => {
     const id = crypto.randomUUID();
     createdTargetIds.set(row.id, id);
-    return buildTournamentTeamInsert(row.normalized, input.tournamentId, id);
+    return { ...buildTournamentTeamInsert(row.normalized, input.tournamentId, id), fee_changed_by: input.actorId };
   });
 
   if (createRecords.length > 0) {
@@ -253,7 +254,7 @@ async function applyRows(input: {
   for (const row of input.updateRows) {
     const { error } = await supabaseAdmin
       .from('teams')
-      .update(buildTournamentTeamUpdate(row.normalized))
+      .update({ ...buildTournamentTeamUpdate(row.normalized), fee_changed_by: input.actorId })
       .eq('id', row.targetId)
       .eq('tournament_id', input.tournamentId);
     if (error) throw new Error(error.message);
@@ -392,6 +393,7 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
     });
 
     const { createdTargetIds } = await applyRows({
+      actorId: auth.ctx.user.id,
       batchId: batch.id,
       tournamentId,
       createRows: prepared.createRows,

@@ -114,6 +114,7 @@ export interface TeamRecordProps {
   canPlace: boolean;
   planHref: string;
   isOwnTeam: boolean;
+  isClubOwnTeam: boolean;
   /** League/Club organizations: the Team section's "Rep team" line (T7) — the linked team's NAME while
    *  reading, today's rep-team picker (`control`, which saves on its own) while editing. */
   repLink: { name: string | null; control: ReactNode; closePicker: () => void } | null;
@@ -276,6 +277,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
       {!added && <RepChip tone={chip.tone}>{chip.label}</RepChip>}
       <span>{where.join(' · ')}</span>
       {props.isOwnTeam && <RepChip>{W.yourTeam}</RepChip>}
+      {props.isClubOwnTeam && <RepChip>Our team</RepChip>}
     </span>
   );
 
@@ -357,9 +359,9 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   // 2026-10-13) and offers Mark paid; one marked paid by hand reads "Paid".
   const markedPaid = t.paymentStatus === 'paid';
   const recordsPayments = props.payments === 'edit';
-  const paymentBlock = props.payments !== 'none' && t.status === 'accepted' && (line || markedPaid || (canWrite && recordsPayments)) && (
+  const paymentBlock = props.payments !== 'none' && t.status === 'accepted' && (props.isClubOwnTeam || line || markedPaid || (canWrite && recordsPayments)) && (
     <RecordSection title={W.payment}>
-      {line ? (
+      {props.isClubOwnTeam ? <p className={screenParts.recordText}>No fee</p> : line ? (
         <p className={screenParts.recordText}>
           <span className={line.owes ? styles.owes : undefined}>{line.lead}</span>
           {line.rest.map(r => <span key={r}> · {r}</span>)}
@@ -367,14 +369,14 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
       ) : markedPaid ? (
         <p className={screenParts.recordText}>{TEAMS_WORDS.paid}</p>
       ) : null}
-      {canWrite && recordsPayments && (line ? owed > 0 : true) && (
+      {!props.isClubOwnTeam && canWrite && recordsPayments && (line ? owed > 0 : true) && (
         <div className={styles.recordWide}>
           {line || t.paymentStatus !== 'paid'
             ? <RowAction onClick={() => void flushThen(() => props.onMarkPaid(t))} disabled={props.busy}>{W.markPaid(line ? formatMoney(owed) : null)}</RowAction>
             : <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onMarkUnpaid(t))} disabled={props.busy}>{W.markUnpaid}</button>}
         </div>
       )}
-      {line && (editing && recordsPayments ? (
+      {!props.isClubOwnTeam && line && (editing && recordsPayments ? (
         <div className={styles.recordFields}>
           <label className={ck.field}>
             <span className={ck.label}>{W.depositPaidField}</span>

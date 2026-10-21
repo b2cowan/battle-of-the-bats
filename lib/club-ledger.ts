@@ -36,7 +36,7 @@ export const LEDGER_KIND_WORD: Record<LedgerKind, string> = {
   league_season: 'House league',
 };
 
-export type LineType = 'expense' | 'income' | 'team_allocations' | 'team_support' | 'transfer' | 'house_league_fees';
+export type LineType = 'expense' | 'income' | 'team_allocations' | 'team_support' | 'transfer' | 'house_league_fees' | 'tournament_fees';
 
 /** A line's status on the book. Void is off the book until a Status filter asks for it. */
 export type LineStatus = 'posted' | 'pending' | 'void';
@@ -48,6 +48,7 @@ export const LINE_TYPE_WORD: Record<LineType, string> = {
   team_support: TEAM_SUPPORT_WORD,
   transfer: 'Transfers',
   house_league_fees: 'House league fees',
+  tournament_fees: 'Tournament fees',
 };
 
 /** Where a line came from (`accounting_entries.source_module`). The loop's two from mig 315 on. */
@@ -55,6 +56,7 @@ export const SOURCE_MODULE = {
   installment: 'rep_allocation_installment',
   request: 'rep_payment_request',
   leagueFee: 'league_registration',
+  tournamentFee: 'tournament_fee_receipt',
 } as const;
 
 export interface LineFacts {
@@ -72,6 +74,7 @@ export function lineType(l: LineFacts): LineType {
     return 'team_support';
   }
   if (l.sourceModule === SOURCE_MODULE.leagueFee) return 'house_league_fees';
+  if (l.sourceModule === SOURCE_MODULE.tournamentFee) return 'tournament_fees';
   if (isTransfer(l)) return 'transfer';
   return l.entryType === 'income' ? 'income' : 'expense';
 }

@@ -46,6 +46,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEST = readFileSync(path.join(ROOT, 'scripts/club-money-atomicity.sql'), 'utf8');
+const STAGE7A = readFileSync(path.join(ROOT, 'scripts/club-stage7a-atomicity.sql'), 'utf8');
 // Newest first: a function a later migration REPLACES is mutated in its live shape (mig 316 replaces 315's
 // club_payee_merge, and mig 325 replaces 316's), never the superseded one.
 const MIGS = [
@@ -333,14 +334,14 @@ const MUTATIONS = [
   // pins the clause instead, and T9 checks the function returns one ledger.
 ];
 
-function run(sql) {
+function run(sql, passMarker = PASSED) {
   const dir = mkdtempSync(path.join(tmpdir(), 'club-atomicity-'));
   const file = path.join(dir, 'probe.sql');
   writeFileSync(file, sql);
   const out = spawnSync(process.execPath, [path.join(ROOT, 'scripts/db-query.mjs'), '--dev', '-f', file], { cwd: ROOT, encoding: 'utf8' });
   rmSync(dir, { recursive: true, force: true });
   const text = `${out.stdout ?? ''}${out.stderr ?? ''}`;
-  if (text.includes(PASSED)) return { outcome: 'passed', text };
+  if (text.includes(passMarker)) return { outcome: 'passed', text };
   // ⚠ A KILL IS ONE OF THE TEST'S OWN ASSERTIONS FIRING ("FAIL T…"), never any error at all: a
   // mutation that breaks the SQL's syntax "fails" too, and counting that as caught is how a mutation
   // run reports ten kills while proving nothing (it did, on its first run).
@@ -357,6 +358,12 @@ if (real.outcome !== 'passed') {
   process.exit(1);
 }
 console.log('✓ check:club-money-atomicity — every move is one step: a double submit leaves one pair, a failed step leaves none, both halves go together (dev, rolled back).');
+const stage7a = run(STAGE7A, 'CLUB_STAGE7A_ATOMICITY_PASSED');
+if (stage7a.outcome !== 'passed') {
+  console.error(`✗ check:club-money-atomicity — a Stage 7a fee move failed:\n  ${stage7a.text}`);
+  process.exit(1);
+}
+console.log('✓ Stage 7a fee book — deposit, correction, undo, shared transfer, own team and house league agree (dev, rolled back).');
 
 if (process.argv.includes('--mutate')) {
   let survived = 0;

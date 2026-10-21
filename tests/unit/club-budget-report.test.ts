@@ -161,9 +161,11 @@ describe('what counts: posted on the Club books, a transfer between the club\'s 
     const r = report({ bookLines: [own, toTeam] });
     assert.equal(r.band.spent.amount, 250);
   });
-  it('a tournament\'s or the house league\'s book is never in the Statement (Stages 7 and 9)', () => {
+  it('a hosted tournament joins the Statement in Stage 7a; house league waits for Stage 9', () => {
     const r = report({ bookLines: [line({ amount: 1440, entryType: 'income', bookKind: 'tournament', ledgerId: 'harvest', bookName: 'Harvest' })] });
-    assert.equal(r.band.collected.amount, 0);
+    assert.equal(r.band.collected.amount, 1440);
+    const house = report({ bookLines: [line({ amount: 100, entryType: 'income', bookKind: 'league_season', ledgerId: 'spring', bookName: 'Spring' })] });
+    assert.equal(house.band.collected.amount, 0);
   });
 });
 
@@ -275,7 +277,7 @@ describe('Months (Ask 5): every column opens + nets = closes; Cash closes this m
     assert.equal(r.months.cashOnHand, 740);
     assert.equal(sept.running, r.months.cashOnHand);
     const aug = r.months.otherBooks.actual.find(x => x.month === '2026-08')!;
-    assert.deepEqual([aug.moneyIn, aug.moneyOut], [1440, 0], 'the other books\' row: the tournament took in $1,440; the transfer between the club\'s books is left out');
+    assert.deepEqual([aug.moneyIn, aug.moneyOut], [0, 0], 'the tournament is now a club book, so it is absent from Other books');
   });
   it('Scheduled: an overdue installment stays in its due month and still counts (the coach\'s rule); a pending cheque by its date; it opens on today\'s cash', () => {
     const march = r.months.months.indexOf('2026-03');

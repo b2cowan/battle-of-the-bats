@@ -21044,6 +21044,24 @@
         "column_default": null
       },
       {
+        "table_name": "teams",
+        "pos": 27,
+        "column_name": "fee_book_baseline",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "teams",
+        "pos": 28,
+        "column_name": "fee_changed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "tournament_archives",
         "pos": 1,
         "column_name": "id",
@@ -21176,6 +21194,123 @@
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "pos": 1,
+        "column_name": "tournament_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "pos": 3,
+        "column_name": "category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "pos": 4,
+        "column_name": "item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "tournament_fee_receipt_allocations",
+        "pos": 1,
+        "column_name": "receipt_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_receipt_allocations",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_receipt_allocations",
+        "pos": 3,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_receipts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "tournament_fee_receipts",
+        "pos": 2,
+        "column_name": "tournament_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_receipts",
+        "pos": 3,
+        "column_name": "entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_fee_receipts",
+        "pos": 4,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "tournament_fee_receipts",
+        "pos": 5,
+        "column_name": "ordinal",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
         "column_default": null
       },
       {
@@ -26647,6 +26782,13 @@
       },
       {
         "table_name": "teams",
+        "column_name": "fee_changed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "teams_fee_changed_by_fkey"
+      },
+      {
+        "table_name": "teams",
         "column_name": "pool_id",
         "foreign_table": "pools",
         "foreign_column": "id",
@@ -26693,6 +26835,62 @@
         "foreign_table": "teams",
         "foreign_column": "id",
         "constraint_name": "tournament_archives_winner_team_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "column_name": "category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_book_settings_category_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "column_name": "item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_book_settings_item_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_book_settings_org_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_book_settings",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_book_settings_tournament_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_receipt_allocations",
+        "column_name": "receipt_id",
+        "foreign_table": "tournament_fee_receipts",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_receipt_allocations_receipt_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_receipt_allocations",
+        "column_name": "team_id",
+        "foreign_table": "teams",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_receipt_allocations_team_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_receipts",
+        "column_name": "entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_receipts_entry_id_fkey"
+      },
+      {
+        "table_name": "tournament_fee_receipts",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "tournament_fee_receipts_tournament_id_fkey"
       },
       {
         "table_name": "tournament_notification_preferences",
@@ -31325,6 +31523,41 @@
         "indexdef": "CREATE INDEX tournament_archives_winner_team_id_idx ON public.tournament_archives USING btree (winner_team_id)"
       },
       {
+        "tablename": "tournament_fee_book_settings",
+        "indexname": "tournament_fee_book_settings_org_id_idx",
+        "indexdef": "CREATE INDEX tournament_fee_book_settings_org_id_idx ON public.tournament_fee_book_settings USING btree (org_id)"
+      },
+      {
+        "tablename": "tournament_fee_book_settings",
+        "indexname": "tournament_fee_book_settings_pkey",
+        "indexdef": "CREATE UNIQUE INDEX tournament_fee_book_settings_pkey ON public.tournament_fee_book_settings USING btree (tournament_id)"
+      },
+      {
+        "tablename": "tournament_fee_receipt_allocations",
+        "indexname": "tournament_fee_allocations_team_idx",
+        "indexdef": "CREATE INDEX tournament_fee_allocations_team_idx ON public.tournament_fee_receipt_allocations USING btree (team_id)"
+      },
+      {
+        "tablename": "tournament_fee_receipt_allocations",
+        "indexname": "tournament_fee_receipt_allocations_pkey",
+        "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipt_allocations_pkey ON public.tournament_fee_receipt_allocations USING btree (receipt_id, team_id)"
+      },
+      {
+        "tablename": "tournament_fee_receipts",
+        "indexname": "tournament_fee_receipts_entry_id_key",
+        "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipts_entry_id_key ON public.tournament_fee_receipts USING btree (entry_id)"
+      },
+      {
+        "tablename": "tournament_fee_receipts",
+        "indexname": "tournament_fee_receipts_event_idx",
+        "indexdef": "CREATE INDEX tournament_fee_receipts_event_idx ON public.tournament_fee_receipts USING btree (tournament_id)"
+      },
+      {
+        "tablename": "tournament_fee_receipts",
+        "indexname": "tournament_fee_receipts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX tournament_fee_receipts_pkey ON public.tournament_fee_receipts USING btree (id)"
+      },
+      {
         "tablename": "tournament_notification_preferences",
         "indexname": "tournament_notif_prefs_tournament_idx",
         "indexdef": "CREATE INDEX tournament_notif_prefs_tournament_idx ON public.tournament_notification_preferences USING btree (tournament_id)"
@@ -34865,6 +35098,30 @@
       {
         "kind": "RLS",
         "table_name": "tournament_archives",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "tournament_fee_book_settings",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_fee_receipt_allocations",
+        "detail": "tournament_fee_receipt_allocations_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "tournament_fee_receipt_allocations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "tournament_fee_receipts",
         "detail": "ENABLED",
         "check_clause": null
       },

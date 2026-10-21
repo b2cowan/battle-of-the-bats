@@ -44,11 +44,11 @@ import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import type { ExportColumnDef } from '@/lib/export';
 import {
-  ItemRows, CatFoldRow, CategoryGroup, SectionBand, SubLabelRow, SubtotalRow,
-  fmtCell, varianceText, varianceInk, r2, fmt, varianceColor,
-  catKeyOf, catFoldable,
+  ActivityGroup, CategoryGroup, SectionBand, SubtotalRow,
+  fmtCell, varianceText, r2, fmt, varianceColor,
+  catKeyOf, catFoldable, activityKeyOf, blockFoldable,
   rebaseReport,
-  type ItemResult, type BehindSide, type ActivityBlock, type MoneyReport,
+  type ItemResult, type BehindSide, type MoneyReport,
 } from '@/components/coaches/MoneyStatementRows';
 import styles from './bva.module.css';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
@@ -284,24 +284,6 @@ function CumulativeChart({ data, undatedBudget }: { data: MonthlyPoint[]; undate
       })}
     </svg>
   );
-}
-
-/**
- * The same address for an ACTIVITY block — one category holding BOTH halves.
- *
- * ⚠⚠ THE `activity|` PREFIX IS LOAD-BEARING, not decoration. It puts these keys in a namespace of
- * their own, which is what lets one `expandedCats` set serve both shapes: a coach who opens
- * Tournaments here does not silently open the two Tournaments rows on the statement, and Collapse
- * all on one view cannot shut rows opened on the other. `catKeyOf` can only ever emit `in|…` or
- * `out|…`, so the three namespaces are disjoint by construction.
- */
-function activityKeyOf(block: ActivityBlock): string {
-  return `activity|${block.categoryId ?? `name:${block.categoryName}`}`;
-}
-
-/** The same question of an activity block, which carries its rows on two halves rather than one. */
-function blockFoldable(block: ActivityBlock): boolean {
-  return (block.revenue?.items.length ?? 0) + (block.costs?.items.length ?? 0) > 0;
 }
 
 /**
@@ -583,58 +565,6 @@ function whenMoved(c: NonNullable<ItemResult['costs']>[number]): string {
  * ⚠ NO `inPlan` NOTE HERE. That sentence explains an em-dash in the Budgeted cell, and an activity's
  * Budgeted is a net that prints a figure either way — `fmtCell` never emits a dash.
  */
-function ActivityGroup({
-  block, expandedCats, toggleCat, openBehind, caption,
-}: {
-  block: ActivityBlock;
-  expandedCats: Set<string>;
-  toggleCat: (id: string) => void;
-  openBehind: (item: ItemResult, side: BehindSide) => void;
-  /** See `CatFoldRow.caption`. Player dues is a block on this shape too, and carries the same
-   *  second line — a coach must not learn a fact on one tab and lose it on the next. */
-  caption?: ReactNode;
-}) {
-  const key = activityKeyOf(block);
-  const open = expandedCats.has(key);
-  /* ⚠ A BLOCK WITH NO ROWS ON EITHER HALF DOES NOT FOLD — the not-set Player dues block, and
-     nothing else. The same rule as the statement's, because it is the same row component. */
-  const foldable = blockFoldable(block);
-  return (
-    <>
-      <CatFoldRow
-        name={block.categoryName}
-        open={open}
-        onToggle={() => toggleCat(key)}
-        foldable={foldable}
-        caption={caption}
-      >
-        <td>{fmtCell(block.net.budgeted)}</td>
-        <td>{fmtCell(block.net.actual)}</td>
-        <td style={{ color: varianceInk(block.net.variance, 'in', block.net.actual) }}>
-          {varianceText(block.net.variance, 'in', block.net.actual)}
-        </td>
-      </CatFoldRow>
-      {open && block.revenue && (
-        <>
-          {/* The inner Revenue/Expenses labels appear only when the block has BOTH — on a one-sided
-              category they would be a heading distinguishing nothing from nothing.
-              ⚠ "Expenses", NOT "Costs" (owner ruling 2026-09-10): this sub-heading sat a few rows
-              under the band heading that has always read "Expenses", so one statement named its own
-              spending half two things. The Statement's register is Revenue / Expenses throughout. */}
-          {block.costs && <SubLabelRow label="Revenue" />}
-          <ItemRows cat={block.revenue} openBehind={openBehind} />
-        </>
-      )}
-      {open && block.costs && (
-        <>
-          {block.revenue && <SubLabelRow label="Expenses" />}
-          <ItemRows cat={block.costs} openBehind={openBehind} />
-        </>
-      )}
-    </>
-  );
-}
-
 /** A REVENUE / EXPENSES band, or an activity's own name. */
 /**
  * WHY THIS STATEMENT'S TOTAL IS NOT THE TEAM'S BANK BALANCE (owner ruling 2026-08-24, Option A,

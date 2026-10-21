@@ -216,8 +216,10 @@ export function buildTournamentTeamUpdate(normalized: TournamentTeamImportNormal
     email: normalized.email,
     status: normalized.status,
     payment_status: normalized.paymentStatus,
-    deposit_paid: normalized.depositPaid ?? 0,
-    total_paid: normalized.totalPaid ?? 0,
+    // A sheet that leaves a money column blank must not zero what a team already paid: every change to these
+    // figures now voids lines in the club's tournament book (Stage 7a). Only a figure the sheet states is written.
+    ...(normalized.depositPaid != null ? { deposit_paid: normalized.depositPaid } : {}),
+    ...(normalized.totalPaid != null ? { total_paid: normalized.totalPaid } : {}),
     waitlist_position: normalized.waitlistPosition,
     admin_notes: normalized.adminNotes,
   };

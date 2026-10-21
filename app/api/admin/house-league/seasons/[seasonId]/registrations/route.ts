@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { getLeagueSeasonById, createRegistration, createLeagueRegistrationFeeEntry } from '@/lib/db';
+import { getLeagueSeasonById, createRegistration } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason } from '@/lib/league-season-scope';
 import { notify } from '@/lib/notify';
@@ -139,15 +139,6 @@ export const POST = withObservability(async (req: Request,
     status:              statusRaw as LeagueRegistrationStatus,
     source:              'admin_manual',
   });
-
-  // Auto-generate pending fee entry for manually-added active registrations
-  if (statusRaw === 'active' && season.autoGenerateFees && season.registrationFee) {
-    void createLeagueRegistrationFeeEntry(
-      ctx!.org.id, seasonId, season.name, registration.id,
-      `${playerFirstName} ${playerLastName}`, season.registrationFee,
-      'pending', ctx!.user.id,
-    ).catch(e => console.error('[ledger] manual add fee entry failed', e));
-  }
 
   // Notify org admins of new house league registration (fire-and-forget)
   notify({

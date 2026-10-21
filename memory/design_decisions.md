@@ -7,6 +7,12 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — STAGE 7A PAYMENT DETAILS (owner answers to the build prompt)
+
+**Decision:** A house-league fee line is written only when paid; approval creates no pending receivable. Its season book joins the club Statement in Stage 9, while a hosted tournament's book joins in 7a. A visiting team that paid and later withdraws keeps its receipt; a refund is a separate typed money-out line. A registration linked to a rep team owned by the host club is Our team and owes no entry fee. One transfer for two teams is one receipt line allocated to both. Saving the tournament's Accounting filing setting creates its category and item before payment. A payment amount correction voids and replaces the affected receipt, retaining the audit trail. Existing teams already marked paid at migration form an opening baseline and receive no historical fee lines; only future payment changes post.
+
+**Consequence for 7b:** a newly added own team must be linked before any paid figure is set. Linking a visitor with an active receipt, or unlinking a paid own team, is refused until the recorded payment is undone. An unlinked club team is a visiting team to the fee writer.
+
 ### 2026-10-20 — STAGE 7: A TOURNAMENT'S FEES LAND IN ITS OWN BOOK; THE CLUB'S OWN TEAM PAYS NO FEE; ONE FEE WRITE FOR TOURNAMENT AND HOUSE LEAGUE; "ADD OUR TEAMS" IN ONE WINDOW; AN EMAIL (NOT "MESSAGES") TO EVERY FAMILY; THE COACH'S TOURNAMENTS AS A ROW LIST AND ONE PAGE (owner, Club Tier Stage 7 round 1, all 13 asks as recommended — drawings https://claude.ai/artifact/MLqvD7TXbLM5QX8H9mmapZ)
 
 **Decision (7a, the tournament's money — Asks 1–4):**

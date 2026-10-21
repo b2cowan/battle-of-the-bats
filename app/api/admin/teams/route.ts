@@ -364,6 +364,7 @@ export const POST = withObservability(async (req: Request) => {
         email: team.email?.trim() ?? '',
         status: team.status ?? 'accepted',
         payment_status: paymentStatus,
+        fee_changed_by: ctx.user.id,
         registered_at: new Date().toISOString(),
       });
 
@@ -568,9 +569,11 @@ export const POST = withObservability(async (req: Request) => {
 
     for (const item of updateData) {
       if (Object.keys(item.updates).length === 0) continue;
+      const paymentChanged = 'payment_status' in item.updates || 'total_paid' in item.updates || 'deposit_paid' in item.updates;
+      const stampedUpdates = paymentChanged ? { ...item.updates, fee_changed_by: ctx.user.id } : item.updates;
       const { error: updateErr } = await supabaseAdmin
         .from('teams')
-        .update(item.updates)
+        .update(stampedUpdates)
         .eq('id', item.id);
       if (updateErr) throw updateErr;
     }

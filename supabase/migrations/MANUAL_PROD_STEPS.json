@@ -258,6 +258,10 @@
     "341_a_deleted_sponsors_invoice_keeps_only_its_number.sql": {
       "prod": "applied",
       "note": "APPLIED to prod 2026-10-20 by the agent on the owner's \"get prod ready for the promote\", before the promote that ships it, in the order 338 -> 339 -> 340 -> 341. Verified right after by one read-only query run on dev and prod with all 15 objects matching (function bodies by md5 + search_path + EXECUTE grantees, the three tables' RLS and policy count, six indexes by md5, the invoice trigger, the rep_teams column, and the old transfer function absent on both). Snapshots refreshed after each apply (DRIFT 0). Function-only: a trigger on rep_sponsor_invoices clears the bill-to contact when the sponsor link goes NULL (the number, amount and dates stay). Needs 339 first."
+    },
+    "342_club_tournament_fee_book.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 7a. Apply after 341 and before promoting the Stage 7a code: new teams columns and tournament receipt/settings/allocations tables, database fee triggers, and service-role-only fee RPCs. Existing paid teams are an opening baseline; there is no receipt backfill. Verify the four new objects, fee function bodies and EXECUTE privileges, then refresh both snapshots."
     }
   }
 }

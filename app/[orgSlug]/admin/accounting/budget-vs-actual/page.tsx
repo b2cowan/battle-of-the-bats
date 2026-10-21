@@ -48,7 +48,7 @@ import CoachScrollX from '@/components/coaches/CoachScrollX';
 import ReportNotes from '@/components/coaches/ReportNotes';
 import MoneyMonthGrid, { monthGridFoldKeys, type MonthGridClubReading } from '@/components/coaches/MoneyMonthGrid';
 import {
-  CatFoldRow, CategoryGroup, SectionBand, SubtotalRow, catFoldable, catKeyOf, fmtCell, fmtVariance, rebaseReport, varianceColor, varianceText,
+  ActivityGroup, CatFoldRow, CategoryGroup, SectionBand, SubtotalRow, activityKeyOf, blockFoldable, catFoldable, catKeyOf, fmtCell, fmtVariance, rebaseReport, varianceColor, varianceText,
   type BehindSide, type CategoryResult, type ItemResult, type MoneyReport,
 } from '@/components/coaches/MoneyStatementRows';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
@@ -70,7 +70,7 @@ import { planColumnLabel, normalizeBasis, type CompareBasis } from '@/lib/coach-
 import { PLAN_LADDER_LABEL } from '@/lib/coach-budget-totals';
 import type { MoneyExportFormat } from '@/lib/coach-money-exports';
 import {
-  CLUB_COMPARE_BASES, clubAgainstLastYearFile, clubMonthsFile, clubMonthsNotes, clubNetRowLabel, clubStatementFile, clubStatementNotes,
+  CLUB_COMPARE_BASES, clubActivityFile, clubAgainstLastYearFile, clubMonthsFile, clubMonthsNotes, clubNetRowLabel, clubStatementFile, clubStatementNotes,
 } from '@/lib/club-money-reports';
 import { NOT_FILED_ID } from '@/lib/club-ledger';
 import { AGAINST_LAST_YEAR_WORDS, OTHER_BOOKS_WORD, cashAtCloseCaption, fiscalYearSpanWords } from '@/lib/club-money-words';
@@ -95,7 +95,7 @@ interface Read {
   againstLastYear: AgainstLastYear | null;
 }
 
-type View = 'statement' | 'months';
+type View = 'statement' | 'activity' | 'months';
 type ClubLens = Exclude<MoneyLens, 'spending'>;
 
 export default function BudgetVsActualTab() {
@@ -153,16 +153,16 @@ export default function BudgetVsActualTab() {
   const isThisYear = !!read?.year.current;
   const effectiveLens: ClubLens = lens === 'scheduled' && !isThisYear ? 'budget' : lens;
 
-  /* The statement at the basis chosen — the coach's own re-cut (`rebaseReport`), one pass, every figure off
-     the same arithmetic. The club's report has no By activity shape (Stage 7's), so its blocks are empty. */
+  /* The coach's one re-cut keeps Statement and By activity on the same figures. */
   const statement: MoneyReport | null = useMemo(() => (report
-    ? rebaseReport({ ...report.statement, activities: [] } as MoneyReport, basis, report.today)
+    ? rebaseReport(report.statement, basis, report.today)
     : null), [report, basis]);
 
-  const compare = againstLast ? read?.againstLastYear ?? null : null;
+  const compare = againstLast && view === 'statement' ? read?.againstLastYear ?? null : null;
   // The folds Collapse all reaches: the Statement's (or the comparison's), or on Months the grid's own under the lens.
   const foldable = view === 'months'
     ? (report ? monthGridFoldKeys(report.months, effectiveLens) : [])
+    : view === 'activity' ? (statement ? statement.activities.filter(blockFoldable).map(activityKeyOf) : [])
     : compare ? [...compare.revenue.categories.filter(c => c.items.length > 0).map(c => compareKey('in', c)),
       ...compare.expenses.categories.filter(c => c.items.length > 0).map(c => compareKey('out', c))]
     : statement ? [...statement.revenue.categories, ...statement.expenses.categories].filter(catFoldable).map(catKeyOf) : [];
@@ -222,11 +222,12 @@ export default function BudgetVsActualTab() {
     const built = asMonths
       ? clubMonthsFile(report.months, effectiveLens, monthBalance(effectiveLens))
       : compare ? clubAgainstLastYearFile(compare, report.year.name)
+      : view === 'activity' ? clubActivityFile(statement, basis, report.year.name)
       : clubStatementFile(statement, basis, report.year.name);
     const lensWord = MONEY_LENSES.find(l => l.id === effectiveLens)?.label ?? '';
     return {
-      dataset: asMonths ? `budget-by-month-${effectiveLens}` : 'budget-vs-actual',
-      title: asMonths ? `Budget by month — ${lensWord}` : 'Budget vs. Actual',
+      dataset: asMonths ? `budget-by-month-${effectiveLens}` : view === 'activity' ? 'budget-by-activity' : 'budget-vs-actual',
+      title: asMonths ? `Budget by month — ${lensWord}` : view === 'activity' ? 'Budget vs. Actual — By activity' : 'Budget vs. Actual',
       columns: built.columns,
       rows: built.rows,
       rowKinds: built.kinds,
@@ -236,7 +237,7 @@ export default function BudgetVsActualTab() {
       notes: asMonths ? monthNotes : compare ? [] : statementNoteStack,
       masthead: {
         title: `${currentOrg?.name ?? ''} · ${report.year.name}`,
-        subtitle: `Budget vs. Actual — ${asMonths ? `Months · Showing: ${lensWord}` : `Statement · Compare: ${compare ? AGAINST_LAST_YEAR_WORDS.option(compare.lastYear.name) : CLUB_COMPARE_BASES.find(b => b.id === basis)?.label ?? ''}`}`,
+        subtitle: `Budget vs. Actual — ${asMonths ? `Months · Showing: ${lensWord}` : `${view === 'activity' ? 'By activity' : 'Statement'} · Compare: ${compare ? AGAINST_LAST_YEAR_WORDS.option(compare.lastYear.name) : CLUB_COMPARE_BASES.find(b => b.id === basis)?.label ?? ''}`}`,
         // The year’s name and, because a name alone can’t say when a September year starts, its two days (specimen 2).
         meta: `${fiscalYearSpanWords(report.year)} · as at ${formatStoredDate(report.today, { withYear: true, longMonth: true })}`,
       },
@@ -278,6 +279,10 @@ export default function BudgetVsActualTab() {
       spanWord="year"
     />
   );
+  const activityFor = (block: MoneyReport['activities'][number]) => (
+    <ActivityGroup key={activityKeyOf(block)} block={block} expandedCats={expanded} toggleCat={toggleCat}
+      openBehind={(item, side) => openBehind(item, side, block.categoryName)} />
+  );
 
   return (
     <>
@@ -314,11 +319,11 @@ export default function BudgetVsActualTab() {
           <YearPill year={report.year.key} years={read.years}
             onChange={y => { setYear(y); setBehind(null); setLineId(null); setAllocationId(null); setAgainstLast(false); }} />
           <SingleSelectDropdown label="View" lead value={view}
-            options={[{ id: 'statement', label: 'Statement' }, { id: 'months', label: 'Months' }]}
-            onChange={next => setView(next as View)} />
-          {view === 'statement' && (
+            options={[{ id: 'statement', label: 'Statement' }, { id: 'activity', label: 'By activity' }, { id: 'months', label: 'Months' }]}
+            onChange={next => { setView(next as View); if (next !== 'statement') setAgainstLast(false); }} />
+          {view !== 'months' && (
             <SingleSelectDropdown label="Compare" value={compare ? 'lastyear' : basis}
-              options={read.againstLastYear
+              options={read.againstLastYear && view === 'statement'
                 ? [...CLUB_COMPARE_BASES, { id: 'lastyear', label: AGAINST_LAST_YEAR_WORDS.option(read.againstLastYear.lastYear.name) }]
                 : CLUB_COMPARE_BASES}
               onChange={next => {
@@ -370,13 +375,14 @@ export default function BudgetVsActualTab() {
                 </colgroup>
                 <thead>
                   <tr>
-                    <th scope="col" className={bvaStyles.lead}>Category / line item</th>
+                    <th scope="col" className={bvaStyles.lead}>{view === 'activity' ? 'Activity / line item' : 'Category / line item'}</th>
                     <th scope="col">{planColumnLabel(basis)}</th>
                     <th scope="col">Actual</th>
                     <th scope="col">Variance</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {view === 'activity' ? statement.activities.map(activityFor) : <>
                   {statement.revenue.categories.length > 0 && (
                     <>
                       <SectionBand label={PLAN_LADDER_LABEL.revenueBand} />
@@ -389,6 +395,7 @@ export default function BudgetVsActualTab() {
                   {statement.expenses.categories.map(groupFor)}
                   <SubtotalRow label={PLAN_LADDER_LABEL.totalExpenses} budgeted={statement.expenses.budgeted}
                     actual={statement.expenses.actual} variance={statement.expenses.variance} direction="out" />
+                  </>}
                   <tr className={bvaStyles.netRow}>
                     <th scope="row" className={bvaStyles.lead}>{clubNetRowLabel(basis, report.year.name)}</th>
                     <td>{fmtCell(statement.net.budgeted)}</td>

@@ -9866,7 +9866,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .occGroupSay { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; font-size: var(--type-support); line-height: 1.45; }
 .occGroupClash, .occGroupPermit { display: flex; gap: 7px; align-items: flex-start; }
 .occGroupClash { color: var(--warning-strong, var(--warning)); }
-.occGroupPermit { color: var(--home-dim, var(--text-tertiary)); }
+.occGroupPermit { color: var(--text-tertiary); }
 .occGroupIcon { flex: none; margin-top: 1px; }
 /* "The other dates" — the same size as its siblings' notes, one step quieter and with no icon: it says nothing. */
 .occGroupRest { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }

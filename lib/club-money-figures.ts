@@ -633,11 +633,10 @@ export function isClubOwnedBook(kind: string): kind is ClubBookKind {
 
 /**
  * The Club books: the General ledger and any book the club opened by name. Actual, Spent, Off-plan
- * and the band's Collected read these; a tournament's and the house league's books keep their own
- * money until Stages 7 and 9 decide how it joins the budget.
+ * and the band's Collected read these; a tournament joins now, while the house league waits for Stage 9.
  */
 export function isClubBook(kind: string): boolean {
-  return kind === 'org';
+  return kind === 'org' || kind === 'tournament';
 }
 
 // ── The year rule (Club Tier Stage 3c: the FISCAL year — lib/club-fiscal-year.ts) ───────────────

@@ -505,6 +505,8 @@ because the club calendar hid it.
 
 ## Trade-offs made in this plan
 
+**Stage 7a built 2026-10-20:** When a club records a visiting team's tournament payment, its tournament book gains the receipt automatically. An owner or admin with Accounting access picks the tournament's filing name in Event settings, then sees its revenue and filed costs together in Accounting → Budget vs. Actual → By activity. A rep team linked to its own club's tournament is labelled Our team and No fee; it creates no receipt. The house league records a fee only when paid, and its book remains outside the club Statement until Stage 9. Existing paid registrations do not create backdated receipts. A tournament admin with Accounting access can record one transfer for two visiting teams; coaches see the own-team no-fee message. Success is a fee-book total that matches new paid figures, with corrections and undos visible as voided history, and a tournament activity total that includes costs from the general book.
+
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money
   model has three months of hardening and build gates; the club's team-ledger copy has neither. The
   plan recommends the coach's records become the source of truth for team money (owner ruling D1).

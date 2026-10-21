@@ -74,6 +74,7 @@ const STAYS: Record<string, string> = {
   family_payment_handoffs: 'a payment the CLUB received and passed to one of its teams (mig 338) — sent from Families, which a coach portal does not have, so none exist to move',
   // ── The coach's OWN tournament (a Premium portal includes one) — the org's, not the team's ────
   tournaments: 'the coach org’s hosted tournament does not move (an open one refuses the move)',
+  tournament_fee_book_settings: 'the filing word belongs to the coach org’s hosted tournament, which stays with that org',
   tournament_archives: 'belongs to the coach org’s tournament',
   tournament_registration_fields: 'belongs to the coach org’s tournament',
   tournament_roster_players: 'a tournament’s roster, in the tournament’s org',

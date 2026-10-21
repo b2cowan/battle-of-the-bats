@@ -19,7 +19,7 @@
 /**
  * ⚠⚠ EVERYTHING THAT POINTS AT A BUDGET WORD — the single list every guard and the fold count from.
  *
- * EVERY foreign key into `budget_items` is `ON DELETE SET NULL` — deliberate for a genuine deletion
+ * Most foreign keys into `budget_items` are `ON DELETE SET NULL` — deliberate for a genuine deletion
  * (a record keeps its money and reads as the honest gap it now is) and catastrophic for a MERGE: the
  * rows must be re-pointed first, or the money survives with its classification silently gone.
  * (The count is deliberately not stated here. It has been wrong twice — the list was described as
@@ -132,6 +132,9 @@ export const BUDGET_ITEM_REFERENCES: readonly BudgetItemReference[] = [
      line's Actual would fall to "Not filed" and its plan line would read unspent. It has no `org_id`:
      it is reached through the club's books (`orgScope`). */
   { table: 'accounting_entries', column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'club ledger lines', orgScope: 'ledger' },
+  /* Stage 7a's hosted-event word is a durable setting. Its NO ACTION foreign key
+     keeps a fee category from disappearing while the tournament still uses it. */
+  { table: 'tournament_fee_book_settings', column: 'item_id', categoryColumn: 'category_id', label: 'hosted tournament settings' },
 ] as const;
 
 /** How many records of each kind point at these words — the count every guard and the fold need. */

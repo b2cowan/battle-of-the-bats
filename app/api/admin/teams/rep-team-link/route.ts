@@ -29,6 +29,21 @@ function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
+/** A refusal the database raises on purpose (Stage 7a: a club team with a recorded fee or a paid status cannot change
+ *  sides until the payment is undone) is a sentence written for the club admin. It reaches the window as a 409, the
+ *  way the fee routes already send theirs. Anything else is a real failure and keeps throwing. */
+const DELIBERATE_REFUSALS = [
+  /^Undo this team's paid status before removing its club-team link/,
+  /^Undo the recorded entry fee before linking this as our team/,
+  /^The rep team and tournament must belong to the same club/,
+];
+
+function refusalOf(err: unknown): Response | null {
+  const e = err as { code?: string; message?: string } | null;
+  if (e?.code !== 'P0001' || !e.message || !DELIBERATE_REFUSALS.some(r => r.test(e.message!))) return null;
+  return NextResponse.json({ error: e.message }, { status: 409 });
+}
+
 /** Shared gate: auth + tournament scope + rep-teams entitlement + registration binding. */
 async function guardTournamentRepAccess(req: Request, tournamentId: string | null) {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -78,12 +93,18 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'That rep team is not in your organization.' }, { status: 404 });
   }
 
-  await linkRepTeamToRegistration({
-    registrationId,
-    repTeamId,
-    orgId: ctx.org.id,
-    userId: ctx.user.id,
-  });
+  try {
+    await linkRepTeamToRegistration({
+      registrationId,
+      repTeamId,
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+    });
+  } catch (err) {
+    const refusal = refusalOf(err);
+    if (refusal) return refusal;
+    throw err;
+  }
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/teams/rep-team-link' });
 
@@ -101,6 +122,12 @@ export const DELETE = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'That registration is not part of this tournament.' }, { status: 404 });
   }
 
-  await unlinkRepTeamFromRegistration(registrationId);
+  try {
+    await unlinkRepTeamFromRegistration(registrationId);
+  } catch (err) {
+    const refusal = refusalOf(err);
+    if (refusal) return refusal;
+    throw err;
+  }
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/teams/rep-team-link' });

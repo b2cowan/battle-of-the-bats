@@ -721,6 +721,53 @@ export interface ActivityBlock {
   inPlan: boolean;
 }
 
+/** The activity fold has its own key space, separate from the Statement's in/out rows. */
+export function activityKeyOf(block: ActivityBlock): string {
+  return `activity|${block.categoryId ?? `name:${block.categoryName}`}`;
+}
+
+export function blockFoldable(block: ActivityBlock): boolean {
+  return (block.revenue?.items.length ?? 0) + (block.costs?.items.length ?? 0) > 0;
+}
+
+/** One category's revenue, expenses and net, using the same rows in both portals. */
+export function ActivityGroup({
+  block, expandedCats, toggleCat, openBehind, caption,
+}: {
+  block: ActivityBlock;
+  expandedCats: Set<string>;
+  toggleCat: (id: string) => void;
+  openBehind: (item: ItemResult, side: BehindSide) => void;
+  caption?: ReactNode;
+}) {
+  const key = activityKeyOf(block);
+  const open = expandedCats.has(key);
+  return (
+    <>
+      <CatFoldRow name={block.categoryName} open={open} onToggle={() => toggleCat(key)}
+        foldable={blockFoldable(block)} caption={caption}>
+        <td>{fmtCell(block.net.budgeted)}</td>
+        <td>{fmtCell(block.net.actual)}</td>
+        <td style={{ color: varianceInk(block.net.variance, 'in', block.net.actual) }}>
+          {varianceText(block.net.variance, 'in', block.net.actual)}
+        </td>
+      </CatFoldRow>
+      {open && block.revenue && (
+        <>
+          {block.costs && <SubLabelRow label="Revenue" />}
+          <ItemRows cat={block.revenue} openBehind={openBehind} />
+        </>
+      )}
+      {open && block.costs && (
+        <>
+          {block.revenue && <SubLabelRow label="Expenses" />}
+          <ItemRows cat={block.costs} openBehind={openBehind} />
+        </>
+      )}
+    </>
+  );
+}
+
 export interface MoneyReport {
   revenue: ReportSection;
   expenses: ReportSection;

@@ -82,7 +82,7 @@ async function countReferences(
   const counts = await Promise.all(BUDGET_ITEM_REFERENCES.map(async ref => {
     const { count } = await supabaseAdmin
       .from(ref.table)
-      .select('id', { count: 'exact', head: true })
+      .select(ref.column, { count: 'exact', head: true })
       .in(keyOf(ref), ids);
     return { label: ref.label, count: count ?? 0 };
   }));

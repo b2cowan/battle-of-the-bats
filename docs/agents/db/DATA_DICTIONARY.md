@@ -734,6 +734,12 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 <!-- dict:col:teams.total_paid -->
 **`deposit_paid` / `total_paid`** (numeric, NOT NULL, default 0) — **manual** organizer accounting of money received (not Stripe-driven).
 
+<!-- dict:col:teams.fee_book_baseline -->
+**`fee_book_baseline`** (numeric(12,2), NOT NULL, default 0; migration 342) — amount already marked received when Stage 7a begins. Existing payments are not backfilled into the new tournament book; only subsequent increases are posted. A correction or undo can reduce the baseline. The book reconciles to `greatest(total_paid, deposit_paid) - fee_book_baseline`.
+
+<!-- dict:col:teams.fee_changed_by -->
+**`fee_changed_by`** (FK → `auth.users.id` ON DELETE SET NULL) — actor carried through a payment update to its automatic fee receipt or void. The database trigger covers every writer of the team's paid figures, including imports and check-in.
+
 <!-- dict:col:teams.waitlist_position -->
 **`waitlist_position`** (int, nullable; NULL = not waitlisted) — 1-based ordinal, computed `max(existing)+1` at register time; set alongside `status='waitlist'` (gotcha 7).
 
@@ -6291,7 +6297,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 - **`org_id` on `league_games` + `league_practices` was `NOT NULL` but unwritten by every insert path — ✓ FIXED 2026-06-10.** `org_id` (added by migs 075/078 for direct-lookup RLS) is `NOT NULL`, **no column default, and NO trigger** — verified live against `information_schema`/`pg_trigger` on **both** dev and prod (2026-06-10; zero triggers on any `league_*` table). At commit `6deac4a` all three game-insert paths (`createLeagueGame` [lib/db.ts:3465](../../../lib/db.ts#L3465), the `schedule/generate` save [generate/route.ts:105-117](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/generate/route.ts#L105-L117), the dev seed) and the practice-insert path (`createPractices` [lib/db.ts:3412](../../../lib/db.ts#L3412)) **omitted `org_id`** → `null value in column "org_id" violates not-null constraint` on every game/practice create. This was the **exact schema/code-drift class this dictionary exists to surface** (sibling of the Phase-4b rep-installment `org_id` finding). **Fix (2026-06-10, code-only — the column already existed):** `orgId` added to `LeagueGameInput`/`LeaguePracticeInput` and written as `org_id` by `createLeagueGame`/`createPractices` plus the `schedule/generate` and dev-seed direct inserts, all sourced from `ctx.org.id`; tsc clean.
 - **`league_seasons.division` (text) ≠ the `league_divisions` table.** The scalar `division` column is the **legacy `age_group` label renamed by migration 093** — a free-text season badge ("U11", "Adult"), still written by the admin form. Structured sub-divisions are the separate `league_divisions` **table**. Classic type-vs-table trap (the same mig 093 also renamed `age_groups`→`divisions` in the Tournaments module and `rep_teams.age_group`→`division`).
 - **Registrations are ACCOUNT-LESS.** A `league_registrations` row is an anonymous family submission keyed by **`guardian_email` (plain text, indexed, NOT an `auth.users` FK)** — the public status page looks a family up by email with no login. Contrast tournament registration (team/contact-based) and basic-coach (membership-keyed). `guardian_email` is **non-unique** → the same family can register a player twice (no dedup).
-- **Fees are INTERNAL double-entry accounting, never Stripe.** `league_seasons.registration_fee` is display-only; when `auto_generate_fees` is on, approving a reg active creates an `accounting_entries` income row (`source_module='league_registration'`) in a per-season ledger and stamps `league_registrations.fee_entry_id`. **`fee_entry_id` is a loose uuid with NO FK** (the durable link is `accounting_entries.source_module`+`source_entity_id`). No `stripe_*` column exists anywhere in the domain. (Billing-flow narrative + `stripe_prices` → the Stripe/Billing phase; columns documented here.)
+- **Fees are INTERNAL accounting, never Stripe.** Stage 7a writes one posted income line (`source_module='league_registration'`) only when an admin marks the registration fee paid; approval and waitlist promotion write no pending line. Undo or decline/withdrawal voids the live line atomically. `fee_entry_id` is a loose uuid with no FK; the durable history is `accounting_entries.source_module` + `source_entity_id`. No `stripe_*` column exists in the domain.
 - **`league_notification_log` is DEAD/legacy.** Created in mig 020 as the original broadcast log, it has **zero reads/writes** in current code and was **superseded by `league_email_log`**. Naming trap: the admin "Notifications" page (`notifications/page.tsx`) actually writes `league_email_log` via the `/email` route. Different schema (`audience_type`/`audience_label`/`recipient_count` vs `scope`/`audience`/`count_sent`+`count_skipped`).
 - **RLS is ENABLED on all 8 tables and mig 020 defines real org-member + public-read policies — but every code path uses `supabaseAdmin` (service role, RLS-bypassing); enforcement is app-layer.** Admin routes gate on `hasCapability(role, caps, 'module_house_league')` **+** `hasModuleEntitlement(org, 'module_house_league')` (the League/Club plan gate) **+**, for writes, role `owner`/`league_admin` (registrar can manage regs but not place/reassign). The lone exception: the **practices** POST/PATCH routes gate on capability+role but **NOT** `hasModuleEntitlement` — a slightly weaker gate than the sibling routes.
 - **UK spelling `'cancelled'`** is the CHECK value on both `league_games` and `league_practices` (and `'postponed'` on games is allowed-but-dead) — never US `'canceled'`, which would fail the CHECK. Cancels are **soft** (status flips, row persists); `deleteLeagueTeam` is a hard delete but its FKs SET-NULL registrations and CASCADE games.
@@ -6309,7 +6315,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 1. **`division` (text) is NOT `league_divisions`** — it's the legacy `age_group` label renamed by mig 093 (a free-text season badge), still written by the admin create form/PATCH ([seasons/route.ts:57](../../../app/api/admin/house-league/seasons/route.ts#L57)). Structured divisions are the separate table.
 2. **`status` is a forward-only, single-hop lifecycle enforced in APP code, not by the CHECK.** The CHECK allows all 6 values in any order, but `ALLOWED_TRANSITIONS` ([seasons/[seasonId]/route.ts:21-28](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L21-L28)) permits only `draft → registration_open → registration_closed → active → completed → archived`, one hop at a time; `archived` is terminal; `draft → registration_open` requires ≥1 division ([:127-135](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L127-L135)). Raw SQL could set an illegal state.
 3. **Naming collision:** season `status = 'draft'` (unpublished season) is unrelated to **`draft_state`** (the live player-draft snapshot, gotcha 5).
-4. **`auto_generate_fees` posts INTERNAL accounting, not Stripe** (see `fee_entry_id` on `league_registrations`).
+4. **`auto_generate_fees` is a legacy season setting; Stage 7a's paid-only fee write does not depend on it** (see `fee_entry_id` on `league_registrations`).
 5. **`draft_state` (jsonb) is a transient draft-room snapshot** — null when no draft is running, cleared on finalize.
 6. **`slug` is client-supplied** (UI auto-derives but allows override); the server only re-validates `[a-z0-9-]` and relies on `UNIQUE(org_id, slug)`, returning **409** on collision — no server-side auto-dedup.
 
@@ -6501,7 +6507,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 2. **NO `created_at` — `registered_at` is the create stamp** (NN, default `now()`). Never written explicitly; admin-manual rows get `now()`, not a back-dated date.
 3. **Two auto-status engines, both can fire.** (a) At public submit: under-capacity + `auto_approve_under_capacity` → `active`; under-capacity without it → `pending_review`; over-capacity → `waitlisted` ([register/route.ts:112-135](../../../app/api/league/[orgSlug]/[seasonSlug]/register/route.ts#L112-L135)). (b) `auto_promote_waitlist` promotes `waitlist[0]` → active on decline/withdraw. **Capacity counts `status='active'` only**; `pending_review` doesn't consume it. **`admin_manual` create defaults `active` and SKIPS the capacity engine** — an admin can over-fill.
 4. **`waitlist_position` is hand-maintained, race-prone, per-DIVISION.** No DB sequence; `compactWaitlist` decrements every position past a vacated slot via a fan-out of per-row UPDATEs ([[regId]/route.ts:70-89](../../../app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts#L70-L89)). `updateRegistrationStatus` auto-NULLs the position whenever status leaves `'waitlisted'` ([lib/db.ts:3298](../../../lib/db.ts#L3298)).
-5. **`fee_entry_id` is a LOOSE uuid (no FK)** → `accounting_entries.id`; set when a fee entry is created — either auto on approve / manual-active-create (requires `auto_generate_fees` + `registration_fee`) **or** when an admin toggles `registration_fee_paid=true` with `registration_fee` set (**no `auto_generate_fees` needed**, [[regId]/route.ts:144](../../../app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts#L144)). Often NULL. Internal ledger, never Stripe (domain gotcha; cross-ref Accounting).
+5. **`fee_entry_id` is a LOOSE uuid (no FK)** → the current posted `accounting_entries.id`; Stage 7a sets it on paid, clears it on undo or decline/withdrawal, and writes a new row on re-payment. Approval and waitlist promotion leave it NULL. Internal ledger, never Stripe.
 6. **`division_id` is nullable** but several flows require it (public submit forces a resolvable division; admin create requires `divisionId`; you can't waitlist a division-less reg). `ON DELETE SET NULL`.
 7. **Role split:** `league_registrar` can change status/feePaid/adminNotes; only `owner`/`league_admin` can reassign division/team, create manual regs, or run placement/draft.
 
@@ -6555,10 +6561,10 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`team_id`** (FK → `league_teams.id` ON DELETE SET NULL, nullable) — the placed team (set by placement/draft, [placement/route.ts](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts) → `assignRegistrationToTeam` [lib/db.ts:3313](../../../lib/db.ts#L3313) / draft finalize → `bulkAssignTeams` [lib/db.ts:3320](../../../lib/db.ts#L3320)); NULL until placement. The **randomize/clear** flows only touch `active` regs, but the manual **assign/bulk_assign** actions place any reg by id with **no status guard** — a waitlisted/pending reg can be given a `team_id`.
 
 <!-- dict:col:league_registrations.registration_fee_paid -->
-**`registration_fee_paid`** (bool, NOT NULL, default false) — admin-toggled payment flag, kept in sync with the linked ledger entry's posted/pending status. Toggling true with no existing entry creates a `posted` `accounting_entries` row ([[regId]/route.ts:130-155](../../../app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts#L130-L155)). Manual flag, NOT a payment processor.
+**`registration_fee_paid`** (bool, NOT NULL, default false) — admin-toggled payment flag. Stage 7a changes it and the current posted fee line in one database function; no line is created before payment. Manual flag, not a payment processor.
 
 <!-- dict:col:league_registrations.fee_entry_id -->
-**`fee_entry_id`** (uuid, nullable, **NO FK**) → `accounting_entries.id` for this reg's fee; back-filled by `createLeagueRegistrationFeeEntry` ([lib/db.ts:3601](../../../lib/db.ts#L3601)). Durable link is `accounting_entries.source_module='league_registration'`+`source_entity_id=regId`. Often NULL (gotcha 5). _Cross-ref:_ Accounting / Stripe phase.
+**`fee_entry_id`** (uuid, nullable, **NO FK**) → the current posted `accounting_entries.id` for this registration's fee. Set by `club_league_fee_set`; cleared by undo or `club_league_fee_end`. The source module and entity id preserve the audit trail of voided and replacement lines. Often NULL (gotcha 5).
 
 <!-- dict:col:league_registrations.admin_notes -->
 **`admin_notes`** (text, nullable) — internal admin-only notes, **never** shown publicly; distinct from guardian `player_notes`. `canManageRegs`-gated.
@@ -6733,6 +6739,52 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 ---
 
+## `tournament_fee_book_settings`
+<!-- dict:table:tournament_fee_book_settings -->
+
+**Purpose:** one filing word per hosted tournament (Stage 7a, migration 342). Saving the Accounting setting creates its budget category and Entry fees income item immediately; the tournament ledger itself opens only when the first fee is paid. No historical payment lines are generated. Server-only RLS.
+
+<!-- dict:col:tournament_fee_book_settings.tournament_id -->
+**`tournament_id`** (PK, FK → `tournaments.id` ON DELETE CASCADE) — locks the setting to one event.
+
+<!-- dict:col:tournament_fee_book_settings.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE) — host club.
+
+<!-- dict:col:tournament_fee_book_settings.category_id -->
+<!-- dict:col:tournament_fee_book_settings.item_id -->
+**`category_id` / `item_id`** (FK → `budget_categories.id` / `budget_items.id`) — the tournament's one activity category and its income word; fee lines carry both, while costs can be filed under the same category from the general book.
+
+## `tournament_fee_receipts`
+<!-- dict:table:tournament_fee_receipts -->
+
+**Purpose:** immutable identity and order for a tournament fee receipt. A correction voids the linked entry and creates a new receipt; a shared transfer is one receipt with two or more allocations. Server-only RLS.
+
+<!-- dict:col:tournament_fee_receipts.id -->
+**`id`** (uuid PK) — `accounting_entries.source_entity_id` for a tournament fee.
+
+<!-- dict:col:tournament_fee_receipts.tournament_id -->
+**`tournament_id`** (FK → `tournaments.id` ON DELETE CASCADE) — owning event.
+
+<!-- dict:col:tournament_fee_receipts.entry_id -->
+**`entry_id`** (unique FK → `accounting_entries.id`) — the posted or voided money line.
+
+<!-- dict:col:tournament_fee_receipts.ordinal -->
+**`ordinal`** (identity bigint) — receipt order used when correcting the most recent payment first; timestamps can tie within a transaction.
+
+## `tournament_fee_receipt_allocations`
+<!-- dict:table:tournament_fee_receipt_allocations -->
+
+**Purpose:** allocation of each receipt to its paid registration. The pair is the PK; allocations to a void receipt remain for audit. `amount > 0`. Server-only RLS.
+
+<!-- dict:col:tournament_fee_receipt_allocations.receipt_id -->
+**`receipt_id`** (PK part, FK → `tournament_fee_receipts.id` ON DELETE CASCADE).
+
+<!-- dict:col:tournament_fee_receipt_allocations.team_id -->
+**`team_id`** (PK part, FK → `teams.id`) — the registered team receiving credit.
+
+<!-- dict:col:tournament_fee_receipt_allocations.amount -->
+**`amount`** (numeric(12,2), positive) — this team's share of the receipt.
+
 ## `accounting_ledgers`
 <!-- dict:table:accounting_ledgers -->
 
@@ -6777,7 +6829,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 3. **DELETE is a soft-`void`** — `voidEntry` sets `status='void'`, row preserved ([lib/db.ts:2823](../../../lib/db.ts#L2823)); `getLedgerSummary` excludes void ([:2839](../../../lib/db.ts#L2839)). Already-void can't be re-voided/edited.
 4. **`category` is FREE TEXT (no FK)** — never a chart-of-accounts key. ⚖ **Since mig 317 (Club Tier Stage 3b, Ask 4a) a club line is FILED UNDER A BUDGET WORD instead** — `budget_category_id` / `budget_item_id` (gotcha 9) — and Budget vs. Actual matches a line's Actual to the year plan by that word. The free-text column stays on every line written before (they read **"Not filed"**, no backfill) and is still accepted ONLY from 3a's Add entry window until Stage 3b session 2 replaces it (the retire list); a line filed under a word writes `category = NULL`.
 5. **`payee_id` (→`org_payees`) vs `payee_payer` (text) are mutually exclusive by CONVENTION only — no DB CHECK.**
-6. **`source_module`/`source_entity_id` = cross-module provenance.** `'league_registration'` (house-league fees) and, **from mig 315 (Club Tier Stage 3a), `'rep_allocation_installment'` and `'rep_payment_request'`** on BOTH halves of every club-loop transfer (the installment's / request's id). A line with a source is **changed where it came from, never on the ledger** — the entry PATCH/DELETE and `club_transfer_void` refuse it (`from_a_source`); pre-315 loop lines carry no source and are caught by their category key (`rep_allocation` / `team_*_to_org`) or by an installment/request naming them in `accounting_entry_id` (`isSourcedLine`, [lib/club-ledger.ts](../../../lib/club-ledger.ts)).
+6. **`source_module`/`source_entity_id` = cross-module provenance.** `'league_registration'` (house-league fees), `'tournament_fee_receipt'` (Stage 7a tournament fee receipt, including one receipt allocated across several teams), and, **from mig 315 (Club Tier Stage 3a), `'rep_allocation_installment'` and `'rep_payment_request'`** on BOTH halves of every club-loop transfer (the installment's / request's id). A line with a source is **changed where it came from, never on the ledger** — the entry PATCH/DELETE and `club_transfer_void` refuse it (`from_a_source`); pre-315 loop lines carry no source and are caught by their category key (`rep_allocation` / `team_*_to_org`) or by an installment/request naming them in `accounting_entry_id` (`isSourcedLine`, [lib/club-ledger.ts](../../../lib/club-ledger.ts)).
 7. **⚖ MIG 315: EVERY CLUB MONEY MOVE IS ONE DATABASE FUNCTION** — `club_installment_receive` (record / confirm received), `club_installment_undo`, `club_request_approve`, `club_request_reverse`, `club_transfer_void`, `club_payee_merge` (replaced by mig 316 to carry payee sharing — see `org_payees` gotcha 6), `club_reminder_wave_claim` (a reminder wave, claimed before any email), plus `club_general_ledger` / `club_team_ledger` (get-or-create, race-safe) and `club_void_entry_pair` (both halves, one reason). Each locks its row, refuses unless the state is the one the caller saw (`{ok:false, code:'state_changed', state}` before any write), and writes the state change and both lines in one transaction — a double submit leaves one pair, a failed step leaves none (`npm run check:club-money-atomicity`, dev, rolled back, mutation-proven). Server-only (revoked from anon/authenticated). ⚠ **The words on a line are the app's** (passed in from [lib/club-money-words.ts](../../../lib/club-money-words.ts)); loop lines from 3a carry the same category **keys** the pre-3a code wrote (`'rep_allocation'` / `'team_payment_to_org'` / `'team_charge_to_org'`, `CLUB_LOOP_CATEGORY`), worded at read time by `categoryWord` — so old and new lines are one shape and a rename is one line of code — and the method word in `payment_method`.
 8. **⚠ A VOID NOW CARRIES ITS RECORD (mig 315)** — `void_reason` / `voided_by` / `voided_at`. A club void (undo, reversal, transfer void) writes all three on both halves; `voidEntry` writes `voided_at` always and the other two when given. NULL on every pre-315 void.
 9. **⚖ WHICH WORD A CLUB LINE COUNTS UNDER (mig 317, `filedCategory` / `fileLine` in [lib/club-budget-report.ts](../../../lib/club-budget-report.ts)).** A line the money loop wrote files itself by its SOURCE, never by a word: an allocation received → "From the teams" (under its allocation), money received on a To-club request → "From the teams › On request", a request paid to a team → the standard club-only word **"Team support › Paid to teams on request"** (fixed ids `3b5e7a00-0317-4c1b-8a50-7ea0507c0001` / `…0002`, `TEAM_SUPPORT_WORD_IDS`). A typed line files under its word, else "Not filed"; a transfer between the club's own books is filed nowhere and moves no money in total. Only POSTED lines on the **Club books** (`entity_type='org'`) count in Budget vs. Actual; every book the club owns (Club, Tournament, House league — never a team's) counts in Cash on hand and the Months balance. A book's sums are ONE SQL aggregate, `club_book_totals(p_ledgers, p_from, p_to)` (mig 317, C14 — it replaced the page-by-page walk in `getLedgerSummary`).
@@ -6811,7 +6863,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:accounting_entries.source_module -->
 <!-- dict:col:accounting_entries.source_entity_id -->
-**`source_module` / `source_entity_id`** (text / uuid, nullable) — cross-module provenance; only `'league_registration'` + the `league_registrations.id` are written today (back-linked via `league_registrations.fee_entry_id`). Logical ref, no FK.
+**`source_module` / `source_entity_id`** (text / uuid, nullable) — cross-module provenance. House fees use `'league_registration'` + `league_registrations.id`; tournament fees use `'tournament_fee_receipt'` + `tournament_fee_receipts.id`; the club money loop uses its installment/request source values (gotcha 6). Logical ref, no FK. A sourced fee line is voided and replaced for corrections, never revived.
 
 <!-- dict:col:accounting_entries.created_by -->
 **`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap, ON DELETE NO ACTION) — who created the entry (or `p_created_by` from the RPC).

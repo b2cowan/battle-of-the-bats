@@ -2,15 +2,13 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { LEAGUE_FEE_ROLES, canMarkLeagueFeePaid, setLeagueFeePaid } from '@/lib/league-fee-paid';
+import { LEAGUE_FEE_ROLES, canMarkLeagueFeePaid, setLeagueFeePaid, voidLeagueRegistrationFee } from '@/lib/league-fee-paid';
 import { moveRefused } from '@/lib/club-money-route';
 import {
   getLeagueSeasonById,
   updateRegistrationStatus,
   promoteFromWaitlist,
   getWaitlistForDivision,
-  createLeagueRegistrationFeeEntry,
-  voidEntry,
   getLedgerEntries,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -213,15 +211,6 @@ export const PATCH = withObservability(async (req: Request,
       await compactWaitlist(divisionId, oldWaitlistPos);
     }
 
-    // Auto-generate pending fee entry if configured and not already present
-    if (season.autoGenerateFees && season.registrationFee && !reg.feeEntryId) {
-      const playerName = `${reg.playerFirstName} ${reg.playerLastName}`;
-      void createLeagueRegistrationFeeEntry(
-        ctx!.org.id, seasonId, season.name, regId, playerName,
-        season.registrationFee, 'pending', ctx!.user.id,
-      ).catch(e => console.error('[ledger] fee entry creation failed', e));
-    }
-
     void (async () => {
       try {
         await sendTransactionalEmail({
@@ -291,7 +280,8 @@ export const PATCH = withObservability(async (req: Request,
 
   // ── → declined ────────────────────────────────────────────────────────────
   if (newStatus === 'declined') {
-    await updateRegistrationStatus(regId, 'declined', adminNotes);
+    const feeRefusal = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'declined', adminNotes);
+    if (feeRefusal) return moveRefused(feeRefusal);
 
     void (async () => {
       try {
@@ -358,7 +348,8 @@ export const PATCH = withObservability(async (req: Request,
 
   // ── → withdrawn ───────────────────────────────────────────────────────────
   if (newStatus === 'withdrawn') {
-    await updateRegistrationStatus(regId, 'withdrawn', adminNotes);
+    const feeRefusal = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'withdrawn', adminNotes);
+    if (feeRefusal) return moveRefused(feeRefusal);
     const updated = await fetchReg(regId, seasonId);
 
     // Auto-promote (same logic as declined, no outbound email for withdrawal)

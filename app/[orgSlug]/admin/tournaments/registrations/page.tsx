@@ -80,6 +80,7 @@ import RegistrationHealthPanel from './components/RegistrationHealthPanel';
 import TeamsGlance, { type PaymentSummary } from './components/TeamsGlance';
 import TeamList, { type ListMode, type RowFacts } from './components/TeamList';
 import TeamRecordWindow, { type TeamRecordUpdates } from './components/TeamRecord';
+import SharedPaymentDialog from './components/SharedPaymentDialog';
 import {
   buildListBands, buildSlotBands, computePaymentStatus, getEffectiveFee, hasDepositStep,
   narrowSlotBands, nextOpenSlot, paymentFact, recordOrder, sortedPools,
@@ -170,7 +171,7 @@ type Ask = {
 
 export default function UnifiedTeamsPage() {
   const { currentTournament, isLocked, loading: tournamentLoading } = useTournament();
-  const { currentOrg, userRole, userCapabilities } = useOrg();
+  const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
   const searchParams = useSearchParams();
   usePageTitle('Teams');
   // Import teams from a spreadsheet (Stage 5, E10): Data tools retired; the import lives where the teams are.
@@ -209,6 +210,7 @@ export default function UnifiedTeamsPage() {
   const [swapMode, setSwapMode] = useState(false);
   const [swapFirstSlotId, setSwapFirstSlotId] = useState<string | null>(null);
   const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<Set<string>>(new Set());
+  const [sharedPaymentOpen, setSharedPaymentOpen] = useState(false);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [paymentFilters, setPaymentFilters] = useState<ActivePaymentFilter[]>([]);
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
@@ -229,6 +231,7 @@ export default function UnifiedTeamsPage() {
   const [repLinkPickerId, setRepLinkPickerId] = useState<string | null>(null);
   const [repLinkSearch, setRepLinkSearch] = useState('');
   const orgHasRepTeams = useMemo(() => (currentOrg ? hasModuleEntitlement(currentOrg, 'module_rep_teams') : false), [currentOrg]);
+  const orgCarriesAccounting = Boolean(currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting'));
   // "Add my team" (2026-09-13) — a tournament run from a coaches PORTAL has exactly one team that
   // is the host's own; the rep-link picker above is gated off for it on purpose (a one-team org
   // needs no picker), and this is that picker collapsed to a button. `ownTeam` is null off a
@@ -1410,8 +1413,10 @@ export default function UnifiedTeamsPage() {
   /** What a row says: its caption (Check-in's words for money), a chip where its status differs from its
    *  band, and its one worded action (A13; the Tournament plan's Promote/Place is a lock in the record, P1). */
   const rowFacts = (team: TeamRecord, slot: PoolSlot | null, band: BandKind): RowFacts => {
+    const clubOwnTeam = orgCarriesAccounting && repLinks.has(team.id);
     const pay = tracksPayments ? paymentFact(team, feeOf(team)) : null;
-    const payNode = pay ? <span className={pay.owes ? styles.owes : undefined}>{pay.text}</span> : null;
+    const payNode = clubOwnTeam ? <span>No fee</span>
+      : pay ? <span className={pay.owes ? styles.owes : undefined}>{pay.text}</span> : null;
     const coach = team.coach?.trim() ? team.coach.trim() : null;
     // An invite-only event: a team added without its coach's email can't be claimed until the host adds one (M7, F07).
     const noEmail = areas.inviteOnly && !team.email?.trim()
@@ -1453,6 +1458,7 @@ export default function UnifiedTeamsPage() {
       parts = [poolName, coach, payNode];
       if (poolAssignable) place = poolNameOf(team, null) ?? place;
     }
+    if (clubOwnTeam) parts.unshift('Our team');
     const caption = joinDots(noEmail ? [...parts, noEmail] : parts);
     return {
       caption, chip, action, place, payment: payNode ?? <span className={repKit.dim}>—</span>,
@@ -1699,6 +1705,10 @@ export default function UnifiedTeamsPage() {
           <>
             <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.depositPaid}</button>
             <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.paidInFull}</button>
+            {canOpen('module_accounting') && selectedRegistrationIds.size >= 2
+              && ![...selectedRegistrationIds].some(id => repLinks.has(id)) && (
+              <button type="button" className={styles.bulkBtn} onClick={() => setSharedPaymentOpen(true)} disabled={working === 'bulk'}>Record one payment</button>
+            )}
           </>
         )}
         {paymentToolsAvailable && (
@@ -2089,6 +2099,7 @@ export default function UnifiedTeamsPage() {
           canPlace={waitlistAutomationAvailable}
           planHref={planHref}
           isOwnTeam={ownTeam?.registrationId === openTeam.id}
+          isClubOwnTeam={orgCarriesAccounting && repLinks.has(openTeam.id)}
           repLink={orgHasRepTeams ? renderRepLinkControl(openTeam, working === openTeam.id) : null}
           prev={openIndex > 0 ? order[openIndex - 1] : null}
           next={openIndex >= 0 && openIndex < order.length - 1 ? order[openIndex + 1] : null}
@@ -2146,6 +2157,18 @@ export default function UnifiedTeamsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {sharedPaymentOpen && currentTournament && currentOrg?.slug && (
+        <SharedPaymentDialog
+          tournamentId={currentTournament.id} orgSlug={currentOrg.slug}
+          rows={regs.filter(r => selectedRegistrationIds.has(r.id)).map(r => ({
+            id: r.id, name: r.name,
+            suggested: Math.max(0, (feeOf(r).totalFeeAmount ?? 0) - Math.max(r.totalPaid ?? 0, r.depositPaid ?? 0)),
+          }))}
+          onClose={() => setSharedPaymentOpen(false)}
+          onSaved={async () => { clearRegistrationSelection(); await load(); }}
+        />
       )}
 
       {/* Add Team modal */}

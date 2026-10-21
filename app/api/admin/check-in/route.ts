@@ -20,6 +20,7 @@ import { checkInUserIds } from '@/lib/notify-recipients';
 import { clearSettled } from '@/lib/needs-attention';
 import { withObservability } from '@/lib/observability';
 import { effectiveFee, markPaidInFullPatch } from '@/lib/mark-paid';
+import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
@@ -228,6 +229,8 @@ export const POST = withObservability(async (req: Request) => {
       break;
     }
     case 'mark_paid': {
+      // The club's own team owes no fee (Stage 7a); a paid figure on it could not be undone from the Teams screen.
+      if (await isOurTournamentTeam(ctx.org.id, teamId)) return json({ error: 'Our team has no entry fee.' }, 409);
       // J5-026: stamp the paid-in-full AMOUNTS (deposit_paid/total_paid), not just the raw status —
       // otherwise the coach portal's resolver (paid requires total_paid >= total_fee when a fee
       // schedule exists) still shows "OWED" while this gate says "Paid". Mirrors the bulk path.
@@ -243,9 +246,10 @@ export const POST = withObservability(async (req: Request) => {
       }
       const fee = effectiveFee(feeTeam ?? { division_id: null, deposit_paid: null, total_paid: null }, tourn ?? { fee_schedule_mode: null, deposit_amount: null, total_fee_amount: null }, divFee);
       const paidPatch = markPaidInFullPatch(feeTeam ?? { division_id: null, deposit_paid: null, total_paid: null }, fee);
-      await supabaseAdmin.from('teams').update({
-        ...paidPatch, payment_collected_at: now,
+      const { error: paidError } = await supabaseAdmin.from('teams').update({
+        ...paidPatch, payment_collected_at: now, fee_changed_by: ctx.user.id,
       }).eq('id', teamId);
+      if (paidError) return json({ error: paidError.message }, 409);
       break;
     }
     case 'unmark_paid': {
@@ -255,12 +259,21 @@ export const POST = withObservability(async (req: Request) => {
       // restored exactly (not blanket-zeroed). Falls back to a clean unpaid state if absent.
       const p = body.prior ?? {};
       const restoreStatus = p.paymentStatus === 'paid' ? 'paid' : 'pending';
-      await supabaseAdmin.from('teams').update({
+      // An undo can only LOWER what a team has paid. The amounts come from the client, and every change to them now
+      // lands in the club's tournament book (Stage 7a), so a volunteer with check-in rights alone must not be able to
+      // raise a paid figure through this door.
+      const { data: nowPaid } = await supabaseAdmin
+        .from('teams').select('deposit_paid, total_paid').eq('id', teamId).single();
+      const lowered = (sent: unknown, current: number | string | null | undefined) =>
+        typeof sent === 'number' && Number.isFinite(sent) && sent > 0 ? Math.min(sent, Number(current ?? 0)) : 0;
+      const { error: unpaidError } = await supabaseAdmin.from('teams').update({
         payment_status: restoreStatus,
-        deposit_paid: typeof p.depositPaid === 'number' ? p.depositPaid : 0,
-        total_paid: typeof p.totalPaid === 'number' ? p.totalPaid : 0,
+        deposit_paid: lowered(p.depositPaid, nowPaid?.deposit_paid),
+        total_paid: lowered(p.totalPaid, nowPaid?.total_paid),
         payment_collected_at: typeof p.paymentCollectedAt === 'string' ? p.paymentCollectedAt : null,
+        fee_changed_by: ctx.user.id,
       }).eq('id', teamId);
+      if (unpaidError) return json({ error: unpaidError.message }, 409);
       break;
     }
     case 'confirm_roster': {

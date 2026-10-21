@@ -221,8 +221,8 @@ export default function AccountingOverviewPage() {
   const p = summary.position;
   const a = summary.againstBudget;
   const bookHref = (id: string) => `${base}/ledger?book=${id}`;
-  const bookIds = new Set(summary.books.map(b => b.name));
-  const tournamentsWithoutBook = tournaments.filter(t => t.status !== 'archived' && !bookIds.has(t.name));
+  const bookIds = new Set(summary.books.filter(b => b.kind === 'tournament').map(b => b.entityId));
+  const tournamentsWithoutBook = tournaments.filter(t => t.status !== 'archived' && !bookIds.has(t.id));
   // The card is the Teams tab's door: only where that tab exists (a club that runs rep teams), and only with teams to count.
   const showTeams = summary.teams.length > 0 && !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams');
 

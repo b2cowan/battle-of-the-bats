@@ -130,8 +130,9 @@
 }
 
 .context {
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.78rem;
-  color: var(--white-50);
+  color: var(--text-tertiary);
   margin: 0 0 0.75rem;
   max-width: 62ch;
   line-height: 1.5;
@@ -189,11 +190,6 @@
 .icon { color: var(--home-olive); }
 
 .railLive .icon { color: var(--danger-light); }
-
-.context {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
 
 .progress {
   color: var(--text-tertiary);

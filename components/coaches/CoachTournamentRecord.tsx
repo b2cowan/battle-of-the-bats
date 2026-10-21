@@ -15,6 +15,7 @@ import {
 } from '@/lib/coaches-status';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
 import { possessive } from '@/lib/utils';
 import { ArrowLeft, BookOpen, CalendarClock, CalendarDays, ChevronDown, ClipboardList, Home, Megaphone, UserCog, Users } from 'lucide-react';
@@ -195,16 +196,18 @@ export default async function CoachTournamentRecord({
       : Promise.resolve({ data: [] }),
   ]);
 
-  let org: { slug: string; name: string; logo_url: string | null } | null = null;
+  let org: { slug: string; name: string; logo_url: string | null; plan_id: string | null } | null = null;
   if (tournament?.org_id) {
     const { data: orgData } = await supabaseAdmin
       .from('organizations')
       // B1.4: logo_url so the hero can show the organizer's mark beside the team monogram.
-      .select('slug, name, logo_url')
+      .select('slug, name, logo_url, plan_id')
       .eq('id', tournament.org_id)
       .maybeSingle();
     org = orgData;
   }
+  const clubOwnTeam = Boolean(tournament?.org_id && (org?.plan_id === 'club' || org?.plan_id === 'club_large')
+    && await isOurTournamentTeam(tournament.org_id, registrationId));
 
   // Contact shown to the coach in this portal respects the "Communication with coaches" toggle
   // and resolves the selected contact member (then legacy contact_email, then org owner — the
@@ -365,7 +368,8 @@ export default async function CoachTournamentRecord({
   // WI-5 (security): a single neutralization point. Everything downstream (TeamHQ fee strip,
   // hero checklist Fee row, "Pay your entry fee" next-step, TournamentStatusBlock) keys off
   // `fee.hasSchedule`, so flattening it to a no-schedule shape hides every fee affordance at once.
-  if (coachStatus && moneyRedacted) {
+  // The club's own team owes no fee (Stage 7a), so it takes the same flattening: no owed panel, no pay prompt.
+  if (coachStatus && (moneyRedacted || clubOwnTeam)) {
     coachStatus.fee = {
       ...coachStatus.fee,
       hasSchedule: false,
@@ -746,7 +750,8 @@ export default async function CoachTournamentRecord({
             showCheckIn={isGameDayOrLater}
             paymentInstructions={feeHidden ? null : paymentInstructions}
             hideFeeRow={feeHidden}
-            pendingFeeAmount={feeHidden ? null : pendingFeeAmount}
+            clubOwnTeam={clubOwnTeam}
+            pendingFeeAmount={feeHidden || clubOwnTeam ? null : pendingFeeAmount}
             rosterPointer={showRosterSubmit && !team.roster_submitted_at}
             waitlisted={team.status === 'waitlist'}
           />

@@ -366,10 +366,15 @@ describe('tournament team import commit helpers', () => {
       status: 'accepted',
       payment_status: 'pending',
       deposit_paid: 25,
-      total_paid: 0,
       waitlist_position: null,
       admin_notes: 'Imported',
     });
+  });
+
+  it('an update leaves a team’s paid figures alone when the sheet states none', () => {
+    const update = buildTournamentTeamUpdate({ ...normalized, depositPaid: null, totalPaid: null });
+    assert.equal('deposit_paid' in update, false);
+    assert.equal('total_paid' in update, false);
   });
 
   it('rejects invalid persisted normalized money and waitlist values', () => {

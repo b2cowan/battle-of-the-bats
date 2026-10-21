@@ -9471,6 +9471,16 @@
   },
   {
     "table_name": "teams",
+    "constraint_name": "teams_fee_changed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fee_changed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "teams",
     "constraint_name": "teams_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
@@ -9557,6 +9567,136 @@
     "foreign_table": "teams",
     "foreign_column": "id",
     "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_book_settings",
+    "constraint_name": "tournament_fee_book_settings_category_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "category_id",
+    "foreign_table": "budget_categories",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_book_settings",
+    "constraint_name": "tournament_fee_book_settings_item_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "item_id",
+    "foreign_table": "budget_items",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_book_settings",
+    "constraint_name": "tournament_fee_book_settings_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_book_settings",
+    "constraint_name": "tournament_fee_book_settings_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "tournament_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "tournament_fee_book_settings",
+    "constraint_name": "tournament_fee_book_settings_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_receipt_allocations",
+    "constraint_name": "tournament_fee_receipt_allocations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "receipt_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "tournament_fee_receipt_allocations",
+    "constraint_name": "tournament_fee_receipt_allocations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "team_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "tournament_fee_receipt_allocations",
+    "constraint_name": "tournament_fee_receipt_allocations_receipt_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "receipt_id",
+    "foreign_table": "tournament_fee_receipts",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_receipt_allocations",
+    "constraint_name": "tournament_fee_receipt_allocations_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_receipts",
+    "constraint_name": "tournament_fee_receipts_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_fee_receipts",
+    "constraint_name": "tournament_fee_receipts_entry_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "entry_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "tournament_fee_receipts",
+    "constraint_name": "tournament_fee_receipts_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "tournament_fee_receipts",
+    "constraint_name": "tournament_fee_receipts_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {

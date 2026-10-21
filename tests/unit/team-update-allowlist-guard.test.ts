@@ -215,16 +215,18 @@ describe('the route reads the request through the list, and nowhere else', () =>
   });
 
   it('the write is the checked columns plus the paid-in-full amounts, and nothing else joins it', () => {
-    assert.equal([...route.matchAll(/\.\.\.\s*item\.updates\b/g)].length, 1, 'one copy of an update in the route');
+    assert.equal([...route.matchAll(/\.\.\.\s*item\.updates\b/g)].length, 2, 'one checked copy for paid-in-full amounts and one for the payment actor');
     assert.match(updateBranch, /const dbUpdates: TeamUpdateColumns & Record<string, unknown> = \{ \.\.\.item\.updates \};/);
     assert.deepEqual([...updateBranch.matchAll(/Object\.assign\(([^)]*)/g)].map(m => m[1]), ['dbUpdates, markPaidInFullPatch(current, fee'],
       'the one merge is J5-026’s paid-in-full amounts');
     assert.doesNotMatch(updateBranch, /\bdbUpdates(\.\w+|\[[^\]]+\])\s*=(?!=)/, 'no key assigned onto the write');
     assert.doesNotMatch(updateBranch, /\bitems\s*\[|\bitem\.updates(\.\w+|\[[^\]]+\])\s*=(?!=)/, 'the checked items are never changed after the list');
+    assert.match(updateBranch, /const stampedUpdates = paymentChanged \? \{ \.\.\.item\.updates, fee_changed_by: ctx\.user\.id \} : item\.updates;/,
+      'the payment actor is added to a new object, after the request allowlist');
   });
 
   it('each check refuses, and runs before the write', () => {
-    const write = at(updateBranch, ".from('teams')\n        .update(item.updates)");
+    const write = at(updateBranch, ".from('teams')\n        .update(stampedUpdates)");
     for (const step of [
       'return badUpdate(TEAM_UPDATE_REFUSALS.oneTournament);',
       'if (poolOutsideDivision(items, currentById, pools)) return badUpdate(TEAM_UPDATE_REFUSALS.pool);',

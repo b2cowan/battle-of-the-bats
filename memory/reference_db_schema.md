@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-20 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-21 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-20
+# DB Schema Reference — 2026-10-21
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -60,7 +60,7 @@ id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, display_orde
 - Indexes: rules_tournament_id_idx
 
 ### teams
-id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer), coach_email
+id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer), coach_email, fee_book_baseline (numeric), fee_changed_by (uuid)
 - Indexes: idx_teams_slot_id, teams_division_id_idx, teams_pool_id_idx, teams_tournament_id_idx
 
 ### tournament_archives
@@ -839,6 +839,18 @@ id (uuid), bucket_start NOT NULL, env, route, org_id (uuid), call_count (bigint)
 id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, division_id (uuid) → divisions.id NOT NULL, label NOT NULL, sort_order (integer), resolved_venue_id (uuid) → diamonds.id, resolved_venue_facility_id (uuid) → venue_facilities.id, created_at, updated_at
 - Indexes: schedule_facility_lanes_division_id_idx, schedule_facility_lanes_resolved_venue_facility_id_idx, schedule_facility_lanes_resolved_venue_id_idx, schedule_facility_lanes_tournament_id_idx, schedule_facility_lanes_unique_label
 
+### tournament_fee_book_settings
+tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, category_id (uuid) → budget_categories.id NOT NULL, item_id (uuid) → budget_items.id NOT NULL, created_at
+- Indexes: tournament_fee_book_settings_org_id_idx
+
+### tournament_fee_receipt_allocations
+receipt_id (uuid) → tournament_fee_receipts.id NOT NULL, team_id (uuid) → teams.id NOT NULL, amount (numeric) NOT NULL
+- Indexes: tournament_fee_allocations_team_idx
+
+### tournament_fee_receipts
+id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, entry_id (uuid) → accounting_entries.id NOT NULL, created_at, ordinal (bigint) NOT NULL
+- Indexes: tournament_fee_receipts_entry_id_key, tournament_fee_receipts_event_idx
+
 ### tournament_roster_players
 id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id NOT NULL, name NOT NULL, jersey_number, date_of_birth, position, notes, source, created_by_user_id (uuid), created_at, updated_at, source_player_id (uuid) → basic_coach_team_players.id
 - Indexes: idx_tournament_roster_players_org, idx_tournament_roster_players_team, idx_tournament_roster_players_tournament, tournament_roster_players_source_player_id_idx
@@ -856,7 +868,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **207 tables** across 10 modules.
+Total: **210 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -867,4 +879,4 @@ Total: **207 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 60 tables
+- Other: 63 tables

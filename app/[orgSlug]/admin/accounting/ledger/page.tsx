@@ -71,8 +71,7 @@ const STATUS_ORDER: LineStatus[] = ['posted', 'pending', 'void'];
 /** "All" on Status — every line, voided ones included (Filter Counts D5, 2026-10-05). */
 const STATUS_ALL: ReadonlySet<string> = new Set(STATUS_ORDER);
 const STATUS_WORD: Record<LineStatus, string> = { posted: 'Posted', pending: 'Pending', void: 'Void' };
-/** Tournament fees keep a place in the Type list for Stage 7 (C18) — the option does not render until then. */
-const TYPE_ORDER: LineType[] = ['expense', 'income', 'team_allocations', 'team_support', 'transfer', 'house_league_fees'];
+const TYPE_ORDER: LineType[] = ['expense', 'income', 'team_allocations', 'team_support', 'transfer', 'house_league_fees', 'tournament_fees'];
 /** The club's book is not one season deep: its "Whole season" preset reads "All time". */
 const DATE_LABELS = { season: 'All time' } as const;
 
@@ -267,7 +266,7 @@ export default function LedgerTab() {
   /* The window's census decides which Types are OFFERED; the number beside each choice is what ticking it would
      list (Filter Counts D1 + D5): at the row's end, never in the name. */
   const typeOptions = TYPE_ORDER
-    .filter(t => t !== 'house_league_fees' || (view.typeCensus.house_league_fees ?? 0) > 0)
+    .filter(t => (t !== 'house_league_fees' && t !== 'tournament_fees') || (view.typeCensus[t] ?? 0) > 0)
     .map(t => ({ id: t, label: LINE_TYPE_WORD[t], count: optionCounts.type[t] ?? 0 }));
   /* A picked item leaves with the book it was picked on — an item is a book's own word (an allocation's name, a
      tournament's line), and kept it would narrow the next book to nothing. Category stays: the club's categories

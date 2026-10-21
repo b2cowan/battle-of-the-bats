@@ -58,6 +58,7 @@ import { minutesToTime } from '@/lib/schedule-conflict';
 import es from './event-settings.module.css';
 import { RegistrationQuestionsList, useRegistrationQuestions } from './RegistrationQuestions';
 import LoadingState from '@/components/shared/LoadingState';
+import FeeFilingSetting from './FeeFilingSetting';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
@@ -105,7 +106,7 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 
 export default function TournamentEventSettingsPage() {
   const { currentTournament, loading: tournamentLoading, refresh: refreshTournaments } = useTournament();
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg, userRole, canOpen } = useOrg();
   usePageTitle('Event settings');
 
   // Tournament identity
@@ -1276,6 +1277,9 @@ export default function TournamentEventSettingsPage() {
           )}
           {showFeeInputs && !feeScope && (
             <p className={ck.hint}>{W.feeChoose}</p>
+          )}
+          {feeScope !== 'free' && currentTournament && currentOrg?.slug && canOpen('module_accounting') && (
+            <FeeFilingSetting tournamentId={currentTournament.id} orgSlug={currentOrg.slug} defaultName={currentTournament.name} />
           )}
 
           {/* Which divisions set their own fee — said here, a door to Divisions (J1-042). */}

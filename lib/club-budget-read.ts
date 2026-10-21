@@ -142,7 +142,7 @@ export async function loadClubBooks(orgId: string, year: FiscalYear, setting: Fi
     kind: l.entityType, postedIn: totals.get(l.id)?.postedIn ?? 0, postedOut: totals.get(l.id)?.postedOut ?? 0,
   })));
   return {
-    books: ledgers.map(l => ({ id: l.id, kind: l.entityType, name: l.name, balance: totals.get(l.id)?.balance ?? 0 })),
+    books: ledgers.map(l => ({ id: l.id, kind: l.entityType, entityId: l.entityId, name: l.name, balance: totals.get(l.id)?.balance ?? 0 })),
     opening: carriedOpening(before.closed?.closingBalance ?? null, fromTheBooks),
     openingCarried: !!before.closed,
   };

@@ -56,6 +56,7 @@ export default function TournamentStatusBlock({
   showCheckIn,
   paymentInstructions,
   hideFeeRow = false,
+  clubOwnTeam = false,
   pendingFeeAmount = null,
   rosterPointer = false,
   waitlisted = false,
@@ -79,6 +80,7 @@ export default function TournamentStatusBlock({
    * fallback — that reads as data ("this event is free"), so suppress the whole row instead.
    */
   hideFeeRow?: boolean;
+  clubOwnTeam?: boolean;
   /** Pending-phase fee preview (moved from the hero) — "$N · due if accepted". */
   pendingFeeAmount?: number | null;
   /** Accepted + organizer requires a roster + none submitted yet → a pointer row that
@@ -140,7 +142,9 @@ export default function TournamentStatusBlock({
           <div className={styles.value}>
             {/* "No fee set" deliberately wins over a 'paid' state with no schedule (marking a free
                 tournament paid is a non-action) — don't "fix" this to show Paid. */}
-            {!fee!.hasSchedule ? (
+            {clubOwnTeam ? (
+              <span className={styles.muted}>No fee · your club’s team</span>
+            ) : !fee!.hasSchedule ? (
               <span className={styles.muted}>No fee set by the organizer</span>
             ) : fee!.isPaid ? (
               <span className="badge badge-success">Paid{paidDate ? ` · ${paidDate}` : ''}</span>

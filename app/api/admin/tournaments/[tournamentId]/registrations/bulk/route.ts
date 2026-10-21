@@ -15,6 +15,7 @@ import { resolveTournamentContactEmail } from '@/lib/db';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { markPaidInFullPatch } from '@/lib/mark-paid';
+import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
@@ -295,6 +296,10 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       patch.slot_id = null;
       nextWaitlistByGroup = new Map(nextWaitlistByGroup).set(team.division_id, nextPosition + 1);
       await releaseTeamSlot(team);
+    } else if ((bulkAction === 'mark_deposit_paid' || bulkAction === 'mark_paid') && await isOurTournamentTeam(ctx.org.id, team.id)) {
+      // The club's own team owes no fee (Stage 7a): a paid figure stamped on it could not be undone from the Teams
+      // screen, and would block unlinking it.
+      continue;
     } else if (bulkAction === 'mark_deposit_paid') {
       const fee = effectiveFee(team, tournament, divisions);
       if (fee.depositAmount != null) patch.deposit_paid = Math.max(Number(team.deposit_paid ?? 0), Number(fee.depositAmount));
@@ -306,6 +311,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       // J5-026: canonical paid-in-full stamp, shared with the single-row toggle (/api/admin/teams)
       // and the check-in gate so "Paid" reconciles to $0 owed on every surface.
       Object.assign(patch, markPaidInFullPatch(team, effectiveFee(team, tournament, divisions)));
+    }
+    if ('payment_status' in patch || 'total_paid' in patch || 'deposit_paid' in patch) {
+      patch.fee_changed_by = ctx.user.id;
     }
     if (Object.keys(patch).length > 0) updates.push({ id: team.id, patch });
   }

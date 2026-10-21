@@ -1,0 +1,317 @@
+<title>Tournament Money Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column; a Sign-in card, a "before you start" card, then one card per part (steps, verdict, notes), the owner's calls, and a paste-back. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+.purpose{font-size:14px;color:var(--ink)}
+ol,ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+li.ruling label{padding-left:28px}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:200px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+.callout{background:var(--warn-bg);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.calls{display:flex;flex-direction:column;gap:14px}
+.call{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.call:first-child{border-top:0;padding-top:0}
+.call b{font-weight:600}
+.call label{display:flex;gap:10px;align-items:flex-start;min-height:40px;padding:4px;border-radius:6px;cursor:pointer}
+.call label:hover{background:var(--bg)}
+.call input{width:18px;height:18px;margin:3px 0 0;flex:none;accent-color:var(--accent)}
+.rec{font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:20px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Club Tier 7a · the tournament’s money</h1>
+    <p>Owner QA Ledger §354. When a visiting team pays an entry fee, the money now lands by itself in that tournament’s own book, filed under one name you choose. The club’s own team in its own tournament owes no fee. The tournament’s fees and costs add up together in Budget vs. Actual › By activity. The house league’s fee path moved onto the same single write.</p>
+    <p>About 45 steps in seven parts, written for the club test tournament <b>UAT Rep Club Invitational 2026</b>. It writes test payments; the steps put most of them back. Where a step quotes a dollar figure, it is a number you set yourself in this walk, not a figure that moves with the calendar.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000/uat-rep-club/admin</code> (the dev server, restarted for this walk). Dev test accounts only; keep this page private.</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (every part except 5, step 4)</dd>
+      <dt>Coach</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Part 5, step 4 only; use a private window so the owner stays signed in)</dd>
+      <dt>The teams</dt><dd>Three visiting teams: <b>Oakville Otters 15U</b>, <b>Milton Mustangs 15U</b>, <b>Guelph Royals 15U</b>. One club team: <b>UAT Rep Club 15U AAA</b>, already linked as the club’s own.</dd>
+    </dl>
+  </section>
+
+  <section class="card" aria-labelledby="notyet-h">
+    <h2 id="notyet-h">Before you start</h2>
+    <p class="where">The test event comes with <b>no entry fee</b> and all four teams marked paid at $0, so Part 1 sets a fee first. The tournament already has a book on dev (a float and one registration line), so “the book opens on the first payment” cannot be shown here; a machine check covers it.</p>
+    <p class="where"><b>Not in this walk:</b> a paid visiting team that withdraws (its received fee stays, a refund is a separately typed money-out line) and refusing to unlink a paid club team. Both are covered by the rolled-back probe on dev; the only screen path to undo a club team’s paid status is the Check-in board.</p>
+    <p class="callout">Write down figures when a step asks. Later steps compare against them.</p>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="calls-h">
+    <h2 id="calls-h">Your call</h2>
+    <p class="where">Ruled 2026-10-20: the refusal reason shows (built, see Part 5 step 9), and the paid figure on a club team waits for 7d. One call is left, if you want to change it.</p>
+    <div class="calls" id="calls"></div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  { id: 'p1', title: '1 · Set up the test event', purpose: 'Gives the test tournament an entry fee and takes the “before” figures the later parts compare against.',
+    where: 'Signed in as the club owner. Admin → pick UAT Rep Club Invitational 2026 in the tournament switcher.', steps: [
+    'Operations → Teams lists four teams: Oakville Otters 15U, Milton Mustangs 15U, Guelph Royals 15U and UAT Rep Club 15U AAA.',
+    'Setup → Event settings → open the “Fees & payments” card (it starts closed). Set Fee model to Tournament-wide, Deposit amount ($) to 100 and Total fee ($) to 300. Wait for the page to finish saving.',
+    'Accounting → Ledger → the Book pill → UAT Rep Club Invitational 2026. WRITE DOWN: the number of lines and the Posted total. Call them BOOK-BEFORE.',
+    'Accounting → Budget vs. Actual → View → Statement. WRITE DOWN the club’s total income figure. Call it STATEMENT-BEFORE.',
+  ]},
+  { id: 'p2', title: '2 · One name, chosen before the first payment', purpose: 'The club picks the name its tournament fees are filed under once, and it exists before any team pays.',
+    where: 'Event settings → “Fees & payments”, under the fee fields. Then Accounting → Ledger.', steps: [
+    'A field “Filed under” is there, with the line “Entry fees and costs filed under this category appear together in By activity. Saving it creates the category before any team pays.” It suggests “Hosted tournament · UAT Rep Club Invitational 2026”.',
+    'Replace the name with UAT Invitational 2026 and click out of the field. “Saving…” flashes. There is no Save button.',
+    'Reload the page and open the card again: the name is exactly “UAT Invitational 2026”.',
+    'Accounting → Ledger → Book pill → General book → Add entry → open the Filed under picker with Money set to In. The category “UAT Invitational 2026” is listed with an “Entry fees” item under it. Close the window without saving.',
+    'Back in Event settings change the name to UAT Invite 2026 and click out. Open the same picker: it lists only “UAT Invite 2026”, never both names. Then change it back to UAT Invitational 2026.',
+    'Open the tournament’s book (Book pill): the line count and Posted total still equal BOOK-BEFORE. Saving the name wrote no money line.',
+  ]},
+  { id: 'p3', title: '3 · A visiting team pays: deposit, balance, correction, undo', purpose: 'Every change to what a visiting team has paid lands as a dated line in the tournament’s book. A corrected or undone amount voids the old line with who and when, and never brings it back.',
+    where: 'Operations → Teams → click the Oakville Otters 15U row to open its record. Check each result in Accounting → Ledger → Book pill → the tournament.', steps: [
+    'Edit this team. Type 100 in Deposit paid and wait for it to save. In the tournament’s book exactly one new posted line appears: “Oakville Otters 15U — entry fee”, $100.00, income, filed under UAT Invitational 2026 › Entry fees. The Posted total is BOOK-BEFORE plus $100.00.',
+    'Back in Oakville’s record press Mark paid. A second new posted line appears. Oakville’s lines now add up to $300.00, the full fee, and the Posted total is BOOK-BEFORE plus $300.00.',
+    'Edit this team and change Total paid to 250 (leave Deposit paid on 100). In the Ledger set Status to Void. The $200.00 line from step 2 is void and shows a reason (“Payment corrected or undone”), who did it and the day. A new posted line makes Oakville’s posted lines add up to $250.00.',
+    'A team with a fee has no “Undo paid” button; the undo is the amounts. Edit this team and set Deposit paid and Total paid to 0. Every Oakville line is now void and the Posted total is back to BOOK-BEFORE.',
+    'Press Mark paid again. Only new lines are posted (Oakville’s posted lines add up to $300.00). The earlier void lines are still void; none of them came back.',
+    'Budget vs. Actual › Statement: the total income figure is STATEMENT-BEFORE plus $300.00, so each fee is counted once.',
+  ]},
+  { id: 'p4', title: '4 · One transfer pays for two teams', purpose: 'A single bank transfer that covers two teams is recorded once and still credits each team its own share.',
+    where: 'Operations → Teams → toolbar Tools → “Select many”. Tick Milton Mustangs 15U and Guelph Royals 15U.', steps: [
+    'In the bar of payment buttons a third button, “Record one payment”, appears beside Deposit paid and Paid in full.',
+    'It opens “One payment for several teams” with the line “Use this when one transfer covers these teams. Accounting will show one fee line linked to each team.” There is one amount box per team, “How it arrived” and “Reference (optional)”.',
+    'Enter 300 for Milton and 150 for Guelph, How it arrived e-Transfer, Reference WALK-7A. The button reads “Record $450.00”. Press it.',
+    'The tournament’s book shows one new posted line for $450.00 that names both teams (“one entry-fee payment”), not two lines.',
+    'Open Milton’s record: Total paid reads $300.00. Open Guelph’s: Total paid reads $150.00.',
+    'Edit Guelph and change Total paid to 100. The $450.00 line is now void. Milton’s $300.00 is still credited and the posted lines for the two teams add up to $400.00.',
+  ]},
+  { id: 'p5', title: '5 · The club’s own team owes no fee', purpose: 'The club’s own team entering its own tournament pays nothing and writes nothing, and the club can tell that from the screen.',
+    where: 'Teams (owner). Step 4 is the coach, in a private window.', steps: [
+    'In the Teams list the row for UAT Rep Club 15U AAA starts its caption with “Our team” and its Payment reads “No fee”.',
+    'Open its record: a chip “Our team”, a Payment section that reads “No fee”, and no Mark paid, Deposit paid or Total paid.',
+    'Look at the division’s payment totals on the Teams page, if it shows any. Tick the one that is true:',
+    { ruling: 'The totals leave 15U AAA’s fee out' },
+    { ruling: 'The totals count 15U AAA’s $300 as money still expected (an issue: it owes nothing)' },
+    { ruling: 'The Teams page shows no payment totals' },
+    'Coach, in a private window: sign in, open Tournaments → UAT Rep Club Invitational 2026. The Fee row reads “No fee · your club’s team”.',
+    'Owner. Open 15U AAA’s record → Edit this team → the ✕ on its rep-team chip. “Remove the rep-team link?” asks; press Unlink. It works (nothing was paid). The row no longer says “Our team” and the payment controls are back.',
+    'Edit this team and set Total paid to 100. One new posted line for UAT Rep Club 15U AAA, $100.00, appears in the tournament’s book. It is a visitor now, so its payment writes a fee.',
+    'Press “Link to a rep team” and choose 15U AAA. A “Link failed” window says why: “Undo the recorded entry fee before linking this as our team”. The team stays unlinked. (Ruled 2026-10-20: the reason shows. If you see only “Could not link the rep team.” the dev server has not picked up the change; say so.)',
+    'Set Deposit paid and Total paid back to 0 (the $100.00 line goes void). Link it to 15U AAA again: it works, and the row says “Our team” and “No fee” as at the start.',
+  ]},
+  { id: 'p6', title: '6 · The tournament’s fees and costs meet in By activity', purpose: 'A club can see whether its tournament paid for itself: revenue and costs for the tournament sit together under one name.',
+    where: 'Accounting → Ledger (General book), then Budget vs. Actual → View → By activity.', steps: [
+    'Ledger → Book pill → General book → Add entry. Money “Out — the club paid”, What “Walk: trophies”, Amount 80, Status Posted. For Filed under choose the category UAT Invitational 2026 and create a new item “Trophies”. Save: the entry is in the General book.',
+    'Budget vs. Actual → View → By activity. “UAT Invitational 2026” is one row showing its net; the table’s first heading reads “Activity / line item”. Open the row: a Revenue part holds Entry fees, an Expenses part holds Trophies at 80.00.',
+    'Entry fees equals the posted lines in the tournament’s book filed under that name. If you followed Parts 3 and 4 exactly that is $300 (Oakville) + $300 (Milton) + $100 (Guelph) = $700.00. If it differs, compare it with the posted lines before calling it wrong.',
+    'The row’s net is revenue minus the $80.00 cost (with the figures above, $620.00).',
+    'Switch View to Statement: the total income figure is STATEMENT-BEFORE plus the same $700.00. The trophies cost shows as an expense, not income.',
+  ]},
+  { id: 'p7', title: '7 · The house league uses the same single write', purpose: 'A house league family’s paid fee now writes one line, once, with no leftover “pending” line, and a declined registration’s fee goes void.',
+    where: 'House league → 2026 Fall House League → Registrations (tabs: Pending review, Active, Waitlist, Declined / withdrawn, All). Check the season’s book in Accounting → Ledger → Book pill → 2026 Fall House League.', steps: [
+    'Open the season’s book and write down the number of lines (when this was written: 0). Also write down the Budget vs. Actual › Statement total income figure. Call it STATEMENT-AFTER-6.',
+    'Pending review → Approve one registration. The season’s book still has the same number of lines: approving writes no pending fee line.',
+    'Active → tick “Fee paid” on that registration. Exactly one new posted line appears in the season’s book.',
+    'Untick it: the line is void (who and when). Tick it again: one new posted line, and the void one stays void. There is never more than one posted line for that registration.',
+    'Pending review → Approve a second registration, tick its Fee paid, then use Decline on the Active tab (it sends a decline email to a test address). Its line goes void and the first registration’s line is untouched.',
+    'Statement total income is still STATEMENT-AFTER-6. The house league’s season book does not join the club Statement until a later stage.',
+  ]},
+];
+
+const CALLS = [
+  { id: 'c2', q: 'A club team that is marked paid by a bulk action still gets a paid dollar figure stamped on it even though it owes nothing (the fee is filled in before the “no fee” rule runs). No money line is written either way.', opts: [
+    ['A', 'Leave it for 7d, where the coach’s Tournaments screens are reworked (your pick on 10-20)', true],
+    ['B', 'Fix it now so a club team never carries a paid figure', false] ] },
+];
+
+const KEY = 'club-stage7a-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+const textOf = s => (typeof s === 'string' ? s : s.ruling);
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="purpose"></p><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.purpose').textContent = part.purpose;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((s, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    if (typeof s !== 'string') li.className = 'ruling';
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = textOf(s);
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  sec.querySelector('.verdict button[data-v=call]').dataset.v = 'call';
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+const callsHost = document.getElementById('calls');
+for (const c of CALLS) {
+  const div = document.createElement('div');
+  div.className = 'call';
+  div.setAttribute('role', 'radiogroup');
+  div.setAttribute('aria-labelledby', c.id + '-q');
+  const q = document.createElement('b');
+  q.id = c.id + '-q';
+  q.textContent = c.q;
+  div.appendChild(q);
+  for (const [letter, text, rec] of c.opts) {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = c.id; input.id = `${c.id}-${letter}`; input.value = letter;
+    input.checked = state[c.id] === letter;
+    input.addEventListener('change', () => { state[c.id] = letter; save(); });
+    const span = document.createElement('span');
+    span.textContent = `${letter} · ${text}`;
+    if (rec) { const r = document.createElement('span'); r.className = 'rec'; r.textContent = 'Recommended'; span.appendChild(r); }
+    label.append(input, span);
+    div.appendChild(label);
+  }
+  const notes = document.createElement('textarea');
+  notes.id = c.id + '-notes';
+  notes.setAttribute('aria-label', 'Notes for call ' + c.id);
+  notes.placeholder = 'Notes (optional)';
+  notes.value = state[c.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[c.id + '-notes'] = notes.value; save(); });
+  div.appendChild(notes);
+  callsHost.appendChild(div);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§354 Club Tier 7a · the tournament’s money — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((s, i) => {
+      const on = !!state[`${part.id}-s${i}`];
+      if (typeof s !== 'string') { if (on) lines.push(`  ☑ ${s.ruling}`); }
+      else if (!on) lines.push(`  ☐ ${s}`);
+    });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  lines.push('', 'Calls:');
+  for (const c of CALLS) {
+    const pick = c.opts.find(o => o[0] === state[c.id]);
+    lines.push(`  ${c.id}: ${pick ? pick[0] + ' · ' + pick[1] + (pick[2] ? ' (recommended)' : '') : 'not answered'}`);
+    const n = (state[c.id + '-notes'] || '').trim();
+    if (n) lines.push(`    Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox], input[type=radio]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('textarea:not(#summary)').forEach(t => { t.value = ''; });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.getElementById('summary').value = '';
+  tally();
+});
+</script>

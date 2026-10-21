@@ -42,7 +42,7 @@ describe('1 · one house-league-fee write, two doors', () => {
     assert.match(lib, /LEAGUE_FEE_ROLES = \['owner', 'league_admin', 'league_registrar'\]/);
     assert.match(lib, /canOpenModule\(ctx, ctx\.org, 'module_house_league'\)/);
     assert.match(lib, /refuseIfClosed\(setting, \[line\.entry_date\]/);
-    assert.match(lib, /\.update\(\{ registration_fee_paid: paid/);
+    assert.match(lib, /\.rpc\('club_league_fee_set'/);
   });
 });
 
@@ -101,10 +101,12 @@ describe('3 · the coach’s save resolves a hand-off, and refuses the wrong one
     assert.match(readCode('supabase/migrations/338_the_club_hands_a_payment_to_the_coach_and_keeps_notes.sql'),
       /CREATE UNIQUE INDEX IF NOT EXISTS family_payment_handoffs_payment_uniq ON public\.family_payment_handoffs \(payment_id\) WHERE payment_id IS NOT NULL;/);
   });
-  it('two presses on one fee make one fee line (the flip is conditional)', () => {
+  it('two presses on one fee make one fee line (the registration is locked in SQL)', () => {
     const lib = readCode('lib/league-fee-paid.ts');
-    assert.match(lib, /\.eq\('id', reg\.id\)\.eq\('registration_fee_paid', !paid\)\.select\('id'\)/);
-    assert.match(lib, /if \(flipped\?\.length && !reg\.feeEntryId && paid && season\.registrationFee\) \{/);
+    const sql = readCode('supabase/migrations/342_club_tournament_fee_book.sql');
+    assert.match(lib, /\.rpc\('club_league_fee_set'/);
+    assert.match(sql, /WHERE id=p_registration AND org_id=p_org AND season_id=p_season FOR UPDATE/);
+    assert.match(sql, /IF v_reg\.registration_fee_paid IS NOT DISTINCT FROM p_paid THEN[\s\S]*IF p_paid AND v_old\.status='posted' THEN RETURN v_reg\.fee_entry_id/);
   });
   it('Record money carries the id only from a door that names it, and clears it with the form', () => {
     const panel = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx');

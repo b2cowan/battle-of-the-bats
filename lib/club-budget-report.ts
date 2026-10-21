@@ -125,7 +125,7 @@ export interface ClubBookLineFacts extends ClubBookMovementFacts, FilingFacts {
   linkedEntryId: string | null;
 }
 
-export interface ClubBook { id: string; kind: string; name: string; balance: number }
+export interface ClubBook { id: string; kind: string; entityId?: string | null; name: string; balance: number }
 
 // ── Filing a Club-book line, and the loop record behind it ────────────────────────────────────
 
@@ -538,7 +538,7 @@ export interface ClubReport {
   year: FiscalYear;
   today: string;
   /** The coach's statement shape: Revenue → categories → lines; Expenses → the same; Net. */
-  statement: Pick<MoneyReport, 'revenue' | 'expenses' | 'net'>;
+  statement: MoneyReport;
   /** Behind a sourced Actual: the allocation or request each loop line came from, by ledger line id. */
   lineSources: Record<string, LineSource>;
   /** Where each counted line sits on the book (the panel's door to the Ledger). */
@@ -685,6 +685,7 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
   const statement = {
     revenue: markEarlier({ ...report.revenue, categories: sortByPlanOrder(report.revenue.categories, c => c.categoryId, c => c.categoryName, categoryOrder) }),
     expenses: { ...report.expenses, categories: sortByPlanOrder(report.expenses.categories, c => c.categoryId, c => c.categoryName, categoryOrder) },
+    activities: sortByPlanOrder(report.activities, a => a.categoryId, a => a.categoryName, categoryOrder),
     net: report.net,
   };
 

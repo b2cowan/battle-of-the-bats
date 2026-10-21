@@ -2091,12 +2091,12 @@ export async function getLedgerSummaries(
 
 /** The books the CLUB owns — Club, Tournament and House league kinds, never a team's (`CLUB_OWNED_BOOK_KINDS`).
  *  The one read of "the club's books": the year's report, the Ledger's category list and a word merge. */
-export async function getClubOwnedLedgers(orgId: string): Promise<Array<{ id: string; name: string; entityType: string }>> {
+export async function getClubOwnedLedgers(orgId: string): Promise<Array<{ id: string; name: string; entityType: string; entityId: string | null }>> {
   const { data, error } = await supabaseAdmin
-    .from('accounting_ledgers').select('id, name, entity_type, created_at')
+    .from('accounting_ledgers').select('id, name, entity_type, entity_id, created_at')
     .eq('org_id', orgId).in('entity_type', [...CLUB_OWNED_BOOK_KINDS]).order('created_at');
   if (error) throw error;
-  return (data ?? []).map(l => ({ id: l.id as string, name: l.name as string, entityType: l.entity_type as string }));
+  return (data ?? []).map(l => ({ id: l.id as string, name: l.name as string, entityType: l.entity_type as string, entityId: l.entity_id as string | null }));
 }
 
 /** One book's figures — the set's read for a set of one. */
@@ -2885,56 +2885,15 @@ export async function getLeagueSeasonLedger(
 export async function getOrCreateLeagueSeasonLedger(
   orgId: string,
   seasonId: string,
-  seasonName: string
+  _seasonName: string
 ): Promise<AccountingLedger> {
-  const { data: existing } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .select('*')
-    .eq('org_id', orgId)
-    .eq('entity_type', 'league_season')
-    .eq('entity_id', seasonId)
-    .maybeSingle();
-  if (existing) return mapLedger(existing);
-  const { data } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .insert({ org_id: orgId, entity_type: 'league_season', entity_id: seasonId, name: seasonName })
-    .select()
-    .single();
-  return mapLedger(data!);
-}
-
-export async function createLeagueRegistrationFeeEntry(
-  orgId: string,
-  seasonId: string,
-  seasonName: string,
-  regId: string,
-  playerName: string,
-  amount: number,
-  status: AccountingEntryStatus,
-  createdBy: string,
-): Promise<AccountingEntry> {
-  const ledger = await getOrCreateLeagueSeasonLedger(orgId, seasonId, seasonName);
-  const { data } = await supabaseAdmin
-    .from('accounting_entries')
-    .insert({
-      ledger_id:        ledger.id,
-      entry_date:       tournamentToday(),
-      description:      `${playerName} — registration fee`,
-      amount,
-      entry_type:       'income',
-      status,
-      category:         'registration_fee',
-      source_module:    'league_registration',
-      source_entity_id: regId,
-      created_by:       createdBy,
-    })
-    .select()
-    .single();
-  await supabaseAdmin
-    .from('league_registrations')
-    .update({ fee_entry_id: data!.id, updated_at: new Date().toISOString() })
-    .eq('id', regId);
-  return mapEntry(data!);
+  const { data: id, error: openError } = await supabaseAdmin.rpc('club_league_season_ledger', {
+    p_org: orgId, p_season: seasonId,
+  });
+  if (openError) throw openError;
+  const { data, error } = await supabaseAdmin.from('accounting_ledgers').select('*').eq('id', id).single();
+  if (error) throw error;
+  return mapLedger(data);
 }
 
 // ── Rep Teams Module ──────────────────────────────────────────────────────────
