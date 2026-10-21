@@ -60,7 +60,7 @@ const houseLeagueHelp: HelpPageContent = {
         <>
           <p>From the House league page, click <strong>Create season</strong>. The create form collects the season basics (name, URL slug, sport, an age/division label) and lets you set the <strong>registration open and close dates</strong>, a <strong>registration fee</strong>, <strong>waiver text</strong>, and the <strong>automation</strong> toggles right away. The slug appears in public URLs — choose it carefully.</p>
           <p>After creating the season, open it and add <strong>divisions</strong>. Each division is a sub-group within the season (e.g., "Division A", "Girls U11") with its own registration list, teams, schedule, and standings. Set a capacity per division to automatically cap registrations and start a waitlist. (On the free League plan, a season includes one division.)</p>
-          <p>The <strong>Automation</strong> settings control whether registrations are auto-approved when a division has open spots, whether the waitlist auto-promotes when a spot opens, and whether accounting entries are auto-generated on approval. Auto-generating fee entries needs the Accounting module.</p>
+          <p>The <strong>Automation</strong> settings control whether registrations are auto-approved when a division has open spots, and whether the waitlist auto-promotes when a spot opens. Fees reach your accounting books when you mark a registration&apos;s fee paid, not when you approve it (see <em>The season ledger and emailing the season</em>).</p>
         </>
       ),
     },
@@ -81,7 +81,7 @@ const houseLeagueHelp: HelpPageContent = {
             <li>Create the season from <strong>House league</strong> and keep it in <strong>Draft</strong> while you configure it.</li>
             <li>Add the divisions families should be able to register for (the free League plan includes one).</li>
             <li>Set capacity for each division so the system knows when to start a waitlist.</li>
-            <li>Review automation: auto-approve, waitlist promotion, and accounting entry creation.</li>
+            <li>Review automation: auto-approve and waitlist promotion.</li>
             <li>Move the season to <strong>Registration open</strong>. A public season page becomes available once it leaves Draft.</li>
             <li>Share the registration link from your website, email list, or social media after confirming the form is live.</li>
           </ol>
@@ -232,7 +232,7 @@ const houseLeagueHelp: HelpPageContent = {
             <li><strong>Waitlist</strong> — holds the registration in queue and emails the family their position. If auto-promote is on, the next waitlisted player advances when a spot opens.</li>
             <li><strong>Decline</strong> — asks you to confirm, then emails a decline notice to the family.</li>
           </ul>
-          <p>Each row has a <strong>Fee paid</strong> toggle so you can track payment alongside status. <strong>Add registration</strong> manually enters a player outside the public form (walk-ins or carry-overs). <strong>Message registrants</strong> (owners and admins) emails a group — everyone active, or filtered by division, team, or status.</p>
+          <p>Each row has a <strong>Fee paid</strong> toggle so you can track payment alongside status. Ticking it also records the fee as one income line in the season&apos;s accounting book; unticking it voids that line, and declining or withdrawing a registration whose fee was paid voids it too. Approving a registration does not create a fee line. <strong>Add registration</strong> manually enters a player outside the public form (walk-ins or carry-overs). <strong>Message registrants</strong> (owners and admins) emails a group — everyone active, or filtered by division, team, or status.</p>
           <p>For the full registration workflow, see the <a href="../help/registrations">Registrations guide</a>.</p>
         </>
       ),
@@ -241,14 +241,14 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'ledger-notifications',
       group: 'Running the season',
       heading: 'The season ledger and emailing the season',
-      summary: 'Each division has a ledger for fees, and a notifications page that both sends season-wide email and logs what was sent.',
-      keywords: ['ledger', 'notifications', 'email log', 'fees', 'accounting', 'email the season', 'broadcast', 'unsubscribe', 'opted out'],
-      searchText: 'season ledger division fees accounting notifications email log sent emails approval waitlist decline confirmation history email the whole season broadcast message all registrants unsubscribe link opted out not sent skipped no email on file delivered count why did fewer families get it',
+      summary: 'The season has a book for registration fees (a line appears when you tick Fee paid), and a notifications page that both sends season-wide email and logs what was sent.',
+      keywords: ['ledger', 'notifications', 'email log', 'fees', 'accounting', 'fee paid', 'void', 'email the season', 'broadcast', 'unsubscribe', 'opted out'],
+      searchText: 'season ledger season book fee paid tick untick void declined withdrawn posted line statement not counted fees accounting notifications email log sent emails approval waitlist decline confirmation history email the whole season broadcast message all registrants unsubscribe link opted out not sent skipped no email on file delivered count why did fewer families get it',
       content: (
         <>
           <p>From a division you can open two record-keeping views alongside Registrations, Teams, Schedule, and Standings:</p>
           <ul>
-            <li><strong>Ledger</strong> — a per-season view of registration fees and related entries. When the season auto-generates fees on approval, they land here.</li>
+            <li><strong>Ledger</strong> — the season&apos;s book of registration fees. Ticking <strong>Fee paid</strong> on a registration writes one income line here; unticking it, declining, or withdrawing the registration voids that line, and ticking it again writes a new one. The club&apos;s Cash on hand counts this book, but its Statement does not yet.</li>
             <li><strong>Notifications</strong> — where you email the season, and a log of what it has already sent (approvals, waitlist notices, declines), so you can confirm a family was contacted if they say they didn&apos;t receive something.</li>
           </ul>
           <p>When you send a season email you can address everyone, one division, one team, or one registration status. Every one carries your club&apos;s name and an <strong>unsubscribe link</strong>, and a family who has opted out is left out — including one who unsubscribed under an older email address and has since given you a new one.</p>

@@ -41,7 +41,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Use the <strong>search box</strong> (player name or parent email) to find a specific family or spot duplicates.</li>
             <li>Check each row&apos;s player, guardian contact, and division before acting.</li>
             <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row.</li>
-            <li>Use the <strong>Fee paid</strong> toggle to track payment separately from status.</li>
+            <li>Use the <strong>Fee paid</strong> toggle to track payment separately from status. Approving never creates a fee line; ticking Fee paid writes it into the season&apos;s accounting book.</li>
           </ol>
           <p>During peak registration, clear the pending list at least once a day so families know where they stand and the waitlist order stays clean.</p>
         </>
@@ -109,7 +109,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Mark the fee paid if payment has already been received.</li>
             <li>Save and confirm the player appears in the expected status tab.</li>
           </ol>
-          <p>Manual entries should still follow your division capacity and waitlist policy. If the division is full, add the player as waitlisted unless your board has approved an exception. When the season auto-generates fees, setting a manual player Active also creates their pending fee entry.</p>
+          <p>Manual entries should still follow your division capacity and waitlist policy. If the division is full, add the player as waitlisted unless your board has approved an exception. A manual entry creates no fee line on its own; marking its fee paid writes one income line into the season&apos;s accounting book.</p>
         </>
       ),
       faqs: [
@@ -193,7 +193,7 @@ const registrationsHelp: HelpPageContent = {
       content: (
         <>
           <p>The Registrations page opens on the <strong>Pending review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining asks you to confirm first, and tells you whether auto-promote will fill the spot.</p>
-          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. If a family pays later, use the <strong>Fee paid</strong> toggle to track payment separately from status. To add a player outside the public form, use <strong>Add registration</strong>.</p>
+          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. If a family pays later, use the <strong>Fee paid</strong> toggle to track payment separately from status; ticking it records the fee in the season&apos;s accounting book, and unticking it (or declining the registration) voids that line. To add a player outside the public form, use <strong>Add registration</strong>.</p>
         </>
       ),
     },
