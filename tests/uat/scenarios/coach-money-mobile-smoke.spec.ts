@@ -687,12 +687,12 @@ test.describe('Money forms on a desktop', () => {
 
     /* ⚖ ONE WINDOW (answer B, 2026-10-19; Record money moved in 2d): a tap outside a form does NOTHING, typed or
        not — the form stays, and nothing asks. Only ×, Cancel, Escape and Back close it, and with words typed those
-       ask in the window's own foot ("Close without saving?" · Keep writing · Discard), never in a second window. */
+       ask in the window's own foot (Keep writing · Discard, no sentence shown — owner 2026-10-20), never in a second window. */
     await page.mouse.click(5, 5);
     await expect(page.getByPlaceholder(/diamond rental/i)).toHaveValue('Bat bag');
-    await expect(page.getByText(/close without saving\?/i)).toBeHidden();
+    await expect(page.getByRole('button', { name: /keep writing/i })).toBeHidden();
     await page.keyboard.press('Escape');
-    await expect(page.getByText(/close without saving\?/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /keep writing/i })).toBeVisible();
     await page.getByRole('button', { name: /keep writing/i }).click();
     await expect(page.getByPlaceholder(/diamond rental/i)).toHaveValue('Bat bag');
   });

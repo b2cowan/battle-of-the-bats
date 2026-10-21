@@ -15187,8 +15187,9 @@ div.gdRow { cursor: default; }
   border-radius: 9px;
   background: var(--home-card, var(--bg-card, var(--bg)));
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-  max-height: min(21rem, 55vh);
+  /* top / bottom / left / width / max-height are written by `useFieldMenu` from the field's rect. */
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .convWhatGroup {
   font-size: var(--type-token);

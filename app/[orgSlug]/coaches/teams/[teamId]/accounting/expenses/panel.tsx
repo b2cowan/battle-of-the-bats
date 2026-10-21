@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2, MoreHorizontal } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import { useFieldMenu } from '@/lib/overlay-hooks';
 import { creditKindSentence } from '@/lib/dues-credits';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
@@ -1398,32 +1399,27 @@ function MoneyRecordsPanel({
   const [whatOpen, setWhatOpen] = useState(false);
   /** The "What happened?" field + its open list — outside-press closes the list. */
   const whatWrapRef = useRef<HTMLDivElement>(null);
-  /** Where the FIXED list anchors — the field's rect, measured at the moment of opening. Fixed
-   *  positioning is what lets a real dropdown float over the form without the modal's scroll
+  /** The field's button and its open list — the shared `useFieldMenu` places the FIXED list from the
+   *  button's rect (opens below, flips above or shrinks when the room is short, follows a scroll).
+   *  Fixed positioning is what lets a real dropdown float over the form without the modal's scroll
    *  region clipping it OR the modal changing size (owner, §80 walk — both were tried, both
-   *  rejected on sight). */
-  const [whatRect, setWhatRect] = useState<{ top: number; left: number; width: number } | null>(null);
+   *  rejected on sight). The first cut here placed it by hand — always below, never checking the
+   *  room — so on a short screen the list ran off the bottom of the window. */
+  const whatFieldRef = useRef<HTMLButtonElement>(null);
+  const whatListRef = useRef<HTMLDivElement>(null);
+  useFieldMenu(whatOpen, whatFieldRef, whatListRef, () => setWhatOpen(false));
   /* ⚠ A LISTENER, NOT A BACKDROP (/review, 2026-08-23 — Medium). The first cut rendered a fixed
      full-viewport click-catcher under the list, and it swallowed the coach's actual click: aiming
      at Cancel while the list was open closed the list and did nothing else — a first-click-does-
      nothing bug on a form's own buttons. A capture-phase pointerdown that merely CLOSES (never
-     preventDefault) lets that same press also reach whatever it was aimed at.
-     ⚠ Scroll closes it too (capture phase; the list's own internal scroll excepted): a fixed
-     list can't follow a scrolling anchor, and closing is what every dropdown in the product
-     does rather than drifting detached. */
+     preventDefault) lets that same press also reach whatever it was aimed at. */
   useEffect(() => {
     if (!whatOpen) return;
     const close = (e: Event) => {
       if (!whatWrapRef.current?.contains(e.target as Node)) setWhatOpen(false);
     };
     document.addEventListener('pointerdown', close, true);
-    document.addEventListener('scroll', close, true);
-    window.addEventListener('resize', close as EventListener);
-    return () => {
-      document.removeEventListener('pointerdown', close, true);
-      document.removeEventListener('scroll', close, true);
-      window.removeEventListener('resize', close as EventListener);
-    };
+    return () => document.removeEventListener('pointerdown', close, true);
   }, [whatOpen]);
   const [conv, setConv] = useState(BLANK_CONV);
   const [convOpenedWith, setConvOpenedWith] = useState(BLANK_CONV);
@@ -4796,22 +4792,14 @@ function MoneyRecordsPanel({
         <label className={styles.label}>What happened? *</label>
         <button
           type="button"
+          ref={whatFieldRef}
           className={`${styles.convWhatField} ${convBranch === null && !isPayableForm ? styles.convWhatFieldEmpty : ''}`}
           aria-haspopup="listbox"
           aria-expanded={whatOpen}
-          onClick={e => {
-            if (!whatOpen) {
-              /* Anchor the fixed list to the field as it stands at this moment — the BUTTON, not
-                 the wrapper (owner report from prod, 2026-09-28). The wrapper is a grid item, and
-                 on a phone the full-height form body stretched it to half the screen on the cold
-                 open, so the list hung mid-screen over Cancel/Save. The body no longer stretches
-                 (`.modalScrollBody > .formGrid`), but the list belongs under the box the coach
-                 pressed whatever the box around it does. */
-              const r = e.currentTarget.getBoundingClientRect();
-              setWhatRect({ top: r.bottom + 4, left: r.left, width: r.width });
-            }
-            setWhatOpen(o => !o);
-          }}
+          /* The list anchors to the BUTTON, not the wrapper (owner report from prod, 2026-09-28): the
+             wrapper is a grid item, and on a phone a stretched form body once made it half the screen
+             tall, so the list hung mid-screen over Cancel/Save. */
+          onClick={() => setWhatOpen(o => !o)}
         >
           {/* On a handed-off form the field's standing answer is that form's own row — the whole
               reason it renders there (see `billHandOff` / `pledgeHandOff`). */}
@@ -4823,11 +4811,11 @@ function MoneyRecordsPanel({
           </span>
           <ChevronDown size={15} className={styles.convWhatCaret} aria-hidden />
         </button>
-        {whatOpen && whatRect && (
+        {whatOpen && (
           <>
             <div
+              ref={whatListRef}
               className={styles.convWhatList}
-              style={{ top: whatRect.top, left: whatRect.left, width: whatRect.width }}
               role="listbox"
               aria-label="What happened?"
             >

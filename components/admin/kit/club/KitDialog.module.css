@@ -240,18 +240,19 @@
   .footEnd { flex: 1 1 auto; }
 }
 
-/* Closing with words typed (`dirty`, One Window Q7): the ask's one sentence at the foot's left, Keep writing and
-   Discard at its right — the window's own sentence slot, as drawn on the hub (2026-10-18). On a phone the sentence
-   takes its own line above the two buttons. */
+/* Closing with words typed (`dirty`, One Window Q7): Keep writing and Discard alone at the foot's right. The ask's
+   sentence is NOT SHOWN (owner, 2026-10-20: the buttons say what each does) — it stays in the page, clipped out of sight,
+   so a screen reader still announces the question the buttons answer. */
 .ask {
-  margin: 0;
-  font-size: var(--type-support);
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--text-primary);
-}
-@media (max-width: 640px) {
-  .footStart:has(> .ask) { flex-basis: 100%; }
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (max-width: 768px) {

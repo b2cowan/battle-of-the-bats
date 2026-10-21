@@ -46,6 +46,7 @@ const ROLL: Record<string, [css: string, rule: string]> = {
   'components/venue/WhereField.tsx': ['components/venue/WhereField.module.css', '.list'],
   'components/coaches/TagSearchCombobox.tsx': ['app/[orgSlug]/coaches/coaches.module.css', '.tagComboDropdown'],
   'components/coaches/OpponentCombobox.tsx': ['app/[orgSlug]/coaches/coaches.module.css', '.tagComboDropdown'],
+  'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx': ['app/[orgSlug]/coaches/coaches.module.css', '.convWhatList'],
   'components/admin/kit/club/PermitWindows.tsx': ['components/admin/kit/club/Permits.module.css', '.pickMenu'],
   'app/[orgSlug]/admin/tournaments/rules/RuleIconField.tsx': ['app/[orgSlug]/admin/tournaments/rules/rules.module.css', '.iconList'],
 };
