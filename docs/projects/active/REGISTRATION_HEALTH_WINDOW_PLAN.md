@@ -39,11 +39,20 @@ https://claude.ai/artifact/Q6WGmAcK1crEAUqfD9ezEo, source `REGISTRATION_HEALTH_W
 Typecheck clean; targeted guards 147/147 (new guard, toolbar, overlay, schedule-health one-number, payments-tracked, demo destinations,
 slide library, club stage 3a); spelling, type, CSS purity, old-look, selectors, tokens and contrast gates green; eslint 0 errors.
 
+## Committed 7c933a270 (2026-10-21)
+
+`/review` (three lenses: Teams logic, the one-number claim, copy and demo drift) found no Critical or High. Fixed before the commit: the
+window reopening by itself on both screens, the button showing while selecting or swapping, the toolbar overflowing at tablet width,
+days-until-start read in the viewer's zone (now the organization's, one function), and help wording (the Divisions page has no switch).
+Left as is, Low: the Teams page drops its registration-question fields when that fetch fails while the route keeps them; a checkbox
+answer stored with inconsistent text and JSON reads differently on the two. `/docs` swept the help; the dashboard article now names the row.
+
 ## Still owed
 
-- Browser check (owner): desk and phone — button, window, chip menu, Payments line, dashboard row, a filtered jump from the window.
-- `/review`; `/docs` pass over any other article naming the old row; `/demos` for the tour's "Go back three weeks" step (it relied on the
-  panel arriving open in the sandbox; the window never arrives open) and the marketing recapture.
+- Browser check (owner): desk and phone — button, window, chip menu, Payments line, dashboard row, a filtered jump from the window,
+  the toolbar at 700–900 px.
+- `/demos` for the tour's "Go back three weeks" step (it relied on the panel arriving open in the sandbox; the window never arrives
+  open) and the marketing recapture.
 - The dev server needs a restart (new files).
 - Phone: the drawing keeps Add team's words and Export as its symbol alone per the standing phone rule; Schedule's header may collapse
   its primary too — not confirmed, worth a look at the browser check.
