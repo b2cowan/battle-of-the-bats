@@ -2,15 +2,15 @@ import type { ReactNode } from 'react';
 import CoachPortalShell from '@/components/coaches/CoachPortalShell';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
-import { createClient } from '@/lib/supabase-server';
+import { getAuthUserCached } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts, type WorkspaceDoor } from '@/lib/user-contexts';
 import { getStartMenuConfig } from '@/lib/start-menu';
 
 /**
  * Wraps every /coaches route. The shell renders the portal chrome (A2 consumer chrome:
  * global consumer nav + team/event header + section tabs/rail) only on the authenticated
- * portal routes. /coaches/checkout passes through and keeps the marketing chrome; the warm
- * journey (/coaches/start, /coaches/claim, /coaches/welcome, and /coaches/join since The first look 2026-10-19)
+ * portal routes. The warm journey (/coaches/start, /coaches/claim, /coaches/welcome, /coaches/join since The first look
+ * 2026-10-19, and /coaches/checkout since 2026-10-20)
  * also passes through here but wears the consumer WARM chrome via its own nested layout
  * (CoachJourneyChrome), with the marketing Navbar/Footer suppressed via isWarmJourneyPath.
  *
@@ -27,8 +27,8 @@ import { getStartMenuConfig } from '@/lib/start-menu';
  * scrolling), exactly as in the paid portal (the 2026-09-23 drawer-layers ruling). A MENU never counts.
  */
 export default async function CoachesPortalLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // One auth round trip per request, shared with the journey chrome nested below (checkout complete re-renders on every poll).
+  const user = await getAuthUserCached();
 
   // Persona-menu gating (WI-2) — started before the contexts lookup so both resolve
   // concurrently; this layout is already dynamic (auth above).

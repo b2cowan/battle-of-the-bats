@@ -35,8 +35,9 @@ export function isConsumerShellPath(pathname: string): boolean {
 // /start lives inside the (consumer) group so the nav already mounts; /coaches/start and the
 // post-provision success screen (/coaches/welcome) mount the same warm nav via their own layout.
 // /coaches/join joined 2026-10-19 (The first look, Ask 5a): the organizer's coach email lands there, and it is a
-// first-run screen like the rest — the app's frame, never the marketing bar and footer.
-export const WARM_JOURNEY_PREFIXES = ['/start', '/coaches/start', '/coaches/claim', '/coaches/welcome', '/coaches/join'] as const;
+// first-run screen like the rest — the app's frame, never the marketing bar and footer. /coaches/checkout joined
+// 2026-10-20 (The first look, Stage 3b, F06): checkout complete is the welcome's other door, on the same card.
+export const WARM_JOURNEY_PREFIXES = ['/start', '/coaches/start', '/coaches/claim', '/coaches/welcome', '/coaches/join', '/coaches/checkout'] as const;
 
 export function isWarmJourneyPath(pathname: string): boolean {
   return WARM_JOURNEY_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));

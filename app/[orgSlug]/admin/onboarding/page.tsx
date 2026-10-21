@@ -21,7 +21,8 @@ import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/l
 import type { FreeFloor, OrgPlan } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
-import { parseStartPricing } from '@/lib/start-door';
+import { parseStartBilling, parseStartPricing } from '@/lib/start-door';
+import PlanStep from './PlanStep';
 import styles from './onboarding.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -267,9 +268,10 @@ function OnboardingPageLegacy() {
   const planChoiceRequired = searchParams.get('choosePlan') === '1';
   const continueSetup = searchParams.get('continueSetup') === '1';
   const planSelectionSucceeded = searchParams.get('success') === '1';
-  // The plan picked on the pricing page rides here from Run a tournament's step 2 and is the one the chooser features
-  // (Account-First Sign-up A6, 2026-10-18). A preselection the person can change, never a price.
-  const pricingPlan = parseStartPricing(searchParams.get('plan'), searchParams.get('billing'))?.plan ?? null;
+  // The plan picked on the pricing page rides here from Run a tournament's step 2 and is the one the plan step
+  // preselects and names (Account-First Sign-up A6, 2026-10-18; The first look G4, 2026-10-20 — the free pick too).
+  // A preselection the person can change, never a price.
+  const pricing = parseStartPricing(searchParams.get('plan'), searchParams.get('billing'));
   // After the sign-up window closes, an organization that holds the Founding comp still picks Tournament Plus at $0 on
   // its FIRST plan choice (owner 2026-10-19). The server answers, the same rule the checkout applies, so the card never
   // shows a price the checkout won't charge. Before the close the window itself shows the offer.
@@ -479,12 +481,21 @@ function OnboardingPageLegacy() {
     }
 
     if (planKey === activePlan) {
-      setPlanChooserOpen(false);
-      if (planChoiceRequired) {
-        await markStartupTask('plan', 'complete', currentOrg.slug);
-        router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
-      } else if (activeModal === 'plan') {
-        await advancePlanStep(planKey);
+      // The plan step's free choice lands here (a new organization is already on Tournament): it shows "Starting…" and
+      // holds both buttons like the other two actions, and a failure says so (/review, The first look Stage 3).
+      setPlanLoading(planKey);
+      try {
+        setPlanChooserOpen(false);
+        if (planChoiceRequired) {
+          await markStartupTask('plan', 'complete', currentOrg.slug);
+          router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
+        } else if (activeModal === 'plan') {
+          await advancePlanStep(planKey);
+        }
+      } catch (err) {
+        setPlanError(err instanceof Error ? err.message : 'Plan selection failed');
+      } finally {
+        setPlanLoading(null);
       }
       return;
     }
@@ -933,51 +944,43 @@ function OnboardingPageLegacy() {
       ? seasonsDone === true || repTeamsDone === true || publicSiteDone === true
       : false;
 
-  function renderPlanChooser(required: boolean, embedded = false) {
-    const planSelectionEditable = !required && isFirstRunPlanEditable();
-    const disabledPlans: OrgPlan[] = (!required && !planSelectionEditable)
+  // The change-plan window ("View plans", from the league / other-plan setup page): the full pricing cards, its close
+  // and "Continue free". The required plan step is `PlanStep` (The first look, Stage 3a), never this.
+  function renderPlanChooser() {
+    const disabledPlans: OrgPlan[] = !isFirstRunPlanEditable()
       ? PLAN_ORDER.filter(k => PLAN_ORDER.indexOf(k) < PLAN_ORDER.indexOf(activePlanId))
       : [];
 
     return (
-      <div className={embedded ? styles.planChooserEmbedded : required ? styles.planStage : styles.planModal} role={required || embedded ? undefined : 'dialog'} aria-modal={required || embedded ? undefined : 'true'} aria-labelledby="onboarding-plan-title">
-        {!embedded && (
-          <div className={styles.modalHeader}>
-            <div>
-              <h2 id="onboarding-plan-title" className={styles.modalTitle}>Start free or choose an upgrade</h2>
-              <p className={styles.modalSub}>
-                Start free with an invite-only event, where you add the teams, or choose Tournament Plus for public registration, payment tracking, automation, branding, and repeat-event tools.
-              </p>
-            </div>
-            {!required && (
-              <button
-                type="button"
-                className={styles.modalClose}
-                onClick={() => setPlanChooserOpen(false)}
-                aria-label="Close plan chooser"
-              >
-                <X size={18} />
-              </button>
-            )}
+      <div className={styles.planModal} role="dialog" aria-modal="true" aria-labelledby="onboarding-plan-title">
+        <div className={styles.modalHeader}>
+          <div>
+            <h2 id="onboarding-plan-title" className={styles.modalTitle}>Start free or choose an upgrade</h2>
+            <p className={styles.modalSub}>
+              Start free with an invite-only event, where you add the teams, or choose Tournament Plus for public registration, payment tracking, automation, branding, and repeat-event tools.
+            </p>
           </div>
-        )}
+          <button
+            type="button"
+            className={styles.modalClose}
+            onClick={() => setPlanChooserOpen(false)}
+            aria-label="Close plan chooser"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         <PricingSection
           gatingMap={gatingMap}
           onChoosePlan={choosePlan}
-          currentPlan={required ? undefined : activePlanId}
+          currentPlan={activePlanId}
           planLoading={planLoading}
           disabledPlans={disabledPlans}
-          initialBilling={searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'}
-          compact={embedded}
+          initialBilling={parseStartBilling(searchParams.get('billing')) ?? undefined}
           order={['tournament_plus', 'tournament', 'league', 'club']}
-          featuredPlan={pricingPlan ?? 'tournament_plus'}
+          featuredPlan={pricing?.plan ?? 'tournament_plus'}
           foundingOfferHeld={foundingOfferHeld}
-          ctaLabel={(planKey) => {
-            if (required && planKey === 'tournament') return 'Start with Tournament';
-            if (!required && planKey === 'tournament' && planKey !== activePlanId) return 'Continue free';
-            return undefined;
-          }}
+          ctaLabel={(planKey) => planKey === 'tournament' && planKey !== activePlanId ? 'Continue free' : undefined}
         />
 
         {planError && <div className={styles.planError}>{planError}</div>}
@@ -1388,15 +1391,14 @@ function OnboardingPageLegacy() {
 
   if (planChoiceRequired) {
     return (
-      <div className={`${styles.page} ${styles.pageWide}`}>
-        <div className={styles.header}>
-          <div className={styles.headerIcon}><Rocket size={22} /></div>
-          <h1 className={styles.title}>Start free or choose an upgrade</h1>
-          <p className={styles.sub}>Begin free with an invite-only event, where you add the teams, or choose Tournament Plus if {currentOrg.name} needs public registration, payment tracking, automation, branding, or repeat-event tools.</p>
-        </div>
-
-        {renderPlanChooser(true)}
-      </div>
+      <PlanStep
+        orgName={currentOrg.name}
+        pricing={pricing}
+        foundingOfferHeld={foundingOfferHeld}
+        loading={planLoading}
+        error={planError}
+        onChoose={choosePlan}
+      />
     );
   }
 
@@ -1418,7 +1420,7 @@ function OnboardingPageLegacy() {
     return (
       <div className={styles.workflowOnlyPage}>
         {renderActiveModal()}
-        {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser(false)}</div>}
+        {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser()}</div>}
       </div>
     );
   }
@@ -1551,7 +1553,7 @@ function OnboardingPageLegacy() {
       </div>
 
       {renderActiveModal()}
-      {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser(false)}</div>}
+      {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser()}</div>}
     </div>
   );
 }

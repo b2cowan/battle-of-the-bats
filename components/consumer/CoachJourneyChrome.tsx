@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
 import styles from '@/components/consumer/ConsumerShell.module.css';
-import { createClient } from '@/lib/supabase-server';
+import { getAuthUserCached } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts, type WorkspaceDoor } from '@/lib/user-contexts';
 import { getStartMenuConfig } from '@/lib/start-menu';
 
@@ -21,8 +21,8 @@ import { getStartMenuConfig } from '@/lib/start-menu';
  * resolved server-side (mirrors app/(consumer)/layout.tsx) so ConsumerNav gets signedIn/isCoach.
  */
 export default async function CoachJourneyChrome({ children }: { children: ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // One auth round trip per request, shared with the /coaches layout above (checkout complete re-renders on every poll).
+  const user = await getAuthUserCached();
 
   // Persona-menu gating (WI-2) — this chrome is already dynamic (auth above). Started
   // before the contexts lookup so the two resolve concurrently (no dependency).

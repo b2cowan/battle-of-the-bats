@@ -341,8 +341,12 @@ export const FOUNDING_SEASON_YEAR_LABEL = FOUNDING_SEASON_END_LABEL.slice(-4);
 /** "2028" — the season the customer chooses a plan for at the end. */
 export const FOUNDING_SEASON_NEXT_YEAR_LABEL = String(Number(FOUNDING_SEASON_YEAR_LABEL) + 1);
 /** "September 2027" — the month the plan choice happens (the comp's last month). */
-export const FOUNDING_SEASON_DECISION_MONTH_LABEL = new Date(new Date(FOUNDING_SEASON_END).getTime() - 1)
+const FOUNDING_SEASON_LAST_INSTANT = new Date(new Date(FOUNDING_SEASON_END).getTime() - 1);
+export const FOUNDING_SEASON_DECISION_MONTH_LABEL = FOUNDING_SEASON_LAST_INSTANT
   .toLocaleDateString('en-CA', { timeZone: 'America/Toronto', month: 'long', year: 'numeric' });
+/** "September" — that month alone, for a sentence that has already named its year (the Premium welcome, G1). */
+export const FOUNDING_SEASON_DECISION_MONTH_NAME = FOUNDING_SEASON_LAST_INSTANT
+  .toLocaleDateString('en-CA', { timeZone: 'America/Toronto', month: 'long' });
 
 /**
  * The one sentence every offer surface repeats, verbatim (copy canon §1 rule 2,
@@ -469,6 +473,16 @@ export function isFoundingSeasonPromoActive(planKey: string): boolean {
 }
 
 /**
+ * Does a plan card show the Founding Season $0? While the window is open, every promo plan does; after it closes, only
+ * Tournament Plus, and only for an organization the server says still holds the offer on its first plan choice
+ * (`foundingSeasonOfferOnPlanChoice`, the rule the checkout applies — owner 2026-10-19). ONE rule for every card that
+ * prices a plan: the pricing cards and the plan step's two choices (The first look G5, 2026-10-20) both ask here.
+ */
+export function showsFoundingZero(planKey: string, foundingOfferHeld: boolean): boolean {
+  return (foundingOfferHeld && planKey === 'tournament_plus') || isFoundingSeasonPromoActive(planKey);
+}
+
+/**
  * Is this plan ON the Founding Season promo, regardless of whether the window is still open?
  *
  * ⚠ The window half of `isFoundingSeasonPromoActive` is wrong for anything read AFTER the signup
@@ -495,6 +509,23 @@ function commaSeparate(n: number): string {
 export function formatPriceAmount(amount: number): string {
   if (amount === 0) return 'Free';
   return `$${commaSeparate(amount)}`;
+}
+
+/** A plan's price for one billing period, in the pricing page's own words: "$39/month", "$390/year". */
+export function formatPlanPeriodPrice(planKey: OrgPlan, billing: 'monthly' | 'annual'): string {
+  const plan = PLAN_CONFIG[planKey];
+  return billing === 'annual' ? `${formatPriceAmount(plan.annualPrice)}/year` : `${formatPriceAmount(plan.monthlyPrice)}/month`;
+}
+
+/**
+ * A plan picked on the pricing page, as the person reads it on the way in: "Tournament Plus, billed annually", or
+ * "Tournament (free)" — a free plan never shows a billing period (The first look G4, 2026-10-20). Step 1 of Run a
+ * tournament and the plan step both say it.
+ */
+export function pickedPlanLabel(planKey: OrgPlan, billing?: 'monthly' | 'annual'): string {
+  const plan = PLAN_CONFIG[planKey];
+  if (plan.monthlyPrice === 0) return `${plan.label} (free)`;
+  return `${plan.label}, billed ${billing === 'annual' ? 'annually' : 'monthly'}`;
 }
 
 /**

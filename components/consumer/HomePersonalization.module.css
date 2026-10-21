@@ -312,6 +312,18 @@
   line-height: 1.5;
   padding: 0.5rem 0;
 }
+/* Under the empty sentence: a quiet olive sentence link to /start, a 44px tap row (F18). */
+.startLine {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-olive);
+  text-decoration: none;
+}
+.startLine:hover { text-decoration: underline; }
 
 /* ── Loading skeleton ────────────────────────────────────────────────────── */
 .skeleton {

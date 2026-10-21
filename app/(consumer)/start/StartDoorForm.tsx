@@ -7,8 +7,8 @@ import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import StartSteps from '@/components/auth/StartSteps';
 import { AccountFields, Field, StartColumn, StartFoot, StartHead, accountForm, hintId, type AccountValues } from '@/components/auth/AccountForm';
 import { accountExistsSignInHref } from '@/lib/auth-errors';
-import { PLAN_CONFIG } from '@/lib/plan-config';
-import { START_DOOR_PATH, startDoorLinkPath, type StartPricing, type StartStepViewer } from '@/lib/start-door';
+import { pickedPlanLabel } from '@/lib/plan-config';
+import { RUN_A_TOURNAMENT_STEPS, START_DOOR_PATH, runATournamentPick, startDoorLinkPath, startPricingParams, withStartPricing, type StartPricing, type StartStepViewer } from '@/lib/start-door';
 
 /** The doors this form serves (Coach Premium keeps its own card, with the same account-first steps — Part 3). */
 type FormDoor = 'team' | 'league' | 'organization';
@@ -56,7 +56,7 @@ const DOOR_COPY: Record<FormDoor, {
     sub: 'Free to start. You\'ll name your organization next.',
     // Step 2 IS the naming step, so "you'll name it next" would be wrong there; the promise's first half stays.
     nameSub: 'Free to start.',
-    steps: ['Account', 'Organization', 'Plan'],
+    steps: RUN_A_TOURNAMENT_STEPS,
     nextStep: 'naming your organization',
     label: 'Organization name',
     placeholder: 'e.g. Milton Softball Association',
@@ -76,7 +76,7 @@ const SIGNUP_ROUTE: Record<FormDoor, string> = {
 
 /** A door's create step, carrying the pricing page's plan for an account that signs in instead of signing up. */
 function stepHref(door: FormDoor, pricing: StartPricing | null): string {
-  return pricing ? `${START_DOOR_PATH[door]}?${new URLSearchParams({ plan: pricing.plan, billing: pricing.billing })}` : START_DOOR_PATH[door];
+  return withStartPricing(START_DOOR_PATH[door], pricing);
 }
 
 /**
@@ -123,6 +123,8 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const nextStep = stepHref(door, pricing);
+  // Only a pick this door can sell is named (F08): the plan step would drop any other.
+  const shownPick = runATournamentPick(pricing);
   const setField: Record<keyof AccountValues, (value: string) => void> = {
     firstName: setFirstName, lastName: setLastName, email: setSignupEmail, password: setPassword,
   };
@@ -146,7 +148,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
           email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim(),
           // The account remembers its door; the server points the link at that door's step 2.
           startDoor: door,
-          ...(pricing ? { plan: pricing.plan, billing: pricing.billing } : {}),
+          ...(pricing ? startPricingParams(pricing) : {}),
         }),
       });
     } catch {
@@ -221,12 +223,12 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
       ) : (
         <>
           <form onSubmit={handleSubmit} className={accountForm.form}>
-            {pricing && (
+            {shownPick && (
               // A6 (design review D10): the plan rides on the account; the white callout with an olive edge (D-F, S1).
               <p className={accountForm.calloutIcon}>
                 <Tag size={18} strokeWidth={1.8} aria-hidden />
                 <span>
-                  <strong>{PLAN_CONFIG[pricing.plan].label}, billed {pricing.billing === 'annual' ? 'annually' : 'monthly'}</strong>, from
+                  <strong>{pickedPlanLabel(shownPick.plan, shownPick.billing)}</strong>, from
                   the pricing page. You&apos;ll confirm it after naming your organization.
                 </span>
               </p>

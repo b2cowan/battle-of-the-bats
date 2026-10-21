@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { isCoachesPortalPurchasable } from './plan-gating-server';
 import { isFoundingSeasonPromoActive } from './plan-config';
 import { START_DOOR_PATH } from './start-door';
@@ -51,9 +52,8 @@ export async function getCoachStartHref(): Promise<string> {
  */
 export type StartMenuConfig = { coachHref: string; showLeague: boolean };
 
-export async function getStartMenuConfig(): Promise<StartMenuConfig> {
-  return {
-    coachHref: await getCoachStartHref(),
-    showLeague: process.env.LEAGUE_STARTER_BETA === 'true',
-  };
-}
+/** Request-memoized: the /coaches layout and a nested journey layout both ask, and each ask reads plan gating. */
+export const getStartMenuConfig = cache(async (): Promise<StartMenuConfig> => ({
+  coachHref: await getCoachStartHref(),
+  showLeague: process.env.LEAGUE_STARTER_BETA === 'true',
+}));

@@ -79,15 +79,7 @@ export async function foundingSeasonOfferOnPlanChoice(org: { id: string; planId?
   if (isFoundingSeasonSignupOpen()) return true;
   if (!isFoundingSeasonActive()) return false;
   const [comp, tournaments, row] = await Promise.all([
-    supabaseAdmin
-      .from('org_overrides')
-      .select('id')
-      .eq('org_id', org.id)
-      .eq('type', 'comp_period')
-      .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
-      .is('revoked_at', null)
-      .limit(1)
-      .maybeSingle(),
+    liveFoundingCompRow(org.id),
     supabaseAdmin
       .from('tournaments')
       .select('id', { count: 'exact', head: true })
@@ -100,6 +92,31 @@ export async function foundingSeasonOfferOnPlanChoice(org: { id: string; planId?
     && (tournaments.count ?? 0) === 0
     && !row.data.onboarding_completed_at
     && !hasSavedSetupWork(row.data.startup_tasks);
+}
+
+/** An org's live Founding Season comp row (current or legacy instant, not revoked), or none: what "holds the comp" reads. */
+function liveFoundingCompRow(orgId: string) {
+  return supabaseAdmin
+    .from('org_overrides')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('type', 'comp_period')
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+    .is('revoked_at', null)
+    .limit(1)
+    .maybeSingle();
+}
+
+/**
+ * THE PREMIUM WELCOME'S DATES (The first look G1, 2026-10-20). The welcome says "Free through September 30, 2027…"
+ * only when the coach's workspace HOLDS the comp, read from its record: never the sign-up window (a coach who qualifies
+ * after the close holds the comp all the same), never a URL flag, and never for a paid coach. Fails closed: a read
+ * error is no dates sentence, because a date the page could not read must not be promised.
+ */
+export async function workspaceHoldsFoundingComp(workspaceOrgId: string): Promise<boolean> {
+  if (!isFoundingSeasonActive()) return false;
+  const { data, error } = await liveFoundingCompRow(workspaceOrgId);
+  return !error && !!data;
 }
 
 /**

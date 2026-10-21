@@ -10,7 +10,7 @@ import {
   COACHES_CLAIM_PATH,
   COACHES_START_PATH,
 } from '@/lib/coaches-portal-routes';
-import { PLAN_CONFIG, formatPriceAmount, normalizeBillingCycle, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { formatPlanPeriodPrice, normalizeBillingCycle, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { startDoorLinkPath } from '@/lib/start-door';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import StartSteps from '@/components/auth/StartSteps';
@@ -79,8 +79,8 @@ function normalizeSport(value: string | null | undefined): string {
 }
 
 /** The two prices, read from the plan settings (never typed), in the pricing page's own words. */
-const MONTHLY = `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month`;
-const ANNUAL = `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year`;
+const MONTHLY = formatPlanPeriodPrice('team', 'monthly');
+const ANNUAL = formatPlanPeriodPrice('team', 'annual');
 const BILLING_OPTIONS = [
   { value: 'monthly', label: MONTHLY },
   { value: 'annual', label: ANNUAL },
@@ -325,10 +325,13 @@ export default function TeamSignupClient({
 
     // Founding-season comp path returns an INTERNAL portal URL (no Stripe). Route it through the
     // warm success screen (design_decisions S1-2): it names the free period, then hands off into the
-    // operating portal. A real Stripe checkout returns an external URL and goes straight there.
+    // operating portal. A real Stripe checkout returns an external URL and ends on checkout complete,
+    // which shows the same welcome when the portal is ready (The first look G2). Keyed on the server's
+    // `comped` (G1, 2026-10-20), not the sign-up window: a coach who keeps the comp after the window
+    // closes (edge (b)) gets the welcome too.
     const dest = payload.url;
     const isInternal = dest.startsWith('/') || dest.startsWith(window.location.origin);
-    if (isInternal && foundingPromoActive) {
+    if (isInternal && payload.comped === true) {
       // dest may be an ABSOLUTE same-origin URL (create-team-checkout builds `${NEXT_PUBLIC_APP_URL}/…`);
       // pass a RELATIVE path so the welcome screen's same-origin guard accepts it (and no origin leaks).
       const nextPath = dest.startsWith('/') ? dest : dest.slice(window.location.origin.length);

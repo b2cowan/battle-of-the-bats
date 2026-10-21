@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, clubTrialLine, gatedPlanTag, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, showsFoundingZero, FOUNDING_SEASON_END_LABEL, clubTrialLine, gatedPlanTag, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
+import { parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PricingSection.module.css';
@@ -28,8 +29,6 @@ interface Plan {
    *  expires with the promo instead of waiting on a January runbook (/review 2026-08-08). */
   promoNote?: string;
   features: string[];
-  /** Short list used inside the onboarding wizard modal — 4–5 key differentiators only */
-  compactFeatures: string[];
   cta: string;
   ctaHref: string;
   initialPlanInterest?: string[];
@@ -63,13 +62,6 @@ const PLANS: Plan[] = [
       'Default FieldLogicHQ styling',
       '3 staff / admin seats',
       '1 tournament at a time',
-    ],
-    compactFeatures: [
-      'You add the teams — coaches claim them by email',
-      '1 tournament at a time',
-      'Manual scheduling & score entry',
-      'Public results & standings',
-      '3 staff / admin seats',
     ],
     cta: 'Get Started Free',
     ctaHref: '/start/tournament',
@@ -105,13 +97,6 @@ const PLANS: Plan[] = [
       'Permanent sealed archives, tournament cloning, and targeted announcements',
       'Unlimited staff / admin seats · unlimited volunteers',
     ],
-    compactFeatures: [
-      'Everything in Tournament',
-      'Public registration and payment tracking',
-      'Check-in and unlimited volunteers',
-      'Round-robin and playoff generators',
-      'Unlimited tournaments and staff seats',
-    ],
     cta: 'Start free — no credit card required',
     ctaHref: '/start/tournament',
   },
@@ -132,13 +117,6 @@ const PLANS: Plan[] = [
       'Public organization page',
       'House league — registration, divisions, seasons, and standings',
       'League-scoped communications',
-      'Advanced member roles and permissions',
-    ],
-    compactFeatures: [
-      'Everything in Tournament Plus',
-      'House league — registration, divisions, and standings',
-      'Public organization page',
-      'Registration workflows',
       'Advanced member roles and permissions',
     ],
     cta: 'Start free — no credit card required',
@@ -167,12 +145,6 @@ const PLANS: Plan[] = [
       'Rep teams — tryouts, rosters, player documents, and season history',
       'Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee',
       'Up to 15 teams — or up to 30 on Club · Association',
-    ],
-    compactFeatures: [
-      'Everything in League Plus',
-      'Accounting — ledger, budgets & team cost splits',
-      'Rep teams — tryouts, rosters & documents',
-      'Whole coaching staff included — no per-team fee',
     ],
     cta: 'Start your Club trial',
     ctaHref: '/start/tournament',
@@ -211,12 +183,6 @@ const TEAM_PLAN: Plan = {
     // R9 (free tournament tier): the Premium portal says it includes one hosted tournament (invite-only, like free).
     'Host one tournament at a time — you invite the teams',
     'Works standalone — no organization account required',
-  ],
-  compactFeatures: [
-    'Roster, lineups, and schedule',
-    'Team budget and dues tracking',
-    'Document management',
-    'Works standalone — no org account',
   ],
   cta: 'Start free — no credit card required',
   ctaHref: '/coaches/start?source=pricing',
@@ -276,8 +242,6 @@ interface PricingSectionProps {
    *  the in-app wizard uses buttons, not links. */
   ctaHrefFor?: (planKey: OrgPlan) => string | undefined;
   initialBilling?: Billing;
-  /** Use condensed 5-item feature list and tighter spacing — for wizard/modal contexts */
-  compact?: boolean;
   /** Optional display order by plan key. Plans omitted here fall to the end in default order. */
   order?: OrgPlan[];
   /** Optional plan key to visually feature (highlighted border). */
@@ -300,7 +264,7 @@ interface PricingSectionProps {
   marketingLayout?: boolean;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, currentPlanComped, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', compact = false, order, featuredPlan, foundingOfferHeld = false, marketingLayout = false }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, currentPlanComped, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', order, featuredPlan, foundingOfferHeld = false, marketingLayout = false }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
   const orderedPlans = order
@@ -324,22 +288,17 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
   const demoDoorsOpen = marketingLayout && sandboxDoorsVisible();
 
   function getSignupHref(plan: Plan) {
-    // Tournament's CTA is plain sign-up; the coaches card owns its own destination (the coach
-    // start flow takes no plan/billing params). The others ride their plan to Run a tournament's sign-up, which
-    // shows it as the plan chip (The first look, Ask 6: every plan button keeps its plan).
-    if (plan.key === 'tournament' || plan.key === 'team') return plan.ctaHref;
-
-    const params = new URLSearchParams({
-      plan: plan.key,
-      billing,
-    });
-    return `${plan.ctaHref}?${params.toString()}`;
+    // The coaches card owns its own destination (the coach start flow takes no plan/billing params). Every other plan
+    // rides to Run a tournament's sign-up, which shows it as the plan chip (The first look, Ask 6: every plan button
+    // keeps its plan) — the free Tournament too, with no billing (G4, 2026-10-20), so the plan step opens on it.
+    if (plan.key === 'team') return plan.ctaHref;
+    return withStartPricing(plan.ctaHref, parseStartPricing(plan.key, billing));
   }
 
   return (
     <>
       {/* Billing toggle */}
-      <div className={`${styles.toggleWrap} ${compact ? styles.toggleWrapCompact : ''}`}>
+      <div className={styles.toggleWrap}>
         <div className={styles.togglePill} role="group" aria-label="Billing period">
           <button
             onClick={() => setBilling('monthly')}
@@ -362,7 +321,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
       </div>
 
       {/* Plan cards */}
-      <div className={`${styles.pricingGrid} ${compact ? styles.pricingGridCompact : ''} ${cardPlans.length === 3 ? styles.pricingGridThree : ''} ${cardPlans.length === 2 ? styles.pricingGridTwo : ''}`}>
+      <div className={`${styles.pricingGrid} ${cardPlans.length === 3 ? styles.pricingGridThree : ''} ${cardPlans.length === 2 ? styles.pricingGridTwo : ''}`}>
         {cardPlans.map(plan => {
           const isGated = gatingMap[plan.key] ?? false;
           // The coaches card never takes the org-operator CTA overrides — a plan change for an
@@ -384,7 +343,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           const promoActive = !!plan.promoNote && (
             isCurrent && currentPlanComped !== undefined
               ? currentPlanComped
-              : (foundingOfferHeld && plan.key === 'tournament_plus') || isFoundingSeasonPromoActive(plan.key)
+              : showsFoundingZero(plan.key, foundingOfferHeld)
           );
           const displayNote = isGated
             ? GATED_PLAN_INTEREST_LINE
@@ -450,7 +409,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
 
               {/* Band 4: features */}
               <ul className={styles.planFeatures}>
-                {(compact ? plan.compactFeatures : plan.features).map(f => (
+                {plan.features.map(f => (
                   <li key={f} className={styles.planRow}>
                     <Check size={13} className={styles.rowCheck} />
                     <span>{f}</span>

@@ -18,17 +18,30 @@ const DOORS = ['team', 'league', 'organization', 'premium'] as const;
 export type StartDoor = (typeof DOORS)[number];
 
 /**
- * The plan and billing picked on the pricing page (owner A6, 2026-10-18): the paid plans its cards send to the sign-up.
+ * The plan and billing picked on the pricing page (owner A6, 2026-10-18): the plans its cards send to the sign-up.
  * They ride on the account so the plan step opens with that plan chosen — a preselection the person can change, never
- * a price (the checkout decides that).
+ * a price (the checkout decides that). The free Tournament pick rides too (The first look G4, 2026-10-20), and it is the
+ * one pick with NO billing: a free plan never grows a billing period anywhere it is shown or carried.
  */
-const START_PLANS = ['tournament_plus', 'league', 'club', 'club_large'] as const;
+const START_PLANS = ['tournament', 'tournament_plus', 'league', 'club', 'club_large'] as const;
 export type StartPlan = (typeof START_PLANS)[number];
 export type StartBilling = 'monthly' | 'annual';
-export interface StartPricing {
-  plan: StartPlan;
-  billing: StartBilling;
+/** A paid pick always carries its billing; the free pick never does. */
+export type StartPricing =
+  | { plan: 'tournament'; billing?: undefined }
+  | { plan: Exclude<StartPlan, 'tournament'>; billing: StartBilling };
+
+/**
+ * The picks Run a tournament can sell (The first look F08, G6): Tournament and Tournament Plus. Step 1 names only these,
+ * and the plan step preselects only these; a League Plus or Club pick (an old link, a hand-typed one) reads as none here
+ * rather than being promised on step 1 and dropped on step 3. Those plans get their own doors the day they open.
+ */
+export function runATournamentPick(pricing: StartPricing | null | undefined): StartPricing | null {
+  return pricing?.plan === 'tournament' || pricing?.plan === 'tournament_plus' ? pricing : null;
 }
+
+/** Run a tournament's step line: step 1 (the account), step 2 (the name) and step 3 (the plan step) say the same. */
+export const RUN_A_TOURNAMENT_STEPS = ['Account', 'Organization', 'Plan'] as const;
 
 export interface StartDoorRecord {
   door: StartDoor;
@@ -43,20 +56,30 @@ export function parseStartBilling(billing: unknown): StartBilling | null {
   return billing === 'annual' || billing === 'monthly' ? billing : null;
 }
 
-/** The pricing page's plan and billing from untrusted values; no plan is none, and billing defaults to monthly. */
+/**
+ * The pricing page's plan and billing from untrusted values; no plan is none. A paid plan's billing defaults to monthly;
+ * the free plan has none, whatever was sent.
+ */
 export function parseStartPricing(plan: unknown, billing: unknown): StartPricing | null {
   if (typeof plan !== 'string' || !(START_PLANS as readonly string[]).includes(plan)) return null;
-  return { plan: plan as StartPlan, billing: parseStartBilling(billing) ?? 'monthly' };
+  if (plan === 'tournament') return { plan };
+  return { plan: plan as Exclude<StartPlan, 'tournament'>, billing: parseStartBilling(billing) ?? 'monthly' };
+}
+
+/** A pick as query parameters (`plan`, and `billing` when it has one), for every link and form that carries it on. */
+export function startPricingParams(pricing: StartPricing): Record<string, string> {
+  return pricing.billing ? { plan: pricing.plan, billing: pricing.billing } : { plan: pricing.plan };
+}
+
+/** A path carrying the pick, when there is one. */
+export function withStartPricing(path: string, pricing: StartPricing | null | undefined): string {
+  if (!pricing) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}${new URLSearchParams(startPricingParams(pricing))}`;
 }
 
 /** The plan step, with the pricing page's choice when there was one (`/{org}/admin/onboarding`). */
 export function planStepPath(orgSlug: string, pricing: StartPricing | null | undefined): string {
-  const params = new URLSearchParams({ choosePlan: '1' });
-  if (pricing) {
-    params.set('plan', pricing.plan);
-    params.set('billing', pricing.billing);
-  }
-  return `/${orgSlug}/admin/onboarding?${params.toString()}`;
+  return withStartPricing(`/${orgSlug}/admin/onboarding?choosePlan=1`, pricing);
 }
 
 /** Who is looking at a door's create step: signed in, and whether this is their first day (no workspace yet). */

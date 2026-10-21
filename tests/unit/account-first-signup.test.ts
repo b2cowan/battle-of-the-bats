@@ -35,9 +35,12 @@ describe('the remembered door', () => {
     );
     assert.deepEqual(readStartDoor({ start: { door: 'organization' } }), { door: 'organization' });
     assert.deepEqual(readStartDoor({ start: { door: 'team', plan: 'league', billing: 'monthly' } }), { door: 'team' });
-    // only the paid plans the pricing cards send; billing defaults to monthly
+    // only the plans the pricing cards send; a paid plan's billing defaults to monthly
     assert.deepEqual(parseStartPricing('league', undefined), { plan: 'league', billing: 'monthly' });
-    for (const plan of ['tournament', 'team', 'bogus', 7, null]) assert.equal(parseStartPricing(plan, 'annual'), null, String(plan));
+    for (const plan of ['team', 'bogus', 7, null]) assert.equal(parseStartPricing(plan, 'annual'), null, String(plan));
+    // the free Tournament pick rides too (The first look G4, 2026-10-20), and NEVER with a billing period, whatever was sent
+    assert.deepEqual(parseStartPricing('tournament', 'annual'), { plan: 'tournament' });
+    assert.deepEqual(readStartDoor({ start: { door: 'organization', plan: 'tournament', billing: 'monthly' } }), { door: 'organization', pricing: { plan: 'tournament' } });
   });
 
   it('Coach Premium’s door carries the billing chosen before the account was made (Part 3); never a claim', () => {
@@ -49,6 +52,7 @@ describe('the remembered door', () => {
   it('the plan step opens with that plan, or as it always has', () => {
     assert.equal(planStepPath('milton', { plan: 'tournament_plus', billing: 'monthly' }), '/milton/admin/onboarding?choosePlan=1&plan=tournament_plus&billing=monthly');
     assert.equal(planStepPath('milton', null), '/milton/admin/onboarding?choosePlan=1');
+    assert.equal(planStepPath('milton', { plan: 'tournament' }), '/milton/admin/onboarding?choosePlan=1&plan=tournament', 'G4: no billing on the free pick');
   });
 
   it('a route takes only the doors it serves', () => {
@@ -152,7 +156,10 @@ describe('the Founding Season offer at a creation', () => {
     assert.match(readCode('app/api/billing/create-checkout/route.ts'), /auth\.org\.planId === 'tournament' &&\s*\(await foundingSeasonOfferOnPlanChoice\(auth\.org\)\);/);
     // the card shows what the checkout will charge
     assert.match(readCode('app/api/admin/org/founding-season-status/route.ts'), /return NextResponse\.json\(\{ offerOnPlanChoice: await foundingSeasonOfferOnPlanChoice\(ctx\.org\) \}\);/);
-    assert.match(readCode('components/PricingSection.tsx'), /: \(foundingOfferHeld && plan\.key === 'tournament_plus'\) \|\| isFoundingSeasonPromoActive\(plan\.key\)/);
+    // ONE $0 rule (The first look G5, 2026-10-20): the pricing cards and the plan step both ask it
+    assert.match(readCode('lib/plan-config.ts'), /export function showsFoundingZero\(planKey: string, foundingOfferHeld: boolean\): boolean \{\s*return \(foundingOfferHeld && planKey === 'tournament_plus'\) \|\| isFoundingSeasonPromoActive\(planKey\);/);
+    assert.match(readCode('components/PricingSection.tsx'), /: showsFoundingZero\(plan\.key, foundingOfferHeld\)/);
+    assert.match(readCode('app/[orgSlug]/admin/onboarding/PlanStep.tsx'), /const zero = showsFoundingZero\('tournament_plus', foundingOfferHeld\);/);
     const onboarding = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
     assert.match(onboarding, /foundingOfferHeld=\{foundingOfferHeld\}/);
     // asked again each time the chooser appears, and shown only for the state it was asked in (/review)
@@ -205,8 +212,12 @@ describe('Run a tournament: the organization sign-up makes the account alone (Pa
     assert.match(form, /return planStepPath\(data\.orgSlug, pricing\);/);
     assert.match(form, /Your public address: <strong>fieldlogichq\.ca\/\{slugifyOrgName\(name\) \|\| 'your-org'\}<\/strong> — you can change this later\./, 'F08: olive (.fieldHelp strong), not pale lime');
     assert.equal(existsSync(new URL('../../app/(consumer)/start/tournament/AddOrgForm.tsx', import.meta.url)), false, 'the old form is gone');
-    // the plan step features the plan from the pricing page (A6)
-    assert.match(readCode('app/[orgSlug]/admin/onboarding/page.tsx'), /featuredPlan=\{pricingPlan \?\? 'tournament_plus'\}/);
+    // the plan step preselects the plan from the pricing page (A6; the free pick too, G4) — Tournament Plus with none
+    const onboardingPage = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
+    assert.match(onboardingPage, /<PlanStep\s+orgName=\{currentOrg\.name\}\s+pricing=\{pricing\}\s+foundingOfferHeld=\{foundingOfferHeld\}/);
+    assert.match(readCode('app/[orgSlug]/admin/onboarding/PlanStep.tsx'), /const first: PlanStepChoice = pick\?\.plan === 'tournament' \? 'tournament' : 'tournament_plus';/);
+    // the change-plan window keeps featuring it on the full cards, as before
+    assert.match(onboardingPage, /featuredPlan=\{pricing\?\.plan \?\? 'tournament_plus'\}/);
   });
   it('step 1 lives at /start/tournament (the intro folded in, Ask 6); /auth/signup forwards there with its plan; account-only stays', () => {
     const tournament = readCode('app/(consumer)/start/tournament/page.tsx');
@@ -252,10 +263,12 @@ describe('the start forms', () => {
   });
   it('Run a tournament’s step 1: its own words, the organization sign-up, the pricing plan riding along (A6)', () => {
     assert.match(form, /title: 'Run a tournament',\s*sub: 'Free to start\. You\\'ll name your organization next\.',/);
-    assert.match(form, /steps: \['Account', 'Organization', 'Plan'\],/, 'the plan step shows in the step line');
+    assert.match(form, /steps: RUN_A_TOURNAMENT_STEPS,/, 'the plan step shows in the step line');
+    assert.match(readCode('lib/start-door.ts'), /export const RUN_A_TOURNAMENT_STEPS = \['Account', 'Organization', 'Plan'\] as const;/);
     assert.match(form, /organization: '\/api\/auth\/signup',/, 'it keeps the Sign-up Invite Guard');
-    assert.match(form, /\.\.\.\(pricing \? \{ plan: pricing\.plan, billing: pricing\.billing \} : \{\}\),/);
-    assert.match(form, /<strong>\{PLAN_CONFIG\[pricing\.plan\]\.label\}, billed \{pricing\.billing === 'annual' \? 'annually' : 'monthly'\}<\/strong>, from\s+the pricing page\. You&apos;ll confirm it after naming your organization\./);
+    assert.match(form, /\.\.\.\(pricing \? startPricingParams\(pricing\) : \{\}\),/);
+    // one label for the pick (G4, 2026-10-20: "Tournament (free)" has no billing period)
+    assert.match(form, /<strong>\{pickedPlanLabel\(shownPick\.plan, shownPick\.billing\)\}<\/strong>, from\s+the pricing page\. You&apos;ll confirm it after naming your organization\./);
     // an account that signs in instead keeps the plan through the sign-in (the one 409 hand-off carries `next` and the
     // address: first-look-stage2b-signin.test.ts pins its URL)
     assert.match(form, /router\.push\(accountExistsSignInHref\(nextStep, emailNorm\)\);/);
@@ -451,7 +464,7 @@ describe('Coach Premium, account first (Part 3)', () => {
     assert.match(card, /: isWarmUpgrade \? `Upgrade \$\{prefillTeamName\?\.trim\(\) \|\| 'your team'\} to Premium` : 'Coach a team';/, 'the /start card’s words; upgrade and reactivation keep their own (owner 2026-10-19)');
     // the offer is read from the plan settings, never typed, so it changes by itself when the window closes
     assert.match(card, /`Premium Coaches Portal\. Free through \$\{FOUNDING_SEASON_END_LABEL\}, then \$\{MONTHLY\}\.`/);
-    assert.match(card, /const MONTHLY = `\$\{formatPriceAmount\(PLAN_CONFIG\.team\.monthlyPrice\)\}\/month`;/);
+    assert.match(card, /const MONTHLY = formatPlanPeriodPrice\('team', 'monthly'\);/);
     assert.doesNotMatch(card, /Seasonal/, '"Seasonal" becomes the annual price wording');
     assert.match(card, /<ChoicePair\b/, 'the shared choice pair (D-F3)');
     assert.match(card, /founding \? 'Create team' : 'Continue to checkout'/, 'D-F6');
@@ -520,7 +533,6 @@ describe('The first look 1c: every other door that makes an account is the one a
   it('the join page is in the app’s frame, never the marketing bar and footer (Ask 5a)', () => {
     assert.match(readCode('app/coaches/join/layout.tsx'), /<CoachJourneyChrome>\{children\}<\/CoachJourneyChrome>/);
     assert.match(readCode('lib/consumer-routes.ts'), /WARM_JOURNEY_PREFIXES = \[[^\]]*'\/coaches\/join'/);
-    // checkout complete shares the old pass-through but is Stage 3 (Ask 5b): not on the journey list yet
-    assert.doesNotMatch(readCode('lib/consumer-routes.ts'), /'\/coaches\/checkout/);
+    // checkout complete joined the journey at Stage 3 (Ask 5b, 2026-10-20): first-look-stage3.test.ts holds it
   });
 });

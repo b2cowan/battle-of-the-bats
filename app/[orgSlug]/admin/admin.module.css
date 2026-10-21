@@ -47,7 +47,10 @@
 
 .adminMainFocused {
   min-height: 100vh;
-  padding: 2rem;
+  /* Named so a focused page that paints its own ground edge to edge (the plan step, PlanStep.module.css) can cancel
+     exactly this padding, never a copy of its numbers. */
+  --admin-focused-pad: 2rem;
+  padding: var(--admin-focused-pad);
   /* Focused flows (help, onboarding) scroll on the document, not inside .adminMain.
      .adminMain sets overflow-y:auto for the standard app-shell scroll; left in place
      that intervening scroll container neutralises the help TOC's position:sticky, so
@@ -131,7 +134,7 @@
 
   /* Focused flows (onboarding/help) render no header — lighter padding, natural scroll. */
   .adminMainFocused {
-    padding: 1rem;
+    --admin-focused-pad: 1rem;
   }
 
   /* Focused flows switch the shell to display:block (see .adminShellFocused above),

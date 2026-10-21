@@ -1,9 +1,10 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Check } from 'lucide-react';
-import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
+import { PremiumWelcome } from '@/components/consumer/CoachWelcomeCard';
+import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
+import { isFoundingSeasonActive } from '@/lib/plan-config';
 import { safeNextPath } from '@/lib/safe-redirect';
-import styles from './welcome.module.css';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isTeamWorkspaceOrgRow } from '@/lib/team-org-links';
 
 export const metadata: Metadata = {
   title: "You're in — Premium Coaches Portal — FieldLogicHQ",
@@ -11,11 +12,13 @@ export const metadata: Metadata = {
 };
 
 /**
- * Warm success screen (Founding Season Coaches launch — S1-2). Reached only from the sign-up
- * flow's client-side redirect after a $0 comp workspace is provisioned. It names the free period,
- * then "Open your season workspace →" hands off into the operating portal in its own theme — the
- * same deliberate "walking into the venue" seam as entering a tournament (R1-2). `next` is the
- * portal URL the provision returned; `team` is the just-created team name.
+ * The Premium welcome (The first look, Stage 3b — F17, G1, 2026-10-20). Reached from the sign-up flow's client-side
+ * redirect after a $0 comp workspace is provisioned; checkout complete shows the same card when a paid portal is ready.
+ * `next` is the portal URL the provision returned; `team` is the just-created team name (display only).
+ *
+ * The dates sentence is read from the WORKSPACE `next` names, server-side — never from the calendar (a coach who
+ * qualifies after the sign-up window closes still holds the comp) and never from a URL flag. Fails closed: no
+ * workspace, no comp row, or a read error is no dates sentence.
  */
 export default async function CoachesWelcomePage({
   searchParams,
@@ -29,26 +32,24 @@ export default async function CoachesWelcomePage({
   // signup redirect passes `next` as a RELATIVE path, so a valid destination survives and anything
   // else (absolute, protocol-relative, smuggled) falls back to the coaches hub.
   const next = safeNextPath((sp.next ?? '').trim(), '/coaches');
-  const founding = isFoundingSeasonPromoActive('team');
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.ring} aria-hidden>
-          <Check size={26} strokeWidth={2.6} />
-        </div>
-        <h1 className={styles.title}>Premium is on{team ? ` for ${team}` : ''}</h1>
-        <p className={styles.sub}>
-          {founding
-            ? `Free through your Founding Season — no credit card, and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.`
-            : 'Your Premium Coaches Portal is ready.'}
-        </p>
-        {founding && (
-          <span className={styles.promoPill}>Founding Season · free through {FOUNDING_SEASON_END_LABEL} · in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for {FOUNDING_SEASON_NEXT_YEAR_LABEL}</span>
-        )}
-        <Link href={next} className={styles.cta}>Open your season workspace →</Link>
-        <p className={styles.fine}>Opens your portal — the toolkit you&apos;ll run the season from.</p>
-      </div>
-    </div>
-  );
+  return <PremiumWelcome team={team} href={next} foundingComp={await portalHoldsFoundingComp(next)} />;
+}
+
+/** Does the coach workspace a portal path names (`/{slug}/coaches…`) hold the Founding comp? */
+async function portalHoldsFoundingComp(portalPath: string): Promise<boolean> {
+  const slug = /^\/([a-z0-9-]+)\/coaches(?:[/?#]|$)/i.exec(portalPath)?.[1];
+  if (!slug || !isFoundingSeasonActive()) return false;
+  try {
+    const { data: org, error } = await supabaseAdmin
+      .from('organizations')
+      .select('id, account_kind, plan_id')
+      .eq('slug', slug)
+      .maybeSingle();
+    if (error || !org || !isTeamWorkspaceOrgRow(org)) return false;
+    return await workspaceHoldsFoundingComp(org.id as string);
+  } catch (err) {
+    console.error('[coaches welcome] comp read failed:', err);
+    return false;
+  }
 }

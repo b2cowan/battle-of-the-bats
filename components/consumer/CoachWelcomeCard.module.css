@@ -1,0 +1,52 @@
+/* THE COACH WELCOME CARD (The first look, Stage 3b; gate G1–G2 ruled 2026-10-20). Centred in the start column
+   (AccountForm's `.page` + `.column` give the paper, the 420px and Warm / Dark); this sheet adds only the well and the
+   spacing. Every colour is the warm --home-* vocabulary. */
+
+.card {
+  text-align: center;
+  padding-top: 1.25rem;
+}
+/* No well (setting up): the heading sits where the well's foot would, so the loading line does not jump when the card
+   turns into the welcome. */
+.cardBare {
+  composes: card;
+  padding-top: 3.5rem;
+}
+
+.well {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.32);
+  color: var(--home-olive);
+}
+.wellQuiet {
+  composes: well;
+  background: var(--home-fill);
+  border-color: var(--home-line);
+  color: var(--home-ink-soft);
+}
+
+.action {
+  margin-top: 1.375rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+/* "Payment received. This takes a few seconds." — the product's one loading line (its pulsing dot, its ink, composed
+   from LoadingState so the two never drift), centred at the sub line's size. Not <LoadingState> itself: that line's
+   label must read "Loading …" so the layout sweep can wait it out, and this is a wait of up to ~50 seconds that the
+   sweep should photograph, not wait for. AccountForm's `.page` points its greys at the warm ones. */
+.wait {
+  composes: loadingState from '../shared/LoadingState.module.css';
+  justify-content: center;
+  padding: 0;
+  font-size: var(--type-heading);
+  line-height: 1.45;
+  text-align: left;
+}

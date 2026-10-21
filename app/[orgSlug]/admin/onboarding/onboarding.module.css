@@ -10,13 +10,6 @@
   gap: 2rem;
 }
 
-/* Centred like every club page (owner 2026-10-07; see components/admin/kit/club/ClubKit.module.css). The one
-   width that is NOT one of the portal's two: the plan-choice step is a pricing grid of up to five plans. */
-.pageWide {
-  max-width: 1340px;
-  margin-inline: auto;
-}
-
 .workflowOnlyPage {
   --onboarding-modal-bg: #080b12; /* token-exempt: modal bg, distinct shade near --bg */
   --plan-badge-ok: #86efac; /* token-exempt: plan-ok badge green, only matches console-only --pa-pos */
@@ -158,8 +151,8 @@
   padding: 1.5rem;
 }
 
-.planModal,
-.planStage {
+/* The change-plan window. The required plan step is PlanStep.module.css (The first look, Stage 3a). */
+.planModal {
   width: min(1040px, 100%);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
@@ -171,10 +164,6 @@
 .planModal {
   max-height: min(760px, calc(100vh - 3rem));
   overflow-y: auto;
-}
-
-.planChooserEmbedded {
-  width: 100%;
 }
 
 .workflowModal {
@@ -440,10 +429,6 @@
   text-align: right;
 }
 
-.planStage {
-  width: 100%;
-}
-
 .modalHeader {
   display: flex;
   align-items: flex-start;
@@ -660,13 +645,6 @@
   border-color: var(--home-line);
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
-}
-/* The required plan choice is part of the page, not a window. */
-.planStage {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 12px;
-  box-shadow: none;
 }
 .modalClose {
   background: var(--card-bg);

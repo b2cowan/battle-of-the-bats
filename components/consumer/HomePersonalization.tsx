@@ -235,9 +235,14 @@ export default function HomePersonalization() {
       )}
 
       {signedInEmpty && (
-        <p className={styles.quietEmpty}>
-          Nothing here yet — follow a team, tournament, or organization and it&rsquo;ll show up here.
-        </p>
+        <>
+          <p className={styles.quietEmpty}>
+            Nothing here yet — follow a team, tournament, or organization and it&rsquo;ll show up here.
+          </p>
+          {/* The fan's way to start something (The first look Ask 9, F18, 2026-10-19): one quiet line, no card, no
+              button. Never beside a waiting workspace — that card keeps its own door. */}
+          <Link href="/start" className={styles.startLine}>Want to run your own? Start a team or a tournament</Link>
+        </>
       )}
     </div>
   );

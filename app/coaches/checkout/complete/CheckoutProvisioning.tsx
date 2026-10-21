@@ -2,14 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { CoachWelcomeCard, WaitLine } from '@/components/consumer/CoachWelcomeCard';
+import { accountForm } from '@/components/auth/AccountForm';
 
 // The workspace is provisioned asynchronously by the Stripe webhook, so it may not exist the
-// instant the buyer lands here. Re-check on a short interval; the server page redirects into the
-// portal the moment it's ready — no manual refresh, and no "back to pricing" dead-end.
+// instant the buyer lands here. Re-check on a short interval; the server page turns this card into
+// the welcome the moment it's ready — no manual refresh, and no "back to pricing" dead-end.
 const POLL_MS = 2500;
 const MAX_ATTEMPTS = 20; // ~50s before offering a manual retry
 
+/**
+ * Paid, portal not made yet (The first look G2, 2026-10-20): "Setting up your portal" with the one loading line and no
+ * button, then, after the poll gives up, "Still setting up your portal" with Check again (which restarts it). The email
+ * is real: the webhook sends the welcome, with the portal link, the moment the portal is made (lib/team-checkout.ts).
+ */
 export default function CheckoutProvisioning() {
   const router = useRouter();
   const [attempts, setAttempts] = useState(0);
@@ -24,39 +30,22 @@ export default function CheckoutProvisioning() {
     return () => clearTimeout(id);
   }, [attempts, timedOut, router]);
 
+  if (timedOut) {
+    return (
+      <CoachWelcomeCard
+        icon="clock"
+        title="Still setting up your portal"
+        sub="Payment received. We'll email you a link the moment it's ready, so you can close this page."
+      >
+        <button type="button" className={accountForm.primary} onClick={() => { setAttempts(0); router.refresh(); }}>
+          Check again
+        </button>
+      </CoachWelcomeCard>
+    );
+  }
   return (
-    <main style={{ minHeight: '70vh', display: 'grid', placeItems: 'center', padding: '2rem' }}>
-      <div style={{ maxWidth: 520 }}>
-        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 800 }}>
-          Coaches Portal checkout
-        </p>
-        <h1 style={{ fontSize: '2rem', margin: '0.35rem 0 0.75rem' }}>
-          Payment received — setting up your portal
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6 }} aria-live="polite">
-          {timedOut
-            ? 'Your payment went through and your portal is being set up. We’ll email you a link to it the moment it’s ready — so you can safely close this page — or check again here.'
-            : 'Hang tight — we’re finishing your workspace and will take you straight in.'}
-        </p>
-        <div style={{ marginTop: '1.25rem', minHeight: 44, display: 'flex', alignItems: 'center' }}>
-          {timedOut ? (
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => { setAttempts(0); router.refresh(); }}
-            >
-              Check again
-            </button>
-          ) : (
-            <Loader2
-              size={26}
-              aria-hidden
-              style={{ color: 'var(--logic-lime)', animation: 'flhq-checkout-spin 0.9s linear infinite' }}
-            />
-          )}
-        </div>
-      </div>
-      <style>{'@keyframes flhq-checkout-spin { to { transform: rotate(360deg); } }'}</style>
-    </main>
+    <CoachWelcomeCard title="Setting up your portal">
+      <WaitLine>Payment received. This takes a few seconds.</WaitLine>
+    </CoachWelcomeCard>
   );
 }
