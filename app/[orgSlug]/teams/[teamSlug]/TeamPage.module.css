@@ -18,7 +18,7 @@
 /* The title block follows the portal's page header: a hairline under the back link, the name, then division · season. */
 .head {
   padding-top: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   border-top: 1px solid var(--club-line);
 }
 
@@ -29,11 +29,21 @@
   overflow-wrap: anywhere;
 }
 
+/* 8 px between the name and its season line (the kit's title leaves about 6); the head's own selector outranks the kit's
+   one-class margin whatever order the sheets load in. */
+.head .name {
+  margin-bottom: 8px;
+}
+
 /* The team's own colour, beside its name (DC-02: a dot, never a tint or a strip). */
 .teamDot {
   flex: none;
   width: 12px;
   height: 12px;
+  /* The condensed capitals sit low in their line, so a box-centred dot reads about 2 px high; this puts it on the middle
+     of the letters. */
+  position: relative;
+  top: 2px;
   border-radius: 50%;
   /* A near-white team colour still shows on the light ground (/design). */
   outline: 1px solid var(--club-line-2);
@@ -46,7 +56,14 @@
 .body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+}
+
+/* The tryout sentence's address: its own line, and it only breaks when it cannot fit the card at all (never at a hyphen). */
+.address {
+  display: block;
+  margin-top: 6px;
+  word-break: break-all;
 }
 
 @media (min-width: 901px) {
@@ -71,7 +88,7 @@
       'schedule .';
     align-items: start;
     column-gap: 28px;
-    row-gap: 16px;
+    row-gap: 20px;
   }
 
   .withSchedule .schedule { grid-area: schedule; min-width: 0; }

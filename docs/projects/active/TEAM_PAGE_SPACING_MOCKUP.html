@@ -1,0 +1,269 @@
+<title>Team Page Spacing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Layout: a review page, with the two real screens drawn at true size in fixed frames (they never reflow with the window). */
+  :root {
+    --bg: #eef0f3;
+    --card: #ffffff;
+    --ink: #1c2430;
+    --soft: #4b5563;
+    --line: #d5dae1;
+    --accent: #1d5fd1;
+    --accent-bg: #e3edfc;
+    --tag-new: #1b6b3a;
+    --tag-new-bg: #dff1e5;
+    --tag-same: #5b6472;
+    --tag-same-bg: #e6e9ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161c; --card: #1b212a; --ink: #e8ecf1; --soft: #aab3bf; --line: #2e3744;
+      --accent: #7aa8f5; --accent-bg: #1f2f4a; --tag-new: #7fd49b; --tag-new-bg: #1c3a29;
+      --tag-same: #aab3bf; --tag-same-bg: #29313c; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12161c; --card: #1b212a; --ink: #e8ecf1; --soft: #aab3bf; --line: #2e3744;
+    --accent: #7aa8f5; --accent-bg: #1f2f4a; --tag-new: #7fd49b; --tag-new-bg: #1c3a29;
+    --tag-same: #aab3bf; --tag-same-bg: #29313c; color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--ink); font: 400 15px/1.55 system-ui, sans-serif; }
+  .doc { max-width: 1060px; margin: 0 auto; padding: 8px 16px 48px; display: flex; flex-direction: column; gap: 28px; }
+  h1 { margin: 0; font-size: 26px; line-height: 1.2; }
+  h2 { margin: 0; font-size: 18px; line-height: 1.3; }
+  p { margin: 0; }
+  .lede { color: var(--soft); max-width: 68ch; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; vertical-align: 1px; }
+  .tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+  .tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+  .block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .pair { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .pair > div { display: flex; flex-direction: column; gap: 8px; }
+  .cap { font-size: 13px; font-weight: 700; color: var(--soft); letter-spacing: .02em; text-transform: uppercase; }
+  .scroll { overflow-x: auto; padding-bottom: 6px; }
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+
+  /* The notes: every pin on a drawing opens its explanation. */
+  .notes { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; max-width: 76ch; }
+  .notes li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); cursor: pointer; }
+  .notes li.on { border-color: var(--accent); background: var(--accent-bg); }
+  .notes b { display: inline-flex; flex: none; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-size: 12px; }
+  .notes span { min-width: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--soft); }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+
+  /* ── The club's own frame, drawn with its real tokens (ClubFrame / ClubKit). Light whatever the viewer's theme. ── */
+  .site {
+    --club-ground: #F6F5F2; --club-card: #FFFFFF; --club-text: #1F1B16; --club-soft: #4E473D;
+    --club-line: #E4E0D8; --club-line-2: #D6D0C4; --club-fill: #1F3A5F; --club-gold: #E8B339;
+    background: var(--club-ground); color: var(--club-text);
+    font-family: 'Inter', system-ui, sans-serif;
+    border: 1px solid var(--line); border-radius: 6px; overflow: visible; flex: none;
+  }
+  .site * { box-sizing: border-box; }
+  .site.phone { width: 390px; }
+  .site.desk { width: 960px; }
+  .bar { background: var(--club-fill); border-bottom: 3px solid var(--club-gold); display: flex; align-items: center; gap: 14px; padding: 14px 16px; color: #fff; border-radius: 5px 5px 0 0; }
+  .logo { flex: none; width: 44px; height: 44px; border-radius: 10px; background: var(--club-gold); color: var(--club-fill); display: flex; align-items: center; justify-content: center; font: 700 18px 'Barlow Condensed', sans-serif; }
+  .club { font: 700 22px/1.1 'Barlow Condensed', sans-serif; }
+  .club small { display: block; font: 600 12px 'Inter', sans-serif; margin-top: 3px; }
+  .bar .signin { margin-left: auto; font-weight: 600; font-size: 14px; }
+  .bar .tabs { display: flex; gap: 6px; margin-left: 12px; font-weight: 600; font-size: 16px; }
+  .bar .tabs span { padding: 8px 12px 10px; }
+  .bar .tabs .cur { border-bottom: 3px solid var(--club-gold); border-radius: 0 0 8px 8px; }
+  .tabrow { background: #fff; border-bottom: 1px solid var(--club-line); display: flex; gap: 6px; padding: 0 8px; font-weight: 600; font-size: 15px; color: var(--club-soft); }
+  .tabrow span { padding: 12px 10px 11px; }
+  .tabrow .cur { color: var(--club-text); border-bottom: 3px solid var(--club-fill); }
+
+  .page { padding: 16px 16px 32px; display: flex; flex-direction: column; }
+  .desk .page { padding: 20px 24px 40px; }
+  .desk .body { max-width: 744px; }
+  .name { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 32px/1.1 'Barlow Condensed', sans-serif; letter-spacing: 0; }
+  .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: #7a1f2b; outline: 1px solid var(--club-line-2); outline-offset: -1px; }
+  .sub { margin: 5.6px 0 0; font-size: 14px; color: var(--club-soft); }
+  .head { margin-bottom: 16px; }
+  .body { display: flex; flex-direction: column; gap: 16px; }
+  .section { display: flex; flex-direction: column; gap: 9.6px; position: relative; }
+  .sectionTitle { margin: 0; font: 700 16px/1.25 'Inter', sans-serif; }
+  .list { border: 1px solid var(--club-line); border-radius: 8px; background: var(--club-card); overflow: hidden; }
+  .cardHead { margin: 0; padding: 14px 16px 4px; font: 700 16px/1.25 'Inter', sans-serif; }
+  .cardText { margin: 0; padding: 4px 16px 14px; font: 400 16px/1.5 'Inter', sans-serif; color: var(--club-soft); }
+  .cardHead + .cardText { padding-top: 0; }
+  .cardText:first-child { padding-top: 14px; }
+  .cardText b { color: var(--club-text); font-weight: 600; }
+  .cardText .addr { display: block; margin-top: 6px; white-space: nowrap; }
+  .rel { position: relative; }
+
+  /* "After": only these values change. */
+  .after .head { margin-bottom: 20px; }
+  .after .sub { margin-top: 8px; }
+  .after .body { gap: 20px; }
+  .after .dot { position: relative; top: 2px; }
+
+  .pin { position: absolute; z-index: 2; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: #1d5fd1; color: #fff; font: 700 12px/20px 'Inter', sans-serif; text-align: center; cursor: pointer; box-shadow: 0 0 0 2px #fff; }
+  .pin.on { background: #c2410c; }
+  .pin:focus-visible { outline: 2px solid #c2410c; outline-offset: 2px; }
+</style>
+
+<div class="doc">
+  <div class="block">
+    <h1>Team page spacing</h1>
+    <p class="lede">The public team page for a team with no schedule and no open tryouts, before and after. The screens are drawn at their real width (390 px phone, 960 px desk) with the club's real colours and type. Open this page on your phone for the true size. Tap a numbered dot to read what changed.</p>
+  </div>
+
+  <div class="block">
+    <h2>Phone, whole screen <span class="tag new">RESTYLED</span></h2>
+    <div class="pair">
+      <div>
+        <div class="cap">Today</div>
+        <div class="site phone">
+          <div class="bar"><div class="logo">UL</div><div class="club">UAT Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></div><span class="signin">Sign in</span></div>
+          <div class="tabrow"><span>Home</span><span class="cur">Teams</span></div>
+          <div class="page">
+            <div class="head">
+              <h1 class="name"><span class="dot"></span>13U AAA</h1>
+              <p class="sub">Provincial AAA · 2026 season</p>
+            </div>
+            <div class="body">
+              <div class="list">
+                <h2 class="cardHead">Tryouts</h2>
+                <p class="cardText">13U AAA isn’t taking tryout sign-ups right now. Questions? Email the club at <b>info@uat-lakeshore-lynx.local</b>.</p>
+              </div>
+              <section class="section">
+                <h2 class="sectionTitle">About the team</h2>
+                <div class="list"><p class="cardText">A 13U AAA group of 13 players. Practices move to Lakeshore Dome from November.</p></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="cap">Proposed</div>
+        <div class="site phone after">
+          <div class="bar"><div class="logo">UL</div><div class="club">UAT Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></div><span class="signin">Sign in</span></div>
+          <div class="tabrow"><span>Home</span><span class="cur">Teams</span></div>
+          <div class="page">
+            <div class="head rel">
+              <h1 class="name"><span class="dot"></span>13U AAA</h1>
+              <p class="sub">Provincial AAA · 2026 season</p>
+              <button class="pin" data-n="4" style="right:-4px;top:8px" aria-label="Note 4">4</button>
+              <button class="pin" data-n="5" style="left:-12px;top:6px" aria-label="Note 5">5</button>
+            </div>
+            <div class="body">
+              <section class="section">
+                <button class="pin" data-n="1" style="right:-4px;top:-4px" aria-label="Note 1">1</button>
+                <h2 class="sectionTitle">Tryouts</h2>
+                <div class="list"><p class="cardText">13U AAA isn’t taking tryout sign-ups right now. Questions? Email the club at<b class="addr">info@uat-lakeshore-lynx.local</b></p></div>
+                <button class="pin" data-n="2" style="right:-4px;bottom:20px" aria-label="Note 2">2</button>
+              </section>
+              <section class="section rel">
+                <h2 class="sectionTitle">About the team</h2>
+                <div class="list"><p class="cardText">A 13U AAA group of 13 players. Practices move to Lakeshore Dome from November.</p></div>
+                <button class="pin" data-n="3" style="right:-4px;top:-18px" aria-label="Note 3">3</button>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h2>Desk, whole screen <span class="tag new">RESTYLED</span></h2>
+    <div class="stack">
+      <div class="block">
+        <div class="cap">Today</div>
+        <div class="scroll"><div class="site desk">
+          <div class="bar"><div class="logo">UL</div><div class="club">UAT Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></div><div class="tabs"><span>Home</span><span class="cur">Teams</span></div></div>
+          <div class="page">
+            <div class="head">
+              <h1 class="name"><span class="dot"></span>13U AAA</h1>
+              <p class="sub">Provincial AAA · 2026 season</p>
+            </div>
+            <div class="body">
+              <div class="list">
+                <h2 class="cardHead">Tryouts</h2>
+                <p class="cardText">13U AAA isn’t taking tryout sign-ups right now. Questions? Email the club at <b>info@uat-lakeshore-lynx.local</b>.</p>
+              </div>
+              <section class="section">
+                <h2 class="sectionTitle">About the team</h2>
+                <div class="list"><p class="cardText">A 13U AAA group of 13 players. Practices move to Lakeshore Dome from November.</p></div>
+              </section>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="block">
+        <div class="cap">Proposed</div>
+        <div class="scroll"><div class="site desk after">
+          <div class="bar"><div class="logo">UL</div><div class="club">UAT Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></div><div class="tabs"><span>Home</span><span class="cur">Teams</span></div></div>
+          <div class="page">
+            <div class="head">
+              <h1 class="name"><span class="dot"></span>13U AAA</h1>
+              <p class="sub">Provincial AAA · 2026 season</p>
+            </div>
+            <div class="body">
+              <section class="section">
+                <h2 class="sectionTitle">Tryouts</h2>
+                <div class="list"><p class="cardText">13U AAA isn’t taking tryout sign-ups right now. Questions? Email the club at<b class="addr">info@uat-lakeshore-lynx.local</b></p></div>
+              </section>
+              <section class="section">
+                <h2 class="sectionTitle">About the team</h2>
+                <div class="list"><p class="cardText">A 13U AAA group of 13 players. Practices move to Lakeshore Dome from November.</p></div>
+              </section>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <p class="lede">The same page at a desk. The address takes its own line at every width, so there is one rule and no second layout.</p>
+  </div>
+
+  <div class="block">
+    <h2>What changed</h2>
+    <ol class="notes" id="notes">
+      <li data-n="1"><b>1</b><span><strong>One card idiom.</strong> “Tryouts” gets its heading above the card, like “About the team” and every other section on the club’s pages (Open now, Teams, About the club, Schedule). The stacked pair now reads as two matching blocks. This is the main fix.</span></li>
+      <li data-n="2"><b>2</b><span><strong>The address never splits.</strong> It takes its own line on a phone and no longer breaks at a hyphen (“uat-” / “lakeshore-lynx.local”). The sentence above it wraps cleanly.</span></li>
+      <li data-n="3"><b>3</b><span><strong>More room between sections.</strong> 16 px becomes 20 px, the same gap the club home uses between its sections. A heading still sits closer to its own card (about 10 px) than to the card above it (20 px), so each heading clearly belongs below.</span></li>
+      <li data-n="4"><b>4</b><span><strong>The title block breathes.</strong> 8 px between the name and “Provincial AAA · 2026 season” (was about 6), and 20 px before the first section (was 16).</span></li>
+      <li data-n="5"><b>5</b><span><strong>The team-colour dot sits on the name.</strong> It is about 2 px high today because the condensed capitals sit lower in their line than the dot’s centre. It moves down 2 px so it lines up with the middle of “13U AAA”.</span></li>
+    </ol>
+  </div>
+
+  <div class="block">
+    <h2>The numbers <span class="tag same">Phone and desk</span></h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Where</th><th>Today</th><th>Proposed</th></tr></thead>
+      <tbody>
+        <tr><td>Between sections</td><td class="n">16 px</td><td class="n">20 px (the club home’s gap)</td></tr>
+        <tr><td>Heading to its own card</td><td class="n">about 10 px (About) · 4 px inside the card (Tryouts)</td><td class="n">about 10 px, both</td></tr>
+        <tr><td>Name to the season line</td><td class="n">about 6 px</td><td class="n">8 px</td></tr>
+        <tr><td>Season line to the first section</td><td class="n">16 px</td><td class="n">20 px</td></tr>
+        <tr><td>Team-colour dot</td><td class="n">about 2 px high</td><td class="n">centred on the capitals</td></tr>
+        <tr><td>Type sizes, colours, card edges</td><td class="n">unchanged</td><td class="n">unchanged</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="block">
+    <h2>Left alone on purpose</h2>
+    <p class="lede">The empty space on the right at a desk stays. A team with a schedule puts the schedule in the left column and these cards beside it, so the space fills when there is something to show. The open-tryouts card (green “Tryouts open” chip and button) keeps its own look, because it is a door and not a section. Nothing here changes how the page behaves.</p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function setOn(n) {
+      document.querySelectorAll('.pin').forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-n') === n); });
+      document.querySelectorAll('#notes li').forEach(function (li) { li.classList.toggle('on', li.getAttribute('data-n') === n); });
+    }
+    document.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-n]');
+      if (el) setOn(el.getAttribute('data-n'));
+    });
+  })();
+</script>

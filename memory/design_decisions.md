@@ -7,6 +7,12 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-20 — THE PUBLIC TEAM PAGE: EVERY SECTION'S HEADING SITS ABOVE ITS CARD; 20 PX BETWEEN SECTIONS; THE ADDRESS TAKES ITS OWN LINE (owner, after `/design`, drawing https://claude.ai/artifact/CSzWDvjBLyzkouR6cNAhMX)
+
+**Decision:** On a club's public team page the quiet "Tryouts" block is a **section: its heading above the card**, like "About the team" and every other club section (Open now, Teams, About the club, Schedule). Sections stand **20 px apart** (the club home's gap; was 16), the title block gives 8 px between the name and the season line and 20 px before the first section, and the team-colour dot sits 2 px lower so it centres on the condensed capitals. The tryout sentence's email address takes **its own line at every width** and never splits at a hyphen. The open-tryouts door keeps its own look (a door, not a section).
+**Rationale:** the page stacked two cards in two idioms (heading inside one, above the other), and the 4 px between the inside heading and its sentence plus a bold address breaking at "uat-" read as jumbled on a phone. Matching the club's one section idiom fixes the cause; the spacing numbers are the club home's own.
+**Applies to:** the public team page (`app/[orgSlug]/teams/[teamSlug]`). The club kit's inside-the-card heading (`cardHead`) has no user left after this; it was left in place, not deleted.
+
 ### 2026-10-20 — STAGE 7A PAYMENT DETAILS (owner answers to the build prompt)
 
 **Decision:** A house-league fee line is written only when paid; approval creates no pending receivable. Its season book joins the club Statement in Stage 9, while a hosted tournament's book joins in 7a. A visiting team that paid and later withdraws keeps its receipt; a refund is a separate typed money-out line. A registration linked to a rep team owned by the host club is Our team and owes no entry fee. One transfer for two teams is one receipt line allocated to both. Saving the tournament's Accounting filing setting creates its category and item before payment. A payment amount correction voids and replaces the affected receipt, retaining the audit trail. Existing teams already marked paid at migration form an opening baseline and receive no historical fee lines; only future payment changes post.

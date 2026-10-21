@@ -98,13 +98,18 @@ export default async function TeamPublicPage({
       </div>
     );
     if (part === 'tryoutQuiet') return (
-      <div key={part} className={`${kit.list} ${styles.tryouts}`}>
-        <h2 className={kit.cardHead}>Tryouts</h2>
-        <p className={kit.cardText}>
-          {team.name} isn’t taking tryout sign-ups right now.
-          {email && <> Questions? Email the club at <b>{email}</b>.</>}
-        </p>
-      </div>
+      // A heading above its card, like About and every other club section (/design 2026-10-20): the one card that carried
+      // its heading inside made the stacked pair read as two different idioms. The address takes its own line so it never
+      // splits at a hyphen.
+      <section key={part} className={`${kit.section} ${styles.tryouts}`} aria-labelledby="tryouts-quiet">
+        <h2 id="tryouts-quiet" className={kit.sectionTitle}>Tryouts</h2>
+        <div className={kit.list}>
+          <p className={kit.cardText}>
+            {team.name} isn’t taking tryout sign-ups right now.
+            {email && <> Questions? Email the club at<b className={styles.address}>{email}</b></>}
+          </p>
+        </div>
+      </section>
     );
     if (part === 'schedule') return (
       <div key={part} className={styles.schedule}>
