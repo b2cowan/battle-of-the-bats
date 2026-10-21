@@ -1,7 +1,7 @@
 # Account-First Sign-up — plan
 
 **✅ CLOSED 2026-10-19 (owner, The first look Ask 11) and archived.** Its last owed item, the review of the sign-up
-screens still on the old look, is owned by The first look (`docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`, hub
+screens still on the old look, is owned by The first look (`docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md`, hub
 https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx), which also carries this project's two remaining owner calls (the
 reading of "first plan choice" and the production orphan organization) under *Inherited from Account-First*. The claim
 link's reachability is parked and routed to `/strategy` (the same session's Ask 7). Release state of Parts 2–3 lives in

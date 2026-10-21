@@ -1,6 +1,6 @@
 /**
  * THE FIRST LOOK, STAGE 2a — the warm email envelope and the two account emails (owner Ask 1 + Ask 8 2026-10-19; U5, U6,
- * U8 2026-10-20 with `/marketing`'s read and the owner's two calls; plan docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md).
+ * U8 2026-10-20 with `/marketing`'s read and the owner's two calls; plan docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md).
  *
  * Pins: the envelope is the drawing's; the confirmation email names the right next step for every way in and never
  * promises Home to someone its link takes elsewhere; a customised template for either key wears the warm envelope on

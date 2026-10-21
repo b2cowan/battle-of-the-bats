@@ -1,7 +1,7 @@
 /**
  * THE FIRST LOOK, STAGE 2c — the Continue page, forgot password and reset (owner Ask 8 2026-10-19; U3, U4 2026-10-20
  * with `/marketing`'s Reset screens row; three owner calls at the 2c gate, all as recommended; plan
- * docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md).
+ * docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md).
  *
  * Pins: the four screens wear the one account step in the drawn words; a link that cannot be used has no screen of its
  * own (the Continue page's goes to sign-in, a reset link's to the forgot screen, both with the expired-link notice);

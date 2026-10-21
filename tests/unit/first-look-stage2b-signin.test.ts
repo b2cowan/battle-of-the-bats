@@ -1,6 +1,6 @@
 /**
  * THE FIRST LOOK, STAGE 2b — sign-in and the way back into it (owner Ask 8 2026-10-19; U1, U2, U3, U7 2026-10-20 with
- * `/marketing`'s read; four owner calls at the 2b gate, all as recommended; plan docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md).
+ * `/marketing`'s read; four owner calls at the 2b gate, all as recommended; plan docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md).
  *
  * Pins: sign-in wears the one account step and keeps the ids the UAT scenarios sign in with; each refusal is the
  * drawn notice in the drawn place; a link that fails at the callback reaches sign-in with its reason while every

@@ -18,13 +18,13 @@ season, the claim link) is not this build.
    regularly carry other sessions' uncommitted hunks; partial-stage them.
 2. **The spec is two drawings.**
    - The hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx, tab **End state drawn**, sub-nav **S3 · The first
-     screen inside**. Source `docs/projects/active/FIRST_LOOK_SIGNUP_HUB.html` (~6.9 MB of images: never open it
+     screen inside**. Source `docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html` (~6.9 MB of images: never open it
      whole; its S3 panels are lines ~570–576; strip the `data:image` runs).
    - **The gate page, which wins where the two differ:** https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj, source
-     `docs/projects/active/FIRST_LOOK_STAGE3_GATE.html` (small, safe to read). It draws the states the hub did not
+     `docs/projects/archive/FIRST_LOOK_STAGE3_GATE.html` (small, safe to read). It draws the states the hub did not
      (paid welcome, the three waiting cards, the pick-named plan step, the list-price card) with the `/design` fixes
      applied, and lists what that review changed and what it said to measure on the built page.
-3. `docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`: findings **F06, F07, F08, F17, F18**; rules 1–8 (*Standing back*);
+3. `docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md`: findings **F06, F07, F08, F17, F18**; rules 1–8 (*Standing back*);
    Asks 4, 5, 9 (*Shape questions*); *Inherited from Account-First* (the "first plan choice" reading is **SETTLED:
    keep as built, no schema change**); **Stage 3 gate (ruled 2026-10-20)** under the stage ladder; *As built, Stages 1
    and 2* (the pieces you reuse).

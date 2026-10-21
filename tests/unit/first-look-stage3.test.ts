@@ -1,6 +1,6 @@
 /**
  * THE FIRST LOOK, STAGE 3 — the first screen inside (owner rulings 2026-10-19 Asks 4, 5b, 9; gate G1–G6 ruled
- * 2026-10-20, drawn at https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj; plan docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md).
+ * 2026-10-20, drawn at https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj; plan docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md).
  * The rules are exercised directly where they are pure; the wiring is pinned by source scans.
  */
 import { describe, it } from 'node:test';

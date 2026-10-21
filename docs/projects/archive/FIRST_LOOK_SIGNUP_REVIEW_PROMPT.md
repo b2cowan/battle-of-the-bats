@@ -155,7 +155,7 @@ and recommend** — never redesign around it silently.
   at true size, phone and computer, NEW / RESTYLED / UNCHANGED tags, fix chips, one checkbox per option per ask —
   **PM Brief**, **Full Plan**, and a paste-back summary. Desktop/phone toggle on the drawings.
 - **`/design` runs on the drawings before the hand-off**; apply its fixes, republish, and list what it changed on the hub.
-- **Files:** `docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md` + `FIRST_LOOK_SIGNUP_PM_BRIEF.md` (AGENCY_RULES: every
+- **Files:** `docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md` + `FIRST_LOOK_SIGNUP_PM_BRIEF.md` (AGENCY_RULES: every
   significant project gets the pair), one `TODO.md` line linking them, and a line in
   `ACCOUNT_FIRST_SIGNUP_PLAN.md`'s "Owed before this project closes" section pointing here — Account-First can close
   once this project owns the review (say so as an ask if you disagree).

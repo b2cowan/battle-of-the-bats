@@ -1,5 +1,7 @@
 # The first look — PM brief
 
+**Closed 2026-10-21 (owner).** All three stages are built and walked (§348, §351, §355). What was left moved to the next release, to The public face, warm (the screen-reader pass), and to one follow-ups line in the task list; the plan's Status block lists them.
+
 **What it is.** An end-to-end review of every screen a new customer passes through on the way in: the buttons on the
 marketing site, the four ways to start something, the account form, the email and the wait, signing in, and the first
 screen inside. Walked on a phone, a computer and a laptop on 2026-10-19; the proposed end state is drawn on the hub.

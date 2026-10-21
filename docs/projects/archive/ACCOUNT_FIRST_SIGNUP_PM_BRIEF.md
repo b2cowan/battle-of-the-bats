@@ -1,7 +1,7 @@
 # Account-First Sign-up — PM brief
 
 **✅ CLOSED 2026-10-19 and archived** (owner). The look and shape of the sign-up screens continue in The first look
-(`docs/projects/active/FIRST_LOOK_SIGNUP_PM_BRIEF.md`).
+(`docs/projects/archive/FIRST_LOOK_SIGNUP_PM_BRIEF.md`).
 
 **Status:** drawn and design-reviewed 2026-10-18; all seven asks ruled as recommended the same day. Part 1 (Start a
 team, Start a league, Home's finish card, sign-in's Send the link again) built and committed `8647a4e8` 2026-10-18;

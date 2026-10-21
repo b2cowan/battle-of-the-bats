@@ -20,8 +20,8 @@ are ruled but are separate builds.
    *S1 · Dark*). The owner ruled those screens, so they are the visual spec, NEW / CHANGED / UNCHANGED tags included
    (auto-memory `feedback_build_to_approved_mockups`).
    - A part you deliberately don't match is flagged at build time, never found by the owner in QA.
-   - The same drawings live in the source file `docs/projects/active/FIRST_LOOK_SIGNUP_HUB.html`.
-3. `docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`: the findings F01–F19, **Standing back: the rules for the first
+   - The same drawings live in the source file `docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html`.
+3. `docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md`: the findings F01–F19, **Standing back: the rules for the first
    run** (rules 1–9), **Rulings** (R1 and every ask, 2026-10-19), the /design review (D-F1–D-F11) and *Notes for the
    build*.
 4. `docs/projects/archive/ACCOUNT_FIRST_SIGNUP_PLAN.md`, the *As built* Parts 1–3. Every behaviour those parts built

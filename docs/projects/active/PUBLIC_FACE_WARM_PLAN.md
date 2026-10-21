@@ -8,6 +8,10 @@ after Club Tier, ahead of Platform admin.** Platform admin's own brief puts inte
 customers will see" (`PLATFORM_ADMIN_SUPPORT_CONSOLE_PM_BRIEF.md`). This project is the first thing every new customer
 sees, so the same reason puts it first.
 **PM brief:** `PUBLIC_FACE_WARM_PM_BRIEF.md`.
+**Carried in from The first look at its close (2026-10-21; its plan is archived, `docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md`):**
+the screen-reader pass on the shared account form (`components/auth/AccountForm`), owed since that project's Stage 1.
+The first look built the sign-up and sign-in screens and the two account emails this plan handed it; the marketing pages,
+the other emails and the system screens stay here.
 
 ## The owner's ask (2026-10-19)
 

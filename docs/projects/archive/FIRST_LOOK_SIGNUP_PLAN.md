@@ -1,8 +1,25 @@
 # The first look — how a new customer gets into FieldLogicHQ — plan
 
+**Status: CLOSED 2026-10-21 (owner), archived.** All three stages are built and walked: Stage 1 §348 ✅, Stage 2 §351 ✅,
+Stage 3 §355 ✅ (2026-10-21, 44 of 45; the walk caught one build defect, fixed `abb1c2f6d` with a guard). Stage 4 was
+reported, not drawn: the free team's first home went to the free coach portal's tap-target work
+(`FREE_COACH_TAP_TARGETS_PROMPT.md`), the claim link stays parked (Ask 7), and a league's first season and the club setup
+kit wait until those plans are on sale.
+
+**Where the leftovers went.**
+- **The next release (staging):** the whole-product layout sweep (Stages 1–3 all widen it); one fresh account email seen
+  in Gmail, Apple Mail and Outlook after the beige frame came off (§351). ⚠ §355's W4 moved the Founding sign-up close
+  into the past with a branch override on staging's dev branch: confirm it is removed, or staging keeps showing every
+  new organization the list price.
+- **The public face, warm** (`PUBLIC_FACE_WARM_PLAN.md`): the screen-reader pass on the shared account form (owed since
+  Stage 1).
+- **TODO, "The first look — follow-ups":** `/docs` for the plan step and the Premium welcome; layout-sweep entries for
+  the plan step (it needs a fresh tournament-plan organization fixture: an owner call before widening the UAT fixtures),
+  the welcome and checkout complete; whether the plan step's heading wraps on a 358-wide phone (not recorded in §355).
+
 **Status:** walked and drawn 2026-10-19 (session 1). **Every ask ruled by the owner 2026-10-19, all as recommended,
 plus R1** (see Rulings). Nothing is built. Hub: https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx (source
-`docs/projects/active/FIRST_LOOK_SIGNUP_HUB.html`, built by `.probe/first-look/build-hub.cjs` from captures made by
+`docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html`, built by `.probe/first-look/build-hub.cjs` from captures made by
 `.probe/first-look/cap-*.mjs` against DEV). **Next:** Stage 1, built from `FIRST_LOOK_STAGE1_BUILD_PROMPT.md` (written 2026-10-19) in a fresh session.
 **PM brief:** `FIRST_LOOK_SIGNUP_PM_BRIEF.md`.
 **Kickoff:** `FIRST_LOOK_SIGNUP_REVIEW_PROMPT.md` (written 2026-10-19 by the Account-First Parts 2–3 session).

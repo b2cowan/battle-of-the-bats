@@ -18,10 +18,10 @@ build. Stage 1 is built and its pieces are the ones you reuse.
    This working copy is shared: run `git status` first and leave other sessions' files alone. `TODO.md`, the QA
    ledger and `memory/design_decisions.md` regularly carry other sessions' uncommitted hunks; partial-stage them.
 2. **The spec is the drawing.** Hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx, tab **End state drawn**,
-   sub-nav **S2 · Email, link, sign-in**. Source: `docs/projects/active/FIRST_LOOK_SIGNUP_HUB.html` (~6.9 MB of
+   sub-nav **S2 · Email, link, sign-in**. Source: `docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html` (~6.9 MB of
    embedded images: never open it whole; grep the S2 section, about lines 561–568). Today's captures are in the
    **Walk** tab, stations 3 (*Waiting for the email*) and 4 (*Signing in, and the refusals*).
-3. `docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`: findings **F04, F09, F10, F11**; the rules 1–8 (*Standing back*);
+3. `docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md`: findings **F04, F09, F10, F11**; the rules 1–8 (*Standing back*);
    **Ask 1** and **Ask 8** (ruled 2026-10-19, as recommended); *As built, Stage 1* (what you reuse and why).
 4. The Stage 1 pieces you build on, all in `components/auth/`: `AccountForm.tsx` (`StartColumn`, `StartHead`, `Field`,
    `EmailField`, `PasswordField purpose="current"` — made for sign-in —, `StartFoot`, `accountForm` classes),
@@ -44,7 +44,7 @@ Delegate the broad reading (CLAUDE.md). Read the lines a decision turns on yours
    with a drawing, before you build it.
 3. **Eight things were not drawn: now drawn AND RULED (owner, 2026-10-20, all eight as recommended).** Stage 1's lesson (and the owner's rule, auto-memory `feedback_build_to_approved_mockups`)
    is that an undrawn state is found in QA. **Drawn 2026-10-20, as their own page** (the hub is an index now):
-   https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ (source `docs/projects/active/FIRST_LOOK_STAGE2_UNDRAWN.html`, built by `.probe/first-look/build-stage2.cjs`;
+   https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ (source `docs/projects/archive/FIRST_LOOK_STAGE2_UNDRAWN.html`, built by `.probe/first-look/build-stage2.cjs`;
    it went through `/design` before publishing). It holds U1–U8 at true phone size beside today's behaviour, each with
    a recommendation, plus the red and amber notices in Dark (the spec for Dark; nothing to rule). **The owner's pasted
    answers: U1–U8 each "as drawn" / "as listed" / the recommended option.** The table below is therefore the ruling.

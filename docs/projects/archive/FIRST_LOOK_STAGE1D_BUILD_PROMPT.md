@@ -19,10 +19,10 @@ before clearing `.next`).
 
 1. `CLAUDE.md`, `AGENTS.md`, `AGENCY_RULES.md`: one `dev` branch, explicit pathspecs, **ask before every commit**,
    never push, the spelling and clock gates, "disagree out loud". Run `git status` first: the tree is shared.
-2. `docs/projects/active/FIRST_LOOK_STAGE1_BUILD_PROMPT.md`, sections **"The top bar, the phone tabs and the doors"**,
+2. `docs/projects/archive/FIRST_LOOK_STAGE1_BUILD_PROMPT.md`, sections **"The top bar, the phone tabs and the doors"**,
    **"Warm / Dark"**, **Keep**, **Verify**, **QA**. That is the spec; this prompt adds only what 1a–1c learned.
 3. The drawings: hub https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx (source
-   `docs/projects/active/FIRST_LOOK_SIGNUP_HUB.html`), *S1 · The account form* (the laptop's top bar) and *S1 · Dark*.
+   `docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html`), *S1 · The account form* (the laptop's top bar) and *S1 · Dark*.
    The drawings' source is `.probe/first-look/build-hub.cjs` + `hub2.css` (the dark field edge is `#646b77`, about 3.4:1).
 4. The shared pieces as built: `components/auth/AccountForm.tsx` + `.module.css` (StartColumn, StartHead, StartFoot,
    Field, EmailField, PasswordField, AccountFields, hintId, `accountForm` classes), `components/auth/StartSteps.tsx`,

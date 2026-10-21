@@ -1,6 +1,6 @@
 /**
  * THE WARM EMAIL ENVELOPE — the account emails' one layout (The first look, Stage 2a: owner Ask 1 + Ask 8 2026-10-19,
- * U5/U6/U8 2026-10-20; drawn in docs/projects/active/FIRST_LOOK_SIGNUP_HUB.html, S2, and FIRST_LOOK_STAGE2_UNDRAWN.html).
+ * U5/U6/U8 2026-10-20; drawn in docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html, S2, and FIRST_LOOK_STAGE2_UNDRAWN.html).
  *
  * The verification email and the password-reset email wear it, in their built-in builders (lib/email.ts) AND when a
  * platform admin customises their template (lib/platform-email-templates.ts), so a saved edit can never bring back the
