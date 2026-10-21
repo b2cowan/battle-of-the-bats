@@ -1,0 +1,241 @@
+<title>First Look Stage 3 Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;650;700&display=swap">
+<style>
+/* Layout: the project hub's frame (dark bar, then one document on paper) — nine short walks, one job each, and the owner's one open call. Same frame as the Stage 1 and 2 walks (§348, §351). */
+:root{
+  --paper:#f5f4ef;--card:#ffffff;--ground:#e7e9e1;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;
+  --olive:#486224;--blue:#245f79;--warn:#8a5a12;--warn-soft:#f6ecd6;--good:#2f6a2a;--good-soft:#e2efd9;
+  --bar:#222d1e;--bar-ink:#ffffff;--bar-muted:#d5dfcc;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-data:'IBM Plex Mono',ui-monospace,'Cascadia Mono',monospace;
+  color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#1b2119;--card:#232a20;--ground:#141912;--ink:#e6ebdf;--muted:#a3ad9a;--line:#3a4434;--soft:#2b3427;
+  --olive:#a9c97a;--blue:#7fbcd6;--warn:#e2b45e;--warn-soft:#3a3120;--good:#9fd18f;--good-soft:#24331f;
+  --bar:#0f140d;--bar-ink:#f2f5ee;--bar-muted:#aab79c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1b2119;--card:#232a20;--ground:#141912;--ink:#e6ebdf;--muted:#a3ad9a;--line:#3a4434;--soft:#2b3427;
+  --olive:#a9c97a;--blue:#7fbcd6;--warn:#e2b45e;--warn-soft:#3a3120;--good:#9fd18f;--good-soft:#24331f;
+  --bar:#0f140d;--bar-ink:#f2f5ee;--bar-muted:#aab79c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--f-body)}
+button,textarea{font:inherit;color:inherit}button{cursor:pointer}
+a{color:var(--blue);text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+[hidden]{display:none!important}
+.hubbar{background:var(--bar);color:var(--bar-ink);padding:13px 24px;display:flex;gap:10px 22px;align-items:center;flex-wrap:wrap}
+.hubbar strong{font:700 19px/1.2 var(--f-display);letter-spacing:.3px;margin-right:auto}
+.hubbar a{color:var(--bar-ink);font-size:13px;font-weight:650}
+.wrap{max-width:820px;margin:0 auto;padding:28px 24px 64px}
+h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
+.eyebrow{font:700 11px/1.3 var(--f-data);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.note{padding:12px 16px;border-left:3px solid var(--blue);background:var(--soft);font-size:14px;margin:0 0 14px;border-radius:0 6px 6px 0}
+.note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.prog{font-weight:700;margin:16px 0}
+.signin{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:0 0 14px}
+.signin .eyebrow{margin-bottom:8px}
+.cred{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.cred .who{min-width:200px;font-weight:650}
+.signin code,.part code{font:500 13px/1.4 var(--f-data);background:var(--soft);padding:2px 7px;border-radius:5px;user-select:all;overflow-wrap:anywhere}
+.signin .meta{margin:8px 0 0}
+.index{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin:0 0 16px}
+.index a{display:flex;justify-content:space-between;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;text-decoration:none;color:var(--ink);font-size:14px;font-weight:650}
+.chip{font:700 11px/1.2 var(--f-data);letter-spacing:.05em;padding:3px 7px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.done{background:var(--good-soft);color:var(--good)}
+.chip.stg{background:var(--warn-soft);color:var(--warn)}
+.part{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px;scroll-margin-top:12px}
+.part h2{margin:0 0 8px;font-size:17px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.facts{display:grid;gap:6px;margin:0 0 10px;font-size:14px}
+.facts p{margin:0}
+.facts b{color:var(--muted);font-weight:650}
+.step{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14px;border-top:1px solid var(--line)}
+.step input{width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:var(--olive)}
+.step span{min-width:0;overflow-wrap:anywhere}
+.verdict{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 8px;font-size:13px}
+.verdict button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;min-height:40px}
+.verdict button[aria-pressed="true"]{background:var(--good-soft);color:var(--good);font-weight:700;border-color:transparent}
+.part textarea,#out{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper)}
+.meta{font-size:12px;color:var(--muted)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 10px}
+.btn{min-height:44px;padding:9px 16px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-weight:650}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+@media (max-width:600px){.wrap{padding-inline:16px}.hubbar{padding-inline:16px}}
+</style>
+
+<div class="hubbar"><strong>The first look · Stage 3 walk · §355</strong><a href="https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj">The gate (G1–G6)</a><a href="https://claude.ai/artifact/AdLSGDCii8xExFuVdZxvsx">The hub</a></div>
+<main class="wrap">
+  <div class="eyebrow">Your walk · Stage 3 (3a, 3b, 3c) · as of 20 Oct 2026</div>
+  <h1>The first screen inside: the plan step, the Premium welcome, checkout complete and a fan’s Home</h1>
+  <p>Stage 3 is built and committed (<code>dc3735034</code>). A new organizer meets one heading and two choices, with their pricing-page pick already chosen and named. A Founding Season coach gets one dates sentence and “Open your team”; a paid coach gets the same card in the app’s own frame after Stripe; a checkout page opened without a payment says so at once. A fan with an empty Home gets one line to start something. Nine short walks, each with one job, and one call. Walk them in any order and sign each off on its own.</p>
+  <div class="note"><strong>Where:</strong> walks 1–3, 6, 7 and 9 on the dev site, <code>localhost:3000</code> (it makes accounts at once, with no email). Walks 4, 5 and 8 on <strong>staging</strong>: they need a real Stripe payment, the Founding sign-up window closed, or an organization dev does not have. A computer is 1366 × 768; a phone is 390 × 844 (a real phone, or the browser’s phone view). Warm unless a step says Dark.</div>
+  <div class="signin" aria-label="Sign in as">
+    <div class="eyebrow">Sign in as · keep this page private</div>
+    <div class="cred"><span class="who">A fresh account (walks 1–3, 6, 9)</span><span>Use a private window and a new made-up address each time, e.g. <code>walk3-a@example.com</code>; any password of 8 or more characters.</span></div>
+    <div class="cred"><span class="who">Coach, dev (walk 7)</span><code>uat-coach@uat-test-org.local</code><code>UATPassword2026!</code></div>
+    <div class="cred"><span class="who">Staging walks (4, 5, 8)</span><span>A staging owner account, Stripe’s test card <code>4242 4242 4242 4242</code>, and a real inbox for walk 8’s email.</span></div>
+    <p class="meta">Every fresh organization you make on dev stays there. Name them “Walk 3 …” so they are easy to find later.</p>
+  </div>
+  <div class="note warn"><strong>Not checked by machine yet:</strong> the automated layout sweep did not run on these screens (its saved sign-ins had expired, and this change widens it to the whole product, which runs on staging at release). Your eyes are the first check of every width here, so the fold steps matter.</div>
+  <nav class="index" id="index" aria-label="Walks"></nav>
+  <p class="prog" id="count"></p>
+  <div id="parts"></div>
+  <div class="bar"><button type="button" class="btn primary" id="build">Build paste-back summary</button><button type="button" class="btn" id="copy" hidden>Copy</button><span class="meta" id="copied"></span></div>
+  <textarea id="out" rows="12" readonly hidden aria-label="Walk summary"></textarea>
+</main>
+
+<script>
+(function(){
+  var PARTS=[
+    {id:'1',stg:false,title:'Picked Tournament Plus, billed annually',
+     for:'The pricing page’s pick is carried into the plan step, chosen and named, and both buttons fit on a laptop without scrolling.',
+     pass:'One heading, the pick named in the sub line, Tournament Plus first with the olive edge and the one lime button, $0 with the Founding Season chip, annual already ticked; both buttons in view at 1366 × 768; the lime one in view at 390 × 844.',
+     not:'The list price without the offer (walk 4).',
+     who:'A fresh account, private window. Computer, then phone.',
+     steps:[
+      'Open localhost:3000/pricing, switch the toggle to Annual, and press Tournament Plus’s button. Step 1 shows the callout “Tournament Plus, billed annually, from the pricing page.” Make the account.',
+      'Name the organization (e.g. “Walk 3 Annual”) and press Create organization. You land on “How do you want to start?” with the step line Account ✓ · Organization ✓ · 3 Plan.',
+      'The sub line reads “You picked Tournament Plus, billed annually on the pricing page. You can change it here, or any time in Plan & billing.”',
+      'Two choices only, side by side: Tournament Plus (left, olive edge, lime “Start with Tournament Plus”) and Tournament (right, white “Start free with Tournament”). No League Plus, no Club.',
+      'Tournament Plus shows the “Founding Season” chip, “$0”, “through September 30, 2027 · normally $39/month”, three short lines, “Billing” with “Then $39/month” and “Then $390/year” (the annual one ticked).',
+      'At 1366 × 768, without scrolling: both buttons and “Compare every plan” are in view. Nothing scrolls sideways.',
+      'Switch to a phone (390 × 844) and reload. The two choices stack, Tournament Plus first, and its lime button is in view without scrolling. Note whether the heading wraps onto two lines at a narrower phone (358 wide).'
+    ]},
+    {id:'2',stg:false,title:'Picked Tournament (free)',
+     for:'The free pick is no longer lost: it is carried from the pricing page with no billing period, and the plan step opens on it.',
+     pass:'Step 1 says “Tournament (free)”; the plan step names it, puts Tournament first with the lime, and Tournament Plus second in white.',
+     not:'',
+     who:'A fresh account, private window. Phone.',
+     steps:[
+      'Open localhost:3000/pricing and press the Tournament card’s button (“Get Started Free”). Step 1’s callout reads “Tournament (free), from the pricing page.” No billing period anywhere.',
+      'Make the account and name the organization (“Walk 3 Free”). The plan step’s sub line: “You picked Tournament (free) on the pricing page. …”',
+      'Tournament is first with the olive edge and the lime “Start free with Tournament”; Tournament Plus is below it in white, still with its $0 and billing choice.',
+      'The pricing page itself looks exactly as before (same cards, same buttons, same words).'
+    ]},
+    {id:'3',stg:false,title:'No pick, then choosing, Compare every plan and Dark',
+     for:'Someone who came straight to Run a tournament sees Tournament Plus first, as before. Each button does what it did. The step follows Dark.',
+     pass:'The no-pick sub line; Tournament Plus first; “Starting…” on the pressed button; choosing free opens the New tournament window; Compare every plan opens the pricing page in a new tab; Dark reads clearly.',
+     not:'',
+     who:'A fresh account, private window. Computer.',
+     steps:[
+      'Open localhost:3000/start/tournament directly (no pricing page). Step 1 has no plan callout. Make the account and name the organization (“Walk 3 Direct”).',
+      'The sub line reads “Walk 3 Direct starts on one of these. You can change it any time in Plan & billing.” Tournament Plus is first, lit.',
+      'Press “Compare every plan”. The pricing page opens in a new tab; this tab stays on the plan step.',
+      'Set Dark (account menu → Dark, then come back). The heading, cards, chip, billing choice and buttons all read clearly on dark; no white panel is left behind.',
+      'Press “Start free with Tournament”. The button says “Starting…” for a moment and both buttons hold; then the New tournament window opens, as it always has.',
+      'With another fresh organization (“Walk 3 Plus”), press “Start with Tournament Plus”. No card is asked for (the Founding Season $0); you go straight on to the New tournament window.'
+    ]},
+    {id:'4',stg:true,title:'Tournament Plus without the Founding offer',
+     for:'After the Founding sign-up window closes, an organization without the comp sees the list price, and the price follows the billing choice.',
+     pass:'No chip; the price reads $39/month or $390/year with the choice; annual adds “Save $78 — 2 months free”; the choice has no “Then”; the button goes to Stripe at that price.',
+     not:'',
+     who:'Staging, with the sign-up window closed for the test (or any time after December 31, 2026). A fresh owner account.',
+     steps:[
+      'Reach the plan step with a fresh organization. Tournament Plus has no Founding Season chip.',
+      'With Monthly ticked: the price reads “$39/month” and there is no small line under it. The choice reads “$39/month” / “$390/year”.',
+      'Tick the annual choice: the price reads “$390/year” and the small line “Save $78 — 2 months free” appears.',
+      'Press Start with Tournament Plus. Stripe opens at the price shown. Cancel at Stripe and you come back to the plan step.'
+    ]},
+    {id:'5',stg:true,title:'The change-plan window still works',
+     for:'The admin’s change-plan window (only shown for a League Plus organization today) keeps the full pricing cards, its close and “Continue free”.',
+     pass:'It opens from “View plans”, shows the full cards, closes with ×, and nothing about it changed.',
+     not:'',
+     who:'An owner of a League Plus organization (staging, or dev if you have one).',
+     steps:[
+      'Open the organization’s setup page (/{org}/admin/onboarding) and press “View plans”. The window opens with the full pricing cards and the toggle.',
+      'Close it with the ×. It closes and the setup page is unchanged.',
+      'Open it again: the Tournament card says “Continue free”. Close it without choosing.'
+    ]},
+    {id:'6',stg:false,title:'A Founding Season coach’s welcome',
+     for:'The welcome gives the dates once, in one sentence read from the team’s own record, with one button. The repeated capitals pill and the fine line are gone.',
+     pass:'“Premium is on for {team}”, the one dates sentence, the lime “Open your team” with no arrow, in the app’s top bar and phone tabs; Open your team lands in the portal with its first-visit summary.',
+     not:'',
+     who:'A fresh account, private window. Phone, then computer; Warm, then Dark.',
+     steps:[
+      'Open localhost:3000/coaches/start, make the account and create a team (e.g. “Walk 3 Rays”). You land on the welcome.',
+      'It reads “Premium is on for Walk 3 Rays”, then exactly one sentence: “Free through September 30, 2027. Nothing is charged before October 1, 2027; in September you’ll choose a plan for 2028.” No capitals pill, no “Opens your portal…” line.',
+      'The page wears the white top bar (and the phone tabs on a phone), on the warm paper, in one column. The lime “Open your team” is in view on the phone.',
+      'Set Dark and reload. The card reads clearly on dark.',
+      'Press Open your team. The portal opens with its first-visit summary, as before.'
+    ]},
+    {id:'7',stg:false,title:'Checkout complete opened with no payment, and the paid card’s look',
+     for:'A checkout page opened without a payment (an old bookmark, a copied link) says so at once. The paid welcome has no dates sentence.',
+     pass:'“We can’t find that payment” at once, with its sentence and “Go to Home”; the welcome for a workspace with no comp shows the first line only.',
+     not:'A real paid checkout (walk 8).',
+     who:'Signed out, then the coach. Phone.',
+     steps:[
+      'Open localhost:3000/coaches/checkout/complete. At once: the quiet round mark, “We can’t find that payment”, “If you’ve just paid, your portal link is on its way to your email.” and the lime “Go to Home”. No waiting first.',
+      'Open localhost:3000/coaches/checkout/complete?session_id=nonsense. The same card, at once.',
+      'Press Go to Home. You land on Home.',
+      'Open localhost:3000/coaches/welcome?team=Walk%203%20Paid&next=%2Fuat-test-org%2Fcoaches. “Premium is on for Walk 3 Paid” and the button, with NO second sentence (that address holds no comp, so the paid look shows).',
+      'The page has the app’s top bar, not the marketing bar and footer.'
+    ]},
+    {id:'8',stg:true,title:'A paid coach through checkout',
+     for:'After Stripe, a paid coach waits on the same card in the app’s frame, then sees the paid welcome, then their team.',
+     pass:'“Setting up your portal” with the pulsing line and no button; it turns into “Premium is on for {team}” (no dates); Open your team lands in the portal with its first-visit summary; the welcome email arrives.',
+     not:'',
+     who:'Staging, with the sign-up window closed for the test (during the window every coach is comped and never sees Stripe). A fresh account; Stripe’s test card.',
+     steps:[
+      'Start Coach Premium with a fresh account, pay with the test card. Back from Stripe you see “Setting up your portal” and the pulsing line “Payment received. This takes a few seconds.” No button, no spinner, no dark marketing page.',
+      'Within a few seconds the same card becomes “Premium is on for {your team}” with “Open your team” and no second sentence.',
+      'Press Open your team. The portal opens with its first-visit summary.',
+      'The welcome email (with the portal link) arrives in your inbox.',
+      'If you ever see “Still setting up your portal” (about 50 seconds with no portal), it reads “Payment received. We’ll email you a link the moment it’s ready, so you can close this page.” with “Check again”. Tick this step if you saw it read right, or if it never appeared.'
+    ]},
+    {id:'9',stg:false,title:'A fan’s empty Home',
+     for:'Someone who only follows teams, with nothing on Home yet, can find a way to start something in one tap.',
+     pass:'One quiet olive line under the empty sentence, opening the start page; nothing else on Home changed.',
+     not:'',
+     who:'A fresh account-only sign-up, private window. Phone.',
+     steps:[
+      'Open localhost:3000/auth/signup?account=1 and make an account (this makes an account with no team, league or organization).',
+      'Home shows “Nothing here yet — follow a team, tournament, or organization and it’ll show up here.” and, under it, the olive line “Want to run your own? Start a team or a tournament”. No card, no button.',
+      'Tap the line. The start page (/start) opens.',
+      'With another fresh account, start a team and stop on the naming step, then open Home: the waiting card shows and the line does not.'
+    ]},
+    {id:'C',stg:false,title:'Your call (tick one box)',
+     for:'The copy read raised one wording point on a ruled string. Tick one option; add a note if you want to say why.',
+     pass:'The question has one box ticked.',
+     not:'',
+     who:'',
+     steps:[
+      'Tournament Plus’s second line. ☐ Keep “Fees, check-in and volunteers”, as ruled',
+      'Tournament Plus’s second line. ☐ Change to “Fee tracking, check-in and volunteers”: the product records fees but never collects them (the pricing page says “you record what each team has paid”)'
+    ]}
+  ];
+  var KEY='first-look-stage3-walk', st={};
+  try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){st={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+  var esc=function(v){return String(v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  function ticks(p){var c=0;p.steps.forEach(function(_,i){if(st[p.id+'-'+i])c++;});return c;}
+  function label(p){return p.id==='C'?'Your call':'Walk '+p.id;}
+  function count(){var c=0,t=0;PARTS.forEach(function(p){t+=p.steps.length;c+=ticks(p);});document.getElementById('count').textContent=c+' of '+t+' steps ticked';
+    document.getElementById('index').innerHTML=PARTS.map(function(p){var n=ticks(p),v=st['v-'+p.id];
+      var chip=v?v+' · '+n+'/'+p.steps.length:(n?'In progress '+n+'/'+p.steps.length:(p.stg?'Staging':'Not started'));
+      return '<a href="#w'+p.id+'"><span>'+esc(label(p))+' · '+esc(p.title)+'</span><span class="chip'+(v==='Pass'?' done':(!v&&!n&&p.stg?' stg':''))+'">'+esc(chip)+'</span></a>';}).join('');}
+  document.getElementById('parts').innerHTML=PARTS.map(function(p){
+    var facts='<div class="facts"><p><b>What this walk is for.</b> '+esc(p.for)+'</p>'+(p.pass?'<p><b>It passes when</b> '+esc(p.pass)+'</p>':'')+(p.not?'<p><b>Not in this walk:</b> '+esc(p.not)+'</p>':'')+(p.who?'<p><b>Who and where:</b> '+esc(p.who)+'</p>':'')+'</div>';
+    return '<section class="part" id="w'+p.id+'"><h2>'+esc(label(p))+' · '+esc(p.title)+(p.stg?' <span class="chip stg">Staging only</span>':'')+'</h2>'+facts+p.steps.map(function(s,i){var k=p.id+'-'+i;return '<label class="step"><input type="checkbox" id="s-'+k+'" data-k="'+k+'"'+(st[k]?' checked':'')+'><span>'+esc(s)+'</span></label>';}).join('')+
+      (p.id==='C'?'':'<div class="verdict">Verdict: '+['Pass','Issue','Needs a call'].map(function(v){return '<button type="button" data-p="'+p.id+'" data-v="'+v+'" aria-pressed="'+(st['v-'+p.id]===v)+'">'+v+'</button>';}).join('')+'</div>')+
+      '<label class="meta" for="n-'+p.id+'">Notes</label><textarea id="n-'+p.id+'" data-n="'+p.id+'" rows="2" placeholder="Anything worth recording">'+esc(st['n-'+p.id]||'')+'</textarea></section>';
+  }).join('');
+  count();
+  document.getElementById('parts').addEventListener('change',function(e){var k=e.target.dataset&&e.target.dataset.k;if(k){st[k]=e.target.checked;save();count();}});
+  document.getElementById('parts').addEventListener('input',function(e){var n=e.target.dataset&&e.target.dataset.n;if(n){st['n-'+n]=e.target.value;save();}});
+  document.getElementById('parts').addEventListener('click',function(e){var b=e.target.closest('button[data-p]');if(!b)return;st['v-'+b.dataset.p]=b.dataset.v;save();count();
+    document.querySelectorAll('button[data-p="'+b.dataset.p+'"]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});});
+  document.getElementById('build').addEventListener('click',function(){
+    var c=0,t=0;PARTS.forEach(function(p){t+=p.steps.length;c+=ticks(p);});
+    var lines=['The first look · Stage 3 walk (§355) · checked '+c+' of '+t,''];
+    PARTS.forEach(function(p){lines.push(label(p)+' · '+p.title+': '+(p.id==='C'?'':(st['v-'+p.id]||'no verdict')+' · ')+ticks(p)+'/'+p.steps.length);
+      p.steps.forEach(function(s,i){lines.push('  ['+(st[p.id+'-'+i]?'x':' ')+'] '+s);});
+      if(st['n-'+p.id])lines.push('  Notes: '+st['n-'+p.id]);lines.push('');});
+    var o=document.getElementById('out');o.value=lines.join('\n');o.hidden=false;document.getElementById('copy').hidden=false;o.select();
+  });
+  document.getElementById('copy').addEventListener('click',function(){var o=document.getElementById('out');
+    var ok=function(){document.getElementById('copied').textContent='Copied';};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(o.value).then(ok,function(){o.select();document.getElementById('copied').textContent='Select all and copy';});}else{o.select();}});
+})();
+</script>

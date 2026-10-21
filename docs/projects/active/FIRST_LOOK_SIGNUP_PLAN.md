@@ -232,8 +232,9 @@ face, warm (its S1) so marketing and email follow the same rules.
 - **How "first plan choice" is read** (Founding Season ruling (c)). The build reads it as **the first-run choice**:
   while the plan step is still editable, Tournament Plus stays $0 for an organization that holds the comp. A strict
   first-click reading needs a server-side record of that first choice, which is a schema change. Detail is in the
-  archived plan's *As built, Part 2*. This project redraws that step (Ask 4), so the call is due before Stage 3 is
-  built.
+  archived plan's *As built, Part 2*. This project redraws that step (Ask 4), so the call was due before Stage 3 is
+  built. **SETTLED 2026-10-20 (owner): keep the as-built reading** — the owner called it a niche case with a low chance of
+  happening and asked for whatever is easiest, so no schema change; Stage 3 builds on the first-run reading.
 - **The production organization from a sign-up that never confirmed** (one, made 2026-08-29: free plan, no
   tournaments, holds a Founding comp). Whether to clean it up is a separate owner call; the probe is read-only.
 
@@ -292,12 +293,40 @@ face, warm (its S1) so marketing and email follow the same rules.
 | Stage | Covers | Asks | State |
 |---|---|---|---|
 | **1 — One account step** | The rules; the account form at every door (team, league, tournament with the intro folded in, account-only, both Coach Premium steps (R1), the join page, both invitations); step 2 naming; the one check-your-email; the door links (F14) | 1, 2, 3, 5 (join), 6, 10, 12, 13 | **Built 2026-10-20** (1a `f45f7d019`, 1b `df295fdc6`, 1c `658cb84e5`, 1d see *As built, Stage 1*); owner walk §348 |
-| **2 — The wait and the way back** | The verification and password-reset emails on the warm envelope; the Continue page; the expired / invalid link; sign-in (waiting account, wrong password); forgot / reset | 1, 8 | Drawn + ruled 2026-10-19; build prompt written 2026-10-20 (`FIRST_LOOK_STAGE2_BUILD_PROMPT.md`); its eight undrawn states (U1–U8) drawn 2026-10-20, after `/design`, at https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ, **all eight ruled 2026-10-20 as recommended**; **Built 2026-10-20** (2a `d1a5742c2`, 2b `04c0ea1c2`, 2c `5cc4b3227`); owner walk §351 https://claude.ai/artifact/Gw7a23Ud1FRXoGevpHbvr7 |
-| **3 — The first screen inside** | The plan step (two choices, in view); the welcome card with checkout complete folded in; Home's fan line; the pricing buttons' doors (F08) | 4, 5 (checkout), 9 | Drawn + ruled 2026-10-19 |
+| **2 — The wait and the way back** | The verification and password-reset emails on the warm envelope; the Continue page; the expired / invalid link; sign-in (waiting account, wrong password); forgot / reset | 1, 8 | Drawn + ruled 2026-10-19; build prompt written 2026-10-20 (`FIRST_LOOK_STAGE2_BUILD_PROMPT.md`); its eight undrawn states (U1–U8) drawn 2026-10-20, after `/design`, at https://claude.ai/artifact/353241emo2NHrP1m6tPyjQ, **all eight ruled 2026-10-20 as recommended**; **Built 2026-10-20** (2a `d1a5742c2`, 2b `04c0ea1c2`, 2c `5cc4b3227`); owner walk §351 https://claude.ai/artifact/Gw7a23Ud1FRXoGevpHbvr7 **PASSED 2026-10-20** (41 of 42, the call: full ink everywhere); the two emails then lost their beige frame (owed: a fresh email seen in the three mail apps) |
+| **3 — The first screen inside** | The plan step (two choices, in view); the welcome card with checkout complete folded in; Home's fan line; the pricing buttons' doors (F08) | 4, 5 (checkout), 9 | Drawn + ruled 2026-10-19; the "first plan choice" call settled 2026-10-20 (as built); **gate G1–G6 drawn after `/design` at https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj and all six ruled 2026-10-20 as recommended** (see *Stage 3 gate* below); build prompt rewritten 2026-10-20 with the rulings in (`FIRST_LOOK_STAGE3_BUILD_PROMPT.md`); **Built 2026-10-20** (`dc3735034`, 3a–3c in one commit); owner walk §355 https://claude.ai/artifact/BibiAY5Yt5GkutCfpW3WU9 |
 | **4 — Not yet** | The free team's first home (F16: belongs to the free coach portal's tap-target work, `FREE_COACH_TAP_TARGETS_PROMPT.md`, handed there); a league's first season and the club setup kit (neither on sale); the claim link (Ask 7) | 7 | Reported, not drawn; claim link parked (Ask 7) |
 
 The end state of stages 1–3 is drawn on the hub in one round, each changed part tagged with its stage; the build
 order stays in this ladder (Stage 1 first: it sets the shared form every later stage uses).
+
+### Stage 3 gate (ruled 2026-10-20, owner, all as recommended)
+
+Drawn against DEV after the `/design` pass (its ten drawing fixes applied):
+https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj.
+
+- **G1 — the welcome for a paid coach.** Both coaches get the same first line ("Premium is on for {team}"). The
+  Founding sentence shows only when the team **holds the comp, read from its record, not the calendar**. A paid coach
+  gets no second sentence. (Found at the gate: today the welcome decides by the sign-up window, so a coach who
+  qualifies after the close, edge (b), loses the sentence.)
+- **G2 — the wait after paying.** Three cards: *Setting up your portal* ("Payment received. This takes a few
+  seconds.", the one loading line, no button); *Still setting up your portal* after the ~50 s poll ("Payment received.
+  We'll email you a link the moment it's ready, so you can close this page.", lime **Check again**); *We can't find
+  that payment*, shown **at once** when the link carries no payment or one Stripe does not know ("If you've just paid,
+  your portal link is on its way to your email.", lime **Go to Home**). When the portal is ready the card **turns into
+  the paid welcome** (G1) and the waiting line drops "we'll take you straight in". "Open your team" keeps the portal's
+  `?success=1` hand-off.
+- **G3 — the plan step's frame.** Build the drawn page in the admin's bare first-run frame (no top bar, as today).
+  Moving the plan step into the app's frame is a later call. Two up on a laptop is a named exception to rule 1, forced
+  by rule 6 (two up from 900px wide, the 420px column below).
+- **G4 — the pricing pick.** Carry the free Tournament pick from the pricing page too (step 1's sentence says
+  "Tournament (free)", no billing period). The plan step's sub line names the pick ("You picked … on the pricing page.
+  You can change it here, or any time in Plan & billing."). With no pick it keeps the drawn line, and Tournament Plus
+  comes first.
+- **G5 — Tournament Plus without the Founding offer.** The price follows the billing choice; the choice drops "Then";
+  annual carries the pricing page's own savings line.
+- **G6 — League Plus and Club's pricing buttons.** A guard, not a build: a test that fails when a plan other than
+  Tournament or Tournament Plus points its start button at the tournament door. Its own door comes the day it opens.
 
 ## As built, Stage 1 (2026-10-19 → 2026-10-20)
 
@@ -507,6 +536,35 @@ those people, because the account-only sign-up carries their `next`.
   override, else "Sign-in didn't work. Try again in a moment.", never a raw code; the team sign-up's and platform admin's
   own copies are gone. (3) The helpdesk agent's command file quotes the new words. Pinned in
   `tests/unit/sign-in-words-and-no-tell-guard.test.ts`.
+
+## As built, Stage 3 (2026-10-20)
+
+| Part | What | Commit |
+|---|---|---|
+| 3a | The plan step (`PlanStep`: two choices, the pick named, two up from 900px), the free pick carried (G4), one $0 rule (`showsFoundingZero`, G5), the G6 guard | `dc3735034` |
+| 3b | One card (`CoachWelcomeCard`) for the welcome and checkout complete; the comp read from the workspace's record (G1); the three waiting cards and the ready welcome (G2) | `dc3735034` |
+| 3c | A fan's empty Home: the line to /start | `dc3735034` |
+
+One commit for all three, because they share the plan settings, the coach sign-up and the test file. Built after `/marketing` (no change; one point to the owner), `/simplify` and `/review` (four lenses).
+
+**Owner walk:** §355, https://claude.ai/artifact/BibiAY5Yt5GkutCfpW3WU9 (source `FIRST_LOOK_STAGE3_WALK.html`): nine walks of one job each, W4, W5 and W8 staging-only, plus Part C (the "Fees" bullet).
+
+**The pieces a later stage reuses.**
+- `lib/start-door.ts`: `StartPricing` is a union (only a paid pick carries billing); `'tournament'` is a start plan; `withStartPricing()` for every link that carries the pick; `runATournamentPick()` is the one "this door can sell it" test (step 1's callout and the plan step); `RUN_A_TOURNAMENT_STEPS`.
+- `lib/plan-config.ts`: `showsFoundingZero()` (the one $0 rule), `pickedPlanLabel()` ("Tournament (free)" / "…, billed annually"), `formatPlanPeriodPrice()` ("$39/month"), `FOUNDING_SEASON_DECISION_MONTH_NAME`.
+- `lib/founding-season.ts`: `workspaceHoldsFoundingComp()` reads the comp row (`liveFoundingCompRow`, shared with `foundingSeasonOfferOnPlanChoice`) and fails closed.
+- `components/consumer/CoachWelcomeCard.tsx`: `CoachWelcomeCard`, `PremiumWelcome`, `WaitLine`.
+- `/coaches/checkout` is on the warm journey (`WARM_JOURNEY_PREFIXES`) with its own `CoachJourneyChrome` layout.
+- The admin's focused frame names its padding (`--admin-focused-pad`), so a focused page can paint edge to edge.
+
+**Deliberate departures and calls made in the build.**
+- The plan step is its own component rather than the marketing cards (the prompt's recommended build). The change-plan window keeps `PricingSection`, whose unused compact mode was deleted.
+- The waiting line composes LoadingState's dot but is not `<LoadingState>`: that line's label must read "Loading …" for the layout sweep to wait it out, and this is a wait of up to ~50 seconds the sweep should photograph.
+- The coach sign-up routes to the welcome on the server's `comped` answer, not the sign-up window, so edge (b) gets it too.
+- From `/review`: the free choice shows "Starting…" and reports a failure (it did neither); a completed checkout whose money is still clearing waits instead of "can't find"; an id Stripe refuses is "can't find"; step 1 names only picks this door can sell; "Go to Home" opens Home (`/discover`) like the portal's other walls.
+- Noted, not built (all Low): the welcome tells anyone who knows a team's address whether it holds the comp; checkout complete shows the team name to whoever holds the session id; the $0 can show the list price for a moment after the window closes while the offer answer loads; the buttons wake again as Stripe opens (holding them would trap the Back button).
+
+**Owed.** The whole-product layout sweep on staging (the admin stylesheet change widens `--changed` to it; the fixture sessions had expired). Layout entries for the plan step (it needs a fresh tournament-plan organization fixture: an owner call before widening the UAT fixtures), the welcome and checkout complete. The G6 guard reads the code only: a plan opened at runtime by the `plan_gating` table (or the dev cookie / env switch, `lib/plan-gating-server.ts`) is not seen by any unit test; opening one is `/billing`'s release checklist. `/docs`.
 
 ## /design review of the drawings (2026-10-19)
 

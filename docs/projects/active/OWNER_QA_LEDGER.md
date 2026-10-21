@@ -26130,3 +26130,20 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **To record from the walk:** parts 1–5 verdicts and notes, any wording or layout changes, and the owner’s overall pass or issue decision. A paid withdrawn visitor keeps its received fee; issue a separate typed refund for money returned. An unlinked club team is a visitor until linked.
 <!-- /§354 -->
+
+## §355 · The first look · Stage 3, the first screen inside — **a new organizer's plan step is one heading and two choices (Tournament Plus, Tournament) with their pricing-page pick, paid or free, already chosen and named, both buttons in view on a laptop; a Founding Season coach's welcome gives the dates once, read from the team's record; a paid coach waits on the same card in the app's frame and then sees the paid welcome; a checkout page opened without a payment says so at once; a fan's empty Home has one line to start something**
+
+**Built 2026-10-20** to the owner's rulings (Asks 4, 5b and 9 on 2026-10-19; gate G1–G6 on 2026-10-20, all as recommended, drawn after `/design` at https://claude.ai/artifact/CtzAZMhmvnJZQxMTtn5xjj). `/marketing` read every new string (no change made; one wording point brought to the owner as Part C). `/simplify` and `/review` (four lenses) ran before the commit, and their confirmed findings were fixed. Plan `docs/projects/active/FIRST_LOOK_SIGNUP_PLAN.md`, *As built, Stage 3*. Commit `dc3735034` (3a–3c in one).
+
+**The walk:** https://claude.ai/artifact/BibiAY5Yt5GkutCfpW3WU9 (source `docs/projects/active/FIRST_LOOK_STAGE3_WALK.html`). Nine walks of one job each and Part C, 45 steps: W1 picked Tournament Plus annual (with the fold) · W2 picked Tournament (free) · W3 no pick, choosing, Compare every plan, Dark · W4 no Founding offer (staging) · W5 the change-plan window (staging, or a League Plus organization) · W6 a Founding Season coach's welcome · W7 checkout complete with no payment, and the paid card's look · W8 a paid coach through checkout (staging) · W9 a fan's empty Home · Part C the "Fees" bullet.
+
+**Sign in:** W1–W3, W6 and W9 with fresh accounts on http://localhost:3000 (private window); W7 signed out. W4, W5 and W8 on staging; W4 and W8 need the Founding sign-up window closed for the test (while it is open every organization gets $0 and every coach is comped, so neither sees Stripe).
+
+**Writes:** every fresh account and organization the walk makes stays on dev; W3 opens the New tournament window twice (nothing saves until a tournament is created); W8 makes a staging Coach Premium subscription on Stripe's test card.
+
+**Checked beside the walk (2026-10-20):** unit tests (`first-look-stage3.test.ts` new, `account-first-signup.test.ts` re-pinned deliberately, the full suite green); typecheck; `verify:changed` green up to schema parity, which is red on another session's Stage 7a tables (migration 342), not this change. **Not checked:** `check:layout` did not run. The saved fixture sessions had expired, and the admin-stylesheet change widens `--changed` to a whole-product sweep (186 screens), which runs on staging at release. None of these screens has a layout-sweep entry yet. The fold (rule 6) is measured by the owner in W1, not by machine.
+
+**Owed beside the walk:** the whole-product layout sweep on staging; layout entries for the plan step (it needs a fresh tournament-plan organization fixture: an owner call before widening the UAT fixtures), the welcome and checkout complete; `/docs` (no help article quotes these screens; the organization guide may want to say what the first plan choice is).
+
+**To record from the walk:** each walk's verdict and notes, the Part C call, and whether the heading wraps onto two lines on a 358-wide phone.
+<!-- /§355 -->

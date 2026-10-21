@@ -10,7 +10,12 @@ with the same form, heading and "Create account". Coach Premium looks like the o
 sits in the app. The top bar reads in sentence case with a "Get started" menu. Every "Coach a team" leads to Coach
 Premium while the Founding Season runs, the coach demo's button included. An account set to Dark stays dark through
 the whole sign-up. Your walk is §348 (https://claude.ai/artifact/RtyhSgLER7LmhxtvAsFFCC); it ends with four small calls.
-Stages 2 and 3 are drawn and ruled, and they come next.
+Stage 2, *the wait and the way back* (the two emails, sign-in, the Continue page, forgot and reset), is built, and your
+walk §351 passed. Stage 3, *the first screen inside*, is built (2026-10-20). A new organizer's plan step is one heading
+and two choices, with their pricing-page pick (paid or free) already chosen and named. A Founding Season coach's welcome
+gives the dates once, and a paid coach waits on the same card after Stripe. A checkout page opened without a payment
+says so at once, and a fan's empty Home has a line to start something. Your walk is §355
+(https://claude.ai/artifact/BibiAY5Yt5GkutCfpW3WU9); three of its walks need staging. Stage 4 is reported, not drawn.
 
 **Why it matters.** For most customers this is the product. Account-First Sign-up fixed *what* each sign-up asks and
 *when*; the walk shows the *look and shape* are still uneven, and in three places they cost people real effort:

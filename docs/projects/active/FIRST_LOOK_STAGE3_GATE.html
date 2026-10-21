@@ -1,0 +1,415 @@
+<title>First Look Stage 3 Gate</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: one review page in the hub's light review palette; the product specimens in the warm consumer skin at true
+   size (phones 390 × 844, the laptop 1366 × 768 shown at 60%). Deliberately single-theme (light): the specimens ARE
+   the light warm product, so every colour and the body background are set explicitly. */
+:root{
+  --paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;
+  --w-paper:#f6f1ea;--w-ink:#211c15;--w-ink-soft:#4a4235;--w-dim:#665f57;--w-olive:#55641c;--w-olive-soft:rgba(85,100,28,.10);--w-okline:rgba(85,100,28,.32);--w-line:rgba(70,55,30,.16);--w-field:#d9d2c6;--w-field-edge:#b9ae9c;--w-lime-ink:#241e15;--w-place:#8b847b;--w-lime:#d9f99d;--w-amber:#b7791f;
+  --ui:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 var(--ui)}
+button,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+a{color:var(--blue);text-underline-offset:3px}
+.bar{background:#222d1e;color:#fff;padding:14px 24px;display:flex;gap:8px 20px;align-items:baseline;flex-wrap:wrap}
+.bar b{font-size:16px}.bar small{color:#d5dfcc}
+.frame{width:min(1320px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper)}
+main{padding:24px 28px 32px}
+h1{font-size:26px;line-height:1.2;margin:2px 0 8px;text-wrap:balance}
+h2{font-size:20px;line-height:1.25;margin:0 0 6px;text-wrap:balance}
+p{margin:0 0 10px;max-width:80ch}
+.lede{color:var(--muted);font-size:14.5px}
+.eyebrow{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:18px 0 6px}
+.who{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.who h3{margin:0 0 6px;font-size:14.5px}.who p{font-size:14px;margin:0 0 6px}.who p:last-child{margin:0}
+.call{border-top:1px solid var(--line);margin-top:28px;padding-top:22px}
+.callhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.cid{display:inline-block;padding:2px 9px;border-radius:20px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;letter-spacing:.5px}
+.src{font-size:12px;color:var(--muted)}
+.strip{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin:16px 0 4px}
+.fig{margin:0;width:390px;max-width:100%;min-width:0}
+.fig figcaption{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:700;margin:0 0 8px;min-height:24px}
+.fig .arrow{font-size:12.5px;color:var(--muted);margin:10px 4px 0;line-height:1.5}
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;border:1px solid var(--line);font-size:11.5px;letter-spacing:.4px;background:#eeeee9}
+.pill.after{background:var(--lime);border-color:#b9d88c;color:#2b3f12}.pill.new{background:#e3edf2;border-color:#b6cfdb;color:#1d4a5e}
+.ask{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:14px;max-width:880px}
+.ask p{font-size:14px}
+.ask label{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:14px;min-height:44px}
+.ask input[type=radio]{margin-top:4px;flex:none;width:18px;height:18px}
+.ask textarea{width:100%;min-height:58px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13.5px;margin-top:6px;background:#fbfbf8}
+.rec{font-weight:700;color:var(--olive)}
+.note{font-size:13.5px;color:var(--muted);max-width:880px}
+.out{position:sticky;bottom:0;background:#222d1e;color:#fff;padding:12px 24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.out button{min-height:44px;padding:0 16px;border-radius:8px;border:0;background:var(--lime);color:#1c2417;font-weight:800}
+.out span{font-size:13px;color:#d5dfcc}
+.out textarea{flex:1 1 320px;min-height:44px;max-height:120px;border-radius:7px;border:0;padding:8px;font:12px/1.4 var(--mono)}
+
+/* the drawn phone, warm consumer skin */
+.ph{width:390px;max-width:100%;min-height:844px;position:relative;border:1px solid #c9c1b2;border-radius:26px;overflow:hidden;background:var(--w-paper);color:var(--w-ink);font-family:var(--sans)}
+.ph-top{background:#fff;border-bottom:1px solid var(--w-line);padding:14px 16px}
+.wm{font:700 17px/1 var(--mono);letter-spacing:.02em;color:var(--w-ink)}.wm span{color:var(--w-olive)}.wm i{font-style:normal;color:#4b463f}
+.ph-body{padding:16px 16px 90px}
+.ph-bar{position:absolute;left:0;right:0;top:772px;height:72px;display:grid;grid-template-columns:repeat(3,1fr);align-items:center;background:#fff;border-top:1px solid var(--w-line);text-align:center;font:600 10px var(--sans);color:#57524b}
+.ph-bar span{display:flex;flex-direction:column;align-items:center;gap:3px}
+.foldline{position:absolute;left:0;right:0;top:843px;border-top:2px dashed #c0392b}
+.ph.bare .ph-body{padding-top:16px;padding-bottom:24px}
+.ic{flex:none}
+
+/* the column's pieces (AccountForm kit) */
+.nf-title{font:700 32px/1.05 var(--display);text-align:center;margin:4px 0 8px;text-wrap:balance;color:var(--w-ink)}
+.nf-sub{font:400 16px/1.45 var(--sans);color:var(--w-dim);text-align:center;margin:0 auto;max-width:390px}
+.nf-sub strong{color:var(--w-ink);font-weight:600}
+.nf-head{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--w-line)}
+.nf-cta{height:48px;border-radius:10px;background:var(--w-lime);display:flex;align-items:center;justify-content:center;font:700 16px var(--sans);color:var(--w-lime-ink);margin-top:18px}
+.nf-sec{height:48px;border-radius:10px;background:#fff;border:1px solid var(--w-field-edge);display:flex;align-items:center;justify-content:center;font:700 16px var(--sans);color:var(--w-ink);margin-top:12px}
+.nf-link{display:flex;justify-content:center;align-items:center;gap:6px;min-height:44px;font:600 14px var(--sans);color:var(--w-olive)}.nf-foot{border-top:1px solid var(--w-line);margin-top:4px}
+.well{width:56px;height:56px;border-radius:50%;background:var(--w-olive-soft);border:1px solid var(--w-okline);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:var(--w-olive)}
+.well.quiet{color:var(--w-ink-soft);background:rgba(70,55,30,.06);border-color:var(--w-line)}
+.center{text-align:center;padding-top:20px}
+.f-steps{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:nowrap;margin:14px 0 0;font:700 12px var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--w-dim)}
+.f-steps>span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.f-steps .n{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(70,55,30,.08);font-style:normal;font-size:12px;font-weight:800}
+.f-steps .on{color:var(--w-ink)}.f-steps .on .n{background:var(--w-ink);color:var(--w-paper)}
+.f-steps .done .n{background:var(--w-olive);color:#fff}
+.f-steps .rule{flex:0 1 18px;min-width:10px;height:1px;background:var(--w-field)}
+.pc{border:1px solid var(--w-line);border-radius:12px;background:#fff;padding:14px 16px;margin-bottom:12px;display:flex;flex-direction:column}
+.pc.on{border:2px solid var(--w-olive);padding:13px 15px}
+.pc-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pc-name{font:700 16px var(--sans)}.pc-price{font:700 16px var(--sans);white-space:nowrap}
+.pc-was{font:400 14px/1.45 var(--sans);color:var(--w-dim);margin:2px 0 8px}
+.pc ul{margin:0 0 4px;padding-left:18px;font:400 14px/1.45 var(--sans);color:var(--w-ink-soft)}.pc li{margin-bottom:3px}
+.pc .nf-cta,.pc .nf-sec{margin-top:12px;height:48px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px}
+.pc-tag{display:inline-block;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--w-olive);border:1px solid var(--w-okline);border-radius:999px;padding:2px 8px}
+.pc-lbl{display:block;font:600 14px var(--sans);color:var(--w-ink-soft);margin:10px 0 6px}.pc-bill{display:flex;gap:6px}
+.pc-bill span{flex:1;height:44px;border:1px solid var(--w-field-edge);border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font:600 14px var(--sans);color:var(--w-ink-soft);background:#fff}
+.pc-bill span.on{border:2px solid var(--w-olive);color:var(--w-ink)}
+.wait{display:inline-flex;align-items:center;gap:10px;font:400 16px/1.45 var(--sans);color:var(--w-dim);text-align:left;margin-top:4px}.dot{width:8px;height:8px;border-radius:50%;background:var(--w-olive);flex:none;animation:pulse 1.4s ease-in-out infinite}@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+
+/* the drawn laptop */
+.lapbox{width:820px;max-width:100%;overflow:hidden;border:1px solid #c9c1b2;border-radius:10px;background:var(--w-paper);position:relative}
+.lap{width:1366px;height:768px;zoom:.6;font-family:var(--sans);color:var(--w-ink);background:var(--w-paper);overflow:hidden;position:relative}
+.dkwide{width:900px;margin:0 auto;padding:32px 0 0}
+.dkgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.dkgrid .pc{margin-bottom:0}.dkgrid .pc .nf-cta,.dkgrid .pc .nf-sec{margin-top:auto}.dkgrid .pc .pc-bill+.nf-cta{margin-top:12px}.dkgrid .pc ul{margin-bottom:12px}
+.lapfold{position:absolute;left:0;right:0;bottom:0;border-top:2px dashed #c0392b}
+.fig.lapfig{width:820px}
+@media (max-width:640px){main{padding:18px 16px 26px}.frame{width:calc(100% - 16px)}}
+</style>
+
+<div class="bar"><b>The first look · Stage 3 gate</b><small>Before any code · six calls · drawn 2026-10-20 against DEV</small></div>
+<div class="frame"><main>
+
+<div class="eyebrow">Stage 3 · the first screen inside</div>
+<h1>Six calls before the build</h1>
+<p class="lede">The drawings in the hub (End state drawn → S3) are the spec. I checked them against today's code. Three calls were in the build prompt (G1, G2, G6). Three more came out of the code (G3, G4, G5). Each has a recommendation; pick, add a note if you like, then press <b>Copy my answers</b> at the bottom and paste them into the chat.</p>
+
+<div class="summary">
+  <div class="who"><h3>A new organizer</h3><p>After naming their organization they see one heading, “How do you want to start?”, and two short choices: Tournament Plus and Tournament. The plan they picked on the pricing page is already chosen and the screen says so. Both buttons show on a laptop without scrolling, and the chosen one shows on a phone. League Plus and Club are no longer on this screen.</p><p>Founding Season still shows Tournament Plus at $0. Nothing changes about what they're charged.</p></div>
+  <div class="who"><h3>A Premium coach</h3><p><b>Founding Season:</b> the welcome gives the dates once, in one sentence, with one button, “Open your team”. The repeated capitals pill is gone.</p><p><b>Paid:</b> after Stripe they no longer land on a dark marketing page. They see the same card in the app's own frame: “Setting up your portal”, then the welcome, then their team. Neither coach reads a date that isn't true for them.</p></div>
+  <div class="who"><h3>A fan</h3><p>An empty Home now has one quiet line under the empty-state sentence: “Want to run your own? Start a team or a tournament”. It opens the start page. No card, no button. Nothing else on Home changes.</p><p><b>Phone and computer:</b> the same column on both. On a laptop the plan step's two choices sit side by side.</p></div>
+</div>
+
+<!-- G1 -->
+<section class="call" id="g1">
+<div class="callhead"><span class="cid">G1</span><h2>The welcome tells a paid coach only what is true</h2><span class="src">build prompt Q1</span></div>
+<p class="note">Today only a Founding Season coach ever sees the welcome; a paid coach goes from Stripe straight into the portal. Ask 5b puts both on one card, so the drawn Founding sentence would tell a paid coach “Nothing is charged before October 1, 2027”, which is false. The code also showed a second problem. The welcome decides by the <b>calendar</b> (is the sign-up window open?), not by whether this coach holds the comp. After January 1 a coach who still qualifies gets the comp but reads only “Your Premium Coaches Portal is ready.” The fix: the card reads the team's own record.</p>
+<div class="strip">
+  <figure class="fig"><figcaption><span class="pill after">As drawn</span>Founding Season coach</figcaption>
+    <div class="ph"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div>
+      <div class="ph-body"><div class="center">
+        <div class="well"><svg class="ic" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <p class="nf-title">Premium is on for Riverdale Rays U13</p>
+        <p class="nf-sub">Free through September 30, 2027. Nothing is charged before October 1, 2027; in September you'll choose a plan for 2028.</p>
+        <div class="nf-cta" style="margin-top:22px">Open your team</div>
+      </div></div>
+      <div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</span></div><div class="foldline"></div>
+    </div>
+    <p class="arrow">Shown when the team holds the Founding comp, read from the team's record, whatever the date.</p></figure>
+  <figure class="fig"><figcaption><span class="pill new">New</span>Paid coach (card at Stripe)</figcaption>
+    <div class="ph"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div>
+      <div class="ph-body"><div class="center">
+        <div class="well"><svg class="ic" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <p class="nf-title">Premium is on for Riverdale Rays U13</p>
+        <div class="nf-cta" style="margin-top:22px">Open your team</div>
+      </div></div>
+      <div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</span></div><div class="foldline"></div>
+    </div>
+    <p class="arrow">Same first line, no second sentence. The receipt and the welcome email already carry the price; this card is the doorway, not the bill.</p></figure>
+</div>
+<div class="ask" data-ask="G1">
+  <label><input type="radio" name="G1" value="Same first line for both; the Founding sentence only when the team holds the comp (read from its record, not the calendar); a paid coach gets no second sentence"><span>Same first line for both. The Founding sentence shows only when the team holds the comp, read from its record rather than the calendar. A paid coach gets no second sentence. <span class="rec">(recommended)</span></span></label>
+  <label><input type="radio" name="G1" value="Paid coach gets a second sentence too (e.g. the price and renewal date)"><span>A paid coach gets a second sentence too, such as their price and renewal date (I'd draw it first).</span></label>
+  <textarea aria-label="Notes on G1" placeholder="Notes (optional)"></textarea>
+</div>
+</section>
+
+<!-- G2 -->
+<section class="call" id="g2">
+<div class="callhead"><span class="cid">G2</span><h2>The wait after paying has three outcomes, not one</h2><span class="src">build prompt Q2, plus one the code found</span></div>
+<p class="note">The waiting screen checks for about 50 seconds. If the portal isn't ready by then, it stops and offers <b>Check again</b>. The welcome email (sent the moment the portal exists) carries the link, so “we'll email you” is true today. There's also a quiet bug: opening this page <b>without</b> a payment (an old bookmark, a copied link) waits 50 seconds and then says “Your payment went through”. That's false. That case gets its own card, straight away.</p>
+<p class="note">One more thing the drawing says. The waiting line promises “we'll take you straight in”, but Ask 5b says the card <b>turns into the welcome</b>. Both can't be true. I recommend the card turning into the welcome, so a paid coach sees the same “Premium is on” moment as a Founding coach, and dropping “straight in” from the waiting line. The portal's own first-visit summary (“your team came with you”) still shows after “Open your team”, exactly as today.</p>
+<div class="strip">
+  <figure class="fig"><figcaption><span class="pill after">As drawn, one phrase cut</span>Setting up</figcaption>
+    <div class="ph"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div>
+      <div class="ph-body"><div class="center">
+        <p class="nf-title" style="margin-top:56px">Setting up your portal</p>
+        <p class="wait"><span class="dot" aria-hidden="true"></span>Payment received. This takes a few seconds.</p>
+      </div></div>
+      <div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</span></div><div class="foldline"></div>
+    </div>
+    <p class="arrow">The portal's one loading line (a pulsing dot, one sentence), no spinner. No button while it works. When the portal exists, this card becomes the paid welcome in G1.</p></figure>
+  <figure class="fig"><figcaption><span class="pill new">New</span>Still setting up (after ~50 seconds)</figcaption>
+    <div class="ph"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div>
+      <div class="ph-body"><div class="center">
+        <div class="well"><svg class="ic" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <p class="nf-title">Still setting up your portal</p>
+        <p class="nf-sub">Payment received. We'll email you a link the moment it's ready, so you can close this page.</p>
+        <div class="nf-cta" style="margin-top:22px">Check again</div>
+      </div></div>
+      <div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</span></div><div class="foldline"></div>
+    </div>
+    <p class="arrow">Same card, same words as today's message made shorter. The one lime is Check again.</p></figure>
+  <figure class="fig"><figcaption><span class="pill new">New</span>Opened with no payment</figcaption>
+    <div class="ph"><div class="ph-top"><span class="wm">FIELD<span>LOGIC</span><i>HQ</i></span></div>
+      <div class="ph-body"><div class="center">
+        <div class="well quiet"><svg class="ic" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+        <p class="nf-title">We can't find that payment</p>
+        <p class="nf-sub">If you've just paid, your portal link is on its way to your email.</p>
+        <div class="nf-cta" style="margin-top:22px">Go to Home</div>
+      </div></div>
+      <div class="ph-bar"><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Scores</span><span><svg class="ic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</span></div><div class="foldline"></div>
+    </div>
+    <p class="arrow">Shown at once when the link carries no payment, or one Stripe doesn't recognize. One sentence, the way forward beside it (rule 7).</p></figure>
+</div>
+<div class="ask" data-ask="G2">
+  <label><input type="radio" name="G2" value="All three cards as drawn here; when ready the card turns into the paid welcome; the waiting line drops 'we'll take you straight in'"><span>All three cards as drawn here. When the portal is ready the card turns into the paid welcome. The waiting line drops “we'll take you straight in”. <span class="rec">(recommended)</span></span></label>
+  <label><input type="radio" name="G2" value="All three cards, but when ready a paid coach goes straight into the portal as today (keep 'we'll take you straight in'; the paid welcome card is not built)"><span>All three cards, but when ready a paid coach goes straight into the portal as today. Keeps “straight in”; the paid welcome is never seen.</span></label>
+  <textarea aria-label="Notes on G2" placeholder="Notes (optional)"></textarea>
+</div>
+</section>
+
+<!-- G3 -->
+<section class="call" id="g3">
+<div class="callhead"><span class="cid">G3</span><h2>The plan step's frame: the drawing has the app's top bar, the code can't give it one cheaply</h2><span class="src">found in the code</span></div>
+<p class="note">The drawing puts the plan step under the white top bar and phone tabs, like steps 1 and 2. In the code the plan step isn't a sign-up screen. It lives inside the organization's admin area, in its bare “focused” frame: no top bar, no side rail, no tabs. That frame carries on into the next screen, the New tournament window. Giving it the app's bar means moving the plan step to its own address outside the admin. Its links, its return from Stripe and its tests would all move with it. That's a bigger change than a restyle.</p>
+<p class="note">I recommend <b>A</b>. The plan step is the hinge into the admin: everything drawn inside the page is built exactly as drawn (heading, step line, two choices, Compare every plan), and the only difference is that the bar above it is absent, as it is today. Rule 1's list of screens that wear the consumer frame doesn't include the plan step. Both buttons sit higher without the bar, so the fold is easier to meet.</p>
+<div class="strip">
+  <figure class="fig lapfig"><figcaption><span class="pill new">A</span>Laptop 1366 × 768, shown at 60%: the drawn page, admin's bare frame, two up from 900px wide</figcaption>
+    <div class="lapbox"><div class="lap">
+      <div class="dkwide">
+        <div class="nf-head">
+          <p class="nf-title">How do you want to start?</p>
+          <p class="nf-sub">You picked <strong>Tournament Plus, billed annually</strong> on the pricing page. You can change it here, or any time in Plan &amp; billing.</p>
+          <div class="f-steps"><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Account</span><span class="rule"></span><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Organization</span><span class="rule"></span><span class="on"><i class="n">3</i>Plan</span></div>
+        </div>
+        <div class="dkgrid">
+          <div class="pc on"><div class="tags"><span class="pc-tag">Founding Season</span></div>
+            <div class="pc-h"><span class="pc-name">Tournament Plus</span><span class="pc-price">$0</span></div>
+            <p class="pc-was">through September 30, 2027 · normally $39/month</p>
+            <ul><li>Teams register themselves on your site</li><li>Fees, check-in and volunteers</li><li>Schedule generators, your branding, repeat events</li></ul>
+            <span class="pc-lbl">Billing</span><div class="pc-bill"><span>Then $39/month</span><span class="on"><svg class="ic" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Then $390/year</span></div>
+            <div class="nf-cta">Start with Tournament Plus</div></div>
+          <div class="pc"><div class="pc-h"><span class="pc-name">Tournament</span><span class="pc-price">Free</span></div>
+            <p class="pc-was">no time limit</p>
+            <ul><li>You add every team; each coach claims it by email</li><li>Schedule, results and live scores</li><li>1 tournament at a time · 3 staff seats</li></ul>
+            <div class="nf-sec">Start free with Tournament</div></div>
+        </div>
+        <div class="nf-foot"><div class="nf-link">Compare every plan <svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></div></div>
+      </div>
+      <div class="lapfold"></div>
+    </div></div>
+    <p class="arrow">Two up is a named exception to the one 420px column (rule 1), forced by the fold (rule 6): stacked, the second button would sit past 768. Below 900px wide it is the 420px column. I'll measure the fold on the built page, not trust this drawing.</p></figure>
+  <figure class="fig"><figcaption><span class="pill new">A</span>Phone 390 × 844</figcaption>
+    <div class="ph bare">
+      <div class="ph-body">
+        <div class="nf-head" style="text-align:center">
+          <p class="nf-title">How do you want to start?</p>
+          <p class="nf-sub">You picked <strong>Tournament Plus, billed annually</strong> on the pricing page. You can change it here, or any time in Plan &amp; billing.</p>
+          <div class="f-steps"><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Account</span><span class="rule"></span><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Organization</span><span class="rule"></span><span class="on"><i class="n">3</i>Plan</span></div>
+        </div>
+        <div class="pc on"><div class="tags"><span class="pc-tag">Founding Season</span></div>
+          <div class="pc-h"><span class="pc-name">Tournament Plus</span><span class="pc-price">$0</span></div>
+          <p class="pc-was">through September 30, 2027 · normally $39/month</p>
+          <ul><li>Teams register themselves on your site</li><li>Fees, check-in and volunteers</li><li>Schedule generators, your branding, repeat events</li></ul>
+          <span class="pc-lbl">Billing</span><div class="pc-bill"><span>Then $39/month</span><span class="on"><svg class="ic" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Then $390/year</span></div>
+          <div class="nf-cta">Start with Tournament Plus</div></div>
+        <div class="pc"><div class="pc-h"><span class="pc-name">Tournament</span><span class="pc-price">Free</span></div>
+          <p class="pc-was">no time limit</p>
+          <ul><li>You add every team; each coach claims it by email</li><li>Schedule, results and live scores</li><li>1 tournament at a time · 3 staff seats</li></ul>
+          <div class="nf-sec">Start free with Tournament</div></div>
+        <div class="nf-foot"><div class="nf-link">Compare every plan <svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></div></div>
+      </div>
+      <div class="foldline"></div>
+    </div>
+    <p class="arrow">The chosen plan's button well above the fold. No tabs: the admin's first run has none today.</p></figure>
+</div>
+<div class="ask" data-ask="G3">
+  <label><input type="radio" name="G3" value="A: build the drawn page in the admin's bare frame (no top bar, as today); moving the plan step into the app's frame is a later call"><span><b>A.</b> Build the drawn page in the admin's bare frame, with no top bar, as today. Moving it into the app's frame becomes a later call. <span class="rec">(recommended)</span></span></label>
+  <label><input type="radio" name="G3" value="B: as drawn, with the app's top bar and phone tabs (the plan step moves to its own address outside the admin; bigger change, its own commit)"><span><b>B.</b> As drawn, with the app's top bar and phone tabs. The plan step moves to its own address outside the admin: a bigger change, in its own commit.</span></label>
+  <textarea aria-label="Notes on G3" placeholder="Notes (optional)"></textarea>
+</div>
+</section>
+
+<!-- G4 -->
+<section class="call" id="g4">
+<div class="callhead"><span class="cid">G4</span><h2>“Preselected and says so”: the free pick is lost today, and nothing says so yet</h2><span class="src">found in the code</span></div>
+<p class="note">Two gaps against the Ask 4 ruling. <b>(1)</b> The pricing page's “Start free” on Tournament carries no plan. Someone who picked Tournament arrives with Tournament Plus lit up in lime, the opposite of what they picked. Only Tournament Plus carries its pick today. <b>(2)</b> The drawing marks the chosen card but has no words saying it came from the pricing page.</p>
+<p class="note">I recommend carrying the free pick too, and saying so in the sub line, as steps 1 and 2 already do (“You picked Tournament Plus, billed monthly, from the pricing page…”). Step 1's sentence learns to say “Tournament (free)” without a billing period. Today's direct link to Run a tournament, and anyone arriving with no pick, still gets Tournament Plus first, as ruled. The pricing page looks exactly the same; only where its Tournament button leads changes.</p>
+<div class="strip">
+  <figure class="fig"><figcaption><span class="pill new">New</span>Picked Tournament on the pricing page</figcaption>
+    <div class="ph bare">
+      <div class="ph-body">
+        <div class="nf-head" style="text-align:center">
+          <p class="nf-title">How do you want to start?</p>
+          <p class="nf-sub">You picked <strong>Tournament (free)</strong> on the pricing page. You can change it here, or any time in Plan &amp; billing.</p>
+          <div class="f-steps"><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Account</span><span class="rule"></span><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Organization</span><span class="rule"></span><span class="on"><i class="n">3</i>Plan</span></div>
+        </div>
+        <div class="pc on"><div class="pc-h"><span class="pc-name">Tournament</span><span class="pc-price">Free</span></div>
+          <p class="pc-was">no time limit</p>
+          <ul><li>You add every team; each coach claims it by email</li><li>Schedule, results and live scores</li><li>1 tournament at a time · 3 staff seats</li></ul>
+          <div class="nf-cta">Start free with Tournament</div></div>
+        <div class="pc"><div class="tags"><span class="pc-tag">Founding Season</span></div>
+          <div class="pc-h"><span class="pc-name">Tournament Plus</span><span class="pc-price">$0</span></div>
+          <p class="pc-was">through September 30, 2027 · normally $39/month</p>
+          <ul><li>Teams register themselves on your site</li><li>Fees, check-in and volunteers</li><li>Schedule generators, your branding, repeat events</li></ul>
+          <span class="pc-lbl">Billing</span><div class="pc-bill"><span class="on"><svg class="ic" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Then $39/month</span><span>Then $390/year</span></div>
+          <div class="nf-sec">Start with Tournament Plus</div></div>
+        <div class="nf-foot"><div class="nf-link">Compare every plan <svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></div></div>
+      </div>
+      <div class="foldline"></div>
+    </div>
+    <p class="arrow">Their pick comes first and holds the one lime. The other choice stays one short scroll away.</p></figure>
+  <figure class="fig"><figcaption><span class="pill new">New</span>No pricing pick</figcaption>
+    <div class="ph bare">
+      <div class="ph-body">
+        <div class="nf-head" style="text-align:center">
+          <p class="nf-title">How do you want to start?</p>
+          <p class="nf-sub">Riverdale Minor Ball starts on one of these. You can change it any time in Plan &amp; billing.</p>
+          <div class="f-steps"><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Account</span><span class="rule"></span><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Organization</span><span class="rule"></span><span class="on"><i class="n">3</i>Plan</span></div>
+        </div>
+        <div class="pc on"><div class="tags"><span class="pc-tag">Founding Season</span></div>
+          <div class="pc-h"><span class="pc-name">Tournament Plus</span><span class="pc-price">$0</span></div>
+          <p class="pc-was">through September 30, 2027 · normally $39/month</p>
+          <ul><li>Teams register themselves on your site</li><li>Fees, check-in and volunteers</li><li>Schedule generators, your branding, repeat events</li></ul>
+          <span class="pc-lbl">Billing</span><div class="pc-bill"><span class="on"><svg class="ic" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Then $39/month</span><span>Then $390/year</span></div>
+          <div class="nf-cta">Start with Tournament Plus</div></div>
+        <div class="pc"><div class="pc-h"><span class="pc-name">Tournament</span><span class="pc-price">Free</span></div>
+          <p class="pc-was">no time limit</p>
+          <ul><li>You add every team; each coach claims it by email</li><li>Schedule, results and live scores</li><li>1 tournament at a time · 3 staff seats</li></ul>
+          <div class="nf-sec">Start free with Tournament</div></div>
+        <div class="nf-foot"><div class="nf-link">Compare every plan <svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></div></div>
+      </div>
+      <div class="foldline"></div>
+    </div>
+    <p class="arrow">The drawn sub line, kept for this case: there's no pick to name.</p></figure>
+</div>
+<div class="ask" data-ask="G4">
+  <label><input type="radio" name="G4" value="Carry the free Tournament pick from the pricing page (step 1 says 'Tournament (free)'); the plan step's sub line names the pick; no pick keeps the drawn sub line"><span>Carry the free Tournament pick from the pricing page (step 1 says “Tournament (free)”). The plan step's sub line names the pick; with no pick it keeps the drawn line. <span class="rec">(recommended)</span></span></label>
+  <label><input type="radio" name="G4" value="Name the pick in the sub line only for Tournament Plus; leave the pricing page's Tournament button as it is (a free pick arrives with Tournament Plus first)"><span>Name the pick only for Tournament Plus. Leave the pricing page's Tournament button alone; a free pick still arrives with Tournament Plus first.</span></label>
+  <textarea aria-label="Notes on G4" placeholder="Notes (optional)"></textarea>
+</div>
+</section>
+
+<!-- G5 -->
+<section class="call" id="g5">
+<div class="callhead"><span class="cid">G5</span><h2>Tournament Plus without the Founding offer was not drawn</h2><span class="src">found in the code</span></div>
+<p class="note">After the sign-up window closes, an organization without the comp sees the list price. The drawing only shows the $0 card. Without the offer, the price follows the billing choice, and the choice drops its “Then”. Prices come from the plan settings, never typed in.</p>
+<div class="strip">
+  <figure class="fig"><figcaption><span class="pill new">New</span>No Founding offer, annual chosen</figcaption>
+    <div class="ph bare">
+      <div class="ph-body">
+        <div class="nf-head" style="text-align:center">
+          <p class="nf-title">How do you want to start?</p>
+          <p class="nf-sub">You picked <strong>Tournament Plus, billed annually</strong> on the pricing page. You can change it here, or any time in Plan &amp; billing.</p>
+          <div class="f-steps"><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Account</span><span class="rule"></span><span class="done"><i class="n"><svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Organization</span><span class="rule"></span><span class="on"><i class="n">3</i>Plan</span></div>
+        </div>
+        <div class="pc on">
+          <div class="pc-h"><span class="pc-name">Tournament Plus</span><span class="pc-price">$390/year</span></div>
+          <p class="pc-was">Save $78 — 2 months free</p>
+          <ul><li>Teams register themselves on your site</li><li>Fees, check-in and volunteers</li><li>Schedule generators, your branding, repeat events</li></ul>
+          <span class="pc-lbl">Billing</span><div class="pc-bill"><span>$39/month</span><span class="on"><svg class="ic" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> $390/year</span></div>
+          <div class="nf-cta">Start with Tournament Plus</div></div>
+        <div class="pc"><div class="pc-h"><span class="pc-name">Tournament</span><span class="pc-price">Free</span></div>
+          <p class="pc-was">no time limit</p>
+          <ul><li>You add every team; each coach claims it by email</li><li>Schedule, results and live scores</li><li>1 tournament at a time · 3 staff seats</li></ul>
+          <div class="nf-sec">Start free with Tournament</div></div>
+        <div class="nf-foot"><div class="nf-link">Compare every plan <svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></div></div>
+      </div>
+      <div class="foldline"></div>
+    </div>
+    <p class="arrow">The small line under the price is the pricing page's own words for annual (“Save $78 — 2 months free”); monthly shows nothing extra.</p></figure>
+</div>
+<div class="ask" data-ask="G5">
+  <label><input type="radio" name="G5" value="As drawn here: price follows the billing choice, 'Then' drops, annual carries the pricing page savings line"><span>As drawn here: the price follows the billing choice, “Then” drops, and annual carries the pricing page's “Save $78 — 2 months free”. <span class="rec">(recommended)</span></span></label>
+  <label><input type="radio" name="G5" value="Other (see note)"><span>Something else (say in the note).</span></label>
+  <textarea aria-label="Notes on G5" placeholder="Notes (optional)"></textarea>
+</div>
+</section>
+
+<!-- G6 -->
+<section class="call" id="g6">
+<div class="callhead"><span class="cid">G6</span><h2>League Plus and Club's pricing buttons: a guard, not a build</h2><span class="src">build prompt Q3</span></div>
+<p class="note">The plan says every organization plan's pricing button points at the old sign-up. That stopped being true in Stage 1. All of them now point at Run a tournament, and nothing is wrong today because League Plus and Club have no start button while they aren't on sale. The risk is the day one of them opens: its button would make a tournament organization. Instead of building a door nobody can use yet, I'd add a check that fails the build if a plan that isn't on sale starts sending people to the tournament door. When League Plus opens it gets its own door, as ruled.</p>
+<div class="ask" data-ask="G6">
+  <label><input type="radio" name="G6" value="A guard test, no build: fails when a plan other than Tournament / Tournament Plus starts pointing its button at the tournament door"><span>A guard check, no build: it fails when a plan other than Tournament or Tournament Plus starts pointing its button at the tournament door. <span class="rec">(recommended)</span></span></label>
+  <label><input type="radio" name="G6" value="Build the League Plus and Club doors now"><span>Build the League Plus and Club doors now (not this stage, per the ruling).</span></label>
+  <textarea aria-label="Notes on G6" placeholder="Notes (optional)"></textarea>
+</div>
+</section>
+
+<section class="call">
+<div class="callhead"><h2>Design review, already applied to these drawings</h2></div>
+<p class="note">The review pass ran before you saw this page. These are proposals until you rule the calls above. The small price line and fine print are now 14px, the first run's fine-print size, not 12px. The billing choice has a visible “Billing” label and a drawn check mark, as the built two-option control does. The phone tabs now match the built bar (taller, sentence case, real icons). “Compare every plan” sits in the column's foot row with a drawn icon, not a typed arrow. The waiting card uses the portal's one loading line (a pulsing dot and a sentence) in place of a spinner. The “can't find” card uses the same quiet ring as the others, because amber is only ever a notice's edge. Spacing and colours now match the built column. The laptop's two-up layout is named as an exception to the one-column rule, forced by the fold rule.</p>
+<p class="note"><b>Measured on the built page, not here:</b> whether the heading wraps to two lines on a phone, the real fold positions, every screen in Dark, and that the admin's bare frame picks up the warm colours.</p>
+</section>
+
+<section class="call">
+<div class="callhead"><h2>Kept exactly as they are</h2></div>
+<p class="note">The pricing page and the marketing home: the same cards, the same look. The plan step gets its own two short rows instead of reusing the big marketing cards. That means nothing on the pricing page can change by accident, and the $0 rule stays one rule shared by both. The “change plan” window inside the admin keeps the full pricing cards, its close and its “Continue free”. It only opens for a League Plus organization today. The Founding Season rule for who sees $0 is untouched (settled 2026-10-20). Home's waiting-team card, the locked start door, the Founding door and every Account-First guard stay as built.</p>
+</section>
+
+</main>
+<div class="out">
+  <button type="button" id="copy">Copy my answers</button>
+  <span id="msg">Then paste them into the chat.</span>
+  <textarea id="answers" aria-label="Your answers" readonly></textarea>
+</div>
+</div>
+
+<script>
+(function () {
+  var asks = Array.prototype.slice.call(document.querySelectorAll('.ask[data-ask]'));
+  var out = document.getElementById('answers');
+  var msg = document.getElementById('msg');
+  function build() {
+    var lines = ['Stage 3 gate answers'];
+    asks.forEach(function (a) {
+      var id = a.getAttribute('data-ask');
+      var picked = a.querySelector('input[type=radio]:checked');
+      var note = a.querySelector('textarea').value.trim();
+      lines.push(id + ': ' + (picked ? picked.value : '(no pick)') + (note ? ' | Note: ' + note : ''));
+    });
+    return lines.join('\n');
+  }
+  function refresh() { out.value = build(); }
+  document.addEventListener('change', refresh);
+  document.addEventListener('input', refresh);
+  refresh();
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = build();
+    out.value = text;
+    try {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = 'Copied. Paste into the chat.'; },
+        function () { out.select(); msg.textContent = 'Select-all is on: copy the box, then paste into the chat.'; });
+    } catch (e) { out.select(); msg.textContent = 'Select-all is on: copy the box, then paste into the chat.'; }
+  });
+})();
+</script>
