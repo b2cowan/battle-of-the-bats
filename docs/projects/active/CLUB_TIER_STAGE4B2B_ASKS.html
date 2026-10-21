@@ -1,0 +1,207 @@
+<title>Stage 4b-2b asks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: a short ask sheet. Undrawn states as true-size phone specimens (390 px), then the edge rulings as a table. */
+:root{--bg:#F3F4F1;--fg:#1D211C;--muted:#5A6157;--line:#D9DCD4;--panel:#FFFFFF;--accent:#2F5D3A;--rec:#E4EFE5;
+  --f-ui:'Public Sans',system-ui,sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151815;--fg:#E7EAE3;--muted:#A3AA9F;--line:#2F352E;--panel:#1D211C;--accent:#8FC79B;--rec:#22362A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151815;--fg:#E7EAE3;--muted:#A3AA9F;--line:#2F352E;--panel:#1D211C;--accent:#8FC79B;--rec:#22362A;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--f-ui)}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+h1{font:700 26px/1.2 var(--f-ui);margin:0;text-wrap:balance}
+h2{font:700 19px/1.3 var(--f-ui);margin:0 0 8px;text-wrap:balance}
+.lede{color:var(--muted);max-width:70ch;margin:6px 0 0}
+.ask{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.ask .tag{font:700 12px/1 var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ask p{margin:0;max-width:72ch}
+.frames{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.fr{display:flex;flex-direction:column;gap:8px;width:390px;max-width:100%}
+.fr .cap{font-size:13px;color:var(--muted);max-width:390px}
+.fr .lbl{font:700 13px/1.2 var(--f-ui)}
+.rec{background:var(--rec);border-radius:8px;padding:10px 12px;font-size:14px}
+.rec b{font-weight:700}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-top:1px solid var(--line)}
+th{font:700 12px/1.2 var(--f-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-top:0}
+td:first-child{font-weight:700;white-space:nowrap}
+.pending{font-size:13px;color:var(--muted)}
+
+/* ══ The club's public site specimens: fixed light, copied from CLUB_TIER_STAGE4_DRAWINGS.html (Lakeshore Lynx). ══ */
+.cs{--g-bg:#F6F5F2;--g-card:#FFFFFF;--g-ink:#1F1B16;--g-soft:#4E473D;--g-dim:#6F675B;--g-line:#E4E0D8;--g-line2:#D6D0C4;--g-field:#948B7D;
+  --ok:#2C6A2A;--ok-tint:#E6F0E2;--c-fill:#1F3A5F;--c-on:#FFFFFF;--c-ink:#1F3A5F;--c-edge:#1F3A5F;--c-accent:#E8B33A;
+  --c-title:'Barlow Condensed','Arial Narrow',sans-serif;--c-body:'Inter',system-ui,sans-serif;
+  background:var(--g-bg);color:var(--g-ink);font:14px/1.5 var(--c-body);border:1px solid var(--line);border-radius:12px;overflow:hidden;width:390px;max-width:100%}
+.cs *{box-sizing:border-box}
+.cs .hd{background:var(--c-fill);color:var(--c-on);display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;min-height:72px;border-bottom:3px solid var(--c-accent)}
+.cs .logo{width:44px;height:44px;border-radius:10px;flex:none;display:grid;place-items:center;font:700 16px/1 var(--c-title);background:#E8B33A;color:#1F3A5F}
+.cs .club{font:700 20px/1.1 var(--c-title);min-width:0}
+.cs .club small{display:block;font:500 12px/1.3 var(--c-body);opacity:.88;margin-top:3px}
+.cs .signin{margin-left:auto;font:600 14px/1 var(--c-body);min-height:44px;padding:0 10px;display:flex;align-items:center}
+.cs .nav{background:var(--g-card);border-bottom:1px solid var(--g-line);display:flex;gap:4px;padding:0 8px;overflow:hidden}
+.cs .nav span{font:600 14px/1 var(--c-body);color:var(--g-soft);padding:15px 8px 12px;border-bottom:3px solid transparent;white-space:nowrap}
+.cs .nav span.on{color:var(--g-ink);border-bottom-color:var(--c-ink)}
+.cs .bd{padding:16px 16px 24px;display:flex;flex-direction:column;gap:20px}
+.cs .back{display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--c-body);color:var(--c-ink);min-height:44px;margin:-6px 0 -10px}
+.cs .back::before{content:'';width:8px;height:8px;border:solid currentColor;border-width:0 0 2px 2px;transform:rotate(45deg);margin-left:3px}
+.cs .ptitle{border-top:1px solid var(--g-line);padding-top:12px;display:flex;flex-direction:column;align-items:flex-start}
+.cs .ptitle.first{border-top:0;padding-top:0}
+.cs .ptitle .meta{margin-top:6px}
+.cs .ptitle .chip{margin-top:10px}
+.cs .ptitle h1{font:700 32px/1.05 var(--c-title);margin:0;color:var(--g-ink)}
+.cs .ptitle .meta{color:var(--g-soft);font-size:14px}
+.cs .chip{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--c-body);border-radius:20px;padding:6px 10px;white-space:nowrap}
+.cs .chip.wait{background:var(--g-bg);color:var(--g-soft);border:1px solid var(--g-line2)}
+.cs .sec-h{font:700 16px/1.25 var(--c-body);margin:0 0 -6px}
+.cs .card{background:var(--g-card);border:1px solid var(--g-line);border-radius:8px}
+.cs .ev{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--g-line);min-height:60px}
+.cs .card>.ev:first-child{border-top:0}
+.cs .ev .dc{font-size:14px;line-height:1.35;color:var(--g-dim);font-variant-numeric:tabular-nums}
+.cs .ev .t{font:600 16px/1.3 var(--c-body)}
+.cs .ev .w{font-size:12px;color:var(--g-dim);margin-top:2px}
+.cs .btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;font:650 16px/1 var(--c-body);background:var(--g-card);color:var(--g-ink);border:1px solid var(--g-field)}
+.cs .btn.full{width:100%}
+.cs .btn.sm{padding:0 12px;font-size:14px}
+.cs p{margin:0;color:var(--g-soft)}
+.cs .contact{display:flex;flex-direction:column;gap:4px}
+.cs .contact .m{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cs .contact b{font:600 16px/1.3 var(--c-body);color:var(--g-ink)}
+.cs .copy{font:600 14px/1 var(--c-body);min-height:44px;padding:0 14px;border-radius:8px;border:1px solid currentColor;display:inline-flex;align-items:center;color:var(--g-ink)}
+.cs .stcard{background:var(--g-card);border:1px solid var(--g-line);border-radius:8px}
+.cs .stcard>div{padding:14px 16px}
+.cs .stcard>div+div{border-top:1px solid var(--g-line);padding-top:12px}
+.cs .dir{width:44px;height:44px;display:grid;place-items:center;color:var(--c-ink)}
+.cs .dir svg{width:22px;height:22px}
+.cs .ft small{display:block;font:500 12px/1.3 var(--c-body);opacity:.85;margin-top:4px}
+.cs .ft{background:var(--c-fill);color:var(--c-on);padding:16px;font:700 18px/1.1 var(--c-title);border-top:3px solid var(--c-accent)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Club Tier Stage 4b-2b: three asks before the build</h1>
+    <p class="lede">Tryout season on a club's public site. The ruled drawings settle most of it. These are the pieces they leave open. Each has a recommendation. Reply "as recommended", or name the ones you'd change. The wording on these frames is a draft until it goes through /marketing, before any code.</p>
+  </header>
+
+  <section class="ask" id="a1">
+    <span class="tag">Ask 1 · not drawn</span>
+    <h2>The club Tryouts address, outside tryout season</h2>
+    <p>The Tryouts tab leaves by itself four weeks after a club's last tryout day. The address stays live all year, because last September's social posts still point at it. The drawings say it "says when the club's last tryouts were" but never draw it.</p>
+    <div class="frames">
+      <div class="fr">
+        <span class="lbl">A · the club has run tryouts before</span>
+        <div class="cs">
+          <div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="signin">Sign in</span></div>
+          <div class="nav"><span>Home</span><span>Teams</span><span>House league</span></div>
+          <div class="bd">
+            <div class="ptitle first"><h1>Tryouts</h1></div>
+            <div class="stcard"><div><p>The club’s last tryouts finished on Sun, Sep 13, 2026.</p></div><div><div class="contact"><p>Questions? Email the club</p><div class="m"><b>info@lakeshorelynx.ca</b><span class="copy">Copy</span></div></div></div></div>
+          </div>
+          <div class="ft">Lakeshore Lynx</div>
+        </div>
+        <span class="cap">No Tryouts tab, and no tab lit. No chip, because the page has no single team’s state to name. The year is written because the date can be many months old. The card is the finished tryout page’s card. There is no "See all teams" button: the tab row is already the way on. Footer shortened in this drawing; the real page carries the full club footer.</span>
+      </div>
+      <div class="fr">
+        <span class="lbl">B · the club has never posted a tryout</span>
+        <div class="cs">
+          <div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="signin">Sign in</span></div>
+          <div class="nav"><span>Home</span><span>Teams</span><span>House league</span></div>
+          <div class="bd">
+            <div class="ptitle first"><h1>Tryouts</h1></div>
+            <div class="stcard"><div><p>No tryouts are posted right now.</p></div><div><div class="contact"><p>Questions? Email the club</p><div class="m"><b>info@lakeshorelynx.ca</b><span class="copy">Copy</span></div></div></div></div>
+          </div>
+          <div class="ft">Lakeshore Lynx</div>
+        </div>
+        <span class="cap">The same page with a plainer sentence. A typed or guessed address finds a real page in the club's own frame, not a "not found". Footer shortened in this drawing.</span>
+      </div>
+    </div>
+    <div class="rec"><b>Recommended: A and B as drawn.</b> The page is never empty, and the tab row and the contact mean it is never a dead end. It also never shows last year's teams as if they were open. The other option is to send the address to the club's home once the tab leaves. That's simpler, but a family following an old post would never learn the tryouts are over.</div>
+  </section>
+
+  <section class="ask" id="a2">
+    <span class="tag">Ask 2 · not drawn</span>
+    <h2>A team's tryout page while it is "Not open yet"</h2>
+    <p>The drawings give a tryout page three states: open, closed and finished. The Tryouts page has a fourth, "Not open yet": the coach has entered tryout days but hasn't opened sign-ups. A family who taps that row needs a page, and no frame draws it.</p>
+    <div class="frames">
+      <div class="fr">
+        <span class="lbl">Not open yet</span>
+        <div class="cs">
+          <div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep baseball · ages 9 to 16</small></span><span class="signin">Sign in</span></div>
+          <div class="nav"><span>Home</span><span class="on">Teams</span><span>Tryouts</span><span>House league</span></div>
+          <div class="bd">
+            <span class="back">15U AA</span>
+            <div class="ptitle"><h1>15U AA tryouts</h1><span class="meta">For the 2027 season</span><span class="chip wait">Not open yet</span></div>
+            <h2 class="sec-h">Tryout days</h2>
+            <div class="card">
+              <div class="ev"><span class="dc">Sat, Nov 14</span><span><span class="t" style="display:block">9:00–11:00 a.m.</span><span class="w" style="display:block">Lakeshore Dome · Field 2</span></span><span class="dir" aria-label="Directions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span></div>
+              <div class="ev"><span class="dc">Sun, Nov 15</span><span><span class="t" style="display:block">1:00–3:00 p.m.</span><span class="w" style="display:block">Lakeshore Dome · Field 2</span></span><span class="dir" aria-label="Directions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span></div>
+            </div>
+            <div class="stcard"><div><p>Sign-ups for 15U AA tryouts aren’t open yet.</p></div><div><div class="contact"><p>Questions? Email the club</p><div class="m"><b>info@lakeshorelynx.ca</b><span class="copy">Copy</span></div></div></div></div>
+            <span class="btn full">See the team</span>
+          </div>
+          <div class="ft">Lakeshore Lynx</div>
+        </div>
+        <span class="cap">The ruled closed frame, whole, with the open frame's Tryout days inserted under the chip. No sign-up button. Teams is the lit tab, as on every tryout page. Directions is the bare symbol on a phone (today's standing ruling) and keeps its word at a desk, the same control the team page already uses. Footer shortened in this drawing.</span>
+      </div>
+    </div>
+    <div class="rec"><b>Recommended: as drawn.</b> The days are the reason a family came, so the page shows them even before sign-ups open. The other option is to show the plain closed page, but then the Tryouts page promises dates that this page hides.</div>
+  </section>
+
+  <section class="ask" id="a3">
+    <span class="tag">Ask 3 · the edges of the three states</span>
+    <h2>Where open, not open yet and finished meet</h2>
+    <p>One rule decides a team's state, and every surface reads it: the Tryouts page, the tab, the tryout page, the home and the team page. That means no two surfaces can disagree. The drawings settle the middle cases. These are the edges.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Case</th><th>Recommended</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Sign-ups open, every day has passed</td><td><b>Tryouts open.</b> The days list drops past days, so it shows none.</td><td>The coach's switch is what the sign-up form obeys. Calling it "Finished" while the form still takes sign-ups would make the page lie one way or the other. Making "Finished" win would mean changing the sign-up path, which this stage doesn't touch.</td></tr>
+          <tr><td>Sign-ups open, no days entered</td><td><b>Tryouts open</b>, with no Tryout days section. Listed on the Tryouts page with "For the 2027 season" in place of a first day.</td><td>That's how every open tryout looks today, so nothing gets worse.</td></tr>
+          <tr><td>Sign-ups closed, days ahead</td><td><b>Not open yet</b> (Ask 2's page).</td><td>As ruled.</td></tr>
+          <tr><td>Sign-ups closed, last day passed</td><td><b>Finished</b>, on the tryout page for the rest of that season. Shown on the Tryouts page and keeping the tab for four weeks after the last day.</td><td>As ruled. The tryout page doesn't expire, because the finished sentence stays true.</td></tr>
+          <tr><td>Sign-ups closed, no days (or every day cancelled)</td><td><b>Tryouts closed</b> (today's page). Not on the Tryouts page.</td><td>There's nothing to announce and no date to say "finished" on.</td></tr>
+          <tr><td>A cancelled day</td><td>Left out everywhere: the list, the first day, the count, the band dates and "finished on".</td><td>As ruled (S4-04).</td></tr>
+          <tr><td>When a day counts as "passed"</td><td>From the next day, in the club's time zone. On the morning of the last day, that day still shows.</td><td>A parent checking the address in the car on the last day still sees where to go.</td></tr>
+          <tr><td>Home, Open now</td><td>Two or more teams open or not open yet → <b>one</b> "2027 tryouts" row. Exactly one team open → that team's row with its days line. One team not open yet and none open → nothing on the home (the tab still shows).</td><td>Round 2 lets the single row carry not-open-yet teams, so that's followed. A lone not-open-yet team isn't "open now".</td></tr>
+          <tr><td>Page title</td><td>All listed teams share one season → "2027 tryouts". Mixed seasons → "Tryouts". The sub names the club's own groups ("Senior and Junior teams for the 2027 season").</td><td>The title never names a year it can't stand behind.</td></tr>
+          <tr><td>A band's dates ("Rep · Sep 7–9")</td><td>The earliest to the latest tryout day in that band. A band with no days shows its name only.</td><td>That's the window a family plans around.</td></tr>
+          <tr><td>The days line's place ("Three days from Sun, Nov 2 · Lakeshore Dome")</td><td>The place is shown only when every remaining day is at the same place. Otherwise the line stops at the date.</td><td>Naming one venue when the days are split sends someone to the wrong park.</td></tr>
+          <tr><td>The team page, not open yet or finished</td><td><b>Unchanged.</b> It keeps today's quiet "isn't taking tryout sign-ups right now" section. Only the open door gains a days line.</td><td>The prompt limits the year-round pages to the days lines. The Tryouts page carries the other states.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="rec"><b>Recommended: every row as written.</b></div>
+  </section>
+
+  <section class="ask" id="a4">
+    <span class="tag">Ask 4 · the fixture</span>
+    <h2>Seed tryout days on the test club</h2>
+    <p>The walk needs a team that's open with days, one not open yet, one finished, and a cancelled day. The test club has none of these. Today only 15U AAA is open, and no team has days.</p>
+    <div class="rec"><b>Recommended:</b> in the test club's seed (dev only, never production):
+      <ul style="margin:6px 0 0;padding-left:20px">
+        <li>15U AAA stays open, gains three days starting 10 days out, and one cancelled day.</li>
+        <li>13U AAA gets two days 3 weeks out with sign-ups closed (not open yet).</li>
+        <li>14U AA gets two days 10 days ago with sign-ups closed (finished).</li>
+      </ul>
+      The dates are worked out from the day the seed runs, so the fixture never goes stale. That covers both groups, so the Tryouts page shows two bands and the home shows the single row. I won't seed during a sweep.</div>
+  </section>
+
+  <section class="ask" id="a5">
+    <span class="tag">Things I'm settling myself unless you object</span>
+    <h2>Smaller calls</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Call</th><th>What I'll do</th></tr></thead>
+        <tbody>
+          <tr><td>The card's badge</td><td>"Tryouts open", as drawn (the product's word), over the note's "Sign-ups open". It follows the state: "Not open yet", "Finished", "Tryouts closed".</td></tr>
+          <tr><td>The team card's description</td><td>Goes to /marketing (drawn "The team's schedule and tryouts." against the note's about-text).</td></tr>
+          <tr><td>The club's logo as a link preview</td><td>Today a club with a logo shares its bare logo. After this, it shares the generated card, which carries that logo. A club whose site is off shares a plain FieldLogicHQ card, never its name. That's the same rule its pages already follow.</td></tr>
+          <tr><td>The address</td><td>/{club}/tryouts. Checked: no tournament in either database uses "tryouts" as its address, so the new page hides nothing.</td></tr>
+          <tr><td>The open tryout page vs. its older drawing</td><td>Built to today's rulings where they are newer than the drawing: on a phone Directions is the bare symbol, the contact sits on its own line with the bordered Copy, and sections stand 20 px apart.</td></tr>
+          <tr><td>The sitemap</td><td>Adds the Teams page, each listed team, each open tryout, and the Tryouts page while it has a tryout to show. Each team is described to search engines as a sports team of the club, with no players.</td></tr>
+          <tr><td>The sign-up form</td><td>Already done in 4b-1: 44 px fields, asterisks, the device's date picker, the club-colour button, and the email box unchecked. One exception: the button still reads "Submit tryout application" while the drawing's door reads "Sign up for tryouts". I'll leave the form's button alone unless /marketing says otherwise.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -25,18 +25,22 @@ const SENTENCE_MIN = 24;
  * (S4-02), and never a generic "teams, tryouts and house league", which would be false for a club without one.
  */
 export function clubDescription(content: Pick<OrgPublicSiteContent, 'tagline' | 'description'> | null, clubName: string): string {
-  const tagline = content?.tagline?.trim();
-  if (tagline) return tagline;
-  const description = content?.description?.trim().replace(/\s+/g, ' ');
-  if (description) {
-    // The first sentence end at least SENTENCE_MIN in: "St." and "Est. 1998" are abbreviations, not a sentence.
-    const end = [...description.matchAll(/[.!?](?=\s|$)/g)].find(m => m.index + 1 >= SENTENCE_MIN);
-    const sentence = end ? description.slice(0, end.index + 1) : description;
-    if (sentence.length <= DESCRIPTION_MAX) return sentence;
-    const cut = sentence.slice(0, DESCRIPTION_MAX - 1);
-    return `${cut.slice(0, cut.lastIndexOf(' ') > 0 ? cut.lastIndexOf(' ') : cut.length)}…`;
-  }
-  return clubName;
+  return content?.tagline?.trim() || firstSentence(content?.description) || clubName;
+}
+
+/**
+ * The first sentence of a written text, cut at a word when it runs past what a search result shows; null when nothing
+ * is written. The club's description and a team's about text both describe their page this way (Stage 4b-2b).
+ */
+export function firstSentence(text: string | null | undefined): string | null {
+  const description = text?.trim().replace(/\s+/g, ' ');
+  if (!description) return null;
+  // The first sentence end at least SENTENCE_MIN in: "St." and "Est. 1998" are abbreviations, not a sentence.
+  const end = [...description.matchAll(/[.!?](?=\s|$)/g)].find(m => m.index + 1 >= SENTENCE_MIN);
+  const sentence = end ? description.slice(0, end.index + 1) : description;
+  if (sentence.length <= DESCRIPTION_MAX) return sentence;
+  const cut = sentence.slice(0, DESCRIPTION_MAX - 1);
+  return `${cut.slice(0, cut.lastIndexOf(' ') > 0 ? cut.lastIndexOf(' ') : cut.length)}…`;
 }
 
 /** Up to two initials for the logo tile of a club with no logo: "Lakeshore Lynx" → "LL", "Harbourview" → "H". */

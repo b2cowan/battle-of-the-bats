@@ -26147,3 +26147,20 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **To record from the walk:** each walk's verdict and notes, the Part C call, and whether the heading wraps onto two lines on a 358-wide phone.
 <!-- /§355 -->
+
+## §356 · Club Tier · Stage 4b-2b, tryout season — **a club's Tryouts page lists every team's tryout under the club's groups, each open, not open yet or finished by itself; the Tryouts tab comes and goes with the season; a tryout page lists the coach's tryout days with Directions; the home shows one tryouts row when several teams are involved; a shared link shows a card in the club's colours, never a player; the sitemap finds the club's teams**
+
+**Built 2026-10-20** to the drawings (ruled 2026-10-19) and the asks page ruled the same day, all as recommended (https://claude.ai/artifact/X37UZWEfxRWt5JqqTp5ia1). Words through `/marketing`; `/design` on the asks and on the built screens; `/simplify`; `/review` high-risk; `/docs`. Plan: CLUB_TIER_PRODUCTION_READINESS_PLAN.md §6 Stage 4, "4b-2b BUILT".
+
+**The walk:** https://claude.ai/artifact/4eudnWvaqcofFtj3n6x7Mj (source `docs/projects/active/CLUB_TIER_STAGE4B2B_WALK.html`). Ten parts, one purpose: the Tryouts page, an open tryout and its days, not open yet, finished and closed, the home and the team page, the pinned phone tab row with Tryouts in it, out of season, the share cards, search engines, and what must not change. Five calls (c1 the open pages' contact line, c2 sign-up vs application words, c3 telling the coach their days are public, c4 the card's title weight, c5 the Tryouts page's width at a desk).
+
+**Sign in:** signed out on http://localhost:3000 (dev server restarted for the walk), except Part 7 (`uat-club-owner@uat-rep-club.local`). The tryout states live on `/uat-rep-only`, seeded from the day the seed runs (`seed-club-fixture.mjs --rep-only-club`, rebuilt 2026-10-20).
+
+**Writes:** Part 7 closes and re-opens 15U AAA's sign-ups on UAT Rep Club.
+
+**Checked beside the walk (2026-10-20):** unit tests (`club-stage4b2b.test.ts`, red run first; `club-stage4b2b-guard.test.ts`; the full suite green); typecheck; `verify:changed` green up to schema parity, which is red on another session's Stage 7a tables; `check:layout` on the five new `club-tryout*` screens and the changed home and team page at every width, no new findings (one tap-floor finding on the contact address fixed).
+
+**Owed beside the walk:** a shared link checked in a real chat app or a preview tool (needs staging); the whole-product layout sweep on staging.
+
+**To record from the walk:** each part's verdict and notes, the five calls.
+<!-- /§356 -->

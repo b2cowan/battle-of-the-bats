@@ -5,6 +5,10 @@ import { provinceName, isProvinceCode } from '@/lib/canadian-provinces';
 import { tournamentToday } from '@/lib/timezone';
 import { isOrgHomeRealDestination } from '@/lib/module-entitlements';
 import type { Organization } from '@/lib/types';
+import { clubTeamsAddress } from '@/lib/public-club-access';
+import { readTryoutsForClubs } from '@/lib/club-tryouts';
+import { clubSitemapPaths } from '@/lib/club-share';
+import { isListedTryout } from '@/lib/tryout-season';
 
 // Shared data layer for the public tournament discovery directory (/discover).
 // Called by BOTH the public API route (client-driven filtering/pagination) and the
@@ -479,6 +483,70 @@ export async function getOrgSitemapEntries(): Promise<{ href: string }[]> {
   return usable
     .filter(o => isOrgHomeRealDestination(entitlementOf(o), activeByOrg.get(o.id) ?? 0))
     .map(o => ({ href: `/${o.slug}` }));
+}
+
+/**
+ * A club's own pages beyond its home (Club Tier Stage 4b-2b, Ask 7A, F02): its Teams page and each listed team, each open
+ * tryout, and its Tryouts page while it has a tryout to show — for every org the home scan would list whose plan carries
+ * the Teams page (`clubTeamsAddress`, the page's own question). The clubs' tryouts are read in batches, never one set of
+ * reads per club, and decided by the same rule the Tryouts page uses, so the sitemap and the pages cannot disagree.
+ */
+export async function getClubPageSitemapEntries(): Promise<{ href: string }[]> {
+  const { data: orgRows, error } = await scopeFollowableOrgs(
+    supabaseAdmin
+      .from('organizations')
+      .select('id, slug, is_public, plan_id, subscription_status, enabled_addons, free_floor, account_kind'),
+  ).limit(SCAN_CEILING);
+  if (error) throw error;
+  const clubs = (orgRows ?? []).filter(o => {
+    try {
+      return clubTeamsAddress({
+        isPublic: o.is_public === true,
+        planId: o.plan_id,
+        subscriptionStatus: o.subscription_status,
+        enabledAddons: o.enabled_addons ?? [],
+        freeFloor: o.free_floor ?? null,
+        accountKind: o.account_kind,
+      } as Parameters<typeof clubTeamsAddress>[0]) === 'teams-page';
+    } catch {
+      return false;
+    }
+  });
+  if (!clubs.length) return [];
+
+  // In slices (an `.in()` list is a URL), each read to its end (the database answers at most 1000 rows at a time).
+  const teamRows: { org_id: string; slug: string; name: string }[] = [];
+  for (let i = 0; i < clubs.length; i += 100) {
+    const ids = clubs.slice(i, i + 100).map(o => o.id);
+    for (let from = 0; ; from += 1000) {
+      const { data, error: teamErr } = await supabaseAdmin
+        .from('rep_teams')
+        .select('org_id, slug, name')
+        .in('org_id', ids)
+        .eq('is_archived', false)
+        .order('id')
+        .range(from, from + 999);
+      if (teamErr) throw teamErr;
+      teamRows.push(...(data ?? []));
+      if ((data ?? []).length < 1000) break;
+    }
+  }
+
+  const today = tournamentToday();
+  const tryoutsByClub = await readTryoutsForClubs(clubs.map(o => o.id), today);
+  const teamsByClub = new Map<string, { slug: string; name: string }[]>();
+  for (const t of teamRows) teamsByClub.set(t.org_id, [...(teamsByClub.get(t.org_id) ?? []), t]);
+  return clubs.flatMap(o => {
+    const tryouts = tryoutsByClub.get(o.id) ?? [];
+    return clubSitemapPaths({
+      orgSlug: o.slug,
+      teamSlugs: (teamsByClub.get(o.id) ?? [])
+        .sort((a, b) => a.name.localeCompare(b.name, 'en-CA', { numeric: true }))
+        .map(t => t.slug),
+      openTryoutSlugs: tryouts.filter(t => t.standing.state === 'open').map(t => t.slug),
+      tryoutsPage: tryouts.some(t => isListedTryout(t.standing, today)),
+    });
+  }).map(href => ({ href }));
 }
 
 /** In-memory mirror of followableOrgQuery's predicate — for a server component that ALREADY

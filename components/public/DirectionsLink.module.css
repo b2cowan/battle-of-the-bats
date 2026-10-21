@@ -1,0 +1,9 @@
+/* Directions (Club Tier Stage 4b-2b): labelled at a desk; on a phone its symbol alone — no border, no fill, a 44px tap
+   target (the house rule for a secondary action, design log 2026-10-20). */
+.directions { gap: 0.5rem; flex: none; }
+.directions > svg { flex: none; }
+
+@media (max-width: 640px) {
+  .directions { width: 44px; padding: 0; gap: 0; border-color: transparent; background: none; color: var(--club-ink); }
+  .directionsLabel { display: none; }
+}

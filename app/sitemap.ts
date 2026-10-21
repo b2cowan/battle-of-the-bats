@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getDirectorySitemapEntries, getOrgSitemapEntries } from '@/lib/directory';
+import { getClubPageSitemapEntries, getDirectorySitemapEntries, getOrgSitemapEntries } from '@/lib/directory';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
@@ -56,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Each dynamic scan fails INDEPENDENTLY and quietly: one hiccup must not cost the sitemap the
   // other scan's pages, and neither may break the static set above.
-  const [tournamentEntries, orgEntries] = await Promise.all([
+  const [tournamentEntries, orgEntries, clubPageEntries] = await Promise.all([
     safeEntries(getDirectorySitemapEntries(), e => ({
       url: `${SITE_URL}${e.href}`,
       lastModified: e.lastModified ? new Date(e.lastModified) : undefined,
@@ -72,7 +72,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.5,
     })),
+    // Club Tier Stage 4b-2b — a club's Teams page, its teams, its open tryouts and its Tryouts page in season (each team
+    // described to search engines as a sports team of the club, on its own page). Ranked beside the club's home.
+    safeEntries(getClubPageSitemapEntries(), e => ({
+      url: `${SITE_URL}${e.href}`,
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    })),
   ]);
 
-  return [...staticEntries, ...tournamentEntries, ...orgEntries];
+  return [...staticEntries, ...tournamentEntries, ...orgEntries, ...clubPageEntries];
 }

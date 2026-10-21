@@ -1,0 +1,302 @@
+<title>Tryout season walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single reading column of walk parts; each part is a card with its steps, a verdict row and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.calls{display:flex;flex-direction:column;gap:14px}
+.call{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.call:first-child{border-top:0;padding-top:0}
+.call b{font-weight:600}
+.call label{display:flex;gap:10px;align-items:flex-start;min-height:40px;padding:4px;border-radius:6px;cursor:pointer}
+.call label:hover{background:var(--bg)}
+.call input{width:18px;height:18px;margin:3px 0 0;flex:none;accent-color:var(--accent)}
+.rec{font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:20px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Club Tier 4b-2b · tryout season</h1>
+    <p>Owner QA Ledger §356. A club’s site now has a Tryouts page and a seasonal Tryouts tab. A team’s tryout page lists the real tryout days and says whether it is open, not open yet, finished or closed. The home shows one tryouts row when several teams are involved, and a shared link shows a card in the club’s colours.</p>
+    <p>The test club is <b>UAT Lakeshore Lynx</b> (navy). Its seed works out dates from the day it runs. Today it holds: 15U AAA <b>open</b>, with three days from about ten days out plus one cancelled day; 13U AAA <b>not open yet</b>, with two days about three weeks out; 14U AA <b>finished</b> about ten days ago; and every other team <b>closed</b>.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server, restarted for this walk). For phone steps, use the browser’s phone view at 390 px.</dd>
+      <dt>Signed out</dt><dd>Every part except 7. Use a private window.</dd>
+      <dt>UAT Rep Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Part 7 only)</dd>
+      <dt>The clubs</dt><dd><code>/uat-rep-only</code> (navy, tryout season) and <code>/uat-rep-club</code> (yellow, for the off-season page)</dd>
+    </dl>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="calls-h">
+    <h2 id="calls-h">Your calls</h2>
+    <p class="where">Five choices the build raised. Pick one for each; the recommended one is marked.</p>
+    <div class="calls" id="calls"></div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  { id: 'p1', title: '1 · The club Tryouts page', where: 'Signed out. /uat-rep-only, then tap the Tryouts tab. On a phone (390 px), then on a computer.', steps: [
+    'The tabs read Home · Teams · Tryouts. Tryouts sits third and is the underlined tab here.',
+    'The title is "2026 tryouts", with "AAA and AA teams for the 2026 season" under it. There is no birth-year picker and no birth years on the rows (those come in 4c).',
+    'Band "AAA · " plus a date range, holding 13U AAA (its first day and "Lakeshore Dome", grey "Not open yet") and 15U AAA (its first day, green "Tryouts open").',
+    'Band "AA · " plus a date range, holding 14U AA with its last day and a grey "Finished" chip that has a small dot.',
+    'Each row opens that team’s tryout page. Under the list: "Questions? Email the club at" with the address on its own line.',
+    'The browser tab reads "2026 tryouts · UAT Lakeshore Lynx".',
+    'Computer: the same list, wider. Nothing overlaps and nothing is cut off.',
+  ]},
+  { id: 'p2', title: '2 · An open tryout and its days', where: 'Signed out. /uat-rep-only/teams/15u-aaa/tryouts on a phone, then a computer.', steps: [
+    '"← 15U AAA" above the title, a thin line between them. "15U AAA tryouts", "For the 2026 season", and a green "Tryouts open" chip. On a phone the tab row shows Teams underlined.',
+    '"Tryout days": three rows. Each reads like "Sun, Nov 1 · 9:00–11:00 a.m. · Lakeshore Dome · Diamond 2". The cancelled day is not listed anywhere.',
+    'Phone: each row ends with a bare arrow icon (no border, no word) that opens a map. Computer: the same button reads "Directions".',
+    '"From the club" holds the club’s tryout words. Then a full-width navy "Sign up for tryouts" button that opens the sign-up form.',
+    'Under it: "Questions? Email the club at" with the address on its own line. The footer repeats the address. That repeat is the open call c1 below.',
+    'The sign-up form is unchanged: 44 px fields, asterisks on required fields, the phone’s own date picker, a navy button, and the email box unchecked.',
+  ]},
+  { id: 'p3', title: '3 · Not open yet', where: 'Signed out. /uat-rep-only/teams/13u-aaa/tryouts.', steps: [
+    '"13U AAA tryouts", "For the 2026 season", and a grey "Not open yet" chip with no dot.',
+    '"Tryout days" lists its two days. The second is at "Sherwood Park" with no diamond number.',
+    'A card reads "Sign-ups for 13U AAA tryouts aren’t open yet." Under a line in the same card: "Questions? Email the club", the address, and a bordered "Copy" button.',
+    'Copy changes to "Copied" for about two seconds, and the row does not jump. Pasting gives the address.',
+    'A full-width white "See the team" button opens the team page. There is no sign-up button.',
+  ]},
+  { id: 'p4', title: '4 · Finished and closed', where: 'Signed out. /uat-rep-only/teams/14u-aa/tryouts, then /uat-rep-only/teams/16u-aa/tryouts.', steps: [
+    '14U AA: "For the 2026 season", a grey "Finished" chip with a dot, and "Tryouts for the 2026 season finished on" with its last day. No tryout days are listed.',
+    '16U AA: no season line, a grey "Tryouts closed" chip with a dot, and "16U AA isn’t taking tryout sign-ups right now."',
+    'Both: the contact card with Copy, and "See the team". Neither page is a dead end.',
+  ]},
+  { id: 'p5', title: '5 · The home and the team page', where: 'Signed out. /uat-rep-only, then /uat-rep-only/teams/15u-aaa.', steps: [
+    'Home: Open now has ONE tryouts row, "2026 tryouts" over "2 teams · AAA" plus a date range. It opens the Tryouts page. There is no separate 15U AAA row.',
+    'The team grid still shows "Tryouts open" on 15U AAA only.',
+    'Team page: the white tryout card with the navy edge reads "Tryouts open", "Tryouts for the 2026 season", then "Three days from …" with the first day and "· Lakeshore Dome", then "Tryout details and sign-up".',
+  ]},
+  { id: 'p6', title: '6 · On a phone: the pinned tab row with Tryouts in it', where: 'Signed out, phone width. /uat-rep-only/tryouts, then a tryout page.', steps: [
+    'Scrolling down, the navy band scrolls away and the white tab row (Home · Teams · Tryouts) stays pinned at the top with its gold top edge.',
+    'All three tabs fit at 390 px without a sideways scroll.',
+  ]},
+  { id: 'p7', title: '7 · Out of season', where: 'Sign in as the UAT Rep Club owner. Open Rep teams, then 15U AAA, then Tryouts, and press Close sign-ups. Then, signed out (private window), open /uat-rep-club and /uat-rep-club/tryouts. Re-open the sign-ups when you finish.', steps: [
+    '/uat-rep-club has no Tryouts tab, and no tryouts row in Open now.',
+    '/uat-rep-club/tryouts still opens. Its title is "Tryouts" with no tab underlined and no chip, then a card reading "No tryouts are posted right now." with the club’s contact and Copy. There is no "See all teams" button: the tab row is the way on.',
+    'After re-opening the sign-ups, the Tryouts tab is back and /uat-rep-club/tryouts lists 15U AAA as "Tryouts open" with "For the 2026 season" (it has no days entered).',
+  ]},
+  { id: 'p8', title: '8 · A shared link’s card', where: 'Signed out. Open these addresses directly in the browser (a chat app cannot reach localhost; checking in a real chat app rides the next staging release).', steps: [
+    '/uat-rep-only/opengraph-image: a navy card with the gold "UL" tile, "UAT Lakeshore Lynx" and "Rep baseball · ages 9 to 16", and a gold edge along the bottom.',
+    '/uat-rep-only/teams/15u-aaa/tryouts/opengraph-image: a green "Tryouts open" badge in the top right corner, "15U AAA tryouts" and "For the 2026 season · from" its first day.',
+    '/uat-rep-club/teams/15u-aaa/opengraph-image: the yellow club. Dark text, readable.',
+    'No card shows a player’s name, a photo of a player, or FieldLogicHQ’s sales line.',
+    'Optional: paste a page address into a link-preview checker once it is on staging. The title reads "page · club", with the club’s own description and the card.',
+  ]},
+  { id: 'p9', title: '9 · Search engines', where: 'Signed out. /sitemap.xml, then view the source of /uat-rep-only/teams/15u-aaa.', steps: [
+    'The sitemap lists /uat-rep-only/teams, each Lakeshore team, /uat-rep-only/teams/15u-aaa/tryouts and /uat-rep-only/tryouts.',
+    'The team page’s source has a "SportsTeam" description naming the team, "Baseball" and the club, with no player or coach names.',
+  ]},
+  { id: 'p10', title: '10 · What must NOT change', where: 'Signed out. /riverdale-minor-ball (the tournament demo) and any tournament page.', steps: [
+    'Tournament pages look as before, and their own share card is unchanged.',
+    '/riverdale-minor-ball/teams still opens the running tournament’s teams.',
+  ]},
+];
+
+const CALLS = [
+  { id: 'c1', q: 'The open tryout page and the Tryouts page say "Questions? Email the club at …" above a footer that repeats the address', opts: [
+    ['A', 'Keep it, as drawn: on the tryout path it answers a hesitant parent right where they decide', true],
+    ['B', 'Drop it from those two pages, as you did on the home (the footer carries the contact once)', false] ] },
+  { id: 'c2', q: 'The door says "Sign up for tryouts", but the form’s button, confirmation and email say "application"', opts: [
+    ['A', 'Leave it for now; queue a separate wording pass on the whole sign-up flow', true],
+    ['B', 'Leave it as it is, permanently', false] ] },
+  { id: 'c3', q: 'Tryout days a coach enters are now public ("Not open yet") before sign-ups open. Coaches are told only in help.', opts: [
+    ['A', 'Add one plain line in the coach’s tryout setup, beside the days, in the next coaches-portal pass', true],
+    ['B', 'Help is enough', false] ] },
+  { id: 'c4', q: 'The share card’s title is regular weight. The image renderer has one built-in face; bold needs a font file.', opts: [
+    ['A', 'Leave it regular', true],
+    ['B', 'Rule on shipping one font file for cards only (your 10-07 ruling said no self-hosted fonts for the site)', false] ] },
+  { id: 'c5', q: 'On a computer the Tryouts page is as wide as the Teams page, so a row’s chip sits far from the team name', opts: [
+    ['A', 'Keep the Teams page’s width, so the two lists line up with each other and with the bar', true],
+    ['B', 'Narrow the list to about 760 px on a computer, with the title staying full width', false] ] },
+];
+const KEY = 'club-tryout-season-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((text, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = text;
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+const callsHost = document.getElementById('calls');
+for (const c of CALLS) {
+  const div = document.createElement('div');
+  div.className = 'call';
+  div.setAttribute('role', 'radiogroup');
+  div.setAttribute('aria-labelledby', c.id + '-q');
+  const q = document.createElement('b');
+  q.id = c.id + '-q';
+  q.textContent = c.q;
+  div.appendChild(q);
+  for (const [letter, text, rec] of c.opts) {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = c.id; input.id = `${c.id}-${letter}`; input.value = letter;
+    input.checked = state[c.id] === letter;
+    input.addEventListener('change', () => { state[c.id] = letter; save(); });
+    const span = document.createElement('span');
+    span.textContent = `${letter} · ${text}`;
+    if (rec) { const r = document.createElement('span'); r.className = 'rec'; r.textContent = 'Recommended'; span.appendChild(r); }
+    label.append(input, span);
+    div.appendChild(label);
+  }
+  const notes = document.createElement('textarea');
+  notes.id = c.id + '-notes';
+  notes.setAttribute('aria-label', 'Notes for ' + c.q);
+  notes.placeholder = 'Notes (optional)';
+  notes.value = state[c.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[c.id + '-notes'] = notes.value; save(); });
+  div.appendChild(notes);
+  callsHost.appendChild(div);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§356 Club Tier 4b-2b · tryout season — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((t, i) => { if (!state[`${part.id}-s${i}`]) lines.push(`  ☐ ${t}`); });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  lines.push('', 'Calls:');
+  for (const c of CALLS) {
+    const pick = c.opts.find(o => o[0] === state[c.id]);
+    lines.push(`  ${c.q}: ${pick ? pick[0] + ' · ' + pick[1] + (pick[2] ? ' (recommended)' : '') : 'not answered'}`);
+    const n = (state[c.id + '-notes'] || '').trim();
+    if (n) lines.push(`    Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox], input[type=radio]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>

@@ -12,8 +12,10 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubTeamsAddress } from '@/lib/public-club-access';
-import { clubHomeTournaments, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
+import { clubHomeTournaments, clubTeamBands, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
 import { readClubTeams } from '@/lib/club-public-teams';
+import { readClubTryouts } from '@/lib/club-tryouts';
+import { homeTryoutsRowSub, isListedTryout, openNowTryouts, sharedSeasonYear, tryoutDaysLine, tryoutSeasonMeta, tryoutsPageTitle } from '@/lib/tryout-season';
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { getRegistrationState } from '@/lib/registration-state';
 import { clubPageMetadata, getClubSiteContent } from '@/lib/club-page-meta';
@@ -31,6 +33,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
   const { orgSlug } = await params;
+  // Its preview card is the club's (Stage 4b-2b, End state 8) — `clubPageMetadata`'s default.
   return clubPageMetadata(orgSlug, () => null);
 }
 
@@ -105,13 +108,16 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   // This reads and shapes; ClubSiteHome draws, in the ruled order, with every empty program absent.
   if (org && hasModuleEntitlement(org, 'module_public_site')) {
     const withTeams = clubTeamsAddress(org) === 'teams-page';
-    const [siteContent, leagueSeasons, clubTeams] = await Promise.all([
+    const today = tournamentToday();
+    const [siteContent, leagueSeasons, clubTeams, clubTryouts] = await Promise.all([
       getClubSiteContent(org.id),
       hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id) : Promise.resolve([]),
       // The club's listed teams and its open tryouts — the same read the Teams page makes.
-      withTeams ? readClubTeams(org.id) : Promise.resolve({ bands: [], count: 0, openTryouts: [] }),
+      withTeams ? readClubTeams(org.id) : Promise.resolve({ bands: [], count: 0 }),
+      // Every listed team's tryout and its days, for Open now's tryouts (Stage 4b-2b) — the Tryouts page's own read.
+      // A failed tryout read costs the home its tryouts row, never the page.
+      withTeams ? readClubTryouts(org.id, today).catch(() => ({ teams: [], groups: [] })) : Promise.resolve({ teams: [], groups: [] }),
     ]);
-    const today = tournamentToday();
     const thisYear = today.slice(0, 4);
     const day = (value: string) => formatStoredDate(value, { withYear: !value.startsWith(thisYear) });
 
@@ -128,8 +134,28 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         : 'Schedule and standings when the season starts',
     };
 
-    // Open now: every open house-league registration and every open tryout (the one public tryout rule), nearest
-    // deadline first. A tryout's days line is Stage 4b-2b; until then its row names the season it recruits for.
+    // Open now's tryouts (Stage 4b-2b, Ask 14 round 2): more than one team open or not open yet → ONE row, the door to the
+    // Tryouts page; exactly one team open → its own row with its days line; otherwise none (the one rule decides).
+    const tryoutPick = openNowTryouts(clubTryouts.teams);
+    const tryoutRows = tryoutPick.kind === 'team' ? [{
+      key: `tryout-${tryoutPick.team.season.id}`,
+      href: `/${orgSlug}/teams/${tryoutPick.team.slug}/tryouts`,
+      title: `${tryoutPick.team.name} tryouts`,
+      sub: tryoutDaysLine(tryoutPick.team.standing.upcoming) ?? tryoutSeasonMeta(tryoutPick.team.season),
+      deadline: null,
+    }] : tryoutPick.kind === 'season' ? [{
+      key: 'tryouts',
+      href: `/${orgSlug}/tryouts`,
+      // The year the Tryouts page's title names — from the same listed teams, so the row and the page it opens agree.
+      title: tryoutsPageTitle(sharedSeasonYear(clubTryouts.teams.filter(t => isListedTryout(t.standing, today)).map(t => ({ seasonYear: t.season.year })))),
+      sub: homeTryoutsRowSub(tryoutPick.teams.length, clubTeamBands(tryoutPick.teams, clubTryouts.groups).map(b => ({
+        name: b.name,
+        days: b.teams.flatMap(t => t.standing.heldDays),
+      }))),
+      deadline: null,
+    }] : [];
+
+    // Open now: every open house-league registration, then the tryouts (above), nearest deadline first.
     const openNow = orderOpenNow([
       ...publicLeagueSeasons.filter(s => s.status === 'registration_open').map(s => {
         // The admin's form stores the close time as typed, with a Z on the end (house-league page), so its date part is
@@ -148,13 +174,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           deadline,
         };
       }),
-      ...clubTeams.openTryouts.map(t => ({
-        key: `tryout-${t.programYearId}`,
-        href: `/${orgSlug}/teams/${t.teamSlug}/tryouts`,
-        title: `${t.teamName} tryouts`,
-        sub: t.programYearYear ? `For the ${t.programYearYear} season` : t.programYearName,
-        deadline: null,
-      })),
+      ...tryoutRows,
     ]);
 
     // Tournaments, with a status true to their dates (S4-03), chosen and ordered by `clubHomeTournaments` (running and

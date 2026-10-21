@@ -62,6 +62,12 @@ const CLUB_SURFACES = [
   'components/public/ClubNotFound.module.css',
   'components/public/OrgSectionTabs.tsx',
   'components/public/OrgSectionTabs.module.css',
+  // Stage 4b-2b: the tryout pages' own pieces.
+  'components/public/TryoutPage.module.css',
+  'components/public/TryoutDays.tsx',
+  'components/public/ClubContactCard.tsx',
+  'components/public/DirectionsLink.tsx',
+  'components/public/DirectionsLink.module.css',
   BAR, FOOTER, FRAME, FRAME_CSS,
   // The one club-page kit and the one form kit every club page and sign-up form draws from (/simplify, 4b-1).
   'components/public/ClubKit.module.css',

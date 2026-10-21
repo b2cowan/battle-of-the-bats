@@ -1118,8 +1118,9 @@ const orgHelp: HelpPageContent = {
         'page not found', 'couldn’t find that page', 'broken link', 'old link', 'qr code', 'short address', 'site isn’t available',
         'home page', 'open now', 'teams tab', 'teams page', 'team page', 'about the club', 'follow', 'tournament status',
         'live now', 'this weekend', 'finished', 'see all teams', 'team schedule', 'earlier this season', 'banner photo',
+        'tryouts page', 'tryouts tab', 'tryout days', 'not open yet', 'tryouts open', 'link preview', 'share card', 'shared link', 'google', 'search engines',
       ],
-      searchText: 'public organization page club site what families see visitors see fans see your own site your bar logo initials club name tagline sign in account section tabs tab row home teams house league past tournaments only the sections you have teams tab teams page every team not archived club groups other teams tryouts open chip home page order open now registration open tryouts teams grid house league tournaments about the club follow button registration open this weekend live now finished banner strip computer only team page back to teams division season dot tryout details and sign-up isn’t taking tryout sign-ups right now schedule public link earlier this season up next directions cancelled show the rest of the season about the team see all teams no tab row with only a home page tabs in the bar on a computer white row under the bar on a phone club name links back to the front page no discover no pricing no breadcrumb no fieldlogichq bottom bar on a phone tournament pages keep the bottom bar light page your colours readable automatically light colour dark text yellow gold sky darker links footer questions email the club copy the address copied social links instagram facebook x website built on fieldlogichq credit paid plans event cards club colours tournament cards account menu sign out stays on your page return to admin from my public page shortcut back admin coaches portal flip door only your own staff staff of another club family never sees it remembers the screen i left page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off',
+      searchText: 'public organization page club site what families see visitors see fans see your own site your bar logo initials club name tagline sign in account section tabs tab row home teams house league past tournaments only the sections you have teams tab teams page every team not archived club groups other teams tryouts open chip home page order open now registration open tryouts teams grid house league tournaments about the club follow button registration open this weekend live now finished banner strip computer only team page back to teams division season dot tryout details and sign-up isn’t taking tryout sign-ups right now schedule public link earlier this season up next directions cancelled show the rest of the season about the team see all teams no tab row with only a home page tabs in the bar on a computer white row under the bar on a phone club name links back to the front page no discover no pricing no breadcrumb no fieldlogichq bottom bar on a phone tournament pages keep the bottom bar light page your colours readable automatically light colour dark text yellow gold sky darker links footer questions email the club copy the address copied social links instagram facebook x website built on fieldlogichq credit paid plans event cards club colours tournament cards account menu sign out stays on your page return to admin from my public page shortcut back admin coaches portal flip door only your own staff staff of another club family never sees it remembers the screen i left page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off tryouts page tryouts tab third tab 2027 tryouts rep and select teams for the season banded by your groups date range tryout days public tryout days families can see tryout days dates venue field directions sign up for tryouts not open yet finished tryouts closed the club’s last tryouts finished no tryouts are posted right now link preview share card shared link card in your colours logo initials never a player text message social media search engines google find your teams page',
       content: (
         <>
           <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. Every club page there (your home, a team, a tryout and its sign-up, your house league, your past tournaments) is your club&rsquo;s own site: your bar at the top, your colours on a light page, and one footer at the bottom.</p>
@@ -1136,6 +1137,7 @@ const orgHelp: HelpPageContent = {
               <ul>
                 <li><strong>Home</strong></li>
                 <li><strong>Teams</strong>, when your plan includes rep teams and you have a team that isn&rsquo;t archived</li>
+                <li><strong>Tryouts</strong>, while any team has tryouts open, not open yet, or finished in the last four weeks. It leaves by itself after that; the address keeps working all year.</li>
                 <li><strong>House league</strong>, once a season is published</li>
                 <li><strong>Past tournaments</strong>, once you have one and haven&rsquo;t hidden it</li>
               </ul>
@@ -1170,7 +1172,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p>Your home page shows, from the top, only what your club has:</p>
               <ol>
-                <li><strong>Open now</strong>: every house-league season taking registrations and every team taking tryout sign-ups, the nearest deadline first. When nothing is open, the section isn&rsquo;t there.</li>
+                <li><strong>Open now</strong>: every house-league season taking registrations and the tryouts. With one team open or not open yet for tryouts, that team has its own row, with its days (&ldquo;Three days from Sun, Nov 2 &middot; Lakeshore Dome&rdquo;). With two or more, they share one row, <strong>2027 tryouts</strong> (&ldquo;7 teams &middot; Rep Sep 7&ndash;9 &middot; Select Sep 11&ndash;13&rdquo;), that opens your Tryouts page. When nothing is open, the section isn&rsquo;t there.</li>
                 <li><strong>Teams</strong>: your teams, under the groups you give them in <strong>Rep teams</strong>. A team taking tryout sign-ups shows <strong>Tryouts open</strong>.</li>
                 <li><strong>House league</strong>, when you run one.</li>
                 <li><strong>Tournaments</strong>, when you host one (see below).</li>
@@ -1189,10 +1191,39 @@ const orgHelp: HelpPageContent = {
               <p>A team&rsquo;s page shows, from the top:</p>
               <ul>
                 <li><strong>&larr; Teams</strong>, then the team&rsquo;s name with its colour as a dot, and its division and season.</li>
-                <li>Its tryouts: <strong>Tryout details and sign-up</strong> while sign-ups are open, otherwise one sentence saying it isn&rsquo;t taking sign-ups right now, with your contact address.</li>
+                <li>Its tryouts, in a quiet block with the same days line your home page shows: <strong>Tryout details and sign-up</strong> while sign-ups are open, otherwise a sentence for where the tryout stands (see <strong>Your Tryouts page</strong>), with your contact address.</li>
                 <li>Its games and tournaments, only when the coach has set the schedule to <strong>Public</strong>. Practices and team events never show here. Games already played fold into <strong>Earlier this season</strong>, the next event is marked <strong>Up next</strong> with a <strong>Directions</strong> button, a cancelled event stays crossed out, and <strong>Show the rest of the season</strong> opens the rest.</li>
                 <li><strong>About the team</strong>, the description you write on the team.</li>
               </ul>
+            </>
+          ),
+        },
+        {
+          id: 'public-org-page-tryouts',
+          title: 'Your Tryouts page, and the days families see',
+          content: (
+            <>
+              <p>Your Tryouts page, at <code>fieldlogichq.ca/your-slug/tryouts</code>, lists every team with a tryout. It is titled <strong>2027 tryouts</strong> (the year, when every listed team recruits for the same season; otherwise just <strong>Tryouts</strong>), with a line like &ldquo;Rep and Select teams for the 2027 season&rdquo;. Teams sit under your own team groups, each with its date range (&ldquo;Rep &middot; Sep 7&ndash;9&rdquo;). Each row gives the team, its first remaining day and venue, and a state chip.</p>
+              <p>The chip comes from one rule:</p>
+              <ul>
+                <li><strong>Tryouts open</strong>: the coach&rsquo;s sign-up switch is on. It wins even after every day has passed, until the coach turns it off.</li>
+                <li><strong>Not open yet</strong>: sign-ups are off and a tryout day is still ahead.</li>
+                <li><strong>Finished</strong>: sign-ups are off and every day has passed (from the next day).</li>
+                <li><strong>Tryouts closed</strong>: sign-ups are off and the team has no days, or every day is cancelled.</li>
+              </ul>
+              <p>A <strong>Tryouts</strong> tab sits third (Home &middot; Teams &middot; Tryouts &middot; House league &middot; Past tournaments) while any team is open, not open yet, or finished in the last four weeks, and leaves by itself after that. The address keeps working all year. Out of season it says &ldquo;The club&rsquo;s last tryouts finished on Sun, Sep 13, 2026.&rdquo; or &ldquo;No tryouts are posted right now.&rdquo;, with your contact address.</p>
+              <p>Each team&rsquo;s tryout page lists <strong>Tryout days</strong>: every remaining day the coach entered in the tryout setup, with its date, its time (&ldquo;9:00&ndash;11:00 a.m.&rdquo;), the venue and field (&ldquo;Lakeshore Dome &middot; Diamond 2&rdquo;), and a <strong>Directions</strong> button (just the arrow on a phone). A cancelled day is left out. The button reads <strong>Sign up for tryouts</strong>. A team that isn&rsquo;t open shows its sentence instead (&ldquo;Sign-ups for 15U AA tryouts aren&rsquo;t open yet.&rdquo;, &ldquo;Tryouts for the 2027 season finished on Mon, Sep 7.&rdquo;, &ldquo;13U AAA isn&rsquo;t taking tryout sign-ups right now.&rdquo;), your contact address with <strong>Copy</strong>, and <strong>See the team</strong>.</p>
+              <p>Tryout days your coaches enter in a team&rsquo;s tryout setup are public on your site, shown as <strong>Not open yet</strong> before sign-ups open.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-org-page-share',
+          title: 'When your link is shared: the preview card',
+          content: (
+            <>
+              <p>A link to your club, one of your teams, or a tryout shows a generated card wherever it is pasted (a text message, an email, social media). The card is in your club&rsquo;s colours with your logo, or your initials if you haven&rsquo;t added one. It never shows a player. A tryout&rsquo;s card carries its state, such as <strong>Tryouts open</strong>.</p>
+              <p>A club whose public site is switched off shows a plain FieldLogicHQ card instead. Search engines find your Teams page, your teams and any open tryouts.</p>
             </>
           ),
         },
@@ -1213,7 +1244,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p>A family who opens an address your organization doesn&rsquo;t have — a mistyped team name, an old link, a league page when you run no house league — sees <strong>We couldn&rsquo;t find that page</strong> inside your site, with your bar and footer and a button back to your home page. An old team address also offers <strong>See all teams</strong> when you have a Teams page.</p>
               <p>The short addresses <code>/schedule</code>, <code>/standings</code>, <code>/results</code>, <code>/register</code>, <code>/news</code> and <code>/rules</code> open the same page of your running tournament, so printed links and QR codes keep working. With no tournament running, they show <em>We couldn&rsquo;t find that page</em> too. <code>/teams</code> is your Teams page when you have one; otherwise it works like the others.</p>
-              <p>While your public site is switched off in <strong>Settings → Your public site</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead, without your bar or colours. Your tournament pages stay up.</p>
+              <p>While your public site is switched off in <strong>Settings → Your public site</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead, without your bar or colours, and a shared link shows a plain FieldLogicHQ card. Your tournament pages stay up.</p>
             </>
           ),
         },
@@ -1230,12 +1261,25 @@ const orgHelp: HelpPageContent = {
           id: 'faq-public-page-no-teams-tab',
           question: 'Why is there no Teams tab on my public page?',
           answerText: 'The Teams tab shows when your plan includes rep teams and you have at least one team that is not archived. It opens your Teams page, which lists every team that is not archived under your groups and says which are taking tryout sign-ups. If every team is archived, there is no list to show, so there is no tab; the archived teams\' pages still open for old links. Your home page lists your teams too, and an open tryout appears under Open now.',
-          keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'teams page', 'tryouts link', 'tryouts open', 'team page link', 'archived teams'],
+          keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'teams page', 'tryouts link', 'tryouts open', 'team page link', 'archived teams', 'tryouts tab', 'tryouts page'],
           answer: (
             <>
               <p>The <strong>Teams</strong> tab shows when your plan includes rep teams and you have at least one team that isn&rsquo;t archived. It opens your Teams page, which lists every team that isn&rsquo;t archived under your groups and says which are taking tryout sign-ups.</p>
               <p>If every team is archived, there is no list to show, so there is no tab. The archived teams&rsquo; pages still open for old links.</p>
               <p>Your home page lists your teams too, and an open tryout appears under <strong>Open now</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-public-page-tryouts-tab',
+          question: 'Why is there no Tryouts tab on my public page, and can families still find tryouts?',
+          answerText: 'The Tryouts tab shows only while a team has tryouts open, not open yet, or finished in the last four weeks, and leaves by itself after that. The tryouts page at your club address followed by /tryouts keeps working all year: out of season it says when the club’s last tryouts finished, or that no tryouts are posted right now, with your contact. The tryout days a coach enters are public on your site.',
+          keywords: ['tryouts tab', 'no tryouts tab', 'tryouts page', 'tryout days', 'tryouts not showing', 'not open yet', 'tryouts missing'],
+          answer: (
+            <>
+              <p>The <strong>Tryouts</strong> tab shows only while a team has tryouts open, not open yet, or finished in the last four weeks, and leaves by itself after that.</p>
+              <p>The Tryouts page at your club address followed by <code>/tryouts</code> keeps working all year. Out of season it says when the club&rsquo;s last tryouts finished, or that no tryouts are posted right now, with your contact address.</p>
+              <p>The tryout days a coach enters are public on your site.</p>
             </>
           ),
         },

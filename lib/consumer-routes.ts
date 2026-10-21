@@ -64,7 +64,7 @@ const ORG_OPERATOR_SECTIONS = ['admin', 'check-in', 'coaches', 'official', 'scor
 
 /** Fan-facing org pages — the org's own public site. */
 const ORG_PUBLIC_SECTIONS = [
-  'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams',
+  'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams', 'tryouts',
 ] as const;
 
 const ORG_OPERATOR_SECTION_SET = new Set<string>(ORG_OPERATOR_SECTIONS);

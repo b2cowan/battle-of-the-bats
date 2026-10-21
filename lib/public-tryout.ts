@@ -1,6 +1,5 @@
 import 'server-only';
-import { getRepProgramYears } from './db';
-import { getClubSiteContent, getClubTeam } from './club-page-meta';
+import { getClubSiteContent, getClubTeam, getClubTeamSeasons } from './club-page-meta';
 import { resolvePublicClub } from './public-club-page';
 import { liveSeasonOf, publicTryoutSeasonOf } from './season-live';
 import type { Organization, RepProgramYear, RepTeam } from './types';
@@ -43,7 +42,7 @@ export async function resolvePublicTryout(orgSlug: string, teamSlug: string): Pr
   if (!team) return null;
   // Read beside the seasons (no added wait). Always read: the old season-numbered pages show the closed state whatever
   // the live season is doing, and their "Contact us" needs it too.
-  const [seasons, siteContent] = await Promise.all([getRepProgramYears(team.id), getClubSiteContent(org.id)]);
+  const [seasons, siteContent] = await Promise.all([getClubTeamSeasons(team.id), getClubSiteContent(org.id)]);
   return {
     org, team, seasons,
     contactEmail: siteContent?.contactEmail ?? null,

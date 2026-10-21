@@ -1128,6 +1128,38 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > **Findings recorded, not fixed:** the house-league admin stores a close time as typed with a Z (the season page shows it in the
 > viewer's zone); the admin billing page spells "canceled" (one L) against the public "Cancelled"; a tournament with no end
 > date reads as one day; `resolvePublicClub` still reads the org uncached (4b-1 finding 4).
+> **🔨 4b-2b BUILT 2026-10-20 (tryout season, preview cards, the sitemap; walk §356 https://claude.ai/artifact/4eudnWvaqcofFtj3n6x7Mj
+> owed):** **asks ruled 2026-10-20, all as recommended** (https://claude.ai/artifact/X37UZWEfxRWt5JqqTp5ia1, source
+> `CLUB_TIER_STAGE4B2B_ASKS.html`): the Tryouts address out of season says when the club's last tryouts finished (or "No tryouts
+> are posted right now."), no tab lit, no chip, no "See all teams"; a team's tryout page has a fourth state, **Not open yet** (the
+> closed frame with the Tryout days inserted, no sign-up); the twelve edges of the three states (the sign-up switch wins over
+> passed days — the form obeys it; no days or all cancelled = Tryouts closed; a day passes from the next club-local day; the home's
+> one tryouts row when 2+ teams are open or not open yet, a lone open team its own row, a lone not-open-yet team nothing; the title
+> names a year only when every listed team shares it; the days line names a place only when every remaining day shares it; the
+> team page keeps its quiet section for not-open-yet and finished); tryout days seeded on the **rep-only** club (owner said "the
+> test club"; the main club's rebuild resets every seeded sign-in, and it has no club colour for the card). **One rule**
+> (`lib/tryout-season.ts` `tryoutStandingOf`, pinned to agree with `publicTryoutSeasonOf` for every archived/switch/season mix)
+> read by the club **Tryouts page** `/{org}/tryouts` (bands by the club's groups with each band's date range, row: first remaining
+> day · venue + state chip), its **seasonal tab** third (open, not open yet, or finished in the last 28 days — asked yes/no in the
+> org layout), the team's **tryout page** (Tryout days from `rep_tryout_sessions`, cancelled left out, Directions a bare symbol on a
+> phone; "Sign up for tryouts"; the closed/not-open/finished card with Copy and "See the team"), the home's **Open now** and the team
+> page door's **days line** ("Three days from Sun, Nov 2 · Lakeshore Dome"); the Teams page's "Tryouts open" chip now reads the same
+> read. Tryout days reach the public only through `lib/club-tryouts.ts` (service client, live season, when/where/cancelled only).
+> **Preview cards**: one generated 1200 × 630 card per club home, team and tryout (`opengraph-image` routes, the club's
+> `clubColourRoles`, logo through the exports' guarded read or initials, never a player); every club page names its card; a
+> tryout's card address carries its state, season and first day; cards are cached 10 minutes (Next's default is a year,
+> immutable), the neutral card never; the org layout's logo-only image removed. **Sitemap**: the Teams page, listed teams, open
+> tryouts and the Tryouts page in season, read in batches; the team page describes itself as a schema.org SportsTeam of the club.
+> Words through /marketing (house range "Aug 30 – Sep 2" kept over the unspaced draft; E1–E3 → walk calls c1–c2 and the card
+> address); /design before and after the build; /simplify (4 angles) and /review (high-risk, 5 lenses: no Critical; the
+> year-long card cache, the sitemap's row cap, the logo read's trust boundary and the tagline gate fixed); /docs (org, rep teams,
+> coaches guides). Tests `club-stage4b2b.test.ts` (red run recorded) + `club-stage4b2b-guard.test.ts`; five anonymous layout
+> screens `club-tryout*`. **Findings recorded, not fixed:** the kit's green chip has no dot while the drawings give it one (a
+> 4b-2a surface); the team page's Schedule heading row is 44 px tall for the symbol-only Subscribe (12 px over the 20 px rhythm —
+> another session's uncommitted change); the schedule's own Directions button and the footer's Copy are not yet on the new shared
+> `DirectionsLink` / contact pieces (their files carry another session's work); a tournament slug can still be shadowed by any
+> club section name (no tournament-slug blocklist exists); the club contact address is saved unvalidated (a `mailto:` can carry
+> extra fields — the club's own admin, own page).
 > **⚖ Ruled the same day (owner): a club's own web address is Stage 4e, inside the release, as recommended; payments
 > processing is inside the release and the release has no date (§7).** The evidence behind both: **a club's own web address** (evidence 2026-10-19: 8 of the 10 club sites use their own
 > domain; the 2 that do not are on free or low-end tools; every platform that documents it hosts the site on the club's domain

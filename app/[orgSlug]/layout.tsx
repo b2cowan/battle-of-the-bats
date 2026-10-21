@@ -78,7 +78,9 @@ export async function generateMetadata({
       template: `%s | ${org.name}`,
     },
     description: clubDescription(siteContent, org.name),
-    openGraph: org.logoUrl ? { images: [{ url: org.logoUrl }] } : undefined,
+    // No preview image here (Club Tier Stage 4b-2b): the club's generated card (app/[orgSlug]/opengraph-image.tsx) carries
+    // its logo in its colours, and every page under the club inherits it unless it names its own. An image set HERE would
+    // silently replace that card — Next skips a segment's generated image when the same segment's metadata names one.
     ...demoRobots,
   };
 }

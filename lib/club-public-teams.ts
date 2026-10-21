@@ -1,11 +1,13 @@
 import 'server-only';
-import { getOpenTryoutsByOrg, getRepTeamGroups, getRepTeams, type OpenTryout } from './db';
+import { getRepTeams } from './db';
 import { clubTeamBands, teamRowDivision, type TeamBand } from './club-site-home';
+import { getClubTeamGroups, readClubTryouts } from './club-tryouts';
+import { tournamentToday } from './timezone';
 
 /**
  * A CLUB'S LISTED TEAMS, ONE READ FOR BOTH PAGES THAT SHOW THEM (Club Tier Stage 4b-2a): the home's team grid and the
  * Teams page. Every team that is not archived, under the club's own groups (`clubTeamBands`), each with whether its
- * tryouts are open — the one public tryout rule (`getOpenTryoutsByOrg`), so the grid, the list and Open now can never
+ * tryouts are open — the one tryout rule, read once with the Tryouts page and Open now (`readClubTryouts`), so they can never
  * disagree. An archived team is not listed; its page still opens for old links.
  */
 export interface ClubListedTeam {
@@ -17,15 +19,20 @@ export interface ClubListedTeam {
   tryoutsOpen: boolean;
 }
 
-export async function readClubTeams(orgId: string): Promise<{ bands: TeamBand<ClubListedTeam>[]; count: number; openTryouts: OpenTryout[] }> {
-  const [teams, groups, openTryouts] = await Promise.all([getRepTeams(orgId), getRepTeamGroups(orgId), getOpenTryoutsByOrg(orgId)]);
-  const open = new Set(openTryouts.map(t => t.teamId));
+export async function readClubTeams(orgId: string): Promise<{ bands: TeamBand<ClubListedTeam>[]; count: number }> {
+  // A failed tryout read costs the "Tryouts open" chips, never the list.
+  const [teams, groups, tryouts] = await Promise.all([
+    getRepTeams(orgId),
+    getClubTeamGroups(orgId),
+    readClubTryouts(orgId, tournamentToday()).then(r => r.teams, () => []),
+  ]);
+  const open = new Set(tryouts.filter(t => t.standing.state === 'open').map(t => t.slug));
   const listed = teams.filter(t => !t.isArchived).map((t): ClubListedTeam => ({
     name: t.name,
     slug: t.slug,
     groupId: t.groupId,
     division: teamRowDivision(t.division, t.groupName, t.name),
-    tryoutsOpen: open.has(t.id),
+    tryoutsOpen: open.has(t.slug),
   }));
-  return { bands: clubTeamBands(listed, groups), count: listed.length, openTryouts };
+  return { bands: clubTeamBands(listed, groups), count: listed.length };
 }

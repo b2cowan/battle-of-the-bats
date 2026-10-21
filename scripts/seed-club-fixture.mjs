@@ -1353,6 +1353,7 @@ async function buildRepOnlyClub() {
     { name: '18U AA', slug: '18u-aa', group: 'AA', division: 'Provincial AA', color: '#6B7280', archived: true },
   ];
   let open = null;
+  const seasonOf = {};   // slug → { teamId, yearId } — the tryout days below hang off a team's season
   for (const t of teams) {
     const row = await one(`team ${t.name}`, db.from('rep_teams').insert({
       org_id: club.id, name: t.name, slug: t.slug, sport: 'baseball', division: t.division, color: t.color,
@@ -1365,6 +1366,7 @@ async function buildRepOnlyClub() {
       tryout_description: t.tryouts ? `Tryouts for the ${t.name} ${Y} roster. Bring a glove, cleats and water.` : null,
     }).select('id').single());
     if (t.tryouts) open = { teamId: row.id, yearId: py.id };
+    seasonOf[t.slug] = { teamId: row.id, yearId: py.id };
   }
 
   // 15U AAA's season: three played (two games with scores, a practice), then Up next and more than four to come — a
@@ -1391,10 +1393,42 @@ async function buildRepOnlyClub() {
   ];
   die('15U AAA events', (await db.from('rep_team_events').insert(events)).error);
 
-  ok(`${REP_ONLY_NAME} (${REP_ONLY_SLUG}): navy, a banner, 9 listed teams in AAA · AA · Development (+ 18U AA archived); 15U AAA tryouts open, schedule public (${events.length} events); owner ${REP_ONLY_OWNER.email}`);
+  // Club Tier Stage 4b-2b — tryout season, every state the walk needs (owner 2026-10-20, Ask 4). Dates are found from
+  // today, so the states hold whenever it runs:
+  //   15U AAA — Tryouts open: three days from a Sunday ten days out, and a cancelled one (left out everywhere);
+  //   13U AAA — Not open yet: two days three weeks out, sign-ups closed (AAA has two teams → the home's one tryouts row);
+  //   14U AA  — Finished: two days ten days ago, sign-ups closed (on the Tryouts page for four weeks, under AA).
+  const tryoutDays = async (slug, days) => {
+    const s_ = seasonOf[slug];
+    const tryout = await one(`tryout ${slug}`, db.from('rep_tryouts').insert({ program_year_id: s_.yearId, team_id: s_.teamId, org_id: club.id }).select('id').single());
+    die(`tryout days ${slug}`, (await db.from('rep_tryout_sessions').insert(days.map(d => ({
+      tryout_id: tryout.id, program_year_id: s_.yearId, team_id: s_.teamId, org_id: club.id,
+      starts_at: torontoInstant(d.day, d.from), ends_at: torontoInstant(d.day, d.to),
+      location: d.where ?? 'Lakeshore Dome', location_address: d.address ?? '100 Lakeshore Rd W, Oakville, ON',
+      field_number: 'field' in d ? d.field : '2', status: d.status ?? 'scheduled',
+    })))).error);
+  };
+  const openFrom = onOrAfter(daysFromNow(10), 0);
+  await tryoutDays('15u-aaa', [
+    { day: openFrom, from: '09:00', to: '11:00' },
+    { day: addDays(openFrom, 6), from: '13:00', to: '15:00' },
+    { day: addDays(openFrom, 7), from: '09:00', to: '11:00' },
+    { day: addDays(openFrom, 13), from: '09:00', to: '11:00', status: 'cancelled' },
+  ]);
+  const laterFrom = onOrAfter(daysFromNow(21), 6);
+  await tryoutDays('13u-aaa', [
+    { day: laterFrom, from: '09:00', to: '11:00' },
+    { day: addDays(laterFrom, 1), from: '13:00', to: '15:00', where: 'Sherwood Park', address: '2045 Sherwood Park Dr, Oakville, ON', field: null },
+  ]);
+  await tryoutDays('14u-aa', [
+    { day: daysFromNow(-10), from: '18:00', to: '20:00' },
+    { day: daysFromNow(-9), from: '18:00', to: '20:00' },
+  ]);
+
+  ok(`${REP_ONLY_NAME} (${REP_ONLY_SLUG}): navy, a banner, 9 listed teams in AAA · AA · Development (+ 18U AA archived); 15U AAA tryouts open with days (13U AAA not open yet, 14U AA finished), schedule public (${events.length} events); owner ${REP_ONLY_OWNER.email}`);
 }
 
 function printRepOnlyClub() {
-  console.log(`  Rep-only club: http://localhost:3000/${REP_ONLY_SLUG}   (the home, Teams, /teams/15u-aaa, /teams/13u-aaa, /teams/18u-aa)`);
+  console.log(`  Rep-only club: http://localhost:3000/${REP_ONLY_SLUG}   (the home, Teams, Tryouts, /teams/15u-aaa, /teams/13u-aaa, /teams/14u-aa/tryouts, /teams/18u-aa)`);
   console.log(`  owner             ${REP_ONLY_OWNER.email}  /  ${REP_ONLY_OWNER.password}   (turn 15U AAA's tryouts off for "nothing open")`);
 }

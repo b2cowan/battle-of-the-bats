@@ -1807,6 +1807,18 @@ export const SCREENS = [
     route: 'app/[orgSlug]/teams/page' },
   { id: 'club-home-rep-only',     session: 'anon', path: () => '/uat-rep-only',                         ready: 'h1', widths: ['320'],
     route: 'app/[orgSlug]/page' },
+  // Club Tier Stage 4b-2b: tryout season on the navy club (`--rep-only-club` seeds every state from today): the club
+  // Tryouts page, an open tryout with its days and Directions, and the not-open-yet, finished and closed tryout pages.
+  { id: 'club-tryouts',           session: 'anon', path: () => '/uat-rep-only/tryouts',                 ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/tryouts' },
+  { id: 'club-tryout-days',       session: 'anon', path: () => '/uat-rep-only/teams/15u-aaa/tryouts',   ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
+  { id: 'club-tryout-not-open',   session: 'anon', path: () => '/uat-rep-only/teams/13u-aaa/tryouts',   ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
+  { id: 'club-tryout-finished',   session: 'anon', path: () => '/uat-rep-only/teams/14u-aa/tryouts',    ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
+  { id: 'club-tryout-closed',     session: 'anon', path: () => '/uat-rep-only/teams/16u-aa/tryouts',    ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

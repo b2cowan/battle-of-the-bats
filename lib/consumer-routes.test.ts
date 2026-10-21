@@ -18,7 +18,7 @@ import {
 
 test('D1: the org root and its public sections take the phone bar', () => {
   assert.equal(showsOrgPublicChrome('/ravens'), true);
-  for (const s of ['league', 'teams', 'archives', 'news', 'schedule', 'standings', 'results', 'rules', 'register']) {
+  for (const s of ['league', 'teams', 'tryouts', 'archives', 'news', 'schedule', 'standings', 'results', 'rules', 'register']) {
     assert.equal(showsOrgPublicChrome(`/ravens/${s}`), true, s);
   }
   // Depth doesn't change the answer — a season page is still the org's public site.

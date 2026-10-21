@@ -4,6 +4,8 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { orgSectionsFor, type OrgSection } from '@/lib/org-public-sections';
 import type { Organization, OrgPublicSiteContent } from '@/lib/types';
 import { clubTeamsAddress, isPublicClubSiteOpen } from './public-club-access';
+import { anyListedTryout } from './club-tryouts';
+import { tournamentToday } from './timezone';
 
 /**
  * lib/org-section-availability.ts — which section tabs an org actually has (Nav Unification Stage F).
@@ -83,13 +85,17 @@ export async function resolveOrgSections(
   if (!isPublicClubSiteOpen(org)) return [];
   if (!hasModuleEntitlement(org, 'module_public_site')) return [];
 
-  const [league, teams, archivesExist, siteContent] = await Promise.all([
+  const withTeams = clubTeamsAddress(org) === 'teams-page';
+  const [league, teams, tryouts, archivesExist, siteContent] = await Promise.all([
     hasModuleEntitlement(org, 'module_house_league')
       ? anyLeagueSeasonPublished(org.id)
       : Promise.resolve(false),
     // The Teams tab (Stage 4b-2a): the plan carries rep teams (the same question the Teams page asks —
     // `clubTeamsAddress`) and the club lists at least one. A tab that opens an empty list is worse than no tab.
-    clubTeamsAddress(org) === 'teams-page' ? anyListedTeam(org.id) : Promise.resolve(false),
+    withTeams ? anyListedTeam(org.id) : Promise.resolve(false),
+    // The Tryouts tab (Stage 4b-2b, Ask 14): seasonal — while any listed team is open, not open yet, or finished in the
+    // last four weeks (`tryoutsTabShows`, asked yes/no). Its address keeps working all year; only the tab leaves.
+    withTeams ? anyListedTryout(org.id, tournamentToday()) : Promise.resolve(false),
     anyArchive(org.id),
     siteContentRead,
   ]);
@@ -99,6 +105,7 @@ export async function resolveOrgSections(
   return orgSectionsFor({
     league,
     teams,
+    tryouts,
     archives: archivesExist && siteContent?.showArchivesLink !== false,
   });
 }
