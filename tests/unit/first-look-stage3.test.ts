@@ -5,7 +5,7 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readCode } from './_source-code.ts';
+import { filesUnder, readCode } from './_source-code.ts';
 import { PLAN_CONFIG, formatPlanPeriodPrice, pickedPlanLabel } from '../../lib/plan-config.ts';
 import { parseStartPricing, runATournamentPick } from '../../lib/start-door.ts';
 
@@ -126,6 +126,18 @@ describe('3b — the welcome and checkout complete (Ask 5b, F06, F17; G1, G2)', 
     assert.match(poll, /<WaitLine>Payment received\. This takes a few seconds\.<\/WaitLine>/);
     assert.match(poll, /title="Still setting up your portal"/);
     assert.doesNotMatch(poll, /Loader2|straight in/, 'the one loading line, no spinner; no "straight in" promise');
+  });
+
+  it('a server file takes the form’s classes from the stylesheet, never the client module’s re-export (caught in walk §355)', () => {
+    // AccountForm.tsx is 'use client': a server component that reads its `accountForm` export gets a client reference,
+    // not the class map, so every class renders bare (the welcome and checkout complete did, until the walk).
+    const offenders: string[] = [];
+    for (const rel of [...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]) {
+      const src = readCode(rel);
+      if (/^\s*['"]use client['"]/.test(src)) continue;
+      if (/import \{[^}]*\baccountForm\b[^}]*\} from '@\/components\/auth\/AccountForm'/.test(src)) offenders.push(rel);
+    }
+    assert.deepEqual(offenders, [], `import accountForm from '@/components/auth/AccountForm.module.css' instead`);
   });
 
   it('both routes in the app’s warm frame, never the marketing chrome', () => {

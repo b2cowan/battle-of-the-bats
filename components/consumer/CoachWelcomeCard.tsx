@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Check, Clock, Search } from 'lucide-react';
-import { StartColumn, accountForm } from '@/components/auth/AccountForm';
+import { StartColumn } from '@/components/auth/AccountForm';
+// The stylesheet itself, not AccountForm's `accountForm` re-export: that file is a client module, and a server
+// component reading a non-component export from one gets undefined, so every class here rendered bare.
+import accountForm from '@/components/auth/AccountForm.module.css';
 import {
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_NAME, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';

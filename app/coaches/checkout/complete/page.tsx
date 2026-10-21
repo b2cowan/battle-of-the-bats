@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CoachWelcomeCard, PremiumWelcome } from '@/components/consumer/CoachWelcomeCard';
-import { accountForm } from '@/components/auth/AccountForm';
+import accountForm from '@/components/auth/AccountForm.module.css';
 import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';

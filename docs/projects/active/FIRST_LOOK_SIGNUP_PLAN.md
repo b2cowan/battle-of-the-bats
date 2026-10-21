@@ -547,7 +547,7 @@ those people, because the account-only sign-up carries their `next`.
 
 One commit for all three, because they share the plan settings, the coach sign-up and the test file. Built after `/marketing` (no change; one point to the owner), `/simplify` and `/review` (four lenses).
 
-**Owner walk:** §355, https://claude.ai/artifact/BibiAY5Yt5GkutCfpW3WU9 (source `FIRST_LOOK_STAGE3_WALK.html`): nine walks of one job each, W4, W5 and W8 staging-only, plus Part C (the "Fees" bullet).
+**Owner walk:** §355, https://claude.ai/artifact/BibiAY5Yt5GkutCfpW3WU9 (source `FIRST_LOOK_STAGE3_WALK.html`): nine walks of one job each, W4, W5 and W8 staging-only, plus Part C (the "Fees" bullet). **PASSED 2026-10-21** (44 of 45; Part C: keep "Fees, check-in and volunteers"). The walk caught one build defect: the welcome card and checkout complete read `accountForm` from a client module in a server component, so they rendered unstyled; fixed by importing the stylesheet directly.
 
 **The pieces a later stage reuses.**
 - `lib/start-door.ts`: `StartPricing` is a union (only a paid pick carries billing); `'tournament'` is a start plan; `withStartPricing()` for every link that carries the pick; `runATournamentPick()` is the one "this door can sell it" test (step 1's callout and the plan step); `RUN_A_TOURNAMENT_STEPS`.

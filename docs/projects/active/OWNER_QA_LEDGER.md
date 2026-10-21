@@ -26145,7 +26145,11 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **Owed beside the walk:** the whole-product layout sweep on staging; layout entries for the plan step (it needs a fresh tournament-plan organization fixture: an owner call before widening the UAT fixtures), the welcome and checkout complete; `/docs` (no help article quotes these screens; the organization guide may want to say what the first plan choice is).
 
-**To record from the walk:** each walk's verdict and notes, the Part C call, and whether the heading wraps onto two lines on a 358-wide phone.
+**Result: PASSED 2026-10-21 (owner), 44 of 45 steps ticked; the 45th is the Part C option not chosen.** Walks 1–9 all Pass (7/7, 4/4, 6/6, 4/4, 3/3, 5/5, 5/5, 5/5, 4/4). W4 and W5 ran on staging (W4 with the Founding sign-up close moved into the past by a branch override on the dev branch; W5 on the Dev League Org fixture); W8 on staging with Stripe's test card. **Part C, the call: keep "Fees, check-in and volunteers", as ruled** (no change to the copy). Not recorded in the paste-back: whether the heading wraps onto two lines on a 358-wide phone (W1's last note).
+
+**Caught while walking:** the Premium welcome and the checkout-complete page rendered with none of the account step's styling (a bare heading in the old display face, no gap under it, "Open your team" as plain text instead of the lime button). Cause: both server pages read the shared form's classes from a client module, which gives nothing on the server. Fixed by reading the stylesheet directly (`CoachWelcomeCard.tsx`, `checkout/complete/page.tsx`); W6 and W7 passed after it. **The two pages' unit tests read the code, so none could have caught it; only the walk did.**
+
+**Still owed:** the whole-product layout sweep on staging; layout entries for the plan step, the welcome and checkout complete; `/docs`.
 <!-- /§355 -->
 
 ## §356 · Club Tier · Stage 4b-2b, tryout season — **a club's Tryouts page lists every team's tryout under the club's groups, each open, not open yet or finished by itself; the Tryouts tab comes and goes with the season; a tryout page lists the coach's tryout days with Directions; the home shows one tryouts row when several teams are involved; a shared link shows a card in the club's colours, never a player; the sitemap finds the club's teams**
