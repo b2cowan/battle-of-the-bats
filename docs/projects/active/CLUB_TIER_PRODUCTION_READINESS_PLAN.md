@@ -1186,7 +1186,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > before this calendar year — the build also skips a founding year; notice by owner or admin, ends tonight / tomorrow night / a
 > date and time, never forever; About at `/{org}/about` with no meta line; Questions families ask drawn small in 4c-1; the
 > "300 girls" count out of 4c; the Born in picker on Teams and Tryouts); fixtures extended on UAT Lakeshore Lynx.
-> **🔨 4c-1 BUILT 2026-10-21 (the club's side; UNCOMMITTED until the owner says; walk §357
+> **🔨 4c-1 BUILT 2026-10-21 (the club's side; COMMITTED `e6d9790fc` 2026-10-21; walk §357
 > https://claude.ai/artifact/2V6xD278XTcGgQHiN4yZr6, result owed):** words `CLUB_TIER_STAGE4C1_COPY.md` (/marketing, approved;
 > after /design the owner changed Ends to "Tonight" / "Tomorrow night" and dropped the About page's back link). **Mig 343**
 > (dev; production at the promote, BEFORE the code, then its carry-over re-run — MANUAL_PROD_STEPS): the home's section order and
