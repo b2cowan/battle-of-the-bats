@@ -788,10 +788,34 @@ export interface OrgPublicSiteContent {
   socialFacebook: string | null;
   socialX: string | null;
   socialWebsite: string | null;
-  showUpcomingTournaments: boolean;
-  showArchivesLink: boolean;
+  /** The home's middle sections and the tab row, in the club's order (mig 343; normalize with lib/club-site-sections). */
+  homeSectionOrder: string[];
+  /** Sections the club hid from families (mig 343; replaces the two deprecated show_* switches). */
+  homeSectionsHidden: string[];
+  /** The About page's lists (mig 343), each in the club's order. */
+  contacts: SiteContact[];
+  documents: SiteDocument[];
+  questions: SiteQuestion[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** Who to contact (≤12): a role the club names and its address. */
+export interface SiteContact { id: string; role: string; email: string }
+/** Documents and policies (≤30): a link under the club's own heading. Links only — never a compliance claim. */
+export interface SiteDocument { id: string; heading: string; title: string; url: string }
+/** Questions families ask (≤10). */
+export interface SiteQuestion { id: string; question: string; answer: string }
+
+/** The club notice (mig 343, org_site_notices): one line at the top of every public page until it ends. */
+export interface ClubNotice {
+  id: string;
+  orgId: string;
+  notice: string;
+  detail: string | null;
+  postedAt: string;
+  endsAt: string;
+  endedAt: string | null;
 }
 
 // ── Accounting Module ─────────────────────────────────────────────────────────

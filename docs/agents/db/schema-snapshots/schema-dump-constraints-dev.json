@@ -3380,6 +3380,26 @@
     "update_rule": null
   },
   {
+    "table_name": "org_site_notices",
+    "constraint_name": "org_site_notices_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_site_notices",
+    "constraint_name": "org_site_notices_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "org_time_block_facilities",
     "constraint_name": "org_time_block_facilities_block_id_fkey",
     "constraint_type": "FOREIGN KEY",

@@ -6,6 +6,9 @@ import { resolveTheme } from '@/lib/themes';
 import { clubColourRoles, hexChannels } from '@/lib/club-colour-roles';
 import { clubDescription, clubFace, clubSocials } from '@/lib/club-site';
 import { getClubBySlug, getClubSiteContent } from '@/lib/club-page-meta';
+import { getLiveClubNotice } from '@/lib/db';
+import { noticeSmallLine } from '@/lib/club-notice';
+import { clubAboutPageShows } from '@/lib/club-about';
 import { resolveOrgSections } from '@/lib/org-section-availability';
 import { isFreePlan } from '@/lib/plan-config';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -111,10 +114,16 @@ export default async function OrgLayout({
   // Read once, alongside the section checks rather than before them — this layout wraps every route under the club.
   // The club's own words and contact (tagline, contact email, social links) are the public-site module's: a club on a
   // plan without it shows its name and logo only, as its pages always did — and its routes skip the read entirely.
-  const siteContentRead = siteOpen && hasModuleEntitlement(org, 'module_public_site')
-    ? getClubSiteContent(org.id)
-    : Promise.resolve(null);
-  const [siteContent, sections] = await Promise.all([siteContentRead, resolveOrgSections(org, siteContentRead)]);
+  const clubSiteOn = siteOpen && hasModuleEntitlement(org, 'module_public_site');
+  const siteContentRead = clubSiteOn ? getClubSiteContent(org.id) : Promise.resolve(null);
+  // The club notice (Stage 4c-1, Ask 16) rides the same gate: a club page shows it under the bar until it ends. One small
+  // indexed read; a failed read is no notice, never a broken page.
+  const nowIso = new Date().toISOString();
+  const [siteContent, sections, liveNotice] = await Promise.all([
+    siteContentRead,
+    resolveOrgSections(org, siteContentRead),
+    clubSiteOn ? getLiveClubNotice(org.id, nowIso) : Promise.resolve(null),
+  ]);
 
   // ── The sandbox hat ────────────────────────────────────────────────────────────
   // Mounted HERE because this one layout wraps both halves of the product for an org — the public
@@ -224,6 +233,13 @@ export default async function OrgLayout({
               socials: clubSocials(siteContent),
               showCredit: !isFreePlan(org.planId),
               face: clubFace(org.themeFont),
+              notice: liveNotice ? {
+                notice: liveNotice.notice,
+                detail: liveNotice.detail,
+                smallLine: noticeSmallLine(liveNotice, nowIso),
+                endsAt: liveNotice.endsAt,
+              } : null,
+              aboutHref: clubAboutPageShows(siteContent) ? `/${orgSlug}/about` : null,
             }}
           >
             {children}

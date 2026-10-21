@@ -2,18 +2,19 @@
 
 **Generated:** 2026-10-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 39 divergence(s)** across dev/prod.
+**⚠️ 67 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 3 | 0 | — |
-| Columns | 15 | 0 | 0 |
-| Indexes | 7 | 0 | 0 |
-| Constraints | 13 | 0 | — |
-| RLS / CHECK | 1 | 0 | 0 (RLS state) |
+| Tables | 4 | 0 | — |
+| Columns | 30 | 0 | 0 |
+| Indexes | 9 | 0 | 0 |
+| Constraints | 15 | 0 | — |
+| RLS / CHECK | 9 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (3)
+### Only in DEV (4)
+- `org_site_notices`
 - `tournament_fee_book_settings`
 - `tournament_fee_receipt_allocations`
 - `tournament_fee_receipts`
@@ -22,7 +23,22 @@
 _none_
 
 ## Columns
-### Only in DEV (15)
+### Only in DEV (30)
+- `org_public_site_content.contacts`
+- `org_public_site_content.documents`
+- `org_public_site_content.home_section_order`
+- `org_public_site_content.home_sections_hidden`
+- `org_public_site_content.questions`
+- `org_site_notices.detail`
+- `org_site_notices.ended_at`
+- `org_site_notices.ended_by_email`
+- `org_site_notices.ends_at`
+- `org_site_notices.id`
+- `org_site_notices.notice`
+- `org_site_notices.org_id`
+- `org_site_notices.posted_at`
+- `org_site_notices.posted_by_email`
+- `org_site_notices.posted_by_user_id`
 - `teams.fee_book_baseline`
 - `teams.fee_changed_by`
 - `tournament_fee_book_settings.category_id`
@@ -46,7 +62,9 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (7)
+### Only in DEV (9)
+- `org_site_notices_org_idx`
+- `org_site_notices_pkey`
 - `tournament_fee_allocations_team_idx`
 - `tournament_fee_book_settings_org_id_idx`
 - `tournament_fee_book_settings_pkey`
@@ -62,7 +80,9 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (13)
+### Only in DEV (15)
+- `org_site_notices.org_site_notices_org_fk`
+- `org_site_notices.org_site_notices_pkey`
 - `teams.teams_fee_changed_by_fkey`
 - `tournament_fee_book_settings.tournament_fee_book_settings_category_id_fkey`
 - `tournament_fee_book_settings.tournament_fee_book_settings_item_id_fkey`
@@ -84,7 +104,15 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (1)
+### CHECK only in DEV (9)
+- `org_public_site_content.org_public_site_content_contacts_cap`
+- `org_public_site_content.org_public_site_content_documents_cap`
+- `org_public_site_content.org_public_site_content_home_section_order_known`
+- `org_public_site_content.org_public_site_content_home_sections_hidden_known`
+- `org_public_site_content.org_public_site_content_questions_cap`
+- `org_site_notices.org_site_notices_detail_check`
+- `org_site_notices.org_site_notices_ends_after_post`
+- `org_site_notices.org_site_notices_notice_check`
 - `tournament_fee_receipt_allocations.tournament_fee_receipt_allocations_amount_check`
 
 ### CHECK only in PROD (0)

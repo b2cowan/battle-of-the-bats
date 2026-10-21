@@ -3,39 +3,25 @@
  * 2026-10-19, End states 1–2, Asks 3A, 4A, DC-01, S4-03).
  *
  * Pure, so they are unit-tested (tests/unit/club-stage4b2a.test.ts) and the pages only render what they decide:
- *   · the home's sections, in ONE fixed order, a program the club does not run absent (never "check back soon");
  *   · Open now, nearest deadline first;
  *   · a tournament's status, true to its dates — "Live now" only while they include today (today every card said Live);
  *   · the club's own team groups as bands, and when the home's two-column grid falls back to one.
- * The editor's show/hide and reorder of the middle sections is Stage 4c; until then the order is the ruled one, fixed.
+ * The home's sections — the ruled order (Ask 3A) a club starts from, and since Stage 4c-1 the club's own order and
+ * show/hide — are decided in lib/club-site-sections.ts (`clubHomeSectionsFor`).
  */
 import { addCalendarDays, mondayOfDay } from './timezone';
-
-export type ClubHomeSection = 'openNow' | 'teams' | 'league' | 'tournaments' | 'about';
-
-/** Bar → Open now → Teams → House league → Tournaments → About the club → footer (Ask 3A). Each present only when it has
- *  something to show: Open now first because it is the only content with a deadline, and it leaves by itself. */
-export function clubHomeSections(has: {
-  openNow: number;
-  teams: number;
-  league: boolean;
-  tournaments: number;
-  about: boolean;
-}): ClubHomeSection[] {
-  const out: ClubHomeSection[] = [];
-  if (has.openNow > 0) out.push('openNow');
-  if (has.teams > 0) out.push('teams');
-  if (has.league) out.push('league');
-  if (has.tournaments > 0) out.push('tournaments');
-  if (has.about) out.push('about');
-  return out;
-}
 
 /** Open now's rows, nearest deadline first; a row with no deadline (a tryout, until 4b-2b reads its days) keeps its
  *  place after them. `deadline` is a sortable date or instant string. */
 export function orderOpenNow<T extends { deadline: string | null }>(rows: readonly T[]): T[] {
   const dated = rows.filter(r => r.deadline).sort((a, b) => a.deadline!.localeCompare(b.deadline!));
   return [...dated, ...rows.filter(r => !r.deadline)];
+}
+
+/** The house-league season the home names: the one running (sign-up open or closed, or playing), else none. A draft
+ *  season is never public. The editor's House league row names the same one (Stage 4c-1). */
+export function runningLeagueSeason<T extends { status: string }>(seasons: readonly T[]): T | null {
+  return seasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status)) ?? null;
 }
 
 // ── A tournament's status (S4-03) ──────────────────────────────────────────────────────────────

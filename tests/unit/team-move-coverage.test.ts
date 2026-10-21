@@ -53,6 +53,7 @@ const STAYS: Record<string, string> = {
   billing_retention_intents: 'the account’s data-retention lifecycle',
   team_entitlements: 'the old portal’s own plan — the move cancels it, and it stays as that portal’s record',
   org_public_site_content: 'the coach org’s own public-site page, not the team',
+  org_site_notices: 'the club notice on an org’s own public site (Club Tier Stage 4c-1) — the org’s words, never a team’s',
   notifications: 'bell messages already delivered, addressed to the old portal’s pages',
   notification_preferences: 'a person’s settings for the old portal; the club’s defaults apply in the club',
   rep_allocation_reminder_waves: 'a CLUB’s record of its allocation reminders (mig 315); a coach’s own org never bills a team, so it has none to move',

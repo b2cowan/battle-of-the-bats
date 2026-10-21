@@ -11,7 +11,7 @@
  *   │ Oct 4–6, 2026 · 8 teams                     ›  │         of its life: what's ahead on top, so history
  *   │ COMPLETED 1   public site online               │         only ever adds rows below; Mark complete moves
  *   │ Riverdale Season Opener      [Reuse setup]  ›  │         an event down a band, not to another page
- *   │ SEALED RECORDS                 Public ledger ↗ │
+ *   │ SEALED RECORDS              Past tournaments ↗ │
  *   └────────────────────────────────────────────────┘
  *
  * Each band says ONCE what it means for the public site, beside its count (it replaced Past tournaments'
@@ -19,7 +19,7 @@
  * its dates and its teams ("no teams" on a finished event, never "no teams yet"). A Completed row carries
  * Reuse setup (olive on white, A12) — in that band only, the band being the condition (K-08's named
  * exception, as Teams' Accept). NO OTHER CONTROLS ON A ROW (F35): the whole row opens THE EVENT'S RECORD,
- * where every status change asks first. Public ledger, the old Past tournaments header's door, sits in the
+ * where every status change asks first. Past tournaments (named as the public page it opens), the old header's door, sits in the
  * Sealed records band, shown when there is a sealed record to list. Every band is open (D7b).
  *
  * One frame with bands on a phone (S.7); at a desk a table — Tournament · Dates · Teams — with the bands
@@ -110,7 +110,7 @@ export default function AdminTournamentsPage({
       <span className={styles.bandNote}>{LIST_WORDS.bandSite[band.key]}</span>
     </>
   );
-  // Public ledger lists sealed records only, so its door shows when there is one to list: the band's last
+  // Past tournaments lists sealed records only, so its door shows when there is one to list: the band's last
   // row on a phone (a 44px row, as each sealed record's), the band row's right edge at a desk.
   const hasLedger = canSeal && lists.sealed.length > 0;
   const ledgerHref = `/${orgSlug}/archives`;

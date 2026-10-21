@@ -1106,7 +1106,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > coach's door): nothing is built that no club could switch on. **📝 Both build prompts written 2026-10-20:**
 > `CLUB_TIER_STAGE4B2A_BUILD_PROMPT.md` (for a new chat) and `CLUB_TIER_STAGE4B2B_BUILD_PROMPT.md` (start after 4b-2a is
 > committed and walked).
-> **🔨 4b-2a BUILT 2026-10-20 (the year-round club; COMMITTED `468ba1199` 2026-10-20; walk §352 owed):** the public-site home is its own
+> **🔨 4b-2a BUILT 2026-10-20 (the year-round club; COMMITTED `468ba1199` 2026-10-20; walk §352 ✅ PASSED 2026-10-20, all four calls option A):** the public-site home is its own
 > view (`components/public/ClubSiteHome.tsx`) in the ruled order — Open now (open house-league registrations + one row per open
 > tryout, nearest deadline first, absent when nothing is open) → Teams (the club's groups as bands, a two-column grid of doors,
 > one column per group when a name passes ~14 characters, DC-01) → House league → Tournaments (Registration open · This weekend
@@ -1128,8 +1128,8 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > **Findings recorded, not fixed:** the house-league admin stores a close time as typed with a Z (the season page shows it in the
 > viewer's zone); the admin billing page spells "canceled" (one L) against the public "Cancelled"; a tournament with no end
 > date reads as one day; `resolvePublicClub` still reads the org uncached (4b-1 finding 4).
-> **🔨 4b-2b BUILT 2026-10-20 (tryout season, preview cards, the sitemap; walk §356 https://claude.ai/artifact/4eudnWvaqcofFtj3n6x7Mj
-> owed):** **asks ruled 2026-10-20, all as recommended** (https://claude.ai/artifact/X37UZWEfxRWt5JqqTp5ia1, source
+> **🔨 4b-2b BUILT 2026-10-20 (tryout season, preview cards, the sitemap; COMMITTED `ec512b404` 2026-10-21; walk §356
+> https://claude.ai/artifact/4eudnWvaqcofFtj3n6x7Mj ✅ PASSED 2026-10-21, all five calls option A — results in the QA ledger):** **asks ruled 2026-10-20, all as recommended** (https://claude.ai/artifact/X37UZWEfxRWt5JqqTp5ia1, source
 > `CLUB_TIER_STAGE4B2B_ASKS.html`): the Tryouts address out of season says when the club's last tryouts finished (or "No tryouts
 > are posted right now."), no tab lit, no chip, no "See all teams"; a team's tryout page has a fourth state, **Not open yet** (the
 > closed frame with the Tryout days inserted, no sign-up); the twelve edges of the three states (the sign-up switch wins over
@@ -1160,6 +1160,61 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > `DirectionsLink` / contact pieces (their files carry another session's work); a tournament slug can still be shadowed by any
 > club section name (no tournament-slug blocklist exists); the club contact address is saved unvalidated (a `mailto:` can carry
 > extra fields — the club's own admin, own page).
+> **📥 TO EVALUATE AND ACT ON (Stage 4; owner ask 2026-10-21, from walk §356 call c1; NOT yet ruled, drawn or built):** *"Incorporate the
+> option to replace the club email with the team head coach email for each team on their tryouts page, so the emails there and in
+> the footer would be different."* **Today:** every public tryout page and the Tryouts page say "Questions? Email the club at …" above a
+> footer that repeats the same club address (call c1 kept that, option A). **The ask:** a team's own tryout page can show that team's
+> head coach's address instead, so a hesitant parent writes to the person running that team's tryouts. **To decide before any build:**
+> (1) *which address* — the head coach's sign-in email (private today, so showing it publicly is a new exposure) or a separate
+> "tryout questions" address the coach types in, which is safer; (2) *who sets it* — the coach, the club admin, or both, and whether
+> it is opt-in per team (default stays the club's); (3) *when the head coach changes* — it follows the new coach, falls back to the
+> club's, or must be re-entered (a stale address sends families to someone who left); (4) *where it shows* — the team's own tryout
+> page only, as asked; the club's Tryouts page lists several teams, so it keeps the club's address, and the footer stays the club's;
+> (5) *the finished and closed states* — whether the coach's address still shows once sign-ups are closed; (6) *the card* — the
+> Copy button and the share card follow whichever address shows. **Route:** `/ux` for the flow, a drawing and asks page for the
+> owner, a PM brief with the plan; touches the coaches-portal tryout setup, so it also needs the c3 "days are public" line decided in
+> the same pass. **Also queued from the same walk:** c3 the coach-setup line saying tryout days are public before sign-ups open; c2 one
+> wording pass on "Sign up for tryouts" vs "application" across the whole sign-up flow.
+> **📝 4c build prompt written 2026-10-21** (`CLUB_TIER_STAGE4C_BUILD_PROMPT.md`, for a new chat): the ruled spec for the
+> editor, the notice, the About page, born-in years, the tryout blurb's editor, the coach's door and Coaches; leads verified at
+> `ec512b404`. Gate asks: split 4c into 4c-1 the club's side and 4c-2 the teams' side; the owner's §356 head-coach email ask,
+> which reverses Ask 2 ("name and role only, never an email"); the gaps the drawings leave; the fixtures.
+> **⚖ 4c gate ruled 2026-10-21 (owner, all as recommended):** split — **4c-1 the club's side first**, then **4c-2 the teams'
+> side**, each walked on its own; the §356 head-coach email is **a separate tryout address the coach types**, blank by default,
+> ending with their role, never the sign-in email, built in 4c-2 beside the coach's door, the club Tryouts page keeping the
+> club's line; the gap defaults (past-year hint on tagline, about, a question's answer and the tryout blurb, any four-digit year
+> before this calendar year — the build also skips a founding year; notice by owner or admin, ends tonight / tomorrow night / a
+> date and time, never forever; About at `/{org}/about` with no meta line; Questions families ask drawn small in 4c-1; the
+> "300 girls" count out of 4c; the Born in picker on Teams and Tryouts); fixtures extended on UAT Lakeshore Lynx.
+> **🔨 4c-1 BUILT 2026-10-21 (the club's side; UNCOMMITTED until the owner says; walk §357
+> https://claude.ai/artifact/2V6xD278XTcGgQHiN4yZr6, result owed):** words `CLUB_TIER_STAGE4C1_COPY.md` (/marketing, approved;
+> after /design the owner changed Ends to "Tonight" / "Tomorrow night" and dropped the About page's back link). **Mig 343**
+> (dev; production at the promote, BEFORE the code, then its carry-over re-run — MANUAL_PROD_STEPS): the home's section order and
+> hidden list and the three About lists (contacts ≤12, documents ≤30, questions ≤10, capped by CHECKs) on
+> `org_public_site_content`; the notice table `org_site_notices` (one row per post; one at a time is a read rule; service role
+> only). The two old switches are deprecated, carried over, and **mirrored** by every save until a later migration drops them.
+> **The editor** rebuilt on self-saving cards (the old look, "Display options" and Save Changes gone; header with the address, Copy
+> link, Open absent while off, and who turns the site on); the **Home page** card — Open now locked first (the reorder list's new
+> `fixedInert`), the rest a switch and a numbered drag handle each, a line saying what each shows ("Shows once you publish a
+> season"), a plan-absent section not listed; **About the club** (tagline count, the past-year hint); **Social links** (a bare
+> domain completed and said, a refusal beside the field and never saved — one check `parsePublicSitePatch` for the route, the
+> fields and the windows); **Who to contact / Documents and policies / Questions families ask** (each row a one-window record,
+> edit autosaves, create asks, the role-address nudge); **Look** (read only, colours in words, a darkened colour said); the **Club
+> notice** card (never autosaved: Post, Update, End now; owner and admin only, one access rule `publicSiteEditor` for both
+> routes). **Families see** the home and tab row in the club's order and show/hide (About drawn once, beside the others at a
+> desk); the notice under the bar on every club page, gone at its end even on a page left open; the **About page** (contacts with
+> Copy, documents under the club's headings opening in a new tab, questions; never a compliance claim) behind the footer's
+> **Contacts and documents**, both shown only once it has a contact, document or question. "Public ledger" → **Past
+> tournaments**. Tests `club-stage4c1.test.ts` (red runs recorded) + `club-stage4c1-guard.test.ts`; layout screen `club-about`.
+> /design (7 must-fix applied), /simplify (4 angles) and /review (high-risk, 4 lenses; no Critical or High; the two-admins notice
+> race, ended-notice history, the midnight edge, mailto `%` and link log-in parts, read-time list checks, the editor's save
+> queues and tab-close send fixed; the anon policy on the site table refuted — no anon grant on dev or prod); /docs (a new
+> "Running your public site" section, four passages, the hub step). **Findings recorded, not fixed:** a tournament slug
+> "about" would be shadowed (no tournament-slug blocklist, as for every club section); an offline phone can show an ended
+> notice until its original end; the notice is read on every club route while the site is on (one indexed read beside the
+> others); hiding Teams drops "See all teams" from a mistyped team address (walk call c3); the footer's Copy is another session's
+> uncommitted icon-only change and should match the About page's (labelled at a desk — owner 2026-10-21); the main club's seed
+> still writes the deprecated switches (fine until the drop migration).
 > **⚖ Ruled the same day (owner): a club's own web address is Stage 4e, inside the release, as recommended; payments
 > processing is inside the release and the release has no date (§7).** The evidence behind both: **a club's own web address** (evidence 2026-10-19: 8 of the 10 club sites use their own
 > domain; the 2 that do not are on free or low-end tools; every platform that documents it hosts the site on the club's domain

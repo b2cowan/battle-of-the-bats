@@ -1819,6 +1819,9 @@ export const SCREENS = [
     route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
   { id: 'club-tryout-closed',     session: 'anon', path: () => '/uat-rep-only/teams/16u-aa/tryouts',    ready: 'h1', widths: ['320'],
     route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
+  // Club Tier Stage 4c-1: the About page (contacts with Copy, documents under headings, a question), on the navy club.
+  { id: 'club-about',             session: 'anon', path: () => '/uat-rep-only/about',                   ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/about' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

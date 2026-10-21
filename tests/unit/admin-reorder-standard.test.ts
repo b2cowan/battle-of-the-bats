@@ -39,8 +39,10 @@ describe('no Reorder mode and no arrow pair anywhere in the admin', () => {
   });
   test('the words are the standard\'s: Move up · Move down · Cancel, and a handle that says what it does', () => {
     // `remove` and `handleHeld`: the tie-breakers' opt-ins (Stage 5 addendum A73, 2026-10-12) — a Remove item, and a
-    // row that holds its place (Coin Toss) says it doesn't drag.
-    assert.deepEqual(Object.keys(ORDER_WORDS).sort(), ['cancel', 'handle', 'handleHeld', 'moveDown', 'moveUp', 'options', 'position', 'remove', 'saveFailed']);
+    // row that holds its place (Coin Toss) says it doesn't drag. `handleFixed`: a fixed row in a list with no Remove —
+    // its handle opens nothing, so it is named and inert (Club Tier Stage 4c-1, the public-site editor's Open now).
+    assert.deepEqual(Object.keys(ORDER_WORDS).sort(), ['cancel', 'handle', 'handleFixed', 'handleHeld', 'moveDown', 'moveUp', 'options', 'position', 'remove', 'saveFailed']);
+    assert.equal(ORDER_WORDS.handleFixed('Open now', '1 of 6'), 'Open now, 1 of 6. It keeps its place.');
     assert.equal(ORDER_WORDS.remove, 'Remove');
     assert.equal(ORDER_WORDS.handleHeld('Coin Toss', '5 of 5'), 'Coin Toss, 5 of 5. Press for options.');
     assert.equal(ORDER_WORDS.cancel, 'Cancel');

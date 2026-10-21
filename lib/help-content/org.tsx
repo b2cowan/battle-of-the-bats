@@ -1063,7 +1063,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Public site</strong> — takes all of your club&rsquo;s pages online or offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Your <strong>tournament pages stay up</strong> either way. Turning it off asks first. While it&rsquo;s off, families who open any of those pages see one page — <em>This club&rsquo;s site isn&rsquo;t available</em> — tryout sign-ups stop, and families&rsquo; subscribed team calendars go empty. Your coaches see a note in their team&rsquo;s <strong>Sharing</strong> settings that their team&rsquo;s public page isn&rsquo;t open.</li>
                 <li><strong>Listed in the directory</strong> — controls whether families searching FieldLogicHQ&rsquo;s public directory can find you. Your site stays online either way; this switch is off, and greyed out, whenever the public site itself is off.</li>
               </ul>
-              <p>The <strong>Public site</strong> editor is where you fill in that home page&rsquo;s content — a tagline, sections and more. It shows an <strong>Online</strong>/<strong>Offline</strong> chip reading the switch above; the switch itself is only ever set here, in Settings.</p>
+              <p>The <strong>Public site</strong> editor is where you run those pages — your home page&rsquo;s sections and their order, your words and contacts, your documents, and a notice for the day (see <strong>Running your public site</strong>). It shows an <strong>Online</strong>/<strong>Offline</strong> chip reading the switch above; the switch itself is only ever set here, in Settings.</p>
             </>
           ),
         },
@@ -1105,6 +1105,120 @@ const orgHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'public-site-editor',
+      heading: 'Running your public site — the Public site editor',
+      summary: 'Choose your home page’s sections and their order, write your club’s words and contacts, list your documents, and post a notice families see on every page.',
+      keywords: [
+        'public site editor', 'public site', 'site editor', 'home page sections', 'reorder sections', 'hide a section',
+        'show a section', 'section order', 'tagline', 'about the club', 'families questions go to', 'contact email',
+        'social links', 'instagram', 'facebook', 'website link', 'saved as', 'that isn’t a web address', 'look', 'colours',
+        'who to contact', 'contacts', 'role address', 'registrar', 'documents and policies', 'code of conduct', 'policies',
+        'questions families ask', 'faq', 'about page', 'contacts and documents', 'club notice', 'field closure',
+        'fields closed', 'rain out', 'post notice', 'end now', 'mentions 2025', 'still true', 'past year',
+      ],
+      searchText: 'public site editor admin public site cards save themselves saved pill no save button online offline chip families see it at your address copy link open turn it off in settings the owner turns it on and off home page sections open now always first teams house league tournaments about the club past tournaments switch hide show hold and drag the number reorder order shows once you publish a season shows once you host a tournament shows once you add a team plan does not carry tab row follows tagline about families questions go to footer team and tryout pages mentions a past year still true hint founding year since social links instagram facebook x website https saved as refused that isn’t a web address paste the link who to contact up to twelve role address registrar@ personal address gmail nudge documents and policies up to thirty heading title link opens in a new tab codes of conduct safety the club never says compliant questions families ask up to ten about page contacts and documents footer link look logo colours font readable darkened change in settings club notice field closure diamonds closed tonight rain more detail ends tonight tomorrow night date and time post notice update notice end now posted by the club ends by itself one at a time every public page every team page',
+      content: (
+        <>
+          <p><strong>Public site</strong> in the admin is where you run your club&rsquo;s pages: which sections your home page shows and in what order, your words and contacts, your documents, and a notice for the day. It&rsquo;s for the owner and admins. Every change saves itself (a <strong>Saved</strong> pill appears and fades), except a notice, which waits for <strong>Post notice</strong>.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'public-site-editor-header',
+          title: 'Your address, and whether the site is on',
+          content: (
+            <>
+              <p>The top of the page shows an <strong>Online</strong> or <strong>Offline</strong> chip and <strong>Families see it at</strong> with your address, <strong>Copy link</strong> and <strong>Open</strong>. While the site is off, Open isn&rsquo;t there; Copy link still is.</p>
+              <p>The site is switched on and off in <strong>Settings</strong>, by the owner only. The owner sees <strong>Turn it off in Settings</strong> (or <strong>Turn it on in Settings</strong>); an admin sees who does it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-sections',
+          title: 'Choose your home page’s sections and their order',
+          content: (
+            <>
+              <p>The <strong>Home page</strong> card lists what families see on your home page, in order. Each row says what it shows today, such as &ldquo;Your 8 teams in your groups, each with its tryout state&rdquo;.</p>
+              <ul>
+                <li><strong>Open now</strong> always comes first, and only shows while something is open (a tryout, a house-league sign-up). It has no switch.</li>
+                <li><strong>Hide or show</strong> any other section with its switch. A hidden section leaves your home page and its tab.</li>
+                <li><strong>Reorder</strong> by holding the number at the start of a row and dragging it. Tapping the number offers <strong>Move up</strong> and <strong>Move down</strong> instead. Your tabs follow the same order.</li>
+                <li>A section you don&rsquo;t run yet keeps its switch and says when it shows, such as <strong>Shows once you publish a season</strong>, so you can decide ahead of time.</li>
+              </ul>
+              <p>A section your plan doesn&rsquo;t include isn&rsquo;t listed.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-words',
+          title: 'Your tagline, about text, contact and social links',
+          content: (
+            <>
+              <p>The <strong>About the club</strong> card holds your <strong>Tagline</strong> (one line under your name, up to 100 characters), your <strong>About</strong> text, and <strong>Families&rsquo; questions go to</strong> — the address shown in your footer and on every team and tryout page.</p>
+              <p>If your tagline or about text mentions a past year, a quiet hint asks <strong>Mentions 2025 — still true?</strong> It never stops a save, and a founding year (&ldquo;since 1979&rdquo;) isn&rsquo;t flagged.</p>
+              <p>In <strong>Social links</strong>, a link typed without <code>https://</code> is completed for you, and the field says <strong>Saved as https://…</strong>. Something that isn&rsquo;t a web address is refused with the reason beside the field, and isn&rsquo;t saved until you fix it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-about-page',
+          title: 'Contacts, documents and questions for your About page',
+          content: (
+            <>
+              <p>Three lists fill your club&rsquo;s <strong>About</strong> page. Each row opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
+              <ul>
+                <li><strong>Who to contact</strong> (up to twelve): a role, such as Registration, and its email address. When an address looks personal, the window suggests a role address like registrar@, which keeps working when a volunteer changes. It never refuses yours.</li>
+                <li><strong>Documents and policies</strong> (up to thirty): a heading, a title and a link to a document you already publish. Families see them under your headings, such as Codes of conduct or Safety, and each opens in a new tab. Your site shows your documents; it never says your club is compliant.</li>
+                <li><strong>Questions families ask</strong> (up to ten): short answers to what you get asked every season.</li>
+              </ul>
+              <p>Families reach the About page from the <strong>About the club</strong> card on your home page and the <strong>Contacts and documents</strong> link in your footer. Both appear once you have added a contact, a document or a question.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-notice',
+          title: 'Post a notice, such as a field closure',
+          content: (
+            <>
+              <p>The <strong>Club notice</strong> card puts one line at the top of every public page and every team page, until it ends.</p>
+              <ol>
+                <li>Write the <strong>Notice</strong>, such as &ldquo;All diamonds are closed tonight&rdquo; (up to 80 characters).</li>
+                <li>Add <strong>More detail</strong> if you like.</li>
+                <li>Choose when it <strong>Ends</strong>: <strong>Tonight</strong>, <strong>Tomorrow night</strong>, or a date and time.</li>
+                <li>Press <strong>Post notice</strong>.</li>
+              </ol>
+              <p>Families see your words and a line like &ldquo;Posted 2:40 p.m. by the club &middot; ends tonight&rdquo;. One notice shows at a time: <strong>Update notice</strong> replaces it, and <strong>End now</strong> takes it down. It also ends by itself at the time you chose.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-look',
+          title: 'Your look',
+          content: (
+            <>
+              <p>The <strong>Look</strong> card shows your logo, your colours in words and your font, and says how families see them. If your colour had to be darkened a little to keep text readable, it says so.</p>
+              <p>Your logo, colours and font are changed in <strong>Organization &rsaquo; Settings</strong> — by the owner, from <strong>Change in Settings</strong>.</p>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-public-site-field-closure',
+          question: 'How do I tell families the fields are closed tonight?',
+          popular: true,
+          answerText: 'In Public site, use the Club notice card. Write the notice, add more detail if you like, choose when it ends (tonight, tomorrow night, or a date and time) and press Post notice. It shows at the top of every public page and every team page until it ends, or until you press End now.',
+          keywords: ['field closure', 'fields closed', 'rain out', 'cancelled tonight', 'club notice', 'post notice', 'announcement'],
+          answer: (
+            <>
+              <p>In <strong>Public site</strong>, use the <strong>Club notice</strong> card. Write the notice, add more detail if you like, choose when it <strong>Ends</strong> (tonight, tomorrow night, or a date and time) and press <strong>Post notice</strong>.</p>
+              <p>It shows at the top of every public page and every team page until it ends, or until you press <strong>End now</strong>.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'public-org-page',
       heading: 'Your public organization page — what visitors see',
       summary: 'Your pages are your club’s own site: your bar with your name and tabs, your colours, one footer with your contact, and a shortcut back to admin for your own staff.',
@@ -1119,8 +1233,9 @@ const orgHelp: HelpPageContent = {
         'home page', 'open now', 'teams tab', 'teams page', 'team page', 'about the club', 'follow', 'tournament status',
         'live now', 'this weekend', 'finished', 'see all teams', 'team schedule', 'earlier this season', 'banner photo',
         'tryouts page', 'tryouts tab', 'tryout days', 'not open yet', 'tryouts open', 'link preview', 'share card', 'shared link', 'google', 'search engines',
+        'about page', 'contacts and documents', 'club notice', 'section order', 'hide a section',
       ],
-      searchText: 'public organization page club site what families see visitors see fans see your own site your bar logo initials club name tagline sign in account section tabs tab row home teams house league past tournaments only the sections you have teams tab teams page every team not archived club groups other teams tryouts open chip home page order open now registration open tryouts teams grid house league tournaments about the club follow button registration open this weekend live now finished banner strip computer only team page back to teams division season dot tryout details and sign-up isn’t taking tryout sign-ups right now schedule public link earlier this season up next directions cancelled show the rest of the season about the team see all teams no tab row with only a home page tabs in the bar on a computer white row under the bar on a phone club name links back to the front page no discover no pricing no breadcrumb no fieldlogichq bottom bar on a phone tournament pages keep the bottom bar light page your colours readable automatically light colour dark text yellow gold sky darker links footer questions email the club copy the address copied social links instagram facebook x website built on fieldlogichq credit paid plans event cards club colours tournament cards account menu sign out stays on your page return to admin from my public page shortcut back admin coaches portal flip door only your own staff staff of another club family never sees it remembers the screen i left page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off tryouts page tryouts tab third tab 2027 tryouts rep and select teams for the season banded by your groups date range tryout days public tryout days families can see tryout days dates venue field directions sign up for tryouts not open yet finished tryouts closed the club’s last tryouts finished no tryouts are posted right now link preview share card shared link card in your colours logo initials never a player text message social media search engines google find your teams page',
+      searchText: 'public organization page club site what families see visitors see fans see your own site your bar logo initials club name tagline sign in account section tabs tab row home teams house league past tournaments only the sections you have teams tab teams page every team not archived club groups other teams tryouts open chip home page order open now registration open tryouts teams grid house league tournaments about the club follow button registration open this weekend live now finished banner strip computer only team page back to teams division season dot tryout details and sign-up isn’t taking tryout sign-ups right now schedule public link earlier this season up next directions cancelled show the rest of the season about the team see all teams no tab row with only a home page tabs in the bar on a computer white row under the bar on a phone club name links back to the front page no discover no pricing no breadcrumb no fieldlogichq bottom bar on a phone tournament pages keep the bottom bar light page your colours readable automatically light colour dark text yellow gold sky darker links footer questions email the club copy the address copied social links instagram facebook x website built on fieldlogichq credit paid plans event cards club colours tournament cards account menu sign out stays on your page return to admin from my public page shortcut back admin coaches portal flip door only your own staff staff of another club family never sees it remembers the screen i left page not found we couldn’t find that page couldnt find mistyped team old link broken link short address teams schedule standings results register news rules forwards to the running tournament printed link qr code no tournament running this club’s site isn’t available site switched off tryouts page tryouts tab third tab 2027 tryouts rep and select teams for the season banded by your groups date range tryout days public tryout days families can see tryout days dates venue field directions sign up for tryouts not open yet finished tryouts closed the club’s last tryouts finished no tryouts are posted right now link preview share card shared link card in your colours logo initials never a player text message social media search engines google find your teams page about page contacts and documents footer link club notice top of every page section order you choose hidden section no tab',
       content: (
         <>
           <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. Every club page there (your home, a team, a tryout and its sign-up, your house league, your past tournaments) is your club&rsquo;s own site: your bar at the top, your colours on a light page, and one footer at the bottom.</p>
@@ -1139,9 +1254,9 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Teams</strong>, when your plan includes rep teams and you have a team that isn&rsquo;t archived</li>
                 <li><strong>Tryouts</strong>, while any team has tryouts open, not open yet, or finished in the last four weeks. It leaves by itself after that; the address keeps working all year.</li>
                 <li><strong>House league</strong>, once a season is published</li>
-                <li><strong>Past tournaments</strong>, once you have one and haven&rsquo;t hidden it</li>
+                <li><strong>Past tournaments</strong>, once you have one, when your plan includes tournaments and you haven&rsquo;t hidden it</li>
               </ul>
-              <p>With only a home page, there is no tab row. Your pages advertise nothing of ours: no Discover, no Pricing.</p>
+              <p>The tabs follow the order you choose for your home page&rsquo;s sections in <strong>Public site</strong>, and a section you hide there has no tab. With only a home page, there is no tab row. Your pages advertise nothing of ours: no Discover, no Pricing.</p>
             </>
           ),
         },
@@ -1160,7 +1275,7 @@ const orgHelp: HelpPageContent = {
           title: 'Your footer and your colours',
           content: (
             <>
-              <p>The same footer closes every club page: your club&rsquo;s name, <strong>Questions? Email the club</strong> with your contact address and a <strong>Copy</strong> button (an email link does nothing on some phones), your social links, and on a paid plan a quiet <strong>Built on FieldLogicHQ</strong>. A part you haven&rsquo;t filled in is left out. You set the address, tagline and social links in <strong>Public site &rsaquo; Site editor</strong>.</p>
+              <p>The same footer closes every club page: your club&rsquo;s name, <strong>Questions? Email the club</strong> with your contact address and a <strong>Copy</strong> button (an email link does nothing on some phones), your social links, a <strong>Contacts and documents</strong> link to your About page once you have added a contact, a document or a question, and on a paid plan a quiet <strong>Built on FieldLogicHQ</strong>. A part you haven&rsquo;t filled in is left out. You set them all in <strong>Public site</strong>.</p>
               <p>Your bar, footer and buttons wear your main colour, and the page keeps it readable for you. A light colour, like a yellow, gets dark text, and your links and outlines are darkened just enough to read on the light page.</p>
             </>
           ),
@@ -1170,15 +1285,15 @@ const orgHelp: HelpPageContent = {
           title: 'Your home page',
           content: (
             <>
-              <p>Your home page shows, from the top, only what your club has:</p>
+              <p>Your home page shows only what your club has, in the order you choose in <strong>Public site</strong> (this is the order it starts in). <strong>Open now</strong> is always first.</p>
               <ol>
                 <li><strong>Open now</strong>: every house-league season taking registrations and the tryouts. With one team open or not open yet for tryouts, that team has its own row, with its days (&ldquo;Three days from Sun, Nov 2 &middot; Lakeshore Dome&rdquo;). With two or more, they share one row, <strong>2027 tryouts</strong> (&ldquo;7 teams &middot; Rep Sep 7&ndash;9 &middot; Select Sep 11&ndash;13&rdquo;), that opens your Tryouts page. When nothing is open, the section isn&rsquo;t there.</li>
                 <li><strong>Teams</strong>: your teams, under the groups you give them in <strong>Rep teams</strong>. A team taking tryout sign-ups shows <strong>Tryouts open</strong>.</li>
                 <li><strong>House league</strong>, when you run one.</li>
                 <li><strong>Tournaments</strong>, when you host one (see below).</li>
-                <li><strong>About the club</strong>: the description you write in the Site editor, and a <strong>Follow</strong> button when your club is listed in Discover.</li>
+                <li><strong>About the club</strong>: the about text you write in Public site, a link to your About page once it has contacts, documents or questions, and a <strong>Follow</strong> button when your club is listed in Discover. On a computer it sits beside the other sections.</li>
               </ol>
-              <p>Your contact address and social links are in the footer. On a computer, your banner photo shows as a strip under your bar; a phone leaves it out.</p>
+              <p>Any section but Open now can be hidden in Public site. A club notice, when you post one, sits at the top of every page. Your contact address and social links are in the footer. On a computer, your banner photo shows as a strip under your bar; a phone leaves it out.</p>
             </>
           ),
         },
@@ -1232,7 +1347,7 @@ const orgHelp: HelpPageContent = {
           title: 'Your tournaments on your home page',
           content: (
             <>
-              <p>Each tournament on your home page says where it stands: <strong>Registration open</strong>, <strong>This weekend</strong>, <strong>Live now</strong> (only while its dates include today) or <strong>Finished</strong>. A finished tournament stays for 30 days, then lives under <strong>Past tournaments</strong> once you archive it. The <strong>Show upcoming tournaments</strong> switch in the Site editor hides the section.</p>
+              <p>Each tournament on your home page says where it stands: <strong>Registration open</strong>, <strong>This weekend</strong>, <strong>Live now</strong> (only while its dates include today) or <strong>Finished</strong>. A finished tournament stays for 30 days, then lives under <strong>Past tournaments</strong> once you archive it. To hide the section, turn off <strong>Tournaments</strong> in <strong>Public site &rsaquo; Home page</strong>.</p>
               <p>A tournament opens its own pages, which keep the tournament&rsquo;s branding.</p>
             </>
           ),

@@ -421,14 +421,16 @@ hides the public site and suspends the org while the comp still has months to ru
 ## `org_public_site_content`
 <!-- dict:table:org_public_site_content -->
 
-**Purpose:** the editable copy + display toggles for an org's **public home page** (the Public Site module) — one row per org (UNIQUE `org_id`, strict 1:1). **Holds the org's public `contact_email`** that `organizations` lacks. Mapped by `getOrgPublicSiteContent` / `upsertOrgPublicSiteContent` ([lib/db.ts:2046-2092](../../../lib/db.ts#L2046)).
+**Purpose:** the editable copy, home sections and About-page lists for an org's **public site** (the Public Site module) — one row per org (UNIQUE `org_id`, strict 1:1). **Holds the org's public `contact_email`** that `organizations` lacks. Mapped by `getOrgPublicSiteContent` / `upsertOrgPublicSiteContent` (lib/db.ts, "Public Site Module"); every field is checked by `parsePublicSitePatch` (lib/public-site-patch.ts). ⚠ RLS has an anon `USING (true)` SELECT policy from mig 015, but anon and authenticated hold **no SELECT grant** (verified dev + prod 2026-10-21), so the table is read only through the service role on the server.
 
 **Gotchas (read first):**
 1. **This is where the org public contact email lives** — `organizations` has no `contact_email` (domain gotcha). Surfaced as the public "Contact Us" `mailto:`. The general `Organization.contactEmail` is *not* hydrated from here (it's a dead read on the org row, always null); only the `team-org-links` path injects this value onto an org row.
 2. **The `contact_email` ILIKE is a reverse lookup** — `findLinkableOrg` does `.ilike('contact_email', value)` against this table to find the owning org by a coach/team's contact email ([lib/team-org-links.ts:311-318](../../../lib/team-org-links.ts#L311)). Orgs with no row / null email are unreachable; duplicates resolve arbitrarily (`.limit(1)`).
-3. **Missing row = soft defaults, never an error** — `getOrgPublicSiteContent` returns null, and consumers treat null as "sections on" (`!== false`). An org with no row still renders a public home.
-4. **Upsert wipes unsupplied fields to null** — it's a full-row upsert (`onConflict: 'org_id'`), not a partial patch; the PATCH route always sends the complete form.
+3. **Missing row = soft defaults, never an error** — `getOrgPublicSiteContent` returns null, and consumers treat null as "the default order, nothing hidden" (`normalizeSectionOrder` / `normalizeHiddenSections`). An org with no row still renders a public home.
+4. **Upsert writes only the fields it is given (Stage 4c-1, mig 343).** It used to be a full-row upsert that nulled every unsupplied field; the 4c-1 editor saves one card at a time, so `upsertOrgPublicSiteContent` now sends only supplied keys (a new row takes the column defaults).
 5. **League/Club only** — both GET and PATCH gate on `module_public_site` (capability + entitlement), granted only to League and Club plans. Tournament/Tournament-Plus get the generic FieldLogicHQ-branded fallback home; the editor is invisible.
+6. **The three lists are arrays on this one row (mig 343)** — `contacts`, `documents`, `questions`, each capped by a CHECK (12 / 30 / 10). A list edit reads the row and writes the whole array back, so two admins saving the same list in the same second keep the later save; accepted (a few edits a year), not guarded. The CHECKs cover the array, not each item: every read passes through `cleanSiteList`, which drops a row the route would refuse (a link or address written by SQL or a script never reaches a page), and a row id is kept only when it is ≤64 characters and not a repeat.
+7. **The home's sections (mig 343)** — `home_section_order` + `home_sections_hidden` replace the two `show_*` switches, which are **deprecated** and kept only until production code stops reading them (drop in a later migration). Missing or unknown keys are normalized in code; Open now is never listed (always first).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -442,17 +444,74 @@ hides the public site and suspends the org while the comp still has months to ru
 **`description`** (text, nullable) — the longer "About" hero paragraph (≤1000 chars).
 
 <!-- dict:col:org_public_site_content.contact_email -->
-**`contact_email`** (text, nullable) — the org's **public** contact email (gotchas 1–2); ≤254 chars, no server-side format validation (HTML `type=email` only).
+**`contact_email`** (text, nullable) — the org's **public** contact email (gotchas 1–2); ≤254 chars, checked server-side since Stage 4c-1 (`checkEmail`: an address, and nothing a `mailto:` could carry as extra fields — `?`, `&`, `%`, spaces, angle brackets); a refused one is a 400, never saved.
 
 <!-- dict:col:org_public_site_content.social_instagram -->
 <!-- dict:col:org_public_site_content.social_facebook -->
 <!-- dict:col:org_public_site_content.social_x -->
 <!-- dict:col:org_public_site_content.social_website -->
-**Social block** (`social_instagram`, `social_facebook`, `social_x` [Twitter/X], `social_website`) — outbound links rendered in the public hero; **https-only**, sanitized server-side (`/^https:\/\/.+/`, ≤500 chars, else stored null).
+**Social block** (`social_instagram`, `social_facebook`, `social_x` [Twitter/X], `social_website`) — outbound links in the club's footer; **https-only**, ≤500 chars, checked server-side since Stage 4c-1 (`checkLink`): a bare domain or `http://` is saved as `https://…`; another scheme, a login part (`user@host`), a backslash or a non-address is refused with a reason (400) and never saved.
 
 <!-- dict:col:org_public_site_content.show_upcoming_tournaments -->
 <!-- dict:col:org_public_site_content.show_archives_link -->
-**`show_upcoming_tournaments`** / **`show_archives_link`** (bool, NOT NULL, default true) — public-home section toggles (gated `!== false`, so null = shown); the archives link additionally requires archives to exist.
+**`show_upcoming_tournaments`** / **`show_archives_link`** (bool, NOT NULL, default true) — ⚠ **DEPRECATED by mig 343** (gotcha 7): carried into `home_sections_hidden` (`tournaments` / `archives`). Read only by code older than Stage 4c-1; the 4c-1 save **mirrors** them whenever it writes the hidden list (a rollback and a re-run of 343's carry-over read the club's current choice). A later migration drops them.
+
+<!-- dict:col:org_public_site_content.home_section_order -->
+**`home_section_order`** (text[], NOT NULL, default `{teams,league,tournaments,about,archives}`) — the home's middle sections and the tab row, in the club's order (hold-and-drag in the editor). CHECK: only those five keys. Open now is not listed — always first.
+
+<!-- dict:col:org_public_site_content.home_sections_hidden -->
+**`home_sections_hidden`** (text[], NOT NULL, default `{}`) — sections the club hid from families (same five keys). A section the club does not run yet can be hidden in advance; a section the plan does not carry never shows regardless.
+
+<!-- dict:col:org_public_site_content.contacts -->
+**`contacts`** (jsonb array, NOT NULL, default `[]`, ≤12) — the About page's Who to contact: `[{ id, role, email }]`, in order. Email format checked in the route; a personal address is nudged, never refused.
+
+<!-- dict:col:org_public_site_content.documents -->
+**`documents`** (jsonb array, NOT NULL, default `[]`, ≤30) — the About page's Documents and policies: `[{ id, heading, title, url }]`, https only. Links to what the club publishes; the site never says the club is compliant.
+
+<!-- dict:col:org_public_site_content.questions -->
+**`questions`** (jsonb array, NOT NULL, default `[]`, ≤10) — the About page's Questions families ask: `[{ id, question, answer }]`.
+
+---
+
+## `org_site_notices`
+<!-- dict:table:org_site_notices -->
+
+**Purpose:** the **club notice** (Club Tier Stage 4c-1, Ask 16, mig 343) — one short line a club owner or admin posts ("All diamonds are closed tonight"), shown at the top of every public page and team page until it ends. One row per post: a replaced or ended notice is a closed row, never an overwrite, so who posted what and when survives.
+
+**Gotchas (read first):**
+1. **"One at a time" is a read rule, not an index.** The live notice is the newest row with `ended_at IS NULL` and `ends_at > now()`. Posting inserts the new row FIRST and then closes the older ones, so a failure between the two still shows the newest notice, never none.
+2. **It ends by its clock without a write** — an expired row keeps `ended_at` NULL. Never read "ended_at IS NULL" alone as "showing".
+3. **Service role only** — RLS on, no policies, anon/authenticated revoked. Public pages read it server-side; the org layout reads it on every club route while the site is on (index `org_site_notices_org_idx (org_id, posted_at DESC)`).
+4. **`ends_at` is an instant**, computed in the club's zone (`ORG_TIME_ZONE`) by the route: "Tonight at midnight" is the next 00:00 Toronto time.
+5. **A post closes only OLDER rows still showing** — two admins posting at once each close what came before them, so the later notice shows; a row that already ended by its clock keeps its `ended_at` NULL (End now leaves it too), so the history is never rewritten. `posted_at` is written by the route from the same clock `ends_at` was worked out from.
+
+**Fields:**
+
+<!-- dict:col:org_site_notices.id -->
+**`id`** (uuid PK).
+
+<!-- dict:col:org_site_notices.org_id -->
+**`org_id`** (FK → organizations.id ON DELETE CASCADE, NOT NULL) — the club.
+
+<!-- dict:col:org_site_notices.notice -->
+**`notice`** (text, NOT NULL, 1–80 trimmed characters) — the line, as the club wrote it. Never generated.
+
+<!-- dict:col:org_site_notices.detail -->
+**`detail`** (text, nullable, ≤200) — More detail, shown under the line.
+
+<!-- dict:col:org_site_notices.posted_at -->
+**`posted_at`** (timestamptz, NOT NULL, default now()) — shown as "Posted 2:40 p.m. by the club".
+
+<!-- dict:col:org_site_notices.posted_by_user_id -->
+<!-- dict:col:org_site_notices.posted_by_email -->
+**`posted_by_user_id`** (uuid, nullable, no FK) / **`posted_by_email`** (text, NOT NULL) — who posted it (audit only; families see "by the club"; never selected for a page). The literal `'unknown'` when the session carries no email (`ended_by_email` too).
+
+<!-- dict:col:org_site_notices.ends_at -->
+**`ends_at`** (timestamptz, NOT NULL, CHECK > posted_at) — when it leaves by itself (gotchas 2, 4). Never "forever".
+
+<!-- dict:col:org_site_notices.ended_at -->
+<!-- dict:col:org_site_notices.ended_by_email -->
+**`ended_at`** / **`ended_by_email`** (nullable) — set by End now, or when a newer notice replaces it.
 
 ---
 

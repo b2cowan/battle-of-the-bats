@@ -26,7 +26,8 @@ import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForP
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { cleanSiteList } from './public-site-patch';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, ClubNotice, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
@@ -1377,35 +1378,125 @@ export async function getOrgPublicSiteContent(orgId: string): Promise<OrgPublicS
     socialFacebook:           data.social_facebook     ?? null,
     socialX:                  data.social_x            ?? null,
     socialWebsite:            data.social_website      ?? null,
-    showUpcomingTournaments:  data.show_upcoming_tournaments,
-    showArchivesLink:         data.show_archives_link,
+    homeSectionOrder:         data.home_section_order   ?? [],
+    homeSectionsHidden:       data.home_sections_hidden ?? [],
+    // Only well-formed rows reach a page — a row written outside the route (SQL, a script) is dropped, not rendered.
+    contacts:                 cleanSiteList('contacts', data.contacts) as OrgPublicSiteContent['contacts'],
+    documents:                cleanSiteList('documents', data.documents) as OrgPublicSiteContent['documents'],
+    questions:                cleanSiteList('questions', data.questions) as OrgPublicSiteContent['questions'],
     createdAt:                data.created_at,
     updatedAt:                data.updated_at,
   };
 }
 
-export async function upsertOrgPublicSiteContent(
+/** Each editable field → its column. */
+const PUBLIC_SITE_COLUMN = {
+  tagline:            'tagline',
+  description:        'description',
+  contactEmail:       'contact_email',
+  socialInstagram:    'social_instagram',
+  socialFacebook:     'social_facebook',
+  socialX:            'social_x',
+  socialWebsite:      'social_website',
+  homeSectionOrder:   'home_section_order',
+  homeSectionsHidden: 'home_sections_hidden',
+  contacts:           'contacts',
+  documents:          'documents',
+  questions:          'questions',
+} as const;
+
+export type OrgPublicSiteContentPatch = Partial<Pick<OrgPublicSiteContent, keyof typeof PUBLIC_SITE_COLUMN>>;
+
+/**
+ * Writes ONLY the fields given (Stage 4c-1: each editor card saves itself). It used to be a full-row upsert that nulled
+ * every field it was not handed (dictionary gotcha 4); a new row takes the column defaults. Throws on a failed write
+ * (a CHECK cap, say) so the editor never says "Saved" over a write that did not land.
+ */
+export async function upsertOrgPublicSiteContent(orgId: string, patch: OrgPublicSiteContentPatch): Promise<void> {
+  const row: Record<string, unknown> = { org_id: orgId, updated_at: new Date().toISOString() };
+  for (const [field, column] of Object.entries(PUBLIC_SITE_COLUMN)) {
+    const v = patch[field as keyof OrgPublicSiteContentPatch];
+    if (v !== undefined) row[column] = v;
+  }
+  // The two deprecated switches MIRROR the new list until a later migration drops them (mig 343): the code still on
+  // production before the promote, a rollback to it, and a re-run of 343's carry-over all read them.
+  if (patch.homeSectionsHidden) {
+    row.show_upcoming_tournaments = !patch.homeSectionsHidden.includes('tournaments');
+    row.show_archives_link = !patch.homeSectionsHidden.includes('archives');
+  }
+  const { error } = await supabaseAdmin.from('org_public_site_content').upsert(row, { onConflict: 'org_id' });
+  if (error) throw error;
+}
+
+// ── The club notice (Stage 4c-1, mig 343) ─────────────────────────────────────────────────────
+
+function mapClubNotice(r: any): ClubNotice {
+  return {
+    id: r.id, orgId: r.org_id, notice: r.notice, detail: r.detail ?? null,
+    postedAt: r.posted_at, endsAt: r.ends_at, endedAt: r.ended_at ?? null,
+  };
+}
+
+/**
+ * The club's showing notice, or null. Server only (service role; the table has no public policy). The newest row not
+ * ended whose end is still ahead (`noticeIsShowing`'s rule, in the query; one at a time is a read rule — mig 343).
+ * A failed read is no notice, never a broken page.
+ */
+export async function getLiveClubNotice(orgId: string, nowIso: string = new Date().toISOString()): Promise<ClubNotice | null> {
+  const { data, error } = await supabaseAdmin
+    .from('org_site_notices')
+    .select('id, org_id, notice, detail, posted_at, ends_at, ended_at')
+    .eq('org_id', orgId)
+    .is('ended_at', null)
+    .gt('ends_at', nowIso)
+    .order('posted_at', { ascending: false })
+    .limit(1);
+  if (error) { console.error('getLiveClubNotice error', error); return null; }
+  return data && data[0] ? mapClubNotice(data[0]) : null;
+}
+
+/**
+ * Posts a notice and closes every OLDER one still showing. Insert FIRST, then close the older ones (mig 343): a failure
+ * between the two still shows the newest notice, never none — and two posts at the same moment each close only what
+ * came before them, so the later one shows. A notice that already ended by its clock is left as it ended (its row is
+ * the record). `postedAt` is the route's clock — the same one `endsAt` was worked out from, so the CHECK
+ * ends_at > posted_at can't trip on the database clock running ahead.
+ */
+export async function postClubNotice(
   orgId: string,
-  content: Partial<Omit<OrgPublicSiteContent, 'id' | 'orgId' | 'createdAt' | 'updatedAt'>>,
-): Promise<void> {
-  await supabaseAdmin
-    .from('org_public_site_content')
-    .upsert(
-      {
-        org_id:                   orgId,
-        tagline:                  content.tagline             ?? null,
-        description:              content.description         ?? null,
-        contact_email:            content.contactEmail        ?? null,
-        social_instagram:         content.socialInstagram     ?? null,
-        social_facebook:          content.socialFacebook      ?? null,
-        social_x:                 content.socialX             ?? null,
-        social_website:           content.socialWebsite       ?? null,
-        show_upcoming_tournaments: content.showUpcomingTournaments ?? true,
-        show_archives_link:        content.showArchivesLink   ?? true,
-        updated_at:               new Date().toISOString(),
-      },
-      { onConflict: 'org_id' },
-    );
+  input: { notice: string; detail: string | null; postedAt: string; endsAt: string; postedByUserId: string | null; postedByEmail: string },
+): Promise<ClubNotice> {
+  const { data, error } = await supabaseAdmin
+    .from('org_site_notices')
+    .insert({
+      org_id: orgId, notice: input.notice, detail: input.detail, posted_at: input.postedAt, ends_at: input.endsAt,
+      posted_by_user_id: input.postedByUserId, posted_by_email: input.postedByEmail,
+    })
+    .select('id, org_id, notice, detail, posted_at, ends_at, ended_at')
+    .single();
+  if (error || !data) throw error ?? new Error('postClubNotice: no row');
+  const posted = mapClubNotice(data);
+  const { error: closeError } = await supabaseAdmin
+    .from('org_site_notices')
+    .update({ ended_at: posted.postedAt, ended_by_email: input.postedByEmail })
+    .eq('org_id', orgId)
+    .is('ended_at', null)
+    .gt('ends_at', posted.postedAt)
+    .lt('posted_at', posted.postedAt);
+  if (closeError) console.error('postClubNotice: closing older notices failed', closeError);
+  return posted;
+}
+
+/** End now: closes the club's showing notice(s). One that already ended by its clock is left as it ended. */
+export async function endClubNotices(orgId: string, endedByEmail: string): Promise<void> {
+  const nowIso = new Date().toISOString();
+  const { error } = await supabaseAdmin
+    .from('org_site_notices')
+    .update({ ended_at: nowIso, ended_by_email: endedByEmail })
+    .eq('org_id', orgId)
+    .is('ended_at', null)
+    .gt('ends_at', nowIso);
+  if (error) throw error;
 }
 
 // --- Resources ---

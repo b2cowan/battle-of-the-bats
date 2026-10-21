@@ -51,6 +51,12 @@ things, and the club reads the coach's records rather than keeping a shadow copy
 **A public face that leads with the rep program.** Families find the club's teams, open tryouts and
 the club's colours on the club's page. The "tryouts are open" card takes them to the tryout, not back
 to the home page. Unlisting the club from the directory no longer takes down its whole website.
+The club runs that site itself (Stage 4c-1, built 2026-10-21, walk §357): it chooses which home sections
+show and in what order, writes its words and contacts with the editor saying why a link was refused,
+lists its documents, policies and families' questions on an About page, and posts a one-line notice
+("All diamonds are closed tonight") that shows on every club page and ends by itself — without asking
+anyone. Success: a club volunteer can post a field closure from a phone in under a minute, and no
+saved link on a club's site is one the editor refused.
 
 **Families.** Household records read the same money the Money hub does, a changed guardian email
 follows the child, a merge stays merged, and the family export says honestly what it contains.

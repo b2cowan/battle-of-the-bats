@@ -1,254 +1,235 @@
-/* Centred, at one of the portal's two widths, like every club page (owner 2026-10-07; the rule and its reason:
-   components/admin/kit/club/ClubKit.module.css). */
-.page {
-  max-width: 960px;
-  margin-inline: auto;
-}
-
-.card {
-  padding: 1.5rem;
-  border-radius: 2px;
-  background: var(--surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  margin-bottom: 1.25rem;
-}
-
-.sectionTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  margin: 0 0 1.25rem;
-}
-
-.settingsLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  color: var(--blueprint-blue);
-  text-decoration: none;
-  margin-bottom: 1.5rem;
-}
-.settingsLink:hover { text-decoration: underline; }
-
-.field {
-  margin-bottom: 1.25rem;
-}
-.field:last-child { margin-bottom: 0; }
-
-.label {
-  composes: fieldLabel from '../../../../components/shared/FieldLabel.module.css';
-  display: block;
-  margin-bottom: 0.4rem;
-}
-
-.input {
-  width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 2px;
-  padding: 0.55rem 0.75rem;
-  color: var(--white-90);
-  font-size: 0.9rem;
-  box-sizing: border-box;
-  transition: border-color 0.15s;
-}
-.input:focus {
-  outline: none;
-  border-color: var(--blueprint-blue);
-}
-
-.textarea {
-  composes: input;
-  resize: vertical;
-  min-height: 90px;
-  line-height: 1.5;
-}
-
-.hint {
-  font-size: 0.78rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  margin: 0.35rem 0 0;
-}
-
-.charRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.35rem;
-}
-
-.charCount {
-  font-size: 0.75rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
-}
-.charCountWarn { color: var(--danger-light); }
-
-.toggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  gap: 1rem;
-}
-
-.toggle {
-  appearance: none;
-  width: 40px;
-  height: 22px;
-  border-radius: 2px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.2);
-  position: relative;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-.toggle:checked {
-  background: var(--blueprint-blue);
-  border-color: var(--blueprint-blue);
-}
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: white;
-  transition: transform 0.2s;
-}
-.toggle:checked::after { transform: translateX(18px); }
+/* Public site — the club's editor (Club Tier Stage 4c-1). The admin kit's cards (RepKit ClubSection), fields (ClubKit),
+   switches (SwitchRows) and reorder handle (ReorderList); this file holds only what the screen adds. The old look
+   (Page Content, Display Options, the typewriter titles, Save Changes) retired with it. ⚠ TOKENS ONLY (checkAdminKit). */
 
 .accessDenied {
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--white-40, rgba(255,255,255,0.4));
-}
-.accessDenied h2 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 1rem 0 0.5rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
-}
-.accessDenied p {
-  font-size: 0.9rem;
-  max-width: 360px;
-  margin: 0 auto;
-}
-
-.formFooter {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 0.5rem;
-  margin-bottom: 2rem;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-tertiary);
 }
+.accessDenied h2 { color: var(--text-primary); margin: 0; }
 
-.unsavedLabel {
-  font-size: 0.8rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+/* ── The header: the site's address, Copy link, Open, and the switch's home in words ── */
+.siteHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: -4px 0 20px;
 }
-
-.muted {
-  color: var(--white-40, rgba(255,255,255,0.4));
-  padding: 2rem;
-}
-
-.previewLink {
-  display: inline-flex;
+.addressRow {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  text-decoration: none;
+  gap: 8px 10px;
 }
-.previewLink:hover { color: var(--white-70, rgba(255,255,255,0.7)); }
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 1 — only with the switch on) ═══════════════════════
-   The build prompt's second pilot area. Same fields, words and order; the portal's card, eyebrow,
-   field and "on" switch, in both themes. Every rule is scoped under `[data-admin-kit]` (the admin
-   shell, switch on), so the legacy rules above render untouched until the release slice deletes them.
-   ⚠ `.card` read `--border`, which IS the organization's brand colour at 25% — one of R1's ~196
-   reads; on the kit it is the neutral hairline, as every coach card is.
-   ⚠ TOKENS ONLY — `tests/unit/admin-kit-guard.test.ts` fails on a literal colour in a kit rule. */
-:global([data-admin-kit]) .card {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .sectionTitle {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  letter-spacing: 0.09em;
+.addressLabel {
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
-:global([data-admin-kit]) .settingsLink {
-  color: var(--home-olive);
+.address {
+  font-family: var(--font-data); /* type-ok: code */
   font-size: var(--type-support);
-  font-weight: 650;
-}
-:global([data-admin-kit]) .input {
-  background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
   color: var(--text-primary);
-  font-size: var(--type-body);
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
-:global([data-admin-kit]) .input::placeholder { color: var(--text-tertiary); }
-:global([data-admin-kit]) .input:focus { border-color: var(--home-olive); }
-:global([data-admin-kit]) .hint,
-:global([data-admin-kit]) .charCount,
-:global([data-admin-kit]) .unsavedLabel,
-:global([data-admin-kit]) .muted,
-:global([data-admin-kit]) .previewLink,
-:global([data-admin-kit]) .accessDenied { color: var(--text-tertiary); }
-:global([data-admin-kit]) .previewLink:hover { color: var(--text-primary); }
-:global([data-admin-kit]) .charCountWarn { color: var(--home-live); }
-:global([data-admin-kit]) .accessDenied h2 { color: var(--text-primary); }
-/* The "on" switch — the portal's ink-on-lime "on" (the one lime FILL that survives on paper), a pill,
-   the knob in the ink that reads on each track. The settings-switch ROW is a kit gap Club Stage 1
-   builds; this is the switch itself, restyled in place. */
-:global([data-admin-kit]) .toggle {
-  border-radius: 999px;
-  background: var(--home-line-strong);
-  border-color: transparent;
+.addressButtons {
+  display: flex;
+  gap: 8px;
 }
-:global([data-admin-kit]) .toggle:checked { background: var(--home-lime); border-color: var(--home-lime); }
-:global([data-admin-kit]) .toggle::after { background: var(--text-secondary); }
-:global([data-admin-kit]) .toggle:checked::after { background: var(--home-lime-ink); }
-
-/* Club Tier Stage 1 (specimen 9), switch on only: the site's on/off state, read-only, and where it
-   is set. ⚠ TOKENS ONLY (checkAdminKit). */
-:global([data-admin-kit]) .siteState {
-  margin: 0 0 1rem;
+.siteState {
+  margin: 0;
   font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .siteStateLink {
+.siteStateLink {
   color: var(--home-olive);
   font-weight: 650;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-/* The state chip beside the title — the kit chip's recipe (`CoachKit.module.css` `.chip`), restated so
-   today's page does not load the kit's stylesheet for an element it never renders (/review 2026-09-26). */
-:global([data-admin-kit]) .siteChip {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 0.14rem 0.5rem;
-  border-radius: 999px;
-  white-space: nowrap;
-  border: 1px solid transparent;
+@media (max-width: 900px) {
+  /* A fingertip's height without moving the sentence: the tap area grows, the line does not. */
+  .siteStateLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -14px;
+  }
 }
-:global([data-admin-kit]) .siteChipOn { color: var(--home-olive); background: rgba(var(--success-rgb), 0.07); border-color: rgba(var(--success-rgb), 0.25); }
-:global([data-admin-kit]) .siteChipOff { color: var(--warning); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+@media (max-width: 640px) {
+  /* A phone: the address on its own line, the buttons a fingertip tall under it (drawings ~L1536). */
+  .addressRow { flex-direction: column; align-items: stretch; }
+  .addressButtons :global(.btn) { min-height: 44px; }
+}
+
+/* ── A card's opening sentence ── */
+.lead,
+.listLead {
+  margin: 0 0 12px;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.listLead { padding: 0 16px; }
+
+/* A refused field is marked, not only captioned (drawings ~L1487: the red edge and ring). */
+.refusedField :global(input),
+.refusedField :global(textarea) {
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+/* ── A list card's foot: Add, or why it can't (drawings ~L1981) ── */
+.listFoot {
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--home-line);
+}
+.listFoot :global(.btn) { min-height: var(--tap-min, 44px); }
+.listFull {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+/* ── A field's refusal (stays until fixed) and the past-year hint (a hint, never a block) ── */
+.fieldError {
+  margin: 4px 0 0;
+  font-size: var(--type-support);
+  color: var(--danger);
+}
+.yearHint {
+  margin: 4px 0 0;
+  font-size: var(--type-support);
+  color: var(--warning);
+}
+
+/* ── Home page: Open now locked first, then the club's order — the number is the handle ── */
+.sectionRows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--home-line);
+}
+.sectionRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+  border-bottom: 1px solid var(--home-line);
+  background: var(--card-bg);
+}
+.sectionRow:last-child { border-bottom: 0; }
+.handleSlot {
+  flex: none;
+  display: inline-flex;
+}
+.sectionSwitch {
+  flex: 1;
+  min-width: 0;
+}
+/* The Look card's words take their own line when the row is too narrow to hold them beside the swatches. */
+.sectionText { flex: 1; }
+.lookText { flex: 1 1 220px; }
+.sectionText,
+.lookText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 8px;
+}
+.sectionName {
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.sectionSub {
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--text-tertiary);
+}
+.sectionWord {
+  flex: none;
+  padding: 0 16px;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+/* Open now on a phone: the shorter line, and no "Always first" beside it (drawings ~L1541) — the locked number says it. */
+.subPhone { display: none; }
+@media (max-width: 640px) {
+  .subDesk, .sectionWord { display: none; }
+  .subPhone { display: inline; }
+}
+
+/* ── The club notice ── */
+.noticeLive {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--warning);
+  border-radius: 0 8px 8px 0;
+  background: var(--home-card);
+}
+.noticeLiveWord {
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--warning);
+}
+.noticeLiveLine {
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.noticeLiveSmall {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.endsPick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.noticeButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+@media (max-width: 640px) {
+  .noticeButtons :global(.btn) { min-height: 44px; }
+}
+
+/* ── Look ── */
+.lookRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.swatch,
+.lookLogo {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--home-line);
+  display: inline-grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  object-fit: contain;
+  background: var(--home-card);
+}

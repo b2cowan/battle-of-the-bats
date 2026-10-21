@@ -26166,5 +26166,30 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 
 **Owed beside the walk:** a shared link checked in a real chat app or a preview tool (needs staging); the whole-product layout sweep on staging.
 
-**To record from the walk:** each part's verdict and notes, the five calls.
+**Result: PASSED 2026-10-21 (owner), all ten parts Pass: 1 (7/7), 2 (6/6), 3 (5/5), 4 (3/3), 5 (3/3), 6 (2/2), 7 (3/3), 8 (5/5), 9 (2/2), 10 (2/2).** The five calls, all option A as recommended: **c1** keep "Questions? Email the club at …" above the footer on the open pages and the Tryouts page; **c2** leave "Sign up for tryouts" vs "application" for now, queue one wording pass on the whole sign-up flow; **c3** add one plain line in the coach's tryout setup, beside the days, saying the days are public before sign-ups open (next coaches-portal pass); **c4** leave the share card's title regular weight; **c5** keep the Tryouts page as wide as the Teams page.
+
+**New ask from the owner, on c1 (open, not yet ruled or drawn): each team's tryout page should be able to show the team's head coach's email in place of the club's, so the page and the footer carry two different addresses.** Needs its own plan and a product-manager summary before any build: who may set it, whether it is the coach's sign-in email or a separate "tryout questions" address, what shows when the head coach changes, and whether the Tryouts page's own line stays the club's.
+
+**Caught while walking:** the walk's Part 7 assumed the UAT Rep Club had no other tryout to list. A hand-entered 13U AAA tryout day (Oct 20) kept the tab and page up for four weeks, so the walk was corrected (delete that day first, with a before-check) and then passed. The page was right; the walk was wrong.
+
+**Still owed:** a shared link checked in a real chat app or a preview tool (needs staging); the whole-product layout sweep on staging; the coach-setup line (c3); the wording pass (c2); the head-coach email ask above.
 <!-- /§356 -->
+
+## §357 · Club Tier · Stage 4c-1, a club runs its own site — **the Public site editor rebuilt on cards that save themselves; the home's sections in the club's order with a switch each (Open now always first), the tab row following; a refused link or address says why and is never saved; contacts, documents and questions on a new About page with a "Contacts and documents" footer door; a one-line club notice on every club page that ends by itself; the old look and "Public ledger" retired**
+
+**Built 2026-10-21** to the Stage 4 drawings (ruled 2026-10-19; round 2 over round 1) and the 4c gate the same day (split 4c, 4c-1 first; all gap defaults as recommended; fixtures extended). Words through `/marketing`, approved ("Go ahead"; Ends and the back link changed after `/design`). Storage: mig 343 (dev only; production at the promote, before the code, then the carry-over re-run — MANUAL_PROD_STEPS). `/design` on the built screens; `/simplify`; `/review` high-risk; `/docs`. Plan: CLUB_TIER_PRODUCTION_READINESS_PLAN.md §6 Stage 4, "4c-1 BUILT".
+
+**The walk:** https://claude.ai/artifact/2V6xD278XTcGgQHiN4yZr6 (source `docs/projects/active/CLUB_TIER_STAGE4C1_WALK.html`). Ten parts, one purpose — the club running its own site: the editor at a glance, the home's sections in your order, your words and refusals that say why, contacts/documents/questions, the Look card, a notice on every page, the About page, the home, as an admin, and what must not change. Three calls (c1 the notice card's place, c2 an empty About page, c3 "See all teams" when Teams is hidden).
+
+**Sign in:** http://localhost:3000 (dev server restarted for the build). Lakeshore owner `uat-rep-only-owner@uat-rep-club.local` (Parts 1–6), UAT Rep Club admin `uat-club-admin@uat-rep-club.local` (Part 9), signed out for 7, 8, 10. Fixture: UAT Lakeshore Lynx's About content written straight onto the dev club (no reseed, so no sign-ins reset); the seed carries the same rows for the next rebuild.
+
+**Writes:** the walk reorders sections, edits words and lists, and posts and ends a notice on UAT Lakeshore Lynx; Part 10 switches the site off and on.
+
+**Owner rulings in this build (2026-10-21):** gate — split 4c, 4c-1 first; the head-coach tryout address (the §356 ask) is a separate address the coach types, blank by default, ending with their role, built in 4c-2; the gap defaults as recommended. After `/design` — no back link on the About page (the Home tab is the way back); Ends reads "Tonight" / "Tomorrow night"; hiding About also hides its Follow button while the footer door stays; Copy is labelled at a desk and a bare icon on a phone on both the About page and the footer (the footer is another session's uncommitted change — theirs to match).
+
+**Checked beside the walk (2026-10-21):** unit tests (`club-stage4c1.test.ts` red first, 66 green; `club-stage4c1-guard.test.ts`); the full suite green except one other session's admin-rail test; typecheck; every `verify:changed` check green except schema parity (red on mig 343 and another session's 342, both dev-only until the promote); `check:layout` on the editor, both homes, the About page and the team page at every width, no new findings (56 old-look entries pruned).
+
+**Owed beside the walk:** the whole-product layout sweep on staging; mig 343 on production at the promote, then the carry-over re-run.
+
+**Result:** owed.
+<!-- /§357 -->

@@ -12,7 +12,10 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubTeamsAddress } from '@/lib/public-club-access';
-import { clubHomeTournaments, clubTeamBands, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
+import { clubHomeTournaments, clubTeamBands, orderOpenNow, runningLeagueSeason, tournamentHomeStatus } from '@/lib/club-site-home';
+import { isSectionShown } from '@/lib/club-site-sections';
+import { siteSectionCarries } from '@/lib/public-site-editor-facts';
+import { clubAboutPageShows } from '@/lib/club-about';
 import { readClubTeams } from '@/lib/club-public-teams';
 import { readClubTryouts } from '@/lib/club-tryouts';
 import { homeTryoutsRowSub, isListedTryout, openNowTryouts, sharedSeasonYear, tryoutDaysLine, tryoutSeasonMeta, tryoutsPageTitle } from '@/lib/tryout-season';
@@ -123,7 +126,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
 
     // House league: a draft season is not public; the section's door is the league page.
     const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
-    const runningSeason = publicLeagueSeasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status));
+    const runningSeason = runningLeagueSeason(publicLeagueSeasons);
     const league = publicLeagueSeasons.length === 0 ? null : {
       href: `/${orgSlug}/league`,
       title: runningSeason?.name ?? 'House league',
@@ -177,10 +180,14 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
       ...tryoutRows,
     ]);
 
+    // The club's order and show/hide from its editor (Stage 4c-1, mig 343); a section the plan does not carry never shows.
+    const sectionPrefs = { order: siteContent?.homeSectionOrder, hidden: siteContent?.homeSectionsHidden };
+    const carries = siteSectionCarries(org);
+
     // Tournaments, with a status true to their dates (S4-03), chosen and ordered by `clubHomeTournaments` (running and
-    // coming first; one that just finished after). The club's own "show upcoming tournaments" switch still hides the
-    // section. Registration is asked only of an event that has not started and whose register page is not hidden.
-    const shownTournaments = siteContent?.showUpcomingTournaments === false ? [] : clubHomeTournaments(allTournaments, today);
+    // coming first; one that just finished after). A club that hid the section is not asked for them at all.
+    // Registration is asked only of an event that has not started and whose register page is not hidden.
+    const shownTournaments = isSectionShown('tournaments', sectionPrefs, carries) ? clubHomeTournaments(allTournaments, today) : [];
     const tournaments = await Promise.all(shownTournaments.map(async t => {
       const asksRegistration = t.status === 'active' && !!t.startDate && today < t.startDate && !t.publicHiddenPages?.includes('register');
       const registrationOpen = asksRegistration
@@ -207,7 +214,10 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         league={league}
         tournaments={tournaments}
         about={siteContent?.description?.trim() || null}
+        aboutPageHref={clubAboutPageShows(siteContent) ? `/${orgSlug}/about` : null}
         showFollow={showFollow}
+        sectionPrefs={sectionPrefs}
+        carries={carries}
       />
     );
   }

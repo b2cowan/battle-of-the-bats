@@ -1,14 +1,15 @@
+import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import FollowOrgButton from './FollowOrgButton';
 import kit from './ClubKit.module.css';
 import styles from './ClubSiteHome.module.css';
 import {
-  clubHomeSections,
   teamGridOneColumn,
   TOURNAMENT_STATUS_WORD,
   type TeamBand,
   type TournamentHomeStatus,
 } from '@/lib/club-site-home';
+import { clubHomeSectionsFor, type ClubHomeSection, type SectionCarries, type SectionPrefs } from '@/lib/club-site-sections';
 
 /**
  * A CLUB'S HOME (Club Tier Stage 4b-2a; End state 1, Ask 3A, ruled 2026-10-19) — the home of an org whose plan carries
@@ -16,9 +17,13 @@ import {
  *
  *   Open now → Teams → House league → Tournaments → About the club
  *
- * in that fixed order (the editor's show/hide and reorder is 4c), each absent when the club has nothing for it — never a
- * "check back soon". The page (app/[orgSlug]/page.tsx) reads the club's data and hands it in already shaped; this only
- * draws, so the order and the absences are decided once (`clubHomeSections`, unit-tested).
+ * by default; since Stage 4c-1 in the club's own order and show/hide from its editor, Open now always first. Each is
+ * absent when the club has nothing for it — never a "check back soon". The page (app/[orgSlug]/page.tsx) reads the
+ * club's data and hands it in already shaped; this only draws, so the order and the absences are decided once
+ * (`clubHomeSectionsFor`, unit-tested).
+ *
+ * Every section is drawn ONCE, in the club's order — the order a phone reads. At a desk About the club stands in the
+ * side column beside the others wherever it sits in that order (a grid places it; the DOM order does not change).
  *
  * What left the home with the old hero: the club's name (the bar carries it), its contact and socials (the footer
  * carries them — one place, 4b-1 leftover), the "Upcoming events" with "Live" on every card (S4-03), the Try out cards
@@ -57,18 +62,23 @@ export interface ClubSiteHomeProps {
   league: { href: string; title: string; sub: string } | null;
   tournaments: HomeTournament[];
   about: string | null;
+  /** The About page, when it says more than the about text (a contact, a document or a question). */
+  aboutPageHref: string | null;
   showFollow: boolean;
+  /** The club's order and show/hide (Stage 4c-1) and what its plan carries. */
+  sectionPrefs: SectionPrefs;
+  carries: SectionCarries;
 }
 
 export default function ClubSiteHome(p: ClubSiteHomeProps) {
   const teamCount = p.teamBands.reduce((n, b) => n + b.teams.length, 0);
-  const sections = clubHomeSections({
+  const sections = clubHomeSectionsFor({
     openNow: p.openNow.length,
     teams: teamCount,
     league: !!p.league,
     tournaments: p.tournaments.length,
-    about: !!p.about || p.showFollow,
-  });
+    about: !!p.about || p.showFollow || !!p.aboutPageHref,
+  }, p.sectionPrefs, p.carries);
 
   const openNow = sections.includes('openNow') && (
     <section className={kit.section} aria-labelledby="open-now">
@@ -143,10 +153,16 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
   );
 
   const about = sections.includes('about') && (
-    <section className={kit.section} aria-labelledby="about">
+    <section className={`${kit.section} ${styles.about}`} aria-labelledby="about">
       <h2 id="about" className={kit.sectionTitle}>About the club</h2>
       <div className={kit.list}>
         {p.about && <p className={kit.cardText}>{p.about}</p>}
+        {/* The About page's door (Stage 4c-1): only when the page says more than this paragraph. */}
+        {p.aboutPageHref && (
+          <Link href={p.aboutPageHref} className={kit.row}>
+            <span className={kit.rowMain}><span className={kit.rowName}>About the club</span></span>
+          </Link>
+        )}
         {p.showFollow && (
           <div className={styles.follow}>
             <FollowOrgButton orgSlug={p.orgSlug} orgName={p.orgName} />
@@ -156,6 +172,12 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
     </section>
   );
 
+  const drawn: Record<ClubHomeSection, ReactNode> = {
+    openNow, teams, league, tournaments, about,
+  };
+  const besideAbout = sections.filter(k => k !== 'about').length;
+  const twoColumns = !!about && besideAbout > 0; // About alone takes the whole width
+
   return (
     <div>
       {/* The page's heading is the club's name, which the bar already shows: a screen reader hears it, the eye sees it
@@ -164,14 +186,10 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
       {/* Ask 7A: a desk-only strip under the bar, never repeating the name; a phone does not draw it, so Open now keeps
           screen one. Decoration — the bar already names the club. */}
       {p.bannerUrl && <div className={styles.bannerStrip} style={{ backgroundImage: `url(${p.bannerUrl})` }} aria-hidden="true" />}
-      <div className={styles.column}>
-        <div className={styles.main}>
-          {openNow}
-          {teams}
-          {league}
-          {tournaments}
-        </div>
-        {about && <div className={styles.side}>{about}</div>}
+      {/* --home-rows: how many sections stand beside About at a desk (the grid gives About their full height). */}
+      <div className={twoColumns ? `${styles.column} ${styles.withAbout}` : styles.column}
+        style={twoColumns ? ({ '--home-rows': besideAbout } as CSSProperties) : undefined}>
+        {sections.map(k => <Fragment key={k}>{drawn[k]}</Fragment>)}
       </div>
     </div>
   );

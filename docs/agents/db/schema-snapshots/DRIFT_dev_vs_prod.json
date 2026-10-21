@@ -1,16 +1,108 @@
 {
   "generated": "2026-10-21",
-  "total": 39,
+  "total": 67,
   "counts": {
-    "tables": 3,
-    "columns": 15,
-    "indexes": 7,
-    "constraints": 13,
-    "rls": 1
+    "tables": 4,
+    "columns": 30,
+    "indexes": 9,
+    "constraints": 15,
+    "rls": 9
   },
   "items": [
     {
+      "key": "check:only-dev:org_public_site_content.org_public_site_content_contacts_cap",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_public_site_content.org_public_site_content_documents_cap",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_public_site_content.org_public_site_content_home_section_order_known",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_public_site_content.org_public_site_content_home_sections_hidden_known",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_public_site_content.org_public_site_content_questions_cap",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_site_notices.org_site_notices_detail_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_site_notices.org_site_notices_ends_after_post",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_site_notices.org_site_notices_notice_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:tournament_fee_receipt_allocations.tournament_fee_receipt_allocations_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_public_site_content.contacts",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_public_site_content.documents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_public_site_content.home_section_order",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_public_site_content.home_sections_hidden",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_public_site_content.questions",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.detail",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.ended_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.ended_by_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.ends_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.notice",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.posted_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.posted_by_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_site_notices.posted_by_user_id",
       "sig": ""
     },
     {
@@ -74,6 +166,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:org_site_notices.org_site_notices_org_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_site_notices.org_site_notices_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:teams.teams_fee_changed_by_fkey",
       "sig": ""
     },
@@ -126,6 +226,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:org_site_notices_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_site_notices_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:tournament_fee_allocations_team_idx",
       "sig": ""
     },
@@ -151,6 +259,10 @@
     },
     {
       "key": "index:only-dev:tournament_fee_receipts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_site_notices",
       "sig": ""
     },
     {

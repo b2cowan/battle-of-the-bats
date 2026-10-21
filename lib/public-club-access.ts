@@ -20,7 +20,7 @@ import type { Organization } from './types';
  */
 
 /** Which kind of club page is asking. `teams` covers the team page, its calendar and every tryout address. */
-export type PublicClubPage = 'home' | 'teams' | 'league' | 'archives';
+export type PublicClubPage = 'home' | 'teams' | 'league' | 'archives' | 'about';
 
 /**
  * What each page needs the plan to carry. The home needs nothing beyond the switch: a tournament-only org without the
@@ -32,6 +32,8 @@ const PAGE_MODULE: Record<PublicClubPage, Capability | null> = {
   teams: 'module_rep_teams',
   league: 'module_house_league',
   archives: 'module_tournaments',
+  // The About page (Stage 4c-1) is the public site's own page: a plan without the module has no editor to fill it.
+  about: 'module_public_site',
 };
 
 export type PublicClubAccessOrg = Pick<Organization,

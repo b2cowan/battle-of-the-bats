@@ -6,6 +6,7 @@ import type { Organization, OrgPublicSiteContent } from '@/lib/types';
 import { clubTeamsAddress, isPublicClubSiteOpen } from './public-club-access';
 import { anyListedTryout } from './club-tryouts';
 import { tournamentToday } from './timezone';
+import { normalizeHiddenSections, normalizeSectionOrder } from './club-site-sections';
 
 /**
  * lib/org-section-availability.ts — which section tabs an org actually has (Nav Unification Stage F).
@@ -40,9 +41,10 @@ async function anyLeagueSeasonPublished(orgId: string): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
-/** Does the club list a team — one that is not archived (Club Tier Stage 4b-2a: the Teams tab's own question; an archived
- *  team's page still opens for old links, but it is not listed, so it puts no tab up). */
-export async function anyListedTeam(orgId: string): Promise<boolean> {
+/** How many teams the club lists — not archived (Club Tier Stage 4b-2a: the Teams tab's own question; an archived team's
+ *  page still opens for old links, but it is not listed, so it puts no tab up). The editor's Teams row says the number
+ *  (Stage 4c-1). Fails quiet and closed: 0. */
+export async function countListedTeams(orgId: string): Promise<number> {
   const { count, error } = await supabaseAdmin
     .from('rep_teams')
     .select('id', { count: 'exact', head: true })
@@ -50,21 +52,23 @@ export async function anyListedTeam(orgId: string): Promise<boolean> {
     .eq('is_archived', false);
   if (error) {
     console.error('[org-sections] teams availability check failed', error);
-    return false;
+    return 0;
   }
-  return (count ?? 0) > 0;
+  return count ?? 0;
 }
+export const anyListedTeam = async (orgId: string) => (await countListedTeams(orgId)) > 0;
 
-async function anyArchive(orgId: string): Promise<boolean> {
+/** How many sealed tournaments the club has (the Past tournaments tab, and the editor's row). Fails quiet: 0. */
+export async function countArchives(orgId: string): Promise<number> {
   const { count, error } = await supabaseAdmin
     .from('tournament_archives')
     .select('id', { count: 'exact', head: true })
     .eq('org_id', orgId);
   if (error) {
     console.error('[org-sections] archives availability check failed', error);
-    return false;
+    return 0;
   }
-  return (count ?? 0) > 0;
+  return count ?? 0;
 }
 
 /**
@@ -96,16 +100,21 @@ export async function resolveOrgSections(
     // The Tryouts tab (Stage 4b-2b, Ask 14): seasonal — while any listed team is open, not open yet, or finished in the
     // last four weeks (`tryoutsTabShows`, asked yes/no). Its address keeps working all year; only the tab leaves.
     withTeams ? anyListedTryout(org.id, tournamentToday()) : Promise.resolve(false),
-    anyArchive(org.id),
+    // The page refuses without the tournaments module (PAGE_MODULE.archives), so the tab needs it too.
+    hasModuleEntitlement(org, 'module_tournaments') ? countArchives(org.id).then(n => n > 0) : Promise.resolve(false),
     siteContentRead,
   ]);
 
-  // The club's own "show past tournaments" switch: its home already hides that section when it is off, and a tab
-  // contradicting the page it sits on is worse than no tab at all.
-  return orgSectionsFor({
-    league,
-    teams,
-    tryouts,
-    archives: archivesExist && siteContent?.showArchivesLink !== false,
-  });
+  // The club's own show/hide and order from its editor (Stage 4c-1): a section it hid has no tab (a tab contradicting
+  // the page it sits on is worse than no tab at all), and the order sorts the rest. Tryouts has no switch of its own.
+  const hidden = normalizeHiddenSections(siteContent?.homeSectionsHidden);
+  return orgSectionsFor(
+    {
+      league: league && !hidden.includes('league'),
+      teams: teams && !hidden.includes('teams'),
+      tryouts,
+      archives: archivesExist && !hidden.includes('archives'),
+    },
+    normalizeSectionOrder(siteContent?.homeSectionOrder),
+  );
 }

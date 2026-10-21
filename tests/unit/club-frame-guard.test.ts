@@ -108,7 +108,8 @@ describe('1 · the club\'s bar replaces the platform\'s (Ask 7)', () => {
     assert.match(footer, /Questions\? Email the club/);
     assert.match(footer, /useCopyToClipboard\(/); // the shared copy behaviour, not a third hand-rolled one
     assert.match(footer, /BuiltOnCredit/);
-    assert.doesNotMatch(footer, /Contacts and documents/); // 4c
+    // Stage 4c-1: the one door to the About page, shown only when the page has contacts, documents or questions.
+    assert.match(footer, /\{club\.aboutHref && <Link href=\{club\.aboutHref\}[^>]*>Contacts and documents<\/Link>\}/);
   });
 });
 

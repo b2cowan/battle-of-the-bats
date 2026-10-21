@@ -15,6 +15,9 @@ export interface OrgSection {
   label: string;
 }
 
+/** A tab that has no place of its own in the club's order sorts with another (Tryouts, seasonal, rides with Teams). */
+const ORDERED_WITH: Record<string, string> = { tryouts: 'teams' };
+
 /**
  * The section table, in tab order: Home · Teams · Tryouts · House league · Past tournaments (Club Tier Stage 4b-2a, Ask
  * 9A; the club Tryouts tab joined third in 4b-2b, Ask 14 — seasonal: present only while the Tryouts page has a team to
@@ -53,14 +56,25 @@ export function activeOrgSectionKey(pathname: string, orgSlug: string): string |
  * Returns fewer than 2 entries when the org has nothing to navigate between; the caller treats
  * that as "render no tab row" rather than showing a row with a single Home tab in it.
  */
-export function orgSectionsFor(available: { league: boolean; archives: boolean; teams: boolean; tryouts?: boolean }): OrgSection[] {
-  return ORG_SECTIONS.filter(s => {
+export function orgSectionsFor(
+  available: { league: boolean; archives: boolean; teams: boolean; tryouts?: boolean },
+  /** The club's section order from its editor (Stage 4c-1): it SORTS the tabs after Home and never hides one (a hidden
+   *  section arrives here as not available). A tab it does not rank keeps its table place after the ranked ones. */
+  order?: readonly string[],
+): OrgSection[] {
+  const present = ORG_SECTIONS.filter(s => {
     if (s.key === 'teams') return available.teams;
     if (s.key === 'tryouts') return !!available.tryouts;
     if (s.key === 'league') return available.league;
     if (s.key === 'archives') return available.archives;
     return true; // Home is always present
   });
+  if (!order) return present;
+  const rank = (s: OrgSection) => {
+    const i = order.indexOf(ORDERED_WITH[s.key] ?? s.key);
+    return s.key === '' ? -1 : i < 0 ? order.length : i;
+  };
+  return [...present].sort((a, b) => rank(a) - rank(b)); // stable: Teams before Tryouts, unranked in table order
 }
 
 /** The Stage F render gate: a tab row is only honest when there is somewhere else to go. */

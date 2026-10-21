@@ -262,6 +262,10 @@
     "342_club_tournament_fee_book.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 7a. Apply after 341 and before promoting the Stage 7a code: new teams columns and tournament receipt/settings/allocations tables, database fee triggers, and service-role-only fee RPCs. Existing paid teams are an opening baseline; there is no receipt backfill. Verify the four new objects, fee function bodies and EXECUTE privileges, then refresh both snapshots."
+    },
+    "343_a_club_runs_its_own_site.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 4c-1. Additive: five columns on org_public_site_content (home_section_order, home_sections_hidden, contacts, documents, questions) with their CHECK caps, and the org_site_notices table (service role only). Its one data step carries the two old show_* switches into home_sections_hidden, so a club that turned one off keeps it off — schema-invisible, hence this entry. Apply BEFORE promoting the 4c-1 code (the code reads the new columns). The two show_* columns stay, deprecated, for the old code still on prod; the 4c-1 save mirrors them, so a rollback reads the club's current choice; a later migration drops them after the promote. AFTER the promote, run the carry-over UPDATE once more (re-applying the whole file is safe — every step is idempotent and the UPDATE only fills an empty hidden list), so a switch turned off on the old editor between the apply and the promote is not lost. Verify the five columns and their defaults, the five CHECKs, the table with RLS on and no anon/authenticated grant, then refresh both snapshots."
     }
   }
 }

@@ -24,6 +24,8 @@ export const ORDER_WORDS = {
   handle: (name: string, place: string) => `${name}, ${place}. Drag to move, or press for options.`,
   /** A row that holds its place (Coin Toss, always last): it doesn't drag. */
   handleHeld: (name: string, place: string) => `${name}, ${place}. Press for options.`,
+  /** A fixed row with nothing to open (Club Tier Stage 4c-1, the public-site editor's Open now). */
+  handleFixed: (name: string, place: string) => `${name}, ${place}. It keeps its place.`,
   options: (name: string) => `Options for ${name}`,
   position: (place: number, of: number) => `${place} of ${of}`,
   moveUp: 'Move up',

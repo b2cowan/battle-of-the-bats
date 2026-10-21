@@ -1770,6 +1770,16 @@
     "indexdef": "CREATE UNIQUE INDEX org_public_site_content_pkey ON public.org_public_site_content USING btree (id)"
   },
   {
+    "tablename": "org_site_notices",
+    "indexname": "org_site_notices_org_idx",
+    "indexdef": "CREATE INDEX org_site_notices_org_idx ON public.org_site_notices USING btree (org_id, posted_at DESC)"
+  },
+  {
+    "tablename": "org_site_notices",
+    "indexname": "org_site_notices_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_site_notices_pkey ON public.org_site_notices USING btree (id)"
+  },
+  {
     "tablename": "org_time_block_facilities",
     "indexname": "org_time_block_facilities_facility_idx",
     "indexdef": "CREATE INDEX org_time_block_facilities_facility_idx ON public.org_time_block_facilities USING btree (facility_id)"

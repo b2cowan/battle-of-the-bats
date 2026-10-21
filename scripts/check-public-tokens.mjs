@@ -525,7 +525,6 @@ const ADMIN_COLOUR_DEBT = new Set([
   'app/[orgSlug]/admin/admin-common.module.css',
   'app/[orgSlug]/admin/house-league/house-league.module.css',
   'app/[orgSlug]/admin/onboarding/onboarding.module.css',
-  'app/[orgSlug]/admin/public-site/public-site.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css',

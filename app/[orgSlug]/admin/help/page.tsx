@@ -25,6 +25,7 @@ export default function AdminHelpHubPage() {
   const canRepTeams     = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams');
   const canAccounting   = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting');
   const canFamilies     = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_families');
+  const canPublicSite   = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_public_site');
   const canOrgAdmin     = userRole === 'owner' || userRole === 'admin';
   const isClub          = !!currentOrg && isClubPlan(currentOrg.planId);
 
@@ -110,6 +111,8 @@ export default function AdminHelpHubPage() {
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
+        // Club Tier Stage 4c-1: the club runs its own site, where the plan carries it.
+        ...(canPublicSite ? [{ label: 'Run your public site', href: `${helpBase}/org#public-site-editor` }] : []),
         ...(isClub ? [{ label: 'Club plan & billing', href: `${helpBase}/org#club-plan-and-billing` }] : []),
         // Club Tier Stage 6b: the club calendar and the Venue library, where the plan carries the library.
         ...(hasOrgVenueLibrary(currentOrg?.planId) ? [

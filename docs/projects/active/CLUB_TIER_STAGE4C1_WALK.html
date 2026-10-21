@@ -1,0 +1,311 @@
+<title>Public site walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single reading column of walk parts; each part is a card with its steps, a verdict row and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.calls{display:flex;flex-direction:column;gap:14px}
+.call{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.call:first-child{border-top:0;padding-top:0}
+.call b{font-weight:600}
+.call label{display:flex;gap:10px;align-items:flex-start;min-height:40px;padding:4px;border-radius:6px;cursor:pointer}
+.call label:hover{background:var(--bg)}
+.call input{width:18px;height:18px;margin:3px 0 0;flex:none;accent-color:var(--accent)}
+.rec{font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:20px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Club Tier 4c-1 · a club runs its own site</h1>
+    <p>Owner QA Ledger §357. The club now runs its public site from <b>Public site</b> in the admin. It chooses which home sections show and in what order, writes its words and contacts, lists its documents and questions on a new About page, and posts a one-line notice that ends by itself. Every change saves itself, except a notice, which waits for <b>Post notice</b>.</p>
+    <p>The test club is <b>UAT Lakeshore Lynx</b> (navy). Its site already has an Instagram link, two contacts (one a personal Gmail address), three documents under two headings and one question whose answer mentions 2025. Its home order starts as Teams · About the club · House league · Tournaments · Past tournaments. A test notice may still be up from the layout check; if it is, press <b>End now</b> before Part 6.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server, restarted for this build). For phone steps, use the browser’s phone view at 390 px.</dd>
+      <dt>Lakeshore owner</dt><dd><code>uat-rep-only-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Parts 1–6). The editor is <code>/uat-rep-only/admin/public-site</code>.</dd>
+      <dt>UAT Rep Club admin</dt><dd><code>uat-club-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Part 9)</dd>
+      <dt>Signed out</dt><dd>Parts 7, 8 and 10. Use a private window next to the signed-in one, so you can change something and watch it land.</dd>
+    </dl>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="calls-h">
+    <h2 id="calls-h">Your calls</h2>
+    <p class="where">Three choices the build raised. Pick one for each; the recommended one is marked.</p>
+    <div class="calls" id="calls"></div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  { id: 'p1', title: '1 · The editor at a glance', where: 'Lakeshore owner. /uat-rep-only/admin/public-site on a computer, then at phone width.', steps: [
+    'The title reads "Public site" with a green "Online" chip.',
+    'Under it: "Families see it at", the address, "Copy link" and "Open". Copy link shows "Copied" for a moment; Open opens the club’s home in a new tab.',
+    '"It is on. Turn it off in Settings", and that link opens Settings.',
+    'The cards, top to bottom: Club notice · Home page · About the club · Who to contact · Documents and policies · Questions families ask · Social links · Look.',
+    'There is no "Save Changes" button anywhere, and no "Page Content" or "Display Options" title. Card titles are in sentence case, not small capitals.',
+    'Phone: the address sits on its own line, with Copy link and Open under it, each a fingertip tall. Nothing scrolls sideways.',
+  ]},
+  { id: 'p2', title: '2 · The home page’s sections, in your order', where: 'Lakeshore owner, the Home page card. Keep a signed-out window on /uat-rep-only beside it.', steps: [
+    'Row 1 is "Open now" with a plain 1 and "Always first" at the right. It has no switch, and holding or dragging its number does nothing.',
+    'Rows 2–6 are Teams · About the club · House league · Tournaments · Past tournaments, each numbered, each with a switch and a line saying what it shows (for example "Your 9 teams in your groups, each with its tryout state").',
+    'Hold the 5 (Tournaments) and drag it above About the club. A "Saved" pill appears and fades. Reload: the order stuck.',
+    'Tap a number instead: a small menu offers Move up, Move down and Cancel (a sheet at phone width). A move from it saves too.',
+    'Turn off Teams. Its line reads "Hidden from families". Reload the signed-out home: the Teams section and the Teams tab are both gone.',
+    'Turn Teams back on: the section and tab come back. The tab row follows your order (Tryouts, when it shows, rides with Teams).',
+    'No row can be dragged above Open now.',
+  ]},
+  { id: 'p3', title: '3 · Your words, and refusals that say why', where: 'Lakeshore owner. About the club and Social links.', steps: [
+    'Tagline ("Rep baseball · ages 9 to 16") shows "One line under your name. 27 / 100", and the count follows your typing.',
+    'Type into About: "Registration for the 2025 season opens in the spring." After a pause an amber hint reads "Mentions 2025 — still true?". It saves anyway.',
+    'Change it to "A volunteer club since 1979." The hint goes away: a founding year isn’t flagged. Put the original text back.',
+    'In "Families’ questions go to", type "info@club". No red text appears while you type. After a pause, or when you leave the field, it turns red with "That doesn’t look like an email address." Fix the address and the red goes.',
+    'In Facebook, type "Lakeshore Lynx Baseball" and pause: red, "That isn’t a web address. Paste the link to your Facebook page, starting with https://". Reload: nothing was saved there.',
+    'In Website, type "lakeshorelynx.ca" and pause: under it, "Saved as https://lakeshorelynx.ca". The signed-out footer gains a website tile.',
+  ]},
+  { id: 'p4', title: '4 · Contacts, documents and questions', where: 'Lakeshore owner. The three list cards.', steps: [
+    'Who to contact lists Registration and Equipment, with their addresses. "Add a contact" sits at the foot of the card, not in its head.',
+    'Open Equipment: the window reads first (Role or name, Email). Press the pencil and you can edit. While editing the Gmail address, a quiet line suggests a role address like registrar@. It never refuses it.',
+    'Change the role to "Equipment and uniforms" while editing. The window’s own pill says Saved. Press ✓ and close: the row has the new name, with no extra "Contact saved" message.',
+    'Add a contact with the email "nope". Save refuses it beside the button: "That doesn’t look like an email address." Fix it and Save: the window closes, and "Contact saved." appears briefly.',
+    'Remove a contact: it asks "Remove …? Families will no longer see it." with Keep it and Remove.',
+    'Add a document: the Heading field offers Codes of conduct, Safety and The club as you type, and any other words are allowed.',
+    'Questions families ask: open the question; its answer mentions 2025, and the window shows "Mentions 2025 — still true?" when you edit it.',
+  ]},
+  { id: 'p5', title: '5 · The Look card', where: 'Lakeshore owner.', steps: [
+    'Read only: the club’s initials tile, two colour swatches, "Navy and gold · the default font", and "White text on navy, navy links. Readable on every page."',
+    '"Change in Settings" opens Settings. Nothing on this card can be edited.',
+  ]},
+  { id: 'p6', title: '6 · A notice families see on every page', where: 'Lakeshore owner, the Club notice card, with the signed-out window beside it.', steps: [
+    'Type "All Lakeshore diamonds are closed tonight" in Notice (the count reads "/ 80"), and "Rain. Every game and practice tonight is cancelled." in More detail. Ends offers Tonight, Tomorrow night, and Pick a date and time. Leave Tonight.',
+    'Nothing is posted while you type. Press "Post notice": "Notice posted. Families see it now." appears, and the card shows "Showing now" with the line families read.',
+    'Signed out, reload /uat-rep-only: under the bar, a white card with an amber left edge, your line in bold, the detail, and "Posted [time] p.m. by the club · ends tonight". The time is lowercase with periods.',
+    'The same notice is on /uat-rep-only/teams, a team page, a tryout page and /uat-rep-only/about.',
+    'Reload the editor: the card still shows Showing now, and Ends still says Tonight. Edit the line and press "Update notice": the public pages show the new line.',
+    'Choose Pick a date and time with a time already past, and press Update notice: "Pick a time that hasn’t passed yet."',
+    'Press "End now": "Notice ended." Reload the public pages: the notice is gone everywhere.',
+  ]},
+  { id: 'p7', title: '7 · The About page', where: 'Signed out. /uat-rep-only/about on a phone, then on a computer.', steps: [
+    'The page is titled "About the club", with no back link (the Home tab is the way back) and no line under the title. The browser tab reads "About the club · UAT Lakeshore Lynx".',
+    'The about text, then "Who to contact": each role over its address, on its own line. Copy is a bare icon on a phone and a labelled "Copy" on a computer, and shows a tick for a moment.',
+    '"Documents and policies": the band "Codes of conduct" with two documents, then "Safety" with one. Each opens in a new tab, with a small arrow icon.',
+    '"Questions families ask": the question in bold, the answer under it.',
+    'Nothing on the page says the club is compliant, approved or certified.',
+    'The footer of every club page has a "Contacts and documents" link that opens this page.',
+  ]},
+  { id: 'p8', title: '8 · The home', where: 'Signed out. /uat-rep-only on a computer, then a phone.', steps: [
+    'Computer: the sections run down the left in your order, and About the club stands in the right-hand column next to them, starting level with the first section.',
+    'Phone: one column, in exactly the order the editor shows, About in its place.',
+    'About the club ends with a link row "About the club" that opens the About page, and one Follow button (not two).',
+    'At 768 px nothing overlaps and nothing scrolls sideways.',
+  ]},
+  { id: 'p9', title: '9 · As an admin, not the owner', where: 'Sign in as the UAT Rep Club admin. /uat-rep-club/admin/public-site.', steps: [
+    'Under the address: "It is on. The owner turns it on and off in Settings." There is no link to Settings.',
+    'The Look card reads "The owner sets your logo, colours and font…" and ends "The owner changes these in Settings."',
+    'The admin can still reorder sections, edit words and lists, and post and end a notice.',
+  ]},
+  { id: 'p10', title: '10 · What must NOT change', where: 'Signed out, then as the UAT Rep Club owner.', steps: [
+    '/uat-rep-club (the yellow club, never edited in this walk) shows its sections in the old order: Open now, Teams, House league, Tournaments, About the club.',
+    'A tournament page (for example /riverdale-minor-ball) looks as before, with no club notice and no club footer.',
+    'As the UAT Rep Club owner, Organization › Tournaments: if a "Sealed records" band shows its door, it now reads "Past tournaments", not "Public ledger".',
+    'Owner, Settings: the Public site switch is where it was. Turning it off makes /uat-rep-only/about show "This club’s site isn’t available", like every other club page. Turn it back on.',
+  ]},
+];
+
+const CALLS = [
+  { id: 'c1', q: 'The Club notice card sits first in the editor, above Home page. The editor is eight cards long on a phone.', opts: [
+    ['A', 'Keep it first: a notice is the one urgent thing, and it is what a volunteer opens the editor for on a rain night', true],
+    ['B', 'Move it below Home page and About the club', false] ] },
+  { id: 'c2', q: 'An About page with no about text, no contacts, no documents, no questions and no club address shows the club’s "not found" page', opts: [
+    ['A', 'Keep "not found": nothing links there in that case, and an empty page with only a title says nothing', true],
+    ['B', 'Show the title and the club’s name only, as the copy table first said', false] ] },
+  { id: 'c3', q: 'When a club hides Teams, a mistyped team address no longer offers "See all teams" (the Teams page itself still opens)', opts: [
+    ['A', 'Leave it: hiding Teams means the club doesn’t want that door', true],
+    ['B', 'Keep offering "See all teams" whenever the club has a Teams page', false] ] },
+];
+
+const KEY = 'club-public-site-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((text, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = text;
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+const callsHost = document.getElementById('calls');
+for (const c of CALLS) {
+  const div = document.createElement('div');
+  div.className = 'call';
+  div.setAttribute('role', 'radiogroup');
+  div.setAttribute('aria-labelledby', c.id + '-q');
+  const q = document.createElement('b');
+  q.id = c.id + '-q';
+  q.textContent = c.q;
+  div.appendChild(q);
+  for (const [letter, text, rec] of c.opts) {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = c.id; input.id = `${c.id}-${letter}`; input.value = letter;
+    input.checked = state[c.id] === letter;
+    input.addEventListener('change', () => { state[c.id] = letter; save(); });
+    const span = document.createElement('span');
+    span.textContent = `${letter} · ${text}`;
+    if (rec) { const r = document.createElement('span'); r.className = 'rec'; r.textContent = 'Recommended'; span.appendChild(r); }
+    label.append(input, span);
+    div.appendChild(label);
+  }
+  const notes = document.createElement('textarea');
+  notes.id = c.id + '-notes';
+  notes.setAttribute('aria-label', 'Notes for ' + c.q);
+  notes.placeholder = 'Notes (optional)';
+  notes.value = state[c.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[c.id + '-notes'] = notes.value; save(); });
+  div.appendChild(notes);
+  callsHost.appendChild(div);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§357 Club Tier 4c-1 · a club runs its own site — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((t, i) => { if (!state[`${part.id}-s${i}`]) lines.push(`  ☐ ${t}`); });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  lines.push('', 'Calls:');
+  for (const c of CALLS) {
+    const pick = c.opts.find(o => o[0] === state[c.id]);
+    lines.push(`  ${c.q}: ${pick ? pick[0] + ' · ' + pick[1] + (pick[2] ? ' (recommended)' : '') : 'not answered'}`);
+    const n = (state[c.id + '-notes'] || '').trim();
+    if (n) lines.push(`    Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox], input[type=radio]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>

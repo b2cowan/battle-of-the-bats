@@ -24,6 +24,7 @@ import type { OrgSection } from '@/lib/org-public-sections';
 import type { ClubSocialKind } from '@/lib/club-site';
 import ClubBar from './ClubBar';
 import ClubFooter from './ClubFooter';
+import ClubNoticeBanner, { type ClubFrameNotice } from './ClubNoticeBanner';
 import { usePublicClub } from './PublicClubContext';
 import styles from './ClubFrame.module.css';
 
@@ -40,6 +41,10 @@ export interface ClubFrameClub {
   showCredit: boolean;
   /** The club's chosen font, as the frame's faces: the warm pair by default, DM Serif with DM Sans, or Inter alone. */
   face: 'warm' | 'dm-serif' | 'inter';
+  /** The club's live notice (Stage 4c-1), already said in the club's zone; null when none is showing. */
+  notice: ClubFrameNotice | null;
+  /** The About page, when it has contacts, documents or questions: the footer's "Contacts and documents" door. */
+  aboutHref: string | null;
 }
 
 export default function ClubFrame({ club, children }: { club: ClubFrameClub; children: React.ReactNode }) {
@@ -53,7 +58,10 @@ export default function ClubFrame({ club, children }: { club: ClubFrameClub; chi
           the club's bar — so it steps aside (ClubFrame.module.css) and this one skips the bar. */}
       <a href="#club-content" className="skip-link">Skip to content</a>
       <ClubBar club={club} />
-      <div id="club-content" tabIndex={-1} className={styles.page}>{children}</div>
+      <div id="club-content" tabIndex={-1} className={styles.page}>
+        {club.notice && <ClubNoticeBanner notice={club.notice} />}
+        {children}
+      </div>
       <ClubFooter club={club} />
     </div>
   );

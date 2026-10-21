@@ -26,6 +26,9 @@
 .handle:active:not(:disabled) { cursor: grabbing; }
 .handle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
 .handle:disabled { cursor: default; opacity: 0.4; }
+/* A fixed row's handle with nothing to open: the same box, at rest (no grab, no hover tint), never faded. */
+.handleInert { cursor: default; }
+.handleInert:hover { background: none; }
 .handle[aria-expanded='true'] { color: var(--text-primary); background: var(--home-olive-soft); }
 
 /* The numbered handle (the seeds): the grip mark and the row's number, the number in the list's olive figure. */

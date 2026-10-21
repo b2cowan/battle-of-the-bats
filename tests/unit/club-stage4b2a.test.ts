@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  clubHomeSections,
   tournamentHomeStatus,
   TOURNAMENT_STATUS_WORD,
   teamGridOneColumn,
@@ -12,6 +11,11 @@ import {
 } from '../../lib/club-site-home.ts';
 import { teamPageParts, teamMetaLine, splitPublicSchedule } from '../../lib/club-team-page.ts';
 import { orgSectionsFor } from '../../lib/org-public-sections.ts';
+import { clubHomeSectionsFor } from '../../lib/club-site-sections.ts';
+
+/** A club that never opened the editor (Stage 4c-1's default order), on a plan that carries every program. */
+const clubHomeSections = (has: Parameters<typeof clubHomeSectionsFor>[0]) =>
+  clubHomeSectionsFor(has, { order: undefined, hidden: undefined }, { teams: true, league: true, tournaments: true });
 import { clubTeamsAddress, type PublicClubAccessOrg } from '../../lib/public-club-access.ts';
 
 /**

@@ -18,7 +18,8 @@ const SCHEDULE = 'components/public/RepTeamPublicSchedule.tsx';
 describe('1 · the home (End state 1, Ask 3A)', () => {
   it('the public-site branch renders the club home, and the home decides its sections through the one rule', () => {
     assert.match(readCode(`${ORG}/page.tsx`), /<ClubSiteHome\b/);
-    assert.match(readCode(HOME), /clubHomeSections\(/);
+    // Since Stage 4c-1 the one rule takes the club's own order and show/hide (lib/club-site-sections.ts).
+    assert.match(readCode(HOME), /clubHomeSectionsFor\(/);
   });
   it('no "check back soon", no "Live" on every card, no "Upcoming events" (S4-03)', () => {
     const code = readCode(HOME);

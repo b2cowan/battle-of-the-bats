@@ -21,10 +21,6 @@
   "app/[orgSlug]/admin/org/billing/mock-portal/mock-portal.module.css": {
     "caps": 1
   },
-  "app/[orgSlug]/admin/public-site/public-site.module.css": {
-    "caps": 1,
-    "face": 2
-  },
   "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": {
     "caps": 1,
     "face": 1

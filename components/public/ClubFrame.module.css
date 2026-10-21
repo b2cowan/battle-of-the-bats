@@ -22,6 +22,7 @@
   --club-field:   #948B7D;   /* token-exempt: a form field's border on the club site, 3.4 : 1 on white */
   --club-ok:      #2C6A2A;   /* token-exempt: the club site's one green status, on --club-ok-bg */
   --club-ok-bg:   #E6F0E2;   /* token-exempt: the green status chip's ground (drawings --ok-tint) */
+  --club-warn:    #8A5300;   /* token-exempt: the club notice's rule (Stage 4c-1 drawings), 6.4 : 1 on the card */
 
   /* The type (Ask 1A, Ask 13A): titles in the display face, text in the body face — the warm pair by default. */
   --club-title-face:   var(--font-barlow), 'Barlow Condensed', 'Arial Narrow', sans-serif;
@@ -471,4 +472,60 @@
   }
 
   .credit { flex-basis: 100%; }
+}
+
+/* ── The club notice (Stage 4c-1, Ask 16; drawings ~L1763): under the bar on every club page, the club's line first. ── */
+.notice {
+  /* The pages' own column and gutter (16 px on a phone; at a desk the bar's 24 px container edge, below), so the notice
+     lines up with the heading under it; 20 px to the first section (the page adds its 16 px top padding). */
+  margin: 12px 0 4px;
+  padding: 0 16px;
+}
+@media (min-width: 901px) {
+  .notice { padding: 0 max(24px, calc((100% - 1200px) / 2 + 24px)); }
+}
+
+.noticeInner {
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-left: 3px solid var(--club-warn);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.noticeLine {
+  margin: 0;
+  font: 700 16px/1.25 var(--club-text-face);
+  color: var(--club-text);
+  overflow-wrap: anywhere;
+}
+
+.noticeDetail {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--club-soft);
+  overflow-wrap: anywhere;
+}
+
+.noticeSmall {
+  margin: 0;
+  font-size: 12px;
+  color: var(--club-dim);
+}
+
+/* The footer's one door to the About page (Stage 4c-1, Ask 10). */
+.footDoor {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  align-self: flex-start;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }

@@ -166,6 +166,25 @@ const CAL_OWNER = {
 const REP_ONLY_SLUG = 'uat-rep-only';
 const REP_ONLY_NAME = 'UAT Lakeshore Lynx';
 const REP_ONLY_MARKER = '[UAT_PROTECTED] Club Tier Stage 4b-2a rep-only club — scripts/seed-club-fixture.mjs (rebuild with --rep-only-club). Do not wipe.';
+// Club Tier Stage 4c-1 — what the About page and its footer door show (walk fixture; owner yes 2026-10-21): a social link,
+// two contacts (one a personal address, so the editor's role-address nudge shows), three documents under two headings,
+// and a question whose answer mentions a past year (so the past-year hint shows). No notice: the walk posts one.
+const LAKESHORE_ABOUT = {
+  social_instagram: 'https://instagram.com/uatlakeshorelynx',
+  home_section_order: ['teams', 'about', 'league', 'tournaments', 'archives'],
+  contacts: [
+    { id: 'c-registration', role: 'Registration', email: 'registrar@uat-lakeshore-lynx.local' },
+    { id: 'c-equipment', role: 'Equipment', email: 'lynx.equipment.uat@gmail.com' },
+  ],
+  documents: [
+    { id: 'd-parent', heading: 'Codes of conduct', title: 'Parent code of conduct', url: 'https://example.com/lynx/parent-code.pdf' },
+    { id: 'd-coach', heading: 'Codes of conduct', title: 'Coach code of conduct', url: 'https://example.com/lynx/coach-code.pdf' },
+    { id: 'd-concussion', heading: 'Safety', title: 'Concussion policy', url: 'https://example.com/lynx/concussion' },
+  ],
+  questions: [
+    { id: 'q-tryouts', question: 'When are tryouts?', answer: 'Tryouts for the 2025 season run in early September. Each team posts its days on its tryout page.' },
+  ],
+};
 const REP_ONLY_OWNER = {
   name: 'Dana Whitfield',
   email: (process.env.UAT_REP_ONLY_OWNER_EMAIL ?? 'uat-rep-only-owner@uat-rep-club.local').toLowerCase(),
@@ -1323,7 +1342,7 @@ async function buildRepOnlyClub() {
     tagline: 'Rep baseball · ages 9 to 16',
     description: 'The Lakeshore Lynx are a volunteer-run rep baseball club. Nine teams from 9U to 16U play in the provincial AA and AAA divisions from April to August, with winter training at Lakeshore Dome. (Walk fixture — not a real club.)',
     contact_email: 'info@uat-lakeshore-lynx.local',
-    show_upcoming_tournaments: true, show_archives_link: true,
+    ...LAKESHORE_ABOUT,
   })).error);
 
   // The banner, stored where the admin's upload puts it (app/api/admin/org-hero-banner/route.ts).

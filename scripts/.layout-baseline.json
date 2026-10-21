@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-17T19:14:05.852Z",
+  "generated": "2026-10-21T18:18:39.552Z",
   "entries": {
     "admin-families-show|768|content-overflow|details·ShowAll families 94No family on file12Ow": {
       "reason": "Deliberate: the Show pill drawn OPEN (Club Tier Stage 5b, P1) — its list of six questions with counts hangs under the pill wider than the pill itself, as every pick-one dropdown does; it is a popover over the page, not content the page lays out (a field’s list hangs over its window, 2026-10-09).",
@@ -3001,70 +3001,6 @@
       "reason": null,
       "detail": "content spills 56px with overflow-x:visible — no scroller owns it"
     },
-    "admin-public-site|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|a·Preview your public page": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|a·Org Settings": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|input·e.g. Milton's Premier Youth Softball Tou": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|input·info@yourorg.ca": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|input·https://instagram.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|input·https://facebook.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|input·https://x.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|input·https://yourorg.ca": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-public-site|361|tap-floor|button·Save Changes": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|361|content-overflow|div·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|361|content-overflow|label·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|361|content-overflow|input·<input>": {
-      "reason": null,
-      "detail": "content spills 22px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|361|content-overflow|div·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|361|content-overflow|label·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
     "admin-house-league|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -3656,70 +3592,6 @@
     "admin-rep-team-history-year|390|content-overflow|div·RosterSchedule & ResultsCoachesDocuments": {
       "reason": null,
       "detail": "content spills 27px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|a·Preview your public page": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|a·Org Settings": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|input·e.g. Milton's Premier Youth Softball Tou": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|input·info@yourorg.ca": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|input·https://instagram.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|input·https://facebook.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|input·https://x.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|input·https://yourorg.ca": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|button·Save Changes": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|390|content-overflow|div·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|390|content-overflow|label·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|390|content-overflow|input·<input>": {
-      "reason": null,
-      "detail": "content spills 22px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|390|content-overflow|div·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|390|content-overflow|label·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
     },
     "admin-house-league|390|tap-floor|a·Public site": {
       "reason": null,
@@ -4401,70 +4273,6 @@
       "reason": null,
       "detail": "content spills 11px with overflow-x:visible — no scroller owns it"
     },
-    "admin-public-site|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|a·Preview your public page": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|a·Org Settings": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|input·e.g. Milton's Premier Youth Softball Tou": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|input·info@yourorg.ca": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|input·https://instagram.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|input·https://facebook.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|input·https://x.com/yourorg": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|input·https://yourorg.ca": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|button·Save Changes": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-public-site|768|content-overflow|div·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|768|content-overflow|label·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|768|content-overflow|input·<input>": {
-      "reason": null,
-      "detail": "content spills 22px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|768|content-overflow|div·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|768|content-overflow|label·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
     "admin-house-league|768|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -4948,38 +4756,6 @@
     "admin-help-tournaments|768|tap-floor|input·Search this guide": {
       "reason": null,
       "detail": "42px tall (floor 44)"
-    },
-    "admin-public-site|1440|content-overflow|div·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|1440|content-overflow|label·Show upcoming tournamentsAuto-display a ": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|1440|content-overflow|input·<input>": {
-      "reason": null,
-      "detail": "content spills 22px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|1440|content-overflow|div·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|1440|content-overflow|label·Show past tournaments linkDisplay a link": {
-      "reason": null,
-      "detail": "content spills 21px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-public-site|361|tap-floor|a·Turn it on or off in Settings": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-public-site|390|tap-floor|a·Turn it on or off in Settings": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "admin-public-site|768|tap-floor|a·Turn it on or off in Settings": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
     },
     "admin-hl-registrations|1440|type-ladder|table·Player": {
       "reason": null,

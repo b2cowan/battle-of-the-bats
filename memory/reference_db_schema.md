@@ -512,7 +512,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, type NOT NULL, value, ex
 - Indexes: idx_org_overrides_org, idx_org_overrides_org_active
 
 ### org_public_site_content
-id (uuid), org_id (uuid) → organizations.id NOT NULL, tagline, description, contact_email, social_instagram, social_facebook, social_x, social_website, show_upcoming_tournaments (boolean), show_archives_link (boolean), created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, tagline, description, contact_email, social_instagram, social_facebook, social_x, social_website, show_upcoming_tournaments (boolean), show_archives_link (boolean), created_at, updated_at, home_section_order, home_sections_hidden, contacts (jsonb), documents (jsonb), questions (jsonb)
 - Indexes: org_public_site_content_org_id_key
 
 ### organization_members
@@ -804,6 +804,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, kept_person_id (uuid) �
 id (uuid), org_id (uuid) → organizations.id NOT NULL, from_person_id (uuid) → org_people.id NOT NULL, to_person_id (uuid) → org_people.id NOT NULL, source_table NOT NULL, source_id (uuid) NOT NULL, at
 - Indexes: org_person_reattachments_from_idx, org_person_reattachments_move_uniq, org_person_reattachments_org_idx, org_person_reattachments_to_idx
 
+### org_site_notices
+id (uuid), org_id (uuid) → organizations.id NOT NULL, notice NOT NULL, detail, posted_at, posted_by_user_id (uuid), posted_by_email NOT NULL, ends_at NOT NULL, ended_at, ended_by_email
+- Indexes: org_site_notices_org_idx
+
 ### org_time_block_facilities
 block_id (uuid) → org_time_blocks.id NOT NULL, facility_id (uuid) → org_venue_facilities.id NOT NULL, org_id (uuid) → organizations.id NOT NULL
 - Indexes: org_time_block_facilities_facility_idx, org_time_block_facilities_org_idx
@@ -868,7 +872,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **210 tables** across 10 modules.
+Total: **211 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -879,4 +883,4 @@ Total: **210 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 63 tables
+- Other: 64 tables

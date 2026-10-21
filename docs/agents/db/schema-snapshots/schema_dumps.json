@@ -8741,6 +8741,141 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_public_site_content",
+        "pos": 14,
+        "column_name": "home_section_order",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "ARRAY['teams'::text, 'league'::text, 'tournaments'::text, 'about'::text, 'archives'::text]"
+      },
+      {
+        "table_name": "org_public_site_content",
+        "pos": 15,
+        "column_name": "home_sections_hidden",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "ARRAY[]::text[]"
+      },
+      {
+        "table_name": "org_public_site_content",
+        "pos": 16,
+        "column_name": "contacts",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "org_public_site_content",
+        "pos": 17,
+        "column_name": "documents",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "org_public_site_content",
+        "pos": 18,
+        "column_name": "questions",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 3,
+        "column_name": "notice",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 4,
+        "column_name": "detail",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 5,
+        "column_name": "posted_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 6,
+        "column_name": "posted_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 7,
+        "column_name": "posted_by_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 8,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 9,
+        "column_name": "ended_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_site_notices",
+        "pos": 10,
+        "column_name": "ended_by_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_time_block_facilities",
         "pos": 1,
         "column_name": "block_id",
@@ -23834,6 +23969,13 @@
         "constraint_name": "org_public_site_content_org_id_fkey"
       },
       {
+        "table_name": "org_site_notices",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_site_notices_org_fk"
+      },
+      {
         "table_name": "org_time_block_facilities",
         "column_name": "block_id",
         "foreign_table": "org_time_blocks",
@@ -28798,6 +28940,16 @@
         "indexdef": "CREATE UNIQUE INDEX org_public_site_content_pkey ON public.org_public_site_content USING btree (id)"
       },
       {
+        "tablename": "org_site_notices",
+        "indexname": "org_site_notices_org_idx",
+        "indexdef": "CREATE INDEX org_site_notices_org_idx ON public.org_site_notices USING btree (org_id, posted_at DESC)"
+      },
+      {
+        "tablename": "org_site_notices",
+        "indexname": "org_site_notices_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_site_notices_pkey ON public.org_site_notices USING btree (id)"
+      },
+      {
         "tablename": "org_time_block_facilities",
         "indexname": "org_time_block_facilities_facility_idx",
         "indexdef": "CREATE INDEX org_time_block_facilities_facility_idx ON public.org_time_block_facilities USING btree (facility_id)"
@@ -32954,8 +33106,62 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "org_public_site_content",
+        "detail": "org_public_site_content_contacts_cap",
+        "check_clause": "((jsonb_typeof(contacts) = 'array'::text) AND (jsonb_array_length(contacts) <= 12))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_public_site_content",
+        "detail": "org_public_site_content_documents_cap",
+        "check_clause": "((jsonb_typeof(documents) = 'array'::text) AND (jsonb_array_length(documents) <= 30))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_public_site_content",
+        "detail": "org_public_site_content_home_section_order_known",
+        "check_clause": "(home_section_order <@ ARRAY['teams'::text, 'league'::text, 'tournaments'::text, 'about'::text, 'archives'::text])"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_public_site_content",
+        "detail": "org_public_site_content_home_sections_hidden_known",
+        "check_clause": "(home_sections_hidden <@ ARRAY['teams'::text, 'league'::text, 'tournaments'::text, 'about'::text, 'archives'::text])"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_public_site_content",
+        "detail": "org_public_site_content_questions_cap",
+        "check_clause": "((jsonb_typeof(questions) = 'array'::text) AND (jsonb_array_length(questions) <= 10))"
+      },
+      {
         "kind": "RLS",
         "table_name": "org_public_site_content",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_site_notices",
+        "detail": "org_site_notices_detail_check",
+        "check_clause": "((detail IS NULL) OR (length(detail) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_site_notices",
+        "detail": "org_site_notices_ends_after_post",
+        "check_clause": "(ends_at > posted_at)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_site_notices",
+        "detail": "org_site_notices_notice_check",
+        "check_clause": "((length(btrim(notice)) >= 1) AND (length(btrim(notice)) <= 80))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_site_notices",
         "detail": "ENABLED",
         "check_clause": null
       },

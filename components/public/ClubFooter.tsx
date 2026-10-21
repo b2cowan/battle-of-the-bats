@@ -7,8 +7,9 @@
  * phones, so the address is shown and copyable); its social links as 44 × 44 tiles named for screen readers ("Lakeshore
  * Lynx on Instagram"); and, under a hairline, the quiet "Built on FieldLogicHQ" credit on a paid plan (BUSINESS_DECISIONS
  * 2026-07-30 — the one trace of the platform a club's pages carry). A part with nothing to show is ABSENT, never a
- * placeholder. ("Contacts and documents" and the About page it opens are Stage 4c.)
+ * placeholder. "Contacts and documents" opens the About page (Stage 4c-1) when the club has put something there.
  */
+import Link from 'next/link';
 import { Globe } from 'lucide-react';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
@@ -65,6 +66,9 @@ export default function ClubFooter({ club }: { club: ClubFrameClub }) {
             ))}
           </ul>
         )}
+
+        {/* The one door to the About page (Stage 4c-1, Ask 10), only when it has contacts, documents or questions. */}
+        {club.aboutHref && <Link href={club.aboutHref} className={styles.footDoor}>Contacts and documents</Link>}
 
         {club.showCredit && <BuiltOnCredit className={styles.credit} />}
       </div>

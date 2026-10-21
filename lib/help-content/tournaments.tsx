@@ -2347,7 +2347,7 @@ const tournamentsHelp: HelpPageContent = {
               <ul>
                 <li><strong>Active</strong> and <strong>Draft</strong> &mdash; what&rsquo;s ahead, soonest first.</li>
                 <li><strong>Completed</strong> and <strong>Archived</strong> &mdash; what&rsquo;s finished, most recent first.</li>
-                <li><strong>Sealed records</strong> &mdash; each opens its permanent public record; <strong>Public ledger</strong> opens the public page that lists them.</li>
+                <li><strong>Sealed records</strong> &mdash; each opens its permanent public record; <strong>Past tournaments</strong> opens the public page that lists them.</li>
               </ul>
               <p>Each group says whether its public sites are online. Tap a tournament to open its record. On Tournament Plus and above, a completed tournament&rsquo;s row also carries <strong>Reuse setup</strong>. On the Tournament plan the list says how many tournament slots are in use and, while one is held, what frees it. Only a draft or an active tournament holds a slot.</p>
             </>
@@ -2365,7 +2365,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li><strong>Completed</strong> &mdash; <strong>Reopen</strong> makes its results editable again and moves it back to Tournaments. On the Tournament plan it needs a free slot; if another tournament holds it, the record says which before you tap. <strong>Archive</strong> takes its public site offline.</li>
                 <li><strong>Archived</strong> &mdash; <strong>Bring back</strong> returns it as Completed, with its public site online at the same links.</li>
               </ul>
-              <p>On Tournament Plus and above, a finished tournament&rsquo;s <strong>Permanent record</strong> offers <strong>Seal</strong>, which keeps a permanent public record of its results in your public ledger. Sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
+              <p>On Tournament Plus and above, a finished tournament&rsquo;s <strong>Permanent record</strong> offers <strong>Seal</strong>, which keeps a permanent public record of its results under <strong>Past tournaments</strong>. Sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
               <p>The record&rsquo;s <strong>Details</strong> &mdash; name, year, public link, and dates &mdash; edit with the pencil and save as you go. Changing the public link asks first, because every link you&rsquo;ve already shared stops working. A tournament that isn&rsquo;t active can be deleted from the end of its record.</p>
             </>
           ),
@@ -2407,11 +2407,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-completed-archived-sealed',
           question: 'What is the difference between completed, archived, and sealed?',
-          answerText: 'Completed means the event is over: its results are read-only, its public site stays online, and it doesn’t hold a tournament slot. Archived takes its public site offline; you can bring it back from the Tournaments list. Sealed means a permanent public record of its results was kept in your public ledger; sealing can’t be undone, and a sealed tournament can’t be reopened.',
+          answerText: 'Completed means the event is over: its results are read-only, its public site stays online, and it doesn’t hold a tournament slot. Archived takes its public site offline; you can bring it back from the Tournaments list. Sealed means a permanent public record of its results was kept under Past tournaments; sealing can’t be undone, and a sealed tournament can’t be reopened.',
           keywords: ['completed', 'archived', 'sealed', 'lifecycle', 'Archives', 'Past tournaments'],
           popular: true,
           answer: (
-            <p><strong>Completed</strong> means the event is over: its results are read-only, its public site stays online, and it doesn&rsquo;t hold a tournament slot. <strong>Archived</strong> takes its public site offline; you can bring it back from the <strong>Tournaments</strong> list. <strong>Sealed</strong> means a permanent public record of its results was kept in your public ledger; sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
+            <p><strong>Completed</strong> means the event is over: its results are read-only, its public site stays online, and it doesn&rsquo;t hold a tournament slot. <strong>Archived</strong> takes its public site offline; you can bring it back from the <strong>Tournaments</strong> list. <strong>Sealed</strong> means a permanent public record of its results was kept under <strong>Past tournaments</strong>; sealing can&rsquo;t be undone, and a sealed tournament can&rsquo;t be reopened.</p>
           ),
         },
         {

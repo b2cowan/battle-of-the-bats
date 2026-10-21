@@ -41,12 +41,6 @@
     "kx": 2,
     "helpers": 6
   },
-  "app/[orgSlug]/admin/public-site/page.tsx": {
-    "useAdminKit": 1
-  },
-  "app/[orgSlug]/admin/public-site/public-site.module.css": {
-    "kitScope": 24
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
     "kitScope": 44
   },

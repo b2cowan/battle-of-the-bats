@@ -1,69 +1,50 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { getOrgPublicSiteContent, upsertOrgPublicSiteContent } from '@/lib/db';
+import { getLiveClubNotice, getOrgPublicSiteContent, upsertOrgPublicSiteContent } from '@/lib/db';
+import { publicSiteEditor } from '@/lib/public-site-access';
+import { publicSiteEditorFacts } from '@/lib/public-site-editor-facts';
+import { parsePublicSitePatch } from '@/lib/public-site-patch';
+import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import { withObservability } from '@/lib/observability';
 
-const URL_RE = /^https:\/\/.+/;
-const MAX_TAGLINE     = 100;
-const MAX_DESCRIPTION = 1000;
-const MAX_EMAIL       = 254;
-const MAX_URL         = 500;
-
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_public_site')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_public_site')) return forbidden();
-  return null;
-}
-
 export const GET = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
+  const r = await publicSiteEditor(req, { write: false });
+  if (r.error) return r.error;
+  const org = r.ctx.org;
 
-  const content = await getOrgPublicSiteContent(ctx!.org.id);
+  // The editor (Stage 4c-1) asks for its rows' facts and the live notice too; other callers (onboarding) get the content.
+  if (new URL(req.url).searchParams.get('with') === 'editor') {
+    const contentRead = getOrgPublicSiteContent(org.id);
+    const [content, editor, notice] = await Promise.all([
+      contentRead,
+      publicSiteEditorFacts(org, contentRead),
+      getLiveClubNotice(org.id),
+    ]);
+    return NextResponse.json({ content: content ?? null, ...editor, notice });
+  }
+  const content = await getOrgPublicSiteContent(org.id);
   return NextResponse.json(content ?? {});
 }, { route: '/api/admin/public-site' });
 
+/**
+ * Club Tier Stage 4c-1: each editor card saves itself, so this takes any subset of fields and stores ONLY those. A
+ * refused field answers 400 with its name and the reason, and nothing in the request is saved (F05) — the editor shows
+ * the reason beside the field. Owner or admin only.
+ */
 export const PATCH = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
+  const r = await publicSiteEditor(req, { write: true });
+  if (r.error) return r.error;
 
-  if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
+  const body = await req.json().catch(() => null);
+  const parsed = parsePublicSitePatch(body);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
+  if (Object.keys(parsed.patch).length === 0) return NextResponse.json({ ok: true, saved: {} });
 
-  const body = await req.json();
-
-  const tagline     = body.tagline     != null ? String(body.tagline).trim().slice(0, MAX_TAGLINE)     : null;
-  const description = body.description != null ? String(body.description).trim().slice(0, MAX_DESCRIPTION) : null;
-
-  const contactEmail = body.contactEmail != null
-    ? String(body.contactEmail).trim().slice(0, MAX_EMAIL) || null
-    : null;
-
-  function sanitizeUrl(raw: unknown): string | null {
-    if (raw == null) return null;
-    const s = String(raw).trim().slice(0, MAX_URL);
-    if (!s) return null;
-    if (!URL_RE.test(s)) return null;
-    return s;
+  try {
+    await upsertOrgPublicSiteContent(r.ctx.org.id, parsed.patch);
+  } catch (e) {
+    console.error('public-site PATCH failed', e);
+    return NextResponse.json({ error: W.saveFailed }, { status: 500 });
   }
-
-  await upsertOrgPublicSiteContent(ctx!.org.id, {
-    tagline:                  tagline || null,
-    description:              description || null,
-    contactEmail,
-    socialInstagram:          sanitizeUrl(body.socialInstagram),
-    socialFacebook:           sanitizeUrl(body.socialFacebook),
-    socialX:                  sanitizeUrl(body.socialX),
-    socialWebsite:            sanitizeUrl(body.socialWebsite),
-    showUpcomingTournaments:  body.showUpcomingTournaments !== false,
-    showArchivesLink:         body.showArchivesLink !== false,
-  });
-
-  return NextResponse.json({ ok: true });
+  // What was stored, so the editor can say "Saved as https://…" and keep the new rows' ids.
+  return NextResponse.json({ ok: true, saved: parsed.patch });
 }, { route: '/api/admin/public-site' });

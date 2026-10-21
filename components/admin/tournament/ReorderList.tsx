@@ -23,6 +23,9 @@
  *   fixed       rows that hold their place (Coin Toss, always last): the handle still opens the menu (to Remove it),
  *               but the row never drags, and no move — by menu or by drag — lands on or crosses it. A move that would
  *               snap straight back is never offered.
+ *   fixedInert  for a list with no Remove, where a fixed row's menu would offer nothing: its handle is the number (or
+ *               grip) in the handle's own box, named for its place, never a button (the public-site editor's Open now,
+ *               "Always first" — Club Tier Stage 4c-1).
  *
  * ⚠ The popover renders INSIDE the list's own DOM (a window's focus floor holds Tab inside its panel, and a popover in
  * the page's body would be outside it) but `position: fixed` against the handle, so a list card's `overflow: hidden`
@@ -52,6 +55,8 @@ type ListCtx = {
   disabled: boolean;
   fixed: ReadonlySet<string>;
   menuFor: string | null;
+  /** A fixed row's handle is drawn inert (`fixedInert`). */
+  fixedInert: boolean;
 };
 const Ctx = createContext<ListCtx | null>(null);
 
@@ -59,7 +64,7 @@ const Ctx = createContext<ListCtx | null>(null);
 const ofCount = (index: number, count: number) => W.position(index + 1, count);
 
 export function ReorderList({
-  ids, names, onMove, onRemove, fixed, disabled = false, overWindow = false, position = ofCount, children,
+  ids, names, onMove, onRemove, fixed, fixedInert = false, disabled = false, overWindow = false, position = ofCount, children,
 }: {
   ids: readonly string[];
   /** Each row's name, in the same order: the handle's name and the menu's head. */
@@ -70,6 +75,8 @@ export function ReorderList({
   onRemove?: (index: number) => void;
   /** Rows that hold their place (see the header), by id. */
   fixed?: readonly string[];
+  /** A list with no Remove: its fixed rows' handles open nothing, so they are drawn inert (see the header). */
+  fixedInert?: boolean;
   /** A save in flight: the handles wait. */
   disabled?: boolean;
   /** The list sits in a full-screen window (a phone's form window): the menu sheet goes over it. */
@@ -186,7 +193,7 @@ export function ReorderList({
   );
 
   return (
-    <Ctx.Provider value={{ open, ids, names, position, disabled, fixed: fixedSet, menuFor: menuOpen ? menu.id : null }}>
+    <Ctx.Provider value={{ open, ids, names, position, disabled, fixed: fixedSet, menuFor: menuOpen ? menu.id : null, fixedInert }}>
       <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}
         // The two screen-reader nodes go in the page's body: rendered in place they would land inside a <ul>.
         accessibility={{ container: typeof document === 'undefined' ? undefined : document.body }}>
@@ -235,7 +242,19 @@ export function ReorderRow({ id, number, label, children }: {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: ctx.disabled || holds });
   const index = ctx.ids.indexOf(id);
   const name = ctx.names[index] ?? '';
-  const handle = (
+  const mark = (
+    <>
+      <GripVertical className={styles.gripMark} size={number ? 12 : 16} aria-hidden />
+      {number && <span className={styles.handleN} aria-hidden>{label ?? index + 1}</span>}
+    </>
+  );
+  // A fixed row with nothing to open (`fixedInert`): its handle's box, inert, named for its place.
+  const handle = holds && ctx.fixedInert ? (
+    <span className={`${styles.handle} ${styles.handleInert}${number ? ` ${styles.handleNumber}` : ''}`} role="img"
+      aria-label={W.handleFixed(name, ctx.position(index, ctx.ids.length))}>
+      {mark}
+    </span>
+  ) : (
     <button
       type="button"
       className={`${styles.handle}${number ? ` ${styles.handleNumber}` : ''}`}
@@ -248,8 +267,7 @@ export function ReorderRow({ id, number, label, children }: {
       disabled={ctx.disabled}
       onClick={e => ctx.open(id, e.currentTarget)}
     >
-      <GripVertical className={styles.gripMark} size={number ? 12 : 16} aria-hidden />
-      {number && <span className={styles.handleN} aria-hidden>{label ?? index + 1}</span>}
+      {mark}
     </button>
   );
   return children({

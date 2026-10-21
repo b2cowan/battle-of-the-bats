@@ -55,7 +55,6 @@ describe('Q1 — one field label, sentence case, in both portals', () => {
       ['app/[orgSlug]/admin/tournaments/branding/branding.module.css', '.label'],
       ['app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css', '.teamLabel'],
       ['components/coaches/DevelopmentHandoutPreview.module.css', '.nextStep'],
-      ['app/[orgSlug]/admin/public-site/public-site.module.css', '.label'],
       // Composed from the source, never through `.label`: `composes` is not transitive under Turbopack.
       ['app/[orgSlug]/coaches/coaches.module.css', '.ppFieldLabel'],
     ];

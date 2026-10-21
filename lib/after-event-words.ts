@@ -207,7 +207,9 @@ export const LIST_WORDS = {
   /** What each band means for the public site, said ONCE beside its count (it replaced a column that
    *  repeated it on every row). */
   bandSite: { active: 'public site online', draft: 'private', completed: 'public site online', archived: 'public site offline' },
-  publicLedger: 'Public ledger',
+  /** The door to the public page of sealed records — named as that page and its tab name themselves (one name per
+   *  thing, design log 2026-10-19; Club Tier Stage 4c-1, the 4b-1 finding "Public ledger"). */
+  publicLedger: 'Past tournaments',
   sealedBand: 'Sealed records',
   /** The Completed band's row action — a named short form; everywhere else "Reuse this setup". */
   reuseRow: 'Reuse setup',
