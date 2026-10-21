@@ -133,7 +133,7 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
      not:'',
      who:'The coach. Computer.',
      steps:[
-      'Sign in as the coach, then open localhost:3000/coaches/join?email=jordan.lee%40example.com&coach=Jordan%20Lee. “You’re signed in as a different account”: jordan.lee@example.com and the coach’s address are bold, in full ink, inside the grey sentence.',
+      'Sign in as the coach, then open a coach join link for a registration filed under a DIFFERENT address than yours: localhost:3000/coaches/join?registrationId=<a registration id>&email=jordan.lee%40example.com (the registration id is any team entry on your dev tournament that was filed with another email; without a registration id the page shows “Create your account” instead). “You’re signed in as a different account”: jordan.lee@example.com and the coach’s address are bold, in full ink, inside the grey sentence.',
       'The assistant-coach invitation shows the same screen with a live invitation sent to a different address than yours (staging, or skip this step and tick it if you have none). Its two addresses read the same way.'
     ]},
     {id:'5',stg:true,title:'Real links that cannot be used',
@@ -172,12 +172,12 @@ h1{font:700 28px/1.15 var(--f-display);margin:4px 0 10px;text-wrap:balance}
       'From a tournament’s registration page, use its sign-in step’s “Forgot your password?”, then the email, the tap and a new password. You land back on that registration, signed in.'
     ]},
     {id:'8',stg:true,title:'The two emails in three mail apps',
-     for:'The confirmation and reset emails wear one warm envelope (light only, tightened on a phone) and say what comes next. A customised copy of each template wears the same envelope. Owed from part 2a.',
+     for:'The confirmation and reset emails wear one warm envelope, now a plain white card with no beige frame (light only, tightened on a phone) and say what comes next. A customised copy of each template wears the same envelope. Owed from part 2a.',
      pass:'Both emails read right in Gmail, Apple Mail and Outlook, light and dark, phone and computer; the customised copies look the same; the customisations are removed afterwards.',
      not:'',
      who:'Staging. Your real inbox in each app. The platform admin for the test sends.',
      steps:[
-      'Get a confirmation email (start a team with an address you can read). The warm ground, the white card, the wordmark, “Confirm your email to finish your account.”, the sentence for your way in (for a team: “Then you’ll name your team.”), the lime button and “The link works for 1 hour.” under it. No “verify” anywhere, subject included.',
+      'Get a confirmation email (start a team with an address you can read). The white card on the mail app’s own background (no beige frame round it, no “FieldLogicHQ” line under it), the wordmark, “Confirm your email to finish your account.”, the sentence for your way in (for a team: “Then you’ll name your team.”), the lime button and “The link works for 1 hour.” under it. No “verify” anywhere, subject included.',
       'Get a reset email. The same envelope, no greeting, “The link works for 1 hour.”, the lime “Reset my password”, and “If you didn’t ask for this, ignore this email. Your password won’t change.”',
       'Open both in Gmail (web and phone app), light and dark. They stay light, nothing is cut off, the button is tappable.',
       'Open both in Apple Mail (phone), light and dark. Same.',

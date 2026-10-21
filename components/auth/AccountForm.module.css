@@ -225,6 +225,13 @@
 .waitBlock:focus { outline: none; }
 /* A screen that is only a heading and its ways out (U4 "Sent") takes focus the same way, with no form gap around it. */
 .focusBlock:focus { outline: none; }
+/* The forgot-password "Check your email" screen has no form to give it body, so it breathes on its own: the heading sits
+   lower on the paper, the sentence gets looser lines, and the rule and the two ways out get room either side. */
+.focusBlock { padding-top: 1.5rem; }
+.focusBlock .title { margin-bottom: 0.875rem; }
+.focusBlock .sub { line-height: 1.6; }
+.focusBlock .head { margin-bottom: 0.5rem; padding-bottom: 1.5rem; }
+.focusBlock .footSplit { padding-top: 0.5rem; }
 
 /* The white callout with an olive edge (tinted panels are retired): where the email went, the pricing page's plan. */
 .callout {
@@ -362,4 +369,6 @@
 @media (max-width: 640px) {
   .page { padding: 0.75rem 1rem 1.25rem; }
   .head { margin-bottom: 1rem; padding-bottom: 0.875rem; }
+  .focusBlock { padding-top: 1rem; }
+  .focusBlock .head { margin-bottom: 0.25rem; padding-bottom: 1.25rem; }
 }

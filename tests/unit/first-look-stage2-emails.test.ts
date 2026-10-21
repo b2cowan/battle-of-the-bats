@@ -19,19 +19,19 @@ import { startDoorLinkPath } from '../../lib/start-door.ts';
 
 describe('the warm envelope (D-F11, U8)', () => {
   const doc = warmEmailDocument('<p>inner</p>');
-  it('is the drawing: 600px ground with its edge, the white card, the wordmark, the footer word', () => {
-    // table cells, not divs, carry them (Outlook's desktop app drops a div's padding)
-    assert.match(doc, /style="width:100%;max-width:600px;margin:0 auto;border-collapse:separate;">\n<tr><td class="fl-ground" style="background:#f6f1ea;border:1px solid #c9c1b2;border-radius:10px;padding:28px 20px;/);
-    assert.match(doc, /<td class="fl-card" style="background:#ffffff;border:1px solid #dad3c9;border-radius:12px;padding:28px 26px;">/);
+  it('is the white card on the mail app\'s own ground, under the wordmark: no beige frame, no footer word (owner 2026-10-20)', () => {
+    // a table cell, not a div, carries it (Outlook's desktop app drops a div's padding)
+    assert.match(doc, /style="width:100%;max-width:600px;margin:0 auto;border-collapse:separate;">\n<tr><td class="fl-card" style="background:#ffffff;border:1px solid #c9c1b2;border-radius:12px;padding:28px 26px;/);
+    assert.doesNotMatch(doc, /fl-ground|#f6f1ea/, 'the beige frame is gone');
+    assert.doesNotMatch(doc, /text-align:center;">FieldLogicHQ<\/p>/, 'and so is the footer word');
     assert.doesNotMatch(doc, /<div/, 'no div carries the layout');
     assert.match(doc, /font-family:'Courier New',Courier,monospace;font-size:15px;[^"]*font-weight:700;[^"]*">FIELD<span style="color:#55641c;">LOGIC<\/span><span style="color:#4b463f;">HQ<\/span><\/p>/);
-    assert.match(doc, /font-size:12px;[^"]*text-align:center;">FieldLogicHQ<\/p>/);
     assert.ok(doc.indexOf('<p>inner</p>') > doc.indexOf('LOGIC'), 'the content sits in the card, under the wordmark');
   });
   it('asks mail apps for light only and tightens the padding on a phone', () => {
     assert.match(doc, /<meta name="color-scheme" content="light only">/);
     assert.match(doc, /<meta name="supported-color-schemes" content="light only">/);
-    assert.match(doc, /@media \(max-width: 480px\) \{\s*\.fl-ground \{ padding: 16px 12px !important; \}\s*\.fl-card \{ padding: 22px 18px !important; \}/);
+    assert.match(doc, /@media \(max-width: 480px\) \{\s*\.fl-card \{ padding: 22px 18px !important; \}/);
     assert.match(doc, /<!--\[if mso\]><table role="presentation" width="600"/, 'Outlook’s desktop app gets a fixed width');
   });
   it('the button is lime with its olive edge, in a cell Outlook draws', () => {

@@ -103,29 +103,26 @@ const WORDMARK = `<p style="margin:0 0 22px;font-family:'Courier New',Courier,mo
   + `FIELD<span style="color:${W.olive};">LOGIC</span><span style="color:${W.hq};">HQ</span></p>`;
 
 /**
- * The envelope without a document around it: the ground, the white card with the wordmark and `inner`, and the footer
- * word. For a preview that drops it into a page (the template editor); a sent email uses `warmEmailDocument`.
+ * The envelope without a document around it: the white card with the wordmark and `inner`. There is no beige frame
+ * round the card and no footer word (owner 2026-10-20: the frame held nothing the card did not, and the wordmark
+ * already names the sender). The card's edge is the darker one, so it holds against a mail app's white. For a preview
+ * that drops it into a page (the template editor); a sent email uses `warmEmailDocument`.
  */
 export function warmEmailBody(inner: string): string {
-  // Table cells, not divs, carry the ground's and the card's padding, colour and edge: Outlook's desktop app (the Word
-  // engine) drops padding on a div. No indentation: the plain-text part (lib/email.ts htmlToText) keeps a line's
-  // leading spaces.
+  // A table cell, not a div, carries the card's padding, colour and edge: Outlook's desktop app (the Word engine)
+  // drops padding on a div. No indentation: the plain-text part (lib/email.ts htmlToText) keeps a line's leading
+  // spaces.
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;margin:0 auto;border-collapse:separate;">
-<tr><td class="fl-ground" style="background:${W.ground};border:1px solid ${W.groundEdge};border-radius:10px;padding:28px 20px;font-family:${W.font};color:${W.ink};text-align:left;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;">
-<tr><td class="fl-card" style="background:${W.card};border:1px solid ${W.cardEdge};border-radius:12px;padding:28px 26px;">
+<tr><td class="fl-card" style="background:${W.card};border:1px solid ${W.groundEdge};border-radius:12px;padding:28px 26px;font-family:${W.font};color:${W.ink};text-align:left;">
 ${WORDMARK}
 ${inner}
-</td></tr>
-</table>
-<p style="margin:16px 0 0;font-family:${W.font};font-size:12px;line-height:1.5;color:${W.secondary};text-align:center;">FieldLogicHQ</p>
 </td></tr>
 </table>`;
 }
 
 /**
  * The envelope as the whole email: a document whose head asks for light only (U8) and tightens the padding on a phone
- * (the U8 drawing: 16px 12px round the card, 22px 18px inside it). Outlook's desktop app ignores a max-width, so it
+ * (the U8 drawing: 22px 18px inside the card). Outlook's desktop app ignores a max-width, so it
  * gets a fixed 600px table of its own.
  */
 export function warmEmailDocument(inner: string): string {
@@ -140,7 +137,6 @@ export function warmEmailDocument(inner: string): string {
 <style>
 :root { color-scheme: light only; supported-color-schemes: light only; }
 @media (max-width: 480px) {
-  .fl-ground { padding: 16px 12px !important; }
   .fl-card { padding: 22px 18px !important; }
 }
 </style>
