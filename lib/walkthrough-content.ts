@@ -660,18 +660,18 @@ export const PITCH_SLIDES = {
   },
   '#15': {
     id: '#15',
-    // The panel is already a short wide strip. ⚠ NOT ringed: the artifact asks for "the two
-    // tiles that are wrong", but this world re-anchors nightly and WHICH tiles are unhealthy
-    // moves with it — a ring on a position would start pointing at a healthy tile.
+    // The picture is Registration health's window (a button on Teams, 2026-10-21; recapture owed). ⚠ NOT ringed: the
+    // artifact asks for "the two figures that are wrong", but this world re-anchors nightly and WHICH figures are
+    // unhealthy moves with it — a ring on a position would start pointing at a healthy figure.
     imageClass: 'proof',
     shotId: 'registration-health',
     pain: 'A team’s payment fell through — and you find out at the gate.',
     claim:
-      'One readiness score for the whole field, weeks out, and every tile opens the exact teams behind it.',
+      'One readiness score for the whole field, weeks out, and every figure opens the exact teams behind it.',
     // Registration Health is Tournament Plus: an invite-only event (the free plan since 2026-10-16) has no
     // registration to score. The slide names no plan (2026-08-21 ruling).
     pageAnswer:
-      'Registration Health scores the whole field weeks out — who’s paid, whose email bounces, who still needs a decision — and every tile clicks through to the exact teams.',
+      'Registration Health scores the whole field weeks out — who’s paid, whose email bounces, who still needs a decision — and every figure clicks through to the exact teams.',
     seoPhrase: 'registration health',
   },
   /**

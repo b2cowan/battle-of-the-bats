@@ -4,7 +4,7 @@
    `[data-admin-kit]` layer, no legacy literal. The shared parts are the kit's and are not restated —
    the row recipe, band, frame and table (`RepKit`), the chip and callout, the form window
    (`KitDialog`) and its fields (`ClubKit`), the page header (`TournamentAdminHeader`). What lives here
-   is Teams' own: the toolbar line, the "At a glance" card, the selection and swap rows (A17), the
+   is Teams' own: the toolbar line with its registration chip, Payments' slim line, the selection and swap rows (A17), the
    docked bulk bar, the record's blocks, the view sheet, the desk filters and the rep-team picker.
    ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs holds this sheet on the strict admin list.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
@@ -70,28 +70,15 @@
 .modeDone:hover { background: var(--home-olive-soft); }
 @media (max-width: 768px) { .modeDone { min-height: var(--tap-min, 44px); } }
 
-/* ── "At a glance" (T1): ONE section card, its heading inside (16/700), closed rows with hairlines ── */
-.glance {
+/* ── Payments, one slim line above the list (owner 2026-10-21): the row "At a glance" used to hold, without the card
+   around it. Its detail opens in place on the paper tone (§3.10.8). ── */
+.payLine {
   margin: 0 0 0.9rem;
   border: 1px solid var(--home-line);
   border-radius: 8px;
   background: var(--card-bg);
   overflow: clip;
 }
-/* The body face, set explicitly: the global h1–h6 rule would draw it in the display face. */
-.glanceHeading {
-  margin: 0;
-  padding: 0.75rem 1.1rem 0.25rem;
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-primary);
-}
-.glanceItem { border-bottom: 1px solid var(--home-line); }
-.glanceItem:last-child { border-bottom: 0; }
 .glanceRow {
   display: flex;
   align-items: center;
@@ -108,16 +95,6 @@
 }
 .glanceRow:hover { background: var(--home-olive-soft); }
 .glanceRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
-.glanceLead {
-  flex: none;
-  min-width: 2rem;
-  font-size: var(--type-heading);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--home-olive);
-  font-variant-numeric: tabular-nums;
-}
-.glanceLead small { margin-left: 1px; font-size: var(--type-label); font-weight: 600; color: var(--text-tertiary); }
 .glanceMain { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.1rem 0.65rem; flex-wrap: wrap; }
 .glanceTitle { font-size: var(--type-body); font-weight: 600; }
 .glanceCaption { font-size: var(--type-support); color: var(--text-tertiary); }
@@ -125,7 +102,6 @@
 .glanceFigure[data-bad] { color: var(--danger-light); }
 .glanceChevron { flex: none; color: var(--text-tertiary); transition: transform 0.15s ease; }
 .glanceRow[aria-expanded="true"] .glanceChevron { transform: rotate(180deg); }
-/* A row that expands in place shows its detail on the paper tone (§3.10.8). */
 .glanceBody {
   display: grid;
   gap: 0.6rem;
@@ -133,35 +109,22 @@
   background: var(--home-paper);
   border-top: 1px solid var(--home-line);
 }
-.glanceSentence { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
-.glanceBody > button { justify-self: start; }
 @media (max-width: 640px) {
-  .glanceHeading { padding: 0.75rem 0.85rem 0.25rem; }
   .glanceRow { min-height: 56px; padding: 0.5rem 0.75rem 0.5rem 0.85rem; }
   .glanceMain { flex-direction: column; align-items: flex-start; }
   .glanceBody { padding: 0.75rem 0.85rem 0.9rem; }
 }
 @media (prefers-reduced-motion: reduce) { .glanceChevron { transition: none; } }
 
-/* Health's opened tiles and issues (today's panel, on the kit). */
-.regHealthKpiGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.45rem; }
-/* An event that doesn't track payments has no Payments tile: three across, never a hole. */
-.regHealthKpiGrid[data-three] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-/* ONE tile for the glance card's opened figures — health's (a button) and Payments' (a figure). */
+/* ONE tile for Payments' opened figures. */
 .glanceTile {
-  position: relative;
   min-width: 0;
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--home-line);
   border-radius: 8px;
   background: var(--home-card);
-  font: inherit;
-  text-align: left;
   color: var(--text-primary);
 }
-button.glanceTile:not(:disabled) { cursor: pointer; }
-button.glanceTile:hover:not(:disabled) { border-color: var(--home-olive); }
-button.glanceTile:disabled { cursor: default; opacity: 1; }
 .glanceTile span,
 .glanceTile small { display: block; min-width: 0; overflow-wrap: anywhere; }
 .glanceTile span,
@@ -178,43 +141,46 @@ button.glanceTile:disabled { cursor: default; opacity: 1; }
 .glanceTile[data-tone="good"] strong { color: var(--success-light); }
 .glanceTile[data-tone="warning"] strong { color: var(--warning-light); }
 .glanceTile[data-tone="danger"] strong { color: var(--danger-light); }
-.regHealthKpiLock { position: absolute; top: 0.4rem; right: 0.45rem; display: inline-flex; color: var(--home-olive); }
-.regHealthIssues { display: flex; flex-direction: column; gap: 0.35rem; }
-.regHealthIssue {
-  display: flex;
+
+/* ── The registration chip beside the division picker (owner 2026-10-21): the state in words, the spots, the one switch.
+   The trigger is CoachToolbarMenu's button wearing this class (plainTrigger), so the chip keeps that menu's keyboard
+   pattern and its phone sheet. A pill at the admin's control height, like the picker beside it. ── */
+.regChipSlot { flex: 0 1 auto; min-width: 0; }
+.regChip {
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  min-height: 38px;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid var(--home-line);
-  border-left-width: 3px;
-  border-radius: 8px;
+  gap: 0.5rem;
+  min-height: var(--admin-control-h);
+  padding: 0 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
   background: var(--card-bg);
   font: inherit;
-  font-size: var(--type-support);
-  line-height: 1.35;
-  text-align: left;
-  color: var(--text-secondary);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  white-space: nowrap;
+  max-width: 100%;
   cursor: pointer;
 }
-.regHealthIssue:disabled { cursor: default; }
-.regHealthIssue strong { color: var(--text-primary); }
-.regHealthIssue svg { flex: none; }
-/* A white note with a coloured edge — tinted panels were retired (2026-09-21). */
-.regHealthIssue[data-tone="danger"] { border-left-color: var(--home-live); }
-.regHealthIssue[data-tone="danger"] svg { color: var(--danger-light); }
-.regHealthIssue[data-tone="warning"] { border-left-color: var(--warning); }
-.regHealthIssue[data-tone="warning"] svg { color: var(--warning-light); }
-.regHealthIssue[data-tone="neutral"] { border-left-color: var(--home-olive); }
-.regHealthIssue[data-tone="neutral"] svg { color: var(--home-olive); }
-.regHealthGood { display: flex; align-items: center; gap: 0.4rem; font-size: var(--type-support); color: var(--text-secondary); }
-.regHealthGood svg { color: var(--success-light); }
+.regChip:hover,
+.regChip[aria-expanded="true"] { background: var(--home-olive-soft); }
+.regChip:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.regChipDot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--success-light); }
+.regChipClosed .regChipDot { background: var(--warning-light); }
+.regChipState { flex: none; font-weight: 600; }
+.regChipSpots { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--type-support); color: var(--text-tertiary); }
+.regChipChevron { flex: none; color: var(--text-tertiary); }
+/* The menu's one sentence, over its one button. */
+.regChipSentence { margin: 0; padding: 0.4rem 0.75rem 0.5rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+@media (max-width: 768px) { .regChip { min-height: var(--tap-min, 44px); } }
+/* A tablet's line is crowded (picker, chip, Search, Filter, Tools): it wraps rather than clips the chip or squeezes Search. */
+@media (max-width: 900px) { .teamsToolbar { flex-wrap: wrap; } }
+/* The toolbar line on a phone: picker and squares keep their row; the chip takes the next one at full width. */
 @media (max-width: 640px) {
-  .regHealthKpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .regHealthKpiGrid[data-three] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .regHealthKpiGrid[data-three] > :last-child { grid-column: 1 / -1; }
-  .regHealthIssue { min-height: var(--tap-min, 44px); }
+  .regChipSlot { order: 5; flex: 1 1 100%; }
+  .regChipSlot > div { display: block; }
+  .regChip { width: 100%; }
+  .regChipChevron { margin-left: auto; }
 }
 
 /* Payments, opened: the collected bar, the four figures, the due dates (today's panel, on the kit). */

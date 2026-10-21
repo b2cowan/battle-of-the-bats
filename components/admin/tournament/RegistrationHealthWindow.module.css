@@ -1,0 +1,74 @@
+/* REGISTRATION HEALTH'S WINDOW (owner 2026-10-21) — the recipes are Schedule health's window, worn by the registration
+   score: a summary line, one joined band of figures, issue rows with a door at their end. */
+.body { display: flex; flex-direction: column; gap: 1.1rem; min-width: 0; }
+
+.summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.65rem; margin: 0; color: var(--text-secondary); font-size: var(--type-body); }
+.score { font-size: 1.75rem; font-weight: 750; line-height: 1; font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.score small { font-size: var(--type-body); font-weight: 600; color: var(--text-tertiary); margin-left: 0.1rem; }
+.score[data-tone='good'] { color: var(--home-olive); }
+.score[data-tone='warning'] { color: var(--warning-light); }
+.score[data-tone='danger'] { color: var(--danger-light); }
+
+/* The joined band: one box, hairlines between the cells. */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.strip[data-cells='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cell {
+  position: relative;
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border: 0;
+  border-left: 1px solid var(--home-line);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.cell:first-child { border-left: 0; }
+.cell:not(:disabled) { cursor: pointer; }
+.cell:not(:disabled):hover { background: var(--home-olive-soft); }
+.cell:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.cell span, .cell small { display: block; min-width: 0; overflow-wrap: anywhere; }
+/* The label over a figure is the kit eyebrow (11 px). */
+.cellLabel {
+  color: var(--text-secondary);
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+}
+.cellValue { display: block; margin: 0.15rem 0 0.1rem; color: var(--text-primary); font-size: var(--type-heading); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.cell[data-tone='good'] .cellValue { color: var(--success-light); }
+.cell[data-tone='warning'] .cellValue { color: var(--warning-light); }
+.cell[data-tone='danger'] .cellValue { color: var(--danger-light); }
+.cellDetail { color: var(--text-tertiary); font-size: var(--type-support); }
+.lock { position: absolute; top: 0.45rem; right: 0.55rem; color: var(--text-tertiary); display: inline-flex; }
+
+.issues { display: flex; flex-direction: column; gap: 0.4rem; }
+.issue { display: flex; align-items: center; gap: 0.38rem; border: 1px solid; border-radius: 4px; padding: 0.34rem 0.5rem; font-size: var(--type-support); line-height: 1.35; }
+.issue svg { flex: 0 0 auto; }
+.issueText { min-width: 0; color: var(--text-secondary); }
+.issueText strong { color: var(--text-primary); }
+.issueGood { color: var(--success-light); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.3); }
+.issueError { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.08); border-color: rgba(var(--danger-rgb), 0.3); }
+.issueWarning { color: var(--warning-light); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+.issueInfo { color: var(--info-light); background: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.2); }
+
+/* An issue's one door: olive words at the row's end, as Schedule's "Show them". */
+.door { margin-left: auto; flex: none; padding: 0.1rem 0; border: 0; background: none; font: inherit; font-weight: 650; color: var(--home-olive); white-space: nowrap; cursor: pointer; }
+.door:hover { text-decoration: underline; }
+.door:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+
+@media (max-width: 768px) {
+  .door { min-height: var(--tap-min, 44px); }
+  .cell { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .strip, .strip[data-cells='3'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cell:nth-child(odd) { border-left: 0; }
+  .cell:nth-child(n + 3) { border-top: 1px solid var(--home-line); }
+  .issue { flex-wrap: wrap; }
+}

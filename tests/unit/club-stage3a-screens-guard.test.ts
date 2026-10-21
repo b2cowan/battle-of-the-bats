@@ -220,10 +220,9 @@ describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', 
     for (const f of ['communication/communication.module.css', 'settings/settings-access.module.css']) {
       assert.doesNotMatch(readCode(`${T}/${f}`), /min-height:\s*38px/, f);
     }
-    // Two named exceptions, neither a control: a health issue is a LIST ROW, and the Results lens pill is a
-    // chip — chips keep their own height (ruling 3).
-    const teams = readCode(`${T}/registrations/teams-admin.module.css`).replace(/\.regHealthIssue \{[^}]*\}/, '');
-    assert.doesNotMatch(teams, /min-height:\s*38px/, 'teams-admin');
+    // One named exception, not a control: the Results lens pill is a chip — chips keep their own height (ruling 3).
+    // (Teams' health issues were a list row with a 38px height; they live in Registration health's window now.)
+    assert.doesNotMatch(readCode(`${T}/registrations/teams-admin.module.css`), /min-height:\s*38px/, 'teams-admin');
     const results = readCode(`${T}/results/results-admin.module.css`).replace('.lensPill { min-height: 38px; }', '');
     assert.doesNotMatch(results, /min-height:\s*38px/, 'results-admin');
   });

@@ -1,4 +1,14 @@
 import type { RegistrationAttentionKey, RegistrationAttentionSummary } from './registration-attention';
+import { daysBetweenDateStrings, tournamentToday } from './timezone';
+
+/**
+ * Calendar days from today to the tournament's start date, read in the organization's own time zone — the ONE reading for
+ * the Teams page (a browser, any zone) and the dashboard's route (a server in UTC), so a viewer's clock never moves the score.
+ * null when the tournament has no start date.
+ */
+export function registrationDaysUntilStart(startDate: string | null | undefined, now: Date = new Date()): number | null {
+  return startDate ? daysBetweenDateStrings(tournamentToday(now), startDate.slice(0, 10)) : null;
+}
 
 export type RegistrationHealthTone = 'good' | 'warning' | 'danger' | 'neutral';
 
@@ -43,6 +53,67 @@ export type RegistrationHealthMetrics = {
   eventTracksPayments: boolean;
   capacityGaps: RegistrationHealthCapacityGap[];
   issues: RegistrationHealthIssue[];
+};
+
+/** A division's fill against its capacity, across every division that HAS a capacity set. */
+export type RegistrationHealthCapacity = {
+  gaps: RegistrationHealthCapacityGap[];
+  capacityTotal: number;
+  capacityAccepted: number;
+};
+
+/**
+ * The capacity half of Registration health — ONE function for the Teams page and the dashboard, so the score is one
+ * number on both (the schedule's rule, owner 2026-10-19). A division is a gap when it never filled and either its
+ * registration is closed or the tournament starts within three days.
+ */
+export function buildRegistrationCapacity(input: {
+  divisions: Array<{ id: string; name: string; capacity?: number | null; isClosed?: boolean | null }>;
+  acceptedByDivision: Map<string, number>;
+  /** Calendar days until the tournament starts; null when it has no start date. */
+  daysUntilStart: number | null;
+}): RegistrationHealthCapacity {
+  const gaps: RegistrationHealthCapacityGap[] = [];
+  let capacityTotal = 0;
+  let capacityAccepted = 0;
+  for (const division of input.divisions) {
+    if (division.capacity == null || division.capacity <= 0) continue;
+    const accepted = input.acceptedByDivision.get(division.id) ?? 0;
+    capacityTotal += division.capacity;
+    capacityAccepted += accepted;
+    if (accepted >= division.capacity) continue;
+    if (division.isClosed) {
+      gaps.push({ divisionId: division.id, divisionName: division.name, accepted, capacity: division.capacity, reason: 'closed_under' });
+    } else if (input.daysUntilStart != null && input.daysUntilStart <= 3) {
+      gaps.push({ divisionId: division.id, divisionName: division.name, accepted, capacity: division.capacity, reason: 'soon_under' });
+    }
+  }
+  return { gaps, capacityTotal, capacityAccepted };
+}
+
+/** The team counts the score divides by: every registration but a rejected one, and the accepted ones among them. */
+export function countRegistrationHealthTeams(
+  teams: Array<{ status?: string | null; divisionId?: string | null }>,
+): { teamsTotal: number; accepted: number; acceptedByDivision: Map<string, number> } {
+  let teamsTotal = 0;
+  let accepted = 0;
+  const acceptedByDivision = new Map<string, number>();
+  for (const team of teams) {
+    if (!team.status || team.status === 'rejected') continue;
+    teamsTotal++;
+    if (team.status === 'accepted') {
+      accepted++;
+      if (team.divisionId) acceptedByDivision.set(team.divisionId, (acceptedByDivision.get(team.divisionId) ?? 0) + 1);
+    }
+  }
+  return { teamsTotal, accepted, acceptedByDivision };
+}
+
+/** What a screen holds to wear Registration health: the metrics and the fill figures the window's Teams cell reads. */
+export type RegistrationHealthView = {
+  metrics: RegistrationHealthMetrics;
+  capacityTotal: number;
+  capacityAccepted: number;
 };
 
 function bucketCount(attention: RegistrationAttentionSummary, key: RegistrationAttentionKey): number {

@@ -23,6 +23,8 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { eventAreas, runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import type { RegistrationAttentionSummary } from '@/lib/registration-attention';
+import type { RegistrationHealthView } from '@/lib/registration-health';
+import RegistrationHealthWindow from '@/components/admin/tournament/RegistrationHealthWindow';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
 import { daysUntilStart, getGuidance } from '@/lib/tournament-guidance';
@@ -156,6 +158,8 @@ type DashboardStats = {
     counts: PaymentCounts;
   };
   registrationAttention: RegistrationAttentionSummary;
+  /** Registration health, scored by the route with the Teams page's own call (owner 2026-10-21); null until a read lands. */
+  registrationHealth: RegistrationHealthView | null;
 };
 
 // ── Layout customization ─────────────────────────────────────────────────────
@@ -294,6 +298,7 @@ const EMPTY_STATS: DashboardStats = {
   checkIn: { accepted: 0, checkedIn: 0, noShow: 0 },
   payment: { hasFeeSchedule: false, totalExpected: 0, totalCollected: 0, counts: { paid: 0, depositPaid: 0, pending: 0, pastDue: 0, noSchedule: 0 } },
   registrationAttention: { total: 0, buckets: [] },
+  registrationHealth: null,
 };
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -321,6 +326,8 @@ export default function AdminDashboard() {
   const [statsReloadKey, setStatsReloadKey] = useState(0);
   // Schedule health's window — the Schedule's own, opened from either board (owner 2026-10-19, A5).
   const [healthWindowOpen, setHealthWindowOpen] = useState(false);
+  // Registration health's window — the Teams header button's own, opened from the Registration card's first row (owner 2026-10-21).
+  const [regHealthWindowOpen, setRegHealthWindowOpen] = useState(false);
   // The coin toss being recorded from the nudge (S7: it opens the recorder in place, not the standings preview).
   const [tossOpen, setTossOpen] = useState<PendingToss | null>(null);
   /**
@@ -418,6 +425,7 @@ export default function AdminDashboard() {
           checkIn: data?.checkIn ?? EMPTY_STATS.checkIn,
           payment: data?.payment ?? EMPTY_STATS.payment,
           registrationAttention: data?.registrationAttention ?? EMPTY_STATS.registrationAttention,
+          registrationHealth: data?.registrationHealth ?? null,
         });
         setStatsFor(id);
         setStatsError('');
@@ -491,6 +499,9 @@ export default function AdminDashboard() {
 
   const statsReady    = Boolean(currentTournament?.id) && statsFor === currentTournament?.id;
   const visibleStats  = statsReady ? stats : EMPTY_STATS;
+  // Registration health's window closes with the figures it reads (an event switch empties them): it must not reopen by
+  // itself when the next event's land. State that follows a derived value — adjusted during render.
+  if (regHealthWindowOpen && !visibleStats.registrationHealth) setRegHealthWindowOpen(false);
   // The board waits for this event's read — a finished event for the read that carries its recap (right
   // after Mark complete the figures on hand are still the active event's). Until then: one quiet line.
   const boardWaiting  = Boolean(currentTournament?.id) && (!statsReady || (isFinished && !visibleStats.recap));
@@ -734,6 +745,8 @@ export default function AdminDashboard() {
             comms={visibleStats.communications}
             health={visibleStats.scheduleHealth}
             onOpenHealth={() => setHealthWindowOpen(true)}
+            regHealth={visibleStats.registrationHealth}
+            onOpenRegHealth={() => setRegHealthWindowOpen(true)}
             teams={visibleStats.teams}
             divisions={visibleStats.divisions}
             panels={layout.panels}
@@ -762,6 +775,19 @@ export default function AdminDashboard() {
             setCurrentTournament({ ...currentTournament, settings: { ...currentTournament.settings, schedule_health_rules: saved } });
             setStatsReloadKey(k => k + 1);
           }}
+        />
+      )}
+
+      {/* Registration health's window, the one the Teams button opens (owner 2026-10-21). A figure or a door leaves for Teams
+          with the filter in the link, as the card's follow-up rows do. */}
+      {regHealthWindowOpen && currentTournament && visibleStats.registrationHealth && (
+        <RegistrationHealthWindow
+          eyebrow={currentTournament.name}
+          health={visibleStats.registrationHealth}
+          onJumpToBucket={key => router.push(`${base}/registrations?attention=${key}`)}
+          onJumpToCapacity={divisionId => router.push(`${base}/registrations?division=${encodeURIComponent(divisionId)}`)}
+          onUpgrade={() => router.push(`${subscriptionHref}?plan=tournament_plus`)}
+          onClose={() => setRegHealthWindowOpen(false)}
         />
       )}
 

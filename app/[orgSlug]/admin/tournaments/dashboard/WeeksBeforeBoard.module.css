@@ -32,6 +32,13 @@
 
 .quiet { margin: 0; font-weight: 400; color: var(--text-tertiary); font-size: var(--type-body); }
 
+/* The Registration card's health row: the score leads the title, in its tone, with its scale small beside it. */
+.regHealthScore { margin-right: 0.5rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.regHealthScore small { margin-left: 1px; font-size: var(--type-label); font-weight: 600; color: var(--text-tertiary); }
+.regHealthScore[data-tone='good'] { color: var(--home-olive); }
+.regHealthScore[data-tone='warning'] { color: var(--warning-light); }
+.regHealthScore[data-tone='danger'] { color: var(--danger-light); }
+
 /* What the last reminder said, under the Coaches card's rows. */
 .result,
 .resultBad { margin: 0; padding: 0.55rem 1.1rem 0.75rem; font-size: var(--type-support); line-height: 1.4; }

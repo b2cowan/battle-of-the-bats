@@ -10,6 +10,7 @@ import type { Division, Tournament, TournamentSettings } from '@/lib/types';
 import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { buildRegistrationAttentionSummary } from '@/lib/registration-attention';
+import { buildRegistrationCapacity, buildRegistrationHealth, countRegistrationHealthTeams, registrationDaysUntilStart } from '@/lib/registration-health';
 import { hasCapability } from '@/lib/roles';
 import { buildEventScheduleHealth, scheduleMetricGameFromRow } from '@/lib/schedule-metrics';
 import { getOrgOwnerEmail, supabaseAdmin } from '@/lib/supabase-admin';
@@ -684,6 +685,27 @@ export const GET = withObservability(async (req: Request) => {
     },
   );
 
+  // Registration health — the Teams page's own call (owner 2026-10-21), so the board's row and the Teams button show ONE
+  // number: the same attention summary, the same team counts, the same capacity gaps.
+  const healthCounts = countRegistrationHealthTeams(teamPayments.map(team => ({ status: team.status, divisionId: team.division_id })));
+  const healthCapacity = buildRegistrationCapacity({
+    divisions: divisions.map(group => ({ id: group.id, name: group.name, capacity: group.capacity, isClosed: group.is_closed })),
+    acceptedByDivision: healthCounts.acceptedByDivision,
+    daysUntilStart: registrationDaysUntilStart(t.start_date),
+  });
+  const registrationHealth = {
+    metrics: buildRegistrationHealth({
+      attention: registrationAttention,
+      teamsTotal: healthCounts.teamsTotal,
+      accepted: healthCounts.accepted,
+      paymentsTracked: hasPlanFeature(ctx.org.planId, 'payment_readiness_tools'),
+      eventTracksPayments: tracksPayments,
+      capacityGaps: healthCapacity.gaps,
+    }),
+    capacityTotal: healthCapacity.capacityTotal,
+    capacityAccepted: healthCapacity.capacityAccepted,
+  };
+
   // ── Coin-toss nudge ───────────────────────────────────────────────
   // Surface the tied groups still awaiting an admin coin toss — the one reading the schedule's Bracket view and
   // Results use (lib/coin-toss.ts, Stage 3 S7), so the three never name a different tie. Only runs when 'coin' is
@@ -915,5 +937,6 @@ export const GET = withObservability(async (req: Request) => {
       byDivision: paymentByDivision,
     },
     registrationAttention,
+    registrationHealth,
   });
 }, { route: '/api/admin/tournament-dashboard' });

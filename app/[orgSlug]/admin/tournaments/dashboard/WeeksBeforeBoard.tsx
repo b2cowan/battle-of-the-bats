@@ -32,6 +32,9 @@ import { formatStoredDate } from '@/lib/timezone';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { BoardNote } from './GameDayBoard';
 import { INVITE_BOARD_WORDS, teamsAndPools } from '@/lib/invite-only-words';
+import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { REGISTRATION_HEALTH_WORDS } from '@/lib/registration-words';
+import type { RegistrationHealthView } from '@/lib/registration-health';
 import dash from './dashboard.module.css';
 import styles from './WeeksBeforeBoard.module.css';
 
@@ -114,8 +117,8 @@ function AddCard({ items, open, onToggle, onAdd }: {
 
 export default function WeeksBeforeBoard({
   base, daysUntil, tournamentId, orgQuery, subscriptionHref, paymentTools, inviteOnly,
-  reg, followUps, pay, fees, chat, chatSettled, onRetryChat, canRemind, comms, health, onOpenHealth, teams, divisions,
-  panels, customizing, onReorder, onHide, onShow,
+  reg, followUps, pay, fees, chat, chatSettled, onRetryChat, canRemind, comms, health, onOpenHealth, regHealth, onOpenRegHealth,
+  teams, divisions, panels, customizing, onReorder, onHide, onShow,
 }: {
   /** An invite-only event (the free tournament tier, screen 4): the Registration card is the Teams card, and the Payments
    *  and Coaches cards are absent. */
@@ -143,6 +146,10 @@ export default function WeeksBeforeBoard({
   health: { tone: 'good' | 'warning' | 'danger'; issueCount: number; topIssue: string | null; totalGames: number; timedGames: number };
   /** Opens Schedule health's window — the one the Schedule's header button opens (owner 2026-10-19, A5). */
   onOpenHealth: () => void;
+  /** Registration health, scored by the route with the Teams page's own call; null until a read lands. */
+  regHealth: RegistrationHealthView | null;
+  /** Opens Registration health's window — the one the Teams header button opens (owner 2026-10-21). */
+  onOpenRegHealth: () => void;
   teams: number;
   divisions: number;
   /** Every card, in the organizer's order, with whether it is shown. */
@@ -226,6 +233,19 @@ export default function WeeksBeforeBoard({
     return (
       <ClubSection list title={W.registration} meta={W.regFigure(reg.totalAccepted, capacity, reg.velocity)}>
         <ClubRowList inset label={W.registration}>
+          {/* Registration health — the card's first row, across every division; it opens the Teams button's own window
+              (owner 2026-10-21). The score is the title's lead, with its scale ("78" alone can read as 78 teams). */}
+          {regHealth?.metrics.hasTeams && regHealth.metrics.tone !== 'neutral' && (
+            <ClubRow
+              as="button"
+              onClick={onOpenRegHealth}
+              aria-haspopup="dialog"
+              aria-label={REGISTRATION_HEALTH_WORDS.buttonLabel(regHealth.metrics.score, regHealth.metrics.issues.length)}
+              title={<><span className={styles.regHealthScore} data-tone={regHealth.metrics.tone}>{regHealth.metrics.score}<small>/100</small></span>{REGISTRATION_HEALTH_WORDS.title}</>}
+              caption={GAME_DAY_WORDS.healthCaption(regHealth.metrics.tone, regHealth.metrics.issues.length)}
+              chevron
+            />
+          )}
           {reg.byDivision.length === 0 ? (
             <ClubRow as="link" href={`${base}/divisions`} title={W.noDivisions} caption={W.noDivisionsLine} chevron />
           ) : reg.byDivision.map(d => {

@@ -12,15 +12,8 @@
 export const TEAMS_LOCK_PLAN = 'Tournament Plus';
 
 export const TEAMS_WORDS = {
-  // ── At a glance (T1) ──
-  glance: 'At a glance',
-  health: 'Registration health',
-  healthScope: 'Every division',
-  healthNothing: 'nothing missing',
-  missingEmail: (n: number) => `${n} missing an email`,
-  missingInfo: (n: number) => `${n} missing info`,
-  withoutSpot: (n: number) => `${n} without a spot`,
-  shortOfTeams: (n: number) => `${n} division${n === 1 ? '' : 's'} short of teams`,
+  // ── Payments' slim line and the registration chip (owner 2026-10-21; the At a glance card is gone) ──
+  // Registration health's own words are REGISTRATION_HEALTH_WORDS, below.
   payments: 'Payments',
   paymentsIn: (collected: string, expected: string) => `${collected} of ${expected} in`,
   pastDue: (amount: string) => `${amount} past due`,
@@ -30,6 +23,8 @@ export const TEAMS_WORDS = {
   registrationClosed: 'Registration closed',
   spotsFull: (accepted: number, capacity: number) => `${accepted} of ${capacity} spots · full`,
   spotsLeft: (accepted: number, capacity: number) => `${accepted} of ${capacity} spots · ${capacity - accepted} left`,
+  /** The chip's count: the state is beside it, so "· 4 left" would only repeat the subtraction. */
+  spotsOf: (accepted: number, capacity: number) => `${accepted} of ${capacity} spots`,
   noLimit: (accepted: number) => `${accepted} accepted · no limit`,
   closeSentence: (division: string) => `Closing stops new teams registering for ${division}. You can reopen it any time.`,
   closedSentence: (division: string) => `New teams can’t register for ${division} until you reopen it.`,
@@ -191,3 +186,43 @@ export const TEAM_STATUS_CHIP: Record<'pending' | 'accepted' | 'waitlist' | 'rej
   waitlist: { label: 'Waitlisted', tone: 'neutral' },
   rejected: { label: 'Rejected', tone: 'neutral' },
 };
+
+/**
+ * REGISTRATION HEALTH'S WORDS — the header button and the window it opens, on Teams and on the dashboard (owner
+ * 2026-10-21: the Schedule health shape). One home so the two screens never say it two ways.
+ */
+export const REGISTRATION_HEALTH_WORDS = {
+  title: 'Registration health',
+  /** The window's scope in its caption — the score covers every division, whichever one Teams is showing. */
+  scope: 'every division',
+  /** The header button's spoken name: the score with its scale, and its issues (the window says it in words). */
+  buttonLabel: (score: number, issues: number) =>
+    `Registration health, ${score} out of 100, ${issues === 0 ? 'no issues' : issues === 1 ? '1 issue' : `${issues} issues`}`,
+  /** An issue's one door, as Schedule's: it opens the teams behind it. */
+  showThem: 'Show them',
+  showIt: 'Show it',
+  noIssues: 'No registration health issues found.',
+  // The four figures. The words are the old panel's tiles, unchanged.
+  cellTeams: 'Teams',
+  cellMissingEmail: 'Missing email',
+  cellPayments: 'Payments',
+  cellNeedsAction: 'Needs action',
+  teamsFilled: (accepted: number, capacity: number, pct: number) => `${accepted}/${capacity} · ${pct}% filled`,
+  teamsPendingWaitlist: (pending: number, waitlist: number) => `${pending} pending · ${waitlist} waitlisted`,
+  teamsAccepted: 'accepted',
+  missingEmailBad: 'can’t be reached',
+  missingEmailGood: 'all reachable',
+  paymentsPastDue: (n: number) => `${n} past due`,
+  paymentsUnpaid: (n: number) => `${n} unpaid`,
+  paymentsAllIn: 'all collected',
+  needsActionSome: 'review or placement',
+  needsActionNone: 'nothing pending',
+} as const;
+
+/** The registration chip beside the division picker (owner 2026-10-21): the state, the spots, and the one switch. */
+export const REGISTRATION_CHIP_WORDS = {
+  /** The chip's accessible name: the state and the spots, then what it opens. */
+  chipLabel: (state: string, spots: string) => `${state}, ${spots}. Change registration`,
+  /** The menu's heading — the sheet's label on a phone. */
+  menuTitle: (division: string) => `${division} registration`,
+} as const;

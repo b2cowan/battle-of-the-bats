@@ -216,12 +216,16 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // world seeds it that way on purpose (waitlist, pending review, partial payments).
     path: '/riverdale-minor-ball/admin/tournaments/registrations?tournamentSlug=invitational',
     ready: '[data-sandbox-tour="registration-health"]',
-    clip: '[data-sandbox-tour="registration-health"]',
+    // Registration health is the Teams header's button and the window it opens (owner 2026-10-21): the picture is the window.
+    // ⚠ RECAPTURE OWED: the stored picture below is still the old in-page panel, and `size` follows the next capture.
+    prepare: ['[data-sandbox-tour="registration-health"]'],
+    readyAfterPrepare: '[data-kit-dialog]',
+    clip: '[data-kit-dialog]',
     width: 1280,
     size: { w: 976, h: 227 },
     takenAt: '2026-08-20',
     alt: 'The Registration Health panel: an overall readiness score with tiles for teams, reachability, payments, and registrations needing action, above rows describing each open issue.',
-    caption: 'Registration Health — one score for the whole field, weeks out. Every tile opens the exact teams behind its number.',
+    caption: 'Registration Health — one score for the whole field, weeks out. Every figure opens the exact teams behind its number.',
   },
 
   /* ── The coach walkthrough ────────────────────────────────────────────────────

@@ -1,0 +1,496 @@
+<title>Registration Health Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: a review sheet on a cool slate ground; every product frame is a warm-portal specimen on top of it. */
+:root {
+  --doc-bg: #E6E9EE; --doc-ink: #1B2230; --doc-soft: #475066; --doc-line: #C5CBD6; --doc-card: #F4F6F9; --doc-accent: #2F4FB3; --doc-accent-ink: #FFFFFF; --doc-good: #1F6B3B;
+  --p-ink: #241E15; --p-soft: #4A4235; --p-dim: #615A54; --p-card: #FFFFFF; --p-paper: #F8F4ED;
+  --p-line: rgba(70,55,30,.12); --p-line-strong: rgba(70,55,30,.20);
+  --p-olive: #57651E; --p-olive-soft: rgba(87,101,30,.10); --p-grid: 87,101,30;
+  --p-lime: #D9F99D; --p-lime-ink: #241E15;
+  --p-good: #34662A; --p-warn: #835006; --p-danger: #B03A22; --p-info: #134FD3;
+  --p-warn-rgb: 131,80,6; --p-danger-rgb: 176,58,34; --p-info-rgb: 19,79,211;
+  --scrim: rgba(36,30,21,.45);
+  --f-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #12151C; --doc-ink: #E6E9F0; --doc-soft: #A3ACC0; --doc-line: #2B3242; --doc-card: #1A1F2A; --doc-accent: #8FA6FF; --doc-accent-ink: #0F1424; --doc-good: #6FD08E;
+    --p-ink: #F1F5F9; --p-soft: rgba(255,255,255,.7); --p-dim: #94A3B8; --p-card: #111827; --p-paper: #0A0A0A;
+    --p-line: rgba(255,255,255,.08); --p-line-strong: rgba(255,255,255,.16);
+    --p-olive: #D9F99D; --p-olive-soft: rgba(30,58,138,.18); --p-grid: 30,58,138;
+    --p-lime: #D9F99D; --p-lime-ink: #0A0A0A;
+    --p-good: #4ade80; --p-warn: #fbbf24; --p-danger: #f87171; --p-info: #60a5fa;
+    --p-warn-rgb: 251,191,36; --p-danger-rgb: 248,113,113; --p-info-rgb: 96,165,250;
+    --scrim: rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #12151C; --doc-ink: #E6E9F0; --doc-soft: #A3ACC0; --doc-line: #2B3242; --doc-card: #1A1F2A; --doc-accent: #8FA6FF; --doc-accent-ink: #0F1424; --doc-good: #6FD08E;
+  --p-ink: #F1F5F9; --p-soft: rgba(255,255,255,.7); --p-dim: #94A3B8; --p-card: #111827; --p-paper: #0A0A0A;
+  --p-line: rgba(255,255,255,.08); --p-line-strong: rgba(255,255,255,.16);
+  --p-olive: #D9F99D; --p-olive-soft: rgba(30,58,138,.18); --p-grid: 30,58,138;
+  --p-lime: #D9F99D; --p-lime-ink: #0A0A0A;
+  --p-good: #4ade80; --p-warn: #fbbf24; --p-danger: #f87171; --p-info: #60a5fa;
+  --p-warn-rgb: 251,191,36; --p-danger-rgb: 248,113,113; --p-info-rgb: 96,165,250;
+  --scrim: rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--f-sans); line-height: 1.5; }
+.doc { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: flex; flex-direction: column; gap: 36px; }
+.doc h1 { font-size: 1.6rem; line-height: 1.15; margin: 0; text-wrap: balance; }
+.doc h2 { font-size: 1.15rem; margin: 0; text-wrap: balance; }
+.doc p { margin: 0; max-width: 68ch; color: var(--doc-soft); }
+.eyebrow-doc { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--doc-soft); }
+.intro { display: flex; flex-direction: column; gap: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--doc-soft); align-items: center; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+
+/* Rulings */
+.rulings { display: grid; gap: 10px; }
+.ruling { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.ruling b { font-size: 15px; }
+.ruling .rec { font-size: 13px; color: var(--doc-soft); }
+.ruling .rec em { font-style: normal; font-weight: 700; color: var(--doc-good); }
+
+.spec { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.spec-head { display: flex; flex-direction: column; gap: 6px; }
+.pair { display: grid; gap: 20px; min-width: 0; }
+.cap { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--doc-soft); margin-bottom: 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.scroll { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 16px; min-width: 0; }
+.scroll > .frame, .scroll > .stage { margin-inline: auto; }
+.note-line { font-size: 13px; color: var(--doc-soft); margin-top: 8px; max-width: 80ch; }
+
+/* Annotation tags: every one opens its explanation */
+.tw { position: relative; display: inline-flex; }
+.tw.block { display: block; }
+.mk { position: absolute; z-index: 5; top: -11px; right: -4px; font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 4px 8px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; line-height: 1.3; white-space: nowrap; }
+.mk:focus-visible, .btn:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.mk-new { background: #2F7D4B; color: #fff; }
+.mk-re { background: #8F5A0C; color: #fff; }
+.mk-same { background: #5B6579; color: #fff; }
+.mk-flag { background: #B03A22; color: #fff; }
+.mk-rm { background: #7A3A8C; color: #fff; }
+.mk.left { right: auto; left: 8px; }
+.mk.inline { position: static; display: inline-block; cursor: default; padding: 2px 6px; }
+.mk.inline.act { cursor: pointer; padding: 4px 8px; }
+
+/* Product frames: warm portal, real size */
+.frame { background: var(--p-paper); color: var(--p-ink); font-family: var(--f-sans); border-radius: 10px; overflow: hidden; border: 1px solid var(--p-line-strong); flex: none; }
+.evbar { background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.eyebrow { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--p-dim); display: flex; gap: 8px; align-items: center; }
+.chip { font-size: 10px; padding: 1px 7px; border-radius: 999px; background: var(--p-olive-soft); color: var(--p-olive); }
+.evname { font-size: 16px; font-weight: 700; }
+.pill { border: 1px solid var(--p-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--p-soft); background: var(--p-card); }
+.main { padding: 28px 32px 32px; background-color: var(--p-paper); background-image: linear-gradient(to right, rgba(var(--p-grid), .07) 1px, transparent 1px), linear-gradient(to bottom, rgba(var(--p-grid), .07) 1px, transparent 1px); background-size: 40px 40px; display: flex; flex-direction: column; gap: 14px; }
+.pghead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pghead h1 { font-size: 20px; font-weight: 700; line-height: 1.1; margin: 0; color: var(--p-ink); }
+.actions { display: flex; gap: 8px; align-items: center; }
+.btn { font-family: var(--f-sans); font-size: 14px; font-weight: 700; height: 34px; padding: 0 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; cursor: default; white-space: nowrap; }
+.btn.out { background: var(--p-card); border-color: var(--p-line-strong); color: var(--p-soft); }
+.btn.lime { background: var(--p-lime); border-color: var(--p-lime); color: var(--p-lime-ink); }
+.btn.health { gap: 7px; }
+.btn.health .sc { font-family: var(--f-sans); font-size: 16px; font-weight: 750; font-variant-numeric: tabular-nums; min-width: 1.4em; text-align: center; }
+.sq { width: 44px; height: 44px; padding: 0; justify-content: center; position: relative; }
+.btn.lime.words { width: auto; padding: 0 14px; height: 44px; }
+.help { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--p-soft); display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--p-soft); }
+[data-tone="warn"] { color: var(--p-warn); }
+[data-tone="good"] { color: var(--p-good); }
+[data-tone="bad"] { color: var(--p-danger); }
+.count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; display: inline-grid; place-items: center; font-family: var(--f-mono); font-size: 10px; font-weight: 700; color: var(--p-warn); background: rgba(var(--p-warn-rgb), .13); }
+.sq .count { position: absolute; top: 2px; right: 2px; background: var(--p-card); box-shadow: inset 0 0 0 20px rgba(var(--p-warn-rgb), .13); }
+.toolrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sel { height: 34px; width: 260px; border: 1px solid var(--p-line-strong); border-radius: 999px; background: var(--p-card); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 14px; font-weight: 500; }
+.sp { flex: 1; }
+.search { height: 34px; width: 256px; border: 1px solid var(--p-line-strong); border-radius: 999px; background: var(--p-card); display: flex; align-items: center; gap: 8px; padding: 0 14px; font-size: 14px; color: var(--p-dim); }
+.tbtn { height: 34px; border: 1px solid var(--p-line-strong); border-radius: 6px; background: var(--p-card); display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 14px; font-weight: 600; }
+
+/* The registration chip and its menu */
+.regchip { height: 34px; border: 1px solid var(--p-line-strong); border-radius: 999px; background: var(--p-card); display: inline-flex; align-items: center; gap: 8px; padding: 0 12px 0 12px; font-size: 14px; white-space: nowrap; }
+.regchip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--p-good); flex: none; }
+.regchip[data-state="closed"] .dot { background: var(--p-warn); }
+.regchip b { font-weight: 600; }
+.regchip .dim { font-size: 12px; color: var(--p-dim); }
+.regchip .chev { margin-left: 2px; }
+.pop { width: 340px; border: 1px solid var(--p-line-strong); border-radius: 8px; background: var(--p-card); box-shadow: 0 8px 22px rgba(0,0,0,.14); padding: 14px 16px; display: grid; gap: 10px; justify-items: start; }
+.pop p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--p-soft); max-width: none; }
+.pop .lk { font-size: 12px; color: var(--p-dim); }
+
+/* Payments line and At a glance rows */
+.glance { border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); overflow: hidden; }
+.glance h2 { margin: 0; padding: 12px 18px 4px; font-size: 16px; font-weight: 700; }
+.grow { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 18px; border-bottom: 1px solid var(--p-line); width: 100%; background: transparent; }
+.glance > :last-child { border-bottom: 0; }
+.payline { border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); overflow: hidden; }
+.payline .grow { border-bottom: 0; min-height: 44px; }
+.glead { font-size: 16px; font-weight: 700; color: var(--p-olive); font-variant-numeric: tabular-nums; min-width: 32px; }
+.glead small { font-size: 11px; font-weight: 600; color: var(--p-dim); }
+.gmain { flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.gt { font-size: 14px; font-weight: 600; }
+.gc { font-size: 12px; color: var(--p-dim); }
+.gfig { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chev { color: var(--p-dim); display: inline-flex; }
+.chev.up { transform: rotate(180deg); }
+.gbody { background: var(--p-paper); border-top: 1px solid var(--p-line); padding: 12px 18px 15px; display: grid; gap: 10px; }
+.prog { display: grid; gap: 6px; }
+.prog .top { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--p-soft); }
+.prog .track { height: 8px; border-radius: 999px; background: var(--p-line); overflow: hidden; }
+.prog .fill { height: 100%; background: var(--p-olive); }
+.tiles4 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.tile { padding: 8px 10px; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); display: grid; gap: 1px; }
+.tile .l { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--p-soft); }
+.tile .v { font-size: 16px; font-weight: 600; }
+.tile .d { font-size: 12px; color: var(--p-soft); }
+.due { font-size: 12px; color: var(--p-soft); }
+
+/* Table */
+.tbl { border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); overflow: hidden; }
+.tbl .th, .tbl .tr { display: grid; grid-template-columns: 1fr 240px 200px 40px; align-items: center; padding: 0 18px; }
+.tbl .th { height: 33px; font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--p-soft); border-bottom: 1px solid var(--p-line); }
+.tbl .grp { background: rgba(var(--p-grid), .06); border-bottom: 1px solid var(--p-line); height: 33px; display: flex; align-items: center; padding: 0 18px; font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--p-soft); }
+.tbl .tr { height: 37px; border-bottom: 1px solid var(--p-line); font-size: 14px; }
+.tbl .tr:last-child { border-bottom: 0; }
+.tbl .tr b { font-weight: 600; }
+.tbl .owes { color: var(--p-warn); font-weight: 600; }
+
+/* The window */
+.stage { position: relative; background: var(--scrim); padding: 28px 24px; border-radius: 10px; flex: none; }
+.win { background: var(--p-card); color: var(--p-ink); border: 1px solid rgba(var(--p-grid), .3); border-radius: 12px; font-family: var(--f-sans); margin: 0 auto; overflow: hidden; }
+.win-head { padding: 17px 24px 7px; display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.win-head .eb { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--p-soft); }
+.win-head .tt { font-size: 16px; font-weight: 700; }
+.x { width: 32px; height: 32px; display: grid; place-items: center; color: var(--p-soft); }
+.win-body { padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 18px; }
+.sum { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sum .big { font-size: 28px; font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1; }
+.sum .big small { font-size: 14px; font-weight: 600; color: var(--p-dim); }
+.sum .cp { font-size: 14px; color: var(--p-soft); }
+.kstrip { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.kc { padding: 11px 14px; border-left: 1px solid var(--p-line); display: grid; gap: 1px; }
+.kc:first-child { border-left: 0; }
+.kc .l { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--p-soft); }
+.kc .v { font-size: 16px; font-weight: 600; }
+.kc .d { font-size: 12px; color: var(--p-soft); }
+.wissue { display: flex; align-items: center; gap: 8px; border-radius: 4px; padding: 6px 9px; font-size: 12px; border: 1px solid; }
+.wissue b { color: var(--p-ink); }
+.wissue.danger { color: var(--p-danger); background: rgba(var(--p-danger-rgb), .08); border-color: rgba(var(--p-danger-rgb), .3); }
+.wissue.info { color: var(--p-info); background: rgba(var(--p-info-rgb), .08); border-color: rgba(var(--p-info-rgb), .2); }
+.wissue .tx { color: var(--p-soft); flex: 1; min-width: 0; }
+.wissue .door { margin-left: auto; color: var(--p-olive); font-weight: 600; white-space: nowrap; }
+.issues { display: grid; gap: 6px; }
+
+/* Dashboard card */
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; width: 560px; overflow: hidden; color: var(--p-ink); font-family: var(--f-sans); }
+.card .hd { display: flex; align-items: center; gap: 10px; padding: 14px 18px 6px; }
+.card .hd h3 { margin: 0 auto 0 0; font-size: 16px; font-weight: 700; }
+.card .hd .meta { font-family: var(--f-mono); font-size: 11px; font-weight: 600; color: var(--p-dim); white-space: nowrap; }
+.card .bd { padding: 2px 0 6px; }
+.crow { display: flex; align-items: center; gap: 14px; padding: 11px 18px; border-top: 1px solid var(--p-line); }
+.bd > :first-child .crow:first-child { border-top: 0; }
+.crow.one { padding-block: 7px; }
+.crow .t { font-size: 14px; font-weight: 600; }
+.crow .c { font-size: 12px; color: var(--p-dim); }
+.crow .m { flex: 1; display: grid; min-width: 0; }
+.crow .lead { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 52px; }
+.crow .lead small { font-size: 11px; font-weight: 600; color: var(--p-dim); }
+.stagecard { background-color: var(--p-paper); background-image: linear-gradient(to right, rgba(var(--p-grid), .07) 1px, transparent 1px), linear-gradient(to bottom, rgba(var(--p-grid), .07) 1px, transparent 1px); background-size: 40px 40px; padding: 24px; border-radius: 10px; border: 1px solid var(--p-line-strong); }
+.mini { display: grid; gap: 10px; justify-items: start; }
+
+/* Phone */
+.phones { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.phone { width: 390px; border: 1px solid var(--p-line-strong); border-radius: 22px; overflow: hidden; background: var(--p-paper); font-family: var(--f-sans); color: var(--p-ink); flex: none; }
+.phone .evbar { padding: 10px 16px; }
+.phone .main { padding: 16px; }
+.phone .sel, .phone .regchip { width: 100%; height: 44px; }
+.phone .payline .grow { min-height: 56px; }
+.phone .regchip { justify-content: flex-start; }
+.phone .regchip .chev { margin-left: auto; }
+.phone .win { border-radius: 0; border: 0; }
+.phone .win-body { padding: 8px 16px 22px; }
+.phone .win-head { padding: 12px 8px 6px 8px; align-items: center; }
+.phone .x { width: 44px; height: 44px; }
+.phone .kstrip { grid-template-columns: 1fr 1fr; }
+.phone .kc:nth-child(3) { border-left: 0; }
+.phone .kc:nth-child(n+3) { border-top: 1px solid var(--p-line); }
+.phone .wissue { align-items: flex-start; flex-wrap: wrap; }
+.phone .wissue .door { margin-left: 22px; }
+
+/* Dialog for annotations */
+dialog { border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-card); color: var(--doc-ink); padding: 0; max-width: min(520px, calc(100vw - 32px)); font-family: var(--f-sans); }
+dialog::backdrop { background: rgba(10,12,18,.5); }
+.dlg { padding: 18px 20px 16px; display: grid; gap: 10px; }
+.dlg .k { font-family: var(--f-mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 2px 7px; border-radius: 4px; color: #fff; justify-self: start; }
+.dlg h4 { margin: 0; font-size: 15px; }
+.dlg p { font-size: 14px; max-width: none; color: var(--doc-ink); }
+.dlg .lbl { font-family: var(--f-mono); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--doc-soft); margin-top: 2px; }
+.dlg button.close { justify-self: end; font: inherit; font-weight: 600; font-size: 14px; padding: 8px 16px; border-radius: 6px; border: 0; background: var(--doc-accent); color: var(--doc-accent-ink); cursor: pointer; }
+.dlg button.close:focus-visible { outline: 2px solid var(--doc-ink); outline-offset: 2px; }
+
+@media (min-width: 900px) { .rulings { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: no-preference) { .mk { transition: transform .12s; } .mk:hover { transform: translateY(-1px); } }
+</style>
+
+<div class="doc">
+  <header class="intro">
+    <div class="eyebrow-doc">Teams page · Dashboard · Round 2</div>
+    <h1>Registration health becomes a button and a window, and the At a glance card goes</h1>
+    <p>Round 2 adds what happens to the other two rows. The score moves to a header button that opens a window like Schedule health's. Registration open or closed becomes a chip beside the division picker. Payments stays as one slim line. The dashboard's Registration card gets a matching health row. The Payments line, the 15U figures and the score of 60 are from your second screenshot. The rows below Guelph and the second division on the dashboard card are made up.</p>
+    <div class="legend">
+      <span><b class="mk mk-new inline">NEW</b> added</span>
+      <span><b class="mk mk-re inline">RESTYLED</b> same facts, new look</span>
+      <span><b class="mk mk-same inline">UNCHANGED</b> kept as is</span>
+      <span><b class="mk mk-rm inline">REMOVED</b> taken away</span>
+      <span><b class="mk mk-flag inline">TODAY</b> a problem in today's screen</span>
+      <span>Every tag opens its explanation. Frames are real size; wide ones scroll sideways.</span>
+    </div>
+  </header>
+
+  <section class="spec" aria-labelledby="rul">
+    <h2 id="rul">Six rulings this round needs</h2>
+    <div class="rulings">
+      <div class="ruling"><b>1. The Teams health row becomes a header button that opens a window.</b><span class="rec"><em>Recommended: yes.</em> It is the move you made for Schedule health on 10-19, and a page-level button says "every division" better than a row under the 15U picker does.</span></div>
+      <div class="ruling"><b>2. The button sits first in the header, before Export.</b><span class="rec"><em>Recommended: yes.</em> That is where Schedule's sits, so the two screens teach one habit.</span></div>
+      <div class="ruling"><b>3. The dashboard gets one health row at the top of the Registration card.</b><span class="rec"><em>Recommended: yes, weeks-before board only.</em> It opens the same window. It is a row, not a sixth card, because the card already lists the follow-ups. The score and the empty-spots gap are what the dashboard does not show today.</span></div>
+      <div class="ruling"><b>4. The page stops naming the problems in words.</b><span class="rec"><em>Recommended: accept.</em> Today's row says "4 missing an email · 1 division short of teams". The button shows a score and a count of 3, as Schedule's does. The words move into the window, and the dashboard's follow-up rows still name them.</span></div>
+      <div class="ruling"><b>5. The At a glance card is removed. Registration open or closed becomes a chip beside the picker.</b><span class="rec"><em>Recommended: yes.</em> The chip says the state and the spots and opens a small menu with the one-sentence consequence and the Close or Reopen button. This row holds the only switch for a division's registration, so the switch has to move, not disappear.</span></div>
+      <div class="ruling"><b>6. Payments stays, as one slim line above the team list.</b><span class="rec"><em>Recommended: yes.</em> Health counts the teams that owe. This line has the dollars, deposits and due dates for the division. It opens to the same detail it has today and appears only when fees are tracked. The alternative is the one-line total with no detail.</span></div>
+    </div>
+  </section>
+
+  <section class="spec" aria-labelledby="s1">
+    <div class="spec-head">
+      <h2 id="s1">1 · The whole Teams screen, before and after</h2>
+      <p>The team list starts about 140 px higher. On an event with no fees, nothing at all sits between the picker row and the list.</p>
+    </div>
+    <div class="pair">
+      <div><div class="cap">Today</div><div class="scroll" id="teamsBefore"></div></div>
+      <div><div class="cap">Proposed <span id="rmTag"></span></div><div class="scroll" id="teamsAfter"></div></div>
+    </div>
+  </section>
+
+  <section class="spec" aria-labelledby="s1b">
+    <div class="spec-head">
+      <h2 id="s1b">2 · The registration chip and its menu</h2>
+      <p>The dot is green when open and amber when closed. The sentences are the ones the row uses today. When an organization's plan ended registration, the menu holds the plan sentence and the upgrade line instead of the button, as the row does now.</p>
+    </div>
+    <div class="pair">
+      <div><div class="cap">Open</div><div class="scroll"><div class="stagecard"><div class="mini" id="chipOpen"></div></div></div></div>
+      <div><div class="cap">Closed</div><div class="scroll"><div class="stagecard"><div class="mini" id="chipClosed"></div></div></div></div>
+    </div>
+  </section>
+
+  <section class="spec" aria-labelledby="s1c">
+    <div class="spec-head">
+      <h2 id="s1c">3 · The Payments line, opened</h2>
+      <p>The opened detail is today's, word for word: collected progress, the team and money tiles, and the due dates. The line is the same row without the card around it.</p>
+    </div>
+    <div class="scroll"><div class="stagecard" style="width:1000px" id="payOpen"></div></div>
+  </section>
+
+  <section class="spec" aria-labelledby="s2">
+    <div class="spec-head">
+      <h2 id="s2">4 · The window the button opens</h2>
+      <p>Same frame as Schedule health's window: tournament name above the title, a score line with its verdict, one joined band of four figures, then the issues. There is no footer and no rules door, because registration health has no rules to adjust. A figure or a "Show them" link closes the window and opens the Teams list filtered to those teams.</p>
+    </div>
+    <div class="scroll"><div class="stage" id="winDesk" style="width:880px"></div></div>
+  </section>
+
+  <section class="spec" aria-labelledby="s3">
+    <div class="spec-head">
+      <h2 id="s3">5 · On a phone</h2>
+      <p>Secondary header actions become 44 px icon squares and Add team keeps its words. The score turns into the pulse icon in its colour, with the count as a corner badge. The picker, the chip and the Payments line stack at full width. The window fills the screen with a back arrow. Open this page on a real phone to judge the tap sizes.</p>
+    </div>
+    <div class="phones" id="phones"></div>
+  </section>
+
+  <section class="spec" aria-labelledby="s4">
+    <div class="spec-head">
+      <h2 id="s4">6 · The dashboard's Registration card</h2>
+      <p>On the weeks-before board only. The new row is the card's first row and opens the same window. The division rows and the follow-up rows are unchanged.</p>
+    </div>
+    <div class="pair">
+      <div><div class="cap">Today</div><div class="scroll"><div class="stagecard" id="dashBefore"></div></div></div>
+      <div><div class="cap">Proposed</div><div class="scroll"><div class="stagecard" id="dashAfter"></div></div></div>
+    </div>
+    <p class="note-line">To carry into the build: the score on the dashboard has to come from the same calculation and the same teams as the Teams page, or the two will disagree the way the schedule's once did.</p>
+  </section>
+</div>
+
+<dialog id="note" aria-labelledby="note-title">
+  <div class="dlg">
+    <span class="k" id="note-kind"></span>
+    <h4 id="note-title"></h4>
+    <div class="lbl">What it is</div><p id="note-what"></p>
+    <div class="lbl" id="note-why-l">Why</div><p id="note-why"></p>
+    <button class="close" id="note-close" type="button">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var NOTES = {
+    flagRow: { kind: 'TODAY', c: '#B03A22', title: 'A drop-down inside the page', what: 'The first row of At a glance. Closed it says "60/100 Registration health" and names up to two problems. Opened, it expands four tiles and the issue list in the page, pushing the team list down.', why: 'On 10-19 you ruled "not this crammed drop down" for Schedule health and moved it to a window. This is the same shape. It also sits under the 15U picker while it scores every division, so it looks like a 15U fact.' },
+    flagReg: { kind: 'TODAY', c: '#B03A22', title: 'A full-width row for one status', what: 'A whole row to say "Registration open · 15U · 4 of 8 spots · 4 left". It opens to a sentence and one button.', why: 'The state is one word and a count, and the spot count is already in the health window. The row is also the only place that can close or reopen a division, so it cannot just be deleted.' },
+    newBtn: { kind: 'NEW', c: '#2F7D4B', title: 'Registration health button', what: 'The score in its colour (green from 85, amber 65 to 84, red under 65), the name, and an amber count of the issues found. Here 60 is red and 3 issues are listed. Clicking opens the window.', why: 'Same anatomy as the Schedule health button, so a coach or organizer sees one idea on both screens. It sits first, before Export, like Schedule\'s.' },
+    regChip: { kind: 'NEW', c: '#2F7D4B', title: 'Registration chip', what: '"Registration open" with a green dot and "4 of 8 spots" beside the division picker. Closed, the dot is amber and the words say "Registration closed". Clicking opens a small menu.', why: 'The state stays visible on the page without costing a row. It sits next to the picker because it is about the division the picker has selected. Full divisions read "8 of 8 spots · full" and divisions with no limit read "6 accepted · no limit", as the row does today.' },
+    regPop: { kind: 'NEW', c: '#2F7D4B', title: 'The chip\'s menu', what: 'One sentence about what the state means and one button: Close registration, or Reopen registration when closed. Closing and reopening work as they do now.', why: 'This is where the switch lives now. The sentences are today\'s: closing says it stops new teams registering for this division and that you can reopen it any time.' },
+    payLine: { kind: 'RESTYLED', c: '#8F5A0C', title: 'Payments as one slim line', what: 'The Payments row without the card or its heading around it: "Payments · 15U · $0 of $1,200 in" and "$1,200 to collect" on the right. The figure turns red once a due date has passed, as it does today. It is absent when fees are not tracked.', why: 'Health says how many teams owe. This line says how much, for the division you are looking at, which nothing else on the page adds up. The team list shows each team\'s amount.' },
+    payOpen: { kind: 'UNCHANGED', c: '#5B6579', title: 'The opened Payments detail', what: 'Collected progress, paid in full, deposits when a deposit is required, outstanding, past due, and the due dates. All as today.', why: 'Nothing is lost by moving the row. It still opens closed and is never remembered open.' },
+    glanceGone: { kind: 'REMOVED', c: '#7A3A8C', title: 'The At a glance card', what: 'The white card, its heading and its three rows. Each row has gone somewhere: health to the header button, Registration to the chip, Payments to its own line.', why: 'Nothing on it was a fact about the card itself. The page now goes from the picker row to the list, with one slim line in between only when fees are tracked.' },
+    tableSame: { kind: 'UNCHANGED', c: '#5B6579', title: 'Filters and the team list', what: 'The division picker, search, Filter, Tools and the team table are as they are today, apart from sitting higher.', why: 'The point of this screen is the list of teams. The change should hand it more room, not less.' },
+    win: { kind: 'NEW', c: '#2F7D4B', title: 'The Registration health window', what: 'A centred window, up to 800 px wide, with the tournament name as its eyebrow. It is closed with the × or the Esc key. There is no footer.', why: 'It is the window Schedule health uses, with the same head, score line and issue rows. Nothing to save, so nothing to ask on close.' },
+    score: { kind: 'NEW', c: '#2F7D4B', title: 'Score line with a verdict', what: '"60/100" and then "Needs work · 3 issues · every division". The verdict words are Schedule\'s: Healthy from 85, Review from 65, Needs work below that.', why: 'The "/100" stays because a bare 60 can read as 60 teams. Saying "every division" is the one thing the old row said that no neighbour said.' },
+    strip: { kind: 'RESTYLED', c: '#8F5A0C', title: 'One joined band of four figures', what: 'Teams, Missing email, Payments and Needs action as one bordered band with hairlines between cells. Each figure that has teams behind it is a door: it closes the window and opens the Teams list filtered to them.', why: 'Today they are four separate tiles. Schedule health\'s window uses one band, and you ruled connected figures over separate cards on 10-08. The words and numbers are unchanged. With payments not tracked, the band is three cells.' },
+    issues: { kind: 'UNCHANGED', c: '#5B6579', title: 'Issue rows keep today\'s wording', what: 'Each issue keeps its sentence from today\'s panel: "4 teams missing an email — They can\'t be reached or invited to sign up." Danger rows are red, warnings amber, and notes blue.', why: 'The only addition is a "Show them" door on the right, as on Schedule\'s rows. Today the whole row is the click target, with no sign that it is one. Unlike Schedule, every issue is listed, not just the first two, because there are rarely more than five.' },
+    pulse: { kind: 'NEW', c: '#2F7D4B', title: 'Phone: pulse icon with a count', what: 'The score is not written on a phone. A pulse icon takes the score\'s colour and the issue count sits on its corner. The spoken name reads "Registration health, 60 out of 100, 3 issues".', why: 'Matches Schedule health on a phone today. The score itself is the first thing in the window.' },
+    phoneHdr: { kind: 'UNCHANGED', c: '#5B6579', title: 'The other header actions', what: 'Export is its symbol alone in a 44 px square. Add team, the primary action, keeps its words. Help keeps its place.', why: 'Your standing phone rule: a secondary action is its symbol alone, the primary keeps its words. I drew Teams by that rule. Schedule\'s header may collapse its primary too, which I did not confirm, so this is the one thing to check when it is built.' },
+    dashRow: { kind: 'NEW', c: '#2F7D4B', title: 'Health row on the dashboard', what: 'The first row of the Registration card: "60/100", the name, "Needs work · 3 issues", and a chevron. It opens the same window as the Teams button, over the dashboard.', why: 'The dashboard says how full each division is and what needs following up, but not whether the registration as a whole is healthy. The score and the empty-spots gap are the two facts it lacks.' },
+    dashSame: { kind: 'UNCHANGED', c: '#5B6579', title: 'Division rows and follow-ups', what: 'The division rows, their amber waiting counts and the "4 missing email" and "3 unpaid" follow-up rows are as they are.', why: 'They are the doors into the Teams list. The health row summarises; these take you to the teams.' },
+    dashBefore: { kind: 'TODAY', c: '#B03A22', title: 'No overall read on the dashboard', what: 'Today the card lists divisions and follow-ups. A coach who wants one number has to open Teams and the At a glance row.', why: 'Schedule health is on the dashboard as a row; registration health is the same kind of fact and is missing from it.' }
+  };
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function mk(id, cls, label, pos) {
+    var n = NOTES[id];
+    return '<span class="mk ' + cls + (pos ? ' ' + pos : '') + '" role="button" tabindex="0" data-note="' + id + '" aria-label="' + esc(n.kind + ': ' + n.title) + '">' + (label || n.kind) + '</span>';
+  }
+  function svg(d, s, w) { return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; }
+  var ic = {
+    down: svg('<path d="m6 9 6 6 6-6"/>', 16),
+    right: svg('<path d="m9 6 6 6-6 6"/>', 16),
+    plus: svg('<path d="M12 5v14M5 12h14"/>', 15, 2.4),
+    dl: svg('<path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/>', 16),
+    pulse: svg('<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', 18),
+    search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', 16),
+    filter: svg('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>', 16),
+    globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>', 16),
+    shield: svg('<path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="M12 8v5M12 16v.01"/>', 14),
+    info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>', 14),
+    back: svg('<path d="M19 12H5m0 0 6-6m-6 6 6 6"/>', 20),
+    x: svg('<path d="M6 6l12 12M18 6 6 18"/>', 16),
+    cal: svg('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>', 12)
+  };
+
+  /* ---- Teams screen ---- */
+  var healthBtn = '<span class="tw"><span class="btn out health" aria-label="Registration health, 60 out of 100, 3 issues"><span class="sc" data-tone="bad">60</span><span>Registration health</span><span class="count">3</span></span>' + mk('newBtn', 'mk-new') + '</span>';
+  function chip(state, withTag) {
+    var closed = state === 'closed';
+    return '<span class="tw"><span class="regchip" data-state="' + state + '"><span class="dot"></span><b>' + (closed ? 'Registration closed' : 'Registration open') + '</b><span class="dim">4 of 8 spots</span><span class="chev">' + ic.down + '</span></span>' + (withTag ? mk('regChip', 'mk-new') : '') + '</span>';
+  }
+  function payLine(open, tags) {
+    var body = open
+      ? '<div class="gbody"><div class="prog"><div class="top"><span>Collected</span><span><b>$0</b> of $1,200 · 0%</span></div><div class="track"><div class="fill" style="width:0"></div></div></div>' +
+        '<div class="tiles4"><div class="tile"><span class="l">Paid in full</span><span class="v">0 / 4</span><span class="d">0% of teams</span></div><div class="tile"><span class="l">Outstanding</span><span class="v">$1,200</span><span class="d">still to collect</span></div><div class="tile"><span class="l">Past due</span><span class="v" data-tone="good">$0</span><span class="d">none overdue</span></div></div>' +
+        '<div class="due">' + ic.cal + ' Payment due Oct 30</div></div>'
+      : '';
+    var row = '<div class="grow"><span class="gmain"><span class="gt">Payments</span><span class="gc">15U · $0 of $1,200 in</span></span><span class="gfig">$1,200 to collect</span><span class="chev' + (open ? ' up' : '') + '">' + ic.down + '</span></div>';
+    var inner = '<div class="payline">' + row + body + '</div>';
+    return tags ? '<div class="tw block">' + inner + mk(tags[0], tags[1]) + '</div>' : inner;
+  }
+  var rowsData = [['UAT Rep Club 15U AAA', 'No fee'], ['Milton Mustangs 15U', 'Owes $300'], ['Guelph Royals 15U', 'Owes $300'], ['Oakville Otters 15U', 'Owes $300']];
+  function rows() {
+    return rowsData.map(function (n) { return '<div class="tr"><b>' + n[0] + '</b><span>—</span><span' + (n[1] !== 'No fee' ? ' class="owes"' : '') + '>' + n[1] + '</span><span class="chev">' + ic.right + '</span></div>'; }).join('');
+  }
+  function glanceToday() {
+    var healthRow = '<div class="tw block"><div class="grow"><span class="glead" data-tone="bad" style="color:var(--p-olive)">60<small>/100</small></span><span class="gmain"><span class="gt">Registration health</span><span class="gc">Every division · 4 missing an email · 1 division short of teams</span></span><span class="chev">' + ic.down + '</span></div>' + mk('flagRow', 'mk-flag', 'TODAY', 'left') + '</div>';
+    var payRow = '<div class="grow"><span class="gmain"><span class="gt">Payments</span><span class="gc">15U · $0 of $1,200 in</span></span><span class="gfig">$1,200 to collect</span><span class="chev">' + ic.down + '</span></div>';
+    var regRow = '<div class="tw block"><div class="grow"><span class="gmain"><span class="gt">Registration open</span><span class="gc">15U · 4 of 8 spots · 4 left</span></span><span class="chev">' + ic.down + '</span></div>' + mk('flagReg', 'mk-flag', 'TODAY', 'left') + '</div>';
+    return '<section class="glance"><h2>At a glance</h2>' + healthRow + payRow + regRow + '</section>';
+  }
+  function teams(after) {
+    var toolrow = '<div class="toolrow"><div class="sel"><span>15U</span>' + ic.down + '</div>' + (after ? chip('open', true) : '') + '<span class="sp"></span><div class="search">' + ic.search + ' Search teams or coaches…</div><div class="tbtn">' + ic.filter + ' Filter ' + ic.down + '</div><div class="tbtn">Tools ' + ic.down + '</div></div>';
+    return '<div class="frame" style="width:1100px">' +
+      '<div class="evbar"><div><div class="eyebrow">UAT Rep Club · Oct 17-19, 2026 <span class="chip">OPEN</span></div><div class="evname">UAT Rep Club Invitational 2026</div></div><span class="pill" style="display:inline-flex;gap:6px;align-items:center">' + ic.globe + ' Public site</span></div>' +
+      '<div class="main">' +
+      '<div class="pghead"><h1>Teams</h1><div class="actions">' + (after ? healthBtn : '') + '<span class="btn out">' + ic.dl + ' Export</span><span class="btn lime">' + ic.plus + ' Add team</span><span class="help">?</span></div></div>' +
+      (after ? '<div class="tw block">' + toolrow + mk('tableSame', 'mk-same') + '</div>' : toolrow) +
+      (after ? payLine(false, ['payLine', 'mk-re']) : glanceToday()) +
+      '<div class="tbl"><div class="th"><span>Team</span><span>Coach</span><span>Payment</span><span></span></div><div class="grp">Accepted 4</div>' + rows() + '</div>' +
+      '</div></div>';
+  }
+  document.getElementById('teamsBefore').innerHTML = teams(false);
+  document.getElementById('teamsAfter').innerHTML = teams(true);
+  document.getElementById('rmTag').innerHTML = mk('glanceGone', 'mk-rm inline act', 'REMOVED · At a glance card');
+
+  /* ---- Chip + menu ---- */
+  function pop(state) {
+    var closed = state === 'closed';
+    return '<div class="tw block"><div class="pop"><p>' + (closed ? 'New teams can’t register for 15U until you reopen it.' : 'Closing stops new teams registering for 15U. You can reopen it any time.') + '</p><span class="btn out">' + (closed ? 'Reopen registration' : 'Close registration') + '</span></div>' + mk('regPop', 'mk-new') + '</div>';
+  }
+  document.getElementById('chipOpen').innerHTML = chip('open', true) + pop('open');
+  document.getElementById('chipClosed').innerHTML = chip('closed', false) + pop('closed');
+  document.getElementById('payOpen').innerHTML = payLine(true, ['payOpen', 'mk-same']);
+
+  /* ---- The window ---- */
+  function windowHtml(phone) {
+    var tag = function (id, cls, pos) { return mk(id, cls, null, pos); };
+    var head = phone
+      ? '<div class="win-head"><span class="x">' + ic.back + '</span><div style="flex:1"><div class="eb">UAT Rep Club Invitational 2026</div><div class="tt">Registration health</div></div></div>'
+      : '<div class="win-head"><div><div class="eb">UAT Rep Club Invitational 2026</div><div class="tt">Registration health</div></div><span class="x">' + ic.x + '</span></div>';
+    var sum = '<div class="tw block"><div class="sum"><span class="big" data-tone="bad">60<small>/100</small></span><span class="cp">Needs work · 3 issues · every division</span></div>' + tag('score', 'mk-new', 'left') + '</div>';
+    var strip = '<div class="tw block"><div class="kstrip">' +
+      '<div class="kc"><span class="l">Teams</span><span class="v">4</span><span class="d">4/8 · 50% filled</span></div>' +
+      '<div class="kc"><span class="l">Missing email</span><span class="v" data-tone="bad">4</span><span class="d">can’t be reached</span></div>' +
+      '<div class="kc"><span class="l">Payments</span><span class="v" data-tone="warn">3</span><span class="d">3 unpaid</span></div>' +
+      '<div class="kc"><span class="l">Needs action</span><span class="v" data-tone="good">0</span><span class="d">nothing pending</span></div>' +
+      '</div>' + tag('strip', 'mk-re') + '</div>';
+    var issues = '<div class="tw block"><div class="issues">' +
+      '<div class="wissue danger"><span>' + ic.shield + '</span><span class="tx"><b>4 teams missing an email</b> — They can’t be reached or invited to sign up.</span><span class="door">Show them ›</span></div>' +
+      '<div class="wissue info"><span>' + ic.info + '</span><span class="tx"><b>3 accepted teams unpaid</b> — No completed payment yet (not past due).</span><span class="door">Show them ›</span></div>' +
+      '<div class="wissue info"><span>' + ic.info + '</span><span class="tx"><b>15U: 4/8 filled</b> — Tournament starts soon with open spots left.</span><span class="door">Show it ›</span></div>' +
+      '</div>' + tag('issues', 'mk-same') + '</div>';
+    return '<div class="win" style="' + (phone ? '' : 'width:800px') + '">' + head + '<div class="win-body">' + sum + strip + issues + '</div></div>';
+  }
+  document.getElementById('winDesk').innerHTML = '<div class="tw block">' + windowHtml(false) + mk('win', 'mk-new') + '</div>';
+
+  /* ---- Phone ---- */
+  function phoneTeams() {
+    var health = '<span class="tw"><span class="btn out sq" aria-label="Registration health, 60 out of 100, 3 issues"><span data-tone="bad" style="display:inline-flex">' + ic.pulse + '</span><span class="count">3</span></span>' + mk('pulse', 'mk-new') + '</span>';
+    return '<div class="phone"><div class="evbar"><div><div class="eyebrow">UAT Rep Club · Oct 17-19</div><div class="evname">UAT Rep Club Invitational 2026</div></div></div>' +
+      '<div class="main"><div class="pghead"><h1>Teams</h1><div class="tw"><div class="actions">' + health + '<span class="btn out sq">' + ic.dl + '</span><span class="btn lime words">' + ic.plus + ' Add team</span><span class="help">?</span></div>' + mk('phoneHdr', 'mk-same', null, 'left') + '</div></div>' +
+      '<div class="sel"><span>15U</span>' + ic.down + '</div>' + chip('open', false) + payLine(false) + '</div></div>';
+  }
+  document.getElementById('phones').innerHTML =
+    '<div><div class="cap">Teams header</div>' + phoneTeams() + '</div>' +
+    '<div><div class="cap">The window</div><div class="phone">' + windowHtml(true) + '</div></div>';
+
+  /* ---- Dashboard ---- */
+  function dashCard(after) {
+    var healthRow = '<div class="tw block"><div class="crow"><span class="lead" data-tone="bad">60<small>/100</small></span><span class="m"><span class="t">Registration health</span><span class="c">Needs work · 3 issues</span></span><span class="chev">' + ic.right + '</span></div>' + mk('dashRow', 'mk-new') + '</div>';
+    var rest = '<div class="crow"><span class="m"><span class="t">15U</span><span class="c">4 of 8 accepted · 4 spots left</span></span><span class="chev">' + ic.right + '</span></div>' +
+      '<div class="crow"><span class="m"><span class="t">13U</span><span class="c">6 of 6 accepted · full</span></span><span class="chev">' + ic.right + '</span></div>' +
+      '<div class="crow one"><span class="m"><span class="t">4 missing email</span></span><span class="chev">' + ic.right + '</span></div>' +
+      '<div class="crow one"><span class="m"><span class="t">3 unpaid</span></span><span class="chev">' + ic.right + '</span></div>';
+    var body = (after ? healthRow : '') + '<div class="tw block">' + rest + (after ? mk('dashSame', 'mk-same') : mk('dashBefore', 'mk-flag', 'TODAY')) + '</div>';
+    return '<div class="card"><div class="hd"><h3>Registration</h3><span class="meta">10 of 14 spots · 2 this week</span></div><div class="bd">' + body + '</div></div>';
+  }
+  document.getElementById('dashBefore').innerHTML = dashCard(false);
+  document.getElementById('dashAfter').innerHTML = dashCard(true);
+
+  /* ---- Explanations ---- */
+  var dlg = document.getElementById('note');
+  function openNote(id) {
+    var n = NOTES[id]; if (!n) return;
+    var k = document.getElementById('note-kind'); k.textContent = n.kind; k.style.background = n.c;
+    document.getElementById('note-title').textContent = n.title;
+    document.getElementById('note-what').textContent = n.what;
+    document.getElementById('note-why').textContent = n.why;
+    document.getElementById('note-why-l').textContent = n.kind === 'TODAY' ? 'Why it matters' : n.kind === 'UNCHANGED' ? 'Why it stays' : n.kind === 'REMOVED' ? 'Why it goes' : 'Why this change';
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-note]');
+    if (t) { e.preventDefault(); openNote(t.getAttribute('data-note')); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var t = e.target.closest && e.target.closest('[data-note]');
+    if (t) { e.preventDefault(); openNote(t.getAttribute('data-note')); }
+  });
+  document.getElementById('note-close').addEventListener('click', function () { dlg.close ? dlg.close() : dlg.removeAttribute('open'); });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>

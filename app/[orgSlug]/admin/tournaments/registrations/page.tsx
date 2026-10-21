@@ -3,8 +3,9 @@
  * TEAMS — the organizer's registration desk (Tournament admin redesign Stage 2, ruled 2026-09-30, hub v16;
  * plan §6b T1–T7). Built to the drawing:
  *
- *   T1  Teams opens on the teams: the title band, ONE toolbar line, the "At a glance" card of three closed
- *       rows (Registration health · Payments · Registration), then the division's teams in one frame.
+ *   T1  Teams opens on the teams: the title band (Registration health its first action, a button opening its window),
+ *       ONE toolbar line (the registration chip beside the picker), Payments' slim line, then the division's teams in
+ *       one frame. The "At a glance" card of three rows is gone (owner 2026-10-21).
  *   T2  A team waiting for a decision is on the screen — the first band, "To review", with its Accept —
  *       and Teams opens on the first division that has one (else the remembered one), so the context
  *       strip's and the rail's "to review" land on the work (F41).
@@ -12,13 +13,13 @@
  *   T4  The pool board is that same frame: a band per pool with its fill; swap and selection modes.
  *   T5  One colour per status, words not glyphs: the band says the status; Check-in's payment words. An event
  *       that doesn't track payments ("Not tracked here", owner 2026-10-13) has NO payment anywhere on this screen:
- *       no column, row fact, filter, bulk action, glance row, health figure, record section, form field or export
+ *       no column, row fact, filter, bulk action, Payments line, health figure, record section, form field or export
  *       column (lib/tournament-payments-tracked).
  *   T6  A division without slots bands by status; what does not apply is ABSENT (no Pools grouping
  *       without pools, no Randomize, no "Pools aren't turned on" note). Exhibition loses only Seed.
  *   T7  The Club seams as today: Payments (Stage 7's), "Add my team" (a star), the rep-team picker.
  *   T8  AN INVITE-ONLY EVENT (the free plan, a Premium coach's event — the free tournament tier, 2026-10-16, M1 M2
- *       M7 M8): the host adds every team, so Teams is a list of who is in — no At a glance, Payment column, Filter,
+ *       M7 M8): the host adds every team, so Teams is a list of who is in — no health button, chip, Payments line, Payment column, Filter,
  *       review or waitlist bands; pool bands only, and no band at all without pools; "No email" in amber where a
  *       coach can't claim the team; Select many only on a pool division, offering only Move to pool; the Export
  *       menu one locked row (a coach's event: PDF open, Excel and CSV one locked row); Add team the invitation. An
@@ -50,10 +51,10 @@ import {
   type RegistrationAttentionField,
   type RegistrationAttentionKey,
 } from '@/lib/registration-attention';
-import { buildRegistrationHealth, type RegistrationHealthCapacityGap } from '@/lib/registration-health';
-import { calendarDaysBetween, formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { buildRegistrationCapacity, buildRegistrationHealth, countRegistrationHealthTeams, registrationDaysUntilStart } from '@/lib/registration-health';
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { coachEmailBlock, resolveCoachRecipient, type CoachEmailBlock } from '@/lib/coach-email-rules';
-import { TEAMS_LOCK_PLAN, TEAMS_WORDS, TEAM_RECORD_WORDS, TEAM_STATUS_CHIP } from '@/lib/registration-words';
+import { REGISTRATION_HEALTH_WORDS, TEAMS_LOCK_PLAN, TEAMS_WORDS, TEAM_RECORD_WORDS, TEAM_STATUS_CHIP } from '@/lib/registration-words';
 import { eventAreas, holdsRegistrationRecords } from '@/lib/invite-only-event';
 import { INVITE_TEAM_WORDS, LOCK_WORDS, registrationClosedLine } from '@/lib/invite-only-words';
 import { Division } from '@/lib/types';
@@ -76,8 +77,10 @@ import ImportSheet from '@/components/admin/tournament/ImportSheet';
 import { PlanLockedTool, PlanLockMenuFoot, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
-import RegistrationHealthPanel from './components/RegistrationHealthPanel';
-import TeamsGlance, { type PaymentSummary } from './components/TeamsGlance';
+import HealthButton from '@/components/admin/tournament/HealthButton';
+import RegistrationHealthWindow from '@/components/admin/tournament/RegistrationHealthWindow';
+import PaymentsLine, { type PaymentSummary } from './components/PaymentsLine';
+import RegistrationChip from './components/RegistrationChip';
 import TeamList, { type ListMode, type RowFacts } from './components/TeamList';
 import TeamRecordWindow, { type TeamRecordUpdates } from './components/TeamRecord';
 import SharedPaymentDialog from './components/SharedPaymentDialog';
@@ -1294,42 +1297,14 @@ export default function UnifiedTeamsPage() {
   const activeAttentionLocked = Boolean(activeAttentionBucket?.plusOnly && !commandCenterAvailable);
 
   // ── Registration Health (tournament-wide, independent of the selected division) ──
+  // One calculation, shared with the dashboard's route (lib/registration-health), so the score is one number on both.
   const registrationHealthCapacity = useMemo(() => {
-    const acceptedByDivision = new Map<string, number>();
-    for (const team of regs) {
-      if (team.status !== 'accepted' || !team.division_id) continue;
-      acceptedByDivision.set(team.division_id, (acceptedByDivision.get(team.division_id) ?? 0) + 1);
-    }
-    const daysUntilStart = currentTournament?.startDate
-      ? calendarDaysBetween(new Date(), new Date(`${currentTournament.startDate}T12:00:00`))
-      : null;
-    const gaps: RegistrationHealthCapacityGap[] = [];
-    // Fill ratio across only the divisions that HAVE a capacity set.
-    let capacityTotal = 0;
-    let capacityAccepted = 0;
-    for (const division of divisions) {
-      if (division.capacity == null || division.capacity <= 0) continue;
-      const accepted = acceptedByDivision.get(division.id) ?? 0;
-      capacityTotal += division.capacity;
-      capacityAccepted += accepted;
-      if (accepted >= division.capacity) continue;
-      if (division.isClosed) {
-        gaps.push({ divisionId: division.id, divisionName: division.name, accepted, capacity: division.capacity, reason: 'closed_under' });
-      } else if (daysUntilStart != null && daysUntilStart <= 3) {
-        gaps.push({ divisionId: division.id, divisionName: division.name, accepted, capacity: division.capacity, reason: 'soon_under' });
-      }
-    }
-    return { gaps, capacityTotal, capacityAccepted };
+    const { acceptedByDivision } = countRegistrationHealthTeams(regs.map(team => ({ status: team.status, divisionId: team.division_id })));
+    return buildRegistrationCapacity({ divisions, acceptedByDivision, daysUntilStart: registrationDaysUntilStart(currentTournament?.startDate) });
   }, [regs, divisions, currentTournament?.startDate]);
 
   const registrationHealth = useMemo(() => {
-    let teamsTotal = 0;
-    let accepted = 0;
-    for (const team of regs) {
-      if (!team.status || team.status === 'rejected') continue;
-      teamsTotal++;
-      if (team.status === 'accepted') accepted++;
-    }
+    const { teamsTotal, accepted } = countRegistrationHealthTeams(regs.map(team => ({ status: team.status, divisionId: team.division_id })));
     return buildRegistrationHealth({
       attention: attentionSummary,
       teamsTotal,
@@ -1339,6 +1314,12 @@ export default function UnifiedTeamsPage() {
       capacityGaps: registrationHealthCapacity.gaps,
     });
   }, [attentionSummary, regs, commandCenterAvailable, tracksPayments, registrationHealthCapacity]);
+  // Registration health's window — the header button opens it; it never arrives open, the demo included (the schedule's rule).
+  const [healthOpen, setHealthOpen] = useState(false);
+  const showRegistrationHealth = Boolean(currentTournament) && !isLocked && !areas.inviteOnly && registrationHealth.hasTeams;
+  // The window closes for good when its button goes (a lock, a refresh that finds no teams) — it must not reopen by itself
+  // when the button comes back. React's own pattern for state that follows a derived value: adjust during render.
+  if (healthOpen && !showRegistrationHealth) setHealthOpen(false);
 
   // ── The list the division shows ──
   const filtered = useMemo(() => divRegs.filter(r => {
@@ -1737,6 +1718,23 @@ export default function UnifiedTeamsPage() {
     </div>
   );
 
+  // The registration chip beside the picker (owner 2026-10-21): this division's state, its spots and the one switch. Absent
+  // on a locked event and on an invite-only one with no registrations carried over (`cleanInvite`).
+  const registrationChip = currentTournament && !cleanInvite && selectedGroup && !isLocked ? (
+    <RegistrationChip
+      divisionName={selectedGroup.name}
+      accepted={paymentSummary.accepted}
+      capacity={selectedGroup.capacity ?? null}
+      closed={Boolean(selectedGroup.isClosed)}
+      busy={closingDivision}
+      onToggle={handleToggleRegistration}
+      // R2: registration closed with its organization's Tournament Plus; reopening it is the plan's lock.
+      ended={areas.inviteOnly
+        ? { sentence: registrationClosedLine(null), lockWords: LOCK_WORDS.reopenRegistration, lockHref: planHref, plan: TEAMS_LOCK_PLAN }
+        : undefined}
+    />
+  ) : null;
+
   return (
     <div className={`${s.page} ${styles.teamsPage}`} data-selecting={selectionModeActive && selectedRegistrationIds.size > 0 ? '' : undefined}>
       <TournamentAdminHeader
@@ -1749,6 +1747,19 @@ export default function UnifiedTeamsPage() {
         }}
         actions={(
           <>
+            {/* Registration health — the header's first action, across every division (owner 2026-10-21; the Schedule
+                health button's shape). The demo tour and the marketing picture ring it. */}
+            {showRegistrationHealth && listMode === 'normal' && (
+              <HealthButton
+                data-sandbox-tour="registration-health"
+                score={registrationHealth.score}
+                tone={registrationHealth.tone === 'neutral' ? 'good' : registrationHealth.tone}
+                issues={registrationHealth.issues.length}
+                title={REGISTRATION_HEALTH_WORDS.title}
+                label={REGISTRATION_HEALTH_WORDS.buttonLabel(registrationHealth.score, registrationHealth.issues.length)}
+                onOpen={() => setHealthOpen(true)}
+              />
+            )}
             <ExportMenu
               formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
@@ -1821,10 +1832,11 @@ export default function UnifiedTeamsPage() {
           {selectedRegistrationIds.size > 0 && <div className={styles.bulkInline}>{bulkBar}</div>}
         </div>
       ) : (
-        <div className={tb.toolbar}>
+        <div className={`${tb.toolbar} ${styles.teamsToolbar}`}>
+          {/* The picker holds the left, its registration chip beside it; Search and Filter sit on the right beside Tools,
+              as on the schedule and Results (2026-10-17: one side for search on every tournament screen). */}
           <DivisionPicker divisions={divisionChoices} value={selectedDivisionId} onChange={chooseDivision} />
-          {/* The picker holds the left; Search and Filter sit on the right beside Tools, as on the schedule and
-              Results (2026-10-17: one side for search on every tournament screen). */}
+          {registrationChip}
           <span className={tb.toolbarSpacer} aria-hidden />
           {showViewTools && (
             <div className={tb.deskFilters}>
@@ -1922,34 +1934,26 @@ export default function UnifiedTeamsPage() {
       {listMode === 'normal' && showViewTools && searchField.row}
       {listMode === 'normal' && showViewTools && !cleanInvite && <FilterLine picks={filterPicks} label={TEAMS_WORDS.filter} />}
 
-      {/* ── At a glance (T1) ── */}
-      {currentTournament && listMode === 'normal' && !cleanInvite && (
-        <TeamsGlance
-          health={!isLocked && !areas.inviteOnly ? (
-            <RegistrationHealthPanel
-              metrics={registrationHealth}
-              capacityTotal={registrationHealthCapacity.capacityTotal}
-              capacityAccepted={registrationHealthCapacity.capacityAccepted}
-              onJumpToBucket={key => focusAttentionBucket(key)}
-              onJumpToCapacity={jumpToDivision}
-              onUpgrade={showCommandCenterUpgrade}
-            />
-          ) : null}
-          payments={paymentToolsAvailable && selectedGroup && !isLocked && paymentSummary.scheduled > 0
-            ? { divisionName: selectedGroup.name, summary: paymentSummary, fee: feeOf({ division_id: selectedGroup.id }), today }
-            : null}
-          registration={selectedGroup && !isLocked ? {
-            divisionName: selectedGroup.name,
-            accepted: paymentSummary.accepted,
-            capacity: selectedGroup.capacity ?? null,
-            closed: Boolean(selectedGroup.isClosed),
-            busy: closingDivision,
-            onToggle: handleToggleRegistration,
-            // R2: registration closed with its organization's Tournament Plus; reopening it is the plan's lock.
-            ended: areas.inviteOnly
-              ? { sentence: registrationClosedLine(null), lockWords: LOCK_WORDS.reopenRegistration, lockHref: planHref, plan: TEAMS_LOCK_PLAN }
-              : undefined,
-          } : null}
+      {/* ── Payments, one slim line (owner 2026-10-21) — this division's money; absent where there is none to say ── */}
+      {currentTournament && listMode === 'normal' && !cleanInvite && paymentToolsAvailable && selectedGroup && !isLocked && paymentSummary.scheduled > 0 && (
+        <PaymentsLine
+          divisionName={selectedGroup.name}
+          summary={paymentSummary}
+          fee={feeOf({ division_id: selectedGroup.id })}
+          today={today}
+        />
+      )}
+
+      {/* Registration health's window — the header button opens it. A figure or a "Show them" door closes it first and
+          lands on the teams behind (the Teams list filters in place). Nothing to save, so closing asks nothing. */}
+      {healthOpen && showRegistrationHealth && (
+        <RegistrationHealthWindow
+          eyebrow={currentTournament?.name}
+          health={{ metrics: registrationHealth, capacityTotal: registrationHealthCapacity.capacityTotal, capacityAccepted: registrationHealthCapacity.capacityAccepted }}
+          onJumpToBucket={key => { setHealthOpen(false); focusAttentionBucket(key); }}
+          onJumpToCapacity={divisionId => { setHealthOpen(false); jumpToDivision(divisionId); }}
+          onUpgrade={() => { setHealthOpen(false); showCommandCenterUpgrade(); }}
+          onClose={() => setHealthOpen(false)}
         />
       )}
 
