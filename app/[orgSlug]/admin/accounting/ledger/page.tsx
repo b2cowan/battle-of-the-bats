@@ -243,7 +243,7 @@ export default function LedgerTab() {
   useEffect(() => {
     if (!wantWords) return;
     let live = true;
-    void moneyFetch<{ categories?: WordList }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&${q}`)
+    void moneyFetch<{ categories?: WordList }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&hostedEvents=1&${q}`)
       .then(r => { if (live) setWords(r.ok ? r.data.categories ?? [] : []); })
       .catch(() => { if (live) setWords([]); });
     return () => { live = false; };
@@ -253,8 +253,9 @@ export default function LedgerTab() {
   if (!books || teamBook) return <LoadingState label="Loading the club’s books…" />;
   if (!book) return <p className={ck.loading}>This club has no book yet.</p>;
 
-  const ref: BookRef = { id: book.ledger.id, name: book.ledger.name, kind: book.ledger.entityType };
-  const allRefs: BookRef[] = clubBooks.map(b => ({ id: b.ledger.id, name: b.ledger.name, kind: b.ledger.entityType }));
+  const refOf = (b: typeof book): BookRef => ({ id: b.ledger.id, name: b.ledger.name, kind: b.ledger.entityType, entityId: b.ledger.entityId });
+  const ref = refOf(book);
+  const allRefs = clubBooks.map(refOf);
   const canMove = read?.canMove ?? false;
   /* ⚖ THE BALANCE SHOWS ONLY WHILE EVERY ENTRY THAT MOVES IT IS ON SCREEN (owner, §255, 2026-10-02) —
      the coach's rule, `balanceIsMeaningful`: every narrowing counts. Type, Category and Item hide entries

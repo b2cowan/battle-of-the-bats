@@ -125,6 +125,43 @@
   padding-bottom: 0.3rem;
 }
 
+/* A SHELF HEADING WITH SOMETHING AT ITS RIGHT (hosted-event filing shelf): the lead shelf's quiet word
+   ("this tournament") and a folded shelf's word count share one row shape and one quiet aside. The lead
+   shelf keeps the lead group's accent, so no new colour is added. */
+.optGroupRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.optGroupAside {
+  font-size: var(--type-support);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+
+/* A FOLDED shelf: the heading row as a real button — only what a button needs on top of the heading's own
+   look: the full row as the target, a hover tint, a visible focus ring, and 44 px on a finger. The word
+   count and a turning arrow sit at the right. */
+.optFold {
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.optFold:hover { background: var(--white-05, rgba(255,255,255,0.05)); }
+.optFold:focus-visible { outline: 2px solid var(--primary-light, currentColor); outline-offset: -2px; }
+.optFoldCount { display: inline-flex; align-items: center; gap: 0.4rem; }
+.optFoldChev { display: inline-block; transition: transform 0.12s; }
+.optFold[aria-expanded='true'] .optFoldChev { transform: rotate(90deg); }
+@media (pointer: coarse) {
+  .optFold { min-height: 44px; }
+}
+
 /* The trailing fact on a lead-group row — whatever makes it worth choosing.
    ⚠ QUIET BY DEFAULT, LOUD ONLY WHEN THE CALLER SAYS SO. This control is shared with the Budget
    Plan and the Org Budget; baking the portal's owing colour in here would render every future lead

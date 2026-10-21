@@ -3163,6 +3163,29 @@ export interface BudgetItem {
 
 export interface BudgetCategoryWithItems extends BudgetCategory {
   items: BudgetItem[];
+  /**
+   * Set only on a hosted tournament's own shelf (mig 342), and only by the club's `forPlanning` read: which
+   * tournament it belongs to and when it runs. It lets the club's filing picker show the event's shelf where it
+   * belongs instead of every event's, everywhere (lib/club-event-shelves.ts). Absent everywhere else.
+   */
+  hostedEvent?: { tournamentId: string; startDate: string | null; endDate: string | null } | null;
+}
+
+/**
+ * How the budget-word picker shows its shelves (BudgetItemPicker's `shelves` prop; decided by the host, e.g.
+ * lib/club-event-shelves.ts). Shelf ids only — the picker learns a state, never a domain. The list handed to the
+ * picker is never replaced: hiding is a state here, so the picker's own words created inline are never reset.
+ */
+export interface PickerShelves {
+  /** This shelf first, in the lead accent; `leadNote` is the quiet word at its right. */
+  lead?: string | null;
+  leadNote?: string;
+  /** One heading row with its word count; opens on a tap, while typing, and when the chosen word lives there. */
+  folded?: ReadonlySet<string>;
+  /** Absent until someone types, then an ordinary shelf. */
+  searchOnly?: ReadonlySet<string>;
+  /** Not offered at all (the chosen word, if it lives there, still shows). */
+  hidden?: ReadonlySet<string>;
 }
 
 // ── Rep team budget planner ───────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
-import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
+import type { BudgetCategoryWithItems, BudgetItem, PickerShelves } from '@/lib/types';
 import { budgetItemTier, ITEM_TIER_LABEL } from '@/lib/coach-budget-item-tiers';
 /* The two side words, read from their one home — never a local pair (see SIDE_FLOW_LABEL). */
 import { SIDE_FLOW_LABEL } from '@/lib/coach-budget-manager-view';
@@ -261,7 +261,24 @@ interface Props {
     selectedName?: string | null;
     onPick: (id: string) => void;
   };
+  /**
+   * ⚠ HOW MANY SHELVES SHOW, AND HOW (hosted-event filing shelf, owner 2026-10-21). The states are
+   * `PickerShelves` (lib/types.ts): lead / folded / searchOnly / hidden. A club that hosts five
+   * tournaments has five shelves of the same nine words, and a window that listed them all would bury
+   * the word it was opened for; the caller knows which shelf is relevant, this control only knows how
+   * to show one.
+   * ⚠ THE CHOSEN WORD IS ALWAYS SHOWN, whatever its shelf's state — a saved record's own word must not
+   * fall out of the list it is displayed in (the rule at the top of this file). And `categories` is
+   * never replaced to hide a shelf: the words created inline live in it.
+   * ⚠ THE CONTROL LEARNS A SHELF STATE, NOT A DOMAIN — it must never learn what a tournament is. Same
+   * rule as `leadGroup`. Keyboard: typing is the way into a folded shelf; its heading is for a pointer
+   * and a finger, so arrow-key order is unchanged.
+   */
+  shelves?: PickerShelves;
 }
+
+/** Nothing folded — one shared empty set, so a picker with no folded shelf keeps a stable identity. */
+const NO_SHELVES: ReadonlySet<string> = new Set();
 
 /** An item with its category carried along — what the flat, searchable list is made of. */
 interface Row { item: BudgetItem; categoryId: string; categoryName: string }
@@ -282,6 +299,7 @@ export default function BudgetItemPicker({
   disabled = false,
   manage,
   leadGroup,
+  shelves,
   placeholder,
   emptyNote,
   newItemNote,
@@ -332,18 +350,43 @@ export default function BudgetItemPicker({
   );
 
   const q = query.trim().toLowerCase();
+  /** Folded shelves a tap has opened (see `shelves`). */
+  const [unfolded, setUnfolded] = useState<ReadonlySet<string>>(() => new Set());
+  const { lead: leadShelf = null, folded, searchOnly, hidden } = shelves ?? {};
+  /** The shelves drawn as ONE folded heading right now: folded, not typed at, not tapped open, and
+   *  nothing chosen on them. The one place the rule lives — rows, headings and counts all read it. */
+  const foldedIds = useMemo<ReadonlySet<string>>(
+    () => (folded && !q ? new Set([...folded].filter(id => !unfolded.has(id) && id !== value?.categoryId && !hidden?.has(id))) : NO_SHELVES),
+    [folded, hidden, q, unfolded, value?.categoryId],
+  );
+  /** Library order, the lead shelf (when there is one) ahead of all of it — shared by the row sort and the render. */
+  const shelfRank = useMemo(
+    () => new Map(localCategories.map((c, i) => [c.id, c.id === leadShelf ? -1 : i])),
+    [localCategories, leadShelf],
+  );
+  /** Words on offer per shelf — what a folded heading says, so it cannot drift from what the open shelf shows. */
+  const wordsOn = useMemo(() => {
+    const m = new Map<string, number>();
+    offered.forEach(r => m.set(r.categoryId, (m.get(r.categoryId) ?? 0) + 1));
+    return m;
+  }, [offered]);
   const matches = useMemo(() => {
-    const hit = q
+    const hit = (q
       ? offered.filter(r => `${r.categoryName} ${r.item.name}`.toLowerCase().includes(q))
-      : offered;
-    // Grouped by category in the library's own order, which is the order the categories arrive in.
-    const order = new Map(localCategories.map((c, i) => [c.id, i]));
+      : offered
+    ).filter(r => r.item.id === value?.itemId
+      || !(hidden?.has(r.categoryId) || (!q && searchOnly?.has(r.categoryId)) || foldedIds.has(r.categoryId)));
     return [...hit].sort((a, b) => {
-      const ca = order.get(a.categoryId) ?? 0;
-      const cb = order.get(b.categoryId) ?? 0;
+      const ca = shelfRank.get(a.categoryId) ?? 0;
+      const cb = shelfRank.get(b.categoryId) ?? 0;
       return ca !== cb ? ca - cb : a.item.name.localeCompare(b.item.name);
     });
-  }, [offered, q, localCategories]);
+  }, [offered, q, value?.itemId, hidden, searchOnly, foldedIds, shelfRank]);
+  /** The folded headings, in library order (a lead shelf is never folded) — only shelves with words on this side. */
+  const foldedHeads = useMemo(
+    () => localCategories.filter(c => foldedIds.has(c.id) && wordsOn.has(c.id) && !matches.some(r => r.categoryId === c.id)),
+    [localCategories, foldedIds, wordsOn, matches],
+  );
 
   /* The lead group's own matches, filtered by the SAME typing (C2's promise: one search, both
      halves). Kept separate from `matches` because these are not rows — they carry no category,
@@ -354,7 +397,10 @@ export default function BudgetItemPicker({
     [leadGroup, q],
   );
 
-  const exact = offered.some(r => r.item.name.toLowerCase() === q);
+  /* ⚠ "ALREADY EXISTS" AND THE ENTER FALLBACK READ WHAT THE LIST SHOWS, not everything on offer: a word that
+     lives only on a HIDDEN shelf must neither suppress "+ Add" nor be the row Enter files under (it would
+     silently use a shelf the window deliberately hid). `matches` is lead-first and hidden-free. */
+  const exact = matches.some(r => r.item.name.toLowerCase() === q);
   const canCreate = q.length > 0 && !exact && !disabled;
   /* ⚠ KEYBOARD ORDER IS RENDER ORDER: lead options, then items, then "+ Add". A cursor index that
      did not account for the lead group would move the highlight and select a DIFFERENT row. */
@@ -517,7 +563,7 @@ export default function BudgetItemPicker({
       else if (activeIdx === lead + matches.length && canCreate) startCreate();
       else if (manage && activeIdx === manageIdx) openManager();
       else {
-        const m = offered.find(r => r.item.name.toLowerCase() === q);
+        const m = matches.find(r => r.item.name.toLowerCase() === q);
         if (m) choose(m);
         else if (canCreate) startCreate();
       }
@@ -670,10 +716,32 @@ export default function BudgetItemPicker({
     let lastCat: string | null = null;
     // The lead group occupies the first indices — see `optionCount`.
     const lead = leadMatches.length;
+    /* Folded shelves with no row on show are headings of their own, merged in at their place in the
+       library's order. Rows keep their `matches` index, so the keyboard order is the render order. */
+    let nextFolded = 0;
+    const flushFolded = (before: number) => {
+      while (nextFolded < foldedHeads.length && (shelfRank.get(foldedHeads[nextFolded].id) ?? 0) < before) {
+        const c = foldedHeads[nextFolded++];
+        out.push(foldHeading(c.id, c.name, wordsOn.get(c.id) ?? 0, false));
+      }
+    };
 
     matches.forEach((row, i) => {
       if (row.categoryId !== lastCat) {
-        out.push(<div key={`c-${row.categoryId}`} className={styles.optGroup}>{row.categoryName}</div>);
+        flushFolded(shelfRank.get(row.categoryId) ?? 0);
+        if (row.categoryId === leadShelf) {
+          out.push(
+            <div key={`c-${row.categoryId}`} className={`${styles.optGroup} ${styles.optGroupLead} ${styles.optGroupRow}`}>
+              <span>{row.categoryName}</span>
+              {shelves?.leadNote && <span className={styles.optGroupAside}>{shelves.leadNote}</span>}
+            </div>,
+          );
+        } else if (folded?.has(row.categoryId) && !q && row.categoryId !== value?.categoryId) {
+          /* (A folded shelf open only because it holds the chosen word is a plain heading: it cannot be folded.) */
+          out.push(foldHeading(row.categoryId, row.categoryName, wordsOn.get(row.categoryId) ?? 0, true));
+        } else {
+          out.push(<div key={`c-${row.categoryId}`} className={styles.optGroup}>{row.categoryName}</div>);
+        }
         lastCat = row.categoryId;
       }
       out.push(
@@ -707,7 +775,37 @@ export default function BudgetItemPicker({
         </button>,
       );
     });
+    flushFolded(Number.POSITIVE_INFINITY);
     return out;
+  }
+
+  /** A shelf's one heading row when it is folded or has been opened from a fold: its name, how many words
+   *  it holds on this side, and a turning arrow. A real button — the mouse-down keeps the field focused so
+   *  the menu stays open, as the rows do. */
+  function foldHeading(id: string, name: string, count: number, isOpen: boolean) {
+    return (
+      <button
+        type="button"
+        key={`f-${id}`}
+        className={`${styles.optGroup} ${styles.optGroupRow} ${styles.optFold}`}
+        aria-expanded={isOpen}
+        onMouseDown={e => e.preventDefault()}
+        onClick={() => {
+          setActiveIdx(-1); // the rows move under the highlight, so it starts again
+          setUnfolded(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+          });
+        }}
+      >
+        <span>{name}</span>
+        <span className={`${styles.optGroupAside} ${styles.optFoldCount}`}>
+          {count} {count === 1 ? 'word' : 'words'}
+          <span className={styles.optFoldChev} aria-hidden>▸</span>
+        </span>
+      </button>
+    );
   }
 
   return (
@@ -764,15 +862,17 @@ export default function BudgetItemPicker({
               role="listbox"
             >
               {renderLeadOptions()}
-              {matches.length > 0 && renderOptions()}
+              {(matches.length > 0 || foldedHeads.length > 0) && renderOptions()}
               {/* ⚠ "Nothing matches" must not appear while the lead group HAS a match — typing a
                   bill's name legitimately empties the item half, and saying the search found
                   nothing above a row it plainly found is the control calling itself a liar. */}
-              {matches.length === 0 && leadMatches.length === 0 && (
+              {matches.length === 0 && leadMatches.length === 0 && foldedHeads.length === 0 && (
                 <div className={styles.dropEmpty}>
                   {q
                     ? <>Nothing on this side matches “{query.trim()}”.</>
-                    : <>Your list has no words under {SIDE_FLOW_LABEL[direction]} yet.</>}
+                    : offered.length > 0
+                      ? <>Type to find a word.</>
+                      : <>Your list has no words under {SIDE_FLOW_LABEL[direction]} yet.</>}
                   {emptyNote && <span className={styles.dropEmptyNote}>{emptyNote}</span>}
                 </div>
               )}

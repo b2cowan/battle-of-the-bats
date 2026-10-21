@@ -183,7 +183,7 @@ export default function BudgetTab() {
 
   // The word picker's list: planning-eligible words only (the club's own plan never files under a team's word).
   const loadCategories = useCallback(async () => {
-    const r = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&${q}`).catch(() => null);
+    const r = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&hostedEvents=1&${q}`).catch(() => null);
     if (r?.ok) setCategories(r.data.categories ?? []);
   }, [q]);
   const canMove = read?.canMove ?? false;

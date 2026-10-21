@@ -25,7 +25,7 @@
  *
  * Every write answers 409/403 in words (lib/club-money-words.ts); a refused tap re-reads the book.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ChevronRight, Lock } from 'lucide-react';
 import KitDialog from '../KitDialog';
@@ -45,9 +45,10 @@ import fy from './FiscalYear.module.css';
 import cr from './ClubReport.module.css';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import type { BudgetCategoryWithItems } from '@/lib/types';
-import type { Filing } from '@/lib/club-ledger';
+import type { Filing, LedgerKind } from '@/lib/club-ledger';
 import { addCalendarDays, tournamentToday } from '@/lib/timezone';
 import { closedThrough, isAddressableDay, lockedIn, type FiscalSetting } from '@/lib/club-fiscal-year';
+import { eventShelves } from '@/lib/club-event-shelves';
 import type { BookRowOut } from '@/lib/club-ledger-read';
 import {
   FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, parseAmount, refusalText,
@@ -56,7 +57,11 @@ import {
 import LoadingState from '@/components/shared/LoadingState';
 
 /** The book a window acts on. */
-export interface BookRef { id: string; name: string; kind: string }
+export interface BookRef {
+  id: string; name: string; kind: LedgerKind;
+  /** What the book belongs to — a tournament's id on a tournament's own book (the filing picker leads with that event's shelf). */
+  entityId?: string | null;
+}
 
 /** "Cheque 2204" back into its method and reference — a typed line stores how it was paid as one phrase. */
 export function splitHow(paymentMethod: string | null): { method: DuesPaymentMethod | ''; reference: string } {
@@ -109,17 +114,28 @@ const selectionOfFiling = (f: Filing | null): BudgetItemSelection | null =>
 
 /** FILED UNDER — the budget word picker (Ask 4a), money-out words for money out, money-in for money in, with
  *  the hint whether the word is on the year's plan. */
-function FiledUnderField({ id, words, value, onChange, direction, orgSlug, plan, hint }: {
+function FiledUnderField({ id, words, value, onChange, direction, orgSlug, plan, hint, book, entryDay, fiscal }: {
   id: string; words: WordList | null; value: BudgetItemSelection | null; onChange: (v: BudgetItemSelection) => void;
   direction: 'in' | 'out'; orgSlug: string; plan: PlanWords | null; hint?: string | null;
+  /** The book the window was opened from, the entry's date and the club's fiscal years — they decide which hosted
+   *  event's shelf shows (lib/club-event-shelves.ts). */
+  book: BookRef; entryDay: string; fiscal: FiscalSetting | null;
 }) {
   const onPlan = value?.itemId && plan ? (plan.words.has(value.itemId) ? { planned: plan.words.get(value.itemId)! } : null) : undefined;
+  /* The book's two facts, not the `book` object: the page rebuilds that object every render, and a fresh
+     object would remake the shelf sets (and the picker's memos behind them) each time. */
+  const { kind, entityId } = book;
+  const shelves = useMemo(
+    () => words ? eventShelves({ categories: words, book: { kind, entityId }, day: entryDay, fiscal, direction }) : undefined,
+    [words, kind, entityId, entryDay, fiscal, direction],
+  );
   return (
     <div className={ck.field}>
       <span className={ck.label} id={`${id}-label`}>Filed under<span className={repKit.req} aria-hidden>*</span></span>
       {words ? (
         <BudgetItemPicker
           categories={words}
+          shelves={shelves}
           value={value}
           onChange={onChange}
           /* org-slug-ok: the picker appends `/{catId}/items`, so the org travels as `adminOrgSlug` */
@@ -284,7 +300,7 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
         placeholder="For example: Diamond permit" />
       <TextField id="ae-amount" label="Amount" required value={amount} onChange={setAmount} placeholder="$0.00" />
       <FiledUnderField id="ae-word" words={words} value={word} onChange={setWord} direction={entryType === 'income' ? 'in' : 'out'}
-        orgSlug={orgSlug} plan={plan} />
+        orgSlug={orgSlug} plan={plan} book={book} entryDay={date} fiscal={fiscal} />
       <PayeeField id="ae-payee" q={q} value={payee} onChange={setPayee} onManage={() => setManaging(true)}
         label={entryType === 'income' ? 'Paid by' : 'Paid to'} />
       <div className={moneyKit.pair}>
@@ -507,6 +523,7 @@ function EditLineWindow({ row, book, q, orgSlug, words, fiscal, onChanged, onClo
         <TextField id="le-amount" label="Amount" required value={d.amount} onChange={v => set({ amount: v })} />
         <FiledUnderField id="le-word" words={words} value={d.word} onChange={v => set({ word: v })}
           direction={d.entryType === 'income' ? 'in' : 'out'} orgSlug={orgSlug} plan={plan}
+          book={book} entryDay={d.date} fiscal={fiscal}
           hint={!row.filedUnder && row.legacyCategory ? wasCategoryWord(row.legacyCategory) : null} />
         <PayeeField id="le-payee" q={q} value={d.payee} onChange={v => set({ payee: v })} onManage={() => setManaging(true)}
           label={d.entryType === 'income' ? 'Paid by' : 'Paid to'} />

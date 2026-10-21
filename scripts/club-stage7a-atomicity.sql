@@ -16,8 +16,12 @@ BEGIN
   SELECT category_id,item_id INTO v_cat,v_item FROM club_tournament_fee_word(v_event,'Stage 7a invitational');
   PERFORM club_tournament_fee_word(v_event,'Stage 7a invitational');
   IF (SELECT count(*) FROM tournament_fee_book_settings WHERE tournament_id=v_event)<>1
-     OR (SELECT count(*) FROM budget_items WHERE category_id=v_cat)<>1 THEN
-    RAISE EXCEPTION 'FAIL T39: category or item duplicated'; END IF;
+     OR (SELECT count(*) FROM budget_items WHERE category_id=v_cat)<>9
+     OR (SELECT count(DISTINCT lower(name)) FROM budget_items WHERE category_id=v_cat)<>9
+     OR NOT EXISTS (SELECT 1 FROM budget_items WHERE id=v_item AND category_id=v_cat AND name='Entry fees') THEN
+    -- Mig 344: a hosted event's shelf is created with its nine words (Entry fees is the one fees file under); a
+    -- second call must add none, and Entry fees must stay the settings item.
+    RAISE EXCEPTION 'FAIL T39: category or words duplicated, or Entry fees is not the filing word'; END IF;
   IF EXISTS(SELECT 1 FROM accounting_ledgers WHERE entity_type='tournament' AND entity_id=v_event) THEN
     RAISE EXCEPTION 'FAIL T39: saving filing opened a book before payment'; END IF;
 

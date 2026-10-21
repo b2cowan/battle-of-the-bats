@@ -266,6 +266,10 @@
     "343_a_club_runs_its_own_site.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 4c-1. Additive: five columns on org_public_site_content (home_section_order, home_sections_hidden, contacts, documents, questions) with their CHECK caps, and the org_site_notices table (service role only). Its one data step carries the two old show_* switches into home_sections_hidden, so a club that turned one off keeps it off — schema-invisible, hence this entry. Apply BEFORE promoting the 4c-1 code (the code reads the new columns). The two show_* columns stay, deprecated, for the old code still on prod; the 4c-1 save mirrors them, so a rollback reads the club's current choice; a later migration drops them after the promote. AFTER the promote, run the carry-over UPDATE once more (re-applying the whole file is safe — every step is idempotent and the UPDATE only fills an empty hidden list), so a switch turned off on the old editor between the apply and the promote is not lost. Verify the five columns and their defaults, the five CHECKs, the table with RLS on and no anon/authenticated grant, then refresh both snapshots."
+    },
+    "344_a_hosted_event_comes_with_its_words.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 7a follow-up (hosted-event filing shelf). Replaced function club_tournament_fee_word (a NEW hosted event now gets Entry fees, Gate / admission, Concession revenue, Registration revenue, Sponsorship, Permits & fields, Officials, Awards, Supplies) plus two service-role-only functions: club_hosted_event_add_words and club_hosted_event_backfill. No table or column changes, so the drift check cannot see it. Apply AFTER 342 and before promoting the picker code. The fill-in for EXISTING hosted events is club_hosted_event_backfill(), run by hand and ONLY on the owner's explicit go (dev first, with the per-event added count); nothing in this file touches an existing shelf. Verify the three functions exist with EXECUTE for service_role only, then refresh both snapshots."
     }
   }
 }

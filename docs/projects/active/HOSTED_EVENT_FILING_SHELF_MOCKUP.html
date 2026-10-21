@@ -1,0 +1,290 @@
+<title>Event Filing Shelf</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a control bar drives three true-size specimens (today · proposed · phone), then the owner's three calls.
+   Page chrome is a cool paper-grey so the warm product frames read as specimens, not as the page. */
+:root {
+  --bg: #EEF0EC; --card: #FFFFFF; --fg: #1D2320; --muted: #5A645E; --line: #D5DAD3; --accent: #3F5A2A; --accent-soft: #E2EAD8; --warn: #8A5A12; --warn-soft: #F6EBD3;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif; --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151A17; --card: #1E2521; --fg: #E6EBE4; --muted: #9AA59D; --line: #343D37; --accent: #A9C98A; --accent-soft: #2A3626; --warn: #E3B66B; --warn-soft: #3A2F18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #151A17; --card: #1E2521; --fg: #E6EBE4; --muted: #9AA59D; --line: #343D37; --accent: #A9C98A; --accent-soft: #2A3626; --warn: #E3B66B; --warn-soft: #3A2F18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); line-height: 1.5; padding-inline: 16px; padding-block: 28px 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-size: 1.6rem; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.tagrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tg { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--line); }
+.tg.new { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.tg.rest { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.tg.same { color: var(--muted); }
+
+/* control bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; }
+.ctl { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 13px var(--font-ui); color: var(--fg); background: transparent; border: 0; padding: 7px 12px; min-height: 36px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* specimens */
+.specimens { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 22px; align-items: start; }
+@media (min-width: 900px) { .specimens { grid-template-columns: 1fr 1fr; } }
+.spec { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cap { display: flex; flex-direction: column; gap: 6px; }
+.cap b { font-weight: 600; }
+.stat { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.stat strong { color: var(--fg); font-weight: 500; }
+.scroller { overflow-x: auto; padding-bottom: 6px; }
+
+/* product frames: real warm tokens, fixed width, never reflow */
+.frame { --paper: #F8F4ED; --ink: #241E15; --ink-soft: #4A4235; --hair: rgba(70,55,30,.12); --hair2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #D9F99D;
+  background: #fff; color: var(--ink); width: 460px; border-radius: 20px; border: 1px solid var(--hair2); box-shadow: 0 14px 40px rgba(36,30,21,.22); display: flex; flex-direction: column; font-family: var(--font-ui); font-size: 14px; }
+.frame.phone { width: 390px; border-radius: 20px 20px 0 0; }
+.dhead { padding: 18px 22px 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+.dhead .bk { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.dhead .tt { font-size: 18px; font-weight: 600; margin-top: 2px; }
+.dhead .x { font-size: 20px; color: var(--ink-soft); line-height: 1; }
+.dbody { padding: 6px 22px 10px; display: flex; flex-direction: column; gap: 12px; }
+.fl { display: flex; flex-direction: column; gap: 4px; }
+.fl label, .fl .lb { font-size: 13px; font-weight: 600; }
+.fld { background: var(--paper); border: 1px solid var(--hair2); border-radius: 8px; height: 36px; padding: 0 10px; display: flex; align-items: center; color: var(--ink-soft); font-size: 13.5px; }
+.two { display: grid; grid-template-columns: 1.1fr 1fr; gap: 10px; }
+.pick { position: relative; }
+.pick input { width: 100%; box-sizing: border-box; background: var(--paper); border: 1px solid var(--olive); border-radius: 8px; height: 36px; padding: 0 10px; font: 13.5px var(--font-ui); color: var(--ink); }
+.pick input::placeholder { color: rgba(74,66,53,.65); }
+.pick input:focus-visible { outline: 2px solid var(--olive); outline-offset: 1px; }
+.list { margin-top: 4px; background: #fff; border: 1px solid var(--hair2); border-radius: 12px; box-shadow: 0 8px 24px rgba(36,30,21,.16); max-height: 292px; overflow-y: auto; padding: 4px 0; }
+.phone .list { max-height: 340px; }
+.gh { padding: 7px 14px 3px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: rgba(74,66,53,.75); display: flex; justify-content: space-between; align-items: center; }
+.gh.lead { color: var(--olive); background: var(--olive-soft); padding-bottom: 5px; }
+button.gh { width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left; min-height: 34px; }
+button.gh:hover { background: var(--olive-soft); }
+button.gh:focus-visible { outline: 2px solid var(--olive); outline-offset: -2px; }
+.phone button.gh { min-height: 44px; }
+.gh .cnt { font-size: 10.5px; letter-spacing: .04em; text-transform: none; display: inline-flex; gap: 6px; align-items: center; color: var(--ink-soft); }
+.gh .chev { display: inline-block; transition: transform .12s; }
+.gh[aria-expanded="true"] .chev { transform: rotate(90deg); }
+.opt { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 14px; min-height: 36px; font-size: 14px; }
+.phone .opt { min-height: 44px; }
+.opt:hover { background: rgba(70,55,30,.05); }
+.opt.hl { background: rgba(70,55,30,.07); }
+.pill { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--hair2); color: var(--ink-soft); }
+.pill.club { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.35); }
+.more { padding: 8px 14px; font-size: 12.5px; color: rgba(74,66,53,.8); border-top: 1px dashed var(--hair2); margin-top: 4px; }
+.none { padding: 12px 14px; color: var(--ink-soft); font-size: 13px; }
+.dfoot { padding: 12px 22px 16px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--hair); margin-top: 6px; }
+.b { font: 600 14px var(--font-ui); border-radius: 10px; padding: 8px 16px; border: 1px solid var(--hair2); background: #fff; color: var(--ink); }
+.b.lime { background: linear-gradient(#DDF8A8, #C8EE86); border-color: rgba(87,101,30,.35); }
+.sbadge { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; padding: 2px 8px; border-radius: 4px; }
+.sbadge.b4 { background: var(--warn-soft); color: var(--warn); } .sbadge.af { background: var(--accent-soft); color: var(--accent); }
+
+/* decisions + notes */
+.dec { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.dec > div { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.dec b { font-weight: 600; }
+.dec .rec { font-size: 13px; color: var(--accent); }
+.dec .alt { font-size: 13px; color: var(--muted); }
+ul.clean { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; max-width: 72ch; }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow">Club Tier · Stage 7a follow-up · Money</span>
+    <h1>A hosted tournament's words, shown only where they belong</h1>
+    <p class="lede">The club's <b>Add an entry</b> window, <b>Filed under</b> picker. Move the controls: the left picture is today, the right is the proposal, and the phone picture is the same proposal at 390 px. Every row is generated from the rules, so the counts are real, not drawn.</p>
+  </header>
+
+  <div class="bar" role="group" aria-label="What to show">
+    <div class="ctl"><span class="eyebrow">Hosted events the club has</span>
+      <div class="seg" id="seg-n"><button data-v="1" aria-pressed="false">1</button><button data-v="5" aria-pressed="true">5</button><button data-v="20" aria-pressed="false">20</button></div></div>
+    <div class="ctl"><span class="eyebrow">Entry is made in</span>
+      <div class="seg" id="seg-book"><button data-v="event" aria-pressed="false">The tournament's own book</button><button data-v="general" aria-pressed="true">The general book</button></div></div>
+    <div class="ctl"><span class="eyebrow">Money</span>
+      <div class="seg" id="seg-dir"><button data-v="in" aria-pressed="true">In</button><button data-v="out" aria-pressed="false">Out</button></div></div>
+    <div class="ctl"><span class="eyebrow">Owner call 2 · general book</span>
+      <div class="seg" id="seg-gen"><button data-v="show" aria-pressed="true">Lists this year's events</button><button data-v="hide" aria-pressed="false">Lists no events</button></div></div>
+  </div>
+
+  <section class="panel">
+    <div class="cap">
+      <div class="tagrow"><span class="tg new">NEW the event's own shelf, collapsed rows, lead shelf</span><span class="tg rest">RESTYLED nothing</span><span class="tg same">UNCHANGED the window, fields, tags, search, keyboard, the create row</span></div>
+      <h2>The whole window, before and after</h2>
+      <p class="lede">Typing in the box searches what is on show. Click a folded event to open it. Rows from the library below the tournament shelves are untouched and still scroll on.</p>
+    </div>
+    <div class="specimens">
+      <div class="spec"><div class="cap"><span class="sbadge b4">TODAY</span><div class="stat" id="stat-b4"></div></div><div class="scroller"><div id="f-b4"></div></div></div>
+      <div class="spec"><div class="cap"><span class="sbadge af">PROPOSED</span><div class="stat" id="stat-af"></div></div><div class="scroller"><div id="f-af"></div></div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="cap">
+      <div class="tagrow"><span class="tg new">NEW</span><span class="tg same">44 px rows and folded headings on a phone; same rules as the desk</span></div>
+      <h2>On a phone, true size</h2>
+      <p class="lede">Open this page on your phone for the real size. The frame is 390 px wide and does not shrink to fit this window.</p>
+    </div>
+    <div class="scroller"><div id="f-ph"></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="cap"><h2>Three calls this drawing asks you to make</h2><p class="lede">Each has a recommended answer. Nothing runs on live data until you say go.</p></div>
+    <div class="dec">
+      <div><b>1 · The words an event comes with</b>
+        <span class="rec">Recommended: money in is Entry fees, Gate / admission, Concession revenue, Registration revenue and Sponsorship. Money out is Permits &amp; fields, Officials, Awards and Supplies.</span>
+        <span class="alt">The money-out words are a draft. I take the final list from the standard Tournaments shelf and the coaches' event words before building, and show you the difference.</span></div>
+      <div><b>2 · Does the general book list events?</b>
+        <span class="rec">Recommended: yes, only events in the fiscal year being entered, folded to one line each. Typing an event's name or a word still finds it.</span>
+        <span class="alt">Alternative: no. A treasurer files an event's money from the tournament's own book. The list is shortest, but general-book entries for an event become a second trip. Try it with the switch above.</span></div>
+      <div><b>3 · Existing events</b>
+        <span class="rec">Recommended: give every existing hosted event the new words, dev first, with a before and after count per event. Entries already filed on the generic words are not moved.</span>
+        <span class="alt">Alternative: only events from this fiscal year on. Older events keep one word, which is fine because nothing new is filed to them.</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="cap"><h2>Design check</h2><p class="lede">What the review changed in these drawings, and what it left alone.</p></div>
+    <ul class="clean">
+      <li><b>Folded event rows are real buttons</b> with the word count and a turning arrow, 34 px at a desk and 44 px on a phone. They are headings that open, not a new kind of row.</li>
+      <li><b>The event's own shelf leads in the picker's existing lead style</b> (olive on the olive tint), so no new colour is added. It is the same device the bills-you-owe group uses.</li>
+      <li><b>Typing opens what matches and shows only the matching words.</b> The honest cost: in the general book, "gate" shows one row under each of this year's events. That is correct, because they are different events, and typing an event's name narrows it to one.</li>
+      <li><b>The generic Tournaments shelf is hidden for money in, inside an event's own book only.</b> It stays for money out (fees the club pays to enter other tournaments) and everywhere in the general book.</li>
+      <li><b>Left alone on purpose:</b> the CLUB and STANDARD tags, the field's look, the create-a-word row, the rule that a saved entry's own word always stays listed.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  var IN_W = ['Entry fees', 'Gate / admission', 'Concession revenue', 'Registration revenue', 'Sponsorship'];
+  var OUT_W = ['Permits & fields', 'Officials', 'Awards', 'Supplies'];
+  var GEN_IN = ['Concession revenue', 'Gate / admission', 'Registration revenue'];
+  var GEN_OUT = ['Tournament entry fees'];
+  var OTHER = { in: [['Sponsorship', ['Grant', 'Donation']]], out: [['Facilities', ['Diamond permit', 'Dome block']]] };
+  var FY = ['UAT Invitational 2026', 'Fall Classic 2026', 'Thanksgiving Slam 2026', 'Harvest Cup 2026'];
+  var OLD = ['Spring Opener 2026', 'Winter Dome Cup 2025', 'Summer Showdown 2025', 'Fall Classic 2025', 'Turkey Bowl 2025', 'Spring Opener 2025', 'Ice Breaker 2025', 'Labour Day Classic 2025', 'Winter Dome Cup 2024', 'Summer Showdown 2024', 'Fall Classic 2024', 'Turkey Bowl 2024', 'Spring Opener 2024', 'Ice Breaker 2024', 'Labour Day Classic 2024', 'Winter Dome Cup 2023'];
+  var S = { n: 5, book: 'general', dir: 'in', gen: 'show', q: { b4: '', af: '', ph: '' }, open: { af: {}, ph: {} } };
+
+  function events() {
+    var nFy = S.n === 1 ? 1 : S.n === 5 ? 3 : 4;
+    var out = [];
+    for (var i = 0; i < S.n; i++) out.push(i < nFy ? { name: FY[i], fy: true } : { name: OLD[i - nFy], fy: false });
+    return out;
+  }
+  function words() { return S.dir === 'in' ? IN_W : OUT_W; }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function pill(w, club) { return '<span class="pill ' + (club ? 'club' : '') + '">' + (club ? 'Club' : 'Standard') + '</span>'; }
+  function match(w, q) { return !q || w.toLowerCase().indexOf(q) >= 0; }
+  function otherShelves(q) {
+    var h = '';
+    OTHER[S.dir].forEach(function (sh) {
+      var ws = sh[1].filter(function (w) { return match(w, q) || match(sh[0], q); });
+      if (!ws.length) return;
+      h += '<div class="gh">' + esc(sh[0]) + '</div>';
+      ws.forEach(function (w) { h += '<div class="opt"><span>' + esc(w) + '</span>' + pill(w, false) + '</div>'; });
+    });
+    return h;
+  }
+  function genericShelf(q, list) {
+    var ws = list.filter(function (w) { return match(w, q) || match('Tournaments', q); });
+    if (!ws.length) return { html: '', rows: 0 };
+    var h = '<div class="gh">Tournaments</div>';
+    ws.forEach(function (w) { h += '<div class="opt"><span>' + esc(w) + '</span>' + pill(w, false) + '</div>'; });
+    return { html: h, rows: 1 + ws.length };
+  }
+
+  /* TODAY: every hosted event keeps a one-word shelf, in every book. */
+  function listToday(q) {
+    var h = '', rows = 0;
+    events().forEach(function (e) {
+      if (S.dir === 'out') return; // Entry fees is money in only
+      if (!(match('Entry fees', q) || match(e.name, q))) return;
+      h += '<div class="gh">' + esc(e.name) + '</div><div class="opt"><span>Entry fees</span>' + pill('', true) + '</div>'; rows += 2;
+    });
+    var g = genericShelf(q, S.dir === 'in' ? GEN_IN : GEN_OUT);
+    h += g.html; rows += g.rows;
+    h += otherShelves(q);
+    return { html: h, rows: rows };
+  }
+
+  /* PROPOSED */
+  function listNew(q, key) {
+    var h = '', rows = 0, ws = words();
+    function shelf(e, lead) {
+      var shown = ws.filter(function (w) { return match(w, q) || match(e.name, q); });
+      if (!shown.length) return;
+      if (lead) {
+        h += '<div class="gh lead"><span>' + esc(e.name) + '</span><span class="cnt">this tournament</span></div>'; rows += 1 + shown.length;
+        shown.forEach(function (w) { h += '<div class="opt"><span>' + esc(w) + '</span>' + pill(w, true) + '</div>'; });
+        return;
+      }
+      var forced = !!q, isOpen = forced || S.open[key][e.name];
+      h += '<button type="button" class="gh" data-ev="' + esc(e.name) + '" data-k="' + key + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '"><span>' + esc(e.name) + '</span><span class="cnt">' + (forced ? shown.length + ' match' : ws.length + ' words') + ' <span class="chev">&#9656;</span></span></button>'; rows += 1;
+      if (isOpen) { shown.forEach(function (w) { h += '<div class="opt"><span>' + esc(w) + '</span>' + pill(w, true) + '</div>'; }); rows += shown.length; }
+    }
+    var evs = events();
+    if (S.book === 'event') {
+      shelf(evs[0], true);
+      if (S.dir === 'out') { var g1 = genericShelf(q, GEN_OUT); h += g1.html; rows += g1.rows; }
+    } else {
+      if (S.gen === 'show') evs.filter(function (e) { return e.fy || (q && match(e.name, q)); }).forEach(function (e) { shelf(e, false); });
+      var g2 = genericShelf(q, S.dir === 'in' ? GEN_IN : GEN_OUT); h += g2.html; rows += g2.rows;
+    }
+    h += otherShelves(q);
+    return { html: h, rows: rows };
+  }
+
+  function frame(key, kind, phone) {
+    var res = kind === 'b4' ? listToday(S.q[key]) : listNew(S.q[key], key);
+    var bookName = S.book === 'event' ? 'UAT Invitational 2026' : 'UAT Rep Club — General';
+    var sel = S.dir === 'in' ? 'In — the club received' : 'Out — the club paid';
+    var html = '<div class="frame ' + (phone ? 'phone' : '') + '">' +
+      '<div class="dhead"><div><div class="bk">' + esc(bookName) + '</div><div class="tt">Add an entry</div></div><span class="x">×</span></div>' +
+      '<div class="dbody"><div class="two"><div class="fl"><span class="lb">Money *</span><div class="fld">' + sel + '</div></div><div class="fl"><span class="lb">Date *</span><div class="fld">2026-10-21</div></div></div>' +
+      '<div class="fl"><span class="lb">What *</span><div class="fld">For example: Diamond permit</div></div>' +
+      '<div class="fl"><span class="lb" id="lb-' + key + kind + '">Filed under *</span><div class="pick"><input type="text" id="in-' + key + kind + '" data-k="' + key + '" data-kind="' + kind + '" aria-labelledby="lb-' + key + kind + '" placeholder="Search what this is — e.g. “sponsorship”, “grant”" value="' + esc(S.q[key]) + '" autocomplete="off">' +
+      '<div class="list">' + (res.html || '<div class="none">Nothing matches.</div>') + '<div class="more">The rest of the word library continues below</div></div></div></div></div>' +
+      '<div class="dfoot"><span class="b">Cancel</span><span class="b lime">Add entry</span></div></div>';
+    return { html: html, rows: res.rows };
+  }
+
+  function draw() {
+    var b4 = frame('b4', 'b4', false), af = frame('af', 'af', false), ph = frame('ph', 'af', true);
+    var focus = document.activeElement && document.activeElement.id;
+    var pos = document.activeElement && document.activeElement.selectionStart;
+    document.getElementById('f-b4').innerHTML = b4.html;
+    document.getElementById('f-af').innerHTML = af.html;
+    document.getElementById('f-ph').innerHTML = ph.html;
+    document.getElementById('stat-b4').innerHTML = 'Tournament rows to scan: <strong>' + b4.rows + '</strong> (shelves + words)';
+    document.getElementById('stat-af').innerHTML = 'Tournament rows to scan: <strong>' + af.rows + '</strong> (shelves + words)';
+    if (focus) { var el = document.getElementById(focus); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} } }
+  }
+
+  function seg(id, key, parse) {
+    document.getElementById(id).addEventListener('click', function (ev) {
+      var b = ev.target.closest('button'); if (!b) return;
+      S[key] = parse ? parse(b.dataset.v) : b.dataset.v;
+      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      S.open = { af: {}, ph: {} }; draw();
+    });
+  }
+  seg('seg-n', 'n', Number); seg('seg-book', 'book'); seg('seg-dir', 'dir'); seg('seg-gen', 'gen');
+
+  document.addEventListener('input', function (ev) {
+    var t = ev.target; if (t.tagName !== 'INPUT' || !t.dataset.k) return;
+    S.q[t.dataset.k] = t.value.trim().toLowerCase(); t.value = t.value; draw();
+  });
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button.gh'); if (!b) return;
+    var k = b.dataset.k, n = b.dataset.ev; S.open[k][n] = !S.open[k][n]; draw();
+  });
+  draw();
+})();
+</script>

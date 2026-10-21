@@ -143,7 +143,7 @@ export default function BudgetVsActualTab() {
 
   const canMove = read?.canMove ?? false;
   const loadCategories = useCallback(async () => {
-    const r = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&${q}`).catch(() => null);
+    const r = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&hostedEvents=1&${q}`).catch(() => null);
     if (r?.ok) setCategories(r.data.categories ?? []);
   }, [q]);
   useDeferredLoad(canMove && lineId != null && categories === null, loadCategories);

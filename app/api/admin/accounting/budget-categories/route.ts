@@ -52,6 +52,21 @@ function mapCategory(row: Record<string, unknown>, orgId: string): BudgetCategor
   };
 }
 
+/** Which tournament each hosted-event shelf belongs to, and when it runs (mig 342) — so the club's filing picker can
+ *  show the event's shelf where it belongs instead of every event's, everywhere. Opt-in (`hostedEvents=1`): only the
+ *  club ledger's filing window asks. It is the caller's own org's data under the route's one accounting gate, so
+ *  nothing here widens access. A failed read returns no map, so every shelf shows ordinarily — the safe direction. */
+type HostedRow = { category_id: string; tournament_id: string; tournaments: { start_date: string | null; end_date: string | null } | null };
+async function hostedEventsByCategory(orgId: string) {
+  const { data } = await supabaseAdmin
+    .from('tournament_fee_book_settings')
+    .select('category_id, tournament_id, tournaments ( start_date, end_date )')
+    .eq('org_id', orgId);
+  return new Map(((data ?? []) as unknown as HostedRow[]).map(h => [h.category_id, {
+    tournamentId: h.tournament_id, startDate: h.tournaments?.start_date ?? null, endDate: h.tournaments?.end_date ?? null,
+  }] as const));
+}
+
 // GET /api/admin/accounting/budget-categories?scope=team|org|both
 // Returns platform defaults merged with org's custom categories,
 // filtered by scope (defaults to all scopes).
@@ -71,7 +86,14 @@ export const GET = withObservability(async (req: Request) => {
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
     .order('sort_order');
 
-  const { data, error } = await query;
+  /* `hostedEvents=1` (with `forPlanning=1`) is for the club ledger's filing window alone, and opt-in like
+     `usage=1`: three other screens read this list and none of them needs to know which tournament a shelf
+     belongs to. It runs beside the main read, not after it. */
+  const wantHosted = url.searchParams.get('forPlanning') === '1' && url.searchParams.get('hostedEvents') === '1';
+  const [{ data, error }, hostedByCategory] = await Promise.all([
+    query,
+    wantHosted ? hostedEventsByCategory(ctx!.org.id) : Promise.resolve(new Map<string, NonNullable<BudgetCategoryWithItems['hostedEvent']>>()),
+  ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   let categories = (data ?? []).map(row => mapCategory(row, ctx!.org.id));
@@ -96,6 +118,9 @@ export const GET = withObservability(async (req: Request) => {
      a word it cannot rename. Both mistakes have been made one level down, on items. */
   if (url.searchParams.get('forPlanning') === '1') {
     categories = categories.filter(c => !c.teamId);
+    if (hostedByCategory.size) {
+      categories = categories.map(c => hostedByCategory.has(c.id) ? { ...c, hostedEvent: hostedByCategory.get(c.id)! } : c);
+    }
   }
 
   /* ⚠ `usage=1` IS FOR THE CATEGORY PANEL ALONE, and it is opt-in for exactly the reason the coach

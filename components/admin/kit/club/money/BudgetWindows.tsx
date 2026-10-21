@@ -198,11 +198,18 @@ function FiledUnderField({ id, categories, value, onChange, direction, orgSlug, 
   id: string; categories: BudgetCategoryWithItems[]; value: BudgetItemSelection | null; onChange: (v: BudgetItemSelection) => void;
   direction: 'in' | 'out'; orgSlug: string; held?: boolean;
 }) {
+  /* A plan has no book or entry date to choose an event by, so every hosted event's shelf is one folded line
+     (the loads ask for `hostedEvents=1`); a plan line for an event is still two taps away, and typing finds it. */
+  const shelves = useMemo(() => {
+    const folded = new Set(categories.filter(c => c.hostedEvent).map(c => c.id));
+    return folded.size ? { folded } : undefined;
+  }, [categories]);
   return (
     <div className={ck.field}>
       <span className={ck.label} id={`${id}-label`}>Filed under<span className={repKit.req} aria-hidden>*</span></span>
       <BudgetItemPicker
         categories={categories}
+        shelves={shelves}
         value={value}
         onChange={onChange}
         /* org-slug-ok: the picker appends `/{catId}/items`, so the org travels separately as `adminOrgSlug`
@@ -516,7 +523,7 @@ export function BudgetLineHandOff({ q, orgSlug, lineId, yearKey, onOpenPermit, o
     setRead(r.data);
     if (r.data.canMove) {
       // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
-      const c = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&${q}`).catch(() => null);
+      const c = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&hostedEvents=1&${q}`).catch(() => null);
       if (c?.ok) setCategories(c.data.categories ?? []);
     }
   }, [q, yearKey, beginRead]);
