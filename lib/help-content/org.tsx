@@ -1190,7 +1190,7 @@ const orgHelp: HelpPageContent = {
               <ul>
                 <li><strong>&larr; Teams</strong>, then the team&rsquo;s name with its colour as a dot, and its division and season.</li>
                 <li>Its tryouts: <strong>Tryout details and sign-up</strong> while sign-ups are open, otherwise one sentence saying it isn&rsquo;t taking sign-ups right now, with your contact address.</li>
-                <li>Its schedule, only when the coach has set the schedule to <strong>Public link</strong>. Games already played fold into <strong>Earlier this season</strong>, the next event is marked <strong>Up next</strong> with a <strong>Directions</strong> button, a cancelled event stays crossed out, and <strong>Show the rest of the season</strong> opens the rest.</li>
+                <li>Its games and tournaments, only when the coach has set the schedule to <strong>Public</strong>. Practices and team events never show here. Games already played fold into <strong>Earlier this season</strong>, the next event is marked <strong>Up next</strong> with a <strong>Directions</strong> button, a cancelled event stays crossed out, and <strong>Show the rest of the season</strong> opens the rest.</li>
                 <li><strong>About the team</strong>, the description you write on the team.</li>
               </ul>
             </>

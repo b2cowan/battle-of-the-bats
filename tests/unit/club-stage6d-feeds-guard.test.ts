@@ -50,6 +50,18 @@ describe('1 · one question for the public schedule', () => {
   });
 });
 
+describe('1b · a visitor reads games and tournaments, never a practice (owner ruling 2026-10-20)', () => {
+  const VIEW = 'lib/family-view.ts';
+  it('the public caller is narrowed at the query, so the page and the feed both lose practices', () => {
+    assert.match(readCode(VIEW), /requireVisibility === 'public_link'\) eventQuery = eventQuery\.in\('event_type', PUBLIC_EVENT_TYPES\)/);
+  });
+  it('the public kinds are the games plus the attended tournament, and nothing else', () => {
+    const def = /export const PUBLIC_EVENT_TYPES = (\[[^\]]*\]);/.exec(readCode(VIEW))?.[1] ?? '';
+    assert.equal(def, "[...COACH_GAME_EVENT_TYPES, 'external_tournament']");
+    assert.match(readCode('lib/coach-tournament-games.ts'), /COACH_GAME_EVENT_TYPES = \['league_game', 'tournament_game'\];/);
+  });
+});
+
 describe('2 · a good read touches no counter', () => {
   for (const f of [COACH_FEED, PUBLIC_FEED, FAMILY_FEED]) {
     it(f, () => {

@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { countsTowardRecord } from './season-wrapped';
+import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import {
   isPubliclyVisible,
   isVisibleToFamilies,
@@ -79,6 +80,11 @@ export interface FamilyTeamView {
   /** Season record, computed from completed games — the "12–6–2" in the mockup header. */
   record: { wins: number; losses: number; ties: number };
 }
+
+/** What a visitor with no account may read: games and the tournaments the team attends. Never a
+ *  practice or a team event — those are the same children at the same place every week, so they stay
+ *  with the families the coach connected (owner ruling 2026-10-20). Families get every kind. */
+export const PUBLIC_EVENT_TYPES = [...COACH_GAME_EVENT_TYPES, 'external_tournament'];
 
 const EVENT_COLUMNS =
   'id, event_type, is_scrimmage, name, starts_at, ends_at, location, location_address, field_number, ' +
@@ -239,12 +245,15 @@ export async function getFamilyTeamView(params: {
   const year = yearResult.data as { id: string; name: string | null; year: number | null };
   const org = orgResult.data as { id: string; name: string; slug: string };
 
-  const { data: eventRows, error: eventError } = await supabaseAdmin
+  let eventQuery = supabaseAdmin
     .from('rep_team_events')
     .select(EVENT_COLUMNS)
     .eq('team_id', params.repTeamId)
-    .eq('program_year_id', year.id)
-    .order('starts_at', { ascending: true });
+    .eq('program_year_id', year.id);
+  // The public caller is narrowed at the query, so a practice never leaves the server for it — and
+  // "Up next" below is then the next GAME, which is what a visitor came for.
+  if (params.requireVisibility === 'public_link') eventQuery = eventQuery.in('event_type', PUBLIC_EVENT_TYPES);
+  const { data: eventRows, error: eventError } = await eventQuery.order('starts_at', { ascending: true });
   if (eventError) throw eventError;
 
   const rows = (eventRows ?? []) as unknown as EventRow[];

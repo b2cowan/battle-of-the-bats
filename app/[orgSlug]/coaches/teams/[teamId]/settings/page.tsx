@@ -67,7 +67,7 @@ const STATUS_LABEL: Record<string, string> = {
 const VISIBILITY_LABEL: Record<ScheduleVisibility, string> = {
   staff: 'Staff only',
   families: 'Families',
-  public_link: 'Public link',
+  public_link: 'Public',
 };
 
 /** One sentence per setting, stating what it DOES rather than restating its name. Each names
@@ -75,7 +75,7 @@ const VISIBILITY_LABEL: Record<ScheduleVisibility, string> = {
 const VISIBILITY_HELP: Record<ScheduleVisibility, string> = {
   staff: 'Games and practices stay inside your coaching staff. Connected families see a quiet “not available” message until you switch back.',
   families: 'The families you have connected see the full schedule.',
-  public_link: 'Everything Families gets, and your team’s public page shows the schedule to anyone who visits it.',
+  public_link: 'Everything Families gets, and your team’s public page shows your games and tournaments to anyone who visits it. Practices and team events stay with families.',
 };
 
 export default function TeamSettingsPage({
