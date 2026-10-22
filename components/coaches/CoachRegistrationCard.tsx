@@ -38,6 +38,7 @@ export default function CoachRegistrationCard({
   registrationStatus,
   startDate,
   endDate,
+  tournamentStatus,
   today,
   metaParts,
   fanView,
@@ -49,6 +50,9 @@ export default function CoachRegistrationCard({
   /** Tournament dates (YYYY-MM-DD) → the lifecycle chip + the meta date range; null-safe. */
   startDate: string | null;
   endDate: string | null;
+  /** The tournament's own status (draft|active|completed|archived) — the organizer's word on whether
+   *  the event is over. Required so a caller cannot forget it and quietly go back to the calendar. */
+  tournamentStatus: string | null;
   today: string;
   /** Meta line fragments in display order (team / org) — falsy entries dropped; the card
    *  appends the date range + (when a chip is showing) the demoted status label itself. */
@@ -56,7 +60,7 @@ export default function CoachRegistrationCard({
   /** Public-site context for the ⇄ Fan view line; null hides it (draft/archived events). */
   fanView: { orgSlug: string; tournamentSlug: string } | null;
 }) {
-  const chip = deriveCoachLifecycleChip(startDate, endDate, today);
+  const chip = deriveCoachLifecycleChip(startDate, endDate, today, tournamentStatus);
   const chipKey = lifecycleChipClassKey(chip.state);
   const hasChip = chip.state !== 'unknown' && chipKey !== '';
   const isLive = chip.state === 'live';

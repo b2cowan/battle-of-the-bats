@@ -11,7 +11,7 @@ import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
-import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
+import { deriveCoachLifecycleChip, sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import styles from './tournaments.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -48,13 +48,10 @@ type CoachTeamGroup = BasicCoachTournamentTeam & {
 
 function isActive(tournament: TournamentRow | null): boolean {
   if (!tournament) return false;
-  const now = tournamentToday();
-  // A single-day event (no end_date) ends on its start_date — otherwise it would
-  // sit in "Active & Upcoming" forever while its lifecycle chip reads "Complete"
-  // (deriveCoachLifecycleChip uses `end = endDate ?? startDate`). Keep them aligned.
-  const effectiveEnd = tournament.end_date ?? tournament.start_date;
-  if (effectiveEnd && now > effectiveEnd) return false;
-  return true;
+  // The organizer's status decides when an event is over — the same fact the chip reads — so an
+  // event whose dates have passed but which isn't marked complete stays in "Active & Upcoming"
+  // (its chip says Game Day), and a completed one moves to "Past" even if marked early.
+  return deriveCoachLifecycleChip(tournament.start_date, tournament.end_date, tournamentToday(), tournament.status).state !== 'complete';
 }
 
 export default async function CoachTournamentRecordsPage() {
@@ -149,6 +146,7 @@ export default async function CoachTournamentRecordsPage() {
         r => r.tournament?.start_date ?? null,
         r => r.tournament?.end_date ?? null,
         today,
+        r => r.tournament?.status ?? null,
       );
 
       return {
@@ -227,6 +225,7 @@ function RegistrationCard({ reg, today }: { reg: Registration; today: string }) 
       registrationStatus={team.status}
       startDate={tournament?.start_date ?? null}
       endDate={tournament?.end_date ?? null}
+      tournamentStatus={tournament?.status ?? null}
       today={today}
       metaParts={tournament ? [team.name, org?.name] : []}
       fanView={canFanView ? { orgSlug: org!.slug, tournamentSlug: tournament!.slug! } : null}

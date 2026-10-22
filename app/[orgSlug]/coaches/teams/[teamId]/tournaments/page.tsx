@@ -119,6 +119,7 @@ export default function PremiumTeamTournamentsPage({
           entry => entry.tournament?.startDate ?? null,
           entry => entry.tournament?.endDate ?? null,
           today,
+          entry => entry.tournament?.status ?? null,
         )
       : [],
     [data, today],
@@ -203,6 +204,7 @@ export default function PremiumTeamTournamentsPage({
                   registrationStatus={entry.registration.status}
                   startDate={entry.tournament?.startDate ?? null}
                   endDate={entry.tournament?.endDate ?? null}
+                  tournamentStatus={entry.tournament?.status ?? null}
                   today={today}
                   metaParts={[entry.org?.name, entry.registration.name]}
                   fanView={fanView}

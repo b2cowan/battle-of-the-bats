@@ -1,6 +1,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { hasFirstGameStarted, isGameDay, PHASE_LABEL, resolvePhase } from '../../lib/tournament-phase.ts';
+import { hasFirstGameStarted, isGameDay, PHASE_LABEL, resolveEventPhase, resolvePhase } from '../../lib/tournament-phase.ts';
+import { deriveCoachLifecycleChip, sortByCoachLifecycle } from '../../lib/coach-tournament-lifecycle.ts';
 import { GAME_STATE_WORD, PENDING_FORFEIT, gameWhen } from '../../lib/game-day-words.ts';
 import { formatShortWeekdayDate } from '../../lib/timezone.ts';
 
@@ -47,6 +48,50 @@ describe('game day — the dates, or the first game having started', () => {
   });
   test('before the first date with nothing played is not game day', () => {
     assert.equal(isGameDay({ startDate: '2026-06-12', endDate: '2026-06-14', firstGameStarted: false, today: '2026-06-01' }), false);
+  });
+});
+
+describe('the organizer\'s status is the one source of truth for "over" (owner ruling 2026-10-21)', () => {
+  const dates = { startDate: '2026-10-17', endDate: '2026-10-19', firstGameStarted: false };
+
+  test('dates passed, nothing played, not marked complete: still game day, never "Open"', () => {
+    assert.equal(resolveEventPhase({ ...dates, status: 'active', today: '2026-10-21' }), 'gameday');
+  });
+  test('only the organizer marking it complete ends it', () => {
+    assert.equal(resolveEventPhase({ ...dates, status: 'completed', today: '2026-10-21' }), 'completed');
+    assert.equal(resolveEventPhase({ ...dates, status: 'archived', today: '2026-10-21' }), 'archived');
+  });
+  test('before the dates with nothing played is still open', () => {
+    assert.equal(resolveEventPhase({ ...dates, status: 'active', today: '2026-10-01' }), 'open');
+  });
+  test('a single-day event ends on its start date', () => {
+    const one = { startDate: '2026-10-17', endDate: null, firstGameStarted: false, status: 'active' };
+    assert.equal(resolveEventPhase({ ...one, today: '2026-10-17' }), 'gameday', 'the day itself');
+    assert.equal(resolveEventPhase({ ...one, today: '2026-10-18' }), 'gameday', 'the day after, until closed');
+    assert.equal(resolveEventPhase({ ...one, today: '2026-10-16' }), 'open', 'the day before');
+  });
+  test('a draft stays a draft, whatever the dates', () => {
+    assert.equal(resolveEventPhase({ ...dates, status: 'draft', today: '2026-10-21' }), 'draft');
+    assert.equal(deriveCoachLifecycleChip('2026-10-17', '2026-10-19', '2026-10-21', 'draft').state, 'complete', 'never live: the calendar decides');
+  });
+  test('the coach site reads the same status: Complete only once the organizer says so', () => {
+    const coach = (status: string | null) => deriveCoachLifecycleChip('2026-10-17', '2026-10-19', '2026-10-21', status);
+    assert.equal(coach('active').label, 'Game Day', 'dates passed, not marked complete');
+    assert.equal(coach('active').state, 'wrapping_up');
+    assert.equal(coach('completed').label, 'Complete');
+    assert.equal(coach('archived').label, 'Complete');
+    assert.equal(deriveCoachLifecycleChip('2026-10-17', '2026-10-19', '2026-10-18', 'completed').label, 'Complete', 'marked early');
+    assert.equal(coach(null).label, 'Complete', 'no status on hand: the calendar decides');
+  });
+  test('the coach list: what is ahead first, then unfinished past events, then finished ones', () => {
+    // `done` is the MORE recent event, so a calendar-only sort would put it ahead of `wrap`.
+    const rows = [
+      { id: 'done', start: '2026-10-18', end: '2026-10-20', status: 'completed' },
+      { id: 'wrap', start: '2026-10-10', end: '2026-10-12', status: 'active' },
+      { id: 'next', start: '2026-11-01', end: '2026-11-02', status: 'active' },
+    ];
+    const sorted = sortByCoachLifecycle(rows, r => r.start, r => r.end, '2026-10-21', r => r.status);
+    assert.deepEqual(sorted.map(r => r.id), ['next', 'wrap', 'done']);
   });
 });
 

@@ -624,7 +624,7 @@ export default async function CoachTournamentRecord({
       {/* A3 quick-jump: folded into the sticky chrome directly under the shell's team header. */}
       {hideHeader && !isRejected && <CoachRecordJumpNav items={jumpItems} />}
 
-      <div className={styles.page}>
+      <div className={hideHeader ? styles.page : `${styles.page} ${styles.pageInShell}`}>
         {backHref && (
           <Link href={backHref} className={styles.recordBackLink}>
             <ArrowLeft size={14} aria-hidden /> Tournaments
@@ -696,6 +696,7 @@ export default async function CoachTournamentRecord({
           // brands each tournament separately, and this record is about ONE event.
           organizerLogoUrl={tournament?.logo_url ?? org?.logo_url ?? null}
           startDate={tournament?.start_date ?? null}
+          datesPassed={coachPhase === 'game_day' && Boolean(tournament?.end_date ?? tournament?.start_date) && today > (tournament?.end_date ?? tournament?.start_date ?? '')}
           dateRangeLabel={dateRange}
           record={record}
           standingsHref={standingsHref}

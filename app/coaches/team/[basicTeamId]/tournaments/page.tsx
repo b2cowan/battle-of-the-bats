@@ -41,6 +41,7 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
     entry => entry.tournament?.startDate ?? null,
     entry => entry.tournament?.endDate ?? null,
     today,
+    entry => entry.tournament?.status ?? null,
   );
   // Entries that actually put this team in an event. Used only to gate the B3.2 shelf — the
   // list itself still shows every entry, rejections included, because that IS their record.
@@ -71,6 +72,7 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
               registrationStatus={entry.registration.status}
               startDate={entry.tournament?.startDate ?? null}
               endDate={entry.tournament?.endDate ?? null}
+              tournamentStatus={entry.tournament?.status ?? null}
               today={today}
               metaParts={[entry.org?.name]}
               /* One rule for every coach-facing tournament ROW (it was inlined identically here,

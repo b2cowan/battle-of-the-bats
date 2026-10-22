@@ -20,7 +20,7 @@ import { ClipboardList, Users, Medal, FileText, ArrowRight, Check, X } from 'luc
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminWorklist } from '@/lib/admin-worklist';
-import { resolvePhase, isGameDay } from '@/lib/tournament-phase';
+import { resolveEventPhase } from '@/lib/tournament-phase';
 import { resolveFlip, primaryTarget } from '@/lib/flip-twins';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
@@ -92,14 +92,12 @@ export default function AdminContextStrip() {
     if (!onTournamentRoute || onChatPage || !base || !currentTournament) return null;
     const regs = worklist.registrations ?? 0;
     const results = worklist.results ?? 0;
-    const phase = resolvePhase({
+    // The event header's own phase rule (G1 + dates passed, not yet marked complete).
+    const phase = resolveEventPhase({
       status: currentTournament.status,
-      // The one game-day rule (G1): the dates, or the first game having started — as the event header says.
-      isGameDay: isGameDay({
-        startDate: currentTournament.startDate,
-        endDate: currentTournament.endDate,
-        firstGameStarted: Boolean(currentTournament.firstGameStarted),
-      }),
+      startDate: currentTournament.startDate,
+      endDate: currentTournament.endDate,
+      firstGameStarted: Boolean(currentTournament.firstGameStarted),
     });
     // A finished event's door to Summary (Tournament admin redesign Stage 4, the /design review): never
     // offered on a plan without Summary (it would invite the organizer into a locked page), and it gives

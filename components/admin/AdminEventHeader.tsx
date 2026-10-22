@@ -17,7 +17,7 @@ import FlipPill from '@/components/shared/FlipPill';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminFlip } from '@/lib/use-admin-flip';
-import { resolvePhase, isGameDay, PHASE_LABEL } from '@/lib/tournament-phase';
+import { resolveEventPhase, PHASE_LABEL } from '@/lib/tournament-phase';
 import { formatEventDateRange } from '@/lib/timezone';
 import { kit as coachKit } from '@/components/coaches/kit';
 import styles from './kit/AdminKitEventHeader.module.css';
@@ -102,14 +102,14 @@ export default function AdminEventHeader() {
     eyebrow = currentOrg?.name ?? null;
     // ONE chip from ONE rule — the board's (G1): the dates, OR the first game having started, until the
     // event is marked complete. It used to read the dates alone, so after the last day it said "Open"
-    // while the dashboard below it said game day.
-    phase = resolvePhase({
+    // while the dashboard below it said game day. Past the last day it stays game day even with no game
+    // ever started — the organizer marking it complete is the only thing that ends it (the coach site
+    // reads the same status).
+    phase = resolveEventPhase({
       status: currentTournament.status,
-      isGameDay: isGameDay({
-        startDate: currentTournament.startDate,
-        endDate: currentTournament.endDate,
-        firstGameStarted: Boolean(currentTournament.firstGameStarted),
-      }),
+      startDate: currentTournament.startDate,
+      endDate: currentTournament.endDate,
+      firstGameStarted: Boolean(currentTournament.firstGameStarted),
     });
     phaseLabel = PHASE_LABEL[phase as keyof typeof PHASE_LABEL] ?? null;
     sub = formatEventDateRange(currentTournament.startDate, currentTournament.endDate, true);

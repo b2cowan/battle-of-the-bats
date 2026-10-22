@@ -39,7 +39,7 @@ import MoreSheetTiles, { type SheetTile } from '@/components/coaches/MoreSheetTi
 import MoreSheetFoot from '@/components/coaches/MoreSheetFoot';
 import { clubPhoneNav, tournamentSheetTiles } from '@/lib/nav-tiles';
 import { isKitLinkActive, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
-import { isGameDay, resolvePhase } from '@/lib/tournament-phase';
+import { resolveEventPhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefProgramCount } from './club/ClubBriefProvider';
 import { MESSAGES_TAB } from '@/lib/invite-only-words';
@@ -84,13 +84,11 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   // The PHASE picks the tabs, read with the header's own rule (the dates, or the first game having started) the way
   // the context strip reads it, so the header, the board and the bar can never disagree (owner, 2026-10-16).
   const phase = currentTournament
-    ? resolvePhase({
+    ? resolveEventPhase({
         status: currentTournament.status,
-        isGameDay: isGameDay({
-          startDate: currentTournament.startDate,
-          endDate: currentTournament.endDate,
-          firstGameStarted: Boolean(currentTournament.firstGameStarted),
-        }),
+        startDate: currentTournament.startDate,
+        endDate: currentTournament.endDate,
+        firstGameStarted: Boolean(currentTournament.firstGameStarted),
       })
     : 'draft';
   type TourItem = (typeof tournamentGroups)[number]['items'][number];

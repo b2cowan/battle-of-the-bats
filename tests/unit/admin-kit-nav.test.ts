@@ -281,7 +281,7 @@ describe('the admin kit nav — one model, two navs', () => {
     }
     const code = readCode('components/admin/kit/AdminKitBottomNav.tsx');
     assert.match(code, /tournamentBarKeys\(phase\)/, 'the bar reads the one phase rule');
-    assert.match(code, /isGameDay\(\{/, 'the phase is the header’s: the dates, or the first game having started');
+    assert.match(code, /resolveEventPhase\(\{/, 'the phase is the header’s: the dates, or the first game having started, until the organizer marks it complete');
     assert.doesNotMatch(code, /opsByKey\.get\('check-in'\)/, 'Check-in is never a tab of the bar');
     assert.match(code, /opsByKey\.get\('chat'\) \?\? relabel\(opsByKey\.get\('communication'\), MESSAGES_TAB\)/, 'Messages takes Chat’s place (M6)');
     assert.match(code, /useChatUnread\(tournamentBar && chatInNav\)/, 'no Chat count where Chat is no door');

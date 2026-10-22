@@ -98,7 +98,8 @@ function readStoredTeamId(): string | null {
 /** Lifecycle chip → pill class. live/game-day = true-lime fill; everything else info-tinted.
  *  ('complete' never renders — gated at the call sites, per the shipped A1 rule.) */
 function chipClass(state: string): string {
-  return state === 'live' || state === 'game_day'
+  // 'wrapping_up' (dates over, organizer hasn't marked it complete) wears the Game Day fill, without the live dot.
+  return state === 'live' || state === 'game_day' || state === 'wrapping_up'
     ? `${styles.chip} ${styles.chipLive}`
     : `${styles.chip} ${styles.chipInfo}`;
 }

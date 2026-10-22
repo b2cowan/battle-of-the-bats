@@ -822,7 +822,7 @@ export async function getCoachTeamContextsForUser(params: {
     const registrations: CoachTeamContextRegistration[] = team.registrations.map(reg => {
       const tournament = reg.tournamentId ? tournamentsById.get(reg.tournamentId) : null;
       const org = tournament?.org_id ? orgsById.get(tournament.org_id) : null;
-      const chipRaw = tournament ? deriveCoachLifecycleChip(tournament.start_date, tournament.end_date, today) : null;
+      const chipRaw = tournament ? deriveCoachLifecycleChip(tournament.start_date, tournament.end_date, today, tournament.status) : null;
       return {
         id: reg.id,
         tournamentId: reg.tournamentId,
@@ -848,8 +848,10 @@ export async function getCoachTeamContextsForUser(params: {
       }
     }
     // The team-only header's "next event" line follows the chip that drives `lifecycle`;
-    // a finished event (chip hidden per the A1 'complete' rule) gets no meta line either.
-    const nextEvent = best && best.state !== 'complete' && bestReg
+    // a finished event (chip hidden per the A1 'complete' rule) gets no meta line either — and neither
+    // does one whose dates are over but which the organizer hasn't closed ('wrapping_up'): it keeps
+    // its "Game Day" chip, but it is not a NEXT event.
+    const nextEvent = best && best.state !== 'complete' && best.state !== 'wrapping_up' && bestReg
       ? {
           registrationId: bestReg.id,
           name: bestReg.tournamentName,

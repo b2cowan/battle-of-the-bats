@@ -6,6 +6,10 @@
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
+/* The operator portal's shell already pads its content area (2rem), so the record's own 2rem top
+   padding doubled it — a 64px gap above the back link, on a page the other screens start 32px down.
+   `.page.pageInShell` (two classes) so the phone `.page { padding }` rule further down cannot override it. */
+.page.pageInShell { padding-top: 0; }
 
 /* Back link to the Tournaments list (both shells pass backHref) */
 .recordBackLink {

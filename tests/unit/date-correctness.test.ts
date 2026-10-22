@@ -44,14 +44,15 @@ describe('coach tournament phase — must not end an event that is still running
   };
 
   it('stays game_day at 8:30 PM on the closing night (the bug: flipped to result)', () => {
-    // The old behaviour, reproduced: deriving "today" from UTC ends the event a night early.
+    // With no status on hand the CALENDAR decides, so this still discriminates: the UTC date is the
+    // day after the event (the old bug), the tournament's own date is its closing day.
+    const noStatus = { ...base, tournamentStatus: null };
     assert.equal(
-      deriveCoachTournamentPhase({ ...base, today: EVENING_EDT.toISOString().slice(0, 10) }),
+      deriveCoachTournamentPhase({ ...noStatus, today: EVENING_EDT.toISOString().slice(0, 10) }),
       'result',
     );
-    // The fix.
     assert.equal(
-      deriveCoachTournamentPhase({ ...base, today: tournamentToday(EVENING_EDT) }),
+      deriveCoachTournamentPhase({ ...noStatus, today: tournamentToday(EVENING_EDT) }),
       'game_day',
     );
   });
@@ -68,11 +69,12 @@ describe('coach tournament phase — must not end an event that is still running
     );
   });
 
-  it('does end the event once the closing day is genuinely over', () => {
-    assert.equal(
-      deriveCoachTournamentPhase({ ...base, today: tournamentToday(new Date('2026-07-26T14:00:00Z')) }),
-      'result',
-    );
+  it('is a result only once the organizer marks the event complete (owner ruling 2026-10-21)', () => {
+    const after = tournamentToday(new Date('2026-07-26T14:00:00Z'));
+    assert.equal(deriveCoachTournamentPhase({ ...base, today: after }), 'game_day', 'dates passed, not marked complete');
+    assert.equal(deriveCoachTournamentPhase({ ...base, tournamentStatus: 'completed', today: after }), 'result');
+    assert.equal(deriveCoachTournamentPhase({ ...base, tournamentStatus: 'archived', today: after }), 'result');
+    assert.equal(deriveCoachTournamentPhase({ ...base, tournamentStatus: 'draft', today: after }), 'result', 'a draft was never live: the calendar decides');
   });
 });
 

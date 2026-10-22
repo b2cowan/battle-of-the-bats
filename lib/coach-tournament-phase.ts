@@ -49,14 +49,19 @@ export function deriveCoachTournamentPhase(input: DeriveCoachTournamentPhaseInpu
   // pending / waitlist / anything not explicitly accepted → still awaiting a decision.
   if (status !== 'accepted') return 'pending';
 
-  // Accepted from here — split by the event clock + schedule visibility.
-  const ended =
+  // Accepted from here — split by the organizer's status, the event clock and schedule visibility.
+  // "Over" is the ORGANIZER's word (owner ruling 2026-10-21): the event is a result only once they
+  // mark it completed (or archive it) — the same fact the admin header and the coach list chips read.
+  // Dates passed but not marked complete stays on game day while scores are finalized — for a
+  // published (`active`) event only; with no status on hand, or a draft, the calendar decides.
+  const endedByCalendar = input.endDate ? today > input.endDate : input.startDate ? today > input.startDate : false;
+  if (
     input.tournamentStatus === 'completed' ||
     input.tournamentStatus === 'archived' ||
-    (input.endDate ? today > input.endDate : input.startDate ? today > input.startDate : false);
-  if (ended) return 'result';
+    (endedByCalendar && input.tournamentStatus !== 'active')
+  ) return 'result';
 
-  // Started (and, per the `ended` check above, not past the end) → the event is underway.
+  // Started (past the end included, until the organizer closes it) → the event is underway.
   if (input.startDate && today >= input.startDate) return 'game_day';
 
   return input.scheduleVisible ? 'schedule_live' : 'accepted_prep';

@@ -63,6 +63,9 @@ type TournamentTeamHQProps = {
   organizerLogoUrl?: string | null;
   /** YYYY-MM-DD start date, for the accepted-prep countdown / headline. */
   startDate: string | null;
+  /** True when the event's last day is behind us but the organizer hasn't marked it complete — the
+   *  game-day hero then says final scores are being confirmed rather than "Game day!". */
+  datesPassed?: boolean;
   dateRangeLabel: string | null;
   /** 5m afterglow (result phase only) — final W-L-T from the team's completed games. */
   record?: { wins: number; losses: number; ties: number } | null;
@@ -272,6 +275,7 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     orgName,
     organizerLogoUrl,
     startDate,
+    datesPassed,
     dateRangeLabel,
     record,
     standingsHref,
@@ -316,7 +320,8 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   } else if (phase === 'result') {
     headline = "That's a wrap!";
   } else if (phase === 'game_day') {
-    headline = 'Game day!';
+    // Not "That's a wrap!" — that is the completed event's word, and the organizer hasn't said so yet.
+    headline = datesPassed ? 'Wrapping up' : 'Game day!';
   } else {
     headline = "You're in!";
   }
@@ -412,7 +417,9 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
             </strong>
           </p>
         ) : (
-          <p className={styles.heroCountdown}><strong>Event underway</strong></p>
+          <p className={styles.heroCountdown}>
+            <strong>{datesPassed ? 'Final scores are being confirmed' : 'Event underway'}</strong>
+          </p>
         )
       )}
       {/* Result trophy card (5m). Champion styling ("Champions!" + Trophy) is gated on a

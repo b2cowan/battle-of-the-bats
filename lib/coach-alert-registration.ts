@@ -25,7 +25,7 @@ export interface AlertHistoryEntry {
 }
 
 /** The minimum an entry must carry to be ordered by which event is actually HAPPENING. */
-type DatedEntry = { tournament?: { startDate?: string | null; endDate?: string | null } | null };
+type DatedEntry = { tournament?: { startDate?: string | null; endDate?: string | null; status?: string | null } | null };
 
 /** …plus the registration's own standing, for the one decision that must not ignore it. */
 type StandingEntry = DatedEntry & { registration?: { status?: string | null } | null };
@@ -44,6 +44,7 @@ function liveFirst<T extends DatedEntry>(history: T[], today?: string): T[] {
     entry => entry.tournament?.startDate ?? null,
     entry => entry.tournament?.endDate ?? null,
     today,
+    entry => entry.tournament?.status ?? null,
   );
 }
 
@@ -100,6 +101,8 @@ export interface FanViewRegistration {
   name: string | null;
   startDate: string | null;
   endDate: string | null;
+  /** The tournament's own status — the organizer's word on whether the event is over. */
+  status: string | null;
 }
 
 /**
@@ -108,10 +111,11 @@ export interface FanViewRegistration {
  * event. A finished event's flip lives on its record page + list rows only (owner call 2026-07-23,
  * rev-3 mockups), which is why this stays narrower than `resolveRowFanView`.
  *
- * ⚠ `status === 'active'` is the tournament's PUBLICATION state (`draft|active|completed|archived`),
- * NOT its lifecycle — an event that finished last week is still `active` until its organizer marks
- * it completed. So this can legitimately return a past event, which is exactly why
- * `CoachLiveEventCard` grew its `Finished` chip (Chunk I). What it must never do is return a FUTURE
+ * ⚠ `status === 'active'` is the tournament's PUBLICATION state (`draft|active|completed|archived`) —
+ * an event whose dates passed last week is still `active` until its organizer marks it completed, and
+ * the card reads "Game day" until then (owner ruling 2026-10-21: the organizer's status decides). So
+ * this can legitimately return a past event; `Finished` only ever shows once that status says so (a
+ * completed event no longer passes this `active` filter, so the chip is for callers that hand one in). What it must never do is return a FUTURE
  * event while a live one is running: hence the lifecycle ordering below (DF-2). The callers pass
  * history in `registeredAt` order, which is not an ordering this function can trust.
  */
@@ -130,5 +134,6 @@ export function pickFanViewRegistration(
     name: tournament.name ?? null,
     startDate: tournament.startDate ?? null,
     endDate: tournament.endDate ?? null,
+    status: tournament.status ?? null,
   };
 }

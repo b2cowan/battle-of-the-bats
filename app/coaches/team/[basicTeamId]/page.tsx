@@ -208,6 +208,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
             registrationStatus={featured.registration.status}
             startDate={featured.tournament?.startDate ?? null}
             endDate={featured.tournament?.endDate ?? null}
+            tournamentStatus={featured.tournament?.status ?? null}
             today={today}
             metaParts={[featured.org?.name]}
             fanView={featuredFanView}

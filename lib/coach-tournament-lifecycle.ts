@@ -10,13 +10,13 @@ import { tournamentToday } from './timezone';
  * Pure (dates → state); `today` is injectable for testing.
  */
 
-export type CoachLifecycleState = 'live' | 'game_day' | 'upcoming' | 'future' | 'complete' | 'unknown';
+export type CoachLifecycleState = 'live' | 'game_day' | 'wrapping_up' | 'upcoming' | 'future' | 'complete' | 'unknown';
 
 export type CoachLifecycleChip = {
   state: CoachLifecycleState;
   /** Display label: "LIVE" / "GAME DAY" / "In 5 days" / "Jun 2026" / "Complete". */
   label: string;
-  /** Sort rank — lower sorts first (live → game-day → upcoming → future → complete → unknown). */
+  /** Sort rank — lower sorts first (live → game-day → upcoming → future → wrapping up → complete → unknown). */
   rank: number;
 };
 
@@ -30,25 +30,42 @@ function daysBetween(fromISO: string, toISO: string): number {
 }
 
 /**
- * Derive the lifecycle chip for a tournament from its start/end dates.
+ * Derive the lifecycle chip for a tournament from its start/end dates AND the organizer's status.
+ * - complete: the ORGANIZER marked the event completed (or archived) — the only thing that makes
+ *   an event "Complete" (owner ruling 2026-10-21: the organizer's status is the single source of
+ *   truth; the admin event header reads the same fact, so the two portals cannot disagree).
+ * - wrapping_up: the dates have passed but the organizer hasn't marked it complete — scores are
+ *   still being finalized. Reads "Game Day", exactly as the admin header does for the same event.
  * - live: today is within [start, end] (dates straddle today)
  * - game_day: start === today (single-day event, or start day of a multi-day before `live` applies)
  * - upcoming: 1–14 days before start
  * - future: > 14 days before start
- * - complete: today > end (or > start when no end)
  * - unknown: no start date (TBD) — sorts last, renders nothing.
+ *
+ * `status` is `tournaments.status`. `null` means a caller with no status on hand, and a `draft` was
+ * never live: for both the calendar decides, as it did before, so neither is left stuck at "Game Day".
  */
 export function deriveCoachLifecycleChip(
   startDate: string | null,
   endDate: string | null,
   today: string = tournamentToday(),
+  status: string | null = null,
 ): CoachLifecycleChip {
-  if (!startDate) return { state: 'unknown', label: '', rank: 5 };
+  if (status === 'completed' || status === 'archived') return { state: 'complete', label: 'Complete', rank: 5 };
+  if (!startDate) return { state: 'unknown', label: '', rank: 6 };
 
   const end = endDate ?? startDate;
 
-  // Complete: the event is over.
-  if (today > end) return { state: 'complete', label: 'Complete', rank: 4 };
+  // The dates are over. With a status on hand the organizer decides when it is "Complete"; until
+  // then the event is still wrapping up. Only a PUBLISHED (`active`) event can be wrapping up: with
+  // no status on hand, or a draft that was never live, the calendar decides. A wrapping-up event
+  // wears the "Game Day" word but sorts BELOW anything still ahead: it is behind the coach, and an
+  // event an organizer never closes must not sit above the next real tournament forever.
+  if (today > end) {
+    return status === 'active'
+      ? { state: 'wrapping_up', label: 'Game Day', rank: 4 }
+      : { state: 'complete', label: 'Complete', rank: 5 };
+  }
 
   // Inside the event window: the opening day (single- or multi-day) reads as "game day";
   // any later day of a multi-day event whose window straddles today reads as "live".
@@ -73,8 +90,8 @@ export function deriveCoachLifecycleChip(
 
 /**
  * Live-first sort (§3c/§3d): order a list of tournament-bearing items by lifecycle chip rank
- * (live → game-day → upcoming → future → complete → unknown). Within a bucket: soonest start
- * first for anything still ahead, but the COMPLETE bucket reads as history — most recent first
+ * (live → game-day → upcoming → future → wrapping up → complete → unknown). Within a bucket: soonest
+ * start first for anything still ahead, but the WRAPPING-UP and COMPLETE buckets read as history — most recent first
  * (a flat premium list would otherwise open its "Complete" tail with the oldest season).
  * Null start dates sort last in either direction. Derives each item's chip exactly once (not
  * per comparison) via a decorate-sort-undecorate pass. `getStart`/`getEnd` let callers pass
@@ -85,13 +102,14 @@ export function sortByCoachLifecycle<T>(
   getStart: (item: T) => string | null,
   getEnd: (item: T) => string | null,
   today: string = tournamentToday(),
+  getStatus: (item: T) => string | null = () => null,
 ): T[] {
   return items
-    .map(item => ({ item, chip: deriveCoachLifecycleChip(getStart(item), getEnd(item), today) }))
+    .map(item => ({ item, chip: deriveCoachLifecycleChip(getStart(item), getEnd(item), today, getStatus(item)) }))
     .sort((a, b) => {
       const rankDiff = a.chip.rank - b.chip.rank;
       if (rankDiff !== 0) return rankDiff;
-      const desc = a.chip.state === 'complete';
+      const desc = a.chip.state === 'complete' || a.chip.state === 'wrapping_up';
       const sentinel = desc ? '0000-01-01' : '9999-12-31';
       const aStart = getStart(a.item) ?? sentinel;
       const bStart = getStart(b.item) ?? sentinel;
@@ -106,6 +124,7 @@ export function lifecycleChipClassKey(state: CoachLifecycleState): string {
     case 'live':
       return 'Live';
     case 'game_day':
+    case 'wrapping_up':
       return 'GameDay';
     case 'upcoming':
       return 'Upcoming';

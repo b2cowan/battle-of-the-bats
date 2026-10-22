@@ -38,7 +38,7 @@ export default function CoachLiveEventCard({
   layout?: 'card' | 'row';
 }) {
   const today = tournamentToday();
-  const chip = deriveCoachLifecycleChip(event.startDate, event.endDate, today);
+  const chip = deriveCoachLifecycleChip(event.startDate, event.endDate, today, event.status);
   const live = chip.state === 'live' || chip.state === 'game_day';
   const upcoming = chip.state === 'upcoming' || chip.state === 'future';
   const dates = formatEventDateRange(event.startDate, event.endDate, true);
@@ -50,6 +50,10 @@ export default function CoachLiveEventCard({
     </span>
   ) : upcoming ? (
     <span className={`${styles.chip} ${styles.chipUpcoming}`}>Upcoming</span>
+  ) : chip.state === 'wrapping_up' ? (
+    // The dates are over but the organizer hasn't marked the event complete — scores are still being
+    // finalized. "Live now" would be false and "Finished" would contradict the organizer's own screen.
+    <span className={`${styles.chip} ${styles.chipLive}`}>Game day</span>
   ) : chip.state === 'complete' ? (
     // Chunk I: a FINISHED event used to render with no chip at all — the card drew Live or
     // Upcoming and then went silent, so a tournament that ended two weeks ago sat in exactly the

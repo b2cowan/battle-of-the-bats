@@ -169,7 +169,9 @@ export function isGameDay(opts: {
   firstGameStarted: boolean;
   today?: string;
 }): boolean {
-  return isWithinEventDates(opts.startDate, opts.endDate, opts.today) || opts.firstGameStarted;
+  // A single-day event may store no end date: it ends on its start date (the coach chip and the
+  // dates-passed rule below read it the same way), so the day itself is game day.
+  return isWithinEventDates(opts.startDate, opts.endDate ?? opts.startDate, opts.today) || opts.firstGameStarted;
 }
 
 export function resolvePhase(opts: { status?: string | null; isGameDay: boolean }): TournamentPhase {
@@ -179,6 +181,28 @@ export function resolvePhase(opts: { status?: string | null; isGameDay: boolean 
   if (status === 'draft') return 'draft';
   // active (or anything else) → split by game-day
   return isGameDay ? 'gameday' : 'open';
+}
+
+/**
+ * THE phase an organizer-facing chrome (header chip, context strip, phone bar) shows. `resolvePhase`
+ * over the game-day rule, plus one more fact: an ACTIVE event whose dates have passed is still on
+ * game day — it was never "Open" again. Only the organizer marking it complete ends it (owner ruling
+ * 2026-10-21: the organizer's status is the single source of truth, read by the coach portal's chips
+ * too). Before, an event whose dates had passed with no game ever started fell through to "Open", while
+ * the coach site said "Complete". `isGameDay` itself is untouched — the dashboard's board still tells
+ * "dates passed, scores to finalize" apart from a live day.
+ */
+export function resolveEventPhase(opts: {
+  status?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  firstGameStarted: boolean;
+  today?: string;
+}): TournamentPhase {
+  const today = opts.today ?? tournamentToday();
+  const end = opts.endDate ?? opts.startDate;
+  const datesPassed = Boolean(end) && today > (end as string);
+  return resolvePhase({ status: opts.status, isGameDay: isGameDay(opts) || datesPassed });
 }
 
 export const PHASE_LABEL: Record<TournamentPhase, string> = {
