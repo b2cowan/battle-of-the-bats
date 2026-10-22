@@ -2,18 +2,19 @@
 
 **Generated:** 2026-10-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 101 divergence(s)** across dev/prod.
+**⚠️ 133 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 5 | 0 | — |
-| Columns | 46 | 0 | 0 |
-| Indexes | 14 | 0 | 0 |
-| Constraints | 22 | 0 | — |
-| RLS / CHECK | 14 | 0 | 0 (RLS state) |
+| Tables | 6 | 0 | — |
+| Columns | 62 | 0 | 0 |
+| Indexes | 16 | 0 | 0 |
+| Constraints | 25 | 0 | — |
+| RLS / CHECK | 24 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (5)
+### Only in DEV (6)
+- `family_email_sends`
 - `org_site_notices`
 - `tournament_fee_book_settings`
 - `tournament_fee_receipt_allocations`
@@ -24,7 +25,23 @@
 _none_
 
 ## Columns
-### Only in DEV (46)
+### Only in DEV (62)
+- `family_email_sends.audience_kind`
+- `family_email_sends.audience_label`
+- `family_email_sends.body`
+- `family_email_sends.coach_count`
+- `family_email_sends.failed_count`
+- `family_email_sends.family_count`
+- `family_email_sends.id`
+- `family_email_sends.opted_out_count`
+- `family_email_sends.org_id`
+- `family_email_sends.reached_count`
+- `family_email_sends.season_id`
+- `family_email_sends.sent_at`
+- `family_email_sends.sent_by`
+- `family_email_sends.status`
+- `family_email_sends.subject`
+- `family_email_sends.team_ids`
 - `org_public_site_content.contacts`
 - `org_public_site_content.documents`
 - `org_public_site_content.home_section_order`
@@ -79,7 +96,9 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (14)
+### Only in DEV (16)
+- `family_email_sends_org_sent_idx`
+- `family_email_sends_pkey`
 - `org_site_notices_org_idx`
 - `org_site_notices_pkey`
 - `tournament_fee_allocations_team_idx`
@@ -102,7 +121,10 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (22)
+### Only in DEV (25)
+- `family_email_sends.family_email_sends_org_id_fkey`
+- `family_email_sends.family_email_sends_pkey`
+- `family_email_sends.family_email_sends_sent_by_fkey`
 - `org_site_notices.org_site_notices_org_fk`
 - `org_site_notices.org_site_notices_pkey`
 - `teams.teams_fee_changed_by_fkey`
@@ -133,7 +155,17 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (14)
+### CHECK only in DEV (24)
+- `family_email_sends.family_email_sends_audience_kind_check`
+- `family_email_sends.family_email_sends_audience_label_check`
+- `family_email_sends.family_email_sends_body_check`
+- `family_email_sends.family_email_sends_coach_count_check`
+- `family_email_sends.family_email_sends_failed_count_check`
+- `family_email_sends.family_email_sends_family_count_check`
+- `family_email_sends.family_email_sends_opted_out_count_check`
+- `family_email_sends.family_email_sends_reached_count_check`
+- `family_email_sends.family_email_sends_status_check`
+- `family_email_sends.family_email_sends_subject_check`
 - `org_public_site_content.org_public_site_content_contacts_cap`
 - `org_public_site_content.org_public_site_content_documents_cap`
 - `org_public_site_content.org_public_site_content_home_section_order_known`

@@ -9,6 +9,7 @@
 import { formatStoredDate, orgDayKey, tournamentToday, utcToZonedInputs } from './timezone';
 import { formatTime, joinWithAnd, pluralize, possessive } from './utils';
 import { HANDOFF_ACTIONS } from './notification-view';
+import type { FamilyListKey } from './families-lists';
 
 /** ⚠ Three messages for one family in any rolling 24 hours (Ask 9). The SAME number is `v_cap` in
  *  family_message_claim (mig 334) — tests/unit/families-stage5a-guard.test.ts holds the two equal. */
@@ -23,6 +24,12 @@ const day = (iso: string) => formatStoredDate(iso);
 const clock = (iso: string) => formatTime(utcToZonedInputs(iso).time);
 
 /** When the next message can go, said as the time it opens (a rolling day can open later today, not only tomorrow). */
+/** Whether a stored instant falls in the club's current year (a log says the year only when it is not this one). */
+const inThisYear = (iso: string) => orgDayKey(iso).slice(0, 4) === tournamentToday().slice(0, 4);
+
+/** A sentence ends once: a clock time already ends in its own period ("1:42 p.m."). */
+const closed = (s: string) => (s.endsWith('.') ? s : `${s}.`);
+
 function whenNext(nextAt: string | null): string {
   if (!nextAt) return 'later';
   const when = clock(nextAt);
@@ -62,10 +69,10 @@ export const FAMILY_MESSAGE_WORDS = {
   /** On the page, where the door was: the family cannot be reached at all. */
   optedOutReason: 'This family has opted out of club email, so they can’t be messaged from here.',
   /** On the page, where the door was: today's three are spent. */
-  capReason: (nextAt: string | null) => `${FAMILY_MESSAGE_CAP} messages from here in the last 24 hours. The next can go ${whenNext(nextAt)}.`,
+  capReason: (nextAt: string | null) => closed(`${FAMILY_MESSAGE_CAP} messages from here in the last 24 hours. The next can go ${whenNext(nextAt)}`),
   /** In the window's foot, in Send's place (amber, the count first — the 10-12 ruling): a send that lost a race. */
   capRace: (nextAt: string | null) =>
-    `${FAMILY_MESSAGE_CAP} messages to this family in the last 24 hours, so this one wasn’t sent. It can go ${whenNext(nextAt)}.`,
+    closed(`${FAMILY_MESSAGE_CAP} messages to this family in the last 24 hours, so this one wasn’t sent. It can go ${whenNext(nextAt)}`),
   /** The window's foot when the whole family has opted out since it opened. */
   optedOutRace: 'This family has opted out of club email, so this wasn’t sent.',
 } as const;
@@ -317,6 +324,128 @@ export const FAMILY_COACH_ASK_WORDS = {
   /** The coach's "Your club" bell. */
   bellTitle: 'Your club needs guardian emails',
   bellBody: (team: string, n: number) => `${pluralize(n, 'player')} on ${team} ${n === 1 ? 'needs' : 'need'} a guardian’s email. Add ${n === 1 ? 'it' : 'them'} on your Roster.`,
+} as const;
+
+/** ⚠ Three Email families sends per CLUB in any rolling 24 hours (Stage 7c, Ask 7 A; owner 2026-10-22, Put to the owner
+ *  2: Email families sends only — a one-household message never counts toward it). The SAME number is `v_cap` in
+ *  family_email_claim (mig 347) — tests/unit/families-email.test.ts holds the two equal. */
+export const CLUB_EMAIL_CAP = 3;
+
+/** A row of the Emails tab still "sending" this long after it began stopped partway (the server died mid-send): it reads
+ *  "Stopped at x of y" (owner 2026-10-22, Put to the owner 4 — no Resume; a resend is a new send). A send of a few
+ *  hundred families takes seconds, so a quarter of an hour is never a send still going. */
+export const CLUB_EMAIL_STOPPED_AFTER_MS = 15 * 60 * 1000;
+
+/**
+ * EMAIL FAMILIES and the EMAILS TAB (Club Tier Stage 7c — Asks 6, 7; drawings 4 and 5). Drafts as drawn, for /marketing's
+ * pass on exactly these. ⚠ Never the word "Messages" (the chat pause's E2 owns it); the unit is "families" everywhere.
+ */
+/** The log's To for a send to everyone — the head coach copy's wording reads it too, so the two cannot drift. */
+const AUDIENCE_EVERY = 'Every family';
+
+export const FAMILY_EMAIL_WORDS = {
+  door: 'Email families',
+  /** On a Families list (Owes money …): the same window with that list chosen. */
+  doorThese: 'Email these families',
+  title: 'Email families',
+  eyebrow: 'Families',
+  statement: 'Sends one email to each family you choose, from the club, with your address to reply to. A family that opted out of club email is skipped.',
+  who: 'Who',
+  every: 'Every family',
+  everySub: (rep: boolean, league: boolean) => (rep && league ? 'Rep teams and house league, each family once' : 'Each family once'),
+  teams: 'Some rep teams',
+  teamsSub: 'Pick the teams',
+  season: 'A house league season',
+  seasonLabel: 'Season',
+  /** Families from one of the Families tab's lists (Owes money …): the same names as the Show pill. */
+  list: 'Families from a list',
+  listSub: 'The same lists as on Families',
+  listLabel: 'List',
+  count: (n: number) => pluralize(n, 'family', 'families'),
+  copyCoaches: (n: number) => `Copy each team’s head coach · ${pluralize(n, 'coach', 'coaches')}, as colleagues`,
+  subject: 'Subject',
+  message: 'Message',
+  nobodyLead: 'Nobody to send to:',
+  noFamily: (n: number) => `${pluralize(n, 'child', 'children')} ${n === 1 ? 'has' : 'have'} no family on file.`,
+  showThem: 'Show them',
+  seeEmail: 'See the email',
+  lastSent: 'Last sent',
+  lastSentValue: (at: string, by: string | null, subject: string, families: number) =>
+    `${day(at)}${by ? ` by ${by}` : ''} · “${subject}” · ${pluralize(families, 'family', 'families')}`,
+  neverSent: 'Not sent from here yet',
+  /** The foot's sentence, left of the buttons: who it reaches, then who it won't. */
+  reach: (n: number, optedOut: number) =>
+    `${pluralize(n, 'family', 'families')} ${n === 1 ? 'gets' : 'get'} it.${optedOut > 0 ? ` ${optedOut} opted out and won’t.` : ''}`,
+  youNotCounted: 'You are not counted.',
+  cancel: 'Cancel',
+  send: (n: number) => `Send to ${n}`,
+  sending: 'Sending…',
+  sent: (reached: number, of: number) => `Sent. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
+  coachesCopied: (n: number) => `${pluralize(n, 'head coach', 'head coaches')} copied.`,
+  capReason: (nextAt: string | null) =>
+    closed(`Your club has sent ${CLUB_EMAIL_CAP} emails to families in the last 24 hours. The next can go ${whenNext(nextAt)}`),
+  justSent: 'This was just sent. Check Last sent before sending it again.',
+  changed: (n: number) => `Who this reaches changed while you were writing: it now goes to ${pluralize(n, 'family', 'families')}. Check it and send again.`,
+  nobodyOptedOut: 'Every family in this choice opted out of club email, so nobody would get it.',
+  nobodyAtAll: 'There are no families to send to yet.',
+  pickTeams: 'Pick at least one team.',
+  pickSeason: 'Pick a season.',
+  needSubject: 'Add a subject.',
+  needMessage: 'Write a message.',
+  tooLong: 'The subject can be up to 200 characters, and the message up to 5,000.',
+  failed: 'The email couldn’t be sent. Please try again.',
+  sentNoneDelivered: 'This didn’t reach any family, so it doesn’t count toward the three a day. Please try again.',
+  unknown: 'We couldn’t tell whether this went out. Check the Emails tab before you send it again.',
+  loadFailed: 'We couldn’t load who this would reach.',
+  tryAgain: 'Try again',
+  /** Who it went to, in words — the log's To. */
+  audienceEvery: AUDIENCE_EVERY,
+  audienceTeams: (names: readonly string[]) => names.join(' · '),
+  audienceList: (list: FamilyListKey) => `Families · ${FAMILY_LIST_WORDS.questions[list]}`,
+  /** The head coach's colleague copy (house mail, never the family envelope). */
+  coachSubject: (subject: string) => `Copy: ${subject}`,
+  coachGreeting: (name: string | null) => (name ? `Hi ${name},` : 'Hi,'),
+  coachLead: (org: string, audience: string, families: number) =>
+    `A copy of the email ${org} sent to ${audience === AUDIENCE_EVERY ? 'every family' : `the families of ${audience}`} (${pluralize(families, 'family', 'families')}). You’re getting it as a head coach. Families don’t see this note.`,
+  coachOutro: (sender: string) => `Reply to this email to reach ${sender}.`,
+} as const;
+
+/** The Emails tab (drawing 5): every email the club sent from Families, newest first. Nothing here is editable. */
+export const FAMILY_EMAILS_TAB_WORDS = {
+  tab: 'Emails',
+  lede: (n: number) => `${pluralize(n, 'email')} sent from Families`,
+  colSent: 'Sent',
+  colSubject: 'Subject',
+  colTo: 'To',
+  colBy: 'By',
+  colReached: 'Reached',
+  reached: (reached: number, of: number) => `${reached} of ${of}`,
+  sending: 'Sending…',
+  stopped: (reached: number, of: number) => `Stopped at ${reached} of ${of}`,
+  /** The log row's status chip for a send that stopped partway (its figures follow, as for any send). */
+  stoppedChip: 'Stopped',
+  /** A one-household message (Stage 5a) keeps its date and sender, never its words or a count. */
+  oneFamily: '1 family',
+  oneFamilySubject: 'A message to this family',
+  // This year's emails are "Oct 22 · 1:44 p.m." (drawing 5); an earlier year keeps its year.
+  sentAt: (at: string) => `${formatStoredDate(at, { withYear: !inThisYear(at) })} · ${clock(at)}`,
+  emptyTitle: 'No emails yet',
+  emptyBody: 'Emails sent from Families, to every family, some teams, a season or one family, are listed here.',
+  loadFailed: 'The emails didn’t load.',
+  showMore: 'Show more',
+  open: (subject: string) => `Open ${subject}`,
+  /** The row's window: the email as sent and its counts — never a list of families (owner 2026-10-22). */
+  factSent: 'Sent',
+  factBy: 'By',
+  factTo: 'To',
+  factGoingTo: 'Going to',
+  factReached: 'Reached',
+  factOptedOut: 'Opted out',
+  factFailed: 'Didn’t go',
+  factCoaches: 'Head coaches copied',
+  reachedNote: 'Reached counts the families whose email the mail service accepted. An email that bounces later isn’t shown here.',
+  stoppedNote: 'This send stopped partway. The families it hadn’t reached yet didn’t get it; send it again to reach them.',
+  oneFamilyNote: 'A message to one family keeps its date and who sent it, never its words.',
 } as const;
 
 /** The Members grant (Ask 12): Families is never given to a member limited to a group of teams. */

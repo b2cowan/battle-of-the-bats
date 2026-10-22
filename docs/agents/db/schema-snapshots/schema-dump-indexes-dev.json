@@ -855,6 +855,16 @@
     "indexdef": "CREATE UNIQUE INDEX family_email_optouts_pkey ON public.family_email_optouts USING btree (id)"
   },
   {
+    "tablename": "family_email_sends",
+    "indexname": "family_email_sends_org_sent_idx",
+    "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
+  },
+  {
+    "tablename": "family_email_sends",
+    "indexname": "family_email_sends_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_email_sends_pkey ON public.family_email_sends USING btree (id)"
+  },
+  {
     "tablename": "family_links",
     "indexname": "family_links_calendar_token_hash_key",
     "indexdef": "CREATE UNIQUE INDEX family_links_calendar_token_hash_key ON public.family_links USING btree (calendar_token_hash)"

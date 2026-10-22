@@ -1,8 +1,8 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { sendEmail, escapeHtml, type SendEmailResult } from './email';
+import { sendEmail, sendEmailBatch, EMAIL_BATCH_SIZE, escapeHtml, type SendEmailResult } from './email';
 import { buildGuardianUnsubscribeUrl } from './unsubscribe-token';
-import { normalizeGuardianEmail } from './guardian-email';
+import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-email';
 import { fetchAll as readAllPaged, chunked } from './supabase-paging';
 import { familyEnvelopeFooterWords } from './family-mail-footer';
 
@@ -184,4 +184,52 @@ export async function sendFamilyEmail(params: {
   if (suppressed.has(to)) return { status: 'suppressed' };
 
   return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to), { replyTo: params.replyTo ?? null });
+}
+
+/**
+ * The same door for MANY families at once (Club Tier Stage 7c — Families' Email families). Every address passes the
+ * same guard `sendFamilyEmail` runs — normalized, checked against the suppression list, given its OWN footer and
+ * unsubscribe link — and the ones left go to the provider `EMAIL_BATCH_SIZE` at a time, one batch after the other.
+ * Each address's result comes back in the map (an opted-out one is `'suppressed'` and was never handed to the
+ * transport). A batch whose request throws (a network failure) is a `'provider_error'` for its addresses, never an
+ * escaped error: the caller's claim must always be completed or given back. `onBatch` runs after each batch with the
+ * results so far, so a caller can record progress as it goes.
+ */
+export async function sendFamilyEmailBatch(params: {
+  orgId: string;
+  to: readonly string[];
+  subject: string;
+  content: FamilyEmailContent;
+  suppressed: Set<string>;
+  replyTo?: string | null;
+  onBatch?: (results: ReadonlyMap<string, FamilySendResult>) => Promise<void>;
+}): Promise<Map<string, FamilySendResult>> {
+  const results = new Map<string, FamilySendResult>();
+  const going = new Set<string>();
+  for (const raw of params.to) {
+    const to = normalizeGuardianEmail(raw);
+    if (!to || going.has(to) || results.has(to)) continue;
+    if (params.suppressed.has(to)) results.set(to, { status: 'suppressed' });
+    // The provider takes a batch whole or not at all: one address that is not an address would fail its 99 neighbours.
+    else if (!isSendableGuardianEmail(to)) results.set(to, { status: 'provider_error' });
+    else going.add(to);
+  }
+  for (const chunk of chunked([...going], EMAIL_BATCH_SIZE)) {
+    let result: SendEmailResult;
+    try {
+      result = await sendEmailBatch(chunk.map(to => ({
+        to, subject: params.subject, html: familyEmailHtml(params.content, params.orgId, to), replyTo: params.replyTo ?? null,
+      })));
+    } catch (err) {
+      console.error('[family-email] a batch threw:', err instanceof Error ? err.message : String(err));
+      result = { status: 'provider_error' };
+    }
+    for (const to of chunk) results.set(to, result);
+    // Progress is the caller's record, never the send's: a recorder that throws must not stop the batches still to go.
+    if (params.onBatch) {
+      try { await params.onBatch(results); }
+      catch (err) { console.error('[family-email] a batch progress recorder threw (the send goes on):', err instanceof Error ? err.message : String(err)); }
+    }
+  }
+  return results;
 }

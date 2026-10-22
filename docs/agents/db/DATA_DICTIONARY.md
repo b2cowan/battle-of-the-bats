@@ -6109,6 +6109,88 @@ send, kept when a team is later archived.
 <!-- dict:col:family_coach_asks.recipient_count -->
 **`recipient_count`** (integer NOT NULL ≥ 0) — how many coaches were emailed.
 
+## `family_email_sends`
+<!-- dict:table:family_email_sends -->
+
+**Purpose:** one row per Families **Email families** send (Club Tier Stage 7c, Asks 6 and 7, **mig 347**) — the club
+emailing every family, some rep teams' families or one house-league season's. It keeps **the subject, the message, who
+it went to (the audience's kind and its description) and counts** — and **NEVER a list of families or addresses** (owner
+2026-10-22, Put to the owner 1, option a: "who bounced" is a count, never names). The one row is the send's **claim**
+(written before any email goes), the club's **cap** (three per club in any rolling 24 hours) and the **record** (the
+Emails tab on Families; "Last sent … by …" in the window). **Service-role only** (RLS enabled, no policies). A
+one-household message is NOT here — it stays a date and a sender in `family_messages` (the Stage 5a rule, unchanged);
+the Emails tab merges the two.
+
+**Gotchas:**
+
+1. **Inserted only by `family_email_claim(org, actor, subject, body, kind, label, team_ids, season_id, family_count,
+   opted_out_count)`** — a per-club `pg_advisory_xact_lock`, then "anything in the last 60 seconds?" (`just_sent`), then
+   the cap (`v_cap` = 3 in the rolling 24 hours, refused `cap` with `nextAt`), then the insert. The SAME 3 is
+   `CLUB_EMAIL_CAP` in `lib/families-words.ts` (held equal by `tests/unit/families-email.test.ts`). ⚠ A **different
+   number in a different place** from `family_message_claim`'s per-FAMILY three: a one-household message never counts
+   toward this cap, and an Email families send never counts toward a family's own three.
+2. **The send route then UPDATEs or DELETEs that one row** (`lib/families-email.ts`): the counts after each batch of 100
+   (so a send the server never finished reads "Stopped at x of y"), then `status = 'done'`; a send that **reached
+   nobody** deletes its row, so it neither spends the day nor reads as Last sent.
+3. **"Reached" is not a delivery receipt.** The platform takes no bounce reports from the mail service: `reached_count`
+   is families at least one of whose addresses the service ACCEPTED. A later bounce never changes it.
+4. **A row still `sending` 15 minutes after `sent_at` is read as stopped** by the app (`CLUB_EMAIL_STOPPED_AFTER_MS`) —
+   no job rewrites it. There is no Resume (owner, Put to the owner 4): a resend is a new send against the cap.
+5. **The unit is FAMILIES** (households — Families' household rule, each once), never addresses: `family_count`,
+   `opted_out_count`, `reached_count` and `failed_count` all count families.
+
+<!-- dict:col:family_email_sends.id -->
+<!-- dict:col:family_email_sends.org_id -->
+**`id`** / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed with `sent_at DESC` as
+`family_email_sends_org_sent_idx`).
+
+<!-- dict:col:family_email_sends.sent_by -->
+**`sent_by`** (uuid, FK → `auth.users` ON DELETE SET NULL) — who sent it, named through `resolvePersonNamer`. Replies
+went to their address.
+
+<!-- dict:col:family_email_sends.sent_at -->
+**`sent_at`** (timestamptz NOT NULL, default now()) — the claim's time, which is the send's; the cap's clock.
+
+<!-- dict:col:family_email_sends.subject -->
+<!-- dict:col:family_email_sends.body -->
+**`subject`** (text NOT NULL, 1–200) / **`body`** (text NOT NULL, 1–5000) — the email as sent (the window's limits).
+
+<!-- dict:col:family_email_sends.audience_kind -->
+**`audience_kind`** (text NOT NULL: `every` · `teams` · `season` · `list`) — `every` = each family with a child on a live team or
+in an open season (never a tryout-only applicant); `teams` = the families of the rep teams in `team_ids`; `season` = the
+families of the house-league season `season_id`; `list` = the families on one Families list (Owes money, Missing forms, No
+consent on file, Not back this season — mig 348), named in `audience_label` ("Families · Owes money").
+
+<!-- dict:col:family_email_sends.audience_label -->
+**`audience_label`** (text NOT NULL, 1–500) — who it went to, in words, as the Emails tab's To shows it ("Every family",
+"15U AAA · 14U AA", "Fall 2026"), frozen at the send.
+
+<!-- dict:col:family_email_sends.team_ids -->
+<!-- dict:col:family_email_sends.season_id -->
+**`team_ids`** (uuid[] NOT NULL, default '{}') / **`season_id`** (uuid) — the teams or the season picked. Not FK-checked:
+a record of a send, kept when a team or a season is later archived.
+
+<!-- dict:col:family_email_sends.family_count -->
+**`family_count`** (integer NOT NULL ≥ 0) — families it was going to (the lime's "Send to N"; opted-out families and the
+sender not counted).
+
+<!-- dict:col:family_email_sends.opted_out_count -->
+**`opted_out_count`** (integer NOT NULL ≥ 0) — families in the audience skipped because every address opted out.
+
+<!-- dict:col:family_email_sends.reached_count -->
+**`reached_count`** (integer NOT NULL ≥ 0) — families at least one of whose addresses the mail service accepted
+(gotcha 3). Updated after each batch.
+
+<!-- dict:col:family_email_sends.failed_count -->
+**`failed_count`** (integer NOT NULL ≥ 0) — families none of whose addresses the mail service accepted.
+
+<!-- dict:col:family_email_sends.coach_count -->
+**`coach_count`** (integer NOT NULL ≥ 0) — head coaches sent a colleague copy, each once.
+
+<!-- dict:col:family_email_sends.status -->
+**`status`** (text NOT NULL: `sending` · `done`, default `sending`) — `done` once the send finished; a row left `sending`
+is read as stopped after the grace period (gotcha 4).
+
 ## `family_messages`
 <!-- dict:table:family_messages -->
 

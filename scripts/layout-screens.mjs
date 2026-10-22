@@ -1633,6 +1633,10 @@ export const SCREENS = [
   { id: 'admin-family',                area: 'families', session: 'repClubOwner', ready: '[data-kit-dialog][data-record]', scope: '[data-kit-dialog][data-record]',
     path: (c) => `/${c.clubSlug}/admin/families/${c.clubPersonId}?show=all` },
   { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
+  // Club Tier Stage 7c: the Emails tab, and the Email families window open over it — its one door (Send is never pressed).
+  { id: 'admin-families-emails',       area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/emails` },
+  { id: 'admin-families-email-window', area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/emails`,
+    interact: (page) => openKitDialogBy(page, page.getByRole('button', { name: 'Email families', exact: true })), scope: '[data-kit-dialog]' },
 
   // ── Public site builder: five rows that open in place, the club's home beside them at a desk. Only the open row is
   // measured, so each row has its own entry (a collapsed row is invisible to this sweep). The preview is an iframe; its own

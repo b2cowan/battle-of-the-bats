@@ -1560,6 +1560,36 @@
     "update_rule": null
   },
   {
+    "table_name": "family_email_sends",
+    "constraint_name": "family_email_sends_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_email_sends",
+    "constraint_name": "family_email_sends_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_email_sends",
+    "constraint_name": "family_email_sends_sent_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "family_links",
     "constraint_name": "family_links_approved_by_user_id_fkey",
     "constraint_type": "FOREIGN KEY",

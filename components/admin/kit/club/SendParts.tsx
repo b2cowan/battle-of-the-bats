@@ -15,17 +15,24 @@ import type { EmailWords } from '@/lib/club-schedule-words';
 import { repKit } from './RepKit';
 import s from './SendParts.module.css';
 
-/** Who the send reaches — a framed list of rows. */
-export function SendRows({ children }: { children: ReactNode }) {
-  return <div className={s.rows}>{children}</div>;
+/** Who the send reaches — a framed list of rows. `group` names a pick-one set (`radio`, named by the heading `labelledBy`)
+ *  or a ticked set (`label`) for a screen reader; a plain list needs none. */
+export function SendRows({ children, group }: { children: ReactNode; group?: { radio?: boolean; labelledBy?: string; label?: string } }) {
+  return (
+    <div className={s.rows} role={group ? (group.radio ? 'radiogroup' : 'group') : undefined}
+      aria-labelledby={group?.labelledBy} aria-label={group?.label}>
+      {children}
+    </div>
+  );
 }
 
-/** One row: who, and a second line under it. `pick` makes it a ticked row the sender can untick. `off` dims a row the
- *  send will not reach (its second line says why). */
+/** One row: who, and a second line under it. `pick` makes it a ticked row the sender can untick — or, with `pick.radio`
+ *  (the group's name), one of a pick-one set (Email families' Who, Stage 7c). `off` dims a row the send will not reach
+ *  (its second line says why). */
 export function SendRow({ title, sub, pick, off }: {
   title: ReactNode;
   sub?: ReactNode;
-  pick?: { checked: boolean; onChange: (checked: boolean) => void };
+  pick?: { checked: boolean; onChange: (checked: boolean) => void; radio?: string };
   off?: boolean;
 }) {
   const main = (
@@ -36,7 +43,7 @@ export function SendRow({ title, sub, pick, off }: {
   );
   return pick ? (
     <label className={`${s.row} ${s.rowPick}`}>
-      <input type="checkbox" checked={pick.checked} onChange={e => pick.onChange(e.target.checked)} />
+      <input type={pick.radio ? 'radio' : 'checkbox'} name={pick.radio} checked={pick.checked} onChange={e => pick.onChange(e.target.checked)} />
       {main}
     </label>
   ) : (

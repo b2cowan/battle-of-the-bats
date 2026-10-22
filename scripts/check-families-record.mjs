@@ -6,11 +6,12 @@
  * nothing it writes survives: a merge holds (E01: no ghost, nothing proposed again), an edited guardian email moves the
  * child to the new address and is recorded once (E02; a re-run changes nothing), a person who keeps a row is not
  * proposed, an address already owned mints no one, the claim alias still files one person, the three-a-day cap
- * (family_message_claim), and a merge carrying a family's message dates.
+ * (family_message_claim), a merge carrying a family's message dates, and Email families' claim (family_email_claim,
+ * mig 347 — Club Tier Stage 7c: a double press refused, three a rolling day per club, T12).
  *
  * The functions under test are INSTALLED inside the block from the migrations' own text (never a copy), so the check
  * runs the same before and after the migrations reach dev:
- *   (default)  migs 333 + 334 + 338 — must PASS.
+ *   (default)  migs 333 + 334 + 338 + 347 — must PASS.
  *   --old      the same, then 252's attach and 254's merge over them — must FAIL T1 and T2 (and T7): the proof
  *              that the E01 / E02 tests bite on the code they replace.
  *   --before-338  the same, then 334's merge over 338's (Club Tier Stage 5c) — must FAIL T11: the proof that "a merge
@@ -40,6 +41,7 @@ const body = f => read(`supabase/migrations/${f}`).replace(/^BEGIN;\s*$/m, '').r
 const M333 = body('333_a_merge_holds_and_an_edited_email_follows_the_child.sql');
 const M334 = body('334_a_family_message_keeps_its_date_and_sender.sql');
 const M338 = body('338_the_club_hands_a_payment_to_the_coach_and_keeps_notes.sql');
+const M347 = body('347_the_club_can_email_every_family.sql');
 
 /** One CREATE OR REPLACE FUNCTION, as a migration writes it. */
 function fn(sql, name) {
@@ -76,6 +78,12 @@ const MUTATIONS = [
     /\n\s+UPDATE family_notes\s+SET person_id = p_keep_id[^\n]*\n/, '\n'],
   ['merge: lose the payments handed to a coach', M338, 'families_merge_people',
     /\n\s+UPDATE family_payment_handoffs\s+SET person_id = p_keep_id[^\n]*\n/, '\n'],
+  ['club email: no double-press refusal', M347, 'public.family_email_claim',
+    /IF v_last IS NOT NULL AND v_last > now\(\) - interval '60 seconds' THEN/, 'IF false THEN'],
+  ['club email: four a day', M347, 'public.family_email_claim', /IF v_count >= v_cap THEN/, 'IF v_count > v_cap THEN'],
+  ['club email: the cap counts every club', M347, 'public.family_email_claim',
+    /FROM family_email_sends WHERE org_id = p_org AND sent_at > now\(\) - interval '24 hours';/,
+    "FROM family_email_sends WHERE sent_at > now() - interval '24 hours';"],
 ];
 
 function run(install, mutations = '') {
@@ -93,7 +101,7 @@ function run(install, mutations = '') {
   return { outcome: 'error', text: text.slice(0, 600) };
 }
 
-const NEW = exec(M333) + '\n  ' + exec(M334) + '\n  ' + exec(M338);
+const NEW = exec(M333) + '\n  ' + exec(M334) + '\n  ' + exec(M338) + '\n  ' + exec(M347);
 
 if (process.argv.includes('--before-338')) {
   const r = run(NEW + '\n  ' + exec(fn(M334, 'families_merge_people')));
@@ -123,7 +131,7 @@ if (real.outcome !== 'passed') {
   console.error(`✗ check:families-record — the family record is not true:\n  ${real.text}`);
   process.exit(1);
 }
-console.log('✓ check:families-record — a merge holds, an edited email follows the child (recorded once), the cap holds at three, a merge keeps the message dates, the notes and the hand-offs (dev, rolled back).');
+console.log('✓ check:families-record — a merge holds, an edited email follows the child (recorded once), the cap holds at three, a merge keeps the message dates, the notes and the hand-offs, Email families claims once and caps the club at three a day (dev, rolled back).');
 
 if (process.argv.includes('--mutate')) {
   let survived = 0;

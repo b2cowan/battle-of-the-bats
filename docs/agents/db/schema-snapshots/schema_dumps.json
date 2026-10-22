@@ -4511,6 +4511,150 @@
         "column_default": "now()"
       },
       {
+        "table_name": "family_email_sends",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 3,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 4,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 5,
+        "column_name": "subject",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 6,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 7,
+        "column_name": "audience_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 8,
+        "column_name": "audience_label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 9,
+        "column_name": "team_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": "'{}'::uuid[]"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 10,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 11,
+        "column_name": "family_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 12,
+        "column_name": "opted_out_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 13,
+        "column_name": "reached_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 14,
+        "column_name": "failed_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 15,
+        "column_name": "coach_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 16,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sending'::text"
+      },
+      {
         "table_name": "family_links",
         "pos": 1,
         "column_name": "id",
@@ -23259,6 +23403,20 @@
         "constraint_name": "family_email_optouts_org_id_fkey"
       },
       {
+        "table_name": "family_email_sends",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "family_email_sends_org_id_fkey"
+      },
+      {
+        "table_name": "family_email_sends",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "family_email_sends_sent_by_fkey"
+      },
+      {
         "table_name": "family_links",
         "column_name": "approved_by_user_id",
         "foreign_table": null,
@@ -28211,6 +28369,16 @@
         "indexdef": "CREATE UNIQUE INDEX family_email_optouts_pkey ON public.family_email_optouts USING btree (id)"
       },
       {
+        "tablename": "family_email_sends",
+        "indexname": "family_email_sends_org_sent_idx",
+        "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
+      },
+      {
+        "tablename": "family_email_sends",
+        "indexname": "family_email_sends_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_email_sends_pkey ON public.family_email_sends USING btree (id)"
+      },
+      {
         "tablename": "family_links",
         "indexname": "family_links_calendar_token_hash_key",
         "indexdef": "CREATE UNIQUE INDEX family_links_calendar_token_hash_key ON public.family_links USING btree (calendar_token_hash)"
@@ -32743,6 +32911,72 @@
       {
         "kind": "RLS",
         "table_name": "family_email_optouts",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_audience_kind_check",
+        "check_clause": "(audience_kind = ANY (ARRAY['every'::text, 'teams'::text, 'season'::text, 'list'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_audience_label_check",
+        "check_clause": "((char_length(audience_label) >= 1) AND (char_length(audience_label) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_body_check",
+        "check_clause": "((char_length(body) >= 1) AND (char_length(body) <= 5000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_coach_count_check",
+        "check_clause": "(coach_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_failed_count_check",
+        "check_clause": "(failed_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_family_count_check",
+        "check_clause": "(family_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_opted_out_count_check",
+        "check_clause": "(opted_out_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_reached_count_check",
+        "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_status_check",
+        "check_clause": "(status = ANY (ARRAY['sending'::text, 'done'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_subject_check",
+        "check_clause": "((char_length(subject) >= 1) AND (char_length(subject) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_email_sends",
         "detail": "ENABLED",
         "check_clause": null
       },

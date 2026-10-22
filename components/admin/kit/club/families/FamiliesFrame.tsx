@@ -4,7 +4,7 @@
  * that made Accounting one page: "a program whose pages are views of one body of records is one page with tabs").
  *
  * Families is one page: the title, then the shared tab row (`HubTabBar`, Accounting's and the coach's Money's) —
- * Families · Duplicates — then the tab's own content. Duplicates wears its waiting count as the rail's amber pill, the
+ * Families · Duplicates · Emails — then the tab's own content. Duplicates wears its waiting count as the rail's amber pill, the
  * same number the rail's Families row carries (the club brief's one count). A family opens as a record OVER the Families
  * tab, so the Families tab stays lit on a family's address.
  */
@@ -14,7 +14,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { familiesTabFor, familiesTabs } from '@/lib/admin-kit-nav';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HubTabBar from '@/components/shared/HubTabBar';
-import { FAMILY_LIST_WORDS as W } from '@/lib/families-words';
+import { FAMILY_EMAILS_TAB_WORDS as EW, FAMILY_LIST_WORDS as W } from '@/lib/families-words';
 import { repKit } from '../RepKit';
 import { useClubBrief } from '../ClubBriefProvider';
 import { WaitingCount } from '../money/MoneyKit';
@@ -28,7 +28,7 @@ export default function FamiliesFrame({ orgSlug, children }: { orgSlug: string; 
   const tabs = familiesTabs(base).map(t => (t.id === 'duplicates' && waiting > 0 ? { ...t, mark: <WaitingCount n={waiting} /> } : t));
 
   // The browser tab names the tab on its own address.
-  usePageTitle(tab === 'duplicates' ? `${W.tabDuplicates} · ${W.title}` : W.title);
+  usePageTitle(tab === 'duplicates' ? `${W.tabDuplicates} · ${W.title}` : tab === 'emails' ? `${EW.tab} · ${W.title}` : W.title);
 
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame}`}>

@@ -124,7 +124,7 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
     }
     case 'families': {
       // ⚖ ONE ROW THAT NEVER OPENS (Club Tier Stage 5b, Ask 14 — the 2026-09-30 rule that made Accounting one page): the
-      // family list and the duplicate queue are two views of the club's people, so Families is one page with two tabs
+      // family list and the duplicate queue are two views of the club's people, so Families is one page with three tabs
       // (`familiesTabs` below). The row lists no pages and carries the Duplicates tab's waiting count.
       return { label: 'Families', icon: Contact, href: `${base}/families`, pages: [] };
     }
@@ -379,10 +379,11 @@ function litTab<Id extends string>(tabs: readonly ProgramTab<Id>[], pathname: st
 
 /**
  * ⚖ FAMILIES' TABS (Club Tier Stage 5b, Ask 14): Families (the book and its questions) · Duplicates (the queue, its
- * waiting count the amber pill). A family is a record OVER the Families tab, at `/families/{personId}` — so that tab lights
- * one segment under its address too (`views`), and Duplicates' own address wins first.
+ * waiting count the amber pill) · Emails (Stage 7c, Ask 7 A: every email the club sent from Families). A family is a
+ * record OVER the Families tab, at `/families/{personId}` — so that tab lights one segment under its address too
+ * (`views`), and Duplicates' and Emails' own addresses win first.
  */
-export type FamiliesTabId = 'families' | 'duplicates';
+export type FamiliesTabId = 'families' | 'duplicates' | 'emails';
 export type FamiliesTab = { id: FamiliesTabId; label: string; href: string; views?: true };
 
 export function familiesTabs(base: string): FamiliesTab[] {
@@ -390,6 +391,7 @@ export function familiesTabs(base: string): FamiliesTab[] {
   return [
     { id: 'families', label: 'Families', href: f, views: true },
     { id: 'duplicates', label: 'Duplicates', href: `${f}/duplicates` },
+    { id: 'emails', label: 'Emails', href: `${f}/emails` },
   ];
 }
 

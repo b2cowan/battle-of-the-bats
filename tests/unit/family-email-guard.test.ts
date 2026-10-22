@@ -60,9 +60,12 @@ const read = (rel: string) => readFileSync(join(REPO, rel), 'utf8');
  */
 const codeOf = (rel: string) => readCode(rel);
 
-/** Calls the raw transport. Does NOT match `sendFamilyEmail(` — different identifier. */
-const CALLS_RAW_SEND = /\bsendEmail\s*\(/;
-const CALLS_GUARDED_SEND = /\bsendFamilyEmail\s*\(/;
+/** Calls the raw transport — one email (`sendEmail`) or a batch (`sendEmailBatch`, Stage 7c). Does NOT match
+ *  `sendFamilyEmail(` — different identifier. */
+const CALLS_RAW_SEND = /\bsendEmail(?:Batch)?\s*\(/;
+/** The choke point's two doors: one family (`sendFamilyEmail`) or many (`sendFamilyEmailBatch`, Club Tier Stage 7c) —
+ *  the same guard, the same footer (the shape check below holds the batch to it). */
+const CALLS_GUARDED_SEND = /\bsendFamilyEmail(?:Batch)?\s*\(/;
 
 type Posture = 'guarded' | 'transactional' | 'known-gap';
 
@@ -71,6 +74,10 @@ const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
   // ── Announcements: the club talking to families. All guarded. ──────────────────────────────
   { file: 'app/api/admin/families/[personId]/message/route.ts', posture: 'guarded',
     what: 'Message this family, from the Families area' },
+  { file: 'lib/families-email.ts', posture: 'guarded',
+    what: 'Email families, from the Families area (Club Tier Stage 7c) — every family, some rep teams or a season, in ' +
+          'batches through the choke point. Its head coach copy is COLLEAGUE mail in lib/families-email-coaches.ts ' +
+          '(NOT_FAMILY_MAIL below), never this file' },
   { file: 'lib/rep-team-announcements.ts', posture: 'guarded',
     what: 'A paid rep coach\'s team announcement' },
   { file: 'lib/family-notify.ts', posture: 'guarded',
@@ -114,6 +121,9 @@ const NOT_FAMILY_MAIL = [
   // 2026-09-11). Mails the invited adult who will be STAFF; never a guardian as a guardian.
   'lib/assistant-invites.ts',
   'lib/email.ts', // the transport itself
+  // Email families' copy to each team's head coach (Club Tier Stage 7c): colleague mail to the club's coaches, never a
+  // guardian as a guardian — a coach who is also a parent the send reaches gets the family copy only.
+  'lib/families-email-coaches.ts',
 ];
 
 describe('Family email — the choke point keeps its shape', () => {
@@ -144,6 +154,17 @@ describe('Family email — the choke point keeps its shape', () => {
       'remembered to pass it. The expansion belongs in getFamilySuppressionList, where every ' +
       'sender gets it without knowing the concept exists.',
     );
+  });
+
+  it('the batch door (Stage 7c) runs the same guard per address: suppression, then each address its own footer', () => {
+    const at = src.indexOf('export async function sendFamilyEmailBatch');
+    assert.ok(at >= 0, 'sendFamilyEmailBatch is gone from the choke point.');
+    const batch = src.slice(at);
+    assert.match(batch, /normalizeGuardianEmail\(/, 'the batch door no longer normalizes each address before the check');
+    assert.match(batch, /params\.suppressed\.has\(to\)/, 'the batch door no longer checks each address against the suppression list');
+    assert.match(batch, /familyEmailHtml\(params\.content, params\.orgId, to\)/,
+      'the batch door no longer builds each address its own envelope — the footer and unsubscribe link are per family');
+    assert.ok(!/\bsendEmail\s*\(/.test(batch), 'the batch door calls the one-at-a-time transport');
   });
 
   it('it still fails CLOSED — a suppression-list error must never become an empty set', () => {

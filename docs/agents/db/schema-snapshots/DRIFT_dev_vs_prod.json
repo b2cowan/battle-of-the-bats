@@ -1,14 +1,54 @@
 {
   "generated": "2026-10-22",
-  "total": 101,
+  "total": 133,
   "counts": {
-    "tables": 5,
-    "columns": 46,
-    "indexes": 14,
-    "constraints": 22,
-    "rls": 14
+    "tables": 6,
+    "columns": 62,
+    "indexes": 16,
+    "constraints": 25,
+    "rls": 24
   },
   "items": [
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_audience_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_audience_label_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_body_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_coach_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_failed_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_family_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_opted_out_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_reached_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_subject_check",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:org_public_site_content.org_public_site_content_contacts_cap",
       "sig": ""
@@ -63,6 +103,70 @@
     },
     {
       "key": "check:only-dev:tournament_team_payments.tournament_team_payments_status_chk",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.audience_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.audience_label",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.coach_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.failed_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.family_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.opted_out_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.reached_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.sent_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.subject",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.team_ids",
       "sig": ""
     },
     {
@@ -250,6 +354,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:family_email_sends.family_email_sends_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_email_sends.family_email_sends_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_email_sends.family_email_sends_sent_by_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_site_notices.org_site_notices_org_fk",
       "sig": ""
     },
@@ -338,6 +454,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:family_email_sends_org_sent_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_email_sends_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_site_notices_org_idx",
       "sig": ""
     },
@@ -391,6 +515,10 @@
     },
     {
       "key": "index:only-dev:tournament_team_payments_tournament_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_email_sends",
       "sig": ""
     },
     {

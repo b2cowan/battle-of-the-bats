@@ -3,7 +3,7 @@
 -- Run by scripts/check-families-record.mjs against DEV only. The whole block ALWAYS ends in an exception —
 -- 'FAMILIES_RECORD_PASSED' when every assertion held, else 'FAIL T…' naming EVERY assertion that failed — so nothing
 -- it writes survives. The INSTALL placeholder is replaced by the runner with the functions under test (the migrations' own text,
--- never a copy): migs 333 + 334 + 338 for the real run (--before-338 lays 334's merge back over 338's: T11 must FAIL); migs 252 + 254 with --old, which must FAIL T1 and T2 (E01, E02 —
+-- never a copy): migs 333 + 334 + 338 + 347 for the real run (--before-338 lays 334's merge back over 338's: T11 must FAIL); migs 252 + 254 with --old, which must FAIL T1 and T2 (E01, E02 —
 -- the proof the tests bite on today's code). The MUTATIONS placeholder is empty, or one EXECUTE swapping in a mutated function.
 -- ════════════════════════════════════════════════════════════════════════════════════════════════
 DO $test$
@@ -204,6 +204,34 @@ BEGIN
     IF n <> 1 THEN fails := fails || format(' | FAIL T11: a merge lost a payment handed to a coach — %s on the person kept, want 1', n); END IF;
   END IF;
 
+
+  -- ── T12 · Email families' claim (mig 347): a double press refused; three a rolling day per CLUB, the fourth refused with
+  --         when the next can go; a send older than 24 hours no longer counts; another club is not this club's cap; the
+  --         club's sends never write a family's own message record (the two caps are different numbers) ──
+  SELECT count(*) INTO n2 FROM family_messages WHERE org_id = v_org;
+  j := family_email_claim(v_org, v_user, 'Picture day', 'Saturday at Bronte Park', 'every', 'Every family', '{}', NULL, 88, 7);
+  IF NOT coalesce((j->>'ok')::boolean, false) OR j->>'sendId' IS NULL THEN fails := fails || format(' | FAIL T12: the first send was refused: %s', j); END IF;
+  j := family_email_claim(v_org, v_user, 'Picture day', 'Saturday at Bronte Park', 'every', 'Every family', '{}', NULL, 88, 7);
+  IF coalesce((j->>'ok')::boolean, false) OR j->>'code' <> 'just_sent' THEN fails := fails || format(' | FAIL T12: a second press a breath later was not refused: %s', j); END IF;
+  FOR i IN 1..2 LOOP
+    UPDATE family_email_sends SET sent_at = sent_at - interval '5 minutes' WHERE org_id = v_org;
+    j := family_email_claim(v_org, v_user, 'Send ' || i, 'Body', 'teams', '13U', ARRAY[v_team], NULL, 10, 0);
+    IF NOT coalesce((j->>'ok')::boolean, false) THEN fails := fails || format(' | FAIL T12: send %s of 3 refused: %s', i + 1, j); END IF;
+  END LOOP;
+  UPDATE family_email_sends SET sent_at = sent_at - interval '5 minutes' WHERE org_id = v_org;
+  j := family_email_claim(v_org, v_user, 'Fourth', 'Body', 'every', 'Every family', '{}', NULL, 88, 7);
+  IF coalesce((j->>'ok')::boolean, false) OR j->>'code' <> 'cap' OR j->>'nextAt' IS NULL THEN
+    fails := fails || format(' | FAIL T12: a fourth send in a day was not refused by the club cap: %s', j); END IF;
+  SELECT count(*) INTO n FROM family_email_sends WHERE org_id = v_org;
+  IF n <> 3 THEN fails := fails || format(' | FAIL T12: a refused claim wrote a row (%s rows, want 3)', n); END IF;
+  UPDATE family_email_sends SET sent_at = now() - interval '25 hours'
+   WHERE id = (SELECT id FROM family_email_sends WHERE org_id = v_org ORDER BY sent_at LIMIT 1);
+  j := family_email_claim(v_org, v_user, 'Next day', 'Body', 'season', 'Fall 2026', '{}', gen_random_uuid(), 24, 1);
+  IF NOT coalesce((j->>'ok')::boolean, false) THEN fails := fails || format(' | FAIL T12: a send older than 24 hours still counted: %s', j); END IF;
+  j := family_email_claim(v_org2, v_user, 'Other club', 'Body', 'every', 'Every family', '{}', NULL, 5, 0);
+  IF NOT coalesce((j->>'ok')::boolean, false) THEN fails := fails || format(' | FAIL T12: another club was refused by this club''s cap: %s', j); END IF;
+  SELECT count(*) INTO n FROM family_messages WHERE org_id = v_org;
+  IF n <> n2 THEN fails := fails || ' | FAIL T12: a club-wide send wrote a family''s own message record'; END IF;
   IF fails <> '' THEN RAISE EXCEPTION '%', substr(fails, 4); END IF;
   RAISE EXCEPTION 'FAMILIES_RECORD_PASSED';
 END

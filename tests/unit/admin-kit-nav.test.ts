@@ -184,13 +184,14 @@ describe('the admin kit nav — where you are', () => {
     for (const t of accountingTabs(BASE, { runsRepTeams: true })) assert.ok(routeExists(t.href), `${t.label} → ${t.href}`);
   });
 
-  it('Families is one page with two tabs, its rail row with no pages (Club Tier Stage 5b, Ask 14)', () => {
+  it('Families is one page with three tabs, its rail row with no pages (Club Tier Stage 5b, Ask 14; Stage 7c, Ask 7)', () => {
     const [fam] = kitPrograms({ base: BASE, canUse: c => c === 'module_families' });
     assert.equal(fam.key, 'families');
-    assert.deepEqual(fam.pages, [], 'no rail pages under Families — the tab row moves between the two');
-    assert.deepEqual(familiesTabs(BASE).map(t => t.label), ['Families', 'Duplicates']);
+    assert.deepEqual(fam.pages, [], 'no rail pages under Families — the tab row moves between the three');
+    assert.deepEqual(familiesTabs(BASE).map(t => t.label), ['Families', 'Duplicates', 'Emails']);
     assert.equal(familiesTabFor(`${BASE}/families`, BASE), 'families');
     assert.equal(familiesTabFor(`${BASE}/families/duplicates`, BASE), 'duplicates', 'Duplicates wins its own address');
+    assert.equal(familiesTabFor(`${BASE}/families/emails`, BASE), 'emails', 'Emails wins its own address');
     // A family is a record OVER the Families tab: its address lights Families, one segment down only.
     assert.equal(familiesTabFor(`${BASE}/families/p1`, BASE), 'families');
     assert.equal(familiesTabFor(`${BASE}/families/p1/x`, BASE), null);

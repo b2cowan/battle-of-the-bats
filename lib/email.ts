@@ -86,6 +86,49 @@ export async function sendEmail(
   return { status: 'sent' };
 }
 
+/** The provider's batch limit: one request carries up to this many separate emails (Resend's `/emails/batch`). */
+export const EMAIL_BATCH_SIZE = 100;
+
+/**
+ * Up to `EMAIL_BATCH_SIZE` separate emails in ONE provider request (Club Tier Stage 7c, Put to the owner 3: a club's
+ * Email families reaches hundreds of families inside the request — one email per request would meet the provider's
+ * per-second limit partway through, and work after the response is not kept alive on this host). Each email is its own
+ * recipient, words and Reply-To; the provider accepts or refuses the request as a whole, so the result is the batch's.
+ * More than the limit is a caller's bug and throws before anything is sent.
+ */
+export async function sendEmailBatch(
+  emails: readonly { to: string; subject: string; html: string; replyTo?: string | null }[],
+): Promise<SendEmailResult> {
+  if (emails.length === 0) return { status: 'sent' };
+  if (emails.length > EMAIL_BATCH_SIZE) throw new Error(`sendEmailBatch: ${emails.length} emails exceeds the batch limit of ${EMAIL_BATCH_SIZE}`);
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    console.warn('[email] RESEND_API_KEY not set - skipping batch send');
+    return { status: 'skipped' };
+  }
+  const request = {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(emails.map(e => ({
+      from: FROM, to: e.to, subject: e.subject, html: e.html, text: htmlToText(e.html),
+      ...(e.replyTo ? { reply_to: e.replyTo } : {}),
+    }))),
+  };
+  let res = await fetch(`${RESEND_API}/batch`, request);
+  if (res.status === 429) {
+    // The provider's per-second limit, met by back-to-back batches: wait out what it asks (at most three seconds), once.
+    const asked = Number(res.headers.get('retry-after'));
+    await new Promise(r => setTimeout(r, Math.min(Number.isFinite(asked) && asked > 0 ? asked * 1000 : 1000, 3000)));
+    res = await fetch(`${RESEND_API}/batch`, request);
+  }
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('[email] Resend batch error:', err);
+    return { status: 'provider_error' };
+  }
+  return { status: 'sent' };
+}
+
 export { ADMIN_EMAIL, SITE_URL };
 
 // ── Automatic coach-email preferences ───────────────────────────────────────────

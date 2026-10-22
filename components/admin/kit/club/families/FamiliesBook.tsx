@@ -14,6 +14,10 @@
  *                     phone, always open (the tournament toolbar's shape, without the square). ⚠ It
  *                     narrows the list on screen — the pill names what is read, and a search that quietly read every
  *                     family under "Owes money" would make the pill untrue. Its empty state offers "Search all families".
+ *   Email these families — (owner 2026-10-22) only on a question that names families (Owes money, Missing forms, No
+ *                     consent, Not back): the Email families window with that list chosen. The Emails tab is the door to
+ *                     every other send. ⚠ The search narrows what is on screen, NOT who this reaches — the list is the
+ *                     pill's, and the window says who it reaches.
  *   the table       — the standard (Family · Children · Balance · Chased · chevron; display-face headings; figures and
  *                     their headings on one side; the name is the link and the whole row opens; one chip). A house-league
  *                     fee not paid is FEE NOT PAID on the child's line and counts in Balance (owner 2026-10-18). On a
@@ -32,17 +36,19 @@ import { ChevronRight, Mail } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { joinWithAnd } from '@/lib/utils';
-import { FAMILY_LIST_WORDS as W } from '@/lib/families-words';
+import { FAMILY_EMAIL_WORDS as EW, FAMILY_LIST_WORDS as W } from '@/lib/families-words';
+import { FAMILY_LIST_PREDICATES, isFamilyListKey, owedCents, type FamilyListKey } from '@/lib/families-lists';
 import type { NoFamilyChild, WorklistFamily, WorklistPayload } from '@/lib/families-read';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import LoadingState from '@/components/shared/LoadingState';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import SearchField from '@/components/shared/SearchField';
-import { ClubRow, ClubRowBand, ClubRowList, EmptyCard, LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead } from '../RepKit';
+import { ClubRow, ClubRowBand, ClubRowList, EmptyCard, LoadFailed, NoticePill, RepChip, repKit, useDeferredLoad, useLatestRead } from '../RepKit';
 import { useClubBrief } from '../ClubBriefProvider';
 import { money, moneyFetch } from '../money/MoneyKit';
 import FamilyRecordWindow from './FamilyRecordWindow';
 import CoachAskWindow from './CoachAskWindow';
+import EmailFamiliesWindow from './EmailFamiliesWindow';
 import fam from './Families.module.css';
 
 type Question = keyof typeof W.questions;
@@ -52,14 +58,9 @@ const isQuestion = (s: string | null): s is Question => s != null && (QUESTIONS 
 /** A list longer than this shows its first rows and "Show more" (E05's screen half: a club's whole book never paints at once). */
 const PAGE = 50;
 
-// ONE definition per question — a count and the rows it shows are the same predicate, or the count lies about its list.
-const FAMILY_PREDICATES: Record<Exclude<Question, 'nofamily' | 'all'>, (f: WorklistFamily) => boolean> = {
-  // The Balance cell's own sum (/review 2026-10-18): a family on Owes money never reads a dash.
-  owes: f => owedCents(f) > 0,
-  forms: f => f.missingFormsCount > 0,
-  consent: f => !f.hasConsent && f.children.some(c => c.current),
-  notback: f => f.notBack,
-};
+// ONE definition per question (lib/families-lists.ts) — a count, the rows it shows and the people "Email these families"
+// reaches are the same predicate, or the count lies about its list.
+const FAMILY_PREDICATES = FAMILY_LIST_PREDICATES;
 
 /** A family's search: names, every address it has used (the project's founding job), a phone number, its children. */
 function familyMatches(f: WorklistFamily, q: string): boolean {
@@ -86,8 +87,6 @@ function childrenPhrase(names: readonly string[]): string {
   return joinWithAnd(names);
 }
 
-/** What a family owes: rep dues and unpaid house-league fees — the record's band reads the same sum (owner 2026-10-18). */
-const owedCents = (f: WorklistFamily) => f.repOwedCents + f.leagueOwedCents;
 /** A family's Balance cell: what it owes, or a quiet dash. */
 const owed = (f: WorklistFamily) => (owedCents(f) > 0 ? money(owedCents(f) / 100) : '—');
 
@@ -115,6 +114,9 @@ export default function FamiliesBook() {
   const [query, setQuery] = useState('');
   const [shown, setShown] = useState(PAGE);
   const [asking, setAsking] = useState(false);
+  /** The list "Email these families" was pressed on — the window opens with it chosen. */
+  const [emailing, setEmailing] = useState<FamilyListKey | null>(null);
+  const [said, setSaid] = useState<string | null>(null);
   const [open, setOpen] = useState<Open | null>(null);
 
   // An arriving family address (`?family=` from /families/{personId}) opens the record — whenever it changes — and is
@@ -223,6 +225,13 @@ export default function FamiliesBook() {
         <SingleSelectDropdown label={W.show} options={options} value={show} onChange={setShow} lead fill />
         <span className={tb.toolbarSpacer} aria-hidden />
         <div className={tb.deskFilters}><SearchField value={query} onChange={onSearch} label={searchLabel} /></div>
+        {/* Email these families (owner 2026-10-22): present only on a list that names families — the pill's list, never
+            narrowed by the search (the window says who it reaches). The Emails tab is the door to every other send. */}
+        {isFamilyListKey(show) && counts[show] > 0 && (
+          <button type="button" className="btn btn-outline" onClick={() => setEmailing(show)} aria-haspopup="dialog">
+            <Mail size={14} aria-hidden />{EW.doorThese}
+          </button>
+        )}
       </div>
       <div className={tb.phoneSearchRow}><SearchField value={query} onChange={onSearch} label={searchLabel} layout="fill" /></div>
 
@@ -331,6 +340,16 @@ export default function FamiliesBook() {
         />
       )}
       {asking && <CoachAskWindow q={q} onClose={() => setAsking(false)} />}
+      {emailing && (
+        <EmailFamiliesWindow
+          q={q}
+          initialList={emailing}
+          onClose={() => setEmailing(null)}
+          onShowNoFamily={() => { setEmailing(null); setShow('nofamily'); }}
+          onSent={text => { setEmailing(null); setSaid(text); }}
+        />
+      )}
+      {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}
     </>
   );
 }

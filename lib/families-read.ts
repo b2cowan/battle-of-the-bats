@@ -11,6 +11,8 @@ import { resolvePersonNamer, getRepDuesPaidBackByCredit } from './db';
 import { FAMILY_MESSAGE_CAP, FAMILY_PAGE_WORDS as PW, FAMILY_DUPLICATE_WORDS } from './families-words';
 import { fmt } from './coach-money-summary';
 import { proposeDuplicates, unionFind, type DuplicateChildIn, type DuplicatePersonIn, type DuplicateProposal } from './families-duplicates';
+import { isCurrentLeagueSeason, isCurrentRepYear, isLiveRegStatus, type AudiencePerson } from './families-audience';
+import { listsByPerson } from './families-lists';
 
 /**
  * lib/families-read.ts — server-side assembly for the Families area (P2 chunks C–E; Club Tier Stage 5a).
@@ -293,10 +295,8 @@ function childKeys(rosterRows: any[], links: any[]): (rosterId: string) => strin
   return (rosterId: string) => `rep:${find(rosterId)}`;
 }
 
-const isCurrentRepYear = (row: any) => row.rep_program_years?.status === 'active';
-const isCurrentLeagueSeason = (row: any) =>
-  ['registration_open', 'active'].includes(row.league_seasons?.status ?? '');
-const isLiveRegStatus = (s: string) => !['declined', 'withdrawn'].includes(s);
+// The three row predicates live in lib/families-audience.ts (pure, so Email families' audience is unit-tested against
+// the SAME definitions this file reads with) — imported, never restated.
 
 function childRowFromRoster(r: any, keyOf: (id: string) => string): FamilyChildRow {
   return {
@@ -472,7 +472,15 @@ function childMoney(rows: readonly any[], figures: Map<string, PlayerDuesFigures
 export async function buildWorklist(orgId: string, orgSlug: string): Promise<WorklistPayload> {
   // The area's entry: the one read that runs the attach.
   const world = await loadOrgFamilyWorld(orgId, { attach: true });
-  const { people, addresses, rosterRows, leagueRegs, optouts, consents, childKeyOf } = world;
+  const [families, duplicatePairs] = await Promise.all([worklistFamilies(orgId, world), buildDuplicatePairs(orgId, world)]);
+  const noFamilyChildren = childrenWithNoFamily(world.rosterRows, world.leagueRegs, orgSlug);
+  return { families, noFamilyChildren, duplicateCount: duplicatePairs.length };
+}
+
+/** Every person of the club as the list shows them — the ONE place a family's money, forms and consent are worked out
+ *  (the Families tab and Email families' lists both read it). */
+async function worklistFamilies(orgId: string, world: Awaited<ReturnType<typeof loadOrgFamilyWorld>>): Promise<WorklistFamily[]> {
+  const { people, addresses, rosterRows, optouts, consents, childKeyOf } = world;
 
   const addressesByPerson = new Map<string, any[]>();
   for (const a of addresses) {
@@ -487,10 +495,9 @@ export async function buildWorklist(orgId: string, orgSlug: string): Promise<Wor
   // Dues + forms for current rep years — independent reads, one batch.
   const currentRoster = rosterRows.filter(isCurrentRepYear);
   const currentRosterIds = currentRoster.map(r => r.id);
-  const [money, formsData, duplicatePairs] = await Promise.all([
+  const [money, formsData] = await Promise.all([
     readRepMoney(orgId, currentRoster),
     loadFormsData(orgId, currentRosterIds),
-    buildDuplicatePairs(orgId, world),
   ]);
   const { templatesForTeam, docTypesByPlayer } = formsData;
 
@@ -549,9 +556,7 @@ export async function buildWorklist(orgId: string, orgSlug: string): Promise<Wor
     });
   }
   families.sort((a, b) => a.name.localeCompare(b.name));
-
-  const noFamilyChildren = childrenWithNoFamily(rosterRows, leagueRegs, orgSlug);
-  return { families, noFamilyChildren, duplicateCount: duplicatePairs.length };
+  return families;
 }
 
 /**
@@ -932,6 +937,42 @@ export async function loadMessageWindow(orgId: string, personId: string): Promis
     recipients: reach.recipients,
     state: { ...messageState(log, [], reach.suppressed), reachable: reached },
   };
+}
+
+// ── Email families' audience (Club Tier Stage 7c) ─────────────────────────────
+
+export interface FamilyAudienceWorld {
+  /** Every person of the club with their live rows and household (lib/families-audience.ts decides who is in a scope). */
+  people: AudiencePerson[];
+  /** The suppression list the audience was read against — the send hands the SAME set to the choke point. */
+  suppressed: Set<string>;
+  /** This season's children with no family on file (the window's "Nobody to send to"), by team or season. */
+  noFamily: NoFamilyChild[];
+}
+
+/**
+ * The one read behind Email families: Families' world, each person's household (`householdOf`, the rule the page, the
+ * one-household message and the file share) and the suppression list. `attach` on the press — a send is an action, as
+ * the one-household message's is, so a registration whose person was minted since the last visit is in the count and
+ * the send; the window's read stays attach-free (the worklist is the visit's one attach).
+ */
+export async function loadFamilyAudience(orgId: string, orgSlug: string, opts: { attach?: boolean; lists?: boolean } = {}): Promise<FamilyAudienceWorld> {
+  const [world, suppressed] = await Promise.all([loadOrgFamilyWorld(orgId, { attach: opts.attach }), getFamilySuppressionList(orgId)]);
+  // The lists ("Owes money" …) are the Families tab's own predicates over the same worklist rows — read only when asked
+  // (the window's choices and a send to a list), since they cost the dues and forms reads.
+  const lists = opts.lists ? listsByPerson(await worklistFamilies(orgId, world)) : null;
+  const people: AudiencePerson[] = world.people.map((p: any) => {
+    const h = householdOf(world, p);
+    return {
+      personId: p.id,
+      email: p.email_normalized,
+      lists: lists?.get(p.id) ?? [],
+      roster: h.roster.map(r => ({ teamId: r.team_id, teamName: r.rep_teams?.name ?? 'Rep team', current: isCurrentRepYear(r) })),
+      league: h.league.map(r => ({ seasonId: r.season_id, seasonName: r.league_seasons?.name ?? 'House league', current: isCurrentLeagueSeason(r) })),
+      coGuardians: h.guardians.slice(1).map(g => g.personId),
+    };
+  });
+  return { people, suppressed, noFamily: childrenWithNoFamily(world.rosterRows, world.leagueRegs, orgSlug) };
 }
 
 // ── Merge (chunk E write) ─────────────────────────────────────────────────────
