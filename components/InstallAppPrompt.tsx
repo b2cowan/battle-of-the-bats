@@ -278,7 +278,9 @@ export default function InstallAppPrompt({
     };
   }, [mode]);
 
-  if (mode === 'hidden') return null;
+  // Never inside a frame: a page shown inside another (the Public site editor's preview) is not where anyone installs an
+  // app, and its clicks are not the visitor's own.
+  if (mode === 'hidden' || (typeof window !== 'undefined' && window.self !== window.top)) return null;
 
   return (
     <div

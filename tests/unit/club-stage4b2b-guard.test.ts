@@ -34,7 +34,8 @@ describe('1 · one rule decides a team’s tryout state; every surface reads it'
     assert.match(readCode(TRYOUT_PAGE), /readTeamTryout\(/);
     assert.match(readCode(TRYOUTS_PAGE), /readClubTryouts\(/);
     assert.match(readCode(TRYOUTS_PAGE), /isListedTryout\(/);
-    assert.match(readCode(HOME), /openNowTryouts\(/);
+    // The home's one loader, shared with the editor's preview since the Public site builder (2026-10-21).
+    assert.match(readCode('lib/club-home-data.ts'), /openNowTryouts\(/);
     assert.match(readCode(TEAM_PAGE), /readTeamTryout\(/);
     // The Teams page's and the home grid's "Tryouts open" chip read the same rule (not the old reader).
     assert.match(readCode('lib/club-public-teams.ts'), /readClubTryouts\(/);

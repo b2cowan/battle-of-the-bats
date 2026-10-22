@@ -24,7 +24,7 @@ describe('the editor saves through one checked patch', () => {
     assert.match(route, /\{ error: parsed\.error, field: parsed\.field \}, \{ status: 400 \}/);
     // Who may save: one rule for both editor routes (lib/public-site-access.ts) — owner or admin to write.
     assert.match(route, /publicSiteEditor\(req, \{ write: true \}\)/);
-    assert.match(read('lib/public-site-access.ts'), /write && ctx\.role !== 'owner' && ctx\.role !== 'admin'/);
+    assert.match(read('lib/public-site-access.ts'), /write && !mayWriteSite\(ctx\.role\)/);
     assert.doesNotMatch(route, /sanitizeUrl|URL_RE/, 'the silent null-on-bad-link is gone');
   });
   it('the save writes only the fields it is given (no full-row null-out)', () => {
@@ -47,7 +47,8 @@ describe('the editor saves through one checked patch', () => {
 
 describe('the club notice', () => {
   it('is posted, never autosaved, and only by an owner or admin', () => {
-    const card = read('app/[orgSlug]/admin/public-site/ClubNoticeCard.tsx');
+    // Since the Public site builder (2026-10-21, A7) a strip with its window — still posted, never autosaved.
+    const card = read('app/[orgSlug]/admin/public-site/ClubNotice.tsx');
     assert.match(card, /onClick=\{\(\) => void post\(\)\}/);
     assert.doesNotMatch(card, /useRecordAutosave|setTimeout/);
     const route = read(NOTICE_ROUTE);
@@ -56,7 +57,9 @@ describe('the club notice', () => {
   });
   it('shows under the bar on every club page, and takes itself down when it ends', () => {
     assert.match(read('components/public/ClubFrame.tsx'), /\{club\.notice && <ClubNoticeBanner notice=\{club\.notice\} \/>\}/);
-    assert.match(read('app/[orgSlug]/layout.tsx'), /getLiveClubNotice\(org\.id, nowIso\)/);
+    // The frame's one loader (shared with the editor's preview since the Public site builder, 2026-10-21).
+    assert.match(read('app/[orgSlug]/layout.tsx'), /loadClubFrame\(org, orgSlug\)/);
+    assert.match(read('lib/club-frame-data.ts'), /getLiveClubNotice\(org\.id, nowIso\)/);
     assert.match(read('components/public/ClubNoticeBanner.tsx'), /setTimeout\(\(\) => setEnded\(true\), left\)/);
   });
 });

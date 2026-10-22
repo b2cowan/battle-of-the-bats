@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { clubLookEditor } from '@/lib/public-site-access';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { STOCK_LOGOS, PLAN_ORDER } from '@/lib/stock-logos';
 import { applyStockLogo } from '@/lib/stock-logo-render';
@@ -7,22 +7,10 @@ import { resolveTheme } from '@/lib/themes';
 import { withObservability, captureError } from '@/lib/observability';
 
 export const POST = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-
-  const { user, org } = ctx;
-
-  const { data: membership } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', org.id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (membership?.role !== 'owner') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  // The owner or an admin changes the club's look (Public site builder, Option A, 2026-10-21; lib/public-site-access.ts).
+  const r = await clubLookEditor(req);
+  if (r.error) return r.error;
+  const { org } = r.ctx;
 
   const body = await req.json().catch(() => null);
   const stockPath: unknown = body?.stockPath;

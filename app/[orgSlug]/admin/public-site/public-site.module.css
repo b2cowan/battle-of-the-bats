@@ -1,6 +1,8 @@
-/* Public site — the club's editor (Club Tier Stage 4c-1). The admin kit's cards (RepKit ClubSection), fields (ClubKit),
-   switches (SwitchRows) and reorder handle (ReorderList); this file holds only what the screen adds. The old look
-   (Page Content, Display Options, the typewriter titles, Save Changes) retired with it. ⚠ TOKENS ONLY (checkAdminKit). */
+/* Public site — THE BUILDER (Public site builder, ruled 2026-10-21; replaced Stage 4c-1's long page of cards). The admin
+   kit's fields (ClubKit), switches (SwitchRows), rows (RepKit) and reorder handle (ReorderList); this file holds only what
+   the screen adds: the five rows that open in place, the set-up card, the notice strip, the Look's controls and the
+   preview beside them. The club's own colours reach this file only through inline styles (the Look strip) and the
+   preview's frame — never a literal here. ⚠ TOKENS ONLY (checkAdminKit). */
 
 .accessDenied {
   display: flex;
@@ -13,12 +15,12 @@
 }
 .accessDenied h2 { color: var(--text-primary); margin: 0; }
 
-/* ── The header: the site's address, Copy link, Open, and the switch's home in words ── */
+/* ── The header: the site's address, Copy link, Open (Preview while offline below the desk) ── */
 .siteHead {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: -4px 0 20px;
+  margin: -4px 0 18px;
 }
 .addressRow {
   display: flex;
@@ -51,57 +53,216 @@
   line-height: 1.45;
   color: var(--text-tertiary);
 }
-.siteStateLink {
-  color: var(--home-olive);
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-@media (max-width: 900px) {
-  /* A fingertip's height without moving the sentence: the tap area grows, the line does not. */
-  .siteStateLink {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    margin-block: -14px;
-  }
-}
 @media (max-width: 640px) {
-  /* A phone: the address on its own line, the buttons a fingertip tall under it (drawings ~L1536). */
-  .addressRow { flex-direction: column; align-items: stretch; }
-  .addressButtons :global(.btn) { min-height: 44px; }
+  /* A phone: the address takes the line, Copy link and Open are their symbols alone beside it (2026-10-20) — no border,
+     no fill, no word, a fingertip square; the word stays as each button's accessible name. */
+  .addressRow { flex-wrap: nowrap; }
+  .addressLabel { display: none; }
+  .address { flex: 1; padding: 12px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+  .addressButtons { gap: 2px; }
+  .addressButton:global(.btn) {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-color: transparent;
+    background: none;
+    color: var(--text-secondary);
+  }
+  .addressButton :global(svg) { width: 20px; height: 20px; }
+  .addressWord { display: none; }
+}
+
+/* ── The builder: the rows, and the preview beside them at a desk ── */
+.builder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+@media (min-width: 1200px) {
+  .builder { grid-template-columns: minmax(380px, 440px) minmax(0, 1fr); }
+}
+.builderRows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.builderPreview {
+  position: sticky;
+  /* Under BOTH sticky bars: the top strip and the page's own header (AdminEventHeader publishes its height). */
+  top: calc(var(--admin-header-h, 0px) + var(--admin-topstrip-h, 48px) + 16px);
+  height: calc(100vh - var(--admin-header-h, 0px) - var(--admin-topstrip-h, 48px) - 32px);
+  min-width: 0;
+}
+
+/* One row: a settings card that opens in place (2026-10-12), its summary in one line while closed. */
+.row {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+.rowOpen { border-color: var(--home-line-strong); }
+.rowHeading { margin: 0; font: inherit; }
+.rowHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 12px 16px;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.rowHead:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rowTitle {
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.rowSummary {
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--text-tertiary);
+  overflow-wrap: anywhere;
+}
+.rowChevron {
+  flex: none;
+  color: var(--text-tertiary);
+  transition: transform 0.15s ease;
+}
+.rowOpen .rowChevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .rowChevron { transition: none; } }
+.rowBody { padding: 0 16px 18px; }
+@media (min-width: 641px) {
+  /* At a desk the body lines up under the title, past the mark's column. */
+  .row:has(.markDone, .markToDo) .rowBody { padding-left: 50px; }
+}
+
+/* The first-run marks (A8): ready, and not yet. */
+.markDone,
+.markToDo {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+}
+.markDone { background: var(--home-olive); color: var(--card-bg); }
+.markToDo { border: 1.5px dashed var(--home-line-strong); }
+
+/* ── Set up your site (A8) ── */
+.setup {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  padding: 14px 16px 16px;
+}
+.setupHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.setupText { flex: 1 1 220px; min-width: 0; }
+.setupTitle {
+  margin: 0 0 2px;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.setupText .lead { margin: 0; }
+.segments {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+}
+.segment,
+.segmentDone {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--home-line);
+}
+.segmentDone { background: var(--home-olive); }
+@media (max-width: 640px) {
+  .setupHead :global(.btn) { min-height: 44px; flex: 1 1 100%; justify-content: center; }
+}
+
+/* ── The club notice's strip (A7) ── */
+.noticeStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+.noticeStripLive {
+  border-left: 3px solid var(--warning);
+  border-radius: 0 8px 8px 0;
+}
+.noticeStripText { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.noticeStripWord {
+  margin: 0;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+.noticeStripLive .noticeStripWord { color: var(--warning); }
+.noticeStripLine {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.noticeStripSmall {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+.noticeStripButtons { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .noticeStripButtons :global(.btn) { min-height: 44px; }
+}
+.endsPick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 /* ── A card's opening sentence ── */
-.lead,
-.listLead {
+.lead {
   margin: 0 0 12px;
   font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-secondary);
 }
-.listLead { padding: 0 16px; }
 
-/* A refused field is marked, not only captioned (drawings ~L1487: the red edge and ring). */
+/* A refused field is marked, not only captioned (the red edge and ring). */
 .refusedField :global(input),
 .refusedField :global(textarea) {
   border-color: var(--danger);
   box-shadow: inset 0 0 0 1px var(--danger);
 }
-
-/* ── A list card's foot: Add, or why it can't (drawings ~L1981) ── */
-.listFoot {
-  padding: 10px 16px 14px;
-  border-top: 1px solid var(--home-line);
-}
-.listFoot :global(.btn) { min-height: var(--tap-min, 44px); }
-.listFull {
-  margin: 0;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-/* ── A field's refusal (stays until fixed) and the past-year hint (a hint, never a block) ── */
 .fieldError {
   margin: 4px 0 0;
   font-size: var(--type-support);
@@ -113,12 +274,29 @@
   color: var(--warning);
 }
 
+/* ── Contacts and documents: three lists in one row ── */
+.listPart + .listPart {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--home-line);
+}
+.listFoot { padding-top: 10px; }
+.listFoot :global(.btn) { min-height: var(--tap-min, 44px); }
+.listFull {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
 /* ── Home page: Open now locked first, then the club's order — the number is the handle ── */
 .sectionRows {
   list-style: none;
-  margin: 0;
+  margin: 0 -16px;
   padding: 0;
   border-top: 1px solid var(--home-line);
+}
+@media (min-width: 641px) {
+  .row:has(.markDone, .markToDo) .sectionRows { margin-left: -50px; }
 }
 .sectionRow {
   display: flex;
@@ -137,11 +315,8 @@
   flex: 1;
   min-width: 0;
 }
-/* The Look card's words take their own line when the row is too narrow to hold them beside the swatches. */
-.sectionText { flex: 1; }
-.lookText { flex: 1 1 220px; }
-.sectionText,
-.lookText {
+.sectionText {
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -163,73 +338,334 @@
   font-size: var(--type-support);
   color: var(--text-tertiary);
 }
-/* Open now on a phone: the shorter line, and no "Always first" beside it (drawings ~L1541) — the locked number says it. */
+/* Open now on a phone: the shorter line, and no "Always first" beside it — the locked number says it. */
 .subPhone { display: none; }
 @media (max-width: 640px) {
   .subDesk, .sectionWord { display: none; }
   .subPhone { display: inline; }
 }
 
-/* ── The club notice ── */
-.noticeLive {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  border: 1px solid var(--home-line);
-  border-left: 3px solid var(--warning);
-  border-radius: 0 8px 8px 0;
-  background: var(--home-card);
-}
-.noticeLiveWord {
+/* ── Look (moved in from Settings) ── */
+.look { display: flex; flex-direction: column; gap: 20px; }
+.lookPart { display: flex; flex-direction: column; gap: 8px; }
+.lookPartTitle {
+  margin: 0;
   font-size: var(--type-support);
   font-weight: 650;
-  color: var(--warning);
+  color: var(--text-secondary);
 }
-.noticeLiveLine {
-  font-weight: 700;
-  color: var(--text-primary);
-  overflow-wrap: anywhere;
-}
-.noticeLiveSmall {
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-.endsPick {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.noticeButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
-}
-@media (max-width: 640px) {
-  .noticeButtons :global(.btn) { min-height: 44px; }
-}
+.listPart .lookPartTitle,
+.rowBody > .lookPartTitle { margin-bottom: 6px; }
+.rowBody > .lookPartTitle { margin-top: 18px; }
 
-/* ── Look ── */
-.lookRow {
-  display: flex;
-  flex-wrap: wrap;
+/* The club's bar as families see it, below the desk that holds the preview (its colours are inline styles). */
+.lookStrip {
+  display: none;
   align-items: center;
-  gap: 8px 12px;
+  gap: 10px;
+  min-height: 60px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border-bottom: 3px solid transparent;
 }
-.swatch,
-.lookLogo {
+@media (max-width: 1199px) { .lookStrip { display: flex; } }
+.lookReadOnly .lookStrip { display: flex; }
+.lookStripLogo {
   flex: none;
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  object-fit: contain;
   display: inline-grid;
   place-items: center;
-  font-size: 13px;
+  font-size: var(--type-support);
   font-weight: 700;
-  line-height: 1;
-  object-fit: contain;
-  background: var(--home-card);
 }
+.lookStripName {
+  min-width: 0;
+  font-size: 20px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The logo and the banner photo: a picture, then its buttons. */
+.imageRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+.logoTile {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.logoTile img { width: 100%; height: 100%; object-fit: contain; }
+.noImage { font-size: var(--type-token); color: var(--text-tertiary); text-align: center; }
+.bannerTile {
+  flex: none;
+  width: 160px;
+  max-width: 100%;
+  aspect-ratio: 16 / 5;
+  border-radius: 6px;
+  border: 1px solid var(--home-line);
+  overflow: hidden;
+}
+.bannerTile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.imageButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.imageButtons :global(.btn) { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 640px) {
+  .imageButtons :global(.btn) { min-height: 44px; }
+}
+
+/* Colours: From your logo first, then the presets, then the club's own (A3). */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--card-bg);
+  box-shadow: 0 0 0 1px var(--home-line-strong);
+  cursor: pointer;
+}
+.swatchOn { box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--home-olive); }
+.swatchOwn { background: conic-gradient(var(--danger), var(--warning), var(--home-olive), var(--home-blue), var(--home-plum), var(--danger)); }
+.swatch:focus-visible,
+.fromLogo:focus-visible,
+.lookTile:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 3px; }
+@media (max-width: 640px) {
+  /* A fingertip each: 44 px circles. */
+  .swatches { gap: 4px 6px; }
+  .swatch { width: 44px; height: 44px; }
+}
+.fromLogo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 3px 12px 3px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: var(--type-support);
+  font-weight: 650;
+  cursor: pointer;
+}
+.fromLogoOn { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
+.dual { width: 28px; height: 28px; border-radius: 50%; flex: none; }
+@media (max-width: 640px) { .fromLogo { min-height: 44px; } }
+.ownColours { display: flex; flex-wrap: wrap; gap: 12px 18px; }
+.ownColour {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+.ownColour input {
+  width: 44px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  background: var(--home-card);
+  cursor: pointer;
+}
+.readable {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* Type: three looks, each showing the club's name in its own faces (A4). */
+.looks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 640px) { .looks { grid-template-columns: minmax(0, 1fr); } }
+.lookTile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 10px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.lookTileOn { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.lookTileName { font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+.lookTileTitle {
+  max-width: 100%;
+  font-size: 19px;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lookTileText { font-size: var(--type-token); color: var(--text-tertiary); }
+/* The faces themselves — the club's three pairs (lib/club-site.ts `clubFace`), loaded by the org layout. */
+[data-look='classic'] .lookTileTitle,
+[data-look='classic'].lookStripName { font-family: var(--font-barlow), 'Barlow Condensed', sans-serif; font-weight: 700; } /* type-ok: the club's own face, a sample */
+[data-look='classic'] .lookTileText { font-family: var(--font-inter), sans-serif; } /* type-ok: the club's own face, a sample */
+[data-look='serif'] .lookTileTitle,
+[data-look='serif'].lookStripName { font-family: var(--font-dm-serif), 'DM Serif Display', serif; font-weight: 400; } /* type-ok: the club's own face, a sample */
+[data-look='serif'] .lookTileText { font-family: var(--font-dm-sans), sans-serif; } /* type-ok: the club's own face, a sample */
+[data-look='clean'] .lookTileTitle,
+[data-look='clean'].lookStripName { font-family: var(--font-inter), sans-serif; font-weight: 700; font-size: 17px; } /* type-ok: the club's own face, a sample */
+[data-look='clean'] .lookTileText { font-family: var(--font-inter), sans-serif; } /* type-ok: the club's own face, a sample */
+
+/* ── Visibility (the owner's; an admin reads it) ── */
+.addressFact {
+  padding: 10px 0 0;
+  border-top: 1px solid var(--home-line);
+  margin-top: 4px;
+}
+.addressFact p { margin: 2px 0 0; }
+.addressText { overflow-wrap: anywhere; }
+.mono { font-family: var(--font-data); } /* type-ok: code */
+.textLink {
+  color: var(--home-olive);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 900px) {
+  /* A fingertip's height without moving the sentence: the tap area grows, the line does not. */
+  .textLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -14px;
+  }
+}
+.facts { margin: 0 0 8px; display: flex; flex-direction: column; gap: 10px; }
+.facts div { display: flex; flex-direction: column; gap: 2px; }
+.facts dt { font-weight: 650; color: var(--text-primary); }
+.facts dd { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
+
+/* ── The preview (A1, A2, A9) ── */
+.preview {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.previewHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--home-line);
+}
+.previewTitle { font-weight: 700; color: var(--text-primary); margin-right: auto; }
+.viewPill {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--home-fill);
+}
+.viewPill button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.viewPill button[aria-pressed='true'] { background: var(--card-bg); color: var(--home-olive); box-shadow: var(--home-shadow); }
+@media (max-width: 640px) { .viewPill button { min-height: 44px; } }
+.previewOffline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 7px 12px;
+  font-size: var(--type-support);
+  color: var(--home-amber);
+  background: rgba(var(--home-amber-rgb), 0.08);
+  border-bottom: 1px solid rgba(var(--home-amber-rgb), 0.2);
+}
+.previewStage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--home-paper);
+}
+.previewStagePhone { display: grid; place-items: center; }
+.previewLoading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.previewDeskBox,
+.previewPhoneBox {
+  position: relative;
+  overflow: hidden;
+}
+.previewPhoneBox {
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px var(--home-line-strong), var(--home-shadow);
+}
+.previewFrame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  transform-origin: 0 0;
+  background: var(--card-bg);
+}
+.previewFoot {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--home-line);
+}
+/* Below the desk: the preview in a window, as tall as the window allows. */
+.previewWindow { height: min(78vh, 900px); }
+@media (max-width: 640px) { .previewWindow { height: calc(100dvh - 140px); } }

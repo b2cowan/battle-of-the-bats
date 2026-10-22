@@ -60,18 +60,19 @@ textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--bo
 
 <div class="wrap">
   <header class="lede">
-    <h1>Club Tier 4c-1 · a club runs its own site</h1>
-    <p>Owner QA Ledger §357. The club now runs its public site from <b>Public site</b> in the admin. It chooses which home sections show and in what order, writes its words and contacts, lists its documents and questions on a new About page, and posts a one-line notice that ends by itself. Every change saves itself, except a notice, which waits for <b>Post notice</b>.</p>
-    <p>The test club is <b>UAT Lakeshore Lynx</b> (navy). Its site already has an Instagram link, two contacts (one a personal Gmail address), three documents under two headings and one question whose answer mentions 2025. Its home order starts as Teams · About the club · House league · Tournaments · Past tournaments. A test notice may still be up from the layout check; if it is, press <b>End now</b> before Part 6.</p>
+    <h1>Club Tier 4c-1 + the Public site builder · a club makes its own site</h1>
+    <p>Owner QA Ledger §357, rewritten 2026-10-22 for the Public site builder (ruled 2026-10-21, A1–A9). Nobody walked the first version, so this one covers both: what 4c-1 changed on the public pages (the sections in your order, the notice, the About page) and the editor rebuilt around them.</p>
+    <p><b>Public site</b> is now five rows that open in place: <b>Look · Home page · About the club · Contacts and documents · Visibility</b>. At a computer, the club’s home sits beside them as a live preview. The look and the on/off switch moved in from Settings. Every change saves itself, except a notice, which waits for <b>Post notice</b>.</p>
+    <p>The test club is <b>UAT Lakeshore Lynx</b> (navy). Its site already has an Instagram link, two contacts (one a personal Gmail address), three documents under two headings and one question whose answer mentions 2025. Its home order starts as Teams · About the club · House league · Tournaments · Past tournaments. If a test notice is still up, press <b>End now</b> before Part 7. For Part 3, have a logo image with two clear colours ready (any PNG or JPG under 2 MB), and a wide photo under 4 MB.</p>
   </header>
 
   <section class="card signin" aria-labelledby="signin-h">
     <h2 id="signin-h">Sign in as</h2>
     <dl>
-      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server, restarted for this build). For phone steps, use the browser’s phone view at 390 px.</dd>
-      <dt>Lakeshore owner</dt><dd><code>uat-rep-only-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Parts 1–6). The editor is <code>/uat-rep-only/admin/public-site</code>.</dd>
-      <dt>UAT Rep Club admin</dt><dd><code>uat-club-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Part 9)</dd>
-      <dt>Signed out</dt><dd>Parts 7, 8 and 10. Use a private window next to the signed-in one, so you can change something and watch it land.</dd>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server, restarted for this build). A computer window at least 1200 px wide for the preview; the browser’s phone view at 390 px for Part 9.</dd>
+      <dt>Lakeshore owner</dt><dd><code>uat-rep-only-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Parts 1–10). The editor is <code>/uat-rep-only/admin/public-site</code>.</dd>
+      <dt>UAT Rep Club admin</dt><dd><code>uat-club-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Part 11)</dd>
+      <dt>Signed out</dt><dd>Parts 12 and 13. Use a private window next to the signed-in one, so you can change something and watch it land.</dd>
     </dl>
   </section>
 
@@ -81,7 +82,7 @@ textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--bo
 
   <section class="card" aria-labelledby="calls-h">
     <h2 id="calls-h">Your calls</h2>
-    <p class="where">Three choices the build raised. Pick one for each; the recommended one is marked.</p>
+    <p class="where">Choices the build raised. Pick one for each; the recommended one is marked.</p>
     <div class="calls" id="calls"></div>
   </section>
 
@@ -100,93 +101,128 @@ textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--bo
 
 <script>
 const PARTS = [
-  { id: 'p1', title: '1 · The editor at a glance', where: 'Lakeshore owner. /uat-rep-only/admin/public-site on a computer, then at phone width.', steps: [
-    'The title reads "Public site" with a green "Online" chip.',
-    'Under it: "Families see it at", the address, "Copy link" and "Open". Copy link shows "Copied" for a moment; Open opens the club’s home in a new tab.',
-    '"It is on. Turn it off in Settings", and that link opens Settings.',
-    'The cards, top to bottom: Club notice · Home page · About the club · Who to contact · Documents and policies · Questions families ask · Social links · Look.',
-    'There is no "Save Changes" button anywhere, and no "Page Content" or "Display Options" title. Card titles are in sentence case, not small capitals.',
-    'Phone: the address sits on its own line, with Copy link and Open under it, each a fingertip tall. Nothing scrolls sideways.',
+  { id: 'p1', title: '1 · The editor at a glance', where: 'Lakeshore owner. /uat-rep-only/admin/public-site on a computer, 1200 px wide or more.', steps: [
+    'The title reads "Public site" with a green "Online" chip. Under it: "Families see it at", the address, "Copy link" and "Open". Copy link shows "Copied" for a moment; Open opens the club’s home in a new tab.',
+    'There is no "Turn it off in Settings" line, and no read-only Look card.',
+    'Down the left: the Club notice strip first, then five rows: Look · Home page · About the club · Contacts and documents · Visibility. Each closed row has one line under its title saying what is in it (for example "4 contacts · 3 documents · 1 question").',
+    'Clicking a row opens it in place; opening another closes the first. Typing in a field, then opening another row and coming back, keeps what you typed.',
+    'On the right: "Preview", with Computer and Phone, showing the club’s home as families see it: its bar, its sections, its footer. It stays in view as you scroll the rows.',
+    'If any part isn’t set up yet, a "Set up your site · N of 4 ready" card sits above the rows with a bar, and the rows start with a tick or a dashed ring. With all four ready and the site online, the card and the marks are gone.',
+    'There is no "Save Changes" button anywhere.',
   ]},
-  { id: 'p2', title: '2 · The home page’s sections, in your order', where: 'Lakeshore owner, the Home page card. Keep a signed-out window on /uat-rep-only beside it.', steps: [
+  { id: 'p2', title: '2 · The preview: see it, point at it, click it', where: 'Lakeshore owner, the preview beside the rows.', steps: [
+    'Point at the club’s bar in the preview: it gets a dashed outline in the club’s colour and a small label "Change in Look". Click it: the Look row opens.',
+    'Point at the Teams section: "Change in Home page"; click it and the Home page row opens. The tagline under the club’s name says "Change in About the club".',
+    'In the footer, the email says "Change in About the club", and "Contacts and documents" opens that row.',
+    'Click a team tile, a tournament or the Sign in link in the preview: nothing navigates. The editor stays where it is.',
+    'Switch to Phone: the preview becomes a phone-sized page, with the tab row under the bar and one column, and no banner photo.',
+    'Scroll the computer preview down to the footer, then change the tagline in About the club. After the "Saved" pill, the preview shows the new tagline without flashing white or jumping back to the top.',
+  ]},
+  { id: 'p3', title: '3 · Look: logo, colours, type, banner', where: 'Lakeshore owner, the Look row, the preview beside it.', steps: [
+    'Logo: upload your two-colour logo. It shows in the row and in the preview’s bar. A file over 2 MB is refused beside the button ("JPG, PNG or WebP, up to 2 MB."), and nothing is sent.',
+    'Colours: with an uploaded logo, "From your logo" comes first, its circle in the logo’s two colours. Click it: the preview’s bar and footer take those colours, and the sentence under the swatches says who reads what (for example "White text on navy, navy links. Readable on every page.").',
+    'Click a preset circle (say Forest Green): the preview turns green. Its ring moves to that circle at once. Then pick "From your logo" again.',
+    'The last circle opens "Your own colours", with Main colour and Accent colour. Changing one recolours the preview a moment after you stop.',
+    'Browse stock logos opens "Choose a stock logo"; pick one and "Use this logo": it is drawn in the club’s colour. "From your logo" is not offered for a stock logo. Upload your own logo again afterwards.',
+    'Type: three tiles, Classic, Serif and Clean, each showing "UAT Lakeshore Lynx" in its own letters. Pick Serif: the preview’s club name changes. Put Classic back.',
+    'Banner photo: upload a wide photo. The computer preview shows it under the bar; the phone preview does not. The hint says phones leave it out. Remove takes it away.',
+    'Nothing in this row has a Save button; each choice shows the floating "Saved".',
+  ]},
+  { id: 'p4', title: '4 · The home page’s sections, in your order', where: 'Lakeshore owner, the Home page row, with the preview beside it.', steps: [
     'Row 1 is "Open now" with a plain 1 and "Always first" at the right. It has no switch, and holding or dragging its number does nothing.',
-    'Rows 2–6 are Teams · About the club · House league · Tournaments · Past tournaments, each numbered, each with a switch and a line saying what it shows (for example "Your 9 teams in your groups, each with its tryout state").',
-    'Hold the 5 (Tournaments) and drag it above About the club. A "Saved" pill appears and fades. Reload: the order stuck.',
-    'Tap a number instead: a small menu offers Move up, Move down and Cancel (a sheet at phone width). A move from it saves too.',
-    'Turn off Teams. Its line reads "Hidden from families". Reload the signed-out home: the Teams section and the Teams tab are both gone.',
-    'Turn Teams back on: the section and tab come back. The tab row follows your order (Tryouts, when it shows, rides with Teams).',
-    'No row can be dragged above Open now.',
+    'The other rows are Teams · About the club · House league · Tournaments · Past tournaments, each numbered, each with a switch and a line saying what it shows.',
+    'Hold the number of Tournaments and drag it above About the club. "Saved" appears and fades; the preview redraws in the new order. Reload: the order stuck.',
+    'Tap a number instead: a small menu offers Move up, Move down and Cancel. A move from it saves too.',
+    'Turn off Teams. Its line reads "Hidden from families"; the preview loses the Teams section and the Teams tab. Turn it back on.',
+    'The closed row’s line says how many sections show and which comes first.',
   ]},
-  { id: 'p3', title: '3 · Your words, and refusals that say why', where: 'Lakeshore owner. About the club and Social links.', steps: [
-    'Tagline ("Rep baseball · ages 9 to 16") shows "One line under your name. 27 / 100", and the count follows your typing.',
-    'Type into About: "Registration for the 2025 season opens in the spring." After a pause an amber hint reads "Mentions 2025 — still true?". It saves anyway.',
-    'Change it to "A volunteer club since 1979." The hint goes away: a founding year isn’t flagged. Put the original text back.',
-    'In "Families’ questions go to", type "info@club". No red text appears while you type. After a pause, or when you leave the field, it turns red with "That doesn’t look like an email address." Fix the address and the red goes.',
-    'In Facebook, type "Lakeshore Lynx Baseball" and pause: red, "That isn’t a web address. Paste the link to your Facebook page, starting with https://". Reload: nothing was saved there.',
-    'In Website, type "lakeshorelynx.ca" and pause: under it, "Saved as https://lakeshorelynx.ca". The signed-out footer gains a website tile.',
+  { id: 'p5', title: '5 · About the club: your words, and refusals that say why', where: 'Lakeshore owner, the About the club row.', steps: [
+    'Tagline shows "One line under your name. 27 / 100", and the count follows your typing.',
+    'Type into About: "Registration for the 2025 season opens in the spring." After a pause an amber hint reads "Mentions 2025 — still true?". It saves anyway. Put the original text back.',
+    'In "Families’ questions go to", type "info@club". No red while you type; after a pause it turns red with "That doesn’t look like an email address." Fix it and the red goes.',
+    'The social links are in this row now, under the questions address. In Facebook, type "Lakeshore Lynx Baseball" and pause: red, "That isn’t a web address. Paste the link to your Facebook page, starting with https://". Reload: nothing was saved there.',
+    'In Website, type "lakeshorelynx.ca" and pause: "Saved as https://lakeshorelynx.ca". The preview’s footer gains a website tile.',
   ]},
-  { id: 'p4', title: '4 · Contacts, documents and questions', where: 'Lakeshore owner. The three list cards.', steps: [
-    'Who to contact lists Registration and Equipment, with their addresses. "Add a contact" sits at the foot of the card, not in its head.',
-    'Open Equipment: the window reads first (Role or name, Email). Press the pencil and you can edit. While editing the Gmail address, a quiet line suggests a role address like registrar@. It never refuses it.',
-    'Change the role to "Equipment and uniforms" while editing. The window’s own pill says Saved. Press ✓ and close: the row has the new name, with no extra "Contact saved" message.',
-    'Add a contact with the email "nope". Save refuses it beside the button: "That doesn’t look like an email address." Fix it and Save: the window closes, and "Contact saved." appears briefly.',
+  { id: 'p6', title: '6 · Contacts and documents', where: 'Lakeshore owner, the Contacts and documents row: three lists in one row.', steps: [
+    'Who to contact lists Registration and Equipment. "Add a contact" sits under the list.',
+    'Open Equipment: the window reads first; the pencil edits. While editing the Gmail address, a quiet line suggests a role address. It never refuses it.',
+    'Add a contact with the email "nope": Save refuses it beside the button. Fix it and Save: "Contact saved." appears briefly, and the preview’s footer shows "Contacts and documents".',
     'Remove a contact: it asks "Remove …? Families will no longer see it." with Keep it and Remove.',
-    'Add a document: the Heading field offers Codes of conduct, Safety and The club as you type, and any other words are allowed.',
-    'Questions families ask: open the question; its answer mentions 2025, and the window shows "Mentions 2025 — still true?" when you edit it.',
+    'Add a document: the Heading field offers Codes of conduct, Safety and The club as you type.',
+    'Questions families ask: open the question; editing its answer shows "Mentions 2025 — still true?".',
   ]},
-  { id: 'p5', title: '5 · The Look card', where: 'Lakeshore owner.', steps: [
-    'Read only: the club’s initials tile, two colour swatches, "Navy and gold · the default font", and "White text on navy, navy links. Readable on every page."',
-    '"Change in Settings" opens Settings. Nothing on this card can be edited.',
+  { id: 'p7', title: '7 · The club notice: a strip, a window, every page', where: 'Lakeshore owner, the strip at the top of the rows, with the signed-out window beside it.', steps: [
+    'With nothing showing, the strip reads "Club notice", "No notice showing." and its one-line purpose, with "Post a notice".',
+    'Post a notice opens a window. Type "All Lakeshore diamonds are closed tonight" and "Rain. Every game and practice tonight is cancelled." Ends offers Tonight, Tomorrow night, and Pick a date and time. Nothing posts while you type.',
+    'Press "Post notice": the window closes, "Notice posted. Families see it now." appears, and the strip turns amber-edged: "Club notice · Showing now", the line, and "Posted [time] p.m. by the club · ends tonight". The preview shows the notice under the bar.',
+    'Signed out: the notice is on /uat-rep-only, /uat-rep-only/teams, a team page, a tryout page and /uat-rep-only/about. The time is lowercase with periods.',
+    'Click the notice in the preview: the window opens for an edit. Change the line and press "Update notice": the public pages show the new line.',
+    'Pick a date and time already past, then Update notice: "Pick a time that hasn’t passed yet."',
+    'Press "End now" on the strip: "Notice ended." The notice is gone from every public page and from the preview.',
   ]},
-  { id: 'p6', title: '6 · A notice families see on every page', where: 'Lakeshore owner, the Club notice card, with the signed-out window beside it.', steps: [
-    'Type "All Lakeshore diamonds are closed tonight" in Notice (the count reads "/ 80"), and "Rain. Every game and practice tonight is cancelled." in More detail. Ends offers Tonight, Tomorrow night, and Pick a date and time. Leave Tonight.',
-    'Nothing is posted while you type. Press "Post notice": "Notice posted. Families see it now." appears, and the card shows "Showing now" with the line families read.',
-    'Signed out, reload /uat-rep-only: under the bar, a white card with an amber left edge, your line in bold, the detail, and "Posted [time] p.m. by the club · ends tonight". The time is lowercase with periods.',
-    'The same notice is on /uat-rep-only/teams, a team page, a tryout page and /uat-rep-only/about.',
-    'Reload the editor: the card still shows Showing now, and Ends still says Tonight. Edit the line and press "Update notice": the public pages show the new line.',
-    'Choose Pick a date and time with a time already past, and press Update notice: "Pick a time that hasn’t passed yet."',
-    'Press "End now": "Notice ended." Reload the public pages: the notice is gone everywhere.',
+  { id: 'p8', title: '8 · Visibility, and going live', where: 'Lakeshore owner, the Visibility row.', steps: [
+    'Two switch rows: "Public site" (on) with its sentence naming the address, and "Listed in the club directory". Under them "Web address", the address, and "Change it in Settings", which opens Settings.',
+    'Turn Public site off: it asks "Take UAT Lakeshore Lynx’s public site offline?" with Keep it online and Take it offline. Take it offline.',
+    'The chip reads "Offline"; the notice strip is gone; the preview now carries an amber line "Only you and your admins can see this. Your site is offline." and still shows the whole site.',
+    'Signed out, /uat-rep-only and /uat-rep-only/about show that the club’s site isn’t available, while the preview still shows it to you.',
+    'The "Set up your site" card is there with a lime "Go live". Press it: the chip turns Online, the card goes (if all four parts are ready), and the signed-out home is back.',
+    'The directory switch is greyed while the site is off and works again once it is on.',
   ]},
-  { id: 'p7', title: '7 · The About page', where: 'Signed out. /uat-rep-only/about on a phone, then on a computer.', steps: [
-    'The page is titled "About the club", with no back link (the Home tab is the way back) and no line under the title. The browser tab reads "About the club · UAT Lakeshore Lynx".',
-    'The about text, then "Who to contact": each role over its address, on its own line. Copy is a bare icon on a phone and a labelled "Copy" on a computer, and shows a tick for a moment.',
-    '"Documents and policies": the band "Codes of conduct" with two documents, then "Safety" with one. Each opens in a new tab, with a small arrow icon.',
-    '"Questions families ask": the question in bold, the answer under it.',
-    'Nothing on the page says the club is compliant, approved or certified.',
-    'The footer of every club page has a "Contacts and documents" link that opens this page.',
+  { id: 'p9', title: '9 · On a phone', where: 'Lakeshore owner, the browser’s phone view at 390 px.', steps: [
+    'The address takes its line; Copy link and Open are bare symbols beside it, no border, each a fingertip square. Nothing scrolls sideways.',
+    'There is no preview beside the rows. The rows open in place, one at a time.',
+    'Open Look: a strip of the club’s bar sits at its top. Pick a different colour: the strip changes. Pick Classic, Serif, Clean: the name in the strip changes letters. Put the originals back.',
+    'Colour circles and type tiles are each a fingertip to tap.',
+    'Take the site offline (Visibility): beside Copy link, Open becomes an eye. Tap it: the preview opens full screen with a back arrow and the "Only you and your admins can see this" line. Tapping a part closes it and opens its row. Turn the site back on.',
   ]},
-  { id: 'p8', title: '8 · The home', where: 'Signed out. /uat-rep-only on a computer, then a phone.', steps: [
-    'Computer: the sections run down the left in your order, and About the club stands in the right-hand column next to them, starting level with the first section.',
-    'Phone: one column, in exactly the order the editor shows, About in its place.',
-    'About the club ends with a link row "About the club" that opens the About page, and one Follow button (not two).',
+  { id: 'p10', title: '10 · Settings is smaller now', where: 'Lakeshore owner, Organization › Settings.', steps: [
+    'Settings holds Organization details (name and web address) with "Save changes", a "Your public site" card, and Delete organization. Nothing else.',
+    'The "Your public site" card says its logo, colours, type and whether it is online are set in Public site; "Open Public site" goes there.',
+    'There is no logo, colour theme, hero banner, font family or card style here any more, and no public site switch.',
+    'Change the name and press the door before saving: it asks "Save your changes?", as before. Discard and leave.',
+  ]},
+  { id: 'p11', title: '11 · As an admin, not the owner', where: 'Sign in as the UAT Rep Club admin. /uat-rep-club/admin/public-site.', steps: [
+    'The admin sees the same rows and the preview.',
+    'Look works for the admin: pick a different preset and the preview recolours. Put the original yellow back (Championship Gold).',
+    'Visibility reads as text: "Public site" Online., the directory listing Yes. or No., the web address with no Settings link, and "The owner turns the site on and off and changes its address." No switches.',
+    'The admin can reorder sections, edit words and lists, and post and end a notice.',
+    'Settings is not in the admin’s menu.',
+  ]},
+  { id: 'p12', title: '12 · What families see', where: 'Signed out. /uat-rep-only and /uat-rep-only/about, on a computer, then a phone.', steps: [
+    'Home, computer: the sections run down the left in your order, and About the club stands in the right-hand column, starting level with the first section.',
+    'Home, phone: one column, in exactly the order the editor shows.',
+    'About the club ends with a link row "About the club" that opens the About page, and one Follow button.',
+    'About page: titled "About the club", no back link; the about text, then "Who to contact" (Copy a bare icon on a phone, labelled on a computer), "Documents and policies" in their bands opening in new tabs, "Questions families ask".',
+    'Nothing on the About page says the club is compliant, approved or certified. The footer of every club page has "Contacts and documents".',
     'At 768 px nothing overlaps and nothing scrolls sideways.',
   ]},
-  { id: 'p9', title: '9 · As an admin, not the owner', where: 'Sign in as the UAT Rep Club admin. /uat-rep-club/admin/public-site.', steps: [
-    'Under the address: "It is on. The owner turns it on and off in Settings." There is no link to Settings.',
-    'The Look card reads "The owner sets your logo, colours and font…" and ends "The owner changes these in Settings."',
-    'The admin can still reorder sections, edit words and lists, and post and end a notice.',
-  ]},
-  { id: 'p10', title: '10 · What must NOT change', where: 'Signed out, then as the UAT Rep Club owner.', steps: [
-    '/uat-rep-club (the yellow club, never edited in this walk) shows its sections in the old order: Open now, Teams, House league, Tournaments, About the club.',
+  { id: 'p13', title: '13 · What must NOT change', where: 'Signed out, then as the UAT Rep Club owner.', steps: [
+    '/uat-rep-club shows its sections in the old order: Open now, Teams, House league, Tournaments, About the club, and its own yellow.',
     'A tournament page (for example /riverdale-minor-ball) looks as before, with no club notice and no club footer.',
-    'As the UAT Rep Club owner, Organization › Tournaments: if a "Sealed records" band shows its door, it now reads "Past tournaments", not "Public ledger".',
-    'Owner, Settings: the Public site switch is where it was. Turning it off makes /uat-rep-only/about show "This club’s site isn’t available", like every other club page. Turn it back on.',
+    'As the UAT Rep Club owner, a tournament’s Branding page still offers its own card style (Default, Glass, Outlined, Flat).',
+    'As the UAT Rep Club owner, Organization › Tournaments: if a "Sealed records" band shows its door, it reads "Past tournaments", not "Public ledger".',
   ]},
 ];
 
 const CALLS = [
-  { id: 'c1', q: 'The Club notice card sits first in the editor, above Home page. The editor is eight cards long on a phone.', opts: [
-    ['A', 'Keep it first: a notice is the one urgent thing, and it is what a volunteer opens the editor for on a rain night', true],
-    ['B', 'Move it below Home page and About the club', false] ] },
-  { id: 'c2', q: 'An About page with no about text, no contacts, no documents, no questions and no club address shows the club’s "not found" page', opts: [
+  { id: 'c1', q: 'A new club’s site starts ONLINE (it always has). So "Set up your site" follows the four parts, not a first Go live: it shows while any part isn’t ready or the site is offline, and Go live appears whenever the site is offline.', opts: [
+    ['A', 'Keep it as built: a club that never opens the editor keeps working tryout pages', true],
+    ['B', 'New clubs start offline until the owner presses Go live (their tryout and team pages refuse until then)', false] ] },
+  { id: 'c2', q: 'The club has one logo, so an admin who changes it in Look changes it everywhere the club’s logo shows: the admin bar, exports and tournament pages that use it (Option A as ruled).', opts: [
+    ['A', 'Keep it: the logo is part of the look, and the look is the admins’ too', true],
+    ['B', 'The logo stays the owner’s; admins change colours, type and banner only', false] ] },
+  { id: 'c3', q: 'Staff who can read the editor but not write it see the look in words and the bar strip, with no preview (the preview is the owner’s and admins’).', opts: [
+    ['A', 'Leave it', true],
+    ['B', 'Give read-only staff the preview too', false] ] },
+  { id: 'c4', q: 'An About page with no about text, no contacts, no documents, no questions and no club address shows the club’s "not found" page', opts: [
     ['A', 'Keep "not found": nothing links there in that case, and an empty page with only a title says nothing', true],
     ['B', 'Show the title and the club’s name only, as the copy table first said', false] ] },
-  { id: 'c3', q: 'When a club hides Teams, a mistyped team address no longer offers "See all teams" (the Teams page itself still opens)', opts: [
+  { id: 'c5', q: 'When a club hides Teams, a mistyped team address no longer offers "See all teams" (the Teams page itself still opens)', opts: [
     ['A', 'Leave it: hiding Teams means the club doesn’t want that door', true],
     ['B', 'Keep offering "See all teams" whenever the club has a Teams page', false] ] },
 ];
 
-const KEY = 'club-public-site-walk-v1';
+const KEY = 'club-public-site-walk-v2';
 let state = {};
 try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
@@ -279,7 +315,7 @@ tally();
 
 const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
 document.getElementById('build').addEventListener('click', () => {
-  const lines = ['§357 Club Tier 4c-1 · a club runs its own site — walk results'];
+  const lines = ['§357 Club Tier 4c-1 + the Public site builder — walk results'];
   for (const part of PARTS) {
     const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
     lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);

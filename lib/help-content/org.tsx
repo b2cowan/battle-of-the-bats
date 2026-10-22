@@ -15,7 +15,7 @@ const orgHelp: HelpPageContent = {
           <ol>
             <li><strong>Invite your co-organizers.</strong> Go to <strong>Members</strong> and send invites to anyone who will help manage tournaments or run the league. Assign the Admin role for full co-organizer access.</li>
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
-            <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your web address before you share any links publicly.</li>
+            <li><strong>Set up your org branding.</strong> In <strong>Public site &rsaquo; Look</strong>, upload your logo and pick your colours. Then confirm your web address in <strong>Settings</strong> before you share any links publicly.</li>
             <li><strong>Check your modules.</strong> If your plan includes House league, Rep teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
             <li><strong>Invite your volunteers</strong> (Tournament Plus and above). Volunteers don&rsquo;t use the main admin area. In <strong>Members → Invite</strong>, choose the Volunteer role and what they&rsquo;re <strong>helping with</strong> (Scoring, The gate, or Both); their phone opens straight to that job.</li>
           </ol>
@@ -84,7 +84,7 @@ const orgHelp: HelpPageContent = {
                 </tbody>
               </table>
               <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program.</p>
-              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It never opens <strong>Families</strong> on its own, and <strong>Plan &amp; billing</strong>, <strong>Settings</strong> and the <strong>audit log</strong> stay owner-only. The menu lists only what you can open, so an admin won&rsquo;t find them there; the club&rsquo;s home page shows <strong>Plan &amp; billing</strong> and <strong>Settings</strong> under <strong>Organization</strong> marked <strong>Owner only</strong>, so it&rsquo;s clear they exist and whose they are.</p>
+              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It never opens <strong>Families</strong> on its own, and <strong>Plan &amp; billing</strong>, <strong>Settings</strong> and the <strong>audit log</strong> stay owner-only. The menu lists only what you can open, so an admin won&rsquo;t find them there; the club&rsquo;s home page shows <strong>Plan &amp; billing</strong> and <strong>Settings</strong> under <strong>Organization</strong> marked <strong>Owner only</strong>, so it&rsquo;s clear they exist and whose they are. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
             </>
           ),
         },
@@ -95,7 +95,7 @@ const orgHelp: HelpPageContent = {
             <>
               <ul>
                 <li><strong>Owner</strong> — Full access, plus the two things nobody else can hold: <strong>Plan &amp; billing</strong> and <strong>Settings</strong>. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
-                <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and branding. Cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
+                <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and the public site&rsquo;s look (logo, colours, type and banner, in <strong>Public site</strong>). Cannot turn the public site on or off, and cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
                 <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
                 <li><strong>League admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
@@ -1046,11 +1046,11 @@ const orgHelp: HelpPageContent = {
     {
       id: 'settings',
       heading: 'Settings and your web address',
-      summary: 'The owner-only Settings page: your public site switches, web address, branding, hero banner, fonts, and account deletion.',
-      keywords: ['settings', 'web address', 'org slug', 'url slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up'],
-      searchText: 'org settings owner only name web address url slug org slug change redirect branding logo stock logos stock logo colour circle main colour logo follows colour hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why turn the site off take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note',
+      summary: 'The owner-only Settings page: your organization’s name, web address, and account deletion. Your public site’s logo, colours, type and switch are in Public site.',
+      keywords: ['settings', 'web address', 'org slug', 'url slug', 'organization details', 'delete organization', 'open public site', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up', 'logo', 'colours', 'branding', 'where did branding go'],
+      searchText: 'org settings owner only organization details name web address url slug org slug change redirect save button delete organization account deletion danger zone your public site door card open public site its logo colours type and whether it is online are set in public site branding logo stock logo colours hero banner banner photo font type moved to public site look visibility card style tournament branding page public site switch online offline listed in the directory discover directory take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note',
       content: (
-        <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your organization&rsquo;s name, web address, whether your public site is switched on, and the look of your public pages.</p>
+        <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It holds <strong>Organization details</strong> (your organization&rsquo;s name and web address), a card that points to <strong>Public site</strong>, and <strong>Delete organization</strong>. Your public site&rsquo;s logo, colours, type, banner and on/off switch are set in <strong>Public site</strong>, not here.</p>
       ),
       subtopics: [
         {
@@ -1058,12 +1058,13 @@ const orgHelp: HelpPageContent = {
           title: 'Your public site',
           content: (
             <>
-              <p><strong>Your public site</strong> is two separate switches, and each saves the moment you set it — there&rsquo;s nothing to save separately below.</p>
+              <p>Settings has one card for it: <strong>Your public site</strong> says <em>Its logo, colours, type, and whether it is online are set in Public site</em>, with an <strong>Open Public site</strong> button. Nothing about the site is changed in Settings itself.</p>
+              <p>In <strong>Public site</strong>, the <strong>Visibility</strong> row holds the two switches. Only the owner can change them, and each saves the moment you set it:</p>
               <ul>
                 <li><strong>Public site</strong> — takes all of your club&rsquo;s pages online or offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Your <strong>tournament pages stay up</strong> either way. Turning it off asks first. While it&rsquo;s off, families who open any of those pages see one page — <em>This club&rsquo;s site isn&rsquo;t available</em> — tryout sign-ups stop, and families&rsquo; subscribed team calendars go empty. Your coaches see a note in their team&rsquo;s <strong>Sharing</strong> settings that their team&rsquo;s public page isn&rsquo;t open.</li>
-                <li><strong>Listed in the directory</strong> — controls whether families searching FieldLogicHQ&rsquo;s public directory can find you. Your site stays online either way; this switch is off, and greyed out, whenever the public site itself is off.</li>
+                <li><strong>Listed in the club directory</strong> — controls whether families searching FieldLogicHQ&rsquo;s public directory can find you. Your site stays online either way; this switch is off, and greyed out, whenever the public site itself is off.</li>
               </ul>
-              <p>The <strong>Public site</strong> editor is where you run those pages — your home page&rsquo;s sections and their order, your words and contacts, your documents, and a notice for the day (see <strong>Running your public site</strong>). It shows an <strong>Online</strong>/<strong>Offline</strong> chip reading the switch above; the switch itself is only ever set here, in Settings.</p>
+              <p>See <strong>Running your public site</strong> for the rest of the page.</p>
             </>
           ),
         },
@@ -1087,8 +1088,8 @@ const orgHelp: HelpPageContent = {
           title: 'Branding and appearance',
           content: (
             <>
-              <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> photo, shown as a strip under your bar on your home page on a computer (a phone leaves it out, so what&rsquo;s open now stays on the first screen). This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
-              <p>A stock logo is drawn on a circle in your main colour, so it shows up on light pages and on printed and exported documents. The picker shows each one exactly as you&rsquo;ll get it. Change your colour theme and save, and your stock logo is remade in the new colour; a logo you uploaded is never changed.</p>
+              <p><strong>Branding</strong> is no longer in Settings. Your logo, colours, type and banner photo are in <strong>Public site &rsaquo; Look</strong>, and the owner <em>or</em> an admin can change them (see <strong>Running your public site</strong>). This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
+              <p><strong>Card style</strong> is no longer a club setting. It only ever changed tournament pages, so each tournament picks its own on its <strong>Branding</strong> page.</p>
             </>
           ),
         },
@@ -1097,7 +1098,7 @@ const orgHelp: HelpPageContent = {
           title: 'Deleting your organization',
           content: (
             <>
-              <p><strong>Danger zone</strong> — the bottom of Settings has a <strong>Request Account Deletion</strong> flow for closing the organization.</p>
+              <p><strong>Delete organization</strong> — the bottom of Settings has a <strong>Request account deletion…</strong> button for closing the organization.</p>
               <p>Requiring an admin to review scores before results go public is a per-tournament setting in each event&rsquo;s settings, not an org-wide Settings option.</p>
             </>
           ),
@@ -1107,8 +1108,11 @@ const orgHelp: HelpPageContent = {
     {
       id: 'public-site-editor',
       heading: 'Running your public site — the Public site editor',
-      summary: 'Choose your home page’s sections and their order, write your club’s words and contacts, list your documents, and post a notice families see on every page.',
+      summary: 'Set your club’s logo, colours and type, choose your home page’s sections and their order, write your words and contacts, list your documents, post a notice, and watch it all in a live preview.',
       keywords: [
+        'preview', 'live preview', 'go live', 'set up your site', 'visibility', 'logo', 'upload a logo', 'stock logos', 'colours',
+        'from your logo', 'your own colours', 'main colour', 'accent colour', 'type', 'classic serif clean', 'banner photo',
+        'computer phone preview', 'offline preview', 'site builder',
         'public site editor', 'public site', 'site editor', 'home page sections', 'reorder sections', 'hide a section',
         'show a section', 'section order', 'tagline', 'about the club', 'families questions go to', 'contact email',
         'social links', 'instagram', 'facebook', 'website link', 'saved as', 'that isn’t a web address', 'look', 'colours',
@@ -1116,10 +1120,11 @@ const orgHelp: HelpPageContent = {
         'questions families ask', 'faq', 'about page', 'contacts and documents', 'club notice', 'field closure',
         'fields closed', 'rain out', 'post notice', 'end now', 'mentions 2025', 'still true', 'past year',
       ],
-      searchText: 'public site editor admin public site cards save themselves saved pill no save button online offline chip families see it at your address copy link open turn it off in settings the owner turns it on and off home page sections open now always first teams house league tournaments about the club past tournaments switch hide show hold and drag the number reorder order shows once you publish a season shows once you host a tournament shows once you add a team plan does not carry tab row follows tagline about families questions go to footer team and tryout pages mentions a past year still true hint founding year since social links instagram facebook x website https saved as refused that isn’t a web address paste the link who to contact up to twelve role address registrar@ personal address gmail nudge documents and policies up to thirty heading title link opens in a new tab codes of conduct safety the club never says compliant questions families ask up to ten about page contacts and documents footer link look logo colours font readable darkened change in settings club notice field closure diamonds closed tonight rain more detail ends tonight tomorrow night date and time post notice update notice end now posted by the club ends by itself one at a time every public page every team page',
+      searchText: 'public site editor admin public site five rows open in place one at a time look home page about the club contacts and documents visibility preview computer phone change in look point at a part outlines click to change links in the preview don’t go anywhere only you and your admins can see this your site is offline preview button eye set up your site n of 4 ready go live the owner puts it online nothing is required to go live ready tick dashed ring logo upload a logo replace logo browse stock logos remove colours from your logo nine presets your own colours main colour accent colour darkened readable type classic serif clean banner photo computer only phones leave it out visibility public site switch take offline listed in the club directory web address change it in settings owner or admin can change the look only the owner turns the site on and off card style tournament branding page cards save themselves saved pill no save button online offline chip families see it at your address copy link open home page sections open now always first teams house league tournaments about the club past tournaments switch hide show hold and drag the number reorder order shows once you publish a season shows once you host a tournament shows once you add a team plan does not carry tab row follows tagline about families questions go to footer team and tryout pages mentions a past year still true hint founding year since social links instagram facebook x website https saved as refused that isn’t a web address paste the link who to contact up to twelve role address registrar@ personal address gmail nudge documents and policies up to thirty heading title link opens in a new tab codes of conduct safety the club never says compliant questions families ask up to ten about page contacts and documents footer link look logo colours font readable darkened club notice showing now edit post a notice field closure diamonds closed tonight rain more detail ends tonight tomorrow night date and time post notice update notice end now posted by the club ends by itself one at a time every public page every team page',
       content: (
         <>
-          <p><strong>Public site</strong> in the admin is where you run your club&rsquo;s pages: which sections your home page shows and in what order, your words and contacts, your documents, and a notice for the day. It&rsquo;s for the owner and admins. Every change saves itself (a <strong>Saved</strong> pill appears and fades), except a notice, which waits for <strong>Post notice</strong>.</p>
+          <p><strong>Public site</strong> in the admin is where you build your club&rsquo;s pages. It is five rows that open in place, one at a time, each with a one-line summary while it is closed: <strong>Look</strong>, <strong>Home page</strong>, <strong>About the club</strong>, <strong>Contacts and documents</strong> and <strong>Visibility</strong>. On a computer, a live preview of your home page stands beside them. It&rsquo;s for the owner and admins. Every change saves itself (a <strong>Saved</strong> pill appears and fades), except a notice, which waits for <strong>Post notice</strong>.</p>
+          <p>The owner or an admin can change everything except <strong>Visibility</strong>. Only the owner turns the site on and off, changes the directory listing, or changes the club&rsquo;s name and web address.</p>
         </>
       ),
       subtopics: [
@@ -1128,8 +1133,49 @@ const orgHelp: HelpPageContent = {
           title: 'Your address, and whether the site is on',
           content: (
             <>
-              <p>The top of the page shows an <strong>Online</strong> or <strong>Offline</strong> chip and <strong>Families see it at</strong> with your address, <strong>Copy link</strong> and <strong>Open</strong>. While the site is off, Open isn&rsquo;t there; Copy link still is.</p>
-              <p>The site is switched on and off in <strong>Settings</strong>, by the owner only. The owner sees <strong>Turn it off in Settings</strong> (or <strong>Turn it on in Settings</strong>); an admin sees who does it.</p>
+              <p>The top of the page shows an <strong>Online</strong> or <strong>Offline</strong> chip and <strong>Families see it at</strong> with your address, <strong>Copy link</strong> and <strong>Open</strong>. While the site is off, Open isn&rsquo;t there; Copy link still is. On a narrow window, an eye <strong>Preview</strong> button sits beside Copy link while the site is off and opens the preview in a window.</p>
+              <p>The site is switched on and off in the <strong>Visibility</strong> row, by the owner only.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-preview',
+          title: 'The live preview',
+          content: (
+            <>
+              <p>On a computer (a window 1200 pixels wide or more), a <strong>Preview</strong> of your home page stands beside the rows, with a <strong>Computer</strong> / <strong>Phone</strong> switch. It redraws after every change.</p>
+              <ul>
+                <li>Point at a part of the preview and it is outlined, with the row that changes it named, such as <strong>Change in Look</strong>. Click it to open that row. Clicking the notice opens the notice window.</li>
+                <li>Links in the preview don&rsquo;t go anywhere.</li>
+                <li>While your site is offline, the preview still shows it to you and your admins, with the line <strong>Only you and your admins can see this. Your site is offline.</strong></li>
+              </ul>
+              <p>In a narrower window there is no side preview. While the site is offline, <strong>Preview</strong> (the eye) opens it in a window. While it is online, <strong>Open</strong> opens the real site.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-setup',
+          title: 'Set up your site, and going live',
+          content: (
+            <>
+              <p>A <strong>Set up your site</strong> card with a bar says <strong>N of 4 ready</strong>. It shows while any of four parts isn&rsquo;t ready, or while the site is offline. The rows then carry a tick (ready) or a dashed ring (not set up yet).</p>
+              <ul>
+                <li><strong>Look</strong> is ready with a logo or any colour but the default.</li>
+                <li><strong>Home page</strong> is always ready.</li>
+                <li><strong>About the club</strong> is ready with a tagline and the questions address.</li>
+                <li><strong>Contacts and documents</strong> is ready with any one entry.</li>
+              </ul>
+              <p>While the site is offline, the owner has a lime <strong>Go live</strong> button on the card. An admin reads <em>When it&rsquo;s ready, the owner puts it online.</em> Nothing is required to go live, and you can go live at any time.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-visibility',
+          title: 'Visibility: the site switch and the directory',
+          content: (
+            <>
+              <p>The owner sees the <strong>Public site</strong> switch and <strong>Listed in the club directory</strong>. Taking the site offline asks first (<em>Take your club&rsquo;s public site offline?</em>, with your club&rsquo;s name) and says what families will see. Your tournament pages stay up either way.</p>
+              <p>The <strong>Web address</strong> reads as text, with <strong>Change it in Settings</strong>. An admin sees the same facts as text, with <em>The owner turns the site on and off and changes its address.</em></p>
             </>
           ),
         },
@@ -1138,7 +1184,7 @@ const orgHelp: HelpPageContent = {
           title: 'Choose your home page’s sections and their order',
           content: (
             <>
-              <p>The <strong>Home page</strong> card lists what families see on your home page, in order. Each row says what it shows today, such as &ldquo;Your 8 teams in your groups, each with its tryout state&rdquo;.</p>
+              <p>The <strong>Home page</strong> row lists what families see on your home page, in order. Each row says what it shows today, such as &ldquo;Your 8 teams in your groups, each with its tryout state&rdquo;.</p>
               <ul>
                 <li><strong>Open now</strong> always comes first, and only shows while something is open (a tryout, a house-league sign-up). It has no switch.</li>
                 <li><strong>Hide or show</strong> any other section with its switch. A hidden section leaves your home page and its tab.</li>
@@ -1154,7 +1200,7 @@ const orgHelp: HelpPageContent = {
           title: 'Your tagline, about text, contact and social links',
           content: (
             <>
-              <p>The <strong>About the club</strong> card holds your <strong>Tagline</strong> (one line under your name, up to 100 characters), your <strong>About</strong> text, and <strong>Families&rsquo; questions go to</strong> — the address shown in your footer and on every team and tryout page.</p>
+              <p>The <strong>About the club</strong> row holds your <strong>Tagline</strong> (one line under your name, up to 100 characters), your <strong>About</strong> text, <strong>Families&rsquo; questions go to</strong> — the address shown in your footer and on every team and tryout page — and your <strong>Social links</strong>.</p>
               <p>If your tagline or about text mentions a past year, a quiet hint asks <strong>Mentions 2025 — still true?</strong> It never stops a save, and a founding year (&ldquo;since 1979&rdquo;) isn&rsquo;t flagged.</p>
               <p>In <strong>Social links</strong>, a link typed without <code>https://</code> is completed for you, and the field says <strong>Saved as https://…</strong>. Something that isn&rsquo;t a web address is refused with the reason beside the field, and isn&rsquo;t saved until you fix it.</p>
             </>
@@ -1165,7 +1211,7 @@ const orgHelp: HelpPageContent = {
           title: 'Contacts, documents and questions for your About page',
           content: (
             <>
-              <p>Three lists fill your club&rsquo;s <strong>About</strong> page. Each row opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
+              <p>The <strong>Contacts and documents</strong> row holds three lists that fill your club&rsquo;s <strong>About</strong> page. Each entry opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
               <ul>
                 <li><strong>Who to contact</strong> (up to twelve): a role, such as Registration, and its email address. When an address looks personal, the window suggests a role address like registrar@, which keeps working when a volunteer changes. It never refuses yours.</li>
                 <li><strong>Documents and policies</strong> (up to thirty): a heading, a title and a link to a document you already publish. Families see them under your headings, such as Codes of conduct or Safety, and each opens in a new tab. Your site shows your documents; it never says your club is compliant.</li>
@@ -1180,14 +1226,15 @@ const orgHelp: HelpPageContent = {
           title: 'Post a notice, such as a field closure',
           content: (
             <>
-              <p>The <strong>Club notice</strong> card puts one line at the top of every public page and every team page, until it ends.</p>
+              <p>A club notice puts one line at the top of every public page and every team page, until it ends. A strip at the top of Public site shows it while the site is online. With none showing, it offers <strong>Post a notice</strong>; with one showing, it says <strong>Showing now</strong> with the line, when it ends, <strong>Edit</strong> and <strong>End now</strong>.</p>
               <ol>
+                <li>Press <strong>Post a notice</strong>. A window opens.</li>
                 <li>Write the <strong>Notice</strong>, such as &ldquo;All diamonds are closed tonight&rdquo; (up to 80 characters).</li>
                 <li>Add <strong>More detail</strong> if you like.</li>
                 <li>Choose when it <strong>Ends</strong>: <strong>Tonight</strong>, <strong>Tomorrow night</strong>, or a date and time.</li>
                 <li>Press <strong>Post notice</strong>.</li>
               </ol>
-              <p>Families see your words and a line like &ldquo;Posted 2:40 p.m. by the club &middot; ends tonight&rdquo;. One notice shows at a time: <strong>Update notice</strong> replaces it, and <strong>End now</strong> takes it down. It also ends by itself at the time you chose.</p>
+              <p>Families see your words and a line like &ldquo;Posted 2:40 p.m. by the club &middot; ends tonight&rdquo;. One notice shows at a time: <strong>Edit</strong> opens the same window, <strong>Update notice</strong> replaces it, and <strong>End now</strong> takes it down. It also ends by itself at the time you chose. A notice never saves itself; it waits for <strong>Post notice</strong> or <strong>Update notice</strong>.</p>
             </>
           ),
         },
@@ -1196,8 +1243,14 @@ const orgHelp: HelpPageContent = {
           title: 'Your look',
           content: (
             <>
-              <p>The <strong>Look</strong> card shows your logo, your colours in words and your font, and says how families see them. If your colour had to be darkened a little to keep text readable, it says so.</p>
-              <p>Your logo, colours and font are changed in <strong>Organization &rsaquo; Settings</strong> — by the owner, from <strong>Change in Settings</strong>.</p>
+              <p>The <strong>Look</strong> row is where the owner or an admin sets how your site looks. It moved here from Settings. Every change saves itself; there is no Save button.</p>
+              <ul>
+                <li><strong>Logo</strong> — <strong>Upload a logo</strong> (or <strong>Replace logo</strong>), <strong>Browse stock logos</strong>, or <strong>Remove</strong>.</li>
+                <li><strong>Colours</strong> — <strong>From your logo</strong> comes first whenever you have uploaded a logo (a stock logo doesn&rsquo;t count): its two strongest colours. Then nine presets, then <strong>Your own colours</strong> (<strong>Main colour</strong> and <strong>Accent colour</strong>). Under them, a sentence says who reads what, and when a colour was made darker so families can read it.</li>
+                <li><strong>Type</strong> — three looks, <strong>Classic</strong>, <strong>Serif</strong> and <strong>Clean</strong>, each shown with your club&rsquo;s own name. A club that had picked an older font choice reads as Classic.</li>
+                <li><strong>Banner photo</strong> — shows across the top of your home page on a computer. Phones leave it out.</li>
+              </ul>
+              <p>A stock logo is drawn on a circle in your main colour, and is remade if you change the colour; a logo you uploaded is never changed.</p>
             </>
           ),
         },
@@ -1207,11 +1260,11 @@ const orgHelp: HelpPageContent = {
           id: 'faq-public-site-field-closure',
           question: 'How do I tell families the fields are closed tonight?',
           popular: true,
-          answerText: 'In Public site, use the Club notice card. Write the notice, add more detail if you like, choose when it ends (tonight, tomorrow night, or a date and time) and press Post notice. It shows at the top of every public page and every team page until it ends, or until you press End now.',
+          answerText: 'In Public site, press Post a notice at the top. Write the notice, add more detail if you like, choose when it ends (tonight, tomorrow night, or a date and time) and press Post notice. It shows at the top of every public page and every team page until it ends, or until you press End now.',
           keywords: ['field closure', 'fields closed', 'rain out', 'cancelled tonight', 'club notice', 'post notice', 'announcement'],
           answer: (
             <>
-              <p>In <strong>Public site</strong>, use the <strong>Club notice</strong> card. Write the notice, add more detail if you like, choose when it <strong>Ends</strong> (tonight, tomorrow night, or a date and time) and press <strong>Post notice</strong>.</p>
+              <p>In <strong>Public site</strong>, press <strong>Post a notice</strong> at the top. Write the notice, add more detail if you like, choose when it <strong>Ends</strong> (tonight, tomorrow night, or a date and time) and press <strong>Post notice</strong>.</p>
               <p>It shows at the top of every public page and every team page until it ends, or until you press <strong>End now</strong>.</p>
             </>
           ),
@@ -1359,7 +1412,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p>A family who opens an address your organization doesn&rsquo;t have — a mistyped team name, an old link, a league page when you run no house league — sees <strong>We couldn&rsquo;t find that page</strong> inside your site, with your bar and footer and a button back to your home page. An old team address also offers <strong>See all teams</strong> when you have a Teams page.</p>
               <p>The short addresses <code>/schedule</code>, <code>/standings</code>, <code>/results</code>, <code>/register</code>, <code>/news</code> and <code>/rules</code> open the same page of your running tournament, so printed links and QR codes keep working. With no tournament running, they show <em>We couldn&rsquo;t find that page</em> too. <code>/teams</code> is your Teams page when you have one; otherwise it works like the others.</p>
-              <p>While your public site is switched off in <strong>Settings → Your public site</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead, without your bar or colours, and a shared link shows a plain FieldLogicHQ card. Your tournament pages stay up.</p>
+              <p>While your public site is switched off in <strong>Public site &rsaquo; Visibility</strong>, every club page shows <strong>This club&rsquo;s site isn&rsquo;t available</strong> instead, without your bar or colours, and a shared link shows a plain FieldLogicHQ card. Your tournament pages stay up.</p>
             </>
           ),
         },

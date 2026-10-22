@@ -9,6 +9,7 @@
  * past midnight, or one a service worker kept, never shows a notice that has ended.
  */
 import { useEffect, useState } from 'react';
+import { siteEdit } from '@/lib/site-edit-marks';
 import styles from './ClubFrame.module.css';
 
 export interface ClubFrameNotice {
@@ -33,7 +34,7 @@ export default function ClubNoticeBanner({ notice }: { notice: ClubFrameNotice }
 
   if (ended) return null;
   return (
-    <aside className={styles.notice} aria-label="Club notice">
+    <aside className={styles.notice} aria-label="Club notice" {...siteEdit('notice')}>
       <div className={styles.noticeInner}>
         <p className={styles.noticeLine}>{notice.notice}</p>
         {notice.detail && <p className={styles.noticeDetail}>{notice.detail}</p>}

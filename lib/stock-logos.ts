@@ -13,6 +13,16 @@ export interface StockLogo {
  *  the mark's 64-unit art box as a share of the circle. The picker's tiles draw with it too. */
 export const STOCK_MARK_SCALE = 0.66;
 
+/** ⚠ THE FILE NAME IS THE RECORD of a made stock logo: `stock-<logoId>-<rrggbb>-<made at>.png` (lib/stock-logo-render.ts
+ *  makes and parses it). Its one spelling lives here, beside the list, so the browser can read it too. */
+export const STOCK_FILE_RE = /^stock-([a-z0-9-]+)-([0-9a-f]{6})-(\d+)\.png$/;
+
+/** Whether a stored logo URL is a made stock logo (made in the club's colour) rather than an uploaded one. */
+export function isStockLogoUrl(url: string | null | undefined): boolean {
+  const file = url?.split('?')[0].split('/').pop();
+  return !!file && STOCK_FILE_RE.test(file);
+}
+
 export const STOCK_LOGOS: StockLogo[] = [
   // Tournament (free tier — available to all orgs)
   { id: 'baseball-bat',    label: 'Baseball Bat',  category: 'Baseball',    file: '/stock-logos/baseball-bat.svg',    minPlan: 'tournament' },

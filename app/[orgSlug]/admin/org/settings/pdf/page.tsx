@@ -245,8 +245,8 @@ export default function PdfSettingsPage() {
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.15rem' }}>
                 {currentOrg?.logoUrl
-                  ? 'The logo uploaded in Settings appears in the header of every document, sized for print automatically.'
-                  : 'Upload a logo in Settings and it will appear in the header of every document. Until then, the header shows your org name as text.'}
+                  ? 'The logo set in Public site appears in the header of every document, sized for print automatically.'
+                  : 'Upload a logo in Public site and it will appear in the header of every document. Until then, the header shows your org name as text.'}
                 {' '}A team that sets its own crest in its coaches portal shows that crest on its own documents.
               </div>
             </div>

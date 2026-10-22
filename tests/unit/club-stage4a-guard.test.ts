@@ -186,7 +186,8 @@ describe('6 · the coach is told; the owner\'s switch says what it does', () => 
     assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx'), /data\.clubSiteOff && \(\s*<div className=\{styles\.settingRow\}><ClubSiteOffNotice \/>/);
   });
   it('the switch and its dialog say every club page goes offline, never the tournaments', () => {
-    const src = readSource('components/admin/kit/club/SettingsKit.tsx');
+    // Moved with the switch from Settings into the Public site editor's Visibility row (Public site builder, 2026-10-21).
+    const src = readSource('lib/public-site-words.ts');
     assert.doesNotMatch(src, /takes the home page and league pages offline/);
     assert.doesNotMatch(src, /home page or league pages will see/);
     assert.ok(src.includes('Turning it off takes all of the club’s pages offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Tournament pages stay up.'));

@@ -1,0 +1,780 @@
+<title>Public Site Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the admin (warm kit) and the
+   club's public site (light ground, the club's colours). Chrome and specimens deliberately do not share a ground. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --accent-soft:#DCEAE5; --flag:#A8361F; --flag-soft:#F7E2DC; --fix:#2B672A; --fix-soft:#DFEEDB;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 80px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+.doc h2{font-size:24px;margin:40px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:18px;margin:28px 0 6px}
+.doc p,.doc li{max-width:78ch}
+.lede{font-size:17px}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:10px 20px 0;display:flex;flex-direction:column;gap:8px}
+@media (max-width:600px){.top-in{padding:8px 16px 0}}
+.top-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.top-row h1{font-size:19px;margin:0}
+.top-row .st{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -4px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:12px 10px 11px;min-height:44px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button .n{font:600 11px/1 var(--f-mono);background:var(--ask-soft);color:var(--ask);border-radius:9px;padding:2px 6px;margin-left:5px;vertical-align:1px}
+section.tab{padding-top:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.grid3>*,.grid2>*{min-width:0}
+.card h3{margin:0 0 6px;font-size:16px}
+.card p{margin:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--flag);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict.ok{border-left-color:var(--fix)}
+.verdict h3{margin-top:0}
+.verdict ol,.verdict ul{margin:6px 0 0;padding-left:20px}
+.verdict li{margin:0 0 6px}
+table.t{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface)}
+table.t th{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tw table.t tr:last-child td{border-bottom:0}
+/* tags: every one opens its explanation */
+details.tag{display:inline-block;vertical-align:middle}
+details.tag>summary{list-style:none;cursor:pointer;font:700 11px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:5px 7px;border:1.5px solid currentColor;background:var(--surface);min-height:24px;display:inline-flex;align-items:center}
+details.tag>summary::-webkit-details-marker{display:none}
+details.tag.new>summary{color:var(--t-new)} details.tag.res>summary{color:var(--t-res)} details.tag.unc>summary{color:var(--t-unc)}
+details.tag.fl>summary{color:var(--flag);background:var(--flag-soft);border-color:transparent}
+details.tag[open]{display:block;margin:4px 0}
+details.tag>div{margin-top:6px;font-size:13.5px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-width:60ch}
+.stage{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin:14px 0 8px}
+.stage>.col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.cap{font-size:13px;color:var(--muted);max-width:390px}
+.cap b{color:var(--ink)}
+.read{display:grid;gap:10px;max-width:560px;flex:1 1 380px;min-width:0}
+.read h4{margin:4px 0 2px;font:600 12px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.read ul{margin:0;padding-left:18px}
+.read li{margin:0 0 7px;font-size:14px}
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:14px}
+.btn-d{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d:hover{border-color:var(--accent)}
+.btn-d.pri{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);background:#fff;max-width:100%;margin-top:8px}
+.dt{width:1440px}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ph-wrap{width:390px;max-width:100%;overflow-x:auto;border-radius:18px;outline:1px solid var(--line);box-shadow:var(--shadow);background:#fff}
+@media (max-width:440px){.ph-wrap{width:auto;margin-inline:-16px;border-radius:0}}
+.ph{width:390px;position:relative}
+.fold{position:absolute;left:0;right:0;border-top:2px dashed #D9431F;z-index:5;pointer-events:none}
+.fold span{position:absolute;right:6px;top:-21px;font:700 10.5px/1 var(--f-mono);color:#fff;background:#D9431F;border-radius:4px;padding:4px 6px}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask .no{font:600 12px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask p{margin:4px 0 8px;font-size:14.5px}
+.opts{display:grid;gap:6px;margin-top:8px}
+.opts label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:14px;background:var(--surface)}
+.opts label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.opts input{margin-top:3px;accent-color:var(--accent)}
+.opts .rec{font:600 11px/1 var(--f-mono);color:var(--fix);margin-left:6px}
+.reply{position:sticky;bottom:12px;margin-top:22px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.reply textarea{flex:1 1 100%;min-height:90px;font:13px/1.5 var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-2);color:var(--ink)}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:12px}
+.mini>*{min-width:0}
+.wf{border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:12px;font-size:12.5px;color:var(--muted)}
+.wf .bx{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:6px}
+.wf .tb{display:flex;gap:14px;border-bottom:1px solid var(--line);padding-bottom:6px;font-weight:600;color:var(--ink)}
+.wf .tb span:first-child{border-bottom:2px solid var(--accent)}
+.endstate{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:12px}
+.endstate>*{min-width:0}
+.es{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;box-shadow:var(--shadow)}
+.es h4{margin:0 0 8px;font-size:15px}
+.es ol,.es ul{margin:0;padding-left:20px;font-size:14px}
+.es li{margin-bottom:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ══════════ ADMIN KIT SPECIMEN (Warm) — literal product values ══════════ */
+.k{font:14px/1.45 'Inter',system-ui,sans-serif;color:#241E15;background-color:#F8F4ED;background-image:linear-gradient(rgba(87,101,30,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(87,101,30,.07) 1px,transparent 1px);background-size:40px 40px;text-align:left}
+.k *{box-sizing:border-box}
+.k svg{flex:none}
+.k-top{height:48px;background:#fff;border-bottom:1px solid rgba(70,55,30,.12);display:flex;align-items:center;gap:14px;padding:0 16px 0 20px}
+.k-wm{font:700 15px/1 'Inter',sans-serif;color:#241E15}
+.k-wm i{font-style:normal;color:#57651E} .k-wm s{text-decoration:none;color:#615A54}
+.k-area{font:700 10px/1 'Inter',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#615A54;border-left:1px solid rgba(70,55,30,.2);padding-left:14px}
+.k-topr{margin-left:auto;display:flex;gap:14px;align-items:center;color:#4A4235}
+.k-ws{font:650 12px/1 'Inter',sans-serif;color:#57651E;border:1px solid rgba(87,101,30,.45);border-radius:999px;padding:6px 10px}
+.k-acct{width:30px;height:30px;border-radius:8px;border:1px solid rgba(70,55,30,.2);display:grid;place-items:center}
+.k-body{display:flex;align-items:stretch}
+.k-rail{width:240px;flex:none;background:#fff;border-right:1px solid rgba(70,55,30,.12);padding:10px 0 24px}
+.k-rg{font:700 11px/1 'Inter',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#615A54;padding:16px 20px 7px}
+.k-ri{display:flex;gap:8px;align-items:center;padding:8px 20px;font-size:14px;color:#615A54}
+.k-ri.on{background:rgba(87,101,30,.10);color:#57651E;font-weight:600}
+.k-main{flex:1;padding:32px;min-width:0}
+.k-page{max-width:1200px;margin:0 auto}
+.k-h1{font:700 20px/1.1 'Inter',sans-serif;margin:0;color:#241E15}
+.k-eyebrow{font:700 11px/1 'Inter',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#615A54;margin-bottom:6px}
+.k-chip{display:inline-flex;align-items:center;font:700 10px/1 'IBM Plex Mono',monospace;letter-spacing:.05em;border-radius:999px;padding:3px 7px;border:1px solid}
+.k-chip.good{color:#57651E;background:rgba(52,102,42,.07);border-color:rgba(52,102,42,.25)}
+.k-chip.warn{color:#835006;background:rgba(131,80,6,.08);border-color:rgba(131,80,6,.3)}
+.k-card{background:#fff;border:1px solid rgba(70,55,30,.12);border-radius:8px}
+.k-ch{padding:13px 18px 6px}
+.k-ct{font:700 16px/1.25 'Inter',sans-serif;margin:0;color:#241E15}
+.k-cb{padding:6px 18px 17px}
+.k-btn{height:34px;padding:0 13px;border-radius:6px;font:650 14px/1 'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(70,55,30,.2);background:#fff;color:#4A4235;white-space:nowrap;cursor:default}
+.k-btn.lime{background:#D9F99D;border-color:#C9E98D;color:#241E15}
+.k-btn.ghost{border-color:transparent;background:none}
+.k-btn.ico{width:34px;padding:0;justify-content:center}
+.k-btn.dang{color:#9B2C1F;border-color:rgba(155,44,31,.35)}
+.k-addr{font:12px/1.2 'IBM Plex Mono',monospace;border:1px solid rgba(70,55,30,.12);border-radius:6px;padding:8px 10px;background:#fff;color:#241E15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k-lead{font-size:12px;line-height:1.45;color:#4A4235;margin:0}
+.k-hint{font-size:12px;line-height:1.45;color:#615A54;margin:4px 0 0}
+.k-muted{color:#615A54}
+.k-label{display:block;font:650 12px/1.3 'Inter',sans-serif;color:#4A4235;margin-bottom:5px}
+.k-input{height:36px;border:1px solid rgba(70,55,30,.2);border-radius:6px;background:#F8F4ED;padding:0 10px;display:flex;align-items:center;font-size:14px;color:#241E15}
+.k-area-in{min-height:80px;align-items:flex-start;padding-top:8px;line-height:1.45}
+.k-field{margin-bottom:14px}
+.k-link{color:#57651E;font-weight:650;text-decoration:underline;text-underline-offset:3px}
+.k-sw{width:44px;height:26px;border-radius:999px;border:1px solid rgba(70,55,30,.2);background:rgba(70,55,30,.12);position:relative;flex:none}
+.k-sw::after{content:"";position:absolute;top:3px;left:4px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(70,55,30,.2);transition:left .15s}
+.k-sw.on{background:#57651E;border-color:#57651E}
+.k-sw.on::after{left:21px}
+.k-swrow{display:flex;gap:14px;align-items:center;min-height:52px;padding:9px 0;border-top:1px solid rgba(70,55,30,.10)}
+.k-swrow:first-child{border-top:0}
+.k-swrow b{display:block;font-size:14px;font-weight:600}
+.k-swrow span{display:block;font-size:12px;color:#615A54;line-height:1.45}
+.k-swrow>div{flex:1;min-width:0}
+.k-hr{height:1px;background:rgba(70,55,30,.10);margin:14px 0}
+.k-pill{display:inline-flex;gap:2px;background:rgba(70,55,30,.06);border-radius:8px;padding:2px}
+.k-pill span{font:600 12px/1 'Inter',sans-serif;padding:7px 10px;border-radius:6px;color:#615A54;display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+.k-pill span.on{background:#fff;color:#57651E;box-shadow:0 1px 2px rgba(70,55,30,.12)}
+.k-save{position:absolute;right:20px;bottom:16px;background:#fff;border:1px solid rgba(70,55,30,.12);border-radius:999px;padding:7px 12px;font:600 12px/1 'Inter',sans-serif;color:#615A54;box-shadow:0 1px 2px rgba(70,55,30,.05),0 6px 18px rgba(70,55,30,.07)}
+
+/* builder */
+.b-grid{display:grid;grid-template-columns:440px 1fr;gap:24px;align-items:start;margin-top:20px}
+.b-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.b-row .b-head{display:grid;grid-template-columns:24px 1fr 20px;gap:12px;align-items:center;padding:14px 18px;cursor:pointer}
+.b-row .b-head h3{font:700 16px/1.25 'Inter',sans-serif;margin:0;color:#241E15}
+.b-row .b-head p{margin:2px 0 0;font-size:12px;color:#615A54;line-height:1.4}
+.b-row .b-body{display:none;padding:2px 18px 18px 54px}
+.b-row.open .b-body{display:block}
+.b-row .chev{transition:transform .15s;color:#615A54}
+.b-row.open .chev{transform:rotate(180deg)}
+.b-row.open{border-color:rgba(70,55,30,.22)}
+.mark{width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
+.mark.done{background:#57651E;color:#fff}
+.mark.todo{border:1.5px dashed rgba(70,55,30,.35)}
+.mark.eye{color:#57651E}
+.amb{display:inline-block;font:600 11px/1.2 'Inter',sans-serif;color:#835006;background:rgba(131,80,6,.08);border:1px solid rgba(131,80,6,.25);border-radius:999px;padding:2px 7px;margin-left:4px}
+.seg{display:flex;gap:4px;margin:10px 0 2px}
+.seg i{flex:1;height:6px;border-radius:3px;background:rgba(70,55,30,.12)}
+.seg i.d{background:#57651E}
+.sw-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.swt{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(70,55,30,.2);cursor:pointer;padding:0;background:linear-gradient(135deg,var(--a) 50%,var(--b) 50%)}
+.swt.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #57651E}
+.swt.cust{background:conic-gradient(#e33,#fc3,#3c6,#39f,#a3f,#e33)}
+.fromlogo{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 10px 0 4px;border-radius:999px;border:1px solid rgba(70,55,30,.2);background:#fff;font:650 13px/1 'Inter',sans-serif;color:#4A4235;cursor:pointer}
+.fromlogo .dual{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#1F3A5F 50%,#D9A93A 50%)}
+.fromlogo.on{border-color:#57651E;background:rgba(87,101,30,.10);color:#57651E}
+.faces{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.face{border:1px solid rgba(70,55,30,.2);border-radius:8px;padding:9px 10px;cursor:pointer;background:#fff;min-width:0}
+.face.on{border-color:#57651E;background:rgba(87,101,30,.08)}
+.face small{display:block;font:650 12px/1.2 'Inter',sans-serif;color:#4A4235;margin-bottom:4px}
+.face b{display:block;font-size:19px;line-height:1.1;color:#241E15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.face span{display:block;font-size:11.5px;color:#615A54;margin-top:2px}
+.f-classic b{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700}
+.f-classic span{font-family:'Inter',sans-serif}
+.f-serif b{font-family:'DM Serif Display',Georgia,serif;font-weight:400}
+.f-serif span{font-family:'DM Sans',sans-serif}
+.f-clean b{font-family:'Inter',sans-serif;font-weight:700;font-size:17px}
+.f-clean span{font-family:'Inter',sans-serif}
+.logo-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.logo-tile{width:64px;height:64px;border-radius:10px;border:1px solid rgba(70,55,30,.12);display:grid;place-items:center;background:#fff}
+.ban-thumb{width:160px;height:50px;border-radius:6px;overflow:hidden;border:1px solid rgba(70,55,30,.12)}
+.ban-thumb svg{display:block;width:100%;height:100%}
+.readsent{font-size:12px;color:#4A4235;margin:8px 0 0;line-height:1.45}
+.readsent b{font-weight:650}
+.sub-h{font:650 12px/1.3 'Inter',sans-serif;color:#4A4235;margin:16px 0 7px}
+.sub-h:first-child{margin-top:0}
+.notice-strip{border-left:3px solid #8A5300;border-radius:0 8px 8px 0;padding:12px 14px 12px 15px;display:flex;gap:12px;align-items:center}
+.notice-strip .nt{flex:1;min-width:0}
+.notice-strip .ns{font:600 12px/1.2 'Inter',sans-serif;color:#835006}
+.notice-strip .nl{font:700 15px/1.3 'Inter',sans-serif;margin:3px 0 2px}
+.notice-strip .nm{font-size:12px;color:#615A54}
+.ro{display:grid;grid-template-columns:44px 1fr 44px;gap:10px;align-items:center;min-height:52px;border-top:1px solid rgba(70,55,30,.10);padding:6px 0}
+.ro:first-child{border-top:0}
+.ro .hd{display:flex;align-items:center;gap:3px;color:#57651E;font-weight:700;font-size:13px}
+.ro b{display:block;font-size:14px;font-weight:600}
+.ro span{display:block;font-size:12px;color:#615A54}
+.ro .fix{font-size:12px;color:#615A54;text-align:right;white-space:nowrap}
+.pv{position:sticky;top:16px;overflow:hidden}
+.pv-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(70,55,30,.12)}
+.pv-head .ttl{font:700 14px/1 'Inter',sans-serif}
+.pv-head .url{font:12px 'IBM Plex Mono',monospace;color:#615A54;margin-left:auto}
+.pv-rib{font-size:12px;color:#835006;background:rgba(131,80,6,.07);border-bottom:1px solid rgba(131,80,6,.18);padding:7px 12px;display:flex;gap:6px;align-items:center}
+.pv-stage{background:#EDE8DF;overflow:hidden;position:relative}
+.pv-desk .cs{zoom:.525}
+.pv-phone{display:none;justify-content:center;padding:16px 0}
+.pv-phone .cs-p-wrap{zoom:.86;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(70,55,30,.25),0 8px 24px rgba(70,55,30,.15)}
+.spec[data-dev="phone"] .pv-desk{display:none}
+.spec[data-dev="phone"] .pv-phone{display:flex}
+.pv-foot{font-size:12px;color:#615A54;padding:9px 12px;border-top:1px solid rgba(70,55,30,.12)}
+
+/* admin phone */
+.kp{width:390px;background-color:#F8F4ED}
+.kp-top{height:48px;background:#fff;border-bottom:1px solid rgba(70,55,30,.12);display:flex;align-items:center;gap:10px;padding:0 12px 0 16px}
+.kp-main{padding:14px 16px 90px}
+.kp-nav{position:absolute;left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid rgba(70,55,30,.12);display:grid;grid-template-columns:repeat(4,1fr);font:600 11px/1 'Inter',sans-serif;color:#615A54}
+.kp-nav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.kp-nav .on{color:#57651E}
+.kp .k-btn.ico{width:44px;height:44px}
+.kp .k-input{height:44px}
+.kp .b-row .b-head{padding:13px 14px;grid-template-columns:24px 1fr 20px;gap:10px;min-height:60px}
+.kp .b-row .b-body{padding:2px 14px 16px}
+.kp .faces{grid-template-columns:1fr}
+.kp .face{display:flex;align-items:baseline;gap:10px;min-height:48px}
+.kp .face small{width:52px;margin:0}
+.kp .face span{margin:0 0 0 auto}
+.kp-win{width:390px;background:#EDE8DF;min-height:844px}
+.kp-win-h{height:56px;background:#fff;border-bottom:1px solid rgba(70,55,30,.12);display:flex;align-items:center;gap:8px;padding:0 8px}
+.kp-win-h b{font:700 16px/1 'Inter',sans-serif}
+
+/* ══════════ CLUB PUBLIC SITE SPECIMEN — literal product values ══════════ */
+.spec{--fill:#1F3A5F;--on:#FFFFFF;--ink:#1F3A5F;--acc:#D9A93A;--face-t:'Barlow Condensed','Arial Narrow',sans-serif;--face-tw:700;--face-b:'Inter',system-ui,sans-serif}
+.spec[data-face="serif"]{--face-t:'DM Serif Display',Georgia,serif;--face-tw:400;--face-b:'DM Sans',system-ui,sans-serif}
+.spec[data-face="clean"]{--face-t:'Inter',system-ui,sans-serif;--face-tw:700;--face-b:'Inter',system-ui,sans-serif}
+.cs{width:1280px;background:#F6F5F2;color:#1F1B16;font:16px/1.5 var(--face-b);text-align:left}
+.cs *{box-sizing:border-box}
+.cs-bar{height:75px;background:var(--fill);color:var(--on);display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:3px solid var(--acc);transition:background .2s}
+.cs-logo{width:44px;height:44px;border-radius:10px;background:#fff;display:grid;place-items:center;flex:none}
+.cs-name{font:var(--face-tw) 24px/1.05 var(--face-t);white-space:nowrap}
+.cs-tag{font:500 12px/1.3 var(--face-b);opacity:.88;margin-top:3px;white-space:nowrap}
+.cs-tabs{display:flex;gap:26px;margin-left:44px;font:600 16px/1 var(--face-b);height:72px;align-items:stretch}
+.cs-tabs span{display:flex;align-items:center}
+.cs-tabs .on{box-shadow:inset 0 -3px 0 var(--acc)}
+.cs-sign{margin-left:auto;font:600 15px/1 var(--face-b)}
+.cs-ban{height:180px;border-bottom:1px solid #E4E0D8;overflow:hidden}
+.cs-ban svg{display:block;width:100%;height:100%}
+.cs-body{max-width:1200px;margin:0 auto;padding:28px 24px 40px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px 28px;align-items:start}
+.cs-mainc,.cs-side{display:flex;flex-direction:column;gap:22px;min-width:0}
+.cs-sec h2{font:700 16px/1.3 var(--face-b);margin:0 0 9px}
+.cs-list{background:#fff;border:1px solid #E4E0D8;border-radius:8px;overflow:hidden}
+.cs-list.open{border-left:3px solid var(--fill)}
+.cs-row{min-height:60px;display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid #E4E0D8}
+.cs-row:first-child{border-top:0}
+.cs-row .rt{flex:1;min-width:0}
+.cs-row b{display:block;font-weight:600;font-size:16px;line-height:1.3}
+.cs-row small{display:block;font-size:12px;color:#6F675B;line-height:1.35;margin-top:2px}
+.cs-row .cv{color:#6F675B}
+.cs-band{font:600 12px/1 var(--face-b);letter-spacing:.06em;text-transform:uppercase;color:#4E473D;margin:0 0 8px}
+.cs-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cs-tile{background:#fff;border:1px solid #E4E0D8;border-radius:8px;min-height:52px;padding:12px 14px;font:600 16px/1.3 var(--face-b);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.cs-chip{font:600 12px/1.4 'Inter',sans-serif;color:#2C6A2A;background:#E6F0E2;border-radius:20px;padding:1px 9px;white-space:nowrap}
+.cs-chip.n{color:#4E473D;background:#fff;border:1px solid #D6D0C4}
+.cs-notice{grid-column:1/-1;background:#fff;border:1px solid #E4E0D8;border-left:3px solid #8A5300;border-radius:0 8px 8px 0;padding:12px 14px}
+.cs-notice b{display:block;font:700 16px/1.35 var(--face-b)}
+.cs-notice span{display:block;font-size:14px;color:#4E473D}
+.cs-notice small{display:block;font-size:12px;color:#6F675B;margin-top:2px}
+.cs-about p{margin:0 0 12px;color:#4E473D;font-size:16px;line-height:1.5}
+.cs-follow{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 16px;border-radius:8px;background:var(--fill);color:var(--on);font:600 15px/1 var(--face-b);margin-top:12px}
+.cs-foot{background:var(--fill);color:var(--on);border-top:3px solid var(--acc);padding:28px 24px;display:flex;gap:40px;align-items:flex-start}
+.cs-foot .fn{font:var(--face-tw) 20px/1.1 var(--face-t)}
+.cs-foot .fq{font-size:12px;opacity:.85}
+.cs-foot .fe{font:600 16px/1.3 var(--face-b);text-decoration:underline;text-underline-offset:3px}
+.cs-soc{display:flex;gap:8px}
+.cs-soc span{width:44px;height:44px;border-radius:10px;border:1px solid currentColor;display:grid;place-items:center;font:700 13px/1 'Inter',sans-serif}
+.cs-foot .fc{font-size:12px;opacity:.75;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.25)}
+/* phone site */
+.cs.p{width:390px}
+.cs.p .cs-bar{padding:0 16px;gap:12px}
+.cs.p .cs-name{font-size:20px}
+.cs.p .cs-ptabs{display:flex;gap:20px;background:#fff;border-bottom:1px solid #E4E0D8;padding:0 16px;height:46px;font:600 14px/1 var(--face-b);overflow:hidden;white-space:nowrap}
+.cs.p .cs-ptabs span{display:flex;align-items:center;color:#4E473D}
+.cs.p .cs-ptabs .on{color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.cs.p .cs-body{display:flex;flex-direction:column;padding:16px;gap:20px}
+.cs.p .cs-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cs.p .cs-foot{flex-direction:column;gap:14px;padding:22px 16px}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="top-row">
+      <h1>Public site builder</h1>
+      <span class="st">Round 1 · drawn 2026-10-21 · <b style="color:var(--fix)">RULED 2026-10-21, A1–A9</b> (A9 in the first build) · Option A: admins change the look; the owner keeps the on/off switch and the web address</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" aria-selected="true" data-tab="idea">The idea</button>
+      <button role="tab" aria-selected="false" data-tab="desk">Desktop</button>
+      <button role="tab" aria-selected="false" data-tab="phone">Phone</button>
+      <button role="tab" aria-selected="false" data-tab="settings">Settings</button>
+      <button role="tab" aria-selected="false" data-tab="shapes">Other shapes</button>
+      <button role="tab" aria-selected="false" data-tab="asks">Asks <span class="n">9</span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="doc">
+
+<!-- ═════════ THE IDEA ═════════ -->
+<section class="tab" id="tab-idea" data-panel="idea">
+  <h2>Make the site with the site beside you</h2>
+  <p class="lede">Public site becomes the one place a club makes its website. The site sits beside the controls and changes as you work. The controls fold into five rows. On a club's first visit, those rows read as a short checklist that ends in <b>Go live</b>. Settings keeps only the club's name, its web address and deletion.</p>
+
+  <div class="grid3" style="margin-top:16px">
+    <div class="card"><h3>You see what families see</h3><p>The home page sits to the right of the controls, on a computer or a phone. Pick navy and the bar turns navy. Turn off Tournaments and the section disappears. Nobody has to imagine the result.</p></div>
+    <div class="card"><h3>Five rows, not nine cards</h3><p><b>Look · Home page · About the club · Contacts and documents · Visibility.</b> Each row opens where it sits and shows a one-line summary while closed. The whole editor fits on one screen.</p></div>
+    <div class="card"><h3>Everything families see, in one place</h3><p>Logo, colours, type, banner photo and the on/off switch move in from Settings. The read-only Look card and its "Change in Settings" link go away.</p></div>
+  </div>
+
+  <div class="verdict">
+    <h3>Why the long page has to go</h3>
+    <ol>
+      <li><b>It breaks a standing layout rule.</b> In July you ruled that a page holding several different jobs is a grid or tabs, and that you never scroll past one job to reach the next. Today's editor stacks nine cards, so reaching the Look means scrolling past the notice, the sections, About, three lists and Social.</li>
+      <li><b>The site is set up in two places, and they save differently.</b> The words autosave in the editor. The look waits for a Save button in Settings, which an admin can't open.</li>
+      <li><b>Nothing shows the site.</b> The Look card is a picture of a setting kept somewhere else, and Open takes you to another tab. "Wow, it looks great" needs the site in view while you make it.</li>
+      <li><b>Setup and the weekly notice compete.</b> The club notice is the one thing used week to week, and it sits in the middle of things set once a year.</li>
+    </ol>
+  </div>
+
+  <div class="verdict" style="border-left-color:var(--ask)">
+    <h3>Three things found while drawing</h3>
+    <ul>
+      <li><b>Card style doesn't change anything on the club's own site.</b> The club's pages are built without the cards it styles. Only the tournament pages use it. Moving it into a club site editor would add a control that does nothing visible there (Ask 5).</li>
+      <li><b>Two of the four fonts look the same.</b> "System" and "Barlow" both give the club Barlow titles over Inter text, so there are three real looks (Ask 4).</li>
+      <li><b>Settings' colour preview still draws the old dark site.</b> It shows a dark card on navy-black, a site the club no longer has. Moving the colours next to a real preview fixes this without a separate repair.</li>
+    </ul>
+  </div>
+
+  <h3>The end state</h3>
+  <div class="endstate">
+    <div class="es">
+      <h4>Public site (owner and admins)</h4>
+      <ul>
+        <li><b>Header:</b> Online / Offline · the address · Copy link · Open</li>
+        <li><b>Club notice:</b> one strip at the top, shown only while the site is online</li>
+        <li><b>Look:</b> logo · colours (from your logo, a preset, or your own) · type · banner photo</li>
+        <li><b>Home page:</b> sections, their order, show and hide</li>
+        <li><b>About the club:</b> tagline · about · questions email · social links</li>
+        <li><b>Contacts and documents:</b> who to contact · documents and policies · questions families ask</li>
+        <li><b>Visibility:</b> site on/off and directory listing (owner); the web address reads as text</li>
+        <li><b>Preview:</b> the home page, on a computer or a phone</li>
+      </ul>
+    </div>
+    <div class="es">
+      <h4>Settings (owner only)</h4>
+      <ul>
+        <li><b>Organization details:</b> name · web address</li>
+        <li><b>A door:</b> "Your public site's look and its on/off switch are in Public site."</li>
+        <li><b>Delete organization</b></li>
+      </ul>
+      <h4 style="margin-top:14px">Leaves the club's site controls</h4>
+      <ul><li><b>Card style</b> goes to the tournament pages it actually changes (Ask 5)</li></ul>
+    </div>
+    <div class="es">
+      <h4>Who can change what (Option A, as you ruled)</h4>
+      <div class="tw"><table class="t">
+        <tr><th></th><th>Owner</th><th>Admin</th></tr>
+        <tr><td>Look</td><td>Changes</td><td>Changes <i>(new)</i></td></tr>
+        <tr><td>Home page, About, lists</td><td>Changes</td><td>Changes</td></tr>
+        <tr><td>Club notice</td><td>Posts</td><td>Posts</td></tr>
+        <tr><td>Site on/off, directory</td><td>Changes</td><td>Reads it</td></tr>
+        <tr><td>Name, web address</td><td>Settings</td><td>—</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <h3>What moves, and its tag</h3>
+  <div class="tw"><table class="t">
+    <tr><th>Control</th><th>Today</th><th>After</th><th>Tag</th></tr>
+    <tr><td>Site on/off · directory listing</td><td>Settings, owner only</td><td>Public site › Visibility, owner only</td><td>RESTYLED (moved)</td></tr>
+    <tr><td>Logo · stock logos</td><td>Settings, Save button</td><td>Public site › Look, autosaves</td><td>RESTYLED (moved)</td></tr>
+    <tr><td>Colour theme</td><td>Settings: 9 presets + custom, dark preview</td><td>Look: "From your logo" first, the same presets, custom; the readability sentence underneath</td><td>NEW (from your logo) · RESTYLED</td></tr>
+    <tr><td>Font family</td><td>Settings: 4 tiles, "Aa 123"</td><td>Look: 3 tiles named for what they look like, showing the club's own name</td><td>RESTYLED</td></tr>
+    <tr><td>Hero banner</td><td>Settings</td><td>Look › Banner photo, saying phones leave it out</td><td>RESTYLED (moved)</td></tr>
+    <tr><td>Card style</td><td>Settings</td><td>Tournament pages (Ask 5)</td><td>moved out</td></tr>
+    <tr><td>Social links</td><td>Its own card</td><td>Inside About the club</td><td>RESTYLED</td></tr>
+    <tr><td>Three lists</td><td>Three cards</td><td>One row, three lists inside it</td><td>RESTYLED</td></tr>
+    <tr><td>Club notice</td><td>A card with its form open</td><td>One strip; Post and Edit open the window</td><td>RESTYLED</td></tr>
+    <tr><td>Look card (read only)</td><td>Editor</td><td>Gone; the Look row and the preview replace it</td><td>retired</td></tr>
+    <tr><td>Preview</td><td>None (Open goes to the live site)</td><td>Beside the rows, computer or phone</td><td>NEW</td></tr>
+    <tr><td>Setup checklist</td><td>None in the editor</td><td>The rows carry ✓ / ○ until the site first goes live, then a lime Go live</td><td>NEW</td></tr>
+  </table></div>
+</section>
+
+<!-- ═════════ DESKTOP ═════════ -->
+<section class="tab" id="tab-desk" data-panel="desk" hidden>
+  <h2>Desktop, 1440 wide</h2>
+  <p>Each screen is drawn at true size and fitted to your window. <b>The after screens are clickable:</b> open and close the rows, pick a colour or a type, and switch the preview between computer and phone.</p>
+
+  <h3>Today: one page, nine cards</h3>
+  <div class="dt-tools"><span>Desktop, 1440, as the owner, site online</span><button class="btn-d" data-fit>Show at true size</button></div>
+  <div class="dt-wrap fit"><div class="dt" id="before-editor" style="position:relative"></div></div>
+  <p class="cap" style="max-width:none">The dashed line is the bottom of a 900 px tall window. Above it are the header and the notice. The look is about 2,500 px down, and it can't be changed here.</p>
+
+  <h3>After ① First visit: the site is offline while the club sets it up</h3>
+  <div class="dt-tools"><span>Desktop, 1440, as the owner, site never online</span><button class="btn-d" data-fit>Show at true size</button></div>
+  <div class="dt-wrap fit"><div class="dt" id="after-setup"></div></div>
+  <div class="stage">
+    <div class="read">
+      <h4>What's on this screen</h4>
+      <ul>
+        <li><details class="tag new"><summary>NEW</summary><div>The rows double as a checklist until the site first goes online. Each row starts with ✓ when it is ready or a dashed circle when it isn't, and the bar counts them. After the first Go live the marks and the bar disappear for good; a missing tagline then shows as a small amber pill in the row's summary.</div></details> <b>Set up your site · 2 of 4 ready</b>, then lime <b>Go live</b>. Nothing is required, because a club can go live with the defaults. That follows "warns, never blocks".</li>
+        <li><details class="tag new"><summary>NEW</summary><div>A preview of the club's home page, drawn as families see it, and redrawn after each autosave. While the site is offline, the owner and admins still see it, with an amber line saying only they can (Ask 2). Its Computer / Phone pill is the olive view pill.</div></details> <b>Preview</b> beside the rows. It stays in place as you scroll.</li>
+        <li><details class="tag new"><summary>NEW</summary><div>When a logo is uploaded, its two strongest colours are offered first as "From your logo" (Ask 3). It follows the same pattern as the app icon (June 24): automatic by default, named shortcuts, custom, and a way back to automatic.</div></details> <b>From your logo</b> before the nine presets.</li>
+        <li><details class="tag res"><summary>RESTYLED</summary><div>Type tiles show the club's own name in each face and are named for how they look. "System" retires because it gave the same result as Barlow (Ask 4).</div></details> <b>Classic · Serif · Clean.</b></li>
+        <li><details class="tag unc"><summary>UNCHANGED</summary><div>The readability sentence is today's colour wording: "White text on navy, navy links. Readable on every page." When a colour has to be darkened, it says so here, next to the colour.</div></details> The sentence under the colours.</li>
+        <li>No club notice while the site is offline, since there is nobody to tell.</li>
+      </ul>
+      <h4>An admin on this screen</h4>
+      <ul><li>Sees the same rows and can change the Look. Where the owner has Go live, an admin reads: "When it's ready, the owner puts it online."</li></ul>
+    </div>
+  </div>
+
+  <h3>After ② Every week: the site is online, a notice is showing</h3>
+  <div class="dt-tools"><span>Desktop, 1440, as the owner, site online</span><button class="btn-d" data-fit>Show at true size</button></div>
+  <div class="dt-wrap fit"><div class="dt" id="after-live"></div></div>
+  <div class="stage">
+    <div class="read">
+      <h4>What's on this screen</h4>
+      <ul>
+        <li><details class="tag res"><summary>RESTYLED</summary><div>The notice becomes one strip at the top of the rows. Showing now reads exactly as today, and Edit and End now sit beside it. Post and Edit open the standard window, because a notice tells families and is held until you post it (October 9 exception). With no notice showing, the strip reads "No notice showing" with a Post a notice button.</div></details> <b>Club notice</b>, first, because it's the thing you come back for.</li>
+        <li><details class="tag unc"><summary>UNCHANGED</summary><div>The Home page list: the number handle (hold to drag, tap for Move up / Move down), a switch per section, and Open now fixed first. The preview redraws in the new order.</div></details> <b>Home page</b> open.</li>
+        <li>The checklist marks are gone. Each closed row shows a one-line summary of what's in it.</li>
+        <li><details class="tag res"><summary>RESTYLED</summary><div>The header loses "It is on. Turn it off in Settings." The switch now lives in Visibility, two rows down, and the chip already says Online.</div></details> Header: chip, address, Copy link, Open.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The Visibility row, owner and admin</h3>
+  <div class="stage">
+    <div class="col"><div class="k" style="width:440px;padding:16px;background-image:none"><div id="vis-owner"></div></div><p class="cap"><b>Owner.</b> Two switch rows as in Settings today, and the same "Take it offline?" window before it goes off. The web address reads as text, with a door to Settings, where changing it gets its own warning.</p></div>
+    <div class="col"><div class="k" style="width:440px;padding:16px;background-image:none"><div id="vis-admin"></div></div><p class="cap"><b>Admin.</b> The values read as text with one sentence saying who changes them. There are no greyed-out switches (absent beats disabled).</p></div>
+  </div>
+</section>
+
+<!-- ═════════ PHONE ═════════ -->
+<section class="tab" id="tab-phone" data-panel="phone" hidden>
+  <h2>Phone, 390 wide</h2>
+  <p>Open this page on your phone to judge it. The frames are drawn at real size. On a phone the rows open where they sit, as settings cards do everywhere (October 12). There's no room for the preview beside them, so it comes two ways: a strip of the club's bar at the top of the Look row, and the whole site in a window.</p>
+  <div class="stage">
+    <div class="col"><div class="ph-wrap"><div class="ph" id="ph-list"></div></div><p class="cap"><b>① The editor, online.</b> Copy link and Open are their symbols alone (October 20). The five rows and the notice fit on one screen.</p></div>
+    <div class="col"><div class="ph-wrap"><div class="ph spec" id="ph-look"></div></div><p class="cap"><b>② Look, open.</b> The club's bar, drawn live at the top of the row, changes as you pick. The type tiles stack so each sample keeps its width. <i>Clickable.</i></p></div>
+    <div class="col"><div class="ph-wrap"><div class="ph" id="ph-prev"></div></div><p class="cap"><b>③ Preview, while offline.</b> With the site offline, Open becomes <b>Preview</b> (an eye) and opens the whole site in a full-screen window with a back arrow. Once online, Open shows the real site, which is always current because everything autosaves.</p></div>
+  </div>
+</section>
+
+<!-- ═════════ SETTINGS ═════════ -->
+<section class="tab" id="tab-settings" data-panel="settings" hidden>
+  <h2>Settings, before and after</h2>
+  <p>Settings stays the owner's page. It keeps the two things that change the club everywhere, not just on its site: the name and the web address. Changing the address breaks every link families have saved, which is why it stays behind the owner's door.</p>
+  <h3>Today</h3>
+  <div class="dt-tools"><span>Desktop, 1440, owner</span><button class="btn-d" data-fit>Show at true size</button></div>
+  <div class="dt-wrap fit"><div class="dt" id="set-before"></div></div>
+  <h3>After</h3>
+  <div class="dt-tools"><span>Desktop, 1440, owner</span><button class="btn-d" data-fit>Show at true size</button></div>
+  <div class="dt-wrap fit"><div class="dt" id="set-after"></div></div>
+  <div class="stage"><div class="read"><ul>
+    <li><details class="tag new"><summary>NEW</summary><div>A door card for the owner who comes here out of habit. It says where the look and the switch went and opens Public site. It sits between the details and Delete organization.</div></details> <b>Your public site</b> door.</li>
+    <li><details class="tag unc"><summary>UNCHANGED</summary><div>The name and web address keep today's fields, warning and Save button. Moving Settings to autosave is a separate question this drawing doesn't take on.</div></details> <b>Organization details</b>.</li>
+  </ul></div></div>
+</section>
+
+<!-- ═════════ OTHER SHAPES ═════════ -->
+<section class="tab" id="tab-shapes" data-panel="shapes" hidden>
+  <h2>The other shapes, and why not</h2>
+  <p>All three shapes pass the July layout rule. They differ in whether the club ever sees its site while making it.</p>
+  <div class="mini">
+    <div class="card">
+      <h3>A · Rows beside a preview <span class="muted" style="font-weight:500">(drawn, recommended)</span></h3>
+      <div class="wf"><div style="display:grid;grid-template-columns:1fr 1.4fr;gap:8px"><div><div class="bx">Look ✓</div><div class="bx">Home page ✓</div><div class="bx">About ○</div><div class="bx">Contacts ○</div><div class="bx">Visibility</div></div><div class="bx" style="display:grid;place-items:center;min-height:150px">your home page</div></div></div>
+      <p style="margin-top:10px"><b>For:</b> every change shows at once. The rows are the checklist on day one and the editor every day after, so there's one screen to learn. It also passes the October 12 rule that settings cards open in place.<br><b>Against:</b> the preview is the one big new piece to build (Ask 2).</p>
+    </div>
+    <div class="card">
+      <h3>B · Tabs: Look · Home page · Content · Visibility</h3>
+      <div class="wf"><div class="tb"><span>Look</span><span>Home page</span><span>Content</span><span>Visibility</span></div><div class="bx">logo · colours · type · banner</div><div class="bx">…</div></div>
+      <p style="margin-top:10px"><b>For:</b> the cheapest option, and it uses the existing tab row (Accounting, Families).<br><b>Against:</b> the site is still out of sight. The ruled reason for tabs is "views of one body of records", and these are four kinds of setting. No "wow".</p>
+    </div>
+    <div class="card">
+      <h3>C · A setup wizard, then today's page</h3>
+      <div class="wf"><div class="seg" style="margin:0 0 8px"><i class="d"></i><i class="d"></i><i></i><i></i><i></i></div><div class="bx">Step 2 of 5 · Pick your colours</div><div class="bx" style="text-align:right">Back · Next</div></div>
+      <p style="margin-top:10px"><b>For:</b> a great first ten minutes.<br><b>Against:</b> two screens doing one job, and the second visit lands back on the long page. A recolour in March means finding it in the stack. A's checklist rows give the same first-run guidance without the second screen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ ASKS ═════════ -->
+<section class="tab" id="tab-asks" data-panel="asks" hidden>
+  <h2>Asks</h2>
+  <div class="verdict ok"><h3>Ruled 2026-10-21</h3><p>All nine as recommended, except <b>A9</b>: clicking the preview to edit goes in the first build. <b>A5</b> follow-through: the tournaments' Branding page already has its own card style per tournament, so the club-level picker simply leaves Settings and its saved value stays as the fallback.</p></div>
+  <p>Already ruled in this conversation, so not asked again: admins change the Look; the owner alone holds the on/off switch, the directory listing, the name and the web address. Pick an option for each ask, then copy your answers and paste them back to me.</p>
+  <div id="asks"></div>
+  <div class="reply">
+    <button class="btn-d pri" id="copy-ans">Copy my answers</button>
+    <span class="muted" id="copy-msg" style="font-size:13px">Your picks are collected below. Copy them and paste them into the chat.</span>
+    <textarea id="ans" readonly aria-label="Your answers"></textarea>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+/* ── icons (lucide paths) ── */
+var P={
+ copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+ ext:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+ globe:'<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+ down:'<path d="m6 9 6 6 6-6"/>', right:'<path d="m9 18 6-6-6-6"/>',
+ grip:'<circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/>',
+ eye:'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+ bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+ user:'<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+ monitor:'<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+ phone:'<rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/>',
+ lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+ back:'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+ home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ cal:'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+ dot:'<circle cx="12" cy="12" r="4"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ upload:'<path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>'
+};
+function I(n,s){s=s||14;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>';}
+function logo(sz){return '<svg viewBox="0 0 44 44" width="'+sz+'" height="'+sz+'" aria-hidden="true"><path d="M22 3 39 9v12c0 10-7 17-17 20C12 38 5 31 5 21V9z" fill="#1F3A5F"/><path d="M22 7 35 12v9c0 8-5.5 13.5-13 16-7.5-2.5-13-8-13-16v-9z" fill="none" stroke="#D9A93A" stroke-width="1.6"/><text x="22" y="27.5" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="15" fill="#D9A93A">LL</text></svg>';}
+function banner(){return '<svg viewBox="0 0 1280 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="1280" height="180" fill="#9DBBD6"/><rect y="70" width="1280" height="110" fill="#5E8A44"/><path d="M0 70h1280v6H0z" fill="#3F6B30"/><ellipse cx="640" cy="230" rx="430" ry="150" fill="#6D9A50"/><path d="M640 92 790 160 640 228 490 160z" fill="#C9A26B"/><path d="M640 120 735 160 640 200 545 160z" fill="#6D9A50"/><circle cx="640" cy="160" r="14" fill="#C9A26B"/><rect x="636" y="88" width="8" height="8" fill="#fff" transform="rotate(45 640 92)"/><rect x="786" y="156" width="8" height="8" fill="#fff" transform="rotate(45 790 160)"/><rect x="486" y="156" width="8" height="8" fill="#fff" transform="rotate(45 490 160)"/><path d="M80 70V20M80 20h60M1200 70V24" stroke="#F6F5F2" stroke-width="4"/></svg>';}
+
+/* ── the club's public home ── */
+var SEC={
+ teams:'<section class="cs-sec"><h2>Teams</h2><div class="cs-band">Rep</div><div class="cs-tiles"><div class="cs-tile">11U AA</div><div class="cs-tile">13U AA <span class="cs-chip">Tryouts open</span></div><div class="cs-tile">15U A</div><div class="cs-tile">16U AAA</div></div></section>',
+ league:'<section class="cs-sec"><h2>House league</h2><div class="cs-list"><div class="cs-row"><div class="rt"><b>2027 house league</b><small>Schedule and standings from Apr 25</small></div><span class="cv">›</span></div></div></section>',
+ tourn:'<section class="cs-sec"><h2>Tournaments</h2><div class="cs-list"><div class="cs-row"><div class="rt"><b>Lakeshore Fall Classic</b><small>Oct 24–26</small></div><span class="cs-chip">This weekend</span><span class="cv">›</span></div><div class="cs-row"><div class="rt"><b>Winter Indoor Cup</b><small>Feb 13–15, 2027</small></div><span class="cs-chip">Registration open</span><span class="cv">›</span></div></div></section>',
+ about:'<section class="cs-sec cs-about"><h2>About the club</h2><p>Lakeshore Lynx has played rep baseball on the east side since 1994. Six teams from 9U to 16U, a spring house league for every age, and a fall tournament we have hosted for twenty years.</p><div class="cs-list"><div class="cs-row"><div class="rt"><b>About the club</b><small>Contacts, documents and questions</small></div><span class="cv">›</span></div></div><span class="cs-follow">Follow a team</span></section>'
+};
+var OPEN='<section class="cs-sec"><h2>Open now</h2><div class="cs-list open"><div class="cs-row"><div class="rt"><b>13U AA tryouts</b><small>Nov 8–9 · Lakeshore Park, Diamond 2</small></div><span class="cv">›</span></div><div class="cs-row"><div class="rt"><b>2027 house league</b><small>Sign up by Mar 1 · $150.00</small></div><span class="cv">›</span></div></div></section>';
+var NOTICE='<div class="cs-notice"><b>All Lakeshore diamonds are closed tonight</b><span>Rain. Every game and practice tonight is cancelled.</span><small>Posted 2:14 p.m. by the club · ends tonight</small></div>';
+function foot(){return '<footer class="cs-foot"><div><div class="fn">Lakeshore Lynx</div><div class="fq" style="margin-top:12px">Questions? Email the club</div><div class="fe">info@lakeshorelynx.ca</div></div><div class="cs-soc"><span>IG</span><span>FB</span><span>'+I('globe',18)+'</span></div><div style="margin-left:auto;font-size:14px">Contacts and documents<div class="fc">Built on FieldLogicHQ</div></div></footer>';}
+function site(o){
+  o=o||{}; var order=o.order||['teams','league','tourn'];
+  var main=OPEN+order.filter(function(k){return k!=='about';}).map(function(k){return SEC[k];}).join('');
+  var side=order.indexOf('about')>-1||!o.order?SEC.about:'';
+  return '<div class="cs"><div class="cs-bar"><span class="cs-logo">'+logo(38)+'</span><div><div class="cs-name">Lakeshore Lynx</div><div class="cs-tag">Rep baseball, ages 9 to 16</div></div><nav class="cs-tabs"><span class="on">Home</span><span>Teams</span><span>Tryouts</span><span>House league</span><span>Past tournaments</span></nav><span class="cs-sign">Sign in</span></div><div class="cs-ban">'+banner()+'</div><div class="cs-body">'+(o.notice?NOTICE:'')+'<div class="cs-mainc">'+main+'</div><div class="cs-side">'+side+'</div></div>'+foot()+'</div>';
+}
+function bar(){return '<div class="cs-bar"><span class="cs-logo">'+logo(38)+'</span><div style="min-width:0"><div class="cs-name">Lakeshore Lynx</div><div class="cs-tag">Rep baseball, ages 9 to 16</div></div><span style="margin-left:auto">'+I('user',22)+'</span></div><div class="cs-ptabs"><span class="on">Home</span><span>Teams</span><span>Tryouts</span><span>House league</span><span>Past tournaments</span></div>';}
+function psite(o){o=o||{};return '<div class="cs p">'+bar()+'<div class="cs-body">'+(o.notice?NOTICE:'')+OPEN+SEC.teams+SEC.league+SEC.tourn+SEC.about+'</div>'+foot()+'</div>';}
+
+/* ── admin frame ── */
+function rail(active){
+  var g=function(t){return '<div class="k-rg">'+t+'</div>';};
+  var r=function(t,ic){return '<div class="k-ri'+(t===active?' on':'')+'">'+I(ic||'dot')+t+'</div>';};
+  return '<aside class="k-rail">'+r('Overview','home')+r('Calendar','cal')+g('Programs')+r('Rep teams')+r('Accounting')+r('Families')+r('Public site','globe')+r('House league')+r('Tournaments')+g('Organization')+r('Members')+r('Audit log')+r('Plan & billing')+r('Settings')+r('Venue library')+r('PDF settings')+'</aside>';
+}
+function top(){return '<div class="k-top"><span class="k-wm">Field<i>Logic</i><s>HQ</s></span><span class="k-area">Admin area</span><span class="k-topr"><span class="k-ws">Lakeshore Lynx</span>'+I('bell',18)+'<span class="k-acct">'+I('user',16)+'</span></span></div>';}
+function frame(active,inner,h){return '<div class="k">'+top()+'<div class="k-body" style="min-height:'+(h||900)+'px">'+rail(active)+'<div class="k-main" style="position:relative">'+inner+'</div></div></div>';}
+
+/* ── builder pieces ── */
+function row(id,title,sum,mark,body,open){
+  var m=mark==='done'?'<span class="mark done">'+I('check',13)+'</span>':mark==='todo'?'<span class="mark todo"></span>':'<span class="mark eye"></span>';
+  return '<div class="k-card b-row'+(open?' open':'')+'" data-row="'+id+'"><div class="b-head" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+m+'<div><h3>'+title+'</h3><p>'+sum+'</p></div><span class="chev">'+I('down',18)+'</span></div><div class="b-body">'+(body||'')+'</div></div>';
+}
+var PRESETS=[['FieldLogicHQ','#1E3A8A','#D9F99D','blue'],['Battle Purple','#8B2FC9','#C084FC','purple'],['Ocean Blue','#075985','#38BDF8','ocean blue'],['Forest Green','#166534','#86EFAC','forest green'],['Sunset Orange','#9A3412','#FDBA74','burnt orange'],['Crimson','#9F1239','#FB7185','crimson'],['Championship Gold','#92400E','#FACC15','bronze'],['Teal','#115E59','#5EEAD4','teal'],['Midnight Blue','#1E40AF','#93C5FD','royal blue']];
+function lookBody(){
+  var sw=PRESETS.map(function(p){return '<button class="swt" style="--a:'+p[1]+';--b:'+p[2]+'" data-fill="'+p[1]+'" data-acc="'+p[2]+'" data-name="'+p[3]+'" aria-label="'+p[0]+'" title="'+p[0]+'"></button>';}).join('');
+  return '<div class="sub-h">Logo</div><div class="logo-row"><span class="logo-tile">'+logo(50)+'</span><span class="k-btn">'+I('upload')+'Replace logo</span><span class="k-btn">Browse stock logos</span><span class="k-btn ghost">Remove</span></div>'+
+  '<div class="sub-h">Colours</div><div class="sw-row"><button class="fromlogo on" data-fill="#1F3A5F" data-acc="#D9A93A" data-name="navy"><span class="dual"></span>From your logo</button>'+sw+'<button class="swt cust" aria-label="Your own colours" title="Your own colours"></button></div><p class="readsent" data-sent><b>Navy and gold.</b> White text on navy, navy links. Readable on every page.</p>'+
+  '<div class="sub-h">Type</div><div class="faces"><div class="face f-classic on" data-face="classic"><small>Classic</small><b>Lakeshore Lynx</b><span>Teams and tryouts</span></div><div class="face f-serif" data-face="serif"><small>Serif</small><b>Lakeshore Lynx</b><span>Teams and tryouts</span></div><div class="face f-clean" data-face="clean"><small>Clean</small><b>Lakeshore Lynx</b><span>Teams and tryouts</span></div></div>'+
+  '<div class="sub-h">Banner photo</div><div class="logo-row"><span class="ban-thumb">'+banner()+'</span><span class="k-btn">Replace</span><span class="k-btn ghost">Remove</span></div><p class="k-hint">Shows across the top of your home page on a computer. Phones leave it out. A wide photo works best, about 16 by 5.</p>';
+}
+function homeBody(){
+  var rr=function(n,name,cap,on){return '<div class="ro"><span class="hd">'+I('grip',12)+n+'</span><div><b>'+name+'</b><span>'+cap+'</span></div>'+(on===null?'<span class="fix">Always first</span>':'<span class="k-sw'+(on?' on':'')+'"></span>')+'</div>';};
+  return '<p class="k-lead" style="margin-bottom:6px">What families see on your home page, in this order. Open now always comes first and shows only while something is open.</p>'+rr('','Open now','Open tryouts and an open house-league sign-up, while they are open',null)+rr(1,'Teams','Your 4 teams in your groups, each with its tryout state',true)+rr(2,'House league','Your 2027 sign-up and divisions',true)+rr(3,'Tournaments','Your upcoming tournaments',true)+rr(4,'About the club','Your about text, with a way to your About page',true)+rr(5,'Past tournaments','A way to your archived tournaments',true);
+}
+function visOwner(){return '<div class="k-swrow"><div><b>Public site</b><span>Online at <span style="font-family:IBM Plex Mono,monospace">fieldlogichq.com/lakeshore-lynx</span>. Turning it off takes the club’s pages offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Tournament pages stay up.</span></div><span class="k-sw on"></span></div><div class="k-swrow"><div><b>Listed in the club directory</b><span>Families searching FieldLogicHQ’s directory can find Lakeshore Lynx. Your site stays online either way.</span></div><span class="k-sw on"></span></div><div class="k-swrow"><div><b>Web address</b><span><span style="font-family:IBM Plex Mono,monospace">fieldlogichq.com/lakeshore-lynx</span> · <a class="k-link">Change it in Settings</a></span></div></div>';}
+function visAdmin(){return '<div class="k-swrow"><div><b>Public site</b><span>Online.</span></div></div><div class="k-swrow"><div><b>Listed in the club directory</b><span>Yes.</span></div></div><div class="k-swrow"><div><b>Web address</b><span style="font-family:IBM Plex Mono,monospace">fieldlogichq.com/lakeshore-lynx</span></div></div><p class="k-hint" style="margin-top:8px">The owner turns the site on and off and changes its address.</p>';}
+
+function header(online){
+  return '<div style="display:flex;align-items:center;gap:10px"><h1 class="k-h1">Public site</h1><span class="k-chip '+(online?'good':'warn')+'">'+(online?'Online':'Offline')+'</span><span class="k-btn ico ghost" style="margin-left:auto">'+I('help',18)+'</span></div>'+
+  '<div style="display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap"><span class="k-lead">Families see it at</span><span class="k-addr">fieldlogichq.com/lakeshore-lynx</span><span class="k-btn">'+I('copy')+'Copy link</span>'+(online?'<span class="k-btn">'+I('ext')+'Open</span>':'')+'</div>';
+}
+function preview(online,notice){
+  return '<div class="k-card pv"><div class="pv-head"><span class="ttl">Preview</span><span class="k-pill" data-devpill><span class="on" data-dev="desk">'+I('monitor',13)+'Computer</span><span data-dev="phone">'+I('phone',13)+'Phone</span></span><span class="url">Home</span></div>'+
+  (online?'':'<div class="pv-rib">'+I('lock',13)+'Only you and your admins can see this. Your site is offline.</div>')+
+  '<div class="pv-stage"><div class="pv-desk">'+site({notice:notice})+'</div><div class="pv-phone"><div class="cs-p-wrap">'+psite({notice:notice})+'</div></div></div>'+
+  '<div class="pv-foot">This is your home page as families see it. It changes as you make changes on the left.</div></div>';
+}
+
+/* ① setup */
+var setup='<div class="k-page spec" data-dev="desk" data-face="classic">'+header(false)+
+ '<div class="b-grid"><div class="b-col">'+
+ '<div class="k-card"><div class="k-cb" style="padding-top:14px"><div style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="k-ct">Set up your site</div><p class="k-lead" style="margin-top:2px">2 of 4 ready. Families see nothing until you go live, and you can go live at any time.</p></div><span class="k-btn lime">'+I('globe')+'Go live</span></div><div class="seg"><i class="d"></i><i class="d"></i><i></i><i></i></div></div></div>'+
+ row('look','Look','From your logo: navy and gold · Classic type · banner photo','done',lookBody(),true)+
+ row('home','Home page','5 sections · Teams first','done',homeBody())+
+ row('about','About the club','No tagline yet · no about text','todo','')+
+ row('lists','Contacts and documents','Optional · none yet','todo','')+
+ row('vis','Visibility','Offline · not in the club directory','',visOwner())+
+ '</div>'+preview(false,false)+'</div><span class="k-save">✓ Saved</span></div>';
+
+/* ② live */
+var live='<div class="k-page spec" data-dev="desk" data-face="classic">'+header(true)+
+ '<div class="b-grid"><div class="b-col">'+
+ '<div class="k-card notice-strip"><div class="nt"><div class="ns">Club notice · Showing now</div><div class="nl">All Lakeshore diamonds are closed tonight</div><div class="nm">Posted 2:14 p.m. by the club · ends tonight</div></div><span class="k-btn">Edit</span><span class="k-btn">End now</span></div>'+
+ row('look','Look','Navy and gold · Classic type · banner photo','',lookBody())+
+ row('home','Home page','5 sections · Teams first','',homeBody(),true)+
+ row('about','About the club','Rep baseball, ages 9 to 16 · info@lakeshorelynx.ca · 3 social links','','')+
+ row('lists','Contacts and documents','4 contacts · 3 documents · 6 questions','','')+
+ row('vis','Visibility','Online · listed in the club directory','',visOwner())+
+ '</div>'+preview(true,true)+'</div></div>';
+
+/* before: today's editor */
+function card(t,lead,body){return '<div class="k-card" style="margin-bottom:12px"><div class="k-ch"><h2 class="k-ct">'+t+'</h2></div><div class="k-cb">'+(lead?'<p class="k-lead" style="margin-bottom:10px">'+lead+'</p>':'')+body+'</div></div>';}
+function fld(l,v,h,area){return '<div class="k-field"><span class="k-label">'+l+'</span><div class="k-input'+(area?' k-area-in':'')+'">'+v+'</div>'+(h?'<p class="k-hint">'+h+'</p>':'')+'</div>';}
+function listrows(a){return a.map(function(x){return '<div class="ro" style="grid-template-columns:1fr 20px"><div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>'+I('right',16)+'</div>';}).join('');}
+var beforeEd='<div class="k-page">'+
+ '<div style="display:flex;align-items:center;gap:10px"><h1 class="k-h1">Public site</h1><span class="k-chip good">Online</span></div>'+
+ '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 6px"><span class="k-lead">Families see it at</span><span class="k-addr">fieldlogichq.com/lakeshore-lynx</span><span class="k-btn">'+I('copy')+'Copy link</span><span class="k-btn">'+I('ext')+'Open</span></div>'+
+ '<p class="k-lead" style="margin-bottom:16px">It is on. <a class="k-link">Turn it off in Settings</a></p>'+
+ card('Club notice','One line at the top of every public page, such as a field closure. It ends by itself.','<div class="notice-strip k-card" style="margin-bottom:14px"><div class="nt"><div class="ns">Showing now</div><div class="nl">All Lakeshore diamonds are closed tonight</div><div class="nm">Posted 2:14 p.m. by the club · ends tonight</div></div></div>'+fld('Notice *','All Lakeshore diamonds are closed tonight','41 / 80')+fld('More detail','Rain. Every game and practice tonight is cancelled.','52 / 200',true)+fld('Ends','Tonight')+'<span class="k-btn lime">Update notice</span> <span class="k-btn">End now</span>')+
+ card('Home page','',homeBody())+
+ card('About the club','',fld('Tagline','Rep baseball, ages 9 to 16','One line under your name. 26 / 100')+fld('About','Lakeshore Lynx has played rep baseball on the east side since 1994…','198 / 1000',true)+fld('Families’ questions go to','info@lakeshorelynx.ca','Shown in your footer and on every team and tryout page.'))+
+ card('Who to contact','Up to twelve. Families see them on your About page.',listrows([['President','president@lakeshorelynx.ca'],['Registrar','registrar@lakeshorelynx.ca'],['Rep coordinator','rep@lakeshorelynx.ca'],['Equipment','equipment@lakeshorelynx.ca']])+'<div class="k-hr"></div><span class="k-btn">Add a contact</span>')+
+ card('Documents and policies','Links to what you already publish. Families open them from your About page.',listrows([['Code of conduct','Policies'],['Refund policy','Policies'],['2027 rep tryout guide','Tryouts']])+'<div class="k-hr"></div><span class="k-btn">Add a document</span>')+
+ card('Questions families ask','Short answers to what you get asked every spring. Up to ten.',listrows([['When are tryouts?','Rep tryouts run in November…'],['How much does house league cost?','$150.00 for the season…'],['Do I need to volunteer?','Every family helps once…']])+'<div class="k-hr"></div><span class="k-btn">Add a question</span>')+
+ card('Social links','',fld('Instagram','https://instagram.com/lakeshorelynx')+fld('Facebook','https://facebook.com/lakeshorelynx')+fld('X','https://x.com/yourclub')+fld('Website','https://lakeshorelynx.ca'))+
+ card('Look','Your logo, colours and font are set in Organization › Settings. This is how families see them.','<div style="display:flex;gap:12px;align-items:center"><span class="logo-tile" style="width:44px;height:44px">'+logo(36)+'</span><span style="width:36px;height:36px;border-radius:8px;background:#1F3A5F"></span><span style="width:36px;height:36px;border-radius:8px;background:#D9A93A"></span><div style="flex:1"><b>Navy and gold · the default font</b><p class="k-hint" style="margin:0">White text on navy, navy links. Readable on every page.</p></div><a class="k-link">Change in Settings</a></div>')+
+ '</div>';
+
+/* settings before / after */
+function tiles(names,sel){return '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'+names.map(function(n,i){return '<div class="face'+(i===sel?' on':'')+'"><small>'+n+'</small><b style="font-size:16px">Aa 123</b></div>';}).join('')+'</div>';}
+var setBefore='<div class="k-page" style="max-width:960px"><div class="k-eyebrow">Organization</div><h1 class="k-h1" style="margin-bottom:18px">Settings</h1>'+
+ card('Your public site','',visOwner().replace(/<div class="k-swrow"><div><b>Web address[\s\S]*$/,''))+
+ card('Organization logo','','<div class="logo-row"><span class="logo-tile" style="width:88px;height:88px">'+logo(64)+'</span><span class="k-btn">Replace logo</span><span class="k-btn">Browse stock logos</span><span class="k-btn ghost">Remove</span></div><p class="k-hint">JPG, PNG, or WebP · max 2 MB</p>')+
+ card('Organization details','',fld('Name','Lakeshore Lynx','Shown in the nav bar and on your public pages.')+fld('Web address','fieldlogichq.com/<b>lakeshore-lynx</b>','Changing it breaks every link families have saved.'))+
+ card('Colour theme','','<div class="sw-row">'+PRESETS.map(function(p,i){return '<span class="swt'+(i===2?' on':'')+'" style="--a:'+p[1]+';--b:'+p[1]+';width:40px;height:40px"></span>';}).join('')+'<span class="swt cust" style="width:40px;height:40px"></span></div><div style="margin-top:12px;background:#0F172A;border-radius:8px;padding:14px;color:#fff;font-size:13px">Preview · Card border · <span style="background:#075985;padding:4px 8px;border-radius:6px">Button</span> · Badge</div>')+
+ card('Hero banner','Shown across the top of your club’s home page.','<div style="aspect-ratio:16/5;max-width:520px;border-radius:8px;overflow:hidden">'+banner()+'</div><p class="k-hint">JPG, PNG, or WebP · max 4 MB. Recommended 16:5 ratio.</p>')+
+ card('Font family','',tiles(['System','Inter','Barlow','DM Serif'],0))+
+ card('Card style','',tiles(['Default','Glass','Outlined','Flat'],0).replace(/Aa 123/g,'▭'))+
+ card('Delete organization','','<span class="k-btn dang">Request deletion</span>')+
+ '<div class="k-card" style="display:flex;gap:10px;justify-content:flex-end;padding:12px 16px"><span class="k-btn">Discard</span><span class="k-btn lime">Save changes</span></div></div>';
+var setAfter='<div class="k-page" style="max-width:960px"><div class="k-eyebrow">Organization</div><h1 class="k-h1" style="margin-bottom:18px">Settings</h1>'+
+ card('Organization details','',fld('Name','Lakeshore Lynx','Shown on your public pages, your invoices and your emails.')+fld('Web address','fieldlogichq.com/<b>lakeshore-lynx</b>','Changing it breaks every link families have saved.'))+
+ '<div class="k-card" style="margin-bottom:12px;display:flex;gap:14px;align-items:center;padding:14px 18px"><span style="color:#57651E">'+I('globe',22)+'</span><div style="flex:1"><div class="k-ct">Your public site</div><p class="k-lead">Its logo, colours, type and whether it is online are set in Public site.</p></div><span class="k-btn">Open Public site</span></div>'+
+ card('Delete organization','','<span class="k-btn dang">Request deletion</span>')+'</div>';
+
+/* phones */
+function ptop(){return '<div class="kp-top"><span class="k-wm" style="font-size:14px">Field<i>Logic</i><s>HQ</s></span><span style="margin-left:auto;display:flex;gap:12px;color:#4A4235">'+I('bell',20)+I('user',20)+'</span></div>';}
+function pnav(){return '<div class="kp-nav"><span>'+I('home',20)+'Overview</span><span>'+I('cal',20)+'Calendar</span><span class="on">'+I('globe',20)+'Public site</span><span>'+I('menu',20)+'More</span></div>';}
+function phead(online){return '<div style="display:flex;align-items:center;gap:8px"><h1 class="k-h1">Public site</h1><span class="k-chip '+(online?'good':'warn')+'">'+(online?'Online':'Offline')+'</span><span class="k-btn ico ghost" style="margin-left:auto">'+I('help',20)+'</span></div><div style="display:flex;gap:6px;align-items:center;margin-top:10px"><span class="k-addr" style="flex:1;min-width:0;padding:13px 10px">fieldlogichq.com/lakeshore-lynx</span><span class="k-btn ico" aria-label="Copy link">'+I('copy',18)+'</span><span class="k-btn ico" aria-label="'+(online?'Open':'Preview')+'">'+I(online?'ext':'eye',18)+'</span></div>';}
+var phList='<div class="k kp" style="position:relative;min-height:844px">'+ptop()+'<div class="kp-main">'+phead(true)+
+ '<div class="b-col" style="margin-top:14px"><div class="k-card notice-strip" style="flex-wrap:wrap"><div class="nt"><div class="ns">Club notice · Showing now</div><div class="nl">All Lakeshore diamonds are closed tonight</div><div class="nm">Ends tonight</div></div><span class="k-btn" style="height:44px">Edit</span></div>'+
+ row('look','Look','Navy and gold · Classic type','',lookBody())+row('home','Home page','5 sections · Teams first','',homeBody())+row('about','About the club','Tagline, email, 3 social links','','')+row('lists','Contacts and documents','4 contacts · 3 documents · 6 questions','','')+row('vis','Visibility','Online · in the directory','',visOwner())+
+ '</div></div><div class="fold" style="top:844px"><span>844 px</span></div>'+pnav()+'</div>';
+var phLook='<div class="k kp" style="position:relative">'+ptop()+'<div class="kp-main">'+phead(true)+
+ '<div class="b-col" style="margin-top:14px">'+
+ '<div class="k-card b-row open" data-row="look"><div class="b-head" role="button" tabindex="0" aria-expanded="true"><span class="mark eye"></span><div><h3>Look</h3><p>Navy and gold · Classic type</p></div><span class="chev">'+I('down',18)+'</span></div><div class="b-body" style="padding:0 0 16px"><div style="border-block:1px solid rgba(70,55,30,.12);margin-bottom:12px"><div class="cs p" style="width:100%">'+bar()+'</div></div><div style="padding:0 14px">'+lookBody()+'</div></div></div>'+
+ row('home','Home page','5 sections · Teams first','',homeBody())+
+ '</div></div>'+pnav()+'</div>';
+var phPrev='<div class="kp-win spec" style="position:relative"><div class="kp-win-h"><span class="k-btn ico ghost" style="width:44px;height:44px">'+I('back',20)+'</span><b>Preview</b></div><div class="pv-rib">'+I('lock',13)+'Only you and your admins can see this. Your site is offline.</div>'+psite({})+'</div>';
+
+/* mount */
+function mount(id,h){var el=document.getElementById(id);if(el)el.innerHTML=h;}
+mount('before-editor',frame('Public site',beforeEd,900)+'<div class="fold" style="top:900px"><span>900 px window</span></div>');
+mount('after-setup',frame('Public site',setup,900));
+mount('after-live',frame('Public site',live,900));
+mount('vis-owner',row('vis','Visibility','Online · listed in the club directory','',visOwner(),true));
+mount('vis-admin',row('vis','Visibility','Online · listed in the club directory','',visAdmin(),true));
+mount('ph-list',phList);mount('ph-look',phLook);mount('ph-prev',phPrev);
+mount('set-before',frame('Settings',setBefore,900));
+mount('set-after',frame('Settings',setAfter,700));
+
+/* ── interactions ── */
+document.addEventListener('click',function(e){
+  var h=e.target.closest('.b-head');
+  if(h){var r=h.parentNode,col=r.parentNode,was=r.classList.contains('open');
+    col.querySelectorAll(':scope>.b-row.open').forEach(function(x){x.classList.remove('open');x.querySelector('.b-head').setAttribute('aria-expanded','false');});
+    if(!was){r.classList.add('open');h.setAttribute('aria-expanded','true');}
+    fit();return;}
+  var s=e.target.closest('.swt[data-fill],.fromlogo');
+  if(s){var sp=s.closest('.spec');if(!sp)return;
+    sp.style.setProperty('--fill',s.dataset.fill);sp.style.setProperty('--ink',s.dataset.fill);sp.style.setProperty('--acc',s.dataset.acc);
+    sp.querySelectorAll('.swt,.fromlogo').forEach(function(x){x.classList.remove('on');});s.classList.add('on');
+    var nm=s.dataset.name, lg=s.classList.contains('fromlogo');
+    sp.querySelectorAll('[data-sent]').forEach(function(p){p.innerHTML=(lg?'<b>Navy and gold.</b> ':'')+'White text on '+nm+', '+nm+' links. Readable on every page.';});
+    return;}
+  var f=e.target.closest('.face[data-face]');
+  if(f){var sp2=f.closest('.spec');if(!sp2)return;sp2.setAttribute('data-face',f.dataset.face);
+    sp2.querySelectorAll('.face[data-face]').forEach(function(x){x.classList.toggle('on',x===f);});return;}
+  var d=e.target.closest('[data-devpill] [data-dev]');
+  if(d){var sp3=d.closest('.spec');sp3.setAttribute('data-dev',d.dataset.dev);
+    d.parentNode.querySelectorAll('[data-dev]').forEach(function(x){x.classList.toggle('on',x===d);});return;}
+  var b=e.target.closest('[data-fit]');
+  if(b){var w=b.parentNode.nextElementSibling;w.classList.toggle('fit');b.textContent=w.classList.contains('fit')?'Show at true size':'Fit to window';fit();}
+});
+document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('b-head')){e.preventDefault();e.target.click();}});
+
+function fit(){document.querySelectorAll('.dt-wrap').forEach(function(w){var z=w.classList.contains('fit')?Math.min(1,(w.clientWidth||1440)/1440):1;w.style.setProperty('--z',z);});}
+window.addEventListener('resize',fit);
+
+/* tabs */
+function show(t){document.querySelectorAll('[data-panel]').forEach(function(p){p.hidden=p.dataset.panel!==t;});
+  document.querySelectorAll('.tabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false');});
+  try{localStorage.setItem('psb-tab',t);}catch(_){}
+  fit();}
+document.querySelectorAll('.tabs button').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.tab);if(history.replaceState)history.replaceState(null,'','#'+b.dataset.tab);window.scrollTo(0,0);});});
+var start=(location.hash||'').slice(1);
+if(!document.querySelector('[data-panel="'+start+'"]')){try{start=localStorage.getItem('psb-tab')||'idea';}catch(_){start='idea';}}
+if(!document.querySelector('[data-panel="'+start+'"]'))start='idea';
+show(start);
+
+/* asks */
+var ASKS=[
+ ['A1','The shape of the editor','Five rows beside a live preview of the home page, as drawn. The other two shapes are on the Other shapes tab.',
+  [['A · Rows beside a preview',1],['B · Tabs, no preview',0],['C · A setup wizard, then today’s page',0]]],
+ ['A2','The preview while the site is offline','The preview matters most on day one, when the site is still offline. Today an offline club’s pages show the refusal to everyone. For the preview, the club’s own owner and admins would see their site, with the amber line saying only they can. This is the biggest new piece to build.',
+  [['Yes, the owner and admins see their offline site in the preview',1],['No, the preview starts once the site is online',0]]],
+ ['A3','Colours from the logo','When a logo is uploaded, offer its two strongest colours first as “From your logo”, ahead of the nine presets. It works the same as the app icon (automatic, shortcuts, custom). It is new and small.',
+  [['Yes, offer it first whenever there is a logo',1],['No, presets and custom only',0]]],
+ ['A4','Type: three looks, named for what they look like','“System” and “Barlow” give the club the same look today. Show three tiles with the club’s own name: Classic (Barlow titles, Inter text), Serif (DM Serif and DM Sans), Clean (Inter). A club that picked System or Barlow reads as Classic.',
+  [['Three tiles: Classic · Serif · Clean',1],['Keep the four tiles as they are',0]]],
+ ['A5','Card style','It changes only tournament pages, never the club’s own site. Putting it in the club’s site builder adds a control with no visible effect there.',
+  [['Move it to the tournaments’ Branding page, where it shows',1],['Retire it',0],['Keep it in Settings',0]]],
+ ['A6','How the Look saves','Settings holds the look behind a Save button today. The editor autosaves everything else. With the preview beside you, each change is visible as you make it.',
+  [['Autosaves like the rest of the editor, with the floating Saved pill',1],['Held behind its own Save button',0]]],
+ ['A7','The club notice','The one thing a club uses every week. Drawn as one strip at the top of the rows, with Post and Edit opening the standard window (a notice tells families, so it is held until you post it). Hidden while the site is offline.',
+  [['One strip at the top; Post and Edit open the window',1],['Keep it as a card with its form open',0]]],
+ ['A8','Going live the first time','The rows read as a checklist until the site first goes online, ending in a lime Go live for the owner. Drawn with nothing required: a club can go live with the defaults.',
+  [['Checklist, nothing required to go live',1],['Checklist, but Look and About must be done first',0],['No checklist; just the switch in Visibility',0]]],
+ ['A9','Clicking the preview to edit','Clicking the club’s bar in the preview could open Look, clicking Teams could open Home page, and so on. It is delightful, but it is extra work on top of the preview.',
+  [['Later, once the builder has shipped',0],['In the first build (ruled)',1]]]
+];
+var host=document.getElementById('asks');
+host.innerHTML=ASKS.map(function(a){return '<div class="ask"><h3><span class="no">'+a[0]+'</span>'+a[1]+'</h3><p>'+a[2]+'</p><div class="opts">'+a[3].map(function(o,i){return '<label><input type="radio" name="'+a[0]+'" value="'+o[0]+'"'+(o[1]?' checked':'')+'><span>'+o[0]+(o[1]?'<span class="rec">RECOMMENDED</span>':'')+'</span></label>';}).join('')+'</div></div>';}).join('');
+function answers(){var out=['Public site builder, round 1 answers:'];ASKS.forEach(function(a){var c=document.querySelector('input[name="'+a[0]+'"]:checked');out.push(a[0]+' '+a[1]+': '+(c?c.value:'(no pick)'));});document.getElementById('ans').value=out.join('\n');}
+host.addEventListener('change',answers);answers();
+document.getElementById('copy-ans').addEventListener('click',function(){var t=document.getElementById('ans'),m=document.getElementById('copy-msg');
+  var done=function(){m.textContent='Copied. Paste it into the chat.';};
+  try{navigator.clipboard.writeText(t.value).then(done,function(){t.select();m.textContent='Selected. Press Ctrl+C to copy.';});}catch(_){t.select();m.textContent='Selected. Press Ctrl+C to copy.';}});
+})();
+</script>

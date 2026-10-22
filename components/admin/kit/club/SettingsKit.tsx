@@ -1,36 +1,22 @@
 'use client';
 /**
- * ORGANIZATION SETTINGS on the kit (Club Tier Stage 1, screens session; specimen 9 "the decisions
- * only"). Rendered by the Settings page (its old page went with Admin Design Continuity Part B, area 2).
- * Owner only, as always.
+ * ORGANIZATION SETTINGS on the kit (Club Tier Stage 1, screens session; specimen 9 "the decisions only"). Owner only.
  *
- *   NEW — "Your public site": the one mislabelled checkbox ("Listed on /discover", which really
- *   switched the WHOLE site, A09/F04) becomes the two real settings — the site's master switch and
- *   the directory listing (`isDiscoverable`, which had no control at all). The directory switch is off
- *   and greyed while the site is off. Taking the site offline ASKS first, and the question names what
- *   goes offline — since Club Tier Stage 4a that is every public club page (home, teams, tryouts and their
- *   sign-up, league, archives, the team calendars), never the tournaments. Both switches save the moment
- *   they are set: a switch that waited for a Save below the fold would read as done when it was not.
+ * ⚖ SINCE THE PUBLIC SITE BUILDER (ruled 2026-10-21, Option A): everything families see moved to Public site — the
+ * site's on/off switch and directory listing (the Visibility row, still the owner's), and the logo, colours, banner and
+ * type (the Look row, the owner's OR an admin's). Card style left the club's controls (A5): only tournament pages wear
+ * it, and each tournament picks its own on its Branding page (the saved club value stays their fallback).
  *
- *   RESTYLED — everything else the page did, the same fields, words and actions on the kit: the logo
- *   (upload, stock logos, remove), name and slug (with the slug warning), the colour theme, the hero
- *   banner (its copy names the club's home page now, A14), the font, the card style, the one Save with
- *   its unsaved-changes guard, and the deletion request. The theme and card previews are PICTURES OF
- *   THE PUBLIC PAGE, so they wear the org's colours inside a public-preview island (R2).
- *
- * ⚠ NO PLAN LOCKS on the custom colours, fonts or hero banner, unlike today's page: today's locks are
- * for the free Tournament plan, and a Tournament-tier org never reaches this page (the org layout
- * sends it to its tournaments first). The server's own refusal still stands behind it.
+ * What stays here is what changes the club everywhere, not only on its site: its NAME and its WEB ADDRESS (changing it
+ * breaks every link families saved), with the one Save and its unsaved-changes guard; a door card to Public site for
+ * the owner who comes here out of habit; and the deletion request.
  */
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Upload, Library, ImageIcon, Check, Lock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { useOrgNav } from '@/components/OrgNavContext';
-import { isClubPlan } from '@/lib/module-entitlements';
-import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, STOCK_MARK_SCALE, isStockLogoUnlocked } from '@/lib/stock-logos';
-import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
@@ -45,73 +31,32 @@ import { possessive } from '@/lib/utils';
 interface OrgSettings {
   name: string;
   slug: string;
-  logoUrl: string | null;
-  isPublic: boolean;
-  isDiscoverable: boolean;
-  themePreset: string | null;
-  themePrimary: string | null;
-  themeAccent: string | null;
-  heroBannerUrl: string | null;
-  themeFont: string;
-  themeCardStyle: string;
 }
-
-const noSubscribe = () => () => {};
 
 export default function SettingsKit() {
   const router = useRouter();
   const { currentOrg, userRole, loading, refresh } = useOrg();
   usePageTitle('Settings');
-  const { setOrgNav } = useOrgNav();
   const slug = currentOrg?.slug ?? '';
   const orgQuery = slug ? `?orgSlug=${encodeURIComponent(slug)}` : '';
-  const host = useSyncExternalStore(noSubscribe, () => window.location.host, () => '');
 
   const [settings, setSettings] = useState<OrgSettings | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState('');
   const [urlSlug, setUrlSlug] = useState('');
-  const [presetKey, setPresetKey] = useState('platform');
-  const [customPrimary, setCustomPrimary] = useState('#1E3A8A'); // token-exempt: a data default, the platform preset's primary
-  const [customAccent, setCustomAccent] = useState('#D9F99D'); // token-exempt: a data default, the platform preset's accent
-  const [fontKey, setFontKey] = useState('system');
-  const [cardStyle, setCardStyle] = useState('default');
   const [saving, setSaving] = useState(false);
-  const [switching, setSwitching] = useState<'site' | 'directory' | null>(null);
-  const [askOffline, setAskOffline] = useState(false);
   const [notice, setNotice] = useNotice();
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [stockOpen, setStockOpen] = useState(false);
-  const [stockSelected, setStockSelected] = useState<string | null>(null);
-  const [stockLockedPlan, setStockLockedPlan] = useState<string | null>(null);
-  const [stockSaving, setStockSaving] = useState(false);
-  const [banner, setBanner] = useState<string | null>(null);
-  const [bannerUploading, setBannerUploading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteSending, setDeleteSending] = useState(false);
   const [deleteSent, setDeleteSent] = useState(false);
   const [guardOpen, setGuardOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
-  const logoInput = useRef<HTMLInputElement>(null);
-  const bannerInput = useRef<HTMLInputElement>(null);
 
   function adopt(data: OrgSettings) {
     setSettings(data);
     setName(data.name);
     setUrlSlug(data.slug);
-    setLogoPreview(data.logoUrl);
-    setBanner(data.heroBannerUrl);
-    setFontKey(data.themeFont ?? 'system');
-    setCardStyle(data.themeCardStyle ?? 'default');
-    if (data.themePrimary) {
-      setPresetKey('custom');
-      setCustomPrimary(data.themePrimary);
-      setCustomAccent(data.themeAccent ?? '#D9F99D'); // token-exempt: a data default
-    } else {
-      setPresetKey(data.themePreset ?? 'platform');
-    }
   }
 
   useEffect(() => {
@@ -124,15 +69,7 @@ export default function SettingsKit() {
     return () => { stale = true; };
   }, [orgQuery]);
 
-  const savedPresetKey = settings ? (settings.themePrimary ? 'custom' : (settings.themePreset ?? 'platform')) : 'platform';
-  const isDirty = !!settings && (
-    name !== settings.name
-    || urlSlug !== settings.slug
-    || presetKey !== savedPresetKey
-    || (presetKey === 'custom' && (customPrimary !== (settings.themePrimary ?? '#1E3A8A') || customAccent !== (settings.themeAccent ?? '#D9F99D'))) // token-exempt: data defaults
-    || fontKey !== (settings.themeFont ?? 'system')
-    || cardStyle !== (settings.themeCardStyle ?? 'default')
-  );
+  const isDirty = !!settings && (name !== settings.name || urlSlug !== settings.slug);
 
   // The unsaved-changes guard — today's, kept: a refresh or tab close asks the browser's question; a
   // link or Back inside the app asks ours.
@@ -174,7 +111,7 @@ export default function SettingsKit() {
       // stepping forward onto the window's entry again (`useBackStep`'s header) — never a Back on this page.
       if (stepOf(e.state) !== null) return;
       window.history.pushState(GUARD_ENTRY, '', window.location.href);
-      // Back while another window is open (the offline question, the stock logos, the deletion
+      // Back while another window is open (the deletion
       // request) stays put and asks nothing — never a second question stacked on the first.
       if (document.querySelector('[data-kit-dialog]')) return;
       setPendingHref(null);
@@ -190,17 +127,6 @@ export default function SettingsKit() {
     };
   }, [isDirty]);
 
-  const preview = useMemo(
-    () => (presetKey === 'custom' ? resolveTheme('platform', customPrimary || null, customAccent || null) : resolveTheme(presetKey, null, null)),
-    [presetKey, customPrimary, customAccent],
-  );
-  // The public page's colours, for the two pictures of it (R2 — the island keeps them).
-  const previewVars = {
-    '--primary': preview.primary,
-    '--primary-light': preview.primaryLight,
-    '--primary-rgb': preview.primaryRgb,
-  } as CSSProperties;
-
   if (loading || !currentOrg || !userRole) return <LoadingState label="Loading the settings…" />;
 
   if (userRole !== 'owner') {
@@ -209,17 +135,11 @@ export default function SettingsKit() {
         <AdminPageHeader eyebrow="Organization" title="Settings" />
         <div className={styles.lockedCard}>
           <h2 className={styles.lockedTitle}>Settings are the owner’s</h2>
-          <p className={styles.lockedBody}>Only {possessive(currentOrg.name)} owner can change the organization’s name, address and look.</p>
+          <p className={styles.lockedBody}>Only {possessive(currentOrg.name)} owner can change the organization’s name and address.</p>
         </div>
       </div>
     );
   }
-
-  const noun = isClubPlan(currentOrg.planId) ? 'club' : currentOrg.planId === 'league' ? 'league' : 'organization';
-  const siteUrl = `${host}/${settings?.slug ?? slug}`;
-  // The colours a stock logo is made in: the SAVED main colour and its ink, as the server makes it
-  // (lib/stock-logo-render.ts) — the picker's tiles draw the same circle.
-  const stockColours = resolveTheme(settings?.themePreset, settings?.themePrimary, settings?.themeAccent);
 
   async function patch(body: Record<string, unknown>): Promise<{ ok: boolean; data: Record<string, unknown> }> {
     const res = await fetch(`/api/admin/org-settings${orgQuery}`, {
@@ -231,51 +151,13 @@ export default function SettingsKit() {
     return { ok: res.ok, data };
   }
 
-  async function setSite(on: boolean) {
-    if (!settings) return;
-    setSwitching('site');
-    try {
-      const { ok, data } = await patch({ isPublic: on });
-      if (!ok) throw new Error(typeof data.error === 'string' ? data.error : 'That didn’t save.');
-      setSettings(s => (s ? { ...s, isPublic: on } : s));
-      setNotice({ tone: 'good', text: on ? `${possessive(currentOrg!.name)} public site is online.` : `${possessive(currentOrg!.name)} public site is offline.` });
-      void refresh();
-    } catch (err) {
-      setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'That didn’t save. Try again.' });
-    } finally {
-      setSwitching(null);
-      setAskOffline(false);
-    }
-  }
-
-  async function setDirectory(on: boolean) {
-    if (!settings) return;
-    setSwitching('directory');
-    try {
-      const { ok, data } = await patch({ isDiscoverable: on });
-      if (!ok) throw new Error(typeof data.error === 'string' ? data.error : 'That didn’t save.');
-      setSettings(s => (s ? { ...s, isDiscoverable: on } : s));
-      setNotice({ tone: 'good', text: on ? `${currentOrg!.name} is listed in the directory.` : `${currentOrg!.name} is no longer listed in the directory.` });
-    } catch (err) {
-      setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'That didn’t save. Try again.' });
-    } finally {
-      setSwitching(null);
-    }
-  }
-
   async function saveAll(): Promise<boolean> {
     if (!settings || saving) return false;
     setSaving(true);
     try {
-      const theme = presetKey === 'custom'
-        ? { themePreset: 'platform', themePrimary: customPrimary, themeAccent: customAccent }
-        : { themePreset: presetKey, themePrimary: null, themeAccent: null };
-      const { ok, data } = await patch({ name, slug: urlSlug, ...theme, themeFont: fontKey, themeCardStyle: cardStyle });
+      const { ok, data } = await patch({ name, slug: urlSlug });
       if (!ok) throw new Error(typeof data.error === 'string' ? data.error : 'Save failed.');
-      // A stock logo is made in the main colour, so a new colour can come back as a new logo.
-      const logoUrl = typeof data.logoUrl === 'string' ? data.logoUrl : null;
-      setSettings(s => (s ? { ...s, name, slug: urlSlug, ...theme, themeFont: fontKey, themeCardStyle: cardStyle, logoUrl } : s));
-      if (logoUrl !== settings.logoUrl) { setLogoPreview(logoUrl); setOrgNav(logoUrl, name); }
+      setSettings(s => (s ? { ...s, name, slug: urlSlug } : s));
       setNotice({ tone: 'good', text: 'Settings saved.' });
       void refresh();
       if (typeof data.slug === 'string' && data.slug !== currentOrg!.slug) router.push(`/${data.slug}/admin/org/settings`);
@@ -290,77 +172,6 @@ export default function SettingsKit() {
 
   function discard() {
     if (settings) adopt(settings);
-  }
-
-  async function upload(kind: 'logo' | 'banner', e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const setBusy = kind === 'logo' ? setUploading : setBannerUploading;
-    const setShown = kind === 'logo' ? setLogoPreview : setBanner;
-    setShown(URL.createObjectURL(file));
-    setBusy(true);
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch(`/api/admin/${kind === 'logo' ? 'org-logo' : 'org-hero-banner'}${orgQuery}`, { method: 'POST', body: fd });
-      const data = await res.json().catch(() => ({})) as { error?: string; logoUrl?: string; heroBannerUrl?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed.');
-      const url = (kind === 'logo' ? data.logoUrl : data.heroBannerUrl) ?? null;
-      setShown(url);
-      setSettings(s => (s ? { ...s, ...(kind === 'logo' ? { logoUrl: url } : { heroBannerUrl: url }) } : s));
-      if (kind === 'logo') setOrgNav(url, currentOrg!.name);
-      setNotice({ tone: 'good', text: kind === 'logo' ? 'Logo updated.' : 'Hero banner updated.' });
-      void refresh();
-    } catch (err) {
-      setShown(kind === 'logo' ? settings?.logoUrl ?? null : settings?.heroBannerUrl ?? null);
-      setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'Upload failed. Try again.' });
-    } finally {
-      setBusy(false);
-      const input = kind === 'logo' ? logoInput.current : bannerInput.current;
-      if (input) input.value = '';
-    }
-  }
-
-  async function removeImage(kind: 'logo' | 'banner') {
-    const setBusy = kind === 'logo' ? setUploading : setBannerUploading;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/admin/${kind === 'logo' ? 'org-logo' : 'org-hero-banner'}${orgQuery}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Remove failed.');
-      if (kind === 'logo') { setLogoPreview(null); setOrgNav(null, currentOrg!.name); } else setBanner(null);
-      setSettings(s => (s ? { ...s, ...(kind === 'logo' ? { logoUrl: null } : { heroBannerUrl: null }) } : s));
-      setNotice({ tone: 'good', text: kind === 'logo' ? 'Logo removed.' : 'Hero banner removed.' });
-      void refresh();
-    } catch (err) {
-      setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'Remove failed. Try again.' });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function applyStockLogo() {
-    if (!stockSelected) return;
-    setStockSaving(true);
-    try {
-      const res = await fetch(`/api/admin/org-logo-stock${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stockPath: stockSelected }),
-      });
-      const data = await res.json().catch(() => ({})) as { error?: string; logoUrl?: string };
-      if (!res.ok) throw new Error(data.error ?? 'The logo didn’t save.');
-      setLogoPreview(data.logoUrl ?? null);
-      setSettings(s => (s ? { ...s, logoUrl: data.logoUrl ?? null } : s));
-      setOrgNav(data.logoUrl ?? null, currentOrg!.name);
-      setStockOpen(false);
-      setStockSelected(null);
-      setNotice({ tone: 'good', text: 'Logo updated.' });
-      void refresh();
-    } catch (err) {
-      setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'The logo didn’t save. Try again.' });
-    } finally {
-      setStockSaving(false);
-    }
   }
 
   async function requestDeletion() {
@@ -386,9 +197,6 @@ export default function SettingsKit() {
     }
   }
 
-  const siteOn = settings?.isPublic ?? currentOrg.isPublic;
-  const listed = siteOn && (settings?.isDiscoverable ?? currentOrg.isDiscoverable);
-
   return (
     <div className={ck.page}>
       <AdminPageHeader eyebrow="Organization" title="Settings" />
@@ -404,77 +212,6 @@ export default function SettingsKit() {
 
       {settings && (
         <>
-          {/* ── Your public site (A09/F04) — the two real switches ────────────────────────── */}
-          <section className={styles.card} aria-labelledby="settings-public-site">
-            <h2 id="settings-public-site" className={styles.cardTitle}>Your public site</h2>
-            <div className={ck.switchRow}>
-              <div className={ck.switchText}>
-                <span className={ck.switchName} id="settings-site-label">Public site</span>
-                <p className={ck.hint}>
-                  {siteOn
-                    ? <>{possessive(settings.name)} public site at <span className={styles.url}>{siteUrl}</span> is online. Turning it off takes all of the club’s pages offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Tournament pages stay up.</>
-                    : <>{possessive(settings.name)} public site at <span className={styles.url}>{siteUrl}</span> is offline. Families who open any of its pages see that the club’s site isn’t available. Tournament pages stay up.</>}
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={siteOn}
-                aria-labelledby="settings-site-label"
-                className={ck.switch}
-                disabled={switching !== null}
-                onClick={() => (siteOn ? setAskOffline(true) : void setSite(true))}
-                id="settings-public"
-              />
-            </div>
-            <div className={`${ck.switchRow}${siteOn ? '' : ` ${ck.switchRowOff}`}`}>
-              <div className={ck.switchText}>
-                <span className={ck.switchName} id="settings-directory-label">Listed in the {noun} directory</span>
-                <p className={ck.hint}>
-                  {siteOn
-                    ? `Families searching FieldLogicHQ’s directory can find ${settings.name}. Your site stays online either way.`
-                    : 'When the public site is off, the directory switch is off too.'}
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={listed}
-                aria-labelledby="settings-directory-label"
-                className={ck.switch}
-                disabled={!siteOn || switching !== null}
-                onClick={() => void setDirectory(!settings.isDiscoverable)}
-                id="settings-discoverable"
-              />
-            </div>
-          </section>
-
-          {/* ── Organization logo ─────────────────────────────────────────────────────────── */}
-          <section className={styles.card} aria-labelledby="settings-logo">
-            <h2 id="settings-logo" className={styles.cardTitle}>Organization logo</h2>
-            <div className={styles.logoRow}>
-              <div className={styles.logoPreview}>
-                {logoPreview
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={logoPreview} alt="Logo" className={styles.logoImg} />
-                  : <span className={styles.logoEmpty}>No logo</span>}
-              </div>
-              <div className={styles.imageActions}>
-                <button type="button" className="btn btn-outline" onClick={() => logoInput.current?.click()} disabled={uploading} id="settings-logo-upload-btn">
-                  <Upload size={15} aria-hidden /> {uploading ? 'Uploading…' : logoPreview ? 'Replace logo' : 'Upload logo'}
-                </button>
-                <button type="button" className="btn btn-outline" onClick={() => setStockOpen(true)} disabled={uploading} id="settings-logo-stock-btn">
-                  <Library size={15} aria-hidden /> Browse stock logos
-                </button>
-                {logoPreview && (
-                  <button type="button" className="btn btn-ghost" onClick={() => void removeImage('logo')} disabled={uploading} id="settings-logo-remove-btn">Remove</button>
-                )}
-                <p className={ck.hint}>JPG, PNG, or WebP — max 2 MB</p>
-              </div>
-            </div>
-            <input ref={logoInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void upload('logo', e)} className={styles.hiddenInput} id="settings-logo-input" />
-          </section>
-
           {/* ── Organization details ──────────────────────────────────────────────────────── */}
           <section className={styles.card} aria-labelledby="settings-details">
             <h2 id="settings-details" className={styles.cardTitle}>Organization details</h2>
@@ -506,138 +243,7 @@ export default function SettingsKit() {
             </div>
           </section>
 
-          {/* ── Colour theme — the public page's colours ─────────────────────────────────── */}
-          <section className={styles.card} aria-labelledby="settings-theme">
-            <h2 id="settings-theme" className={styles.cardTitle}>Colour theme</h2>
-            <div className={styles.swatches}>
-              {Object.entries(PRESETS).map(([key, p]) => (
-                <button
-                  key={key}
-                  type="button"
-                  title={p.name}
-                  aria-label={p.name}
-                  aria-pressed={presetKey === key}
-                  className={`${styles.swatch}${presetKey === key ? ` ${styles.swatchOn}` : ''}`}
-                  style={{ background: p.primary }}
-                  onClick={() => setPresetKey(key)}
-                >
-                  {presetKey === key && <Check size={16} strokeWidth={3} aria-hidden />}
-                </button>
-              ))}
-              <button
-                type="button"
-                title="Custom colours"
-                aria-label="Custom colours"
-                aria-pressed={presetKey === 'custom'}
-                className={`${styles.swatch}${presetKey === 'custom' ? ` ${styles.swatchOn}` : ''}`}
-                style={{ background: `linear-gradient(135deg, ${customPrimary} 0 50%, ${customAccent} 50% 100%)` }}
-                onClick={() => setPresetKey('custom')}
-              >
-                {presetKey === 'custom' && <Check size={16} strokeWidth={3} aria-hidden />}
-              </button>
-            </div>
-            {presetKey === 'custom' && (
-              <div className={styles.pickers}>
-                <label className={styles.picker}>
-                  <span className={ck.label}>Primary</span>
-                  <input type="color" value={customPrimary} onChange={e => setCustomPrimary(e.target.value)} id="theme-primary" />
-                </label>
-                <label className={styles.picker}>
-                  <span className={ck.label}>Accent</span>
-                  <input type="color" value={customAccent} onChange={e => setCustomAccent(e.target.value)} id="theme-accent" />
-                </label>
-              </div>
-            )}
-            {preview.isLowContrast && (
-              <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
-                <AlertTriangle size={15} aria-hidden />
-                <div className={ck.noticeBody}>Low contrast — text may be hard to read on white backgrounds.</div>
-              </div>
-            )}
-            {/* R2 — a picture of the public page keeps the organization's own colours. */}
-            <div className={styles.publicPreview} data-public-preview="" style={previewVars}>
-              <span className={styles.previewLabel}>Preview</span>
-              <div className={styles.previewRow}>
-                <span className={styles.previewBorder}>Card border</span>
-                <span className={styles.previewBtn}>Button</span>
-                <span className={styles.previewBadge}>Badge</span>
-              </div>
-            </div>
-          </section>
-
-          {/* ── Hero banner (A14: the club's home page, not "your tournament home page") ──── */}
-          <section className={styles.card} aria-labelledby="settings-banner">
-            <h2 id="settings-banner" className={styles.cardTitle}>Hero banner</h2>
-            <p className={ck.hint}>Shown across the top of your {possessive(noun)} home page.</p>
-            {banner && (
-              <div className={styles.bannerPreview}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={banner} alt="Hero banner preview" className={styles.bannerImg} />
-              </div>
-            )}
-            <div className={styles.imageActions}>
-              <button type="button" className="btn btn-outline" onClick={() => bannerInput.current?.click()} disabled={bannerUploading}>
-                <ImageIcon size={15} aria-hidden /> {bannerUploading ? 'Uploading…' : banner ? 'Replace banner' : 'Upload banner'}
-              </button>
-              {banner && (
-                <button type="button" className="btn btn-ghost" onClick={() => void removeImage('banner')} disabled={bannerUploading}>Remove</button>
-              )}
-            </div>
-            <p className={ck.hint}>JPG, PNG, or WebP — max 4 MB. Recommended 16:5 ratio.</p>
-            <input ref={bannerInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void upload('banner', e)} className={styles.hiddenInput} />
-          </section>
-
-          {/* ── Font ──────────────────────────────────────────────────────────────────────── */}
-          <section className={styles.card} aria-labelledby="settings-font">
-            <h2 id="settings-font" className={styles.cardTitle}>Font family</h2>
-            <div className={styles.choiceGrid}>
-              {Object.entries(FONT_OPTIONS).map(([key, opt]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={fontKey === key}
-                  className={`${styles.choice}${fontKey === key ? ` ${styles.choiceOn}` : ''}`}
-                  style={{ fontFamily: opt.sampleStyle }}
-                  onClick={() => setFontKey(key)}
-                >
-                  <span className={styles.choiceLabel}>{opt.label}</span>
-                  <span className={styles.choiceSample}>Aa 123</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* ── Card style — the public page's cards ─────────────────────────────────────── */}
-          <section className={styles.card} aria-labelledby="settings-cards">
-            <h2 id="settings-cards" className={styles.cardTitle}>Card style</h2>
-            <div className={styles.choiceGrid}>
-              {Object.entries(CARD_STYLE_OPTIONS).map(([key, opt]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={cardStyle === key}
-                  className={`${styles.choice}${cardStyle === key ? ` ${styles.choiceOn}` : ''}`}
-                  onClick={() => setCardStyle(key)}
-                >
-                  <span className={`${styles.thumb} ${styles[`thumb_${key}`] ?? ''}`} aria-hidden>
-                    <span className={styles.thumbLine} />
-                    <span className={`${styles.thumbLine} ${styles.thumbLineShort}`} />
-                  </span>
-                  <span className={styles.choiceLabel}>{opt.label}</span>
-                </button>
-              ))}
-            </div>
-            <div className={`${styles.publicPreview} ${styles[`card_${cardStyle}`] ?? ''}`} data-public-preview="" style={previewVars}>
-              <span className={styles.previewLabel}>Preview</span>
-              <div className={styles.previewCardHead}>
-                <span className={styles.previewCardTitle}>Field 1 · U12 Division</span>
-                <span className={styles.previewBadge}>Active</span>
-              </div>
-              <span className={styles.previewMeta}>Sat Jun 14 · 9:00 a.m. · Lions Park</span>
-            </div>
-          </section>
-
-          {/* ── The one Save (the switches above save themselves) ──────────────────────────── */}
+          {/* ── The one Save (the name and the web address) ──────────────────────────── */}
           <div className={styles.saveBar}>
             {isDirty && <span className={styles.unsaved}>Unsaved changes</span>}
             {isDirty && <button type="button" className="btn btn-ghost" onClick={discard} disabled={saving}>Discard</button>}
@@ -645,6 +251,16 @@ export default function SettingsKit() {
               {saving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
+
+          {/* ── Your public site: a door (Public site builder, 2026-10-21) — what families see moved there ── */}
+          <section className={`${styles.card} ${styles.doorCard}`} aria-labelledby="settings-public-site">
+            <Globe size={20} className={styles.doorIcon} aria-hidden />
+            <div className={styles.doorText}>
+              <h2 id="settings-public-site" className={styles.cardTitle}>Your public site</h2>
+              <p className={ck.hint}>Its logo, colours, type, and whether it is online are set in Public site.</p>
+            </div>
+            <Link href={`/${slug}/admin/public-site`} className="btn btn-outline">Open Public site</Link>
+          </section>
 
           {/* ── Delete the organization ────────────────────────────────────────────────────── */}
           <section className={`${styles.card} ${styles.danger}`} aria-labelledby="settings-delete">
@@ -659,92 +275,6 @@ export default function SettingsKit() {
             )}
           </section>
         </>
-      )}
-
-      {askOffline && settings && (
-        <KitDialog
-          kind="question"
-          title={`Take ${possessive(settings.name)} public site offline?`}
-          onClose={() => setAskOffline(false)}
-          busy={switching === 'site'}
-          footer={
-            <>
-              <button type="button" className="btn btn-outline" onClick={() => setAskOffline(false)} disabled={switching === 'site'} data-autofocus="">Keep it online</button>
-              <button type="button" className="btn btn-danger" onClick={() => void setSite(false)} disabled={switching === 'site'}>
-                {switching === 'site' ? 'Taking it offline…' : 'Take it offline'}
-              </button>
-            </>
-          }
-        >
-          {/* What goes offline (Club Tier Stage 4a, words through /marketing 2026-10-20): every public club page asks
-              the one rule (lib/public-club-access.ts) — never the tournaments, which the switch does not gate. */}
-          <p>Families who open your home, team, tryout, league or archive pages will see that the site isn’t available. Tryout sign-ups stop, and team calendars go empty. Tournament pages stay up. You can turn it back on at any time.</p>
-        </KitDialog>
-      )}
-
-      {stockOpen && (
-        <KitDialog
-          kind="form"
-          title="Choose a stock logo"
-          onClose={() => { setStockOpen(false); setStockSelected(null); setStockLockedPlan(null); }}
-          busy={stockSaving}
-          footer={
-            <>
-              <button type="button" className="btn btn-outline" onClick={() => { setStockOpen(false); setStockSelected(null); setStockLockedPlan(null); }} disabled={stockSaving}>Cancel</button>
-              <button type="button" className="btn btn-lime" onClick={() => void applyStockLogo()} disabled={!stockSelected || stockSaving}>
-                {stockSaving ? 'Saving…' : 'Use this logo'}
-              </button>
-            </>
-          }
-        >
-          {STOCK_LOGO_CATEGORIES.map(category => {
-            const icons = STOCK_LOGOS.filter(l => l.category === category);
-            if (!icons.length) return null;
-            return (
-              <div key={category} className={styles.stockGroup}>
-                <p className={styles.stockCategory}>{category}</p>
-                <div className={styles.stockGrid}>
-                  {icons.map(logo => {
-                    const unlocked = isStockLogoUnlocked(logo, currentOrg.planId);
-                    const selected = stockSelected === logo.file;
-                    return (
-                      <button
-                        key={logo.id}
-                        type="button"
-                        aria-label={logo.label}
-                        aria-pressed={selected}
-                        className={`${styles.stockTile}${selected ? ` ${styles.stockTileOn}` : ''}${unlocked ? '' : ` ${styles.stockTileLocked}`}`}
-                        onClick={() => {
-                          if (!unlocked) { setStockLockedPlan(logo.minPlan); return; }
-                          setStockLockedPlan(null);
-                          setStockSelected(logo.file);
-                        }}
-                      >
-                        <span className={styles.stockMark} style={{ background: stockColours.primary }}>
-                          {/* The white art as a mask, painted in the ink the made logo uses. */}
-                          <span
-                            className={styles.stockGlyph}
-                            style={{
-                              background: stockColours.onPrimary,
-                              width: `${STOCK_MARK_SCALE * 100}%`,
-                              maskImage: `url(${logo.file})`,
-                              WebkitMaskImage: `url(${logo.file})`,
-                            }}
-                          />
-                        </span>
-                        <span className={styles.stockLabel}>{logo.label}</span>
-                        {!unlocked && <Lock size={10} className={styles.stockLock} aria-hidden />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-          {stockLockedPlan && (
-            <p className={ck.hint}><Lock size={12} aria-hidden /> Upgrade to {stockLockedPlan.charAt(0).toUpperCase() + stockLockedPlan.slice(1)} to unlock this icon.</p>
-          )}
-        </KitDialog>
       )}
 
       {deleteOpen && (

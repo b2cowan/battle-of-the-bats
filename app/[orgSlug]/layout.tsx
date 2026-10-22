@@ -4,13 +4,9 @@ import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
 import { resolveTheme } from '@/lib/themes';
 import { clubColourRoles, hexChannels } from '@/lib/club-colour-roles';
-import { clubDescription, clubFace, clubSocials } from '@/lib/club-site';
+import { clubDescription } from '@/lib/club-site';
 import { getClubBySlug, getClubSiteContent } from '@/lib/club-page-meta';
-import { getLiveClubNotice } from '@/lib/db';
-import { noticeSmallLine } from '@/lib/club-notice';
-import { clubAboutPageShows } from '@/lib/club-about';
-import { resolveOrgSections } from '@/lib/org-section-availability';
-import { isFreePlan } from '@/lib/plan-config';
+import { loadClubFrame } from '@/lib/club-frame-data';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { OrgNavSync } from '@/components/OrgNavSync';
 import ClubFrame from '@/components/public/ClubFrame';
@@ -105,25 +101,13 @@ export default async function OrgLayout({
   const roles = clubColourRoles(org.themePreset, org.themePrimary, org.themeAccent);
   const siteOpen = isPublicClubSiteOpen(org);
 
-  // ── Stage F: the org's section tabs ────────────────────────────────────────────
+  // ── Stage F: the org's section tabs, and the club's frame ──────────────────────
   // Tier-gated and deliberately CHEAP (see lib/org-section-availability for why it can't be
   // pathname-gated: this layout also wraps admin/coaches/scorekeeper and every tournament page,
   // and a Server Component has no pathname here — proxy.ts intentionally doesn't run on public org
-  // routes, which is what keeps an anonymous page free of session work). Two `head:true` counts.
-  // The club's site content (tagline, contact, social links) feeds both the tabs and the club's bar and footer: one read.
-  // Read once, alongside the section checks rather than before them — this layout wraps every route under the club.
-  // The club's own words and contact (tagline, contact email, social links) are the public-site module's: a club on a
-  // plan without it shows its name and logo only, as its pages always did — and its routes skip the read entirely.
-  const clubSiteOn = siteOpen && hasModuleEntitlement(org, 'module_public_site');
-  const siteContentRead = clubSiteOn ? getClubSiteContent(org.id) : Promise.resolve(null);
-  // The club notice (Stage 4c-1, Ask 16) rides the same gate: a club page shows it under the bar until it ends. One small
-  // indexed read; a failed read is no notice, never a broken page.
-  const nowIso = new Date().toISOString();
-  const [siteContent, sections, liveNotice] = await Promise.all([
-    siteContentRead,
-    resolveOrgSections(org, siteContentRead),
-    clubSiteOn ? getLiveClubNotice(org.id, nowIso) : Promise.resolve(null),
-  ]);
+  // routes, which is what keeps an anonymous page free of session work). Read by the one function the
+  // editor's preview shares (lib/club-frame-data.ts): the site content once, the tabs, the live notice.
+  const frameClub = await loadClubFrame(org, orgSlug);
 
   // ── The sandbox hat ────────────────────────────────────────────────────────────
   // Mounted HERE because this one layout wraps both halves of the product for an org — the public
@@ -218,30 +202,11 @@ export default async function OrgLayout({
             ⚠ This layout still refuses ONLY a club that does not exist: tournament pages stay up when the site is off
             (BUSINESS_DECISIONS 2026-07-22); each club page asks the one rule itself (lib/public-club-page.ts). */}
         {/* `teamsPage`: the Teams tab is up exactly when the club has a Teams page to send a lost visitor to (4b-2a). */}
-        <PublicClubProvider club={{ slug: orgSlug, name: org.name, siteOpen, teamsPage: sections.some(s => s.key === 'teams') }}>
+        <PublicClubProvider club={{ slug: orgSlug, name: org.name, siteOpen, teamsPage: frameClub.sections.some(s => s.key === 'teams') }}>
           {/* Club Tier Stage 4b-1 — the club's site (its bar, its footer, its light ground and type) around every club
               page. The frame decides WHICH pages wear it (this layout also wraps tournament pages and the signed-in
               tools, and cannot read the address); it carries no identity, so it is safe in SW-cached anonymous HTML. */}
-          <ClubFrame
-            club={{
-              slug: orgSlug,
-              name: org.name,
-              logoUrl: org.logoUrl ?? null,
-              tagline: siteContent?.tagline?.trim() || null,
-              sections,
-              contactEmail: siteContent?.contactEmail?.trim() || null,
-              socials: clubSocials(siteContent),
-              showCredit: !isFreePlan(org.planId),
-              face: clubFace(org.themeFont),
-              notice: liveNotice ? {
-                notice: liveNotice.notice,
-                detail: liveNotice.detail,
-                smallLine: noticeSmallLine(liveNotice, nowIso),
-                endsAt: liveNotice.endsAt,
-              } : null,
-              aboutHref: clubAboutPageShows(siteContent) ? `/${orgSlug}/about` : null,
-            }}
-          >
+          <ClubFrame club={frameClub}>
             {children}
           </ClubFrame>
         </PublicClubProvider>

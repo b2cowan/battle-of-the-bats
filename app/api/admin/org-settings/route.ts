@@ -4,6 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { withObservability, captureError } from '@/lib/observability';
 import { remakeStockLogoForTheme } from '@/lib/stock-logo-render';
+import { clubLookEditor } from '@/lib/public-site-access';
+import { CLUB_LOOK_FIELDS } from '@/lib/public-site-builder';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS     = new Set(Object.keys(PRESETS));
@@ -50,24 +52,18 @@ export const GET = withObservability(async (req: Request) => {
 }, { route: '/api/admin/org-settings' });
 
 export const PATCH = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
+  // The owner changes anything here; an admin only the club's look (Public site builder, Option A, 2026-10-21) — the
+  // site's on/off switch, its directory listing, the name and the web address stay the owner's. A request carrying any
+  // other field from an admin is refused whole, so nothing in it is saved.
+  const r = await clubLookEditor(req);
+  if (r.error) return r.error;
+  const { org, role } = r.ctx;
 
-  const { user, org } = ctx;
-
-  const { data: membership } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', org.id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (membership?.role !== 'owner') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+  if (role !== 'owner' && Object.keys(body).some(k => !CLUB_LOOK_FIELDS.includes(k))) {
+    return NextResponse.json({ error: 'Only the owner can change this.' }, { status: 403 });
   }
-
-  const body = await req.json();
   const updates: Record<string, unknown> = {};
 
   if (body.name !== undefined) {

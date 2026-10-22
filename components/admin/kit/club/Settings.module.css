@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
    ORGANIZATION SETTINGS on the kit (Club Tier Stage 1, specimen 9). Kit only. TOKENS ONLY.
-   ⚠ The two PREVIEWS are pictures of the org's PUBLIC page: they sit in a `[data-public-preview]`
-   island and read `--primary*`, which the page sets inline from the chosen theme (R2 — a public page
-   keeps the organization's colours, even when the admin shows it).
+   Since the Public site builder (2026-10-21) the logo, colours, banner, type and the site's switches live in
+   Public site; their styles left with them. The stock-logo window (StockLogoWindow.tsx, opened from Public
+   site's Look row) still reads its tiles from here.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .card {
@@ -21,121 +21,8 @@
   text-transform: none;
   color: var(--text-primary);
 }
-.url { font-family: var(--font-data); /* type-ok: an address */ font-size: var(--type-support); color: var(--text-secondary); word-break: break-all; }
-.hiddenInput { display: none; }
-
-/* ── Logo and banner ── */
-.logoRow { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-.logoPreview {
-  width: 88px;
-  height: 88px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 10px;
-  background: var(--home-card);
-  overflow: hidden;
-}
-.logoImg { width: 100%; height: 100%; object-fit: contain; }
-.logoEmpty { font-size: var(--type-support); color: var(--text-tertiary); }
 .imageActions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.4rem 0; }
 .imageActions button { display: inline-flex; align-items: center; gap: 0.35rem; }
-.imageActions p { flex-basis: 100%; }
-.bannerPreview { margin: 0.5rem 0; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
-.bannerImg { display: block; width: 100%; aspect-ratio: 16 / 5; object-fit: cover; }
-
-/* ── Colour theme ── */
-.swatches { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.8rem; }
-.swatch {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  border: 2px solid var(--home-line-strong);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-inverse, var(--card-bg));
-  cursor: pointer;
-}
-.swatch:hover { border-color: var(--text-tertiary); }
-.swatchOn { border-color: var(--text-primary); box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--text-primary); }
-.pickers { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
-.picker { display: flex; flex-direction: column; gap: 0.3rem; }
-.picker input { width: 4rem; height: 2.5rem; padding: 0; border: 1px solid var(--home-line-strong); border-radius: 7px; background: var(--home-card); cursor: pointer; }
-
-/* The public-page pictures (the org's own colours — R2). */
-.publicPreview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.4rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(var(--primary-rgb), 0.25);
-  border-radius: 8px;
-  background: var(--bg-2, var(--card-bg));
-  color: var(--text-secondary);
-}
-.previewLabel { font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow */
-.previewRow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.previewBorder { padding: 0.4rem 0.7rem; border: 1px solid rgba(var(--primary-rgb), 0.45); border-radius: 6px; font-size: var(--type-support); }
-.previewBtn { padding: 0.4rem 0.9rem; border-radius: 6px; background: var(--primary); color: var(--on-primary, var(--card-bg)); font-size: var(--type-support); font-weight: 650; }
-.previewBadge {
-  padding: 0.12rem 0.5rem;
-  border-radius: 999px;
-  background: rgba(var(--primary-rgb), 0.15);
-  border: 1px solid rgba(var(--primary-rgb), 0.3);
-  color: var(--primary-light);
-  font-size: var(--type-token);
-  font-weight: 700;
-}
-.previewCardHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.previewCardTitle { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
-.previewMeta { font-size: var(--type-support); color: var(--text-tertiary); }
-/* The four public card styles, as the public page draws them (lib/themes CARD_STYLE_OPTIONS). */
-.card_glass { background: rgba(var(--primary-rgb), 0.08); }
-.card_outlined { background: transparent; border-width: 2px; }
-.card_flat { border-color: transparent; }
-
-/* ── Font and card-style choices ── */
-.choiceGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; margin-bottom: 0.8rem; }
-@media (max-width: 640px) {
-  .choiceGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-.choice {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-  min-height: 4.25rem;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--home-card);
-  color: var(--text-secondary);
-  text-align: left;
-  cursor: pointer;
-}
-.choice:hover { border-color: var(--text-tertiary); }
-.choiceOn { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--text-primary); }
-.choiceLabel { font-family: var(--font-sans); font-size: var(--type-support); font-weight: 650; }
-.choiceSample { font-size: var(--type-heading); color: var(--text-primary); }
-.thumb {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  width: 100%;
-  padding: 0.45rem;
-  border-radius: 6px;
-  border: 1px solid var(--home-line-strong);
-  background: var(--card-bg);
-}
-.thumb_glass { background: var(--home-olive-soft); }
-.thumb_outlined { background: transparent; border-width: 2px; }
-.thumb_flat { border-color: transparent; background: var(--home-line); }
-.thumbLine { display: block; height: 4px; width: 100%; border-radius: 2px; background: var(--home-line-strong); }
-.thumbLineShort { width: 60%; }
 
 /* ── Save ── */
 .saveBar {
@@ -148,12 +35,19 @@
 }
 .unsaved { margin-right: auto; font-size: var(--type-support); font-weight: 650; color: var(--warning); }
 
+/* The door to Public site (Public site builder, 2026-10-21): what families see is set there now. */
+.doorCard { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.doorIcon { flex: none; color: var(--home-olive); }
+.doorText { flex: 1 1 16rem; min-width: 0; }
+.doorText .cardTitle { margin-bottom: 0.15rem; }
+@media (max-width: 640px) { .doorCard :global(.btn) { min-height: 44px; flex: 1 1 100%; justify-content: center; } }
+
 /* ── Delete ── */
 .danger { border-color: rgba(var(--danger-rgb), 0.3); }
 .dangerText { color: var(--home-live); }
 .sent { display: flex; align-items: center; gap: 0.35rem; margin: 0.4rem 0 0; font-size: var(--type-support); color: var(--home-olive); }
 
-/* ── Stock logos ── */
+/* ── Stock logos (the window Public site's Look row opens) ── */
 .stockGroup { margin-bottom: 0.9rem; }
 .stockCategory { margin: 0 0 0.4rem; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow */
 .stockGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 0.5rem; }
@@ -188,6 +82,5 @@
 .lockedBody { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
 
 @media (max-width: 768px) {
-  .choice, .stockTile, .swatch { min-height: var(--tap-min, 44px); }
-  .swatch { min-width: var(--tap-min, 44px); }
+  .stockTile { min-height: var(--tap-min, 44px); }
 }

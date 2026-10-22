@@ -1,6 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import FollowOrgButton from './FollowOrgButton';
+import { siteEdit } from '@/lib/site-edit-marks';
 import kit from './ClubKit.module.css';
 import styles from './ClubSiteHome.module.css';
 import {
@@ -81,7 +82,7 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
   }, p.sectionPrefs, p.carries);
 
   const openNow = sections.includes('openNow') && (
-    <section className={kit.section} aria-labelledby="open-now">
+    <section className={kit.section} aria-labelledby="open-now" {...siteEdit('home')}>
       <h2 id="open-now" className={kit.sectionTitle}>Open now</h2>
       {/* The heading says "open" once, so the rows carry no chip; nearest deadline first (the page orders them). */}
       <div className={`${kit.list} ${kit.edge}`}>
@@ -98,7 +99,7 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
   );
 
   const teams = sections.includes('teams') && (
-    <section className={kit.section} aria-labelledby="teams">
+    <section className={kit.section} aria-labelledby="teams" {...siteEdit('home')}>
       <h2 id="teams" className={kit.sectionTitle}>Teams</h2>
       {/* The home's team finder (DC-01): a grid of doors, its own treatment — no tile chevrons, no "All teams" link
           (the grid shows every team; the Teams tab is one tap away). */}
@@ -119,7 +120,7 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
   );
 
   const league = sections.includes('league') && p.league && (
-    <section className={kit.section} aria-labelledby="house-league">
+    <section className={kit.section} aria-labelledby="house-league" {...siteEdit('home')}>
       <h2 id="house-league" className={kit.sectionTitle}>House league</h2>
       <div className={kit.list}>
         <Link href={p.league.href} className={kit.row}>
@@ -133,7 +134,7 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
   );
 
   const tournaments = sections.includes('tournaments') && (
-    <section className={kit.section} aria-labelledby="tournaments">
+    <section className={kit.section} aria-labelledby="tournaments" {...siteEdit('home')}>
       <h2 id="tournaments" className={kit.sectionTitle}>Tournaments</h2>
       <div className={kit.list}>
         {p.tournaments.map(t => (
@@ -153,7 +154,7 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
   );
 
   const about = sections.includes('about') && (
-    <section className={`${kit.section} ${styles.about}`} aria-labelledby="about">
+    <section className={`${kit.section} ${styles.about}`} aria-labelledby="about" {...siteEdit('about')}>
       <h2 id="about" className={kit.sectionTitle}>About the club</h2>
       <div className={kit.list}>
         {p.about && <p className={kit.cardText}>{p.about}</p>}
@@ -184,8 +185,10 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
           once (the old hero drew it a second time). */}
       <h1 className={kit.srOnly}>{p.orgName}</h1>
       {/* Ask 7A: a desk-only strip under the bar, never repeating the name; a phone does not draw it, so Open now keeps
-          screen one. Decoration — the bar already names the club. */}
-      {p.bannerUrl && <div className={styles.bannerStrip} style={{ backgroundImage: `url(${p.bannerUrl})` }} aria-hidden="true" />}
+          screen one. Decoration — the bar already names the club.
+          `data-site-edit` (here and on each section): the editor's preview opens the row that sets the part clicked
+          (Public site builder A9, ruled 2026-10-21) — a name, no behaviour, nothing a family's page acts on. */}
+      {p.bannerUrl && <div className={styles.bannerStrip} style={{ backgroundImage: `url(${p.bannerUrl})` }} aria-hidden="true" {...siteEdit('look')} />}
       {/* --home-rows: how many sections stand beside About at a desk (the grid gives About their full height). */}
       <div className={twoColumns ? `${styles.column} ${styles.withAbout}` : styles.column}
         style={twoColumns ? ({ '--home-rows': besideAbout } as CSSProperties) : undefined}>

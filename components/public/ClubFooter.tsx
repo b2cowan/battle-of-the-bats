@@ -14,6 +14,7 @@ import { Globe } from 'lucide-react';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import type { ClubSocialKind } from '@/lib/club-site';
+import { siteEdit } from '@/lib/site-edit-marks';
 import type { ClubFrameClub } from './ClubFrame';
 import styles from './ClubFrame.module.css';
 
@@ -31,12 +32,12 @@ export default function ClubFooter({ club }: { club: ClubFrameClub }) {
 
   return (
     // data-club-chrome: the club refusal steps the footer aside too (components/public/ClubNotFound.module.css).
-    <footer className={styles.footer} data-club-footer="" data-club-chrome="">
+    <footer className={styles.footer} data-club-footer="" data-club-chrome="" {...siteEdit('look')}>
       <div className={styles.footInner}>
         <p className={styles.footName}>{club.name}</p>
 
         {club.contactEmail && (
-          <div className={styles.contact}>
+          <div className={styles.contact} {...siteEdit('about')}>
             <span className={styles.contactLabel}>Questions? Email the club</span>
             <div className={styles.mailRow}>
               <a href={`mailto:${club.contactEmail}`} className={styles.mail}>{club.contactEmail}</a>
@@ -50,7 +51,7 @@ export default function ClubFooter({ club }: { club: ClubFrameClub }) {
         )}
 
         {club.socials.length > 0 && (
-          <ul className={styles.socials}>
+          <ul className={styles.socials} {...siteEdit('about')}>
             {club.socials.map(({ kind, href }) => (
               <li key={kind}>
                 <a
@@ -68,7 +69,7 @@ export default function ClubFooter({ club }: { club: ClubFrameClub }) {
         )}
 
         {/* The one door to the About page (Stage 4c-1, Ask 10), only when it has contacts, documents or questions. */}
-        {club.aboutHref && <Link href={club.aboutHref} className={styles.footDoor}>Contacts and documents</Link>}
+        {club.aboutHref && <Link href={club.aboutHref} className={styles.footDoor} {...siteEdit('lists')}>Contacts and documents</Link>}
 
         {club.showCredit && <BuiltOnCredit className={styles.credit} />}
       </div>

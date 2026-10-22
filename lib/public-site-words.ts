@@ -6,6 +6,8 @@
  * notice's clock with its (lib/club-notice.ts).
  */
 
+import { possessive } from './utils';
+
 export const PUBLIC_SITE_WORDS = {
   title: 'Public site',
   online: 'Online',
@@ -14,13 +16,99 @@ export const PUBLIC_SITE_WORDS = {
   copyLink: 'Copy link',
   copied: 'Copied',
   open: 'Open',
-  onOwner: 'It is on.',
-  turnOff: 'Turn it off in Settings',
-  onAdmin: 'It is on. The owner turns it on and off in Settings.',
-  offLead: "Your site is off, so families can't see it.",
-  turnOn: 'Turn it on in Settings',
-  offAdmin: 'The owner turns it on and off in Settings.',
   saveFailed: "Couldn't save your changes. Try again.",
+
+  // ── The builder (Public site builder, ruled 2026-10-21; drawing https://claude.ai/artifact/LSWvZmV9r1772Zt4etqcaM) ──
+  // The five rows, in order (Look, Home page, About the club, Contacts and documents, Visibility).
+  lists: 'Contacts and documents',
+  visibility: 'Visibility',
+  setupTitle: 'Set up your site',
+  setupLeadOffline: (ready: number, of: number) => `${ready} of ${of} ready. Families see nothing until you go live, and you can go live at any time.`,
+  setupLeadOnline: (ready: number, of: number) => `${ready} of ${of} ready. Your site is online, so families see each change as you make it.`,
+  setupLeadAdmin: "When it's ready, the owner puts it online.",
+  goLive: 'Go live',
+  goingLive: 'Going live…',
+  rowReady: 'Ready',
+  rowToDo: 'Not set up yet',
+  /** The closed rows' one-line summaries. */
+  homeSummary: (n: number, first: string | null) => first ? `${n} ${n === 1 ? 'section' : 'sections'} · ${first} first` : 'Every section is hidden',
+  aboutSummary: (parts: string[]) => parts.join(' · '),
+  aboutNoTagline: 'No tagline yet',
+  aboutNoEmail: 'No questions address yet',
+  socialCount: (n: number) => `${n} social ${n === 1 ? 'link' : 'links'}`,
+  listsSummary: (c: number, d: number, q: number) =>
+    [c ? `${c} ${c === 1 ? 'contact' : 'contacts'}` : null, d ? `${d} ${d === 1 ? 'document' : 'documents'}` : null, q ? `${q} ${q === 1 ? 'question' : 'questions'}` : null]
+      .filter(Boolean).join(' · ') || 'Optional · none yet',
+  visibilitySummary: (on: boolean, listed: boolean) => on ? (listed ? 'Online · listed in the club directory' : 'Online · not in the club directory') : 'Offline',
+  lookSummaryBanner: 'banner photo',
+
+  // The preview (A1, A2, A9)
+  preview: 'Preview',
+  previewComputer: 'Computer',
+  previewPhone: 'Phone',
+  previewOffline: 'Only you and your admins can see this. Your site is offline.',
+  previewFoot: 'Your home page as families see it. Point at any part to see where it is changed, and click to change it.',
+  previewLoading: 'Loading the preview…',
+  previewEditIn: (row: string) => `Change in ${row}`,
+  previewFrameTitle: 'Your home page, as families see it',
+
+  // Look (moved in from Settings, A3, A4, A6)
+  logo: 'Logo',
+  uploadLogo: 'Upload a logo',
+  replaceLogo: 'Replace logo',
+  browseStock: 'Browse stock logos',
+  removeImage: 'Remove',
+  uploading: 'Uploading…',
+  logoHint: 'JPG, PNG or WebP, up to 2 MB.',
+  noLogo: 'No logo',
+  colours: 'Colours',
+  fromLogo: 'From your logo',
+  ownColours: 'Your own colours',
+  mainColour: 'Main colour',
+  accentColour: 'Accent colour',
+  type: 'Type',
+  typeLooks: { classic: 'Classic', serif: 'Serif', clean: 'Clean' } as Record<'classic' | 'serif' | 'clean', string>,
+  typeSample: 'Teams and tryouts',
+  banner: 'Banner photo',
+  uploadBanner: 'Upload a photo',
+  replaceBanner: 'Replace',
+  bannerHint: 'Shows across the top of your home page on a computer. Phones leave it out. A wide photo works best, about 16 by 5. JPG, PNG or WebP, up to 4 MB.',
+  stockTitle: 'Choose a stock logo',
+  useThisLogo: 'Use this logo',
+  stockLocked: (plan: string) => `Upgrade to ${plan} to unlock this icon.`,
+  lookFailed: "Couldn't save the look. Try again.",
+
+  // Visibility (moved in from Settings; the owner's alone, Option A)
+  siteSwitch: 'Public site',
+  // The switch's words as Settings said them (Club Tier Stage 4a, through /marketing 2026-10-20) — moved, not rewritten.
+  siteOnHint: (club: string, url: string) => `${possessive(club)} public site at ${url} is online. Turning it off takes all of the club’s pages offline: home, teams, tryouts and their sign-up, league, archives and team calendars. Tournament pages stay up.`,
+  siteOffHint: (club: string, url: string) => `${possessive(club)} public site at ${url} is offline. Families who open any of its pages see that the club’s site isn’t available. Tournament pages stay up.`,
+  directorySwitch: (noun: string) => `Listed in the ${noun} directory`,
+  directoryHint: (club: string) => `Families searching FieldLogicHQ’s directory can find ${club}. Your site stays online either way.`,
+  directoryOffHint: 'When the public site is off, the directory switch is off too.',
+  webAddress: 'Web address',
+  changeAddress: 'Change it in Settings',
+  visibilityAdmin: 'The owner turns the site on and off and changes its address.',
+  yes: 'Yes.',
+  no: 'No.',
+  onlineWord: 'Online.',
+  offlineWord: 'Offline.',
+  offlineAsk: (club: string) => `Take ${possessive(club)} public site offline?`,
+  offlineAskBody: 'Families who open your home, team, tryout, league or archive pages will see that the site isn’t available. Tryout sign-ups stop, and team calendars go empty. Tournament pages stay up. You can turn it back on at any time.',
+  keepOnline: 'Keep it online',
+  takeOffline: 'Take it offline',
+  takingOffline: 'Taking it offline…',
+  nowOnline: 'Your public site is online.',
+  nowOffline: 'Your public site is offline.',
+  nowListed: 'Listed in the directory.',
+  nowUnlisted: 'No longer listed in the directory.',
+  switchFailed: "That didn't save. Try again.",
+
+  // The club notice's strip (A7)
+  noticeNone: 'No notice showing.',
+  postANotice: 'Post a notice',
+  editNotice: 'Edit',
+  editNoticeTitle: 'Edit the notice',
   loading: 'Loading the public site…',
   loadFailed: "Couldn't load the public site.",
   noAccessTitle: 'Access restricted',
@@ -57,10 +145,6 @@ export const PUBLIC_SITE_WORDS = {
 
   // Look
   look: 'Look',
-  lookLeadOwner: 'Your logo, colours and font are set in Organization › Settings. This is how families see them.',
-  lookLeadAdmin: 'The owner sets your logo, colours and font in Organization › Settings. This is how families see them.',
-  changeInSettings: 'Change in Settings',
-  ownerChanges: 'The owner changes these in Settings.',
 
   // Club notice
   notice: 'Club notice',

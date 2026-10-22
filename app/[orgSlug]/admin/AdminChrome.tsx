@@ -43,9 +43,14 @@ export default function AdminChrome({
   // bell or badge consumes the notification count there. Compute this up front to gate the hook below.
   const isOnboarding = pathname.endsWith('/admin/onboarding');
   const isTournamentPreview = pathname.includes('/admin/tournaments/preview/');
+  // The Public site editor's preview of the club's home (Public site builder, 2026-10-21): shown in a frame inside the
+  // editor, so it is the club's page alone — no rail, no bars, the kit off — in the club's own light frame.
+  const isClubSitePreview = pathname.endsWith('/admin/public-site/preview');
   const isHelp = pathname.includes('/admin/help');
   const isFocusedAdmin = isOnboarding || isHelp;
-  const isFocused = isFocusedAdmin || isTournamentPreview;
+  // Either preview is the public page alone, in a bare shell (the tournament's inside an island; the club's in its own frame).
+  const isPreviewShell = isTournamentPreview || isClubSitePreview;
+  const isFocused = isFocusedAdmin || isPreviewShell;
 
   // Own the unread notification count ONCE for the whole admin shell — the desktop top-strip bell
   // (Stage C: moved up from the sidebar) and the mobile More-tab badge both read it, so a single
@@ -70,10 +75,10 @@ export default function AdminChrome({
   // was pinned dark (until slice 5, R4) a cream margin round it would have been a third look, and it
   // moved onto the theme on the shell's own ground — the ground walk §245 W6 passed.
   const kitGround = !isHelp;
-  const shellClassName = isTournamentPreview
+  const shellClassName = isPreviewShell
     ? styles.adminPreviewShell
     : `${styles.adminShell} ${isFocusedAdmin ? styles.adminShellFocused : ''}${kitGround ? ` ${styles.adminShellKit}` : ''}`;
-  const mainClassName = isTournamentPreview
+  const mainClassName = isPreviewShell
     ? styles.adminPreviewMain
     : `${styles.adminMain} ${isFocusedAdmin ? styles.adminMainFocused : ''}${kitGround ? ` ${styles.adminMainKit}` : ''}`;
 
@@ -111,7 +116,9 @@ export default function AdminChrome({
             // a portaled bottom sheet — must answer as the public page it sits in.
             isTournamentPreview
               ? <div className={styles.previewIsland} data-public-preview><AdminKitProvider on={false}>{children}</AdminKitProvider></div>
-              : children
+              : isClubSitePreview
+                ? <AdminKitProvider on={false}>{children}</AdminKitProvider>
+                : children
           ) : (
             <>
               {/* The Flip: one persistent shell header (event/org identity + status + pill), desktop

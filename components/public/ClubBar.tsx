@@ -27,6 +27,7 @@ import { resolveOrgReturnFlip } from '@/lib/flip-twins';
 import { signInHrefFor } from '@/lib/consumer-routes';
 import { activeOrgSectionKey, ORG_SECTION_TABS_MIN } from '@/lib/org-public-sections';
 import { clubInitials } from '@/lib/club-site';
+import { siteEdit } from '@/lib/site-edit-marks';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import FlipPill from '@/components/shared/FlipPill';
 import AccountMenu from '@/components/shared/AccountMenu';
@@ -35,16 +36,19 @@ import type { ClubFrameClub } from './ClubFrame';
 import flipStyles from '@/components/shared/FlipPill.module.css';
 import styles from './ClubFrame.module.css';
 
-export default function ClubBar({ club }: { club: ClubFrameClub }) {
-  const pathname = usePathname() ?? '';
-  const signedIn = useClientSignedIn();
+/** `preview` (the editor's preview of the home): Home lit, and the visitor's corner a signed-out family's — never the
+ *  editing owner's own Account or staff door. */
+export default function ClubBar({ club, preview = false }: { club: ClubFrameClub; preview?: boolean }) {
+  const realPath = usePathname() ?? '';
+  const pathname = preview ? `/${club.slug}` : realPath;
+  const signedIn = useClientSignedIn(!preview) && !preview;
   const roles = useRoleSummary(signedIn);
-  const door = resolveOrgReturnFlip(roles?.workspaces, club.slug);
+  const door = preview ? null : resolveOrgReturnFlip(roles?.workspaces, club.slug);
   const showTabs = club.sections.length >= ORG_SECTION_TABS_MIN;
 
   return (
     // data-club-chrome: the club refusal steps this bar aside (components/public/ClubNotFound.module.css).
-    <header className={styles.bar} data-club-bar="" data-club-chrome="">
+    <header className={styles.bar} data-club-bar="" data-club-chrome="" {...siteEdit('look')}>
       {/* The way home from any depth. Named "{club} home": the visible name is in it, so voice control still finds it. */}
       <Link href={`/${club.slug}`} className={styles.identity} aria-label={`${club.name} home`}>
         {club.logoUrl ? (
@@ -54,7 +58,7 @@ export default function ClubBar({ club }: { club: ClubFrameClub }) {
         )}
         <span className={styles.name}>
           <span className={styles.nameText}>{club.name}</span>
-          {club.tagline && <span className={styles.tagline}>{club.tagline}</span>}
+          {club.tagline && <span className={styles.tagline} {...siteEdit('about')}>{club.tagline}</span>}
         </span>
       </Link>
 

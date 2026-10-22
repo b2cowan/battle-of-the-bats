@@ -47,17 +47,24 @@ export interface ClubFrameClub {
   aboutHref: string | null;
 }
 
-export default function ClubFrame({ club, children }: { club: ClubFrameClub; children: React.ReactNode }) {
+/**
+ * `preview` — the editor's preview (Public site builder, ruled 2026-10-21): the frame drawn at an admin address, for the
+ * club's own owner and admins, whatever the switch says (A2). Its bar is the one a signed-out family sees.
+ */
+export default function ClubFrame({ club, preview = false, children }: { club: ClubFrameClub; preview?: boolean; children: React.ReactNode }) {
   const pathname = usePathname() ?? '';
   // The club's slug and whether its site is open come from the one provider the "not found" faces read too.
-  if (!wearsClubFrame(pathname, usePublicClub())) return <>{children}</>;
+  const wears = wearsClubFrame(pathname, usePublicClub());
+  // The preview is deliberately OUTSIDE `wearsClubFrame`: it is the one place the frame is drawn at an admin address, and
+  // for a club whose site is closed (the editor shows its owner and admins the site they are making).
+  if (!preview && !wears) return <>{children}</>;
 
   return (
     <div className={styles.site} data-club-site="" data-club-face={club.face}>
       {/* The page's own "Skip to content" (WCAG 2.4.1): the root one lands at the top of <main>, which on a club page is
           the club's bar — so it steps aside (ClubFrame.module.css) and this one skips the bar. */}
       <a href="#club-content" className="skip-link">Skip to content</a>
-      <ClubBar club={club} />
+      <ClubBar club={club} preview={preview} />
       <div id="club-content" tabIndex={-1} className={styles.page}>
         {club.notice && <ClubNoticeBanner notice={club.notice} />}
         {children}

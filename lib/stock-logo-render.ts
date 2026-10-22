@@ -13,12 +13,13 @@
  *
  * ⚠ THE FILE NAME IS THE RECORD. `<orgId>/stock-<logoId>-<rrggbb>-<made at>.png` — nothing else
  * marks a logo as stock, and a colour save reads the name to remake it in the new colour (an
- * uploaded logo is never touched). `stockFileName` and `STOCK_FILE_RE` are its one spelling.
+ * uploaded logo is never touched). `stockFileName` and `STOCK_FILE_RE` (lib/stock-logos.ts, so the
+ * browser can read it too) are its one spelling.
  * The made-at stamp makes every make its own file: two overlapping requests never share a path,
  * so one's clean-up can never delete the file the other just pointed the org at.
  */
 import { supabaseAdmin } from './supabase-admin';
-import { STOCK_LOGOS, STOCK_MARK_SCALE, type StockLogo } from './stock-logos';
+import { STOCK_FILE_RE, STOCK_LOGOS, STOCK_MARK_SCALE, type StockLogo } from './stock-logos';
 import { STOCK_LOGO_ART } from './stock-logo-art';
 import { ORG_LOGO_BUCKET, ensureOrgLogoBucket } from './org-logo-storage';
 
@@ -31,7 +32,6 @@ export interface StockLogoColours {
   onPrimary: string;
 }
 
-const STOCK_FILE_RE = /^stock-([a-z0-9-]+)-([0-9a-f]{6})-(\d+)\.png$/;
 const stockFileName = (logo: StockLogo, primary: string) =>
   `stock-${logo.id}-${primary.slice(1).toLowerCase()}-${Date.now()}.png`;
 

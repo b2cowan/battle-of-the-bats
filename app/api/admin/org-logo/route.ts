@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { clubLookEditor } from '@/lib/public-site-access';
+import { ORG_IMAGE_TYPES, ORG_LOGO_MAX_BYTES } from '@/lib/org-image-limits';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { ORG_LOGO_BUCKET as BUCKET, ensureOrgLogoBucket } from '@/lib/org-logo-storage';
 import { parseStockLogoUrl, removeStockLogoFile } from '@/lib/stock-logo-render';
 
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_BYTES = ORG_LOGO_MAX_BYTES;
+const ALLOWED_MIME: readonly string[] = ORG_IMAGE_TYPES;
 const EXT_MAP: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -14,23 +15,10 @@ const EXT_MAP: Record<string, string> = {
 };
 
 export const POST = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-
-  const { user, org } = ctx;
-
-  // Verify caller is owner
-  const { data: membership } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', org.id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (membership?.role !== 'owner') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  // The owner or an admin changes the club's look (Public site builder, Option A, 2026-10-21; lib/public-site-access.ts).
+  const r = await clubLookEditor(req);
+  if (r.error) return r.error;
+  const { org } = r.ctx;
 
   const formData = await req.formData();
   const file = formData.get('file');
@@ -89,22 +77,10 @@ export const POST = withObservability(async (req: Request) => {
 }, { route: '/api/admin/org-logo' });
 
 export const DELETE = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-
-  const { user, org } = ctx;
-
-  const { data: membership } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', org.id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (membership?.role !== 'owner') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  // The owner or an admin changes the club's look (Public site builder, Option A, 2026-10-21; lib/public-site-access.ts).
+  const r = await clubLookEditor(req);
+  if (r.error) return r.error;
+  const { org } = r.ctx;
 
   const { error: dbError } = await supabaseAdmin
     .from('organizations')

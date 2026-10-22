@@ -167,9 +167,20 @@ async function openKitInvite(page) {
 async function openKitManage(page) {
   await openKitDialogBy(page, page.locator('button[aria-label^="Manage "]:visible, table button:visible:has-text("Manage")'));
 }
-/** Settings › Your public site — pressing the ON switch asks first; the question is what we measure. */
+/** Public site › Visibility — pressing the ON switch asks first; the question is what we measure. The switch moved here from
+ *  Settings with the Public site builder (2026-10-21); its row is closed on arrival, so open it first. */
 async function openKitTakeOffline(page) {
-  await openKitDialogBy(page, page.locator('#settings-public[aria-checked="true"]'));
+  await openBuilderRow('visibility')(page);
+  await openKitDialogBy(page, page.locator('button[role="switch"][aria-labelledby="site-switch-label"][aria-checked="true"]'));
+}
+/** Public site builder — open one of its rows (they open in place, one at a time, and a closed row is invisible to the sweep). */
+function openBuilderRow(id) {
+  return async (page) => {
+    const head = page.locator(`#${id} > h2 button[aria-expanded="false"]`);
+    if (await head.count() === 0) return;
+    await head.click();
+    await page.waitForTimeout(250);
+  };
 }
 
 /** The scorekeeper's score SHEET, raised from the first game a volunteer can still score. Opening
@@ -1460,7 +1471,7 @@ export const SCREENS = [
     interact: openKitInvite, scope: '[data-kit-dialog]' },
   { id: 'admin-org-members-manage',    area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,
     interact: openKitManage, scope: '[data-kit-dialog]' },
-  { id: 'admin-org-settings-offline',  area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings`,
+  { id: 'admin-org-settings-offline',  area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`,
     interact: openKitTakeOffline, scope: '[data-kit-dialog]' },
   { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
   { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues` },
@@ -1623,8 +1634,13 @@ export const SCREENS = [
     path: (c) => `/${c.clubSlug}/admin/families/${c.clubPersonId}?show=all` },
   { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
 
-  // ── Public site editor (its PREVIEW of the public pages keeps the org's colours — R2) ──
+  // ── Public site builder: five rows that open in place, the club's home beside them at a desk. Only the open row is
+  // measured, so each row has its own entry (a collapsed row is invisible to this sweep). The preview is an iframe; its own
+  // document is the public home, swept as that. ──
   { id: 'admin-public-site',           area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site` },
+  { id: 'admin-public-site-look',      area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`, interact: openBuilderRow('look') },
+  { id: 'admin-public-site-lists',     area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`, interact: openBuilderRow('lists') },
+  { id: 'admin-public-site-visibility', area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`, interact: openBuilderRow('visibility') },
 
   // ── House league (the 2026 Fall season, registration open) ──
   { id: 'admin-house-league',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league` },

@@ -26,7 +26,9 @@ describe('1 · the home (End state 1, Ask 3A)', () => {
     assert.doesNotMatch(code, /check back soon/i);
     assert.doesNotMatch(code, /Upcoming events/);
     assert.match(code, /TOURNAMENT_STATUS_WORD\[/, 'the one set of status words');
-    assert.match(readCode(`${ORG}/page.tsx`), /tournamentHomeStatus\(t, today, registrationOpen\)/, 'true to its dates');
+    // The home's one loader, shared with the editor's preview since the Public site builder (2026-10-21).
+    assert.match(readCode(`${ORG}/page.tsx`), /loadClubHome\(org, orgSlug\)/);
+    assert.match(readCode('lib/club-home-data.ts'), /tournamentHomeStatus\(t, today, registrationOpen\)/, 'true to its dates');
   });
   it('the description lives in About the club, and the hero\'s repeated contact is gone (the footer carries it)', () => {
     const code = readCode(HOME);
@@ -37,7 +39,7 @@ describe('1 · the home (End state 1, Ask 3A)', () => {
   it('Follow sits in the About card (owner 2026-10-20), behind the same gate a follow write checks', () => {
     const code = readCode(HOME);
     assert.match(code, /<FollowOrgButton\b/);
-    assert.match(readCode(`${ORG}/page.tsx`), /isFollowableOrg\(org\)/);
+    assert.match(readCode('lib/club-home-data.ts'), /isFollowableOrg\(org\)/);
   });
   it('the banner is a desk-only strip, never a hero behind the name (Ask 7A)', () => {
     assert.match(readCode(HOME), /bannerStrip/);
@@ -61,7 +63,7 @@ describe('2 · the Teams page and tab (End state 2, Asks 4A + 9A)', () => {
     const code = readCode(`${ORG}/teams/page.tsx`);
     assert.match(code, /readClubTeams\(org\.id\)/, 'the one read the home grid makes too');
     assert.match(readCode('lib/club-public-teams.ts'), /clubTeamBands\(/);
-    assert.match(readCode(`${ORG}/page.tsx`), /readClubTeams\(org\.id\)/);
+    assert.match(readCode('lib/club-home-data.ts'), /readClubTeams\(org\.id\)/);
     assert.match(code, /clubPageMetadata\(/);
     assert.doesNotMatch(code, /player|coach/i, 'not on a row: players, coaches (End state 2)');
   });
