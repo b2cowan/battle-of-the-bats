@@ -49,6 +49,7 @@ const ROLL: Record<string, [css: string, rule: string]> = {
   'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx': ['app/[orgSlug]/coaches/coaches.module.css', '.convWhatList'],
   'components/admin/kit/club/PermitWindows.tsx': ['components/admin/kit/club/Permits.module.css', '.pickMenu'],
   'app/[orgSlug]/admin/tournaments/rules/RuleIconField.tsx': ['app/[orgSlug]/admin/tournaments/rules/rules.module.css', '.iconList'],
+  'app/[orgSlug]/admin/tournaments/registrations/page.tsx': ['app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css', '.repLinkPopover'],
 };
 
 function sources(dir: string, out: string[] = []): string[] {
@@ -127,6 +128,18 @@ describe('a picker’s list hangs over its window (§80)', () => {
     assert.match(cssRule(coachCss, '.tagComboDropdownInPane'), /position: absolute;/);
     assert.match(metric, /styles\.tagComboDropdown\} \$\{styles\.tagComboDropdownInPane\}/, 'the add-a-test list keeps its pane');
     assert.doesNotMatch(metric, /useFieldMenu/);
+  });
+
+  it('the team record’s rep-team picker hangs over its window too — wider than its button, and only its LIST scrolls', () => {
+    const teamsPage = readCode('app/[orgSlug]/admin/tournaments/registrations/page.tsx');
+    const teamsCss = readCode('app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css');
+    const pop = cssRule(teamsCss, '.repLinkPopover');
+    assert.doesNotMatch(pop, /top: calc\(100%/, 'placement is measured, not hung from the button');
+    assert.match(pop, /overflow: hidden;/, 'the panel never scrolls itself — a second scrollbar hid its search');
+    assert.match(cssRule(teamsCss, '.repLinkList'), /overflow-y: auto;/, 'the list is the one thing that scrolls');
+    assert.match(teamsPage, /useFieldMenu\(repLinkPickerId !== null, repLinkWrapRef, repLinkPopRef, [^\n]*\{ width: 320, align: 'end' \}\)/, 'placed from its button while open, at its own width');
+    assert.match(teamsPage, /className=\{styles\.repLinkPopover\} ref=\{repLinkPopRef\}/, 'the panel carries the ref the hook places');
+    assert.doesNotMatch(teamsPage, /useAnchoredMenu/, 'that hook re-measures the panel it has already capped, so it resizes as the page scrolls');
   });
 
   it('the hook flips above the field, follows a scroll, and lets the list scroll itself', () => {

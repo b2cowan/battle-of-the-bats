@@ -443,9 +443,14 @@ export function useFieldMenu(
   fieldRef: RefObject<HTMLElement | null>,
   menuRef: RefObject<HTMLElement | null>,
   onLost: () => void,
+  /** A list WIDER than its field (a panel off a small button): its own width, lined up with the field's `start` or
+   *  `end` edge and kept inside the screen. Absent = the list is exactly as wide as its field, as every caller was. */
+  shape?: { width: number; align?: 'start' | 'end' },
 ) {
   const onLostRef = useRef(onLost);
   useEffect(() => { onLostRef.current = onLost; }, [onLost]);
+  const wideWidth = shape?.width;
+  const wideAtEnd = shape?.align === 'end';
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -475,8 +480,16 @@ export function useFieldMenu(
          up). A downward list may run under the keys — its later rows still scroll up into view. */
       const floor = up ? Math.min(FIELD_MENU_MIN, Math.max(0, above)) : FIELD_MENU_MIN;
       const s = menu.style;
-      s.left = `${r.left}px`;
-      s.width = `${r.width}px`;
+      if (wideWidth) {
+        const layoutWidth = document.documentElement.clientWidth;
+        const width = Math.min(wideWidth, layoutWidth - FIELD_MENU_MARGIN * 2);
+        const edge = wideAtEnd ? r.right - width : r.left;
+        s.left = `${Math.max(FIELD_MENU_MARGIN, Math.min(edge, layoutWidth - width - FIELD_MENU_MARGIN))}px`;
+        s.width = `${width}px`;
+      } else {
+        s.left = `${r.left}px`;
+        s.width = `${r.width}px`;
+      }
       s.maxHeight = `${Math.max(floor, Math.min(FIELD_MENU_MAX, up ? above : below))}px`;
       s.top = up ? '' : `${r.bottom + FIELD_MENU_GAP}px`;
       s.bottom = up ? `${layoutHeight - r.top + FIELD_MENU_GAP}px` : '';
@@ -499,7 +512,7 @@ export function useFieldMenu(
       window.visualViewport?.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('scroll', schedule);
     };
-  }, [open, fieldRef, menuRef]);
+  }, [open, fieldRef, menuRef, wideWidth, wideAtEnd]);
 }
 
 /**

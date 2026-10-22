@@ -36,7 +36,7 @@ import { AlertCircle, ArrowLeftRight, Check, ChevronDown, ClipboardList, Link2, 
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { useDismissable } from '@/lib/overlay-hooks';
+import { useDismissable, useFieldMenu } from '@/lib/overlay-hooks';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -233,6 +233,11 @@ export default function UnifiedTeamsPage() {
   const [repLinks, setRepLinks] = useState<Map<string, { repTeamId: string; repTeamName: string }>>(new Map());
   const [repLinkPickerId, setRepLinkPickerId] = useState<string | null>(null);
   const [repLinkSearch, setRepLinkSearch] = useState('');
+  // The picker hangs over the record's window (a field's list is never cut off by the window's footer): placed on
+  // the screen from its button, right edges flush, flipping above when the room is below. One record is open at a time.
+  const repLinkWrapRef = useRef<HTMLDivElement>(null);
+  const repLinkPopRef = useRef<HTMLDivElement>(null);
+  useFieldMenu(repLinkPickerId !== null, repLinkWrapRef, repLinkPopRef, () => setRepLinkPickerId(null), { width: 320, align: 'end' });
   const orgHasRepTeams = useMemo(() => (currentOrg ? hasModuleEntitlement(currentOrg, 'module_rep_teams') : false), [currentOrg]);
   const orgCarriesAccounting = Boolean(currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting'));
   // The club's own team pays no entry fee — the row says "No fee", and the money tiles, the attention counts and
@@ -1596,7 +1601,7 @@ export default function UnifiedTeamsPage() {
     const matches = repTeams.filter(t => !q || t.name.toLowerCase().includes(q));
 
     const control = (
-      <div className={styles.repLinkWrap}>
+      <div className={styles.repLinkWrap} ref={repLinkWrapRef}>
         {link ? (
           <span className={styles.repLinkChip} title={`Linked to rep team ${link.repTeamName}`}>
             <Link2 size={12} aria-hidden />
@@ -1616,7 +1621,7 @@ export default function UnifiedTeamsPage() {
           </button>
         )}
         {pickerOpen && (
-          <div className={styles.repLinkPopover} role="dialog" aria-label={`Link ${team.name} to a rep team`}>
+          <div className={styles.repLinkPopover} ref={repLinkPopRef} role="dialog" aria-label={`Link ${team.name} to a rep team`}>
             <div className={styles.repLinkPopHead}>
               <div className={styles.repLinkPopTitle}>Link &ldquo;{team.name}&rdquo; to a rep team</div>
               <div className={styles.repLinkPopSub}>Your organization&rsquo;s rep teams only</div>
