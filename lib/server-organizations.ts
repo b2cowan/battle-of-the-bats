@@ -2,6 +2,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-config';
 import { applyEntitlementGrants } from './entitlement-grants';
 import type { Organization } from './types';
+import { storedCutoffs } from './born-years';
 
 type OrganizationRow = {
   id: string;
@@ -32,6 +33,8 @@ type OrganizationRow = {
   free_floor: Organization['freeFloor'] | null;
   /** Club Shared Book (mig 227). Optional so an unapplied migration reads false, not throws. */
   club_book_sharing_enabled?: boolean | null;
+  /** When birthdays count from (mig 349); the select is `*`. */
+  birthday_cutoffs?: unknown;
 };
 
 function mapOrganization(row: OrganizationRow): Organization {
@@ -63,6 +66,8 @@ function mapOrganization(row: OrganizationRow): Organization {
     isDiscoverable: row.is_discoverable ?? true,
     freeFloor: row.free_floor ?? null,
     clubBookSharingEnabled: row.club_book_sharing_enabled === true,
+    // When birthdays count from (mig 349) — read through cutoffFor(); absent = January 1.
+    birthdayCutoffs: storedCutoffs(row.birthday_cutoffs),
   };
 }
 

@@ -2,6 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { supabaseAdmin } from './supabase-admin';
 import { getRepTeamGroups } from './db';
+import { bornYearsOf, type BornYears } from './born-years';
 import { liveSeasonOf, LIVE_SEASON_STATUSES } from './season-live';
 import { addCalendarDays, orgDayKey, zonedWallClockToUtc } from './timezone';
 import { tryoutStandingOf, TRYOUT_LISTED_DAYS, type TryoutDay, type TryoutStanding } from './tryout-season';
@@ -21,7 +22,7 @@ import type { RepProgramYear, RepTeam, RepTeamGroup } from './types';
  */
 
 const DAY_COLUMNS = 'program_year_id, starts_at, ends_at, status, location, location_address, field_number';
-const SEASON_COLUMNS = 'id, name, year, team_id, org_id, status, created_at, tryout_open, rep_teams!team_id(name, slug, is_archived, group_id)';
+const SEASON_COLUMNS = 'id, name, year, team_id, org_id, status, created_at, tryout_open, born_from_year, born_to_year, rep_teams!team_id(name, slug, is_archived, group_id, sport)';
 /** An `.in()` list is a URL: the batched reads go in slices this long. */
 const IN_SLICE = 100;
 /** The database hands back at most this many rows per request; a longer answer is read page by page. */
@@ -45,7 +46,9 @@ interface LiveSeasonRow {
   team_id: string;
   org_id: string;
   tryout_open: boolean;
-  rep_teams: { name: string; slug: string; is_archived: boolean; group_id: string | null } | null;
+  born_from_year: number | null;
+  born_to_year: number | null;
+  rep_teams: { name: string; slug: string; is_archived: boolean; group_id: string | null; sport: string | null } | null;
 }
 type DayRow = TryoutDay & { programYearId: string };
 
@@ -123,6 +126,10 @@ export interface ClubTryoutTeam {
   slug: string;
   groupId: string | null;
   season: { id: string; name: string; year: number | null };
+  /** The season's birth years and the team's sport — read with the club's cut-off through lib/club-born-public.ts
+   *  (Stage 4c-2), never formatted here. */
+  bornYears: BornYears;
+  sport: string | null;
   standing: TryoutStanding;
 }
 
@@ -143,6 +150,8 @@ async function tryoutTeamsOf(seasons: readonly LiveSeasonRow[], today: string): 
       slug: r.rep_teams?.slug ?? '',
       groupId: r.rep_teams?.group_id ?? null,
       season: { id: r.id, name: r.name, year: r.year ?? null },
+      bornYears: bornYearsOf(r),
+      sport: r.rep_teams?.sport ?? null,
       standing: tryoutStandingOf({ isArchived: false, season: { tryoutOpen: !!r.tryout_open }, days, today }),
     }]);
   }

@@ -84,3 +84,25 @@
 @media (max-width: 768px) {
   .stockTile { min-height: var(--tap-min, 44px); }
 }
+
+/* ── When birthdays count from (Club Tier Stage 4c-2): one row per sport the club runs ── */
+/* /design 2026-10-22: the lead stands clear of the first row's rule, as drawn. */
+.cutoffLead { padding-bottom: 0.75rem; } /* padding: the kit hint sets margin 0 */
+.cutoffRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--home-line);
+}
+.cutoffText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.cutoffName { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.cutoffPick { flex: none; display: flex; gap: 0.5rem; }
+.cutoffMonth { width: 9.5rem; }
+.cutoffDay { width: 4.5rem; }
+@media (max-width: 640px) {
+  .cutoffRow { flex-direction: column; gap: 0.5rem; }
+  .cutoffPick { width: 100%; }
+  .cutoffMonth { flex: 2 1 0; width: auto; }
+  .cutoffDay { flex: 1 1 0; width: auto; }
+}

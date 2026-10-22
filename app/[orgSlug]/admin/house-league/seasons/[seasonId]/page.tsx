@@ -16,6 +16,10 @@ import styles from '../../house-league.module.css';
 import type { LeagueSeason, LeagueSeasonStatus } from '@/lib/types';
 import type { LeagueCapKind } from '@/lib/free-floor';
 import LoadingState from '@/components/shared/LoadingState';
+import { JAN_1, type Cutoff } from '@/lib/born-years';
+import { divisionBornState } from '@/lib/birthday-cutoff';
+import { sportLabel } from '@/lib/sports';
+import DivisionBornYears from './DivisionBornYears';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -29,10 +33,14 @@ interface DivisionWithStats {
   activeCount: number;
   waitlistCount: number;
   teamCount: number;
+  bornFromYear: number | null;
+  bornToYear: number | null;
 }
 
 interface SeasonDetail {
   season: LeagueSeason;
+  /** The club's cut-off for this season's sport (Stage 4c-2): what the divisions' birth years count from. */
+  birthdayCutoff?: Cutoff;
   divisions: DivisionWithStats[];
   summary: {
     activeRegistrationCount: number;
@@ -141,11 +149,15 @@ export default function SeasonDetailPage() {
   const [newDivCap,     setNewDivCap]     = useState('');
   const [addingDiv,     setAddingDiv]     = useState(false);
   const [capHit,        setCapHit]        = useState<LeagueCapKind | null>(null);
+  const [newDivFrom,    setNewDivFrom]    = useState('');
+  const [newDivTo,      setNewDivTo]      = useState('');
 
   // Edit division modal
   const [editDivId,     setEditDivId]     = useState<string | null>(null);
   const [editDivName,   setEditDivName]   = useState('');
   const [editDivCap,    setEditDivCap]    = useState('');
+  const [editDivFrom,   setEditDivFrom]   = useState('');
+  const [editDivTo,     setEditDivTo]     = useState('');
   const [savingDiv,     setSavingDiv]     = useState(false);
 
   // Delete division confirm
@@ -162,6 +174,18 @@ export default function SeasonDetailPage() {
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
   }
+
+  // Birth years (Club Tier Stage 4c-2): read through the club's cut-off for this season's sport; one rule, lib/born-years.ts.
+  const cutoff = detail?.birthdayCutoff ?? JAN_1;
+  const thisYear = new Date().getFullYear();
+  const addBorn  = divisionBornState(newDivFrom,  newDivTo,  true,           cutoff, thisYear);
+  // Has the admin changed a box since Edit division opened? Typing and then restoring the stored pair counts as untouched; an
+  // untouched pair is never sent back (see divisionBornState).
+  const editedDivision = detail?.divisions.find(d => d.id === editDivId);
+  const editBornTouched = editedDivision != null
+    && (editDivFrom !== (editedDivision.bornFromYear != null ? String(editedDivision.bornFromYear) : '')
+      || editDivTo !== (editedDivision.bornToYear != null ? String(editedDivision.bornToYear) : ''));
+  const editBorn = divisionBornState(editDivFrom, editDivTo, editBornTouched, cutoff, thisYear);
 
   const load = useCallback(async () => {
     if (!seasonId) return;
@@ -250,11 +274,13 @@ export default function SeasonDetailPage() {
   function openAddDiv() {
     setNewDivName('');
     setNewDivCap('');
+    setNewDivFrom('');
+    setNewDivTo('');
     setAddDivOpen(true);
   }
 
   async function handleAddDivision() {
-    if (!newDivName.trim()) return;
+    if (!newDivName.trim() || addBorn.blocks) return;
     setAddingDiv(true);
     try {
       const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions${orgQuery}`, {
@@ -263,6 +289,8 @@ export default function SeasonDetailPage() {
         body: JSON.stringify({
           name:     newDivName.trim(),
           capacity: newDivCap ? parseInt(newDivCap, 10) : null,
+          bornFromYear: addBorn.years?.from ?? null,
+          bornToYear:   addBorn.years?.to ?? null,
         }),
       });
       const data = await res.json();
@@ -287,10 +315,12 @@ export default function SeasonDetailPage() {
     setEditDivId(div.id);
     setEditDivName(div.name);
     setEditDivCap(div.capacity != null ? String(div.capacity) : '');
+    setEditDivFrom(div.bornFromYear != null ? String(div.bornFromYear) : '');
+    setEditDivTo(div.bornToYear != null ? String(div.bornToYear) : '');
   }
 
   async function handleSaveDivision() {
-    if (!editDivId) return;
+    if (!editDivId || editBorn.blocks) return;
     setSavingDiv(true);
     try {
       const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions/${editDivId}${orgQuery}`, {
@@ -299,6 +329,8 @@ export default function SeasonDetailPage() {
         body: JSON.stringify({
           name:     editDivName.trim() || undefined,
           capacity: editDivCap ? parseInt(editDivCap, 10) : null,
+          // Only a pair the admin touched goes back; a stored pair left alone is left exactly as it is.
+          ...(editBornTouched && editBorn.years ? { bornFromYear: editBorn.years.from, bornToYear: editBorn.years.to } : {}),
         }),
       });
       const data = await res.json();
@@ -753,13 +785,23 @@ export default function SeasonDetailPage() {
               <p className={styles.hint}>Maximum number of active registrations for this division.</p>
             </div>
 
+            <DivisionBornYears
+              idPrefix="div"
+              from={newDivFrom}
+              to={newDivTo}
+              state={addBorn}
+              onChange={(f, t) => { setNewDivFrom(f); setNewDivTo(t); }}
+              cutoff={cutoff}
+              sportLabel={sportLabel(detail?.season.sport)}
+            />
+
             <div className={styles.modalFooter}>
               <button type="button" className="btn btn-ghost" onClick={() => setAddDivOpen(false)}>Cancel</button>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={handleAddDivision}
-                disabled={addingDiv || !newDivName.trim()}
+                disabled={addingDiv || !newDivName.trim() || addBorn.blocks}
               >
                 {addingDiv ? 'Adding…' : 'Add division'}
               </button>
@@ -804,13 +846,23 @@ export default function SeasonDetailPage() {
               />
             </div>
 
+            <DivisionBornYears
+              idPrefix="ediv"
+              from={editDivFrom}
+              to={editDivTo}
+              state={editBorn}
+              onChange={(f, t) => { setEditDivFrom(f); setEditDivTo(t); }}
+              cutoff={cutoff}
+              sportLabel={sportLabel(detail?.season.sport)}
+            />
+
             <div className={styles.modalFooter}>
               <button type="button" className="btn btn-ghost" onClick={() => setEditDivId(null)}>Cancel</button>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSaveDivision}
-                disabled={savingDiv || !editDivName.trim()}
+                disabled={savingDiv || !editDivName.trim() || editBorn.blocks}
               >
                 {savingDiv ? 'Saving…' : 'Save'}
               </button>

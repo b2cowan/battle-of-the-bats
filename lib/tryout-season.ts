@@ -200,20 +200,25 @@ export function bandHeading(name: string, days: readonly string[]): string {
   return range ? `${name} · ${range}` : name;
 }
 
-/** "For the 2027 season", or the season's own name when it has no year. */
-export function tryoutSeasonMeta(season: TryoutSeasonName): string {
-  return season.year != null ? `For the ${season.year} season` : season.name;
+/** "For the 2027 season", or the season's own name when it has no year. Given the team's birth years in the form that
+ *  follows a dot (`bornMeta`, lib/born-years.ts: "born 2012–2013"), the tryout page's meta: "For the 2027 season · born
+ *  2012–2013" (Stage 4c-2, D9–D11). A share card calls it with the season alone. */
+export function tryoutSeasonMeta(season: TryoutSeasonName, born?: string | null): string {
+  const base = season.year != null ? `For the ${season.year} season` : season.name;
+  return born ? `${base} · ${born}` : base;
 }
 
 /** A Tryouts page row's line: the next day and its place; a finished team, its last day (with its year when that was
- *  last year — the four-week window can cross New Year); none, its season. */
-export function tryoutsRowSub(s: TryoutStanding, season: TryoutSeasonName, today: string): string {
+ *  last year — the four-week window can cross New Year); none, its season. Given the team's born line (`bornLine`:
+ *  "Born 2017–2018"), it leads: "Born 2017–2018 · Mon, Sep 7 · Lions Park" (D8); a team with no years starts at the day. */
+export function tryoutsRowSub(s: TryoutStanding, season: TryoutSeasonName, today: string, born?: string | null): string {
+  const lead = born ? `${born} · ` : '';
   const next = s.upcoming[0];
   const d = next ?? (s.state === 'finished' ? s.last : null);
-  if (!d) return tryoutSeasonMeta(season);
+  if (!d) return `${lead}${tryoutSeasonMeta(season)}`;
   const when = next || !s.lastDay ? dayLabel(d.startsAt) : pastDay(s.lastDay, today);
   const venue = d.location?.trim();
-  return venue ? `${when} · ${venue}` : when;
+  return `${lead}${venue ? `${when} · ${venue}` : when}`;
 }
 
 /** The home's one tryouts row: "7 teams · Rep Sep 7–9 · Select Sep 11–13" when the groups are honest, else one range. */

@@ -12,6 +12,7 @@ import {
 } from '@/lib/db';
 import type { LeagueSeasonStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { cutoffFor } from '@/lib/born-years';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -71,6 +72,8 @@ export const GET = withObservability(async (_req: Request,
 
   return NextResponse.json({
     season,
+    // The club's cut-off for this season's sport — what the division windows' birth years count from (Stage 4c-2).
+    birthdayCutoff: cutoffFor(ctx!.org.birthdayCutoffs, season.sport),
     divisions: divisionsWithStats,
     summary: {
       activeRegistrationCount: regs.filter(r => r.status === 'active').length,

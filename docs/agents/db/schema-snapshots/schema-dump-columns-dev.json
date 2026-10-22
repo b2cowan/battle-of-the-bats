@@ -6228,6 +6228,24 @@
     "ordinal_position": 6
   },
   {
+    "table_name": "league_divisions",
+    "column_name": "born_from_year",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "league_divisions",
+    "column_name": "born_to_year",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
     "table_name": "league_email_log",
     "column_name": "id",
     "data_type": "uuid",
@@ -9898,6 +9916,15 @@
     "is_nullable": "NO",
     "column_default": "1",
     "ordinal_position": 44
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "birthday_cutoffs",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 45
   },
   {
     "table_name": "pitch_decks",
@@ -15163,6 +15190,33 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 17
+  },
+  {
+    "table_name": "rep_program_years",
+    "column_name": "born_from_year",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "rep_program_years",
+    "column_name": "born_to_year",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "rep_program_years",
+    "column_name": "born_years_carried",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 20
   },
   {
     "table_name": "rep_roster_players",

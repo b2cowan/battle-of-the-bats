@@ -43,6 +43,8 @@ export interface HomeTeam {
   name: string;
   slug: string;
   tryoutsOpen: boolean;
+  /** The team's birth years as families read them (Stage 4c-2: "Born 2012–2013", from lib/born-years.ts); none, no line. */
+  born?: { line: string | null };
 }
 
 export interface HomeTournament {
@@ -110,6 +112,7 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
             {band.teams.map(t => (
               <Link key={t.slug} href={`/${p.orgSlug}/teams/${t.slug}`} className={styles.tile}>
                 {t.name}
+                {t.born?.line && <span className={styles.tileBorn}>{t.born.line}</span>}
                 {t.tryoutsOpen && <span className={`${kit.chip} ${kit.chipOk}`}>Tryouts open</span>}
               </Link>
             ))}

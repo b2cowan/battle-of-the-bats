@@ -40,6 +40,7 @@ import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardi
 import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, formatStoredDate } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { readStoredEventKind, scrimmageFlagFor } from './coach-schedule-vocab';
+import { storedCutoffs } from './born-years';
 import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
@@ -1798,6 +1799,8 @@ function mapOrg(r: any): Organization {
     // Club Shared Book (mig 227). Absent column / null → FALSE, never "on": the gate must
     // fail closed while the migration is unapplied, not open a cross-team read by accident.
     clubBookSharingEnabled: r.club_book_sharing_enabled === true,
+    // When birthdays count from (mig 349). An absent column reads as '{}' — every sport on January 1.
+    birthdayCutoffs: storedCutoffs(r.birthday_cutoffs),
   };
 }
 
@@ -2341,6 +2344,8 @@ function mapLeagueDivision(row: any): LeagueDivision {
     name:      row.name,
     capacity:  row.capacity ?? null,
     sortOrder: row.sort_order,
+    bornFromYear: row.born_from_year ?? null,
+    bornToYear:   row.born_to_year ?? null,
     createdAt: row.created_at,
   };
 }
@@ -2480,13 +2485,16 @@ export async function getDivisionsForSeason(seasonId: string): Promise<LeagueDiv
 
 export async function updateDivision(
   divisionId: string,
-  input: Partial<{ name: string; capacity: number | null; sortOrder: number }>
+  input: Partial<{ name: string; capacity: number | null; sortOrder: number; bornFromYear: number | null; bornToYear: number | null }>
 ): Promise<void> {
   const patch: Record<string, unknown> = {};
   if (input.name      !== undefined) patch.name       = input.name;
   if (input.capacity  !== undefined) patch.capacity   = input.capacity;
   if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
-  await supabaseAdmin.from('league_divisions').update(patch).eq('id', divisionId);
+  if (input.bornFromYear !== undefined) patch.born_from_year = input.bornFromYear;
+  if (input.bornToYear   !== undefined) patch.born_to_year   = input.bornToYear;
+  const { error } = await supabaseAdmin.from('league_divisions').update(patch).eq('id', divisionId);
+  if (error) throw error;
 }
 
 export async function deleteDivision(divisionId: string): Promise<void> {
@@ -3342,6 +3350,9 @@ function mapRepProgramYear(r: any): RepProgramYear {
     status: r.status,
     tryoutOpen: r.tryout_open,
     tryoutDescription: r.tryout_description,
+    bornFromYear: r.born_from_year ?? null,
+    bornToYear: r.born_to_year ?? null,
+    bornYearsCarried: Boolean(r.born_years_carried),
     budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
     autoRemindersEnabled: r.auto_reminders_enabled ?? true,
     creditApplication: normalizeCreditApplicationMode(r.credit_application),
@@ -3419,6 +3430,8 @@ export async function updateRepProgramYear(yearId: string, fields: {
   status?: RepProgramYearStatus;
   tryoutOpen?: boolean;
   tryoutDescription?: string | null;
+  /** Saving the years (either side) clears the carried note — the club has looked at them. */
+  bornYears?: { from: number | null; to: number | null };
   budgetAmount?: number | null;
   lineupSettings?: LineupSettings | null;
 }): Promise<RepProgramYear> {
@@ -3427,6 +3440,11 @@ export async function updateRepProgramYear(yearId: string, fields: {
   if (fields.status !== undefined) patch.status = fields.status;
   if (fields.tryoutOpen !== undefined) patch.tryout_open = fields.tryoutOpen;
   if (fields.tryoutDescription !== undefined) patch.tryout_description = fields.tryoutDescription;
+  if (fields.bornYears !== undefined) {
+    patch.born_from_year = fields.bornYears.from;
+    patch.born_to_year = fields.bornYears.to;
+    patch.born_years_carried = false;
+  }
   if (fields.budgetAmount !== undefined) patch.budget_amount = fields.budgetAmount;
   if (fields.lineupSettings !== undefined) patch.lineup_settings = fields.lineupSettings;
   const { data, error } = await supabaseAdmin

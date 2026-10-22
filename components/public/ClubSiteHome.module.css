@@ -70,6 +70,13 @@
   overflow-wrap: anywhere;
 }
 
+/* The team's birth years under its name (Stage 4c-2; the Stage 4 drawings' .born). */
+.tileBorn {
+  display: block;
+  font: 500 0.75rem/1.2 var(--club-text-face);
+  color: var(--club-dim);
+}
+
 .tile:hover {
   border-color: var(--club-field);
 }

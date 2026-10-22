@@ -20,6 +20,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
+import BirthdayCutoffCard from './BirthdayCutoffCard';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
@@ -251,6 +252,9 @@ export default function SettingsKit() {
               {saving ? 'Saving…' : 'Save changes'}
             </button>
           </div>
+
+          {/* ── When birthdays count from (Club Tier Stage 4c-2): saves by itself through the pill, apart from the Save above ── */}
+          <BirthdayCutoffCard orgQuery={orgQuery} />
 
           {/* ── Your public site: a door (Public site builder, 2026-10-21) — what families see moved there ── */}
           <section className={`${styles.card} ${styles.doorCard}`} aria-labelledby="settings-public-site">

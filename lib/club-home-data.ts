@@ -34,7 +34,7 @@ export async function loadClubHome(org: Organization, orgSlug: string): Promise<
     getClubSiteContent(org.id),
     hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id) : Promise.resolve([]),
     // The club's listed teams and its open tryouts — the same read the Teams page makes.
-    withTeams ? readClubTeams(org.id) : Promise.resolve({ bands: [], count: 0 }),
+    withTeams ? readClubTeams(org.id, org.birthdayCutoffs) : Promise.resolve({ bands: [], count: 0 }),
     // Every listed team's tryout and its days, for Open now's tryouts (Stage 4b-2b) — the Tryouts page's own read.
     // A failed tryout read costs the home its tryouts row, never the page.
     withTeams ? readClubTryouts(org.id, today).catch(() => ({ teams: [], groups: [] })) : Promise.resolve({ teams: [], groups: [] }),

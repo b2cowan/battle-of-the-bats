@@ -120,6 +120,9 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.require_score_finalization -->
 **`require_score_finalization`** (bool, NOT NULL, default false) — org default for the score-lock workflow; `tournaments.require_score_finalization` overrides per-event ([lib/public-tournament-data.ts:51](../../../lib/public-tournament-data.ts#L51)). _Writes:_ org-settings PATCH.
 
+<!-- dict:col:organizations.birthday_cutoffs -->
+**`birthday_cutoffs`** (jsonb, NOT NULL, default `'{}'`; CHECK `birthday_cutoffs_valid()`; mig 349, Club Tier Stage 4c-2) — **when birthdays count from, per sport**: `{"softball":{"m":9,"d":1}}`, keyed by the **normalized** sport id (`normalizeSportId`). **An absent sport counts from January 1** — January 1 is never stored (the save writes it as absent), so `'{}'` is every club that never changed it. Teams and divisions store YEARS (`rep_program_years.born_*`, `league_divisions.born_*`) and read their sport's cut-off when shown, so a change re-reads every team of that sport at once. The CHECK function refuses a non-object, a key that is not a sport-id shape, a value that is not exactly `{m, d}` numbers, and a day the month lacks (**Feb 29 is refused**). Read and written only through [lib/born-years.ts](../../../lib/born-years.ts) (`cutoffFor`, `cleanCutoffs`). _Writes:_ `PATCH /api/admin/org-settings/birthday-cutoffs` (**owner only** — owner ruling 2026-10-22, matching Settings; Stage 13 may revisit), **one sport at a time**: the body is `{ sport, cutoff }`, the route merges that sport into the stored map (January 1 removes the key) so two tabs never overwrite each other's sports. Not a look field and not on the org-settings route, so an admin sending it is refused.
+
 <!-- dict:col:organizations.onboarding_completed_at -->
 **`onboarding_completed_at`** (timestamptz, nullable) — first-run onboarding gate; set once (idempotent on null) by `complete-onboarding`.
 
@@ -2504,7 +2507,14 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`tryout_open`** (bool, NOT NULL, default false) — gates the public tryout-registration page (`status='active' AND tryout_open=true`).
 
 <!-- dict:col:rep_program_years.tryout_description -->
-**`tryout_description`** (text, nullable) — the public-facing blurb on the tryout landing page.
+**`tryout_description`** (text, nullable; CHECK `char_length <= 500`, mig 349) — the "From the club" blurb on the team's tryout page, shown while sign-ups are **open and while they are not open yet** (hidden once finished or closed; Stage 4c-2 Ask 9). Written from the admin Tryouts page's Sign-ups section (autosave) through the program-year PATCH, which refuses anything but the team's live season. **Not carried by Start next season** — a new season starts blank, with a "Start from last season's words" door (Ask 10). The longest value on dev and prod when the cap was added (2026-10-22) was 162.
+
+<!-- dict:col:rep_program_years.born_from_year -->
+<!-- dict:col:rep_program_years.born_to_year -->
+**`born_from_year` / `born_to_year`** (smallint, nullable; CHECK each 1900–2100 and from ≤ to; mig 349, Club Tier Stage 4c-2) — the season's **birth years**: who may play, as families read it ("Born 2012–2013"). **On the season, not the team** (Ask 4): a team's years move every September, and a team can have two seasons open in the autumn. **An empty side is no limit on that side**; both empty shows nothing. ⚠ The DB CHECK is the WEAK form: the strict rule depends on today (no year after this calendar year) and on the club's cut-off (`organizations.birthday_cutoffs` — off January 1 the same year twice runs backwards), and lives only in [lib/born-years.ts](../../../lib/born-years.ts). So a stored pair can pass here and still be **unshowable** — a one-year team after its sport moved off January 1 (owner ruling 2026-10-22, C12): no line, and it stays in every Born in list. Written from the admin team page's Team details; *Start next season* writes the new season's pair one year later.
+
+<!-- dict:col:rep_program_years.born_years_carried -->
+**`born_years_carried`** (bool, NOT NULL, default false; mig 349) — true when *Start next season* wrote the pair one year later (and either side was set). Drives the note under the boxes ("Moved one year later when the 2028 season started…"); cleared when the club saves the years. The note's other end — the season's first game has started — is read at render time, not stored.
 
 <!-- dict:col:rep_program_years.budget_amount -->
 **`budget_amount`** (numeric, nullable) — **coach-only**: the season's optional **estimated total** (the Budget Plan's "set an estimated total"). NULL = no estimate, which is ordinary — a plan built from lines alone has none. Written by the PATCH in [app/api/coaches/.../budget/route.ts](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/budget/route.ts) (write-only since 2026-10-01) and carried forward by *Start next season* (`lib/rep-season-rollover.ts`). Read by the budget-plan, installment-preview, money-summary and budget-vs-actual routes, each passing it as `estimatedTotal` to `computeBudgetTotals` (`lib/coach-budget-totals.ts`), which makes it the season total whenever set and falls back to the cost lines when not (gotcha 6 under `rep_budget_lines`). ⚠ One reader does NOT follow that rule: the season close-out sheet (`lib/coach-season-settlement.ts`, `unspentPlan`) uses `max(cost lines, estimate)` — the pre-2026-08-12 rule. ⚠ Never read it alone as "has a budget" — the team Overview's Budget tile did, and read "Not set" over a fully itemized plan. No org-admin reader/writer (gotcha 4).
@@ -6549,6 +6559,10 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:league_divisions.sort_order -->
 **`sort_order`** (integer, NOT NULL, default 0) — display order, append-to-end on create; ties broken by `created_at` (gotcha 4).
+
+<!-- dict:col:league_divisions.born_from_year -->
+<!-- dict:col:league_divisions.born_to_year -->
+**`born_from_year` / `born_to_year`** (smallint, nullable; CHECK each 1900–2100 and from ≤ to; mig 349, Club Tier Stage 4c-2) — the division's birth years, the same pair and the same rule as `rep_program_years.born_*` (read through [lib/born-years.ts](../../../lib/born-years.ts) with the season's sport's cut-off). Typed in the Add division / Edit division windows. **No carried marker**: divisions are typed fresh every season.
 
 ---
 

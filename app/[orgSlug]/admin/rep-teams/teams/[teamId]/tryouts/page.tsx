@@ -29,6 +29,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
+import TryoutBlurb from '@/components/admin/kit/club/TryoutBlurb';
 import ViewPills from '@/components/shared/ViewPills';
 import {
   ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, repKit, TwoOpenNote, useDeferredLoad,
@@ -43,6 +44,7 @@ import {
 } from '@/lib/export';
 import { publicTryoutHref } from '@/lib/public-tryout-links';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
+import { previousBlurbOf } from '@/lib/program-year-patch';
 import { startButton } from '@/lib/club-season-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { pluralize, possessive } from '@/lib/utils';
@@ -246,6 +248,11 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
     });
   }
 
+  // The blurb saved: the season in hand keeps it, so "Start from last season's words" and a re-read agree.
+  const blurbSaved = useCallback((text: string | null) => {
+    setRead(r => (r && season ? { ...r, programYears: r.programYears.map(py => (py.id === season.id ? { ...py, tryoutDescription: text } : py)) } : r));
+  }, [season]);
+
   // ── Export (the list on screen, as today) ──
   const exportScope = team?.name ?? teamId;
   const exportSrc = () => filtered.map(r => ({
@@ -332,7 +339,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
   const address = publicTryoutHref(orgSlug, team.slug).replace(/^\//, '');
 
   return (
-    <div className={repKit.page}>
+    <div className={`${repKit.page}${canWrite && isLive ? ` ${repKit.savePillPage}` : ''}`}>
       {header}
       <TwoOpenNote teamName={read!.team.name} seasons={read!.programYears} showingName={season.name} teamHref={teamBase} />
       {notice && <PageNotice notice={notice} />}
@@ -357,6 +364,18 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
           <span className={repKit.readonlyValue}>{address}</span>
           {!season.tryoutOpen && (
             <p className={repKit.windowNote}>While sign-ups are closed, this address tells families they aren’t open.</p>
+          )}
+          {yearApi && (
+            <TryoutBlurb
+              key={season.id}
+              yearApi={yearApi}
+              orgSlug={orgSlug}
+              saved={season.tryoutDescription}
+              open={season.tryoutOpen}
+              previous={previousBlurbOf(read.programYears, season)}
+              canWrite={canWrite}
+              onSaved={blurbSaved}
+            />
           )}
         </ClubSection>
       ) : (

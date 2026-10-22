@@ -50,6 +50,7 @@ export default function SingleSelectDropdown({
   foot,
   restQuiet = false,
   restValue,
+  labelSuffix,
 }: {
   /** Sits to the left of the chosen value — "Group by", "View", "Showing". */
   label: string;
@@ -60,9 +61,11 @@ export default function SingleSelectDropdown({
    *  two of one thing (owner, §283 walk, 2026-10-08). `rowMark` is the reverse — ONLY in the row, never in the pill:
    *  the club's Team pill's amber waiting count beside each team in its list, where the team on screen already says
    *  its own (Needs you), as the Teams division picker's closed box leaves out the current division's count (the
-   *  waiting-count ruling, 2026-10-01). `group` puts the option under a heading in the panel (below). All opt-in; no
+   *  waiting-count ruling, 2026-10-01). `faceLabel` is the words the PILL's face shows for the chosen option when they differ from the row's (the club's Born in
+   *  pill: the row reads "Any year", the face "Born in: any year"). `group` puts the option under a heading in the panel
+   *  (below). All opt-in; no
    *  portal strip passes one. */
-  options: readonly { id: string; label: string; detail?: string; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; group?: string }[];
+  options: readonly { id: string; label: string; detail?: string; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
   value: string;
   onChange: (next: string) => void;
   /**
@@ -100,6 +103,13 @@ export default function SingleSelectDropdown({
    */
   restQuiet?: boolean;
   restValue?: string;
+  /**
+   * Does the pill's face READ AS A SENTENCE — "Born in: any year"? `labelSuffix` (":") ends the label beside a chosen value
+   * — and only then: a quiet `restQuiet` face at rest shows the label alone, never a dangling "Born in:". The value's
+   * words come from the option's own `faceLabel`. Opt-in; first caller is the club's Born in pill (Stage 4c-2, D15/D16).
+   * Every other caller renders exactly as before.
+   */
+  labelSuffix?: string;
 }) {
   /* ⚖ OPTION GROUPS (Club Accounting · Teams, Ask 2, owner 2026-10-16): consecutive options sharing a `group` sit under
      one heading in the panel — the club Team pill's teams under their group, in the Teams table's band words and order
@@ -168,7 +178,9 @@ export default function SingleSelectDropdown({
   };
 
   const chosen = options.find(o => o.id === value);
-  const chosenLabel = chosen?.label ?? options[0]?.label ?? '';
+  const shown = chosen ?? options[0];
+  /** The words the pill's face shows for the chosen option: its `faceLabel` when it has one, else its label. */
+  const chosenLabel = shown?.faceLabel ?? shown?.label ?? '';
   const atRest = restQuiet && !narrowed;
 
   const choice = (o: (typeof options)[number], inSheet: boolean) => (
@@ -239,7 +251,7 @@ export default function SingleSelectDropdown({
             setSheetOpen(v => !v);
           }}
         >
-          <span className={styles.multiSelectLabel}>{label}</span>
+          <span className={styles.multiSelectLabel}>{atRest ? label : `${label}${labelSuffix ?? ''}`}</span>
           {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}{chosen?.mark}{chosen?.pillMark}</span>}
           <ChevronDown size={14} aria-hidden />
         </summary>

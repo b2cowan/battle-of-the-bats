@@ -19,7 +19,8 @@ import {
  * (lib/tryout-season.ts), never here:
  *
  *   · Tryouts open — the days, "From the club", "Sign up for tryouts", the club's contact.
- *   · Not open yet — the days, then the closed frame's card ("Sign-ups … aren't open yet." + the contact).
+ *   · Not open yet — the days, "From the club" (Stage 4c-2: the cost and who may come, before a family has to ask), then
+ *                    the closed frame's card ("Sign-ups … aren't open yet." + the contact).
  *   · Finished     — "Tryouts for the 2027 season finished on Mon, Sep 7." + the contact.
  *   · Closed       — "13U AAA isn't taking tryout sign-ups right now." + the contact.
  *
@@ -27,7 +28,7 @@ import {
  * in every state (a second "See the team" at the foot went to the same page and was removed, owner 2026-10-21).
  */
 export default function TryoutLandingView({
-  orgSlug, teamSlug, team, state, season, upcoming, lastDay, today, contactEmail, registerHref,
+  orgSlug, teamSlug, team, state, season, born = null, upcoming, lastDay, today, contactEmail, registerHref,
 }: {
   orgSlug: string;
   teamSlug: string;
@@ -35,6 +36,8 @@ export default function TryoutLandingView({
   state: TryoutState;
   /** The team's live season (null for an archived team or one with none). */
   season: { year: number | null; name: string; tryoutDescription: string | null } | null;
+  /** The season's birth years in the form that follows a dot (`bornFactsOf(…).meta`: "born 2012–2013"); none, no years to say. */
+  born?: string | null;
   /** The tryout days still ahead (the one rule's `upcoming`). */
   upcoming: readonly TryoutDay[];
   lastDay: string | null;
@@ -45,8 +48,15 @@ export default function TryoutLandingView({
 }) {
   const teamHref = `/${orgSlug}/teams/${teamSlug}`;
   // The closed frame names no season (there is nothing to sign up for); the others say which season the tryouts are for.
-  const meta = season && state !== 'closed' ? tryoutSeasonMeta(season) : null;
-  const blurb = state === 'open' ? season?.tryoutDescription?.trim() || null : null;
+  const meta = season && state !== 'closed' ? tryoutSeasonMeta(season, born) : null;
+  // "From the club" reads while sign-ups are open and while they are not open yet; finished and closed pages hide it (D24).
+  const blurb = state === 'open' || state === 'notOpenYet' ? season?.tryoutDescription?.trim() || null : null;
+  const blurbSection = blurb && (
+    <section className={kit.section} aria-labelledby="from-the-club">
+      <h2 id="from-the-club" className={kit.sectionTitle}>From the club</h2>
+      <div className={kit.list}><p className={styles.blurb}>{blurb}</p></div>
+    </section>
+  );
   const seasonName = { year: season?.year ?? null, name: season?.name ?? '' };
 
   return (
@@ -64,14 +74,10 @@ export default function TryoutLandingView({
 
       {(state === 'open' || state === 'notOpenYet') && <TryoutDays days={upcoming} sport={team.sport} />}
 
+      {blurbSection}
+
       {state === 'open' ? (
         <>
-          {blurb && (
-            <section className={kit.section} aria-labelledby="from-the-club">
-              <h2 id="from-the-club" className={kit.sectionTitle}>From the club</h2>
-              <div className={kit.list}><p className={styles.blurb}>{blurb}</p></div>
-            </section>
-          )}
           <Link href={registerHref} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnFull}`}>Sign up for tryouts</Link>
           <ClubContactLine email={contactEmail} />
         </>

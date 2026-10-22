@@ -16,6 +16,7 @@ import { openingBalanceFor, carriesProvenance, type SeasonCarryChoice } from './
 import { carryBudgetPlan, shiftDateYears } from './rep-budget-carry';
 import { createRepPlayerDuesSchedule, replaceRepDuesInstallments } from './db';
 import { decideStrayOpenSeasons, isLiveSeasonStatus, twoOpenSeasonsMessage } from './season-live';
+import { rollBornYears } from './born-years';
 import type { RepProgramYear } from './types';
 
 /**
@@ -214,6 +215,14 @@ export async function startNextRepSeason(params: {
      shows a line saying so. Same number, different facts — decided in ONE tested place. */
   const openingBalance = openingBalanceFor(carryCash, closingCents);
 
+  /* BIRTH YEARS roll one year later with the season (Club Tier Stage 4c-2, Ask 4 A): the season's players are a year
+     older, so a September that shows last year's years would be wrong. An empty box stays empty; `bornCarried` is the
+     marker the team page's note reads ("Moved one year later when the 2028 season started…") until the admin saves
+     the years or the first game starts. Set only when a side was set — nothing to explain otherwise. Nothing is sent
+     to anyone. The pair rides the same single insert as the season. */
+  const rolledYears = rollBornYears({ from: currentSeason.bornFromYear ?? null, to: currentSeason.bornToYear ?? null });
+  const bornCarried = rolledYears.from != null || rolledYears.to != null;
+
   // ── Critical core: new active season + coaching access (revert + throw on failure) ──
   // Insert the season already-active in ONE statement (no draft->active window that could strand a
   // half-created year and block retries via the duplicate-year guard).
@@ -225,6 +234,9 @@ export async function startNextRepSeason(params: {
       .insert({
         org_id: orgId, team_id: teamId, name: newName, year: newYear, status: 'active',
         tryout_open: false,
+        born_from_year: rolledYears.from,
+        born_to_year: rolledYears.to,
+        born_years_carried: bornCarried,
         opening_balance: openingBalance,
         /* The provenance the settings row and the register's first line read back. Null on a
            hand-typed amount: "carried from the 2026 Season" would be vouching for a figure the

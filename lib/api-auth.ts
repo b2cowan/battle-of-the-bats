@@ -12,6 +12,7 @@ import { applyEntitlementGrants } from './entitlement-grants';
 import { isOrgBillingSuspended, OrgBillingSuspendedError } from './org-billing-access';
 import { LOCKED_RESULTS } from './tournament-status-words';
 import { GROUP_UNSCOPED_ROLES } from './member-access';
+import { storedCutoffs } from './born-years';
 
 export interface AuthContext {
   user: User;
@@ -78,6 +79,8 @@ type AuthOrgRow = {
   /** Club Shared Book (mig 227). Optional on the row type so an unapplied migration reads as
    *  undefined → false rather than throwing; the gate must fail CLOSED, never open. */
   club_book_sharing_enabled?: boolean | null;
+  /** When birthdays count from (mig 349); the select is `*`, so it is here once the column exists. */
+  birthday_cutoffs?: unknown;
   /** The club's public look. The row is read with `*`, so these are always present. */
   theme_preset?: string | null;
   theme_primary?: string | null;
@@ -202,6 +205,8 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     isDiscoverable: orgRow.is_discoverable ?? true,
     freeFloor: orgRow.free_floor ?? null,
     clubBookSharingEnabled: orgRow.club_book_sharing_enabled === true,
+    // When birthdays count from (mig 349) — read through cutoffFor(); absent = January 1.
+    birthdayCutoffs: storedCutoffs(orgRow.birthday_cutoffs),
     // The public site editor reads the saved look from here (and re-reads it after every pick); without these
     // it saw "no colour chosen" and always showed the default, whatever had been saved.
     themePreset: orgRow.theme_preset ?? undefined,

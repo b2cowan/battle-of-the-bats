@@ -6,6 +6,7 @@ import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LeagueDivision } from '@/lib/types';
+import { bornFactsOf } from '@/lib/club-born-public';
 import column from '../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -141,17 +142,21 @@ export default async function LeagueSeasonPage({
               {divisions.map(d => {
                 const pct = d.capacity ? Math.min(1, d.activeCount / d.capacity) : 0;
                 const isFull = d.capacity != null && d.activeCount >= d.capacity;
+                // The division's birth years as families read them (Stage 4c-2), under the season's sport's cut-off.
+                const born = bornFactsOf({ from: d.bornFromYear, to: d.bornToYear }, org.birthdayCutoffs, season.sport).line;
                 return (
                   <div key={d.id} className={kit.card} style={{ padding: '1rem 1.25rem' }}>
-                    <div
-                      style={{
-                        fontSize: '1rem',
-                        fontWeight: 700,
-                        color: 'var(--club-text)',
-                        marginBottom: '0.6rem',
-                      }}
-                    >
-                      {d.name}
+                    <div style={{ marginBottom: '0.6rem' }}>
+                      <div
+                        style={{
+                          fontSize: '1rem',
+                          fontWeight: 700,
+                          color: 'var(--club-text)',
+                        }}
+                      >
+                        {d.name}
+                      </div>
+                      {born && <span className={kit.rowSub}>{born}</span>}
                     </div>
                     {d.capacity != null ? (
                       <>

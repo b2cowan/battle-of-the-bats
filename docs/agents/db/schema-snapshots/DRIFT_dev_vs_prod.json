@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-22",
-  "total": 133,
+  "total": 143,
   "counts": {
     "tables": 6,
-    "columns": 62,
+    "columns": 68,
     "indexes": 16,
     "constraints": 25,
-    "rls": 24
+    "rls": 28
   },
   "items": [
     {
@@ -50,6 +50,10 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_divisions.league_divisions_born_years_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:org_public_site_content.org_public_site_content_contacts_cap",
       "sig": ""
     },
@@ -79,6 +83,18 @@
     },
     {
       "key": "check:only-dev:org_site_notices.org_site_notices_notice_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organizations.organizations_birthday_cutoffs_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_program_years.rep_program_years_born_years_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_program_years.rep_program_years_tryout_description_length",
       "sig": ""
     },
     {
@@ -170,6 +186,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_divisions.born_from_year",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_divisions.born_to_year",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:org_public_site_content.contacts",
       "sig": ""
     },
@@ -227,6 +251,22 @@
     },
     {
       "key": "column:only-dev:org_site_notices.posted_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.birthday_cutoffs",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_program_years.born_from_year",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_program_years.born_to_year",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_program_years.born_years_carried",
       "sig": ""
     },
     {

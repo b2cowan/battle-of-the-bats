@@ -1357,17 +1357,27 @@ async function buildRepOnlyClub() {
   for (const [i, name] of ['AAA', 'AA', 'Development'].entries()) {
     groupIds[name] = (await one(`group ${name}`, db.from('rep_team_groups').insert({ org_id: club.id, name, display_order: i }).select('id').single())).id;
   }
+  // Club Tier Stage 4c-2 Part A (owner 2026-10-22): `born` = [from, to] birth years for the team's live season (a null side is
+  // open: 9U AA reads "Born 2018 or later"; 16U AA and 14U AA are one year each, so a softball September 1 cut-off shows the
+  // one-year warning); `blurb` = the season's tryout blurb. 10U Development has no years on purpose (a team with none stays in
+  // every Born in list). born_years_carried is left false — the walk rolls a season to see the note. 13U AAA's blurb names
+  // last year, so the "Mentions 2025 — still true?" hint fires. No team has a second season here: "Start from last season's
+  // words" is walked by rolling a team that has a blurb forward.
   const teams = [
     { name: '15U AAA', slug: '15u-aaa', group: 'AAA', division: 'Provincial AAA', color: '#1E3A8A', tryouts: true, schedule: 'public_link',
+      born: [Y - 14, Y - 13],
+      blurb: 'Open to players born ' + (Y - 14) + ' and ' + (Y - 13) + '. The tryout fee is $40, paid at the first session. Bring a glove, cleats and water. We call every family by the end of the week.',
       about: 'Our top 15U group. Winter practices on Sundays at Lakeshore Dome; the season runs April to August.' },
     { name: '13U AAA', slug: '13u-aaa', group: 'AAA', division: 'Provincial AAA', color: '#7A1F2B',
+      born: [Y - 12, Y - 11],
+      blurb: "Last year's " + (Y - 1) + " roster returns most of its players, so we're looking for two pitchers and a catcher. Fee $40 at the door.",
       about: 'A 13U AAA group of 13 players. Practices move to Lakeshore Dome from November.' },
-    { name: '16U AA', slug: '16u-aa', group: 'AA', division: 'Provincial AA', color: '#0F766E' },
-    { name: '15U AA', slug: '15u-aa', group: 'AA', division: 'Provincial AA', color: '#9D174D' },
-    { name: '14U AA', slug: '14u-aa', group: 'AA', division: 'Provincial AA', color: '#065F46' },
-    { name: '12U AA', slug: '12u-aa', group: 'AA', division: 'Provincial AA', color: '#0E7490' },
-    { name: '11U AA', slug: '11u-aa', group: 'AA', division: 'Provincial AA', color: '#7C3AED' },
-    { name: '9U AA', slug: '9u-aa', group: 'AA', division: 'Provincial AA', color: '#CA8A04' },
+    { name: '16U AA', slug: '16u-aa', group: 'AA', division: 'Provincial AA', color: '#0F766E', born: [Y - 15, Y - 15] },
+    { name: '15U AA', slug: '15u-aa', group: 'AA', division: 'Provincial AA', color: '#9D174D', born: [Y - 14, Y - 13] },
+    { name: '14U AA', slug: '14u-aa', group: 'AA', division: 'Provincial AA', color: '#065F46', born: [Y - 13, Y - 13] },
+    { name: '12U AA', slug: '12u-aa', group: 'AA', division: 'Provincial AA', color: '#0E7490', born: [Y - 11, Y - 11] },
+    { name: '11U AA', slug: '11u-aa', group: 'AA', division: 'Provincial AA', color: '#7C3AED', born: [Y - 10, Y - 9] },
+    { name: '9U AA', slug: '9u-aa', group: 'AA', division: 'Provincial AA', color: '#CA8A04', born: [Y - 8, null] },
     { name: 'Lakeshore Lynx 10U Development', slug: '10u-development', group: 'Development', division: null, color: '#6B7280' },
     { name: '18U AA', slug: '18u-aa', group: 'AA', division: 'Provincial AA', color: '#6B7280', archived: true },
   ];
@@ -1382,7 +1392,8 @@ async function buildRepOnlyClub() {
     const py = await one(`season ${t.name}`, db.from('rep_program_years').insert({
       team_id: row.id, org_id: club.id, name: `${Y} Season`, year: Y, status: t.archived ? 'completed' : 'active',
       tryout_open: !!t.tryouts,
-      tryout_description: t.tryouts ? `Tryouts for the ${t.name} ${Y} roster. Bring a glove, cleats and water.` : null,
+      tryout_description: t.blurb ?? (t.tryouts ? `Tryouts for the ${t.name} ${Y} roster. Bring a glove, cleats and water.` : null),
+      born_from_year: t.born?.[0] ?? null, born_to_year: t.born?.[1] ?? null,
     }).select('id').single());
     if (t.tryouts) open = { teamId: row.id, yearId: py.id };
     seasonOf[t.slug] = { teamId: row.id, yearId: py.id };

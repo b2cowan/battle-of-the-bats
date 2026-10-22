@@ -12,7 +12,8 @@ import { readCode } from './_source-code.ts';
  *   3. A shared link's card asks the one question first, and no card can reach a player.
  *   4. The org layout names no preview image of its own (it would silently replace the club's generated card).
  *   5. The sitemap lists the club's teams and tryouts; the team page describes itself as a sports team of the club.
- *   6. Born-in years and the Born in picker are Stage 4c: not built here.
+ *   6. Birth years (Stage 4c-2) reach every surface through ONE rule (lib/born-years.ts); none formats a born line by hand,
+ *      and the Born in picker is the house pick-one pill.
  * The rule itself is pinned by club-stage4b2b.test.ts.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
@@ -131,10 +132,67 @@ describe('5 · search engines: the club’s teams and tryouts, a team as a team 
   });
 });
 
-describe('6 · born-in years are Stage 4c', () => {
-  it('no born-in text or picker on the tryout surfaces', () => {
-    for (const f of [TRYOUTS_PAGE, VIEW, 'lib/tryout-season.ts']) {
-      assert.doesNotMatch(readCode(f), /Born in|born \d|birthYear/i, f);
+describe('6 · birth years: one rule, pinned on every surface they show (Stage 4c-2)', () => {
+  const BORN_SURFACES = [
+    'lib/club-public-teams.ts',
+    'lib/club-born-public.ts',
+    'lib/club-home-data.ts',
+    'components/public/ClubSiteHome.tsx',
+    `${ORG}/teams/page.tsx`,
+    TRYOUTS_PAGE,
+    TRYOUT_PAGE,
+    VIEW,
+    'lib/tryout-season.ts',
+    `${ORG}/league/[seasonSlug]/page.tsx`,
+    'components/public/BornInPill.tsx',
+  ];
+  it('the born lines come from the one rule: bornLine / bornMeta, through bornFactsOf', () => {
+    assert.match(readCode('lib/club-born-public.ts'), /bornLine\(years, cutoff\)[\s\S]*bornMeta\(years, cutoff\)/);
+    // The home grid and the Teams page read each team's years in the one read; the Tryouts page reads them off each team.
+    assert.match(readCode('lib/club-public-teams.ts'), /bornFactsOf\(/);
+    assert.match(readCode(TRYOUTS_PAGE), /bornFactsOf\(t\.bornYears, org\.birthdayCutoffs, t\.sport\)/);
+    // The tryout page's meta ("For the 2027 season · born 2012–2013") and its finished form are the one function's.
+    assert.match(readCode(TRYOUT_PAGE), /bornFactsOf\(\{ from: season\.bornFromYear, to: season\.bornToYear \}, org\.birthdayCutoffs, team\.sport\)\.meta/);
+    assert.match(readCode(VIEW), /tryoutSeasonMeta\(season, born\)/);
+    assert.match(readCode('lib/tryout-season.ts'), /born \? `\$\{base\} · \$\{born\}` : base/);
+    // The Tryouts row leads with the line; the house-league division card reads it under the season's sport.
+    assert.match(readCode(TRYOUTS_PAGE), /tryoutsRowSub\(t\.standing, t\.season, today, t\.born\.line\)/);
+    assert.match(readCode(`${ORG}/league/[seasonSlug]/page.tsx`), /bornFactsOf\(\{ from: d\.bornFromYear, to: d\.bornToYear \}, org\.birthdayCutoffs, season\.sport\)/);
+    // The home tile draws the line the read made.
+    assert.match(readCode('components/public/ClubSiteHome.tsx'), /t\.born\?\.line/);
+  });
+  it('no surface builds a born line by hand', () => {
+    for (const f of BORN_SURFACES) {
+      assert.doesNotMatch(readCode(f), /`[Bb]orn \$\{|['"][Bb]orn \d|\+ ?['"][Bb]orn |['"][Bb]orn ['"] ?\+/, `${f} formats a born line itself`);
     }
+  });
+  it('the Born in picker is the house pick-one pill, one pill on the Teams and Tryouts pages, never ViewPills', () => {
+    const pill = readCode('components/public/BornInPill.tsx');
+    assert.match(pill, /import SingleSelectDropdown from '@\/components\/coaches\/SingleSelectDropdown';/);
+    assert.match(pill, /label="Born in"/);
+    assert.doesNotMatch(pill, /ViewPills/);
+    for (const f of [`${ORG}/teams/page.tsx`, TRYOUTS_PAGE]) {
+      const code = readCode(f);
+      assert.match(code, /<BornInPill\b/, `${f} renders the pill`);
+      assert.match(code, /bornPickOf\(/, `${f} reads the pick from the address`);
+      assert.doesNotMatch(code, /ViewPills/, `${f}: a pick-one pill, not a view pill`);
+    }
+  });
+  it('the pill face reads "Born in: any year" / "Born in: 2015" (D15/D16) through the shared pill’s opt-in labelSuffix / faceLabel, and no other pill changed', () => {
+    const pill = readCode('components/public/BornInPill.tsx');
+    assert.ok(pill.includes('labelSuffix=":"'));
+    assert.ok(pill.includes("{ id: ANY, label: 'Any year', faceLabel: 'any year' }"), 'the menu row still reads "Any year", the face "any year"');
+    const dd = readCode('components/coaches/SingleSelectDropdown.tsx');
+    assert.ok(dd.includes('labelSuffix?: string;'));
+    assert.ok(dd.includes('faceLabel?: string;'));
+    assert.ok(dd.includes("atRest ? label : `${label}${labelSuffix ?? ''}`"), 'a quiet face at rest never shows a dangling suffix');
+    assert.ok(dd.includes('{chosenLabel}{chosen?.mark}{chosen?.pillMark}'));
+    // opt-in: no other caller passes it
+    for (const f of ['components/admin/kit/club/money/YearPill.tsx', 'components/admin/kit/club/families/FamiliesBook.tsx']) {
+      assert.ok(!/labelSuffix=|faceLabel:/.test(readCode(f)), `${f} is unchanged`);
+    }
+  });
+  it('the blurb reads while sign-ups are open and while they are not open yet, never finished or closed (D24)', () => {
+    assert.match(readCode(VIEW), /state === 'open' \|\| state === 'notOpenYet' \? season\?\.tryoutDescription/);
   });
 });

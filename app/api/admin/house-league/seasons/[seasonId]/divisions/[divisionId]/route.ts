@@ -4,7 +4,9 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasonById, updateDivision, deleteDivision } from '@/lib/db';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
+import type { BornYears } from '@/lib/born-years';
+import { bornYearsFromBody } from '@/lib/program-year-patch';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -13,20 +15,22 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
+/** The division's stored birth years when it belongs to the org's season, else null (the PATCH keeps a side the body leaves out). */
 async function verifyDivisionBelongsToOrg(
   divisionId: string,
   seasonId: string,
   orgId: string,
-): Promise<boolean> {
+): Promise<{ born: BornYears } | null> {
   const season = await getLeagueSeasonById(seasonId, orgId);
-  if (!season) return false;
+  if (!season) return null;
   const { data } = await supabaseAdmin
     .from('league_divisions')
-    .select('id')
+    .select('id, born_from_year, born_to_year')
     .eq('id', divisionId)
     .eq('season_id', seasonId)
     .maybeSingle();
-  return !!data;
+  if (!data) return null;
+  return { born: { from: (data.born_from_year as number | null) ?? null, to: (data.born_to_year as number | null) ?? null } };
 }
 
 export const PATCH = withObservability(async (req: Request,
@@ -39,8 +43,8 @@ export const PATCH = withObservability(async (req: Request,
   if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const { seasonId, divisionId } = await params;
-  const exists = await verifyDivisionBelongsToOrg(divisionId, seasonId, ctx!.org.id);
-  if (!exists) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  const stored = await verifyDivisionBelongsToOrg(divisionId, seasonId, ctx!.org.id);
+  if (!stored) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
 
   const body = await req.json();
   const patch: Parameters<typeof updateDivision>[1] = {};
@@ -57,11 +61,24 @@ export const PATCH = withObservability(async (req: Request,
     patch.capacity = typeof body.capacity === 'number' && body.capacity > 0 ? body.capacity : null;
   }
 
+  // Birth years travel as a pair; a side the body leaves out keeps what the division has (the season PATCH's rule). The
+  // window always sends both, and an explicit null/empty is "no limit on that side".
+  const born = bornYearsFromBody(body, stored.born, new Date().getFullYear());
+  if (born && 'error' in born) return NextResponse.json({ error: born.error }, { status: 400 });
+  if (born) {
+    patch.bornFromYear = born.years.from;
+    patch.bornToYear = born.years.to;
+  }
+
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
 
-  await updateDivision(divisionId, patch);
+  try {
+    await updateDivision(divisionId, patch);
+  } catch (e) {
+    return captureAndJson(e, { error: 'Couldn’t save your changes. Try again.' }, 500);
+  }
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/divisions/[divisionId]' });
 

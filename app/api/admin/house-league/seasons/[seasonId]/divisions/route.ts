@@ -7,6 +7,7 @@ import { getLeagueSeasonById, getDivisionsForSeason } from '@/lib/db';
 import { houseLeagueDivisionCap, leagueCapHit } from '@/lib/free-floor';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
+import { bornColumns, checkBornBody } from '@/lib/born-years';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -79,6 +80,11 @@ export const POST = withObservability(async (req: Request,
 
   const capacity = typeof body.capacity === 'number' && body.capacity > 0 ? body.capacity : null;
 
+  // Birth years (Club Tier Stage 4c-2): two years, an empty box is no limit on that side. Held with its reason (A15–A17) when
+  // not four digits, after this year, or the earlier one is second. The stricter date rule off January 1 is the window's.
+  const born = checkBornBody(body.bornFromYear, body.bornToYear, new Date().getFullYear());
+  if (!born.ok) return NextResponse.json({ error: born.held }, { status: 400 });
+
   // sortOrder: place after existing divisions
   const existing = await getDivisionsForSeason(seasonId);
 
@@ -100,7 +106,7 @@ export const POST = withObservability(async (req: Request,
 
   const { data, error } = await supabaseAdmin
     .from('league_divisions')
-    .insert({ season_id: seasonId, name, capacity, sort_order: sortOrder })
+    .insert({ season_id: seasonId, name, capacity, sort_order: sortOrder, ...bornColumns(born.years) })
     .select()
     .single();
 

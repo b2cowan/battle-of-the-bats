@@ -86,7 +86,7 @@ id (uuid), venue_id (uuid) → diamonds.id NOT NULL, tournament_id (uuid) → to
 ## Module: League
 
 ### league_divisions
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year
 - Indexes: league_divisions_season_id_idx
 
 ### league_email_log
@@ -240,7 +240,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_player_tryout_baselines_org_id_idx, rep_player_tryout_baselines_player_year_uniq, rep_player_tryout_baselines_team_idx, rep_player_tryout_baselines_tryout_registration_id_idx, rep_player_tryout_baselines_year_idx
 
 ### rep_program_years
-id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name NOT NULL, year (integer) NOT NULL, status, tryout_open (boolean), tryout_description, budget_amount (numeric), created_at, updated_at, auto_reminders_enabled (boolean), lineup_settings (jsonb), credit_application, default_player_credit_percent (numeric), opening_balance (numeric), opening_balance_from_year_id (uuid) → rep_program_years.id
+id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name NOT NULL, year (integer) NOT NULL, status, tryout_open (boolean), tryout_description, budget_amount (numeric), created_at, updated_at, auto_reminders_enabled (boolean), lineup_settings (jsonb), credit_application, default_player_credit_percent (numeric), opening_balance (numeric), opening_balance_from_year_id (uuid) → rep_program_years.id, born_from_year, born_to_year, born_years_carried (boolean)
 - Indexes: rep_program_years_org_id_idx, rep_program_years_team_id_year_key
 
 ### rep_roster_players
@@ -520,7 +520,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb)
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -714,6 +714,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, guardian_email NOT NULL,
 id (uuid), org_id (uuid) → organizations.id NOT NULL, email NOT NULL, opted_out_at, source, created_at
 - Indexes: family_email_optouts_org_email_uniq
 
+### family_email_sends
+id (uuid), org_id (uuid) → organizations.id NOT NULL, sent_by (uuid), sent_at, subject NOT NULL, body NOT NULL, audience_kind NOT NULL, audience_label NOT NULL, team_ids, season_id (uuid), family_count (integer), opted_out_count (integer), reached_count (integer), failed_count (integer), coach_count (integer), status
+- Indexes: family_email_sends_org_sent_idx
+
 ### family_links
 id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, role NOT NULL, player_id (uuid) → rep_roster_players.id, user_id (uuid), invited_email NOT NULL, relationship, status, verified_via, claim_token_hash, claim_expires_at, invited_by_user_id (uuid), calendar_token_hash, consent_recorded_at, consent_ip, approved_by_user_id (uuid), approved_at, declined_at, revoked_at, created_at, updated_at, claimed_email, person_id (uuid) → org_people.id
 - Indexes: family_links_calendar_token_hash_key, family_links_claim_token_hash_key, family_links_email_idx, family_links_live_uniq, family_links_org_idx, family_links_person_id_idx, family_links_player_id_idx, family_links_team_status_idx, family_links_user_idx
@@ -876,7 +880,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **212 tables** across 10 modules.
+Total: **213 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -887,4 +891,4 @@ Total: **212 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 65 tables
+- Other: 66 tables

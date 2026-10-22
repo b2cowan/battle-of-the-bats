@@ -75,8 +75,10 @@ export async function refuseUnlessLiveSeason(
   team: Pick<RepTeam, 'id' | 'name'>,
   programYear: Pick<RepProgramYear, 'id' | 'name' | 'status'>,
   consequence: string,
+  /** The team's live season when the caller has already read it; read here when left out. */
+  liveSeason?: Pick<RepProgramYear, 'id'> | null,
 ): Promise<Response | null> {
-  const live = await getActiveRepProgramYear(team.id);
+  const live = liveSeason !== undefined ? liveSeason : await getActiveRepProgramYear(team.id);
   if (live && live.id === programYear.id) return null;
   const error = isLiveSeasonStatus(programYear.status)
     ? `The ${programYear.name} isn’t ${possessive(team.name)} current season, so ${consequence}.`

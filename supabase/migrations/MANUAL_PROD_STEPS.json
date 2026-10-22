@@ -286,6 +286,10 @@
     "348_email_families_to_a_families_list.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 7c, Email families to a Families list. Applied to DEV 2026-10-22. ONE table constraint: family_email_sends.audience_kind now also accepts 'list' (the drift check sees it). Apply AFTER 347 and BEFORE promoting the code: until it is on prod, a send to a list passes the re-count and is then refused by the claim (the new kind fails the old CHECK), a 500 that sends nothing. Verify on prod: SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'family_email_sends_audience_kind_check' contains 'list'; then refresh both snapshots."
+    },
+    "349_birth_years_and_when_birthdays_count.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 4c-2 Part A: birth years on rep_program_years and league_divisions, rep_program_years.born_years_carried, organizations.birthday_cutoffs with its shape CHECK (function birthday_cutoffs_valid), and the 500-character cap on tryout_description (longest on prod 162 on 2026-10-22; re-check before applying: SELECT max(char_length(tryout_description)) FROM rep_program_years -> <= 500). Apply BEFORE promoting the 4c-2 Part A code. Verify on prod after applying: SELECT count(*) FROM pg_proc WHERE proname = 'birthday_cutoffs_valid' -> 1; SELECT public.birthday_cutoffs_valid('{\"softball\":{\"m\":2,\"d\":29}}') -> false; then refresh both snapshots."
     }
   }
 }

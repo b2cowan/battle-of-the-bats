@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 133 divergence(s)** across dev/prod.
+**⚠️ 143 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 6 | 0 | — |
-| Columns | 62 | 0 | 0 |
+| Columns | 68 | 0 | 0 |
 | Indexes | 16 | 0 | 0 |
 | Constraints | 25 | 0 | — |
-| RLS / CHECK | 24 | 0 | 0 (RLS state) |
+| RLS / CHECK | 28 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (6)
@@ -25,7 +25,7 @@
 _none_
 
 ## Columns
-### Only in DEV (62)
+### Only in DEV (68)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -42,6 +42,8 @@ _none_
 - `family_email_sends.status`
 - `family_email_sends.subject`
 - `family_email_sends.team_ids`
+- `league_divisions.born_from_year`
+- `league_divisions.born_to_year`
 - `org_public_site_content.contacts`
 - `org_public_site_content.documents`
 - `org_public_site_content.home_section_order`
@@ -57,6 +59,10 @@ _none_
 - `org_site_notices.posted_at`
 - `org_site_notices.posted_by_email`
 - `org_site_notices.posted_by_user_id`
+- `organizations.birthday_cutoffs`
+- `rep_program_years.born_from_year`
+- `rep_program_years.born_to_year`
+- `rep_program_years.born_years_carried`
 - `teams.fee_book_baseline`
 - `teams.fee_changed_by`
 - `tournament_fee_book_settings.category_id`
@@ -155,7 +161,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (24)
+### CHECK only in DEV (28)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -166,6 +172,7 @@ _none_
 - `family_email_sends.family_email_sends_reached_count_check`
 - `family_email_sends.family_email_sends_status_check`
 - `family_email_sends.family_email_sends_subject_check`
+- `league_divisions.league_divisions_born_years_check`
 - `org_public_site_content.org_public_site_content_contacts_cap`
 - `org_public_site_content.org_public_site_content_documents_cap`
 - `org_public_site_content.org_public_site_content_home_section_order_known`
@@ -174,6 +181,9 @@ _none_
 - `org_site_notices.org_site_notices_detail_check`
 - `org_site_notices.org_site_notices_ends_after_post`
 - `org_site_notices.org_site_notices_notice_check`
+- `organizations.organizations_birthday_cutoffs_shape`
+- `rep_program_years.rep_program_years_born_years_check`
+- `rep_program_years.rep_program_years_tryout_description_length`
 - `tournament_fee_receipt_allocations.tournament_fee_receipt_allocations_amount_check`
 - `tournament_team_payments.tournament_team_payments_amount_chk`
 - `tournament_team_payments.tournament_team_payments_date_chk`

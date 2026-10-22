@@ -61,9 +61,9 @@ describe('2 · the Teams page and tab (End state 2, Asks 4A + 9A)', () => {
   });
   it('the page lists through the club\'s groups and names itself', () => {
     const code = readCode(`${ORG}/teams/page.tsx`);
-    assert.match(code, /readClubTeams\(org\.id\)/, 'the one read the home grid makes too');
+    assert.match(code, /readClubTeams\(org\.id,/, 'the one read the home grid makes too');
     assert.match(readCode('lib/club-public-teams.ts'), /clubTeamBands\(/);
-    assert.match(readCode('lib/club-home-data.ts'), /readClubTeams\(org\.id\)/);
+    assert.match(readCode('lib/club-home-data.ts'), /readClubTeams\(org\.id,/);
     assert.match(code, /clubPageMetadata\(/);
     assert.doesNotMatch(code, /player|coach/i, 'not on a row: players, coaches (End state 2)');
   });

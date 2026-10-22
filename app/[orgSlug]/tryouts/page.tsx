@@ -7,6 +7,7 @@ import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata, getClubSiteContent } from '@/lib/club-page-meta';
 import { lastClubTryoutDay, readClubTryouts } from '@/lib/club-tryouts';
 import { clubTeamBands } from '@/lib/club-site-home';
+import { bornFactsOf, bornPickOf, bornPlacesSentence, keepsBornYear } from '@/lib/club-born-public';
 import {
   bandHeading,
   isListedTryout,
@@ -20,6 +21,7 @@ import {
 import { tournamentToday } from '@/lib/timezone';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from '@/components/public/TryoutPage.module.css';
+import BornInPill from '@/components/public/BornInPill';
 import ClubContactCard from '@/components/public/ClubContactCard';
 import ClubContactLine from '@/components/public/ClubContactLine';
 import TryoutChip from '@/components/public/TryoutChip';
@@ -52,9 +54,20 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
  * grouped the club's way, each team saying by itself whether it is open, not open yet or finished. The facts come from
  * the tryout days each coach already entered, so it all expires by itself: four weeks after a team's last day it leaves
  * the page, and when none is left the Tryouts tab leaves too. The address keeps working all year and then says when the
- * club's last tryouts were. NOT here: born-in years and the Born in picker (Stage 4c), players (never).
+ * club's last tryouts were. NOT here: players (never).
+ *
+ * Stage 4c-2: each row leads with the team's birth years ("Born 2017–2018 · Mon, Sep 7 · Lions Park", from
+ * `lib/born-years.ts` — nothing here formats it), and one pick-one pill, Born in, narrows the page to a year
+ * (`?born=2015`, so a filtered list can be shared). The meta then counts places. Only teams are listed here: a
+ * house-league division has no tryout, so the divisions a pick adds live on the Teams page.
  */
-export default async function ClubTryoutsPage({ params }: { params: Promise<{ orgSlug: string }> }) {
+export default async function ClubTryoutsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ born?: string | string[] }>;
+}) {
   const { orgSlug } = await params;
   // A club whose plan does not carry rep teams has no tryouts to list: the club's "not found" (inside its site when the
   // site is open, the neutral refusal when it is not).
@@ -80,8 +93,12 @@ export default async function ClubTryoutsPage({ params }: { params: Promise<{ or
     );
   }
 
-  const bands = clubTeamBands(listed, groups);
-  const sub = tryoutsPageSub(year, bands.map(b => b.name));
+  // Born in: every listed team read under its own sport's cut-off; the menu offers the years they name (no year, no pill).
+  const withBorn = listed.map(t => ({ ...t, born: bornFactsOf(t.bornYears, org.birthdayCutoffs, t.sport) }));
+  const { menu, pick } = bornPickOf(withBorn.map(t => t.born), (await searchParams).born, Number(today.slice(0, 4)));
+  const kept = withBorn.filter(t => keepsBornYear(t.born, pick));
+  const bands = clubTeamBands(kept, groups);
+  const sub = pick == null ? tryoutsPageSub(year, bands.map(b => b.name)) : bornPlacesSentence(kept.length, pick);
   const href = (slug: string) => `/${orgSlug}/teams/${slug}/tryouts`;
 
   return (
@@ -91,7 +108,9 @@ export default async function ClubTryoutsPage({ params }: { params: Promise<{ or
         {sub && <p className={kit.sub}>{sub}</p>}
       </div>
 
-      <div className={kit.list}>
+      {menu.length > 0 && <BornInPill path={`/${orgSlug}/tryouts`} years={menu} picked={pick} />}
+
+      {kept.length > 0 && <div className={kit.list}>
         {bands.map((band, i) => (
           <Fragment key={i}>
             {band.name && <div className={kit.listBand}>{bandHeading(band.name, band.teams.flatMap(t => t.standing.heldDays))}</div>}
@@ -99,14 +118,14 @@ export default async function ClubTryoutsPage({ params }: { params: Promise<{ or
               <Link key={t.slug} href={href(t.slug)} className={kit.row}>
                 <span className={kit.rowMain}>
                   <span className={kit.rowName}>{t.name}</span>
-                  <span className={kit.rowSub}>{tryoutsRowSub(t.standing, t.season, today)}</span>
+                  <span className={kit.rowSub}>{tryoutsRowSub(t.standing, t.season, today, t.born.line)}</span>
                 </span>
                 <TryoutChip state={t.standing.state} className={styles.rowChip} />
               </Link>
             ))}
           </Fragment>
         ))}
-      </div>
+      </div>}
 
       <ClubContactLine email={email} />
     </div>

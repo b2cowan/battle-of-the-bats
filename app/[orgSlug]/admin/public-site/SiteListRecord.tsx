@@ -13,6 +13,7 @@ import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { RecordDelete, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import styles from './public-site.module.css';
 import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
@@ -122,7 +123,9 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
   const fieldsForm = fields.map(f => {
     const id = `site-${f.key}`;
     const value = values[f.key] ?? '';
-    const hint = (f.pastYearHint && pastYearHint(value, thisYear)) || (f.nudge && value.trim() && !mistake ? f.nudge(value.trim()) : null);
+    // The past-year hint is amber everywhere it shows (Stage 4c-2, C2-07: it was grey here); a nudge stays quiet grey.
+    const yearHint = f.pastYearHint ? pastYearHint(value, thisYear) : null;
+    const hint = yearHint ? null : (f.nudge && value.trim() && !mistake ? f.nudge(value.trim()) : null);
     const listId = f.suggestions ? `${id}-suggestions` : undefined;
     return (
       <label key={f.key} className={ck.field} htmlFor={id}>
@@ -136,6 +139,7 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
             onChange={e => set(f.key, e.target.value)} />
         )}
         {listId && <datalist id={listId}>{f.suggestions!.map(s => <option key={s} value={s} />)}</datalist>}
+        {yearHint && <p className={styles.yearHint}>{yearHint}</p>}
         {hint && <p className={ck.hint}>{hint}</p>}
       </label>
     );

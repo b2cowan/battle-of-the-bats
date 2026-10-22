@@ -85,8 +85,8 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to add a team and start its first season',
       summary: 'Add the team once, start its first season, then invite its head coach.',
-      keywords: ['create rep team', 'add team', 'first season', 'program year', 'season', 'team setup', 'team details', 'archive team', 'bring back'],
-      searchText: 'create rep team add team first season start the first season program year season name year public address slug sport division colour group description team details autosave saved archive team bring back team places plan limit',
+      keywords: ['create rep team', 'add team', 'first season', 'program year', 'season', 'team setup', 'team details', 'archive team', 'bring back', 'birth years', 'birth year', 'born', 'age group', 'age', 'who can play', 'cut-off', 'birthday'],
+      searchText: 'create rep team add team first season start the first season program year season name year public address slug sport division colour group description team details autosave saved archive team bring back team places plan limit birth years for the season born year boxes empty box no limit on that side families see born 2012–2013 born 2012 or later born 2008 or earlier birthdays count from change in settings use a four-digit year a birth year can’t be after put the earlier year first families see no birth years yet age birth year range',
       content: (
         <>
           <ol>
@@ -95,6 +95,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Invite the team&apos;s head coach from <strong>Coaches</strong> (see How to invite a coach).</li>
           </ol>
           <p>Change a team&apos;s name, group, division, colour, sport or description in <strong>Team details</strong> on its page — it saves as you type. The division is what coaches see in their Team settings; only the club changes it. <strong>Archive team</strong> sits there too: it hides the team from your lists and frees its place on your plan, keeps its seasons and history, and <strong>Bring back</strong> undoes it.</p>
+          <p>Next to Division, <strong>Birth years for the season</strong> has two year boxes: the earliest and the latest birth year that can play. Families read it on your public site as <strong>Born 2012&ndash;2013</strong>. An empty box means no limit on that side (<strong>Born 2012 or later</strong>, <strong>Born 2008 or earlier</strong>), and with both empty families see no birth years. A year that isn&apos;t four digits, is in the future or is the wrong way round is held with the reason under the boxes until you fix it. The years belong to the live season, and <strong>Start next season</strong> moves them one year later and says so on the team page. Below the boxes, a line says when your sport&apos;s birthdays count from; the owner can <strong>Change in Settings</strong> (see <em>Settings and your web address</em>).</p>
         </>
       ),
       faqs: [
@@ -115,13 +116,13 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to start the next season, close one, or reopen it',
       summary: 'Start next season carries the team forward; Close the season ends it for a team that isn’t coming back; Reopen undoes a close.',
-      keywords: ['start next season', 'close the season', 'reopen', 'season end', 'rollover', 'what carries over', 'unsettled money', 'two seasons open'],
-      searchText: 'start next season close the season reopen closed this by mistake season end rollover roll forward what carries over roster budget plan fee plan opening balance returning players history staff stays schedule tryouts documents start fresh unsettled money families owe dues money waiting to go back warns never blocks coaches are told notification two seasons open',
+      keywords: ['start next season', 'close the season', 'reopen', 'season end', 'rollover', 'what carries over', 'unsettled money', 'two seasons open', 'birth years move', 'birth year'],
+      searchText: 'start next season close the season reopen closed this by mistake season end rollover roll forward what carries over roster budget plan fee plan opening balance returning players history staff stays schedule tryouts documents start fresh unsettled money families owe dues money waiting to go back warns never blocks coaches are told notification two seasons open birth years moved one year later when the season started if this team keeps its players change it back born',
       content: (
         <>
           <p>A club team&apos;s seasons are the club&apos;s to change. The team page carries the doors, and the team&apos;s coaches are told each time.</p>
           <ul>
-            <li><strong>Start next season</strong> closes the current season and starts the next one with the team in it: the roster, the budget and the fee plan (both optional), the opening balance, and each returning player&apos;s history. The coaching staff stays. The schedule, tryouts and player documents start fresh.</li>
+            <li><strong>Start next season</strong> closes the current season and starts the next one with the team in it: the roster, the budget and the fee plan (both optional), the opening balance, and each returning player&apos;s history. The coaching staff stays. The schedule, tryouts and player documents start fresh. The team&apos;s <strong>birth years</strong> move one year later, with a note on the team page — if the team keeps its players, change them back.</li>
             <li><strong>Close the season</strong> ends it and starts nothing — for a team that isn&apos;t coming back. Nothing is deleted; the season becomes a record.</li>
             <li><strong>Reopen</strong> — on a closed team&apos;s page, &ldquo;Closed this by mistake?&rdquo; brings the season back. It&apos;s offered only while no season is live.</li>
           </ul>
@@ -145,19 +146,35 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to open tryouts and review applicants',
       summary: 'Tryouts run on the team’s live season: open sign-ups, share the team’s link, and decide in each applicant’s window.',
-      keywords: ['tryouts', 'open sign-ups', 'close sign-ups', 'applicants', 'offer', 'waitlist', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself', 'tryouts open', 'open now', 'tryout link', 'too many attempts', 'copy link', 'reference number', 'application reference', 'tryouts page', 'tryout days', 'not open yet', 'link preview', 'share card'],
-      searchText: 'open tryouts review applicants reference number application reference sign-ups open sign-ups close sign-ups copy link team tryout address public tryout form tryouts open open now home page teams page front page where do families apply family cannot submit too many attempts pending review extend offer waitlist add to roster decline final mark withdrawn add applicant consent guardian privacy PIPEDA CASL export no emails sent to families decisions recorded only you tell families yourself closed season record coach runs the tryout same list tryouts page tryouts tab tryout days public club site not open yet finished tryouts closed directions sign up for tryouts link preview share card shared link',
+      keywords: ['tryouts', 'open sign-ups', 'close sign-ups', 'applicants', 'offer', 'waitlist', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself', 'tryouts open', 'open now', 'tryout link', 'too many attempts', 'copy link', 'reference number', 'application reference', 'tryouts page', 'tryout days', 'not open yet', 'link preview', 'share card', 'from the club', 'tryout blurb', 'what to bring', 'cost', 'birth year', 'born'],
+      searchText: 'from the club blurb note to families what it costs who can try out what to bring when families hear back 500 characters start from last season’s words mentions 2025 still true saves as you type born birth years born 2012–2013 open tryouts review applicants reference number application reference sign-ups open sign-ups close sign-ups copy link team tryout address public tryout form tryouts open open now home page teams page front page where do families apply family cannot submit too many attempts pending review extend offer waitlist add to roster decline final mark withdrawn add applicant consent guardian privacy PIPEDA CASL export no emails sent to families decisions recorded only you tell families yourself closed season record coach runs the tryout same list tryouts page tryouts tab tryout days public club site not open yet finished tryouts closed directions sign up for tryouts link preview share card shared link',
       content: (
-        <>
-          <p>A tryout belongs to the team&apos;s <strong>live season</strong> — the same list the coach sees in their portal, where they run the sessions, scoring and decisions.</p>
-          <ol>
-            <li>Open the team and go to <strong>Tryouts</strong>. In <strong>Sign-ups</strong>, press <strong>Open sign-ups</strong>. While they are open, your club&apos;s public home page lists the tryout under <strong>Open now</strong> and marks the team <strong>Tryouts open</strong> on your home page and your Teams page, and <strong>Copy link</strong> gives you the team&apos;s own tryout address — it names the team, so it keeps working from one season to the next. The team also appears on your club&apos;s <strong>Tryouts</strong> page, and the tryout days the coach entered in the tryout setup are public there (see <strong>Your public organization page</strong> in the club guide).</li>
-            <li>Applications arrive in <strong>Pending review</strong>. Open one to decide: <strong>Extend offer</strong>, <strong>Waitlist</strong>, <strong>Add to roster</strong> once the family says yes, or <strong>Decline</strong>. A decline is final, so it asks first. Every decision is recorded and <strong>nothing is emailed</strong> — you reach the family yourself. Under the applicant&apos;s name is the <strong>reference</strong> from the family&apos;s confirmation screen and email, so a family who quotes it can be matched.</li>
-            <li>Press <strong>Close sign-ups</strong> when you&apos;re done; the address then tells families sign-ups aren&apos;t open. With days still ahead the team reads <strong>Not open yet</strong>; once every day has passed, <strong>Finished</strong>.</li>
-          </ol>
-          <p>A closed season&apos;s tryout is a record: no sign-ups and no decisions. To take sign-ups for next year, start the next season first. The list shows each family&apos;s <strong>Consent</strong> date, and <strong>Export</strong> gives the consent record too. Use <strong>Add applicant</strong> for someone who applied outside the form (they carry no form consent).</p>
-        </>
+        <p>Tryouts run on the team&apos;s live season: you open sign-ups, share the team&apos;s link and decide in each applicant&apos;s window, and you write the note families read on the tryout page.</p>
       ),
+      subtopics: [
+        {
+          id: 'recipe-open-tryouts-steps',
+          title: 'Open sign-ups and decide on applicants',
+          content: (
+            <>
+              <p>A tryout belongs to the team&apos;s <strong>live season</strong> — the same list the coach sees in their portal, where they run the sessions, scoring and decisions.</p>
+              <ol>
+                <li>Open the team and go to <strong>Tryouts</strong>. In <strong>Sign-ups</strong>, press <strong>Open sign-ups</strong>. While they are open, your club&apos;s public home page lists the tryout under <strong>Open now</strong> and marks the team <strong>Tryouts open</strong> on your home page and your Teams page, and <strong>Copy link</strong> gives you the team&apos;s own tryout address — it names the team, so it keeps working from one season to the next. The team also appears on your club&apos;s <strong>Tryouts</strong> page, and the tryout days the coach entered in the tryout setup are public there (see <strong>Your public organization page</strong> in the club guide).</li>
+                <li>Applications arrive in <strong>Pending review</strong>. Open one to decide: <strong>Extend offer</strong>, <strong>Waitlist</strong>, <strong>Add to roster</strong> once the family says yes, or <strong>Decline</strong>. A decline is final, so it asks first. Every decision is recorded and <strong>nothing is emailed</strong> — you reach the family yourself. Under the applicant&apos;s name is the <strong>reference</strong> from the family&apos;s confirmation screen and email, so a family who quotes it can be matched.</li>
+                <li>Press <strong>Close sign-ups</strong> when you&apos;re done; the address then tells families sign-ups aren&apos;t open. With days still ahead the team reads <strong>Not open yet</strong>; once every day has passed, <strong>Finished</strong>.</li>
+              </ol>
+              <p>A closed season&apos;s tryout is a record: no sign-ups and no decisions. To take sign-ups for next year, start the next season first. The list shows each family&apos;s <strong>Consent</strong> date, and <strong>Export</strong> gives the consent record too. Use <strong>Add applicant</strong> for someone who applied outside the form (they carry no form consent).</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-open-tryouts-from-the-club',
+          title: 'The From the club note',
+          content: (
+            <p><strong>From the club</strong>, under <strong>Sign-ups</strong> on a team&apos;s Tryouts page, is your note to families — what it costs, who can try out, what to bring and when they hear back, up to 500 characters. It saves as you type. Families read it on the team&apos;s tryout page, above <strong>Sign up for tryouts</strong>, before sign-ups open and while they are open; once the tryout is finished or closed, the page no longer shows it. <strong>Start from last season&apos;s words</strong> copies last season&apos;s note into an empty box, and an amber <strong>Mentions 2025 &mdash; still true?</strong> reminds you of a year to check (it never stops you, and birth years don&apos;t trigger it). The tryout page also shows the team&apos;s <strong>Born</strong> years from Team details.</p>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-tryout-consent',

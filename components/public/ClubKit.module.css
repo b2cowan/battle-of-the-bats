@@ -165,6 +165,12 @@
   color: var(--club-text);
 }
 
+/* The Born in pill's row (Stage 4c-2): the pill keeps its own width, left, under the title block. */
+.pickRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .list {
   border: 1px solid var(--club-line);
   border-radius: 8px;

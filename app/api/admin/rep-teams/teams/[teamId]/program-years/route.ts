@@ -5,6 +5,7 @@ import { projectMembershipsOntoProgramYear } from '@/lib/coach-membership';
 import { tellClubTeamStaff } from '@/lib/club-season-notify';
 import { resolveClubTeam } from '@/lib/club-team-route';
 import { isLiveSeasonStatus } from '@/lib/season-live';
+import { blurbFromBody } from '@/lib/program-year-patch';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async (_req: Request,
@@ -55,6 +56,10 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
+  // The tryout blurb (E10/E11): over the cap or not text is a worded 400, never the database's 500.
+  const blurb = blurbFromBody(body.tryoutDescription);
+  if ('error' in blurb) return NextResponse.json({ error: blurb.error }, { status: 400 });
+
   try {
     // ⚠ LIVE FROM THE START: a season is live when it is draft or active, and "Draft" is no longer a
     // preparation state anywhere a club reads (Ask 1). The first season is created active.
@@ -63,7 +68,7 @@ export const POST = withObservability(async (req: Request,
       year,
       status: 'active',
       tryoutOpen: body.tryoutOpen === true,
-      tryoutDescription: body.tryoutDescription?.trim() || null,
+      tryoutDescription: blurb.text,
     });
     // M1 (2026-08-16): the new season's staff RECORD is written from the team's memberships the
     // moment the year exists. Before this, a fresh year started with ZERO coach rows and the

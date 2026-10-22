@@ -46,7 +46,7 @@ line 2 ("Leave a box empty...") shows **only while both boxes are empty**. When 
 | A10 | Hint, other cut-off, to-date only | `Families see "Born before Sep 1, 2014".` | Ruled line. |
 | A11 | Hint, other cut-off, from-date only | `Families see "Born on or after Sep 1, 2013".` | Ruled line. |
 | A12 | Both empty | No family line anywhere. The hint is A4. | Never "Born —" or "All ages". |
-| A13 | Cut-off line, January 1 | `{Sport} birthdays count from January 1.` then the link `Change in Settings` | Link only for a person who can open Settings (owner, admin); otherwise the sentence alone. |
+| A13 | Cut-off line, January 1 | `{Sport} birthdays count from January 1.` then the link `Change in Settings` | Link only for the owner (the only person who can open Settings, owner ruling 2026-10-22); an admin reads the sentence alone. |
 | A14 | Cut-off line, other date | `{Sport} birthdays count from {September 1}.` then `Change in Settings` | Same. |
 | A15 | Held, not a four-digit year | `Use a four-digit year, like 2013, to save it.` | As drawn. |
 | A16 | Held, in the future | `A birth year can't be after {this year}.` | As drawn. |
@@ -78,14 +78,14 @@ Old-look windows keep their look and their Save. Edit is the same.
 | C1 | Card title | `When birthdays count from` | |
 | C2 | Lead | `Teams and house-league divisions show who can play by birth year, counted from this date. Most leagues count from January 1.` | As drawn. |
 | C3 | Row label | `{Sport}` | One row per sport the club runs. |
-| C4 | Row sub-line | `{n} rep team(s)[, {n} house-league season(s)]. Families see "{example}".` | See plurals below. The example is a real line from the club's own teams of that sport (the first team with years, by name), counted with the saved date. Nothing to show: `{n} rep team(s)[, ...]. No birth years entered yet.` |
+| C4 | Row sub-line | `{n} rep team(s)[, {n} house-league season(s)]. Families see "{example}".` | See plurals below. The example is a real line from the club's own teams of that sport (the first team by name with both years, else the first with one; /design 2026-10-22), counted with the saved date. Nothing to show: `{n} rep team(s)[, ...]. No birth years entered yet.` |
 | C5 | Row value | Month dropdown (`January` to `December`) and day dropdown (`1` to the last day; February stops at 28) | Accessible names: `{Sport} birthdays count from, month` and `{Sport} birthdays count from, day` (K7). |
 | C6 | Ask-once title | `Count {softball} birthdays from {September 1}?` | The sport is lower-cased inside the sentence. For a sport with no natural lower-cased noun (`Other`) the window reads `Count birthdays from {September 1}?` and "Every team and house-league division". |
 | C7 | Ask-once body | `Every {softball} team and house-league division shows its birth years from {September 1}, on your site. {13U Softball} will read "Born Sep 1, 2013 – Aug 31, 2015". Nothing is sent to families.` | **Changed.** Drawn: "on your site and in your forms". The spec's "where they show" never puts a birth year in a sign-up form. The example sentence is dropped when no team of that sport has years. When C12 applies, its sentence follows this one. |
 | C8 | Ask-once buttons | `Keep {January 1}` · `Change` | HR-7: "Keep" names the date being kept (the current saved date). × and Esc do the same as Keep. Buttons together at the right. |
 | C9 | After Change | The house pill: `Saved`; on failure `Couldn't save · Retry` (Retry sends the change again); the dropdown shows the saved date until it lands. | GAP filled. The Settings page's other card keeps its held Save and its `Settings saved.` banner; this card has no Save button, so it uses the pill. |
 | C10 | Club with no sport yet | `Your sports show here once you add a rep team or a house-league season.` in place of the rows | GAP filled. |
-| C11 | Who | Owner and admin (ruled), as Settings; no read-only text. API refusal: `Only an owner or admin can change when birthdays count from.` | GAP filled. A staff member without Settings access never reaches the card. |
+| C11 | Who | **Owner only** (owner ruling 2026-10-22, superseding "owner and admin"; Stage 13 may revisit), as Settings; no read-only text. API refusal for an admin: the existing `Only the owner can change this.` | GAP filled. Anyone but the owner never reaches the card. |
 | C12 | **RULED 2026-10-22 (option a).** A cut-off moved away from January 1 while a team or division of that sport covers a single year | See the block below. | New row. |
 
 **Plurals (C4, and wherever a count is spoken):** `1 rep team` / `{n} rep teams`; `1 house-league season` / `{n} house-league seasons`; a zero part is left out of the sentence.
@@ -289,7 +289,7 @@ I7 changes the ruled accessible name (`Copy email address`): two identical butto
 | K5 | Year boxes | January 1: `Earliest birth year` and `Latest birth year`. Other cut-off: `Earliest birth year, counted from {Sep 1}` and `Latest birth year, up to {Aug 31}`. |
 | K6 | Blurb | Named by its label `From the club`; the counter is read as `{n} of 500 characters`, polite. |
 | K7 | Cut-off dropdowns | See C5. |
-| K8 | API refusals | Years: A15, A16, A17 or A18. Blurb: E10, E11. Cut-off: `Pick a month and day from the lists.` Unknown sport: `That isn't a sport your club runs.` Tryout address: H5, H6, H14. Reset with none set: `No coach address is set on this page.` Not owner/admin: C11. Anything else: `Couldn't save your changes. Try again.` (existing) |
+| K8 | API refusals | Years: A15, A16, A17 or A18. Blurb: E10, E11. Cut-off: `Pick a month and day from the lists.` Unknown sport: `That isn't a sport your club runs.` Tryout address: H5, H6, H14. Reset with none set: `No coach address is set on this page.` Not the owner: C11. Anything else: `Couldn't save your changes. Try again.` (existing) |
 | K9 | Name switch | The portal's pill: `Saved` / `Couldn't save · Retry`. Refusal for another person's switch: `You can only change your own setting.` |
 | K10 | Names and addresses in the drawings | Sample data, not copy. |
 | K11 | Help articles | `/docs` owes Team details, house-league divisions, Settings, the admin Tryouts page, the coach's Sharing and tryout setup, and the public-site articles (keywords and `searchText` too: one spelling). |

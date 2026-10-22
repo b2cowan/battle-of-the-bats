@@ -79,6 +79,11 @@
   --border:        var(--club-line);
   --border-2:      var(--club-line);
   --border-subtle: var(--club-line);
+  /* The shared pick-one pill's panel and phone sheet (the Born in pill, Stage 4c-2) read the warm portal's own names too;
+     a club page has no bottom bar, so nothing lifts the sheet off the screen's foot. */
+  --home-card:        var(--club-card);
+  --home-line-strong: var(--club-line-2);
+  --coach-foot-clear: 0px;
   /* Accent as TEXT is the club's ink; the dark ground's lime and structural blue have no place on the club's site. */
   --primary:            var(--club-fill);
   --primary-rgb:        var(--club-fill-rgb);

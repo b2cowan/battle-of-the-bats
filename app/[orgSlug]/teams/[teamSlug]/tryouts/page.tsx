@@ -4,6 +4,7 @@ import TryoutLandingView from '@/components/rep-teams/TryoutLandingView';
 import { resolvePublicTryout, publicTryoutRegisterHref } from '@/lib/public-tryout';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import { readTeamTryout } from '@/lib/club-tryouts';
+import { bornFactsOf } from '@/lib/club-born-public';
 import { tournamentToday } from '@/lib/timezone';
 import { teamTryoutPageMeta } from './tryout-metadata';
 
@@ -29,7 +30,7 @@ export default async function TeamTryoutsPage({
   const { orgSlug, teamSlug } = await params;
   const resolved = await resolvePublicTryout(orgSlug, teamSlug);
   if (!resolved) notFound();
-  const { team, seasons, contactEmail } = resolved;
+  const { org, team, seasons, contactEmail } = resolved;
   const today = tournamentToday();
   const { season, standing } = await readTeamTryout(team, seasons, today);
   return (
@@ -39,6 +40,7 @@ export default async function TeamTryoutsPage({
       team={{ name: team.name, sport: team.sport }}
       state={standing.state}
       season={season ? { year: season.year ?? null, name: season.name, tryoutDescription: season.tryoutDescription } : null}
+      born={season ? bornFactsOf({ from: season.bornFromYear, to: season.bornToYear }, org.birthdayCutoffs, team.sport).meta : null}
       upcoming={standing.upcoming}
       lastDay={standing.lastDay}
       today={today}

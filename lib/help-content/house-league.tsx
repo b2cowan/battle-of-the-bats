@@ -54,12 +54,13 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Creating and configuring a season',
       summary: 'Set the season basics, registration window, fee, and automation, then add divisions.',
-      keywords: ['create season', 'season setup', 'divisions', 'capacity', 'automation', 'registration fee', 'waiver'],
-      searchText: 'create season setup name slug sport division registration opens closes fee waiver automation auto approve waitlist accounting divisions capacity public url',
+      keywords: ['create season', 'season setup', 'divisions', 'capacity', 'automation', 'registration fee', 'waiver', 'birth years', 'birth year', 'born', 'age', 'cut-off', 'birthday', 'add division', 'edit division'],
+      searchText: 'create season setup name slug sport division registration opens closes fee waiver automation auto approve waitlist accounting divisions capacity public url add division edit division birth years born 2014–2015 families see born beside this division empty box no limit on that side birthdays count from age group',
       content: (
         <>
           <p>From the House league page, click <strong>Create season</strong>. The create form collects the season basics (name, URL slug, sport, an age/division label) and lets you set the <strong>registration open and close dates</strong>, a <strong>registration fee</strong>, <strong>waiver text</strong>, and the <strong>automation</strong> toggles right away. The slug appears in public URLs — choose it carefully.</p>
           <p>After creating the season, open it and add <strong>divisions</strong>. Each division is a sub-group within the season (e.g., "Division A", "Girls U11") with its own registration list, teams, schedule, and standings. Set a capacity per division to automatically cap registrations and start a waitlist. (On the free League plan, a season includes one division.)</p>
+          <p>In <strong>Add division</strong> and <strong>Edit division</strong>, <strong>Birth years</strong> has two year boxes. Families read them beside the division on your public House league page as <strong>Born 2014&ndash;2015</strong>. An empty box means no limit on that side, and with both empty families see no birth years for the division. The window holds a year that isn&apos;t four digits, is in the future or is the wrong way round, with the reason under the boxes, and won&apos;t save until it&apos;s fixed. Under the boxes, a line says when your sport&apos;s birthdays count from; the owner sets that in <strong>Settings</strong>.</p>
           <p>The <strong>Automation</strong> settings control whether registrations are auto-approved when a division has open spots, and whether the waitlist auto-promotes when a spot opens. Fees reach your accounting books when you mark a registration&apos;s fee paid, not when you approve it (see <em>The season ledger and emailing the season</em>).</p>
         </>
       ),

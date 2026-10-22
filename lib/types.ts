@@ -278,6 +278,9 @@ export interface Organization {
    * predates the migration, so the feature is absent until someone decides otherwise.
    */
   clubBookSharingEnabled: boolean;
+  /** When birthdays count from, per normalized sport id (mig 349, Stage 4c-2). Absent sport = January 1. Read it
+   *  through `cutoffFor()` in lib/born-years.ts, never directly. */
+  birthdayCutoffs?: Record<string, { m: number; d: number }>;
 }
 
 export interface OrganizationMember {
@@ -971,6 +974,9 @@ export interface LeagueDivision {
   name: string;
   capacity: number | null;
   sortOrder: number;
+  /** Birth years (mig 349, Stage 4c-2): read through lib/born-years.ts with the season's sport's cut-off. */
+  bornFromYear: number | null;
+  bornToYear: number | null;
   createdAt: string;
 }
 
@@ -1229,6 +1235,12 @@ export interface RepProgramYear {
   status: RepProgramYearStatus;
   tryoutOpen: boolean;
   tryoutDescription: string | null;
+  /** The season's birth years (mig 349, Stage 4c-2): read through lib/born-years.ts with the club's cut-off for the
+   *  team's sport. An empty side is no limit on that side. */
+  bornFromYear: number | null;
+  bornToYear: number | null;
+  /** Start next season wrote the pair one year later; the note under the boxes shows until the club saves them. */
+  bornYearsCarried: boolean;
   budgetAmount: number | null;
   autoRemindersEnabled: boolean;
   /** How this team's dues credits meet its bills (mig 233, owner Call 2 2026-08-14). */

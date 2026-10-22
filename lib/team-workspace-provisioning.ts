@@ -140,6 +140,10 @@ function mapProgramYear(row: RepProgramYearRow): RepProgramYear {
     status: row.status,
     tryoutOpen: row.tryout_open,
     tryoutDescription: row.tryout_description,
+    // A standalone team's first season: no birth years yet (mig 349).
+    bornFromYear: null,
+    bornToYear: null,
+    bornYearsCarried: false,
     budgetAmount: row.budget_amount != null ? Number(row.budget_amount) : null,
     autoRemindersEnabled: row.auto_reminders_enabled ?? true,
     // Same normalization as mapRepProgramYear (lib/db.ts) — the two mappers must agree.

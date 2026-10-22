@@ -19,6 +19,7 @@
  */
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { AlertTriangle, Book, Building2, CalendarCheck, CalendarPlus, ExternalLink, Lock, RotateCcw } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { WHAT_THE_CLUB_SEES_3B } from '@/lib/club-money-words';
@@ -28,6 +29,7 @@ import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import type { TeamCapRefusal } from '@/components/admin/kit/club/TeamCapDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import { BornHeld, BornYearsBoxes } from '@/components/admin/kit/club/BornYears';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, kit } from '@/components/coaches/kit';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import {
@@ -42,6 +44,11 @@ import {
   FIRST_SEASON_TITLE, closedCardLine, firstSeasonLine, reopenLink, startButton, twoOpenBody, twoOpenTitle,
 } from '@/lib/club-season-words';
 import { formatStoredDate } from '@/lib/timezone';
+import {
+  bornHint, bornShowable, checkBornYears, cutoffFor, cutoffSentence, unshowableHeld, type BornYears,
+} from '@/lib/born-years';
+import { liveSeasonOf } from '@/lib/season-live';
+import { seasonPhrase } from '@/lib/season-phrase';
 import { pluralize, possessive } from '@/lib/utils';
 import { OFFERED_SPORT_OPTIONS } from '@/lib/sports';
 import type { ClubBoardRow } from '@/lib/club-team-board';
@@ -76,19 +83,28 @@ interface StaffRow { membershipId: string; userId: string; name: string | null; 
 interface InviteRow { id: string; email: string; coachRole: string; kindWord: string; status: string; invitedAt: string; expired: boolean }
 interface CoachesRead { staff: StaffRow[]; invitations: InviteRow[] }
 
-type Details = { name: string; groupId: string; division: string; color: string; sport: string; description: string };
+/** `bornFrom` / `bornTo` are the LIVE SEASON's birth years (typed text, so a half-typed value is held, not lost). */
+type Details = {
+  name: string; groupId: string; division: string; color: string; sport: string; description: string;
+  bornFrom: string; bornTo: string;
+};
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
-function detailsOf(team: RepTeam): Details {
+function detailsOf(team: RepTeam, season: RepProgramYear | null): Details {
   return {
     name: team.name, groupId: team.groupId ?? '', division: team.division ?? '', color: team.color ?? '',
     sport: team.sport ?? '', description: team.description ?? '',
+    bornFrom: season?.bornFromYear != null ? String(season.bornFromYear) : '',
+    bornTo: season?.bornToYear != null ? String(season.bornToYear) : '',
   };
 }
-const detailsSig = (d: Details) => JSON.stringify({
+/** The team's own fields — what the team PATCH carries. The birth years go to the SEASON's PATCH. */
+const teamPartSig = (d: Details) => JSON.stringify({
   name: d.name.trim(), groupId: d.groupId, division: d.division.trim(), color: d.color.trim(), sport: d.sport,
   description: d.description.trim(),
 });
+const bornPartSig = (d: Details) => JSON.stringify({ from: d.bornFrom.trim(), to: d.bornTo.trim() });
+const detailsSig = (d: Details) => `${teamPartSig(d)}|${bornPartSig(d)}`;
 
 export default function TeamPage({ params }: { params: Promise<{ orgSlug: string; teamId: string }> }) {
   const { orgSlug, teamId } = use(params);
@@ -186,6 +202,8 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   const liveYear = live ? read.programYears.find(py => py.id === live.id) ?? null : null;
   const openCount = preflight?.openSeasons.length ?? seasons.filter(s => s.isLive).length;
   const lastClosed = !live ? seasons.find(s => !s.isLive) ?? null : null;
+  // The season whose birth years Team details edits: the team's live season — the newest one if two are open.
+  const birthSeason = liveSeasonOf(read.programYears);
   const headCoachName = board.headCoach.people[0]?.name ?? null;
   const rollsFromRoster = seasons.find(s => s.id === preflight?.rollsFrom?.id)?.rosterCount ?? live?.rosterCount ?? 0;
 
@@ -333,11 +351,14 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
       {!team.isArchived && <WhatTheClubSees />}
       {!team.isArchived && (
         <TeamDetails
-          key={team.id}
+          key={`${team.id}:${birthSeason?.id ?? ''}`}
           team={team}
+          season={birthSeason}
+          cutoffs={currentOrg?.birthdayCutoffs}
           groups={groups}
           orgSlug={orgSlug}
           canWrite={canWrite}
+          isOwner={userRole === 'owner'}
           onSaved={updated => setRead(r => (r ? { ...r, team: { ...r.team, ...updated } } : r))}
           onArchive={() => setWindowOpen('archive')}
         />
@@ -555,42 +576,92 @@ function WhatTheClubSees() {
  * is the real home of the coach's "Division is managed by your club admin"; archive lives here,
  * never as a row action.
  */
-function TeamDetails({ team, groups, orgSlug, canWrite, onSaved, onArchive }: {
+function TeamDetails({ team, season, cutoffs, groups, orgSlug, canWrite, isOwner, onSaved, onArchive }: {
   team: RepTeam;
+  /** The team's live season (the newest, if two are open): the birth years belong to it. Null = no pair. */
+  season: RepProgramYear | null;
+  cutoffs: unknown;
   groups: RepTeamGroup[];
   orgSlug: string;
   canWrite: boolean;
+  /** Settings is the owner's alone (owner ruling 2026-10-22): only the owner gets the "Change in Settings" link. */
+  isOwner: boolean;
   onSaved: (team: Partial<RepTeam>) => void;
   onArchive: () => void;
 }) {
-  const [form, setForm] = useState<Details>(() => detailsOf(team));
-  const [saved, setSaved] = useState<Details>(() => detailsOf(team));
+  const [form, setForm] = useState<Details>(() => detailsOf(team, season));
+  const [saved, setSaved] = useState<Details>(() => detailsOf(team, season));
   const sig = detailsSig(form);
+
+  // ── Birth years (Club Tier Stage 4c-2): the pair is the live season's, read against the sport's cut-off ──
+  const thisYear = new Date().getFullYear();
+  const cutoff = cutoffFor(cutoffs, form.sport);
+  const bornCheck = checkBornYears(form.bornFrom, form.bornTo, cutoff, thisYear);
+  const bornEdited = bornPartSig(form) !== bornPartSig(saved);
+  const savedPair: BornYears = {
+    from: saved.bornFrom.trim() ? Number(saved.bornFrom) : null, to: saved.bornTo.trim() ? Number(saved.bornTo) : null,
+  };
+  // A typed value that can't be saved is HELD with its reason (never saved, never swapped). A stored pair that the club's
+  // cut-off made unshowable is held AT REST (C12b): the old years stay in the boxes; nothing was typed, so no "to save it".
+  const bornHeld = season
+    ? bornEdited ? (bornCheck.ok ? null : bornCheck.held)
+      : bornShowable(savedPair, cutoff) ? null : unshowableHeld(cutoff, 'team')
+    : null;
   const blocked = !form.name.trim() ? 'Give the team a name to save it.'
     : form.color.trim() && !HEX.test(form.color.trim()) ? `Use a colour code like ${TEAM_COLOUR_EXAMPLE} to save it.`
+    : season && bornEdited && !bornCheck.ok ? bornCheck.held
     : null;
 
+  // The "moved one year later" note: while the pair is the roll's and the season's first game has not started (read now,
+  // from the season's own summary). It clears the moment the years are saved.
+  const [carried, setCarried] = useState(season?.bornYearsCarried ?? false);
+  const [gameStarted, setGameStarted] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!season || !season.bornYearsCarried) return;
+    let cancelled = false;
+    void fetch(`/api/admin/rep-teams/teams/${team.id}/program-years/${season.id}?orgSlug=${encodeURIComponent(orgSlug)}&include=firstGame`, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!cancelled && d?.summary) setGameStarted(Boolean(d.summary.firstGameStarted)); })
+      .catch(() => { /* no note rather than a wrong one */ });
+    return () => { cancelled = true; };
+  }, [season, team.id, orgSlug]);
+
   const write = useCallback(async (signal: AbortSignal) => {
-    const body: Record<string, unknown> = {
-      name: form.name.trim(), division: form.division.trim(), color: form.color.trim(), sport: form.sport,
-      description: form.description.trim(),
-    };
-    // The group is sent only when it changed: the server checks a group-limited member's scope on it.
-    if (form.groupId !== saved.groupId) body.groupId = form.groupId || null;
-    const res = await fetch(`/api/admin/rep-teams/teams/${team.id}?orgSlug=${encodeURIComponent(orgSlug)}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error ?? 'Couldn’t save');
-    // The SAVED record moves; the form is never reset, so keystrokes typed during the save stay.
-    const next = { ...form };
-    setSaved(next);
-    onSaved({
-      name: next.name.trim(), division: next.division.trim() || null, color: next.color.trim() || null, sport: next.sport,
-      description: next.description.trim() || null, groupId: next.groupId || null,
-      groupName: groups.find(g => g.id === next.groupId)?.name ?? null,
-    });
-  }, [form, saved.groupId, team.id, orgSlug, groups, onSaved]);
+    const teamPart = teamPartSig(form) !== teamPartSig(saved);
+    if (teamPart) {
+      const body: Record<string, unknown> = {
+        name: form.name.trim(), division: form.division.trim(), color: form.color.trim(), sport: form.sport,
+        description: form.description.trim(),
+      };
+      // The group is sent only when it changed: the server checks a group-limited member's scope on it.
+      if (form.groupId !== saved.groupId) body.groupId = form.groupId || null;
+      const res = await fetch(`/api/admin/rep-teams/teams/${team.id}?orgSlug=${encodeURIComponent(orgSlug)}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Couldn’t save');
+      // The SAVED record moves; the form is never reset, so keystrokes typed during the save stay.
+      const next = { ...form };
+      setSaved(s => ({ ...s, name: next.name, groupId: next.groupId, division: next.division, color: next.color, sport: next.sport, description: next.description }));
+      onSaved({
+        name: next.name.trim(), division: next.division.trim() || null, color: next.color.trim() || null, sport: next.sport,
+        description: next.description.trim() || null, groupId: next.groupId || null,
+        groupName: groups.find(g => g.id === next.groupId)?.name ?? null,
+      });
+    }
+    if (bornEdited && season) {
+      const from = form.bornFrom.trim();
+      const to = form.bornTo.trim();
+      const res = await fetch(`/api/admin/rep-teams/teams/${team.id}/program-years/${season.id}?orgSlug=${encodeURIComponent(orgSlug)}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, signal,
+        body: JSON.stringify({ bornFromYear: from ? Number(from) : null, bornToYear: to ? Number(to) : null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Couldn’t save');
+      setSaved(s => ({ ...s, bornFrom: from, bornTo: to }));
+      setCarried(false); // saving the years clears the carried marker on the server too
+    }
+  }, [form, saved, season, bornEdited, team.id, orgSlug, groups, onSaved]);
 
   const { saving, dirty, saveError, touch, handleSave } = useRecordAutosave({
     enabled: canWrite, loading: false, sig, blocked, write, failText: 'Couldn’t save',
@@ -612,6 +683,7 @@ function TeamDetails({ team, groups, orgSlug, canWrite, onSaved, onArchive }: {
     ? OFFERED_SPORT_OPTIONS
     : [...OFFERED_SPORT_OPTIONS, { id: form.sport, label: form.sport }];
   const publicHref = `/${orgSlug}/teams/${team.slug}`;
+  const sportLabel = sports.find(s => s.id === form.sport)?.label ?? form.sport;
 
   return (
     <ClubSection id="details" title="Team details">
@@ -633,6 +705,36 @@ function TeamDetails({ team, groups, orgSlug, canWrite, onSaved, onArchive }: {
             <input className={ck.input} value={form.division} maxLength={30} onChange={e => set({ division: e.target.value })} />
             <span className={ck.hint}>Coaches see this in their Team settings. Only the club changes it.</span>
           </label>
+          {season && (
+            <div className={ck.field} role="group" aria-labelledby="born-years-label">
+              <span id="born-years-label" className={ck.label}>Birth years for the {seasonPhrase(season.name)}</span>
+              <BornYearsBoxes
+                from={form.bornFrom}
+                to={form.bornTo}
+                onFrom={v => set({ bornFrom: v })}
+                onTo={v => set({ bornTo: v })}
+                cutoff={cutoff}
+                held={!!bornHeld}
+                describedBy={bornHeld ? 'born-years-held' : undefined}
+              />
+              {bornHeld ? (
+                <BornHeld id="born-years-held">{bornHeld}</BornHeld>
+              ) : (
+                <span className={ck.hint}>{bornHint(bornCheck.ok ? bornCheck.years : savedPair, cutoff)}</span>
+              )}
+              <span className={ck.hint}>
+                {cutoffSentence(sportLabel, cutoff)}
+                {isOwner && (
+                  <>{' '}<Link href={`/${orgSlug}/admin/org/settings`} className={repKit.inlineLink}>Change in Settings</Link></>
+                )}
+              </span>
+              {carried && gameStarted === false && (
+                <span className={ck.hint}>
+                  Moved one year later when the {seasonPhrase(season.name)} started. If this team keeps its players, change it back.
+                </span>
+              )}
+            </div>
+          )}
           <label className={ck.field}>
             <span className={ck.label}>Colour</span>
             <span className={repKit.fieldRow}>

@@ -1,0 +1,53 @@
+/* The two birth-year boxes and the lines under them (Club Tier Stage 4c-2). The box itself is the kit's field
+   (`ClubKit.module.css` .input: 36px on a computer, the tap floor on a phone); this file only lays the pair out. */
+.years {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* Two four-digit years fit side by side in 390 (a phone's 44px height comes from the kit's input). */
+.box { width: 6rem; flex: none; }
+/* With a date written before it ("Sep 1,") the box is narrower: the date carries the meaning. */
+.boxAffixed { width: 4.75rem; flex: none; }
+.affix { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
+.dash { color: var(--text-tertiary); }
+/* A held box is marked, not only captioned (the red edge, as the site editor's refused field). */
+.boxHeld { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+.held {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--danger-light);
+}
+/* The past-year hint: amber, never a block. The same ink as the site editor's `.yearHint`. */
+.yearHint {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--warning);
+}
+/* The "From the club" box: the counter sits at the left under it, the amber hint above the counter. */
+.stack { display: flex; flex-direction: column; gap: 0.3rem; }
+.counter { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.door {
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.door:hover { color: var(--text-primary); }
+@media (max-width: 768px) {
+  .door { min-height: var(--tap-min, 44px); display: inline-flex; align-items: center; }
+}
+
+/* /design 2026-10-22: the blurb stands clear of the Sign-ups line above it, and its box keeps a readable measure (the drawn ~640px) at a desk. */
+.blurbField { padding-top: 0.9rem; } /* padding: the kit field owns its margin */
+.blurbBox { max-width: 40rem; }
