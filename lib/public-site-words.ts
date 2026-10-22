@@ -78,7 +78,7 @@ export const PUBLIC_SITE_WORDS = {
   stockTitle: 'Choose a stock logo',
   useThisLogo: 'Use this logo',
   // "Use", as the server's own refusal says it (app/api/admin/org-logo-stock) — and never "unlock" (brand voice).
-  stockLocked: (plan: string) => `Upgrade to ${plan} to use this icon.`,
+  stockLocked: (plan: string) => `Upgrade to ${plan} to use this logo.`,
   lookFailed: "Couldn't save the look. Try again.",
 
   // Visibility (moved in from Settings; the owner's alone, Option A)
@@ -115,7 +115,7 @@ export const PUBLIC_SITE_WORDS = {
   loading: 'Loading the public site…',
   loadFailed: "Couldn't load the public site.",
   noAccessTitle: 'Access restricted',
-  noAccess: "You don't have access to the public site. Ask your organization's owner.",
+  noAccess: "You don't have access to the public site. Ask the owner.",
   readOnly: 'Only an owner or admin can change the public site.',
 
   // Home page
@@ -130,7 +130,7 @@ export const PUBLIC_SITE_WORDS = {
   // About the club
   aboutCard: 'About the club',
   tagline: 'Tagline',
-  taglinePlaceholder: 'Rep baseball, ages 9 to 16',
+  taglinePlaceholder: 'Rep teams, ages 9 to 16',
   taglineHint: (n: number, max: number) => `One line under your name. ${n} / ${max}`,
   about: 'About',
   aboutPlaceholder: 'Who you are, who plays, and when your season runs.',
@@ -153,7 +153,7 @@ export const PUBLIC_SITE_WORDS = {
   notice: 'Club notice',
   noticeLead: 'One line at the top of every public page, such as a field closure. It ends by itself.',
   noticeField: 'Notice',
-  noticePlaceholder: 'All diamonds are closed tonight',
+  noticePlaceholder: 'All fields are closed tonight',
   detailField: 'More detail',
   detailPlaceholder: 'Rain. Every game and practice tonight is cancelled.',
   ends: 'Ends',

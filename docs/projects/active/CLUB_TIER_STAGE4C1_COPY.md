@@ -59,7 +59,7 @@
 | Element | Copy |
 |---|---|
 | Card title | About the club |
-| Tagline | label **Tagline** · placeholder Rep baseball, ages 9 to 16 · hint One line under your name. {n} / 100 |
+| Tagline | label **Tagline** · placeholder Rep teams, ages 9 to 16 (was "Rep baseball", sport-neutral 2026-10-22) · hint One line under your name. {n} / 100 |
 | About | label **About** · placeholder Who you are, who plays, and when your season runs. · hint {n} / 1000 |
 | Contact | label **Families' questions go to** · placeholder info@yourclub.ca · hint Shown in your footer and on every team and tryout page. |
 | Bad email | That doesn't look like an email address. |
@@ -96,7 +96,7 @@
 |---|---|
 | Card title | Club notice |
 | Lead | One line at the top of every public page, such as a field closure. It ends by itself. |
-| Notice | label **Notice** · placeholder All diamonds are closed tonight · hint {n} / 80 |
+| Notice | label **Notice** · placeholder All fields are closed tonight (was "diamonds", sport-neutral 2026-10-22) · hint {n} / 80 |
 | More detail | label **More detail** (optional) · placeholder Rain. Every game and practice tonight is cancelled. · hint {n} / 200 |
 | Ends | label **Ends** · options: **Tonight** · **Tomorrow night** · **Pick a date and time** (date field, time field, default 8:00 p.m.). No "never". (Owner 2026-10-21, after /design: "Tomorrow at midnight" read as tonight; the banner's own words.) |
 | Past time picked | Pick a time that hasn't passed yet. |
@@ -199,6 +199,27 @@ The product never writes a notice for the club and never posts one by itself.
 | Bad link | That isn't a web address. Paste the link, starting with https:// |
 | Too many | You have {n} {contacts / documents / questions}. Remove one to add another. |
 | Generic | Couldn't save your changes. Try again. |
+
+## K2 · The Public site builder's words (`/marketing` review, owner-approved 2026-10-22)
+
+The builder's words are in `lib/public-site-words.ts` (the "builder" block) and the editor's help article
+(`public-site-editor` in `lib/help-content/org.tsx`). Six changes approved and applied; a seventh was dropped on evidence.
+
+| Where | Was | Now |
+|---|---|---|
+| Stock logo locked, in the window and in the server's refusal | Upgrade to {plan} to use this icon. | Upgrade to {plan} to use this logo. (one word for the thing) |
+| No access to the editor | …Ask your organization's owner. | …Ask the owner. |
+| Notice placeholder, help step and search text | All diamonds are closed tonight | All fields are closed tonight |
+| Tagline placeholder | Rep baseball, ages 9 to 16 | Rep teams, ages 9 to 16 |
+| Help: the colour sentence | a sentence says who reads what | a line tells you what colour your text and links will be |
+| Help: Go live | a lime Go live button | a Go live button |
+| Help: the preview | a window 1200 pixels wide or more | a computer or any wide window |
+| Help: About's ready test | the questions address | the address families' questions go to |
+
+**Dropped — apostrophes.** The four curly-apostrophe strings in the words file (the site-on and site-off hints, the
+directory hint, the offline window's body) quote what families read on a club's "site isn't available" page, which is
+curly and guarded by `club-stage4a-guard.test.ts`. The editor's own strings stay straight, like the rest of the product's
+screens; help articles stay curly. The mix is by surface, not drift.
 
 ## L · Words that leave
 

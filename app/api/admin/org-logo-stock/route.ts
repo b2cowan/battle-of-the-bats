@@ -26,7 +26,7 @@ export const POST = withObservability(async (req: Request) => {
 
   if (PLAN_ORDER[org.planId] < PLAN_ORDER[logo.minPlan]) {
     return NextResponse.json(
-      { error: `Upgrade to ${logo.minPlan} to use this icon` },
+      { error: `Upgrade to ${logo.minPlan} to use this logo` },
       { status: 403 }
     );
   }
