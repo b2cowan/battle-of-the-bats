@@ -1,0 +1,412 @@
+<title>Team Payments List</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a control bar drives one working Payment block (desk size) beside the ledger it writes; above it the whole window before and after; below it the phone frame and three calls.
+   Page chrome is a cool paper-grey so the warm product frames read as specimens, not as the page. */
+:root {
+  --bg: #EEF0EC; --card: #FFFFFF; --fg: #1D2320; --muted: #5A645E; --line: #D5DAD3; --accent: #3F5A2A; --accent-soft: #E2EAD8; --warn: #8A5A12; --warn-soft: #F6EBD3; --bad: #8E2F25;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif; --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151A17; --card: #1E2521; --fg: #E6EBE4; --muted: #9AA59D; --line: #343D37; --accent: #A9C98A; --accent-soft: #2A3626; --warn: #E3B66B; --warn-soft: #3A2F18; --bad: #E58C80; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #151A17; --card: #1E2521; --fg: #E6EBE4; --muted: #9AA59D; --line: #343D37; --accent: #A9C98A; --accent-soft: #2A3626; --warn: #E3B66B; --warn-soft: #3A2F18; --bad: #E58C80; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); line-height: 1.5; padding-inline: 16px; padding-block: 28px 64px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-size: 1.6rem; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.tagrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tg { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--line); }
+.tg.new { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.tg.rest { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.tg.same { color: var(--muted); }
+.cap { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.stat { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.sbadge { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
+.sbadge.b4 { background: var(--warn-soft); color: var(--warn); } .sbadge.af { background: var(--accent-soft); color: var(--accent); }
+.scroller { overflow-x: auto; padding-bottom: 8px; }
+.specimens { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (min-width: 1000px) { .specimens { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.spec { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* control bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; }
+.ctl { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button, .rst { font: 500 13px var(--font-ui); color: var(--fg); background: transparent; border: 0; padding: 7px 12px; min-height: 36px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.rst { border: 1px solid var(--line); border-radius: 8px; }
+.seg button:focus-visible, .rst:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* product frames: real warm tokens, fixed width, never reflow */
+.frame { --paper: #F8F4ED; --ink: #241E15; --ink-soft: #4A4235; --hair: rgba(70,55,30,.12); --hair2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --amber: #8A5A12; --red: #8E2F25;
+  background: #fff; color: var(--ink); width: 720px; border-radius: 16px; border: 1px solid var(--hair2); box-shadow: 0 14px 40px rgba(36,30,21,.18); display: flex; flex-direction: column; font-family: var(--font-ui); font-size: 14px; line-height: 1.4; }
+.frame.phone { width: 390px; border-radius: 16px 16px 0 0; }
+.dhead { padding: 16px 22px 10px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--hair); }
+.dhead .tt { font-size: 18px; font-weight: 600; }
+.dhead .ic { display: flex; gap: 18px; color: var(--olive); font-size: 18px; }
+.chips { display: flex; gap: 8px; align-items: center; margin-top: 4px; font-size: 13px; color: var(--ink-soft); }
+.chip { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; background: #E8F1E2; color: #234A1F; border: 1px solid rgba(35,74,31,.18); }
+.dbody { padding: 14px 22px 18px; display: flex; flex-direction: column; gap: 16px; }
+.phone .dbody { padding-inline: 16px; }
+.sec { display: flex; flex-direction: column; gap: 10px; }
+.sec h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.sub { font: 600 13px var(--font-ui); color: var(--ink-soft); }
+.owes { color: var(--amber); font-weight: 600; } .full { color: var(--olive); font-weight: 600; }
+.line { font-size: 14px; }
+.wide { width: 100%; box-sizing: border-box; min-height: 40px; border-radius: 10px; border: 1px solid var(--hair2); background: #fff; color: var(--olive); font: 600 14px var(--font-ui); cursor: pointer; }
+.phone .wide { min-height: 44px; }
+.rows { display: flex; flex-direction: column; border-top: 1px solid var(--hair); }
+.row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto 36px; gap: 8px; align-items: center; min-height: 40px; border-bottom: 1px solid var(--hair); }
+.phone .row { grid-template-columns: 48px minmax(0, 1fr) auto 44px; min-height: 48px; }
+.row .d { color: var(--ink-soft); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row .lg { margin-left: 6px; white-space: nowrap; }
+.row .amt { font-variant-numeric: tabular-nums; font-weight: 500; text-align: right; }
+.due { grid-template-columns: minmax(0, 1fr) auto auto; gap: 14px; }
+.phone .due { grid-template-columns: minmax(0, 1fr) auto; }
+.due .dd { color: var(--ink-soft); font-size: 13px; }
+.phone .due .dd { grid-column: 1; grid-row: 2; margin-top: -10px; padding-bottom: 8px; }
+.phone .due { grid-template-rows: auto auto; }
+.pen { width: 36px; height: 36px; border: 0; background: transparent; color: var(--olive); font-size: 16px; cursor: pointer; border-radius: 8px; }
+.phone .pen { width: 44px; height: 44px; }
+.pen:hover, .sm:hover { background: var(--olive-soft); }
+.lg { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; color: var(--olive); background: var(--olive-soft); border: 1px solid rgba(87,101,30,.3); }
+.sm { font: 600 13px var(--font-ui); color: var(--olive); background: #fff; border: 1px solid var(--hair2); border-radius: 8px; padding: 0 14px; min-height: 36px; cursor: pointer; }
+.phone .sm { min-height: 44px; }
+.link { align-self: flex-start; font: 600 13px var(--font-ui); color: var(--olive); background: transparent; border: 0; padding: 8px 2px; cursor: pointer; }
+.phone .link { min-height: 44px; }
+.form { background: var(--paper); border: 1px solid var(--hair2); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.form h4 { margin: 0; font-size: 14px; font-weight: 600; }
+.fgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.phone .fgrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.phone .fgrid .how { grid-column: 1 / -1; }
+.fl { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fl label { font-size: 12px; font-weight: 650; color: var(--ink-soft); }
+.fl input, .fl select { box-sizing: border-box; width: 100%; background: #fff; border: 1px solid var(--hair2); border-radius: 8px; height: 36px; padding: 0 10px; font: 13.5px var(--font-ui); color: var(--ink); }
+.phone .fl input, .phone .fl select { height: 44px; }
+.fl input:focus-visible, .fl select:focus-visible, .sm:focus-visible, .link:focus-visible, .pen:focus-visible, .wide:focus-visible, .go:focus-visible { outline: 2px solid var(--olive); outline-offset: 1px; }
+.hint { font-size: 12.5px; color: var(--ink-soft); }
+.err { font-size: 12.5px; color: var(--red); font-weight: 600; }
+.acts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.go { font: 600 14px var(--font-ui); border-radius: 10px; padding: 8px 18px; min-height: 36px; border: 1px solid rgba(87,101,30,.35); background: linear-gradient(#DDF8A8, #C8EE86); color: #241E15; cursor: pointer; }
+.phone .go { min-height: 44px; }
+.rm { align-self: flex-start; display: inline-flex; gap: 6px; align-items: center; font: 500 14px var(--font-ui); color: var(--red); background: transparent; border: 0; cursor: pointer; padding: 8px 2px; min-height: 36px; }
+.phone .rm { min-height: 44px; }
+.rm:hover { text-decoration: underline; }
+.rm:focus-visible { outline: 2px solid var(--olive); outline-offset: 1px; }
+.ask { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--hair); padding-top: 10px; }
+.fields2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fld { background: var(--paper); border: 1px solid var(--hair2); border-radius: 8px; height: 38px; padding: 0 10px; display: flex; align-items: center; font-size: 13.5px; color: var(--ink-soft); }
+.fld.on { border-color: var(--olive); color: var(--ink); background: #fff; }
+.team { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--hair); padding-top: 14px; }
+
+/* ledger panel (page chrome, not the product frame) */
+.pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (min-width: 1240px) { .pair { grid-template-columns: 744px minmax(0, 1fr); } }
+.lgr { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 13px; }
+.lgr .h { padding: 10px 12px; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.lgr table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.lgr th { font: 500 10.5px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.lgr td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.lgr td.n, .lgr th.n { text-align: right; white-space: nowrap; }
+.lgr tr.void td { color: var(--muted); text-decoration: line-through; }
+.lgr tr.void td.tag { text-decoration: none; }
+.lgr tr.bal td { background: var(--bg); font-weight: 600; }
+.vd { font: 500 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--bad); }
+.empty { padding: 16px 12px; color: var(--muted); }
+
+/* decisions + notes */
+.dec { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.dec > div { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.dec b { font-weight: 600; }
+.dec .rec { font-size: 13px; color: var(--accent); }
+.dec .alt { font-size: 13px; color: var(--muted); }
+ul.clean { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; max-width: 72ch; }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow">Tournaments · Teams · Payments</span>
+    <h1>A payment is something you record, with a date</h1>
+    <p class="lede">Today the team window asks you to type two running totals, saves as you type, and the ledger gets a line for every pause. This replaces them with a short list of payments. Each one has an amount and a date, and each one is one ledger line.</p>
+  </header>
+
+  <section class="panel">
+    <div class="cap">
+      <div class="tagrow"><span class="tg new">NEW the Payment block: summary, Received, Still due, Record</span><span class="tg rest">RESTYLED nothing</span><span class="tg same">UNCHANGED the window, its head, the pencil, the Team section, Mark paid</span></div>
+      <h2>The whole window, before and after</h2>
+      <p class="lede">Same window, same place for Payment at the top. The two typed boxes are gone. Everything else in the window is as it is today.</p>
+    </div>
+    <div class="specimens">
+      <div class="spec"><div class="cap"><span class="sbadge b4">TODAY</span><div class="stat">Editing: two boxes, saved as you type</div></div><div class="scroller"><div id="f-before"></div></div></div>
+      <div class="spec"><div class="cap"><span class="sbadge af">PROPOSED</span><div class="stat">Reading or editing: the same list, no boxes to type totals into</div></div><div class="scroller"><div id="f-after"></div></div></div>
+    </div>
+  </section>
+
+  <div class="bar" role="group" aria-label="What to show">
+    <div class="ctl"><span class="eyebrow">The event's fee</span>
+      <div class="seg" id="seg-fee"><button data-v="dep" aria-pressed="true">$100 deposit, then $200</button><button data-v="one" aria-pressed="false">One $300 payment</button></div></div>
+    <div class="ctl"><span class="eyebrow">The club's plan</span>
+      <div class="seg" id="seg-plan"><button data-v="acct" aria-pressed="true">Has Accounting</button><button data-v="none" aria-pressed="false">No Accounting</button></div></div>
+    <button class="rst" id="reset" type="button">Start over</button>
+  </div>
+
+  <section class="panel">
+    <div class="cap">
+      <div class="tagrow"><span class="tg new">NEW</span><span class="tg same">Try it: record, change and remove payments. The ledger on the right is what each action would write.</span></div>
+      <h2>The Payment block, working</h2>
+      <p class="lede">Record a deposit for $50 and the screen says <b>Owes $250</b>, not that the deposit is settled. Date a payment last week and the ledger line carries that date. Remove one and its line is voided, not deleted.</p>
+    </div>
+    <div class="pair">
+      <div class="scroller"><div id="f-live"></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <div><span class="sbadge af">AFTER</span></div>
+        <div id="ledger-after"></div>
+        <div><span class="sbadge b4">TODAY</span> <span class="stat">typing 109 into Deposit paid</span></div>
+        <div id="ledger-before"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="cap">
+      <div class="tagrow"><span class="tg new">NEW</span><span class="tg same">44 px rows and buttons on a phone, the form in two columns</span></div>
+      <h2>On a phone, true size</h2>
+      <p class="lede">The same block at 390 px with the balance's Record form open. This one is a still picture. Open the page on your phone for the real size.</p>
+    </div>
+    <div class="scroller"><div id="f-phone"></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="cap"><h2>Four calls this drawing asks you to make</h2><p class="lede">Each has a recommended answer. Nothing runs on live data until you say go.</p></div>
+    <div class="dec">
+      <div><b>1 · Payments already on teams</b>
+        <span class="rec">Recommended: each team that already has a paid figure gets one row, "Earlier payment", with no date. Lines already in a tournament's book stay as they are and are not posted twice.</span>
+        <span class="alt">Alternative: ask each organizer to date them. Nobody can be asked to do that for every team before the new window works.</span></div>
+      <div><b>2 · Which dates are allowed</b>
+        <span class="rec">Recommended: any date up to today. A date in a closed fiscal year is refused with a sentence saying so, the same as every other ledger write.</span>
+        <span class="alt">Alternative: allow it and post to the closed year. That breaks the lock the club's treasurer relies on.</span></div>
+      <div><b>3 · The spreadsheet import</b>
+        <span class="rec">Recommended: a Deposit Paid or Total Paid figure higher than what is recorded adds one "Imported payment" for the difference, dated the day of the import. A lower figure is skipped and the preview says to remove the payment on the team.</span>
+        <span class="alt">Alternative: let an import lower what is recorded. One wrong column then voids real ledger lines.</span></div>
+      <div><b>4 · Changing a recorded payment asks first</b>
+        <span class="rec">Recommended: Record and Save change are buttons you press. The rest of the window still saves as you type. A change to a payment on an Accounting plan voids a ledger line and posts a new one, so saving every keystroke would bring back today's problem.</span>
+        <span class="alt">Alternative: autosave a payment's edits like name and email. Each pause then writes a void and a new line.</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="cap"><h2>Design check</h2><p class="lede">What the review changed in these drawings, and what it left alone.</p></div>
+    <ul class="clean">
+      <li><b>Changed: Received and Still due are plain sentence-case headings,</b> not small capitals. Small capitals are for read-only labels over a value, not for a section title in a window.</li>
+      <li><b>Changed: the In ledger pill sits beside the payment's name at every width.</b> It was hidden on a phone, and a row's chip keeps one place at every width.</li>
+      <li><b>Changed: Remove this payment is its own line at the end of the change form,</b> a trash symbol and red words, and it asks first and says what happens to the ledger line. It was squeezed onto the same row as Save and Cancel.</li>
+      <li><b>Changed: Amount and Paid on carry a plain asterisk, How it arrived is bare.</b> Fields are 36 px at a desk and 44 px on a phone. Dates are one line, tabular figures.</li>
+      <li><b>Left alone: the Record form opens in place</b> under the row you pressed. A second window over this window is not allowed, and the form keeps Cancel beside Record.</li>
+      <li><b>Left alone: "Owes" stays amber,</b> as the line reads today. <b>Left alone: payment dates print as "Oct 9"</b> with no year, like ledger rows.</li>
+      <li><b>Left alone: Mark paid stays the wide one-tap button.</b> It is the quick path; Record is for a specific amount or a date that is not today.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <div class="cap"><h2>What else changes, and what does not</h2></div>
+    <ul class="clean">
+      <li><b>Mark paid</b> still takes one tap. It records one payment for what is owed, dated today, and it still sends the same email only when it completes the fee. A part payment sends nothing, as today.</li>
+      <li><b>The dashboard's "collected" number gets more honest.</b> Today a team with only a deposit counts as $0 collected on the dashboard and $150 in the ledger. After this, both read the same payments.</li>
+      <li><b>The coach sees the real date.</b> "Paid · Oct 9" comes from the last payment's date. Today Mark paid never sets it.</li>
+      <li><b>Check-in, bulk Paid in full, Record one payment for several teams, imports and exports</b> all write through the same list, so a payment looks the same wherever it was made.</li>
+      <li><b>Plans that can only read payments</b> see the list and no Record buttons, as they see the two figures today.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var TODAY = '2026-10-21', FEE = 300, DEP = 100, TEAM = 'Oakville Otters 15U', BOOK = 'UAT Invitational 2026', START = 1940;
+  function fmt(n) { return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function fd(iso) { var p = iso.split('-'); return MON[+p[1] - 1] + ' ' + (+p[2]); }
+  function ac(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+  function seed(hasDep) {
+    var st = { hasDep: hasDep, plan: st0.plan, pays: [], ledger: [], form: null, edit: null, next: 1, err: '' };
+    if (hasDep) addPay(st, 'Deposit', 100, '2026-10-09', 'E-transfer');
+    return st;
+  }
+  var st0 = { plan: 'acct' };
+  var S;
+  function addPay(st, label, amount, date, how) {
+    var p = { id: st.next++, label: label, amount: amount, date: date, how: how };
+    st.pays.push(p);
+    if (st.plan === 'acct') st.ledger.push({ id: st.next++, payId: p.id, date: date, amount: amount, label: label, status: 'posted' });
+  }
+  function sum(st) { return st.pays.reduce(function (a, p) { return a + p.amount; }, 0); }
+  function dues(st) {
+    var s = sum(st), out = [];
+    if (st.hasDep) {
+      var dr = Math.max(0, DEP - s);
+      if (dr > 0) out.push({ key: 'dep', label: 'Deposit', amount: dr, due: 'Oct 10' });
+      var br = Math.max(0, FEE - Math.max(s, DEP));
+      if (br > 0) out.push({ key: 'bal', label: 'Balance', amount: br, due: 'Nov 1' });
+    } else if (FEE - s > 0) out.push({ key: 'bal', label: 'Entry fee', amount: FEE - s, due: 'Nov 1' });
+    return out;
+  }
+  function hows(sel) {
+    return ['', 'E-transfer', 'Cheque', 'Cash', 'Card', 'Other'].map(function (h) {
+      return '<option value="' + h + '"' + (h === sel ? ' selected' : '') + '>' + (h || 'Not recorded') + '</option>';
+    }).join('');
+  }
+
+  /* One Payment block, drawn from a state. pfx keeps control ids unique per picture. */
+  function block(st, pfx, interactive) {
+    var s = sum(st), owed = Math.max(0, FEE - s), dl = dues(st);
+    var lead;
+    if (s >= FEE && s > FEE) lead = '<span class="full">Paid ' + fmt(s) + '</span> · ' + fmt(s - FEE) + ' over the fee';
+    else if (s >= FEE) lead = '<span class="full">Paid in full</span> · ' + fmt(s);
+    else lead = '<span class="owes">Owes ' + fmt(owed) + '</span>' + (s > 0 ? ' · paid ' + fmt(s) + ' of ' + fmt(FEE) : '');
+    var h = '<div class="sec"><h3>Payment</h3><p class="line">' + lead + '</p>';
+    if (owed > 0) h += '<button class="wide" type="button" data-a="markpaid" id="' + pfx + '-mark">Mark paid · ' + fmt(owed) + '</button>';
+
+    if (st.pays.length) {
+      h += '<div class="sub">Received</div><div class="rows">';
+      st.pays.slice().sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id; }).forEach(function (p) {
+        if (st.edit === p.id) { h += editForm(st, p, pfx); return; }
+        h += '<div class="row"><span class="d">' + fd(p.date) + '</span><span>' + ac(p.label) + (p.how ? ' <span class="d">· ' + ac(p.how) + '</span>' : '') +
+          (st.plan === 'acct' ? '<span class="lg">In ledger</span>' : '') + '</span><span class="amt">' + fmt(p.amount) + '</span>' +
+          '<button class="pen" type="button" data-a="edit" data-id="' + p.id + '" id="' + pfx + '-e' + p.id + '" aria-label="Change this ' + fmt(p.amount) + ' payment">✎</button></div>';
+      });
+      h += '</div>';
+    }
+    if (dl.length) {
+      h += '<div class="sub">Still due</div><div class="rows">';
+      dl.forEach(function (d) {
+        if (st.form && st.form.key === d.key) { h += recForm(st, pfx); return; }
+        h += '<div class="row due"><span>' + d.label + ' <b style="font-weight:500">' + fmt(d.amount) + '</b></span><span class="dd">due ' + d.due + '</span>' +
+          '<button class="sm" type="button" data-a="open" data-k="' + d.key + '" id="' + pfx + '-r-' + d.key + '">Record</button></div>';
+      });
+      h += '</div>';
+      if (st.form && st.form.key === 'other') h += recForm(st, pfx);
+      else if (!st.form) h += '<button class="link" type="button" data-a="open" data-k="other" id="' + pfx + '-other">+ Record a different amount</button>';
+    }
+    return h + '</div>';
+  }
+  function recForm(st, pfx) {
+    var f = st.form, d = dues(st).filter(function (x) { return x.key === f.key; })[0];
+    var title = f.key === 'other' ? 'Record a payment' : 'Record the ' + d.label.toLowerCase();
+    return '<div class="form"><h4>' + title + '</h4><div class="fgrid">' +
+      '<div class="fl"><label for="' + pfx + '-amt">Amount *</label><input id="' + pfx + '-amt" type="number" inputmode="decimal" min="0" step="0.01" value="' + f.amount + '"></div>' +
+      '<div class="fl"><label for="' + pfx + '-date">Paid on *</label><input id="' + pfx + '-date" type="date" max="' + TODAY + '" value="' + f.date + '"></div>' +
+      '<div class="fl how"><label for="' + pfx + '-how">How it arrived</label><select id="' + pfx + '-how">' + hows(f.how) + '</select></div></div>' +
+      (st.plan === 'acct' ? '<p class="hint">Any date up to today. Posts one line to ' + BOOK + ' · Entry fees, dated the day you pick.</p>' : '<p class="hint">Any date up to today. Kept on the team; this club has no Accounting, so nothing posts to a ledger.</p>') +
+      (st.err ? '<p class="err">' + st.err + '</p>' : '') +
+      '<div class="acts"><button class="go" type="button" data-a="record" id="' + pfx + '-go">Record</button><button class="sm" type="button" data-a="cancel" id="' + pfx + '-cancel">Cancel</button></div></div>';
+  }
+  function editForm(st, p, pfx) {
+    var end = st.confirm === p.id
+      ? '<div class="ask"><p class="line"><b>Remove this ' + fmt(p.amount) + ' payment?</b></p><p class="hint">' + (st.plan === 'acct' ? 'Its ledger line is voided and stays in the book, with your name and the time.' : 'It leaves the list. The team’s total goes down by ' + fmt(p.amount) + '.') + '</p>' +
+        '<div class="acts"><button class="sm" type="button" data-a="remove" data-id="' + p.id + '" id="' + pfx + '-rm-yes" style="color:var(--red)">Remove payment</button><button class="sm" type="button" data-a="keep" id="' + pfx + '-rm-no">Keep it</button></div></div>'
+      : '<button class="rm" type="button" data-a="ask" data-id="' + p.id + '" id="' + pfx + '-rm"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9h6.6L12 4M6.8 6.5v4M9.2 6.5v4"/></svg> Remove this payment</button>';
+    return '<div class="form" style="margin:8px 0"><h4>Change this payment</h4><div class="fgrid">' +
+      '<div class="fl"><label for="' + pfx + '-eamt">Amount *</label><input id="' + pfx + '-eamt" type="number" inputmode="decimal" min="0" step="0.01" value="' + p.amount + '"></div>' +
+      '<div class="fl"><label for="' + pfx + '-edate">Paid on *</label><input id="' + pfx + '-edate" type="date" max="' + TODAY + '" value="' + p.date + '"></div>' +
+      '<div class="fl how"><label for="' + pfx + '-ehow">How it arrived</label><select id="' + pfx + '-ehow">' + hows(p.how) + '</select></div></div>' +
+      (st.plan === 'acct' ? '<p class="hint">Saving a change voids this ledger line and posts a corrected one, so the book keeps both. That is why a change asks first instead of saving as you type.</p>' : '') +
+      (st.err ? '<p class="err">' + st.err + '</p>' : '') +
+      '<div class="acts"><button class="go" type="button" data-a="save" data-id="' + p.id + '" id="' + pfx + '-save">Save change</button><button class="sm" type="button" data-a="cancel" id="' + pfx + '-ecancel">Cancel</button></div>' + end + '</div>';
+  }
+
+  /* The window around the block (head, chips, a stub of the Team section). */
+  function win(inner, phone) {
+    return '<div class="frame' + (phone ? ' phone' : '') + '"><div class="dhead"><div><div class="tt">' + TEAM + '</div><div class="chips"><span class="chip">Accepted</span><span>15U</span></div></div><div class="ic"><span>✓</span><span style="color:var(--ink-soft)">✕</span></div></div>' +
+      '<div class="dbody">' + inner + '<div class="team"><h3 style="margin:0;font-size:17px">Team</h3><div class="sub">Team name</div><div class="fld">' + TEAM + '</div></div></div></div>';
+  }
+  function before() {
+    return win('<div class="sec"><h3>Payment</h3><p class="line"><span class="owes">Owes $300</span> · deposit paid</p><button class="wide" type="button" tabindex="-1">Mark paid · $300</button>' +
+      '<div class="fields2"><div><div class="sub" style="text-transform:none;font:600 12.5px var(--font-ui);letter-spacing:0;color:var(--ink)">Deposit paid</div><div class="fld on">109</div></div>' +
+      '<div><div class="sub" style="text-transform:none;font:600 12.5px var(--font-ui);letter-spacing:0;color:var(--ink)">Total paid</div><div class="fld">$0</div></div></div></div>');
+  }
+
+  /* Ledger tables */
+  function ledgerHtml(lines, startBal) {
+    var bal = startBal, rows = '';
+    lines.forEach(function (l) {
+      var v = l.status === 'void';
+      if (!v) bal += l.amount;
+      rows += '<tr class="' + (v ? 'void' : '') + '"><td>' + fd(l.date) + '</td><td>' + TEAM + ' — entry fee' + (l.label && l.label !== 'x' ? ' <span class="d">(' + ac(l.label) + ')</span>' : '') + '</td><td class="n">' + fmt(l.amount) + '</td><td class="n">' + (v ? '' : fmt(bal)) + '</td><td class="tag">' + (v ? '<span class="vd">Void</span>' : '') + '</td></tr>';
+    });
+    return '<div class="lgr"><div class="h"><b>Ledger · ' + BOOK + '</b><span class="stat">Entry fees · starting balance ' + fmt(startBal) + '</span></div><div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>What</th><th class="n">Money in</th><th class="n">Balance</th><th></th></tr></thead><tbody>' + rows + '<tr class="bal"><td colspan="3">Ending balance</td><td class="n">' + fmt(bal) + '</td><td></td></tr></tbody></table></div></div>';
+  }
+  function renderLedger() {
+    var el = document.getElementById('ledger-after');
+    if (S.plan !== 'acct') { el.innerHTML = '<div class="lgr"><div class="empty">No ledger on this plan. The payments are kept on the team only, and the list above works the same.</div></div>'; return; }
+    var lines = S.ledger.slice().sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id; });
+    el.innerHTML = lines.length ? ledgerHtml(lines, START) : '<div class="lgr"><div class="empty">Nothing recorded yet. Each payment you record appears here as one line.</div></div>';
+  }
+  document.getElementById('ledger-before').innerHTML = ledgerHtml([
+    { id: 1, date: '2026-10-21', amount: 10, label: 'x', status: 'posted' }, { id: 2, date: '2026-10-21', amount: 90, label: 'x', status: 'posted' }, { id: 3, date: '2026-10-21', amount: 9, label: 'x', status: 'posted' }], START);
+
+  function render() {
+    document.getElementById('f-live').innerHTML = win(block(S, 'L', true));
+    renderLedger();
+  }
+
+  /* Events */
+  var live = document.getElementById('f-live');
+  function val(id) { var e = document.getElementById(id); return e ? e.value : ''; }
+  function checkDate(d) { return d && d <= TODAY; }
+  live.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-a]'); if (!b) return;
+    var a = b.getAttribute('data-a'), id = +b.getAttribute('data-id');
+    S.err = '';
+    if (a === 'markpaid') { addPay(S, 'Payment', Math.max(0, FEE - sum(S)), TODAY, ''); S.form = null; S.edit = null; }
+    else if (a === 'open') {
+      var k = b.getAttribute('data-k'), d = dues(S).filter(function (x) { return x.key === k; })[0];
+      S.edit = null; S.form = { key: k, amount: d ? d.amount : Math.max(0, FEE - sum(S)), date: TODAY, how: '' };
+    }
+    else if (a === 'cancel') { S.form = null; S.edit = null; S.confirm = null; }
+    else if (a === 'ask') { S.confirm = id; }
+    else if (a === 'keep') { S.confirm = null; }
+    else if (a === 'record') {
+      var amt = parseFloat(val('L-amt')), dt = val('L-date');
+      if (!(amt > 0)) { S.err = 'Enter an amount above $0.'; }
+      else if (!checkDate(dt)) { S.err = 'A payment can’t be dated in the future.'; }
+      else { var f = S.form, lab = f.key === 'dep' ? 'Deposit' : f.key === 'bal' ? (S.hasDep ? 'Balance' : 'Entry fee') : 'Payment'; addPay(S, lab, amt, dt, val('L-how')); S.form = null; }
+      if (S.err) S.form.amount = isNaN(amt) ? '' : amt;
+    }
+    else if (a === 'edit') { S.form = null; S.edit = id; S.confirm = null; }
+    else if (a === 'save') {
+      var p = S.pays.filter(function (x) { return x.id === id; })[0], na = parseFloat(val('L-eamt')), nd = val('L-edate'), nh = val('L-ehow');
+      if (!(na > 0)) S.err = 'Enter an amount above $0.';
+      else if (!checkDate(nd)) S.err = 'A payment can’t be dated in the future.';
+      else {
+        if (S.plan === 'acct' && (na !== p.amount || nd !== p.date)) {
+          S.ledger.forEach(function (l) { if (l.payId === id && l.status === 'posted') l.status = 'void'; });
+          S.ledger.push({ id: S.next++, payId: id, date: nd, amount: na, label: p.label, status: 'posted' });
+        }
+        p.amount = na; p.date = nd; p.how = nh; S.edit = null;
+      }
+    }
+    else if (a === 'remove') {
+      S.ledger.forEach(function (l) { if (l.payId === id && l.status === 'posted') l.status = 'void'; });
+      S.pays = S.pays.filter(function (x) { return x.id !== id; }); S.edit = null; S.confirm = null;
+    }
+    render();
+  });
+  function setSeg(id, v) { Array.prototype.forEach.call(document.querySelectorAll('#' + id + ' button'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === v)); }); }
+  document.getElementById('seg-fee').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var v = b.getAttribute('data-v'); setSeg('seg-fee', v); S = seed(v === 'dep'); render(); });
+  document.getElementById('seg-plan').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var v = b.getAttribute('data-v'); setSeg('seg-plan', v); st0.plan = v; S = seed(S.hasDep); render(); });
+  document.getElementById('reset').addEventListener('click', function () { S = seed(S.hasDep); render(); });
+
+  /* Still pictures */
+  S = seed(true); render();
+  document.getElementById('f-before').innerHTML = before();
+  var A = seed(true); document.getElementById('f-after').innerHTML = win(block(A, 'A', false));
+  var P = seed(true); P.form = { key: 'bal', amount: 200, date: TODAY, how: '' };
+  document.getElementById('f-phone').innerHTML = win(block(P, 'P', false), true);
+})();
+</script>

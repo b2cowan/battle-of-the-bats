@@ -1,4 +1,10 @@
 import { normalizeToken } from './tabular.ts';
+import {
+  importKeepsPaidStatus,
+  importPaysTheRest,
+  planImportMoney,
+  statedImportMoney,
+} from './tournament-team-money.ts';
 
 export type TournamentTeamImportNormalizedRow = {
   teamId: string;
@@ -200,26 +206,63 @@ export function buildTournamentTeamInsert(
     coach: normalized.coachName,
     email: normalized.email,
     status: normalized.status,
-    payment_status: normalized.paymentStatus,
-    deposit_paid: normalized.depositPaid ?? 0,
-    total_paid: normalized.totalPaid ?? 0,
+    // A new team starts unpaid with its paid figures at their defaults: those are a cache the database keeps from the
+    // team's payments (mig 345), so an import never writes them. A sheet "paid" and any stated money are applied after
+    // the insert, as payments (see planTournamentTeamPayments).
+    payment_status: 'pending',
     waitlist_position: normalized.waitlistPosition,
     admin_notes: normalized.adminNotes,
   };
 }
 
-export function buildTournamentTeamUpdate(normalized: TournamentTeamImportNormalizedRow) {
+/** What the team already has, as the commit reads it from the live row. */
+export type TournamentTeamMoneyState = { paymentStatus: string | null; totalPaid: number | null };
+
+/** A brand-new team: nothing recorded, not paid. */
+export const NEW_TEAM_MONEY_STATE: TournamentTeamMoneyState = { paymentStatus: 'pending', totalPaid: 0 };
+
+export type TournamentTeamPaymentPlan = {
+  /** Record this much as one Imported payment (0 = none): the sheet's stated money above what is recorded. */
+  recordAmount: number;
+  /** Sheet says paid and states no more money than is recorded: record what is still due (the database says so when the team has no fee). */
+  payTheRest: boolean;
+  /** Sheet says paid and this row moves money: a team with no fee schedule still gets payment_status = 'paid'. */
+  markPaidWithoutFee: boolean;
+  /** The sheet states less than is recorded: nothing is lowered (the preview already said so). */
+  skippedLower: boolean;
+};
+
+export function planTournamentTeamPayments(
+  normalized: TournamentTeamImportNormalizedRow,
+  current: TournamentTeamMoneyState,
+): TournamentTeamPaymentPlan {
+  const stated = statedImportMoney(normalized.depositPaid, normalized.totalPaid);
+  const plan = planImportMoney(current.totalPaid, stated);
+  const recordAmount = plan.kind === 'add' ? plan.amount : 0;
+  const payTheRest = importPaysTheRest(normalized.paymentStatus, current.paymentStatus, plan);
+  return {
+    recordAmount,
+    payTheRest,
+    markPaidWithoutFee: normalized.paymentStatus === 'paid' && current.paymentStatus !== 'paid' && (recordAmount > 0 || payTheRest),
+    skippedLower: plan.kind === 'lower',
+  };
+}
+
+export function buildTournamentTeamUpdate(
+  normalized: TournamentTeamImportNormalizedRow,
+  current: TournamentTeamMoneyState = NEW_TEAM_MONEY_STATE,
+) {
+  // The paid figures and a sheet "paid" belong to the payments (a cache the database keeps), so the update writes
+  // neither. Only a sheet "pending" is written, and never over a team that has recorded payments: those decide.
+  const writesPending = normalized.paymentStatus === 'pending'
+    && !importKeepsPaidStatus(normalized.paymentStatus, current.paymentStatus, current.totalPaid);
   return {
     division_id: normalized.divisionId,
     name: normalized.teamName,
     coach: normalized.coachName,
     email: normalized.email,
     status: normalized.status,
-    payment_status: normalized.paymentStatus,
-    // A sheet that leaves a money column blank must not zero what a team already paid: every change to these
-    // figures now voids lines in the club's tournament book (Stage 7a). Only a figure the sheet states is written.
-    ...(normalized.depositPaid != null ? { deposit_paid: normalized.depositPaid } : {}),
-    ...(normalized.totalPaid != null ? { total_paid: normalized.totalPaid } : {}),
+    ...(writesPending ? { payment_status: 'pending' as const } : {}),
     waitlist_position: normalized.waitlistPosition,
     admin_notes: normalized.adminNotes,
   };

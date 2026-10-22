@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden } from '@/lib/api-auth';
 import { canMoveClubMoney } from '@/lib/member-access';
-import { closedYearFromError, isClosedYearError } from '@/lib/club-fiscal-year-server';
-import { moveRefused } from '@/lib/club-money-route';
+import { paymentErrorResponse } from '@/lib/team-payments-server';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { tournamentInOrg } from '@/lib/org-references';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { tournamentToday } from '@/lib/timezone';
@@ -22,6 +22,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if (!(await tournamentInOrg(ctx.org.id, tournamentId))) {
     return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
   }
+  // A finished event takes no new payment (the same lock the Teams screen's payments route holds).
+  const { data: state } = await supabaseAdmin.from('tournaments').select('status').eq('id', tournamentId).maybeSingle();
+  if (state?.status === 'completed') return NextResponse.json({ error: LOCKED_RESULTS }, { status: 409 });
   const body = await req.json().catch(() => ({}));
   const allocations = Array.isArray(body.allocations) ? body.allocations : [];
   if (allocations.length < 2 || allocations.length > 50 || allocations.some((a: unknown) => {
@@ -40,9 +43,6 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     p_amounts: allocations.map((a: { amount: number }) => Math.round(Number(a.amount) * 100) / 100),
     p_actor: ctx.user.id, p_day, p_method: method, p_reference: reference,
   });
-  if (error) {
-    if (isClosedYearError(error)) return moveRefused(await closedYearFromError(ctx.org.id, [p_day]));
-    return NextResponse.json({ error: error.message }, { status: 409 });
-  }
+  if (error) return paymentErrorResponse(error, ctx.org.id, [p_day]);
   return NextResponse.json({ receiptId: data });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/shared-payment' });

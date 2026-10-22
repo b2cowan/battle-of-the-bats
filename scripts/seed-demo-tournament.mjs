@@ -42,7 +42,7 @@ import {
   DEMO_ORG_NAME, DEMO_TOURNAMENT_NAME, DEMO_VENUE_NAME, DEMO_FACILITIES,
   DEMO_DIVISIONS, DEMO_PLAYOFF_CONFIG, DEMO_TOURNAMENT_SETTINGS, DEMO_GAME_DURATION_MINUTES,
   DEMO_BRACKET_CODES, ROUND_ROBIN_PAIRS,
-  resolveDemoState, demoCoachEmail, roundRobinFacilityIndex,
+  resolveDemoState, demoCoachEmail, roundRobinFacilityIndex, shiftedDate,
 } from '../lib/demo-tournament.ts';
 import {
   DEMO_OPENER_SLUG, DEMO_OPENER_NAME, OPENER_DIVISIONS, OPENER_REJECTED_TEAM,
@@ -50,7 +50,7 @@ import {
   resolveOpenerState,
   DEMO_INVITATIONAL_SLUG, DEMO_INVITATIONAL_NAME, INVITATIONAL_FEE,
   INVITATIONAL_TOURNAMENT_SETTINGS, resolveInvitationalState,
-  registeredAtIsoFor,
+  registeredAtIsoFor, openerTeamPayments, invitationalTeamPayments,
 } from '../lib/demo-moments.ts';
 
 const PROD_PROJECT_REF = 'qcttcboqysynwcdyghil';
@@ -329,6 +329,20 @@ async function insertDemoVenue(tournamentId, { withFacilities = true } = {}) {
   return { venueId, facilityIds };
 }
 
+/**
+ * A team's paid money is a list of dated payments (mig 345), never a figure stamped on the team. The database keeps
+ * `teams.total_paid` / `deposit_paid` / `payment_status` / `payment_collected_at` from what is recorded here, so the team
+ * is inserted WITHOUT them (status 'pending' — the column's default is 'paid', and the database flips it on completion).
+ */
+async function recordTeamPayments(teamId, payments) {
+  for (const payment of payments) {
+    const { error } = await db.rpc('tournament_team_payment_record', {
+      p_team: teamId, p_amount: payment.amount, p_paid_on: payment.paidOn, p_label: payment.label, p_method: null, p_actor: null,
+    });
+    die(`record ${payment.label} payment`, error);
+  }
+}
+
 /** Wipe a prior demo tournament by slug — the ONE delete order for all three events. */
 async function wipeTournamentBySlug(slug) {
   const rows = (await db.from('tournaments').select('id').eq('org_id', org.id).eq('slug', slug)).data;
@@ -392,10 +406,11 @@ for (let d = 0; d < OPENER_DIVISIONS.length; d++) {
       id: teamId, tournament_id: openerId, division_id: divisionId,
       name: team.name, coach: team.coach, email: demoCoachEmail(team.name),
       coach_email: demoCoachEmail(team.name),
-      status: 'accepted', payment_status: 'paid',
-      deposit_paid: OPENER_FEE.deposit, total_paid: OPENER_FEE.totalFee,
+      status: 'accepted', payment_status: 'pending',
       registered_at: nowIso,
     })).error);
+    // Settled: the deposit and the balance, dated before the first game. The database turns that into 'paid'.
+    await recordTeamPayments(teamId, openerTeamPayments(opener.startDate));
     openerDomainTeams.push({ id: teamId, name: team.name, divisionId, status: 'accepted', poolId: null });
   }
 }
@@ -406,7 +421,7 @@ die('insert opener rejected team', (await db.from('teams').insert({
   name: OPENER_REJECTED_TEAM.name, coach: OPENER_REJECTED_TEAM.coach,
   email: demoCoachEmail(OPENER_REJECTED_TEAM.name),
   coach_email: demoCoachEmail(OPENER_REJECTED_TEAM.name),
-  status: 'rejected', payment_status: 'pending', deposit_paid: 0, total_paid: 0,
+  status: 'rejected', payment_status: 'pending',
   registered_at: nowIso,
 })).error);
 
@@ -521,18 +536,22 @@ for (let d = 0; d < invitational.divisions.length; d++) {
   })).error);
 }
 
+const invitationalToday = shiftedDate(new Date(), 0);
 for (const team of invitational.teams) {
+  const teamId = randomUUID();
   die('insert invitational team', (await db.from('teams').insert({
-    id: randomUUID(), tournament_id: invitationalId,
+    id: teamId, tournament_id: invitationalId,
     division_id: invitationalDivisionIds.get(team.division),
     name: team.name, coach: team.coach,
     email: demoCoachEmail(team.name), coach_email: demoCoachEmail(team.name),
     status: team.status,
     waitlist_position: team.waitlistPosition,
-    payment_status: team.totalPaid >= INVITATIONAL_FEE.totalFee ? 'paid' : 'pending',
-    deposit_paid: team.depositPaid, total_paid: team.totalPaid,
+    // 'pending' until the payments below complete the fee — then the database says 'paid'.
+    payment_status: 'pending',
     registered_at: registeredAtIsoFor(team.registeredDate),
   })).error);
+  // The modelled figures (lib/demo-moments.ts) become dated payments; the database derives the same figures from them.
+  await recordTeamPayments(teamId, invitationalTeamPayments(team, invitationalToday));
 }
 
 // ── the stamp ──

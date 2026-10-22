@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-21",
-  "total": 67,
+  "generated": "2026-10-22",
+  "total": 101,
   "counts": {
-    "tables": 4,
-    "columns": 30,
-    "indexes": 9,
-    "constraints": 15,
-    "rls": 9
+    "tables": 5,
+    "columns": 46,
+    "indexes": 14,
+    "constraints": 22,
+    "rls": 14
   },
   "items": [
     {
@@ -43,6 +43,26 @@
     },
     {
       "key": "check:only-dev:tournament_fee_receipt_allocations.tournament_fee_receipt_allocations_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:tournament_team_payments.tournament_team_payments_amount_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:tournament_team_payments.tournament_team_payments_date_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:tournament_team_payments.tournament_team_payments_label_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:tournament_team_payments.tournament_team_payments_method_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:tournament_team_payments.tournament_team_payments_status_chk",
       "sig": ""
     },
     {
@@ -166,6 +186,70 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:tournament_team_payments.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.label",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.ordinal",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.paid_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.removed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.removed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.tournament_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:tournament_team_payments.updated_at",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_site_notices.org_site_notices_org_fk",
       "sig": ""
     },
@@ -226,6 +310,34 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:tournament_team_payments.tournament_team_payments_created_by_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:tournament_team_payments.tournament_team_payments_entry_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:tournament_team_payments.tournament_team_payments_org_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:tournament_team_payments.tournament_team_payments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:tournament_team_payments.tournament_team_payments_removed_by_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:tournament_team_payments.tournament_team_payments_team_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:tournament_team_payments.tournament_team_payments_tournament_fk",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_site_notices_org_idx",
       "sig": ""
     },
@@ -262,6 +374,26 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:tournament_team_payments_entry_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:tournament_team_payments_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:tournament_team_payments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:tournament_team_payments_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:tournament_team_payments_tournament_idx",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:org_site_notices",
       "sig": ""
     },
@@ -275,6 +407,10 @@
     },
     {
       "key": "table:only-dev:tournament_fee_receipts",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:tournament_team_payments",
       "sig": ""
     }
   ]

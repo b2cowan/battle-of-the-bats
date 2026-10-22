@@ -43,13 +43,15 @@ import type { EventPayments } from '@/lib/invite-only-event';
 import { INVITE_TEAM_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
 import { formatMoney, owedAmount, paymentLine, type FeeSchedule, type PoolInfo, type PoolSlot, type TeamRecord } from '@/lib/tournament-teams';
 import styles from '../teams-admin.module.css';
+import TeamPayments from './TeamPayments';
 
+/** What the record's autosave may send. The paid figures are not here: a payment is recorded (TeamPayments), never typed. */
 export type TeamRecordUpdates = Partial<{
   name: string; coach: string; email: string; seed: number | null;
-  depositPaid: number; totalPaid: number; adminNotes: string; poolId: string;
+  adminNotes: string; poolId: string;
 }>;
 
-type Form = { name: string; coach: string; email: string; seed: string; depositPaid: string; totalPaid: string; adminNotes: string; poolId: string };
+type Form = { name: string; coach: string; email: string; seed: string; adminNotes: string; poolId: string };
 
 function formOf(t: TeamRecord): Form {
   return {
@@ -57,14 +59,11 @@ function formOf(t: TeamRecord): Form {
     coach: t.coach ?? '',
     email: t.email ?? '',
     seed: typeof t.seed === 'number' ? String(t.seed) : '',
-    depositPaid: t.depositPaid ? String(t.depositPaid) : '',
-    totalPaid: t.totalPaid ? String(t.totalPaid) : '',
     adminNotes: t.adminNotes ?? '',
     poolId: t.poolId ?? '',
   };
 }
 
-const money = (v: string) => { const n = parseFloat(v); return Number.isFinite(n) && n > 0 ? n : 0; };
 const seedOf = (v: string): number | null => { const n = parseInt(v, 10); return Number.isInteger(n) && n > 0 && n <= 999 ? n : null; };
 /** Empty, or a whole address (the Add team form's own test). The email is the team's sign-in key. */
 const emailOk = (v: string) => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
@@ -77,8 +76,6 @@ function changes(form: Form, saved: Form): TeamRecordUpdates {
   if (form.coach.trim() !== saved.coach.trim()) u.coach = form.coach.trim();
   if (emailOk(form.email) && form.email.trim() !== saved.email.trim()) u.email = form.email.trim();
   if (seedOf(form.seed) !== seedOf(saved.seed)) u.seed = seedOf(form.seed);
-  if (money(form.depositPaid) !== money(saved.depositPaid)) u.depositPaid = money(form.depositPaid);
-  if (money(form.totalPaid) !== money(saved.totalPaid)) u.totalPaid = money(form.totalPaid);
   if (form.adminNotes !== saved.adminNotes) u.adminNotes = form.adminNotes;
   if (form.poolId !== saved.poolId) u.poolId = form.poolId;
   return u;
@@ -98,6 +95,11 @@ export interface TeamRecordProps {
    *  registrations before its organization left Tournament Plus (R2). Undefined on an open event. */
   invite?: 'clean' | 'carried';
   today: string;
+  /** The payments list reads and writes through the event's payments route (`?orgSlug=…` as the page builds it). */
+  tournamentId: string;
+  orgQuery: string;
+  /** The page re-reads its teams after a payment is recorded, changed or removed. */
+  onPaymentsChanged: () => Promise<void>;
   /** False while the event is locked (completed): read-only, the plain name, no actions. */
   canWrite: boolean;
   /** Seed feeds only the playoff bracket's "By seed number" — absent for an Exhibition. */
@@ -148,6 +150,8 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   const [form, setForm] = useState<Form>(() => formOf(team));
   const [saved, setSaved] = useState<Form>(() => formOf(team));
   const [leaveError, setLeaveError] = useState('');
+  // A Record or change form is open in the payments list: closing the window over it asks first (KitDialog `dirty`).
+  const [paymentFormOpen, setPaymentFormOpen] = useState(false);
   // Which team the head's pencil turned into its form (the read / edit mode — see toggleEdit below).
   // Declared here so the re-seed can clear it: the window stays mounted as it steps through the list.
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
@@ -376,25 +380,23 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
             : <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onMarkUnpaid(t))} disabled={props.busy}>{W.markUnpaid}</button>}
         </div>
       )}
-      {!props.isClubOwnTeam && line && (editing && recordsPayments ? (
-        <div className={styles.recordFields}>
-          <label className={ck.field}>
-            <span className={ck.label}>{W.depositPaidField}</span>
-            <input className={ck.input} type="number" inputMode="decimal" min="0" step="0.01" placeholder="$0"
-              value={form.depositPaid} onChange={e => set({ depositPaid: e.target.value })} />
-          </label>
-          <label className={ck.field}>
-            <span className={ck.label}>{W.totalPaidField}</span>
-            <input className={ck.input} type="number" inputMode="decimal" min="0" step="0.01" placeholder="$0"
-              value={form.totalPaid} onChange={e => set({ totalPaid: e.target.value })} />
-          </label>
-        </div>
-      ) : (
-        <dl className={`${styles.recordFacts} ${styles.recordFactsAfter}`}>
-          <div><dt>{W.depositPaidField}</dt><dd>{formatMoney(money(saved.depositPaid))}</dd></div>
-          <div><dt>{W.totalPaidField}</dt><dd>{formatMoney(money(saved.totalPaid))}</dd></div>
-        </dl>
-      ))}
+      {/* The payments themselves (mig 345): what was received, with its date, and what is still due. Recording is an
+          action, so it works reading or editing; one component per team, so stepping to another team starts it afresh. */}
+      {!props.isClubOwnTeam && line && (
+        <TeamPayments
+          key={t.id}
+          teamId={t.id}
+          tournamentId={props.tournamentId}
+          orgQuery={props.orgQuery}
+          fee={props.fee}
+          today={props.today}
+          canRecord={canWrite && recordsPayments}
+          paidTotal={t.totalPaid}
+          onChanged={props.onPaymentsChanged}
+          busy={props.busy}
+          onFormOpen={setPaymentFormOpen}
+        />
+      )}
       {/* R2: what was recorded stays readable; recording more is Tournament Plus. */}
       {props.payments === 'read' && <PlanLockLine href={props.planHref} plan={TEAMS_LOCK_PLAN}>{LOCK_WORDS.recordPayments}</PlanLockLine>}
     </RecordSection>
@@ -412,6 +414,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
           held={held} onRetry={() => void handleSave()} />
       ) : undefined}
       edit={canWrite ? { editing, onToggle: toggleEdit, label: W.editTeam } : undefined}
+      dirty={paymentFormOpen}
       onClose={() => void flushThen(props.onClose)}
       steps={{
         prev: props.prev ? { name: props.prev.name, onStep: () => void flushThen(() => props.onStep(props.prev!.id)) } : null,

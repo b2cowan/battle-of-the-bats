@@ -2105,6 +2105,9 @@ export default function UnifiedTeamsPage() {
           payments={areas.payments}
           invite={invite}
           today={today}
+          tournamentId={currentTournament?.id ?? ''}
+          orgQuery={orgQuery}
+          onPaymentsChanged={load}
           canWrite={!isLocked}
           showSeed={hasPlayoffs(currentTournament ?? undefined)}
           poolChoices={poolAssignable ? poolsForDivision : null}

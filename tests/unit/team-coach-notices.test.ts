@@ -261,7 +261,10 @@ describe('bell only (B4 and the no-double-email rule)', () => {
 
   it('every sender writes its notice', () => {
     const senders: Array<[string, RegExp]> = [
-      ['app/api/admin/teams/route.ts', /eventType: 'team_coach_accepted'[\s\S]*eventType: 'team_coach_declined'[\s\S]*eventType: 'team_coach_payment_recorded'/],
+      ['app/api/admin/teams/route.ts', /announceTeamPaid\([\s\S]*eventType: 'team_coach_accepted'[\s\S]*eventType: 'team_coach_declined'/],
+      // The payment bell moved with the email and the host's bell to one place (mig 345): every door that completes a fee asks it.
+      ['lib/team-payment-notices.ts', /eventType: 'team_coach_payment_recorded'/],
+      ['app/api/admin/tournaments/[tournamentId]/registrations/payments/route.ts', /announceTeamPaid\(/],
       ['app/api/admin/tournaments/[tournamentId]/registrations/bulk/route.ts', /team_coach_accepted[\s\S]*team_coach_declined[\s\S]*team_coach_payment_recorded/],
       ['app/api/admin/tournaments/[tournamentId]/registrations/payment-reminders/route.ts', /team_coach_payment_reminder/],
       ['app/api/admin/schedule-publish/route.ts', /team_coach_schedule_published/],

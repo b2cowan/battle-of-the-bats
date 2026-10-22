@@ -38,9 +38,9 @@ function refusal(raw: unknown): string {
 }
 
 describe('the list is what the screens send', () => {
-  it('is exactly the ten keys — a new one is a decision, made here', () => {
+  it('is exactly the eight keys — a new one is a decision, made here (the paid figures left in mig 345: a payment is recorded)', () => {
     assert.deepEqual(Object.keys(TEAM_UPDATE_COLUMNS).sort(), [
-      'adminNotes', 'coach', 'depositPaid', 'email', 'name', 'paymentStatus', 'poolId', 'seed', 'status', 'totalPaid',
+      'adminNotes', 'coach', 'email', 'name', 'paymentStatus', 'poolId', 'seed', 'status',
     ]);
   });
 
@@ -49,7 +49,8 @@ describe('the list is what the screens send', () => {
     const type = src.match(/export type TeamRecordUpdates = Partial<\{([\s\S]*?)\}>/);
     assert.ok(type, 'TeamRecordUpdates is still declared');
     const keys = [...type[1].matchAll(/(\w+)\s*:/g)].map(m => m[1]);
-    assert.ok(keys.length >= 8, `read the type's keys (${keys.join(', ')})`);
+    assert.ok(keys.length >= 6, `read the type's keys (${keys.join(', ')})`);
+    assert.ok(!keys.includes('depositPaid') && !keys.includes('totalPaid'), 'the record window never types a paid figure');
     for (const key of keys) assert.ok(Object.hasOwn(TEAM_UPDATE_COLUMNS, key), `the team record sends "${key}"`);
   });
 
@@ -74,7 +75,6 @@ describe('the list is what the screens send', () => {
     assert.deepEqual(columns({ status: 'rejected' }), { status: 'rejected' });                        // reject
     assert.deepEqual(columns({ paymentStatus: 'paid' }), { payment_status: 'paid' });                 // mark paid
     assert.deepEqual(columns({ paymentStatus: 'pending' }), { payment_status: 'pending' });           // mark unpaid
-    assert.deepEqual(columns({ depositPaid: 150, totalPaid: 0 }), { deposit_paid: 150, total_paid: 0 }); // deposit
     assert.deepEqual(columns({ adminNotes: '' }), { admin_notes: '' });
     assert.deepEqual(columns({ coach: 'Sam Lee' }), { coach: 'Sam Lee' });
     assert.deepEqual(columns({}), {});
@@ -94,6 +94,8 @@ describe('anything else refuses the whole request', () => {
       'checked_in_by_user_id', 'checked_in_by_name', 'checked_in_at', 'check_in_status', 'checkInStatus',
       'registered_at', 'roster_submitted_at', 'roster_confirmed_at', 'payment_collected_at', 'coach_email',
       'waitlist_position', 'waitlistPosition', 'payment_status', 'deposit_paid', 'total_paid', 'admin_notes',
+      // Mig 345: the paid figures are the database's sum of the team's payments, never typed through this route.
+      'depositPaid', 'totalPaid', 'fee_book_baseline', 'fee_changed_by',
       '__proto__', 'constructor',
     ]) {
       assert.equal(refusal({ name: 'Rays', [key]: 'x' }), TEAM_UPDATE_REFUSALS.unknownKey(key), key);
@@ -112,10 +114,6 @@ describe('anything else refuses the whole request', () => {
     assert.equal(refusal({ name: 7 }), TEAM_UPDATE_REFUSALS.name);
     assert.equal(refusal({ email: 'not-an-address' }), TEAM_UPDATE_REFUSALS.email);
     assert.equal(refusal({ email: 42 }), TEAM_UPDATE_REFUSALS.email);
-    assert.equal(refusal({ depositPaid: -5 }), TEAM_UPDATE_REFUSALS.money);
-    assert.equal(refusal({ totalPaid: Number.NaN }), TEAM_UPDATE_REFUSALS.money);
-    assert.equal(refusal({ totalPaid: Number.POSITIVE_INFINITY }), TEAM_UPDATE_REFUSALS.money);
-    assert.equal(refusal({ totalPaid: '100' }), TEAM_UPDATE_REFUSALS.money);
     assert.equal(refusal({ status: 'checked_in' }), TEAM_UPDATE_REFUSALS.status);
     assert.equal(refusal({ paymentStatus: 'partial' }), TEAM_UPDATE_REFUSALS.paymentStatus);
     assert.equal(refusal({ poolId: 'pool-1' }), TEAM_UPDATE_REFUSALS.pool);
@@ -174,7 +172,7 @@ describe('a pool is the team’s own division’s, in its own tournament', () =>
 
 describe('the invite-only refusals still fire, on the checked columns', () => {
   it('no payment moves on the free plan; a paid plan is unchanged', () => {
-    for (const raw of [{ paymentStatus: 'paid' }, { depositPaid: 50 }, { totalPaid: 100 }]) {
+    for (const raw of [{ paymentStatus: 'paid' }, { paymentStatus: 'pending' }]) {
       assert.equal(teamUpdateAllowed('tournament', 'accepted', columns(raw)), false, JSON.stringify(raw));
       assert.equal(teamUpdateAllowed('tournament_plus', 'accepted', columns(raw)), true, JSON.stringify(raw));
     }
@@ -214,11 +212,16 @@ describe('the route reads the request through the list, and nowhere else', () =>
     assert.doesNotMatch(route, /\.(update|insert|upsert)\(\s*body\b/, 'no write of the request body');
   });
 
-  it('the write is the checked columns plus the paid-in-full amounts, and nothing else joins it', () => {
-    assert.equal([...route.matchAll(/\.\.\.\s*item\.updates\b/g)].length, 2, 'one checked copy for paid-in-full amounts and one for the payment actor');
+  it('the write is the checked columns, and nothing else joins it — never a paid figure (mig 345)', () => {
+    assert.equal([...route.matchAll(/\.\.\.\s*item\.updates\b/g)].length, 2, 'one checked copy and one for the payment actor');
     assert.match(updateBranch, /const dbUpdates: TeamUpdateColumns & Record<string, unknown> = \{ \.\.\.item\.updates \};/);
-    assert.deepEqual([...updateBranch.matchAll(/Object\.assign\(([^)]*)/g)].map(m => m[1]), ['dbUpdates, markPaidInFullPatch(current, fee'],
-      'the one merge is J5-026’s paid-in-full amounts');
+    assert.deepEqual([...updateBranch.matchAll(/Object\.assign\(([^)]*)/g)].map(m => m[1]), [],
+      'nothing is merged into the write: a "Mark paid" is a recorded payment, made by the database');
+    // A READ of total_paid is fine (the "unpaid" refusal looks at it); a write or a key is not.
+    assert.doesNotMatch(updateBranch, /\b(deposit_paid|total_paid)\s*:|\.(deposit_paid|total_paid)\s*=(?!=)|markPaidInFullPatch/,
+      'the route writes no paid figure and stamps none');
+    assert.match(updateBranch, /if \(markedByPayment\.has\(item\.id\)\) delete dbUpdates\.payment_status;/,
+      'a status a payment already moved is dropped from the copy, never written twice');
     assert.doesNotMatch(updateBranch, /\bdbUpdates(\.\w+|\[[^\]]+\])\s*=(?!=)/, 'no key assigned onto the write');
     assert.doesNotMatch(updateBranch, /\bitems\s*\[|\bitem\.updates(\.\w+|\[[^\]]+\])\s*=(?!=)/, 'the checked items are never changed after the list');
     assert.match(updateBranch, /const stampedUpdates = paymentChanged \? \{ \.\.\.item\.updates, fee_changed_by: ctx\.user\.id \} : item\.updates;/,
@@ -232,7 +235,7 @@ describe('the route reads the request through the list, and nowhere else', () =>
       'if (poolOutsideDivision(items, currentById, pools)) return badUpdate(TEAM_UPDATE_REFUSALS.pool);',
       'if (await isPlatformAdminEmail(email)) return badUpdate(TEAM_UPDATE_REFUSALS.staffEmail);',
       'if (!teamUpdateAllowed(ctx.org.planId, current?.status, item.updates ?? {})) return inviteOnlyRefusal();',
-      'Object.assign(dbUpdates, markPaidInFullPatch(current, fee));',
+      "const paid = await payTeamDue({ teamId: item.id, actorId: ctx.user.id, scope: 'all' });",
     ]) assert.ok(at(updateBranch, step) < write, `${step} runs before the write`);
     assert.match(updateBranch, /if \(new Set\([^;]*\.map\(t => t\.tournament_id\)\)\.size > 1\) \{\s*return badUpdate\(TEAM_UPDATE_REFUSALS\.oneTournament\);/);
   });

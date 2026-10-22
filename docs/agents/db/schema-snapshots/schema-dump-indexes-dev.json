@@ -4610,6 +4610,31 @@
     "indexdef": "CREATE INDEX tournament_roster_players_source_player_id_idx ON public.tournament_roster_players USING btree (source_player_id)"
   },
   {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_entry_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_entry_idx ON public.tournament_team_payments USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_org_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_org_idx ON public.tournament_team_payments USING btree (org_id)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_team_payments_pkey ON public.tournament_team_payments USING btree (id)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_team_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_team_idx ON public.tournament_team_payments USING btree (team_id, status)"
+  },
+  {
+    "tablename": "tournament_team_payments",
+    "indexname": "tournament_team_payments_tournament_idx",
+    "indexdef": "CREATE INDEX tournament_team_payments_tournament_idx ON public.tournament_team_payments USING btree (tournament_id)"
+  },
+  {
     "tablename": "tournaments",
     "indexname": "idx_tournaments_created_at",
     "indexdef": "CREATE INDEX idx_tournaments_created_at ON public.tournaments USING btree (created_at DESC)"

@@ -11,12 +11,15 @@ import {
   TournamentTeamImportCommitError,
   buildTournamentTeamInsert,
   buildTournamentTeamUpdate,
+  NEW_TEAM_MONEY_STATE,
   parseTournamentTeamNormalizedRow,
+  planTournamentTeamPayments,
   prepareTournamentTeamCommitRows,
   rowsWithInvalidTournamentDivisions,
   summarizeTournamentTeamCommit,
   type StoredTournamentTeamImportRow,
 } from '../../lib/import/tournament-teams-commit.ts';
+import { planImportMoney, statedImportMoney } from '../../lib/import/tournament-team-money.ts';
 import { ImportParseError, type ParsedImportFile } from '../../lib/import/types.ts';
 
 const context: TournamentTeamImportContext = {
@@ -274,6 +277,78 @@ describe('tournament team import preview', () => {
   });
 });
 
+describe('tournament team import preview — a team’s paid money is its payments', () => {
+  const paidContext: TournamentTeamImportContext = {
+    ...context,
+    existingTeams: [{ ...context.existingTeams[0], paymentStatus: 'paid', depositPaid: 100, totalPaid: 300 }],
+  };
+  const sheet = (overrides: Record<string, string>) => parsed([{
+    'Team ID': 'team-1', 'Team Name': 'Blue Jays', 'Division ID': 'division-1', 'Division Name': 'U11',
+    'Coach Name': 'Avery', Email: 'avery@example.com', Status: 'pending', 'Payment Status': 'paid',
+    'Deposit Paid': '100', 'Total Paid': '300', 'Waitlist Position': '', 'Admin Notes': '', ...overrides,
+  }]);
+
+  it('a figure equal to what is recorded is no change', () => {
+    const preview = buildTournamentTeamImportPreview(sheet({}), paidContext, 'batch-1');
+    assert.equal(preview.rows[0].operation, 'unchanged');
+    assert.equal(preview.rows[0].warnings.some(w => w.includes('lower')), false);
+  });
+
+  it('a lower figure is skipped, says so in words, and the after figure stays what is recorded', () => {
+    const preview = buildTournamentTeamImportPreview(sheet({ 'Deposit Paid': '', 'Total Paid': '50' }), paidContext, 'batch-1');
+    const row = preview.rows[0];
+    assert(row.warnings.includes('Paid figure is lower than what is recorded ($300); remove the payment on the team to lower it.'));
+    assert.equal(row.after?.totalPaid, 300);
+    assert.equal(row.changes.some(change => change.field === 'Total Paid'), false);
+  });
+
+  it('a higher figure shows before = recorded and after = the stated money', () => {
+    const preview = buildTournamentTeamImportPreview(sheet({ 'Total Paid': '350' }), paidContext, 'batch-1');
+    const change = preview.rows[0].changes.find(item => item.field === 'Total Paid');
+    assert.deepEqual(change, { field: 'Total Paid', before: 300, after: 350 });
+    assert.equal(preview.rows[0].operation, 'update');
+  });
+
+  it('the larger of Deposit Paid and Total Paid is the stated money', () => {
+    const preview = buildTournamentTeamImportPreview(sheet({ 'Deposit Paid': '400', 'Total Paid': '' }), paidContext, 'batch-1');
+    assert.equal(preview.rows[0].after?.totalPaid, 400);
+    // Deposit Paid is derived from the payments: the preview never promises a new one.
+    assert.equal(preview.rows[0].changes.some(change => change.field === 'Deposit Paid'), false);
+  });
+
+  it('a sheet "pending" on a team with payments is ignored with a note', () => {
+    const preview = buildTournamentTeamImportPreview(sheet({ 'Payment Status': 'pending' }), paidContext, 'batch-1');
+    assert.equal(preview.rows[0].operation, 'unchanged');
+    assert(preview.rows[0].warnings.some(w => w.includes('is ignored')));
+    assert.equal(preview.rows[0].after?.paymentStatus, 'paid');
+  });
+
+  it('a new team shows the stated money as its Total Paid', () => {
+    const preview = buildTournamentTeamImportPreview(parsed([{
+      'Team ID': '', 'Team Name': 'Fresh', 'Division ID': 'division-2', 'Division Name': 'U13', Status: 'accepted',
+      'Payment Status': 'pending', 'Deposit Paid': '75', 'Total Paid': '', 'Admin Notes': '', 'Waitlist Position': '',
+    }]), context, 'batch-1');
+    assert.equal(preview.rows[0].operation, 'create');
+    assert.equal(preview.rows[0].after?.totalPaid, 75);
+  });
+});
+
+describe('tournament team import money arithmetic', () => {
+  it('states money as the larger figure, or null when the sheet states none', () => {
+    assert.equal(statedImportMoney(null, null), null);
+    assert.equal(statedImportMoney(50, null), 50);
+    assert.equal(statedImportMoney(50, 40), 50);
+    assert.equal(statedImportMoney(0, 0), 0);
+  });
+
+  it('plans the difference in whole cents', () => {
+    assert.deepEqual(planImportMoney(0.1, 0.3), { kind: 'add', amount: 0.2 });
+    assert.deepEqual(planImportMoney(null, null), { kind: 'none', amount: 0 });
+    assert.deepEqual(planImportMoney(300, 300), { kind: 'same', amount: 0 });
+    assert.deepEqual(planImportMoney(300, 299.99), { kind: 'lower', amount: 0 });
+  });
+});
+
 const normalized = {
   teamId: '',
   teamName: 'New Team',
@@ -353,8 +428,6 @@ describe('tournament team import commit helpers', () => {
       email: 'coach@example.com',
       status: 'accepted',
       payment_status: 'pending',
-      deposit_paid: 25,
-      total_paid: 0,
       waitlist_position: null,
       admin_notes: 'Imported',
     });
@@ -365,16 +438,59 @@ describe('tournament team import commit helpers', () => {
       email: 'coach@example.com',
       status: 'accepted',
       payment_status: 'pending',
-      deposit_paid: 25,
       waitlist_position: null,
       admin_notes: 'Imported',
     });
   });
 
-  it('an update leaves a team’s paid figures alone when the sheet states none', () => {
-    const update = buildTournamentTeamUpdate({ ...normalized, depositPaid: null, totalPaid: null });
-    assert.equal('deposit_paid' in update, false);
-    assert.equal('total_paid' in update, false);
+  it('an import never writes the paid figures: a stated figure is a payment, not a column', () => {
+    for (const figures of [{ depositPaid: 25, totalPaid: 100 }, { depositPaid: null, totalPaid: null }]) {
+      const row = { ...normalized, ...figures, paymentStatus: 'paid' as const };
+      const insert = buildTournamentTeamInsert(row, 'tournament-1', 'team-new');
+      const update = buildTournamentTeamUpdate(row, { paymentStatus: 'pending', totalPaid: 0 });
+      for (const record of [insert, update]) {
+        assert.equal('deposit_paid' in record, false);
+        assert.equal('total_paid' in record, false);
+      }
+      // A sheet "paid" is the payments' (or the no-fee follow-up's) to apply, never the insert's or the update's.
+      assert.equal(insert.payment_status, 'pending');
+      assert.equal('payment_status' in update, false);
+    }
+  });
+
+  it('a sheet "pending" never lowers a team that has recorded payments', () => {
+    const row = { ...normalized, paymentStatus: 'pending' as const };
+    assert.equal('payment_status' in buildTournamentTeamUpdate(row, { paymentStatus: 'paid', totalPaid: 100 }), false);
+    assert.equal(buildTournamentTeamUpdate(row, { paymentStatus: 'paid', totalPaid: 0 }).payment_status, 'pending');
+  });
+
+  it('plans one Imported payment for the difference above what is recorded', () => {
+    const plan = planTournamentTeamPayments({ ...normalized, depositPaid: 50, totalPaid: 125.5 }, { paymentStatus: 'pending', totalPaid: 100 });
+    assert.equal(plan.recordAmount, 25.5);
+    assert.equal(plan.payTheRest, false);
+    assert.equal(plan.skippedLower, false);
+    // A new team records the whole stated money.
+    assert.equal(planTournamentTeamPayments({ ...normalized, depositPaid: 25, totalPaid: null }, NEW_TEAM_MONEY_STATE).recordAmount, 25);
+  });
+
+  it('skips a lower or equal figure and records nothing', () => {
+    const lower = planTournamentTeamPayments({ ...normalized, depositPaid: null, totalPaid: 40 }, { paymentStatus: 'pending', totalPaid: 100 });
+    assert.deepEqual(lower, { recordAmount: 0, payTheRest: false, markPaidWithoutFee: false, skippedLower: true });
+    const same = planTournamentTeamPayments({ ...normalized, depositPaid: 100, totalPaid: 100 }, { paymentStatus: 'pending', totalPaid: 100 });
+    assert.equal(same.recordAmount, 0);
+    assert.equal(same.skippedLower, false);
+  });
+
+  it('a sheet "paid" with no figure above what is recorded pays the rest, once', () => {
+    const paid = { ...normalized, depositPaid: null, totalPaid: null, paymentStatus: 'paid' as const };
+    assert.deepEqual(planTournamentTeamPayments(paid, { paymentStatus: 'pending', totalPaid: 100 }), {
+      recordAmount: 0, payTheRest: true, markPaidWithoutFee: true, skippedLower: false,
+    });
+    // Already paid: nothing to do. Money stated above what is recorded: the stated money decides, not the rest.
+    assert.equal(planTournamentTeamPayments(paid, { paymentStatus: 'paid', totalPaid: 300 }).payTheRest, false);
+    const stated = planTournamentTeamPayments({ ...paid, totalPaid: 150 }, { paymentStatus: 'pending', totalPaid: 100 });
+    assert.equal(stated.payTheRest, false);
+    assert.equal(stated.recordAmount, 50);
   });
 
   it('rejects invalid persisted normalized money and waitlist values', () => {

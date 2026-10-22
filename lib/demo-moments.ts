@@ -328,6 +328,61 @@ export function registeredAtIsoFor(date: string): string {
   return `${date}T16:00:00.000Z`;
 }
 
+// ── Payments: a team's paid money is a list of dated payments (mig 345), never a typed figure ──
+
+/** One payment to record through `tournament_team_payment_record`. `label` is one of the labels the table allows. */
+export interface DemoPayment {
+  label: 'Deposit' | 'Balance' | 'Payment';
+  amount: number;
+  paidOn: string;
+}
+
+/** `YYYY-MM-DD` plus whole days, on a UTC calendar (no DST of its own). */
+function addDaysIso(date: string, days: number): string {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * The payments that reproduce a team's modelled paid figures (the figures stay the model — they drive the attention
+ * counts). Money in = the larger of the two; a deposit step comes first, the rest is the balance. Pure and
+ * deterministic; the database derives `deposit_paid` / `total_paid` / `payment_status` from what is recorded.
+ */
+export function demoPaymentsFor(
+  depositPaid: number,
+  totalPaid: number,
+  depositOn: string,
+  balanceOn: string,
+): DemoPayment[] {
+  const moneyIn = Math.max(depositPaid, totalPaid);
+  const out: DemoPayment[] = [];
+  if (depositPaid > 0) out.push({ label: 'Deposit', amount: Math.min(depositPaid, moneyIn), paidOn: depositOn });
+  if (moneyIn > depositPaid) {
+    out.push({ label: depositPaid > 0 ? 'Balance' : 'Payment', amount: moneyIn - depositPaid, paidOn: balanceOn });
+  }
+  return out;
+}
+
+/**
+ * The Opener's eight settled teams: the deposit three weeks before the first game, the balance ten days before it —
+ * all in the past, since the Opener finished yesterday.
+ */
+export function openerTeamPayments(openerStartDate: string): DemoPayment[] {
+  return demoPaymentsFor(OPENER_FEE.deposit, OPENER_FEE.totalFee, addDaysIso(openerStartDate, -21), addDaysIso(openerStartDate, -10));
+}
+
+/**
+ * An Invitational team's payments: the deposit the day it registered, the balance three days later (never after
+ * `today` — the database refuses a future date).
+ */
+export function invitationalTeamPayments(
+  team: Pick<InvitationalTeamDef, 'depositPaid' | 'totalPaid'> & { registeredDate: string },
+  today: string,
+): DemoPayment[] {
+  const later = addDaysIso(team.registeredDate, 3);
+  return demoPaymentsFor(team.depositPaid, team.totalPaid, team.registeredDate, later > today ? today : later);
+}
+
 /** Invitational settings: fees are shown on the register form (ratified 2026-08-04) — amounts only. */
 export const INVITATIONAL_TOURNAMENT_SETTINGS = {
   format: 'round_robin_playoffs',

@@ -75,6 +75,9 @@ export type ImportCommitResult = {
   };
   /** Coaches emailed a portal-claim link (opt-in at commit). Absent/0 when the toggle was off. */
   emailsSent?: number;
+  /** Team import: payments recorded from the sheet's paid figures (mig 345), and the rows whose payment was refused. */
+  paymentsRecorded?: number;
+  paymentIssues?: Array<{ rowNumber: number; teamName: string; message: string }>;
 };
 
 export class ImportParseError extends Error {

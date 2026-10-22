@@ -21782,6 +21782,150 @@
         "column_default": null
       },
       {
+        "table_name": "tournament_team_payments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 3,
+        "column_name": "tournament_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 5,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 6,
+        "column_name": "paid_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 7,
+        "column_name": "label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'Payment'::text"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 8,
+        "column_name": "method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 9,
+        "column_name": "entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 10,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'posted'::text"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 11,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 12,
+        "column_name": "removed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 13,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 14,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 15,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 16,
+        "column_name": "ordinal",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "tournaments",
         "pos": 1,
         "column_name": "id",
@@ -27105,6 +27249,48 @@
         "constraint_name": "tournament_roster_players_tournament_id_fkey"
       },
       {
+        "table_name": "tournament_team_payments",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "tournament_team_payments_created_by_fk"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "column_name": "entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_payments_entry_fk"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_payments_org_fk"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "column_name": "removed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "tournament_team_payments_removed_by_fk"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "column_name": "team_id",
+        "foreign_table": "teams",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_payments_team_fk"
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_payments_tournament_fk"
+      },
+      {
         "table_name": "tournaments",
         "column_name": "chat_reminder_last_sent_by",
         "foreign_table": null,
@@ -31780,6 +31966,31 @@
         "indexdef": "CREATE INDEX tournament_roster_players_source_player_id_idx ON public.tournament_roster_players USING btree (source_player_id)"
       },
       {
+        "tablename": "tournament_team_payments",
+        "indexname": "tournament_team_payments_entry_idx",
+        "indexdef": "CREATE INDEX tournament_team_payments_entry_idx ON public.tournament_team_payments USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "tournament_team_payments",
+        "indexname": "tournament_team_payments_org_idx",
+        "indexdef": "CREATE INDEX tournament_team_payments_org_idx ON public.tournament_team_payments USING btree (org_id)"
+      },
+      {
+        "tablename": "tournament_team_payments",
+        "indexname": "tournament_team_payments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX tournament_team_payments_pkey ON public.tournament_team_payments USING btree (id)"
+      },
+      {
+        "tablename": "tournament_team_payments",
+        "indexname": "tournament_team_payments_team_idx",
+        "indexdef": "CREATE INDEX tournament_team_payments_team_idx ON public.tournament_team_payments USING btree (team_id, status)"
+      },
+      {
+        "tablename": "tournament_team_payments",
+        "indexname": "tournament_team_payments_tournament_idx",
+        "indexdef": "CREATE INDEX tournament_team_payments_tournament_idx ON public.tournament_team_payments USING btree (tournament_id)"
+      },
+      {
         "tablename": "tournaments",
         "indexname": "idx_tournaments_created_at",
         "indexdef": "CREATE INDEX idx_tournaments_created_at ON public.tournaments USING btree (created_at DESC)"
@@ -35364,6 +35575,42 @@
       {
         "kind": "RLS",
         "table_name": "tournament_roster_players",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_payments",
+        "detail": "tournament_team_payments_amount_chk",
+        "check_clause": "((amount > (0)::numeric) AND (amount <= (1000000)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_payments",
+        "detail": "tournament_team_payments_date_chk",
+        "check_clause": "((paid_on IS NOT NULL) OR (label = 'Earlier payment'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_payments",
+        "detail": "tournament_team_payments_label_chk",
+        "check_clause": "(label = ANY (ARRAY['Deposit'::text, 'Balance'::text, 'Entry fee'::text, 'Payment'::text, 'Imported payment'::text, 'Earlier payment'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_payments",
+        "detail": "tournament_team_payments_method_chk",
+        "check_clause": "((method IS NULL) OR (method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_payments",
+        "detail": "tournament_team_payments_status_chk",
+        "check_clause": "(status = ANY (ARRAY['posted'::text, 'removed'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "tournament_team_payments",
         "detail": "ENABLED",
         "check_clause": null
       },

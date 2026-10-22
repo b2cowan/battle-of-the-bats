@@ -216,8 +216,6 @@ async function createHardeningState(orgSlug: string): Promise<HardeningState> {
     email: `team-import-hardening-${index + 1}-${suffix}@example.test`,
     status: 'accepted',
     payment_status: 'paid',
-    deposit_paid: 25,
-    total_paid: 100,
   }));
 
   const { data: teams, error: teamsError } = await supabaseAdmin
@@ -227,6 +225,20 @@ async function createHardeningState(orgSlug: string): Promise<HardeningState> {
 
   if (teamsError) throw teamsError;
   if (!teams || teams.length !== 3) throw new Error('Team import hardening teams were not created.');
+
+  // A team's paid money is dated payments (mig 345), never a figure written on the team: $100 in two payments, dated
+  // yesterday (the database refuses a future date). The database derives total_paid from them.
+  const paidOn = new Date(`${smokeDate}T12:00:00Z`);
+  paidOn.setUTCDate(paidOn.getUTCDate() - 1);
+  for (const team of teams) {
+    for (const payment of [{ label: 'Deposit', amount: 25 }, { label: 'Balance', amount: 75 }]) {
+      const { error: paymentError } = await supabaseAdmin.rpc('tournament_team_payment_record', {
+        p_team: team.id, p_amount: payment.amount, p_paid_on: paidOn.toISOString().slice(0, 10),
+        p_label: payment.label, p_method: null, p_actor: null,
+      });
+      if (paymentError) throw paymentError;
+    }
+  }
 
   const teamByName = new Map(teams.map(team => [team.name, team]));
   const [teamOneName, teamTwoName, teamThreeName] = teamRows.map(team => team.name);

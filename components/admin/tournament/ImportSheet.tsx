@@ -362,9 +362,12 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
           )}
           {result && (
             <p className={styles.done} role="status">
-              {W.imported(result.summary.created, result.summary.updated)}{result.emailsSent ? W.emailed(result.emailsSent) : ''}
+              {W.imported(result.summary.created, result.summary.updated)}{result.emailsSent ? W.emailed(result.emailsSent) : ''}{result.paymentsRecorded ? W.paymentsRecorded(result.paymentsRecorded) : ''}
             </p>
           )}
+          {result?.paymentIssues?.map((i, n) => (
+            <p key={`${i.rowNumber}-${n}`} className={styles.refused} role="alert">{W.paymentRefused(i.rowNumber, i.teamName, i.message)}</p>
+          ))}
         </RecordSection>
       )}
 

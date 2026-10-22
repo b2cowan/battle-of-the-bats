@@ -8,7 +8,8 @@ import { SEE_IT_LIVE_PATH } from '../../lib/sandbox-door.ts';
 import { demoBracketSeeds } from '../../lib/demo-tournament.ts';
 import {
   resolveOpenerState, resolveInvitationalState, openerBracketSeeds,
-  invitationalAttentionBuckets, INVITATIONAL_TEAMS,
+  invitationalAttentionBuckets, INVITATIONAL_TEAMS, OPENER_FEE, INVITATIONAL_FEE,
+  demoPaymentsFor, openerTeamPayments, invitationalTeamPayments,
 } from '../../lib/demo-moments.ts';
 import { utcToZonedInputs, ORG_TIME_ZONE } from '../../lib/timezone.ts';
 
@@ -113,6 +114,53 @@ describe("the Invitational's pipeline — the mockups' exact numbers, by the app
     assert.equal(u11.filter(t => t.status === 'waitlist').length, 2);
     const u13 = INVITATIONAL_TEAMS.filter(t => t.division === 'U13');
     assert.ok(u13.filter(t => t.status === 'accepted').length < 8);
+  });
+});
+
+describe('payments — the seeds record dated payments that reproduce the modelled figures (mig 345)', () => {
+  const now = new Date('2026-08-04T15:00:00Z');
+  const today = utcToZonedInputs(now.toISOString(), ORG_TIME_ZONE).date;
+  // What the database derives from posted payments: total = the sum, deposit = least(sum, the deposit fee).
+  const derive = (payments: { amount: number }[], depositFee: number) => {
+    const total = payments.reduce((sum, p) => sum + p.amount, 0);
+    return { total, deposit: Math.min(total, depositFee) };
+  };
+
+  test('every Invitational team: the derived figures equal the modelled ones, and nothing is dated in the future', () => {
+    for (const team of resolveInvitationalState(now).teams) {
+      const payments = invitationalTeamPayments(team, today);
+      const { total, deposit } = derive(payments, INVITATIONAL_FEE.deposit);
+      assert.equal(total, Math.max(team.depositPaid, team.totalPaid), `${team.name} total`);
+      assert.equal(deposit, team.depositPaid, `${team.name} deposit`);
+      for (const p of payments) assert.ok(p.paidOn <= today, `${team.name} has a payment dated ${p.paidOn}, after ${today}`);
+      assert.ok(payments.every(p => p.amount > 0));
+    }
+  });
+
+  test('every Opener team settles the full fee, dated before the first game', () => {
+    const opener = resolveOpenerState(now);
+    const payments = openerTeamPayments(opener.startDate);
+    const { total, deposit } = derive(payments, OPENER_FEE.deposit);
+    assert.equal(total, OPENER_FEE.totalFee);
+    assert.equal(deposit, OPENER_FEE.deposit);
+    for (const p of payments) assert.ok(p.paidOn < opener.startDate);
+  });
+
+  test('a deposit step comes first, the rest is the balance; no deposit means one Payment', () => {
+    assert.deepEqual(demoPaymentsFor(100, 500, 'a', 'b'), [
+      { label: 'Deposit', amount: 100, paidOn: 'a' }, { label: 'Balance', amount: 400, paidOn: 'b' },
+    ]);
+    assert.deepEqual(demoPaymentsFor(100, 0, 'a', 'b'), [{ label: 'Deposit', amount: 100, paidOn: 'a' }]);
+    assert.deepEqual(demoPaymentsFor(0, 0, 'a', 'b'), []);
+  });
+
+  test('the seeds never stamp a paid figure on a team', async () => {
+    const { readFileSync } = await import('node:fs');
+    for (const file of ['scripts/seed-demo-tournament.mjs', 'scripts/seed-fp5-cluster5.mjs']) {
+      const src = readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
+      assert.doesNotMatch(src, /^s*(deposit_paid|total_paid)s*:|[,{]s*(deposit_paid|total_paid)s*:/m, `${file} writes a paid figure`);
+      assert.match(src, /tournament_team_payment_record/, `${file} does not record payments`);
+    }
   });
 });
 

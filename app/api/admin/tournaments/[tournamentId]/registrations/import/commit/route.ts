@@ -8,6 +8,8 @@ import {
   buildTournamentTeamInsert,
   buildTournamentTeamUpdate,
   didImportDivisionChange,
+  NEW_TEAM_MONEY_STATE,
+  planTournamentTeamPayments,
   prepareTournamentTeamCommitRows,
   rowsWithInvalidTournamentDivisions,
   summarizeTournamentTeamCommit,
@@ -27,6 +29,10 @@ import {
 } from '../shared';
 import { withObservability } from '@/lib/observability';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { IMPORTED_PAYMENT_LABEL } from '@/lib/import/tournament-team-money';
+import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
+import { paymentErrorResponse, payTeamDue, recordTeamPayment } from '@/lib/team-payments-server';
+import { tournamentToday } from '@/lib/timezone';
 
 export const runtime = 'nodejs';
 
@@ -143,7 +149,7 @@ async function validateCurrentState(input: {
   tournamentId: string;
   updateRows: PreparedTournamentTeamCommitRow[];
   createRows: PreparedTournamentTeamCommitRow[];
-}) {
+}): Promise<Map<string, TeamRow>> {
   const { data: divisionRows, error: divisionError } = await supabaseAdmin
     .from('divisions')
     .select('id')
@@ -229,12 +235,80 @@ async function validateCurrentState(input: {
       throw new TournamentTeamImportCommitError('One or more new teams now match an existing team. Run preview again before applying.', 409, duplicateRows.map(row => row.rowNumber));
     }
   }
+
+  return teamById;
+}
+
+/** A row whose money could not be recorded (the team itself was still written). Returned to the organizer per row. */
+type ImportPaymentIssue = { rowNumber: number; teamName: string; message: string };
+
+/** The sentence a payment refusal carries (a closed fiscal year, a database sentence), read off the response the routes send. */
+async function paymentRefusalWords(error: { message?: string }, orgId: string, today: string): Promise<string> {
+  const response = await paymentErrorResponse(error, orgId, [today]);
+  const body = await response.json().catch(() => null) as { error?: unknown } | null;
+  return typeof body?.error === 'string' ? body.error : 'Couldn’t save the payment. Try again.';
+}
+
+/**
+ * The money half of an import (owner call 3, TEAM_PAYMENTS_LIST_PLAN §9). A team's paid money is its dated payments, so a
+ * sheet's figures become ONE "Imported payment" for the difference (dated today), and a sheet "paid" records what is still
+ * due. Nothing is ever lowered. A QUIET path by design: no email, bell or notice (announceTeamPaid is never called).
+ * The club's own linked team has no entry fee, so its payment writes are skipped. A refusal never aborts the import (the
+ * teams are already written): it comes back as a per-row issue.
+ */
+async function applyImportPayments(input: {
+  orgId: string;
+  actorId: string;
+  rows: Array<{ row: PreparedTournamentTeamCommitRow; teamId: string; current: { paymentStatus: string | null; totalPaid: number | null } }>;
+}) {
+  const today = tournamentToday();
+  const issues: ImportPaymentIssue[] = [];
+  let recorded = 0;
+
+  for (const { row, teamId, current } of input.rows) {
+    const plan = planTournamentTeamPayments(row.normalized, current);
+    if (plan.recordAmount <= 0 && !plan.payTheRest) continue;
+    const issue = (message: string) => issues.push({ rowNumber: row.rowNumber, teamName: row.normalized.teamName, message });
+    try {
+      if (await isOurTournamentTeam(input.orgId, teamId)) {
+        issue('Your own team has no entry fee, so no payment was recorded.');
+        continue;
+      }
+
+      let noFee = false;
+      if (plan.recordAmount > 0) {
+        const result = await recordTeamPayment({
+          teamId, amount: plan.recordAmount, paidOn: today, label: IMPORTED_PAYMENT_LABEL, method: null, actorId: input.actorId,
+        });
+        if ('error' in result) { issue(await paymentRefusalWords(result.error, input.orgId, today)); continue; }
+        recorded++;
+        noFee = result.outcome.feeTotal == null;
+      } else {
+        const result = await payTeamDue({ teamId, actorId: input.actorId, scope: 'all', label: IMPORTED_PAYMENT_LABEL });
+        if ('error' in result) { issue(await paymentRefusalWords(result.error, input.orgId, today)); continue; }
+        if (result.outcome.recorded) recorded++;
+        noFee = result.outcome.noFee;
+      }
+
+      // No fee schedule: the database has nothing to derive a status from, so a sheet "paid" is only a status, as before.
+      if (noFee && plan.markPaidWithoutFee) {
+        const { error } = await supabaseAdmin.from('teams').update({ payment_status: 'paid' }).eq('id', teamId);
+        if (error) issue('The payment was recorded but the team could not be marked paid. Try again from the team.');
+      }
+    } catch {
+      issue('Couldn’t save the payment. Try again from the team.');
+    }
+  }
+
+  return { recorded, issues };
 }
 
 async function applyRows(input: {
   actorId: string;
+  orgId: string;
   batchId: string;
   tournamentId: string;
+  currentTeams: Map<string, TeamRow>;
   createRows: PreparedTournamentTeamCommitRow[];
   updateRows: PreparedTournamentTeamCommitRow[];
   unchangedRows: PreparedTournamentTeamCommitRow[];
@@ -243,7 +317,7 @@ async function applyRows(input: {
   const createRecords = input.createRows.map(row => {
     const id = crypto.randomUUID();
     createdTargetIds.set(row.id, id);
-    return { ...buildTournamentTeamInsert(row.normalized, input.tournamentId, id), fee_changed_by: input.actorId };
+    return buildTournamentTeamInsert(row.normalized, input.tournamentId, id);
   });
 
   if (createRecords.length > 0) {
@@ -252,9 +326,13 @@ async function applyRows(input: {
   }
 
   for (const row of input.updateRows) {
+    const current = row.targetId ? input.currentTeams.get(row.targetId) : null;
+    // What the team has recorded today (a READ of the cache), so the update never lowers a paid team's status.
+    const recorded = { paymentStatus: current?.payment_status ?? null, totalPaid: current?.total_paid ?? null };
+    const columns = buildTournamentTeamUpdate(row.normalized, recorded);
     const { error } = await supabaseAdmin
       .from('teams')
-      .update({ ...buildTournamentTeamUpdate(row.normalized), fee_changed_by: input.actorId })
+      .update(columns)
       .eq('id', row.targetId)
       .eq('tournament_id', input.tournamentId);
     if (error) throw new Error(error.message);
@@ -289,7 +367,22 @@ async function applyRows(input: {
     if (error) throw new Error(error.message);
   }
 
-  return { createdTargetIds };
+  // The money last, once every team row is in: payments are the database's own transactions, one per team.
+  const paymentRows = [
+    ...input.createRows.flatMap(row => {
+      const teamId = createdTargetIds.get(row.id);
+      return teamId ? [{ row, teamId, current: NEW_TEAM_MONEY_STATE }] : [];
+    }),
+    ...input.updateRows.flatMap(row => {
+      const current = row.targetId ? input.currentTeams.get(row.targetId) : null;
+      return row.targetId && current
+        ? [{ row, teamId: row.targetId, current: { paymentStatus: current.payment_status, totalPaid: current.total_paid } }]
+        : [];
+    }),
+  ];
+  const payments = await applyImportPayments({ orgId: input.orgId, actorId: input.actorId, rows: paymentRows });
+
+  return { createdTargetIds, payments };
 }
 
 /**
@@ -386,16 +479,18 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
     if (rowsError) return json({ error: rowsError.message }, 500);
 
     const prepared = prepareTournamentTeamCommitRows((rows ?? []) as StoredTournamentTeamImportRow[]);
-    await validateCurrentState({
+    const currentTeams = await validateCurrentState({
       tournamentId,
       createRows: prepared.createRows,
       updateRows: prepared.updateRows,
     });
 
-    const { createdTargetIds } = await applyRows({
+    const { createdTargetIds, payments } = await applyRows({
       actorId: auth.ctx.user.id,
+      orgId: auth.ctx.org.id,
       batchId: batch.id,
       tournamentId,
+      currentTeams,
       createRows: prepared.createRows,
       updateRows: prepared.updateRows,
       unchangedRows: prepared.unchangedRows,
@@ -405,6 +500,7 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
     const summary = {
       ...(batch.summary_json ?? {}),
       commit: commitSummary,
+      ...(payments.recorded > 0 || payments.issues.length > 0 ? { payments: { recorded: payments.recorded, issues: payments.issues } } : {}),
     };
     await updateBatchStatus(batch.id, 'committed', summary);
 
@@ -450,6 +546,8 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
         batchId: batch.id,
         summary: commitSummary,
         emailsSent,
+        paymentsRecorded: payments.recorded,
+        paymentIssues: payments.issues,
       },
     });
   } catch (error) {

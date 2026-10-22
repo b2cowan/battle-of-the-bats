@@ -59,6 +59,9 @@ export const IMPORT_WORDS = {
   imported: (created: number, updated: number) =>
     `Imported: ${plural(created, 'added', 'added')} · ${plural(updated, 'updated', 'updated')}.`,
   emailed: (n: number) => ` Emailed ${plural(n, 'coach', 'coaches')} a portal link.`,
+  /** A sheet's paid figure becomes a payment dated today; a refused one is said by row, and the rest of the import stands. */
+  paymentsRecorded: (n: number) => ` Recorded ${plural(n, 'payment', 'payments')}.`,
+  paymentRefused: (row: number, team: string, why: string) => `Row ${row}, ${team}: the payment wasn’t recorded. ${why}`,
   showAll: (n: number) => `Show all ${plural(n, 'row', 'rows')}`,
   earlierTitle: 'Earlier imports',
   earlierFailed: 'The earlier imports didn’t load.',

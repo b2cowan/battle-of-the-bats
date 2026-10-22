@@ -53,6 +53,8 @@ const startDate = iso(new Date(today.getTime() + 14 * DAY));
 const endDate = iso(new Date(today.getTime() + 16 * DAY));
 const depositDue = iso(new Date(today.getTime() + 5 * DAY));
 const totalDue = iso(new Date(today.getTime() + 10 * DAY));
+// Payments are dated in the past (the database refuses a future date; UTC today minus a day can never be ahead of Toronto).
+const paidDaysAgo = (n) => iso(new Date(today.getTime() - n * DAY));
 
 const PAYMENT_INSTRUCTIONS =
   'E-transfer to treasurer@slotcup.ca (password: slotcup2026). Put your team name + division in the memo. Balance due by the date above.';
@@ -184,18 +186,30 @@ for (let p = 0; p < pools.length; p++) {
 // ── 6. teams in mixed states ──────────────────────────────────────────────────
 // Helper to insert one team. slotIndex assigns into slots[] (and mirrors both sides).
 let teamN = 0;
-async function addTeam({ name, status, paymentStatus = 'pending', deposit = 0, total = 0, slotIndex = null, waitlist = null }) {
+async function addTeam({ name, status, deposit = 0, total = 0, slotIndex = null, waitlist = null }) {
   teamN++;
   const teamId = randomUUID();
   die(`insert team ${name}`, (await db.from('teams').insert({
     id: teamId, tournament_id: tid, division_id: did,
     name, coach: `Coach ${teamN}`, email: `coach${teamN}@slotcup.ca`,
-    status, payment_status: paymentStatus,
-    deposit_paid: deposit, total_paid: total,
+    // Never a paid figure: money is recorded as dated payments below (mig 345) and the database derives the figures and
+    // flips the status. The column's default is 'paid', so a team that has not completed its fee must say 'pending'.
+    status, payment_status: 'pending',
     slot_id: slotIndex != null ? slots[slotIndex].id : null,
     waitlist_position: waitlist,
     registered_at: new Date().toISOString(),
   })).error);
+  // `deposit` / `total` keep their old meaning (the deposit step, and the running total — a deposit-only team has
+  // total 0): money in is the larger. A deposit comes first, dated before the deposit due date; the rest is the balance.
+  const moneyIn = Math.max(deposit, total);
+  const payments = [];
+  if (deposit > 0) payments.push({ label: 'Deposit', amount: Math.min(deposit, moneyIn), paidOn: paidDaysAgo(3) });
+  if (moneyIn > deposit) payments.push({ label: deposit > 0 ? 'Balance' : 'Payment', amount: moneyIn - deposit, paidOn: paidDaysAgo(1) });
+  for (const payment of payments) {
+    die(`record ${payment.label} payment ${name}`, (await db.rpc('tournament_team_payment_record', {
+      p_team: teamId, p_amount: payment.amount, p_paid_on: payment.paidOn, p_label: payment.label, p_method: null, p_actor: null,
+    })).error);
+  }
   // bidirectional slot link (gotcha: write BOTH sides)
   if (slotIndex != null) {
     die(`link slot ${name}`, (await db.from('pool_slots').update({ team_id: teamId }).eq('id', slots[slotIndex].id)).error);
@@ -204,10 +218,10 @@ async function addTeam({ name, status, paymentStatus = 'pending', deposit = 0, t
 }
 
 // 4 accepted + placed (fill slots 0,1,2,3 → leaves slots 4,5 OPEN in pool B)
-await addTeam({ name: 'River Hawks',  status: 'accepted', paymentStatus: 'paid',    deposit: 100, total: 500, slotIndex: 0 });
-await addTeam({ name: 'Bay Bombers',  status: 'accepted', paymentStatus: 'pending', deposit: 100, total: 0,   slotIndex: 1 });
-await addTeam({ name: 'Hill Toppers',  status: 'accepted', paymentStatus: 'pending', deposit: 0,   total: 0,   slotIndex: 2 });
-await addTeam({ name: 'Lake Lightning', status: 'accepted', paymentStatus: 'pending', deposit: 0, total: 0,   slotIndex: 3 });
+await addTeam({ name: 'River Hawks',  status: 'accepted', deposit: 100, total: 500, slotIndex: 0 });
+await addTeam({ name: 'Bay Bombers',  status: 'accepted', deposit: 100, total: 0,   slotIndex: 1 });
+await addTeam({ name: 'Hill Toppers',  status: 'accepted', deposit: 0,   total: 0,   slotIndex: 2 });
+await addTeam({ name: 'Lake Lightning', status: 'accepted', deposit: 0, total: 0,   slotIndex: 3 });
 
 // 2 waitlisted (no slot)
 await addTeam({ name: 'Pine Panthers',  status: 'waitlist', waitlist: 1 });

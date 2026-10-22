@@ -12,6 +12,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { listPaymentsByTournament } from '@/lib/team-payments-server';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -174,6 +175,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
       'Payment status',
       'Deposit paid',
       'Total paid',
+      'Last payment date',
       'Payment readiness status',
       'Amount due',
       'Payment due date',
@@ -183,6 +185,13 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
   ];
 
   const today = tournamentToday();
+  // The day of the team's latest dated payment (mig 345); an "Earlier payment" has no day, so a team with only that is blank.
+  const paymentsByTeam = tracksPayments ? await listPaymentsByTournament(tournamentId) : new Map();
+  const lastPaymentDay = (teamId: string): string => {
+    const days = ((paymentsByTeam.get(teamId) ?? []) as Array<{ paidOn: string | null }>)
+      .map(p => p.paidOn).filter((d): d is string => Boolean(d)).sort();
+    return days.length ? days[days.length - 1] : '';
+  };
   const rows = typedTeams.map(team => {
     const fee = effectiveFee(team, tournament, groupFeeMap);
     const due = paymentDue(team, fee);
@@ -198,6 +207,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
         team.payment_status ?? '',
         team.deposit_paid ?? '',
         team.total_paid ?? '',
+        lastPaymentDay(team.id),
         paymentReadinessStatus(team, fee, today),
         due.amount,
         due.dueDate,

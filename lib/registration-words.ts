@@ -126,8 +126,11 @@ export const TEAM_RECORD_WORDS = {
   paidInFull: (amount: string) => `Paid in full · ${amount}`,
   markPaid: (amount: string | null) => (amount ? `Mark paid · ${amount}` : 'Mark paid'),
   markUnpaid: 'Mark unpaid',
-  depositPaidField: 'Deposit paid',
-  totalPaidField: 'Total paid',
+  /** The summary line once something is paid: "Owes $200 · paid $100 of $300". */
+  paidOf: (paid: string, fee: string) => `paid ${paid} of ${fee}`,
+  /** A team that paid more than its fee: "Paid $350 · $50 over the fee". */
+  paidAmount: (amount: string) => `Paid ${amount}`,
+  overFee: (amount: string) => `${amount} over the fee`,
   // ── The record reads first and is edited whole (owner, 2026-10-01): the Team section says each fact
   // ONCE (it replaced a read "Coach" block above a "Team details" form of the same fields).
   // "Coach’s email" is the coach-email override, shown only where it differs from the sign-in email;
@@ -180,6 +183,46 @@ export const TEAM_RECORD_WORDS = {
 
 /** One status, one word, one tone — the club tryouts' map (T5: pending warn · accepted good ·
  *  waitlisted and rejected neutral). No new tone. */
+/**
+ * A team's payments, in the record's Payment section (mig 345; drawn and ruled 2026-10-21 — TEAM_PAYMENTS_LIST_PLAN.md).
+ * Sentence-case headings, plain asterisks on what is required, no "optional" tags. New words, owed to /marketing.
+ */
+export const TEAM_PAYMENT_WORDS = {
+  received: 'Received',
+  stillDue: 'Still due',
+  record: 'Record',
+  recordOther: '+ Record a different amount',
+  recordTitle: (what: string | null) => (what ? `Record the ${what.toLowerCase()}` : 'Record a payment'),
+  amount: 'Amount',
+  paidOn: 'Paid on',
+  how: 'How it arrived',
+  howNone: 'Not recorded',
+  methods: { etransfer: 'E-transfer', cash: 'Cash', cheque: 'Cheque', card: 'Card', other: 'Other' },
+  /** Under the Record form. The date range is the rule; the second sentence says where the money goes. */
+  hintBook: 'Any date up to today. Posts one line to the tournament’s book, dated the day you pick.',
+  hintTeamOnly: 'Any date up to today. Kept on the team; this club has no Accounting, so nothing posts to a ledger.',
+  inLedger: 'In ledger',
+  earlier: 'Earlier',
+  changeTitle: 'Change this payment',
+  changeAria: (amount: string, day: string) => `Change the ${amount} payment from ${day}`,
+  changeHintBook: 'Saving a change voids this ledger line and posts a corrected one, so the book keeps both. That is why a change asks first instead of saving as you type.',
+  saveChange: 'Save change',
+  cancel: 'Cancel',
+  removeLink: 'Remove this payment',
+  removeAsk: (amount: string) => `Remove this ${amount} payment?`,
+  removeBodyBook: 'Its ledger line is voided and stays in the book, with your name and the time.',
+  removeBody: (amount: string) => `It leaves the list. The team’s total goes down by ${amount}.`,
+  removeConfirm: 'Remove payment',
+  keep: 'Keep it',
+  dueOn: (date: string) => `due ${date}`,
+  loading: 'Loading the payments…',
+  loadError: 'Couldn’t load the payments.',
+  retry: 'Try again',
+  amountError: 'Enter an amount above $0.',
+  futureError: 'A payment can’t be dated in the future.',
+  dateError: 'Choose the date the payment arrived.',
+} as const;
+
 export const TEAM_STATUS_CHIP: Record<'pending' | 'accepted' | 'waitlist' | 'rejected', { label: string; tone: 'warn' | 'good' | 'neutral' }> = {
   pending: { label: 'Pending', tone: 'warn' },
   accepted: { label: 'Accepted', tone: 'good' },

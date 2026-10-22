@@ -1,5 +1,13 @@
 import crypto from 'node:crypto';
 import { getCell, normalizeHeader, normalizeToken } from './tabular.ts';
+import {
+  KEEPS_PAID_STATUS_NOTE,
+  importKeepsPaidStatus,
+  importTotalAfter,
+  lowerFigureNote,
+  planImportMoney,
+  statedImportMoney,
+} from './tournament-team-money.ts';
 import type { ImportPreview, ImportPreviewChange, ImportPreviewRow, ParsedImportFile, ParsedImportRow } from './types.ts';
 
 export const TOURNAMENT_TEAM_IMPORT_TYPE = 'tournament_teams';
@@ -356,7 +364,22 @@ export function buildTournamentTeamImportPreview(
       warnings.push('Waitlist Position is set but Status is not waitlist.');
     }
 
-    const after = afterRecord(normalized);
+    // A team's paid money is its dated payments; the sheet's paid figures are read as money and the commit records the
+    // difference as one Imported payment. Never lowers (owner call 3): the preview says so, and `after` stays truthful.
+    const statedMoney = statedImportMoney(normalized.depositPaid, normalized.totalPaid);
+    const keepsPaidStatus = target ? importKeepsPaidStatus(normalized.paymentStatus, target.paymentStatus, target.totalPaid) : false;
+    if (target && planImportMoney(target.totalPaid, statedMoney).kind === 'lower') warnings.push(lowerFigureNote(target.totalPaid ?? 0));
+    if (keepsPaidStatus) warnings.push(KEEPS_PAID_STATUS_NOTE);
+
+    const after = {
+      ...afterRecord(normalized),
+      // Deposit Paid is derived from the payments (an import never writes it); Total Paid is what will be on record.
+      depositPaid: target ? target.depositPaid ?? null : null,
+      totalPaid: target
+        ? importTotalAfter(target.totalPaid, statedMoney)
+        : statedMoney != null && statedMoney > 0 ? statedMoney : null,
+      paymentStatus: keepsPaidStatus && target ? 'paid' : normalized.paymentStatus,
+    };
     const before = target ? normalizeExisting(target, context) : undefined;
     const changes = before ? compare(before, after) : Object.entries(after)
       .filter(([, value]) => value !== null && value !== '')

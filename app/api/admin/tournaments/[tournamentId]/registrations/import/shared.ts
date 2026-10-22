@@ -110,6 +110,8 @@ export async function loadTournamentTeamImportContext(input: {
     name: division.name,
   }));
 
+  // deposit_paid / total_paid are the cache the database keeps from the team's payments (mig 345): read here as "what is
+  // recorded" for the preview's before/after and its lower-figure note. The commit never writes them.
   const existingTeams: TournamentTeamImportExistingTeam[] = (teamRows ?? []).map((team: TeamRow) => ({
     id: team.id,
     divisionId: team.division_id ?? '',

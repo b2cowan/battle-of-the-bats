@@ -19,6 +19,8 @@
 .plainList { margin: 0.25rem 0; padding-left: 1.1rem; }
 /* In the window's foot, where Import would be: beside Cancel at a desk, a line above it on a phone (the foot wraps). */
 .blockedFoot { margin: 0; align-self: center; min-width: 0; font-size: var(--type-support); font-weight: 600; line-height: 1.35; color: var(--warning-light); }
+/* A payment the import could not record (a closed fiscal year, our own team): the amber of "wasn't done", never the green of done. */
+.refused { margin: 0.4rem 0 0; font-size: var(--type-support); font-weight: 600; line-height: 1.35; color: var(--warning-light); }
 .done { margin: 0.6rem 0 0; font-size: var(--type-body); font-weight: 600; color: var(--success-light); }
 
 /* ── The preview as a summary (owner, 2026-10-12 — the Import Preview Redraw, A1–A8) ───────────────────────────────

@@ -4,7 +4,6 @@
  * suite holds the order the organizer steps through (tests/unit/teams-model.test.ts).
  */
 import { formatPoolName } from './utils';
-import { formatStoredDate } from './timezone';
 import type { Division } from './types';
 import { TEAMS_WORDS, TEAM_RECORD_WORDS } from './registration-words';
 
@@ -54,8 +53,10 @@ export interface FeeSchedule {
 
 export type PoolInfo = { id: string; name: string; display_order?: number | null };
 
+/** "$475", and "$109.50" when there are cents (a recorded payment can be any amount; a fee is whole dollars). */
 export function formatMoney(value: number): string {
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value);
+  const digits = Math.abs(value - Math.round(value)) < 0.005 ? 0 : 2;
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 }
 
 export function getEffectiveFee(team: Pick<TeamRecord, 'division_id'>, divisions: Division[], feeMode: FeeMode, feeSchedule: FeeSchedule): FeeSchedule {
@@ -105,26 +106,21 @@ export function paymentFact(team: TeamRecord, fee: FeeSchedule): { text: string;
   return team.paymentStatus === 'paid' ? { text: TEAMS_WORDS.paid, owes: false } : null;
 }
 
-const shortDate = (d: string) => formatStoredDate(d, { withYear: false });
-
 /**
- * The record's payment line — facts, not narration (D10): "Owes $475 · deposit due May 28 · balance
- * due Jun 7 · past due". `lead` is the owed/paid fact (amber when owed); `rest` the dates and state.
- * Null with no fee schedule (the record then offers Mark paid / Mark unpaid on its own).
+ * The record's payment line — facts, not narration (D10): "Owes $200 · paid $100 of $300 · past due". `lead` is the
+ * owed/paid fact (amber when owed); `rest` what has been received and the state. The due DATES are the Still due rows'
+ * (mig 345, TeamPayments.tsx), said once. Null with no fee schedule (the record then offers Mark paid / Mark unpaid).
  */
 export function paymentLine(team: TeamRecord, fee: FeeSchedule, today: string): { lead: string; owes: boolean; rest: string[] } | null {
   if (!fee.totalFeeAmount) return null;
   const owed = owedAmount(team, fee);
-  if (owed <= 0) return { lead: TEAM_RECORD_WORDS.paidInFull(formatMoney(fee.totalFeeAmount)), owes: false, rest: [] };
-  const rest: string[] = [];
-  if (hasDepositStep(fee)) {
-    const depositIn = team.depositPaid >= (fee.depositAmount ?? 0);
-    if (depositIn) rest.push(TEAM_RECORD_WORDS.depositPaid);
-    else if (fee.depositDueDate) rest.push(TEAM_RECORD_WORDS.depositDue(shortDate(fee.depositDueDate)));
-    if (fee.totalFeeDueDate) rest.push(TEAM_RECORD_WORDS.balanceDue(shortDate(fee.totalFeeDueDate)));
-  } else if (fee.totalFeeDueDate) {
-    rest.push(TEAM_RECORD_WORDS.due(shortDate(fee.totalFeeDueDate)));
+  if (owed <= 0) {
+    const over = Math.round((team.totalPaid - fee.totalFeeAmount) * 100) / 100;
+    if (over > 0) return { lead: TEAM_RECORD_WORDS.paidAmount(formatMoney(team.totalPaid)), owes: false, rest: [TEAM_RECORD_WORDS.overFee(formatMoney(over))] };
+    return { lead: TEAM_RECORD_WORDS.paidInFull(formatMoney(fee.totalFeeAmount)), owes: false, rest: [] };
   }
+  const rest: string[] = [];
+  if (team.totalPaid > 0) rest.push(TEAM_RECORD_WORDS.paidOf(formatMoney(team.totalPaid), formatMoney(fee.totalFeeAmount)));
   if (computePaymentStatus(team, fee, today) === 'past-due') rest.push(TEAM_RECORD_WORDS.pastDue);
   return { lead: TEAM_RECORD_WORDS.owes(formatMoney(owed)), owes: true, rest };
 }

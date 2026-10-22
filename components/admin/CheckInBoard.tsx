@@ -83,6 +83,14 @@ function timeOf(iso: string | null) {
   return formatTime(formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' }));
 }
 
+/** The clock on "Paid at …" only for a payment collected TODAY. A payment recorded for an earlier day carries a noon stamp
+ *  (mig 345), which would read as if it were taken at the gate at 12:00 p.m. */
+function paidTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const day = (v: string) => formatInOrgZone(v, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return day(iso) === day(new Date().toISOString()) ? timeOf(iso) : null;
+}
+
 const STATUS_META: Record<CheckInStatus, { label: string }> = {
   not_arrived: { label: 'Not arrived' },
   checked_in: { label: 'Checked in' },
@@ -97,13 +105,13 @@ function optimisticPatch(act: string, now: string, extra?: Record<string, unknow
     case 'undo': return { checkInStatus: 'not_arrived', checkedInAt: null, checkedInByName: null };
     case 'mark_paid': return { paymentStatus: 'paid', paymentCollectedAt: now };
     case 'unmark_paid': {
-      // J8-016: optimistic restore of the prior amounts the caller captured.
+      // J8-016: optimistic restore of what the caller captured. The undo removes the payment the board's own press
+      // recorded, so what the team owes returns to what it owed before that press.
       const prior = extra?.prior as Partial<CheckInTeam> | undefined;
       return {
         paymentStatus: prior?.paymentStatus === 'paid' ? 'paid' : 'pending',
-        depositPaid: typeof prior?.depositPaid === 'number' ? prior.depositPaid : 0,
-        totalPaid: typeof prior?.totalPaid === 'number' ? prior.totalPaid : 0,
         paymentCollectedAt: typeof prior?.paymentCollectedAt === 'string' ? prior.paymentCollectedAt : null,
+        ...(prior && 'owed' in prior ? { owed: prior.owed ?? null } : {}),
       };
     }
     case 'confirm_roster': return { rosterConfirmedAt: now };
@@ -338,8 +346,8 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   // Optimistic: flip just the affected team locally and persist in the background.
   // Only the changed team gets a new object reference, so memoized rows for every
   // other team skip re-rendering. On failure we silently resync to server truth.
-  const action = useCallback(async (act: string, teamId: string, extra?: Record<string, unknown>) => {
-    if (!tournamentId) return;
+  const action = useCallback(async (act: string, teamId: string, extra?: Record<string, unknown>): Promise<{ paymentIds?: string[] } | undefined> => {
+    if (!tournamentId) return undefined;
     const patch = optimisticPatch(act, new Date().toISOString(), extra);
     loadSeqRef.current++; // a read already in flight predates this change — it must not paint over it
     setBusyId(teamId);
@@ -354,17 +362,20 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
         // the optimistic flip to server truth (the silent reload leaves this message in place).
         markAuthLost();
         void loadBoard(true);
-        return;
+        return undefined;
       }
-      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Action failed.');
+      const body = await res.json().catch(() => ({})) as { error?: string; paymentIds?: string[] };
+      if (!res.ok) throw new Error(body?.error || 'Action failed.');
       // A successful action proves the session recovered — clear any lingering "signed out" / failure
       // banner (otherwise only a non-silent load clears it, and that never re-runs after mount). Both
       // setters no-op via React's bail-out when already clear, so no dependency on the current values.
       setError(null);
       setAuthLost(false);
+      return body;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Action failed.');
       void loadBoard(true); // revert optimistic change to server truth (keeps the message visible)
+      return undefined;
     } finally {
       setBusyId(null);
     }
@@ -559,26 +570,28 @@ function CheckInSheet({ team, tracksPayments, divisionName, locked, busy, onActi
   divisionName: string;
   locked: boolean;
   busy: boolean;
-  onAction: (act: string, teamId: string, extra?: Record<string, unknown>) => Promise<void>;
+  onAction: (act: string, teamId: string, extra?: Record<string, unknown>) => Promise<{ paymentIds?: string[] } | undefined>;
   onClose: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [rows, setRows] = useState<RosterPlayer[]>(() => team.roster.length > 0 ? team.roster : []);
-  // J8-016: capture the team's payment state the moment "Mark paid" is tapped, so "Un-pay" can
-  // restore the prior amounts (not blanket-zero) even after a refetch overwrites the live values.
+  // J8-016: capture the team's payment state the moment "Mark paid" is tapped, and keep the id of the payment that press
+  // recorded, so "Un-pay" removes exactly that payment and restores what the team owed (even after a refetch).
   const [paidSnapshot, setPaidSnapshot] = useState<Partial<CheckInTeam> | null>(null);
+  const [paidIds, setPaidIds] = useState<string[]>([]);
 
-  function handleMarkPaid() {
+  async function handleMarkPaid() {
     setPaidSnapshot({
       paymentStatus: team.paymentStatus,
-      depositPaid: team.depositPaid,
-      totalPaid: team.totalPaid,
       paymentCollectedAt: team.paymentCollectedAt,
+      owed: team.owed,
     });
-    void onAction('mark_paid', team.id);
+    const result = await onAction('mark_paid', team.id);
+    // A second press records nothing and returns no id: the first press's id is the one the undo needs.
+    if (result?.paymentIds?.length) setPaidIds(result.paymentIds);
   }
   function handleUnmarkPaid() {
-    void onAction('unmark_paid', team.id, { prior: paidSnapshot ?? {} });
+    void onAction('unmark_paid', team.id, { prior: paidSnapshot ?? {}, paymentIds: paidIds });
   }
 
   function setRow(i: number, patch: Partial<RosterPlayer>) {
@@ -631,7 +644,7 @@ function CheckInSheet({ team, tracksPayments, divisionName, locked, busy, onActi
         <span className={styles.sheetLabel}>Payment</span>
         {team.paymentStatus === 'paid' ? (
           <div className={styles.sheetLine}>
-            <span><Check size={15} aria-hidden className={styles.paidMark} /> {GAME_DAY_WORDS.paidAt(team.paymentCollectedAt ? timeOf(team.paymentCollectedAt) : null)}</span>
+            <span><Check size={15} aria-hidden className={styles.paidMark} /> {GAME_DAY_WORDS.paidAt(paidTime(team.paymentCollectedAt))}</span>
             <button type="button" className={`btn btn-outline ${styles.sheetAction}`} disabled={locked || busy} onClick={handleUnmarkPaid}>
               {TEAM_RECORD_WORDS.markUnpaid}
             </button>

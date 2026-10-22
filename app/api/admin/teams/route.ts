@@ -1,6 +1,6 @@
 import {
   sendEmail,
-  acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml, teamInvitationHtml,
+  acceptanceHtml, rejectionHtml, manualTeamRegistrationHtml, teamInvitationHtml,
   coachEmailBlock, resolveCoachRecipient, acceptanceFeeLine,
 } from '@/lib/email';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
@@ -38,7 +38,8 @@ import {
 } from '@/lib/db';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
-import { effectiveFee, markPaidInFullPatch } from '@/lib/mark-paid';
+import { paymentErrorResponse, payTeamDue } from '@/lib/team-payments-server';
+import { announceTeamPaid } from '@/lib/team-payment-notices';
 import { notify } from '@/lib/notify';
 import {
   duplicateTournamentTeamMessage,
@@ -363,12 +364,26 @@ export const POST = withObservability(async (req: Request) => {
         coach: team.coach?.trim() || null,
         email: team.email?.trim() ?? '',
         status: team.status ?? 'accepted',
-        payment_status: paymentStatus,
+        // "Paid" at creation is recorded below as a payment (mig 345), so the ledger and the coach's view agree.
+        payment_status: 'pending',
         fee_changed_by: ctx.user.id,
         registered_at: new Date().toISOString(),
       });
 
       if (insertErr) throw insertErr;
+
+      if (paymentStatus === 'paid') {
+        const paid = await payTeamDue({ teamId: id, actorId: ctx.user.id, scope: 'all' });
+        if ('error' in paid) {
+          // A team that could not be recorded as paid is not left behind half-made (a closed fiscal year, for one).
+          await supabaseAdmin.from('teams').delete().eq('id', id);
+          return paymentErrorResponse(paid.error, ctx.org.id);
+        }
+        // No fee schedule: nothing is owed, so only the status is marked.
+        if (paid.outcome.noFee) {
+          await supabaseAdmin.from('teams').update({ payment_status: 'paid', fee_changed_by: ctx.user.id }).eq('id', id);
+        }
+      }
 
       // An invite-only event: the email is the invitation to claim the team into a Coaches Portal (B3).
       if (team.notifyTeam && team.email?.trim() && runsInviteOnlyEvents(ctx.org.planId)) {
@@ -526,50 +541,38 @@ export const POST = withObservability(async (req: Request) => {
       if (!teamUpdateAllowed(ctx.org.planId, current?.status, item.updates ?? {})) return inviteOnlyRefusal();
     }
 
-    // J5-026: when an update marks a team paid, stamp the paid-in-full AMOUNTS the same way the
-    // bulk "Mark Paid in Full" path does — not just the raw status. The single-row toggle posts
-    // { paymentStatus:'paid' } here; without the amounts the coach portal's resolver still shows
-    // "OWED" for fee-schedule teams. Load the tournament fee + division fee map once, only when a
-    // paid-mark is actually present, and only enrich updates that don't already pass amounts.
-    const marksPaid = items.some(i => i.updates.payment_status === 'paid');
-    let feeTournament: { fee_schedule_mode: string | null; deposit_amount: number | null; total_fee_amount: number | null } | null = null;
-    const divisionFeeMap = new Map<string, { deposit_amount: number | null; total_fee_amount: number | null }>();
-    if (marksPaid && bulkTournamentId) {
-      const { data: ft } = await supabaseAdmin
-        .from('tournaments').select('fee_schedule_mode, deposit_amount, total_fee_amount').eq('id', bulkTournamentId).single();
-      feeTournament = ft ?? null;
-      if (ft?.fee_schedule_mode === 'division') {
-        const divIds = [...new Set((currents as Array<{ division_id: string | null }>).map(t => t.division_id).filter(Boolean) as string[])];
-        if (divIds.length) {
-          const { data: divs } = await supabaseAdmin
-            .from('divisions').select('id, deposit_amount, total_fee_amount').in('id', divIds);
-          for (const d of divs ?? []) divisionFeeMap.set(d.id, { deposit_amount: d.deposit_amount, total_fee_amount: d.total_fee_amount });
+    // A "Mark paid" is a recorded payment (mig 345): the rest of the fee, dated today, in one locked step — the same payment
+    // the Record button makes, so "Paid" reconciles to $0 owed on the coach side too (J5-026). A team with no fee schedule
+    // has nothing to pay, so only its status is marked. The paid figures are never written from here: the database keeps them
+    // as the sum of the team's payments (tests/unit/team-payments-guard.test.ts).
+    const paidNow = new Map<string, number>();
+    const markedByPayment = new Set<string>();
+    for (const item of items) {
+      const current = currentById.get(item.id);
+      if (item.updates.payment_status === 'paid') {
+        const paid = await payTeamDue({ teamId: item.id, actorId: ctx.user.id, scope: 'all' });
+        if ('error' in paid) return paymentErrorResponse(paid.error, ctx.org.id);
+        // Only a payment that was actually recorded moved the status. Nothing due (the fee was lowered after it was paid in
+        // full) leaves the status to this update, so the team reads paid.
+        if (!paid.outcome.noFee && paid.outcome.recorded) {
+          markedByPayment.add(item.id);
+          if (paid.outcome.becamePaid) paidNow.set(item.id, paid.outcome.total);
         }
+      } else if (item.updates.payment_status === 'pending' && Number(current?.total_paid ?? 0) > 0) {
+        // The payments are what make a team paid: taking it back to unpaid means removing them, one at a time.
+        return badUpdate(TEAM_UPDATE_REFUSALS.removePayments);
       }
     }
     const updateData = items.map(item => {
-      // The checked columns, copied: the paid-in-full amounts below join this copy, never the request's.
+      // The checked columns, copied. A payment recorded above already moved the status, so it is not written again.
       const dbUpdates: TeamUpdateColumns & Record<string, unknown> = { ...item.updates };
-      // J5-026: enrich a paid-mark with the paid-in-full amounts (unless the caller already passed
-      // them explicitly), so "Paid" reconciles to $0 owed on the coach side too.
-      if (
-        feeTournament &&
-        dbUpdates.payment_status === 'paid' &&
-        dbUpdates.total_paid === undefined &&
-        dbUpdates.deposit_paid === undefined
-      ) {
-        const current = currentById.get(item.id);
-        if (current) {
-          const fee = effectiveFee(current, feeTournament, divisionFeeMap.get(current.division_id) ?? null);
-          Object.assign(dbUpdates, markPaidInFullPatch(current, fee));
-        }
-      }
+      if (markedByPayment.has(item.id)) delete dbUpdates.payment_status;
       return { id: item.id, updates: dbUpdates };
     });
 
     for (const item of updateData) {
       if (Object.keys(item.updates).length === 0) continue;
-      const paymentChanged = 'payment_status' in item.updates || 'total_paid' in item.updates || 'deposit_paid' in item.updates;
+      const paymentChanged = 'payment_status' in item.updates;
       const stampedUpdates = paymentChanged ? { ...item.updates, fee_changed_by: ctx.user.id } : item.updates;
       const { error: updateErr } = await supabaseAdmin
         .from('teams')
@@ -626,7 +629,6 @@ export const POST = withObservability(async (req: Request) => {
     // written after the emails — OUTSIDE the host's email switches (A6), to every coach on the team (A5).
     const bellAccepted: string[] = [];
     const bellDeclined: string[] = [];
-    const bellPaid = new Map<string, number | null>();
 
     // Handle Emails. The registration emails never fire on an invite-only event (the free tournament tier, Part 3): a
     // team still waiting there (R2) is answered on the screen and told by its coach's bell, below.
@@ -655,7 +657,7 @@ export const POST = withObservability(async (req: Request) => {
           // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team, including
           // when this same update marks it paid (effective post-update status).
           const div = bulkDivisions.get(current.division_id);
-          const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid';
+          const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid' || paidNow.has(current.id);
           // "Not tracked here": the email has no Payment panel at all (no amount, no how-to-pay).
           const paymentsTracked = tournamentTracksPayments(bulkCoachSettings);
           const feeLine = willBePaid || !paymentsTracked ? undefined : acceptanceFeeLine({
@@ -705,25 +707,11 @@ export const POST = withObservability(async (req: Request) => {
           excludeUserIds: [ctx.user.id],
         }).catch(console.error);
       }
-      if (updates.payment_status === 'paid' && current.payment_status !== 'paid') {
-        // "Not tracked here" records no payment anywhere, the bell included (owner 2026-10-13).
-        if (tournamentTracksPayments(bulkCoachSettings)) {
-          const paidAmount = Number(updateData.find(u => u.id === current.id)?.updates.total_paid);
-          bellPaid.set(current.id, Number.isFinite(paidAmount) ? paidAmount : null);
-        }
-        if (!coachEmailBlock(bulkCoachSettings, 'payment', current)) {
-          await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
-        }
-        // Notify org admins of received payment (fire-and-forget)
-        notify({
-          orgId: ctx.org.id,
-          tournamentId: current.tournament_id,
-          eventType: 'payment_received',
-          title: `Payment received: ${current.name}`,
-          body: 'Team payment recorded as paid',
-          link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${current.tournament_id}`,
-          excludeUserIds: [ctx.user.id],
-        }).catch(console.error);
+      // The payment that completes a team's fee (a recorded payment) or a status-only "paid" for a team with no fee schedule:
+      // the coach's email, the host's bell and the coach's bell, in one place (lib/team-payment-notices.ts).
+      const completedFee = paidNow.has(current.id);
+      if (completedFee || (updates.payment_status === 'paid' && current.payment_status !== 'paid')) {
+        await announceTeamPaid(ctx, current.id, paidNow.get(current.id) ?? null);
       }
     }
 
@@ -731,12 +719,6 @@ export const POST = withObservability(async (req: Request) => {
     await Promise.all([
       notifyTeamCoaches({ registrationIds: bellAccepted, eventType: 'team_coach_accepted', compose: TEAM_COACH_WORDS.accepted, excludeUserIds: [ctx.user.id] }),
       notifyTeamCoaches({ registrationIds: bellDeclined, eventType: 'team_coach_declined', compose: TEAM_COACH_WORDS.declined, excludeUserIds: [ctx.user.id] }),
-      notifyTeamCoaches({
-        registrationIds: [...bellPaid.keys()],
-        eventType: 'team_coach_payment_recorded',
-        compose: c => TEAM_COACH_WORDS.paymentRecorded(c, bellPaid.get(c.registrationId)),
-        excludeUserIds: [ctx.user.id],
-      }),
     ]);
 
     return new Response(JSON.stringify({ success: true, count: items.length }), {

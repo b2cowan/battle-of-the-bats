@@ -14,7 +14,8 @@ import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
-import { markPaidInFullPatch } from '@/lib/mark-paid';
+import { paymentErrorResponse, payTeamDue } from '@/lib/team-payments-server';
+import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
@@ -120,24 +121,6 @@ async function getNextWaitlistPosition(divisionId: string) {
     .maybeSingle<{ waitlist_position: number | null }>();
   if (error) throw error;
   return (data?.waitlist_position ?? 0) + 1;
-}
-
-function effectiveFee(
-  team: TeamRow,
-  tournament: TournamentRow,
-  divisions: Map<string, DivisionFeeRow>,
-) {
-  const group = divisions.get(team.division_id);
-  if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) {
-    return {
-      depositAmount: group.deposit_amount ?? null,
-      totalFeeAmount: group.total_fee_amount ?? null,
-    };
-  }
-  return {
-    depositAmount: tournament.deposit_amount ?? null,
-    totalFeeAmount: tournament.total_fee_amount ?? null,
-  };
 }
 
 async function releaseTeamSlot(team: TeamRow) {
@@ -268,6 +251,12 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   if (divisionError) return json({ error: divisionError.message }, 500);
   if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
 
+  // A finished event takes no new payment: each press now records a dated payment and posts a ledger line.
+  if (bulkAction === 'mark_paid' || bulkAction === 'mark_deposit_paid') {
+    const { data: state } = await supabaseAdmin.from('tournaments').select('status').eq('id', tournamentId).maybeSingle();
+    if (state?.status === 'completed') return json({ error: LOCKED_RESULTS }, 409);
+  }
+
   const selectedTeams = (teams ?? []) as TeamRow[];
   if (selectedTeams.length !== ids.length || selectedTeams.some(team => team.tournament_id !== tournamentId)) {
     return json({ error: 'One or more registrations are outside this tournament.' }, 400);
@@ -276,6 +265,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const divisions = new Map((divisionRows ?? []).map(group => [group.id, group as DivisionFeeRow]));
 
   const updates: Array<{ id: string; patch: Record<string, unknown> }> = [];
+  const dueTeams: TeamRow[] = [];
   let nextWaitlistByGroup = new Map<string, number>();
 
   for (const team of selectedTeams) {
@@ -300,20 +290,10 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       // The club's own team owes no fee (Stage 7a): a paid figure stamped on it could not be undone from the Teams
       // screen, and would block unlinking it.
       continue;
-    } else if (bulkAction === 'mark_deposit_paid') {
-      const fee = effectiveFee(team, tournament, divisions);
-      if (fee.depositAmount != null) patch.deposit_paid = Math.max(Number(team.deposit_paid ?? 0), Number(fee.depositAmount));
-      if (fee.totalFeeAmount && fee.depositAmount && Number(fee.depositAmount) >= Number(fee.totalFeeAmount)) {
-        patch.total_paid = Math.max(Number(team.total_paid ?? 0), Number(fee.totalFeeAmount));
-        patch.payment_status = 'paid';
-      }
-    } else if (bulkAction === 'mark_paid') {
-      // J5-026: canonical paid-in-full stamp, shared with the single-row toggle (/api/admin/teams)
-      // and the check-in gate so "Paid" reconciles to $0 owed on every surface.
-      Object.assign(patch, markPaidInFullPatch(team, effectiveFee(team, tournament, divisions)));
-    }
-    if ('payment_status' in patch || 'total_paid' in patch || 'deposit_paid' in patch) {
-      patch.fee_changed_by = ctx.user.id;
+    } else if (bulkAction === 'mark_deposit_paid' || bulkAction === 'mark_paid') {
+      // A payment is a recorded fact (mig 345): the rest of the deposit, or the rest of the fee, dated today — one payment
+      // per team in one locked step, so a double press records once. Done below with the other writes.
+      dueTeams.push(team);
     }
     if (Object.keys(patch).length > 0) updates.push({ id: team.id, patch });
   }
@@ -321,6 +301,20 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   for (const update of updates) {
     const { error } = await supabaseAdmin.from('teams').update(update.patch).eq('id', update.id);
     if (error) return json({ error: error.message }, 500);
+  }
+
+  // The paid totals the coach's bell names, by team.
+  const paidTotals = new Map<string, number>();
+  for (const team of dueTeams) {
+    const paid = await payTeamDue({ teamId: team.id, actorId: ctx.user.id, scope: bulkAction === 'mark_deposit_paid' ? 'deposit' : 'all' });
+    if ('error' in paid) return paymentErrorResponse(paid.error, ctx.org.id);
+    if (paid.outcome.noFee && bulkAction === 'mark_paid') {
+      // No fee schedule: nothing is owed, so only the status is marked (as before).
+      const { error } = await supabaseAdmin.from('teams').update({ payment_status: 'paid', fee_changed_by: ctx.user.id }).eq('id', team.id);
+      if (error) return json({ error: error.message }, 500);
+    } else {
+      paidTotals.set(team.id, paid.outcome.total);
+    }
   }
 
   // J1-066: when a team is accepted into a slot-configured division, drop it into
@@ -358,7 +352,6 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     });
   } else if (bulkAction === 'mark_paid' && tournamentTracksPayments(tournament.settings)) {
     // "Not tracked here" records no payment anywhere, the bell included (owner 2026-10-13).
-    const paidTotals = new Map(updates.map(u => [u.id, Number(u.patch.total_paid)]));
     await notifyTeamCoaches({
       registrationIds: selectedTeams.filter(t => t.payment_status !== 'paid').map(t => t.id),
       eventType: 'team_coach_payment_recorded',

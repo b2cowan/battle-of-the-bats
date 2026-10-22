@@ -76,6 +76,7 @@ const STAYS: Record<string, string> = {
   // ── The coach's OWN tournament (a Premium portal includes one) — the org's, not the team's ────
   tournaments: 'the coach org’s hosted tournament does not move (an open one refuses the move)',
   tournament_fee_book_settings: 'the filing word belongs to the coach org’s hosted tournament, which stays with that org',
+  tournament_team_payments: 'a payment toward a hosted tournament’s entry fee belongs to that tournament’s org (and its ledger line), which stays; a team that moves is a coach team, not a registration in the hosted event',
   tournament_archives: 'belongs to the coach org’s tournament',
   tournament_registration_fields: 'belongs to the coach org’s tournament',
   tournament_roster_players: 'a tournament’s roster, in the tournament’s org',

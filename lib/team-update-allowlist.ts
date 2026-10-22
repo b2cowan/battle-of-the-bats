@@ -8,8 +8,9 @@
  * check-in and registration columns (FREE_TOURNAMENT_TIER_REVIEW_PLAN.md §12, "Pre-existing").
  *
  * The list is built from what the screens SEND, not from the table: the team record window
- * (`TeamRecordUpdates`: name, coach, email, seed, depositPaid, totalPaid, adminNotes, poolId) and the
- * Teams page (status for Accept/Reject, paymentStatus for Mark paid/unpaid, poolId for the pool moves).
+ * (`TeamRecordUpdates`: name, coach, email, seed, adminNotes, poolId) and the Teams page (status for Accept/Reject,
+ * paymentStatus for Mark paid/unpaid, poolId for the pool moves). The PAID FIGURES are not here since mig 345: a payment is
+ * recorded through the payments route, and the database keeps `total_paid` / `deposit_paid` as the sum of the team's payments.
  * A key no caller sends is not here. A key that is not here refuses the WHOLE request — a caller
  * sending one is a bug to surface, not a field to drop quietly. `tournament_id`, `division_id` and
  * `slot_id` are never settable here: moving a team between events or divisions is not a feature of
@@ -25,8 +26,6 @@ export const TEAM_UPDATE_COLUMNS = {
   coach: 'coach',
   email: 'email',
   seed: 'seed',
-  depositPaid: 'deposit_paid',
-  totalPaid: 'total_paid',
   adminNotes: 'admin_notes',
   poolId: 'pool_id',
   status: 'status',
@@ -41,8 +40,6 @@ export type TeamUpdateColumns = Partial<{
   coach: string | null;
   email: string;
   seed: number | null;
-  deposit_paid: number;
-  total_paid: number;
   admin_notes: string | null;
   pool_id: string | null;
   status: Team['status'];
@@ -64,7 +61,8 @@ export const TEAM_UPDATE_REFUSALS = {
   name: 'Enter a team name.',
   email: 'Enter a valid email address.',
   staffEmail: 'That email belongs to FieldLogicHQ staff and can’t be used as a team contact.',
-  money: 'An amount paid must be zero or more.',
+  /** A team with payments is taken back to unpaid by removing them, not by flipping the status. */
+  removePayments: 'Remove the team’s payments to take it back to unpaid.',
   status: 'That isn’t a team status.',
   paymentStatus: 'A payment is either paid or pending.',
   text: 'That field takes text.',
@@ -111,12 +109,6 @@ export function readTeamUpdate(raw: unknown): { ok: true; updates: TeamUpdateCol
         // As before this list existed: anything but a whole 1–999 clears the seed.
         const n = Number(value);
         out.seed = Number.isInteger(n) && n > 0 && n <= 999 ? n : null;
-        break;
-      }
-      case 'depositPaid':
-      case 'totalPaid': {
-        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return { ok: false, error: TEAM_UPDATE_REFUSALS.money };
-        out[key === 'depositPaid' ? 'deposit_paid' : 'total_paid'] = value;
         break;
       }
       case 'adminNotes': {

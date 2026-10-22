@@ -791,10 +791,10 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 
 <!-- dict:col:teams.deposit_paid -->
 <!-- dict:col:teams.total_paid -->
-**`deposit_paid` / `total_paid`** (numeric, NOT NULL, default 0) — **manual** organizer accounting of money received (not Stripe-driven).
+**`deposit_paid` / `total_paid`** (numeric, NOT NULL, default 0) — ⚠ **A CACHE since migration 345, never typed or written by app code.** `total_paid` = the sum of the team's posted rows in `tournament_team_payments`; `deposit_paid` = `least(that sum, the team's deposit fee)`, 0 with no deposit. `team_payments_refresh` is the only writer, called inside the payment functions in the same transaction that writes the payment row and the ledger line; `tests/unit/team-payments-guard.test.ts` fails the build if app code writes either column. Before 345 these were **manual** organizer figures (not Stripe-driven) and an AFTER trigger diffed them into the tournament's book.
 
 <!-- dict:col:teams.fee_book_baseline -->
-**`fee_book_baseline`** (numeric(12,2), NOT NULL, default 0; migration 342) — amount already marked received when Stage 7a begins. Existing payments are not backfilled into the new tournament book; only subsequent increases are posted. A correction or undo can reduce the baseline. The book reconciles to `greatest(total_paid, deposit_paid) - fee_book_baseline`.
+**`fee_book_baseline`** (numeric(12,2), NOT NULL, default 0; migration 342) — ⚠ **RETIRED by migration 345: no longer read or written.** It held the amount already marked received when Stage 7a began; that money is now an undated "Earlier payment" row in `tournament_team_payments`. The column stays for one release and is dropped later (DROP COLUMN last).
 
 <!-- dict:col:teams.fee_changed_by -->
 **`fee_changed_by`** (FK → `auth.users.id` ON DELETE SET NULL) — actor carried through a payment update to its automatic fee receipt or void. The database trigger covers every writer of the team's paid figures, including imports and check-in.
@@ -6815,10 +6815,53 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:tournament_fee_book_settings.item_id -->
 **`category_id` / `item_id`** (FK → `budget_categories.id` / `budget_items.id`) — the tournament's one activity category and its income word; fee lines carry both, while costs can be filed under the same category from the general book.
 
+## `tournament_team_payments`
+<!-- dict:table:tournament_team_payments -->
+
+**Purpose (migration 345, 2026-10-21 — [TEAM_PAYMENTS_LIST_PLAN.md](../../projects/active/TEAM_PAYMENTS_LIST_PLAN.md)):** one row per payment a team made toward its tournament entry fee — the amount, the day it arrived, a label, how it arrived. **This is where a team's paid money lives**; `teams.total_paid` / `deposit_paid` / `payment_status` / `payment_collected_at` are a cache the database keeps from it. On a plan with Accounting (club plans or the accounting add-on, and an event not set to "free"), recording a payment also posts ONE ledger line dated `paid_on` (source `tournament_fee_receipt`, `source_entity_id` = the payment id, or the first payment of a shared transfer) and links it through `entry_id`; several rows may share one line (one transfer for several teams). Adding Accounting later posts nothing retroactively. Written only by the security-definer functions `tournament_team_payment_record`, `_pay_due` (Mark paid / Deposit paid: the rest, dated today, one locked step), `_change` (voids the line and posts a corrected one) and `_remove` (voids the line, never revived; who and when kept), and `club_tournament_shared_payment`; each refreshes the team's cache in the same transaction (`team_payments_refresh`). A date in a closed fiscal year is refused by the ledger lock (`year_closed`). **Status rule of the cache:** a team becomes `paid` when its sum reaches the fee and goes back to `pending` only when payments it was paid BY now fall short; a legacy team marked paid with too little recorded is left as marked until money completes it. `payment_collected_at` is the day the payment whose running total first reached the fee arrived (noon Toronto for an earlier day, so a check-in board shows a clock only for today). **A fee edit** (`deposit_amount`, `total_fee_amount`, `fee_schedule_mode` on `tournaments`, or the first two on `divisions`) refreshes the cached figures of the teams that have payments through `tournaments_fee_changed` / `divisions_fee_changed` — figures only, never a status. Lock order everywhere: tournament row → team rows (id order) → ledger line; the payment row is inserted last. Server-only RLS.
+
+<!-- dict:col:tournament_team_payments.id -->
+**`id`** (uuid PK).
+
+<!-- dict:col:tournament_team_payments.team_id -->
+<!-- dict:col:tournament_team_payments.tournament_id -->
+<!-- dict:col:tournament_team_payments.org_id -->
+**`team_id` / `tournament_id` / `org_id`** (FK → `teams.id` ON DELETE CASCADE / `tournaments.id` ON DELETE CASCADE / `organizations.id` ON DELETE CASCADE) — the paying registration, its event and the host.
+
+<!-- dict:col:tournament_team_payments.amount -->
+**`amount`** (numeric(12,2), `> 0` and `<= 1000000`) — what arrived.
+
+<!-- dict:col:tournament_team_payments.paid_on -->
+**`paid_on`** (date) — the day it arrived; never in the future. Null **only** for the backfilled "Earlier payment" (CHECK).
+
+<!-- dict:col:tournament_team_payments.label -->
+**`label`** (text, CHECK) — `Deposit` / `Balance` / `Entry fee` / `Payment` / `Imported payment` / `Earlier payment`. A label only NAMES a row (it comes from the Record button pressed); it never decides what is owed — the SUM does.
+
+<!-- dict:col:tournament_team_payments.method -->
+**`method`** (text, nullable, CHECK) — `etransfer` / `cash` / `cheque` / `card` / `other`; also copied to the ledger line's `payment_method`.
+
+<!-- dict:col:tournament_team_payments.entry_id -->
+**`entry_id`** (FK → `accounting_entries.id`, nullable) — the ledger line this payment posted; null on a plan with no Accounting at the time it was recorded, and for an "Earlier payment".
+
+<!-- dict:col:tournament_team_payments.status -->
+<!-- dict:col:tournament_team_payments.removed_at -->
+<!-- dict:col:tournament_team_payments.removed_by -->
+**`status` / `removed_at` / `removed_by`** (`posted` | `removed`; timestamptz; FK → `auth.users` ON DELETE SET NULL) — a payment is never hard-deleted: removing one voids its ledger line and keeps who and when.
+
+<!-- dict:col:tournament_team_payments.created_by -->
+<!-- dict:col:tournament_team_payments.created_at -->
+<!-- dict:col:tournament_team_payments.updated_at -->
+**`created_by` / `created_at` / `updated_at`** — the recorder (FK → `auth.users` ON DELETE SET NULL; the check-in undo may remove only a payment its own user recorded), and the stamps.
+
+<!-- dict:col:tournament_team_payments.ordinal -->
+**`ordinal`** (identity bigint) — arrival order within a day.
+
+**Backfill (migration 345):** every posted receipt allocation became a payment (dated by its ledger line, linked to it), plus one undated "Earlier payment" per team for the rest of its figure; the migration halts if any team's rows would not add up to the figure it carried. Deposit-only teams' `total_paid` was rewritten from the rows (it now counts the deposit).
+
 ## `tournament_fee_receipts`
 <!-- dict:table:tournament_fee_receipts -->
 
-**Purpose:** immutable identity and order for a tournament fee receipt. A correction voids the linked entry and creates a new receipt; a shared transfer is one receipt with two or more allocations. Server-only RLS.
+**Purpose (⚠ RETIRED by migration 345 — superseded by `tournament_team_payments`; kept one release, dropped later):** immutable identity and order for a tournament fee receipt. A correction voids the linked entry and creates a new receipt; a shared transfer is one receipt with two or more allocations. Server-only RLS.
 
 <!-- dict:col:tournament_fee_receipts.id -->
 **`id`** (uuid PK) — `accounting_entries.source_entity_id` for a tournament fee.
@@ -6835,7 +6878,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 ## `tournament_fee_receipt_allocations`
 <!-- dict:table:tournament_fee_receipt_allocations -->
 
-**Purpose:** allocation of each receipt to its paid registration. The pair is the PK; allocations to a void receipt remain for audit. `amount > 0`. Server-only RLS.
+**Purpose (⚠ RETIRED by migration 345 — superseded by `tournament_team_payments`):** allocation of each receipt to its paid registration. The pair is the PK; allocations to a void receipt remain for audit. `amount > 0`. Server-only RLS.
 
 <!-- dict:col:tournament_fee_receipt_allocations.receipt_id -->
 **`receipt_id`** (PK part, FK → `tournament_fee_receipts.id` ON DELETE CASCADE).
@@ -6924,7 +6967,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:accounting_entries.source_module -->
 <!-- dict:col:accounting_entries.source_entity_id -->
-**`source_module` / `source_entity_id`** (text / uuid, nullable) — cross-module provenance. House fees use `'league_registration'` + `league_registrations.id`; tournament fees use `'tournament_fee_receipt'` + `tournament_fee_receipts.id`; the club money loop uses its installment/request source values (gotcha 6). Logical ref, no FK. A sourced fee line is voided and replaced for corrections, never revived.
+**`source_module` / `source_entity_id`** (text / uuid, nullable) — cross-module provenance. House fees use `'league_registration'` + `league_registrations.id`; tournament fees use `'tournament_fee_receipt'` + the `tournament_team_payments.id` (the first payment's, for one transfer shared by several teams) from migration 345 — lines posted before it carry the retired `tournament_fee_receipts.id`; the club money loop uses its installment/request source values (gotcha 6). Logical ref, no FK. A sourced fee line is voided and replaced for corrections, never revived.
 
 <!-- dict:col:accounting_entries.created_by -->
 **`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap, ON DELETE NO ACTION) — who created the entry (or `p_created_by` from the RPC).

@@ -146,12 +146,14 @@ describe('payment words (T5, D10)', () => {
     assert.equal(paymentLine(team('x', 'accepted'), none, '2026-06-10'), null);
   });
 
-  it('states the record\'s line as facts', () => {
+  it('states the record\'s line as facts (what is owed and received; the due dates are the Still due rows\', said once)', () => {
     assert.deepEqual(paymentLine(team('x', 'accepted'), fee, '2026-06-10'),
-      { lead: 'Owes $475', owes: true, rest: ['deposit due May 28', 'balance due Jun 7', 'past due'] });
+      { lead: 'Owes $475', owes: true, rest: ['past due'] });
     assert.deepEqual(paymentLine(team('x', 'accepted', { depositPaid: 150, totalPaid: 150 }), fee, '2026-05-20'),
-      { lead: 'Owes $325', owes: true, rest: ['deposit paid', 'balance due Jun 7'] });
+      { lead: 'Owes $325', owes: true, rest: ['paid $150 of $475'] });
     assert.deepEqual(paymentLine(team('x', 'accepted', { totalPaid: 475 }), fee, '2026-06-10'),
       { lead: 'Paid in full · $475', owes: false, rest: [] });
+    assert.deepEqual(paymentLine(team('x', 'accepted', { depositPaid: 150, totalPaid: 500 }), fee, '2026-06-10'),
+      { lead: 'Paid $500', owes: false, rest: ['$25 over the fee'] });
   });
 });

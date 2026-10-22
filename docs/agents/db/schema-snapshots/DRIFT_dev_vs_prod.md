@@ -1,29 +1,30 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 67 divergence(s)** across dev/prod.
+**⚠️ 101 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 4 | 0 | — |
-| Columns | 30 | 0 | 0 |
-| Indexes | 9 | 0 | 0 |
-| Constraints | 15 | 0 | — |
-| RLS / CHECK | 9 | 0 | 0 (RLS state) |
+| Tables | 5 | 0 | — |
+| Columns | 46 | 0 | 0 |
+| Indexes | 14 | 0 | 0 |
+| Constraints | 22 | 0 | — |
+| RLS / CHECK | 14 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (4)
+### Only in DEV (5)
 - `org_site_notices`
 - `tournament_fee_book_settings`
 - `tournament_fee_receipt_allocations`
 - `tournament_fee_receipts`
+- `tournament_team_payments`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (30)
+### Only in DEV (46)
 - `org_public_site_content.contacts`
 - `org_public_site_content.documents`
 - `org_public_site_content.home_section_order`
@@ -54,6 +55,22 @@ _none_
 - `tournament_fee_receipts.id`
 - `tournament_fee_receipts.ordinal`
 - `tournament_fee_receipts.tournament_id`
+- `tournament_team_payments.amount`
+- `tournament_team_payments.created_at`
+- `tournament_team_payments.created_by`
+- `tournament_team_payments.entry_id`
+- `tournament_team_payments.id`
+- `tournament_team_payments.label`
+- `tournament_team_payments.method`
+- `tournament_team_payments.ordinal`
+- `tournament_team_payments.org_id`
+- `tournament_team_payments.paid_on`
+- `tournament_team_payments.removed_at`
+- `tournament_team_payments.removed_by`
+- `tournament_team_payments.status`
+- `tournament_team_payments.team_id`
+- `tournament_team_payments.tournament_id`
+- `tournament_team_payments.updated_at`
 
 ### Only in PROD (0)
 _none_
@@ -62,7 +79,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (9)
+### Only in DEV (14)
 - `org_site_notices_org_idx`
 - `org_site_notices_pkey`
 - `tournament_fee_allocations_team_idx`
@@ -72,6 +89,11 @@ _none_
 - `tournament_fee_receipts_entry_id_key`
 - `tournament_fee_receipts_event_idx`
 - `tournament_fee_receipts_pkey`
+- `tournament_team_payments_entry_idx`
+- `tournament_team_payments_org_idx`
+- `tournament_team_payments_pkey`
+- `tournament_team_payments_team_idx`
+- `tournament_team_payments_tournament_idx`
 
 ### Only in PROD (0)
 _none_
@@ -80,7 +102,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (15)
+### Only in DEV (22)
 - `org_site_notices.org_site_notices_org_fk`
 - `org_site_notices.org_site_notices_pkey`
 - `teams.teams_fee_changed_by_fkey`
@@ -96,6 +118,13 @@ _none_
 - `tournament_fee_receipts.tournament_fee_receipts_entry_id_key`
 - `tournament_fee_receipts.tournament_fee_receipts_pkey`
 - `tournament_fee_receipts.tournament_fee_receipts_tournament_id_fkey`
+- `tournament_team_payments.tournament_team_payments_created_by_fk`
+- `tournament_team_payments.tournament_team_payments_entry_fk`
+- `tournament_team_payments.tournament_team_payments_org_fk`
+- `tournament_team_payments.tournament_team_payments_pkey`
+- `tournament_team_payments.tournament_team_payments_removed_by_fk`
+- `tournament_team_payments.tournament_team_payments_team_fk`
+- `tournament_team_payments.tournament_team_payments_tournament_fk`
 
 ### Only in PROD (0)
 _none_
@@ -104,7 +133,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (9)
+### CHECK only in DEV (14)
 - `org_public_site_content.org_public_site_content_contacts_cap`
 - `org_public_site_content.org_public_site_content_documents_cap`
 - `org_public_site_content.org_public_site_content_home_section_order_known`
@@ -114,6 +143,11 @@ _none_
 - `org_site_notices.org_site_notices_ends_after_post`
 - `org_site_notices.org_site_notices_notice_check`
 - `tournament_fee_receipt_allocations.tournament_fee_receipt_allocations_amount_check`
+- `tournament_team_payments.tournament_team_payments_amount_chk`
+- `tournament_team_payments.tournament_team_payments_date_chk`
+- `tournament_team_payments.tournament_team_payments_label_chk`
+- `tournament_team_payments.tournament_team_payments_method_chk`
+- `tournament_team_payments.tournament_team_payments_status_chk`
 
 ### CHECK only in PROD (0)
 _none_
