@@ -15,6 +15,7 @@ import { notifyFansForAnnouncement } from '@/lib/fan-notify';
 import { supersedeScheduleChangeNotices } from '@/lib/schedule-change-notices';
 import { notify } from '@/lib/notify';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 import { INVITE_COMPOSER_WORDS, emailDayWhen } from '@/lib/invite-only-words';
@@ -78,12 +79,13 @@ function mapRow(a: any): Communication {
  * writes and the free plan's cap all read this.
  */
 async function resolveRecipients(tournamentId: string, targeting: RecipientTargeting | null): Promise<AnnouncementRecipient[]> {
-  const [{ data: teams, error: teamsError }, { data: tournament, error: tournamentError }] = await Promise.all([
+  const [{ data: teams, error: teamsError }, { data: tournament, error: tournamentError }, ourTeams] = await Promise.all([
     supabaseAdmin
       .from('teams')
       .select('id, name, email, coach_email, status, payment_status, division_id')
       .eq('tournament_id', tournamentId),
     supabaseAdmin.from('tournaments').select('settings').eq('id', tournamentId).maybeSingle(),
+    ourTournamentTeamIds(tournamentId),
   ]);
   if (teamsError) throw teamsError;
   if (tournamentError) throw tournamentError;
@@ -93,7 +95,9 @@ async function resolveRecipients(tournamentId: string, targeting: RecipientTarge
     ? { ...targeting, paymentStatuses: undefined }
     : targeting;
   // contacts table removed — includeContacts is a no-op; targeting by org member is not yet implemented
-  return selectAnnouncementRecipients((teams ?? []) as RecipientTeamRow[], effective);
+  // Our own team owes no entry fee (owner 2026-10-21), so it is never in the "still owes" audience, whatever its status says.
+  const rows = ((teams ?? []) as RecipientTeamRow[]).map(t => (ourTeams.has(t.id) ? { ...t, payment_status: 'paid' } : t));
+  return selectAnnouncementRecipients(rows, effective);
 }
 
 // ─── GET — list all communications for a tournament ──────────────────────────

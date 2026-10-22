@@ -73,10 +73,11 @@ describe('3 · the team page (End state 3)', () => {
   it('decides its parts through the one recipe', () => {
     assert.match(readCode(TEAM), /teamPageParts\(/);
   });
-  it('one level up to Teams; no "← club" link home (design log 2026-10-20)', () => {
+  it('no back link to a place the tab row already holds — no "← Teams", no "← club" (design log 2026-10-20, amended)', () => {
     const code = readCode(TEAM);
-    assert.match(code, /href=\{`\/\$\{orgSlug\}\/teams`\}/);
+    assert.doesNotMatch(code, /href=\{`\/\$\{orgSlug\}\/teams`\}/);
     assert.doesNotMatch(code, /href=\{`\/\$\{orgSlug\}`\}/);
+    assert.doesNotMatch(code, /kit\.back\b/);
   });
   it('no Past seasons list (DC-07), no colour strip under the tabs, the colour is a dot', () => {
     const code = readCode(TEAM);

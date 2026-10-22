@@ -39,7 +39,7 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,6 +47,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEST = readFileSync(path.join(ROOT, 'scripts/club-money-atomicity.sql'), 'utf8');
 const STAGE7A = readFileSync(path.join(ROOT, 'scripts/club-stage7a-atomicity.sql'), 'utf8');
+const STAGE7B = readFileSync(path.join(ROOT, 'scripts/club-stage7b-atomicity.sql'), 'utf8');
 // Newest first: a function a later migration REPLACES is mutated in its live shape (mig 316 replaces 315's
 // club_payee_merge, and mig 325 replaces 316's), never the superseded one.
 const MIGS = [
@@ -350,6 +351,50 @@ function run(sql, passMarker = PASSED) {
   return { outcome: 'error', text: text.slice(0, 400) };
 }
 
+/** Stage 7b: a race one rolled-back block cannot stage. Two separate transactions enter the same team in the same tournament at
+ *  once; each holds its transaction open after the call, so without the lock both would see "not in yet". The fixtures are
+ *  COMMITTED on dev (a throwaway club) and removed afterwards, whatever happened. */
+function runAsync(sql) {
+  return new Promise(resolve => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'club-race-'));
+    const file = path.join(dir, 'race.sql');
+    writeFileSync(file, sql);
+    const child = spawn(process.execPath, [path.join(ROOT, 'scripts/db-query.mjs'), '--dev', '-f', file], { cwd: ROOT });
+    let text = '';
+    child.stdout.on('data', d => { text += d; });
+    child.stderr.on('data', d => { text += d; });
+    child.on('close', code => { rmSync(dir, { recursive: true, force: true }); resolve({ code, text }); });
+  });
+}
+
+async function stage7bRace() {
+  const tag = `s7b-race-${Date.now().toString(36)}`;
+  const setup = await runAsync(`
+    WITH o AS (INSERT INTO organizations(name,slug,plan_id) VALUES('RACE Stage 7b','${tag}','club') RETURNING id),
+    t AS (INSERT INTO tournaments(org_id,year,name,slug,status,settings) SELECT id,2026,'Race','${tag}','active','{"fee_scope":"tournament"}'::jsonb FROM o RETURNING id, org_id),
+    d AS (INSERT INTO divisions(tournament_id,name) SELECT id,'U15' FROM t RETURNING id),
+    r AS (INSERT INTO rep_teams(org_id,name,slug) SELECT id,'Race U15','${tag}' FROM o RETURNING id, org_id),
+    y AS (INSERT INTO rep_program_years(team_id,org_id,name,year,status) SELECT id,org_id,'2026 Season',2026,'active' FROM r RETURNING id)
+    SELECT (SELECT id FROM o) AS org, (SELECT id FROM t) AS tournament, (SELECT id FROM d) AS division, (SELECT id FROM r) AS rep, (SELECT id FROM y) AS season;`);
+  let ids;
+  try { ids = JSON.parse(setup.text)[0]; } catch { return { ok: false, why: `setup failed: ${setup.text.slice(0, 300)}` }; }
+  try {
+    const enter = `DO $race$ BEGIN
+      PERFORM club_enter_own_teams('${ids.org}', '${ids.tournament}', '[{"rep_team_id":"${ids.rep}","division_id":"${ids.division}"}]'::jsonb, NULL);
+      PERFORM pg_sleep(2);
+    END $race$;`;
+    const [a, b] = await Promise.all([runAsync(enter), runAsync(enter)]);
+    const count = await runAsync(`SELECT count(*)::int AS n FROM rep_team_tournament_registrations l JOIN teams t ON t.id = l.tournament_team_id WHERE t.tournament_id = '${ids.tournament}'`);
+    const n = JSON.parse(count.text)[0]?.n;
+    const refused = [a, b].filter(r => r.text.includes('Race U15 is already in this tournament.')).length;
+    if (n !== 1) return { ok: false, why: `${n} entries of one team after two presses` };
+    if (refused !== 1) return { ok: false, why: `expected one press refused by name, got ${refused}: ${a.text.slice(0, 150)} | ${b.text.slice(0, 150)}` };
+    return { ok: true };
+  } finally {
+    await runAsync(`DELETE FROM tournaments WHERE id = '${ids.tournament}'; DELETE FROM rep_teams WHERE id = '${ids.rep}'; DELETE FROM organizations WHERE id = '${ids.org}';`);
+  }
+}
+
 // A function replacer, never a string: a replacement STRING reads `$` as "one dollar sign", which
 // silently broke every dollar-quoted function body spliced in.
 const real = run(withJoin(TEST.replace('{{MUTATIONS}}', () => '')));
@@ -364,6 +409,18 @@ if (stage7a.outcome !== 'passed') {
   process.exit(1);
 }
 console.log('✓ Stage 7a fee book — deposit, correction, undo, shared transfer, own team and house league agree (dev, rolled back).');
+const stage7b = run(STAGE7B, 'CLUB_STAGE7B_ATOMICITY_PASSED');
+if (stage7b.outcome !== 'passed') {
+  console.error(`✗ check:club-money-atomicity — Add our teams (Stage 7b) failed:\n  ${stage7b.text}`);
+  process.exit(1);
+}
+console.log('✓ Stage 7b Add our teams — a set enters whole or not at all, every refusal names its team, no money is written (dev, rolled back).');
+const race = await stage7bRace();
+if (!race.ok) {
+  console.error(`✗ check:club-money-atomicity — Add our teams raced: ${race.why}`);
+  process.exit(1);
+}
+console.log('✓ Stage 7b race — two presses at once enter the team once; the second is refused by name (dev, committed fixtures, removed after).');
 
 if (process.argv.includes('--mutate')) {
   let survived = 0;

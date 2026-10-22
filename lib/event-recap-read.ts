@@ -13,6 +13,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getDivisions, getGames, getTeams } from './db';
 import { computeEventRecap, type EventRecap } from './event-recap';
+import { ourTournamentTeamIds } from './club-own-tournament-team';
 import type { TournamentSettings } from './types';
 
 type RecapTournamentRow = {
@@ -27,12 +28,12 @@ type RecapTournamentRow = {
   total_fee_due_date: string | null;
 };
 
-type RecapPaymentRow = { division_id: string | null; status: string | null; total_paid: number | null };
+type RecapPaymentRow = { id: string; division_id: string | null; status: string | null; total_paid: number | null };
 
 const num = (value: unknown) => (value == null ? null : Number(value));
 
 export async function loadEventRecap(tournamentId: string, orgSlug: string): Promise<EventRecap> {
-  const [tournamentRes, paymentsRes, teams, games, divisions] = await Promise.all([
+  const [tournamentRes, paymentsRes, teams, games, divisions, ourTeams] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
       .select('slug, status, settings, public_hidden_pages, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
@@ -40,11 +41,12 @@ export async function loadEventRecap(tournamentId: string, orgSlug: string): Pro
       .maybeSingle<RecapTournamentRow>(),
     supabaseAdmin
       .from('teams')
-      .select('division_id, status, total_paid')
+      .select('id, division_id, status, total_paid')
       .eq('tournament_id', tournamentId),
     getTeams(tournamentId, { admin: true }),
     getGames(tournamentId, { admin: true }),
     getDivisions(tournamentId, { admin: true }),
+    ourTournamentTeamIds(tournamentId),
   ]);
   if (tournamentRes.error) throw tournamentRes.error;
   if (paymentsRes.error) throw paymentsRes.error;
@@ -67,7 +69,8 @@ export async function loadEventRecap(tournamentId: string, orgSlug: string): Pro
     divisions,
     teams,
     games,
-    payments: ((paymentsRes.data ?? []) as RecapPaymentRow[]).map(p => ({
+    // Our own team owes no entry fee (owner 2026-10-21): it is left out of what is collected and still owed.
+    payments: ((paymentsRes.data ?? []) as RecapPaymentRow[]).filter(p => !ourTeams.has(p.id)).map(p => ({
       divisionId: p.division_id,
       status: p.status,
       totalPaid: num(p.total_paid),

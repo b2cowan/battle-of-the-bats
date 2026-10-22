@@ -12,6 +12,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 import { registrationAmountDue, registrationFee } from '@/lib/registration-amount-due';
+import { ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -174,6 +175,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const reminderFallback = (await getOrgOwnerEmail(ctx.org.id)) ?? ctx.user.email ?? null;
   const contactEmail = (await resolveTournamentContactEmail(tournamentId, reminderFallback, 'coach')) ?? undefined;
 
+  const ourTeams = await ourTournamentTeamIds(tournamentId);
   let emailsSent = 0;
   let skippedCount = 0;
   // A free coach's bell (Free coach header parity, 2026-10-13): each reminder that went also waits under
@@ -186,7 +188,8 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     // Recipient prefers the assigned coach (teams.coach_email), falls back to teams.email; the
     // footer keeps teams.email (the claim key, never overwritten).
     const recipient = resolveCoachRecipient(team);
-    if (!recipient || team.status !== 'accepted' || !due || due.amount <= 0) {
+    // Our own team owes no entry fee (owner 2026-10-21), whatever the tournament charges.
+    if (!recipient || team.status !== 'accepted' || !due || due.amount <= 0 || ourTeams.has(team.id)) {
       skippedCount++;
       continue;
     }

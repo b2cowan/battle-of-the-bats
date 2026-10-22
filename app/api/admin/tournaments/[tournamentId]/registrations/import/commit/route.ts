@@ -30,7 +30,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { IMPORTED_PAYMENT_LABEL } from '@/lib/import/tournament-team-money';
-import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
+import { ourTeamIdsAmong, ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 import { paymentErrorResponse, payTeamDue, recordTeamPayment } from '@/lib/team-payments-server';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -264,13 +264,14 @@ async function applyImportPayments(input: {
   const today = tournamentToday();
   const issues: ImportPaymentIssue[] = [];
   let recorded = 0;
+  const ourTeams = await ourTeamIdsAmong(input.rows.map(r => r.teamId));
 
   for (const { row, teamId, current } of input.rows) {
     const plan = planTournamentTeamPayments(row.normalized, current);
     if (plan.recordAmount <= 0 && !plan.payTheRest) continue;
     const issue = (message: string) => issues.push({ rowNumber: row.rowNumber, teamName: row.normalized.teamName, message });
     try {
-      if (await isOurTournamentTeam(input.orgId, teamId)) {
+      if (ourTeams.has(teamId)) {
         issue('Your own team has no entry fee, so no payment was recorded.');
         continue;
       }
@@ -325,11 +326,12 @@ async function applyRows(input: {
     if (error) throw new Error(error.message);
   }
 
+  const ourTeams = input.updateRows.length > 0 ? await ourTournamentTeamIds(input.tournamentId) : new Set<string>();
   for (const row of input.updateRows) {
     const current = row.targetId ? input.currentTeams.get(row.targetId) : null;
     // What the team has recorded today (a READ of the cache), so the update never lowers a paid team's status.
     const recorded = { paymentStatus: current?.payment_status ?? null, totalPaid: current?.total_paid ?? null };
-    const columns = buildTournamentTeamUpdate(row.normalized, recorded);
+    const columns = buildTournamentTeamUpdate(row.normalized, recorded, Boolean(row.targetId && ourTeams.has(row.targetId)));
     const { error } = await supabaseAdmin
       .from('teams')
       .update(columns)

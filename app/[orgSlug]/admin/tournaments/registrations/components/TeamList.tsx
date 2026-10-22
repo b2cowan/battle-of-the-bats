@@ -30,6 +30,8 @@ export interface RowFacts {
   caption: ReactNode;
   /** A chip when the team's status differs from its band. */
   chip: ReactNode | null;
+  /** The club's own team: the desk's row carries a quiet "Our team" tag beside the name (the phone's caption already says it). */
+  ourTeam?: boolean;
   /** The row's one worded action, or null. */
   action: ReactNode | null;
   /** The desk's third column (the slot, the pool, or the waitlist place). */
@@ -156,6 +158,7 @@ export default function TeamList({
               ? <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-haspopup="dialog" onClick={e => { e.stopPropagation(); onOpen(t.id); }}>{t.name}</button>
               : <span className={repKit.nameLink}>{t.name}</span>}
             {f.chip}
+            {f.ourTeam && <span className={styles.ourTeamTag}>{TEAMS_WORDS.ourTeam}</span>}
           </span>
         </td>
         <td className={repKit.dim}>{f.coach ?? (t.coach || '—')}</td>

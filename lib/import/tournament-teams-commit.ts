@@ -251,10 +251,12 @@ export function planTournamentTeamPayments(
 export function buildTournamentTeamUpdate(
   normalized: TournamentTeamImportNormalizedRow,
   current: TournamentTeamMoneyState = NEW_TEAM_MONEY_STATE,
+  ourTeam = false,
 ) {
   // The paid figures and a sheet "paid" belong to the payments (a cache the database keeps), so the update writes
-  // neither. Only a sheet "pending" is written, and never over a team that has recorded payments: those decide.
-  const writesPending = normalized.paymentStatus === 'pending'
+  // neither. Only a sheet "pending" is written, and never over a team that has recorded payments: those decide. The
+  // club's own team owes no entry fee (owner 2026-10-21), so a sheet "pending" never overwrites its status.
+  const writesPending = normalized.paymentStatus === 'pending' && !ourTeam
     && !importKeepsPaidStatus(normalized.paymentStatus, current.paymentStatus, current.totalPaid);
   return {
     division_id: normalized.divisionId,

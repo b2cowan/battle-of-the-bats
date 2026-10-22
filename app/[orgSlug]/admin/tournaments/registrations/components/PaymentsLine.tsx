@@ -14,6 +14,7 @@ import { CalendarClock } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
 import { TEAMS_WORDS } from '@/lib/registration-words';
 import { formatMoney, type FeeSchedule } from '@/lib/tournament-teams';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import GlanceRow from './GlanceRow';
 import styles from '../teams-admin.module.css';
 
@@ -69,34 +70,24 @@ export default function PaymentsLine({ divisionName, summary, fee, today }: {
               <strong>{formatMoney(collected)}</strong> of {formatMoney(expected)} · {pctCollected}%
             </span>
           </div>
-          <div className={styles.payProgressTrack} role="progressbar" aria-valuenow={pctCollected} aria-valuemin={0} aria-valuemax={100} aria-label="Fees collected">
-            <div className={styles.payProgressFill} style={{ width: `${pctCollected}%` }} />
-          </div>
-        </div>
-        <div className={styles.payGrid} data-cols={showDeposit ? 4 : 3}>
-          <div className={styles.glanceTile} data-tone={scheduled > 0 && paidInFull === scheduled ? 'good' : undefined}>
-            <span>Paid in full</span>
-            <strong>{paidInFull} / {scheduled}</strong>
-            <small>{pctPaidTeams}% of teams</small>
-          </div>
-          {showDeposit && (
-            <div className={styles.glanceTile} data-tone={depositComplete === depositRequired ? 'good' : undefined}>
-              <span>Deposits in</span>
-              <strong>{depositComplete} / {depositRequired}</strong>
-              <small>{pctDeposits}% of teams</small>
+          {/* An empty bar is a stray line, and the words above it already say $0: it appears once something is in. */}
+          {collected > 0 && (
+            <div className={styles.payProgressTrack} role="progressbar" aria-valuenow={pctCollected} aria-valuemin={0} aria-valuemax={100} aria-label="Fees collected">
+              <div className={styles.payProgressFill} style={{ width: `${pctCollected}%` }} />
             </div>
           )}
-          <div className={styles.glanceTile}>
-            <span>Outstanding</span>
-            <strong>{formatMoney(outstanding)}</strong>
-            <small>{outstanding > 0 ? 'still to collect' : 'all fees in'}</small>
-          </div>
-          <div className={styles.glanceTile} data-tone={pastDue > 0 ? 'danger' : 'good'}>
-            <span>Past due</span>
-            <strong>{formatMoney(pastDueAmount)}</strong>
-            <small>{pastDue === 0 ? 'none overdue' : `${pastDue} team${pastDue === 1 ? '' : 's'} overdue`}</small>
-          </div>
         </div>
+        {/* The figures are the portal's ONE joined band — one frame, a hairline between figures, two-up on a phone (owner
+            2026-10-08: money figures are connected, never separate cards). Colour marks a verdict: all in, or past due. */}
+        <MoneySummaryBand
+          ariaLabel="Payments for this division"
+          tiles={[
+            { key: 'paid', label: 'Paid in full', figure: `${paidInFull} / ${scheduled}`, tone: scheduled > 0 && paidInFull === scheduled ? 'good' : 'plain', caption: `${pctPaidTeams}% of teams` },
+            { key: 'deposits', label: 'Deposits in', figure: `${depositComplete} / ${depositRequired}`, tone: depositComplete === depositRequired ? 'good' : 'plain', caption: `${pctDeposits}% of teams`, hidden: !showDeposit },
+            { key: 'outstanding', label: 'Outstanding', figure: formatMoney(outstanding), caption: outstanding > 0 ? 'still to collect' : 'all fees in' },
+            { key: 'pastDue', label: 'Past due', figure: formatMoney(pastDueAmount), tone: pastDue > 0 ? 'danger' : 'plain', caption: pastDue === 0 ? 'none overdue' : `${pastDue} team${pastDue === 1 ? '' : 's'} overdue` },
+          ]}
+        />
         {dueDates.length > 0 && (
           <div className={styles.payDueDates}>
             {dueDates.map(d => (

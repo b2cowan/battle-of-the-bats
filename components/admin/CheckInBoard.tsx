@@ -69,6 +69,8 @@ type CheckInTeam = {
   checkInNotes: string | null;
   /** What the team still owes against its fee (the Teams screen's figure); null with no fee. */
   owed: number | null;
+  /** The club's own team: it owes no entry fee, so the board shows "No fee" and no Mark paid. */
+  ourTeam?: boolean;
   roster: RosterPlayer[];
 };
 type DivInfo = { id: string; name: string };
@@ -137,6 +139,7 @@ const owes = (team: CheckInTeam) => team.paymentStatus !== 'paid' && (team.owed 
 /** The team's payment fact: what it owes in the amber of money owed, or a plain "Paid" — and nothing for a team
  *  with no fee that nobody marked paid (no amber "Unpaid" where nothing is owed, owner 2026-10-13). */
 function paymentFact(team: CheckInTeam) {
+  if (team.ourTeam) return <span>No fee</span>;
   if (team.paymentStatus === 'paid' || team.owed === 0) return <span>Paid</span>;
   if (owes(team)) return <span className={styles.owes}>{`Owes ${formatMoney(team.owed!)}`}</span>;
   return null;
@@ -642,7 +645,9 @@ function CheckInSheet({ team, tracksPayments, divisionName, locked, busy, onActi
           (it was an amber-tinted 35px box). Mark unpaid is J8-016's reversal, in the Teams record's word. */}
       {tracksPayments && <div className={styles.sheetSection}>
         <span className={styles.sheetLabel}>Payment</span>
-        {team.paymentStatus === 'paid' ? (
+        {team.ourTeam ? (
+          <div className={styles.sheetLine}>{paymentFact(team)}</div>
+        ) : team.paymentStatus === 'paid' ? (
           <div className={styles.sheetLine}>
             <span><Check size={15} aria-hidden className={styles.paidMark} /> {GAME_DAY_WORDS.paidAt(paidTime(team.paymentCollectedAt))}</span>
             <button type="button" className={`btn btn-outline ${styles.sheetAction}`} disabled={locked || busy} onClick={handleUnmarkPaid}>

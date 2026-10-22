@@ -13,6 +13,7 @@ import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { listPaymentsByTournament } from '@/lib/team-payments-server';
+import { ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -185,6 +186,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
   ];
 
   const today = tournamentToday();
+  // Our own team owes no entry fee (owner 2026-10-21), whatever the event charges: it reads "No fee" and owes 0.
+  const ourTeams = tracksPayments ? await ourTournamentTeamIds(tournamentId) : new Set<string>();
   // The day of the team's latest dated payment (mig 345); an "Earlier payment" has no day, so a team with only that is blank.
   const paymentsByTeam = tracksPayments ? await listPaymentsByTournament(tournamentId) : new Map();
   const lastPaymentDay = (teamId: string): string => {
@@ -194,7 +197,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
   };
   const rows = typedTeams.map(team => {
     const fee = effectiveFee(team, tournament, groupFeeMap);
-    const due = paymentDue(team, fee);
+    const due = ourTeams.has(team.id) ? { amount: 0, dueDate: '' } : paymentDue(team, fee);
     return [
       team.name,
       team.division_id ? groupMap.get(team.division_id) ?? '' : '',
@@ -204,11 +207,11 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
       '',
       team.registered_at ?? '',
       ...(tracksPayments ? [
-        team.payment_status ?? '',
+        ourTeams.has(team.id) ? 'No fee' : team.payment_status ?? '',
         team.deposit_paid ?? '',
         team.total_paid ?? '',
         lastPaymentDay(team.id),
-        paymentReadinessStatus(team, fee, today),
+        ourTeams.has(team.id) ? 'No fee' : paymentReadinessStatus(team, fee, today),
         due.amount,
         due.dueDate,
       ] : []),

@@ -4,6 +4,7 @@ import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
+import { ourTeamIdsAmong } from './club-own-tournament-team';
 import { excludeActivePremiumUpgrades, isLivePortalStatus } from './coach-team-page';
 import { tournamentNow, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
@@ -956,6 +957,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
   const [
     { data: tournaments, error: tournamentError },
     { data: divisions, error: divisionError },
+    ourTeams,
   ] = await Promise.all([
     tournamentIds.length > 0
       ? supabaseAdmin
@@ -969,6 +971,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
           .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
           .in('id', divisionIds)
       : Promise.resolve({ data: [], error: null }),
+    ourTeamIdsAmong(registrationIds),
   ]);
 
   if (tournamentError) throw tournamentError;
@@ -1036,7 +1039,8 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
               }
             : null,
         });
-        amountDue = status.fee.amountDue;
+        // The club's own team owes no entry fee (owner 2026-10-21), whatever the event charges.
+        amountDue = ourTeams.has(row.id) ? 0 : status.fee.amountDue;
       }
 
       return {

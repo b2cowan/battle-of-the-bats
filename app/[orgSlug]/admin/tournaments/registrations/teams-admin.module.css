@@ -116,18 +116,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .glanceChevron { transition: none; } }
 
-/* ONE tile for Payments' opened figures. */
-.glanceTile {
-  min-width: 0;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-  background: var(--home-card);
-  color: var(--text-primary);
-}
-.glanceTile span,
-.glanceTile small { display: block; min-width: 0; overflow-wrap: anywhere; }
-.glanceTile span,
+/* Payments, opened: the "Collected" label over the bar. The figures below it are the portal's joined band. */
 .payProgressLabel {
   font-family: var(--font-data);
   font-size: var(--type-label);
@@ -136,11 +125,6 @@
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.glanceTile strong { display: block; margin-top: 0.12rem; font-size: var(--type-heading); line-height: 1.15; color: var(--text-primary); font-variant-numeric: tabular-nums; }
-.glanceTile small { margin-top: 0.08rem; font-size: var(--type-support); color: var(--text-secondary); }
-.glanceTile[data-tone="good"] strong { color: var(--success-light); }
-.glanceTile[data-tone="warning"] strong { color: var(--warning-light); }
-.glanceTile[data-tone="danger"] strong { color: var(--danger-light); }
 
 /* ── The registration chip beside the division picker (owner 2026-10-21): the state in words, the spots, the one switch.
    The trigger is CoachToolbarMenu's button wearing this class (plainTrigger), so the chip keeps that menu's keyboard
@@ -173,8 +157,12 @@
 /* The menu's one sentence, over its one button. */
 .regChipSentence { margin: 0; padding: 0.4rem 0.75rem 0.5rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
 @media (max-width: 768px) { .regChip { min-height: var(--tap-min, 44px); } }
-/* A tablet's line is crowded (picker, chip, Search, Filter, Tools): it wraps rather than clips the chip or squeezes Search. */
-@media (max-width: 900px) { .teamsToolbar { flex-wrap: wrap; } }
+/* The line is crowded well before a tablet (picker, chip, Search, Filter, Tools ≈ 1100px of controls): at EVERY width it
+   wraps whole controls onto a second line rather than squeezing one. Search and Filter are one unit that never splits
+   (the shared sheet lets that group wrap inside itself, which dropped Filter under Search and over the next card), and
+   on a second line the unit and Tools keep the right, as they do on one. */
+.teamsToolbar { flex-wrap: wrap; }
+.teamsToolbar > .teamsDeskFilters { flex: none; flex-wrap: nowrap; margin-left: auto; }
 /* The toolbar line on a phone: picker and squares keep their row; the chip takes the next one at full width. */
 @media (max-width: 640px) {
   .regChipSlot { order: 5; flex: 1 1 100%; }
@@ -183,7 +171,7 @@
   .regChipChevron { margin-left: auto; }
 }
 
-/* Payments, opened: the collected bar, the four figures, the due dates (today's panel, on the kit). */
+/* Payments, opened: the collected bar and the due dates (the figures are the joined band, MoneySummaryBand). */
 .payProgress { display: flex; flex-direction: column; gap: 0.3rem; }
 .payProgressTop { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
 .payProgressValue { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -191,14 +179,11 @@
 .payProgressTrack { height: 5px; border-radius: 3px; background: var(--home-line-strong); overflow: hidden; }
 /* The fill is a meter, not text. */
 .payProgressFill { height: 100%; border-radius: 3px; background: var(--success); transition: width 0.3s ease; }
-.payGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.45rem; }
 .payDueDates { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
 .payDueItem { display: inline-flex; align-items: center; gap: 0.3rem; font-size: var(--type-support); color: var(--text-secondary); }
 .payDueItem svg { color: var(--text-tertiary); }
 .payDueItem[data-overdue],
 .payDueItem[data-overdue] svg { color: var(--danger-light); }
-@media (min-width: 981px) { .payGrid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 980px) { .payGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .payProgressFill { transition: none; } }
 
 /* ── The list's own parts (T4, A17): Teams' selection row, the swap mark, the desk's action cell ── */
@@ -295,9 +280,30 @@
 .recordIdentity { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; }
 .recordGrow { flex: 1 1 auto; }
 .recordPlace { margin-top: 0.5rem; }
-.recordWide { margin: 0 0 0.25rem; }
-.recordWide > button { width: 100%; }
+/* The Payment section's top line: the summary left, the Mark paid / Mark unpaid button right. */
+.payHead { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 0 0 0.25rem; }
+.payHead .payHeadText { margin: 0; min-width: 0; }
 .recordFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; margin-top: 0.75rem; }
+.recordFields > label { margin-bottom: 0.25rem; }
+.recordFacts { display: grid; gap: 0.1rem; margin: 0 0 0.5rem; }
+.recordFacts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.recordFacts dt { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
+.recordFacts dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
+.recordFacts a { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }
+/* A section's first row of fields sits right under its heading. */
+.recordFieldsLead { margin-top: 0; }
+.recordFieldWide { grid-column: 1 / -1; }
+/* The admin notes, read: the words as typed, line breaks kept; the quiet ink when there are none. */
+.recordNotes { margin: 0; font-size: var(--type-body); color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.recordNotes[data-empty] { color: var(--text-tertiary); }
 
 /* ── The record's Payment list (mig 345; TeamPayments.tsx): Received, Still due, and the Record / change forms in place ── */
 /* A heading, not a <p>: the window's `.modal p` rule (margin 0 0 0.5rem) outranks a module class on a paragraph and
@@ -331,7 +337,8 @@
   color: var(--home-olive);
   cursor: pointer;
 }
-/* The list's two text links ("+ Record a different amount", "Try again"): the inline link, at a finger's height on a phone. */
+/* "+ Record a different amount": a standalone action, so olive text underlined only on hover (the house door; an
+   underline at rest is for a link inside a sentence, which is `.inlineLink`), at a finger's height on a phone. */
 .payLink {
   display: inline-flex;
   align-items: center;
@@ -344,10 +351,11 @@
   font-size: var(--type-support);
   font-weight: 650;
   color: var(--home-olive);
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 3px;
   cursor: pointer;
 }
+.payLink:hover:not(:disabled) { text-decoration: underline; }
 .payLink:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .payLink:disabled { opacity: 0.5; cursor: default; }
 .payPen:disabled { opacity: 0.4; cursor: default; }
@@ -402,26 +410,6 @@
   .payFormGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .payHowField { grid-column: 1 / -1; }
 }
-.recordFields > label { margin-bottom: 0.25rem; }
-.recordFacts { display: grid; gap: 0.1rem; margin: 0 0 0.5rem; }
-.recordFacts > div {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.35rem 0;
-  font-size: var(--type-body);
-  color: var(--text-primary);
-}
-.recordFacts dt { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
-.recordFacts dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
-.recordFacts a { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }
-/* A section's first row of fields sits right under its heading. */
-.recordFieldsLead { margin-top: 0; }
-.recordFieldWide { grid-column: 1 / -1; }
-/* The admin notes, read: the words as typed, line breaks kept; the quiet ink when there are none. */
-.recordNotes { margin: 0; font-size: var(--type-body); color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
-.recordNotes[data-empty] { color: var(--text-tertiary); }
 /* Editing on a phone: one field to a line (a 2-up row of inputs leaves an email ~150px). */
 @media (max-width: 640px) {
   .recordFields { grid-template-columns: minmax(0, 1fr); }
@@ -489,6 +477,8 @@
   .repLinkButton { min-height: var(--tap-min, 44px); }
   .repLinkChipX { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }
+/* Hangs over the record's window: viewport-fixed, `useFieldMenu` writes its place (left, width, top or bottom, height)
+   from the button, so the window's scroll box and footer cannot cover it. */
 .repLinkPopover {
   position: fixed;
   z-index: 500;
@@ -502,6 +492,7 @@
   background: var(--card-bg);
   box-shadow: var(--home-shadow);
   overflow: hidden;
+  overscroll-behavior: contain;
   text-align: left;
 }
 .repLinkPopHead { padding: 0.65rem 0.8rem 0.55rem; border-bottom: 1px solid var(--home-line); }
@@ -550,8 +541,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-/* Hangs over the record's window: viewport-fixed, `useFieldMenu` writes its place (left, width, top or bottom, height)
-   from the button, so the window's scroll box and footer cannot cover it. */
   padding: 0.5rem 0.8rem;
   border-top: 1px solid var(--home-line);
   font-size: var(--type-support);
@@ -564,7 +553,6 @@
 .sheetSection { padding: 0.75rem 0; border-bottom: 1px solid var(--home-line); }
 .sheetSection:last-of-type { border-bottom: 0; }
 .sheetSectionLabel {
-  overscroll-behavior: contain;
   margin-bottom: 0.6rem;
   font-family: var(--font-data);
   font-size: var(--type-label);
@@ -652,3 +640,38 @@
   color: var(--text-secondary);
 }
 .coachAccountKnown { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
+
+/* ── Add our teams (Club Tier Stage 7b, drawing #e-add) ────────────────────────────────────────────────────────────────
+   A short table at 640 on a computer (Team · Division, every row's field showing); on a phone the window fills the screen
+   and each row is the tick and the name, with a ticked row's full-width 44 px division field under it. */
+.aotIntro { margin: 0 0 0.9rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
+.aotFrame { margin: 0 0 0.6rem; }
+.aotTable .aotTickCol { width: 2.75rem; padding-right: 0; }
+.aotTable td { vertical-align: middle; }
+.aotName { display: block; font-weight: 650; color: var(--text-primary); cursor: pointer; }
+.aotDim .aotName { cursor: default; color: var(--text-tertiary); }
+.aotDim input[type='checkbox'] { opacity: 0.5; }
+.aotSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.4; }
+.aotSubPhone { display: none; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.4; }
+.aotPhoneField { display: none; }
+.aotDivCell { width: 13rem; }
+.aotField { display: flex; flex-direction: column; gap: 0.25rem; }
+.aotRoom { font-size: var(--type-support); color: var(--text-tertiary); }
+.aotHint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+@media (max-width: 640px) {
+  .aotIntroMore,
+  .aotHint,
+  .aotTable thead,
+  .aotDivCell { display: none; }
+  .aotSubPhone { display: block; }
+  .aotPhoneField { display: block; margin-top: 0.5rem; }
+  /* An unticked row holds no field: without this its empty slot still takes the margin (77 px a row against 52). */
+  .aotPhoneField:empty { display: none; }
+  .aotTable .aotTickCol { width: 2.25rem; vertical-align: top; padding-top: calc(var(--table-pad-compact) + 0.6rem); }
+  .aotTable td { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  .aotName { min-height: var(--tap-min, 44px); display: flex; align-items: center; }
+}
+/* The header's Add our teams: words at a desk, its symbol alone on a phone (the header's own breakpoint). */
+.ourTeamTag { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.aotHeaderGlyph { display: none; }
+@media (max-width: 760px) { .aotHeaderGlyph { display: inline-block; } }

@@ -279,9 +279,9 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   const identity = (
     <span className={styles.recordIdentity}>
       {!added && <RepChip tone={chip.tone}>{chip.label}</RepChip>}
-      <span>{where.join(' · ')}</span>
       {props.isOwnTeam && <RepChip>{W.yourTeam}</RepChip>}
       {props.isClubOwnTeam && <RepChip>Our team</RepChip>}
+      <span>{where.join(' · ')}</span>
     </span>
   );
 
@@ -365,21 +365,22 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   const recordsPayments = props.payments === 'edit';
   const paymentBlock = props.payments !== 'none' && t.status === 'accepted' && (props.isClubOwnTeam || line || markedPaid || (canWrite && recordsPayments)) && (
     <RecordSection title={W.payment}>
-      {props.isClubOwnTeam ? <p className={screenParts.recordText}>No fee</p> : line ? (
-        <p className={screenParts.recordText}>
-          <span className={line.owes ? styles.owes : undefined}>{line.lead}</span>
-          {line.rest.map(r => <span key={r}> · {r}</span>)}
-        </p>
-      ) : markedPaid ? (
-        <p className={screenParts.recordText}>{TEAMS_WORDS.paid}</p>
-      ) : null}
-      {!props.isClubOwnTeam && canWrite && recordsPayments && (line ? owed > 0 : true) && (
-        <div className={styles.recordWide}>
-          {line || t.paymentStatus !== 'paid'
+      {/* The summary on the left, Mark paid on the right: the same edge the Record buttons below sit on. */}
+      <div className={styles.payHead}>
+        {props.isClubOwnTeam ? <p className={`${screenParts.recordText} ${styles.payHeadText}`}>No fee</p> : line ? (
+          <p className={`${screenParts.recordText} ${styles.payHeadText}`}>
+            <span className={line.owes ? styles.owes : undefined}>{line.lead}</span>
+            {line.rest.map(r => <span key={r}> · {r}</span>)}
+          </p>
+        ) : markedPaid ? (
+          <p className={`${screenParts.recordText} ${styles.payHeadText}`}>{TEAMS_WORDS.paid}</p>
+        ) : null}
+        {!props.isClubOwnTeam && canWrite && recordsPayments && (line ? owed > 0 : true) && (
+          line || t.paymentStatus !== 'paid'
             ? <RowAction onClick={() => void flushThen(() => props.onMarkPaid(t))} disabled={props.busy}>{W.markPaid(line ? formatMoney(owed) : null)}</RowAction>
-            : <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onMarkUnpaid(t))} disabled={props.busy}>{W.markUnpaid}</button>}
-        </div>
-      )}
+            : <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onMarkUnpaid(t))} disabled={props.busy}>{W.markUnpaid}</button>
+        )}
+      </div>
       {/* The payments themselves (mig 345): what was received, with its date, and what is still due. Recording is an
           action, so it works reading or editing; one component per team, so stepping to another team starts it afresh. */}
       {!props.isClubOwnTeam && line && (

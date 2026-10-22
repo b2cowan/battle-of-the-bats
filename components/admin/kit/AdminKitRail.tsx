@@ -266,7 +266,8 @@ export default function AdminKitRail() {
     <aside className={`${styles.rail} ${strip.stripLayer}`} ref={railRef}>
       <nav className={styles.railScroll} aria-label="Admin navigation">
         {!tournamentOnly && !isCanceled && (
-          <RailRow href={base} label="Overview" active={pathname === base} icon={LayoutGrid} />
+          // Inside a tournament this row is the one way back to the club, so it says so — as the phone's More sheet does.
+          <RailRow href={base} label={onTournaments ? 'Club overview' : 'Overview'} active={pathname === base} icon={LayoutGrid} />
         )}
         {/* The club calendar (Club Tier 6b, Ask 7): directly under Overview — it spans every program, so it is no
             program's row. `kitCalendarLink` holds its gate. ⚖ Not inside a tournament (owner 2026-10-20): there Overview

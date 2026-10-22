@@ -240,7 +240,7 @@ export default function TeamPayments(props: Props) {
       {payments === null && !loadFailed && <p className={screenParts.recordText}>{W.loading}</p>}
       {loadFailed && (
         <p className={styles.payErr} role="alert">
-          {W.loadError} <button type="button" className={styles.payLink} onClick={() => void load()}>{W.retry}</button>
+          {W.loadError} <button type="button" className={styles.inlineLink} onClick={() => void load()}>{W.retry}</button>
         </p>
       )}
 

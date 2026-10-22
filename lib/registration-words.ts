@@ -12,6 +12,8 @@
 export const TEAMS_LOCK_PLAN = 'Tournament Plus';
 
 export const TEAMS_WORDS = {
+  /** A registration linked to one of the club's own teams: its row says so (the phone's caption, the desk's tag). */
+  ourTeam: 'Our team',
   // ── Payments' slim line and the registration chip (owner 2026-10-21; the At a glance card is gone) ──
   // Registration health's own words are REGISTRATION_HEALTH_WORDS, below.
   payments: 'Payments',
@@ -268,4 +270,36 @@ export const REGISTRATION_CHIP_WORDS = {
   chipLabel: (state: string, spots: string) => `${state}, ${spots}. Change registration`,
   /** The menu's heading — the sheet's label on a phone. */
   menuTitle: (division: string) => `${division} registration`,
+} as const;
+
+/**
+ * ADD OUR TEAMS' WORDS (Club Tier Stage 7b; drawing https://claude.ai/artifact/MLqvD7TXbLM5QX8H9mmapZ #e-add, change 14).
+ * Placements are the owner's (Ask 5 A); every sentence is flagged for `/marketing`. "Our teams enter with no fee" is said ONCE,
+ * at the end of the intro (owner 2026-10-22: a standing fact is not a foot sentence; the foot keeps only the live count). The no-season band, its line and the no-head-coach line are the build's (not drawn).
+ */
+export const ADD_OUR_TEAMS_WORDS = {
+  button: 'Add our teams',
+  title: 'Add our teams',
+  intro: 'Each team you tick is entered in the division you choose, accepted and linked to the team.',
+  introMore: 'Its coaches see the tournament in their portal, and its games join their Schedule once you set them.',
+  colTeam: 'Team',
+  colDivision: 'Division',
+  bandIn: 'Already in',
+  bandYours: 'Your teams',
+  bandNoSeason: 'No season running',
+  noSeasonLine: 'Start its season to enter it.',
+  noHeadCoach: 'No head coach yet',
+  enteredOn: (division: string | null, day: string) => (division ? `${division} · entered ${day}` : `Entered ${day}`),
+  choose: 'Choose a division',
+  divisionFor: (team: string) => `Division for ${team}`,
+  spotsLeft: (division: string, left: number) => `${division} · ${left} ${left === 1 ? 'spot' : 'spots'} left`,
+  full: (division: string) => `${division} is full`,
+  hint: 'Only this season’s active teams. A division picks itself when its name matches the team’s.',
+  ticked: (n: number) => `${n} ${n === 1 ? 'team' : 'teams'} ticked.`,
+  noFee: 'Our teams enter with no fee.',
+  add: (n: number) => (n > 0 ? `Add ${n} ${n === 1 ? 'team' : 'teams'}` : 'Add teams'),
+  adding: 'Adding…',
+  needsDivision: (teams: string[]) => `Choose a division for ${teams.join(', ')}.`,
+  failed: 'Your teams could not be added. Try again.',
+  noTeams: 'Your club has no active teams to enter.',
 } as const;

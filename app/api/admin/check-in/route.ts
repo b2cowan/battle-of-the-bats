@@ -21,7 +21,7 @@ import { clearSettled } from '@/lib/needs-attention';
 import { withObservability } from '@/lib/observability';
 import { effectiveFee } from '@/lib/mark-paid';
 import { paymentErrorResponse, payTeamDue, removeTeamPayment } from '@/lib/team-payments-server';
-import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
+import { isOurTournamentTeam, ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
@@ -114,6 +114,7 @@ export const GET = withObservability(async (req: Request) => {
     return Math.max(fee.totalFeeAmount - Number(t.total_paid ?? 0), 0);
   };
 
+  const ourTeams = await ourTournamentTeamIds(tournamentId);
   const teamIds = (teamRows ?? []).map(t => t.id);
   const rosterByTeam = new Map<string, any[]>();
   if (teamIds.length > 0) {
@@ -144,7 +145,9 @@ export const GET = withObservability(async (req: Request) => {
     rosterConfirmedAt: t.roster_confirmed_at,
     paymentCollectedAt: t.payment_collected_at,
     checkInNotes: t.check_in_notes,
-    owed: owedOf(t),
+    // Our own team owes no entry fee (owner 2026-10-21): nothing owed, and the board says so.
+    owed: ourTeams.has(t.id) ? 0 : owedOf(t),
+    ...(ourTeams.has(t.id) ? { ourTeam: true } : {}),
     roster: rosterByTeam.get(t.id) ?? [],
   }));
 

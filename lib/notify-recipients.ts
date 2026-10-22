@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { canGate } from './volunteer-jobs';
+import { hasCapability } from './roles';
 import type { OrgRole } from './types';
 
 /**
@@ -19,15 +20,23 @@ export async function orgOwnerUserIds(orgId: string): Promise<string[]> {
   return [...new Set((data ?? []).map(m => m.user_id as string).filter(Boolean))];
 }
 
-/** The people who run check-in for this tournament: who may work the gate (`canGate`, the check-in route's own
- *  question), with a staff member limited to their assigned tournaments as `notify()` limits them (no rows =
- *  every tournament). */
-export async function checkInUserIds(orgId: string, tournamentId: string): Promise<string[]> {
+/** The people who may add teams to this tournament (`create_tournaments`, the Teams page's own question), with a staff member
+ *  limited to their assigned tournaments as `notify()` limits them. Club Tier Stage 7b: the club entering its own teams tells
+ *  them, never the club's coaches (a coach learns from their own Tournaments list). */
+export async function tournamentTeamAdderUserIds(orgId: string, tournamentId: string): Promise<string[]> {
   const { data, error } = await supabaseAdmin.from('organization_members').select('id, user_id, role, capabilities')
     .eq('organization_id', orgId).eq('status', 'active');
   if (error) throw error;
-  const members = ((data ?? []) as { id: string; user_id: string | null; role: OrgRole; capabilities: Record<string, boolean> | null }[])
-    .filter(m => m.user_id && canGate(m.role, m.capabilities));
+  return scopedToTournament(
+    ((data ?? []) as Member[]).filter(m => m.user_id && hasCapability(m.role, m.capabilities, 'create_tournaments')),
+    tournamentId,
+  );
+}
+
+type Member = { id: string; user_id: string | null; role: OrgRole; capabilities: Record<string, boolean> | null };
+
+/** A staff member with tournament assignments hears only about those tournaments (no rows = every tournament). */
+async function scopedToTournament(members: Member[], tournamentId: string): Promise<string[]> {
   const staff = members.filter(m => m.role === 'staff');
   const assigned = new Map<string, Set<string>>();
   if (staff.length) {
@@ -41,4 +50,14 @@ export async function checkInUserIds(orgId: string, tournamentId: string): Promi
   return [...new Set(members
     .filter(m => m.role !== 'staff' || !assigned.get(m.id)?.size || assigned.get(m.id)!.has(tournamentId))
     .map(m => m.user_id as string))];
+}
+
+/** The people who run check-in for this tournament: who may work the gate (`canGate`, the check-in route's own
+ *  question), with a staff member limited to their assigned tournaments as `notify()` limits them (no rows =
+ *  every tournament). */
+export async function checkInUserIds(orgId: string, tournamentId: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin.from('organization_members').select('id, user_id, role, capabilities')
+    .eq('organization_id', orgId).eq('status', 'active');
+  if (error) throw error;
+  return scopedToTournament(((data ?? []) as Member[]).filter(m => m.user_id && canGate(m.role, m.capabilities)), tournamentId);
 }

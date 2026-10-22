@@ -206,8 +206,8 @@ export default async function CoachTournamentRecord({
       .maybeSingle();
     org = orgData;
   }
-  const clubOwnTeam = Boolean(tournament?.org_id && (org?.plan_id === 'club' || org?.plan_id === 'club_large')
-    && await isOurTournamentTeam(tournament.org_id, registrationId));
+  // Our own team owes no entry fee on every plan (owner 2026-10-21): no plan gate.
+  const clubOwnTeam = Boolean(tournament?.org_id && await isOurTournamentTeam(tournament.org_id, registrationId));
 
   // Contact shown to the coach in this portal respects the "Communication with coaches" toggle
   // and resolves the selected contact member (then legacy contact_email, then org owner — the

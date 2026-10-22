@@ -8,6 +8,7 @@ import { NEEDS_ATTENTION_KINDS, isTeamCoachEvent, type NeedsAttentionKind } from
 import { bellReadFilter, type BellSource } from './notification-bell-scope';
 import { registrationAmountDue, registrationFee, type DueDivision, type DueTournament } from './registration-amount-due';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
+import { ourTeamIdsAmong } from './club-own-tournament-team';
 import { tournamentToday, utcToZonedInputs } from './timezone';
 import { SETTLED_WORDS as W } from './needs-attention-words';
 import type { SettledNotice } from './types';
@@ -349,6 +350,7 @@ const paymentReminder: Resolver = async rows => {
     rowsIn<DueTournament & { id: string; settings: unknown }>('tournaments', 'id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings', 'id', uniq(teams.map(t => t.tournament_id))),
     rowsIn<DueDivision & { id: string }>('divisions', 'id, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date', 'id', uniq(teams.map(t => t.division_id))),
   ]);
+  const ours = await ourTeamIdsAmong(teams.map(t => t.id));
   const teamById = new Map(teams.map(t => [t.id, t]));
   const tournamentById = new Map(tournaments.map(t => [t.id, t]));
   const divisionById = new Map<string, DueDivision>(divisions.map(d => [d.id, d]));
@@ -361,7 +363,8 @@ const paymentReminder: Resolver = async rows => {
     if (!tournament) continue;
     // "Not tracked here": nothing is owed on the platform any more, so nothing waits (the reminder route's own answer).
     if (!tournamentTracksPayments(tournament.settings)) { out.set(r.id, said(W.notTracked)); continue; }
-    out.set(r.id, registrationAmountDue(t, registrationFee(t, tournament, divisionById)) ? 'waiting' : said(W.paidInFull));
+    // Our own team owes no entry fee (owner 2026-10-21) — handled the way a paid team is.
+    out.set(r.id, !ours.has(t.id) && registrationAmountDue(t, registrationFee(t, tournament, divisionById)) ? 'waiting' : said(W.paidInFull));
   }
   return out;
 };

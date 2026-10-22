@@ -46,6 +46,7 @@ import {
   findDuplicateTournamentTeam,
 } from '@/lib/team-registration-duplicates';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
+import { ourTeamIdsAmong } from '@/lib/club-own-tournament-team';
 import { runsInviteOnlyEvents, teamUpdateAllowed } from '@/lib/invite-only-event';
 import { INVITATION_EMAIL_WORDS, INVITE_REFUSALS } from '@/lib/invite-only-words';
 import {
@@ -633,6 +634,7 @@ export const POST = withObservability(async (req: Request) => {
     // Handle Emails. The registration emails never fire on an invite-only event (the free tournament tier, Part 3): a
     // team still waiting there (R2) is answered on the screen and told by its coach's bell, below.
     const inviteOnlyEmails = runsInviteOnlyEvents(ctx.org.planId);
+    const ourTeams = await ourTeamIdsAmong(ids);
     for (const item of items) {
       const current = currents.find((c: any) => c.id === item.id);
       if (!current) continue;
@@ -657,7 +659,8 @@ export const POST = withObservability(async (req: Request) => {
           // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team, including
           // when this same update marks it paid (effective post-update status).
           const div = bulkDivisions.get(current.division_id);
-          const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid' || paidNow.has(current.id);
+          // Our own team owes no entry fee (owner 2026-10-21), so it reads as nothing owed too.
+          const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid' || paidNow.has(current.id) || ourTeams.has(current.id);
           // "Not tracked here": the email has no Payment panel at all (no amount, no how-to-pay).
           const paymentsTracked = tournamentTracksPayments(bulkCoachSettings);
           const feeLine = willBePaid || !paymentsTracked ? undefined : acceptanceFeeLine({

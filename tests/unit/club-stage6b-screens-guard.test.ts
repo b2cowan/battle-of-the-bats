@@ -59,7 +59,8 @@ describe('1. the Calendar door — under Overview, first in More, one gate', () 
 
   it('the rail draws it directly under Overview', () => {
     const code = readCode(RAIL);
-    const overview = code.indexOf('label="Overview"');
+    // The label is "Club overview" inside a tournament, so find the row by its link, not its words.
+    const overview = code.indexOf('<RailRow href={base} label=');
     const calendar = code.indexOf('calendarLink.href');
     const programs = code.indexOf('<div className={styles.label}>Programs</div>');
     assert.ok(overview > 0 && calendar > overview && calendar < programs, 'Overview, then Calendar, then the programs');

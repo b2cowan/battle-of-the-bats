@@ -16,7 +16,7 @@ import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { paymentErrorResponse, payTeamDue } from '@/lib/team-payments-server';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
-import { isOurTournamentTeam } from '@/lib/club-own-tournament-team';
+import { ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
@@ -128,7 +128,7 @@ async function releaseTeamSlot(team: TeamRow) {
   await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', team.slot_id);
 }
 
-async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament: TournamentRow, divisions: Map<string, DivisionFeeRow>, orgId: string | null, paymentInstructions?: string, coachSettings?: unknown, contactEmail?: string) {
+async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament: TournamentRow, divisions: Map<string, DivisionFeeRow>, orgId: string | null, paymentInstructions?: string, coachSettings?: unknown, contactEmail?: string, ourTeams: ReadonlySet<string> = new Set()) {
   if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
   const tournamentName = tournament.name;
 
@@ -155,7 +155,8 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team. "Not tracked here": no
       // Payment panel at all (no amount, no how-to-pay).
       const paymentsTracked = tournamentTracksPayments(coachSettings);
-      const feeLine = team.payment_status === 'paid' || !paymentsTracked ? undefined : acceptanceFeeLine({
+      // Our own team owes no entry fee (owner 2026-10-21): no amount line either.
+      const feeLine = team.payment_status === 'paid' || !paymentsTracked || ourTeams.has(team.id) ? undefined : acceptanceFeeLine({
         feeMode: tournament.fee_schedule_mode,
         tournament: { depositAmount: tournament.deposit_amount, depositDueDate: tournament.deposit_due_date, totalFeeAmount: tournament.total_fee_amount, totalFeeDueDate: tournament.total_fee_due_date },
         division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
@@ -181,7 +182,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
       if (orgId) await cancelScheduledEmailForRecipient(orgId, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);
     }
-    if (action === 'mark_paid' && team.payment_status !== 'paid' && !coachEmailBlock(coachSettings, 'payment', team)) {
+    if (action === 'mark_paid' && team.payment_status !== 'paid' && !ourTeams.has(team.id) && !coachEmailBlock(coachSettings, 'payment', team)) {
       await sendTransactionalEmail({
         key: 'tournament_payment_recorded',
         to: recipient,
@@ -267,6 +268,10 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const updates: Array<{ id: string; patch: Record<string, unknown> }> = [];
   const dueTeams: TeamRow[] = [];
   let nextWaitlistByGroup = new Map<string, number>();
+  // The club's own teams owe no fee: read once for the whole press (it keeps their payments out and their accept email's fee line off).
+  const ourTeams = bulkAction === 'accept' || bulkAction === 'mark_paid' || bulkAction === 'mark_deposit_paid'
+    ? await ourTournamentTeamIds(tournamentId)
+    : new Set<string>();
 
   for (const team of selectedTeams) {
     const patch: Record<string, unknown> = {};
@@ -286,7 +291,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       patch.slot_id = null;
       nextWaitlistByGroup = new Map(nextWaitlistByGroup).set(team.division_id, nextPosition + 1);
       await releaseTeamSlot(team);
-    } else if ((bulkAction === 'mark_deposit_paid' || bulkAction === 'mark_paid') && await isOurTournamentTeam(ctx.org.id, team.id)) {
+    } else if ((bulkAction === 'mark_deposit_paid' || bulkAction === 'mark_paid') && ourTeams.has(team.id)) {
       // The club's own team owes no fee (Stage 7a): a paid figure stamped on it could not be undone from the Teams
       // screen, and would block unlinking it.
       continue;
@@ -336,7 +341,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   // fallback) so status emails point coaches at the organizer, not the platform inbox (J5-057).
   const statusFallback = tournament.org_id ? (await getOrgOwnerEmail(tournament.org_id)) ?? null : null;
   const statusContact = (await resolveTournamentContactEmail(tournamentId, statusFallback, 'coach')) ?? undefined;
-  await sendStatusEmails(selectedTeams, bulkAction, tournament, divisions, tournament.org_id, paymentInstructions, tournament.settings, statusContact);
+  await sendStatusEmails(selectedTeams, bulkAction, tournament, divisions, tournament.org_id, paymentInstructions, tournament.settings, statusContact, ourTeams);
 
   // A free coach's bell (Free coach header parity, 2026-10-13): the moments the status emails mark, for
   // every coach on the team and outside the host's email switches (A5, A6). Awaited; it never throws.
@@ -353,7 +358,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   } else if (bulkAction === 'mark_paid' && tournamentTracksPayments(tournament.settings)) {
     // "Not tracked here" records no payment anywhere, the bell included (owner 2026-10-13).
     await notifyTeamCoaches({
-      registrationIds: selectedTeams.filter(t => t.payment_status !== 'paid').map(t => t.id),
+      registrationIds: selectedTeams.filter(t => t.payment_status !== 'paid' && !ourTeams.has(t.id)).map(t => t.id),
       eventType: 'team_coach_payment_recorded',
       compose: c => TEAM_COACH_WORDS.paymentRecorded(c, paidTotals.get(c.registrationId)),
       excludeUserIds: [ctx.user.id],

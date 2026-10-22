@@ -36,6 +36,8 @@ const DELIBERATE_REFUSALS = [
   /^Undo this team's paid status before removing its club-team link/,
   /^Undo the recorded entry fee before linking this as our team/,
   /^The rep team and tournament must belong to the same club/,
+  // Stage 7b (mig 346): one entry per rep team per tournament, whichever door made the first.
+  / is already in this tournament\.$/,
 ];
 
 function refusalOf(err: unknown): Response | null {

@@ -54,7 +54,7 @@ import {
 import { buildRegistrationCapacity, buildRegistrationHealth, countRegistrationHealthTeams, registrationDaysUntilStart } from '@/lib/registration-health';
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { coachEmailBlock, resolveCoachRecipient, type CoachEmailBlock } from '@/lib/coach-email-rules';
-import { REGISTRATION_HEALTH_WORDS, TEAMS_LOCK_PLAN, TEAMS_WORDS, TEAM_RECORD_WORDS, TEAM_STATUS_CHIP } from '@/lib/registration-words';
+import { ADD_OUR_TEAMS_WORDS, REGISTRATION_HEALTH_WORDS, TEAMS_LOCK_PLAN, TEAMS_WORDS, TEAM_RECORD_WORDS, TEAM_STATUS_CHIP } from '@/lib/registration-words';
 import { eventAreas, holdsRegistrationRecords } from '@/lib/invite-only-event';
 import { INVITE_TEAM_WORDS, LOCK_WORDS, registrationClosedLine } from '@/lib/invite-only-words';
 import { Division } from '@/lib/types';
@@ -84,6 +84,7 @@ import RegistrationChip from './components/RegistrationChip';
 import TeamList, { type ListMode, type RowFacts } from './components/TeamList';
 import TeamRecordWindow, { type TeamRecordUpdates } from './components/TeamRecord';
 import SharedPaymentDialog from './components/SharedPaymentDialog';
+import AddOurTeamsWindow, { type OwnTeamOption } from './components/AddOurTeamsWindow';
 import {
   buildListBands, buildSlotBands, computePaymentStatus, getEffectiveFee, hasDepositStep,
   narrowSlotBands, nextOpenSlot, paymentFact, recordOrder, sortedPools,
@@ -239,10 +240,15 @@ export default function UnifiedTeamsPage() {
   const repLinkPopRef = useRef<HTMLDivElement>(null);
   useFieldMenu(repLinkPickerId !== null, repLinkWrapRef, repLinkPopRef, () => setRepLinkPickerId(null), { width: 320, align: 'end' });
   const orgHasRepTeams = useMemo(() => (currentOrg ? hasModuleEntitlement(currentOrg, 'module_rep_teams') : false), [currentOrg]);
-  const orgCarriesAccounting = Boolean(currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting'));
-  // The club's own team pays no entry fee — the row says "No fee", and the money tiles, the attention counts and
-  // the payment filter all leave it out by this one answer.
-  const isClubOwnTeam = useCallback((registrationId: string) => orgCarriesAccounting && repLinks.has(registrationId), [orgCarriesAccounting, repLinks]);
+  // The club's own team pays no entry fee, on every plan — the one answer, the server's (lib/club-own-tournament-team.ts,
+  // owner 2026-10-21). The row says "Our team" and "No fee" and its head coach is read live through the link (S7-01); the
+  // money tiles, the attention counts and the payment filter all leave it out by this one answer.
+  const [ourTeams, setOurTeams] = useState<Map<string, { headCoach: string | null }>>(new Map());
+  // Add our teams (Club Tier Stage 7b): the window's list, or null when this member may not use it (not a club running rep
+  // teams, a coaches portal — which keeps its star — or no `create_tournaments`).
+  const [ownTeamOptions, setOwnTeamOptions] = useState<OwnTeamOption[] | null>(null);
+  const [showAddOurTeams, setShowAddOurTeams] = useState(false);
+  const isClubOwnTeam = useCallback((registrationId: string) => ourTeams.has(registrationId), [ourTeams]);
   // "Add my team" (2026-09-13) — a tournament run from a coaches PORTAL has exactly one team that
   // is the host's own; the rep-link picker above is gated off for it on purpose (a one-team org
   // needs no picker), and this is that picker collapsed to a button. `ownTeam` is null off a
@@ -414,6 +420,21 @@ export default function UnifiedTeamsPage() {
     }
   }, [orgHasRepTeams, currentTournament?.id, currentOrg?.slug]);
 
+  const loadOurTeams = useCallback(async () => {
+    if (!currentTournament) { setOurTeams(new Map()); setOwnTeamOptions(null); return; }
+    try {
+      const res = await fetch(`/api/admin/teams/our-teams?tournamentId=${encodeURIComponent(currentTournament.id)}${orgParam}`, SAME_ORIGIN_FETCH);
+      if (!res.ok) { setOurTeams(new Map()); setOwnTeamOptions(null); return; }
+      const data = await res.json().catch(() => ({ ours: [], options: null }));
+      const ours = Array.isArray(data.ours) ? data.ours : [];
+      setOurTeams(new Map(ours.map((o: { registrationId: string; headCoach: string | null }) => [o.registrationId, { headCoach: o.headCoach ?? null }])));
+      setOwnTeamOptions(Array.isArray(data.options) ? data.options : null);
+    } catch {
+      setOurTeams(new Map());
+      setOwnTeamOptions(null);
+    }
+  }, [currentTournament?.id, orgParam]);
+
   const loadOwnTeam = useCallback(async () => {
     if (!isHostPortal || !currentTournament) { setOwnTeam(null); return; }
     try {
@@ -450,6 +471,7 @@ export default function UnifiedTeamsPage() {
   useEffect(() => { loadPoolSlots(); }, [loadPoolSlots]);
   useEffect(() => { loadRepLinks(); }, [loadRepLinks]);
   useEffect(() => { loadOwnTeam(); }, [loadOwnTeam]);
+  useEffect(() => { loadOurTeams(); }, [loadOurTeams]);
 
   useEffect(() => {
     setSelectedRegistrationIds(prev => {
@@ -649,6 +671,7 @@ export default function UnifiedTeamsPage() {
         next.set(registrationId, { repTeamId, repTeamName: repTeam?.name ?? '' });
         return next;
       });
+      void loadOurTeams(); // a link makes it our team (Our team, its head coach, No fee)
       // Only close the picker if THIS registration's is still the open one.
       setRepLinkPickerId(prev => (prev === registrationId ? null : prev));
       setRepLinkSearch('');
@@ -678,6 +701,7 @@ export default function UnifiedTeamsPage() {
             next.delete(registrationId);
             return next;
           });
+          void loadOurTeams();
           setRepLinkPickerId(prev => (prev === registrationId ? null : prev));
         });
       },
@@ -856,6 +880,12 @@ export default function UnifiedTeamsPage() {
     });
   }
 
+  const canAddOurTeams = !isLocked && !isHostPortal && !!ownTeamOptions && ownTeamOptions.length > 0;
+  function openAddOurTeams() {
+    setShowAddOurTeams(true);
+    void loadOurTeams(); // the list as it is now (another admin may have entered a team since the page loaded)
+  }
+
   function openOwnTeamModal() {
     setOwnTeamForm({ divisionId: selectedDivisionId || divisions[0]?.id || '', paymentStatus: 'paid' });
     setShowOwnTeamModal(true);
@@ -880,6 +910,7 @@ export default function UnifiedTeamsPage() {
       setShowOwnTeamModal(false);
       void load();
       void loadOwnTeam();
+      void loadOurTeams();
     });
   }
 
@@ -1409,7 +1440,9 @@ export default function UnifiedTeamsPage() {
     const pay = tracksPayments ? paymentFact(team, feeOf(team)) : null;
     const payNode = clubOwnTeam ? <span>No fee</span>
       : pay ? <span className={pay.owes ? styles.owes : undefined}>{pay.text}</span> : null;
-    const coach = team.coach?.trim() ? team.coach.trim() : null;
+    // Our team's coach is its head coach read live through the link (S7-01), so a coach change shows without editing the entry.
+    const liveHead = clubOwnTeam ? ourTeams.get(team.id)?.headCoach ?? null : null;
+    const coach = liveHead ?? (team.coach?.trim() ? team.coach.trim() : null);
     // An invite-only event: a team added without its coach's email can't be claimed until the host adds one (M7, F07).
     const noEmail = areas.inviteOnly && !team.email?.trim()
       ? <span className={styles.noEmail}>{INVITE_TEAM_WORDS.noEmailTag}</span>
@@ -1450,11 +1483,11 @@ export default function UnifiedTeamsPage() {
       parts = [poolName, coach, payNode];
       if (poolAssignable) place = poolNameOf(team, null) ?? place;
     }
-    if (clubOwnTeam) parts.unshift('Our team');
+    if (clubOwnTeam) parts.unshift(TEAMS_WORDS.ourTeam);
     const caption = joinDots(noEmail ? [...parts, noEmail] : parts);
     return {
-      caption, chip, action, place, payment: payNode ?? <span className={repKit.dim}>—</span>,
-      coach: noEmail ? (coach ? <>{coach} · {noEmail}</> : noEmail) : undefined,
+      caption, chip, ourTeam: clubOwnTeam, action, place, payment: payNode ?? <span className={repKit.dim}>—</span>,
+      coach: noEmail ? (coach ? <>{coach} · {noEmail}</> : noEmail) : liveHead ?? undefined,
     };
   };
 
@@ -1698,7 +1731,7 @@ export default function UnifiedTeamsPage() {
             <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.depositPaid}</button>
             <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.paidInFull}</button>
             {canOpen('module_accounting') && selectedRegistrationIds.size >= 2
-              && ![...selectedRegistrationIds].some(id => repLinks.has(id)) && (
+              && ![...selectedRegistrationIds].some(id => isClubOwnTeam(id)) && (
               <button type="button" className={styles.bulkBtn} onClick={() => setSharedPaymentOpen(true)} disabled={working === 'bulk'}>Record one payment</button>
             )}
           </>
@@ -1782,9 +1815,24 @@ export default function UnifiedTeamsPage() {
               exportDisabled={regs.length === 0}
               planLock={exportLock}
             />
+            {/* Add our teams (Club Tier Stage 7b): a club's teams, many at once. Never beside the portal's star (a portal has
+                one team): the server gives no list to a portal. No glyph at a desk (drawing change 15); on a phone a secondary
+                action is its symbol alone (standing ruling 2026-10-20). */}
+            {canAddOurTeams && (
+              <button
+                className={`btn btn-outline btn-data ${screenParts.headerButton}`}
+                onClick={openAddOurTeams}
+                disabled={!currentTournament}
+                aria-label={ADD_OUR_TEAMS_WORDS.button}
+                title={ADD_OUR_TEAMS_WORDS.button}
+              >
+                <ListChecks size={15} aria-hidden className={styles.aotHeaderGlyph} />
+                <span className={screenParts.headerButtonLabel}>{ADD_OUR_TEAMS_WORDS.button}</span>
+              </button>
+            )}
             {!isLocked && ownTeam && !ownTeam.registrationId && (
               <button
-                className={`btn btn-ghost btn-data ${screenParts.headerButton}`}
+                className={`btn btn-outline btn-data ${screenParts.headerButton}`}
                 onClick={openOwnTeamModal}
                 disabled={!currentTournament}
                 aria-label={`Add ${ownTeam.teamName} to this tournament`}
@@ -1850,7 +1898,7 @@ export default function UnifiedTeamsPage() {
           {registrationChip}
           <span className={tb.toolbarSpacer} aria-hidden />
           {showViewTools && (
-            <div className={tb.deskFilters}>
+            <div className={`${tb.deskFilters} ${styles.teamsDeskFilters}`}>
               {searchField.field}
               {!cleanInvite && <TeamsFilterMenu
                 statuses={STATUS_ORDER.map(st => ({
@@ -2008,6 +2056,9 @@ export default function UnifiedTeamsPage() {
               <p>{areas.inviteOnly ? 'No teams added yet.' : 'No teams have registered yet.'}</p>
               {!isLocked && ownTeam && !ownTeam.registrationId && (
                 <button type="button" className="btn btn-outline" onClick={openOwnTeamModal}>Add my team</button>
+              )}
+              {canAddOurTeams && (
+                <button type="button" className="btn btn-outline" onClick={openAddOurTeams}>{ADD_OUR_TEAMS_WORDS.button}</button>
               )}
               {/* The teams import is Tools' row only, as the schedule's games import is (owner, 2026-10-12). */}
             </>
@@ -2255,6 +2306,20 @@ export default function UnifiedTeamsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {showAddOurTeams && ownTeamOptions && currentTournament && (
+        <AddOurTeamsWindow
+          options={ownTeamOptions}
+          divisions={divisions}
+          orgSlug={currentOrg?.slug}
+          tournamentId={currentTournament.id}
+          onClose={() => setShowAddOurTeams(false)}
+          onAdded={() => {
+            setShowAddOurTeams(false);
+            void Promise.all([load(), loadPoolSlots(), loadRepLinks(), loadOurTeams()]);
+          }}
+        />
       )}
 
       {showReminderModal && (
