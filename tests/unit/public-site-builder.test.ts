@@ -178,3 +178,21 @@ describe('A8 · what makes each part ready', () => {
     assert.equal(r.ready, 4);
   });
 });
+
+/**
+ * The editor reads the club's SAVED look from the sign-in org (and again after every pick). When that org was built
+ * without the colour, font and banner, the editor saw "nothing chosen": the selected swatch and type always snapped
+ * back to the default and the Look summary read "Navy · the default font" whatever had been saved (walk §357).
+ */
+describe('the sign-in org carries the saved look', () => {
+  const src = read('lib/api-auth.ts');
+  const PAIRS: [string, string][] = [
+    ['themePreset', 'theme_preset'], ['themePrimary', 'theme_primary'], ['themeAccent', 'theme_accent'],
+    ['themeFont', 'theme_font'], ['themeCardStyle', 'theme_card_style'], ['heroBannerUrl', 'hero_banner_url'],
+  ];
+  for (const [field, column] of PAIRS) {
+    it(`${field} is read from ${column}`, () => {
+      assert.ok(src.includes(`${field}: orgRow.${column} ?? undefined`), `${field} must be read from the ${column} column`);
+    });
+  }
+});

@@ -136,8 +136,22 @@ export default function LookPanel({ org, orgSlug, run, onChanged, readOnly = fal
     }, W.lookFailed);
   };
 
-  const pickPreset = (key: string) => patchTheme({ themePreset: key, themePrimary: null, themeAccent: null }, { colour: { kind: 'preset', key } });
-  const pickFromLogo = () => fromLogo && patchTheme({ themePreset: 'platform', themePrimary: fromLogo.primary, themeAccent: fromLogo.accent }, { colour: { kind: 'logo' } });
+  // A preset or the logo's colours replaces the club's own pair: the two pickers close, and a pick of their colour still
+  // waiting out its half second is dropped so it cannot land afterwards and undo this choice.
+  const leaveOwn = () => {
+    if (ownTimer.current) window.clearTimeout(ownTimer.current);
+    ownTimer.current = null;
+    setOwnOpen(false);
+  };
+  const pickPreset = (key: string) => {
+    leaveOwn();
+    patchTheme({ themePreset: key, themePrimary: null, themeAccent: null }, { colour: { kind: 'preset', key } });
+  };
+  const pickFromLogo = () => {
+    if (!fromLogo) return;
+    leaveOwn();
+    patchTheme({ themePreset: 'platform', themePrimary: fromLogo.primary, themeAccent: fromLogo.accent }, { colour: { kind: 'logo' } });
+  };
   const changeOwn = (next: { primary: string; accent: string }) => {
     setOwn(next);
     if (ownTimer.current) window.clearTimeout(ownTimer.current);

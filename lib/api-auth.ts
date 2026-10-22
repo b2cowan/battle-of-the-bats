@@ -78,6 +78,13 @@ type AuthOrgRow = {
   /** Club Shared Book (mig 227). Optional on the row type so an unapplied migration reads as
    *  undefined → false rather than throwing; the gate must fail CLOSED, never open. */
   club_book_sharing_enabled?: boolean | null;
+  /** The club's public look. The row is read with `*`, so these are always present. */
+  theme_preset?: string | null;
+  theme_primary?: string | null;
+  theme_accent?: string | null;
+  theme_font?: string | null;
+  theme_card_style?: string | null;
+  hero_banner_url?: string | null;
 };
 
 type AuthMemberOrgRow = {
@@ -195,6 +202,14 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     isDiscoverable: orgRow.is_discoverable ?? true,
     freeFloor: orgRow.free_floor ?? null,
     clubBookSharingEnabled: orgRow.club_book_sharing_enabled === true,
+    // The public site editor reads the saved look from here (and re-reads it after every pick); without these
+    // it saw "no colour chosen" and always showed the default, whatever had been saved.
+    themePreset: orgRow.theme_preset ?? undefined,
+    themePrimary: orgRow.theme_primary ?? undefined,
+    themeAccent: orgRow.theme_accent ?? undefined,
+    themeFont: orgRow.theme_font ?? undefined,
+    themeCardStyle: orgRow.theme_card_style ?? undefined,
+    heroBannerUrl: orgRow.hero_banner_url ?? undefined,
   };
 
   // Grants are applied FIRST so a platform-admin `subscription_status: 'active'` override can still
