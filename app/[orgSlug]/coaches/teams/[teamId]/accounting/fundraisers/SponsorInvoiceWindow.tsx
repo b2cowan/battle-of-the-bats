@@ -213,9 +213,6 @@ export function SponsorInvoiceWindow({
 
   const issued = read?.invoice ?? null;
   const teamName = read?.teamName ?? '';
-  const footSentence = issued
-    ? `Downloading again reprints invoice ${issued.number} with these details.`
-    : 'Downloading keeps these details and gives the invoice its number.';
 
   return (
     <QuestionShell
@@ -228,7 +225,6 @@ export function SponsorInvoiceWindow({
       title="Invoice"
       busy={saving}
       leaveGuard={{ tabActive, message: "You haven't downloaded this invoice yet. Leave without saving it?" }}
-      footerStart={draft ? <span className={styles.formHint}>{footSentence}</span> : undefined}
       footer={draft ? <>
         <QuestionCancel className={styles.btnGhost} />
         <button type="submit" form="sponsor-invoice-form" className={styles.btnPrimary} disabled={saving}>

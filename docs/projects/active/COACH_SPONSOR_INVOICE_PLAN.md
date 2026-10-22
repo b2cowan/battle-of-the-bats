@@ -1,7 +1,7 @@
 # Coach Sponsor Invoice — Plan
 
 **PM brief:** [COACH_SPONSOR_INVOICE_PM_BRIEF.md](COACH_SPONSOR_INVOICE_PM_BRIEF.md) ·
-**State:** committed `7a50b369` 2026-10-20 (after /review: 4 lenses, 14 fixes; help article updated). Migrations 339 + 340 applied to dev 2026-10-20; prod at the next promote. Owner browser check owed.
+**State:** committed `7a50b369` 2026-10-20 (after /review: 4 lenses, 14 fixes; help article updated). Migrations 339–341 on prod 2026-10-20 (promote job 283). **✅ CLOSED UNWALKED 2026-10-20** (owner); the browser check was not run.
 
 **Drawings (ruled):** https://claude.ai/artifact/5XGAZvyBChL2fZxdzqi6Sc (source
 [COACH_SPONSOR_INVOICE_MOCKUP.html](COACH_SPONSOR_INVOICE_MOCKUP.html))
