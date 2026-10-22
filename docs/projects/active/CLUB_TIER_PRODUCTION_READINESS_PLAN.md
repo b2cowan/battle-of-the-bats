@@ -1142,7 +1142,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > read by the club **Tryouts page** `/{org}/tryouts` (bands by the club's groups with each band's date range, row: first remaining
 > day · venue + state chip), its **seasonal tab** third (open, not open yet, or finished in the last 28 days — asked yes/no in the
 > org layout), the team's **tryout page** (Tryout days from `rep_tryout_sessions`, cancelled left out, Directions a bare symbol on a
-> phone; "Sign up for tryouts"; the closed/not-open/finished card with Copy and "See the team"), the home's **Open now** and the team
+> phone; "Sign up for tryouts"; the closed/not-open/finished card with Copy; its "See the team" foot button was removed 2026-10-21 — "← {team}" at the top is the one way to the team), the home's **Open now** and the team
 > page door's **days line** ("Three days from Sun, Nov 2 · Lakeshore Dome"); the Teams page's "Tryouts open" chip now reads the same
 > read. Tryout days reach the public only through `lib/club-tryouts.ts` (service client, live season, when/where/cancelled only).
 > **Preview cards**: one generated 1200 × 630 card per club home, team and tryout (`opengraph-image` routes, the club's
@@ -2324,7 +2324,24 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 > **⚖ RULED 2026-10-20 (owner): all 13 asks as recommended (option A each), round 1.** Design-log entry written; build prompts
 > `CLUB_TIER_STAGE7A_BUILD_PROMPT.md` (first); the 7b / 7c / 7d prompts are written after 7a commits and walks; each part gets
 > its own walk (Ask 13). **Stage 12c's wait on Ask 1 is over:** an online tournament payment goes through 7a's one fee write. Nothing
-> **7a BUILT 2026-10-20** in the working tree; migration 342 applied to DEV and its rolled-back atomicity probe passed. Its owner walk is §354. The paragraph below is the drawing record (its "open" and "recommended" wording is history).
+> **7b BUILT 2026-10-21** (walk §358, https://claude.ai/artifact/WBd2jFdENXDEM38irnNuuF; migration 346 applied to DEV,
+> function-only, prod-pending and ORDER-CRITICAL after 345 in `MANUAL_PROD_STEPS.json`). Owner answers at the start, all as
+> recommended (all or none; head coach written and read live; a full division names its spots, no refusal; no invitation for the
+> club's own team on an invite-only event; no head coach is no block), and one ruling the build surfaced: **"our team" is one
+> answer, the database's, on every plan** (the Teams page's and dashboard's Accounting gate and the coach record's Club-plan
+> gate dropped; every payment reader asks `lib/club-own-tournament-team.ts`, census-guarded). **Departures from the drawing:**
+> the closing ask is the kit's (Keep writing · Discard; the drawing's "Keep choosing" cannot be set); on a phone the window
+> closes with ← (the kit's form window), and the header's button is its symbol alone (standing ruling 2026-10-20) where the
+> desk keeps the words with no glyph; a team with no season running is listed under a "No season running" band with its reason
+> (not drawn; walk call c1); "No head coach yet" under a team that has none (not drawn). **Found and fixed beyond the prompt:**
+> the record's "Link to a rep team" could link a rep team already in the tournament to a second entry (now refused by the
+> guard, the same sentence); the payment-reminder send, its bell, the check-in board, the export, the recap, the coach's fee
+> tile, the import's pending write, the "still owes" email audience and the acceptance emails' fee line now all treat our team
+> as owing nothing. **Found, not fixed:** the coaches-portal "Add my team" window still offers Paid/Unpaid on a plan with
+> payment tracking, though the database refuses a fee for that team (its "Unpaid" now reads "No fee" everywhere); the bulk
+> Mark paid email path was not traced for our team (the action itself skips it); games reaching the coach's Schedule were not
+> exercised (the fixture has no games set). Prompt: `CLUB_TIER_STAGE7B_BUILD_PROMPT.md`.
+> **7b build prompt WRITTEN 2026-10-21:** `CLUB_TIER_STAGE7B_BUILD_PROMPT.md` (no new design needed; five owner questions at its end). **7a BUILT 2026-10-20** in the working tree; migration 342 applied to DEV and its rolled-back atomicity probe passed. Its owner walk is §354. The paragraph below is the drawing record (its "open" and "recommended" wording is history).
 >
 > **DRAWN 2026-10-20 (asks were open until the ruling above).** Drawings (round 1, through `/design`, 15 drawing changes
 > applied): https://claude.ai/artifact/MLqvD7TXbLM5QX8H9mmapZ (source `CLUB_TIER_STAGE7_DRAWINGS.html`, captures
@@ -2663,6 +2680,7 @@ unwritten departures.
 - [ ] **The club, first and longest:** does the club sidebar still read as one object at its full length (Rep teams, House
   league, Families, Public site, Accounting, Calendar, Schedules, bookings, payments)? Its order, its groups, the Overview's job,
   and whether N10's one phone bar still holds with every program on.
+- [ ] **Inventory question (owner 2026-10-22, not ruled): does the Club notice belong under a "Communications" home rather than the Public site editor?** The club sidebar has no Communications place today (the Coaches Portal's "Communication" group and tournament admin do), so the question is whether the club gets one: the notice, the family broadcast (Stage 7), anything else that talks to families. Detail and counter-weight: `PUBLIC_SITE_BUILDER_PLAN.md` §7.
 - [ ] **The standard, extended:** new rules for the crossings and for parity go into `NAV_STANDARD.md`; every departure found is
   either fixed or written into its exceptions with the reason that earns it. **The default is the same everywhere; an exception
   has to name what makes its place different.** The tournament bar following the phase, the free portal's tiles and the closed

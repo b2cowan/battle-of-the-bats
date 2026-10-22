@@ -120,14 +120,14 @@ const PARTS = [
   { id: 'p3', title: '3 · Not open yet', where: 'Signed out. /uat-rep-only/teams/13u-aaa/tryouts.', steps: [
     '"13U AAA tryouts", "For the 2026 season", and a grey "Not open yet" chip with no dot.',
     '"Tryout days" lists its two days. The second is at "Sherwood Park" with no diamond number.',
-    'A card reads "Sign-ups for 13U AAA tryouts aren’t open yet." Under a line in the same card: "Questions? Email the club", the address, and a bordered "Copy" button.',
-    'Copy changes to "Copied" for about two seconds, and the row does not jump. Pasting gives the address.',
-    'A full-width white "See the team" button opens the team page. There is no sign-up button.',
+    'A card reads "Sign-ups for 13U AAA tryouts aren’t open yet." Under a line in the same card: "Questions? Email the club", the address, and Copy at the card’s right edge, in line with the Directions arrows above it (on a phone, its symbol alone; at a desk, a bordered button with the symbol and "Copy").',
+    'Copy shows a tick (and "Copied" at a desk) for about two seconds, and the row does not jump. Pasting gives the address.',
+    'The card is the end of the page: no sign-up button and no "See the team" button. "← 13U AAA" at the top opens the team page.',
   ]},
   { id: 'p4', title: '4 · Finished and closed', where: 'Signed out. /uat-rep-only/teams/14u-aa/tryouts, then /uat-rep-only/teams/16u-aa/tryouts.', steps: [
     '14U AA: "For the 2026 season", a grey "Finished" chip with a dot, and "Tryouts for the 2026 season finished on" with its last day. No tryout days are listed.',
     '16U AA: no season line, a grey "Tryouts closed" chip with a dot, and "16U AA isn’t taking tryout sign-ups right now."',
-    'Both: the contact card with Copy, and "See the team". Neither page is a dead end.',
+    'Both: the contact card with Copy ends the page, and "← {team}" at the top opens the team. Neither page is a dead end.',
   ]},
   { id: 'p5', title: '5 · The home and the team page', where: 'Signed out. /uat-rep-only, then /uat-rep-only/teams/15u-aaa.', steps: [
     'Home: Open now has ONE tryouts row, "2026 tryouts" over "2 teams · AAA" plus a date range. It opens the Tryouts page. There is no separate 15U AAA row.',
@@ -138,7 +138,8 @@ const PARTS = [
     'Scrolling down, the navy band scrolls away and the white tab row (Home · Teams · Tryouts) stays pinned at the top with its gold top edge.',
     'All three tabs fit at 390 px without a sideways scroll.',
   ]},
-  { id: 'p7', title: '7 · Out of season', where: 'Sign in as the UAT Rep Club owner. Open Rep teams, then 15U AAA, then Tryouts, and press Close sign-ups. Then, signed out (private window), open /uat-rep-club and /uat-rep-club/tryouts. Re-open the sign-ups when you finish.', steps: [
+  { id: 'p7', title: '7 · Out of season', where: 'Sign in as the UAT Rep Club owner. First, Rep teams, then 13U AAA, then Tryouts: it has one tryout day (Tue, Oct 20, Lions Park) that makes the team "Finished", and a finished team keeps the tab and the page for four weeks. Delete that day (or cancel it) so the club has nothing to list. Then open 15U AAA, then Tryouts, and press Close sign-ups. Then, signed out (private window), open /uat-rep-club and /uat-rep-club/tryouts. Re-open the sign-ups when you finish.', steps: [
+    'Before you delete anything, signed out, /uat-rep-club/tryouts reads "2026 tryouts" with the Tryouts tab underlined, and 13U AAA under Junior with a "Finished" chip. That is right: a team that finished less than four weeks ago stays listed.',
     '/uat-rep-club has no Tryouts tab, and no tryouts row in Open now.',
     '/uat-rep-club/tryouts still opens. Its title is "Tryouts" with no tab underlined and no chip, then a card reading "No tryouts are posted right now." with the club’s contact and Copy. There is no "See all teams" button: the tab row is the way on.',
     'After re-opening the sign-ups, the Tryouts tab is back and /uat-rep-club/tryouts lists 15U AAA as "Tryouts open" with "For the 2026 season" (it has no days entered).',

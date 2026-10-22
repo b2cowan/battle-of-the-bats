@@ -1,0 +1,309 @@
+<title>Club Tier 7b walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column; a Sign-in card, a "before you start" card, then one card per part (steps, verdict, notes), the owner's calls, and a paste-back. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+.purpose{font-size:14px;color:var(--ink)}
+ol,ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+li.ruling label{padding-left:28px}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:200px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+.callout{background:var(--warn-bg);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.calls{display:flex;flex-direction:column;gap:14px}
+.call{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.call:first-child{border-top:0;padding-top:0}
+.call b{font-weight:600}
+.call label{display:flex;gap:10px;align-items:flex-start;min-height:40px;padding:4px;border-radius:6px;cursor:pointer}
+.call label:hover{background:var(--bg)}
+.call input{width:18px;height:18px;margin:3px 0 0;flex:none;accent-color:var(--accent)}
+.rec{font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:20px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+</style>
+
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Club Tier 7b · Add our teams</h1>
+    <p>Owner QA Ledger §358. A club admin enters any of the club’s teams into its own tournament from one window: tick the teams, a division each, Add. Each team is entered, accepted and linked to its club team in that one step, so its coaches see the tournament at once. The row reads Our team, its head coach and No fee, and nothing reminds it of a fee.</p>
+    <p>About 40 steps in seven parts, on the club test tournament <b>UAT Rep Club Invitational 2026</b> (one division, 15U, room for 8; an entry fee of $300 from the 7a walk). It enters test teams; tell me when you paste back and I will take them out again.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000/uat-rep-club/admin</code> (the dev server, restarted for this walk). Dev test accounts only; keep this page private.</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (every part except 4)</dd>
+      <dt>Coach</dt><dd><code>uat-club-coach-15aa@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Part 4 only, in a private window; Sam Whitford, head coach of 15U AA)</dd>
+      <dt>The teams</dt><dd>Already in: <b>UAT Rep Club 15U AAA</b> (the club’s own) and three visitors. The club’s other teams: 15U AA, 14U AA, 13U AAA, 12U AA, 11U AA, 9U AA, UAT Test Team, and two with no season running (16U AA, UAT Between Seasons).</dd>
+    </dl>
+  </section>
+
+  <section class="card" aria-labelledby="notyet-h">
+    <h2 id="notyet-h">Before you start</h2>
+    <p class="where"><b>Proved by machine, not in this walk:</b> two presses at the same instant enter a team once (a real race on dev); a refused set enters nothing; a team or a tournament of another club is refused; no email is sent and no coach gets a bell (checked on dev’s send log and notices). Dev cannot deliver mail to the test addresses, so an empty inbox would prove nothing here.</p>
+    <p class="where"><b>Not in this walk:</b> games joining the coach’s Schedule. The test tournament has no games set; the coach’s Schedule reads an entered team’s accepted, published games, and these entries are accepted, so they join when games are set.</p>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="calls-h">
+    <h2 id="calls-h">Your calls</h2>
+    <p class="where">Two things the drawing did not show, built as below. Change either if you like.</p>
+    <div class="calls" id="calls"></div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  { id: 'p1', title: '1 · The button', purpose: 'A club admin finds Add our teams beside + Add team, where a coaches portal shows its “Add my team” star.',
+    where: 'Signed in as the club owner. Admin → pick UAT Rep Club Invitational 2026 in the tournament switcher → Operations → Teams.', steps: [
+    'The header reads, left to right: Export, Add our teams (words, no symbol), + Add team. There is no “Add my team” star.',
+    'Narrow the window to phone width (about 390). Add our teams becomes a people symbol alone, the same size as the + beside it; hovering names it “Add our teams”.',
+    'Back to desktop width. The row for UAT Rep Club 15U AAA reads “Our team”, its Coach column shows Jordan Reyes (until now it showed —), and its Payment reads “No fee”.',
+  ]},
+  { id: 'p2', title: '2 · The window', purpose: 'One window lists the club’s teams that can be entered, the ones already in, and the ones that cannot be entered, with the reason.',
+    where: 'Press Add our teams.', steps: [
+    'A window titled “Add our teams”, about 640 wide, opens. Its first line: “Each team you tick is entered in the division you choose, accepted and linked to the team. Its coaches see the tournament in their portal, and its games join their Schedule once you set them.”',
+    'A short table, Team and Division. Under “Already in”: 15U AAA, its tick on but faded, and “15U · entered” with a date in the Division column. It cannot be ticked.',
+    'Under “Your teams”: 9U AA, 11U AA, 12U AA, 13U AAA, 14U AA, 15U AA and UAT Test Team, unticked. 9U AA and 12U AA say “No head coach yet” under their names.',
+    'Under “No season running”: 16U AA and UAT Between Seasons, faded, each with “Start its season to enter it.” They cannot be ticked.',
+    'Every “Your teams” row has a division field. 15U AA’s already shows 15U (its name matches); the others say “Choose a division”.',
+    'Under the table: “Only this season’s active teams. A division picks itself when its name matches the team’s.” The foot has nothing on the left yet, with Cancel and a faded “Add teams” on the right. The paragraph at the top now ends “Our teams enter with no fee.”',
+  ]},
+  { id: 'p3', title: '3 · Add two teams, one matched and one not', purpose: 'Two of the club’s teams go in with one press: each accepted, linked, its head coach on the row, and No fee.',
+    where: 'Still in the window.', steps: [
+    'Tick 15U AA. Its field keeps 15U, and under it “15U · 4 spots left”. The foot reads “1 team ticked.” and the button “Add 1 team”.',
+    'On 14U AA, choose 15U in its field without ticking first. Choosing ticks the row. Both rows now say “15U · 3 spots left”, the foot “2 teams ticked.”, the button “Add 2 teams”.',
+    'Press × (or Cancel). The window asks before it closes (Keep writing · Discard). Press Keep writing.',
+    'Press Add 2 teams. The window closes. Teams lists 15U AA and 14U AA in 15U, accepted (no “To review”, no Accept button).',
+    '15U AA’s row: “Our team”, Coach Sam Whitford, Payment “No fee”. 14U AA’s row: “Our team”, Coach Taylor Brooks, “No fee”.',
+    'Open 15U AA’s record: the “Our team” chip, a Payment section that reads “No fee”, no Mark paid, and its rep-team chip reads 15U AA. Close it.',
+    'The tournament’s dashboard: its Payments card does not count 15U AA or 14U AA as owing.',
+  ]},
+  { id: 'p4', title: '4 · The coach sees it', purpose: 'The coach of a team the club entered sees the tournament in their portal without anyone telling them.',
+    where: 'A private window. Sign in as uat-club-coach-15aa@uat-rep-club.local.', steps: [
+    'The coaches portal opens on 15U AA. Tournaments lists UAT Rep Club Invitational 2026 (it was not there before Part 3).',
+    'Open it. The Fee row reads “No fee · your club’s team”, and nothing asks the coach to pay.',
+    'The coach’s bell has no “New registration” notice. Close the private window.',
+  ]},
+  { id: 'p5', title: '5 · Already in, and two admins at once', purpose: 'A team cannot be entered twice, and a refused set enters nothing: the window says which team and why.',
+    where: 'Owner, Teams. Open the same page in a SECOND browser tab as well.', steps: [
+    'Open Add our teams in tab A. 15U AA and 14U AA are now under “Already in” with today’s date, not tickable.',
+    'In tab A tick 12U AA (choose 15U). Do not press Add yet. In tab B open Add our teams and tick 12U AA AND 9U AA (15U for both).',
+    'Press Add 1 team in tab A. It goes in.',
+    'Press Add 2 teams in tab B. The window stays open and says “12U AA is already in this tournament.” Close it and reload tab B: 9U AA was NOT entered (all or none).',
+    'In tab B open the window again: 12U AA is under Already in, and 9U AA can still be ticked. Cancel.',
+  ]},
+  { id: 'p6', title: '6 · The long way stays', purpose: 'A visiting team still goes in by hand, and the record’s link cannot enter a club team twice.',
+    where: 'Owner, Teams.', steps: [
+    '+ Add team opens the same “Add team” window as before. Add a team named “Walk Visitor 7b” in 15U by hand. It is listed as a visitor with a payment figure, not “Our team”.',
+    'Open Walk Visitor 7b’s record → Link to a rep team → choose 15U AA. A window says “15U AA is already in this tournament.” and the team stays unlinked.',
+    'Link it to 11U AA instead. It works: the row now reads “Our team”, Coach Marcus Bell, “No fee”.',
+    'Open the record again and unlink it (the ✕ on its rep-team chip → Unlink). It reads as a visitor again.',
+  ]},
+  { id: 'p7', title: '7 · Nothing reminds our team of a fee', purpose: 'The club’s own teams are never in a payment reminder, an unpaid view or the export’s money due.',
+    where: 'Owner. Teams, then Check-in, then Export.', steps: [
+    'Teams → Tools → Select many → tick 15U AA and Oakville Otters 15U (a visitor that still owes part of its fee). The bar shows Deposit paid and Paid in full but NOT “Record one payment” (a club team is ticked).',
+    'Press “Send a reminder” with those two ticked, type any instructions, and send. “Payment reminders sent” reports 1 selected registration skipped because no payment is currently due: that is 15U AA.',
+    'Operations → Check-in: 15U AA and 14U AA read “No fee”. Open 15U AA: its Payment says “No fee” and offers no Mark paid.',
+    'Back on Teams, Export → Excel. In the sheet 15U AA, 14U AA and 12U AA read “No fee” under Payment status and Payment readiness, with 0 amount due.',
+  ]},
+];
+
+const CALLS = [
+  { id: 'c1', q: 'A club team with no season running (16U AA here) is listed in the window under its own band, “No season running”, faded, with “Start its season to enter it.” The drawing did not show this case.', opts: [
+    ['A', 'Keep the band (a team is never dropped without saying why)', true],
+    ['B', 'Leave those teams out of the window', false] ] },
+  { id: 'c2', q: 'On a phone, the header’s Add our teams is a people symbol alone (the standing rule for a phone’s secondary action); at a desk it is words with no symbol, as drawn. On a phone the window closes with ← at the top left like every form window, where the drawing shows ×.', opts: [
+    ['A', 'Keep both as built', true],
+    ['B', 'Change them (say how in the notes)', false] ] },
+];
+
+const KEY = 'club-stage7b-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+const textOf = s => (typeof s === 'string' ? s : s.ruling);
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="purpose"></p><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.purpose').textContent = part.purpose;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((s, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    if (typeof s !== 'string') li.className = 'ruling';
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = textOf(s);
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  sec.querySelector('.verdict button[data-v=call]').dataset.v = 'call';
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+const callsHost = document.getElementById('calls');
+for (const c of CALLS) {
+  const div = document.createElement('div');
+  div.className = 'call';
+  div.setAttribute('role', 'radiogroup');
+  div.setAttribute('aria-labelledby', c.id + '-q');
+  const q = document.createElement('b');
+  q.id = c.id + '-q';
+  q.textContent = c.q;
+  div.appendChild(q);
+  for (const [letter, text, rec] of c.opts) {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = c.id; input.id = `${c.id}-${letter}`; input.value = letter;
+    input.checked = state[c.id] === letter;
+    input.addEventListener('change', () => { state[c.id] = letter; save(); });
+    const span = document.createElement('span');
+    span.textContent = `${letter} · ${text}`;
+    if (rec) { const r = document.createElement('span'); r.className = 'rec'; r.textContent = 'Recommended'; span.appendChild(r); }
+    label.append(input, span);
+    div.appendChild(label);
+  }
+  const notes = document.createElement('textarea');
+  notes.id = c.id + '-notes';
+  notes.setAttribute('aria-label', 'Notes for call ' + c.id);
+  notes.placeholder = 'Notes (optional)';
+  notes.value = state[c.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[c.id + '-notes'] = notes.value; save(); });
+  div.appendChild(notes);
+  callsHost.appendChild(div);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§358 Club Tier 7b · Add our teams — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((s, i) => {
+      const on = !!state[`${part.id}-s${i}`];
+      if (typeof s !== 'string') { if (on) lines.push(`  ☑ ${s.ruling}`); }
+      else if (!on) lines.push(`  ☐ ${s}`);
+    });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  lines.push('', 'Calls:');
+  for (const c of CALLS) {
+    const pick = c.opts.find(o => o[0] === state[c.id]);
+    lines.push(`  ${c.id}: ${pick ? pick[0] + ' · ' + pick[1] + (pick[2] ? ' (recommended)' : '') : 'not answered'}`);
+    const n = (state[c.id + '-notes'] || '').trim();
+    if (n) lines.push(`    Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox], input[type=radio]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('textarea:not(#summary)').forEach(t => { t.value = ''; });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.getElementById('summary').value = '';
+  tally();
+});
+</script>
+
