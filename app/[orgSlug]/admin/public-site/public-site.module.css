@@ -492,6 +492,7 @@
   background: var(--home-card);
   cursor: pointer;
 }
+@media (max-width: 640px) { .ownColour input { height: 44px; } }
 .readable {
   margin: 0;
   font-size: var(--type-support);
