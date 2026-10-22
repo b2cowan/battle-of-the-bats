@@ -148,7 +148,7 @@ describe('6 · birth years: one rule, pinned on every surface they show (Stage 4
   ];
   it('the born lines come from the one rule: bornLine / bornMeta, through bornFactsOf', () => {
     assert.match(readCode('lib/club-born-public.ts'), /bornLine\(years, cutoff\)[\s\S]*bornMeta\(years, cutoff\)/);
-    // The home grid and the Teams page read each team's years in the one read; the Tryouts page reads them off each team.
+    // The Teams page reads each team's years in the one read; the Tryouts page reads them off each team.
     assert.match(readCode('lib/club-public-teams.ts'), /bornFactsOf\(/);
     assert.match(readCode(TRYOUTS_PAGE), /bornFactsOf\(t\.bornYears, org\.birthdayCutoffs, t\.sport\)/);
     // The tryout page's meta ("For the 2027 season · born 2012–2013") and its finished form are the one function's.
@@ -158,8 +158,9 @@ describe('6 · birth years: one rule, pinned on every surface they show (Stage 4
     // The Tryouts row leads with the line; the house-league division card reads it under the season's sport.
     assert.match(readCode(TRYOUTS_PAGE), /tryoutsRowSub\(t\.standing, t\.season, today, t\.born\.line\)/);
     assert.match(readCode(`${ORG}/league/[seasonSlug]/page.tsx`), /bornFactsOf\(\{ from: d\.bornFromYear, to: d\.bornToYear \}, org\.birthdayCutoffs, season\.sport\)/);
-    // The home tile draws the line the read made.
-    assert.match(readCode('components/public/ClubSiteHome.tsx'), /t\.born\?\.line/);
+    // The home's team grid carries NO birth years (owner 2026-10-22: a tile is a name and the Tryouts open chip; the years live on
+    // the Teams page, the Tryouts pages and the team's own pages).
+    assert.doesNotMatch(readCode('components/public/ClubSiteHome.tsx'), /\.born\b/);
   });
   it('no surface builds a born line by hand', () => {
     for (const f of BORN_SURFACES) {

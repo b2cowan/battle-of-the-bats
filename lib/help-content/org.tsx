@@ -1406,7 +1406,7 @@ const orgHelp: HelpPageContent = {
           title: 'Birth years, and the Born in picker',
           content: (
             <>
-              <p>Where you have entered birth years, families read them as a line such as <strong>Born 2012&ndash;2013</strong> on your home page&rsquo;s team grid, your Teams page, your Tryouts page, a team&rsquo;s tryout page and your house-league divisions. You enter them in <strong>Team details</strong> and in <strong>Add division</strong> and <strong>Edit division</strong>.</p>
+              <p>Where you have entered birth years, families read them as a line such as <strong>Born 2012&ndash;2013</strong> on your Teams page, your Tryouts page, a team&rsquo;s tryout page and your house-league divisions. You enter them in <strong>Team details</strong> and in <strong>Add division</strong> and <strong>Edit division</strong>.</p>
               <ul>
                 <li><strong>Other shapes</strong> &mdash; <em>Born 2012 or later</em> and <em>Born 2008 or earlier</em> when one box is empty. A team with neither box filled shows no line.</li>
                 <li><strong>A cut-off other than January 1</strong> &mdash; the line carries dates instead, such as <em>Born Sep 1, 2013 &ndash; Aug 31, 2015</em>. The owner sets the date per sport in <strong>Settings &rsaquo; When birthdays count from</strong>.</li>

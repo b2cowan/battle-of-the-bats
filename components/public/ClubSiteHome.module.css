@@ -56,11 +56,11 @@
 .tile {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   gap: 6px;
   min-height: 52px;
-  padding: 8px 12px;
+  padding: 16px 12px;
   border: 1px solid var(--club-line);
   border-radius: 8px;
   background: var(--club-card);
@@ -68,13 +68,6 @@
   color: var(--club-text);
   text-decoration: none;
   overflow-wrap: anywhere;
-}
-
-/* The team's birth years under its name (Stage 4c-2; the Stage 4 drawings' .born). */
-.tileBorn {
-  display: block;
-  font: 500 0.75rem/1.2 var(--club-text-face);
-  color: var(--club-dim);
 }
 
 .tile:hover {
