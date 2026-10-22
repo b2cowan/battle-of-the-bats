@@ -9,6 +9,7 @@ import {
 import type { Division, Tournament, TournamentSettings } from '@/lib/types';
 import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getRepTeamLinksForTournament } from '@/lib/rep-team-tournament-links';
 import { buildRegistrationAttentionSummary } from '@/lib/registration-attention';
 import { buildRegistrationCapacity, buildRegistrationHealth, countRegistrationHealthTeams, registrationDaysUntilStart } from '@/lib/registration-health';
 import { hasCapability } from '@/lib/roles';
@@ -559,6 +560,12 @@ export const GET = withObservability(async (req: Request) => {
     averageGamesPerParticipant: scheduleMetrics.averageGamesPerParticipant,
   };
 
+  // The host club's own team (linked to one of its rep teams) pays no entry fee, the same answer the Teams page gives —
+  // so it is never owed, never past due, and its fee never lands in Expected.
+  const clubOwnTeamIds = hasModuleEntitlement(ctx.org, 'module_rep_teams') && hasModuleEntitlement(ctx.org, 'module_accounting')
+    ? new Set((await getRepTeamLinksForTournament(tournamentId)).map(l => l.registrationId))
+    : new Set<string>();
+
   const paymentCounts = { paid: 0, depositPaid: 0, pending: 0, pastDue: 0, noSchedule: 0 };
   let totalExpected = 0;
   let totalCollected = 0;
@@ -583,7 +590,7 @@ export const GET = withObservability(async (req: Request) => {
 
     const divCounts = divPayMap.get(tm.division_id);
 
-    if (!tracksPayments || !fee.totalFeeAmount) {
+    if (!tracksPayments || !fee.totalFeeAmount || clubOwnTeamIds.has(tm.id)) {
       paymentCounts.noSchedule++;
       continue;
     }
@@ -654,6 +661,7 @@ export const GET = withObservability(async (req: Request) => {
       waitlistPosition: team.waitlist_position,
       customAnswers: answersByRegistration.get(team.id) ?? [],
       email: team.email,
+      feeExempt: clubOwnTeamIds.has(team.id),
     })),
     {
       divisions: divisions.map(group => ({

@@ -227,17 +227,17 @@ export const WEEKS_BEFORE_WORDS = {
   paidLine: (paid: number, deposits: number) =>
     [paid > 0 ? `${paid} paid in full` : '', deposits > 0 ? `${deposits} paid a deposit` : ''].filter(Boolean).join(' · ') || 'Nobody has paid yet',
   owingLine: (unpaid: number, pastDue: number) =>
-    [unpaid > 0 ? `${unpaid} haven’t paid` : '', pastDue > 0 ? `${pastDue} past due` : ''].filter(Boolean).join(' · ') || 'Everyone is up to date',
+    [unpaid > 0 ? `${unpaid} ${unpaid === 1 ? 'hasn’t' : 'haven’t'} paid` : '', pastDue > 0 ? `${pastDue} past due` : ''].filter(Boolean).join(' · ') || 'Everyone is up to date',
   nothingDue: (fees: string) => `${fees} · nothing due until a team is accepted`,
   coaches: 'Coaches',
   coachesFigure: (signed: number, total: number) => `${signed} of ${total} signed up`,
-  notJoined: (n: number) => `${n} haven’t joined yet`,
+  notJoined: (n: number) => `${n} ${n === 1 ? 'hasn’t' : 'haven’t'} joined yet`,
   joinLine: 'A coach who signs up joins the event’s chat room',
   openRoom: 'Open the room on Chat, and every coach who signs up joins it',
   allJoined: 'Every team’s coach is signed up',
   // ⚖ While chat is paused (2026-10-18, ruling P5) the card is a sign-up tracker: the same count, worded for sign-ups,
   // opening Teams. The line is the reminder email's own promise, cut short (draft — /marketing reviews it).
-  notSignedUp: (n: number) => `${n} haven’t signed up`,
+  notSignedUp: (n: number) => `${n} ${n === 1 ? 'hasn’t' : 'haven’t'} signed up`,
   signUpLine: 'Their page shows games and announcements',
   noTeamsSignUpLine: 'A coach can sign up once their team is in',
   coachesFailedPausedLine: 'Nothing has changed for your coaches.',

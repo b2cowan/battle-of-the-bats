@@ -2389,6 +2389,13 @@ does the same with the team's Ledger.
 > checkout; the payment landing in the club's books; offline payment kept alongside. **Built as Stage 12b** (planned 2026-10-19;
 > the data it needs — a fee per division, early-bird dates — lands here in Stage 9). Evidence from the ten club sites: Stage 4
 > drawings, "Ten club sites". The H1 2027 date no longer binds the Club release (§7, /strategy 2026-10-19); counsel sign-off does.
+> **📒 OWED BY THIS STAGE (owner 2026-10-21, found in the Stage 7a walk, Part 7): house-league fees must reach the club's
+> Budget vs. Actual Statement.** Today a paid house-league fee posts one line in the season's own book (it shows on the Ledger
+> and the families book) and is filed nowhere on the Statement by design (`fileLine`, Stage 7a build prompt: "stays Stage 9's"),
+> so Total revenue, and the Statement against the Ledger, leave out the club's largest revenue source. Stage 9 draws and builds
+> how a season's fees file (a revenue row per season, or one "House league registration fees" row with the seasons under it,
+> plus the budget side for it), updates Walk 7a step 7.6 ("Statement total income is still STATEMENT-AFTER-6" stops being true),
+> and does not close until the Statement and the season books agree. The Club release does not go on sale without it.
 Inventory in §4I. Scope: the trust-plan defect list re-verified (comms that email nobody, the
 vanishing season, schedule honesty, parent payment loop, schedule generator, email injection), the
 coupling check for a standalone League Plus org (house league with no rep teams / no accounting),
