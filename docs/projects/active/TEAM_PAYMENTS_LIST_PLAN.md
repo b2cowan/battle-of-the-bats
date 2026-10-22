@@ -1,8 +1,8 @@
 # Team Payments List — Plan
 
-**Status:** BUILT on dev 2026-10-21 (uncommitted); the four owner calls (§9) were ruled **as recommended** the same day. Mockup
+**Status:** BUILT on dev 2026-10-21, committed cd8bdc811 2026-10-21 after `/review` and `/docs`; the four owner calls (§9) were ruled **as recommended** the same day. Mockup
 `TEAM_PAYMENTS_LIST_MOCKUP.html`, Artifact https://claude.ai/artifact/2gLQJhYEQgQ4e1doqFJU2T, run through `/design`. See the build
-record at the foot. Owed: owner browser walk, `/review`, `/docs`, `/demos`, an Owner QA Ledger §, the prod apply (see `MANUAL_PROD_STEPS.json`). PM brief: `TEAM_PAYMENTS_LIST_PM_BRIEF.md`.
+record at the foot. Owed: owner browser walk, `/demos`, an Owner QA Ledger §, the prod apply (see `MANUAL_PROD_STEPS.json`). PM brief: `TEAM_PAYMENTS_LIST_PM_BRIEF.md`.
 **Origin:** owner, 2026-10-21, from the Teams window on the UAT Rep Club Invitational: typing `109` into *Deposit paid* made three ledger lines
 (`$10`, `$90`, `$9`), all dated that day, and asked for "a deposit/fee with a date each" that lines up to the ledger. Then ruled: **the list on every
 plan**, and **type each payment's own amount, not a running total**.
@@ -174,3 +174,15 @@ partial payment is recorded on it, because the status now follows the sum. Backf
 
 **Not done / owed:** help articles (`/docs`: the six places in §10), the demo tour check (`/demos`), the coach "Owed" panel needs no change but
 deserves a walk, refunds (still not built), the Owner QA Ledger §.
+
+**Review record (2026-10-21, four lenses: SQL correctness, security and tenancy, regression, window behaviour).** Fixed in the commit:
+old triggers firing on the backfill (dropped first); a stale ledger line when two shares of one transfer change at once (the change and
+remove functions now hold every team on the transfer, then the line, and re-read until stable); a tournament-row deadlock between two
+payments (lock order tournament → teams → payment row); a legacy paid team flipping to unpaid on an unrelated edit (a team goes back to
+pending only when payments it was paid BY fall short); the collected day following a re-dated completing payment; a fee edit leaving the
+cached deposit stale (triggers on tournaments and divisions); Mark paid on an already-covered team doing nothing; a stale payments list
+after Mark paid; bulk and shared-transfer payments on a finished event; the check-in undo fallback (never sets paid, 12-hour limit, no
+browser time); a noon stamp read as a gate time; 44px links; a refused-payment line styled as success; an "Earlier payment" silently
+re-dated on edit. **Known and accepted:** the import preview's "after" total is the recorded total for a sheet "paid" row that states less
+than is recorded (the commit then records the rest of the fee); a fee lowered below what a team paid leaves its status as marked; a team
+dropped from a transfer leaves the ledger line's source id on the first remaining payment.
