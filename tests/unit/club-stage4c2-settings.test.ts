@@ -231,7 +231,8 @@ describe('who may send when birthdays count from — the OWNER alone (ruled 2026
     assert.ok(!route.includes("ctx.role !== 'admin'"));
     assert.match(read('components/admin/kit/club/BirthdayCutoffCard.tsx'), /org-settings\/birthday-cutoffs\$\{orgQuery\}`, \{\s+method: 'PATCH'/, 'the card saves through its own route');
     const kit = read('components/admin/kit/club/SettingsKit.tsx');
-    assert.ok(kit.includes('<BirthdayCutoffCard orgQuery={orgQuery} />'));
+    assert.ok(kit.includes('<BirthdayCutoffCard orgQuery={orgQuery} initial={cutoffData} />'));
+    assert.ok(kit.includes('loadBirthdayCutoffs(orgQuery)'), 'the card’s read rides the page’s own load, so it appears with every other card');
     assert.doesNotMatch(kit, /userRole === 'admin' && <BirthdayCutoffCard/);
   });
 

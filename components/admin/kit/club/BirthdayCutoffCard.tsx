@@ -10,7 +10,7 @@
  * this card, and `/api/admin/org-settings/birthday-cutoffs` refuses its save from anyone else. The words are `CLUB_TIER_STAGE4C2_COPY.md` C; the rule is
  * `lib/born-years.ts`; the sentences are `lib/birthday-cutoff.ts`.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { JAN_1, CUTOFF_MONTHS, cutoffFor, cutoffWords, daysInCutoffMonth, isJan1, type Cutoff } from '@/lib/born-years';
 import { cutoffAskBody, cutoffAskTitle, cutoffRowSentence, oneYearSentence, type BirthdaySportRow } from '@/lib/birthday-cutoff';
 import { useOrg } from '@/lib/org-context';
@@ -19,27 +19,25 @@ import { SavePill } from './RepKit';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
 
-type CardData = { applies: boolean; cutoffs: Record<string, Cutoff>; sports: BirthdaySportRow[] };
+export type CardData = { applies: boolean; cutoffs: Record<string, Cutoff>; sports: BirthdaySportRow[] };
 type Pending = { row: BirthdaySportRow; next: Cutoff };
 
-export default function BirthdayCutoffCard({ orgQuery }: { orgQuery: string }) {
-  const [data, setData] = useState<CardData | null>(null);
+/** The card's read, as the PAGE loads it (with the settings, so the card appears with everything else — never a beat later). A failed read is null: the card is secondary and stays away. */
+export function loadBirthdayCutoffs(orgQuery: string): Promise<CardData | null> {
+  return fetch(`/api/admin/org-settings/birthday-cutoffs${orgQuery}`)
+    .then(r => (r.ok ? r.json() : Promise.reject(new Error())))
+    .then((d: CardData) => ({ ...d, cutoffs: d.cutoffs ?? {} }))
+    .catch(() => null);
+}
+
+export default function BirthdayCutoffCard({ orgQuery, initial }: { orgQuery: string; initial: CardData | null }) {
+  const [data, setData] = useState<CardData | null>(initial);
   const [pending, setPending] = useState<Pending | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   /** What the last Change sent (ONE sport), so Retry sends the same change again and only that. */
   const [lastSent, setLastSent] = useState<{ sport: string; cutoff: Cutoff } | null>(null);
   const { refresh } = useOrg();
-
-  useEffect(() => {
-    if (!orgQuery) return;
-    let stale = false;
-    fetch(`/api/admin/org-settings/birthday-cutoffs${orgQuery}`)
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error())))
-      .then((d: CardData) => { if (!stale) setData({ ...d, cutoffs: d.cutoffs ?? {} }); })
-      .catch(() => { /* the card is secondary: the page's own load notice speaks for the screen */ });
-    return () => { stale = true; };
-  }, [orgQuery]);
 
   const send = useCallback(async (change: { sport: string; cutoff: Cutoff }) => {
     setLastSent(change);

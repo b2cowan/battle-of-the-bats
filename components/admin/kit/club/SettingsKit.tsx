@@ -20,7 +20,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
-import BirthdayCutoffCard from './BirthdayCutoffCard';
+import BirthdayCutoffCard, { loadBirthdayCutoffs, type CardData } from './BirthdayCutoffCard';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
@@ -42,6 +42,7 @@ export default function SettingsKit() {
   const orgQuery = slug ? `?orgSlug=${encodeURIComponent(slug)}` : '';
 
   const [settings, setSettings] = useState<OrgSettings | null>(null);
+  const [cutoffData, setCutoffData] = useState<CardData | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState('');
   const [urlSlug, setUrlSlug] = useState('');
@@ -63,9 +64,12 @@ export default function SettingsKit() {
   useEffect(() => {
     if (!orgQuery) return;
     let stale = false;
-    fetch(`/api/admin/org-settings${orgQuery}`)
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error())))
-      .then((d: OrgSettings) => { if (!stale) adopt(d); })
+    // The birthdays card reads with the settings and the page waits for both, so every card shows at once.
+    Promise.all([
+      fetch(`/api/admin/org-settings${orgQuery}`).then(r => (r.ok ? r.json() : Promise.reject(new Error()))),
+      loadBirthdayCutoffs(orgQuery),
+    ])
+      .then(([d, cutoffs]: [OrgSettings, CardData | null]) => { if (!stale) { adopt(d); setCutoffData(cutoffs); } })
       .catch(() => { if (!stale) setLoadFailed(true); });
     return () => { stale = true; };
   }, [orgQuery]);
@@ -254,7 +258,7 @@ export default function SettingsKit() {
           </div>
 
           {/* ── When birthdays count from (Club Tier Stage 4c-2): saves by itself through the pill, apart from the Save above ── */}
-          <BirthdayCutoffCard orgQuery={orgQuery} />
+          <BirthdayCutoffCard orgQuery={orgQuery} initial={cutoffData} />
 
           {/* ── Your public site: a door (Public site builder, 2026-10-21) — what families see moved there ── */}
           <section className={`${styles.card} ${styles.doorCard}`} aria-labelledby="settings-public-site">
