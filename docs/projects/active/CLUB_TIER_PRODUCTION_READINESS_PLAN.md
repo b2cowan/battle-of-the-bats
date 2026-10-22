@@ -2324,6 +2324,33 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 > **⚖ RULED 2026-10-20 (owner): all 13 asks as recommended (option A each), round 1.** Design-log entry written; build prompts
 > `CLUB_TIER_STAGE7A_BUILD_PROMPT.md` (first); the 7b / 7c / 7d prompts are written after 7a commits and walks; each part gets
 > its own walk (Ask 13). **Stage 12c's wait on Ask 1 is over:** an online tournament payment goes through 7a's one fee write. Nothing
+> **7c BUILT 2026-10-22** (walk §359, https://claude.ai/artifact/7yK3vG8tTbvFRd2XkMz1cK; migration 347 applied to DEV — the
+> `family_email_sends` table and the `family_email_claim` function — prod-pending in `MANUAL_PROD_STEPS.json`). Owner answers at
+> the start, all as recommended (design log 2026-10-22 "STAGE 7C"): the Emails tab keeps the words and counts, never names; a
+> per-club cap of three a rolling day over Email families only; a big send in the provider's batches of 100 inside the press
+> (work after the response is not kept alive on Amplify, and one request per email would meet the provider's rate limit); a
+> half-sent row reads "Stopped at x of y", no Resume; each head coach copied once as colleague mail; no quiet hours. Built: an
+> **Email families** door in the Families toolbar on every question; the one club send window (Who: every family · some rep
+> teams · a house-league season, each offered only where the club runs it, with its count; the coach copy; Subject, Message;
+> Nobody to send to; See the email; Last sent; the foot sentence left and "Send to N"); **one audience function**
+> (`lib/families-audience.ts`) for the preview, the button, the server's re-count and the send, households counted once; the
+> press attaches first and refuses when the count changed; the batch door in the family choke point (`sendFamilyEmailBatch`)
+> with the coach copy in its own colleague-mail file; the **Emails** tab (third tab) merging club-wide sends and one-household
+> messages, newest first, paged, a row opening the email as sent and its counts. **Departures from the drawing:** the window's
+> closing ask is the kit's (One window 2d); "Show them" is absent once something is typed (leaving would lose it); the tab's
+> line counts all time, not "this fiscal year" (walk call c2); "Reached" is accepted-by-the-mail-service, not delivered (there
+> are no bounce reports; walk call c1); a one-household row has no subject or count. **Corrected here:** the "`org_announcements`
+> (+ send log)" migration line below is superseded by Ask 7 — the record is the Emails tab's `family_email_sends`; and "reuses
+> the house-league broadcast sender once it is batched" could not be met by reuse (that sender is a sequential loop with no
+> claim, cap, Reply-To or dedupe), so 7c built a shared batched family sender. **Follow-up, not built:** rewire the house-league
+> season email onto `sendFamilyEmailBatch` (it still sends one at a time and mails a guardian once per child). **Found, not
+> fixed:** a house-league season whose registration has CLOSED but not started is not "this season" in Families' one rule
+> (open or running), so it is neither offered nor in Every family — widening the rule changes Families' own lists (walk call
+> c3). Prompt: `CLUB_TIER_STAGE7C_BUILD_PROMPT.md`. **Walk §359 ✅ PASSED 2026-10-22 (owner, 40/40), all three calls as
+> recommended:** c1 keep "Reached" with its one-line note; c2 keep the all-time count; c3 keep Families' one rule in 7c, and
+> widen it to a registration-closed season as **its own change later** (now a follow-up, not built). One owner ask during the
+> walk: the window's List and Season dropdowns show the name with its count smaller below (the kit's Role picker shape). The
+> walk's dev set-up was removed after the paste-back.
 > **7b BUILT 2026-10-21** (walk §358, https://claude.ai/artifact/WBd2jFdENXDEM38irnNuuF; migration 346 applied to DEV,
 > function-only, prod-pending and ORDER-CRITICAL after 345 in `MANUAL_PROD_STEPS.json`). Owner answers at the start, all as
 > recommended (all or none; head coach written and read live; a full division names its spots, no refusal; no invitation for the
@@ -2359,10 +2386,10 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 
 **Closes:** G01–G04 · C18 (decision) · the org-wide announcement gap.
 - [x] **7a · tournament money:** a paid visiting team writes into its tournament book (`tournament_fee_receipt`), including deposit then balance, correction and undo; two teams may share one transfer line. A club rep-linked team reads Our team / No fee and writes no fee. The Accounting setting creates the tournament's category and Entry fees word before payment; the book opens with the first fee. Existing paid figures form a baseline and are not backfilled. The house league's paid fee now uses the same atomic fee-line primitive; its book joins the Statement in Stage 9. The club Statement and By activity include the tournament through its filed word. A paid withdrawn visitor keeps its receipt for a separate typed refund. A link cannot be added to a visitor with an active receipt or removed from a paid own team until payment is undone. All six house-fee defect tests, atomicity and arithmetic checks passed on DEV. The old hub banner was already fixed (G01); G03 remains for 7b.
-- [ ] **Message every family** (G02): one org-wide announcement door on the hub (audience = every guardian across rep rosters + league registrations + Families, through the family-email choke point with suppression, a preview count, a send log, a cap). Reuses the house-league broadcast sender once it is batched.
+- [x] **Message every family** (G02) — **built as 7c, Email families, on Families** (not the hub; Ask 6): every family, some rep teams or a house-league season, each family once, through the family-email choke point with suppression, a preview count, a send log (the Emails tab) and a club cap of three a day. Built 2026-10-22, walk §359 owed. It does not reuse the house-league sender (a sequential loop); the house league moving onto the new batched sender is the follow-up.
 - [x] **By activity on the club's Budget vs. Actual** (from 3b, Ask 5): the coach's third report shape is reused for a hosted tournament's revenue and costs filed under its category.
 - [ ] **The coach portal's Tournaments** (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.** *From Stage 6c (ruled 2026-10-10):* the record's dates and times read the device's clock (`CoachLiveSchedule`, `formatGameDateLabel`) — the recipe's own clock and words (C8, C10); "LIVE" follows its own rule (a submitted score, today) instead of the shared game-status rule (C6-09); "vs / @" on its rows and "vs / at" in its change banner — one.
-**QA walk §J.** **Migrations:** `org_announcements` (+ send log) if the broadcast is recorded.
+**QA walk §J.** **Migrations:** ~~`org_announcements` (+ send log) if the broadcast is recorded~~ — superseded by Ask 7 (2026-10-22): mig 347's `family_email_sends` + `family_email_claim`, the Emails tab's record.
 
 ### Stage 8 — Release readiness
 - [ ] **Club UAT suite:** `tests/uat/scenarios/club-admin.spec.ts` (shell, members/roles, teams→coach→portal, money loop, public pages, families) on the Stage 0 fixture; `/uat club` added to `.claude/commands/uat.md`; the stale `org_team_addon` smokes deleted; `plan-gating.spec.ts:162` rewritten for D8.

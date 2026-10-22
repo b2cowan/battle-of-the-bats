@@ -7,6 +7,64 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-22 — STAGE 7C DESIGN PASS: THE SEND WINDOW'S RADIOS WEAR THE CHECKBOX'S LOOK; A CHANGED COUNT IS AMBER WITH SEND STILL LIVE; A STOPPED SEND WEARS AN AMBER CHIP; THE DOOR HAS NO ENVELOPE (owner, "go ahead with your recommendations", 2026-10-22; seen at 1440 and 390, light and dark)
+
+**Decision:**
+- **Radios:** a pick-one row in the send window (`SendParts.module.css`, scoped — NOT global) draws the checkbox's look (ring in the
+  blueprint border, lime dot). The native radio drew an unticked disc MORE filled than the ticked one in the dark theme. ⚠ Twelve other
+  screens still use native radios; a product-wide radio is its own owner call, not part of this pass. The Who group and the team list
+  carry an accessible name (`SendRows group`).
+- **"Who this reaches changed while you were writing"** reads amber at the foot's LEFT (`SendStanding`) and the lime STAYS: unlike the cap
+  and a double press (lime absent), the sender's next move is to press Send again on the new number. It belongs to the pick it was said
+  about and clears when the pick changes.
+- **Emails log:** a send that stopped partway wears the amber "Stopped" chip with its figures after it ("a status is said once, by a
+  chip"); "Sending…" stays plain words. A date, a sender and a figure stay on one line (drawing 5's `td.nw`); this year's rows drop the
+  year ("Oct 22 · 1:44 p.m."), an earlier year keeps it.
+- **The door** ("Email families", on the Emails tab) carries no envelope (design check #15; the glyph's reason — a neighbouring Ask the
+  coaches envelope — no longer applies there).
+- **A sentence ends once:** the cap's "The next can go tomorrow at 1:42 p.m." no longer ends "p.m..".
+
+**Rationale:** the written rules (one branded form control; status by chip; the foot's amber-left ruling of 2026-10-12) against what was
+seen. **Applies to:** `EmailFamiliesWindow`, `EmailsTab`, `SendParts`, `FAMILY_EMAIL_WORDS.capReason`, `FAMILY_EMAILS_TAB_WORDS.sentAt`.
+
+### 2026-10-22 — STAGE 7C: EMAIL FAMILIES KEEPS ITS WORDS AND COUNTS, NEVER NAMES; THE CLUB'S THREE A DAY IS ITS OWN COUNT; A BIG SEND GOES IN BATCHES INSIDE THE PRESS (owner answers to the 7c build prompt, "Put to the owner" 1–6, all as recommended)
+
+**Decision:**
+1. **What the Emails tab keeps (a).** A club-wide send keeps its subject, its message, who it went to (in words) and counts:
+   going to, reached, opted out, didn't go, head coaches copied. **Never a list of families or addresses**; "who bounced" is a
+   count. A one-household message keeps the Stage 5a rule unchanged (date and sender only); its row reads "1 family" and "A
+   message to this family", never an invented subject or number.
+2. **The cap.** A separate **per-club** count: three Email families sends in any rolling 24 hours, any audience. A one-household
+   message never counts toward it, and a club-wide send never counts toward a family's own three. Said once, in the window's
+   foot, when it bites ("Your club has sent 3 emails to families in the last 24 hours. The next can go …").
+3. **A big club.** The provider's **batch send, 100 emails a request, all of it finished inside the press**, the counts written
+   after each batch. Not "answer now, keep sending afterwards": work after the response is not kept alive on this host (no
+   `waitUntil` bridge), and one request per email would meet the provider's per-team rate limit partway through a big send.
+4. **A half-sent send.** A row still sending a quarter of an hour after it began reads "Stopped at x of y". **No Resume**: a
+   resend is a new send against the cap.
+5. **Head coaches copied.** Each head coach **once**, however many teams; **colleague mail** (house mail, no family footer, no
+   unsubscribe); a head coach who is also a parent the send reaches gets the family copy only; never the sender. For Every
+   family, the head coaches of every team with an audience family; a house-league season copies no one.
+6. **Quiet hours.** None; the window says nothing about time.
+
+**Why:** (1) the tab's job is "what did we tell families and did it land"; a stored address list is exactly what a data
+request would ask for, and the counts answer the question without it. (2) the person cap protects one family from being
+messaged repeatedly; the club cap protects the whole book from a noisy club — different jobs, so different numbers in different
+places (`CLUB_EMAIL_CAP` = `v_cap` in `family_email_claim`, mig 347, held equal by a test). (3) a send that silently stops halfway
+is the worst outcome for "picture day moved"; the batch keeps a 600-family club to six requests and seconds. (5) a coach is
+copied as a colleague, not subscribed as a family.
+
+**Built-in calls surfaced to the walk (§359):** "Reached" means the mail service accepted it (no bounce reports exist on this
+platform); the tab's line counts all time, not the drawing's "this fiscal year"; a house-league season whose registration has
+closed but not started is not offered, because Families' one "this season" rule (open or running) excludes it.
+
+**Walk §359 ✅ PASSED 2026-10-22 (40/40); the three calls RULED as recommended:** c1 "Reached" stays (accepted by the mail
+service) with its one-line note, because there are no bounce reports to count "delivered" from; c2 the tab's line stays all-time,
+because a fiscal year would be a new decision for this tab; c3 Families keeps its one "this season" rule in 7c, because widening
+it to a registration-closed season changes Families' own lists too, so it is its own change (a recorded follow-up). Owner ask in
+the walk: the window's List and Season dropdowns are the two-line kind (name, count smaller below), never a native `<select>`
+running "Owes money · 5 families" together.
+
 ### 2026-10-21 — STAGE 7B: ADD OUR TEAMS ENTERS A SET WHOLE OR NOT AT ALL; THE HEAD COACH IS WRITTEN AND READ LIVE; "OUR TEAM" IS ONE ANSWER ON EVERY PLAN (owner answers to the 7b build prompt)
 
 **Decision:** Add our teams enters every ticked team or none: if one is refused, nothing is entered and the window names that team. The head coach's name and email are written on the entry (the dashboard's counts, the reminders and the coach's later tournament emails read them) and the Teams table reads the head coach live through the link, so a coach change shows without editing the entry. A full division is not refused: under a ticked team's field it says "15U · 1 spot left" or "15U is full" (the admin is the authority, as with + Add team). On an invite-only event the club's own team needs no invitation. A team with no head coach yet may be entered (blank Coach, "No head coach yet" under it). **"Our team" is one answer, the database's, on every plan:** a registration linked to a rep team of the host club owes no entry fee whether or not the club carries Accounting; the Teams page's and dashboard's Accounting gate and the coach record's Club-plan gate are gone, and every payment reader (reminders and their bell, check-in, export, recap, the coach's fee tile, import, the "still owes" audience, acceptance emails) asks the one helper.
