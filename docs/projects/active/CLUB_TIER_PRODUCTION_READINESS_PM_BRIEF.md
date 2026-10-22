@@ -58,6 +58,16 @@ lists its documents, policies and families' questions on an About page, and post
 anyone. Success: a club volunteer can post a field closure from a phone in under a minute, and no
 saved link on a club's site is one the editor refused.
 
+**The teams' side (Stage 4c-2, drawn and ruled 2026-10-22; Part A, the club's side, committed `2fcf5efdd` 2026-10-22 and its walk (§360) owed; Part B, the coach's side, next:
+https://claude.ai/artifact/2HDwoGLtFS8ACuq2CuSbNn).** A **parent** sees each team's birth years ("Born 2012–2013") on the
+Teams page and the tryout page. Before sign-ups open they can already read what a tryout costs and who may come. They can
+write to the person running that team's tryouts, with the address copyable on a phone. A **head coach** can give their team's
+tryout page their own tryout address, never their sign-in. It comes off by itself if they stop being head coach. They are
+told, beside the tryout days, that those days are public before sign-ups open. A **club admin** types each team's birth years
+once (they roll forward a year with the season) and writes the tryout blurb on the team's Tryouts page. They can always see
+which address a tryout page shows and put the club's back. Success: a parent answers "which team is my child?" and "what does
+it cost?" from the tryout link alone, and no tryout page shows last year's years or a departed coach's address.
+
 **Families.** Household records read the same money the Money hub does, a changed guardian email
 follows the child, a merge stays merged, and the family export says honestly what it contains.
 

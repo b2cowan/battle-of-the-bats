@@ -27,6 +27,45 @@ binding — weight them accordingly, and say so when citing one.
 **Rationale:** the written rules (one branded form control; status by chip; the foot's amber-left ruling of 2026-10-12) against what was
 seen. **Applies to:** `EmailFamiliesWindow`, `EmailsTab`, `SendParts`, `FAMILY_EMAIL_WORDS.capReason`, `FAMILY_EMAILS_TAB_WORDS.sentAt`.
 
+### 2026-10-22 — STAGE 4C-2, THE TEAMS' SIDE: BIRTH YEARS PER SEASON FROM A CLUB CUT-OFF PER SPORT; THE TRYOUT BLURB AUTOSAVES ON THE ADMIN'S TRYOUTS PAGE; A HEAD COACH'S OWN TRYOUT ADDRESS, TYPED IN TRYOUT SETUP, ENDING WITH THE ROLE (owner, all 13 asks as recommended + round 2; drawing https://claude.ai/artifact/2HDwoGLtFS8ACuq2CuSbNn)
+
+**Decision:**
+- **The head coach's tryout address (Asks 1–3, A):** a head coach types a separate address, blank by default, in tryout setup
+  (an Optional row "Questions from families"; not Team settings › Sharing as the gate placed it). The sign-in address is refused.
+  There is one per team: any head coach may set, change or remove it, the club sees who set it, and it ends with that person's
+  head-coach role. The club sees it on the team's Tryouts page and can put its own back (asks once; the coach's row then says the
+  club changed it). Families see it on the team's own tryout page while **open or not open yet**, as "Questions about these
+  tryouts? Email the head coach", with the name only when the coach's name switch is on. Once finished or closed, and on the
+  footer, the club's Tryouts page, the team page and every share card, they see the club's address. The address saves only when
+  complete and valid, never part-typed.
+- **Birth years (Asks 4–7 + round 2):** they belong to each **season** and roll one year later at Start next season, with a note
+  under the boxes until the admin changes them or the first game is played. Two boxes: an empty box means no limit on that side,
+  and one year is the same year in both. A value is held with its reason when it is not a four-digit year, is after this calendar
+  year, or the earlier year is second. **No suggestion from the team's label.** On house league they go on each division, in the
+  existing windows. **Round 2:** birthdays count from **a club cut-off kept per sport** (club Settings, "When birthdays count
+  from", one row per sport the club runs, default January 1, a change asks once). Teams keep years and read their sport's cut-off,
+  so a non-January cut-off frames the boxes ("Sep 1, [2013] – Aug 31, [2015]") and the family line ("Born Sep 1, 2013 – Aug 31,
+  2015", "Born before Sep 1, 2014"). The Born in picker stays a year and keeps every team the year overlaps.
+- **The tryout blurb (Asks 8–10):** "From the club", in the admin Tryouts page's Sign-ups section under the address. It
+  **autosaves** (it sends nothing, unlike the club notice). It holds 500 characters, with the house counter and the amber
+  past-year hint. Families see it while **open and not open yet**. A new season starts blank, with "Start from last season's
+  words".
+- **The past-year hint (Ask 11):** skips a year that follows "born" or "birth", as it skips a founding year, and is amber
+  wherever it shows (it was grey under a question's answer).
+- **The "days are public" line (Ask 12):** under the coach's tryout session list whenever the club's site is on ("…even before
+  sign-ups open", that clause dropping once they are open). The empty text names the tryout page too.
+- **Design check (Ask 13):** a stacked "questions go to" line on the admin phone. A question window's buttons sit together at
+  the foot's right. Directions on every public tryout day, with **Copy built like Directions** on the open page's contact line
+  too (extends 2026-10-21). The phone save pill clears the content. No "(optional)" tag on new fields.
+
+**Rationale:** a team-level birth year is wrong every September and cannot say which of two open seasons it describes. Labels
+do not carry the age reliably ("Provincial AAA"; "13U" vs "U13"). The hint fired on every honest blurb. September parents read
+the tryout page while it says "Not open yet". The coach is who a hesitant parent needs, and an address tied to a role cannot go
+stale. Ask 2 (2026-10-19, no email on the team page) stands everywhere except this one opt-in line.
+**Applies to:** admin Team details, house-league division windows, club Settings, the admin Tryouts page, the coach's tryout
+setup, every public surface that shows a team's birth years or a tryout's contact. Build prompt
+`docs/projects/active/CLUB_TIER_STAGE4C2_BUILD_PROMPT.md`.
+
 ### 2026-10-22 — STAGE 7C: EMAIL FAMILIES KEEPS ITS WORDS AND COUNTS, NEVER NAMES; THE CLUB'S THREE A DAY IS ITS OWN COUNT; A BIG SEND GOES IN BATCHES INSIDE THE PRESS (owner answers to the 7c build prompt, "Put to the owner" 1–6, all as recommended)
 
 **Decision:**

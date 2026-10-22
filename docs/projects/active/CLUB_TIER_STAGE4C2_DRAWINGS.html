@@ -1,0 +1,1868 @@
+<title>Club Tier Stage 4c-2 Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds specimens of a club's public site
+   (warm product type, the club's colours). The chrome and the specimens deliberately do not share a ground. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --accent-soft:#DCEAE5; --flag:#A8361F; --flag-soft:#F7E2DC; --fix:#2B672A; --fix-soft:#DFEEDB;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --f-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-serif:'DM Serif Display',Georgia,serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 80px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+.doc h2{font-size:24px;margin:40px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:18px;margin:28px 0 6px}
+.doc p,.doc li{max-width:78ch}
+.lede{font-size:17px;color:var(--ink)}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:10px 20px 0;display:flex;flex-direction:column;gap:8px}
+@media (max-width:600px){.top-in{padding:8px 16px 0}}
+.top-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.top-row h1{font-size:19px;margin:0}
+.top-row .st{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -4px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:12px 10px 11px;min-height:44px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button .n{font:600 11px/1 var(--f-mono);background:var(--ask-soft);color:var(--ask);border-radius:9px;padding:2px 6px;margin-left:5px;vertical-align:1px}
+section.tab{padding-top:8px}
+/* cards in the document */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.grid2>*,.grid3>*{min-width:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--flag);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict.ok{border-left-color:var(--fix)}
+.verdict h2,.verdict h3{margin-top:0}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+table.t{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface)}
+table.t th{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tw table.t tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font:600 12px/1.4 var(--f-doc);border-radius:20px;padding:2px 10px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{background:var(--fix-soft);color:var(--fix);border-color:transparent}
+.pill.bad{background:var(--flag-soft);color:var(--flag);border-color:transparent}
+.pill.half{background:var(--ask-soft);color:var(--ask);border-color:transparent}
+/* annotation chips: every one opens its explanation on click */
+.fl,.fx,.mk{font:700 11px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:5px 7px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);vertical-align:middle;white-space:nowrap;min-height:24px}
+.fl{color:var(--flag);background:var(--flag-soft);border-color:transparent}
+.fx{color:var(--fix);background:var(--fix-soft);border-color:transparent}
+.fl::before{content:"▲ ";font-size:9px}
+.fx::before{content:"✓ fixes "}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 10px}
+/* specimen stages */
+.stage{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin:14px 0 8px}
+.stage>.col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.cap{font-size:13px;color:var(--muted);max-width:390px}
+.cap b{color:var(--ink)}
+.ph-wrap{position:relative;width:390px;max-width:100%}
+@media (max-width:440px){.ph-wrap{width:auto;max-width:none;margin-inline:-16px;overflow-x:auto}}
+.ph{position:relative;width:390px;flex:none;background:#fff;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+@media (max-width:440px){.ph{border-radius:0;outline:0}}
+.fold{position:absolute;left:0;right:0;top:844px;border-top:2px dashed #D9431F;z-index:5;pointer-events:none}
+.fold span{position:absolute;right:6px;top:-21px;font:700 10.5px/1 var(--f-mono);color:#fff;background:#D9431F;border-radius:4px;padding:4px 6px}
+.shot{display:block;width:390px;max-width:none;height:auto}
+.shot-wrap{position:relative;width:390px;flex:none;border-radius:14px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow);background:#0b0b0b}
+@media (max-width:440px){.shot-wrap{border-radius:0;outline:0;margin-inline:-16px;width:auto;max-width:none;overflow-x:auto}}
+.shot-scroll{max-height:1100px;overflow-y:auto}
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.btn-d{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d:hover{border-color:var(--accent)}
+.btn-d.pri{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);background:#fff;max-width:100%}
+.dt{width:1440px;background:#fff}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.dt-shot{display:block;width:1440px;max-width:none}
+.dt-wrap.fit .dt-shot{zoom:var(--z,1)}
+/* stations */
+.station{border-top:1px solid var(--line);margin-top:34px;padding-top:4px}
+.station>h3 .no{font:600 12px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.read{display:grid;grid-template-columns:1fr;gap:10px;max-width:560px;flex:1 1 380px;min-width:0}
+.read h4{margin:4px 0 2px;font-size:13px;font-family:var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.read ul{margin:0;padding-left:18px}
+.read li{margin:0 0 6px}
+.measure{font:500 12.5px/1.5 var(--f-mono);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink)}
+.shape{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.shape b{font-size:14px}
+.shape .k{display:inline-block;font:700 11px/1 var(--f-mono);padding:4px 7px;border-radius:4px;margin-right:6px}
+.k.keep{background:var(--fix-soft);color:var(--fix)} .k.reshape{background:var(--ask-soft);color:var(--ask)} .k.notyet{background:var(--surface-2);color:var(--muted)}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask.decides{border-left-color:var(--flag)}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:6px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:8px 10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer;border:1px solid transparent}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted)}
+.ask textarea{width:100%;box-sizing:border-box;min-height:60px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{position:sticky;bottom:12px;z-index:20;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;box-shadow:var(--shadow);margin-top:20px}
+.paste textarea{width:100%;min-height:140px;font:12.5px/1.45 var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-2);color:var(--ink)}
+/* explanation dialog */
+dialog.note{max-width:min(560px,calc(100vw - 32px));border:1px solid var(--line);border-radius:14px;padding:0;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog.note::backdrop{background:rgba(15,20,25,.45)}
+dialog.note .nh{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:16px 18px 6px}
+dialog.note .nh h3{margin:0;font-size:17px}
+dialog.note .nb{padding:0 18px 18px;font-size:14.5px}
+dialog.note .nb h4{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+dialog.note .nb p{margin:0 0 6px}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px;margin:-10px -10px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);align-items:center}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+<style>
+/* ══ The club's public site, drawn (end state). Fixed light specimens: they do not follow the reader's theme,
+   because the drawn pages are light. Every colour below is one of the five roles the site derives from the
+   club's chosen colour (fill, text on fill, ink, tint, edge); the ground is the same for every club. ══ */
+.cs{--g-bg:#F6F5F2;--g-card:#FFFFFF;--g-ink:#1F1B16;--g-soft:#4E473D;--g-dim:#6F675B;--g-line:#E4E0D8;--g-line2:#D6D0C4;--g-field:#948B7D;
+  --ok:#2C6A2A;--ok-tint:#E6F0E2;
+  --c-fill:#1F3A5F;--c-on:#FFFFFF;--c-ink:#1F3A5F;--c-edge:#1F3A5F;--c-accent:#1F3A5F;
+  --c-title:'Barlow Condensed','Arial Narrow',sans-serif;--c-body:'Inter',system-ui,sans-serif;--c-tw:700;
+  background:var(--g-bg);color:var(--g-ink);font:14px/1.5 var(--c-body);text-align:left;position:relative}
+.cs.lynx{--c-fill:#1F3A5F;--c-on:#FFFFFF;--c-ink:#1F3A5F;--c-edge:#1F3A5F;--c-accent:#E8B33A}
+.cs.harbour{--c-fill:#F2C230;--c-on:#1F1B16;--c-ink:#886D1B;--c-edge:#886D1B;--c-accent:#1E2A38;
+  --c-title:'DM Serif Display',Georgia,serif;--c-body:'DM Sans','Inter',system-ui,sans-serif;--c-tw:400}
+.cs.sky{--c-fill:#7CC8E8;--c-on:#1F1B16;--c-ink:#487487;--c-edge:#487487;--c-accent:#487487}
+.cs.pink{--c-fill:#D04072;--c-on:#FFFFFF;--c-ink:#B03862;--c-edge:#D04072;--c-accent:#D04072}
+.cs *{box-sizing:border-box}
+.cs a{color:var(--c-ink);text-decoration:none}
+/* the branded bar: 72 px with a 44 px logo (the nav ruling: the branded bar stays 72 px) */
+.cs .hd{background:var(--c-fill);color:var(--c-on);display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;min-height:72px;border-bottom:3px solid var(--c-accent)}
+.cs .logo{width:44px;height:44px;border-radius:10px;flex:none;display:grid;place-items:center;font:700 16px/1 var(--c-title);letter-spacing:.02em}
+.cs.lynx .logo{background:#E8B33A;color:#1F3A5F}
+.cs.harbour .logo{background:#1E2A38;color:#F2C230;border-radius:50%;font-family:'DM Serif Display',serif;font-weight:400;font-size:19px}
+.cs.sky .logo{background:#1F1B16;color:#7CC8E8}
+.cs.pink .logo{background:#fff;color:#D04072}
+.cs .club{font:var(--c-tw) 20px/1.1 var(--c-title);color:var(--c-on);min-width:0}
+.cs .club small{display:block;font:500 12px/1.3 var(--c-body);opacity:.88;margin-top:3px}
+.cs .signin{margin-left:auto;font:600 14px/1 var(--c-body);color:var(--c-on);min-height:44px;min-width:44px;padding:0 10px;display:flex;align-items:center;border-radius:8px}
+.cs .nav{background:var(--g-card);border-bottom:1px solid var(--g-line);display:flex;gap:4px;padding:0 8px;overflow:hidden}
+.cs .nav span{font:600 14px/1 var(--c-body);color:var(--g-soft);padding:15px 8px 12px;border-bottom:3px solid transparent;min-height:44px;white-space:nowrap}
+.cs .nav span.on{color:var(--g-ink);border-bottom-color:var(--c-ink)}
+.cs .bd{padding:16px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.cs .sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 -6px;min-height:24px}
+.cs .sec-h h2{font:700 16px/1.25 var(--c-body);margin:0;color:var(--g-ink)}
+.cs .card{background:var(--g-card);border:1px solid var(--g-line);border-radius:8px;padding:0;box-shadow:none}
+/* the one 'open now' signal: a white card with the club's edge, square at the edge (the portal callout) */
+.cs .card.opennow{border-left:3px solid var(--c-edge);border-radius:0 8px 8px 0}
+.cs .door{background:var(--g-card);border:1px solid var(--g-line);border-left:3px solid var(--c-edge);border-radius:0 8px 8px 0;padding:14px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.cs .door h3{margin:0;font:700 16px/1.25 var(--c-body)}
+.cs .door p{margin:0;color:var(--g-soft)}
+.cs .card-h{padding:14px 16px 4px;font:700 16px/1.25 var(--c-body)}
+.cs .card-p{padding:4px 16px 14px;color:var(--g-soft)}
+.cs .row{position:relative;display:flex;align-items:center;gap:12px;padding:12px 40px 12px 16px;min-height:60px;border-top:1px solid var(--g-line)}
+.cs .card>.row:first-child,.cs .card>.band+.row{border-top:0}
+.cs .row .nm{font:600 16px/1.3 var(--c-body);color:var(--g-ink)}
+.cs .row .sub{font-size:12px;color:var(--g-dim);margin-top:2px;font-variant-numeric:tabular-nums}
+.cs .row .grow{flex:1;min-width:0}
+.cs .chev{position:absolute;right:14px;top:50%;width:9px;height:9px;border:solid var(--g-dim);border-width:2px 2px 0 0;transform:translateY(-50%) rotate(45deg)}
+/* one band face: the club's body face in capitals, for bands and column headings alike */
+.cs .band{font:700 12px/1.2 var(--c-body);letter-spacing:.06em;text-transform:uppercase;color:var(--g-soft);background:var(--g-bg);padding:8px 16px;border-top:1px solid var(--g-line)}
+.cs .card>.band:first-child{border-top:0;border-radius:8px 8px 0 0}
+/* one status chip: green, 12 px, one phrase per meaning */
+.cs .chip{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--c-body);border-radius:20px;padding:6px 10px;white-space:nowrap;flex:none}
+.cs .chip.open{background:var(--ok-tint);color:var(--ok)}
+.cs .chip.open::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.cs .chip.closed{background:var(--g-bg);color:var(--g-soft);border:1px solid var(--g-line2)}
+.cs .chip.closed::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--g-field)}
+.cs .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:8px;font:650 16px/1 var(--c-body);background:var(--c-fill);color:var(--c-on);border:1.5px solid var(--c-edge)}
+.cs .btn.full{width:100%}
+.cs .btn.sec{background:var(--g-card);color:var(--g-ink);border:1px solid var(--g-field)}
+.cs .btn.sm{padding:0 12px;font-size:14px}
+.cs .back{display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--c-body);color:var(--c-ink);min-height:44px;margin:-6px 0 -10px}
+.cs .back::before{content:'';width:8px;height:8px;border:solid currentColor;border-width:0 0 2px 2px;transform:rotate(45deg);margin-left:3px}
+.cs .ptitle{border-top:1px solid var(--g-line);padding-top:12px}
+.cs .ptitle h1{font:var(--c-tw) 32px/1.05 var(--c-title);margin:0;color:var(--g-ink);display:flex;align-items:center;gap:10px}
+.cs .ptitle .meta{color:var(--g-soft);margin-top:6px;font-size:14px}
+.cs .tdot{width:12px;height:12px;border-radius:50%;flex:none;display:inline-block}
+/* a dated row: the date leads as a plain column (body face, tabular, tertiary), never a tile */
+.cs .ev{position:relative;display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--g-line);min-height:60px}
+.cs .card>.ev:first-child,.cs .card>.band+.ev,.cs .card>.more+.ev{border-top:0}
+.cs .ev .dc{font-size:14px;line-height:1.35;color:var(--g-dim);font-variant-numeric:tabular-nums}
+.cs .ev .t{font:600 16px/1.3 var(--c-body)}
+.cs .ev .w{font-size:12px;color:var(--g-dim);font-variant-numeric:tabular-nums;margin-top:2px}
+.cs .ev.next{box-shadow:inset 3px 0 0 var(--c-edge)}
+.cs .ev .lbl{display:block;font:700 12px/1.2 var(--c-body);color:var(--c-ink);margin-bottom:2px}
+.cs .ev.x .t{text-decoration:line-through;color:var(--g-dim)}
+.cs .ev .xc{font:600 12px/1 var(--c-body);color:var(--g-soft);border:1px solid var(--g-line2);border-radius:20px;padding:6px 9px;white-space:nowrap}
+.cs .more{display:flex;align-items:center;justify-content:center;min-height:48px;border-top:1px solid var(--g-line);font:600 14px/1 var(--c-body);color:var(--c-ink)}
+.cs .card>.more:first-child{border-top:0;border-bottom:1px solid var(--g-line);color:var(--g-soft)}
+.cs .ctline{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;color:var(--g-soft);font-size:14px}
+.cs .ctline b{color:var(--g-ink)}
+/* the home's team finder: its own treatment (the list standard excludes card grids) */
+.cs .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px 12px}
+.cs .tgrid a{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;min-height:52px;border:1px solid var(--g-line);border-radius:8px;padding:8px 12px;background:var(--g-card);font:600 16px/1.2 var(--c-body);color:var(--g-ink)}
+.cs .tgrid.one{grid-template-columns:1fr}
+.cs .tband{grid-column:1/-1;font:700 12px/1.2 var(--c-body);letter-spacing:.06em;text-transform:uppercase;color:var(--g-soft);padding:6px 2px 0}
+/* one footer, every page */
+.cs .ft{background:var(--c-fill);color:var(--c-on);padding:22px 16px 18px;display:flex;flex-direction:column;gap:14px;border-top:3px solid var(--c-accent)}
+.cs .ft a{color:var(--c-on)}
+.cs .ft .fname{font:var(--c-tw) 20px/1.1 var(--c-title)}
+.cs .ft .fl2{display:flex;flex-wrap:wrap;gap:4px 18px}
+.cs .ft .fl2 a{min-height:44px;display:flex;align-items:center;font:600 14px/1 var(--c-body);text-decoration:underline;text-underline-offset:3px}
+.cs .ft .soc{display:flex;gap:8px}
+.cs .ft .soc span{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;border:1px solid currentColor;font:700 12px/1 var(--c-body)}
+.cs .ft .credit{font:500 12px/1.4 var(--c-body);opacity:.85;border-top:1px solid currentColor;padding-top:10px;margin-top:2px}
+.cs .ft .mail{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cs .ft .mail b{font:600 16px/1.3 var(--c-body)}
+.cs .copy{font:600 14px/1 var(--c-body);min-height:44px;padding:0 14px;border-radius:8px;border:1px solid currentColor;display:inline-flex;align-items:center;background:transparent;color:inherit}
+.cs label.f{display:block;font:600 14px/1.3 var(--c-body);margin:0 0 6px}
+.cs .in{display:flex;align-items:center;justify-content:space-between;min-height:44px;border:1px solid var(--g-field);border-radius:8px;background:var(--g-card);padding:0 12px;color:var(--g-dim);font-size:16px}
+.cs .ck{display:flex;gap:12px;align-items:flex-start;min-height:44px;padding:10px 0}
+.cs .ck i{width:22px;height:22px;border:2px solid var(--g-field);border-radius:5px;flex:none;background:var(--g-card)}
+.cs .hint{font-size:12px;color:var(--g-dim);margin-top:6px}
+.cs .refuse{min-height:844px;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;gap:14px}
+.cs .refuse h1{font:700 32px/1.1 'Barlow Condensed',sans-serif;margin:0}
+.cs .refuse p{margin:0;color:var(--g-soft);font-size:16px;max-width:34ch}
+.cs.wide .hd{padding:0 max(24px,calc((100% - 1200px)/2));min-height:72px}
+.cs.wide .club{font-size:24px}
+.cs.wide .navd{display:flex;gap:6px;margin-left:28px}
+.cs.wide .navd span{font:600 16px/1 var(--c-body);color:var(--c-on);opacity:.9;padding:12px 10px;border-radius:8px}
+.cs.wide .navd span.on{opacity:1;box-shadow:inset 0 -3px 0 var(--c-accent)}
+.cs.wide .in-w{width:1200px;margin:0 auto}
+.cs.wide .cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;padding:28px 0 40px}
+.cs.wide .cols>*{display:flex;flex-direction:column;gap:16px;min-width:0}
+.cs.wide .ft{padding:28px max(24px,calc((100% - 1200px)/2)) 22px;flex-direction:row;flex-wrap:wrap;justify-content:space-between;gap:20px}
+.cs.wide .tgrid{grid-template-columns:repeat(4,1fr)}
+.cs table.tt{width:100%;border-collapse:collapse}
+.cs table.tt th{font:700 12px/1.2 var(--c-body);letter-spacing:.06em;text-transform:uppercase;color:var(--g-soft);text-align:left;padding:10px 16px;border-bottom:1px solid var(--g-line);background:var(--g-card)}
+.cs table.tt td{padding:12px 16px;border-top:1px solid var(--g-line);font-size:14px;vertical-align:middle}
+.cs table.tt td.nm{font-weight:600;font-size:16px}
+.cs table.tt tr.b td{font:700 12px/1.2 var(--c-body);letter-spacing:.06em;text-transform:uppercase;color:var(--g-soft);background:var(--g-bg);padding:8px 16px}
+.cs table.tt td.cv{width:40px;position:relative}
+.wm .hdl.desk{width:28px;height:34px;font-size:13px;border-radius:6px}
+/* the admin and coach specimens wear the product's warm portal look, not the club's */
+.wm{--w-paper:#F8F4ED;--w-card:#FFFFFF;--w-ink:#241E15;--w-soft:#4F4636;--w-dim:#7A6F5E;--w-line:#E5DDCD;--w-olive:#57651E;--w-olive-soft:#EEF1E1;--w-red:#A3321E;--w-amber:#8A5300;
+  background:var(--w-paper);color:var(--w-ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative}
+.wm *{box-sizing:border-box}
+.wm .sb{position:absolute;left:0;top:0;bottom:0;width:240px;background:#fff;border-right:1px solid var(--w-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.wm .sb .it{font:500 14px/1 'Inter';color:var(--w-soft);padding:10px 10px;border-radius:7px}
+.wm .sb .it.on{background:var(--w-olive-soft);color:var(--w-ink);font-weight:650}
+.wm .sb .grp{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);padding:14px 10px 6px}
+.wm .main{margin-left:240px;padding:24px 0 60px}
+.wm .col960{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wm .ttl{font:700 20px/1.2 'Barlow Condensed',sans-serif;margin:0;display:flex;align-items:center;gap:10px}
+.wm .wchip{font:600 12px/1 'Inter';border-radius:20px;padding:5px 10px;background:#E6F0E2;color:#2C6A2A}
+.wm .wcard{background:var(--w-card);border:1px solid var(--w-line);border-radius:8px}
+.wm .wcard h3{font:700 16px/1.25 'Inter';margin:0;padding:14px 16px 2px}
+.wm .wcard .lead{padding:2px 16px 10px;color:var(--w-soft);font-size:13.5px}
+.wm .wrow{display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid var(--w-line);min-height:56px}
+.wm .wrow .grow{flex:1;min-width:0}
+.wm .wrow .nm{font:600 14.5px/1.3 'Inter'}
+.wm .wrow .sub{font-size:13px;color:var(--w-dim)}
+.wm .hdl{width:44px;height:44px;flex:none;border-radius:8px;border:1px solid var(--w-line);display:grid;place-items:center;font:600 14px/1 'Inter';color:var(--w-soft);background:var(--w-paper)}
+.wm .hdl.lock{border-style:dashed;color:var(--w-dim)}
+.wm .sw{width:44px;height:26px;border-radius:13px;background:var(--w-olive);position:relative;flex:none}
+.wm .sw::after{content:"";position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+.wm .sw.off{background:#CFC6B4}.wm .sw.off::after{right:auto;left:3px}
+.wm .sw.na{opacity:.45}
+.wm .fld{padding:8px 16px 12px}
+.wm .fld label{display:block;font:600 13.5px/1.3 'Inter';margin-bottom:6px}
+.wm .win{display:flex;align-items:center;min-height:36px;border:1px solid #D7CFBD;border-radius:6px;padding:0 10px;background:#fff;font-size:14px}
+.wm .win.err{border-color:var(--w-red);box-shadow:0 0 0 1px var(--w-red) inset}
+.wm .whint{font-size:12.5px;color:var(--w-dim);margin-top:5px}
+.wm .werr{font-size:13px;color:var(--w-red);margin-top:5px;display:flex;gap:6px}
+.wm .wbtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:6px;border:1px solid #D7CFBD;background:#fff;font:600 13.5px/1 'Inter';color:var(--w-ink)}
+.wm .wlink{color:var(--w-olive);font-weight:600}
+.wm .pill-saved{position:absolute;right:24px;bottom:18px;background:#241E15;color:#F8F4ED;border-radius:999px;padding:8px 14px;font:600 13px/1 'Inter';box-shadow:0 8px 20px rgba(36,30,21,.22)}
+.wm .addr{font:500 13.5px/1.35 'IBM Plex Mono',monospace;background:var(--w-paper);border:1px solid var(--w-line);border-radius:6px;padding:9px 10px;word-break:break-all}
+.wm .callout{border:1px solid var(--w-line);border-left:3px solid var(--w-amber);background:#fff;border-radius:0 6px 6px 0;padding:9px 12px;font-size:13.5px}
+.wm .seg{display:flex;border:1px solid var(--w-line);border-radius:8px;overflow:hidden}
+.wm .seg span{flex:1;min-height:47px;display:grid;place-items:center;text-align:center;font:600 14px/1.15 'Inter';color:var(--w-soft);background:#fff;border-left:1px solid var(--w-line);padding:4px}
+.wm .seg span:first-child{border-left:0}
+.wm .seg span.on{background:#241E15;color:#F8F4ED}
+.wm .swatch{width:36px;height:36px;border-radius:8px;border:1px solid var(--w-line);flex:none}
+/* share previews */
+.pv-row{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.pv{width:300px;font-family:-apple-system,'Segoe UI',system-ui,sans-serif}
+.pv .lbl{font:600 12px/1.3 var(--f-mono);color:var(--muted);margin-bottom:6px;letter-spacing:.04em}
+.pv .imsg{background:#E9E9EB;border-radius:18px;overflow:hidden;color:#111}
+.pv .wa{background:#D9FDD3;border-radius:10px;padding:4px;color:#111}
+.pv .wa .inner{background:#CFF5C7;border-radius:7px;overflow:hidden}
+.pv .ogi{aspect-ratio:1200/630;width:100%;display:flex;flex-direction:column;justify-content:space-between;padding:16px 18px;position:relative}
+.pv .ogi .o-logo{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font:700 13px/1 'Barlow Condensed',sans-serif}
+.pv .ogi .o-t{font:700 26px/1.02 'Barlow Condensed',sans-serif}
+.pv .ogi .o-s{font:600 12.5px/1.2 'Inter',sans-serif;opacity:.92;margin-top:4px}
+.pv .ogi .o-badge{position:absolute;right:14px;top:16px;font:700 11.5px/1 'Inter';border-radius:20px;padding:6px 9px;background:#E6F0E2;color:#2C6A2A}
+.pv .meta{padding:9px 12px 11px}
+.pv .meta b{display:block;font-size:14px;line-height:1.25}
+.pv .meta span{display:block;font-size:12.5px;color:#555;line-height:1.3;margin-top:2px}
+.pv .meta i{display:block;font-style:normal;font-size:12px;color:#777;margin-top:3px}
+.pv .empty-img{display:none}
+</style>
+<style>
+.cs.river{--c-fill:#5B2A86;--c-on:#FFFFFF;--c-ink:#5B2A86;--c-edge:#5B2A86;--c-accent:#F4B400}
+.cs.river .logo{background:#F4B400;color:#3D1A5C}
+.cs .notice{background:var(--g-card);border:1px solid var(--g-line);border-left:3px solid #8A5300;border-radius:0 8px 8px 0;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.cs .notice b{font:700 16px/1.25 var(--c-body);color:var(--g-ink)}
+.cs .notice span{color:var(--g-soft);font-size:14px}
+.cs .notice small{color:var(--g-dim);font-size:12px}
+.cs .picker{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--g-field);background:var(--g-card);font:600 14px/1 var(--c-body);color:var(--g-ink);align-self:flex-start}
+.cs .picker::after{content:'';width:7px;height:7px;border:solid var(--g-soft);border-width:0 2px 2px 0;transform:rotate(45deg);margin:-3px 0 0 2px}
+.cs .born{display:block;font:500 12px/1.2 var(--c-body);color:var(--g-dim)}
+.cs .chip.wait{background:var(--g-bg);color:var(--g-soft);border:1px solid var(--g-line2)}
+.cs .spons{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px 12px}
+.cs .spons span{min-height:56px;border:1px solid var(--g-line);border-radius:8px;display:grid;place-items:center;text-align:center;font:700 13px/1.15 var(--c-body);color:var(--g-soft);padding:6px;background:var(--g-card)}
+.cs .ctc{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--g-line);min-height:60px}
+.cs .card>.ctc:first-child,.cs .card>.band+.ctc{border-top:0}
+.cs .ctc .grow{flex:1;min-width:0}
+.cs .ctc .nm{font:600 16px/1.3 var(--c-body)}
+.cs .ctc .sub{font-size:12px;color:var(--g-dim)}
+.cs .doc{position:relative;display:flex;align-items:center;padding:12px 40px 12px 16px;border-top:1px solid var(--g-line);min-height:52px;font:600 15px/1.3 var(--c-body);color:var(--g-ink)}
+.cs .card>.doc:first-child,.cs .card>.band+.doc{border-top:0}
+.cs .doc .ext{position:absolute;right:16px;top:50%;width:10px;height:10px;border:solid var(--g-dim);border-width:2px 2px 0 0;transform:translateY(-50%)}
+.cs .doc .ext::after{content:'';position:absolute;right:-1px;top:-2px;width:13px;height:2px;background:var(--g-dim);transform:rotate(-45deg);transform-origin:right}
+</style>
+<style>
+/* ══ 4c-2 specimens. `.ak` = the admin and coach portals' warm look, drawn from the product's own values
+   (app/globals.css warm block, ClubKit / RepKit / KitDialog / coaches.module.css), not the Stage 4 page's
+   approximations. Fixed light specimens, like every product frame on these pages. ══ */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--lime:#D9F99D;--red:#B03A22;--amber:#835006;--green:#34662A;--green-t:#E6F0E2;
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak *{box-sizing:border-box}
+.ak .sb{position:absolute;left:0;top:0;bottom:0;width:240px;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .org{font:700 15px/1.2 'Inter';padding:4px 10px 12px}
+.ak .main{margin-left:240px;padding:24px 0 60px;min-height:900px}
+.ak .c960{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.ak .ph-in{padding:12px 16px 40px;display:flex;flex-direction:column;gap:16px;min-height:844px}
+.ak .bar{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .bar .menu{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:20px}
+/* page head: back arrow behind a hairline, display-face title 20 */
+.ak .back{font:600 14px/1 'Inter';color:var(--olive);display:inline-flex;align-items:center;gap:6px;min-height:32px}
+.ak .crumbs{font:500 12px/1.3 'Inter';color:var(--dim)}
+.ak .ptitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.ak .ptitle h1{font:700 20px/1.2 'Barlow Condensed','Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.02em;margin:0}
+.ak .ptitle .act{margin-left:auto;display:flex;gap:8px}
+/* section card: heading inside at 16/700, 8 px, no shadow */
+.ak .sect{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.ak .sect-h{display:flex;align-items:center;gap:10px;padding:14px 16px 6px;flex-wrap:wrap}
+.ak .sect-h h3{font:700 16px/1.25 'Inter';margin:0;display:flex;align-items:center;gap:8px}
+.ak .sect-h .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ak .sect-b{padding:6px 16px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .sect-f{border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px;color:var(--dim);font-size:12px}
+.ak .lede{font-size:12px;color:var(--dim);max-width:64ch;margin:-2px 0 0}
+/* chips: mono 10 / 700, pill */
+.ak .kc{font:700 10px/1 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;border-radius:20px;padding:5px 8px;border:1px solid var(--line2);color:var(--soft);background:var(--olive-soft);white-space:nowrap}
+.ak .kc.good{color:var(--green);background:var(--green-t);border-color:transparent}
+/* buttons: Inter 14/650, 6 px, 34 high on a computer */
+.ak .b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 13px;border-radius:6px;font:650 14px/1 'Inter';white-space:nowrap}
+.ak .b.lime{background:var(--lime);color:var(--ink);border:1px solid transparent}
+.ak .b.out{background:var(--card);color:var(--soft);border:1px solid var(--line2)}
+.ak .b.ghost{background:var(--card);color:var(--soft);border:1px solid var(--line2)}
+.ak .b.icon{width:44px;min-height:44px;padding:0;border:0;background:none;color:var(--soft)}
+.ak .door{font:600 14px/1.3 'Inter';color:var(--olive);display:inline-flex;align-items:center;gap:6px;min-height:32px}
+.ak .door::after{content:"→"}
+/* fields: label 12/650 secondary, box 36 high on paper, 6 px, focus = olive border */
+.ak .f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ak .lbl{font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .lbl .sub{font-weight:500;color:var(--dim)}
+.ak .in{height:36px;border:1px solid var(--line2);border-radius:6px;background:var(--paper);padding:0 10px;display:flex;align-items:center;font-size:14px;color:var(--ink);min-width:0;overflow:hidden;white-space:nowrap}
+.ak .in.ph{color:var(--dim)}
+.ak .in.focus{border-color:var(--olive)}
+.ak .in.err{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.ak .in.sel::after{content:"";margin-left:auto;width:7px;height:7px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-2px)}
+.ak .ta{min-height:96px;border:1px solid var(--line2);border-radius:6px;background:var(--paper);padding:8px 10px;font-size:14px;line-height:1.5;color:var(--ink);white-space:pre-wrap}
+.ak .ta.ph{color:var(--dim)}
+.ak .ta.focus{border-color:var(--olive)}
+.ak .hint{font-size:12px;line-height:1.45;color:var(--dim)}
+.ak .yh{font-size:12px;line-height:1.45;color:var(--amber)}
+.ak .held{font-size:12px;line-height:1.45;color:var(--red)}
+.ak .ro{font:500 13px/1.35 'IBM Plex Mono',monospace;color:var(--ink);word-break:break-all}
+.ak .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.ak .g2>*{min-width:0}
+.ak .yrs{display:flex;align-items:center;gap:8px}
+.ak .yrs .in{width:84px;font-variant-numeric:tabular-nums}
+.ak .yrs .dash{color:var(--dim)}
+.ak .note{font-size:12px;color:var(--dim)}
+/* the white callout with a coloured edge */
+.ak .call{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14px;line-height:1.45;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ak .call.warn{border-left-color:var(--amber)}
+.ak .call .grow{flex:1;min-width:0}
+.ak .call small{display:block;font-size:12px;color:var(--soft)}
+/* the floating save pill: white, hairline, 12/600 tertiary, green check */
+.ak .spill{position:absolute;right:20px;bottom:18px;background:var(--card);border:1px solid var(--line);border-radius:999px;min-height:36px;padding:0 14px;display:flex;align-items:center;gap:6px;font:600 12px/1 'Inter';color:var(--dim)}
+.ak .spill::before{content:"✓";color:var(--green);font-weight:700}
+.ak .spill.bad{color:var(--red)}
+.ak .spill.bad::before{content:"!";color:var(--red)}
+/* a table, the house way */
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px}
+.ak table.kt th{font:700 12px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:left;padding:10px 16px;background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td.n{font-weight:600}
+.ak .vp{display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:0 12px;border:1px solid var(--olive);border-radius:20px;background:var(--olive-soft);color:var(--olive);font:650 14px/1 'Inter'}
+.ak .vp::after{content:"";width:6px;height:6px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-2px)}
+/* the old-look modal (house league), drawn as it is today */
+.ak .old{background:#fff;border:1px solid #D9D2C3;border-radius:12px;box-shadow:0 18px 40px rgba(36,30,21,.18);width:440px;max-width:100%}
+.ak .old .oh{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+.ak .old .oh b{font:700 16px/1 'Inter'}
+.ak .old .ob{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.ak .old .of{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .scrim{background:rgba(36,30,21,.34);display:grid;place-items:center;padding:24px 16px}
+/* the KitDialog (new look): tinted edge, no shadow, 12 px */
+.ak .kd{background:var(--card);border:1px solid rgba(87,101,30,.3);border-radius:12px;width:520px;max-width:100%}
+.ak .kd .kh{display:flex;align-items:flex-start;gap:10px;padding:18px 24px 6px}
+.ak .kd .kh b{font:700 16px/1.3 'Inter';flex:1}
+.ak .kd .kb{padding:6px 24px 16px;font-size:14px;color:var(--soft);line-height:1.5}
+.ak .kd .kf{display:flex;align-items:center;gap:8px;padding:12px 24px;border-top:1px solid var(--line)}
+.ak .kd .kf .l{flex:1;font-size:12px;color:var(--dim)}
+/* the coach's tryout checklist */
+.ak .ck-row{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-top:1px solid var(--line);position:relative}
+.ak .ck-row:first-of-type{border-top:0}
+.ak .ck-row .tick{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);flex:none;margin-top:1px}
+.ak .ck-row .tick.done{background:var(--olive);border-color:var(--olive);position:relative}
+.ak .ck-row .tick.done::after{content:"";position:absolute;left:6px;top:3px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak .ck-row .grow{flex:1;min-width:0}
+.ak .ck-row .t{font:600 15px/1.3 'Inter';display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .ck-row .s{font-size:13px;color:var(--dim);margin-top:2px}
+.ak .ck-row .tag{font:700 10px/1 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);border-radius:20px;padding:4px 7px}
+.ak .ck-row .chev{width:9px;height:9px;border:solid var(--dim);border-width:2px 2px 0 0;transform:rotate(135deg);margin:6px 4px 0 0;flex:none}
+.ak .ck-row.open .chev{transform:rotate(-45deg);margin-top:9px}
+.ak .ck-body{padding:0 16px 16px 50px;display:flex;flex-direction:column;gap:12px}
+.ak .sess{border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.ak .sess .r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line);min-height:56px}
+.ak .sess .r:first-child{border-top:0}
+.ak .sess .r .grow{flex:1}
+.ak .sess .r .t{font:600 14px/1.3 'Inter'}
+.ak .sess .r .m{font-size:12px;color:var(--dim)}
+.ak .sess .r .cv{width:8px;height:8px;border:solid var(--dim);border-width:2px 2px 0 0;transform:rotate(45deg)}
+.ak .add{font:650 14px/1 'Inter';color:var(--olive);min-height:44px;display:inline-flex;align-items:center}
+.ak .pub{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--soft)}
+.ak .pub svg{flex:none;margin-top:2px}
+/* the "this is drawn in" marker beside a provisional sentence */
+.drafted{outline:1.5px dashed #B97A00;outline-offset:2px;border-radius:3px}
+.mk.drf{color:var(--ask)}
+/* the public page: a bare symbol for a phone's secondary action */
+.cs .sym{width:44px;height:44px;display:grid;place-items:center;color:var(--c-ink);flex:none;margin:-10px -12px -10px 0}
+.cs .ctcard{background:var(--g-card);border:1px solid var(--g-line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.cs .ctcard p{margin:0;color:var(--g-soft)}
+.cs .ctcard .lab{font:700 14px/1.3 var(--c-body);color:var(--g-ink)}
+.cs .ctcard .addrrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cs .ctcard .addrrow b{font:600 16px/1.3 var(--c-body);color:var(--c-ink);word-break:break-all}
+.cs .days .ev{grid-template-columns:96px minmax(0,1fr)}
+.cs .blurb{white-space:pre-wrap;padding:12px 16px 14px;color:var(--g-ink)}
+/* document helpers for this page */
+.tight{margin:6px 0}
+.small{font-size:13px}
+.kvt{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:8px 16px;font-size:14px;margin:8px 0}
+.kvt dt{color:var(--muted);font-weight:600}
+.kvt dd{margin:0}
+.states{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;margin:12px 0}
+.states>.col{display:flex;flex-direction:column;gap:6px;min-width:0}
+.spec{width:390px;max-width:100%;border-radius:12px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+@media (max-width:440px){.spec{width:auto}}
+.pb{counter-reset:pb;list-style:none;padding:0;margin:12px 0;display:flex;flex-direction:column;gap:12px}
+.pb>li{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--flag);border-radius:0 12px 12px 0;padding:12px 16px;box-shadow:var(--shadow);max-width:none}
+.pb>li h3{margin:0 0 4px;font-size:16px}
+.pb>li p{margin:4px 0}
+.ux h4{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+.ux ol,.ux ul{margin:0;padding-left:20px}
+.ux li{margin:0 0 6px}
+.sev{font:700 10.5px/1 var(--f-mono);padding:3px 6px;border-radius:4px;background:var(--ask-soft);color:var(--ask);margin-left:4px;vertical-align:1px}
+.sev.hi{background:var(--flag-soft);color:var(--flag)}
+.sev.lo{background:var(--surface-2);color:var(--muted)}
+</style><style>
+/* ══ The real portal chrome, read from today's captures (2026-10-22) ══ */
+.ak.grid,.ak .gridbg{background-color:var(--paper);background-image:linear-gradient(rgba(70,55,30,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.05) 1px,transparent 1px);background-size:40px 40px}
+.ak .tb{height:48px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 20px;font:700 13px/1 'IBM Plex Mono',monospace;letter-spacing:.04em}
+.ak .tb .lg{width:20px;height:20px;background:#1A1A1A;clip-path:polygon(0 0,100% 50%,0 100%);flex:none}
+.ak .tb .ar{font:700 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--soft);border-left:1px solid var(--line2);padding-left:14px}
+.ak .tb .rt{margin-left:auto;display:flex;gap:18px;color:var(--soft)}
+.ak .shell{display:flex;min-height:852px}
+.ak .shell .sb{position:static;width:240px;flex:none;border-right:1px solid var(--line);padding:16px 12px;gap:0}
+.ak .shell .sb .it{padding:10px 8px;font-size:14.5px}
+.ak .shell .sb .it.sub{padding:9px 8px 9px 30px;font-size:13px}
+.ak .shell .sb .it.team{padding:12px 8px 6px 30px;font:700 12px/1 'Inter';color:var(--olive)}
+.ak .shell .sb .grp{padding:16px 8px 8px}
+.ak .shell .mn{flex:1;min-width:0}
+.ak .orgrow{height:52px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 32px;font:700 20px/1 'Inter'}
+.ak .orgrow .ps{margin-left:auto;font:600 13px/1 'Inter';border:1px solid var(--line2);border-radius:20px;padding:8px 12px;background:var(--paper)}
+.ak .teamrow{height:56px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 32px}
+.ak .teamrow b{display:block;font:700 16px/1.2 'Inter'}
+.ak .teamrow small{display:block;font:500 11px/1.4 'IBM Plex Mono',monospace;color:var(--soft)}
+.ak .teamrow .nx{margin-left:auto;text-align:right;font:600 13px/1.2 'Inter'}
+.ak .teamrow .nx small{font-size:9.5px;letter-spacing:.1em;font-weight:700}
+.ak .pg{padding:28px 32px 60px;display:flex;flex-direction:column;gap:16px}
+.ak .pg.w1200{max-width:1200px;margin:0 auto}
+.ak .pg.w960{max-width:1024px;margin:0 auto}
+/* the page head: back behind a hairline, mono eyebrow, Inter title, mono season chip */
+.ak .phd{display:flex;align-items:center;gap:16px}
+.ak .phd .bk{font:500 15px/1 'Inter';color:var(--ink);padding-right:16px;border-right:1px solid var(--line2);min-height:40px;display:flex;align-items:center;gap:8px}
+.ak .phd .ey{font:700 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-bottom:6px}
+.ak .phd h1{font:700 20px/1.2 'Inter';margin:0;display:flex;align-items:center;gap:8px}
+.ak .phd .act{margin-left:auto;display:flex;gap:8px}
+.ak .kc.live{color:#2F5A26;background:#E7F0DF;border:1px solid rgba(52,102,42,.35)}
+.ak .addrbox{border:1px dashed var(--line2);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--soft);word-break:break-all}
+.ak .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.ak .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-height:96px}
+.ak .stat .k{font:700 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--soft)}
+.ak .stat .v{font:700 17px/1.3 'Inter';margin-top:10px}
+.ak .stat .s{font-size:12.5px;color:var(--soft);margin-top:4px}
+.ak .b.red{background:#F6E1DB;color:#9A2F1B;border:1px solid rgba(176,58,34,.3)}
+/* phone heads and bottom bars */
+.ak .phead{height:60px;background:var(--card);display:flex;align-items:center;padding:0 16px;font:700 17px/1 'Inter';border-bottom:1px solid var(--line)}
+.ak .phead .r{margin-left:auto;width:44px;height:44px;display:grid;place-items:center;color:var(--soft)}
+.ak .botnav{position:absolute;left:0;right:0;top:772px;height:72px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;font:600 11px/1 'Inter';color:var(--soft);z-index:3}
+.ak .botnav span{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:56px}
+.ak .botnav span::before{content:"";width:22px;height:22px;border:2px solid currentColor;border-radius:6px;opacity:.7}
+.ak .botnav span.on{color:var(--olive)}
+.ak .botnav span.on::before{background:rgba(87,101,30,.15);border-radius:12px;width:44px}
+/* the coaches' tryout page: icon title, numbered stage tabs, the checklist the way it is */
+.ak .tt{display:flex;align-items:center;gap:12px;font:700 22px/1 'Inter'}
+.ak .tt i{width:34px;height:34px;border:1px solid var(--line2);border-radius:8px;background:var(--olive-soft);flex:none}
+.ak .stg{display:flex;gap:18px;border-bottom:1px solid var(--line);font:600 15px/1 'Inter';color:var(--soft)}
+.ak .stg span{display:flex;align-items:center;gap:8px;padding:12px 2px 14px;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.ak .stg span::before{content:attr(data-n);width:20px;height:20px;border-radius:50%;background:var(--line);display:grid;place-items:center;font:600 11px/1 'Inter'}
+.ak .stg span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .stg span.on::before{background:var(--lime)}
+.ak .stg .how{margin-left:auto;font:500 13px/1 'Inter';align-self:center}
+.ak .ckc{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.ak .ckc .hh{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .ckc .hh .pr{margin-left:auto;font:500 13px/1 'Inter';color:var(--soft)}
+.ak .ckc .hh .pr b{color:var(--ink)}
+.ak .ckc .ck-row{padding:14px 18px}
+.ak .ckc .ck-row .tick{width:20px;height:20px;border:1.5px solid var(--line2)}
+.ak .ckc .ck-row .tag{border:0;background:rgba(87,101,30,.12);color:var(--olive)}
+.ak .ckc .ck-row .chev{transform:rotate(135deg)}
+.ak .ckc .ck-row.open .chev{transform:rotate(-45deg)}
+.ak .ckc .ck-body{padding:0 18px 18px 52px}
+.ak .dashbtn{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:1px dashed var(--line2);border-radius:6px;font:600 14px/1 'Inter';color:var(--ink);background:var(--card)}
+.ak .bibs{display:inline-flex;align-items:center;gap:8px;border:1px solid #9FB4E8;background:#E9EEFB;color:#2448B8;border-radius:22px;padding:8px 14px;font:600 13px/1 'Inter'}
+.ak .folded{border:1px dashed var(--line2);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--dim);background:rgba(255,255,255,.5)}
+</style>
+<style>
+/* the public contact card as it is today: sentence, hairline, "Questions? Email …", the address with Copy at the row's end */
+.cs .ctcard{gap:0;padding:0}
+.cs .ctcard>p{padding:14px 16px;border-bottom:1px solid var(--g-line);font-size:16px}
+.cs .ctcard>.lab{padding:12px 16px 4px;font:400 16px/1.35 var(--c-body);color:var(--g-soft)}
+.cs .ctcard>.addrrow{padding:0 16px 8px;justify-content:space-between;flex-wrap:nowrap}
+.cs .ctcard>.addrrow b{color:var(--g-ink)}
+.cs .ctcard.bare{background:none;border:0}
+.cs .ctcard.bare>.lab,.cs .ctcard.bare>.addrrow{padding-left:0;padding-right:0}
+/* the house-league window as it looks today */
+.ak .old .oh{border-bottom:0;padding-bottom:4px}
+.ak .old .of .b.ghost{background:#EFEAE0;border-color:rgba(70,55,30,.2);color:var(--ink)}
+</style>
+
+<style>
+/* /design D3: Directions on each tryout day, and Copy built the same way at a desk (2026-10-21 ruling) */
+.cs .days .ev{grid-template-columns:96px minmax(0,1fr) auto}
+.cs .dbtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:1px solid var(--g-line2);border-radius:8px;background:var(--g-card);font:600 13px/1 var(--c-body);color:var(--c-ink);white-space:nowrap;flex:none}
+.cs .ev .sym{margin:-8px -10px -8px 0}
+</style>
+<header class="top">
+  <div class="top-in">
+    <div class="top-row">
+      <h1>Club Tier · Stage 4c-2 · The teams' side</h1>
+      <span class="st">Drawn 2026-10-22 · round 2 · ⚖ ruled 2026-10-22: all 13 asks as recommended, plus a club cut-off per sport · build prompt written · nothing built</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="start" aria-selected="true">Start here</button>
+      <button role="tab" data-tab="today">Today</button>
+      <button role="tab" data-tab="born">1 · Birth years</button>
+      <button role="tab" data-tab="blurb">2 · Tryout blurb</button>
+      <button role="tab" data-tab="addr">3 · Coach's address</button>
+      <button role="tab" data-tab="c3">4 · Setup line</button>
+      <button role="tab" data-tab="flow">Flow check</button>
+      <button role="tab" data-tab="check">Design check</button>
+      <button role="tab" data-tab="asks">Asks<span class="n" id="ask-count">13</span></button>
+    </nav>
+  </div>
+</header>
+<main class="doc">
+
+<!-- ═════════════════════════ START ═════════════════════════ -->
+<section class="tab" id="tab-start" data-tab="start">
+  <h2>What this page is for</h2>
+  <p class="lede">4c-1 gave the club its own editor. 4c-2 is the same idea from the team's side: a family sees a team's birth years, a parent with a tryout question writes to the person running that team's tryouts, and the club says in its own words what a tryout costs and who may come.</p>
+  <p>Four pieces were ruled but never drawn. They are drawn here, each with today's screen first, then the proposal at true size on a phone and a desk, then the empty, filled and refused states. Nothing is built. The words in the frames are <b>drafts</b>: they go through the copy pass after you rule, before any code.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="eyebrow">Who reads it</div>
+      <dl class="kvt">
+        <dt>A parent</dt><dd>On a phone: the team page, the Teams list, the tryout page.</dd>
+        <dt>A head coach</dt><dd>Shares the team page and runs its tryouts, from the coaches portal.</dd>
+        <dt>A club admin</dt><dd>Sets up the team, the house-league divisions and the tryout blurb.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Already ruled, not redrawn</div>
+      <p class="tight small">The coach's "Your team's public page" door, the "Show my name" switch (off by default, name and role only), the team page's Coaches section and the Born in picker. All are in the <a href="https://claude.ai/artifact/QhdgL1QnfRndu4ZAoTB67k" target="_blank" rel="noopener">Stage 4 drawings</a> (End state › 7, 3 and 11), ruled A on 2026-10-19. These frames sit beside them and use the same people: Dana Whitfield (head coach) and Sam Okafor (assistant), on Lakeshore Lynx's 15U AAA.</p>
+    </div>
+  </div>
+
+  <h2>Push back first</h2>
+  <p>You asked for disagreement before the work. These change what gets built; each has an ask.</p>
+  <ol class="pb">
+    <li>
+      <h3>1 · The coach's address is a carve-out from Ask 2. Say what it costs.</h3>
+      <p>Ask 2 keeps every email off the team page, for two reasons: robots collect any address printed on a public page, and a family writes to someone who left. A coach-typed address on the tryout page brings both back on one page. The drawing keeps the carve-out narrow and shows every safeguard. It is opt-in per team and blank by default. The sign-in address is refused, and the coach is told the address is public. The club sees it and can put its own back, and it ends by itself when the coach stops being head coach. <button class="fl" data-finding="C2-10">C2-10</button></p>
+      <p><b>The other reading of your ask</b> is "a different contact per team", not "the coach's own inbox". That would be the club typing a per-team address (a registrar, a team inbox, or the coach's, if the coach agrees). Both are drawn as options in <a href="#ask-1" data-jump="ask-1">Ask 1</a>. I still recommend the coach's own: the coach is who a hesitant parent needs, and an address tied to a role cannot go stale the way a club-kept one can.</p>
+    </li>
+    <li>
+      <h3>2 · Birth years belong to a season, not to a team. This widens the question.</h3>
+      <p>A 13U team's birth years change every September. A field on the team is right for one year and then wrong. That is the same stale-words failure the past-year hint exists to catch, built into a field. And during the autumn, when a team can have two seasons open, a team-level field cannot say which season it describes. The drawing puts the years on the team's season. It labels the field with the season's name, and <b>Start next season</b> carries them forward one year later. A team that keeps its players together year after year, named by birth year, changes them back once. <a href="#ask-4" data-jump="ask-4">Ask 4</a> · <button class="fl" data-finding="C2-01">C2-01</button></p>
+    </li>
+    <li>
+      <h3>3 · Do not suggest birth years from the team's label.</h3>
+      <p>The label does not carry the age reliably. Lakeshore's divisions read "Provincial AAA", so its ages live only in the team names. "13U" (13 and under) and "U13" (under 13) can mean different birth years, and the date the age is counted on differs by sport and by club. The Stage 4 drawings disagree with themselves: Riverbend's U13 reads 2015–2016, while a 13U team counted at the end of 2027 would be 2014–2015. With the carry-forward above, a club types each team's years once, ever. A suggestion would save that one entry, at the cost of a confident wrong default that nobody checks. <a href="#ask-6" data-jump="ask-6">Ask 6</a></p>
+      <p><b>Round 2, ruled:</b> you raised clubs whose cut-off is not January 1 ("anyone born before September 1, 2014"). The club now sets when birthdays count from, per sport (<a href="#b-cut" data-jump="b-cut">1b</a>). That settles the date, but not whether "13U" means one birth year or two, so Ask 6 stands.</p>
+    </li>
+    <li>
+      <h3>4 · The past-year hint would fire on every honest tryout blurb.</h3>
+      <p>The ruled rule is "any four-digit year before this calendar year, a founding year skipped". A birth year is always a past year, so "Open to players born 2012 and 2013" reads <i>Mentions 2012 and 2013 — still true?</i> every time. I checked the hint's own rule; it has no exception for that. A hint that fires on every correct blurb teaches the club to ignore it. The fix is to skip a year that follows "born" or "birth", the way a founding year is skipped. <a href="#ask-11" data-jump="ask-11">Ask 11</a> · <button class="fl" data-finding="C2-02">C2-02</button></p>
+    </li>
+    <li>
+      <h3>5 · The blurb's problem is when it shows, not how big it is.</h3>
+      <p>Plain text does answer what a parent asks: what it costs, who may come, what to bring and when they will hear back. Who may come is now also a field the page shows by itself (the birth years), so a fee field is still not needed. What is missing is timing. The blurb shows only while sign-ups are open. In September, though, the club posts the page and parents first read it while it says "Not open yet", so they see nothing about cost or eligibility. <a href="#ask-9" data-jump="ask-9">Ask 9</a> · <button class="fl" data-finding="C2-03">C2-03</button></p>
+    </li>
+    <li>
+      <h3>6 · Two smaller things the frames exposed</h3>
+      <p>A house-league "division" is not always an age: its window suggests "Division A, East". Years per division still work, and nothing changes in the ruling (<button class="fl" data-finding="C2-08">C2-08</button>). And a team can have more than one head coach, so "the head coach's address" needs a rule for whose (<button class="fl" data-finding="C2-09">C2-09</button>): one per team, and it ends with the role of whoever set it.</p>
+    </li>
+  </ol>
+
+  <h2>How to read the drawings</h2>
+  <div class="legend">
+    <button class="mk new" data-note="An element that does not exist today. The build adds it as drawn.">New</button>
+    <button class="mk res" data-note="An element that exists today and changes as drawn.">Restyled</button>
+    <button class="mk unc" data-note="An element that exists today and stays exactly as it is. Drawn so you can judge the whole screen.">Unchanged</button>
+    <button class="mk drf" data-note="Every sentence in these frames is a draft. Final words go through /marketing after you rule and before any code (sentence case, 8:00 a.m., the bare possessive, the spelling gate). A dashed box marks a sentence that is new words.">Draft words</button>
+    <button class="fl" data-finding="C2-01">Finding</button>
+    <button class="fx" data-finding="C2-01">C2-01</button>
+    <span>Every tag, flag and fix opens its explanation when you tap it. A phone frame is 390 wide with the fold at 844. A desk frame is 1440 wide, fitted to your window, with <b>Show at true size</b> beside it. Open this page on your phone to judge the phone frames.</span>
+  </div>
+
+  <h2>For the walk, later: what the fixtures need</h2>
+  <p>No seed is changed here. The build session asks before it changes a seed, and never seeds mid-sweep. Today's fixtures cannot show 4c-2:</p>
+  <ul>
+    <li>No fixture team has a head coach <b>and</b> an active assistant. The walk needs one, with one coach's name switch on and one off.</li>
+    <li>Lakeshore Lynx (the rep-only club) has every tryout state (15U AAA open, 13U AAA not open yet, 14U AA finished) but no coaches at all. Rebuilding the main fixture club resets every saved sign-in, so the coaches belong on Lakeshore.</li>
+    <li>Birth years on most teams and none on one. Lakeshore's 10U Development already has no division, so it is the natural blank.</li>
+    <li>A house-league season with divisions on the walk club. Lakeshore has none; the main fixture club has "U9 Rookie".</li>
+    <li>A blurb that names birth years, and one that names a past year, so the hint can be seen to fire and to stay quiet.</li>
+    <li>One open team with a head coach's tryout address, and one without.</li>
+  </ul>
+</section>
+
+<!-- ═════════════════════════ TODAY ═════════════════════════ -->
+<section class="tab" id="tab-today" data-tab="today" hidden>
+  <h2>Today's screens</h2>
+  <p>Captured on 2026-10-22 from the development fixtures (the main fixture club, warm look, a 390 phone and a 1440 desk). Nothing was saved. <b>Two states could not be captured:</b> no fixture has an open tryout page, and no coach has tryout days added. Those two are described from the code.</p>
+
+  <div class="station"><h3><span class="no">01</span>The admin's team page · Team details</h3>
+    <p>A full page, not a window. Team details is always editable and saves as you type. Fields: Name, Group, Division, Colour, Sport, Public address, Description. No age anywhere. <button class="fl" data-finding="C2-01" data-here="Team details, two columns: Division sits beside Colour.">C2-01</button></p>
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><img class="dt-shot" src="img/s4c2-admin-team-record-15u-aaa-1440-full.jpg" alt="Today's admin team page at 1440, full height" loading="lazy"></div>
+  </div>
+
+  <div class="station"><h3><span class="no">02</span>House league · a season and its divisions</h3>
+    <p>Divisions are cards on the season page. Each has a pencil that opens Edit division (name and capacity; an explicit Save). The season itself carries a free-text "Division" badge ("U11", "Adult"). <button class="fl" data-finding="C2-08">C2-08</button></p>
+    <div class="stage">
+      <div class="col"><div class="chips"><span class="eyebrow">Season page · phone</span></div><div class="shot-wrap"><div class="shot-scroll" style="max-height:844px"><img class="shot" src="img/s4c2-admin-house-league-season-390-full.jpg" alt="Today's house-league season page on a phone" loading="lazy"></div></div></div>
+      <div class="col"><div class="chips"><span class="eyebrow">Edit division · phone</span></div><div class="shot-wrap"><img class="shot" src="img/s4c2-admin-house-league-division-edit-window-390-view.jpg" alt="Today's Edit division window on a phone" loading="lazy"></div></div>
+    </div>
+  </div>
+
+  <div class="station"><h3><span class="no">03</span>The admin's Tryouts page</h3>
+    <p>A head with the season chip and Add applicant. The Sign-ups section has an Open/Closed chip, Copy link (while open) and Open or Close sign-ups, then the address. Below it come the applicants, then a foot sentence. No blurb field anywhere. <button class="fl" data-finding="C2-04">C2-04</button></p>
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><img class="dt-shot" src="img/s4c2-admin-team-tryouts-15u-aaa-1440-view.jpg" alt="Today's admin Tryouts page at 1440" loading="lazy"></div>
+    <div class="stage"><div class="col"><div class="chips"><span class="eyebrow">Phone</span></div><div class="shot-wrap"><img class="shot" src="img/s4c2-admin-team-tryouts-15u-aaa-390-view.jpg" alt="Today's admin Tryouts page on a phone" loading="lazy"></div></div></div>
+  </div>
+
+  <div class="station"><h3><span class="no">04</span>The coach's tryout setup</h3>
+    <p>"Get set up" has three rows: Tryout dates and Evaluation scorecard (required), and Helpers who score (optional). <button class="fl" data-finding="C2-05">C2-05</button></p>
+    <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+    <div class="dt-wrap fit"><img class="dt-shot" src="img/s4c2-coach-tryouts-15u-aaa-1440-view.jpg" alt="Today's coach tryout setup at 1440" loading="lazy"></div>
+  </div>
+
+  <div class="station"><h3><span class="no">05</span>The coach's Team settings › Sharing</h3>
+    <p>Schedule visibility (Staff only, Families, Public) and Share our book. The "Your team's public page" door and the name switch are ruled and drawn in Stage 4 and not built yet. Neither has anywhere for a tryout address.</p>
+    <div class="stage"><div class="col"><div class="shot-wrap"><div class="shot-scroll" style="max-height:844px"><img class="shot" src="img/s4c2-coach-team-settings-sharing-open-15u-aaa-390-full.jpg" alt="Today's Sharing section on a phone" loading="lazy"></div></div></div></div>
+  </div>
+
+  <div class="station"><h3><span class="no">06</span>What a family sees</h3>
+    <p>Every state names the club's address. Closed, finished and not open yet show it in a card with Copy. The open page (not in any fixture) shows the days, "From the club", Sign up for tryouts, then a plain line, "Questions? Email the club at …", <b>with no Copy</b>. <button class="fl" data-finding="C2-06">C2-06</button> <button class="fl" data-finding="C2-03">C2-03</button></p>
+    <div class="stage">
+      <div class="col"><div class="chips"><span class="eyebrow">Closed</span></div><div class="shot-wrap"><img class="shot" src="img/s4c2-public-tryouts-15u-aaa-390-view.jpg" alt="Today's closed tryout page" loading="lazy"></div></div>
+      <div class="col"><div class="chips"><span class="eyebrow">Finished</span></div><div class="shot-wrap"><img class="shot" src="img/s4c2-public-tryouts-13u-aaa-390-view.jpg" alt="Today's finished tryout page" loading="lazy"></div></div>
+      <div class="col"><div class="chips"><span class="eyebrow">The team page</span></div><div class="shot-wrap"><img class="shot" src="img/s4c2-public-team-13u-aaa-390-view.jpg" alt="Today's public team page" loading="lazy"></div></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═════════════════════════ 1 · BIRTH YEARS ═════════════════════════ -->
+<section class="tab" id="tab-born" data-tab="born" hidden>
+  <h2 id="b-team">1 · Birth years, where the team is set up</h2>
+  <p>Ruled (Ask 15 A): two small fields, entered where the team and division are set up; a team with no years always stays in the Born in list. <b>Open, and drawn here:</b> one pair or a from/to, how it is checked, one year against a range, a suggestion or not, and (new) whether the years belong to the team or to its season. <b>Round 2:</b> a club whose cut-off is not January 1 (<a href="#b-cut" data-jump="b-cut">1b</a>).</p>
+  <p>Today a rep team has no record window. An admin edits it in the <b>Team details</b> section of the team's page, which saves as you type. The years go there, beside Division, the one other label that says who the team is for. <button class="fl" data-finding="C2-01" data-here="Team details today: Name, Group, Division, Colour, Sport, Public address, Description. No age anywhere.">C2-01</button></p>
+
+  <h3>Desk, 1440 · the team's page, Team details</h3>
+  <div class="chips">
+    <span class="eyebrow">After</span>
+    <button class="mk new" data-note="NEW. 'Birth years for the 2027 season': two four-digit boxes joined by a dash. The label names the season because the years belong to it (Ask 4 A). For a one-year team the same year goes in both; an empty box means no limit on that side. Under the pair, one line names the sport's cut-off and links to it. The pair saves as you type, like the rest of Team details; a value that cannot be saved is held with its reason under the boxes.">Birth years</button>
+    <button class="mk res" data-note="RESTYLED, order only: every other Team details field keeps its words, look and autosave, and the Archive foot is unchanged. Colour, Sport and Public address each move one cell along, because the years take the cell beside Division.">Team details</button>
+    <button class="mk unc" data-note="UNCHANGED: the rest of the team page (stat cards, Coaches, With the club, What the club sees, Seasons). Shown folded here so the frame stays readable; nothing in them moves.">Rest of the page</button>
+    <button class="mk drf" data-note="Draft words: the label 'Birth years for the 2027 season', the hint 'Families see "Born 2012–2013". Leave a box empty for no limit on that side.' and the cut-off line 'Baseball birthdays count from January 1. Change in Settings'">Words</button>
+    <button class="fx" data-finding="C2-01">C2-01</button>
+  </div>
+  <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+  <div class="dt-wrap fit"><div class="dt">
+    <div class="ak" style="min-height:900px">
+<div class="tb"><span class="lg"></span>FIELDLOGICHQ<span class="ar">ADMIN AREA</span><span class="rt">🔔 ◯</span></div>
+<div class="shell"><div class="sb"><div class="it">Overview</div><div class="it">Calendar</div><div class="it">Schedules</div><div class="grp">Programs</div><div class="it" style="font-weight:650;color:var(--ink)">Rep teams</div><div class="it sub">Teams</div><div class="it sub">Assistant coaches</div><div class="it sub">Document templates</div><div class="it sub">Shared library</div><div class="it sub">Past seasons</div><div class="it sub">Bring in a coach's team</div><div class="it team">15U AAA</div><div class="it sub on">Team page</div><div class="it sub">Roster</div><div class="it sub">Schedule</div><div class="it sub">Tryouts</div><div class="it sub">Coaches</div><div class="it">House league</div><div class="it">Accounting</div><div class="it">Families</div><div class="it">Public site</div><div class="it">Tournaments</div><div class="grp">Organization</div></div>
+<div class="mn gridbg"><div class="orgrow">Lakeshore Lynx<span class="ps">◍ Public site</span></div>
+
+        <div class="pg w1200">
+          <div class="phd"><span class="bk">← Teams</span><div><div class="ey">Rep teams · Senior</div><h1>15U AAA <span class="kc live">2027 Season · Live</span></h1></div><span class="act"><span class="b out">▣ Close the season</span><span class="b lime">▣ Start next season</span></span></div>
+          <div class="folded">Unchanged above, folded in this frame: the four stat cards, Coaches, With the club, What the club sees.</div>
+          <div class="sect">
+            <div class="sect-h"><h3>Team details</h3></div>
+            <div class="sect-b">
+              <div class="g2">
+                <div class="f"><span class="lbl">Name *</span><span class="in">15U AAA</span></div>
+                <div class="f"><span class="lbl">Group</span><span class="in sel">Senior</span></div>
+                <div class="f"><span class="lbl">Division</span><span class="in">Provincial AAA</span><span class="hint">Coaches see this in their Team settings. Only the club changes it.</span></div>
+                <div class="f"><span class="lbl drafted">Birth years for the 2027 season</span><span class="yrs"><span class="in">2012</span><span class="dash">–</span><span class="in">2013</span></span><span class="hint drafted">Families see "Born 2012–2013". Leave a box empty for no limit on that side.</span><span class="hint drafted">Baseball birthdays count from January 1. <span class="door" style="min-height:0;font-size:12px">Change in Settings</span></span></div>
+                <div class="f"><span class="lbl">Colour</span><span class="yrs"><span style="width:36px;height:36px;border-radius:6px;background:#1F3A5F;flex:none"></span><span class="in" style="width:auto;flex:1">#1F3A5F</span></span><span class="hint">Shown on the team's public page.</span></div>
+                <div class="f"><span class="lbl">Sport</span><span class="in sel">Baseball</span></div>
+                <div class="f"><span class="lbl">Public address</span><span class="addrbox">lakeshore-lynx/teams/15u-aaa</span><span class="hint">Rename team URLs on Rep teams changes it. <span style="color:var(--olive);font-weight:600;text-decoration:underline">Open the public page ↗</span></span></div>
+              </div>
+              <div class="f"><span class="lbl">Description</span><div class="ta" style="min-height:80px">Our top 15U group. Winter practices on Sundays at Lakeshore Dome; the season runs April to August.</div></div>
+            </div>
+            <div class="sect-f"><span style="flex:1;font-size:13px;color:var(--soft)">Archiving hides 15U AAA from the club's lists and frees its place on your plan. Its seasons and history are kept.</span><span class="b red">Archive team</span></div>
+          </div>
+          <div class="folded">Unchanged below: Seasons.</div>
+        </div>
+      </div></div>
+      <div class="spill">Saved</div>
+    </div>
+  </div></div>
+  <p class="cap" style="max-width:none"><b>One more row on a desk.</b> The years sit beside Division, the other label that says who the team is for. Colour and Sport each move one cell along, and Public address ends the grid with a free cell beside it. The section grows by one field row, about 70 px. The rest of the page is folded in this frame and does not change.</p>
+
+  <h3>Phone, 390 · and the states of the field</h3>
+  <div class="stage">
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · phone</span>
+        <button class="mk new" data-note="NEW. On a phone the grid is one column, so the years sit under Division. The two boxes stay side by side (two four-digit years fit in 390), each 44 px high like every one-line field on a phone.">Birth years</button>
+        <button class="mk unc" data-note="UNCHANGED: the phone page head with its Start next season symbol, and every other field.">The rest</button>
+      </div>
+      <div class="ph-wrap"><div class="ph">
+        <div class="ak">
+          <div class="phead">Lakeshore Lynx<span class="r">◍</span></div>
+          <div class="ph-in gridbg">
+            <div class="folded">Scrolled to Team details. Above it, unchanged: the page head, the stat cards, Coaches, With the club, What the club sees.</div>
+            <div class="sect">
+              <div class="sect-h"><h3>Team details</h3></div>
+              <div class="sect-b">
+                <div class="f"><span class="lbl">Name *</span><span class="in" style="height:44px">15U AAA</span></div>
+                <div class="f"><span class="lbl">Group</span><span class="in sel" style="height:44px">Senior</span></div>
+                <div class="f"><span class="lbl">Division</span><span class="in" style="height:44px">Provincial AAA</span><span class="hint">Coaches see this in their Team settings. Only the club changes it.</span></div>
+                <div class="f"><span class="lbl drafted">Birth years for the 2027 season</span><span class="yrs"><span class="in" style="height:44px;width:96px">2012</span><span class="dash">–</span><span class="in" style="height:44px;width:96px">2013</span></span><span class="hint drafted">Families see "Born 2012–2013". Leave a box empty for no limit on that side.</span><span class="hint drafted">Baseball birthdays count from January 1. <span class="door" style="min-height:0;font-size:12px">Change in Settings</span></span></div>
+                <div class="f"><span class="lbl">Colour</span><span class="yrs"><span style="width:44px;height:44px;border-radius:8px;background:#1F3A5F;flex:none"></span><span class="in" style="width:auto;flex:1;height:44px">#1F3A5F</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="spill" style="top:728px;bottom:auto">Saved</div>
+          <div class="botnav"><span>Overview</span><span>Calendar</span><span class="on">Rep teams</span><span>Accounting</span><span>More</span></div>
+        </div>
+        <div class="fold"><span>fold · 844</span></div>
+      </div></div>
+    </div>
+    <div class="col" style="flex:1 1 420px">
+      <div class="chips"><span class="eyebrow">States of the pair</span>
+        <button class="mk new" data-note="Every state the two boxes can be in. A held value is never saved: the boxes keep what was typed, the reason sits under them in red, and the save pill does not say Saved. That is the house rule for an autosaving record ('Give the team a name to save it').">States</button>
+        <button class="mk drf" data-note="Draft words: every hint and held sentence in these states.">Words</button>
+      </div>
+      <div class="states">
+        <div class="col"><span class="eyebrow">Empty (the default)</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in ph">Year</span><span class="dash">–</span><span class="in ph">Year</span></span><span class="hint">Families see "Born 2012–2013". Leave a box empty for no limit on that side.</span></div></div>
+          <span class="small muted">Nothing shows to families. The team stays in every Born in list.</span></div>
+        <div class="col"><span class="eyebrow">One year</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in">2013</span><span class="dash">–</span><span class="in">2013</span></span><span class="hint">Families see "Born 2013".</span></div></div>
+          <span class="small muted">The same year in both boxes.</span></div>
+        <div class="col"><span class="eyebrow">A range</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in">2012</span><span class="dash">–</span><span class="in">2013</span></span><span class="hint">Families see "Born 2012–2013".</span></div></div>
+          <span class="small muted">The hint repeats what families will read, so the admin checks it once.</span></div>
+        <div class="col"><span class="eyebrow">No upper limit</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in">2012</span><span class="dash">–</span><span class="in ph">Year</span></span><span class="hint">Families see "Born 2012 or later".</span></div></div>
+          <span class="small muted">For a team that takes younger players too.</span></div>
+        <div class="col"><span class="eyebrow">No lower limit</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in ph">Year</span><span class="dash">–</span><span class="in">2008</span></span><span class="hint">Families see "Born 2008 or earlier".</span></div></div>
+          <span class="small muted">An older or adult team.</span></div>
+        <div class="col"><span class="eyebrow">Softball, cut-off September 1</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="note" style="font-size:13px;color:var(--soft)">Sep 1,</span><span class="in" style="width:72px">2013</span><span class="dash">–</span><span class="note" style="font-size:13px;color:var(--soft)">Aug 31,</span><span class="in" style="width:72px">2015</span></span><span class="hint">Families see "Born Sep 1, 2013 – Aug 31, 2015".</span><span class="hint">Softball birthdays count from September 1. <span class="door" style="min-height:0;font-size:12px">Change in Settings</span></span></div></div>
+          <span class="small muted">The boxes sit inside the dates, so the admin types years and sees exactly what they mean.</span></div>
+        <div class="col"><span class="eyebrow">Your example</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="note" style="font-size:13px;color:var(--soft)">Sep 1,</span><span class="in ph" style="width:72px">Year</span><span class="dash">–</span><span class="note" style="font-size:13px;color:var(--soft)">Aug 31,</span><span class="in" style="width:72px">2014</span></span><span class="hint">Families see "Born before Sep 1, 2014".</span></div></div>
+          <span class="small muted">"Anyone born before September 1, 2014": the first box empty.</span></div>
+        <div class="col"><span class="eyebrow">Held · not a year</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in err">13</span><span class="dash">–</span><span class="in ph">Year</span></span><span class="held drafted">Use a four-digit year, like 2013, to save it.</span></div></div></div>
+        <div class="col"><span class="eyebrow">Held · in the future</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in">2012</span><span class="dash">–</span><span class="in err">2031</span></span><span class="held drafted">A birth year can't be after 2026.</span></div></div>
+          <span class="small muted">"After this calendar year": nobody on a roster is born yet.</span></div>
+        <div class="col"><span class="eyebrow">Held · the wrong way round</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="in err">2013</span><span class="dash">–</span><span class="in err">2012</span></span><span class="held drafted">Put the earlier year first to save it.</span></div></div>
+          <span class="small muted">Not swapped silently: the admin may have typed one of them wrong.</span></div>
+        <div class="col"><span class="eyebrow">After Start next season</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Birth years for the 2028 season</span><span class="yrs"><span class="in">2013</span><span class="dash">–</span><span class="in">2014</span></span><span class="hint drafted">Moved one year later when the 2028 season started. If this team keeps its players, change it back.</span></div></div>
+          <span class="small muted">Ask 4 A. An empty box stays empty. The note shows until the admin changes the years or the season's first game is played. No message is sent.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Add a team</h3>
+  <p>The <b>Add a team</b> window asks for a name, address, sport, division, group, colour and description. The team has no season until it is started, so its birth years cannot be entered yet. <b>Recommendation: leave Add a team alone.</b> The years are asked for on the team's page once its first season is started, and the page's success line already says to start that season. <span class="mk unc" role="button" tabindex="0" data-note="UNCHANGED: the Add a team window. Under Ask 4 A the years belong to a season, and a new team has none until 'Start its first season'.">Add a team</span></p>
+
+    <h2 id="b-cut">1b · When birthdays count from (round 2)</h2>
+  <div class="verdict ok"><h3>Ruled 2026-10-22: the club sets its cut-off, per sport</h3><p class="tight">Not every league counts a player's age from January 1. Little League counts from the end of August, and a winter hockey season may count differently from a summer baseball one. You ruled a club cut-off for now, built per sport if that is easy. It is: every team and house-league season already knows its sport, so the cut-off is one row per sport the club runs. Teams keep their years and read their sport's cut-off, so changing it later re-reads every team of that sport at once, on the site and in the forms.</p></div>
+
+  <h3>Desk, 1440 · Settings, a new card</h3>
+  <div class="chips">
+    <span class="eyebrow">After</span>
+    <button class="mk new" data-note="NEW. 'When birthdays count from': one row per sport the club runs (a sport with no team or house-league season is not listed). Each row is a month and a day, two dropdowns, January 1 by default, with a sentence under it saying what it does. A change asks once, because it changes every team of that sport on the club's site at once.">Cut-off card</button>
+    <button class="mk unc" data-note="UNCHANGED: Organization details (with its own Save), the Your public site door, Delete organization.">The rest</button>
+    <button class="mk drf" data-note="Draft words: the card title, its sentence and the row sentences.">Words</button>
+  </div>
+  <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+  <div class="dt-wrap fit"><div class="dt">
+    <div class="ak" style="min-height:900px">
+      <div class="tb"><span class="lg"></span>FIELDLOGICHQ<span class="ar">ADMIN AREA</span><span class="rt">🔔 ◯</span></div>
+      <div class="shell"><div class="sb"><div class="it">Overview</div><div class="it">Calendar</div><div class="it">Schedules</div><div class="grp">Programs</div><div class="it">Rep teams</div><div class="it">House league</div><div class="it">Accounting</div><div class="it">Families</div><div class="it">Public site</div><div class="it">Tournaments</div><div class="grp">Organization</div><div class="it">Members</div><div class="it">Venues</div><div class="it">Billing</div><div class="it on">Settings</div></div>
+      <div class="mn gridbg"><div class="orgrow">Lakeshore Lynx<span class="ps">◍ Public site</span></div>
+        <div class="pg w960">
+          <div class="phd"><div><div class="ey">Organization</div><h1>Settings</h1></div></div>
+          <div class="folded">Unchanged above: Organization details (name and address, with its own Save).</div>
+          <div class="sect">
+            <div class="sect-h"><h3 class="drafted">When birthdays count from</h3></div>
+            <div class="sect-b">
+              <p class="lede drafted" style="font-size:13px;color:var(--soft)">Teams and house-league divisions show who can play by birth year, counted from this date. Most leagues count from January 1.</p>
+              <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;align-items:flex-start;gap:16px">
+                <div style="flex:1;min-width:0"><div style="font:650 14px/1.3 Inter">Baseball</div><div class="hint drafted">9 rep teams. Families see "Born 2012–2013".</div></div>
+                <span class="in sel" style="width:150px">January</span><span class="in sel" style="width:72px">1</span>
+              </div>
+              <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;align-items:flex-start;gap:16px">
+                <div style="flex:1;min-width:0"><div style="font:650 14px/1.3 Inter">Softball</div><div class="hint drafted">2 rep teams, 1 house-league season. Families see "Born Sep 1, 2013 – Aug 31, 2015".</div></div>
+                <span class="in sel focus" style="width:150px">September</span><span class="in sel" style="width:72px">1</span>
+              </div>
+            </div>
+          </div>
+          <div class="folded">Unchanged below: Your public site, Delete organization.</div>
+        </div>
+      </div></div>
+    </div>
+  </div></div>
+  <p class="cap" style="max-width:none"><b>Only the sports the club runs.</b> A baseball-only club sees one row. The sentence under each row shows a family's line from that club's own teams, so the admin sees the effect before changing it.</p>
+
+  <div class="stage">
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · phone</span>
+        <button class="mk new" data-note="NEW, the same card on a phone: the sport and its sentence on one line, the two dropdowns under it at full width, 44 px.">Cut-off card</button>
+      </div>
+      <div class="spec ak" style="padding:12px">
+        <div class="sect">
+          <div class="sect-h"><h3>When birthdays count from</h3></div>
+          <div class="sect-b">
+            <p class="lede" style="font-size:13px;color:var(--soft)">Teams and house-league divisions show who can play by birth year, counted from this date. Most leagues count from January 1.</p>
+            <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px">
+              <div><div style="font:650 14px/1.3 Inter">Softball</div><div class="hint">2 rep teams, 1 house-league season. Families see "Born Sep 1, 2013 – Aug 31, 2015".</div></div>
+              <div style="display:flex;gap:8px"><span class="in sel" style="flex:2;height:44px">September</span><span class="in sel" style="flex:1;height:44px">1</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · changing it asks once</span>
+        <button class="mk new" data-note="NEW. Changing a sport's cut-off re-reads every team and division of that sport on the club's public site at once, so it asks once and shows an example. Nothing is sent to anyone. Keep is the way out; the change is the lime.">The question</button>
+        <button class="mk drf" data-note="Draft words.">Words</button>
+      </div>
+      <div class="ph-wrap"><div class="ph" style="height:auto">
+        <div class="ak scrim" style="min-height:400px">
+          <div class="kd">
+            <div class="kh"><b class="drafted">Count softball birthdays from September 1?</b><span style="font-size:18px;color:var(--dim)">×</span></div>
+            <div class="kb drafted">Every softball team and house-league division shows its birth years from September 1, on your site and in your forms. 13U Softball will read "Born Sep 1, 2013 – Aug 31, 2015". Nothing is sent to families.</div>
+            <div class="kf"><span class="l"></span><span class="b ghost" style="min-height:44px">Keep January 1</span><span class="b lime" style="min-height:44px">Change</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · a softball team's Team details</span>
+        <button class="mk new" data-note="With the sport's cut-off on September 1, the same two boxes sit inside the dates: 'Sep 1, [2013] – Aug 31, [2015]'. The admin still types only years and sees exactly what they mean. A January 1 sport shows the bare boxes, as on the baseball frames above.">Framed boxes</button>
+      </div>
+      <div class="spec ak" style="padding:14px 16px">
+        <div class="f"><span class="lbl">Birth years for the 2027 season</span><span class="yrs"><span class="note" style="font-size:13px;color:var(--soft)">Sep 1,</span><span class="in" style="width:72px">2013</span><span class="dash">–</span><span class="note" style="font-size:13px;color:var(--soft)">Aug 31,</span><span class="in" style="width:72px">2015</span></span><span class="hint">Families see "Born Sep 1, 2013 – Aug 31, 2015". Leave a box empty for no limit on that side.</span><span class="hint">Softball birthdays count from September 1. <span class="door" style="min-height:0;font-size:12px">Change in Settings</span></span></div>
+      </div>
+      <p class="cap"><b>Why not full date pickers on every team:</b> most clubs count from January 1, and would be typing "January 1" and "December 31" on every team for nothing.</p>
+    </div>
+  </div>
+
+  <h2 id="b-hl">1c · Birth years on a house-league division</h2>
+  <p>A house-league division is set up in the <b>Add division</b> and <b>Edit division</b> windows on the season's page. Both are still the old-look windows, with an explicit Save. The years join them as one more field; the window itself is not this stage's to restyle. Divisions are typed fresh for every season and nothing is copied forward, so the years never go stale here. <button class="fl" data-finding="C2-08" data-here="The Add division window's placeholder is 'e.g. Division A, East': a division can be a place, not an age.">C2-08</button></p>
+  <div class="stage">
+    <div class="col"><div class="chips"><span class="eyebrow">Before</span></div>
+      <div class="shot-wrap"><img class="shot" src="img/s4c2-admin-house-league-division-add-window-390-view.jpg" alt="Today's Add division window: Division name and Capacity" loading="lazy"></div>
+      <p class="cap"><b>Today.</b> Division name ("e.g. Division A, East") and Capacity. No age anywhere.</p>
+
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · Add division (Edit is the same)</span>
+        <button class="mk new" data-note="NEW. 'Birth years', the same two boxes and the same checks as a rep team. The label names no season because the window already belongs to one ('2027 House League').">Birth years</button>
+        <button class="mk unc" data-note="UNCHANGED: the old-look window, its name and capacity fields and its Cancel / Add division buttons. A redraw to the new window is a separate pass (the One Window programme), not this stage.">The window</button>
+        <button class="mk drf" data-note="Draft words: 'Birth years' and its hint.">Words</button>
+        <button class="fx" data-finding="C2-08">C2-08</button>
+      </div>
+      <div class="ph-wrap"><div class="ph" style="height:auto">
+        <div class="ak scrim" style="min-height:560px">
+          <div class="old">
+            <div class="oh"><b>Add division</b><span style="font-size:18px;color:var(--dim)">×</span></div>
+            <div class="ob">
+              <div class="f"><span class="lbl">Division name *</span><span class="in" style="height:44px">U13</span></div>
+              <div class="f"><span class="lbl">Capacity (optional)</span><span class="in ph" style="height:44px">Leave blank for unlimited</span><span class="hint">Maximum number of active registrations for this division.</span></div>
+              <div class="f"><span class="lbl drafted">Birth years</span><span class="yrs"><span class="in" style="height:44px;width:96px">2014</span><span class="dash">–</span><span class="in" style="height:44px;width:96px">2015</span></span><span class="hint drafted">Families see "Born 2014–2015" beside this division. Leave a box empty for no limit on that side. Birthdays count from the cut-off for this season's sport.</span></div>
+            </div>
+            <div class="of"><span class="b ghost">Cancel</span><span class="b lime">Add division</span></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="cap"><b>Same pair, same checks.</b> A held value keeps the window open with its reason under the boxes. The window's own Add division refuses until it is fixed, as its name field does today.</p>
+    </div>
+  </div>
+
+  <h2 id="b-fam">1d · What a family sees: one year, a range, none, and a September cut-off</h2>
+  <p>The places the years show were drawn and ruled in Stage 4 (the home's team grid, the Teams page, the tryout rows, the finished meta, the house league). This frame settles only the open point: how one year reads against a range, and what a team with none looks like beside them.</p>
+  <div class="stage">
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · Teams, no year picked</span>
+        <button class="mk unc" data-note="UNCHANGED from the ruled Stage 4 drawing (End state › 11): the Teams page, its bands, the Born in pill and the row shape.">Teams page</button>
+        <button class="mk new" data-note="The open point, drawn. A range reads 'Born 2012–2013' with an en dash. One year reads 'Born 2013'. A team with no years shows no line at all, never 'Born —' or 'All ages', and stays in the list for every year picked.">One · range · none</button>
+      </div>
+      <div class="ph-wrap"><div class="ph">
+        <div class="cs lynx">
+          <div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep teams · ages 9 to 16</small></span><span class="signin">Sign in</span></div>
+          <div class="nav"><span>Home</span><span class="on">Teams</span><span>Tryouts</span><span>About</span></div>
+          <div class="bd">
+            <div class="ptitle" style="border-top:0;padding-top:0"><h1>Teams</h1><div class="meta">2027 season</div></div>
+            <span class="picker">Born in: any year</span>
+            <div class="card">
+              <div class="band">AAA</div>
+              <div class="row"><div class="grow"><div class="nm">15U AAA</div><div class="sub">Born 2012–2013</div></div><span class="chip open">Tryouts open</span><span class="chev"></span></div>
+              <div class="row"><div class="grow"><div class="nm">13U AAA</div><div class="sub">Born 2014–2015</div></div><span class="chev"></span></div>
+              <div class="band">AA</div>
+              <div class="row"><div class="grow"><div class="nm">16U AA</div><div class="sub">Born 2011</div></div><span class="chev"></span></div>
+              <div class="row"><div class="grow"><div class="nm">14U AA</div><div class="sub">Born 2013</div></div><span class="chev"></span></div>
+              <div class="row"><div class="grow"><div class="nm">12U AA</div><div class="sub">Born 2015</div></div><span class="chev"></span></div>
+              <div class="band">Development</div>
+              <div class="row"><div class="grow"><div class="nm">10U Development</div></div><span class="chev"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="fold"><span>fold · 844</span></div>
+      </div></div>
+      <p class="cap"><b>10U Development has no years.</b> It shows as a plain row and stays listed whichever year a parent picks (ruled). The fixture's years here are examples; Lakeshore's real ones are the club's to type.</p>
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · the tryout page's meta</span>
+        <button class="mk res" data-note="RESTYLED (4c-2): the tryout page's meta line gains the years: 'For the 2027 season · born 2012–2013', lower-case 'born' after the dot, as the ruled finished frame reads. A team with none keeps today's 'For the 2027 season'.">Meta line</button>
+      </div>
+      <div class="spec"><div class="cs lynx"><div class="bd">
+        <span class="back">15U AAA</span>
+        <div class="ptitle"><h1>15U AAA tryouts</h1><div class="meta">For the 2027 season · born 2012–2013</div></div>
+        <span class="chip open" style="align-self:flex-start">Tryouts open</span>
+      </div></div></div>
+      <div class="spec"><div class="cs lynx"><div class="bd">
+        <span class="back">10U Development</span>
+        <div class="ptitle"><h1>10U Development tryouts</h1><div class="meta">For the 2027 season</div></div>
+      </div></div></div>
+      <p class="cap"><b>The guard changes with it.</b> Today a build test forbids "Born in" and "born 2…" on the tryout pages, by design until this stage. The 4c-2 build replaces that test with one that pins these lines.</p>
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · a September club, one year picked</span>
+        <button class="mk new" data-note="Round 2. With a September 1 cut-off a birth year can fall in two teams. Picking 2014 keeps both, because a child born in March 2014 plays U13 and one born in October 2014 plays U11. Each row shows its dates, so the parent picks by birth month. The picker stays a year: a month-and-year menu would be exact, but far longer on a phone.">Two teams for one year</button>
+        <button class="mk unc" data-note="UNCHANGED (ruled Stage 4): the Born in pill, its count sentence and the row shape.">Picker</button>
+      </div>
+      <div class="ph-wrap"><div class="ph" style="height:auto">
+        <div class="cs harbour">
+          <div class="hd"><span class="logo">H</span><span class="club">Harbourside Softball<small>Rep teams · ages 9 to 16</small></span><span class="signin">Sign in</span></div>
+          <div class="nav"><span>Home</span><span class="on">Teams</span><span>Tryouts</span><span>About</span></div>
+          <div class="bd">
+            <div class="ptitle" style="border-top:0;padding-top:0"><h1>Teams</h1><div class="meta">2 places for a player born in 2014</div></div>
+            <span class="picker">Born in: 2014</span>
+            <div class="card">
+              <div class="band">Rep</div>
+              <div class="row"><div class="grow"><div class="nm">U13 Rep</div><div class="sub">Born Sep 1, 2012 – Aug 31, 2014</div></div><span class="chev"></span></div>
+              <div class="row"><div class="grow"><div class="nm">U11 Rep</div><div class="sub">Born Sep 1, 2014 – Aug 31, 2016</div></div><span class="chev"></span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="cap"><b>Born in March 2014: U13. Born in October 2014: U11.</b> The dates on the rows answer it; the list never hides a team the child might fit.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═════════════════════════ 2 · TRYOUT BLURB ═════════════════════════ -->
+<section class="tab" id="tab-blurb" data-tab="blurb" hidden>
+  <h2 id="t-page">2 · The tryout blurb's editor, on the admin's Tryouts page</h2>
+  <p>Ruled (Ask 5 A): the blurb gains an editor on the admin's Tryouts page; no fee field is invented; the past-year hint covers it. <b>Open, and drawn here:</b> where it sits, autosave or a held Save, its size and count, how the hint reads here, and whether next season starts with last season's words.</p>
+  <p>Today no screen writes the blurb. Families see it under <b>From the club</b> on the tryout page, above <b>Sign up for tryouts</b>, and only while sign-ups are open. It has no length limit, and starting next season leaves it blank. <button class="fl" data-finding="C2-04">C2-04</button> <button class="fl" data-finding="C2-03">C2-03</button></p>
+
+  <div class="verdict ok" style="border-left-color:var(--t-res)">
+    <h3>Autosave, not a held Save: the reason</h3>
+    <p class="tight">The 2026-10-09 exception holds a change that <b>tells families</b>: a published game moving, a club notice going up. Both send or announce something, at a moment someone chose. The blurb sends nothing. It is read when a parent opens the page, like the About text, which autosaves. So it saves as you type, with the floating pill. A held Save here would be the one tryout field that needs a button, beside an Open sign-ups switch that already decides when families can act.</p>
+  </div>
+
+  <h3>Desk, 1440 · the whole Tryouts page</h3>
+  <div class="chips">
+    <span class="eyebrow">After · sign-ups open</span>
+    <button class="mk new" data-note="NEW. 'From the club', the same heading families read above the blurb. A 4-line box (grows as you type), 500 characters, the house counter '185 / 500' under it at the left, and the amber past-year hint above the counter when it fires. It saves as you type; the floating pill says Saved and fades.">From the club</button>
+    <button class="mk new" data-note="NEW, and it belongs to frame 3. One line saying where this page's tryout questions go: the club's address, or the head coach's when one is set, with who set it and 'Use the club's address'. Drawn here because this is the screen it lives on; the rules are on the Coach's address tab.">Questions line</button>
+    <button class="mk unc" data-note="UNCHANGED: the page head, the Sign-ups chip, Copy link, Close sign-ups, the address, the applicant views, Export, the table and the foot sentence.">The rest</button>
+    <button class="mk drf" data-note="Draft words: the field's hint, the placeholder, and the questions line.">Words</button>
+    <button class="fx" data-finding="C2-04">C2-04</button>
+  </div>
+  <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+  <div class="dt-wrap fit"><div class="dt">
+    <div class="ak" style="min-height:900px">
+<div class="tb"><span class="lg"></span>FIELDLOGICHQ<span class="ar">ADMIN AREA</span><span class="rt">🔔 ◯</span></div>
+<div class="shell"><div class="sb"><div class="it">Overview</div><div class="it">Calendar</div><div class="it">Schedules</div><div class="grp">Programs</div><div class="it" style="font-weight:650;color:var(--ink)">Rep teams</div><div class="it sub">Teams</div><div class="it sub">Assistant coaches</div><div class="it sub">Document templates</div><div class="it sub">Shared library</div><div class="it sub">Past seasons</div><div class="it sub">Bring in a coach's team</div><div class="it team">15U AAA</div><div class="it sub">Team page</div><div class="it sub">Roster</div><div class="it sub">Schedule</div><div class="it sub on">Tryouts</div><div class="it sub">Coaches</div><div class="it">House league</div><div class="it">Accounting</div><div class="it">Families</div><div class="it">Public site</div><div class="it">Tournaments</div><div class="grp">Organization</div></div>
+<div class="mn gridbg"><div class="orgrow">Lakeshore Lynx<span class="ps">◍ Public site</span></div>
+
+        <div class="pg w1200">
+        <div class="phd"><span class="bk">← 15U AAA</span><div><div class="ey">Rep teams · Senior</div><h1>Tryouts <span class="kc live">2027 Season · Live</span></h1></div><span class="act"><span class="b lime">+ Add applicant</span></span></div>
+        <div class="sect">
+          <div class="sect-h"><h3>Sign-ups <span class="kc good">Open</span></h3><span class="acts"><span class="b ghost">⧉ Copy link</span><span class="b out">Close sign-ups</span></span></div>
+          <div class="sect-b">
+            <span class="addrbox">lakeshore-lynx/teams/15u-aaa/tryouts</span>
+            <div class="f" style="max-width:640px"><span class="lbl">From the club</span>
+              <div class="ta focus" style="min-height:100px">The tryout fee is $40, paid at check-in. Open to players born 2012 and 2013. Bring water and the gear you play in; bibs are handed out at the door. We email every family by November 28.</div>
+              <span class="hint drafted">Families read this on the tryout page, above Sign up for tryouts, before and while sign-ups are open.</span>
+              <span class="hint">185 / 500</span>
+            </div>
+            <div class="call" style="max-width:640px"><div class="grow drafted">Tryout questions on this page go to <b>dana.tryouts@gmail.com</b><small>Set by Dana Whitfield, head coach. Your footer and the club's Tryouts page keep info@lakeshorelynx.ca.</small></div><span class="b out">Use the club's address</span></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="vp">Pending review · 4</span><span style="margin-left:auto" class="b out">Export</span></div>
+        <div class="sect" style="overflow:hidden">
+          <table class="kt"><thead><tr><th>Player</th><th>Date of birth</th><th>Guardian email</th><th>Submitted</th><th>Status</th><th>Consent</th></tr></thead>
+          <tbody><tr><td class="n">Avery Lindqvist</td><td>2012-05-14</td><td>m.lindqvist@example.ca</td><td>Oct 19</td><td><span class="kc">Pending</span></td><td>Yes</td></tr>
+          <tr><td class="n">Jordan Pereira</td><td>2013-01-30</td><td>pereira.home@example.ca</td><td>Oct 18</td><td><span class="kc">Pending</span></td><td>Yes</td></tr>
+          <tr><td class="n">Riley Chen</td><td>2012-09-02</td><td>chen.family@example.ca</td><td>Oct 16</td><td><span class="kc">Pending</span></td><td>Yes</td></tr>
+          <tr><td class="n" style="border-bottom:0">Sam Toussaint</td><td style="border-bottom:0">2013-07-21</td><td style="border-bottom:0">toussaint@example.ca</td><td style="border-bottom:0">Oct 15</td><td style="border-bottom:0"><span class="kc">Pending</span></td><td style="border-bottom:0">Yes</td></tr></tbody></table>
+        </div>
+        <p class="hint" style="margin:0">Dana Whitfield runs this tryout in the Coaches Portal: sessions, scoring and decisions. This is the same list, on the same season. Accepting adds a player to the 2027 Season roster; nothing is emailed.</p>
+      </div></div></div>
+      <div class="spill">Saved</div>
+    </div>
+  </div></div>
+  <p class="cap" style="max-width:none"><b>The table stays where it was.</b> The blurb and the questions line both join the Sign-ups section, the one part of this page about what families see. The applicants table, which is what the page is mostly used for, moves down by the height of the box (about 170 px) and stays above the fold on a 900-high desk.</p>
+
+  <h3>Phone, 390 · and the states of the field</h3>
+  <div class="stage">
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · phone</span>
+        <button class="mk new" data-note="NEW. The same field, full width, 4 lines. On a phone the page's secondary actions are bare symbols (Copy link); Close sign-ups keeps its words, a named exception: it changes what every family sees.">From the club</button>
+        <button class="mk unc" data-note="UNCHANGED: the phone page head and the Sign-ups section's address.">The rest</button>
+      </div>
+      <div class="ph-wrap"><div class="ph">
+        <div class="ak">
+          <div class="phead">Lakeshore Lynx<span class="r">◍</span></div>
+          <div class="ph-in gridbg">
+            <div class="phd"><span class="bk" style="padding-right:12px">←</span><div><div class="ey">Rep teams · Senior</div><h1>Tryouts <span class="kc live">2027 Season · Live</span></h1></div><span class="act"><span class="b lime" style="width:44px;min-height:44px;padding:0" aria-label="Add applicant">+</span></span></div>
+            <div class="sect">
+              <div class="sect-h"><h3>Sign-ups <span class="kc good">Open</span></h3><span class="acts"><span class="b icon" aria-label="Copy link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span><span class="b out" style="min-height:44px">Close sign-ups</span></span></div>
+              <div class="sect-b">
+                <span class="addrbox">lakeshore-lynx/teams/15u-aaa/tryouts</span>
+                <div class="f"><span class="lbl">From the club</span>
+                  <div class="ta" style="min-height:150px">The tryout fee is $40, paid at check-in. Open to players born 2012 and 2013. Bring water and the gear you play in; bibs are handed out at the door. We email every family by November 28.</div>
+                  <span class="hint drafted">Families read this on the tryout page, above Sign up for tryouts, before and while sign-ups are open.</span>
+                  <span class="hint">185 / 500</span>
+                </div>
+                <div class="call" style="flex-direction:column;align-items:stretch"><div class="grow drafted" style="overflow-wrap:anywhere">Tryout questions on this page go to <b>dana.tryouts@gmail.com</b><small>Set by Dana Whitfield, head coach.</small></div><span class="b out" style="min-height:44px;align-self:flex-start">Use the club's address</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px"><span class="vp" style="min-height:44px">Pending review · 4</span></div>
+          </div>
+          <div class="spill" style="top:728px;bottom:auto">Saved</div>
+          <div class="botnav"><span>Overview</span><span>Calendar</span><span class="on">Rep teams</span><span>Accounting</span><span>More</span></div>
+        </div>
+        <div class="fold"><span>fold · 844</span></div>
+      </div></div>
+      <p class="cap"><b>On a phone the applicants drop below the fold.</b> The admin's phone visit is usually "are sign-ups open, what does it say": both now answer on screen one, and the list is a scroll away. If you would rather keep the list on screen one, Ask 8 B tucks the blurb into a collapsed row on a phone.</p>
+    </div>
+    <div class="col" style="flex:1 1 420px">
+      <div class="chips"><span class="eyebrow">States of the field</span>
+        <button class="mk new" data-note="Every state of the blurb field. It never refuses a value: at 500 the box stops taking characters, as About does at 1000. The only failure is a save that does not reach the server, which keeps the pill's error and its Retry until it does.">States</button>
+        <button class="mk drf" data-note="Draft words: placeholder, hint, the door, the pill's error.">Words</button>
+        <button class="fx" data-finding="C2-02">C2-02</button><button class="fx" data-finding="C2-07">C2-07</button>
+      </div>
+      <div class="states">
+        <div class="col"><span class="eyebrow">Empty, a new season (Ask 10 A)</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">From the club</span><div class="ta ph drafted">What it costs, who can try out, what to bring and when families hear back.</div><span class="door drafted">Start from last season's words</span><span class="hint">0 / 500</span></div></div>
+          <span class="small muted">The door shows only when last season had a blurb. It fills the box with last season's words, which the hint then checks.</span></div>
+        <div class="col"><span class="eyebrow">Filled · birth years are not flagged</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">From the club</span><div class="ta">The tryout fee is $40, paid at check-in. Open to players born 2012 and 2013. Bring water and the gear you play in; bibs are handed out at the door. We email every family by November 28.</div><span class="hint">185 / 500</span></div></div>
+          <span class="small muted">Ask 11 A. Under today's rule this box would read "Mentions 2012 and 2013 — still true?".</span></div>
+        <div class="col"><span class="eyebrow">The past-year hint fires</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">From the club</span><div class="ta">The tryout fee is $40, the same as 2025, paid at check-in. Bring water and the gear you play in.</div><span class="yh">Mentions 2025 — still true?</span><span class="hint">96 / 500</span></div></div>
+          <span class="small muted">The approved words, amber, never a block, above the counter (as under About). <button class="fl" data-finding="C2-07" data-here="Under a question's answer the same hint is grey today.">C2-07</button></span></div>
+        <div class="col"><span class="eyebrow">At the limit</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">From the club</span><div class="ta" style="min-height:60px;color:var(--soft)">…and we email every family by November 28 with the result, whether or not a place is offered.</div><span class="hint">500 / 500</span></div></div>
+          <span class="small muted">The box stops taking characters. No red, no sentence: the counter says it.</span></div>
+        <div class="col"><span class="eyebrow">Refused · the save failed</span>
+          <div class="spec ak" style="padding:14px 16px 70px;position:relative"><div class="f"><span class="lbl">From the club</span><div class="ta">The tryout fee is $40, paid at check-in.</div><span class="hint">41 / 500</span></div><div class="spill bad" style="bottom:14px">Couldn't save · Retry</div></div>
+          <span class="small muted">The house pill: only an error stays. Leaving the page sends what is pending first, as the site editor does.</span></div>
+        <div class="col"><span class="eyebrow">Sign-ups closed</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">From the club</span><div class="ta">The tryout fee is $40, paid at check-in.</div><span class="hint drafted">Families read this once tryout days are posted and while sign-ups are open. Right now the page doesn't show it.</span><span class="hint">41 / 500</span></div></div>
+          <span class="small muted">The hint says when the words are read, so a closed page never surprises the admin.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 id="t-fam">2b · What a family sees before sign-ups open (Ask 9 A)</h2>
+  <div class="stage">
+    <div class="col"><div class="chips"><span class="eyebrow">Before · Not open yet</span></div>
+      <div class="shot-wrap"><img class="shot" src="img/s4c2-public-tryouts-15u-aaa-390-view.jpg" alt="Today's tryout page, closed: a card with the club's address and Copy" loading="lazy"></div>
+      <p class="cap"><b>No fixture is "Not open yet" today</b>, so this is the closed page, which shares its card. On a not-open-yet page the code adds the chip and the tryout days above that card, and shows no blurb.</p>
+
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · Not open yet</span>
+        <button class="mk res" data-note="RESTYLED (4c-2, Ask 9 A): the 'From the club' section, unchanged in look, now also shows on the Not open yet page, between the days and the contact card. Finished and closed pages still hide it.">From the club</button>
+        <button class="mk unc" data-note="UNCHANGED: the back link, title, chip, the tryout days and the contact card's sentence.">The rest</button>
+        <button class="mk res" data-note="RESTYLED, from frame 3: the contact card names the head coach's address when one is set (Ask 3 A). Copy is the bare symbol on a phone.">Questions</button>
+        <button class="fx" data-finding="C2-03">C2-03</button>
+      </div>
+      <div class="ph-wrap"><div class="ph">
+        <div class="cs lynx">
+          <div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep teams · ages 9 to 16</small></span><span class="signin">Sign in</span></div>
+          <div class="nav"><span>Home</span><span>Teams</span><span class="on">Tryouts</span><span>About</span></div>
+          <div class="bd">
+            <span class="back">13U AAA</span>
+            <div class="ptitle"><h1>13U AAA tryouts</h1><div class="meta">For the 2027 season · born 2014–2015</div></div>
+            <span class="chip closed" style="align-self:flex-start">Not open yet</span>
+            <div class="card days">
+              <div class="ev"><div class="dc">Sat, Nov 14</div><div><div class="t">10:00 a.m. – 12:00 p.m.</div><div class="w">Sherwood Park · Field 2</div></div><span class="sym" aria-label="Directions"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span></div>
+              <div class="ev"><div class="dc">Sun, Nov 15</div><div><div class="t">10:00 a.m. – 12:00 p.m.</div><div class="w">Lakeshore Dome</div></div><span class="sym" aria-label="Directions"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span></div>
+            </div>
+            <div class="sec-h"><h2>From the club</h2></div>
+            <div class="card"><div class="blurb">The tryout fee is $40, paid at check-in. Bring water and the gear you play in. We email every family within a week of the last day.</div></div>
+            <div class="ctcard"><p>Sign-ups for 13U AAA tryouts aren't open yet.</p><div class="lab drafted">Questions? Email the head coach</div><div class="addrrow"><b>coach.13uaaa@lakeshorelynx.ca</b><span class="sym" aria-label="Copy email address"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></div></div>
+          </div>
+        </div>
+        <div class="fold"><span>fold · 844</span></div>
+      </div></div>
+      <p class="cap"><b>The September page answers cost and who may come</b> before a parent has to ask. This head coach used a role address on the club's own domain, which the coach's form nudges toward (frame 3).</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═════════════════════════ 3 · HEAD COACH'S TRYOUT ADDRESS ═════════════════════════ -->
+<section class="tab" id="tab-addr" data-tab="addr" hidden>
+  <h2 id="a-coach">3 · The head coach's tryout address</h2>
+  <p>Ruled (gate, 2026-10-21): a <b>separate address the coach types</b>, blank by default, never the sign-in email, ending with their role, shown on the team's own tryout page only; the club's Tryouts page and the footer keep the club's line. <b>Open, and drawn here:</b> where the coach types it, its words, what a family sees in each state, Copy, who may set it, and what happens when the head coach changes. This is <a href="#ask-1" data-jump="ask-1">Ask 1</a>, the one that changes the build. <button class="fl" data-finding="C2-10">C2-10</button> <button class="fl" data-finding="C2-09">C2-09</button></p>
+
+  <div class="verdict" style="border-left-color:var(--ask)">
+    <h3>Where the coach types it: tryout setup, not Sharing (Ask 2)</h3>
+    <p class="tight">The gate ruling placed it "beside the coach's door" in Team settings › Sharing, and the drawing prompt left the placement open. I recommend the tryout setup instead, for three reasons from the code. <b>Who sees it:</b> Sharing shows to any coach who can configure the team, while tryout setup is the head coach's (an assistant sees it only if the head coach grants tryouts). <b>When:</b> the address is a tryout-season thing, set up beside the tryout days it sits next to on the family's page. Sharing is visited once a year, if that. <b>What it is:</b> Sharing's door is "who can see the team page"; this is "who answers tryout questions", a different question. The Sharing door gets no new control; option B draws it there if you prefer the ruled spot.</p>
+  </div>
+
+  <h3>The coach's side · phone, 390 and desk, 1440</h3>
+  <div class="stage">
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · phone · the row open, filled</span>
+        <button class="mk new" data-note="NEW. A fourth row in 'Get set up', Optional like Helpers who score: 'Questions from families'. Closed, its status line says where questions go now. Open, it holds one email field, its hint, and Remove once an address is set. It does not count toward '2 required'.">Questions row</button>
+        <button class="mk unc" data-note="UNCHANGED: the Get set up card, its progress line, and the three rows above (Tryout dates, Evaluation scorecard, Helpers who score).">Checklist</button>
+        <button class="mk drf" data-note="Draft words: the row's title, the status lines, the label, the hint and the two refusals.">Words</button>
+      </div>
+      <div class="ph-wrap"><div class="ph">
+        <div class="ak">
+          <div class="phead">15U AAA<span class="r">?</span></div>
+          <div class="ph-in gridbg">
+            <div class="tt"><i></i>Tryouts</div>
+            <div class="stg"><span class="on" data-n="1">Set up</span><span data-n="2">Tryout day</span><span data-n="3">Decide</span></div>
+            <div class="folded">The four-step explainer and "Do this next" sit here, unchanged.</div>
+            <div class="ckc">
+              <div class="hh">☑ Get set up<span class="pr"><b>1</b> of 2 required done</span></div>
+              <div class="ck-row"><span class="tick done"></span><div class="grow"><div class="t">Tryout dates</div><div class="s">Sat, Nov 14 + 2 more</div></div><span class="chev"></span></div>
+              <div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Evaluation scorecard <span class="tag">Required</span></div><div class="s">What you rate players on. Start from the ready-made starter and tweak it.</div></div><span class="chev"></span></div>
+              <div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Helpers who score <span class="tag">Optional</span></div><div class="s">Share a scoring link with an assistant — no account needed.</div></div><span class="chev"></span></div>
+              <div class="ck-row open"><span class="tick done"></span><div class="grow"><div class="t drafted">Questions from families</div><div class="s drafted">dana.tryouts@gmail.com · on your tryout page</div></div><span class="chev"></span></div>
+              <div class="ck-body" style="padding-left:16px">
+                <div class="f"><span class="lbl drafted">Address for tryout questions</span><span class="in" style="height:44px">dana.tryouts@gmail.com</span>
+                  <span class="hint drafted">Shown on your team's tryout page, where anyone can read it. Use an inbox you're happy to share, not the one you sign in with. It comes off when you stop being head coach.</span></div>
+                <span class="door" style="min-height:44px;color:var(--soft)">Remove and use the club's address</span>
+              </div>
+            </div>
+          </div>
+          <div class="spill" style="top:728px;bottom:auto">Saved</div>
+          <div class="botnav"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span class="on">More</span></div>
+        </div>
+        <div class="fold"><span>fold · 844</span></div>
+      </div></div>
+      <p class="cap"><b>Optional, last, quiet.</b> A coach who never opens it changes nothing: families keep writing to the club.</p>
+    </div>
+    <div class="col" style="flex:1 1 420px">
+      <div class="chips"><span class="eyebrow">States of the row</span>
+        <button class="mk new" data-note="Every state of the questions row. The address saves when it is a complete, acceptable address and you leave the field, never mid-typing: a half-typed address must never reach a public page. A refused one is held with its reason, and the page keeps what it showed before.">States</button>
+        <button class="mk drf" data-note="Draft words.">Words</button>
+      </div>
+      <div class="states">
+        <div class="col"><span class="eyebrow">Closed, nothing set (the default)</span>
+          <div class="spec ak"><div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Questions from families <span class="tag">Optional</span></div><div class="s drafted">They go to the club (info@lakeshorelynx.ca). Add your own address for this team's tryout page.</div></div><span class="chev"></span></div></div></div>
+        <div class="col"><span class="eyebrow">Open, empty</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Address for tryout questions</span><span class="in ph">you@example.ca</span><span class="hint">Shown on your team's tryout page, where anyone can read it. Use an inbox you're happy to share, not the one you sign in with. It comes off when you stop being head coach.</span></div></div></div>
+        <div class="col"><span class="eyebrow">Refused · the sign-in address</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Address for tryout questions</span><span class="in err">dana.whitfield@gmail.com</span><span class="held drafted">That's the address you sign in with. Use a separate one, so your sign-in stays private.</span></div></div>
+          <span class="small muted">Ruled "never the sign-in email". Compared ignoring case and spaces. Nothing is published.</span></div>
+        <div class="col"><span class="eyebrow">Refused · not an address</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Address for tryout questions</span><span class="in err">dana.tryouts@gmail</span><span class="held">That doesn't look like an email address.</span></div></div>
+          <span class="small muted">The site editor's approved words, reused.</span></div>
+        <div class="col"><span class="eyebrow">Accepted, with the nudge</span>
+          <div class="spec ak" style="padding:14px 16px"><div class="f"><span class="lbl">Address for tryout questions</span><span class="in">dana.tryouts@gmail.com</span><span class="hint">A role address such as tryouts@ keeps working when a volunteer changes. You can use this one if you prefer.</span></div></div>
+          <span class="small muted">The site editor's nudge for a personal-looking address, never a refusal.</span></div>
+        <div class="col"><span class="eyebrow">Another head coach set it</span>
+          <div class="spec ak"><div class="ck-row"><span class="tick done"></span><div class="grow"><div class="t">Questions from families</div><div class="s drafted">coach.15uaaa@lakeshorelynx.ca · set by Pat Morrow</div></div><span class="chev"></span></div></div>
+          <span class="small muted">One address per team; any head coach may change or remove it. An assistant with tryouts access reads it and cannot change it.</span></div>
+        <div class="col"><span class="eyebrow">The club put its own back</span>
+          <div class="spec ak"><div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Questions from families <span class="tag">Optional</span></div><div class="s drafted">The club put its own address back on Oct 22. They go to info@lakeshorelynx.ca.</div></div><span class="chev"></span></div></div>
+          <span class="small muted">The coach learns why it changed, in the place they set it. No email.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chips"><span class="eyebrow">After · desk</span>
+    <button class="mk new" data-note="NEW: the same row at a desk. The checklist card is the coach portal's reading width (960).">Questions row</button>
+    <button class="mk unc" data-note="UNCHANGED: the coach portal's sidebar, the Tryouts stage pills, the checklist card.">The rest</button>
+  </div>
+  <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+  <div class="dt-wrap fit"><div class="dt">
+    <div class="ak" style="min-height:760px">
+<div class="tb"><span class="lg"></span>FIELDLOGICHQ<span class="ar">COACHES PORTAL</span><span class="rt">🔔 ◯</span></div>
+<div class="shell"><div class="sb" style="width:220px"><div class="it">Overview</div><div class="grp">Season</div><div class="it">Schedule</div><div class="it">Practice plans</div><div class="it">Lineups</div><div class="it">Tournaments</div><div class="grp">Progress</div><div class="it">Skills &amp; goals</div><div class="it">Insights</div><div class="grp">Money</div><div class="it">Money</div><div class="grp">Communication</div><div class="it">Email families</div><div class="grp">Team</div><div class="it">Roster</div><div class="it on">Tryouts</div><div class="it">Staff</div><div class="it">Documents</div><div class="it">Settings</div></div>
+<div class="mn gridbg"><div class="teamrow"><div><b>15U AAA</b><small>Lakeshore Lynx · 2027 Season</small></div><div class="nx"><small>NEXT</small><br>Sat 9:00 a.m. tryout</div></div>
+
+        <div class="pg w960">
+        <div class="tt"><i></i>Tryouts</div>
+        <div class="stg"><span class="on" data-n="1">Set up</span><span data-n="2">Tryout day</span><span data-n="3">Decide</span><span data-n="4">Build team</span><span class="how">⌃ How tryouts work</span></div>
+        <div class="folded">The four-step explainer, "Do this next" and the sentence above the checklist sit here, unchanged.</div>
+        <div class="ckc">
+          <div class="hh">☑ Get set up<span class="pr"><b>1</b> of 2 required done</span></div>
+          <div class="ck-row"><span class="tick done"></span><div class="grow"><div class="t">Tryout dates</div><div class="s">Sat, Nov 14 + 2 more</div></div><span class="chev"></span></div>
+          <div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Evaluation scorecard <span class="tag">Required</span></div><div class="s">What you rate players on. Start from the ready-made starter and tweak it.</div></div><span class="chev"></span></div>
+          <div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Helpers who score <span class="tag">Optional</span></div><div class="s">Share a scoring link with an assistant — no account needed.</div></div><span class="chev"></span></div>
+          <div class="ck-row open"><span class="tick done"></span><div class="grow"><div class="t">Questions from families</div><div class="s">dana.tryouts@gmail.com · on your tryout page</div></div><span class="chev"></span></div>
+          <div class="ck-body">
+            <div class="f" style="max-width:420px"><span class="lbl">Address for tryout questions</span><span class="in">dana.tryouts@gmail.com</span>
+              <span class="hint">Shown on your team's tryout page, where anyone can read it. Use an inbox you're happy to share, not the one you sign in with. It comes off when you stop being head coach.</span></div>
+            <span class="door" style="color:var(--soft)">Remove and use the club's address</span>
+          </div>
+        </div>
+      </div></div></div>
+    </div>
+  </div></div>
+
+  <h2 id="a-club">3b · The club's side</h2>
+  <p>The club sees the address on the team's Tryouts page (drawn on the <a href="#t-page" data-jump="t-page">Tryout blurb tab</a>), in the Sign-ups section, with who set it. <b>Use the club's address</b> takes it off. It asks once, because it overrides another person's choice on a page families read.</p>
+  <div class="stage">
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · the question it asks</span>
+        <button class="mk new" data-note="NEW. A small window in the house window shape (sentence at the foot's left, buttons at the right). It asks because it overrides the head coach's choice; it is not a delete, so no red. The coach can set it again; the coach's row says the club put its own back.">Use the club's address?</button>
+        <button class="mk drf" data-note="Draft words.">Words</button>
+      </div>
+      <div class="ph-wrap"><div class="ph" style="height:auto">
+        <div class="ak scrim" style="min-height:420px">
+          <div class="kd">
+            <div class="kh"><b class="drafted">Use the club's address on 15U AAA's tryout page?</b><span style="font-size:18px;color:var(--dim)">×</span></div>
+            <div class="kb drafted">Dana Whitfield set dana.tryouts@gmail.com for tryout questions. The page will show info@lakeshorelynx.ca instead, and Dana sees that the club changed it.</div>
+            <div class="kf"><span class="l"></span><span class="b ghost" style="min-height:44px">Keep it</span><span class="b lime" style="min-height:44px">Use the club's address</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="col" style="flex:1 1 420px">
+      <h3 style="margin-top:0">Who may do what</h3>
+      <div class="tw"><table class="t">
+        <thead><tr><th>Who</th><th>Sees it</th><th>Sets or changes it</th><th>Takes it off</th></tr></thead>
+        <tbody>
+          <tr><td>A head coach of the team</td><td>Yes, in tryout setup</td><td>Yes (one address per team)</td><td>Yes: Remove</td></tr>
+          <tr><td>An assistant with tryouts access</td><td>Yes, read only</td><td>No</td><td>No</td></tr>
+          <tr><td>Other assistants</td><td>No</td><td>No</td><td>No</td></tr>
+          <tr><td>Club owner or admin</td><td>Yes, on the team's Tryouts page</td><td>No (option C lets them)</td><td>Yes: Use the club's address</td></tr>
+          <tr><td>A family</td><td>On the team's own tryout page</td><td colspan="2">Never on the footer, the club's Tryouts page, the team page or a share card</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <h2 id="a-fam">3c · What a family sees</h2>
+  <p>Recommended (<a href="#ask-3" data-jump="ask-3">Ask 3</a> A): the head coach's address while the page is <b>open</b> or <b>not open yet</b>, the time a parent is deciding whether to try out. Once tryouts are <b>finished</b> or <b>closed</b> the page goes back to the club's line: the families who took part already have the coach's answer by email, and a finished page can stay up for months. Copy follows whichever address shows. <button class="fl" data-finding="C2-06">C2-06</button></p>
+  <div class="stage">
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · open · phone</span>
+        <button class="mk res" data-note="RESTYLED. Today: 'Questions? Email the club at info@…', a plain line with no Copy. After: 'Questions about these tryouts? Email the head coach' with the address and a bare Copy symbol (the phone rule). No name, because Dana has not turned on 'Show my name' (Ask 2's name switch decides that, not this field).">Questions line</button>
+        <button class="mk unc" data-note="UNCHANGED: the back link, title, the tryout days, the From the club section, Sign up for tryouts.">The page</button>
+        <button class="mk unc" data-note="UNCHANGED (ruled): the footer keeps the club's address, so this page carries two addresses on purpose, the team's above and the club's below.">Footer</button>
+        <button class="mk drf" data-note="Draft words: 'Questions about these tryouts? Email the head coach'.">Words</button>
+        <button class="fx" data-finding="C2-06">C2-06</button>
+      </div>
+      <div class="ph-wrap"><div class="ph">
+        <div class="cs lynx">
+          <div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep teams · ages 9 to 16</small></span><span class="signin">Sign in</span></div>
+          <div class="nav"><span>Home</span><span>Teams</span><span class="on">Tryouts</span><span>About</span></div>
+          <div class="bd">
+            <span class="back">15U AAA</span>
+            <div class="ptitle"><h1>15U AAA tryouts</h1><div class="meta">For the 2027 season · born 2012–2013</div></div>
+            <span class="chip open" style="align-self:flex-start">Tryouts open</span>
+            <div class="card days">
+              <div class="ev"><div class="dc">Sat, Nov 14</div><div><div class="t">9:00 a.m. – 11:00 a.m.</div><div class="w">Lakeshore Dome</div></div><span class="sym" aria-label="Directions"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span></div>
+              <div class="ev"><div class="dc">Sun, Nov 15</div><div><div class="t">9:00 a.m. – 11:00 a.m.</div><div class="w">Lakeshore Dome</div></div><span class="sym" aria-label="Directions"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span></div>
+              <div class="ev"><div class="dc">Sat, Nov 21</div><div><div class="t">1:00 p.m. – 3:00 p.m.</div><div class="w">Lakeshore Dome · Callbacks</div></div><span class="sym" aria-label="Directions"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span></div>
+            </div>
+            <div class="sec-h"><h2>From the club</h2></div>
+            <div class="card"><div class="blurb">The tryout fee is $40, paid at check-in. Bring water and the gear you play in; bibs are handed out at the door. We email every family by November 28.</div></div>
+            <span class="btn full">Sign up for tryouts</span>
+            <div class="ctcard bare"><div class="lab drafted">Questions about these tryouts? Email the head coach</div><div class="addrrow"><b>dana.tryouts@gmail.com</b><span class="sym" aria-label="Copy email address"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></div></div>
+          </div>
+          <div class="ft"><div class="fname">Lakeshore Lynx</div><div style="font-size:13px">Questions? Email the club</div><div class="mail" style="justify-content:space-between"><b style="text-decoration:underline">info@lakeshorelynx.ca</b><span class="sym" style="color:inherit;margin:-10px 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></div></div>
+        </div>
+        <div class="fold"><span>fold · 844</span></div>
+      </div></div>
+      <p class="cap"><b>Two addresses, one page, on purpose.</b> The one under the button is for these tryouts; the footer's is the club's. The words say which is which, so a parent never has to guess.</p>
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · finished · phone</span>
+        <button class="mk unc" data-note="UNCHANGED from today: a finished page's card names the club's address with Copy. The head coach's address does not show once tryouts are finished (Ask 3 A).">Finished card</button>
+      </div>
+      <div class="spec"><div class="cs lynx"><div class="bd">
+        <span class="back">14U AA</span>
+        <div class="ptitle"><h1>14U AA tryouts</h1><div class="meta">For the 2027 season · born 2013</div></div>
+        <span class="chip closed" style="align-self:flex-start">Finished</span>
+        <div class="ctcard"><p>Tryouts for the 2027 season finished on Mon, Oct 12.</p><div class="lab">Questions? Email the club</div><div class="addrrow"><b>info@lakeshorelynx.ca</b><span class="sym" aria-label="Copy email address"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></div></div>
+      </div></div></div>
+      <div class="chips" style="margin-top:14px"><span class="eyebrow">After · open · the coach's name switch on</span>
+        <button class="mk new" data-note="When the head coach has also turned on 'Show my name on the team's public page' (Ask 2, ruled), the line names them: 'Email Dana Whitfield, head coach'. Off, it says 'the head coach'. The tryout address never turns the name on by itself.">With a name</button>
+      </div>
+      <div class="spec"><div class="cs lynx"><div class="bd"><div class="ctcard bare"><div class="lab drafted">Questions about these tryouts? Email Dana Whitfield, head coach</div><div class="addrrow"><b>dana.tryouts@gmail.com</b><span class="sym" aria-label="Copy email address"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></div></div></div></div></div>
+      <p class="cap"><b>Not on the share card.</b> The card a parent sees in a group chat keeps the team, the state and the date only (today's rule: no email, no player, ever).</p>
+    </div>
+  </div>
+
+  <h3>Desk, 1440 · open</h3>
+  <div class="chips"><span class="eyebrow">After · open · desk</span>
+    <button class="mk res" data-note="RESTYLED: at a desk Copy is the small bordered button with its symbol and word, built like Directions and lined up under them at the right (the 2026-10-21 tryout-card ruling, applied to the open page too).">Questions line</button>
+    <button class="mk unc" data-note="UNCHANGED: the page layout and the footer.">The page</button>
+  </div>
+  <div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+  <div class="dt-wrap fit"><div class="dt">
+    <div class="cs lynx wide">
+      <div class="hd"><span class="logo">LL</span><span class="club">Lakeshore Lynx<small>Rep teams · ages 9 to 16</small></span><span class="navd"><span>Home</span><span>Teams</span><span class="on">Tryouts</span><span>About</span></span><span class="signin">Sign in</span></div>
+      <div class="in-w"><div style="max-width:760px;padding:28px 0 40px;display:flex;flex-direction:column;gap:16px">
+        <span class="back">15U AAA</span>
+        <div class="ptitle"><h1>15U AAA tryouts</h1><div class="meta">For the 2027 season · born 2012–2013</div></div>
+        <span class="chip open" style="align-self:flex-start">Tryouts open</span>
+        <div class="card days">
+          <div class="ev"><div class="dc">Sat, Nov 14</div><div><div class="t">9:00 a.m. – 11:00 a.m.</div><div class="w">Lakeshore Dome</div></div><span class="dbtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Directions</span></div>
+          <div class="ev"><div class="dc">Sun, Nov 15</div><div><div class="t">9:00 a.m. – 11:00 a.m.</div><div class="w">Lakeshore Dome</div></div><span class="dbtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Directions</span></div>
+          <div class="ev"><div class="dc">Sat, Nov 21</div><div><div class="t">1:00 p.m. – 3:00 p.m.</div><div class="w">Lakeshore Dome · Callbacks</div></div><span class="dbtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Directions</span></div>
+        </div>
+        <div class="sec-h"><h2>From the club</h2></div>
+        <div class="card"><div class="blurb">The tryout fee is $40, paid at check-in. Bring water and the gear you play in; bibs are handed out at the door. We email every family by November 28.</div></div>
+        <span class="btn" style="align-self:flex-start">Sign up for tryouts</span>
+        <div class="ctcard bare"><div class="lab">Questions about these tryouts? Email the head coach</div><div class="addrrow"><b>dana.tryouts@gmail.com</b><span class="dbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</span></div></div>
+      </div></div>
+      <div class="ft"><div class="fname">Lakeshore Lynx</div><div class="mail"><span>Questions? Email the club</span><b style="text-decoration:underline">info@lakeshorelynx.ca</b><span class="copy">Copy</span></div></div>
+    </div>
+  </div></div>
+
+  <h2 id="a-end">3d · When the head coach changes</h2>
+  <p>The address belongs to the person who set it, while they are a head coach of the team. It is never handed on.</p>
+  <div class="tw"><table class="t">
+    <thead><tr><th>What happens</th><th>The family's tryout page</th><th>The club's Tryouts page</th><th>The coaches</th></tr></thead>
+    <tbody>
+      <tr><td>Dana is removed from the team, or becomes an assistant</td><td>Goes back to the club's line at once</td><td>The questions line reads the club's address</td><td>The next head coach finds the row empty. Dana's address is gone; nothing is passed on.</td></tr>
+      <tr><td>A second head coach, Pat, joins while Dana's address is set</td><td>Unchanged (Dana's)</td><td>"Set by Dana Whitfield"</td><td>Pat sees "set by Dana Whitfield" and may change it; then it is Pat's and ends with Pat's role</td></tr>
+      <tr><td>The season closes, or the next season starts</td><td>No change while Dana is head coach</td><td>No change</td><td>The address carries to the next season's tryouts with Dana</td></tr>
+      <tr><td>The club turns its public site off</td><td>The whole page refuses (4a, unchanged)</td><td>No change</td><td>The address is kept, ready for when the site is back</td></tr>
+      <tr><td>Dana changes the address that is their sign-in</td><td>No change</td><td>No change</td><td>A tryout address that now matches the sign-in is <b>not</b> removed; the refusal applies when the tryout address is typed</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+
+<!-- ═════════════════════════ 4 · THE C3 LINE ═════════════════════════ -->
+<section class="tab" id="tab-c3" data-tab="c3" hidden>
+  <h2 id="c-line">4 · "The days are public" in the coach's tryout setup</h2>
+  <p>Ruled (walk §356, c3 A): one plain line in the coach's tryout setup, beside the days, saying the days are public before sign-ups open. <b>Open, and drawn here:</b> the words, and whether the line sits in the "Tryout dates" row's empty text or beside the day cards.</p>
+  <p>Drawn: <b>both</b>, because the empty text vanishes the moment it matters. The tryout page starts showing the days to anyone as soon as the first one is added, before sign-ups open. A line in the empty text is gone by then. <button class="fl" data-finding="C2-05" data-here="The empty text today: 'No sessions yet — they show on your schedule once added.'">C2-05</button></p>
+  <div class="stage">
+    <div class="col"><div class="chips"><span class="eyebrow">Before</span></div>
+      <div class="shot-wrap"><div class="shot-scroll" style="max-height:844px"><img class="shot" src="img/s4c2-coach-tryouts-15u-aaa-390-full.jpg" alt="Today's coach tryout setup with no sessions" loading="lazy"></div></div>
+      <p class="cap"><b>Today, no days yet</b> (no fixture has any). The row reads "No sessions yet — they show on your schedule once added." Scroll inside the frame to reach it.</p>
+
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · phone · days added</span>
+        <button class="mk new" data-note="NEW. One line under the session list, above + Add session, shown whenever the club's public site is on: 'Anyone can see these days on your team's tryout page, even before sign-ups open.' A small globe marks it as being about the public page. It is a sentence, not a callout: it informs, it does not warn.">The line</button>
+        <button class="mk unc" data-note="UNCHANGED: the names-hidden hint and its switch, the session rows, + Add session and the Add session window.">The day card</button>
+        <button class="mk drf" data-note="Draft words: the line.">Words</button>
+        <button class="fx" data-finding="C2-05">C2-05</button>
+      </div>
+      <div class="ph-wrap"><div class="ph">
+        <div class="ak">
+          <div class="phead">15U AAA<span class="r">?</span></div>
+          <div class="ph-in gridbg">
+            <div class="tt"><i></i>Tryouts</div>
+            <div class="stg"><span class="on" data-n="1">Set up</span><span data-n="2">Tryout day</span><span data-n="3">Decide</span></div>
+            <div class="folded">The four-step explainer and "Do this next" sit here, unchanged.</div>
+            <div class="ckc">
+              <div class="hh">☑ Get set up<span class="pr"><b>1</b> of 2 required done</span></div>
+              <div class="ck-row open"><span class="tick done"></span><div class="grow"><div class="t">Tryout dates</div><div class="s">Sat, Nov 14 + 2 more</div></div><span class="chev"></span></div>
+              <div class="ck-body" style="padding-left:16px">
+                <div class="hint" style="font-size:13px"><b style="color:var(--ink)">Names are hidden</b> — players show as bib numbers on the board, on your helpers' phones and on the printed sheet.</div>
+                <span class="bibs">◐ Helpers see bibs · show</span>
+                <div class="sess">
+                  <div class="r"><div class="grow"><div class="t">Sat, Nov 14 · 9:00 a.m.</div><div class="m">Day 1 · Lakeshore Dome</div></div><span class="cv"></span></div>
+                  <div class="r"><div class="grow"><div class="t">Sun, Nov 15 · 9:00 a.m.</div><div class="m">Day 2 · Lakeshore Dome</div></div><span class="cv"></span></div>
+                  <div class="r"><div class="grow"><div class="t">Sat, Nov 21 · 1:00 p.m.</div><div class="m">Callbacks · Lakeshore Dome</div></div><span class="cv"></span></div>
+                </div>
+                <div class="pub drafted"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span>Anyone can see these days on your team's tryout page, even before sign-ups open.</span></div>
+                <span class="dashbtn">+ Add session</span>
+              </div>
+              <div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Evaluation scorecard <span class="tag">Required</span></div><div class="s">What you rate players on. Start from the ready-made starter and tweak it.</div></div><span class="chev"></span></div>
+            </div>
+          </div>
+          <div class="botnav"><span>Overview</span><span>Schedule</span><span>Practices</span><span>Roster</span><span class="on">More</span></div>
+        </div>
+        <div class="fold"><span>fold · 844</span></div>
+      </div></div>
+      <p class="cap"><b>Said where the coach is looking</b> when they add a day, and still there when they add the third.</p>
+    </div>
+    <div class="col">
+      <div class="chips"><span class="eyebrow">After · the other states</span>
+        <button class="mk res" data-note="RESTYLED words: the empty text names the tryout page as well as the schedule, so the coach knows before the first day is added.">Empty text</button>
+        <button class="mk new" data-note="When the club's public site is off, the line does not show: nothing is public. The site-off notice belongs to Team settings › Sharing (4a), not here.">Site off</button>
+      </div>
+      <div class="states">
+        <div class="col"><span class="eyebrow">Empty, closed row</span>
+          <div class="spec ak"><div class="ck-row"><span class="tick"></span><div class="grow"><div class="t">Tryout dates <span class="tag">Required</span></div><div class="s drafted">No sessions yet. Once added, they show on your schedule and on your team's tryout page.</div></div><span class="chev"></span></div></div></div>
+        <div class="col"><span class="eyebrow">Days added, the club's site off</span>
+          <div class="spec ak" style="padding:12px 16px"><div class="sess"><div class="r"><div class="grow"><div class="t">Sat, Nov 14 · 9:00 a.m.</div><div class="m">Day 1 · Lakeshore Dome</div></div><span class="cv"></span></div></div><span class="dashbtn">+ Add session</span></div>
+          <span class="small muted">No line. Nothing is public while the site is off.</span></div>
+        <div class="col"><span class="eyebrow">Sign-ups open</span>
+          <div class="spec ak" style="padding:12px 16px"><div class="pub"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="drafted">Anyone can see these days on your team's tryout page.</span></div></div>
+          <span class="small muted">"Even before sign-ups open" drops once they are open; it would be old news.</span></div>
+      </div>
+      <p class="small"><b>Desk:</b> the same line in the same place, in the 960 checklist card drawn on the Coach's address tab. Not drawn twice.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═════════════════════════ FLOW CHECK (/ux) ═════════════════════════ -->
+<section class="tab" id="tab-flow" data-tab="flow" hidden>
+  <h2>Flow check · the head coach's tryout address</h2>
+  <p>The UX flow review (who, where, when it ends), run on 2026-10-22 before the frames were finished. Its recommendations are already drawn; they stay proposals until you rule.</p>
+  <div class="grid2 ux">
+    <div class="card">
+      <div class="eyebrow">Per person</div>
+      <h4>Head coach</h4>
+      <ol><li>Opens Tryouts › Set up and sees "Questions from families · Optional", saying questions go to the club today.</li>
+        <li>Types an address. It saves when it is complete and acceptable and they leave the field, never part-typed. The row's status then reads "… · on your tryout page".</li>
+        <li>They can remove it at any time ("Remove and use the club's address"). It also comes off by itself when they stop being a head coach of the team.</li></ol>
+      <h4>Club admin</h4>
+      <ol><li>Sees, on the team's Tryouts page, which address the page shows and who set it.</li>
+        <li>Can put the club's back ("Use the club's address", asked once). The coach's row then says the club changed it, and when.</li></ol>
+      <h4>Family</h4>
+      <ol><li>On the team's own tryout page, open or not open yet, reads "Questions about these tryouts? Email the head coach" with Copy.</li>
+        <li>Everywhere else (footer, the club's Tryouts page, the team page, a finished or closed page, a share card) sees the club's address, or no address at all.</li></ol>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Completeness</div>
+      <dl class="kvt">
+        <dt>Happy path</dt><dd>Complete: set, shown, changed, removed.</dd>
+        <dt>Empty</dt><dd>Blank is the default and the safe state: the club's line. The row says so in words.</dd>
+        <dt>Loading</dt><dd>The field is not editable until the team's tryout read returns, so an empty box is never mistaken for "nothing set".</dd>
+        <dt>Error</dt><dd>Two refusals at the field (sign-in address; not an address). A failed save keeps the pill's error with Retry. The page keeps what it showed before.</dd>
+        <dt>Recovery</dt><dd>Remove is reversible by typing again. The club's override is reversible by the coach, and the coach is told about it.</dd>
+        <dt>Confirmation</dt><dd>Only the club's override asks, because it changes another person's choice. The coach's own Remove does not ask (it is theirs, and it is one field).</dd>
+        <dt>Role access</dt><dd>Head coaches set it. An assistant with tryouts access reads it. Other assistants do not see the row. The club sees it and can clear it.</dd>
+      </dl>
+    </div>
+  </div>
+  <h3>What the review found</h3>
+  <ol class="ux">
+    <li><b>The ruled spot is the wrong room.</b> Sharing is a "once a year" settings card that any coach who can configure the team sees. The address is part of setting up a tryout, which only head coaches (or assistants granted tryouts) see. <span class="sev">Medium</span> → tryout setup row (Ask 2 A).</li>
+    <li><b>"The head coach" is not one person.</b> A team can have several. Without a rule, two head coaches overwrite each other silently. <span class="sev">Medium</span> → one per team, "set by …" shown, any head may change it, it ends with the role of whoever set it.</li>
+    <li><b>A part-typed address would go live.</b> Autosave as you type would publish "dana.tryouts@gm" for a second. <span class="sev hi">High</span> → saves on leaving the field, and only when it passes both checks.</li>
+    <li><b>A silent revert leaves two people guessing.</b> If the club clears the address with no trace, the coach sees it gone and types it again. <span class="sev">Medium</span> → the coach's row says "The club put its own address back on Oct 22."</li>
+    <li><b>The name must not follow the address.</b> Showing "Email Dana Whitfield" because Dana typed an address would bypass the name switch (Ask 2). <span class="sev">Medium</span> → "the head coach" unless the name switch is on.</li>
+    <li><b>The open page's address can't be copied.</b> It is the page with the sign-up button, and today it is the one state without Copy. <span class="sev">Medium</span> → Copy on every state (C2-06).</li>
+    <li><b>The sign-up form's closed message says "Questions? Contact us".</b> A family that follows an old sign-up link to a closed form reaches the club, and that is right. <span class="sev lo">Low</span> → unchanged; the form keeps the club's address.</li>
+    <li><b>Stale copies cannot be recalled.</b> A family that copied Dana's address keeps it after Dana leaves. Nothing in the product can fix that. <span class="sev lo">Low</span> → the cost is named in Ask 1, and the role-address nudge is the mitigation.</li>
+  </ol>
+</section>
+
+
+<!-- ═════════════════════════ DESIGN CHECK ═════════════════════════ -->
+<section class="tab" id="tab-check" data-tab="check" hidden>
+  <h2>Design check</h2>
+  <p>The design review ran on 2026-10-22, before this page reached you. It read every frame against the product's written rules and the newest design log entries, and against today's captures. Its changes are <b>already drawn</b>. They stay proposals until you rule (<a href="#ask-13" data-jump="ask-13">Ask 13</a>).</p>
+
+  <h3>First, the frames were redrawn from the captures</h3>
+  <p>My first drawings used the Stage 4 page's approximation of the portals. Reading today's captures showed several differences, and every admin and coach frame was redrawn on the real look:</p>
+  <ul>
+    <li>The page head has the back link behind a hairline, a mono eyebrow, an Inter title and a mono season chip.</li>
+    <li>The sidebars, the phone bottom bars and the dashed address box are drawn as they are today.</li>
+    <li>The coach's numbered stage tabs and the checklist's olive "Required" chips are drawn as they are today.</li>
+  </ul>
+  <p>One claim changed with it. Team details has no free cell beside Division (Colour sits there), so the birth years add <b>one row</b> on a desk, not none.</p>
+
+  <h3>The review's changes</h3>
+  <div class="tw"><table class="t">
+    <thead><tr><th>#</th><th>Frame</th><th>What was wrong</th><th>Drawn now</th></tr></thead>
+    <tbody>
+      <tr><td>D1</td><td>Tryout blurb › phone</td><td>The "questions go to" callout put its button beside the sentence, squeezing the address until it was cut off.</td><td>The sentence takes the full width and the button sits under it at 44 px. The address breaks inside its own line.</td></tr>
+      <tr><td>D2</td><td>Coach's address › "Use the club's address?"</td><td>"Keep it" sat at the foot's left, where the house window keeps a sentence or a delete, never the way out.</td><td>Both buttons together at the right: Keep it, then the one lime.</td></tr>
+      <tr><td>D3</td><td>Family pages, open and not open yet</td><td>The drawn tryout days had no Directions, which today's page has. At a desk the new Copy was a word-only button. The 2026-10-21 ruling builds a tryout card's Copy like Directions and lines it up under them.</td><td>Every day row carries Directions (the bare symbol on a phone, the small bordered button at a desk). Copy matches it: symbol and word at a desk at the right edge, the bare symbol on a phone.</td></tr>
+      <tr><td>D4</td><td>Every phone frame</td><td>The floating Saved pill sat over a field's hint.</td><td>It sits just above the bottom bar, where the product floats it.</td></tr>
+      <tr><td>D5</td><td>House-league window</td><td>The window labels Capacity "(optional)". The house rule marks what is required and never what is optional.</td><td>Birth years carries no tag. Capacity's old label is reported for the One Window pass, not changed here.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Checked and kept</h3>
+  <ul>
+    <li><b>One lime per screen.</b> The admin Tryouts page keeps Add applicant as its only lime; the blurb and the questions line add none. The coach's checklist has none, and the question window's lime is its own screen.</li>
+    <li><b>Autosave pill.</b> Saved fades, and only "Couldn't save · Retry" stays. That holds for the blurb, the years and the coach's address.</li>
+    <li><b>Field recipe.</b> Labels are 12 px in sentence case. Boxes are 36 px on paper on a desk and 44 px on a phone. Hints are 12 px tertiary and the past-year hint is amber. Held reasons are red, under the box.</li>
+    <li><b>Phone secondary actions.</b> Copy link, Copy and Directions are bare symbols. Close sign-ups and Use the club's address keep their words, a named exception: each changes what families see.</li>
+    <li><b>Section idiom on the public page.</b> "From the club" keeps its heading above its card, as every club section does.</li>
+  </ul>
+
+  <h3>Seen, not this stage's</h3>
+  <ul>
+    <li>The house-league division windows are still the old look, with an explicit Save on an edit. That belongs to the One Window programme.</li>
+    <li>The site editor shows the past-year hint grey under a question's answer and amber elsewhere (<button class="fl" data-finding="C2-07">C2-07</button>). A one-line fix, proposed in Ask 11.</li>
+  </ul>
+</section>
+
+
+<!-- ═════════════════════════ ASKS ═════════════════════════ -->
+<section class="tab" id="tab-asks" data-tab="asks" hidden>
+  <h2>Asks</h2>
+  <div class="verdict ok"><h3>Ruled 2026-10-22: all 13 asks as recommended</h3><p class="tight">The owner picked option A on every ask, including Ask 13 (the design check's five changes), on top of round 2's club cut-off per sport. The 4c-2 build prompt is written: <code>docs/projects/active/CLUB_TIER_STAGE4C2_BUILD_PROMPT.md</code>. The words in the frames are still drafts; <code>/marketing</code> settles them before any code.</p></div>
+  <p>One pick per ask; the recommended option is marked. Your picks and notes stay in this browser. <b>Copy all answers</b> at the foot gives one block to paste back. Ask 1 changes the build the most, so it comes first.</p>
+
+  <div class="ask decides" data-ask="1" id="ask-1">
+    <h3><span class="no">Ask 1</span>The head coach's tryout address: who owns it, and is the carve-out worth it?</h3>
+    <p>Ask 2 keeps every email off the team page. This puts one address on one page: the team's own tryout page. It costs an address that robots will collect, and one a family keeps after the coach leaves. The safeguards are drawn on the Coach's address tab.</p>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a1" value="A"> <span><b>The head coach's own, as ruled at the gate.</b> A head coach types a separate address in tryout setup. It is blank by default, the sign-in address is refused, and there is one per team. Any head coach may set, change or remove it, and it ends with the role of whoever set it. The club sees it on the team's Tryouts page and can put its own back.</span></label>
+      <label><input type="radio" name="a1" value="B"> <span><b>The club names each team's tryout contact.</b> The admin types any address on the team's Tryouts page: a registrar's, a team inbox, or the coach's with their agreement. The coach portal gets no field. The address does not end with a role, so the club keeps it right.</span></label>
+      <label><input type="radio" name="a1" value="C"> <span><b>Both.</b> The club may name it. Where the club has not, a head coach may set one, as in A. The club's always wins.</span></label>
+      <label><input type="radio" name="a1" value="D"> <span><b>No carve-out.</b> The club's address stays on every page (Ask 2 unchanged), and the coach's name switch is the only coach presence.</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> A adds a coach-portal row, an admin line and window, a column tied to the head-coach role, and a guard that the address never reaches the footer, the club Tryouts page, the team page or a share card. B moves the field to the admin page only and drops the role end. C is A plus B and their precedence rule. D removes frame 3 except Copy (C2-06).</p>
+    <textarea id="n1" placeholder="Notes for Ask 1"></textarea>
+  </div>
+
+  <div class="ask" data-ask="2" id="ask-2">
+    <h3><span class="no">Ask 2</span>Where the coach types it (if Ask 1 is A or C)</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a2" value="A"> <span><b>Tryout setup, an Optional row "Questions from families".</b> Only coaches who run the tryout see it, beside the tryout days it sits next to on the family's page.</span></label>
+      <label><input type="radio" name="a2" value="B"> <span><b>Team settings › Sharing, beside "Your team's public page"</b>, as the gate ruling placed it. The same field and rules, in the card the coach shares the team from.</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> which coaches see the field. In Sharing, any coach who can configure the team does, so the field would need its own head-coach-only rule.</p>
+    <textarea id="n2" placeholder="Notes for Ask 2"></textarea>
+  </div>
+
+  <div class="ask" data-ask="3" id="ask-3">
+    <h3><span class="no">Ask 3</span>When families see the coach's address, and Copy</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a3" value="A"> <span><b>Open and not open yet; the club's line once finished or closed.</b> "Questions about these tryouts? Email the head coach", with a name only if the coach's name switch is on. Copy on every state: the word at a desk, the bare symbol on a phone. The open page's line gains Copy whichever address it shows.</span></label>
+      <label><input type="radio" name="a3" value="B"> <span><b>Every state of the team's tryout page</b>, finished and closed included.</span></label>
+      <label><input type="radio" name="a3" value="C"> <span><b>Open only.</b></span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> the tryout page's contact line and card, and the tests that pin the footer and the share card to the club.</p>
+    <textarea id="n3" placeholder="Notes for Ask 3"></textarea>
+  </div>
+
+  <div class="ask decides" data-ask="4" id="ask-4">
+    <h3><span class="no">Ask 4</span>Do birth years belong to the team, or to each season?</h3>
+    <p>A 13U team's birth years change every September. A field on the team is right for one year and then wrong.</p>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a4" value="A"> <span><b>To each season, carried forward one year later.</b> The field is labelled with the season's name. <b>Start next season</b> fills the new season's years one later, with a note under the boxes until the admin changes them or the first game is played. A team that keeps its players changes them back once.</span></label>
+      <label><input type="radio" name="a4" value="B"> <span><b>To the team, never moved.</b> The admin updates every team each year; if they forget, families see last year's years.</span></label>
+      <label><input type="radio" name="a4" value="C"> <span><b>To each season, blank at the start.</b> The admin types every team's years each season.</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> where the two new columns live (a season's row or the team's), the rollover adding one step, and which season's years the Teams page and the tryout page read. Under A and C they read the season the tryout is for.</p>
+    <textarea id="n4" placeholder="Notes for Ask 4"></textarea>
+  </div>
+
+  <div class="verdict ok" id="ruled-cutoff"><h3>Ruled 2026-10-22 (round 2): the club sets the cut-off</h3><p class="tight">The owner asked about clubs whose cut-off is not January 1 ("anyone born before September 1, 2014") and ruled: <b>start with a club cut-off</b>; revisit at multi-sport, <b>unless it is easy to build in now</b>, since a winter hockey season may want a different cut-off from a summer baseball one. It is easy. The club's cut-off is kept <b>per sport</b>: one row per sport the club runs, default January 1. Teams and divisions keep their years and read their sport's cut-off, so changing it re-reads every team of that sport at once. Drawn on the Birth years tab, 1b.</p></div>
+
+  <div class="ask" data-ask="5" id="ask-5">
+    <h3><span class="no">Ask 5</span>The two boxes: an empty box, and the checks <span class="pill half">changed in round 2</span></h3>
+    <p>Your example ("born before September 1, 2014") is open-ended, so round 1's "the second box empty means one year" cannot stand.</p>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a5" value="A"> <span><b>An empty box means no limit on that side; one year is the same year in both.</b> Families read "Born 2012–2013", "Born 2013", "Born 2012 or later", "Born 2008 or earlier", or with a September cut-off "Born Sep 1, 2013 – Aug 31, 2015" and "Born before Sep 1, 2014". A value is held with its reason, never saved, when it is not a four-digit year, is after this calendar year, or the earlier year is second.</span></label>
+      <label><input type="radio" name="a5" value="B"> <span><b>Closed ranges only</b> (round 1): an empty second box means one year, and an open-ended team leaves both empty.</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> the one shared check (rep teams and house-league divisions) and the Born in picker's match rule. An open side matches every year beyond it.</p>
+    <textarea id="n5" placeholder="Notes for Ask 5"></textarea>
+  </div>
+
+  <div class="ask" data-ask="6" id="ask-6">
+    <h3><span class="no">Ask 6</span>Suggest birth years from the team's label?</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a6" value="A"> <span><b>No suggestion.</b> The label does not carry the age reliably ("Provincial AAA"; "13U" vs "U13"). Even with the club's cut-off known (round 2), whether "13U" means the 13-year-olds or the 12- and 13-year-olds is the club's call. Under Ask 4 A a club types each team once, ever.</span></label>
+      <label><input type="radio" name="a6" value="B"> <span><b>Suggest from a number in the name or division</b> ("13U", "U13"), shown greyed in the boxes for the admin to accept, using one rule the club sets once (the age is counted at the end of the season year).</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> B adds a club-level setting (how the club counts age) and a parse rule. Recorded reason for A: sports differ, and a confident wrong default is worse than an empty box that stays in every list.</p>
+    <textarea id="n6" placeholder="Notes for Ask 6"></textarea>
+  </div>
+
+  <div class="ask" data-ask="7" id="ask-7">
+    <h3><span class="no">Ask 7</span>House league: where the years go</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a7" value="A"> <span><b>On each division, as ruled</b>, in the existing Add division and Edit division windows, which keep their look. A geographic division ("East") takes the same years or none.</span></label>
+      <label><input type="radio" name="a7" value="B"> <span><b>On the house-league season instead</b>: one range per season, beside its "Division" badge.</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> the Born in picker lists divisions (ruled). B would list a season instead of its divisions.</p>
+    <textarea id="n7" placeholder="Notes for Ask 7"></textarea>
+  </div>
+
+  <div class="ask" data-ask="8" id="ask-8">
+    <h3><span class="no">Ask 8</span>The blurb editor: where, how it saves, how big</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a8" value="A"> <span><b>In the Sign-ups section, under the address; it saves as you type.</b> Labelled "From the club" (the heading families read). A four-line box that grows, 500 characters, "185 / 500" under it, and the amber past-year hint. It sends nothing, so no held Save.</span></label>
+      <label><input type="radio" name="a8" value="B"> <span><b>As A, but on a phone it sits in a collapsed row</b> ("From the club · 185 characters"), so the applicants stay on screen one.</span></label>
+      <label><input type="radio" name="a8" value="C"> <span><b>A held Save, posted like the club notice.</b></span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> a 500-character cap at the server (none today), the house counter and hint reused from the site editor, and the save pill on this page.</p>
+    <textarea id="n8" placeholder="Notes for Ask 8"></textarea>
+  </div>
+
+  <div class="ask" data-ask="9" id="ask-9">
+    <h3><span class="no">Ask 9</span>When families see the blurb</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a9" value="A"> <span><b>Open and not open yet</b>, between the days and the contact. Hidden once finished or closed.</span></label>
+      <label><input type="radio" name="a9" value="B"> <span><b>Open only</b> (today).</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> one condition on the tryout page, and the admin field's hint saying when it is read.</p>
+    <textarea id="n9" placeholder="Notes for Ask 9"></textarea>
+  </div>
+
+  <div class="ask" data-ask="10" id="ask-10">
+    <h3><span class="no">Ask 10</span>Next season's blurb</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a10" value="A"> <span><b>Starts blank, with one door: "Start from last season's words".</b> The door shows only when last season had a blurb. It fills the box, and the past-year hint then checks the words.</span></label>
+      <label><input type="radio" name="a10" value="B"> <span><b>Carried over by itself</b> when the next season starts, with the hint left to catch old years.</span></label>
+      <label><input type="radio" name="a10" value="C"> <span><b>Starts blank</b>, no door (today).</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> A reads the previous season's blurb on the admin page. B adds the blurb to the rollover's carry list.</p>
+    <textarea id="n10" placeholder="Notes for Ask 10"></textarea>
+  </div>
+
+  <div class="ask" data-ask="11" id="ask-11">
+    <h3><span class="no">Ask 11</span>The past-year hint and birth years</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a11" value="A"> <span><b>Skip a year that follows "born" or "birth"</b>, as a founding year is skipped, everywhere the hint runs. The hint is amber everywhere, including under a question's answer, where it is grey today (C2-07).</span></label>
+      <label><input type="radio" name="a11" value="B"> <span><b>Keep the rule as it is.</b> A blurb naming birth years always shows the hint.</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> one change to the shared hint rule and its tests, plus a one-line style fix in the site editor's list window.</p>
+    <textarea id="n11" placeholder="Notes for Ask 11"></textarea>
+  </div>
+
+  <div class="ask" data-ask="12" id="ask-12">
+    <h3><span class="no">Ask 12</span>The "days are public" line in tryout setup</h3>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a12" value="A"> <span><b>Both places.</b> A line under the session list whenever the club's site is on: "Anyone can see these days on your team's tryout page, even before sign-ups open." The last clause drops once sign-ups are open. The empty text also names the tryout page.</span></label>
+      <label><input type="radio" name="a12" value="B"> <span><b>The empty text only.</b> It disappears once the first day is added.</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> the day card reads whether the club's site is on and whether sign-ups are open.</p>
+    <textarea id="n12" placeholder="Notes for Ask 12"></textarea>
+  </div>
+
+  <div class="ask" data-ask="13" id="ask-13">
+    <h3><span class="no">Ask 13</span>The design check's changes</h3>
+    <p>Five drawing changes (D1–D5 on the Design check tab), already drawn.</p>
+    <div class="opts">
+      <label class="rec"><input type="radio" name="a13" value="A"> <span><b>Accept all five.</b></span></label>
+      <label><input type="radio" name="a13" value="B"> <span><b>Accept some</b> (say which in the note).</span></label>
+    </div>
+    <p class="rides"><b>What rides on it:</b> D3 adds Directions and the bordered Copy to the open tryout page at a desk (the 2026-10-21 card ruling extended to the open page's line). The rest are drawing fixes with no new rule.</p>
+    <textarea id="n13" placeholder="Notes for Ask 13"></textarea>
+  </div>
+
+
+  <div class="paste">
+    <span><b id="answered">0</b> of 13 answered</span>
+    <span style="display:flex;gap:8px"><button class="btn-d" id="clear">Clear answers</button><button class="btn-d pri" id="copy">Copy all answers</button></span>
+    <textarea id="out" readonly hidden aria-label="Your answers"></textarea>
+  </div>
+</section>
+
+
+</main>
+
+<dialog class="note" id="note" aria-labelledby="note-t">
+  <div class="nh"><h3 id="note-t"></h3><button class="x" id="note-x" aria-label="Close">×</button></div>
+  <div class="nb" id="note-b"></div>
+</dialog>
+<script>
+/* Navigation: tabs and bare-token hashes. Kept apart from every other script so nothing else can stop it. */
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.tabs [data-tab]'));
+  var secs=[].slice.call(document.querySelectorAll('section.tab'));
+  function tabOf(id){var el=document.getElementById(id); var s=el&&el.closest('section.tab'); return s?s.dataset.tab:null;}
+  function show(name,scrollTo){
+    if(!secs.some(function(s){return s.dataset.tab===name})) name='start';
+    secs.forEach(function(s){s.hidden=s.dataset.tab!==name});
+    tabs.forEach(function(t){t.setAttribute('aria-selected',t.dataset.tab===name?'true':'false')});
+    if(scrollTo){var el=document.getElementById(scrollTo); if(el){el.scrollIntoView({block:'start'}); return;}}
+    window.scrollTo(0,0);
+    document.dispatchEvent(new CustomEvent('s4tab',{detail:name}));
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.dataset.tab); try{history.replaceState(null,'','#'+t.dataset.tab)}catch(e){}})});
+  document.addEventListener('click',function(e){
+    var g=e.target.closest('[data-goto]'); if(g){e.preventDefault(); show(g.dataset.goto); try{history.replaceState(null,'','#'+g.dataset.goto)}catch(x){} return;}
+    var j=e.target.closest('[data-jump]'); if(j){e.preventDefault(); show(tabOf(j.dataset.jump),j.dataset.jump);}
+  });
+  var h=(location.hash||'').slice(1);
+  if(h&&tabOf(h)&&!secs.some(function(s){return s.dataset.tab===h})) show(tabOf(h),h); else show(h||'start');
+})();
+</script>
+<script>
+/* Desktop frames: fit to the column, or true size. */
+(function(){
+  function fit(){
+    document.querySelectorAll('.dt-wrap').forEach(function(w){
+      var z=Math.min(1,(w.clientWidth||1440)/1440);
+      w.style.setProperty('--z',z.toFixed(4));
+      var tools=w.previousElementSibling, zl=tools&&tools.querySelector('.zl');
+      if(zl) zl.textContent=w.classList.contains('fit')?('Shown at '+Math.round(z*100)+'% of true size'):'True size: scroll sideways inside the frame';
+    });
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-fit]'); if(!b) return;
+    var w=b.closest('.dt-tools').nextElementSibling; if(!w) return;
+    w.classList.toggle('fit'); b.textContent=w.classList.contains('fit')?'Show at true size':'Fit to the window'; fit();
+  });
+  window.addEventListener('resize',fit); document.addEventListener('s4tab',function(){setTimeout(fit,0)}); fit();
+})();
+</script>
+<script type="application/json" id="s4data">{"findings":{"C2-01":{"title":"C2-01 — Birth years have nowhere to live","today":"No team, season or house-league division records a birth year. A rep team carries a free-text \"Division\" (\"U13 Tier 1\", \"Provincial AAA\") and its name (\"15U AAA\"); a house-league division carries only a name and a capacity. A family reading the club site has to work out \"which one is my daughter?\" from a label.","proposal":"Two small year boxes where the team and the division are set up (Ask 15, ruled). The drawing proposes they belong to the team's SEASON, carried one year later when the next season starts (Ask 4), so September never shows last year's years."},"C2-02":{"title":"C2-02 — The past-year hint would flag every honest tryout blurb","today":"The hint flags any four-digit year before this calendar year, except one after \"since\", \"founded\" or \"est.\". It has no exception for a birth year, and a birth year is always a past year. \"Open to players born 2012 and 2013\" reads \"Mentions 2012 and 2013 — still true?\" every time.","proposal":"Skip a year that follows \"born\" or \"birth\" (\"born 2012\", \"born in 2012\", \"2012 birth year\"), the same way a founding year is skipped (Ask 11). A hint that fires on every correct blurb teaches the club to ignore it."},"C2-03":{"title":"C2-03 — The blurb hides while the page says \"Not open yet\"","today":"The \"From the club\" blurb shows only while sign-ups are open. In the weeks before, when the club posts the tryout page on social and parents first read it, the page shows the days and \"Sign-ups for 13U AAA tryouts aren't open yet.\" and nothing about cost or who may come.","proposal":"Show the blurb on the \"Not open yet\" page as well as the open one; hide it once tryouts are finished or closed (Ask 9)."},"C2-04":{"title":"C2-04 — The blurb has no editor, no limit and no carry-over","today":"No screen writes the blurb: only the seeds and a raw admin route do. It has no length limit, so a pasted letter would push \"Sign up for tryouts\" far below the fold on a phone. Starting next season leaves it blank.","proposal":"An editor in the admin Tryouts page's Sign-ups section, 500 characters with the house counter, the amber past-year hint, saving as you type (Ask 8). Next season starts blank with one door, \"Start from last season's words\" (Ask 10)."},"C2-05":{"title":"C2-05 — The \"days are public\" line would vanish when it matters","today":"The coach's \"Tryout dates\" row says \"No sessions yet — they show on your schedule once added.\" That sentence shows only while the row is empty. The tryout page starts showing the days to anyone the moment the first one is added, before sign-ups open.","proposal":"One line under the session list, shown whenever the club's site is on: \"Anyone can see these days on your team's tryout page, even before sign-ups open.\" The empty text names the tryout page too (Ask 12)."},"C2-06":{"title":"C2-06 — The open page's contact line has no Copy","today":"On an open tryout page the contact is a plain line, \"Questions? Email the club at info@…\", with no Copy button. On the not-open-yet, finished and closed pages the same address sits in a card with Copy. A parent on a phone whose mail link does nothing has to select the address by hand, on the one page with a sign-up button.","proposal":"Whichever address shows (the club's or the head coach's) gets Copy on every state: the word at a desk, the bare symbol on a phone (the 2026-10-20 phone rule)."},"C2-07":{"title":"C2-07 — One hint, two colours","today":"The past-year hint is amber under the tagline and the About text, but plain grey under a question's answer in the same editor.","proposal":"Amber everywhere it shows, the blurb included. Reported for the build; a one-line fix in the editor's list window."},"C2-08":{"title":"C2-08 — A house-league division is not always an age","today":"The Add division window suggests \"e.g. Division A, East\". In practice the fixtures use ages (\"U9 Rookie\", \"U11\"), and a season can also carry its own age badge (\"U11\"). Divisions are typed fresh for every season; nothing is copied forward.","proposal":"Years per division as ruled. A geographic division takes the same years, or none, and a division with none always stays in the Born in list. Because divisions are typed fresh each season, a house-league division never needs the carry-forward rep teams do."},"C2-09":{"title":"C2-09 — A team can have more than one head coach","today":"Any number of active head coaches can sit on one team. Removing or demoting one has no public-facing effect today, because nothing public reads a coach.","proposal":"One tryout address per team. Any head coach may set, change or remove it; the page says who set it to the club; it comes off the moment that person stops being a head coach of the team, and the page falls back to the club's line."},"C2-10":{"title":"C2-10 — A personal inbox on the open web","today":"Ask 2 (2026-10-19) keeps every email off the team page: a coach shows by name and role only, and families' questions go to the club. Every public address in the product today is the club's.","proposal":"The carve-out is narrow and drawn with its safeguards: opt-in per team, blank by default, never the sign-in address (refused), the coach told it is public, the club able to see it and put its own back, and an automatic end with the role. The cost stays: an address on a public page is collected by spam robots, and a family that copied it keeps it."}}}</script>
+<script>
+/* Explanations: every finding flag, fix chip and tag opens on click (never a hover title). */
+(function(){
+  var data={findings:{}}; try{data=JSON.parse(document.getElementById('s4data').textContent)}catch(e){}
+  var dlg=document.getElementById('note'), t=document.getElementById('note-t'), b=document.getElementById('note-b');
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function open(title,html){t.textContent=title; b.innerHTML=html; try{dlg.showModal()}catch(e){dlg.setAttribute('open','')}}
+  document.getElementById('note-x').addEventListener('click',function(){dlg.close()});
+  dlg.addEventListener('click',function(e){if(e.target===dlg) dlg.close()});
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('.fl,.fx,.mk'); if(!el) return;
+    e.preventDefault(); e.stopPropagation();
+    if(el.dataset.finding){
+      var f=data.findings[el.dataset.finding]||{title:el.dataset.finding,today:'',proposal:''};
+      var kind=el.classList.contains('fx')?'The drawing that answers it':'What the code does today';
+      var html='<h4>What the code does today</h4><p>'+esc(f.today)+'</p>';
+      if(el.dataset.here) html+='<h4>Where you are looking</h4><p>'+esc(el.dataset.here)+'</p>';
+      html+='<h4>What the proposal does</h4><p>'+esc(f.proposal)+'</p>';
+      if(el.classList.contains('fx')) html='<p><b>'+kind+'.</b></p>'+html;
+      open(f.title,html);
+    } else {
+      var kindName=el.classList.contains('new')?'New':el.classList.contains('res')?'Restyled':el.classList.contains('drf')?'Draft words':'Unchanged';
+      open(kindName+' · '+el.textContent.trim(),'<p>'+esc(el.dataset.note||'')+'</p>');
+    }
+  },true);
+})();
+</script>
+<script>
+/* Asks: picks and notes kept in this browser; one block to paste back. */
+(function(){
+  var KEY='s4c2-asks-v1', st={};
+  try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){st={}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+  var asks=[].slice.call(document.querySelectorAll('.ask[data-ask]'));
+  function count(){var n=asks.filter(function(a){return st['a'+a.dataset.ask]}).length; document.getElementById('answered').textContent=n;}
+  asks.forEach(function(a){
+    var k=a.dataset.ask;
+    a.querySelectorAll('input[type=radio]').forEach(function(r){
+      if(st['a'+k]===r.value) r.checked=true;
+      r.addEventListener('change',function(){st['a'+k]=r.value; save(); count();});
+    });
+    var ta=a.querySelector('textarea'); if(ta){ ta.value=st['n'+k]||''; ta.addEventListener('input',function(){st['n'+k]=ta.value; save();}); }
+  });
+  count();
+  function block(){
+    var lines=['Club Tier Stage 4c-2 drawings — answers (round 2)'];
+    asks.forEach(function(a){
+      var k=a.dataset.ask, h=a.querySelector('h3').cloneNode(true);
+      [].slice.call(h.querySelectorAll('.pill,.no')).forEach(function(x){x.remove()});
+      var pick=st['a'+k], txt='(no pick)';
+      if(pick){var r=a.querySelector('input[value="'+pick+'"]'); var lab=r&&r.closest('label'); var bt=lab&&lab.querySelector('b'); txt=pick+' — '+(bt?bt.textContent.trim():''); if(lab&&lab.classList.contains('rec')) txt+=' (recommended)';}
+      lines.push('Ask '+k+' · '+h.textContent.trim()+': '+txt);
+      if(st['n'+k]) lines.push('   Note: '+st['n'+k].replace(/\s+/g,' ').trim());
+    });
+    return lines.join('\n');
+  }
+  var out=document.getElementById('out');
+  document.getElementById('copy').addEventListener('click',function(){
+    var text=block(); var btn=this;
+    function shown(){out.hidden=false; out.value=text; out.focus(); out.select();}
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      shown(); var done=function(){btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy all answers'},1800);}; var old=function(){try{out.focus(); out.select(); if(document.execCommand('copy')) done();}catch(e){}}; navigator.clipboard.writeText(text).then(done,old);
+    } else shown();
+  });
+  var armed=false, clr=document.getElementById('clear');
+  clr.addEventListener('click',function(){
+    if(!armed){armed=true; clr.textContent='Tap again to clear'; setTimeout(function(){armed=false; clr.textContent='Clear answers'},3000); return;}
+    st={}; save(); asks.forEach(function(a){a.querySelectorAll('input').forEach(function(r){r.checked=false}); var ta=a.querySelector('textarea'); if(ta) ta.value='';}); count(); armed=false; clr.textContent='Clear answers'; out.hidden=true;
+  });
+})();
+</script>

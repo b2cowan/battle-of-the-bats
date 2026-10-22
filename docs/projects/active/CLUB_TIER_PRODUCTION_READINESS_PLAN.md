@@ -1215,6 +1215,65 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > others); hiding Teams drops "See all teams" from a mistyped team address (walk call c3); the footer's Copy is another session's
 > uncommitted icon-only change and should match the About page's (labelled at a desk — owner 2026-10-21); the main club's seed
 > still writes the deprecated switches (fine until the drop migration).
+>
+> **🎨 4c-2 DRAWN 2026-10-22, 13 ASKS OPEN, nothing built** — https://claude.ai/artifact/2HDwoGLtFS8ACuq2CuSbNn (source
+> `docs/projects/active/CLUB_TIER_STAGE4C2_DRAWINGS.html`, built from `.probe/s4c2/hub/`; today's captures in
+> `docs/projects/active/club-tier-stage4c2/`; prompt `CLUB_TIER_STAGE4C2_DRAWING_PROMPT.md`). Four pieces drawn: birth years on
+> the admin's Team details and the house-league division windows; the tryout blurb's editor in the admin Tryouts page's Sign-ups
+> section; the head coach's tryout address (coach's tryout setup row, the club's line + "Use the club's address", the family page
+> per state, the end with the role); the c3 "days are public" line. `/ux` and `/design` ran before the hand-off (design changes
+> D1–D5 drawn, Ask 13). **Push-back on the page, each with an ask:** (Ask 1, first) the address is a carve-out from Ask 2 —
+> options A head coach's own (rec, as the gate ruled) · B club names a per-team contact · C both · D none; (Ask 4) **birth years
+> belong to the team's SEASON, carried one year later by Start next season** (a team-level field is stale every September and
+> cannot say which of two open seasons it describes); (Ask 6) no suggestion from the label ("Provincial AAA"; "13U" vs "U13";
+> cut-off dates differ); (Ask 11) the past-year hint flags every birth year — skip a year after "born"/"birth" (verified: the rule
+> has no such skip); (Ask 9) the blurb shows on "Not open yet" too. Recommended elsewhere: tryout setup, not Sharing, for the
+> address (Ask 2 — the gate placed it beside the door; the prompt left it open); family sees it open + not open yet, club's line
+> once finished/closed, Copy on every state built like Directions (Ask 3); blurb autosaves (it sends nothing), 500 characters,
+> next season starts blank with "Start from last season's words" (Asks 8, 10). Facts found: Team details has no free cell, so the
+> years add one desk row; house-league divisions are typed fresh each season (nothing copied); a team can have several head coaches;
+> the open tryout page's contact line has no Copy (C2-06); the hint is grey under a question's answer (C2-07). **Walk fixtures
+> needed (none changed):** a team with a head coach AND an active assistant (none exists), coaches on Lakeshore Lynx (it has none),
+> birth years on all but one team, a house-league season with divisions on the walk club, a blurb naming birth years and one naming
+> a past year, one open team with a coach's address. Next: owner rules the asks → `/marketing` on the words → 4c-2 build prompt.
+> **⚖ Round 2 RULED 2026-10-22 (owner, same session):** asked about cut-offs that aren't January 1 ("anyone born before
+> September 1, 2014"), the owner ruled **a club cut-off** (revisit at multi-sport), **built per sport now if easy** ("hockey winter
+> seasons might want a different cut off than baseball summer seasons"). It is easy, so drawn per sport: club Settings gains
+> "When birthdays count from", one row per sport the club runs (month + day, default January 1; a change asks once, nothing is
+> sent). Teams and divisions store their YEARS and read their sport's cut-off at display, so a change re-reads every team of that
+> sport at once. With a non-January cut-off the boxes are framed by the dates ("Sep 1, [2013] – Aug 31, [2015]"). Ask 5 rewritten
+> (still open): an empty box = no limit on that side (the owner's example needs it), one year = same year in both. The Born in
+> picker stays a year and keeps every team the year overlaps (rows show dates). Artifact republished, same URL (round 2).
+> **⚖ 4c-2 RULED 2026-10-22 (owner): all 13 asks as recommended** (Ask 1 A the head coach's own address · 2 A tryout setup · 3 A
+> open + not open yet, Copy everywhere · 4 A years per season, +1 at rollover · 5 A empty box = no limit · 6 A no suggestion ·
+> 7 A per division · 8 A blurb in Sign-ups, autosaves, 500 · 9 A open + not open yet · 10 A blank + "Start from last season's
+> words" · 11 A hint skips born/birth, amber everywhere · 12 A the line in both places · 13 A the five design changes). Design
+> log entry 2026-10-22 written. **Build prompt written:** `docs/projects/active/CLUB_TIER_STAGE4C2_BUILD_PROMPT.md` (Part 0 the
+> words through `/marketing`; Part A the club's side; Part B the coach's side; a walk after each part).
+> **🔨 4c-2 Part A BUILT 2026-10-22, COMMITTED `2fcf5efdd`** (the words `1339b4bb1`, through `/marketing`). The club's side: birth years on every
+> team and every house-league division, the "When birthdays count from" card per sport, the Born in picker on the Teams page, and
+> the tryout blurb on each team's Tryouts page. **Migration 349 is applied to DEV only;** its `MANUAL_PROD_STEPS` entry is pending and
+> must be applied BEFORE the code ships. **Walk A = Owner QA Ledger §360,** published https://claude.ai/artifact/NMpuhC8ejQfRCe2ooKWATL
+> (source `docs/projects/active/CLUB_TIER_STAGE4C2_WALK.html`), walk owed. **Part B (the coach's side) starts after walk A passes;**
+> the copy doc's F7 and H7 wait for the owner then.
+>
+> **⚖ Owner rulings 2026-10-22, during the build:**
+> 1. **C12, option a.** A one-year team or division under a NON-January cut-off shows no born line, stays in every Born in list,
+>    and is held at rest on admin screens; the ask-once window warns with the count.
+> 2. **The "When birthdays count from" card is OWNER ONLY.** Settings is owner only; the earlier "owner and admin" was asked on
+>    incomplete facts. Stage 13 may revisit admin access to Settings.
+> 3. **The Born in picker is the house single-select dropdown pill** reading "Born in: any year" (not `ViewPills`; not in
+>    `PILL_HOSTS`).
+>
+> **Open owner questions from `/design` (asked inside the walk and the hand-off):** the held reason shows both under the boxes and in
+> the floating pill (the drawing shows it under the boxes only); and the Teams page meta with no year picked reads "{n} teams",
+> where the drawing showed "2027 season".
+>
+> **Known, not 4c-2 (pre-existing):** the layout check flags 38px buttons on the house-league landing page ("View season →",
+> "Close registration") and Settings' "Open Public site" at 768.
+>
+> **Lakeshore fixture:** birth years on every live team except 10U Development; blurbs on 15U AAA (birth years) and 13U AAA (a past
+> year, 2025); written by script, on dev.
 > **⚖ Ruled the same day (owner): a club's own web address is Stage 4e, inside the release, as recommended; payments
 > processing is inside the release and the release has no date (§7).** The evidence behind both: **a club's own web address** (evidence 2026-10-19: 8 of the 10 club sites use their own
 > domain; the 2 that do not are on free or low-end tools; every platform that documents it hosts the site on the club's domain

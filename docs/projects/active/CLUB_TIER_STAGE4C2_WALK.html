@@ -1,0 +1,298 @@
+<title>Club Tier 4c-2 walk A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single reading column of walk parts; each part is a card with its steps, a verdict row and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+.purpose{font-size:14px;color:var(--ink)}
+ol,ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ul.plain li{padding:2px 4px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+.heads-up{border-color:var(--warn);background:var(--warn-bg)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Club Tier 4c-2 Part A · birth years, when birthdays count from, the Born in picker and the tryout blurb</h1>
+    <p>Owner QA Ledger §360. One purpose: a club says which birth years each team plays, chooses the date birthdays count from, and families find a place for their child by birth year, with a few words from the club on the tryout page. Nothing about the coach's side (Part B) is here.</p>
+    <p>The test club is <b>UAT Lakeshore Lynx</b>, a baseball club. Its live teams, as seeded, with the line families should read at the start (January 1): <b>15U AAA</b> 2012–2013 · <b>13U AAA</b> 2014–2015 · <b>16U AA</b> 2011 (one year) · <b>15U AA</b> 2012–2013 · <b>14U AA</b> 2013 (one year) · <b>12U AA</b> 2015 (one year) · <b>11U AA</b> 2016–2017 · <b>9U AA</b> 2018 or later · <b>10U Development</b> none. Only 15U AAA has sign-ups open. 15U AAA's tryout blurb begins “Open to players born 2012 and 2013.” 13U AAA's begins “Last year's 2025 roster returns …”.</p>
+    <p>Part C moves the date birthdays count from, then puts it back. Part E starts a real 2027 season on 13U AAA and cannot be undone, so do it last if you want to keep the fixture as it is; Parts G and H don't depend on it.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server). A computer window for Parts A to F and H; the browser's phone view at 390 px for Part G.</dd>
+      <dt>Lakeshore owner</dt><dd><code>uat-rep-only-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Parts A to E, G, H). The club's public pages are <code>/uat-rep-only</code>, <code>/uat-rep-only/teams</code> and <code>/uat-rep-only/tryouts</code>; admin is <code>/uat-rep-only/admin</code>.</dd>
+      <dt>UAT Rep Club admin</dt><dd><code>uat-club-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Part F only: this is the club with house league). Its public pages are <code>/uat-rep-club</code> and <code>/uat-rep-club/teams</code>.</dd>
+      <dt>Signed out</dt><dd>Use a private window next to the signed-in one for the public pages, so you can change something and watch it land. Part A can also be read signed in.</dd>
+      <dt>Sport word</dt><dd>This walk says “Baseball” for the club's sport. Whatever word the Settings card shows on its row in Part C is the one to expect everywhere this walk says Baseball.</dd>
+    </dl>
+  </section>
+
+  <section class="card heads-up" aria-labelledby="warn-h">
+    <h2 id="warn-h">Before you start</h2>
+    <ul class="plain">
+      <li>Part C changes the club's birthday date and Part E starts a real season, both on fixture data. C ends with the date back on January 1; E has no way back.</li>
+      <li>Where this walk quotes the product's words, apostrophes may be straight or curly. Don't log that as a difference.</li>
+      <li>If a step's words don't match, tick nothing, write what you saw in that part's notes and mark Issue.</li>
+    </ul>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="known-h">
+    <h2 id="known-h">Known, not this stage</h2>
+    <p class="where">Don't log these. They were there before 4c-2 and are not part of it.</p>
+    <ul class="plain">
+      <li>The layout check flagged three buttons on the house-league landing page that are 38 px tall, and the “Open Public site” link on Settings, which is also 38 px.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  { id: 'pA', title: 'A · The public site, with birthdays counted from January 1', purpose: 'Families see each team\'s birth years, pick a year, and find where a child fits.',
+    where: 'Before you touch Settings. Lakeshore owner or signed out. /uat-rep-only/teams first, on a computer.', steps: [
+    `Teams page: each team's row carries a born line beside its chip: 15U AAA "Born 2012–2013", 13U AAA "Born 2014–2015", 16U AA "Born 2011", 15U AA "Born 2012–2013", 14U AA "Born 2013", 12U AA "Born 2015", 11U AA "Born 2016–2017", 9U AA "Born 2018 or later".`,
+    `The 10U Development row shows its name only: no born line, and no dash or "Born" with nothing after it.`,
+    `The toolbar has one pill reading "Born in: any year".`,
+    `Open the pill: the first choice is "Any year", then the years the teams name, newest first (2018 at the top, 2011 at the bottom).`,
+    `Pick 2015: the pill reads "Born in: 2015" and the line above the list reads "3 places for a player born in 2015".`,
+    `The list now holds 12U AA, 13U AAA and 10U Development (it has no birth years, so it always stays). Every other team is gone from it.`,
+    `The address now ends with "?born=2015". Copy it into a new tab: the same pill, the same sentence and the same three teams.`,
+    `Back in the pill, choose "Any year": the full list returns, the pill reads "Born in: any year" again and the address no longer carries "born".`,
+    `Club Tryouts page (/uat-rep-only/tryouts): 15U AAA's row reads "Born 2012–2013 · " then its first tryout day, then " · " and the place, with its chip. For example "Born 2012–2013 · Mon, Sep 7 · Lions Park" in shape; your day and place will differ.`,
+    `The Tryouts page has the same "Born in" pill, offering only the years its listed teams name. Pick 2015: "1 place for a player born in 2015" and only 13U AAA's row stays. Pick 2013: "1 place for a player born in 2013" with 15U AAA. Put it back to Any year.`,
+    `15U AAA's tryout page (/uat-rep-only/teams/15u-aaa/tryouts): the line under the title reads "For the 2026 season · born 2012–2013", with a lowercase "born" after the dot.`,
+    `The same page has a heading "From the club" above Sign up for tryouts, with the words "Open to players born 2012 and 2013." and the rest of the club's blurb.`,
+    `10U Development: if it has a tryout page that opens, its line reads "For the 2026 season" with no "born" part. If the club says it has no tryouts, tick this and write "no page" in the notes.`,
+    `The club's home (/uat-rep-only): Lakeshore keeps its Teams section switched off, so first turn it on in Admin › Public site (the home's sections). The home's team grid then shows the same born lines under each team's name, and 10U Development has none. Switch the section off again afterwards.`,
+  ]},
+  { id: 'pB', title: 'B · Team details: the birth years boxes', purpose: 'The club types the years on the team, and is told at once why one will not save.',
+    where: 'Lakeshore owner. Admin › Rep teams › 15U AAA › Team details, on a computer.', steps: [
+    `Beside Division there is a field "Birth years for the 2026 season" with two boxes and a dash between them, holding 2012 and 2013. Empty boxes would read "Year".`,
+    `Under the boxes: Families see "Born 2012–2013". The hint is a plain line, not an error.`,
+    `Under that, "Baseball birthdays count from January 1." and a link "Change in Settings".`,
+    `Type 2030 in the second box: after a pause a held reason appears, "A birth year can't be after 2026." The page does not say Saved; the red reason takes the hint's place. The same reason also shows in the floating save pill. The drawing showed it under the boxes only: if twice is too much (look on a phone too), mark this part Needs a call and say which one to keep.`,
+    `Put 2013 back: the reason goes, the hint returns and the pill shows Saved, then fades.`,
+    `Change the first box to 2014 while the second still reads 2013: "Put the earlier year first to save it." No Saved. Nothing swaps by itself.`,
+    `Put the first box back to 2012: the reason goes and Saved appears.`,
+    `Type 13 in the first box: "Use a four-digit year, like 2013, to save it." with no Saved. Type 2012 over it: the reason goes and Saved appears.`,
+    `Clear both boxes: the hint reads "Families see no birth years yet. Leave a box empty for no limit on that side." and the pill says Saved. Type only 2012 in the first box: the hint reads Families see "Born 2012 or later".`,
+    `Type 2013 in the second box too: the hint is back to Families see "Born 2012–2013". Reload the page: both boxes still hold 2012 and 2013.`,
+    `Open 10U Development's Team details: both boxes are empty (placeholders "Year") and the hint reads "Families see no birth years yet. Leave a box empty for no limit on that side."`,
+  ]},
+  { id: 'pC', title: 'C · When birthdays count from', purpose: 'The club chooses the date, is asked once before it moves, and every team and page follows.',
+    where: 'Lakeshore owner. Admin › Organization › Settings, on a computer. Public pages in a second window.', steps: [
+    `Settings has a card "When birthdays count from" with a lead sentence beginning "Teams and house-league divisions show who can play by birth year". It has one row, Baseball.`,
+    `The row's sub-line gives the team count, then a real example from the club, in the shape: Families see "Born 2016–2017". Its two dropdowns read January and 1.`,
+    `Open the month dropdown and pick September (the day stays 1). A window opens: "Count baseball birthdays from September 1?" Nothing has changed yet.`,
+    `Its body begins "Every baseball team and house-league division shows its birth years from September 1, on your site." then names one of the club's teams, for example (the team named may differ) 11U AA will read "Born Sep 1, 2016 – Aug 31, 2017", then "Nothing is sent to families."`,
+    `After that comes the one-year warning: "3 teams have one birth year and will show none from September 1 until you set them again." The buttons, together at the right, are "Keep January 1" and "Change".`,
+    `Press "Keep January 1": the window closes, the month goes back to January, and nothing was changed (look at the public Teams page: still years).`,
+    `Pick September again. Press Esc instead: the same as Keep January 1.`,
+    `Pick September again and press "Change": the pill shows Saved, and the dropdown reads September 1. The sub-line's example is now in dates, for example Families see "Born Sep 1, 2016 – Aug 31, 2017".`,
+    `Public Teams page, reloaded: 15U AAA reads "Born Sep 1, 2012 – Aug 31, 2013" and 13U AAA reads "Born Sep 1, 2014 – Aug 31, 2015" (the same shape on the others).`,
+    `16U AA, 14U AA and 12U AA have no born line at all, but still stand in the list.`,
+    `Pick 2015 in the pill: 16U AA, 14U AA, 12U AA and 10U Development all stay listed (no line, so nothing to rule them out), along with 13U AAA, whose dates run Sep 1, 2014 to Aug 31, 2015. The line above the list counts them all as places.`,
+    `Pick 2014: the three one-year teams and 10U Development stay again, and any team whose dates cover part of 2014 joins them. Where two rows could fit, their own dates say which. Put it back to Any year.`,
+    `Without reloading, go to Rep teams › 15U AAA › Team details through the menu (don't type the address): beside the boxes there is "Sep 1," before the first and "Aug 31," before the second, still holding 2012 and 2013.`,
+    `On the same page, the hint reads Families see "Born Sep 1, 2012 – Aug 31, 2013". and the cut-off line reads "Baseball birthdays count from September 1." with "Change in Settings".`,
+    `Open 16U AA's Team details (it had one year, 2011): at rest, before you type anything, the red line reads "Families see no birth years for this team yet. From September 1, the second year has to be later than the first. Change it to show them." The old year is still in the box.`,
+    `Change the second box to 2012: the red line goes, Saved appears, and the hint reads Families see "Born Sep 1, 2011 – Aug 31, 2012".`,
+    `Set the second box to the same year as the first (2011): the line is "Aug 31, 2011 comes before Sep 1, 2011. Make the second year later to save it." and nothing saves. Put 2012 back.`,
+    `Back in Settings, pick January in the month dropdown: the window reads "Count baseball birthdays from January 1?" with buttons "Keep September 1" and "Change". Press "Change".`,
+    `Public Teams page: the lines are years again: 15U AAA "Born 2012–2013" and 16U AA now "Born 2011–2012". The one-year teams 14U AA ("Born 2013") and 12U AA ("Born 2015") are back too.`,
+  ]},
+  { id: 'pD', title: 'D · The tryout blurb', purpose: 'The club writes a few words that families read on the tryout page.',
+    where: 'Lakeshore owner. Admin › Rep teams › 15U AAA › Tryouts › Sign-ups, on a computer. The public tryout page in a second window.', steps: [
+    `Under the tryout address there is a box labelled "From the club" holding the blurb, with its counter at the left, in the shape "180 / 500".`,
+    `Under the box: "Families read this on the tryout page, above Sign up for tryouts, before and while sign-ups are open."`,
+    `There is no amber hint on this blurb (its only years are birth years, which the hint skips).`,
+    `Paste or type a long text, 600 characters or more, at the end of the box: it stops at 500, the counter reads "500 / 500", and there is no red and no extra sentence.`,
+    `Cut the text back below 500 and add a word: the pill shows Unsaved changes, then Saving, then Saved, and Saved fades.`,
+    `Reload the public tryout page: "From the club" shows the new words. Put the blurb back to its original words ("Open to players born 2012 and 2013. The tryout fee is $40, paid at the first session. Bring a glove, cleats and water. We call every family by the end of the week.") and see Saved.`,
+    `Press "Close sign-ups". The line under the box changes. If tryout days are still to come: "Families read this on the tryout page now, with your tryout days. Sign-ups aren't open yet." If none are: "Families read this once a tryout day is coming up, and while sign-ups are open. Right now the page doesn't show it."`,
+    `The public tryout page now says "Not open yet" and, if days are still to come, still shows "From the club" with the blurb. Press "Open sign-ups" to put it back.`,
+    `Open 13U AAA's Tryouts › Sign-ups: its blurb begins "Last year's 2025 roster returns". Above the counter, an amber line reads "Mentions 2025 — still true?" It doesn't stop you saving.`,
+    `Edit the 2025 to 2026 in that blurb: the amber line goes (wait a moment). Change it back to 2025 so the line returns; it is the fixture.`,
+    `Admin › Public site, the questions families ask: open any question and add "Updated in 2025." to its answer. The hint "Mentions 2025 — still true?" under the answer is amber now, not grey, and it still saves. Take the words out again.`,
+  ]},
+  { id: 'pE', title: 'E · Start next season carries the years and the words', purpose: 'A new season moves the birth years on a year and offers last season\'s words, and nothing is lost.',
+    where: 'Lakeshore owner. Admin › Rep teams › 13U AAA, on a computer. WARNING: this creates a real 2027 season on the fixture team and cannot be undone. Do it last.', steps: [
+    `On 13U AAA's page press "Start next season" and confirm the window that opens (its words are unchanged by this stage).`,
+    `Team details now reads "Birth years for the 2027 season" and the boxes hold 2015 and 2016 (the old pair 2014–2015 moved one year later).`,
+    `Under the field, the note: "Moved one year later when the 2027 season started. If this team keeps its players, change it back."`,
+    `Change a box (for example the first to 2014 and the second to 2015) and wait for Saved: the note goes and does not return after a reload.`,
+    `Tryouts › Sign-ups: the "From the club" box is empty (placeholder "What it costs, who can try out, what to bring and when families hear back.") and under it a door "Start from last season's words".`,
+    `Press it: the 2026 words fill the box ("Last year's 2025 roster returns …"), the pill shows Saved, and the door goes. The amber "Mentions 2025 — still true?" shows again.`,
+  ]},
+  { id: 'pF', title: 'F · House league divisions', purpose: 'A house-league division shows the birth years it is for, beside its name.',
+    where: 'This is the other club, UAT Rep Club (the one with house league), signed in as its admin. Admin › House league, then open the season "2026 Fall House League" (its division is "U9 Rookie"). Public pages at /uat-rep-club.', steps: [
+    `Open "Edit division" on U9 Rookie. The field reads "Birth years" with no asterisk and no "(optional)", two boxes with the placeholder "Year", empty.`,
+    `Both empty, the hint reads "Families see no birth years for this division." then "Leave a box empty for no limit on that side." then "Baseball birthdays count from January 1." There is no "Change in Settings" link in the window.`,
+    `Type 2030: the reason "A birth year can't be after 2026." appears and Save refuses. Clear that, then type 2015 in the first box and 2014 in the second: "Put the earlier year first to save it." and Save refuses.`,
+    `Set the first box to 2014 and the second to 2015: the hint becomes Families see "Born 2014–2015" beside this division. Press Save: the window closes and the division saves.`,
+    `The public house-league season page (/uat-rep-club/league/2026-fall-house-league, or open the season from the club's home): U9 Rookie's card shows "Born 2014–2015".`,
+    `The club's public Teams page (/uat-rep-club/teams) now has the "Born in: any year" pill. Pick 2014: the house-league division U9 Rookie appears in the list with its line, and the sentence counts it as a place.`,
+    `Edit the division again and clear both boxes, then Save: the line is gone from the public page. (Leave it that way, or put 2014–2015 back if you want to keep checking.)`,
+  ]},
+  { id: 'pG', title: 'G · On a phone', purpose: 'The same things work with a thumb.',
+    where: 'Lakeshore owner, in the browser\'s phone view at 390 px wide.', steps: [
+    `Public Teams page: the pill reads "Born in: any year". Tap it and it opens as a sheet from the bottom with the years; picking one closes it and the pill reads "Born in: 2015".`,
+    `The born lines wrap onto their own line cleanly beside long team names. Nothing sideways, nothing overlapping the chip. Put it back to Any year.`,
+    `Admin › Rep teams › 15U AAA › Team details: the two year boxes and the dash fit on the row, each a thumb to tap, and the hint wraps with no sideways scroll.`,
+    `Admin › Settings, the card "When birthdays count from": the Baseball row stacks, the month dropdown and the day dropdown each take the full width, and each is a thumb to tap.`,
+    `Pick September: the window "Count baseball birthdays from September 1?" fits the screen, its buttons are easy to tap, and "Keep January 1" closes it with nothing changed.`,
+    `Admin › 15U AAA › Tryouts › Sign-ups: the "From the club" box and its "n / 500" counter fit the width, and the counter sits at the left.`,
+  ]},
+  { id: 'pH', title: 'H · What must not change', purpose: 'Nothing else moved on the way past.',
+    where: 'Lakeshore owner, then signed out.', steps: [
+    `No public page (Teams, Tryouts, a tryout page, the club's home) shows a player's name anywhere.`,
+    `Admin › Rep teams › Add a team: the window has no birth years field.`,
+    `Pasting a team's tryout page link into a link-preview tool (a chat or a message box) gives the same card as before this stage: the team and club names and the same picture, with no born line and none of the blurb's text added to it. Skip this step if you have no tool, and write "skipped" in the notes.`,
+  ]},
+];
+
+const KEY = 'club-stage4c2-walk-a-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="purpose"></p><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.purpose').textContent = part.purpose;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((text, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = text;
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§360 Club Tier 4c-2 Part A — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((t, i) => { if (!state[`${part.id}-s${i}`]) lines.push(`  ☐ ${t}`); });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>
