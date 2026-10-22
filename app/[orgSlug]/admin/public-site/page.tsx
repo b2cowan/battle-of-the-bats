@@ -428,7 +428,7 @@ export default function PublicSitePage() {
       ...(socials ? [W.socialCount(socials)] : []),
     ]),
     lists: W.listsSummary(counts.contacts, counts.documents, counts.questions),
-    visibility: W.visibilitySummary(on, currentOrg.isDiscoverable),
+    visibility: W.visibilitySummary(on, currentOrg.isDiscoverable, noun),
   };
 
   const textField = (key: TextKey, label: string, opts: { placeholder?: string; hint?: ReactNode; area?: boolean; inputType?: string; pastYear?: boolean }) => {
@@ -504,7 +504,7 @@ export default function PublicSitePage() {
                 <div className={styles.setupText}>
                   <h2 id="setup-title" className={styles.setupTitle}>{W.setupTitle}</h2>
                   <p className={styles.lead}>
-                    {!on && !isOwner ? `${ready.ready} of ${ready.of}. ${W.setupLeadAdmin}` : on ? W.setupLeadOnline(ready.ready, ready.of) : W.setupLeadOffline(ready.ready, ready.of)}
+                    {!on && !isOwner ? `${ready.ready} of ${ready.of} ready. ${W.setupLeadAdmin}` : on ? W.setupLeadOnline(ready.ready, ready.of) : W.setupLeadOffline(ready.ready, ready.of)}
                   </p>
                 </div>
                 {!on && isOwner && (

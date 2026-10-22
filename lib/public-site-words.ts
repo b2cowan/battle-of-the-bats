@@ -23,7 +23,8 @@ export const PUBLIC_SITE_WORDS = {
   lists: 'Contacts and documents',
   visibility: 'Visibility',
   setupTitle: 'Set up your site',
-  setupLeadOffline: (ready: number, of: number) => `${ready} of ${of} ready. Families see nothing until you go live, and you can go live at any time.`,
+  // Said only while the site is offline (a new club's site starts online): what families meet, in plain words.
+  setupLeadOffline: (ready: number, of: number) => `${ready} of ${of} ready. Families can't see your site until you go live, and you can go live whenever you like.`,
   setupLeadOnline: (ready: number, of: number) => `${ready} of ${of} ready. Your site is online, so families see each change as you make it.`,
   setupLeadAdmin: "When it's ready, the owner puts it online.",
   goLive: 'Go live',
@@ -34,12 +35,13 @@ export const PUBLIC_SITE_WORDS = {
   homeSummary: (n: number, first: string | null) => first ? `${n} ${n === 1 ? 'section' : 'sections'} · ${first} first` : 'Every section is hidden',
   aboutSummary: (parts: string[]) => parts.join(' · '),
   aboutNoTagline: 'No tagline yet',
-  aboutNoEmail: 'No questions address yet',
+  aboutNoEmail: 'No email for questions yet',
   socialCount: (n: number) => `${n} social ${n === 1 ? 'link' : 'links'}`,
   listsSummary: (c: number, d: number, q: number) =>
     [c ? `${c} ${c === 1 ? 'contact' : 'contacts'}` : null, d ? `${d} ${d === 1 ? 'document' : 'documents'}` : null, q ? `${q} ${q === 1 ? 'question' : 'questions'}` : null]
       .filter(Boolean).join(' · ') || 'Optional · none yet',
-  visibilitySummary: (on: boolean, listed: boolean) => on ? (listed ? 'Online · listed in the club directory' : 'Online · not in the club directory') : 'Offline',
+  // `noun` is the directory's name in the switch's own label (club, league or organization), so the two read alike.
+  visibilitySummary: (on: boolean, listed: boolean, noun = 'club') => on ? (listed ? `Online · listed in the ${noun} directory` : `Online · not in the ${noun} directory`) : 'Offline',
   lookSummaryBanner: 'banner photo',
 
   // The preview (A1, A2, A9)
@@ -47,7 +49,7 @@ export const PUBLIC_SITE_WORDS = {
   previewComputer: 'Computer',
   previewPhone: 'Phone',
   previewOffline: 'Only you and your admins can see this. Your site is offline.',
-  previewFoot: 'Your home page as families see it. Point at any part to see where it is changed, and click to change it.',
+  previewFoot: 'This is your home page as families see it. Click any part to change it.',
   previewLoading: 'Loading the preview…',
   previewEditIn: (row: string) => `Change in ${row}`,
   previewFrameTitle: 'Your home page, as families see it',
@@ -71,11 +73,12 @@ export const PUBLIC_SITE_WORDS = {
   typeSample: 'Teams and tryouts',
   banner: 'Banner photo',
   uploadBanner: 'Upload a photo',
-  replaceBanner: 'Replace',
+  replaceBanner: 'Replace photo',
   bannerHint: 'Shows across the top of your home page on a computer. Phones leave it out. A wide photo works best, about 16 by 5. JPG, PNG or WebP, up to 4 MB.',
   stockTitle: 'Choose a stock logo',
   useThisLogo: 'Use this logo',
-  stockLocked: (plan: string) => `Upgrade to ${plan} to unlock this icon.`,
+  // "Use", as the server's own refusal says it (app/api/admin/org-logo-stock) — and never "unlock" (brand voice).
+  stockLocked: (plan: string) => `Upgrade to ${plan} to use this icon.`,
   lookFailed: "Couldn't save the look. Try again.",
 
   // Visibility (moved in from Settings; the owner's alone, Option A)

@@ -342,16 +342,16 @@ describe('the Look card says the colours in words', () => {
   });
   it('the summary, the readability line, and the darkened colour', () => {
     const look = lookWords({ preset: 'custom', primary: '#1F3A5F', accent: '#E8B33A', font: null });
-    assert.equal(look.summary, 'Navy and gold · the default font');
+    assert.equal(look.summary, 'Navy and gold · Classic type');
     assert.equal(look.readable, 'White text on navy, navy links. Readable on every page.');
     assert.equal(look.darkened, null);
     // The drawings' pink fails 4.5 : 1 with both texts, so the platform darkens it (lib/club-colour-roles.ts).
     const pink = lookWords({ preset: 'custom', primary: '#E0457B', accent: null, font: 'inter' });
-    assert.equal(pink.summary, 'Pink · Inter');
+    assert.equal(pink.summary, 'Pink · Clean type');
     assert.equal(pink.darkened, 'We made your pink a little darker on text and buttons so families can read it.');
   });
   it('one colour said once when the accent is the same word', () => {
-    assert.equal(lookWords({ preset: 'custom', primary: '#1F3A5F', accent: '#1E3A8A', font: 'dm-serif' }).summary, 'Navy · DM Serif');
+    assert.equal(lookWords({ preset: 'custom', primary: '#1F3A5F', accent: '#1E3A8A', font: 'dm-serif' }).summary, 'Navy · Serif type');
   });
 });
 
