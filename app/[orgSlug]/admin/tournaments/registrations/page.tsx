@@ -1131,10 +1131,16 @@ export default function UnifiedTeamsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Payment reminders could not be sent.');
       setShowReminderModal(false);
+      const sent: number = data.emailsSent ?? 0;
+      const noEmail: number = data.skippedNoEmailCount ?? 0;
+      const notDue: number = (data.skippedCount ?? 0) - noEmail;
+      const skipLines: string[] = [];
+      if (notDue > 0) skipLines.push(`${notDue} selected registration${notDue === 1 ? ' was' : 's were'} skipped because no payment is currently due.`);
+      if (noEmail > 0) skipLines.push(`${noEmail} ${noEmail === 1 ? 'owes' : 'owe'} a payment but ${noEmail === 1 ? 'has' : 'have'} no email address on file.`);
       setFeedback({
-        title: 'Payment reminders sent',
-        message: `${data.emailsSent ?? 0} reminder${(data.emailsSent ?? 0) === 1 ? '' : 's'} sent. ${data.skippedCount ?? 0} selected registration${(data.skippedCount ?? 0) === 1 ? ' was' : 's were'} skipped because no payment is currently due.`,
-        type: 'success',
+        title: sent > 0 ? 'Payment reminders sent' : 'No reminders sent',
+        message: [`${sent} reminder${sent === 1 ? '' : 's'} sent.`, ...skipLines].join(' '),
+        type: sent > 0 ? 'success' : 'warning',
       });
 
     });

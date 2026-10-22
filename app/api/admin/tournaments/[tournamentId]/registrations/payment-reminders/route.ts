@@ -178,6 +178,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const ourTeams = await ourTournamentTeamIds(tournamentId);
   let emailsSent = 0;
   let skippedCount = 0;
+  let skippedNoEmailCount = 0;
   // A free coach's bell (Free coach header parity, 2026-10-13): each reminder that went also waits under
   // Needs attention until the coach marks it Done (owner B4) — "$450.00 is due Jun 1 for …".
   const bellDue = new Map<string, string>();
@@ -189,7 +190,15 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     // footer keeps teams.email (the claim key, never overwritten).
     const recipient = resolveCoachRecipient(team);
     // Our own team owes no entry fee (owner 2026-10-21), whatever the tournament charges.
-    if (!recipient || team.status !== 'accepted' || !due || due.amount <= 0 || ourTeams.has(team.id)) {
+    // A team that owes money but has no email on file is its own reason: "no payment is due" would be
+    // untrue for it, and the admin's fix (add an address) is different from "nothing to do".
+    const owes = team.status === 'accepted' && !!due && due.amount > 0 && !ourTeams.has(team.id);
+    if (owes && !recipient) {
+      skippedNoEmailCount++;
+      skippedCount++;
+      continue;
+    }
+    if (!recipient || !owes) {
       skippedCount++;
       continue;
     }
@@ -238,5 +247,5 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     skippedCount,
   });
 
-  return json({ success: true, emailsSent, skippedCount });
+  return json({ success: true, emailsSent, skippedCount, skippedNoEmailCount });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/payment-reminders' });
