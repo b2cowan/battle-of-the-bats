@@ -6,10 +6,12 @@
   align-items: center;
   gap: 0.5rem;
 }
-/* Two four-digit years fit side by side in 390 (a phone's 44px height comes from the kit's input). */
-.box { width: 6rem; flex: none; }
+/* Two four-digit years fit side by side in 390 (a phone's 44px height comes from the kit's input).
+   `.years >` doubles the specificity: the kit's `.input` says width:100% in a rule of the same weight, and which file
+   loads last decided the winner — on Team details the full width won and the pair stacked. */
+.years > .box { width: 6rem; flex: none; }
 /* With a date written before it ("Sep 1,") the box is narrower: the date carries the meaning. */
-.boxAffixed { width: 4.75rem; flex: none; }
+.years > .boxAffixed { width: 4.75rem; flex: none; }
 .affix { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
 .dash { color: var(--text-tertiary); }
 /* A held box is marked, not only captioned (the red edge, as the site editor's refused field). */
