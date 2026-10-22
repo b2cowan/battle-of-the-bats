@@ -370,14 +370,21 @@
 }
 
 .copy {
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid currentColor;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
   border-radius: 8px;
   background: none;
-  font: 600 14px/1 var(--club-text-face);
   color: inherit;
+  opacity: 0.8;
   cursor: pointer;
+}
+
+.copy:hover {
+  opacity: 1;
 }
 
 .mail:focus-visible,

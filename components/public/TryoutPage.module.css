@@ -112,7 +112,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 /* The address: its own line, and it only breaks when it cannot fit at all — never at a hyphen (design log 2026-10-20). */
 .address {
@@ -127,17 +126,16 @@
   word-break: break-all;
 }
 .address:hover { text-decoration: underline; }
-/* Copy: the drawings' bordered control, 44 px; held to "Copied"'s width so the row does not jump when it flips. */
-.copy {
-  min-height: 44px;
-  min-width: 5.5rem;
-  padding: 0 14px;
-  border: 1px solid currentColor;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--club-text);
-  font: 600 0.875rem var(--club-text-face);
-  cursor: pointer;
+/* Copy is built like Directions on the tryout days above it and lines up under them at the card's right edge (both rows
+   are padded 16 px) — labelled at a desk, its symbol alone on a phone (the house rule for a secondary action, design log
+   2026-10-20; owner 2026-10-21). It never wraps under the address: a long address breaks inside its own space instead,
+   so Copy is never stranded alone on a line. The word holds "Copied"'s width so the button does not jump when it flips. */
+.mailRow .copy { gap: 0.5rem; flex: none; margin-left: auto; }
+.copy > svg { flex: none; }
+.copyLabel { display: inline-block; min-width: 3.4em; text-align: left; }
+@media (max-width: 640px) {
+  .mailRow .copy { width: 44px; padding: 0; gap: 0; border-color: transparent; background: none; color: var(--club-ink); }
+  .copyLabel { display: none; }
 }
 .copy:focus-visible,
 .address:focus-visible {

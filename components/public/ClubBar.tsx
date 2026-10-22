@@ -66,7 +66,7 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
         <OrgSectionTabs
           sections={club.sections}
           orgSlug={club.slug}
-          activeKey={activeOrgSectionKey(pathname, club.slug)}
+          activeKey={activeOrgSectionKey(pathname, club.slug, club.sections)}
           className={styles.tabsSlot}
         />
       )}

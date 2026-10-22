@@ -1,7 +1,7 @@
 /**
  * lib/club-team-page.ts — THE PUBLIC TEAM PAGE'S RECIPE (Club Tier Stage 4b-2a; End state 3, ruled 2026-10-19).
  *
- * "← Teams" → the name, its division and season → the tryout door (or one quiet sentence) → the schedule, when the coach
+ * The name, its division and season → the tryout door (or one quiet sentence) → the schedule, when the coach
  * chose Public link → About the team. A part with nothing to show is absent. No Past seasons list (DC-07); no Coaches
  * section (it arrives in 4c with the coach's own switch). Pure, so the absences are unit-tested.
  */

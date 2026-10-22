@@ -46,13 +46,14 @@ export default function TeamSubscribeButton({ feedPath, calendarName }: {
         ref={buttonRef}
         type="button"
         className={styles.button}
+        aria-label={W.publicButton}
         aria-expanded={open !== null}
         onClick={() => {
           if (open) { close(); return; }
           setOpen(isPhone ? 'sheet' : 'panel');
         }}
       >
-        <CalendarPlus size={16} aria-hidden /> {W.publicButton}
+        <CalendarPlus size={18} aria-hidden /> <span className={styles.label}>{W.publicButton}</span>
       </button>
       {open && (
         <SubscribeChoices

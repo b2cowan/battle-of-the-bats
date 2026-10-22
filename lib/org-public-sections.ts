@@ -38,11 +38,16 @@ const ORG_SECTIONS: OrgSection[] = [
  * section key (`''` for the org home) or null when the visitor is on an unnamed section, where no
  * tab should read as current rather than one falsely claiming to.
  */
-export function activeOrgSectionKey(pathname: string, orgSlug: string): string | null {
+export function activeOrgSectionKey(pathname: string, orgSlug: string, sections?: readonly OrgSection[]): string | null {
   if (!orgSlug) return null;
   const base = `/${orgSlug}`;
   if (pathname !== base && !pathname.startsWith(`${base}/`)) return null;
-  const segment = pathname.slice(base.length).replace(/^\//, '').split(/[/?#]/)[0];
+  const parts = pathname.slice(base.length).replace(/^\//, '').split(/[?#]/)[0].split('/');
+  const segment = parts[0];
+  // A team's tryout pages (`/teams/{team}/tryouts/…`) are tryout pages, so they light Tryouts however the visitor got
+  // there — the tab is the way back to the club's list, and "← {team}" on the page is the way on to the team. While
+  // the seasonal tab is absent they stay under Teams, where the URL lives (design log 2026-10-21).
+  if (segment === 'teams' && parts[2] === 'tryouts' && sections?.some(s => s.key === 'tryouts')) return 'tryouts';
   return ORG_SECTIONS.some(s => s.key === segment) ? segment : null;
 }
 

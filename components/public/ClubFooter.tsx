@@ -10,7 +10,7 @@
  * placeholder. "Contacts and documents" opens the About page (Stage 4c-1) when the club has put something there.
  */
 import Link from 'next/link';
-import { Globe } from 'lucide-react';
+import { Check, Copy, Globe } from 'lucide-react';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import type { ClubSocialKind } from '@/lib/club-site';
@@ -41,8 +41,14 @@ export default function ClubFooter({ club }: { club: ClubFrameClub }) {
             <span className={styles.contactLabel}>Questions? Email the club</span>
             <div className={styles.mailRow}>
               <a href={`mailto:${club.contactEmail}`} className={styles.mail}>{club.contactEmail}</a>
-              <button type="button" className={styles.copy} onClick={() => copy(club.contactEmail!)}>
-                {copied ? 'Copied' : 'Copy'}
+              <button
+                type="button"
+                className={styles.copy}
+                onClick={() => copy(club.contactEmail!)}
+                aria-label="Copy email address"
+                title={copied ? 'Copied' : 'Copy email address'}
+              >
+                {copied ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />}
               </button>
               {/* Announced from its own region: a live region on the focused button itself is read unreliably. */}
               <span className={styles.srOnly} aria-live="polite">{copied ? 'Copied' : ''}</span>

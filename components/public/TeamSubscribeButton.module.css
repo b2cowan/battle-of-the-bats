@@ -23,6 +23,15 @@
 .button:hover { background: var(--white-10); }
 .button:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
+/* On a phone the button is its symbol alone — no border, no fill, still a 44px tap target (the house standard for a
+   secondary action on a phone). The word stays in the button's aria-label; the glyph sits 16px in from the column's edge,
+   straight above the Directions arrow in the schedule rows below (their 16px padding + the same 44px box). */
+@media (max-width: 640px) {
+  .button { width: 44px; padding: 0; gap: 0; justify-content: center; margin-right: 16px; border-color: transparent; background: none; }
+  .button:hover { background: none; }
+  .label { display: none; }
+}
+
 .lead {
   margin: 0 0 12px;
   font-size: 0.875rem;

@@ -148,4 +148,24 @@ logo" chip (silent; the walk's Part 3 tests it); a typed save in flight across a
 restore after a redraw is best-effort on a very long home; the preview boots the admin provider tree inside its frame
 (a few extra client calls per redraw).
 
-**Owed:** walk §357; `/marketing` on the new words; `check:layout --changed` on the editor, the preview and Settings.
+**Walked:** §357 ✅ PASSED 13 of 13 on 2026-10-22; calls c1–c5 all answered A (as built, including A8 as built: the set-up card follows the parts). Two defects found in the walk, fixed the same day (the Look row's selection read the default after every pick; the own-colour pickers stayed open).
+
+**Owed:** `/marketing` on the new words; `check:layout --changed` on the editor, the preview and Settings.
+
+## 7. Open — where the Club notice lives (owner 2026-10-22, noted, NOT ruled)
+
+Seen on the built editor: the **Club notice** strip (one line at the top of every public page, e.g. a field closure)
+is a message to families, not a part of how the site looks. The owner's instinct: it belongs under a
+**Communications** home, not in the site editor. **Not changed in this build** — the strip stays where A7 put it
+until Club Tier Stage 13 (navigation across the three portals) decides.
+
+For that review to weigh:
+- **There is no Communications place in the club admin rail today** (Programs / Also on your plan / Organization);
+  only the Coaches Portal ("Communication" group) and tournament admin have one. So the move is really "does the
+  club get a Communications home, and what else lives there" — the notice, the family broadcast (Stage 7 / J), and
+  anything else that talks to families.
+- Counter-weight: the notice is *seen* on the site, and the preview shows it in place (A9 marks it); moving the
+  control away loses that "edit it where you see it" link unless the editor keeps a pointer to it.
+- Whichever way it goes, the strip's window (`ClubNotice`) and its help article move as a unit.
+
+Carried into Club Tier Stage 13 (see its inventory items in `CLUB_TIER_PRODUCTION_READINESS_PLAN.md`); the 10-17 nav review is closed.

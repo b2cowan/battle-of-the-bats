@@ -19,11 +19,12 @@ import {
  * (lib/tryout-season.ts), never here:
  *
  *   · Tryouts open — the days, "From the club", "Sign up for tryouts", the club's contact.
- *   · Not open yet — the days, then the closed frame's card ("Sign-ups … aren't open yet." + the contact), "See the team".
- *   · Finished     — "Tryouts for the 2027 season finished on Mon, Sep 7." + the contact, "See the team".
- *   · Closed       — "13U AAA isn't taking tryout sign-ups right now." + the contact, "See the team".
+ *   · Not open yet — the days, then the closed frame's card ("Sign-ups … aren't open yet." + the contact).
+ *   · Finished     — "Tryouts for the 2027 season finished on Mon, Sep 7." + the contact.
+ *   · Closed       — "13U AAA isn't taking tryout sign-ups right now." + the contact.
  *
- * It never dead-ends: every state carries the club's contact and a way on to the team.
+ * It never dead-ends: every state carries the club's contact, and "← {team}" at the top is the one way on to the team
+ * in every state (a second "See the team" at the foot went to the same page and was removed, owner 2026-10-21).
  */
 export default function TryoutLandingView({
   orgSlug, teamSlug, team, state, season, upcoming, lastDay, today, contactEmail, registerHref,
@@ -75,10 +76,7 @@ export default function TryoutLandingView({
           <ClubContactLine email={contactEmail} />
         </>
       ) : (
-        <>
-          <ClubContactCard sentence={tryoutStateSentence(state, team.name, seasonName, lastDay, today)} email={contactEmail} />
-          <Link href={teamHref} className={`${kit.btn} ${kit.btnSecondary} ${kit.btnFull}`}>See the team</Link>
-        </>
+        <ClubContactCard sentence={tryoutStateSentence(state, team.name, seasonName, lastDay, today)} email={contactEmail} />
       )}
     </div>
   );

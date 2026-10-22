@@ -8,9 +8,8 @@ import kit from '@/components/public/ClubKit.module.css';
 import { liveSeasonOf, publicTryoutSeasonOf } from '@/lib/season-live';
 import { publicTryoutHref } from '@/lib/public-tryout';
 import { requirePublicClubPage } from '@/lib/public-club-page';
+import { publicClubRefusal } from '@/lib/public-club-access';
 import { clubPageMetadata, getClubSiteContent, getClubTeam, getClubTeamSeasons } from '@/lib/club-page-meta';
-import { clubTeamsAddress, publicClubRefusal } from '@/lib/public-club-access';
-import { anyListedTeam } from '@/lib/org-section-availability';
 import { teamMetaLine, teamPageParts } from '@/lib/club-team-page';
 import styles from './TeamPage.module.css';
 import { forwardToRunningTournament } from '@/lib/club-shortcut';
@@ -24,7 +23,6 @@ import { shareCardPath, sportsTeamJsonLd, teamCard, TEAM_DESCRIPTION_FALLBACK } 
 
 /** Where the club's pages live, for the team's description to search engines (the sitemap's own base). */
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
-
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +69,6 @@ export default async function TeamPublicPage({
   // accepted any — so the two could disagree about which season a family was applying to.
   const openYear = publicTryoutSeasonOf(team, programYears);
 
-
   // The standing public schedule (Chunk D 1.9) — and, since Club Tier 6d, its Subscribe button and the team's public
   // calendar feed — all ask ONE question (`getPublicTeamSchedule`): Public link, the club not cancelled, the family
   // layer, not archived, a live season. This page never decides; it renders what it is given. ⚠ It used to skip the
@@ -91,10 +88,6 @@ export default async function TeamPublicPage({
   const meta = teamMetaLine(team.division, liveYear?.year);
   const about = team.description?.trim() || null;
   const email = siteContent?.contactEmail?.trim() || null;
-  // The Teams page exists exactly when the Teams tab does: the plan carries it and the club lists a team. This team, if
-  // not archived, is one; an archived team's page asks (a club whose teams are all archived has no list to go up to).
-  const teamsPage = clubTeamsAddress(org) === 'teams-page' && (!team.isArchived || await anyListedTeam(org.id));
-
   // End state 3: a part with nothing to show is absent. No Past seasons (DC-07: a door to an old season would be a new
   // look-back surface); no Coaches (4c, with the coach's own switch).
   const parts = teamPageParts({ archived: team.isArchived, tryoutOpen: !!openYear, schedule: !!publicSchedule, about: !!about });
@@ -168,11 +161,8 @@ export default async function TeamPublicPage({
   return (
     <div className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      {/* One level up (design log 2026-10-20) — to the club's Teams page, where the club has one. */}
-      {teamsPage && (
-        <Link href={`/${orgSlug}/teams`} className={kit.back}>← Teams</Link>
-      )}
-
+      {/* No "← Teams" (design log 2026-10-20, amended): the Teams tab exists exactly when the Teams page does, and it is
+          pinned on a phone — a back link to the same place only scrolls away above the name. */}
       <div className={styles.head}>
         <h1 className={`${kit.title} ${styles.name}`}>
           {/* The team's own colour is a dot beside its name, never a tint or a strip: the club's colour carries the page

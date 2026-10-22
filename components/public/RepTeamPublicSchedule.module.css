@@ -83,6 +83,15 @@
   white-space: nowrap;
 }
 
+/* Directions: labelled at a desk; on a phone its symbol alone — no border, no fill, a 44px tap target (the house
+   standard for a secondary action on a phone). The word stays in the link's aria-label. */
+.directions { gap: 0.5rem; }
+.directions > svg { flex: none; }
+@media (max-width: 640px) {
+  .row .directions { width: 44px; padding: 0; gap: 0; border-color: transparent; background: none; color: var(--club-ink); }
+  .directionsLabel { display: none; }
+}
+
 .scoreWin  { color: var(--club-ok); }
 .scoreLoss { color: var(--danger); }
 

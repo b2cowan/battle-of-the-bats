@@ -58,3 +58,16 @@ test('a team page reads as inside the Teams tab (Club Tier Stage 4b-2a, End stat
   const tabs = orgSectionsFor({ league: true, archives: true, teams: true });
   assert.ok(tabs.some(t => t.key === activeOrgSectionKey('/ravens/teams/u14-select', 'ravens')));
 });
+
+test('a team tryout page lights Tryouts while the club shows that tab, Teams while it does not (2026-10-21)', () => {
+  const inSeason = orgSectionsFor({ league: false, archives: false, teams: true, tryouts: true });
+  const offSeason = orgSectionsFor({ league: false, archives: false, teams: true, tryouts: false });
+  for (const path of ['/ravens/teams/u14-select/tryouts', '/ravens/teams/u14-select/tryouts/register', '/ravens/teams/u14-select/tryouts?x=1']) {
+    assert.equal(activeOrgSectionKey(path, 'ravens', inSeason), 'tryouts', path);
+    assert.equal(activeOrgSectionKey(path, 'ravens', offSeason), 'teams', path);
+  }
+  // The team page itself stays under Teams in season; only its tryout pages move.
+  assert.equal(activeOrgSectionKey('/ravens/teams/u14-select', 'ravens', inSeason), 'teams');
+  // A team whose slug happens to be "tryouts" is still a team page.
+  assert.equal(activeOrgSectionKey('/ravens/teams/tryouts', 'ravens', inSeason), 'teams');
+});

@@ -1,3 +1,4 @@
+import { Navigation } from 'lucide-react';
 import styles from './RepTeamPublicSchedule.module.css';
 import kit from './ClubKit.module.css';
 import {
@@ -55,8 +56,10 @@ function Row({ entry }: { entry: FamilyScheduleEntry }) {
       {cancelled ? <span className={styles.cancelChip}>Cancelled</span>
         : score ? <b className={`${styles.score} ${TONE_CLASS[scheduleResultTone(entry)]}`}>{score}</b>
         : directions ? (
-          <a className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm}`} href={directions} target="_blank" rel="noopener noreferrer">
-            Directions
+          <a className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm} ${styles.directions}`} href={directions}
+            target="_blank" rel="noopener noreferrer" aria-label="Directions">
+            <Navigation size={18} aria-hidden />
+            <span className={styles.directionsLabel}>Directions</span>
           </a>
         ) : null}
     </div>
