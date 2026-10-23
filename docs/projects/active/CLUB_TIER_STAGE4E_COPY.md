@@ -18,14 +18,13 @@
 
 ## 0 · Four things for the owner before the build reads this
 
-1. **The drawing promised checks the build does not make.** Frame g3 said "We check every few minutes", and the waiting
-   frames said "every few minutes". The build prompt's status job reads a waiting connection every 15 minutes and a
-   *connected* one **once a day**. So I wrote "every 15 minutes" while waiting, and "every day" everywhere after it connects
-   (truth rule: copy says only what ships).
-   **I disagree with the once-a-day check for record 2.** If a volunteer deletes it, the club's whole site, and with it
-   every poster, is dead until the next daily tick: up to a day, and the email "at once" is really "on the next check". Record 2 is one
-   lookup per connected club. **Recommendation: look at record 2 every hour, keep record 1 daily.** If you agree, g3 and the
-   fourth email say "every hour"; as written they say "every day" and "when we noticed".
+1. **The drawing promised checks the build does not make, and the cadence is now RULED (owner, 2026-10-23).** Frame g3 said
+   "We check every few minutes", and the waiting frames said "every few minutes". What ships: a waiting connection is read every
+   15 minutes; once connected, **record 2 (the site) is looked at every hour and record 1 (the padlock check) every day.**
+   Record 2 is the one whose loss takes the whole site down, so it gets the faster look; record 1 breaks nothing for months, so
+   daily is plenty. A miss on record 2 is confirmed at the next 15-minute tick before the owner is emailed, so a lookup blip
+   cannot send a false "your site is down". Worst case from loss to email: about an hour and a quarter. Copy that follows:
+   "every 15 minutes" while waiting, "every hour" on the Not working card (g3), "every day" on the Needs attention card (f).
 2. **The drawings left four things unwritten.** The "Use a name other than www" link and what opens under it; the
    refusals for a failed connect; the live-region texts a screen reader hears; the two tournament screens' fixed text. All
    written below, marked **NEW**.
@@ -239,7 +238,7 @@ Thanks!
 - **The old address** → `fieldlogichq.ca/{slug}` **forwards here**
 - **{bare}** → **Forwards to www** · or · **Not forwarding yet** · **How** (a link)
 - **Padlock** → **Renews by itself before {date}**
-- Hint: **Keep both records where you bought {bare} for as long as you use this address. We check them every day.**
+- Hint: **Keep both records where you bought {bare} for as long as you use this address. We keep checking both, and we will write to you if one goes missing.**
 - Disclosure: **Show the two records**
 - Owner's rare door (ends the body): **Stop using your own address**
 - Admin: the same facts, the hint and the disclosure, then **The owner connects and removes the address.** No Stop door.
@@ -274,7 +273,7 @@ Thanks!
 - Title: **{address} is not reaching your site.**
 - Body: **Record 2 was changed or removed where you bought {bare}. Anyone who uses that address sees an error until it is back. Until then, every link we hand out uses `fieldlogichq.ca/{slug}`, which works. We emailed {owner} when we noticed, {time}; this clears by itself once record 2 is back.**
 - Record 2 card with chip **Missing**; no record 1 card
-- Foot: **We check every day. Last checked {time}** · **Check now** *(see §0, item 1: "every hour" if you take the recommendation)*
+- Foot: **We check every hour. Last checked {time}** · **Check now**
 - Owner's rare door: **Stop using your own address**
 
 *(Admin view of f, g1 and g3: the same warning, cards and Check now, then **The owner connects and removes the address.** No Try again, no Stop, no Use a different address.)*
@@ -342,7 +341,7 @@ Warm envelope, Arial, the name line "FieldLogic**HQ**" in text. One lime button 
 
   Every link we hand out uses it. `fieldlogichq.ca/{slug}` forwards there, so posters and old links keep working.
 
-  Keep both records where you bought {bare} for as long as you use this address. The padlock check record matters most: the padlock renews only while it is there. We check both every day and will write to you if one goes missing.
+  Keep both records where you bought {bare} for as long as you use this address. The padlock check record matters most: the padlock renews only while it is there. We keep checking both and will write to you if one goes missing.
 
   *(Only if the bare name is not forwarding:)* One thing is left. {bare} on its own does not forward to {address} yet, so anyone who types it without www will not find you. How to forward it is on the same page.
 - **Button:** Open Web address
@@ -427,7 +426,7 @@ Warm envelope, Arial, the name line "FieldLogic**HQ**" in text. One lime button 
 - **The clock.** Every time is "{time}" with "a.m." or "p.m.": "2:14 p.m.", "9:41 a.m."
 - **Possessives.** FieldLogicHQ's, Lakeshore Lynx's, service's: the bare apostrophe only after an s.
 - **No timing promise** beyond: "often minutes once both records are in; it can take up to two days."
-- **Nothing promised that does not ship.** "Every 15 minutes" and "every day" are the build prompt's schedule; "up to two days"
+- **Nothing promised that does not ship.** "Every 15 minutes", "every hour" and "every day" are the status check's schedule (owner-ruled, §0 item 1); "up to two days"
   is the host's own limit; "emailed {owner}" is ruling 6.
 - **No competitor named.** No "DNS" alone: the one use (§5) says where.
 - **One lime button per view** (the emails' single button; in the product the door is outline, lime stays for Go live).
