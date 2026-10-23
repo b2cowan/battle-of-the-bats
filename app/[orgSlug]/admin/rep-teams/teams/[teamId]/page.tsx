@@ -719,9 +719,13 @@ function TeamDetails({ team, season, cutoffs, groups, orgSlug, canWrite, isOwner
               />
               {bornHeld ? (
                 <BornHeld id="born-years-held">{bornHeld}</BornHeld>
-              ) : (
-                <span className={ck.hint}>{bornHint(bornCheck.ok ? bornCheck.years : savedPair, cutoff)}</span>
-              )}
+              ) : (() => {
+                // Both boxes filled: the sentence would only repeat the figures just above, so it stays away.
+                const shown = bornCheck.ok ? bornCheck.years : savedPair;
+                return shown.from != null && shown.to != null
+                  ? null
+                  : <span className={ck.hint}>{bornHint(shown, cutoff)}</span>;
+              })()}
               <span className={ck.hint}>
                 {cutoffSentence(sportLabel, cutoff)}
                 {isOwner && (
