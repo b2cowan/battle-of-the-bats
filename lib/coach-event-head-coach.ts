@@ -39,6 +39,9 @@ export function canEditEventHeadCoach(access: EventHeadCoachAccess): boolean {
 /** What the server says to a caller the rule refuses (the page shows the same person a line, never a form). */
 export const EVENT_HEAD_COACH_REFUSED = 'Only the head coach can change who coaches at this event.';
 
+/** Roster submission answers to the same rule (walk §361 call c2, owner 2026-10-22, option A): the roster goes to the organizer under the head coach's name. */
+export const EVENT_ROSTER_REFUSED = 'Only the head coach can submit the roster for this event.';
+
 /* ── The autosave's checks (Stage 7d; owner ruling 2026-10-22, Put to the owner 4 option (a)) ──────────
    The name and the email save separately, each only when it is worth sending: a blank name is NEVER
    sent (the field says so in place and the last saved name stays in effect — the route would refuse it

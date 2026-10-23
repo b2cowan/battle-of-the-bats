@@ -26,9 +26,10 @@
 
 .input {
   font: inherit;
+  font-size: var(--type-body);
   color: var(--text-primary);
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
   border-radius: var(--radius-sm);
   padding: 0 0.7rem;
   height: 36px;
@@ -60,5 +61,6 @@
 @media (max-width: 768px) {
   .input {
     height: var(--tap-min, 44px);
+    font-size: 1rem; /* 16 px on a phone: below it iOS zooms the page on focus */
   }
 }

@@ -583,6 +583,7 @@ export default function ScheduleEventSheet({
   // spelling, Club Tier Stage 7d T9 — it was "@").
   const isTournamentContainer = ev.eventType === 'external_tournament';
   const matchupSep = ev.homeAway === 'away' ? 'at' : 'vs';
+  const gameTitled = mirroredGame && !!ev.opponent;
   const eventMeta = [
     ev.startsAt
       ? (isTournamentContainer && ev.endsAt
@@ -593,7 +594,10 @@ export default function ScheduleEventSheet({
       ? `${fmtTime(ev.startsAt)}${ev.endsAt ? ` – ${fmtTime(ev.endsAt)}` : ''}`
       : null,
     ev.arrivalTime ? `Arrive ${fmtClock(ev.arrivalTime)}` : null,
-    ev.opponent ? `${matchupSep} ${ev.opponent}${ev.homeAway === 'neutral' ? ' (neutral)' : ''}` : null,
+    // A tournament game is TITLED by its matchup (drawing 8: "vs Guelph Royals 15U"), so the meta does not say it
+    // twice; the tournament's name is the road-back row's title below.
+    ev.opponent && !gameTitled ? `${matchupSep} ${ev.opponent}${ev.homeAway === 'neutral' ? ' (neutral)' : ''}` : null,
+    gameTitled && ev.homeAway === 'neutral' ? 'Neutral site' : null,
     ev.isRecurring ? 'Repeats weekly' : null,
   ].filter(Boolean) as string[];
   // Location is rendered separately as a tappable Google Maps link (reusing the shared helper),
@@ -717,7 +721,7 @@ export default function ScheduleEventSheet({
       </button>
     </div>
   );
-  const titleBlock = <h2 className={styles.slideOverTitle}>{ev.name}</h2>;
+  const titleBlock = <h2 className={styles.slideOverTitle}>{gameTitled ? `${matchupSep} ${ev.opponent}` : ev.name}</h2>;
   const whenLine = eventMeta.length > 0 ? (
     <p className={styles.slideOverMeta}>{eventMeta.join('  ·  ')}</p>
   ) : null;
@@ -731,16 +735,20 @@ export default function ScheduleEventSheet({
   const sourceTournament = mirroredGameSource?.tournamentName || ev.name;
   const sourceBlock = clubSource ? <ClubSourceNote source={clubSource} /> : mirroredGame ? (
     mirroredGameSource?.recordHref ? (
-      <CoachRowList label="Where this game comes from">
-        <CoachRow
-          as="link"
-          href={mirroredGameSource.recordHref}
-          mark={<Trophy size={14} />}
-          title={sourceTournament}
-          caption="The organizer sets the time, place and score"
-          door="chevron"
-        />
-      </CoachRowList>
+      // A wrapper carries the gap: `ul.rowList { margin: 0 }` outweighs a class on the list itself, so the
+      // row would sit flush against the doors below it.
+      <div className={styles.sourceRowGap}>
+        <CoachRowList label="Where this game comes from">
+          <CoachRow
+            as="link"
+            href={mirroredGameSource.recordHref}
+            mark={<Trophy size={14} />}
+            title={sourceTournament}
+            caption="The organizer sets the time, place and score"
+            door="chevron"
+          />
+        </CoachRowList>
+      </div>
     ) : (
       <div className={`${styles.infoBanner} ${styles.sourceNote}`}>
         <Trophy size={13} aria-hidden style={{ flexShrink: 0 }} />

@@ -2405,6 +2405,12 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 > **Found, not fixed:** the roster-submit route still opens to anyone who can open the entry (owner question); an ex-coach who
 > stays a member of a paid team's free-team shadow still opens and edits through membership; the tournament Teams toolbar guard
 > fails on HEAD (not this work); the Schedule page's opponents-book effect trips `set-state-in-effect` on HEAD (not this work).
+> **7d WALKED ✅ 2026-10-22 (owner, 35/35, ledger §361).** Calls: c1 B (the "Fan view of every tournament" link is dropped everywhere:
+> `CoachTournamentFanDoor` and the `fanDoor` prop are gone, the help line now points at each tournament page's Fan view); c2 A (roster
+> submission takes `canEditEventHeadCoach` over `resolveEventHeadCoachAccess`: POST 403 `EVENT_ROSTER_REFUSED` before any lookup, GET
+> reports `state.mayEdit`, the island reads without the editor, the Registration card's roster pointer follows the rule — this answers the
+> "Found, not fixed" roster line above); c3 A (day format unchanged). Built and green in the commit that records this walk; c2's wording has had no `/marketing`
+> pass, and its browser check is owed.
 > **7d CLOSE-OUT LOG** (prompt `CLUB_TIER_STAGE7D_CLOSEOUT_PROMPT.md`). One line per agent, ticked THE MOMENT that agent
 > finishes — date, result in one line, what changed. A line still `[ ]` was NOT run, whatever any summary says.
 > - [x] `/simplify` — 2026-10-22: 4 reviewers (reuse, simplification, efficiency, altitude), ~30 findings (overlapping), 13 distinct fixes, rest skipped as
@@ -2445,11 +2451,64 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 >   an invalid `?day=` is not stripped from the URL; a reinstated cancelled game is not announced; `24:00:00` reads as noon;
 >   the access lookup runs twice per request (a cost, not a defect). Also owed at commit time: the new files are untracked —
 >   stage them by explicit path with the 7d edits, or the tracked files that import them will not build.
-> - [ ] `/design` (390 + 1440, both portals, warm + dark) —
-> - [ ] `/marketing` (every new or changed sentence) —
-> - [ ] `/docs` (the coach Tournaments help: the help door, the road to the games, who may change the head coach) —
-> - [ ] `/strategy` (plan-inclusion check only) —
-> - [ ] Gates re-run after the fixes (typecheck, the 7d tests + guards, `verify:changed`) —
+> - [x] `/design` (390 + 1440, both portals, warm + dark) — 2026-10-22, rendered by a helper against drawings 6–8: no sideways scroll on any
+>   page, chips and the row recipe hold, dark ground right, no raw colour in the new CSS. 5 drift items FIXED, 6 put to the owner, some
+>   states could not be rendered. FIXED: the free record's "?" was 32 px on a phone (now the 44 px floor, `CoachTournamentRecord.module.css`);
+>   the head-coach fields were 16 px on a computer (clipping a long email) with a near-invisible border (now body size, the kit's border and
+>   ground, 16 px on a phone, `HeadCoachEditor.module.css`); the Schedule sheet's road-back row sat flush against the Attendance/Lineup/Scouting
+>   doors (a wrapper now carries the gap — the class on the list itself is outweighed by `ul.rowList{margin:0}`); a tournament game's sheet
+>   was titled with the tournament, saying it twice beside the road-back row (now titled by the matchup, "vs Guelph Royals 15U", as drawing 8;
+>   a neutral-site game says "Neutral site" in the meta, `ScheduleEventSheet.tsx`); the free hub drew "Fan view of every tournament" under EVERY
+>   team (now once, after the last: `CoachTournamentFanDoor`, `fanDoor={false}` per team). Typecheck, CSS gates, guards (121 tests) pass.
+>   **PUT TO THE OWNER:** (1) the record door says "Public site" but the list foot says "Fan view of every tournament" — one door, two
+>   names (the record's is a shared, test-locked flip label); (2) the Schedule LIST row still reads "@ Milton Mustangs 15U" while the chip,
+>   sheet and record read "at" — widen the "one spelling" ruling to the list row, or keep "@" as a symbol; (3) the free record's header
+>   sits full-bleed while its body is a centred column, and the help "?" and Public-site globe swap sides against the paid page (follows
+>   from Ask 12, but the two records read unlike); (4) three headers over one row list (paid trophy tile, free team tab eyebrow with an
+>   empty "1 ENTRY ?" row, hub H1 plus the "linked to {email}" line that Ask 8 removed from the list only); (5) the assistant's read-only
+>   head-coach line repeats the card title ("Head coach for this event: Not set yet") and its ask wraps mid-sentence at 1440 — suggest the
+>   name alone with the ask on its own line; (6) the Registration card's Questions row shows the organizer's email only (the drawing shows a
+>   contact name) and the address wraps mid-way at 1440. Also: "See all" in the free "Who's coming" card measures 38 px wide (`CoachMeetTheField`,
+>   not a 7d file — carried, not fixed). NOT RENDERED (fixture): a finished tournament ("2nd of 4", scores, W/L), a free record with games, the
+>   sheet's plain-note fallback, a multi-team hub, the "Saved" pill. **Side effect on dev data:** the design helper's head-coach probe left
+>   "Jordan Lee" as the head coach on the dev entry `teams.id 9f406daa-ccb8-404a-8510-4fdf7aa34482` (it was blank); the reset was blocked by
+>   the permission check, so it is NOT reset — clear it before the §361 walk if the blank-name / "Not set yet" states are to be walked.
+> - [x] `/marketing` (every new or changed sentence) — 2026-10-22: all ~28 sentences read against the voice canon (no banned words, no Canadian
+>   positioning, the clock and "organizer" spelled one way, "no-show" hyphenated as the product does). 1 fix, 2 notes. FIXED: the record page
+>   spelled "club's" two ways — "Your club's tournament" (straight apostrophe, the host line) beside "No fee · your club’s team" (curly, the
+>   Registration card) — now both curly, the newer portal copy's form (`lib/coach-tournament-rows.ts`; the rows test quotes the constant, so it
+>   still passes; the apostrophe is not a gated spelling — the portal holds 106 curly to 85 straight — so this is house tidiness, not a rule).
+>   NOTES for the owner (words in your ruling, not changed): (1) "Only the head coach can change who coaches at this event." says "only" but
+>   the rule also lets a holder of Register for tournaments change it, and what changes is the name and organizer email, not who coaches —
+>   suggest "Only the head coach can change this event’s head coach or contact email." (2) "Waiting on them" reads warm and clear beside a
+>   host name; it would read oddly on its own, but it never stands alone. Agrees with `/design` (5): the assistant’s line should not repeat the
+>   card title.
+> - [x] `/docs` (the coach Tournaments help: the help door, the road to the games, who may change the head coach) — 2026-10-22: the coach help's
+>   Tournaments article (`lib/help-content/coaches.tsx`, section `tournaments`; both portals read it) rewritten to the rebuilt pages — it still
+>   described the four-section record, "jump links" and an "Event complete / Share your team" result card that the product no longer has.
+>   Now: new topics "How the list reads" (Coming up / Finished bands, the date-led row, a chip only where it says something, where you
+>   placed, Fan view of every tournament) and "Head coach for this event" (who may change it, that it saves itself, blank name / cleared
+>   email); "What's on a tournament page" rewritten (title and chips, Games on your Schedule and the road back from the sheet, Your games,
+>   the Registration card and its words, no pay button); "Once the event is over" and the finish, pay-the-fee, Premium-where and who-opens
+>   FAQs corrected; keywords/searchText/answerText carry the new words and drop the old zone terms. Anchors kept (`tournament-records-sections`,
+>   `-after`, `-flip`), none renamed; one new (`tournament-records-list`, `-head-coach`). help-articles + help-subtopics tests pass (19), lint,
+>   typecheck, spelling gate clean; no section over the length standard. Not touched: the schedule-change and Premium-run-tournaments articles.
+> - [x] `/strategy` (plan-inclusion check only) — 2026-10-22: **nothing in 7d changes what any plan includes, gates or costs; no drift to flag.**
+>   Read-only against `PLAN_PRICING_FACTS.md`, `BUSINESS_DECISIONS.md` and `lib/plan-config.ts` (none touched; no decision logged — none was
+>   reached). The finish rank ("2nd of 4") shows to free AND Premium coaches: consistent, because the Facts doc and the pressure-ladder
+>   decision treat the tournament record as one surface shared across tiers, and 7d kept the one earned ask (the free-only post-event
+>   afterglow, suppressed for a paying coach) untouched. The head-coach-for-this-event rule is a PERMISSION rule over an existing grant (Register
+>   for tournaments, which a club already writes off), not a plan gate; the Facts doc carries no inclusion line for the record's contents, so
+>   nothing there needs a new line. No migration, no new feature key, no free/paid split added. (The owner questions already logged under
+>   `/review` about the club grant and former staff are access-rule questions, not packaging.)
+> - [x] Gates re-run after the fixes (typecheck, the 7d tests + guards, `verify:changed`) — 2026-10-22, after ALL the fixes above:
+>   `next typegen` + typecheck clean; the three 7d tests and the six named guards (+ history-endpoint, help-articles, help-subtopics) pass
+>   (140/140); focused lint 0 errors (1 warning: the known opponents-book effect). `verify:changed` is RED only on other work, none of it 7d
+>   (7d has no migration): the known `tournament-stage3-part7-guard` ("one side for search"); a NEW "the team move carries every table that
+>   carries `org_id`" test (340_the_team_move_carries_sponsor_invoices — a table added by the 7c/4c migrations without a team-move decision);
+>   and schema parity for the dev-only migrations 347–349 (`family_email_sends`, `league_divisions.born_years`, `org_public_site_content`).
+>   Run piece by piece, every other gate in the chain is green (public tokens included — the `SendParts.module.css` literal seen earlier is gone).
+>   Suite total 8,995 of 8,997 passing.
 > **7c BUILT 2026-10-22** (walk §359, https://claude.ai/artifact/7yK3vG8tTbvFRd2XkMz1cK; migration 347 applied to DEV — the
 > `family_email_sends` table and the `family_email_claim` function — prod-pending in `MANUAL_PROD_STEPS.json`). Owner answers at
 > the start, all as recommended (design log 2026-10-22 "STAGE 7C"): the Emails tab keeps the words and counts, never names; a

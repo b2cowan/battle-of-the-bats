@@ -16160,6 +16160,8 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    (`CoachRowList`). The two-selector shape is the recipe's own (it is served as
    `:is()` at the stronger member's weight — see `.figureRows`), so this outranks it at ≤640 too. */
 .sheetDoorRows { margin: 0.9rem 0 0.35rem; }
+/* The road-back row's wrapper (Stage 7d): the gap above the Attendance · Lineup · Scouting doors. */
+.sourceRowGap { margin-bottom: 0.9rem; }
 .sheetDoorRows .rowListRow,
 .sheetDoorRows .rowListRow:has(.rowCaption) { min-height: 64px; padding-top: 0.55rem; padding-bottom: 0.55rem; gap: 12px; }
 .sheetDoorRows .rowListMark { width: 22px; justify-content: center; color: var(--home-olive, var(--logic-lime)); }

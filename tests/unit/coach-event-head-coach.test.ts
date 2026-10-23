@@ -8,6 +8,7 @@ import {
   HEAD_COACH_NAME_REQUIRED,
   HEAD_COACH_EMAIL_INVALID,
   EVENT_HEAD_COACH_REFUSED,
+  EVENT_ROSTER_REFUSED,
 } from '../../lib/coach-event-head-coach.ts';
 import { resolveCoachCapabilities, applyOrgGrantPolicy, STAFF_PRESETS } from '../../lib/coach-capabilities.ts';
 
@@ -70,6 +71,34 @@ describe('the page and the route read ONE rule', () => {
 
   it('the refusal is a plain sentence', () => {
     assert.match(EVENT_HEAD_COACH_REFUSED, /^[A-Z][^{}]+\.$/);
+    assert.match(EVENT_ROSTER_REFUSED, /^[A-Z][^{}]+\.$/);
+  });
+});
+
+describe('roster submission answers to the same rule (walk §361 call c2)', () => {
+  const roster = readFileSync('app/api/coaches/tournaments/[teamId]/roster/route.ts', 'utf8');
+  const island = readFileSync('components/coaches/TournamentRosterSubmit.tsx', 'utf8');
+  const record = readFileSync('components/coaches/CoachTournamentRecord.tsx', 'utf8');
+
+  it('the POST refuses before any lookup or write; the GET reports the same answer as mayEdit', () => {
+    assert.match(roster, /canEditEventHeadCoach\(await resolveEventHeadCoachAccess\(guard\.user\.id, teamId\)\)/);
+    const post = roster.slice(roster.indexOf('export const POST'));
+    assert.ok(post.indexOf('EVENT_ROSTER_REFUSED }, 403') > 0);
+    assert.ok(post.indexOf('EVENT_ROSTER_REFUSED }, 403') < post.indexOf('loadContext(teamId)'));
+    assert.match(roster, /canSubmit: mayEdit && /);
+  });
+
+  it('the island reads without the editor when the rule refuses, and the pointer follows the rule', () => {
+    assert.match(island, /!state\.mayEdit/);
+    assert.match(record, /rosterPointer=\{showRosterSubmit && canEditHeadCoach &&/);
+  });
+});
+
+describe('the tournaments list has no fan-side link under it (walk §361 call c1)', () => {
+  it('neither the rows component nor the free hub draws "Fan view of every tournament"', () => {
+    for (const file of ['components/coaches/CoachTournamentRows.tsx', 'app/coaches/tournaments/page.tsx']) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), /Fan view of every tournament|CoachTournamentFanDoor/);
+    }
   });
 });
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCoachRegistrationAccess } from '@/lib/coach-team-guard';
+import { resolveEventHeadCoachAccess } from '@/lib/coach-registration-access';
+import { canEditEventHeadCoach, EVENT_ROSTER_REFUSED } from '@/lib/coach-event-head-coach';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   getBasicCoachTeamPlayers,
@@ -119,6 +121,8 @@ export const GET = withObservability(async (_req: NextRequest, { params }: Route
     const locked = !!team.roster_confirmed_at;
     const tournamentCompleted = tournament.status === 'completed';
     const accepted = team.status === 'accepted';
+    // The same rule the POST refuses with, so the island never offers what the server would refuse.
+    const mayEdit = canEditEventHeadCoach(await resolveEventHeadCoachAccess(guard.user.id, teamId));
 
     return json({
       ok: true,
@@ -129,7 +133,8 @@ export const GET = withObservability(async (_req: NextRequest, { params }: Route
         accepted,
         locked,
         tournamentCompleted,
-        canSubmit: accepted && !locked && !tournamentCompleted,
+        mayEdit,
+        canSubmit: mayEdit && accepted && !locked && !tournamentCompleted,
         rosterSubmittedAt: team.roster_submitted_at,
         rosterConfirmedAt: team.roster_confirmed_at,
       },
@@ -145,6 +150,10 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     const { teamId } = await params;
     const guard = await requireCoachRegistrationAccess(teamId);
     if (!guard.ok) return authError(guard.status);
+    // Opening the entry is not submitting for the team (walk §361 c2): the head coach's rule, before any write.
+    if (!canEditEventHeadCoach(await resolveEventHeadCoachAccess(guard.user.id, teamId))) {
+      return json({ error: EVENT_ROSTER_REFUSED }, 403);
+    }
 
     const ctx = await loadContext(teamId);
     if (!ctx) return json({ error: 'Registration not found.' }, 404);

@@ -553,14 +553,10 @@ const OVERVIEW_CARVE_OUT = 'app/[orgSlug]/coaches/teams/[teamId]/page.tsx';
  * Now the modules are the identity: the scan reads each file's imports, learns whatever LOCAL name
  * each export module was bound to, and looks for that name used as a JSX tag. Rename the import and
  * the guard follows it, because the import statement is what cannot be renamed away.
- *
- * `CoachScheduleCalendarButton` is on the list because it IS Schedule's export wearing its phone
- * face — the `.ics` a coach syncs into the phone in their hand.
  */
 const EXPORT_MODULES = [
   'components/coaches/CoachExportButton',
   'components/coaches/MoneyExportButton',
-  'components/coaches/CoachScheduleCalendarButton',
   'components/admin/tournament/TournamentAdminUI', // the old admin toolbar menu these screens dropped (the file keeps only the page header since admin type sweep Stage 5)
 ];
 
@@ -572,7 +568,7 @@ const EXPORT_MODULES = [
  * cheap, so the check is the UNION and neither is trusted alone.
  */
 const EXPORT_NAMES = [
-  'CoachExportButton', 'MoneyExportButton', 'ExportMenu', 'CoachScheduleCalendarButton',
+  'CoachExportButton', 'MoneyExportButton', 'ExportMenu',
 ];
 
 /** House rule 4 — the create goes FIRST, at every width. */

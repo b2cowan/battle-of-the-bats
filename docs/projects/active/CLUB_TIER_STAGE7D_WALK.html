@@ -129,13 +129,15 @@ const PARTS = [
     'Phone width (about 390): one column in the order door, games, Registration, Head coach, From the organizer; every control at least a thumb high; the page roughly 1,350 px tall (it was 2,175).',
   ]},
   { id: 'p3', title: '3 · The head coach saves itself', purpose: 'The event’s head coach and the email the organizer writes to save on their own; a blank name is never saved.',
-    where: 'Head coach, on the page: Head coach for this event.', steps: [
+    where: 'Head coach, on the page: Head coach for this event. (The 15U AAA entry on dev may already hold “Jordan Lee”, left by a test run; that is fine, change it.)', steps: [
     'Two fields: “Name *” and “Email the organizer uses”, its placeholder showing the address mail goes to now, and under it “Acceptance, payment and schedule updates go here. Blank uses your sign-in email.” No Save button.',
     'Type a name (say “Jordan Reyes”) and stop typing: “Unsaved changes”, then “Saving…”, then “✓ Saved” at the bottom right, which fades after a couple of seconds.',
     'Clear the name and click away: the field says “Enter a head coach name.” and nothing saves. Reload: the last saved name is back.',
     'Type “jo@ex” in the email and click away: “Enter a valid email address, or leave it blank.” and nothing saves.',
     'Type a full address and press Enter (or click away): it saves. Pausing in the middle of an address never saves it.',
     'Clear the email and click away: it saves (mail goes back to the registration email). Reload: both fields show what you last saved.',
+    'Type a new name and, within a second, tap a link to another page. Come back: the new name was saved.',
+    'The two fields read at the page’s normal text size on a computer (a long email is not cut off at the end) and have a clear border; on a phone they are a full thumb tall.',
   ]},
   { id: 'p4', title: '4 · An assistant reads a line', purpose: 'Someone who may open the entry but not change who coaches it sees a line, never a form.',
     where: 'A private window. Sign in as the assistant (Riley). Coaches portal → Tournaments → the tournament.', steps: [
@@ -146,10 +148,12 @@ const PARTS = [
   { id: 'p5', title: '5 · The road back from the Schedule', purpose: 'The Schedule and the tournament page lead to each other inside the portal.',
     where: 'Head coach, on the tournament page.', steps: [
     'Click “Games on your Schedule”: the Schedule list opens at the tournament’s first day, not today; the address bar no longer carries ?day=.',
-    'Open the 6:00 p.m. game against Guelph Royals: its sheet has, under the time and place, one row with the tournament’s name and “The organizer sets the time, place and score”, with a chevron. No “View on the tournament page ↗”.',
-    'Open the 9:00 a.m. game at Milton: the sheet’s summary line says “at Milton Mustangs 15U” (not “@”).',
+    'Open the 6:00 p.m. game against Guelph Royals: the sheet is titled by the matchup, “vs Guelph Royals 15U” (not the tournament’s name), and has, under the time and place, one row with the tournament’s name and “The organizer sets the time, place and score”, with a chevron, then a clear gap before the Attendance / Lineup / Scouting rows. No “View on the tournament page ↗”.',
+    'Open the 9:00 a.m. game at Milton: the sheet’s title says “at Milton Mustangs 15U” (not “@”).',
     'Tap the tournament row in a sheet: the tournament page opens in the same tab, inside the portal.',
     'Back on the Schedule, switch to Week or Month: the tournament games read “vs” at home and “at” away.',
+    'Back on the Schedule list, switch to Week and then back to List: the list opens on today again (the first-game-day opening was for the link only).',
+    'Open the tournament page’s address with #schedule on the end (the “your game moved” bell and push links use it): the page scrolls to Your games.',
   ]},
   { id: 'p6', title: '6 · Clocks and words', purpose: 'Every time on these screens is the house clock, with one spelling for home and away.',
     where: 'Head coach: the tournament page and the Schedule.', steps: [
@@ -162,8 +166,9 @@ const PARTS = [
     'Open Bears U11’s own Tournaments tab: the same rows, and a “?” beside the title that opens the Tournaments help.',
     'Open Battle of the Bats: the sticky header’s title is the tournament’s name, with “Bears U11 · Jul 15–17 · <organizer>” under it and the ⇄ Fan view at its right. No eyebrow above the title.',
     'The page body is Part 2’s page (chips, Your games, Registration, Head coach for this event as a form, From the organizer), with a back link “Tournaments” and the “?” at the right of the chip row.',
+    'Back on the whole Tournaments page (both teams showing): “Fan view of every tournament” appears once, under the last team’s list, not under each team.',
     'Bears U11 → Schedule: a tournament game row reads “vs …” or “at …”; tapping it opens the tournament page, not the public game page.',
-    'Phone width (about 390): the phone bar still marks Tournaments on the list and on the page.',
+    'Phone width (about 390): the phone bar still marks Tournaments on the list and on the page, and the “?” beside the chip row is a full thumb tall.',
   ]},
   { id: 'p8', title: '8 · A finished tournament', purpose: 'A finished entry carries no chip on the list; where the organizer shows standings, the row and the page say where the team finished.',
     where: 'Tell me first: I switch UAT Rep Club Invitational to finished (scores in, 5 to 3 days ago). Then head coach → Tournaments.', steps: [
@@ -185,7 +190,7 @@ const CALLS = [
     ['B', 'Drop the comma everywhere', false] ] },
 ];
 
-const KEY = 'club-stage7d-walk-v1';
+const KEY = 'club-stage7d-walk-v2';
 let state = {};
 try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };

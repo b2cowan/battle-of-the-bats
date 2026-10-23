@@ -56,6 +56,8 @@ type RosterState = {
   accepted: boolean;
   locked: boolean;
   tournamentCompleted: boolean;
+  /** The head coach's rule (lib/coach-event-head-coach.ts) — false reads the roster without the editor. */
+  mayEdit: boolean;
   canSubmit: boolean;
   rosterSubmittedAt: string | null;
   rosterConfirmedAt: string | null;
@@ -223,7 +225,8 @@ export default function TournamentRosterSubmit({ teamId }: { teamId: string }) {
   const { requirements: r, masterPlayers, snapshot, state } = data;
 
   // ── Locked / completed → read-only confirmed roster ──────────────────────────
-  if (state.locked || state.tournamentCompleted) {
+  // Someone the head coach's rule refuses (an assistant) reads the same list, with who to ask.
+  if (state.locked || state.tournamentCompleted || !state.mayEdit) {
     const rows = snapshot.length > 0 ? snapshot : [];
     return (
       <div className={`card ${styles.card}`}>
@@ -231,7 +234,9 @@ export default function TournamentRosterSubmit({ teamId }: { teamId: string }) {
           <Lock size={14} aria-hidden />{' '}
           {state.locked
             ? 'The organizer has confirmed your roster at check-in. Contact them to make any changes.'
-            : 'This tournament is complete — the roster is locked.'}
+            : state.tournamentCompleted
+              ? 'This tournament is complete — the roster is locked.'
+              : 'Only the head coach can submit the roster. Ask the head coach to submit it.'}
         </p>
         {rows.length > 0 ? (
           <ul className={styles.readList}>

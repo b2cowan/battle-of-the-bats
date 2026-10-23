@@ -5,7 +5,7 @@ import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail, getStandings } from '@/lib/db';
 import { findRepTeamAccessForRegistration, resolveEventHeadCoachAccess } from '@/lib/coach-registration-access';
 import { canUserAccessTournamentRegistration } from '@/lib/basic-coach-teams';
-import { formatGameDateLabel, formatGameTimeLabel, homeAwayWord } from '@/lib/game-clock-labels';
+import { formatGameDateLabel, formatGameTimeLabel } from '@/lib/game-clock-labels';
 import { canEditEventHeadCoach } from '@/lib/coach-event-head-coach';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
@@ -31,13 +31,11 @@ import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit'
 import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import CoachWelcomeBanner from '@/components/coaches/CoachWelcomeBanner';
-import CoachScheduleCalendarButton from '@/components/coaches/CoachScheduleCalendarButton';
 import CoachMeetTheField from '@/components/coaches/CoachMeetTheField';
 import { CoachRow, CoachRowList } from '@/components/coaches/CoachRowList';
 import { CoachTournamentChip } from '@/components/coaches/CoachTournamentRows';
 import { CoachShareRow } from '@/components/coaches/CoachTournamentRecordParts';
 import HelpButton from '@/components/help/HelpButton';
-import type { ICSEventInput } from '@/lib/export/ics';
 import FlipPill from '@/components/shared/FlipPill';
 import { resolveFlip, primaryTarget, HAT_LABEL, publicHref, publicGamePageHref } from '@/lib/flip-twins';
 import { getTournamentViewer } from '@/lib/tournament-viewer-hats';
@@ -402,26 +400,6 @@ export default async function CoachTournamentRecord({
     .map(t => t.name);
   const teamsHref = publicCtx && !hiddenPages.includes('teams') ? publicHref(publicCtx, 'teams') : null;
 
-  // The calendar file — built here so the client button ships a few small objects. Cancelled games are
-  // included (marked CANCELLED, so a re-import cleans the calendar). "vs" at home, "at" away (T9).
-  const calendarEvents: ICSEventInput[] = showLiveBridge && tournament && org
-    ? teamGames
-        .filter(g => g.game_date)
-        .map(g => {
-          const { isHome, name } = opponentOf(g);
-          return {
-            gameId: g.id,
-            title: `${team.name} ${homeAwayWord(isHome)} ${name}`,
-            date: g.game_date as string,
-            time: g.game_time || undefined,
-            location: g.location || undefined,
-            description: `${tournament.name}${division?.name ? ` · ${division.name}` : ''}`,
-            url: canLinkPublic ? `${publicGamePageHref(publicCtx!, g.id)}` : undefined,
-            cancelled: g.status === 'cancelled',
-          };
-        })
-    : [];
-
   // Standings: the finish ("2nd of 4") on the status chip, and the Standings box beside Your games —
   // both only when the organizer shows standings publicly (which also rules out a bracket-only event).
   const standingsPublicallyOn = isPublicPageEnabled(
@@ -610,13 +588,6 @@ export default async function CoachTournamentRecord({
                       alertSlotId={SCHEDULE_ALERT_SLOT_ID}
                       initialGames={initialGames}
                     />
-                    {calendarEvents.length > 0 && (
-                      <CoachScheduleCalendarButton
-                        filename={`${team.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'team'}-schedule.ics`}
-                        events={calendarEvents}
-                        gameCount={calendarEvents.length}
-                      />
-                    )}
                   </>
                 ) : team.status === 'accepted' ? (
                   <>
@@ -699,7 +670,7 @@ export default async function CoachTournamentRecord({
                 hideFeeRow={feeHidden}
                 clubOwnTeam={clubOwnTeam}
                 pendingFeeAmount={feeHidden || clubOwnTeam ? null : pendingFeeAmount}
-                rosterPointer={showRosterSubmit && !team.roster_submitted_at}
+                rosterPointer={showRosterSubmit && canEditHeadCoach && !team.roster_submitted_at}
                 waitlisted={team.status === 'waitlist'}
               />
             </div>

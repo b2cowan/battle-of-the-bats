@@ -192,44 +192,6 @@
   overflow-wrap: anywhere;
 }
 
-/* ── "Add the games to a calendar" (B1.1; drawing 7: a plain door under the games, no card) ── */
-.calBlock {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
-}
-
-.calBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 36px;
-  padding: 0;
-  font-family: inherit;
-  font-size: var(--type-body);
-  font-weight: 600;
-  color: var(--logic-lime);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-.calBtn:hover:not(:disabled) { text-decoration: underline; }
-.calBtn:disabled { opacity: 0.6; cursor: default; }
-
-/* The snapshot-not-subscription caveat — quiet, but never omitted. */
-.calNote {
-  margin: 0;
-  font-size: var(--type-support);
-  line-height: 1.45;
-  color: var(--text-tertiary);
-  max-width: 52ch;
-}
-
-@media (max-width: 768px) {
-  .calBtn { min-height: var(--tap-min, 44px); }
-}
-
 /* ── Meet the field (B1.5 — the pre-schedule state of Your games) ── */
 .fieldCard {
   display: flex;
@@ -299,4 +261,14 @@
 /* The Fan view (paid shell) — the right end of the chip row. */
 .fanView {
   margin-left: auto;
+}
+
+/* The help "?" in the chip row keeps the phone tap floor in the FREE portal too — the shared help module
+   lifts it to 44 px only under the admin kit, and this page is read on a phone in both portals. */
+@media (max-width: 768px) {
+  .helpDoor button {
+    width: var(--tap-min, 44px);
+    height: var(--tap-min, 44px);
+    min-height: var(--tap-min, 44px);
+  }
 }

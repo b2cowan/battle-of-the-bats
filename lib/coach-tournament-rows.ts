@@ -22,7 +22,7 @@ import { ordinal } from './playoff-bracket';
  */
 
 /** The meta for a tournament the coach's own club runs, with the team entered as its own (7a). */
-export const OWN_CLUB_TOURNAMENT_HOST = "Your club's tournament";
+export const OWN_CLUB_TOURNAMENT_HOST = 'Your club’s tournament'; // curly, as the Registration card's "No fee · your club’s team" beside it
 /** The chip for an entry the organizer has not decided on yet (a placement, /marketing's words). */
 export const WAITING_ON_ORGANIZER = 'Waiting on them';
 
