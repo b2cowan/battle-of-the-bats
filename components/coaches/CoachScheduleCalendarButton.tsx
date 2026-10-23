@@ -46,14 +46,14 @@ export default function CoachScheduleCalendarButton({
   }
 
   return (
-    // Approved mockups put the button AND its caveat inside one card, so the caveat
-    // reads as part of the control rather than loose page text under it.
-    <div className={`card ${styles.calBlock}`}>
+    // Stage 7d (drawing 7): a plain door under the games — no card. The caveat stays directly under it,
+    // so it still reads as part of the control.
+    <div className={styles.calBlock}>
       <button type="button" className={styles.calBtn} onClick={handle} disabled={state === 'busy'}>
         {state === 'done' ? <Check size={14} aria-hidden /> : <CalendarPlus size={14} aria-hidden />}
         {state === 'done'
           ? 'Added to your downloads'
-          : `Add ${gameCount === 1 ? 'this game' : `all ${gameCount} games`} to your calendar`}
+          : gameCount === 1 ? 'Add the game to a calendar' : 'Add the games to a calendar'}
       </button>
       <p className={styles.calNote}>
         Opens in your phone or computer calendar. This is a snapshot — if the organizer changes a

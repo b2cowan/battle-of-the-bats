@@ -1,23 +1,8 @@
-/* ── Coaches Portal — game-day bridge (slice 5i) ──────────────────────────────
-   Opponent names + monograms, deep-linked rows, and a live broadcast scorebug
-   for the game in progress. Shipped design-system tokens only (no ghost --text-*).
-   Lives alongside the tournament hero (TeamHQ); kept in its own module so the 5g
-   standalone pixel-diff on TeamHQ.module.css stays untouched. */
+/* ── "Your games" on the coach's tournament page (Club Tier Stage 7d, drawing 7) ──────────────────
+   The rows are the portal's row list (CoachRowList); this sheet keeps only what the list does not
+   own: the "Schedule updated" bar (B2.1), the live trail, the score and the moved-row tint. The old
+   bespoke rows, the broadcast scorebug and their 600 px breakpoint retired with the row list. */
 
-.bridge {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-/* (The "Highlight my team" follow controls were removed 2026-07-27 — the coach's team
-   is auto-highlighted on the public schedule; see the seeding effect in the component.) */
-
-/* ── B2.1 schedule-change notice ──────────────────────────────────────────────
-   A SERVICE message: what changed, and nothing else. No CTA, no upgrade prompt, on
-   any plan (pressure ladder, BUSINESS_DECISIONS.md 2026-07-27). Amber via --warning,
-   which the coach warm gate already remaps to --home-amber, so this is theme-correct
-   in both skins without a single literal. The whole bar is the dismiss target. */
 .changeBar {
   display: flex;
   flex-direction: column;
@@ -35,18 +20,12 @@
   font: inherit;
   transition: background 0.15s;
 }
-
 .changeBar:hover {
   background: rgba(var(--warning-rgb), 0.16);
 }
-
-/* B2.1 hoist: portalled above the Schedule zone heading, the bar leaves this block's
-   flex `gap` behind and sits in the record page's normal block flow — so it carries its
-   own separation from the heading below it. */
 .changeBarHoisted {
   margin-bottom: 0.85rem;
 }
-
 .changeTitle {
   display: inline-flex;
   align-items: center;
@@ -58,327 +37,39 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-
 .changeBody {
   color: var(--text-primary);
   font-size: var(--type-body);
   font-weight: 600;
   line-height: 1.45;
 }
-
 .changeMeta {
   color: var(--text-tertiary);
   font-size: var(--type-support);
 }
 
-/* ── Game list ────────────────────────────────────────────────────────────── */
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.row {
-  display: flex;
+/* The trail: "PLAYING NOW" beside the running score; a final score with its result word. */
+.liveTrail {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
+  gap: 0.5rem;
+}
+.score {
+  font-family: var(--font-data, monospace);
   font-size: var(--type-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.result {
+  color: var(--text-tertiary);
+}
+.score[data-result="W"] .result {
+  color: var(--success);
 }
 
-/* B2.1 — the row that moved. Border only (never a fill): the row still has to read as a
-   normal game a coach can tap through to, just one carrying a correction. */
+/* A game the organizer moved since the page loaded — the row's note says what it was. */
 .rowChanged {
-  border-color: rgba(var(--warning-rgb), 0.55);
-}
-
-/* "was 2:00 p.m. at Diamond 2" — outlives dismissing the bar. The bar is the
-   interruption; this is the record, and it's what a coach checks twice. */
-.rowWas {
-  flex: 1 0 100%;
-  margin: 0;
-  color: var(--warning);
-  font-size: var(--type-support);
-  font-weight: 600;
-}
-
-/* (B1.2 retired `a.rowLink` — the row card is no longer an anchor. Its hover/active
-   feedback now lives on `.rowInteractive` and the link styling on `.rowMain`.) */
-
-.rowDate {
-  flex: 0 0 auto;
-  color: var(--text-secondary);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.rowOpp {
-  display: flex;
-  flex: 1 1 140px;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: 0;
-}
-
-.oppName {
-  color: var(--text-primary);
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.vs {
-  color: var(--text-tertiary);
-  font-weight: 600;
-}
-
-.tag {
-  margin-left: 0.4rem;
-  padding: 0.05rem 0.35rem;
-  border-radius: var(--radius-sm);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--logic-lime);
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  vertical-align: middle;
-}
-
-/* B1.2 — now wraps a real LocationLink (opens Maps) instead of flat text. Keeps the
-   same flex sizing so the row's wrapping is unchanged; the ellipsis clamp moves onto
-   the link, which is the element that actually carries the text. */
-.rowLoc {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 38%;
-  font-size: var(--type-support);
-}
-
-/* Reads as a link (approved mockups), not the muted grey the shared LocationLink's
-   inline org-primary styling produced under the coach warm theme. */
-.rowLocLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  max-width: 100%;
-  min-width: 0;
-  color: var(--logic-lime);
-  font-weight: 600;
-  text-decoration: none;
-  transition: opacity 0.12s ease;
-}
-
-.rowLocLink:hover { text-decoration: underline; }
-.rowLocLink:active { opacity: 0.75; }
-
-.rowLocText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* B1.2 — the game deep-link moved OFF the row card and onto this inner element, because
-   the venue is now its own anchor and nested <a> is invalid HTML. Carries the layout the
-   row itself used to provide, so the visual result is unchanged. */
-.rowMain {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  flex: 1 1 240px;
-  min-width: 0;
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Hover/active feedback moves to the card so the whole row still reads as one target. */
-.rowInteractive {
-  transition: border-color 0.15s ease, transform 0.05s ease;
-}
-
-.rowInteractive:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-}
-
-.rowInteractive:active {
-  transform: translateY(1px);
-}
-
-.rowScore {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 0.4rem;
-  font-family: var(--font-data, monospace);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.resultWin {
-  color: var(--logic-lime);
-  font-weight: 800;
-}
-
-.resultMuted {
-  color: var(--text-tertiary);
-  font-weight: 800;
-}
-
-.sideChip,
-.cancelChip {
-  flex: 0 0 auto;
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.sideChip {
-  color: var(--text-tertiary);
-}
-
-.cancelChip {
-  color: var(--danger);
-}
-
-/* (Owner call 2026-07-27: the auto-generated team-initial squares — `.mono` / `.monoSm`
-   and the per-team colour that fed them — are gone from both the standard row and the
-   live scorebug. Two letters derived from a team name carried no information the name
-   beside them didn't already give, and they crowded the row on a phone.) */
-
-/* ── LIVE broadcast row (scorebug) ────────────────────────────────────────── */
-.live {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.6rem;
-  background-image: linear-gradient(
-    135deg,
-    rgba(var(--logic-lime-rgb), 0.1),
-    transparent 60%
-  );
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-}
-
-.liveBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  align-self: start;
-  color: var(--logic-lime);
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-label);
-  font-weight: 800;
-  letter-spacing: 0.1em;
-}
-
-.liveDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--logic-lime);
-  box-shadow: 0 0 0 0 rgba(var(--logic-lime-rgb), 0.6);
-  animation: livePulse 1.6s ease-out infinite;
-}
-
-@keyframes livePulse {
-  0%   { box-shadow: 0 0 0 0 rgba(var(--logic-lime-rgb), 0.6); }
-  70%  { box-shadow: 0 0 0 6px rgba(var(--logic-lime-rgb), 0); }
-  100% { box-shadow: 0 0 0 0 rgba(var(--logic-lime-rgb), 0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .liveDot { animation: none; }
-}
-
-.matchup {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.side {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: 0;
-}
-
-.sideRight {
-  justify-content: flex-end;
-  text-align: right;
-  flex-direction: row-reverse;
-}
-
-.sideName {
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: var(--type-body);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bcScores {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.bcScore {
-  font-family: var(--font-data, monospace);
-  font-variant-numeric: tabular-nums;
-  font-weight: 850;
-  font-size: var(--type-display);
-  line-height: 1;
-  color: var(--text-primary);
-}
-
-.bcSep {
-  color: var(--text-tertiary);
-  font-size: var(--type-title);
-  font-weight: 700;
-}
-
-.bcAwaiting {
-  color: var(--text-secondary);
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-body);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.bcMeta {
-  color: var(--text-secondary);
-  font-size: var(--type-support);
-}
-
-/* ── Mobile ───────────────────────────────────────────────────────────────── */
-@media (max-width: 600px) {
-  .rowLoc {
-    flex-basis: 100%;
-    max-width: 100%;
-    order: 5;
-  }
-
-  .bcScore {
-    font-size: var(--type-figure);
-  }
-
-  .sideName {
-    font-size: var(--type-body);
-  }
+  background: color-mix(in srgb, var(--warning) 8%, var(--card-bg));
 }

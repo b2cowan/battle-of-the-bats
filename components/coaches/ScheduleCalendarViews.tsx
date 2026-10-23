@@ -24,6 +24,7 @@ import {
   dayStr, daysBetween, eventOnDay, fmtTime, monthKey, resultColor, sortDayEvents, tournamentSpan,
 } from '@/lib/coach-schedule-view';
 import type { RepTeamEvent, RepTryoutSession } from '@/lib/types';
+import { homeAwayWord } from '@/lib/game-clock-labels';
 
 /**
  * THE SCHEDULE'S THREE CALENDAR VIEWS — List, Week and Month — and the three row kinds they draw
@@ -170,7 +171,7 @@ function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTour
   // calendar cell's chip and the list view's row cannot drift apart — the same shape EventChip
   // takes below.
   const title = (
-    <>vs {game.opponentName}<span className={styles.eventChipOpp}> · </span><span className={styles.tournamentChipTag}>Tournament</span></>
+    <>{homeAwayWord(game.homeAway === 'home')} {game.opponentName}<span className={styles.eventChipOpp}> · </span><span className={styles.tournamentChipTag}>Tournament</span></>
   );
   const trail = game.phase === 'live' ? (
     <span className={styles.eventChipResult} style={{ color: 'var(--danger)' }}>

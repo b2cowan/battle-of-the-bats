@@ -1,5 +1,7 @@
-/* ── Coaches Portal — tournament records (dashboard) ──────────────────────────
-   Migrated off the legacy /my/registrations CSS; shipped design tokens only. */
+/* ── Coaches Portal — the account's tournaments, one section per team ─────────
+   Club Tier Stage 7d: each team's entries are the portal's row list (CoachTournamentRows), which
+   paints its own frame — so the team section is no longer a card (one painter of the ground). The
+   bands, rows and chips are the list's; this sheet keeps only the page and the team headings. */
 
 .page {
   max-width: 920px;
@@ -25,49 +27,10 @@
   margin: 0;
 }
 
-/* ── Section ─────────────────────────────────────────────────────────────── */
-.section {
-  margin-bottom: 2.5rem;
-}
-
-.sectionTitle {
-  font-family: var(--font-data, monospace);
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--white-40);
-  margin: 0 0 0.75rem;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
 .teamList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.teamGroup {
-  padding: 1.25rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
-}
-
-.teamGroupHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border-2);
+  gap: 2rem;
 }
 
 .teamGroupTitle {
@@ -78,30 +41,13 @@
 }
 
 .teamGroupMeta {
-  margin: 0;
+  margin: 0 0 0.6rem;
   color: var(--white-60);
   font-size: 0.8rem;
 }
 
-.teamSection + .teamSection {
-  margin-top: 1.25rem;
-}
-
-/* A3.3: the registration-card anatomy moved to the shared CoachRegistrationCard
-   component (this page's treatment was promoted to the canon). The legacy .cta*
-   block (CtaCards were removed from this surface in Phase 5·0) is gone too. */
-
 @media (max-width: 640px) {
   .page {
     padding: 1.5rem 1rem 3rem;
-  }
-
-  .teamGroup {
-    padding: 1rem;
-  }
-
-  .teamGroupHeader {
-    flex-direction: column;
-    gap: 0.6rem;
   }
 }

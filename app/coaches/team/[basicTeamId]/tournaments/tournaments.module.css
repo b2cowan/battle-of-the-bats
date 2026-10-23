@@ -7,11 +7,5 @@
   color: var(--white-40);
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-/* A3.3: the per-list card styles (monogram / fainter border / neutral hover) retired —
-   rows render through the shared CoachRegistrationCard component now. */
+/* ⚰ `.list` is GONE (Club Tier Stage 7d): the entries render through the portal's row list
+   (CoachTournamentRows), the same rows as the paid list and the account hub. */

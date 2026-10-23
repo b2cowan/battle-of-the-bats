@@ -46,6 +46,28 @@ export function isMirroredEvent(
   return Boolean(event?.sourceTournamentGameId);
 }
 
+/**
+ * THE ROAD BACK (Club Tier Stage 7d, drawing 8): a mirrored game's sheet leads to the coach's OWN
+ * tournament page for it. The game is found among the team's own tournament games (both bridges,
+ * this season — what the Tournaments list reads), which carry the entry it belongs to. ABSENT —
+ * never a dead end — when the event is not a mirror, the game is not among them (a team moved, a
+ * season closed), or this coach has no Tournaments door: then the sheet shows a plain note.
+ */
+export function tournamentRoadBack(
+  sourceTournamentGameId: string | null | undefined,
+  games: ReadonlyArray<{ id: string; registrationId: string; tournamentName: string }>,
+  canOpenTournaments: boolean,
+  teamBase: string,
+): { tournamentName: string; recordHref: string | null } | null {
+  if (!sourceTournamentGameId) return null;
+  const game = games.find(g => g.id === sourceTournamentGameId);
+  if (!game) return null;
+  return {
+    tournamentName: game.tournamentName,
+    recordHref: canOpenTournaments ? `${teamBase}/tournaments/${game.registrationId}` : null,
+  };
+}
+
 const seenKey = (teamId: string) => `flhq-coach-tgame-seen:${teamId}`;
 const dismissedKey = (teamId: string) => `flhq-coach-tgame-dupe:${teamId}`;
 

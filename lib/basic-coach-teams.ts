@@ -7,6 +7,8 @@ import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ourTeamIdsAmong } from './club-own-tournament-team';
 import { excludeActivePremiumUpgrades, isLivePortalStatus } from './coach-team-page';
 import { tournamentNow, tournamentToday, zonedWallClockToUtc } from './timezone';
+import { formatGameDateLabel, formatGameTimeLabel } from './game-clock-labels';
+import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
 import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
 import { getLinkedRegistrationIdsForRepTeam } from './rep-team-tournament-links';
 import { authAccountExistsForEmail } from './auth-account-lookup';
@@ -109,6 +111,9 @@ export type BasicCoachTournamentHistoryEntry = {
   /** False when the tournament doesn't track payments ("Not tracked here"): it has no entry fee to state — not
    *  even "clear" — so a fee tile leaves it out. */
   entryFeeTracked: boolean;
+  /** The club's own team in its own club's tournament (Stage 7a) — the Tournaments row's "Your club's
+   *  tournament" (Stage 7d); the one answer, `ourTeamIdsAmong`. */
+  ourTeam: boolean;
 };
 
 export type PendingTournamentRegistration = {
@@ -1065,6 +1070,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
           : null,
         amountDue,
         entryFeeTracked,
+        ourTeam: ourTeams.has(row.id),
       };
     })
     .sort((a, b) => b.registration.registeredAt.localeCompare(a.registration.registeredAt));
@@ -1075,6 +1081,8 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
  *  tournament — their live game right now, else the next scheduled one. */
 export type BasicCoachRegistrationGame = {
   opponentName: string;
+  /** Home reads "vs", away reads "at" (Stage 7d T9). */
+  isHome: boolean;
   myScore: number | null;
   oppScore: number | null;
   isLive: boolean;
@@ -1090,21 +1098,6 @@ export type BasicCoachRegistrationGame = {
 // (matches the tournament record / public game page resolution).
 const NIL_GAME_TEAM_UUID = '00000000-0000-0000-0000-000000000000';
 
-/** Short calendar label for a game date ("Sat, Jul 18"); 'TBD' when unscheduled.
- *  Shared by the tournament record and the Overview tile so the two never drift. */
-export function formatGameDateLabel(gameDate: string | null): string {
-  return gameDate
-    ? new Date(gameDate + 'T00:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
-    : 'TBD';
-}
-
-/** Local start-time label ("9:00 a.m."); null when no time is set. */
-export function formatGameTimeLabel(gameTime: string | null): string | null {
-  return gameTime
-    ? new Date(`1970-01-01T${gameTime}`).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
-    : null;
-}
-
 /**
  * Live-now (else next-scheduled) game across a team's ACCEPTED tournament registrations,
  * for the standalone Overview's schedule tile (C5). Takes the already-loaded history
@@ -1113,8 +1106,8 @@ export function formatGameTimeLabel(gameTime: string | null): string | null {
  * registrations and the published-division reveal rule filters in memory. Honors the
  * same reveal rules as the tournament record: only divisions with a PUBLISHED schedule
  * surface games, and opponent names resolve only from accepted teams (else placeholder).
- * "Live" mirrors CoachLiveSchedule: a submitted score on a game dated today, in the
- * tournament timezone (never raw UTC — the J6-056 rollover trap).
+ * "Live" mirrors CoachLiveSchedule: `isGameLive` (lib/game-status.ts) — the game's own time
+ * window, in the tournament timezone (never raw UTC — the J6-056 rollover trap).
  */
 /** One row of the accepted-registration games query, shared by the two functions below. */
 type AcceptedGameRow = {
@@ -1130,6 +1123,7 @@ type AcceptedGameRow = {
   tournament_id: string;
   home_placeholder: string | null;
   away_placeholder: string | null;
+  duration_minutes: number | null;
 };
 
 /**
@@ -1169,7 +1163,7 @@ async function loadAcceptedTournamentGameRows(
     supabaseAdmin.from('divisions').select('id, schedule_visibility').in('id', divisionIds),
     supabaseAdmin
       .from('games')
-      .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, home_placeholder, away_placeholder')
+      .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, home_placeholder, away_placeholder, duration_minutes')
       .in('tournament_id', tournamentIds)
       .or(`home_team_id.in.(${registrationIdList}),away_team_id.in.(${registrationIdList})`)
       .order('game_date', { ascending: true })
@@ -1210,7 +1204,12 @@ export async function getNextRegistrationGameForTeam(
   if (!loaded) return null;
   const { rows, registrationIdSet, teamNameById, entries, today, nowTime } = loaded;
 
-  const liveGame = rows.find(g => g.status === 'submitted' && g.game_date === today) ?? null;
+  // "Playing now" by the ONE shared rule (lib/game-status.ts, Stage 7d T8) — the game's own time
+  // window — not the old "a score was entered today", which missed a game in progress with no score.
+  const liveGame = rows.find(g => isGameLive(
+    { status: g.status, date: g.game_date, time: g.game_time },
+    g.duration_minutes ?? DEFAULT_GAME_DURATION_MINUTES,
+  )) ?? null;
   const upcomingGame = rows.find(g =>
     g.status === 'scheduled' &&
     g.game_date !== null &&
@@ -1233,6 +1232,7 @@ export async function getNextRegistrationGameForTeam(
   const isLive = game === liveGame;
   return {
     opponentName,
+    isHome,
     myScore: isHome ? game.home_score : game.away_score,
     oppScore: isHome ? game.away_score : game.home_score,
     isLive,
@@ -1265,10 +1265,14 @@ export type CoachScheduleTournamentGame = {
   oppScore: number | null;
   status: string;
   /** The one score-state classification, computed once here so consumers don't re-derive it:
-   *  'live' = submitted score today; 'final' = completed/forfeit WITH both scores; else 'scheduled'. */
+   *  'live' = inside the game's own time window (the shared rule, `isGameLive` — Stage 7d T8);
+   *  'final' = both scores in; else 'scheduled'. */
   phase: 'live' | 'final' | 'scheduled';
   result: 'win' | 'loss' | 'tie' | null;
   tournamentName: string;
+  /** The team's own tournament ENTRY this game belongs to (`teams.id`) — the road back from the
+   *  Schedule's game sheet to the coach's tournament page (Stage 7d, drawing 8). */
+  registrationId: string;
   /** Public game page — present only when the tournament is publicly visible (active|completed). */
   href: string | null;
 };
@@ -1312,11 +1316,12 @@ export async function getRegistrationGamesForTeam(
     const myScore = isHome ? game.home_score : game.away_score;
     const oppScore = isHome ? game.away_score : game.home_score;
     const hasScore = myScore != null && oppScore != null;
-    // 'live' = a score submitted today (on now / just in). Otherwise ANY game that already has both
-    // scores shows them ('final') — this must cover a still-pending SUBMITTED score whose day has
-    // passed (finalization-required orgs can lag), so a played+scored game never reads as unplayed.
+    // 'live' = inside the game's own time window — the ONE shared rule (Stage 7d T8; it was "a score
+    // submitted today", which missed a game in progress with no score yet). Otherwise ANY game that
+    // already has both scores shows them ('final') — this must cover a still-pending SUBMITTED score
+    // whose day has passed, so a played+scored game never reads as unplayed.
     const phase: 'live' | 'final' | 'scheduled' =
-      game.status === 'submitted' && game.game_date === today ? 'live'
+      isGameLive({ status: game.status, date: game.game_date, time: game.game_time }, game.duration_minutes ?? DEFAULT_GAME_DURATION_MINUTES) ? 'live'
         : hasScore ? 'final'
           : 'scheduled';
     // The W/L/T badge asserts an outcome, so it shows ONLY for a truly finalized result
@@ -1350,6 +1355,8 @@ export async function getRegistrationGamesForTeam(
       phase,
       result,
       tournamentName: ctx?.name ?? '',
+      // The loader guarantees one side is ours.
+      registrationId: (isHome ? game.home_team_id : game.away_team_id) as string,
       href,
     };
   });

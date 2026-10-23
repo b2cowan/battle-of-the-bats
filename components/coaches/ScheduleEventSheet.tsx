@@ -142,7 +142,7 @@ export async function deleteEventRequest(orgSlug: string, teamId: string, eventI
 
 export default function ScheduleEventSheet({
   orgSlug, teamId, base, event: ev, initialView, isPhone, nowMs, sportPack, capabilities, drawerDoors,
-  places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameHref,
+  places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameSource,
   bookEntry, gameDayLive, familiesSeeSchedule, seriesReach, clubSource = null,
   onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged, onHandedBack,
 }: {
@@ -170,8 +170,10 @@ export default function ScheduleEventSheet({
   awardPlayers: { id: string; name: string; number: string | null }[];
   /** Batch 4: the organizer moved this game since this device last showed it. */
   moved: MovedGame | null;
-  /** The public game page for a mirrored game, when the tournament is publicly visible. */
-  mirroredGameHref: string | null;
+  /** Where a mirrored game came from (Stage 7d, drawing 8): its tournament's name, and the coach's own
+   *  tournament page for it — null when this coach cannot open that page (no Tournaments door, or the
+   *  entry is outside what the team's list reads), so the row is ABSENT rather than a dead end. */
+  mirroredGameSource: { tournamentName: string; recordHref: string | null } | null;
   /** The Scouting book's entry for this game's opponent, when the book has one. */
   bookEntry: OpponentBookEntry | null;
   /** The game-day window holds right now — Game day runs live, not as a recap. */
@@ -577,9 +579,10 @@ export default function ScheduleEventSheet({
   const canAddEvents = drawerDoors.editEvent;
 
   // Compact one-line summary for the slide-over header (replaces the tall label/value list).
-  // Tournaments (multi-day containers) show a date range and no clock time; "@" = away.
+  // Tournaments (multi-day containers) show a date range and no clock time; "at" = away (the one
+  // spelling, Club Tier Stage 7d T9 — it was "@").
   const isTournamentContainer = ev.eventType === 'external_tournament';
-  const matchupSep = ev.homeAway === 'away' ? '@' : 'vs';
+  const matchupSep = ev.homeAway === 'away' ? 'at' : 'vs';
   const eventMeta = [
     ev.startsAt
       ? (isTournamentContainer && ev.endsAt
@@ -721,21 +724,31 @@ export default function ScheduleEventSheet({
 
   /* Batch 4 — where this game came from. Its time, opponent, venue and score are the
       organizer's; attendance and the lineup below are entirely the coach's. */
+  // Stage 7d (drawing 8): the road back — one row that opens the coach's OWN tournament page in the
+  // portal (same tab). Its caption says whose the time, place and score are; the public page is one
+  // tap further, as Fan view on that page. A coach who cannot open it gets the plain note, never a
+  // row that leads nowhere.
+  const sourceTournament = mirroredGameSource?.tournamentName || ev.name;
   const sourceBlock = clubSource ? <ClubSourceNote source={clubSource} /> : mirroredGame ? (
-    <div className={`${styles.infoBanner} ${styles.sourceNote}`}>
-      <Trophy size={13} aria-hidden style={{ flexShrink: 0 }} />
-      <span>
-        From <strong>{ev.name}</strong> · organizer’s schedule
-        {mirroredGameHref && (
-          <>
-            {' '}
-            <a href={mirroredGameHref} target="_blank" rel="noopener noreferrer" className={styles.sourceNoteLink}>
-              View on the tournament page <ExternalLink size={11} aria-hidden />
-            </a>
-          </>
-        )}
-      </span>
-    </div>
+    mirroredGameSource?.recordHref ? (
+      <CoachRowList label="Where this game comes from">
+        <CoachRow
+          as="link"
+          href={mirroredGameSource.recordHref}
+          mark={<Trophy size={14} />}
+          title={sourceTournament}
+          caption="The organizer sets the time, place and score"
+          door="chevron"
+        />
+      </CoachRowList>
+    ) : (
+      <div className={`${styles.infoBanner} ${styles.sourceNote}`}>
+        <Trophy size={13} aria-hidden style={{ flexShrink: 0 }} />
+        <span>
+          From <strong>{sourceTournament}</strong> · The organizer sets the time, place and score
+        </span>
+      </div>
+    )
   ) : null;
 
   /* The organizer moved it since this device last showed it. Nothing was lost — the

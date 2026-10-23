@@ -382,6 +382,14 @@ const SITES: Site[] = [
     screen: 'A session (titled by the session)', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
+    // One tournament entry (Club Tier Stage 7d, drawing 7) — the shared record's paid-shell title, titled by
+    // the TOURNAMENT with the back arrow to the list. No action: the Fan view is navigation, so it sits in
+    // the page's chip row under the title, never in this slot. The free shell does not render this header
+    // (its sticky header names the tournament) — the record draws that shell's "?" in the chip row instead.
+    file: 'components/coaches/CoachTournamentRecordParts.tsx', occurrence: 0,
+    screen: 'A tournament entry (titled by the tournament)', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
     // Preview development handout (Phase 3, mockup screen 6) — ONE component draws the page. The way
     // back is the arrow; Print / Save as PDF is an EXPORT and sits in the body (house rule 2), never
     // in the header, even though the mockup drew it there.

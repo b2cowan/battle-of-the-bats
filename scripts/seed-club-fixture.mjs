@@ -305,6 +305,17 @@ if (process.argv.includes('--club-permits')) {
   process.exit(0);
 }
 
+// ── Club Tier Stage 7d — `--tournament-games[=finished]`: ADD the club tournament's games, and stop ─────────────
+// Additive, never a reset. `--tournament-games` = 10–12 days out, scheduled; `--tournament-games=finished` = a
+// completed weekend with scores (15U AAA 2nd of 4). Re-running replaces exactly that tournament's games.
+const tournamentGamesArg = process.argv.find(a => a === '--tournament-games' || a.startsWith('--tournament-games='));
+if (tournamentGamesArg) {
+  head(`Club Tier Stage 7d — the tournament's games for ${ORG_NAME} (added; nothing rebuilt)`);
+  await addTournamentGames(tournamentGamesArg.endsWith('=finished') ? 'finished' : 'upcoming');
+  head('Done');
+  process.exit(0);
+}
+
 // ── Club Tier Stage 3c — `--calendar-club`: rebuild ONLY the calendar club, and stop ────────────────
 if (process.argv.includes('--calendar-club')) {
   head(`Rebuilding ${CAL_NAME} (${CAL_SLUG}) — UAT Rep Club untouched`);
@@ -647,6 +658,7 @@ die('link own team', (await db.from('rep_team_tournament_registrations').insert(
   tournament_team_id: ownEntry.id, rep_team_id: team['15u-aaa'].id, org_id: orgId, linked_by_user_id: OWNER, link_source: 'explicit',
 })).error);
 ok(`tournament "UAT Rep Club Invitational ${Y}" (active) — the club's own 15U AAA entered and linked`);
+await addTournamentGames('upcoming');
 
 // ── Club Tier Stage 3a — the club's books: a tournament's book and a transfer to it, two spellings of
 // one payee (the Payees page merges them), a pending cheque, and a line voided with its reason.
@@ -1182,6 +1194,81 @@ async function addClubVenues() {
 
 // ── Club Tier Stage 10a — the club's permits ─────────────────────────────────────────────────────────────────
 
+
+/**
+ * Club Tier Stage 7d — the club tournament's GAMES (7b found the fixture had none, so a coach's tournament page
+ * and the Schedule's mirrored games could not be walked). Publishes the 15U division and writes its whole round
+ * robin (6 games) plus a final, on the tournament's own days: the club's 15U AAA plays three round-robin games and
+ * the final. Re-running replaces exactly these games (the tournament's own — nothing else writes there).
+ *
+ *   mode 'upcoming' (default): the tournament stays 10–12 days out, every game scheduled, no scores.
+ *   mode 'finished': the tournament moves to 5–3 days ago and is completed, with scores — 15U AAA finishes
+ *                    2nd of 4, so the list row reads "… · 2nd of 4" and the page's chip "Finished · 2nd of 4".
+ */
+async function addTournamentGames(mode = 'upcoming') {
+  const org = await one('find org', db.from('organizations').select('id').eq('slug', ORG_SLUG).single());
+  const tourn = await one('find tournament', db.from('tournaments').select('id').eq('org_id', org.id).eq('slug', `uat-rep-club-invitational-${Y}`).single());
+  const finished = mode === 'finished';
+  const start = finished ? daysFromNow(-5) : daysFromNow(10);
+  const day2 = finished ? daysFromNow(-4) : daysFromNow(11);
+  const end = finished ? daysFromNow(-3) : daysFromNow(12);
+  die('tournament dates', (await db.from('tournaments').update({ start_date: start, end_date: end, status: finished ? 'completed' : 'active' }).eq('id', tourn.id)).error);
+  const div = await one('find division', db.from('divisions').select('id').eq('tournament_id', tourn.id).eq('name', '15U').single());
+  die('publish 15U schedule', (await db.from('divisions').update({ schedule_visibility: 'published' }).eq('id', div.id)).error);
+  const rows = await one('find entrants', db.from('teams').select('id, name').eq('tournament_id', tourn.id));
+  const id = Object.fromEntries((rows ?? []).map(t => [t.name, t.id]));
+  const ours = id['UAT Rep Club 15U AAA'], guelph = id['Guelph Royals 15U'], milton = id['Milton Mustangs 15U'], oakville = id['Oakville Otters 15U'];
+  if (!ours || !guelph || !milton || !oakville) { console.error('✗ the four entrants are not all there — rebuild with --reset.'); process.exit(1); }
+
+  die('clear old games', (await db.from('games').delete().eq('tournament_id', tourn.id)).error);
+  // [home, away, day, time, location, our-perspective scores when finished (home, away)]
+  // Finished standings: Milton 3–0, 15U AAA 2–1, Guelph 1–2, Oakville 0–3 → 15U AAA is 2nd of 4.
+  const plan = [
+    [ours, guelph, start, '18:00:00', 'Bronte Park · Field 2', [7, 4]],
+    [milton, ours, day2, '09:00:00', 'Bronte Park · Field 1', [5, 2]],
+    [ours, oakville, day2, '14:30:00', 'Bronte Park · Field 2', [6, 1]],
+    [milton, guelph, start, '20:00:00', 'Bronte Park · Field 1', [3, 1]],
+    [guelph, oakville, day2, '11:30:00', 'Bronte Park · Field 1', [4, 2]],
+    [oakville, milton, day2, '17:00:00', 'Bronte Park · Field 2', [0, 5]],
+  ];
+  const games = plan.map(([home, away, date, time, location, score]) => ({
+    tournament_id: tourn.id, division_id: div.id, home_team_id: home, away_team_id: away,
+    game_date: date, game_time: time, location, duration_minutes: 90, is_playoff: false,
+    status: finished ? 'completed' : 'scheduled',
+    home_score: finished ? score[0] : null, away_score: finished ? score[1] : null,
+  }));
+  games.push({
+    tournament_id: tourn.id, division_id: div.id, home_team_id: milton, away_team_id: ours,
+    game_date: end, game_time: '11:00:00', location: 'Bronte Park · Field 1', duration_minutes: 90, is_playoff: true,
+    status: finished ? 'completed' : 'scheduled', home_score: finished ? 4 : null, away_score: finished ? 3 : null,
+  });
+  die('insert games', (await db.from('games').insert(games)).error);
+
+  // An ASSISTANT on 15U AAA with schedule editing and no Register for tournaments — the person the event's
+  // head coach shows as a line, never a form (Stage 7d, Ask 10). Written the way the admin Coaches route
+  // writes staff: the coach membership, the staff membership (access truth, mig 245), the live season's
+  // projection. Idempotent: an existing assistant is left as it is.
+  const ASSISTANT = { email: 'uat-club-assistant-15aaa@uat-rep-club.local', name: 'Riley Assistant' };
+  const assistant = await ensureUser(ASSISTANT.email, DEFAULT_PASSWORD, ASSISTANT.name);
+  const repTeam = await one('find 15U AAA', db.from('rep_teams').select('id').eq('org_id', org.id).eq('slug', '15u-aaa').single());
+  const grants = { schedule: true, scheduleManage: true, registerTournaments: false, tournaments: false };
+  const already = await one('assistant membership', db.from('rep_team_staff_memberships').select('id').eq('team_id', repTeam.id).eq('user_id', assistant.id).maybeSingle());
+  if (!already) {
+    const member = await one('assistant org member', db.from('organization_members').select('id').eq('organization_id', org.id).eq('user_id', assistant.id).maybeSingle());
+    if (!member) die('assistant org member', (await db.from('organization_members').insert({
+      organization_id: org.id, user_id: assistant.id, role: 'coach', status: 'active', display_name: ASSISTANT.name, invited_at: nowIso, accepted_at: nowIso,
+    })).error);
+    die('assistant staff membership', (await db.from('rep_team_staff_memberships').insert({
+      org_id: org.id, team_id: repTeam.id, user_id: assistant.id, coach_role: 'assistant_coach', status: 'active', staff_kind: 'assistant', capabilities: grants,
+    })).error);
+    const py = await one('15U AAA live year', db.from('rep_program_years').select('id').eq('team_id', repTeam.id).eq('status', 'active').single());
+    die('assistant projection', (await db.from('rep_team_coaches').insert({
+      program_year_id: py.id, team_id: repTeam.id, org_id: org.id, user_id: assistant.id, coach_role: 'assistant_coach', capabilities: grants,
+    })).error);
+  }
+  ok(`assistant on 15U AAA (schedule editing, no Register for tournaments): ${ASSISTANT.email} / ${DEFAULT_PASSWORD}`);
+  ok(`tournament games (${mode}): 15U published, ${games.length} games ${start} → ${end} — 15U AAA plays 4 (vs Guelph, at Milton, vs Oakville, the final at Milton)${finished ? '; finishes 2nd of 4' : ''}`);
+}
 
 async function addClubPermits() {
   const org = await one('find org', db.from('organizations').select('id').eq('slug', ORG_SLUG).single());

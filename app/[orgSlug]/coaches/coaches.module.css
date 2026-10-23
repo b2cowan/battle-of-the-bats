@@ -6417,10 +6417,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary);
 }
 .sourceNote strong { color: var(--text-primary); font-weight: 640; }
-.sourceNoteLink {
-  color: var(--text-primary); font-weight: 620; text-decoration: underline;
-  display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap;
-}
+/* ⚰ `.sourceNoteLink` is GONE (Club Tier Stage 7d, drawing 8): a mirrored game's sheet leads back to the
+   coach's own tournament page as a row; the public page is one tap further, as Fan view. */
 
 /* "The organizer moved this" — informational, never alarming: nothing was lost. */
 .movedNote {

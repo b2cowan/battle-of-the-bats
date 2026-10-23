@@ -1,143 +1,217 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Check, UserCog } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
+import {
+  headCoachEmailSave,
+  headCoachNameSave,
+  type HeadCoachSave,
+} from '@/lib/coach-event-head-coach';
 import styles from './HeadCoachEditor.module.css';
 
 /**
- * Coaches Portal — head-coach + contact assignment (free-tier Phase 5l).
+ * Head coach for this event — the name and the email the organizer writes to (Club Tier Stage 7d,
+ * Ask 10; drawing 7). It AUTOSAVES: the record page renders this form only for someone the one rule
+ * lets change it (`canEditEventHeadCoach`); everyone else reads a line instead, and the PATCH route
+ * refuses them with the same rule.
  *
- * Lets the registrant set/change the team's head-coach NAME and an OPTIONAL coach contact email
- * for this tournament, via `PATCH /api/coaches/tournaments/[teamId]` (sibling of the 5j roster API).
+ * ⚠ This record routes mail. The name saves on leaving the field or after a pause; the EMAIL saves
+ * only on leaving the field (or Enter) — a pause mid-address can already pass the format check
+ * ("jo@ex.co" on the way to "jo@ex.com") and would send the organizer's acceptance and payment mail to
+ * a half-typed inbox. A blank name is never sent: the field says so and the last saved name stands. A
+ * cleared email IS a save — mail reverts to the email the team registered with (`resolveCoachRecipient`).
+ * The word is the portal's transient pill ("Saved" fades; only an error persists). Two tabs: the last
+ * write wins, as before.
  *
- * Semantics (mirrors the API):
- *   • The NAME is required — the save button is disabled when it's empty (the API also rejects ''),
- *     because `teams.coach` drives admin displays + email greetings (a product rule — the column itself
- *     is nullable on both envs since migration 202).
- *   • The contact email is OPTIONAL. When set, coach-facing automatic emails (acceptance, payment,
- *     schedule updates) route to it; leaving it blank routes to the registration email. It NEVER
- *     overwrites the team's access/claim email.
+ * A value the route REFUSES (a 400) is said at its field and is not "unsaved changes": it is not sent
+ * again until the coach changes it. A network failure is the pill's Retry, and it clears the moment
+ * the field it belongs to no longer has anything to send. Saves of one field are ordered by request —
+ * a slow earlier answer never overwrites what a later one set.
+ *
+ * The route keeps every one of its own checks; `teams.email` (the claim key) is never touched.
  */
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_PAUSE_MS = 1200;
 
-type Props = {
+type Field = 'name' | 'email';
+
+export default function HeadCoachEditor({
+  teamId,
+  initialCoach,
+  initialCoachEmail,
+  registrationEmail,
+}: {
   teamId: string;
   initialCoach: string;
   initialCoachEmail: string | null;
-  /** The registration / access email (teams.email) — the fallback recipient when no
-   *  contact override is set. Used only to spell out where organizer emails will go. */
+  /** The email the team registered with (`teams.email`) — where mail goes while the field is blank. */
   registrationEmail?: string | null;
-  /** A3: rendered inside the record page's merged "Your Team" entry card — drop the
-   *  component's own card chrome (the wrapping card owns border/padding). */
-  embedded?: boolean;
-};
+}) {
+  const [name, setName] = useState(initialCoach ?? '');
+  const [email, setEmail] = useState(initialCoachEmail ?? '');
+  const [saved, setSaved] = useState({ name: initialCoach ?? '', email: initialCoachEmail ?? '' });
 
-export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmail, registrationEmail, embedded = false }: Props) {
-  const router = useRouter();
-
-  const [coach, setCoach] = useState(initialCoach ?? '');
-  const [coachEmail, setCoachEmail] = useState(initialCoachEmail ?? '');
-  // Baseline = the last persisted values; "dirty" is measured against it so we don't save no-ops.
-  const [savedCoach, setSavedCoach] = useState(initialCoach ?? '');
-  const [savedEmail, setSavedEmail] = useState(initialCoachEmail ?? '');
-
+  const [fieldError, setFieldError] = useState<Record<Field, string | null>>({ name: null, email: null });
+  // The body the route refused for each field — said at the field, never re-sent until the value changes.
+  const [refused, setRefused] = useState<Record<Field, { body: string; message: string } | null>>({ name: null, email: null });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const lastFailed = useRef<Field | null>(null);
+  // Per field: the body on the wire, and the newest request's number (a slow older answer is ignored).
+  const inFlight = useRef<Record<Field, string | null>>({ name: null, email: null });
+  const requestNo = useRef<Record<Field, number>>({ name: 0, email: 0 });
+  const open = useRef(0);
 
-  const trimmedName = coach.trim();
-  const trimmedEmail = coachEmail.trim();
-  const emailValid = trimmedEmail === '' || EMAIL_RE.test(trimmedEmail.toLowerCase());
-  // Where organizer emails actually route, based on the LAST SAVED state (not the
-  // in-progress edit): the saved override if set, else the registration email.
-  const routedEmail = (savedEmail ?? '').trim() || (registrationEmail ?? '').trim();
-  const dirty =
-    trimmedName !== savedCoach.trim() ||
-    trimmedEmail.toLowerCase() !== (savedEmail ?? '').trim().toLowerCase();
-  const canSave = !saving && trimmedName.length > 0 && emailValid && dirty;
+  const planFor = (field: Field): HeadCoachSave => field === 'name'
+    ? headCoachNameSave(name, saved.name)
+    : headCoachEmailSave(email, saved.email);
+  const isSendable = (field: Field) => {
+    const plan = planFor(field);
+    return plan.kind === 'send' && refused[field]?.body !== JSON.stringify(plan.body);
+  };
 
-  async function save() {
-    if (!canSave) return;
+  // "Unsaved changes" only while a field holds something that WILL be sent — a blank name, a
+  // malformed email or a value the route refused is said beside the field, never as a pending save.
+  const dirty = isSendable('name') || isSendable('email');
+
+  /** Retry belongs to a failed field; once that field has nothing left to send there is nothing to retry. */
+  function clearFailure(field: Field) {
+    if (lastFailed.current !== field) return;
+    lastFailed.current = null;
+    setSaveError(null);
+  }
+
+  async function commit(field: Field) {
+    const plan = planFor(field);
+    if (plan.kind === 'invalid') {
+      setFieldError(prev => ({ ...prev, [field]: plan.message }));
+      clearFailure(field);
+      return;
+    }
+    if (plan.kind === 'skip') {
+      setFieldError(prev => ({ ...prev, [field]: null }));
+      clearFailure(field);
+      return;
+    }
+    const sending = JSON.stringify(plan.body);
+    // Refused already (its message is said again), or on the wire right now — the pause timer and
+    // the blur can both fire for one value before the first answer lands.
+    const already = refused[field];
+    if (already?.body === sending) {
+      setFieldError(prev => ({ ...prev, [field]: already.message }));
+      return;
+    }
+    if (inFlight.current[field] === sending) return;
+    setFieldError(prev => ({ ...prev, [field]: null }));
+    const mine = ++requestNo.current[field];
+    const latest = () => requestNo.current[field] === mine;
+    inFlight.current[field] = sending;
+
+    open.current += 1;
     setSaving(true);
-    setError(null);
-    setSaved(false);
+    if (lastFailed.current === field) setSaveError(null);
     try {
       const res = await fetch(`/api/coaches/tournaments/${teamId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coach: trimmedName, coachEmail: trimmedEmail || null }),
+        body: JSON.stringify(plan.body),
       });
-      const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (res.status === 400) {
+        // The route's own refusal of THIS value (a FieldLogicHQ staff address, say): said beside the
+        // field it is about, not as a retry — sending it again would be refused again.
+        if (latest()) {
+          const message = body.error ?? 'That could not be saved.';
+          setFieldError(prev => ({ ...prev, [field]: message }));
+          setRefused(prev => ({ ...prev, [field]: { body: sending, message } }));
+          clearFailure(field);
+        }
+        return;
+      }
       if (!res.ok) throw new Error(body.error ?? 'Could not update the head coach.');
-      setSavedCoach(trimmedName);
-      setSavedEmail(trimmedEmail);
-      setSaved(true);
-      // Refresh the server-rendered displays (Registration Details "Coach" line, hero greeting).
-      router.refresh();
+      if (latest()) {
+        const sent = plan.body;
+        setSaved(prev => ('coach' in sent ? { ...prev, name: sent.coach } : { ...prev, email: sent.coachEmail ?? '' }));
+        setRefused(prev => ({ ...prev, [field]: null }));
+        clearFailure(field);
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update the head coach.');
+      if (latest()) {
+        lastFailed.current = field;
+        setSaveError(e instanceof Error ? e.message : 'Could not update the head coach.');
+      }
     } finally {
-      setSaving(false);
+      if (inFlight.current[field] === sending) inFlight.current[field] = null;
+      open.current -= 1;
+      setSaving(open.current > 0);
     }
   }
 
-  return (
-    <div className={embedded ? styles.embedded : `card ${styles.card}`}>
-      <div className={styles.head}>
-        {/* Embedded: the wrapping <summary> row already carries the UserCog icon. */}
-        {!embedded && <UserCog size={16} aria-hidden />}
-        <p className={styles.intro}>
-          Set who coaches this team for this event. The contact email is where acceptance, payment,
-          and schedule updates are sent — leave it blank to use your registration email.
-        </p>
-      </div>
+  // The name's pause: a save after the coach stops typing, as well as on leaving the field.
+  const nameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitRef = useRef(commit);
+  useEffect(() => { commitRef.current = commit; });
+  // Leaving the page inside the pause (a tap on a link does not always blur a field) still sends the name.
+  useEffect(() => () => {
+    if (!nameTimer.current) return;
+    clearTimeout(nameTimer.current);
+    void commitRef.current('name');
+  }, []);
 
+  const routedTo = (registrationEmail ?? '').trim();
+
+  return (
+    <div className={styles.form}>
       <label className={styles.field}>
-        <span className={styles.label}>Head coach name *</span>
+        <span className={styles.label}>Name *</span>
         <input
           className={styles.input}
           type="text"
-          value={coach}
+          value={name}
           maxLength={120}
-          placeholder="e.g. Jordan Lee"
-          onChange={e => { setCoach(e.target.value); setSaved(false); }}
-          aria-label="Head coach name"
+          autoComplete="name"
+          aria-invalid={fieldError.name ? true : undefined}
+          onChange={e => {
+            setName(e.target.value);
+            if (nameTimer.current) clearTimeout(nameTimer.current);
+            nameTimer.current = setTimeout(() => { nameTimer.current = null; void commitRef.current('name'); }, NAME_PAUSE_MS);
+          }}
+          onBlur={() => {
+            if (nameTimer.current) clearTimeout(nameTimer.current);
+            nameTimer.current = null;
+            void commit('name');
+          }}
         />
+        {fieldError.name && <span className={styles.fieldError} role="alert">{fieldError.name}</span>}
       </label>
 
       <label className={styles.field}>
-        <span className={styles.label}>Coach contact email</span>
+        <span className={styles.label}>Email the organizer uses</span>
         <input
           className={styles.input}
           type="email"
           inputMode="email"
           autoComplete="email"
-          value={coachEmail}
-          placeholder="coach@example.com"
-          onChange={e => { setCoachEmail(e.target.value); setSaved(false); }}
-          aria-label="Coach contact email"
+          value={email}
+          /* The address mail goes to while this is blank — the team's registration email, which is the
+             sign-in email of whoever registered it. Falls back to the drawn words when unknown. */
+          placeholder={routedTo || 'Your sign-in email'}
+          aria-invalid={fieldError.email ? true : undefined}
+          onChange={e => { setEmail(e.target.value); setFieldError(prev => ({ ...prev, email: null })); }}
+          onBlur={() => { void commit('email'); }}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void commit('email'); } }}
         />
+        {fieldError.email
+          ? <span className={styles.fieldError} role="alert">{fieldError.email}</span>
+          : <span className={styles.hint}>Acceptance, payment and schedule updates go here. Blank uses your sign-in email.</span>}
       </label>
 
-      {!emailValid && <p className={styles.hint}>Enter a valid email address, or leave it blank.</p>}
-      {!trimmedName && <p className={styles.hint}>A head coach name is required.</p>}
-      {/* Routing confirmation — closes the loop so the coach knows where organizer
-          emails go (the registration email never changes here, which is otherwise
-          confusing). Reflects saved state; updates after a successful save. */}
-      {routedEmail && (
-        <p className={styles.routing}>
-          Organizer emails for this team will go to <strong>{routedEmail}</strong>
-          {!(savedEmail ?? '').trim() && ' (your registration email)'}.
-        </p>
-      )}
-      {error && <p className={styles.error} role="alert">{error}</p>}
-      {saved && !error && <p className={styles.success}>Head coach updated.</p>}
-
-      <button type="button" className={styles.saveBtn} onClick={save} disabled={!canSave}>
-        <Check size={15} aria-hidden /> {saving ? 'Saving…' : 'Save head coach'}
-      </button>
+      <SaveStatusPill
+        saving={saving}
+        dirty={dirty}
+        error={saveError}
+        onRetry={() => { if (lastFailed.current) void commit(lastFailed.current); }}
+      />
     </div>
   );
 }

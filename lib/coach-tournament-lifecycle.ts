@@ -20,6 +20,15 @@ export type CoachLifecycleChip = {
   rank: number;
 };
 
+/**
+ * "Finished" for a coach's lists (Stage 7d): an event whose dates are behind the coach is finished even
+ * before the organizer marks it complete (`wrapping_up`) — it no longer belongs under Coming up. The row
+ * band, the finish lookup and the record's Finished chip all ask this one question.
+ */
+export function isFinishedLifecycle(state: CoachLifecycleState): boolean {
+  return state === 'complete' || state === 'wrapping_up';
+}
+
 const DAY_MS = 86_400_000;
 
 function daysBetween(fromISO: string, toISO: string): number {

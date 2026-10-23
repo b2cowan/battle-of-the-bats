@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCoachRegistrationAccess } from '@/lib/coach-team-guard';
+import { resolveEventHeadCoachAccess } from '@/lib/coach-registration-access';
+import {
+  canEditEventHeadCoach,
+  EVENT_HEAD_COACH_REFUSED,
+  HEAD_COACH_EMAIL_INVALID,
+  HEAD_COACH_NAME_REQUIRED,
+} from '@/lib/coach-event-head-coach';
+import { isValidEmail } from '@/lib/auth-errors';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -36,8 +44,6 @@ function authError(status: 401 | 403) {
     : json({ error: 'You do not have access to this team.' }, 403);
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 type RouteCtx = { params: Promise<{ teamId: string }> };
 
 export const PATCH = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
@@ -45,6 +51,11 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Rout
     const { teamId } = await params;
     const guard = await requireCoachRegistrationAccess(teamId);
     if (!guard.ok) return authError(guard.status);
+    // Stage 7d (Ask 10): opening the entry is not changing who the organizer writes to. The same rule
+    // the record reads to draw the form or the line — so the page never offers what this refuses.
+    if (!canEditEventHeadCoach(await resolveEventHeadCoachAccess(guard.user.id, teamId))) {
+      return json({ error: EVENT_HEAD_COACH_REFUSED }, 403);
+    }
 
     const body = (await req.json().catch(() => ({}))) as { coach?: unknown; coachEmail?: unknown };
     const updates: { coach?: string; coach_email?: string | null } = {};
@@ -54,7 +65,7 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Rout
     if (body.coach !== undefined) {
       if (typeof body.coach !== 'string') return json({ error: 'Invalid head coach name.' }, 400);
       const name = body.coach.trim();
-      if (!name) return json({ error: 'Enter a head coach name.' }, 400);
+      if (!name) return json({ error: HEAD_COACH_NAME_REQUIRED }, 400);
       if (name.length > 120) return json({ error: 'Head coach name is too long.' }, 400);
       updates.coach = name;
     }
@@ -67,7 +78,7 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Rout
         updates.coach_email = null;
       } else if (typeof raw === 'string') {
         const normalized = raw.trim().toLowerCase();
-        if (!EMAIL_RE.test(normalized)) return json({ error: 'Enter a valid email address.' }, 400);
+        if (!isValidEmail(normalized)) return json({ error: HEAD_COACH_EMAIL_INVALID }, 400);
         // FieldLogicHQ staff are never coaches — don't route coach emails to a staff inbox
         // (mirrors the register / add-teams contact guard; defensive, coach_email is recipient-only).
         if (await isPlatformAdminEmail(normalized)) {

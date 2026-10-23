@@ -1,39 +1,13 @@
-/* ── Coaches Portal — head-coach + contact assignment (free-tier Phase 5l) ─────
-   Shipped design-system tokens only. Matches the RosterEditor / TournamentRosterSubmit
-   aesthetic — mobile-first, generous touch targets. */
+/* ── Head coach for this event (Club Tier Stage 7d, drawing 7) ───────────────────────────────────
+   An autosaving form inside the record's "Head coach for this event" card — the card paints the
+   ground, so this sheet has no chrome of its own. The explicit Save button, its success line and the
+   routing box retired with the autosave: the word is the portal's transient pill (SaveStatusPill).
+   Fields are 36 px on a computer and 44 px on a phone (the standard's form sizes, design check). */
 
-.card {
+.form {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  padding: 1rem;
-}
-
-/* A3: rendered inside the record page's merged "Your Team" entry card (a <details>
-   body) — same internal layout, no card chrome of its own. */
-.embedded {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.head {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.head svg {
-  flex-shrink: 0;
-  margin-top: 0.15rem;
-  color: var(--logic-lime);
-}
-
-.intro {
-  margin: 0;
-  font-size: var(--type-body);
-  line-height: 1.5;
-  color: var(--text-secondary);
+  gap: 0.8rem;
 }
 
 .field {
@@ -42,23 +16,13 @@
   gap: 0.3rem;
 }
 
+/* Field labels 12 px, secondary ink (design check #3). A required field takes a plain asterisk in the
+   label's own ink (owner ruling 2026-08-25) — never a red `.labelRequired`. */
 .label {
   font-size: var(--type-support);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.formHint {
-  margin: 0;
-  font-size: var(--type-support);
+  font-weight: 600;
   color: var(--text-secondary);
 }
-
-/* ⚖ `.labelRequired` IS RETIRED — DO NOT BRING IT BACK (owner ruling 2026-08-25, portal-wide;
-   `memory/design_decisions.md`; the full reasoning lives on the headstone in coaches.module.css).
-   A required field takes a PLAIN asterisk in the label's own ink — ` *` written inline in the
-   label text. Red in this portal means something has GONE WRONG, and a field is not in error for
-   being required. The rule is deleted rather than merely unused so the next form cannot find it. */
 
 .input {
   font: inherit;
@@ -67,7 +31,7 @@
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
   padding: 0 0.7rem;
-  height: 42px;
+  height: 36px;
   width: 100%;
 }
 
@@ -82,87 +46,19 @@
 }
 
 .hint {
-  margin: 0;
-  font-size: var(--type-support);
-  color: var(--text-secondary);
-}
-
-/* Quiet routing confirmation — tells the coach where organizer emails actually go.
-   Informational (not validation/success): muted text on a faint surface. */
-.routing {
-  margin: 0;
-  padding: 0.5rem 0.7rem;
   font-size: var(--type-support);
   line-height: 1.45;
-  color: var(--text-secondary);
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-}
-.routing strong {
-  color: var(--text-primary);
-  font-weight: 600;
+  color: var(--text-tertiary);
 }
 
-.error {
-  margin: 0;
-  padding: 0.6rem 0.8rem;
-  font-size: var(--type-body);
+.fieldError {
+  font-size: var(--type-support);
+  line-height: 1.45;
   color: var(--danger);
-  background: rgba(var(--danger-rgb), 0.1);
-  border: 1px solid rgba(var(--danger-rgb), 0.3);
-  border-radius: var(--radius-sm);
 }
 
-.success {
-  margin: 0;
-  padding: 0.55rem 0.8rem;
-  font-size: var(--type-body);
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  border-radius: var(--radius-sm);
-}
-
-.saveBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  align-self: flex-start;
-  height: 44px;
-  padding: 0 1.1rem;
-  font-size: var(--type-body);
-  font-weight: 700;
-  /* Dark text on lime — matches the global .btn-lime convention. */
-  color: var(--on-lime);
-  background: var(--logic-lime);
-  border: 1px solid var(--logic-lime);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: filter 0.15s, opacity 0.15s;
-}
-
-.saveBtn:hover:not(:disabled) {
-  filter: brightness(1.05);
-}
-
-.saveBtn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-@media (max-width: 700px) {
-  .saveBtn {
-    align-self: stretch;
+@media (max-width: 768px) {
+  .input {
+    height: var(--tap-min, 44px);
   }
-}
-
-/* Warm coaches portal (TH-5) — primary CTA stays ink-on-lime. The lime FILL must be TRUE lime
-   + dark ink; the accent remap would otherwise olive-ify the fill, leaving near-black --on-lime
-   text on dark olive (dark-on-dark). Mirrors globals .btn-lime / coaches .btnPrimary. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .saveBtn {
-  background: var(--home-lime);
-  border-color: var(--home-lime);
-  color: var(--home-lime-ink);
 }

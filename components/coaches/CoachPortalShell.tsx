@@ -328,17 +328,17 @@ export default function CoachPortalShell({
 
   // ── Header composition (both states, per the approved mockups) ──
   //   Team-only:  eyebrow "Coaches Portal" · title = team name · meta = team chip + next event.
-  //   Event ctx:  eyebrow "{tournament} · {org}" · title = team name · meta = reg chip + dates
-  //               (full, with year) · Flip top-right when the tournament is public.
-  const eyebrow = currentReg
-    ? [currentReg.tournamentName, currentReg.orgName].filter(Boolean).join(' · ') || 'Coaches Portal'
-    : 'Coaches Portal';
-  const headerChip = currentReg ? currentReg.chip : currentTeam?.lifecycle ?? null;
+  //   Event ctx:  title = the TOURNAMENT · meta = team · dates · organizer · Flip top-right when the
+  //               tournament is public (Club Tier Stage 7d, Ask 12: the paid page's title order — the
+  //               tournament named, the team under it). No eyebrow and no chip here: the record's own
+  //               chip row says the entry's status and what the event is doing, once.
+  const eyebrow = 'Coaches Portal';
+  const headerChip = currentReg ? null : currentTeam?.lifecycle ?? null;
   // Chip earns header space only while it says something current (live / game day / upcoming /
   // future date). A finished event showing "Complete" forever read as stale noise (A1 rule).
   const showChip = Boolean(headerChip && headerChip.state !== 'complete');
   const metaDates = currentReg
-    ? formatEventRange(currentReg.startDate, currentReg.endDate, true)
+    ? [currentTeam?.name, formatEventRange(currentReg.startDate, currentReg.endDate, false), currentReg.orgName].filter(Boolean).join(' · ')
     : null;
   const nextEventLine = !currentReg && currentTeam?.nextEvent
     ? [currentTeam.nextEvent.name, formatEventRange(currentTeam.nextEvent.startDate, currentTeam.nextEvent.endDate, false)]
@@ -349,8 +349,8 @@ export default function CoachPortalShell({
     ? { orgSlug: currentReg.orgSlug, tournamentSlug: currentReg.tournamentSlug }
     : null;
 
-  const titleText = currentTeam?.name ?? 'Coaches Portal';
-  const titleNode = currentTeam && multiTeam ? (
+  const titleText = currentReg?.tournamentName ?? currentTeam?.name ?? 'Coaches Portal';
+  const titleNode = currentTeam && multiTeam && !currentReg ? (
     <button
       ref={switchBtnRef}
       type="button"
@@ -387,7 +387,7 @@ export default function CoachPortalShell({
           <div className={`${styles.mhText}${multiTeam ? ` ${styles.switchWrap}` : ''}`} ref={switchWrapRef}>
             {/* No-team states title themselves "Coaches Portal" — an identical eyebrow above
                 that would just stutter. */}
-            {currentTeam && <p className={styles.mhEyebrow}>{eyebrow}</p>}
+            {currentTeam && !currentReg && <p className={styles.mhEyebrow}>{eyebrow}</p>}
             <div className={styles.mhTitle}>{titleNode}</div>
             {(showChip || metaDates || nextEventLine) && (
               <div className={styles.mhMeta}>

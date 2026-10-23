@@ -235,6 +235,19 @@ a.card:active {
   color: var(--text-tertiary);
 }
 
+/* Stage 7d (drawing 6): the tournament row's REGISTRATION chips, in the same typewriter capitals.
+   ACCEPTED is the green-soft fill; WAITING ON THEM (pending, waitlisted) the amber-soft fill. The fills
+   are mixed OPAQUE over the card, never translucent: a translucent tint over a row's hover wash fails
+   contrast (row-list recipe §10, B1). */
+.coachLifecycleChipOk {
+  background: color-mix(in srgb, var(--success) 14%, var(--card-bg));
+  color: var(--success);
+}
+.coachLifecycleChipWaiting {
+  background: color-mix(in srgb, var(--warning) 16%, var(--card-bg));
+  color: var(--warning);
+}
+
 /* COMPLETE — end_date < today. Muted text + faint border. */
 .coachLifecycleChipComplete {
   border-color: var(--border-2);

@@ -5,8 +5,9 @@ import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from '@/lib/team-works
 import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
 import { canOpenTournaments, denyUnless, isMoneyRedactedForTeam, TOURNAMENTS_DOOR_DENIED_MESSAGE } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
+import { attachTournamentFinishes } from '@/lib/coach-tournament-finish';
 
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -51,7 +52,12 @@ export const GET = withObservability(async (_req: Request,
     // WI-5 (security): a money='off' assistant coach must not receive fee amounts in the payload
     // (the Overview tile is already render-gated, but the JSON itself leaked `amountDue`). Resolve
     // the caller's capability on this rep team and FAIL CLOSED (redact when no assignment resolves).
-    const { history, basicCoachTeamId, linkage } = await getSeasonTournamentHistoryForRepTeam(teamId);
+    const { history: seasonHistory, basicCoachTeamId, linkage } = await getSeasonTournamentHistoryForRepTeam(teamId);
+    // Stage 7d: the Tournaments LIST asks for each finished entry's finish ("2nd of 4"); the Overview tile,
+    // which reads here too, does not, so it pays nothing for a word it never shows.
+    const history = new URL(req.url).searchParams.get('finish') === '1'
+      ? await attachTournamentFinishes(seasonHistory)
+      : seasonHistory;
     const safeHistory = isMoneyRedactedForTeam(assignments, teamId)
       ? history.map(entry => ({ ...entry, amountDue: null }))
       : history;

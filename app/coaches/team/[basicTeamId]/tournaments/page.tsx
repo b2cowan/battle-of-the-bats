@@ -6,10 +6,9 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
-import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
-import { resolveRowFanView } from '@/lib/coach-alert-registration';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
+import CoachTournamentRows from '@/components/coaches/CoachTournamentRows';
+import { attachTournamentFinishes } from '@/lib/coach-tournament-finish';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 import { Trophy } from 'lucide-react';
@@ -30,19 +29,11 @@ export async function generateMetadata({ params }: RouteParams) {
 export default async function CoachTeamTournamentsPage({ params }: RouteParams) {
   const { basicTeamId } = await params;
   const { team } = await resolveCoachTeamPage(basicTeamId, '/tournaments');
-  const rawHistory = await getBasicCoachTournamentHistoryForTeam(basicTeamId);
   const today = tournamentToday();
-  // DF-7: live-first, like the account-wide hub and the premium team list. This was the only one of
-  // the three that stayed in `registeredAt` order, so the same coach's events read in two different
-  // orders on two screens — and it matters more now that the Overview names one event and sends
-  // them here for the rest.
-  const history = sortByCoachLifecycle(
-    rawHistory,
-    entry => entry.tournament?.startDate ?? null,
-    entry => entry.tournament?.endDate ?? null,
-    today,
-    entry => entry.tournament?.status ?? null,
-  );
+  // Stage 7d: the same rows, bands and order as the paid list and the account hub (CoachTournamentRows
+  // sorts live-first inside each band — DF-7's one order across the three lists). This list is the free
+  // team's LIFETIME record, so "Finished" here reaches past this season; the paid list's does not.
+  const history = await attachTournamentFinishes(await getBasicCoachTournamentHistoryForTeam(basicTeamId), today);
   // Entries that actually put this team in an event. Used only to gate the B3.2 shelf — the
   // list itself still shows every entry, rejections included, because that IS their record.
   const liveEntryCount = history.filter(({ registration }) => registration.status !== 'rejected').length;
@@ -51,6 +42,7 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
     <TeamSectionShell
       teamName={team.name}
       title="Tournaments"
+      help={{ module: 'coaches', sectionIds: ['tournaments'], fullGuideHref: '/coaches/help#tournaments' }}
       meta={<span className={styles.count}>{history.length} {history.length === 1 ? 'entry' : 'entries'}</span>}
     >
       {history.length === 0 ? (
@@ -61,26 +53,12 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
           description="When you register this team for a tournament, it shows up here with its status and schedule."
         />
       ) : (
-        <div className={styles.list}>
-          {/* A3.3: the shared registration card — the old per-list design (tournament-hashed
-              monogram, fainter border, neutral hover) retired in favour of the one anatomy. */}
-          {history.map(entry => (
-            <CoachRegistrationCard
-              key={entry.registration.id}
-              href={`${COACHES_TOURNAMENTS_PATH}/${entry.registration.id}`}
-              title={entry.tournament?.name ?? entry.registration.name}
-              registrationStatus={entry.registration.status}
-              startDate={entry.tournament?.startDate ?? null}
-              endDate={entry.tournament?.endDate ?? null}
-              tournamentStatus={entry.tournament?.status ?? null}
-              today={today}
-              metaParts={[entry.org?.name]}
-              /* One rule for every coach-facing tournament ROW (it was inlined identically here,
-                 on the premium list, and would have been a third copy on the Overview). */
-              fanView={resolveRowFanView(entry)}
-            />
-          ))}
-        </div>
+        <CoachTournamentRows
+          label="Tournaments"
+          today={today}
+          entries={history}
+          hrefBase={COACHES_TOURNAMENTS_PATH}
+        />
       )}
 
       {/* B3.2 (◆N1): the shelf this portal already runs on roster / schedule / fees /

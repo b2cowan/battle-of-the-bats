@@ -1,364 +1,152 @@
-/* ── Coaches Portal — tournament record detail ────────────────────────────────
-   Migrated off the legacy /my/registrations CSS; shipped design tokens only. */
+/* ── The coach's tournament page (Club Tier Stage 7d, drawing 7) ─────────────────────────────────────
+   One page, two shells. The phone order is the story; on a computer the same sections sit in two
+   columns inside the 960 reading column — the door, the games and the organizer left; the registration
+   and the event's head coach right. Breakpoints on the product's 640 / 768 / 900 (T10). The A3 zones,
+   the tinted hero, the quick-jump row and the pill links retired with the redraw. */
 
 .page {
-  max-width: 760px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
-/* The operator portal's shell already pads its content area (2rem), so the record's own 2rem top
-   padding doubled it — a 64px gap above the back link, on a page the other screens start 32px down.
-   `.page.pageInShell` (two classes) so the phone `.page { padding }` rule further down cannot override it. */
+/* The paid shell already pads its content area, so the record's own top padding would double it. */
 .page.pageInShell { padding-top: 0; }
 
-/* Back link to the Tournaments list (both shells pass backHref) */
-.recordBackLink {
+/* The free shell's back door (the paid one is the page header's). 44 px on a phone. */
+.backLink {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin-bottom: 1rem;
+  min-height: 36px;
+  margin-bottom: 0.25rem;
   font-size: var(--type-body);
   color: var(--text-tertiary);
   text-decoration: none;
-  transition: color 0.12s;
 }
-.recordBackLink:hover { color: var(--text-primary); }
+.backLink:hover { color: var(--text-primary); }
 
-/* ── Header ─────────────────────────────────────────────────────────────── */
-.header {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+/* The meta under the title (team · dates · host) and the chips under it. */
+.identity {
+  margin: 0 0 1.25rem;
 }
-
-.headerMain {
-  flex: 1;
-  min-width: 0;
-}
-
-.title {
-  font-size: var(--type-title);
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  margin: 0 0 0.25rem;
-  color: var(--text-primary);
-  /* Header stays a row at all widths (Flip pinned right) — an unbreakable long team
-     name must wrap, not overflow. Matches TeamHQ's team-name treatment. */
+.meta {
+  margin: 0 0 0.5rem;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
-
-.tournamentName {
-  color: var(--text-secondary);
-  font-size: var(--type-body);
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-/* The status card was replaced by the shared phase-adaptive TeamHQ tournament hero
-   (slice 5h) — its styles live in components/coaches/TeamHQ.module.css. */
-
-/* ── Sections / zones ─────────────────────────────────────────────────────── */
-.section {
-  margin-bottom: 2rem;
-}
-
-/* A3 zone anchor target — clears the sticky shell header + quick-jump row on arrival.
-   --coach-mhead-h is measured + published by CoachPortalShell (free chrome); the
-   Premium shell has no sticky header, so the fallback 0px is correct there. */
-.zone {
-  scroll-margin-top: calc(var(--coach-mhead-h, 0px) + 42px);
-}
-
-@media (min-width: 901px) {
-  /* Desktop stacks the global consumer top bar ABOVE the header band (.mhead sits at
-     top: var(--coach-top-strip)) — a fragment navigation must clear both. The var is
-     defined at every width but only offsets the header ≥901px, hence the media split. */
-  .zone {
-    scroll-margin-top: calc(var(--coach-top-strip, 0px) + var(--coach-mhead-h, 0px) + var(--sandbox-chrome-h, 0px) + 42px);
-  }
-}
-
-/* A3 zone header — the public .section-header grammar (eyebrow + heading) at portal
-   scale: left-aligned, display-font pair, accent eyebrow (lime on dark / olive on
-   warm via the --logic-lime remap — never raw lime text on paper). */
-.zoneHead {
-  margin: 0 0 0.65rem;
-}
-
-.zoneEyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin: 0;
-  font-family: var(--font-display, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.zoneTitle {
-  margin: 0.12rem 0 0;
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-title);
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: var(--text-primary);
-}
-
-/* Cards stacked inside one zone (roster submit + the entry card). */
-.zoneStack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-/* ── A3 quick-jump sub-nav (free A2 chrome, ≤900px) ───────────────────────────
-   A compact 34px row folded into the sticky stack under the shell's team header
-   (--coach-mhead-h; the section tab row it first sat under retired with the phone's team
-   bar, 2026-10-15). Quiet on purpose: smaller mono type, no icons; the active zone gets
-   COLOUR ONLY. */
-.jumpNav {
-  position: sticky;
-  top: var(--coach-mhead-h, 0px);
-  z-index: 90; /* under the shell header (100), above page content */
-  background: var(--nav-bg-scrolled, rgba(13, 11, 20, 0.92));
-  -webkit-backdrop-filter: blur(var(--blur-bar, 20px)); /* webkit FIRST (minifier gotcha) */
-  backdrop-filter: blur(var(--blur-bar, 20px));
-  border-bottom: 1px solid var(--border-2);
-}
-
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .jumpNav {
-  background: rgba(var(--home-paper-rgb, 248, 244, 237), 0.92);
-}
-
-.jumpNavInner {
-  display: flex;
-  align-items: stretch;
-  /* Centre the four anchors AS A GROUP with a fixed gap, rather than pushing the first
-     and last to the content edges (owner call 2026-07-27: more breathing room outside
-     the group, tighter inside it). Edge inset is then whatever's left over, which is
-     always larger than the gap — the requested proportion — and it holds at any width
-     without a media query, because a narrow screen just consumes the free space first.
-     `safe center` keeps the row's start reachable if it ever does overflow (plain
-     `center` can clip the leading item in a scroll container); older engines ignore the
-     `safe` keyword and fall back to the `center` declared above it. */
-  justify-content: center;
-  justify-content: safe center;
-  /* Tuned by eye 2026-07-27: 1.05rem (edge-to-edge spread) read as dead space on the
-     right, 1.5rem bunched the four together. This sits between the two. */
-  gap: 2.5rem;
-  height: 34px;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.jumpNavInner::-webkit-scrollbar {
-  display: none;
-}
-
-.jumpLink {
-  /* Full-height flex item so the whole 34px band is tappable — the label alone was a
-     ~10px-tall target on a sticky mobile bar, which is well under the 44px guidance and
-     the hardest thing on the page to hit accurately on game day. */
-  display: flex;
-  align-items: center;
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--text-tertiary);
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-
-.jumpLink:hover {
-  color: var(--text-secondary);
-}
-
-.jumpLinkActive {
-  color: var(--logic-lime);
-}
-
-@media (min-width: 901px) {
-  /* Desktop has the rail + a much shorter page — the jump row is mobile chrome. */
-  .jumpNav {
-    display: none;
-  }
-}
-
-/* One-line note under a demoted section heading (e.g. the pending "Manage your
-   entry" zone) — signals the actions below are optional, not required. */
-.zoneNote {
-  margin: -0.2rem 0 0.7rem;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-  line-height: 1.45;
-}
-
-/* Organizer-owned "nothing here yet" note — text-only (the coach can't act
-   from this surface), per the coach empty-state decision rule. */
-.organizerNote {
-  margin: 0;
-  color: var(--text-tertiary);
-  font-size: var(--type-body);
-  line-height: 1.55;
-}
-
-/* ── Zone 3 · merged entry card (head-coach editor + inert registration facts) ──
-   One card: a native <details> for the editor (collapsed while pending — the
-   optional-for-now framing) + the facts grid below a hairline. Replaces the old
-   separate "Your entry" CollapsibleCard + "Registration Details" card. */
-.entryCard {
-  display: flex;
-  flex-direction: column;
-  padding: 0.35rem 1.25rem 1.15rem;
-}
-
-.entrySummary {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 48px;
-  cursor: pointer;
-  list-style: none;
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-body);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.85);
-}
-
-.entrySummary::-webkit-details-marker {
-  display: none;
-}
-
-.entrySummary::marker {
-  content: '';
-}
-
-.entrySummary:hover {
-  color: var(--logic-lime);
-}
-
-.entryChevron {
-  margin-left: auto;
-  color: var(--text-tertiary);
-  transition: transform 0.15s ease;
-}
-
-.entryDetails[open] .entryChevron {
-  transform: rotate(180deg);
-}
-
-.entryBody {
-  padding: 0.1rem 0 0.4rem;
-}
-
-.entryFacts {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.45rem 1.5rem;
-  margin: 0.55rem 0 0;
-  padding: 0.95rem 0 0;
-  border-top: 1px solid var(--border-2);
-}
-
-.entryFacts dt {
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding-top: 0.05rem;
-}
-
-.entryFacts dd {
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* ── Zone 4 · tournament resource links (moved from the welcome banner) ─────── */
-.resourceLinks {
+.chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 0.7rem;
-}
-
-.resourcePill {
-  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.75rem;
-  font-size: var(--type-support);
-  font-weight: 600;
+}
+.helpDoor {
+  margin-left: auto;
+}
+
+/* ── The two columns ── */
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.col {
+  display: contents;
+}
+.door { order: 1; }
+.games { order: 2; }
+.registration { order: 3; }
+.roster { order: 4; }
+.headCoach { order: 5; }
+.organizer { order: 6; }
+
+@media (min-width: 901px) {
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 20px;
+    align-items: start;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+}
+
+/* ── Section headings ── */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.5rem;
+}
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
   color: var(--text-primary);
-  background: var(--bg-2, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--border);
-  border-radius: 999px;
+}
+.sectionHead .sectionTitle { margin: 0; }
+
+/* "Standings" beside the games heading — a 44 px box (design check #9). */
+.standingsBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.9rem;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-primary);
   text-decoration: none;
-  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+}
+.standingsBox:hover { background: var(--home-olive-soft, var(--surface-2)); }
+
+.games > :global(*) + :global(*) { margin-top: 0.6rem; }
+.organizer > :global(*) + :global(*) { margin-top: 0.6rem; }
+
+.quiet {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }
 
-.resourcePill:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.08);
+/* ── Head coach for this event — a card, like Registration ── */
+.headCoach {
+  padding: 1rem 1.1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: var(--radius);
 }
+.cardTitle {
+  margin: 0 0 0.75rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.headCoachLine {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.headCoachLine strong { color: var(--text-primary); font-weight: 600; }
 
-/* ── Afterglow strip (◆C) — thanks + Founding-Season doorway + organizer line,
-   directly under the hero's result card. Replaces the "That's a wrap" section
-   (and its ad-hoc inline styles). ─────────────────────────────────────────── */
+/* ── The afterglow (free tier, result phase) ── */
 .afterglow {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   padding: 1.1rem 1.25rem;
 }
-
-/* Share control inside the hero's result card. The shared SharePageButton's default is a
-   full-bleed block; here it must read as one small action beside the record, so it takes a
-   fit-content pill instead. Same component, same behaviour — presentation only. */
-.resultShareBtn {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: 0.4rem;
-  margin-top: 0.15rem;
-  padding: 0.34rem 0.7rem;
-  color: var(--text-primary);
-  background: transparent;
-  border: 1px solid var(--white-20);
-  border-radius: 999px;
-  font-size: var(--type-support);
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.resultShareBtn:hover:not(:disabled) {
-  border-color: rgba(var(--logic-lime-rgb), 0.45);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-}
-
-.resultShareBtn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-/* B3.1 lead line — full-strength ink, one register above the supporting sentence, so the
-   strip opens on the season claim rather than on housekeeping copy. */
 .afterglowLede {
   margin: 0 0 -0.45rem;
   color: var(--text-primary);
@@ -367,117 +155,66 @@
   line-height: 1.45;
   letter-spacing: -0.01em;
 }
-
 .afterglowLede strong {
   font-weight: 800;
 }
-
 .afterglowText {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--type-body);
   line-height: 1.55;
 }
-
 .afterglowOrg {
   margin: 0;
   color: var(--text-tertiary);
   font-size: var(--type-body);
 }
-
 .afterglowOrg a {
   color: var(--logic-lime);
 }
 
-/* The populated schedule + live scorebug moved to components/coaches/CoachLiveSchedule
-   (slice 5i); only the empty/unpublished notes render from this page now. */
-
-/* ── Announcements ────────────────────────────────────────────────────────── */
-.announcementList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+@media (max-width: 768px) {
+  .backLink { min-height: var(--tap-min, 44px); }
 }
 
-.announcementCard {
-  padding: 1rem 1.25rem;
+@media (max-width: 640px) {
+  .page { padding: 1.25rem 1rem 3rem; }
+  .page.pageInShell { padding-top: 0; }
 }
 
-.announcementTitle {
-  font-weight: 700;
-  font-size: var(--type-body);
+/* The not-found page's heading (app/coaches/tournaments/[teamId]/not-found.tsx borrows this sheet). */
+.title {
+  font-size: var(--type-title);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.25rem;
   color: var(--text-primary);
-  margin-bottom: 0.4rem;
+  overflow-wrap: anywhere;
 }
 
-.announcementBody {
-  color: var(--text-secondary);
-  font-size: var(--type-body);
-  line-height: 1.5;
-  margin: 0 0 0.5rem;
-  white-space: pre-wrap;
-}
-
-.announcementDate {
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-/* (The unused legacy .cta* block was removed in A3 — the afterglow strip above is the
-   only post-event CTA surface on this page now.) */
-
-@media (max-width: 600px) {
-  .page {
-    padding: 1.5rem 1rem 3rem;
-  }
-
-  .jumpNavInner {
-    padding: 0 1rem;
-  }
-
-  /* .header stays a ROW at every width: the platform Flip convention pins the pill
-     top-right and never re-stacks (FlipPill drops to icon-only ≤900px on its own;
-     the title wraps via .headerMain min-width:0). The old column override here made
-     the pill fall bottom-left under the title. */
-}
-
-/* ══ B1 quick wins — all three live in the Schedule zone (decisions ◆H1/◆I1,
-      approved 2026-07-27). Same card grammar as the rest of the record so they
-      read as part of the zone, not bolted on. ═══════════════════════════════ */
-
-/* ── B1.1 Add-all-games-to-calendar ─────────────────────────────────────────── */
+/* ── "Add the games to a calendar" (B1.1; drawing 7: a plain door under the games, no card) ── */
 .calBlock {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.5rem;
-  margin-bottom: 0.7rem;
-  padding: 0.7rem 0.8rem;
+  gap: 0.15rem;
 }
 
 .calBtn {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
   gap: 0.45rem;
-  padding: 0.5rem 0.8rem;
+  min-height: 36px;
+  padding: 0;
   font-family: inherit;
   font-size: var(--type-body);
   font-weight: 600;
-  color: var(--text-primary);
-  background: var(--bg-2, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: color 0.12s, border-color 0.12s, background 0.12s;
-}
-
-.calBtn:hover:not(:disabled) {
   color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.08);
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
-
+.calBtn:hover:not(:disabled) { text-decoration: underline; }
 .calBtn:disabled { opacity: 0.6; cursor: default; }
 
 /* The snapshot-not-subscription caveat — quiet, but never omitted. */
@@ -486,27 +223,28 @@
   font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
-  max-width: 46ch;
+  max-width: 52ch;
 }
 
-/* ── B1.5 Meet the field (pre-event state of the Schedule zone) ─────────────── */
-.fieldCard,
-.standCard {
+@media (max-width: 768px) {
+  .calBtn { min-height: var(--tap-min, 44px); }
+}
+
+/* ── Meet the field (B1.5 — the pre-schedule state of Your games) ── */
+.fieldCard {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
 }
 
-.fieldHead,
-.standHead {
+.fieldHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
-.fieldTitle,
-.standTitle {
+.fieldTitle {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -516,17 +254,17 @@
   color: var(--text-primary);
 }
 
-.fieldLink,
-.standLink {
+.fieldLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
   font-size: var(--type-support);
   font-weight: 600;
   color: var(--logic-lime);
   text-decoration: none;
   white-space: nowrap;
 }
-
-.fieldLink:hover,
-.standLink:hover { text-decoration: underline; }
+.fieldLink:hover { text-decoration: underline; }
 
 .fieldCount {
   margin: 0;
@@ -535,7 +273,6 @@
   font-size: var(--type-body);
   color: var(--text-secondary);
 }
-
 .fieldCount strong { color: var(--text-primary); }
 
 .fieldChips {
@@ -559,54 +296,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── B1.6 Where you stand ───────────────────────────────────────────────────── */
-.standBody {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.standRank {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-figure);
-  font-weight: 800;
-  line-height: 1;
-  color: var(--logic-lime);
-  font-variant-numeric: tabular-nums;
-}
-
-.standFacts {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.standRecord {
-  margin: 0;
-  font-family: var(--font-data, monospace);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-}
-
-.standRecord strong { color: var(--text-primary); }
-
-.standDiff {
-  margin: 0;
-  font-family: var(--font-data, monospace);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-.standNote {
-  margin: 0;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-/* ── B1.3 Permanent share, beside the organizer's resource pills (◆J1) ──────── */
-.organizerShare {
-  margin: 0 0 0.7rem;
+/* The Fan view (paid shell) — the right end of the chip row. */
+.fanView {
+  margin-left: auto;
 }

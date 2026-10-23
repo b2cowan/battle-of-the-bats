@@ -1,0 +1,77 @@
+/* ── Registration (Club Tier Stage 7d, drawing 7) — one card, a label/value list ─────────────────
+   Label column 104 px on a computer; every row at least 44 px on a phone (the organizer's email is a
+   tap target). Breakpoints on the product's 640 / 768 / 900 (T10). */
+
+.card {
+  padding: 1rem 1.1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: var(--radius);
+}
+
+.heading {
+  margin: 0 0 0.35rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rows {
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 36px;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--home-line, var(--border-2));
+}
+.row:first-child { border-top: 0; }
+
+.row dt {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.row dd {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.contact {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--logic-lime);
+}
+
+.pay {
+  margin-top: 0.6rem;
+}
+
+.payInstructions {
+  margin: 0 0 0.35rem;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  white-space: pre-line;
+  color: var(--text-primary);
+}
+
+.note {
+  margin: 0.5rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+@media (max-width: 768px) {
+  .row { min-height: var(--tap-min, 44px); }
+  .contact { min-height: var(--tap-min, 44px); }
+}

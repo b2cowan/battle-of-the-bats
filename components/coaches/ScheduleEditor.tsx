@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell, Lock, ExternalLink } from 'lucide-react';
+import { ChevronRight, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
+import { homeAwayWord } from '@/lib/game-clock-labels';
+import { isCalendarDate } from '@/lib/timezone';
+import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import {
   addHoursToWallInput, basicEventWhen, basicScheduleSortKey, instantToWallInput, nextHourWallInput, wallInputToInstant,
 } from '@/lib/basic-coach-schedule-view';
@@ -125,6 +128,17 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
 
   // WI-2B: interleave the coach's own (editable) events with the read-only tournament games,
   // time-ordered, so a coach sees one true schedule. Tournament games are never editable.
+  // `?day=YYYY-MM-DD` (Club Tier Stage 7d): "Games on your Schedule" on a tournament's page opens this list
+  // on the tournament's first day — the first row on or after it scrolls into view. A day, never a year.
+  useEffect(() => {
+    try {
+      const day = new URLSearchParams(window.location.search).get('day');
+      if (!day || !isCalendarDate(day)) return;
+      const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-schedule-day]'));
+      rows.find(r => (r.dataset.scheduleDay ?? '') >= day)?.scrollIntoView({ block: 'start' });
+    } catch { /* ignore malformed params */ }
+  }, []);
+
   const mergedItems: ScheduleItem[] = [
     ...events.map(event => ({ kind: 'event' as const, sortKey: basicScheduleSortKey(event.startsAt), event })),
     ...tournamentGames.map(game => ({ kind: 'tournament' as const, sortKey: basicScheduleSortKey(game.startsAt), game })),
@@ -159,7 +173,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
                   </span>
                   <div className={styles.rowMain}>
                     <span className={styles.tourNameLine}>
-                      <span className={styles.tourOpp}>vs {game.opponentName}</span>
+                      <span className={styles.tourOpp}>{homeAwayWord(game.homeAway === 'home')} {game.opponentName}</span>
                       <span className={styles.tournamentTag}>Tournament</span>
                     </span>
                     <span className={styles.meta}>
@@ -178,23 +192,24 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
                           <span className={`${styles.result} ${styles[`result_${game.result}`]}`}>{game.result[0].toUpperCase()}</span>
                         )}
                       </span>
-                    ) : game.href ? (
-                      <ExternalLink size={14} className={styles.readonlyIcon} aria-hidden />
                     ) : (
-                      <Lock size={13} className={styles.readonlyIcon} aria-label="Read-only — set by the organizer" />
+                      <ChevronRight size={15} className={styles.readonlyIcon} aria-hidden />
                     )}
                   </div>
                 </>
               );
+              // Stage 7d (drawing 8): the road back — a tournament game opens the coach's OWN tournament page in
+              // the portal; the organizer sets its time, place and score, and the public game page is one tap
+              // further from there (Fan view). The free team's list reads its own entries, so the page opens.
               return (
-                <li key={`t-${game.id}`}>
-                  {game.href ? (
-                    <Link href={game.href} className={`${styles.row} ${styles.tournamentRow} ${styles.tournamentLink}`} title="Open the live game page">
-                      {inner}
-                    </Link>
-                  ) : (
-                    <div className={`${styles.row} ${styles.tournamentRow}`}>{inner}</div>
-                  )}
+                <li key={`t-${game.id}`} data-schedule-day={game.gameDate ?? undefined}>
+                  <Link
+                    href={`${COACHES_TOURNAMENTS_PATH}/${game.registrationId}`}
+                    className={`${styles.row} ${styles.tournamentRow} ${styles.tournamentLink}`}
+                    title="Open the tournament — the organizer sets the time, place and score"
+                  >
+                    {inner}
+                  </Link>
                 </li>
               );
             }

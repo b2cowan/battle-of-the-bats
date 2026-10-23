@@ -10,9 +10,8 @@ import {
 import { withObservability } from '@/lib/observability';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { denyUnless, canViewSchedule } from '@/lib/coach-capabilities';
-import {
-  getMergedTournamentHistoryForRepTeam, formatGameDateLabel, formatGameTimeLabel,
-} from '@/lib/basic-coach-teams';
+import { getMergedTournamentHistoryForRepTeam } from '@/lib/basic-coach-teams';
+import { formatGameDateLabel, formatGameTimeLabel } from '@/lib/game-clock-labels';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { assembleOpponentTournamentIntel } from '@/lib/coach-tournament-intel';
 

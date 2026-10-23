@@ -62,7 +62,7 @@
 }
 
 /* Team HQ stat strip lives in components/coaches/TeamHQ.module.css (slice 5g) —
-   the standalone team home and the tournament-coach hero share that one source. */
+   the standalone team home is its one user now (the tournament hero retired in Stage 7d). */
 
 /* ── A2 (2026-07-25): the team-colour identity band is RETIRED — team identity lives in
    the persistent shell header now (stated once, by the chrome; approved mockups). Pages

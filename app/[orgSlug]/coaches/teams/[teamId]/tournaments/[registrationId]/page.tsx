@@ -2,14 +2,26 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { getCoachingAssignmentsForUser, getOrganizationBySlug } from '@/lib/db';
 import { canOpenTournaments, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
-import { registrationBelongsToRepTeam } from '@/lib/coach-registration-access';
+import { registrationBelongsToRepTeam, tournamentEntryNames, tournamentEntryTabTitle } from '@/lib/coach-registration-access';
+import { CoachTournamentRecordHeader } from '@/components/coaches/CoachTournamentRecordParts';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
-
-export const metadata = { title: 'Tournament Record' };
 
 type RouteParams = {
   params: Promise<{ orgSlug: string; teamId: string; registrationId: string }>;
 };
+
+/** "Invitational 2026 · 15U AAA" (Stage 7d, T1) — behind the page's own gate, else the generic title. */
+export async function generateMetadata({ params }: RouteParams) {
+  const { orgSlug, teamId, registrationId } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const org = user ? await getOrganizationBySlug(orgSlug) : null;
+  const assignment = org?.id && user ? (await getCoachingAssignmentsForUser(org.id, user.id)).find(a => a.teamId === teamId) : undefined;
+  if (!assignment || !canOpenTournaments(assignment.capabilities) || !(await registrationBelongsToRepTeam(registrationId, teamId))) {
+    return { title: 'Tournament' };
+  }
+  return { title: (await tournamentEntryTabTitle(registrationId)) ?? 'Tournament' };
+}
 
 export default async function PremiumCoachTournamentRecordPage({ params }: RouteParams) {
   const { orgSlug, teamId, registrationId } = await params;
@@ -43,15 +55,28 @@ export default async function PremiumCoachTournamentRecordPage({ params }: Route
   // The shared record re-checks the user's access to the registration and 404s if absent —
   // a paying coach sees the full record (live schedule/scores, status, roster, announcements)
   // in the Premium shell, with the free-tier upsells suppressed and a back link to the list.
+  // The page header is drawn HERE, by the page: inside the team layout its "?" is the masthead's (the one
+  // help door, Stage 7d T3), and the header guard places a header by the page that renders it.
+  const names = await tournamentEntryNames(registrationId);
+  const backHref = `/${orgSlug}/coaches/teams/${teamId}/tournaments`;
   return (
     <CoachTournamentRecord
+      headerSlot={
+        <CoachTournamentRecordHeader
+          title={names?.tournamentName ?? names?.teamName ?? 'Tournament'}
+          backHref={backHref}
+          help={{ module: 'coaches', sectionIds: ['tournaments'], label: 'Tournaments', fullGuideHref: `/${orgSlug}/coaches/help#tournaments` }}
+        />
+      }
       registrationId={registrationId}
       userId={user.id}
       email={user.email}
       suppressUpsell
       moneyRedacted={moneyRedacted}
       allowAssignmentAccess
-      backHref={`/${orgSlug}/coaches/teams/${teamId}/tournaments`}
+      backHref={backHref}
+      scheduleHref={`/${orgSlug}/coaches/teams/${teamId}/schedule`}
+      helpGuideHref={`/${orgSlug}/coaches/help#tournaments`}
     />
   );
 }

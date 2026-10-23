@@ -1,8 +1,6 @@
 'use client';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trophy } from 'lucide-react';
-import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
-import { resolveRowFanView } from '@/lib/coach-alert-registration';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
@@ -11,13 +9,14 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
-import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
+import CoachTournamentRows from '@/components/coaches/CoachTournamentRows';
+import LoadingState from '@/components/shared/LoadingState';
+import type { TournamentFinish } from '@/lib/coach-tournament-rows';
 import CoachHostedTournamentsSection, { type HostedTournamentsState } from '@/components/coaches/CoachHostedTournamentsSection';
 import CoachTournamentChoiceCard from '@/components/coaches/CoachTournamentChoiceCard';
 import { trackTournamentAcquisition } from '@/components/marketing/tournament-acquisition';
 import type { HostedTournamentRow } from '@/app/api/coaches/[orgSlug]/teams/[teamId]/hosted-tournaments/route';
 import styles from '../../../coaches.module.css';
-import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
 
@@ -30,6 +29,8 @@ interface TournamentHistoryEntry {
   registration: { id: string; name: string; status: string; registeredAt: string };
   tournament: { id: string; name: string; slug: string | null; year: number | null; startDate: string | null; endDate: string | null; status: string } | null;
   org: { id: string; slug: string; name: string } | null;
+  ourTeam?: boolean;
+  finish?: TournamentFinish | null;
 }
 
 type Linkage = 'workspace' | 'admin-link' | 'none';
@@ -70,7 +71,7 @@ export default function PremiumTeamTournamentsPage({
   const load = useCallback(async () => {
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-history`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-history?finish=1`);
       if (!res.ok) throw new Error('Tournaments could not be loaded');
       const json: Partial<TournamentHistoryData> = await res.json();
       setData({
@@ -112,18 +113,7 @@ export default function PremiumTeamTournamentsPage({
 
   const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
 
-  const sorted = useMemo(
-    () => data
-      ? sortByCoachLifecycle(
-          data.history,
-          entry => entry.tournament?.startDate ?? null,
-          entry => entry.tournament?.endDate ?? null,
-          today,
-          entry => entry.tournament?.status ?? null,
-        )
-      : [],
-    [data, today],
-  );
+  const sorted = useMemo(() => data?.history ?? [], [data]);
 
   // The merge point: both halves of the season are genuinely empty (nothing entered, nothing
   // hosted), so CoachTournamentChoiceCard replaces both illustrated blocks with one — in EVERY
@@ -184,35 +174,17 @@ export default function PremiumTeamTournamentsPage({
       {error && <p className={styles.errorText}>{error}</p>}
 
       {data === null || awaitingMergeDecision ? (
-        <div className={styles.loadingState}>Loading tournaments…</div>
+        <LoadingState label="Loading tournaments…" />
       ) : sorted.length > 0 ? (
-        <>
-          <div className={flow.panelIntro}>
-            <p className={flow.panelIntroText}>Live and upcoming first — tap an entry for schedule, roster submission, and organizer updates.</p>
-          </div>
-          <div className={styles.tournamentHistoryList}>
-            {sorted.map(entry => {
-              /* One rule for every coach-facing tournament ROW, shared with the free portal's
-                 lists and its Overview card. */
-              const fanView = resolveRowFanView(entry);
-
-              return (
-                <CoachRegistrationCard
-                  key={entry.registration.id}
-                  href={`${base}/tournaments/${entry.registration.id}`}
-                  title={entry.tournament?.name ?? entry.registration.name}
-                  registrationStatus={entry.registration.status}
-                  startDate={entry.tournament?.startDate ?? null}
-                  endDate={entry.tournament?.endDate ?? null}
-                  tournamentStatus={entry.tournament?.status ?? null}
-                  today={today}
-                  metaParts={[entry.org?.name, entry.registration.name]}
-                  fanView={fanView}
-                />
-              );
-            })}
-          </div>
-        </>
+        /* Stage 7d (drawing 6): the portal's row list, banded Coming up / Finished — the same rows as
+           the free portal's lists (`CoachTournamentRows`). The intro line is gone: the help door says
+           what the order is. Each tournament's own public page is the ⇄ on its record. */
+        <CoachTournamentRows
+          label="Tournaments"
+          today={today}
+          entries={sorted}
+          hrefBase={`${base}/tournaments`}
+        />
       ) : bothEmpty ? (
         // Merged state (stacked-onboarding review, 2026-09-13): nothing entered AND nothing
         // hosted, so one card offers both doors instead of two full illustrated blocks stacked

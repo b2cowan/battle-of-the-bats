@@ -1,0 +1,312 @@
+<title>Club Tier 7d walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column; a Sign-in card, a "before you start" card, then one card per part (steps, verdict, notes), the owner's calls, and a paste-back. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+.purpose{font-size:14px;color:var(--ink)}
+ol,ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:200px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.calls{display:flex;flex-direction:column;gap:14px}
+.call{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.call:first-child{border-top:0;padding-top:0}
+.call b{font-weight:600}
+.call label{display:flex;gap:10px;align-items:flex-start;min-height:40px;padding:4px;border-radius:6px;cursor:pointer}
+.call label:hover{background:var(--bg)}
+.call input{width:18px;height:18px;margin:3px 0 0;flex:none;accent-color:var(--accent)}
+.rec{font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:20px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+</style>
+
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Club Tier 7d · The coach’s Tournaments</h1>
+    <p>Owner QA Ledger §361. A coach opens <b>Tournaments</b> and sees a row list banded <b>Coming up</b> and <b>Finished</b>, the date in front, a chip only where it says something. One tournament’s page is titled by the tournament, with the team under it, one status chip, <b>Games on your Schedule</b>, Your games beside Standings, one Registration card, the event’s head coach (which saves itself, and only for those allowed to change it) and From the organizer as rows. A tournament game on the Schedule leads back to that page. Game times read “6:00 p.m.” on the venue’s clock; “vs” is home and “at” is away.</p>
+    <p>About 40 steps in eight parts. Parts 1–6 on <b>uat-rep-club</b> (its tournament now has games, 10 to 12 days out), Part 7 on the free portal, Part 8 after I switch the club tournament to “finished”: tell me when you reach it.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000/uat-rep-club/coaches</code> (dev). Dev test accounts only; keep this page private.</dd>
+      <dt>Head coach</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code> (15U AAA; Parts 1–3, 5, 6, 8)</dd>
+      <dt>Assistant</dt><dd><code>uat-club-assistant-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Riley, 15U AAA: schedule editing, no Register for tournaments; Part 4, private window)</dd>
+      <dt>Free portal</dt><dd><code>coach@dev.local</code> · <code>devpass123</code> (Part 7; go straight to <code>/coaches/tournaments</code>)</dd>
+      <dt>Set up for you</dt><dd>UAT Rep Club Invitational: the 15U schedule published, 7 games (the round robin and a playoff). 15U AAA plays vs Guelph Royals (day 1, 6:00 p.m.), at Milton Mustangs (day 2, 9:00 a.m.), vs Oakville Otters (day 2, 2:30 p.m.) and the playoff at Milton (day 3, 11:00 a.m.).</dd>
+    </dl>
+  </section>
+
+  <section class="card" aria-labelledby="notyet-h">
+    <h2 id="notyet-h">Before you start</h2>
+    <p class="where"><b>Proved by machine, not in this walk:</b> who may change the event’s head coach for every role (head coach, a standalone team manager, an assistant with schedule editing, a helper, a club’s head coach, a club’s team manager, a free team’s member, a stranger), and that the page and the server read one rule. On dev, the 15U AAA head coach saves; another team’s head coach and a schedule-only assistant are refused; signed out is refused. A blank name, a malformed email and an unchanged value are never sent; a cleared email is. A 6:00 p.m. game reads 6:00 p.m. from a phone in any time zone, and an evening registration date is not the next day. “Playing now” follows the game’s own time window, so a game in progress with no score yet counts. The three lists draw the same row. Hidden money stays hidden on the list and the page.</p>
+    <p class="where"><b>Not in this walk:</b> “Playing now” live (the games are days away); the empty states (their words are unchanged, now under the new list); a paid standalone team’s page (no test entry; it is the same page as the club’s).</p>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="calls-h">
+    <h2 id="calls-h">Your calls</h2>
+    <p class="where">Three things the drawings did not settle, built as below. Change any if you like.</p>
+    <div class="calls" id="calls"></div>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  { id: 'p1', title: '1 · The list', purpose: 'Tournaments is a row list banded Coming up and Finished, the date in front, a chip only where it says something.',
+    where: 'Head coach, desktop (1440). Coaches portal → Tournaments.', steps: [
+    'No intro line under the title. One framed list with a band “Coming up”.',
+    'The row: the dates as a plain leading column, then “UAT Rep Club Invitational 2026” with a green ACCEPTED chip (typewriter capitals) beside it, “Your club’s tournament” under the name, a chevron last.',
+    'Under the list, one line: a globe and “Fan view of every tournament”. Click it: the fan side’s Following page opens. Go back.',
+    'Phone width (about 390): the same frame; the dates ride the line under the name (“Nov 1–3 · Your club’s tournament”), the chip beside the name, the chevron in the corner; nothing runs off the screen and the row is at least a thumb high.',
+  ]},
+  { id: 'p2', title: '2 · The page', purpose: 'One tournament reads titled by the tournament, one chip row, the door to the Schedule, the games, one Registration card, the organizer as rows.',
+    where: 'Head coach, desktop. Tap the row.', steps: [
+    'The browser tab reads “UAT Rep Club Invitational 2026 · UAT Rep Club 15U AAA”.',
+    'The page title is the tournament’s name, with a back arrow “Tournaments”. Under it: “UAT Rep Club 15U AAA · <dates> · Your club’s tournament”. No tinted hero card.',
+    'One chip row: ACCEPTED, then the countdown (IN 10 DAYS or so), and at the right the ⇄ Fan view (the public page). The “?” in the top bar opens the Tournaments help.',
+    'Two columns: on the left “Games on your Schedule” with “4 games · opens on <the first day>” and a chevron, then Your games, then From the organizer; on the right Registration and Head coach for this event.',
+    'Your games: four rows, “vs Guelph Royals 15U”, “at Milton Mustangs 15U”, “vs Oakville Otters 15U”, “Playoff · at Milton Mustangs 15U”. Each leads with its day and time (“Sun, Nov 1 · 6:00 p.m.” style) with the place under the name (“Bronte Park · Field 2”). A “Standings” box sits right of the heading.',
+    'Under the games: “Add the games to a calendar” and its one-line note.',
+    'Registration: Fee “No fee · your club’s team”, Questions (the organizer’s email, a link), Registered (one short date like “Oct 22”). No Status row.',
+    'From the organizer: rows Tournament home, Rules, Share this tournament (chevrons), then “No announcements from the organizer.”',
+    'Phone width (about 390): one column in the order door, games, Registration, Head coach, From the organizer; every control at least a thumb high; the page roughly 1,350 px tall (it was 2,175).',
+  ]},
+  { id: 'p3', title: '3 · The head coach saves itself', purpose: 'The event’s head coach and the email the organizer writes to save on their own; a blank name is never saved.',
+    where: 'Head coach, on the page: Head coach for this event.', steps: [
+    'Two fields: “Name *” and “Email the organizer uses”, its placeholder showing the address mail goes to now, and under it “Acceptance, payment and schedule updates go here. Blank uses your sign-in email.” No Save button.',
+    'Type a name (say “Jordan Reyes”) and stop typing: “Unsaved changes”, then “Saving…”, then “✓ Saved” at the bottom right, which fades after a couple of seconds.',
+    'Clear the name and click away: the field says “Enter a head coach name.” and nothing saves. Reload: the last saved name is back.',
+    'Type “jo@ex” in the email and click away: “Enter a valid email address, or leave it blank.” and nothing saves.',
+    'Type a full address and press Enter (or click away): it saves. Pausing in the middle of an address never saves it.',
+    'Clear the email and click away: it saves (mail goes back to the registration email). Reload: both fields show what you last saved.',
+  ]},
+  { id: 'p4', title: '4 · An assistant reads a line', purpose: 'Someone who may open the entry but not change who coaches it sees a line, never a form.',
+    where: 'A private window. Sign in as the assistant (Riley). Coaches portal → Tournaments → the tournament.', steps: [
+    'The page opens (schedule editing opens Tournaments).',
+    'Head coach for this event is one line: “Head coach for this event: <the name you saved> · Ask the head coach to change this.” No fields.',
+    'Close the private window.',
+  ]},
+  { id: 'p5', title: '5 · The road back from the Schedule', purpose: 'The Schedule and the tournament page lead to each other inside the portal.',
+    where: 'Head coach, on the tournament page.', steps: [
+    'Click “Games on your Schedule”: the Schedule list opens at the tournament’s first day, not today; the address bar no longer carries ?day=.',
+    'Open the 6:00 p.m. game against Guelph Royals: its sheet has, under the time and place, one row with the tournament’s name and “The organizer sets the time, place and score”, with a chevron. No “View on the tournament page ↗”.',
+    'Open the 9:00 a.m. game at Milton: the sheet’s summary line says “at Milton Mustangs 15U” (not “@”).',
+    'Tap the tournament row in a sheet: the tournament page opens in the same tab, inside the portal.',
+    'Back on the Schedule, switch to Week or Month: the tournament games read “vs” at home and “at” away.',
+  ]},
+  { id: 'p6', title: '6 · Clocks and words', purpose: 'Every time on these screens is the house clock, with one spelling for home and away.',
+    where: 'Head coach: the tournament page and the Schedule.', steps: [
+    'Every game time reads like “6:00 p.m.” / “9:00 a.m.” (lowercase, with periods) on the page, the Schedule and the game sheet.',
+    'Press “Add the games to a calendar” and open the file in your calendar: the events read “UAT Rep Club 15U AAA vs Guelph Royals 15U” and “… at Milton Mustangs 15U” (no “@”), at the page’s times.',
+  ]},
+  { id: 'p7', title: '7 · The free portal', purpose: 'The free portal’s lists, page and Schedule are the same rows and the same page; its header names the tournament with the team under it.',
+    where: 'Sign out. Sign in as coach@dev.local and go to /coaches/tournaments.', steps: [
+    'Tournaments: one section per team (Bears U11, Halton Hawks U11 Jr), each its own framed row list with Coming up / Finished bands (Battle of the Bats 2026 sits under Finished: its dates are past). No card per entry.',
+    'Open Bears U11’s own Tournaments tab: the same rows, and a “?” beside the title that opens the Tournaments help.',
+    'Open Battle of the Bats: the sticky header’s title is the tournament’s name, with “Bears U11 · Jul 15–17 · <organizer>” under it and the ⇄ Fan view at its right. No eyebrow above the title.',
+    'The page body is Part 2’s page (chips, Your games, Registration, Head coach for this event as a form, From the organizer), with a back link “Tournaments” and the “?” at the right of the chip row.',
+    'Bears U11 → Schedule: a tournament game row reads “vs …” or “at …”; tapping it opens the tournament page, not the public game page.',
+    'Phone width (about 390): the phone bar still marks Tournaments on the list and on the page.',
+  ]},
+  { id: 'p8', title: '8 · A finished tournament', purpose: 'A finished entry carries no chip on the list; where the organizer shows standings, the row and the page say where the team finished.',
+    where: 'Tell me first: I switch UAT Rep Club Invitational to finished (scores in, 5 to 3 days ago). Then head coach → Tournaments.', steps: [
+    'The row sits under a band “Finished”, with no chip, and reads “Your club’s tournament · 2nd of 4”.',
+    'The page’s chip row: ACCEPTED, then FINISHED · 2ND OF 4. The games show their results (“W 7–4” with the W in green, “L 2–5”).',
+    'Tell me when you are done and I switch the tournament back to upcoming.',
+  ]},
+];
+
+const CALLS = [
+  { id: 'c1', q: '“Fan view of every tournament” under the list: the drawing names no destination. Built to open Following, the fan side of every team you follow (an accepted coach follows their team automatically). Each tournament’s own public page is the ⇄ on its page.', opts: [
+    ['A', 'Keep it opening Following', true],
+    ['B', 'Drop the link (each tournament page’s ⇄ is enough)', false] ] },
+  { id: 'c2', q: 'Submitting the roster to the organizer still opens to anyone who can open the entry, so an assistant with schedule editing can submit it. The head coach’s rule now refuses them.', opts: [
+    ['A', 'Give roster submission the head coach’s rule (a small follow-up)', true],
+    ['B', 'Leave it as it is', false] ] },
+  { id: 'c3', q: 'Day labels read “Sun, Nov 1” (the product’s one weekday format, with a comma); the drawing has “Sat Oct 17” with none. Dropping the comma changes every screen that uses that format.', opts: [
+    ['A', 'Keep the product’s format', true],
+    ['B', 'Drop the comma everywhere', false] ] },
+];
+
+const KEY = 'club-stage7d-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="purpose"></p><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.purpose').textContent = part.purpose;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((s, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = s;
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+const callsHost = document.getElementById('calls');
+for (const c of CALLS) {
+  const div = document.createElement('div');
+  div.className = 'call';
+  div.setAttribute('role', 'radiogroup');
+  div.setAttribute('aria-labelledby', c.id + '-q');
+  const q = document.createElement('b');
+  q.id = c.id + '-q';
+  q.textContent = c.q;
+  div.appendChild(q);
+  for (const [letter, text, rec] of c.opts) {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = c.id; input.id = `${c.id}-${letter}`; input.value = letter;
+    input.checked = state[c.id] === letter;
+    input.addEventListener('change', () => { state[c.id] = letter; save(); });
+    const span = document.createElement('span');
+    span.textContent = `${letter} · ${text}`;
+    if (rec) { const r = document.createElement('span'); r.className = 'rec'; r.textContent = 'Recommended'; span.appendChild(r); }
+    label.append(input, span);
+    div.appendChild(label);
+  }
+  const notes = document.createElement('textarea');
+  notes.id = c.id + '-notes';
+  notes.setAttribute('aria-label', 'Notes for call ' + c.id);
+  notes.placeholder = 'Notes (optional)';
+  notes.value = state[c.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[c.id + '-notes'] = notes.value; save(); });
+  div.appendChild(notes);
+  callsHost.appendChild(div);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§361 Club Tier 7d · The coach’s Tournaments — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((s, i) => { if (!state[`${part.id}-s${i}`]) lines.push(`  ☐ ${s}`); });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  lines.push('', 'Calls:');
+  for (const c of CALLS) {
+    const pick = c.opts.find(o => o[0] === state[c.id]);
+    lines.push(`  ${c.id}: ${pick ? pick[0] + ' · ' + pick[1] + (pick[2] ? ' (recommended)' : '') : 'not answered'}`);
+    const n = (state[c.id + '-notes'] || '').trim();
+    if (n) lines.push(`    Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox], input[type=radio]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('textarea:not(#summary)').forEach(t => { t.value = ''; });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.getElementById('summary').value = '';
+  tally();
+});
+</script>

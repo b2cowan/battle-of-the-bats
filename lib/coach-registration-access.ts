@@ -1,7 +1,9 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getCoachingAssignmentsForUser } from './db';
-import { canOpenTournaments } from './coach-capabilities';
+import { canOpenTournaments, type CoachCapabilities } from './coach-capabilities';
+import { findLinkedBasicTeamForRegistration } from './basic-coach-teams';
+import { canEditEventHeadCoach, type EventHeadCoachAccess } from './coach-event-head-coach';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -92,6 +94,36 @@ export async function registrationBelongsToRepTeam(registrationId: string, repTe
   return links.some(l => l.repTeamId === repTeamId);
 }
 
+type RegistrationAssignment = RegistrationRepTeamAccess & { capabilities: CoachCapabilities };
+
+/** Every coaching assignment the user holds on a rep team this registration belongs to (normally zero or one). */
+async function findAssignmentsForRegistration(userId: string, registrationId: string): Promise<RegistrationAssignment[]> {
+  const links = await findRepTeamsForRegistration(registrationId);
+  if (links.length === 0) return [];
+
+  const { data: repTeams, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, org_id')
+    .in('id', links.map(l => l.repTeamId));
+  if (error) throw error;
+
+  const found: RegistrationAssignment[] = [];
+  for (const repTeam of repTeams ?? []) {
+    const orgId = repTeam.org_id as string;
+    const assignments = await getCoachingAssignmentsForUser(orgId, userId);
+    const assignment = assignments.find(a => a.teamId === repTeam.id);
+    if (!assignment) continue;
+    const link = links.find(l => l.repTeamId === repTeam.id);
+    found.push({
+      repTeamId: repTeam.id as string,
+      orgId,
+      basicCoachTeamId: link?.basicCoachTeamId ?? null,
+      capabilities: assignment.capabilities,
+    });
+  }
+  return found;
+}
+
 /**
  * The paid-portal right to open a registration: a rep team the registration belongs to, on which
  * the user holds a coaching assignment that passes the Tournaments door. Null when none does.
@@ -100,23 +132,45 @@ export async function findRepTeamAccessForRegistration(
   userId: string,
   registrationId: string,
 ): Promise<RegistrationRepTeamAccess | null> {
-  const links = await findRepTeamsForRegistration(registrationId);
-  if (links.length === 0) return null;
+  const open = (await findAssignmentsForRegistration(userId, registrationId)).find(a => canOpenTournaments(a.capabilities));
+  return open ? { repTeamId: open.repTeamId, orgId: open.orgId, basicCoachTeamId: open.basicCoachTeamId } : null;
+}
 
-  const { data: repTeams, error } = await supabaseAdmin
-    .from('rep_teams')
-    .select('id, org_id')
-    .in('id', links.map(l => l.repTeamId));
-  if (error) throw error;
-
-  for (const repTeam of repTeams ?? []) {
-    const orgId = repTeam.org_id as string;
-    const assignments = await getCoachingAssignmentsForUser(orgId, userId);
-    const assignment = assignments.find(a => a.teamId === repTeam.id);
-    if (assignment && canOpenTournaments(assignment.capabilities)) {
-      const link = links.find(l => l.repTeamId === repTeam.id);
-      return { repTeamId: repTeam.id as string, orgId, basicCoachTeamId: link?.basicCoachTeamId ?? null };
-    }
+/**
+ * The one resolver behind "who may change this event's head coach" (lib/coach-event-head-coach.ts) —
+ * read by the record (form or line) AND the PATCH route (refuse), so they cannot disagree.
+ *
+ * An ASSIGNMENT decides first: a Premium team's staff member may also be a member of the team's
+ * free-team shadow, and membership alone would hand an assistant the head coach's rights. Only a
+ * user with no assignment on the entry's team falls back to free-team membership (a free team's
+ * owner). Null: neither — the caller's own access gate has already refused them.
+ */
+export async function resolveEventHeadCoachAccess(userId: string, registrationId: string): Promise<EventHeadCoachAccess> {
+  const assignments = await findAssignmentsForRegistration(userId, registrationId);
+  if (assignments.length > 0) {
+    const best = assignments.find(a => canEditEventHeadCoach({ via: 'assignment', capabilities: a.capabilities })) ?? assignments[0];
+    return { via: 'assignment', capabilities: best.capabilities };
   }
-  return null;
+  return (await findLinkedBasicTeamForRegistration(userId, registrationId)) ? { via: 'membership' } : null;
+}
+
+/**
+ * The browser-tab title for a tournament entry (Club Tier Stage 7d, T1): "Invitational 2026 · 15U AAA" —
+ * the tournament, then the team — read the same in both portals. Call it only AFTER the caller's own
+ * access gate (a pending or rejected entry's name is not public).
+ */
+export async function tournamentEntryTabTitle(registrationId: string): Promise<string | null> {
+  const names = await tournamentEntryNames(registrationId);
+  return names ? [names.tournamentName, names.teamName].filter(Boolean).join(' · ') : null;
+}
+
+/** The entry's team name and its tournament's name — the paid page's title and the tab title. */
+export async function tournamentEntryNames(registrationId: string): Promise<{ teamName: string; tournamentName: string | null } | null> {
+  const { data: team } = await supabaseAdmin
+    .from('teams')
+    .select('name, tournaments(name)')
+    .eq('id', registrationId)
+    .maybeSingle<{ name: string; tournaments: { name: string } | null }>();
+  if (!team) return null;
+  return { teamName: team.name, tournamentName: team.tournaments?.name ?? null };
 }

@@ -1,58 +1,21 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   getBasicCoachTournamentTeamsForUser,
-  type BasicCoachTeamRegistration,
+  getBasicCoachTournamentHistoryForRegistrationIds,
   type BasicCoachTournamentTeam,
 } from '@/lib/basic-coach-teams';
 import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
-import { deriveCoachLifecycleChip, sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
-import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
+import { attachTournamentFinishes } from '@/lib/coach-tournament-finish';
+import CoachTournamentRows from '@/components/coaches/CoachTournamentRows';
 import styles from './tournaments.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
 export const metadata = { title: 'Tournaments - Coaches Portal' };
-
-type TournamentRow = {
-  id: string;
-  name: string;
-  slug: string | null;
-  year: number;
-  start_date: string | null;
-  end_date: string | null;
-  org_id: string;
-  status: string;
-};
-
-type OrgRow = {
-  id: string;
-  slug: string;
-  name: string;
-};
-
-type Registration = {
-  team: BasicCoachTeamRegistration;
-  tournament: TournamentRow | null;
-  org: OrgRow | null;
-};
-
-type CoachTeamGroup = BasicCoachTournamentTeam & {
-  active: Registration[];
-  past: Registration[];
-};
-
-function isActive(tournament: TournamentRow | null): boolean {
-  if (!tournament) return false;
-  // The organizer's status decides when an event is over — the same fact the chip reads — so an
-  // event whose dates have passed but which isn't marked complete stays in "Active & Upcoming"
-  // (its chip says Game Day), and a completed one moves to "Past" even if marked early.
-  return deriveCoachLifecycleChip(tournament.start_date, tournament.end_date, tournamentToday(), tournament.status).state !== 'complete';
-}
 
 export default async function CoachTournamentRecordsPage() {
   const supabase = await createClient();
@@ -81,9 +44,9 @@ export default async function CoachTournamentRecordsPage() {
     );
   }
 
-  const registrationList = coachTeams.flatMap(team => team.registrations);
+  const registrationIds = [...new Set(coachTeams.flatMap(team => team.registrations.map(r => r.id)))];
 
-  if (registrationList.length === 0) {
+  if (registrationIds.length === 0) {
     return (
       <div className={styles.page}>
         <div className={styles.header}>
@@ -101,61 +64,23 @@ export default async function CoachTournamentRecordsPage() {
     );
   }
 
-  const tournamentIds = [...new Set(registrationList.map(t => t.tournamentId).filter(Boolean))] as string[];
-  const { data: tournamentsData } = tournamentIds.length > 0
-    ? await supabaseAdmin
-        .from('tournaments')
-        .select('id, name, slug, year, start_date, end_date, org_id, status')
-        .in('id', tournamentIds)
-    : { data: [] };
-
-  const tournamentMap = new Map<string, TournamentRow>(
-    ((tournamentsData ?? []) as TournamentRow[]).map(t => [t.id, t])
-  );
-
-  const orgIds = [...new Set(((tournamentsData ?? []) as TournamentRow[]).map(t => t.org_id).filter(Boolean))];
-  const { data: orgsData } = orgIds.length > 0
-    ? await supabaseAdmin.from('organizations').select('id, slug, name').in('id', orgIds)
-    : { data: [] };
-
-  const orgMap = new Map<string, OrgRow>(
-    ((orgsData ?? []) as OrgRow[]).map(o => [o.id, o])
-  );
-
-  const registrationMap = new Map<string, Registration>();
-  for (const team of registrationList) {
-    const tournament = team.tournamentId ? tournamentMap.get(team.tournamentId) ?? null : null;
-    const org = tournament?.org_id ? orgMap.get(tournament.org_id) ?? null : null;
-    registrationMap.set(team.id, { team, tournament, org });
-  }
-
-  // Live-first sort (§3c/§3d): order Active & Upcoming by the lifecycle chip rank
-  // (live → game-day → upcoming → future), so a coach opening the portal on game day
-  // sees today's event first, not buried under later registrations. Ties keep the
-  // soonest start date first. The chip itself is rendered per card below.
+  // Stage 7d (Ask 12; owner ruling 2026-10-22, Put to the owner 3 option (a)): one section per team,
+  // each the same row list as the team's own Tournaments tab and the paid portal's — read through the
+  // ONE assembler, so a row's words (host, "Your club's tournament", the finish) cannot drift from theirs.
+  // The hub's own tournament/org reads and its card wrapper are gone.
   const today = tournamentToday();
+  const entries = await attachTournamentFinishes(
+    await getBasicCoachTournamentHistoryForRegistrationIds(registrationIds, null),
+    today,
+  );
+  const entryById = new Map(entries.map(e => [e.registration.id, e] as const));
 
-  const teamGroups: CoachTeamGroup[] = coachTeams
-    .map(team => {
-      const registrations = team.registrations
-        .map(registration => registrationMap.get(registration.id))
-        .filter(Boolean) as Registration[];
-
-      const active = sortByCoachLifecycle(
-        registrations.filter(r => isActive(r.tournament)),
-        r => r.tournament?.start_date ?? null,
-        r => r.tournament?.end_date ?? null,
-        today,
-        r => r.tournament?.status ?? null,
-      );
-
-      return {
-        ...team,
-        active,
-        past: registrations.filter(r => !isActive(r.tournament)),
-      };
-    })
-    .filter(team => team.active.length > 0 || team.past.length > 0);
+  const teamGroups = coachTeams
+    .map(team => ({
+      team,
+      entries: team.registrations.map(r => entryById.get(r.id)).filter((e): e is (typeof entries)[number] => Boolean(e)),
+    }))
+    .filter(group => group.entries.length > 0);
 
   return (
     <div className={styles.page}>
@@ -167,69 +92,20 @@ export default async function CoachTournamentRecordsPage() {
       </div>
 
       <div className={styles.teamList}>
-        {teamGroups.map(team => (
-          <section key={team.id} className={styles.teamGroup}>
-            <div className={styles.teamGroupHeader}>
-              <div>
-                <h2 className={styles.teamGroupTitle}>{team.name}</h2>
-                <p className={styles.teamGroupMeta}>
-                  {team.registrations.length === 1 ? '1 tournament record' : `${team.registrations.length} tournament records`}
-                  {team.primaryCoachName ? ` · ${team.primaryCoachName}` : ''}
-                </p>
-              </div>
-            </div>
-
-            {team.active.length > 0 && (
-              <div className={styles.teamSection}>
-                <h3 className={styles.sectionTitle}>Active &amp; Upcoming</h3>
-                <div className={styles.list}>
-                  {team.active.map(r => (
-                    <RegistrationCard key={r.team.id} reg={r} today={today} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {team.past.length > 0 && (
-              <div className={styles.teamSection}>
-                <h3 className={styles.sectionTitle}>Past Tournaments</h3>
-                <div className={styles.list}>
-                  {team.past.map(r => (
-                    <RegistrationCard key={r.team.id} reg={r} today={today} />
-                  ))}
-                </div>
-              </div>
-            )}
+        {teamGroups.map(({ team, entries: teamEntries }) => (
+          <section key={team.id} aria-labelledby={`team-${team.id}`}>
+            <h2 id={`team-${team.id}`} className={styles.teamGroupTitle}>{team.name}</h2>
+            {team.primaryCoachName && <p className={styles.teamGroupMeta}>{team.primaryCoachName}</p>}
+            <CoachTournamentRows
+              label={team.name}
+              today={today}
+              entries={teamEntries}
+              hrefBase={COACHES_TOURNAMENTS_PATH}
+            />
           </section>
         ))}
       </div>
     </div>
-  );
-}
-
-function RegistrationCard({ reg, today }: { reg: Registration; today: string }) {
-  const { team, tournament, org } = reg;
-
-  // ⇄ Fan view ("The Flip" P3, owner call 2026-07-23): this cross-team list joins the per-row flip
-  // treatment. Publicly-visible lifecycles only (the public route 404s draft/archived).
-  const canFanView = Boolean(org?.slug && tournament?.slug &&
-    (tournament.status === 'active' || tournament.status === 'completed'));
-
-  // A3.3: this card's treatment was promoted to the shared CoachRegistrationCard —
-  // the cross-team hub keeps the team name in the meta (the other two lists are
-  // already team-scoped and skip it).
-  return (
-    <CoachRegistrationCard
-      href={`${COACHES_TOURNAMENTS_PATH}/${team.id}`}
-      title={tournament?.name ?? team.name}
-      registrationStatus={team.status}
-      startDate={tournament?.start_date ?? null}
-      endDate={tournament?.end_date ?? null}
-      tournamentStatus={tournament?.status ?? null}
-      today={today}
-      metaParts={tournament ? [team.name, org?.name] : []}
-      fanView={canFanView ? { orgSlug: org!.slug, tournamentSlug: tournament!.slug! } : null}
-    />
   );
 }
 

@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { notifyFansForScheduleChange } from './fan-notify';
 import { zonedWallClockToUtc } from './timezone';
 import { captureError } from './observability';
+import { homeAwayWord } from './game-clock-labels';
 import { notifyTeamCoaches } from './team-coach-notices';
 import { TEAM_COACH_WORDS, possessive, teamCoachRecordLink } from './team-coach-notice-plan';
 
@@ -255,7 +256,7 @@ function compose(
     const wasTime = timeLabel(e.was.time);
     // A game that never had a time set (a bracket slot getting its first real time) has no
     // "your 2:00 p.m. …" to lead with — "Your game vs X" keeps the sentence whole.
-    const which = `${wasTime ? `${wasTime} ` : 'game '}${isHome ? 'vs' : 'at'} ${name}`;
+    const which = `${wasTime ? `${wasTime} ` : 'game '}${homeAwayWord(isHome)} ${name}`;
 
     if (e.kind === 'cancelled') {
       return {

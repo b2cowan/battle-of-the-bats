@@ -60,6 +60,9 @@ export type CoachTournamentStatus = {
     state: RegistrationPaymentStatus;
     isPaid: boolean;
     hasSchedule: boolean;
+    /** The event's whole entry fee (division over tournament), null with no schedule — the Registration
+     *  card's "$475.00 · paid Sep 12" (Stage 7d). */
+    totalFee: number | null;
     /** Remaining amount owed (deposit-phase or balance), mirroring the organizer's getPaymentDue. */
     amountDue: number | null;
     /** Due date for `amountDue` (deposit due date in the deposit phase, else the total due date). */
@@ -161,6 +164,7 @@ export function buildCoachTournamentStatus(input: CoachTournamentStatusInput): C
       state,
       isPaid,
       hasSchedule,
+      totalFee: hasSchedule ? totalFee : null,
       amountDue,
       dueDate,
       collectedAt: tracksPayments ? input.team.paymentCollectedAt : null,

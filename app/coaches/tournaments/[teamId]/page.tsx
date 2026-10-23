@@ -5,10 +5,10 @@ import {
   canUserAccessTournamentRegistration,
   findLinkedBasicTeamForRegistration,
 } from '@/lib/basic-coach-teams';
-import { findRepTeamAccessForRegistration } from '@/lib/coach-registration-access';
+import { findRepTeamAccessForRegistration, tournamentEntryTabTitle } from '@/lib/coach-registration-access';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import type { Organization } from '@/lib/types';
-import { COACHES_TEAM_PATH, COACHES_TOURNAMENTS_PATH, portalTournamentRecordPath } from '@/lib/coaches-portal-routes';
+import { COACHES_HELP_PATH, COACHES_TEAM_PATH, COACHES_TOURNAMENTS_PATH, portalTournamentRecordPath } from '@/lib/coaches-portal-routes';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
 
 type RouteParams = {
@@ -32,12 +32,8 @@ export async function generateMetadata({ params }: RouteParams) {
   });
   if (!access) return { title: 'Tournament Record' };
 
-  const { data: team } = await supabaseAdmin
-    .from('teams')
-    .select('name')
-    .eq('id', teamId)
-    .maybeSingle();
-  return { title: team?.name ?? 'Tournament Record' };
+  // "Invitational 2026 · 15U AAA" — the tournament, then the team (Stage 7d, T1), as the paid portal reads.
+  return { title: (await tournamentEntryTabTitle(teamId)) ?? 'Tournament Record' };
 }
 
 export default async function CoachTournamentRecordDetailPage({ params, searchParams }: RouteParams) {
@@ -97,6 +93,8 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
       backHref={backHref}
       /* A2: the shell's persistent header carries this page's identity + Flip. */
       hideHeader
+      scheduleHref={linkedBasicTeamId ? `${COACHES_TEAM_PATH}/${linkedBasicTeamId}/schedule` : null}
+      helpGuideHref={`${COACHES_HELP_PATH}#tournaments`}
     />
   );
 }

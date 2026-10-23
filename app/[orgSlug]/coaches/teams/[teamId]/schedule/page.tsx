@@ -6,6 +6,7 @@ import { Calendar, CalendarDays, CalendarPlus, CalendarRange, List, Plus, Upload
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import { useRouter } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import { canOpenTournaments } from '@/lib/coach-capabilities';
 import { useScheduleOpensOnToday } from '@/components/coaches/useScheduleOpensOnToday';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
@@ -27,7 +28,7 @@ import { useMinuteClock } from '@/lib/use-minute-clock';
 import type { ClubPickerSpelling } from '@/lib/coach-opponent-picker';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import {
-  COACH_GAME_EVENT_TYPES, isMirroredEvent,
+  COACH_GAME_EVENT_TYPES, isMirroredEvent, tournamentRoadBack,
   diffSeenTimes, readSeenTimes, writeSeenTimes, acknowledgeSeen,
   findDuplicateSelfEntries, readDismissedDuplicates, dismissDuplicate,
   type MovedGame, type DuplicateGamePair,
@@ -37,7 +38,7 @@ import { CoachListToolbar } from '@/components/coaches/kit';
 import { gameDayConsolePath, gameDayWindow, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
-import { mondayOfDay, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
+import { isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import { dayHeading } from '@/lib/calendar-recipe';
 import { EVENT_LABELS } from '@/lib/coach-schedule-vocab';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
@@ -503,7 +504,25 @@ export default function CoachesSchedulePage({
   // THE LIST OPENS ON TODAY, IN ITS OWN FRAME, AT EVERY WIDTH (stage 2 · C1; Club Tier 6c Ask 3 — C3): the shared hook,
   // which a team's schedule (admin) reads too. It runs on every LOAD of the list — the first, a return from Week or
   // Month, and the refetch after a save (`fetchEvents` unmounts the list behind "Loading events…").
-  useScheduleOpensOnToday({ scrollerRef, tailRef, active: !loading && view === 'list', trigger: `${teamId}|${view}|${loading}` });
+  // `?day=YYYY-MM-DD` (Club Tier Stage 7d): "Games on your Schedule" on a tournament's page opens the
+  // Schedule on the tournament's first day — the list scrolls there, and Week / Month move their cursor
+  // to it. Read once on mount and handed off the address like `?event=`; a DAY, never a year.
+  const [linkedDay, setLinkedDay] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const day = sp.get('day');
+      if (!day || !isCalendarDate(day)) return;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLinkedDay(day);
+      setCursorDate(day);
+      setSelectedDay(day);
+      sp.delete('day');
+      const rest = sp.toString();
+      window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`);
+    } catch { /* ignore malformed params */ }
+  }, []);
+  useScheduleOpensOnToday({ scrollerRef, tailRef, active: !loading && view === 'list', trigger: `${teamId}|${view}|${loading}`, day: linkedDay });
 
   // `?add=practice` (practices re-evaluation stage 0, D6): the Practice plans empty state's button
   // opens the Add Practice FORM directly rather than landing the coach on the list two clicks short
@@ -1008,9 +1027,14 @@ export default function CoachesSchedulePage({
           awardTypes={awardTypes}
           awardPlayers={awardPlayers}
           moved={movedGames.find(m => m.eventId === selectedEvent.id) ?? null}
-          mirroredGameHref={selectedEvent.sourceTournamentGameId
-            ? tournamentGames.find(g => g.id === selectedEvent.sourceTournamentGameId)?.href ?? null
-            : null}
+          // Stage 7d (drawing 8): the road back to the coach's tournament page — behind the Tournaments
+          // door, so a coach without it gets a plain note, never a row that leads nowhere.
+          mirroredGameSource={tournamentRoadBack(
+            selectedEvent.sourceTournamentGameId,
+            tournamentGames,
+            (() => { const a = assignments.find(x => x.teamId === teamId); return !!a && canOpenTournaments(a.capabilities); })(),
+            base,
+          )}
           bookEntry={selectedEvent.opponent ? bookByKey.get(normalizeOpponentName(selectedEvent.opponent)) ?? null : null}
           gameDayLive={gameDayHrefById.has(selectedEvent.id)}
           familiesSeeSchedule={familiesSeeSchedule}
