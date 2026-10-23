@@ -1,12 +1,11 @@
 # The public face, warm — marketing, sign-in and emails — plan
 
-**Status:** QUEUED 2026-10-19 (owner). Not started, nothing drawn. **Scope trimmed 2026-10-19:** S2 (sign-in and
-sign-up) and the two account emails moved to The first look (`FIRST_LOOK_SIGNUP_PLAN.md`, its Ask 1).
-**Starts:** owner, 2026-10-19: *"after the club tier readiness or platform admin projects finish"*. **To confirm at
-kickoff:** whether it runs after Club Tier and ahead of (or beside) Platform admin, or after both. **Recommended: right
-after Club Tier, ahead of Platform admin.** Platform admin's own brief puts internal tooling behind "the projects
-customers will see" (`PLATFORM_ADMIN_SUPPORT_CONSOLE_PM_BRIEF.md`). This project is the first thing every new customer
-sees, so the same reason puts it first.
+**Status:** WALKED AND DRAWN 2026-10-22 · **ROUND 1 RULED 2026-10-23** (see the rulings below). The walk, the ladder, the identity and the end state are one page:
+https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft (source `PUBLIC_FACE_WARM_WALK.html`, built from `.probe/pfw/src/` by
+`.probe/pfw/build-walk.mjs`). Fourteen asks; nothing is built. `/design` (D1–D13) and `/ux` (U1–U8) ran before the hand-off; their drawn changes are on the page's Checks tab (Ask 12), and the two calls they raised are Asks 13 (where the sign-up wordmark leads) and 14 (one lime per marketing view). **Scope trimmed 2026-10-19:** S2 (sign-in and sign-up)
+and the two account emails moved to The first look (`FIRST_LOOK_SIGNUP_PLAN.md`, its Ask 1).
+**Order — RULED 2026-10-22 (owner):** it runs **beside Club Tier**, ahead of Platform admin. This answers Q8. Only the
+order moved; Q1–Q7 stay recommendations, put to the owner as the walk page's asks.
 **PM brief:** `PUBLIC_FACE_WARM_PM_BRIEF.md`.
 **Carried in from The first look at its close (2026-10-21; its plan is archived, `docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md`):**
 the screen-reader pass on the shared account form (`components/auth/AccountForm`), owed since that project's Stage 1.
@@ -91,6 +90,29 @@ in-app sign-up journey (`/start`, `/coaches/start`).
    and compliance question for a product that takes sign-ups and family data. It goes to `/strategy` as its own item
    and is recorded here only so the walk doesn't step over it.
 
+## Round 1 rulings (owner, 2026-10-23, the walk page's paste-back)
+
+| Ask | Ruled |
+|---|---|
+| 1 (Q1) | **A** — supersede "marketing stays dark" (2026-07-23); the whole marketing set moves in one release. |
+| 2 (Q2) | **C** — **redraw the wordmark**, as its own piece of work before S4. **Follow-up 2026-10-23 (owner, "yes"): the redraw includes the browser-tab mark (the lime ">", also on the admin and coaches-portal top strips) and the phone home-screen icon (today a separate "FL / HQ" mark on a dark square, `public/icons/pwa-*.png`).** |
+| 3 | **A** — the public type rules P1–P10 as drawn, with one named exception: a marketing page's headline, one per page, Barlow 700, 64px desktop / 40px phone. Scroll-reveal comes out (P6). |
+| 4 (Q3) | **A** — a `/marketing` voice pass in every stage, before its code. |
+| 5 (Q4) | **B** — the marketing pages are **always warm**, whatever the setting. |
+| 6 (Q5) | **A** — family emails wear the club's identity on the warm envelope. |
+| 7 (Q6) | **A** — the public tournament pages' type is its own project, joined with Tinted Panel Retirement D4. |
+| 8 (Q7) | **A** — one warm share card for the marketing site, plus a title and description on every marketing page (S4). |
+| 9 | **A** — split: S3a before Club Stages 9 and 12 begin; S3b with 7c's follow-up. |
+| 10 | **A** — a build guard on P1 as written. |
+| 11 | **A** — S1 → S3a → S4 → S5 → S3b. |
+| 12 | **A** — the design and flow checks' drawn changes, all accepted. |
+| 13 | **A** — on the sign-up steps, signed out, the wordmark leads to the marketing home page. |
+| 14 | **A** — the page's own lime wins: the bar's Get started is white on a page with its own lime; Pricing's one lime is on Tournament Plus. |
+| Follow-up to Ask 5 (owner, 2026-10-23) | **Signed out = warm, on every signed-out page.** Signing out resets that browser to warm; a person who chose Dark gets it back when they sign in (it is saved to their account). Owner: *"people who like dark themes don't need it every second of every day and surely understand signed out means they don't get to view their theme choices."* Why: a signed-out visitor has no Warm / Dark control, and signing out left the Dark choice in the browser, so on a shared device the next person's first impression (sign-in, sign-up, Home, Scores) was dark. Not affected: the public tournament pages, whose light or dark is the organizer's per-tournament choice. |
+
+**Open from these rulings (to settle when each is drawn or built, not ruled here):** the signed-out reset ships **on its own, ahead of S1** (owner, 2026-10-23: "agreed"; build prompt `PUBLIC_FACE_WARM_SIGNED_OUT_BUILD_PROMPT.md`); Ask 2 C needs its own drawing session before S4 (the wordmark, the browser-tab mark and the home-screen icon, drawn together). Ask 5 B drops the "Home in Dark" frame and U6's "browser-bar
+colour follows the setting" becomes a fixed warm colour on the marketing pages.
+
 ## Shape questions to put to the owner in the walk (recommendations, not rulings)
 
 - **Q1 — The ruling this replaces.** `memory/design_decisions.md` 2026-07-23 says "Marketing pages … stay dark by
@@ -123,7 +145,7 @@ in-app sign-up journey (`/start`, `/coaches/start`).
   - *To decide:* whether the type change is a stage here or its own project. It overlaps Tinted Panel Retirement D4's
     "second wave" (`TODO.md`).
 - **Q7 — Link previews.** A marketing-site share image, and the tournament previews in the same voice.
-- **Q8 — Order.** See **Starts** above.
+- **Q8 — Order. RULED 2026-10-22 (owner):** beside Club Tier, ahead of Platform admin.
 
 ## Coordination (in flight on 2026-10-19; re-check at kickoff)
 
@@ -133,10 +155,20 @@ in-app sign-up journey (`/start`, `/coaches/start`).
 - **Verify every sign-up** owns the verify email template and kept its dark layout on purpose. Its walk is merged into
   §336.
 - **Feedback window** ask A1 (public pages wear the coach window on the Warm / Dark setting) is with the owner.
-- **Club Tier Stage 4 / Stage 8** touches `/for-clubs` copy and runs a marketing drift check. This project starts
-  after it.
-- **Demos.** Marketing pages are tour destinations, and the build fails if a tour anchor disappears. Keep anchors, or
-  move them in the same change. The `/demos` cycle after the release curates the story.
+- **Club Tier Stage 4 / Stage 8** touches `/for-clubs` copy and runs a marketing drift check. Since the 2026-10-22
+  ruling this project runs beside it: S4 changes the look and keeps today's words; Stage 8 changes "Coming soon" when
+  Club goes on sale, as a separate copy change.
+- **Demos.** ~~Marketing pages are tour destinations~~ — **corrected 2026-10-22:** no marketing page is a tour
+  destination. The guard (`tests/unit/demo-destinations-guard.test.ts`) checks product screens and the `/see-it-live`
+  door only, so restyling the marketing set cannot break a tour. The layout sweep's public list
+  (`scripts/layout-screens.mjs`) covers the marketing set. The `/demos` cycle after the release curates the story.
+- **Stage 13 (Club Tier, navigation across the three portals)** covers the operator navs only (its inventory: sidebar,
+  phone bar, More sheet, top strip). The public bars' lettering is this project's (P1 below). Only the **crossing** — a
+  signed-in visitor's "Open app" door from the marketing bar into a portal — is "coordinate with Stage 13".
+- **Club stages that add or change emails (verified 2026-10-22 against `CLUB_TIER_PRODUCTION_READINESS_PLAN.md`):**
+  Stage 9 (house league: seven league templates, the injection fix, "communications silently email nobody"), Stage 12
+  (12a's receipt "in the club's name"), 7c's open follow-up (the house-league season email onto the batched sender).
+  None has started except 7c. Recommendation (Ask 9): S3a before Stages 9 and 12 start; S3b with 7c's follow-up.
 - **Help.** The help articles quote sign-in screen wording. Run `/docs` on each stage that changes it.
 - **Spelling and time gates** (`check:spelling`) apply to every word and time this project writes.
 - **The top-bar pills (handed over by the Admin type sweep, owner P1 2026-10-19).** The Workspaces pill and the
@@ -174,6 +206,50 @@ in-app sign-up journey (`/start`, `/coaches/start`).
    - **S5 — System screens and link previews.** 404, crash, global-error, offline, unsubscribe and the OG images.
    - **S6 (if Q6 rules it in) — The public sport pages' type.**
 2. Each stage is drawn, ruled, built and walked by the owner.
+
+### The build order and the recommended model per session (2026-10-23)
+
+| # | Session | Model · effort | Why |
+|---|---|---|---|
+| 0 | Signed out = warm (build; prompt `PUBLIC_FACE_WARM_SIGNED_OUT_BUILD_PROMPT.md`) | Sonnet · high | small and fully specified, but it touches the pre-paint script and every sign-out path |
+| S1 | The identity written + the public type rules + the build check (build) | Sonnet · high | the doc is transcription of ruled rules; the check needs care to avoid false alarms |
+| W | The wordmark, the browser-tab mark and the home-screen icon (drawing session, with `/marketing` + `/design`) | Opus · high | design judgment; the owner rules on the drawings |
+| S3a | One email envelope for every email (build) | Sonnet · high | broad but mechanical (~50 builders onto one envelope); mail-client quirks |
+| S4 | The marketing set as one (build) | Sonnet · high | large restyle to approved drawings; needs W ruled first |
+| S5 | System screens + carry-ins (build) | Sonnet · medium | small screens, drawn and worded |
+| S3b | Family emails in the club's name (build) | Sonnet · high | per-club colour contrast and logos in email; coordinated with Club 7c |
+| — | Tournament pages' type (its own project: walk + drawing first) | Opus · high | a new walk and drawing for families' pages |
+
+Writing each stage's build prompt: Opus · medium. Each build ends with `/review` (which tiers its own models) and a checkable walk.
+
+### The ladder as drawn (2026-10-22; order RULED 2026-10-23, Ask 11: S1 → S3a → S4 → S5 → S3b; the wordmark redraw, Ask 2 C, before S4)
+
+| Stage | Covers | Waits for |
+|---|---|---|
+| **S1** Identity + public type rules (P1–P10 on the walk page) + the build guard (Ask 10) | the written identity in `docs/agents/brand/`, pointed at by `/marketing` and `/design` | nothing |
+| **S2** Sign-in and sign-up | closed: The first look, on production 2026-10-20, archived 2026-10-21 | — |
+| **S3a** One envelope for every email | `wrap()` (~44 builders + campaigns) and the five copies (`notify.ts`, `basic-coach-announcements.ts`, `family-email.ts`, `dues-reminder-email.ts`, `practice-plan-email.ts`) onto `lib/email-envelope-warm.ts`; one email palette (Codebase Cleanup Tier 4's email half) | nothing; ahead of Club Stages 9 + 12 |
+| **S3b** Family emails in the club's name (Q5) | announcement, dues reminder, club schedule mails, basic coach announcement | Club 7c follow-up; feeds Stage 12's receipt; the contact-email TODO item |
+| **S4** The marketing set as one | bar, footer, Founding strip, 13 routes, share card + titles/descriptions, the tournament strip + flip pill lettering, scroll-reveal out, the `/start` chooser leftovers (moved from S5 by `/ux` U2), the phone browser-bar colour following the setting (U6) | `/marketing`'s words; "Open app" crossing → Stage 13 |
+| **S5** System screens + carry-ins | 404, crash, global-error, offline, unsubscribed, suspended, the neutral share-card fallback, the install banner off the sign-up steps (U7), the AccountForm screen-reader pass | nothing |
+| **S6** Public sport pages' type | recommended as its own project with Tinted Panel Retirement D4 (Ask 7) | S4 |
+
+**Census re-verified 2026-10-22** (helpers + key lines opened; walk page, station by station). Changes since 10-19:
+`/auth/*` WARM except `suspended` (the last reader of `auth.module.css`); `/coaches/join` and checkout-complete WARM (no
+longer outliers); the consumer bar's links WARM, its tournament `.topbarStrip` + the flip pill still caps; the `/start`
+chooser keeps four mono leftovers; emails: 2 warm, ~44 on `wrap()`, 5 own copies (the practice plan is its own copy,
+not the warm envelope); link previews: 6 images now (3 club cards added 2026-10-21), still none for marketing; the home
+page hides four sections until scrolled (`AnimateIn`, home only). Unchanged: the marketing set (13 routes) and the
+system screens.
+
+**Routed, not built here (2026-10-22):** to `/marketing` — the home description's "Canadian sports organizations"
+(brand rule) and `PRICING_PAGE_COPY.md:477`; the doubled Pricing title; the house-league card's "automated game
+notifications" line against Stage 9's defect list; the registration email's "FieldLogicHQ does not process online
+payments" before Stage 12; the Premium welcome's "Everything from your free portal carries over" (`lib/email.ts:638`, most new
+Premium coaches never had one); the "FieldLogicHQ · Canada" sign-off (`lib/email.ts:1405`, `lib/email-sender.ts:58`: brand
+rule, and a thin CASL mailing address); whether a free team gets a welcome email (+ `/strategy`); two copy tweaks for the
+first look's check-your-email and Continue screens (`/ux` U5). To `/strategy` — finding 6 (no privacy or terms page). To `/design` — the first look's
+fainter-than-3:1 field edges (every Warm field), which is product-wide.
 3. **A build guard proposed at kickoff (owner's call):** a public page that sets a heading in the mono face fails the
    build, the same way the spelling and time gates work.
 

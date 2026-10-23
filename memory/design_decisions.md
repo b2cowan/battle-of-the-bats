@@ -7,6 +7,37 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-23 — THE PUBLIC FACE, WARM, ROUND 1: THE MARKETING SET LEAVES THE DARK LOOK AS ONE SET AND IS ALWAYS WARM; THE WORDMARK IS REDRAWN; ONE LIME PER VIEW; FAMILY EMAILS WEAR THE CLUB (owner, walk answers round 1, https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft)
+
+**Decision (as ruled; the asks' full wording is on the walk page and in `PUBLIC_FACE_WARM_PLAN.md` "Round 1 rulings"):**
+- **Supersedes, for the marketing pages only,** the 2026-07-23 clause "Marketing pages … stay dark by design" (Ask 1 A). The whole
+  marketing set (bar, footer, all marketing routes) moves in one release. That clause's other surfaces (org-branded tournament pages,
+  platform-admin login, operator shells) are not touched by this ruling.
+- **The marketing pages are always warm,** whatever the visitor's Warm / Dark setting (Ask 5 B). The auth screens keep following the
+  setting (2026-07-23, unchanged).
+- **The wordmark is redrawn** as its own piece of work before the marketing stage (Ask 2 C), **together with the browser-tab mark
+  (the ">") and the phone home-screen icon** (owner follow-up the same day: "yes"). Until that redraw is ruled, today's
+  wordmark (R1-4's, and the first look's three-ink version) stays where it is.
+- **The public type rules P1–P10** (on the walk page), with one named exception to the type ladder: a marketing page's headline, one
+  per page, Barlow Condensed 700 at 64px desktop / 40px phone. Scroll-reveal comes out (Ask 3 A). A build guard holds P1 (Ask 10 A).
+- **One lime per view on the marketing pages:** the page's own lime wins; the bar's Get started is white on a page with its own lime;
+  Pricing's one lime is on Tournament Plus (Ask 14 A).
+- **Family emails wear the club's identity on the warm envelope** (Ask 6 A).
+- **On the sign-up steps, signed out, the wordmark leads to the marketing home page** (Ask 13 A).
+- The `/design` (D1–D13) and `/ux` (U1–U8) drawn changes are accepted (Ask 12 A).
+- **Follow-up the same day: signed out = warm, on every signed-out page.** Signing out resets that browser to warm; Dark returns at
+  sign-in from the account. Owner: *"people who like dark themes don't need it every second of every day and surely understand signed
+  out means they don't get to view their theme choices."* Reason: a signed-out visitor has no Warm / Dark control, and the browser kept
+  the last Dark choice after sign-out, so a shared device showed the next newcomer a dark sign-up door. This narrows the 2026-07-23
+  "auth screens follow the user theme" to signed-in people. Not affected: the public tournament pages (the organizer's per-tournament
+  light/dark).
+
+**Rationale:** the 2026-07-23 clause's only written reason was "M2 unchanged", and M2 concerns org-branded pages, which the marketing
+pages are not; what it protected in practice, the set moving as one, is kept by Ask 1. The terminal feel is type and words, and the
+first look's screens show the fix.
+**Applies to:** the marketing routes, `components/Navbar.tsx`, `components/Footer.tsx`, the consumer bar's tournament strip and the
+flip pill, every email builder (onto `lib/email-envelope-warm.ts`), the system screens.
+
 ### 2026-10-22 — STAGE 7C DESIGN PASS: THE SEND WINDOW'S RADIOS WEAR THE CHECKBOX'S LOOK; A CHANGED COUNT IS AMBER WITH SEND STILL LIVE; A STOPPED SEND WEARS AN AMBER CHIP; THE DOOR HAS NO ENVELOPE (owner, "go ahead with your recommendations", 2026-10-22; seen at 1440 and 390, light and dark)
 
 **Decision:**
