@@ -26308,7 +26308,9 @@ republished; tick positions unchanged).
 
 **The walk:** [New mark walk](PUBLIC_FACE_WARM_S4B_WALK.html), published https://claude.ai/artifact/5TyMKPtZADGy6zu11tyhYe 2026-10-23. Eight parts: A the browser tab and a bookmark · B the name in every bar (marketing, app, coach and admin strips in Warm and Dark, volunteer shells, tournament strip light and dark, a demo) · C sign-in and system pages · D the phone home screen (iPhone re-add, Android install) · E a push notification · F exports · G the email name line · H no trace of the old marks. Phone, push and mail-app steps have Skipped twins.
 
-**Open for the owner:** the name and logo search on "FieldLogic" and the mark before anything is printed or stitched; the What's new line goes to `/release` at promote (an iPhone keeps the old icon until the app is added again); `opentype.js` is now unused and can be uninstalled.
+**The name and logo search: CLOSED by the owner 2026-10-23.** Canada only (owner). The Canadian trademarks database was searched for the word: "fieldlogic", "field logic", "fieldlogix", "field logix", "logic hq" and "fieldhq" each returned no results (database current to 2026-10-21). No logo (design-mark) search, no search outside Canada and no trademark agent's opinion were done; the owner closed the item there.
+
+**Open for the owner:** the What's new line goes to `/release` at promote (an iPhone keeps the old icon until the app is added again); `opentype.js` is now unused and can be uninstalled.
 
 **Not in the walk:** a club's own app icon (the club site installs with ours; routed to the public site builder); the share card's fonts on a server with no internet (it falls back to the plain face).
 <!-- /§368 -->

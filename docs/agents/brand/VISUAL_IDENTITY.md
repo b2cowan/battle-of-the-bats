@@ -192,7 +192,7 @@ mark at every size. The tile appears only where the mark stands alone: the tab, 
 - **Share card:** the marketing card gets one (P7), with the tile as its one lime-free accent.
 - **One colour:** the same path in black or white, holes real.
 
-**Owed before printing or stitching anything:** a name and logo search on "FieldLogic" and this mark (owner or counsel).
+**The name and logo search: CLOSED by the owner 2026-10-23.** Canada only (owner). The Canadian trademarks database was searched for the word: "fieldlogic", "field logic", "fieldlogix", "field logix", "logic hq" and "fieldhq" each returned no results (database current to 2026-10-21). No logo (design-mark) search, no search outside Canada and no trademark agent's opinion were done; the owner closed the item there.
 **Recommended, not a gate:** a few informal reactions (coaches, a parent or two) that ask "what letters do you see?" first.
 The admin and coaches-portal top strips take the new lockup in place of the ">". People with the app installed get a
 What's new line (an iPhone keeps the old icon until the app is added again). Every copy of the name becomes one shared
