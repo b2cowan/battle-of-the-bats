@@ -519,6 +519,24 @@ tournament dates and the free portal's times are right in every time zone. Eleve
 §289). Success looks like: a coach lands on next week's game without scrolling, and nobody turns up for a called-off game
 because the club calendar hid it.
 
+**Stage 14 — one player across seasons and teams: added by the owner 2026-10-22; not yet drawn.** Today a child exists once per
+season. Starting next season copies last year's active players as new entries, a player the team let go and later takes back
+arrives as a stranger, and every waiver and document is collected again on the new record. A coach adding a kid types them in,
+and nothing says "you already have this child." The family library holds the parents, not the children. The proposal: **a child
+becomes one record that outlives a season, anchored to the family library**, with each season's roster as that season's
+membership of it. A coach adds a returning kid by picking them, not retyping; their history and still-valid documents arrive with
+them; typing someone who already exists gets a "same kid?" nudge; and a club with years of duplicates gets a review-and-merge
+pass instead of a forced one. **Ruled the same day:** *Start next season* now asks what the team is doing — **the same group moving
+up an age group** (11U becomes 12U, the birth years stay, and the roster is a choice to carry) or **a new group in the same age
+group** (the birth years roll to the next cohort). It serves a coach who keeps their kids and a club that keeps its slot, which
+today's single behaviour only half does. **Open for the owner session:** what a coach may see of a child who played on another
+team (medical notes, guardian contact, evaluations); who may link or merge; which documents carry and which must be signed again
+each season (a waiver usually must, so the gain is one record with a history and a "needs re-signing" state, not skipping it); and
+whether a standalone coach gets the same record. Why it matters: it removes the most repeated chore of every season (re-entering
+the same kids and re-collecting the same papers) and is the foundation for a child's whole history in one place. Priority:
+inside the Club release; the season window first (small), then the player record. Success: a returning child is picked, not
+retyped, and appears once in the family library no matter how many teams and seasons they have played.
+
 ## Trade-offs made in this plan
 
 **Stage 7a built 2026-10-20:** When a club records a visiting team's tournament payment, its tournament book gains the receipt automatically. An owner or admin with Accounting access picks the tournament's filing name in Event settings, then sees its revenue and filed costs together in Accounting → Budget vs. Actual → By activity. A rep team linked to its own club's tournament is labelled Our team and No fee; it creates no receipt. The house league records a fee only when paid, and its book remains outside the club Statement until Stage 9. Existing paid registrations do not create backdated receipts. A tournament admin with Accounting access can record one transfer for two visiting teams; coaches see the own-team no-fee message. Success is a fee-book total that matches new paid figures, with corrections and undos visible as voided history, and a tournament activity total that includes costs from the general book.

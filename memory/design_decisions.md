@@ -197,6 +197,20 @@ p.m."; Registered and announcement dates on the club's clock; "Playing now" by t
 the change notice and the calendar file; breakpoints onto 640 / 768 / 900); **every 7d change lands in the free portal too**
 (one page, two shells), including the title order: the free shell's header names the tournament, the team under it.
 
+**Decision (7d build — Put to the owner 1–4, all (a), owner 2026-10-22):**
+1. **Who may change an event's head coach is a GRANT, never the staff label:** the head coach, and anyone holding Register for
+   tournaments (on in the Team manager preset). In a club nobody holds that grant (a club's entries are the club admin's), so in a
+   club it is **the head coach alone**; everyone else reads "Head coach for this event: … · Ask the head coach to change this." A
+   free team has one signed-in member, who is its head coach. One rule, read by the page (form or line) and the PATCH route
+   (refuse). An ASSIGNMENT decides before free-team membership (a paid team's staff can also be members of its free-team shadow).
+2. **"2nd of 4" on a finished row only when it is known** — the organizer shows standings and the division played a round robin;
+   absent otherwise (no placeholder, no dash). Read once per list load in one batch, never per row.
+3. **The free account hub keeps one section per team**, each the same Coming up / Finished row list as the team's own tab; the
+   hub's own card styling retired.
+4. **A required field that autosaves:** a blank name is never sent — the field says "Enter a head coach name." and the last
+   saved name stands; "Saved" shows only after a real save; a cleared email IS a save (mail reverts to the registration email).
+   The email saves on leaving the field, never on a typing pause (a half-typed address can already look valid).
+
 **Decision (walk — Ask 13 — A):** each part (7a–7d) gets **its own checkable walk page after its build**, one purpose per walk.
 
 **Rationale:** a club's tournament already has a book of its own; a fee in the general book would mix one event's money into

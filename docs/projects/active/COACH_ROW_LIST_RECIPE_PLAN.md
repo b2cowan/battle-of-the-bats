@@ -165,7 +165,7 @@ ruled chip, used on the next-practice card too).
 | F-27 | `CoachEventListRow.tsx`, `practice/page.tsx`, `lineups/page.tsx` | one `CoachRowList` per hub with two bands; `note` → `caption2` with `data-meaning`; the run-window `Run practice` sibling (`eventChipRow`) stays. The "Every practice this season ›" door sits under the frame. |
 | F-28 | `lineups/page.tsx` templates pane | `as="static"` rows with the name as the link and three controls in `trail`, all `--tap-min` at ≤ 768. |
 | F-29 | `history/opponents/panel.tsx` | `as="link"`, `lead={<NoteDot/>}`, trail: club badge + record chip. |
-| F-30 | `CoachRegistrationCard.tsx` (+ its module) | `variant="row"`; `tournaments/page.tsx` and `CoachHostedTournamentsSection.tsx` pass it; the free Overview keeps the card. The `FanViewLink` line sits under the row as a caption line. |
+| F-30 | ✅ **Built by Club Tier Stage 7d (2026-10-22), not B2** — `CoachTournamentRows` renders the paid list, the free team list and the free hub on `CoachRow` (banded Coming up / Finished; chip beside the name; Fan view one door under the list). `CoachRegistrationCard` stays for the free Overview and the hosted section only. ~~Original plan:~~ `CoachRegistrationCard.tsx` (+ its module) | `variant="row"`; `tournaments/page.tsx` and `CoachHostedTournamentsSection.tsx` pass it; the free Overview keeps the card. The `FanViewLink` line sits under the row as a caption line. |
 | F-31 | `RepAnnouncementEditor.tsx` / `AnnouncementEditor.tsx` | `inset` list on the log card; the fold button stays; status icon as lead. |
 | F-32 | `roster/[playerId]/page.tsx` (sessions, awards) | `inset`, compact, label line kept. |
 | F-33 | `PlayerNotesTab.tsx` | date lead in the body face. |
@@ -190,7 +190,8 @@ Game day sibling link · "8:00 a.m." everywhere a time is shown.
 1. **Session B1** — the component + the three gate extensions, proven on the Scouting book (the
    Q1 specimen); then the season's daily screens: Schedule list (F-26), the two hubs and Lineups
    templates (F-27, F-28). `/simplify` · `/review` · `/docs` · ledger §-walk · commit.
-2. **Session B2** — Tournaments (F-30), Announcements (F-31), the small lists (F-32–F-35, F-38,
+2. **Session B2** — ~~Tournaments (F-30)~~ (left B2 on 2026-10-22: Club Tier Stage 7d built all three coach
+   Tournaments lists on `CoachRow`, Ask 8 — see the F-30 row), Announcements (F-31), the small lists (F-32–F-35, F-38,
    F-39), the quiet ones (F-37, F-36), F-40 if the opponent page is open. Same close-out.
 
 Each session's walk is its own ledger §; the hub's QA Walk tab is unhidden and finalised then.

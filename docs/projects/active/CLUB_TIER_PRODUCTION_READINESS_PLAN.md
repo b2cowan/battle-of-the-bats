@@ -2383,6 +2383,73 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 > **⚖ RULED 2026-10-20 (owner): all 13 asks as recommended (option A each), round 1.** Design-log entry written; build prompts
 > `CLUB_TIER_STAGE7A_BUILD_PROMPT.md` (first); the 7b / 7c / 7d prompts are written after 7a commits and walks; each part gets
 > its own walk (Ask 13). **Stage 12c's wait on Ask 1 is over:** an online tournament payment goes through 7a's one fee write. Nothing
+> **7d BUILT 2026-10-22** (walk §361, https://claude.ai/artifact/U5kFSggaVAN2Z1YmVq8o5N; no migration). Owner answers at the start, all (a) (design log 2026-10-20
+> "STAGE 7", the "7d build" entry): (1) the event's head coach is edited by the head coach or a Register-for-tournaments holder —
+> in a club the head coach alone — through ONE rule (`canEditEventHeadCoach` over `resolveEventHeadCoachAccess`) read by the page
+> and the PATCH route, an ASSIGNMENT deciding before free-team membership; (2) "2nd of 4" only when standings are public, read in
+> one batch per list load; (3) the free hub keeps one section per team; (4) a blank name is never sent, a cleared email is a save,
+> the email saves on leaving the field only. **Built:** the three lists on `CoachRow` through one mapping (`tournamentRowFace`);
+> the record rebuilt (title by the tournament, one chip row, "Games on your Schedule" → `?day=`, Your games as rows with Standings
+> beside, one Registration card, the head coach autosaving, From the organizer as rows, two columns ≥ 901 px, 640/768/900); the
+> paid page draws its own header (the header guard places a "?" by the page that renders it), the free shell's header names the
+> tournament with the team under it; the road back on the Schedule sheet and the free Schedule's tournament rows; the clock
+> (`lib/game-clock-labels.ts`), the ONE live rule in all three coach readers, "vs"/"at" (rows, notice, calendar file, the Schedule's
+> chip and sheet); the tab title "Tournament · Team" in both portals. **Departures:** the day label keeps the product's
+> "Sat, Oct 17" (comma; the drawing has none); a playoff game reads "Playoff ·" (the round's name is not stored; the drawing's
+> "Final ·"); the per-row venue Maps link is gone (the drawing draws none); the Registration card keeps a Roster row when a roster
+> was submitted (undrawn); the Fan view sits in the chip row, not the page header (the header's actions slot holds verbs only);
+> "Fan view of every tournament" opens Following (the drawing names no destination); the head coach's email placeholder shows the
+> team's registration email when known. **Retired:** the tinted hero (TeamHQ's tournament variant), the quick-jump row, the
+> standings snapshot card, the status block, the old card rows on the three lists. **Fixture:** `seed-club-fixture.mjs
+> --tournament-games[=finished]` publishes the 15U division and writes the round robin + a final (applied to dev, upcoming).
+> **Found, not fixed:** the roster-submit route still opens to anyone who can open the entry (owner question); an ex-coach who
+> stays a member of a paid team's free-team shadow still opens and edits through membership; the tournament Teams toolbar guard
+> fails on HEAD (not this work); the Schedule page's opponents-book effect trips `set-state-in-effect` on HEAD (not this work).
+> **7d CLOSE-OUT LOG** (prompt `CLUB_TIER_STAGE7D_CLOSEOUT_PROMPT.md`). One line per agent, ticked THE MOMENT that agent
+> finishes — date, result in one line, what changed. A line still `[ ]` was NOT run, whatever any summary says.
+> - [x] `/simplify` — 2026-10-22: 4 reviewers (reuse, simplification, efficiency, altitude), ~30 findings (overlapping), 13 distinct fixes, rest skipped as
+>   minor or wider than 7d (React `cache` / one shared access lookup, `?finish=1` as its own route, `TeamHQ` one-variant wrapper, `?day=`
+>   parse twin, dead `chip` field in the shell type, `getStandings`/`Promise.all` reshuffle in the record, poll row-identity). Fixed:
+>   the email check and the head-coach messages are now one set shared by the page and the route; "finished" is one rule
+>   (`isFinishedLifecycle`); the Registration card uses `formatMoney`; the change notice uses `homeAwayWord`; the `basic-coach-teams`
+>   re-export is gone; the live schedule uses `useMinuteClock`; the entry title is one read; the tournament rows take `entries` +
+>   `hrefBase` (fan-door computed inside); the head-coach name no longer double-sends; four needless exports dropped. Files:
+>   `lib/coach-event-head-coach.ts`, `lib/coach-tournament-lifecycle.ts`, `lib/coach-tournament-rows.ts`, `lib/coach-tournament-finish.ts`,
+>   `lib/coach-registration-access.ts`, `lib/basic-coach-teams.ts`, `lib/schedule-change-notices.ts` (one line), the tournament-intel and
+>   tournaments PATCH routes, `CoachTournamentRows`, `CoachTournamentRecord`, `CoachLiveSchedule`, `HeadCoachEditor`,
+>   `TournamentRegistrationCard`, and the three tournament list pages. Typecheck clean; the three 7d tests pass (46/46).
+> - [x] `/review` — 2026-10-22, HIGH tier, 4 lenses (authz+money, correctness+data, client state+`?day=`, regression). 0 Critical/High;
+>   ~20 findings → 8 fixed, 3 PUT TO THE OWNER (below), the rest skipped as Low. Money redaction, the PATCH-refuses-before-write
+>   order, assignment-before-membership, the finish read being absent on failure, the road back and `HISTORY_ENDPOINTS` all held.
+>   FIXED: the record lost its `#schedule` anchor, so "your game moved" bell/push links landed at the top of the page (anchor
+>   restored + a test); a finish rank showed while a tie waited on a coin toss (now absent); a finish was ranked off a capped
+>   1000-row read (now absent); the list showed a finish for a division whose schedule is not published while the record did not
+>   (now both agree); the head-coach autosave: a value the route refused left "Unsaved changes" up for good and was re-sent on
+>   every blur, a failed save could leave a Retry that did nothing, two saves of one field could land out of order, and a name
+>   typed just before leaving the page was dropped (all four fixed); a `?day=` link re-applied itself on every later open of the
+>   list (now the first open only); a stale comment on the free Overview's "live" rule. Files: `components/coaches/HeadCoachEditor.tsx`,
+>   `useScheduleOpensOnToday.ts`, `CoachTournamentRecord.tsx`, `lib/coach-tournament-finish.ts`, `lib/coach-tournament-rows.ts`,
+>   `lib/basic-coach-teams.ts` (a comment), `tests/unit/coach-tournament-rows.test.ts`. Typecheck clean; 7d tests + guards pass.
+>   Gate: `verify:changed` stops at the known `tournament-stage3-part7-guard` failure; run piece by piece, only two other gates are red and
+>   both are other sessions' work (the 7c `SendParts.module.css` colour literal, and schema parity for dev-only migrations 347–349).
+>   `check:layout` SKIPPED here (the shared portal stylesheets widen it to the whole list, which does not run on the dev server) — `/design` renders the 7d screens.
+>   **PUT TO THE OWNER (each touches the Ask 10 head-coach ruling, so not changed):** (1) a person removed from a team's staff keeps
+>   their free-team shadow membership (staff removal never touches it), so the membership fallback lets them rewrite the event's
+>   head coach/organizer email on an entry they no longer coach — recommend the fallback applies only to a registration with NO
+>   rep-team link (a pure free team); (2) the "nobody holds Register for tournaments in a club" premise is enforced when a grant
+>   is WRITTEN, not read, so a club team-manager row written before 2026-10-13 still passes — recommend applying the club policy
+>   when the grant is read (and checking prod for such rows); (3) a finish rank shows on an event whose dates are past but the
+>   organizer has not closed it ("wrapping up"), from partial results — recommend showing it only once the organizer marks the
+>   event complete.
+>   Skipped (Low): PATCH does not check a rejected entry's status (the page already hides the form; the caller is eligible anyway);
+>   an invalid `?day=` is not stripped from the URL; a reinstated cancelled game is not announced; `24:00:00` reads as noon;
+>   the access lookup runs twice per request (a cost, not a defect). Also owed at commit time: the new files are untracked —
+>   stage them by explicit path with the 7d edits, or the tracked files that import them will not build.
+> - [ ] `/design` (390 + 1440, both portals, warm + dark) —
+> - [ ] `/marketing` (every new or changed sentence) —
+> - [ ] `/docs` (the coach Tournaments help: the help door, the road to the games, who may change the head coach) —
+> - [ ] `/strategy` (plan-inclusion check only) —
+> - [ ] Gates re-run after the fixes (typecheck, the 7d tests + guards, `verify:changed`) —
 > **7c BUILT 2026-10-22** (walk §359, https://claude.ai/artifact/7yK3vG8tTbvFRd2XkMz1cK; migration 347 applied to DEV — the
 > `family_email_sends` table and the `family_email_claim` function — prod-pending in `MANUAL_PROD_STEPS.json`). Owner answers at
 > the start, all as recommended (design log 2026-10-22 "STAGE 7C"): the Emails tab keeps the words and counts, never names; a
@@ -2447,7 +2514,7 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 - [x] **7a · tournament money:** a paid visiting team writes into its tournament book (`tournament_fee_receipt`), including deposit then balance, correction and undo; two teams may share one transfer line. A club rep-linked team reads Our team / No fee and writes no fee. The Accounting setting creates the tournament's category and Entry fees word before payment; the book opens with the first fee. Existing paid figures form a baseline and are not backfilled. The house league's paid fee now uses the same atomic fee-line primitive; its book joins the Statement in Stage 9. The club Statement and By activity include the tournament through its filed word. A paid withdrawn visitor keeps its receipt for a separate typed refund. A link cannot be added to a visitor with an active receipt or removed from a paid own team until payment is undone. All six house-fee defect tests, atomicity and arithmetic checks passed on DEV. The old hub banner was already fixed (G01); G03 remains for 7b.
 - [x] **Message every family** (G02) — **built as 7c, Email families, on Families** (not the hub; Ask 6): every family, some rep teams or a house-league season, each family once, through the family-email choke point with suppression, a preview count, a send log (the Emails tab) and a club cap of three a day. Built 2026-10-22, walk §359 owed. It does not reuse the house-league sender (a sequential loop); the house league moving onto the new batched sender is the follow-up.
 - [x] **By activity on the club's Budget vs. Actual** (from 3b, Ask 5): the coach's third report shape is reused for a hosted tournament's revenue and costs filed under its category.
-- [ ] **The coach portal's Tournaments** (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.** *From Stage 6c (ruled 2026-10-10):* the record's dates and times read the device's clock (`CoachLiveSchedule`, `formatGameDateLabel`) — the recipe's own clock and words (C8, C10); "LIVE" follows its own rule (a submitted score, today) instead of the shared game-status rule (C6-09); "vs / @" on its rows and "vs / at" in its change banner — one.
+- [ ] **The coach portal's Tournaments** — **BUILT as 7d 2026-10-22, walk §361 owed** (see "7d BUILT" above). (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.** *From Stage 6c (ruled 2026-10-10):* the record's dates and times read the device's clock (`CoachLiveSchedule`, `formatGameDateLabel`) — the recipe's own clock and words (C8, C10); "LIVE" follows its own rule (a submitted score, today) instead of the shared game-status rule (C6-09); "vs / @" on its rows and "vs / at" in its change banner — one.
 **QA walk §J.** **Migrations:** ~~`org_announcements` (+ send log) if the broadcast is recorded~~ — superseded by Ask 7 (2026-10-22): mig 347's `family_email_sends` + `family_email_claim`, the Emails tab's record.
 
 ### Stage 8 — Release readiness
@@ -2779,6 +2846,75 @@ unwritten departures.
 **Migrations:** none expected. **Definition of done:** the inventory walked; every crossing ruled and built; parity holds or is
 written as an exception; `NAV_STANDARD.md` updated; the guards in the build; the walk passed.
 
+### Stage 14 — One player across seasons and teams: current and historical players (⚖ added by the owner 2026-10-22; inside the release; not yet drawn)
+> **Why this stage exists:** the owner, 2026-10-22, asking what *Start next season* does to a team that keeps its kids and moves up
+> an age group: *"we already have the family library but need to figure out a way to not have to also make duplicate players with
+> duplicate documents etc. year by year."* **What the code does today (a census of 2026-10-22; re-read the cited places when the
+> stage opens, a helper's summary is a lead):** (1) **no player identity outlives a season** — each season's roster entry is an
+> independent copy, and the roll copies it by value; (2) **the roll carries only ACTIVE players** — a released, inactive or call-up
+> player is not carried, gets no history link and no dues, so a kid who comes back is a stranger; (3) **waivers and documents are
+> never carried** — the roll's own note tells the coach to collect fresh ones, so the same kid's papers are re-collected every
+> year on a new record; (4) **history links join two entries on the same team only** (cross-team is structurally refused by the
+> database) and are made by the roll or by the tryout matcher; (5) **no door picks an existing player** — the coach adds by typing
+> or pasting a list, the club admin has no add-player door at all, and a duplicate is warned about only on the paste-a-list door
+> (same season, by name, ignoring birth date); (6) **the Families book holds the ADULTS** (a guardian record keyed by club and
+> email); a child is a roster entry that points at a guardian, and children are not matched across teams. The owner's direction:
+> **the family library is the anchor, and a child should be one record that every season's roster entry points at.**
+>
+> **⚖ Ruled 2026-10-22 (owner), the first slice only:** *Start next season* **asks what the team is doing** — **(a) the same group
+> moving up an age group** or **(b) a new group in the same age group** (a coach who keeps their kids and a club that keeps its
+> slot are both served; today's single behavior is (b) with the roster carried). On (a) the **roster is a carry choice** beside
+> the budget, the dues and the cash. **Proposed, not ruled:** on (b) the roster carry defaults **off** (the birth years roll to the
+> next cohort, so last year's kids are the wrong kids; today they are carried and the coach deletes them); on (a) the team's age
+> group moves up one (11U → 12U) and its birth years stay.
+**Closes:** the same child created again every season · documents and waivers re-collected on a new record · a returning kid
+who was released or sat out a year arriving with no history · the single-add form's missing duplicate check · the open gap
+between the coach's idea of a team (kids who age up) and the club's (a slot that gets a new cohort).
+- [ ] **14a · The season window asks what the team is doing (the ruled slice):** the *Start next season* window for the coach and
+  the club's own copy of it — the two choices above, roster as a carry choice on (a), the birth years and the age group each
+  following the choice, the same words in both portals. Mockup first (the window on a phone and a computer, both paths, what the
+  confirmation says about the roster). Open: what (a) does to a team's name and public listing, and whether a coach (not only the
+  club) may change a team's age group, since no coach screen edits it today.
+- [ ] **14b · One child, many seasons (the design question this stage exists for):** a **player record that outlives a season**,
+  anchored to the family library, with each season's roster entry as that season's membership of it (jersey, position, status),
+  so a returning child is picked, not retyped. **The shape is not decided.** Options to draw: (i) the smallest — a **"bring back a
+  past player"** picker over this team's earlier seasons (including players the roll skipped), plus a "same kid?" nudge when
+  anything typed matches a past player by name and birth date (which also closes the single-add form's gap); (ii) a **club-level
+  child record** under the family library that every team's roster entry points at, which is what makes a **cross-team** picker
+  (a 11U kid joining a different 12U team) possible. **The recommendation to test at the session: build (i) first on the shape
+  that (ii) will grow into, and hold the cross-team picker until the privacy question below is ruled.**
+- [ ] **14c · Documents and waivers across seasons:** a document belongs to the child's record and reads on every season's
+  entry, so a signed medical form is not re-uploaded. **The honest limit to rule at the session:** a waiver is usually valid for
+  one season, so the win is **one record with a document history and a "needs re-signing this season" state**, not skipping the
+  re-sign. Which documents are per-season and which carry (a medical note, an emergency contact, a photo consent) is the owner's
+  call, with counsel's read where it touches consent.
+- [ ] **14d · Existing data (the migration question):** every club already has years of duplicate players. A **review-and-merge**
+  pass (the matcher's existing high / possible tiers, the Families book's duplicate-guardian logic as the model) before any
+  forced merge; a merge never deletes a season's entry, and a roster's history links survive it. Standalone coaches with no club
+  sit on the same data: **open — does a standalone coach's team get the same record, or does 14b stay a club feature?**
+- [ ] **Open questions for the owner session:** **privacy** — what a coach on one team may see of a child who played on another
+  (medical notes, guardian contact, evaluations), and whether a past-team coach's notes travel (the Notes feature already keeps
+  a coach's private note out of the family file); **who may link or merge** — the club admin only, or the head coach for their
+  own team; **a child's age and the birth-year check** — whether picking a past player into a team flags a birth year outside
+  the team's range; **the demo sandboxes** — their seed will need the record (a number in a demo sentence is computed from the
+  seed).
+- [ ] **Owner mockup session** (drawn before any build, through `/design`): the season window both ways; the picker at 390 and at
+  1440 and what a returning kid looks like once picked; a child's page across three seasons with its documents; the merge pass;
+  the "same kid?" nudge.
+- [ ] **Build gates:** the look-back rule — a picker reads earlier seasons, so its route is a **new look-back route** and must be
+  added to `HISTORY_ENDPOINTS` on purpose, with the three questions answered (it is a record read feeding a write to the working
+  season; the whole subtree is the picker; the season it reads from is named on screen). A unit test that a roll never invents a
+  duplicate for a child already on the new season's roster.
+**Migrations (expected, each with its dictionary line and snapshot refresh):** a child record that outlives a season (or a stable
+child key on the roster entry), the link from a season's entry to it, document ownership moved from the roster entry to the
+child, and the backfill that merges what the matcher is sure of. **Definition of done:** the window asks and each path does what
+it says; a returning child is picked, never retyped, and arrives with their history and their still-valid documents; a duplicate
+typed anyway is flagged on every add door; existing duplicates have a review path; the privacy rulings are built into the reads;
+the demos carry it; unit tests for the roll, the picker's reads and the merge; the layout sweep on staging; **the Stage 14
+walk** (its own checkable page, a § in the Owner QA Ledger) passed.
+**Effort:** not estimated — 14a is small; 14b–14d are a data-model change that touches the roster, tryouts, documents and the
+Families book, so it is sized at its own mockup session rather than guessed here.
+
 ## 7. Sequencing & dependencies
 
 ```
@@ -2793,6 +2929,9 @@ Stage 9 (house league) ─── its own plan and release track; may run alongsi
 Stage 12 (payments, ⚖ 2026-10-19): 12a foundation (any time; no live charge before counsel) ─► 12b house league (after Stage 9) ·
                    12c tournaments (after Stage 7) ─► 12d hardening ─► Stage 8 ─► release (the release waits for Stage 12)
 Stage 13 (navigation, ⚖ 2026-10-20): after every stage that adds a nav door (7, 9, 10, 11, 12) ─► Stage 8's go/no-go
+Stage 14 (one player across seasons, ⚖ 2026-10-22): 14a (the season window) any time after Stage 4c-2's coach side ─► 14b child
+                   record + picker ─► 14c documents ─► 14d existing-data merge ─► Stage 8's go/no-go (14b–14d draw after Stage 5,
+                   whose Families book they build on; Stage 13 re-checks any door 14 adds)
 Stage 6 (built) ─► 6c one calendar (review + the coach desk schedule) ─► Stage 10 + Stage 11 drawn in ONE session
                    (permits → the club's schedules) ─► built as two ─► Stage 8 ─► release (⚖ 2026-10-08: the release
                    waits for Stage 11 too)
