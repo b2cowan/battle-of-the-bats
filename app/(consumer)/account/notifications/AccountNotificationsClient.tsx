@@ -171,7 +171,7 @@ function CoachCard({ card }: { card: NotificationCard }) {
   const clubTeam = card.clubTeam === true;
   const clubMoney = clubTeam && card.clubMoney === true;
   const clubEvents = useMemo<NotificationEventType[]>(
-    () => (clubMoney ? ['club_season_changed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_MONEY_EVENTS, ...CLUB_HAND_BACK_EVENTS] : ['club_season_changed', ...CLUB_SCHEDULE_EVENTS]),
+    () => (clubMoney ? ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_MONEY_EVENTS, ...CLUB_HAND_BACK_EVENTS] : ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS]),
     [clubMoney],
   );
   const eventTypes = useMemo<NotificationEventType[]>(

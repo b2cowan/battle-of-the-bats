@@ -41,6 +41,7 @@ import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zone
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { readStoredEventKind, scrimmageFlagFor } from './coach-schedule-vocab';
 import { storedCutoffs } from './born-years';
+import { sanitizeCoachNamesPolicy } from './coach-names-policy';
 import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
@@ -1801,6 +1802,8 @@ function mapOrg(r: any): Organization {
     clubBookSharingEnabled: r.club_book_sharing_enabled === true,
     // When birthdays count from (mig 349). An absent column reads as '{}' — every sport on January 1.
     birthdayCutoffs: storedCutoffs(r.birthday_cutoffs),
+    // Who the club lists as a coach (mig 352). An absent column reads as the default — each coach decides.
+    coachNamesPolicy: sanitizeCoachNamesPolicy(r.coach_names_policy),
   };
 }
 

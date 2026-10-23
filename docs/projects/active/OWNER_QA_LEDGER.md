@@ -26270,3 +26270,12 @@ republished; tick positions unchanged).
 
 **Not in the walk (tests cover it, or no fixture):** removal clearing the address and the name switch; a save racing a removal or the club's reset; the site switched off; share cards and link previews; a team between seasons.
 <!-- /§362 -->
+
+## §363 · Club Tier · Coach names, the club decides who is listed on team pages — **the club's owner chooses once for every team (Coaches choose · Head coaches always · Head and assistant coaches always · No coach names) from a sixth row on Public site; the two "always" choices ask first with the real count; a coach's own switch is never overwritten and is replaced by "Listed by your club" / "Not listed by your club" where the club has decided; a newly listed coach gets one notice; families see the result on the team page and on the tryout page's head-coach line**
+
+**Built:** 2026-10-23 from `COACH_NAMES_CLUB_POLICY_BUILD_PROMPT.md`, UNCOMMITTED on `dev`. Migration 352 (`organizations.coach_names_policy`) applied to DEV only; a schema-visible text CHECK, so no manual-prod entry; apply to prod before the code ships. Owner rulings 2026-10-23: all six asks as recommended, and A7 yes (the tryout line follows the same rule). Words by `/marketing` (`COACH_NAMES_CLUB_POLICY_COPY.md`), help by `/docs`. `/review` and `/simplify` not yet run.
+
+**The walk:** [Coach names walk](COACH_NAMES_CLUB_POLICY_WALK.html), published https://claude.ai/artifact/FGyYGQgPs7P6ty15JJdfCK 2026-10-23. 40 steps in seven parts: A the owner chooses · B the coach's own row by choice · C what a family sees · D being told · E an admin reads, a manager keeps their switch (needs two accounts the fixture lacks) · F a phone · G put it back. Fixture: UAT Lakeshore Lynx (Jordan head ON, Sam assistant OFF, Pat head OFF). This entry awaits the owner's browser verdict. The user performs browser and visual QA under `AGENCY_RULES.md`.
+
+**Not in the walk (tests cover it, or no fixture):** the rule table and counts; a coach with no name on file; a team between seasons or archived; Schedule visibility (separate).
+<!-- /§363 -->

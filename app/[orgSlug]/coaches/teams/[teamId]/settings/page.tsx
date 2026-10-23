@@ -21,6 +21,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import ClubSiteOffNotice from '@/components/coaches/ClubSiteOffNotice';
 import CoachPublicPageDoor, { VISIBILITY_LABEL } from '@/components/coaches/CoachPublicPageDoor';
+import type { CoachNamesPolicy } from '@/lib/coach-names-policy';
 
 interface SettingsData {
   team: { id: string; name: string; division: string | null; sport: string };
@@ -43,7 +44,11 @@ interface SettingsData {
   clubSiteOff: boolean;
   /** "Your team's public page" + the caller's OWN name switch (Club Tier 4c-2 Part B). Null ⇒ no public team page in
    *  the plan ⇒ both absent. Served to every coach: each decides about their own name. */
-  publicPage: { path: string; showMyName: boolean } | null;
+  publicPage: {
+    path: string; showMyName: boolean;
+    /** The club's choice (mig 352) and what it means for this coach — computed on the server. */
+    namesPolicy: CoachNamesPolicy; ownSwitchApplies: boolean; listedByClub: boolean;
+  } | null;
   /** The team's arrival habit (mig 307): minutes before a game / a practice a new event starts at. */
   arrivalDefaults: { game: number | null; practice: number | null; canEdit: boolean };
   /** Null when this coach has no money access — the server omits the figures entirely. */
@@ -1001,6 +1006,9 @@ export default function TeamSettingsPage({
                   visibility={data.scheduleVisibility?.value ?? null}
                   canChangeVisibility={!!data.scheduleVisibility?.canEdit}
                   showMyName={data.publicPage.showMyName}
+                  namesPolicy={data.publicPage.namesPolicy}
+                  ownSwitchApplies={data.publicPage.ownSwitchApplies}
+                  listedByClub={data.publicPage.listedByClub}
                   onSaveName={saveShowMyName}
                 />
               )}

@@ -9929,6 +9929,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "organizations",
+        "pos": 46,
+        "column_name": "coach_names_policy",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'coaches_choose'::text"
+      },
+      {
         "table_name": "pitch_decks",
         "pos": 1,
         "column_name": "id",
@@ -33925,6 +33934,12 @@
         "table_name": "organizations",
         "detail": "organizations_birthday_cutoffs_shape",
         "check_clause": "birthday_cutoffs_valid(birthday_cutoffs)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
+        "detail": "organizations_coach_names_policy_check",
+        "check_clause": "(coach_names_policy = ANY (ARRAY['coaches_choose'::text, 'heads_always'::text, 'heads_and_assistants_always'::text, 'none'::text]))"
       },
       {
         "kind": "CHECK",

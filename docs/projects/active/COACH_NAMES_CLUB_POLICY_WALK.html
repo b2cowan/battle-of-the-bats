@@ -1,0 +1,298 @@
+<title>Coach names walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single reading column of walk parts; each part is a card with its steps, a verdict row and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+.purpose{font-size:14px;color:var(--ink)}
+ol,ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ul.plain li{padding:2px 4px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+.heads-up{border-color:var(--warn);background:var(--warn-bg)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Coach names · the club decides who is listed on team pages</h1>
+    <p>Owner QA Ledger §363. One purpose: the club's owner chooses, once for every team, who is listed under Coaches on a team's public page; a coach's own switch is never overwritten; coaches are told once; families see the result, including the head coach's name on the tryout page.</p>
+    <p>The test club is <b>UAT Lakeshore Lynx</b> (the rep-only club, slug uat-rep-only), as seeded for walk B: <b>15U AAA</b>, head coach <b>Jordan Reyes</b> (name on; tryout address on) and assistant <b>Sam Okafor</b> (name off); <b>13U AAA</b>, head coach <b>Pat Lindqvist</b> (name off; no tryout address). Parts run in order; each says which account it is signed in as.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server), signing in at <code>/auth/login</code>. A computer for Parts A to E and G; the browser's phone view at 390 px for Part F. Keep this card private: it carries test passwords.</dd>
+      <dt>OWNER · Lakeshore club owner</dt><dd><code>uat-rep-only-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · admin at <code>/uat-rep-only/admin</code></dd>
+      <dt>JORDAN · head coach, 15U AAA</dt><dd><code>uat-lynx-head-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>SAM · assistant, 15U AAA</dt><dd><code>uat-lynx-assistant-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>PAT · head coach, 13U AAA</dt><dd><code>uat-lynx-head-13aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>ADMIN · MANAGER</dt><dd>Not in the fixture yet (Part E). Needs the smallest addition first.</dd>
+      <dt>A family</dt><dd>A private window, signed out, for <code>/uat-rep-only/teams/15u-aaa</code>, <code>/uat-rep-only/teams/13u-aaa</code> and <code>/uat-rep-only/teams/15u-aaa/tryouts</code>.</dd>
+      <dt>Two people at once</dt><dd>One person per browser window: sign out before switching, or use a second private window.</dd>
+    </dl>
+  </section>
+
+  <section class="card heads-up" aria-labelledby="warn-h">
+    <h2 id="warn-h">Before you start</h2>
+    <ul class="plain">
+      <li>Migration 352 is applied to the DEV database only. The dev server needs a restart if it was running before the build (new files).</li>
+      <li>The counts in the ask-first windows are the real ones from the fixture. If they differ from the numbers written here, someone changed the fixture's coaches: write what you saw rather than failing the step.</li>
+      <li>Where this walk quotes the product's words, apostrophes may be straight or curly. Don't log that as a difference.</li>
+      <li>If a step's words don't match, tick nothing, write what you saw in that part's notes and mark Issue.</li>
+    </ul>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="known-h">
+    <h2 id="known-h">Not in this walk</h2>
+    <p class="where">Covered by tests, or for a later stage. Don't log these.</p>
+    <ul class="plain">
+      <li>The rule table itself (every choice by every role, switch on and off) and the counts: pinned by unit tests.</li>
+      <li>A coach with no name on file being left out, and a team between seasons or archived listing nobody: pinned by tests; no fixture team is in those states.</li>
+      <li>Schedule visibility (who may set it) is a separate setting and is untouched.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  {
+    "id": "pA",
+    "title": "A · The owner chooses, on Public site",
+    "purpose": "The owner picks who is listed under Coaches on every team page; the two \"always\" choices ask first with the real count; the other two save at once.",
+    "where": "A computer. OWNER signed in at /uat-rep-only/admin/public-site. Start state: Coaches choose, Jordan Reyes's switch ON, Sam Okafor's and Pat Lindqvist's OFF.",
+    "steps": [
+      "OWNER: Public site shows SIX rows in this order: Look, Home page, About the club, Contacts and documents, Coaches on team pages, Visibility. The closed Coaches row reads \"Coaches choose\".",
+      "OWNER: open Coaches on team pages. A lead sentence (\"Who is listed under Coaches on each team's public page. It is the same for every team. A listing shows a name and a role, never an email address, a phone number or a player.\"), then ONE framed list of four choices with radios: Coaches choose · Head coaches always · Head and assistant coaches always · No coach names, each with its own line under it, then a hint line ending \"...whether a team's tryout page names its head coach.\"",
+      "OWNER: \"Coaches choose\" is the selected radio. Nothing else on the row (no Save button).",
+      "OWNER: pick Head coaches always. A window opens titled \"List every head coach on team pages?\" saying the real count: \"1 head coach on 1 team will be listed under Coaches on their team's public page, with their name and role. Each one gets a notice and can read it in Team settings.\" (Pat, the only head coach not already listed.) Buttons: Not now on the left, List them on the right; no × in the corner.",
+      "OWNER: behind the window the list still shows Coaches choose selected. Press Not now: the window closes and Coaches choose is still selected. Open it again and press Escape: same. Open it again and tap outside the window: same.",
+      "OWNER: pick Head coaches always again, press List them. The window closes, a \"Saved\" pill appears and fades, the closed row now reads \"Head coaches always\", and Head coaches always is the selected radio.",
+      "OWNER: pick Head and assistant coaches always. The window is titled \"List assistant coaches on team pages?\" and counts the assistant alone: \"1 assistant coach on 1 team will be listed under Coaches on their team's public page, ...\". Press List them: Saved, row reads \"Head and assistant coaches always\".",
+      "OWNER: pick No coach names. NO window: it saves at once with the Saved pill, and the row reads \"No coach names\".",
+      "OWNER: pick Coaches choose. No window; Saved; the row reads \"Coaches choose\". (End of part A: Coaches choose, ready for the next parts.)"
+    ]
+  },
+  {
+    "id": "pB",
+    "title": "B · The coach's own row, by choice",
+    "purpose": "Where the club has decided for a coach's role the switch is replaced by one sentence and plain text; where it has not, the switch stays; the coach's own saved choice is never overwritten.",
+    "where": "A computer. JORDAN (head, 15U AAA) and SAM (assistant, 15U AAA) on /uat-rep-only/coaches/teams/28e196de-c6ac-4039-9d52-f4b5577be4d8/settings, Sharing section; PAT (head, 13U AAA) on /uat-rep-only/coaches/teams/eef9db33-c192-4745-9ebe-3591ba3e00ed/settings. Between steps the OWNER changes the choice in the other window (the pick that asks first: List them).",
+    "steps": [
+      "Choice: Coaches choose. JORDAN: \"Show my name on the team's public page\" with \"Your name and role only.\" and the switch, ON. SAM: the same row, switch OFF. Exactly as before this change.",
+      "Choice: Head coaches always (OWNER sets it). JORDAN reload: the sentence reads \"Your club lists every head coach, with your name and role. Nothing else.\" and where the switch was, plain text \"Listed by your club\". No switch, no tag, no pill, nothing greyed. The label \"Show my name on the team's public page\" is still there.",
+      "Same choice. SAM reload: the sentence reads \"Your club lists every head coach. For other staff it's your choice. Your name and role only.\" and his switch is still there, OFF, and still works (turn it on, a \"Saved\" fades; turn it off again).",
+      "Same choice. PAT reload: \"Listed by your club\" (he is a head coach; his own switch was OFF and is not shown).",
+      "Choice: Head and assistant coaches always. SAM reload: \"Your club lists every head coach and assistant coach, with your name and role. Nothing else.\" and \"Listed by your club\". JORDAN: the same two-role sentence and \"Listed by your club\".",
+      "Choice: No coach names. JORDAN, SAM and PAT each read \"Your club isn't listing coach names on public pages.\" and \"Not listed by your club\" in the control slot.",
+      "Choice back to Coaches choose. JORDAN is back to the switch ON; SAM and PAT back to their switches OFF. Nobody's own choice changed while the club decided. (This is the proof that the club never overwrites a coach.)"
+    ]
+  },
+  {
+    "id": "pC",
+    "title": "C · What a family sees",
+    "purpose": "The Coaches shelf on a team's public page, and the head coach's name on the tryout page, follow the club's choice.",
+    "where": "A private window, signed out: /uat-rep-only/teams/15u-aaa (15U AAA: Jordan head, Sam assistant), /uat-rep-only/teams/13u-aaa (13U AAA: Pat head) and the tryout page /uat-rep-only/teams/15u-aaa/tryouts. Reload after each change. OWNER changes the choice in the other window.",
+    "steps": [
+      "Coaches choose. 15U AAA shows a Coaches shelf with Jordan Reyes, Head coach, and nobody else. 13U AAA shows NO Coaches shelf (Pat is off). The tryout page for 15U AAA says \"Questions about these tryouts? Email Jordan Reyes, head coach\" with the address and Copy.",
+      "Head coaches always. 15U AAA shows Jordan only (Sam is not listed; his switch is off). 13U AAA now shows a Coaches shelf with Pat Lindqvist, Head coach. No email or phone on either.",
+      "Head and assistant coaches always. 15U AAA shows Jordan Reyes (Head coach) first, then Sam Okafor (Assistant coach). Sam is listed even though his own switch is off. 13U AAA shows Pat.",
+      "No coach names. NEITHER team page has a Coaches shelf (no empty heading either). The 15U AAA tryout page now reads \"Questions about these tryouts? Email the head coach\" (no name) with the address and Copy; the Copy button's accessible name says \"the head coach's email address\".",
+      "Head coaches always again. The tryout page names Jordan again (\"Email Jordan Reyes, head coach\"), and so would any head coach who set an address, whatever their own switch says.",
+      "Back to Coaches choose. Both pages are as in the first step of this part."
+    ]
+  },
+  {
+    "id": "pD",
+    "title": "D · Being told",
+    "purpose": "A coach a choice newly lists gets one in-app notice; nobody is told when names are hidden or the choice is handed back.",
+    "where": "A computer. SAM signed in (the bell, and /account/notifications); OWNER in the other window. Start state: Coaches choose; clear Sam's existing bell items first if the bell is crowded.",
+    "steps": [
+      "OWNER sets Head coaches always (List them). SAM's bell has NOTHING new (he is an assistant; this choice does not list him).",
+      "OWNER sets Head and assistant coaches always (List them). SAM's bell shows ONE new item: \"<club name> now lists you as a coach\" with \"Your name and role show under Coaches on your team's public page. Your club chose this for every team.\"",
+      "SAM opens that item: it goes to his team's Team settings, where his row says \"Listed by your club\".",
+      "OWNER sets Head coaches always (assistants go back to their own choice, no window), then No coach names, then Coaches choose. SAM's bell gets NOTHING more from any of those three.",
+      "SAM: /account/notifications has a row \"Your club lists you as a coach\" with the description \"Your club chose to list you under Coaches on a team's public page.\", on by default for the push channel like the other club notices.",
+      "The OWNER (who pressed the button) got no bell item from their own choice."
+    ]
+  },
+  {
+    "id": "pE",
+    "title": "E · An admin reads, a manager keeps their switch (needs two accounts the fixture does not have yet)",
+    "purpose": "An admin who is not the owner can read the choice but not change it; a team manager keeps their own switch under both \"always\" choices.",
+    "where": "Needs a club ADMIN who is not the owner, and a team MANAGER on 15U AAA with a name on file. The rep-only fixture has neither: ask for the smallest addition (one admin sign-in, one manager invited on 15U AAA with their switch off) before walking this part. Until then leave it unticked and mark \"Needs a call\".",
+    "steps": [
+      "ADMIN: Public site shows the same sixth row. Opened, it shows the lead sentence, then plain facts (Listed / Choose for themselves) for the current choice, then \"The owner chooses who is listed.\" No radios, nothing greyed.",
+      "ADMIN: for Head coaches always the facts read Listed: Every head coach / Choose for themselves: Assistant coaches and other staff. For Head and assistant coaches always: Every head coach and assistant coach / Team managers, treasurers and helpers. For No coach names: Listed: No one. For Coaches choose: Listed: Coaches who switch their own name on.",
+      "ADMIN: a hand-made request to change the choice is refused (the page offers no way; the server says no).",
+      "MANAGER under Head and assistant coaches always: their Team settings row keeps its switch and the sentence \"Your club lists every head coach and assistant coach. For other staff it's your choice. Your name and role only.\"; with the switch off they are not on the public Coaches shelf; with it on they are, as \"Team manager\".",
+      "MANAGER under No coach names: \"Your club isn't listing coach names on public pages.\" and \"Not listed by your club\"."
+    ]
+  },
+  {
+    "id": "pF",
+    "title": "F · On a phone (390 px)",
+    "purpose": "Nothing is shortened on a phone; every tap target is easy to hit.",
+    "where": "The browser's phone view at 390 px. OWNER on Public site, JORDAN and SAM on Team settings, a signed-out window on the team page.",
+    "steps": [
+      "OWNER: the Coaches on team pages row opens full width; the four choices wrap their full sentences; each choice row is at least 44 px tall and the whole row (not only the radio) selects it; the hint line stays.",
+      "OWNER: the ask-first window fits the screen, its sentence wraps, Not now and List them are both easy to hit, and there is no × in the corner.",
+      "JORDAN under Head coaches always: the sentence wraps in full and \"Listed by your club\" sits with it without clipping.",
+      "SAM under Head coaches always: the sentence wraps in full and his switch is a 44 px target.",
+      "Signed-out phone: the Coaches shelf on the team page reads as before (name over role)."
+    ]
+  },
+  {
+    "id": "pG",
+    "title": "G · Put it back",
+    "purpose": "End where you began so the next walk starts clean.",
+    "where": "OWNER on Public site; JORDAN, SAM and PAT on their Team settings.",
+    "steps": [
+      "OWNER: the choice is Coaches choose.",
+      "JORDAN switch ON; SAM switch OFF; PAT switch OFF (as at the start of Part A)."
+    ]
+  }
+];
+
+const KEY = 'coach-names-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="purpose"></p><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.purpose').textContent = part.purpose;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((text, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = text;
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§363 Coach names (the club decides who is listed) — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((t, i) => { if (!state[`${part.id}-s${i}`]) lines.push(`  ☐ ${t}`); });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>

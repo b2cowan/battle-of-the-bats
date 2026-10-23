@@ -19,6 +19,7 @@ import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { denyUnless, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
+import { DEFAULT_COACH_NAMES_POLICY, seatNameListing } from '@/lib/coach-names-policy';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import {
   SCHEDULE_VISIBILITIES, isFamilyLayerEnabled, setScheduleVisibility, type ScheduleVisibility,
@@ -149,9 +150,24 @@ export const GET = withObservability(async (_req: Request,
      * EVERY coach on the team — every coach can open Settings since Part B (owner ruling 2026-10-22), and each decides
      * about their own name. NULL when the plan carries no public team page (absent, never locked); a closed site still
      * has the door (Copy link only) and the notice. The path is relative: the client prefixes its own origin.
+     *
+     * The club's choice (mig 352) rides along, computed HERE through the one rule — the client never decides:
+     * `namesPolicy` is the club's choice, `ownSwitchApplies` is false where the club has decided for this coach's role,
+     * and `listedByClub` is whether they are listed then. `showMyName` stays the coach's own STORED switch, whatever the
+     * club chose, so it is what returns when the club goes back to Coaches choose.
      */
     publicPage: hasPublicTeamPage(ctx.org)
-      ? { path: `/${ctx.org.slug}/teams/${team.slug}`, showMyName: membership.showNamePublic }
+      ? (() => {
+          const policy = ctx.org.coachNamesPolicy ?? DEFAULT_COACH_NAMES_POLICY;
+          const listing = seatNameListing(policy, membership);
+          return {
+            path: `/${ctx.org.slug}/teams/${team.slug}`,
+            showMyName: membership.showNamePublic,
+            namesPolicy: policy,
+            ownSwitchApplies: listing.ownSwitchApplies,
+            listedByClub: !listing.ownSwitchApplies && listing.listed,
+          };
+        })()
       : null,
     scheduleVisibility: (await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))
       ? { value: team.scheduleVisibility, canEdit: canManageSchedule(assignment.capabilities) }

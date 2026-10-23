@@ -37,6 +37,7 @@ export const EVENT_ICONS: Record<string, string> = {
   coach_insights_digest:             '📊',
   practice_plan_sent:                '📋',
   club_season_changed:               '📅',
+  club_coach_listed:                 '🧑‍🏫',
   club_coach_joined:                 '🧑‍🏫',
   club_coach_declined:               '✉️',
   team_move_requested:               '🤝',

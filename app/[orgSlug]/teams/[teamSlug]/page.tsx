@@ -87,7 +87,7 @@ export default async function TeamPublicPage({
     // An optional section: a failed read leaves it out rather than taking the page down. Only while the team has a live
     // season (owner ruling 2026-10-22): between seasons a team opens only to its closed-season page, where a coach could
     // not switch their name off, so no name stands on a page nobody is tending.
-    !team.isArchived && liveSeasonOf(programYears) ? getPublicTeamCoaches(org.id, team.id).catch(() => []) : Promise.resolve([]),
+    !team.isArchived && liveSeasonOf(programYears) ? getPublicTeamCoaches(org.id, team.id, org.coachNamesPolicy).catch(() => []) : Promise.resolve([]),
   ]);
   const daysLine = tryoutDaysLine(tryout?.standing.upcoming ?? []);
   // The season under the name is the team's live one; an archived team has none.

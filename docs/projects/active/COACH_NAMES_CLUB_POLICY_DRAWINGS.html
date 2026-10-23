@@ -1,0 +1,464 @@
+<title>Coach Names Policy Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the product's warm portal look.
+   Chrome and specimens deliberately do not share a ground. Specimens are fixed light, like every product frame on these pages. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --accent-soft:#DCEAE5; --flag:#A8361F; --flag-soft:#F7E2DC; --fix:#2B672A; --fix-soft:#DFEEDB;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:20px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+h1{font-size:27px;margin:8px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:23px;margin:46px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:26px 0 6px}
+.doc p,.doc li{max-width:78ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict h2{margin-top:0}
+.verdict ul{margin:6px 0 0;padding-left:20px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 10px}
+.mk{font:700 11px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:5px 7px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.stage{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin:12px 0 8px}
+.stage>.col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.cap{font-size:13px;color:var(--muted);max-width:64ch;margin:4px 0 0}
+.cap b{color:var(--ink)}
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.btn-d{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d:hover{border-color:var(--accent)}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);background:#fff;max-width:100%}
+.dt{width:1440px;background:#fff}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ph{position:relative;width:390px;flex:none;background:#fff;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+@media (max-width:440px){.ph{border-radius:0;outline:0;margin-inline:-16px;width:calc(100% + 32px)}}
+.fr{width:100%;max-width:760px;border-radius:12px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.read{max-width:640px;display:flex;flex-direction:column;gap:6px}
+.measure{font:500 12.5px/1.5 var(--f-mono);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+table.t{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface)}
+table.t th{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tw table.t tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font:600 12px/1.4 var(--f-doc);border-radius:20px;padding:2px 10px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{background:var(--fix-soft);color:var(--fix);border-color:transparent}
+.pill.half{background:var(--ask-soft);color:var(--ask);border-color:transparent}
+.pill.bad{background:var(--flag-soft);color:var(--flag);border-color:transparent}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:6px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:8px 10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted)}
+.ask textarea{width:100%;box-sizing:border-box;min-height:56px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);margin-top:20px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{width:100%;box-sizing:border-box;min-height:150px;font:12.5px/1.45 var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-2);color:var(--ink)}
+dialog.note{max-width:min(520px,calc(100vw - 32px));border:1px solid var(--line);border-radius:14px;padding:0;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog.note::backdrop{background:rgba(15,20,25,.45)}
+dialog.note .nh{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:16px 18px 6px}
+dialog.note .nh h3{margin:0;font-size:17px}
+dialog.note .nb{padding:0 18px 18px;font-size:14.5px}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px;margin:-10px -10px 0 0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+<style>
+/* ══ Product specimens. `.ak` = the admin and coach portals' warm look (values from the Stage 4c-2 drawings, which took
+   them from the product's own warm block). Fixed light. ══ */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--lime:#D9F99D;--red:#B03A22;--amber:#835006;--green:#34662A;--green-t:#E6F0E2;
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak *{box-sizing:border-box}
+.ak .tb{display:flex;align-items:center;gap:10px;height:56px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'IBM Plex Mono',monospace;letter-spacing:.04em}
+.ak .tb .lg{width:26px;height:26px;background:#111;border-radius:4px;display:inline-block}
+.ak .tb .ar{font:600 12px/1 'IBM Plex Mono',monospace;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px}
+.ak .sb .it.sub{padding-left:26px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .mn{flex:1;min-width:0;padding:24px 0 60px;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:32px 32px;background-position:-1px -1px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.ak .orgrow{font:700 13px/1 'Inter';color:var(--dim);padding:0 0 10px 40px}
+.ak .phd h1{font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:0}
+.ak .phd .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .phd p{margin:4px 0 0;color:var(--soft);font-size:14px}
+/* builder rows: drawn from BuilderRow (public-site.module.css): 8px radius, 60px head, summary UNDER the title, no rule between head and body */
+.ak .brow{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.ak .brow.open{border-color:var(--line2)}
+.ak .brow .bh{display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 16px}
+.ak .brow .bh .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ak .brow .bh b{font:700 16px/1.25 'Inter'}
+.ak .brow .bh .sm{font-size:12px;line-height:1.4;color:var(--dim)}
+.ak .brow .bh .ch{width:9px;height:9px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin:-4px 4px 0 6px;flex:none}
+.ak .brow.open .bh .ch{transform:rotate(-135deg);margin-top:4px}
+.ak .brow .bb{padding:0 16px 18px;display:flex;flex-direction:column;gap:12px}
+.ak .lead{margin:0;color:var(--soft);font-size:14px}
+.ak .hint{font-size:12px;color:var(--dim);margin:0;line-height:1.4}
+/* the pick-one list: ONE framed list, rows divided by a hairline, the ring-and-dot radio (SendParts.module.css) */
+.ak .radios{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.ak .rad{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-top:1px solid var(--line);min-height:44px}
+.ak .rad:first-child{border-top:0}
+.ak .rad .dot{width:18px;height:18px;border-radius:50%;border:1px solid rgba(60,90,140,.45);background:#fff;flex:none;margin-top:2px;position:relative}
+.ak .rad.on .dot{border-color:var(--olive);background:rgba(87,101,30,.14)}
+.ak .rad.on .dot::after{content:"";position:absolute;left:4px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--olive)}
+.ak .rad b{display:block;font:600 14px/1.35 'Inter'}
+.ak .rad span.s{display:block;color:var(--soft);font-size:12px;line-height:1.4;margin-top:1px}
+.ak .rad.tap{background:rgba(87,101,30,.06)}
+.ak .facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:0;font-size:14px}
+.ak .facts dt{color:var(--dim)} .ak .facts dd{margin:0;font-weight:600}
+.ak .pill-saved{position:absolute;right:24px;bottom:20px;background:#241E15;color:#F8F4ED;border-radius:999px;padding:8px 14px;font:600 13px/1 'Inter';box-shadow:0 8px 20px rgba(36,30,21,.22)}
+.ak .pg2{width:1080px;margin:0 auto;display:flex;gap:20px;align-items:flex-start}
+.ak .pg2 .rowscol{width:620px;flex:none;display:flex;flex-direction:column;gap:10px}
+.ak .pg2 .prev{width:440px;flex:none;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.ak .prev .ph-h{padding:10px 14px;font:700 12px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line)}
+.ak .prev .site{margin:14px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#F6F5F2}
+.ak .prev .site .nv{background:#1F3A5F;color:#fff;padding:10px 12px;font:700 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.04em}
+.ak .prev .site .hero{height:120px;background:#E8EDF4;display:grid;place-items:center;font:700 22px/1 'Barlow Condensed',sans-serif;color:#1F3A5F}
+.ak .prev .site .ln{height:10px;background:#E4E0D8;border-radius:4px;margin:12px 14px 0}
+.ak .prev .site .ln.s{width:60%;margin-bottom:14px}
+.ak .prev .note{padding:0 14px 14px;font-size:12px;color:var(--dim)}
+/* the coach's Team settings, drawn from the product screenshot */
+.ak.co{padding:18px}
+.ak .scard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px 18px}
+.ak .scard h3{font:700 18px/1.2 'Inter';margin:0 0 8px;letter-spacing:-.005em;display:flex;align-items:center}
+.ak .scard h3 .ch{margin-left:auto;width:9px;height:9px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(-135deg);margin-top:4px}
+.ak .scard .sl{color:var(--soft);font-size:14px;margin:0 0 12px}
+.ak .sbox{border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.ak .srow{display:flex;align-items:center;gap:16px;padding:14px 16px;min-height:68px}
+.ak .srow+.srow{border-top:1px solid var(--line)}
+.ak .srow .m{flex:1;min-width:0}
+.ak .srow .l{font:600 16px/1.3 'Inter'}
+.ak .srow .d{font-size:14px;color:var(--soft);margin-top:2px}
+.ak .srow .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:4px}
+.ak .srow .ctlt{flex:none;max-width:210px;text-align:right;font-size:14px;color:var(--soft)}
+.ak .srow .b2{display:flex;gap:8px;flex:none}
+.ak .btn-o{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:#fff;font:600 14px/1 'Inter'}
+.ak .folded{border:1px dashed var(--line2);border-radius:8px;padding:8px 12px;font-size:12.5px;color:var(--dim);background:rgba(255,255,255,.5)}
+.ak .sw{width:52px;height:30px;border-radius:15px;background:#E6DFD0;border:1px solid var(--line2);position:relative;flex:none}
+.ak .sw::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#4A4235}
+.ak .sw.on{background:var(--olive);border-color:var(--olive)}
+.ak .sw.on::after{left:auto;right:3px;background:#fff}
+.ak .phone-in{padding:14px;display:flex;flex-direction:column;gap:14px;min-height:520px}
+.ak .phone-in .srow{flex-wrap:wrap}
+.ak .pbar{height:52px;display:flex;align-items:center;padding:0 16px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+/* the confirmation window */
+.ak.win{padding:28px;background:#CFC8B8}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(36,30,21,.35);padding:22px 22px 18px;max-width:416px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.ak .dlg h4{font:700 16px/1.3 'Inter';margin:0}
+.ak .dlg p{margin:0;color:var(--soft);font-size:14px}
+.ak .dlg .btns{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+.ak .btn{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line2);background:#fff;font:600 14.5px/1 'Inter';color:var(--ink)}
+.ak .btn.pri{background:var(--olive);border-color:var(--olive);color:#fff}
+/* the family's view of a team page */
+.fam{--g-bg:#F6F5F2;--g-card:#fff;--g-ink:#1F1B16;--g-soft:#4E473D;--g-dim:#6F675B;--g-line:#E4E0D8;--c:#1F3A5F;
+  background:var(--g-bg);color:var(--g-ink);font:14px/1.45 'Inter',system-ui,sans-serif;padding:14px;border-radius:10px;min-height:150px;text-align:left}
+.fam *{box-sizing:border-box}
+.fam .sh{font:700 12px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--g-soft);margin:0 0 8px}
+.fam .cr{background:var(--g-card);border:1px solid var(--g-line);border-radius:8px}
+.fam .co{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;font-size:14.5px}
+.fam .co+.co{border-top:1px solid var(--g-line)}
+.fam .co b{font-weight:650}
+.fam .co span{color:var(--g-dim);font-size:13.5px}
+.fam .none{font-size:13.5px;color:var(--g-dim);padding:6px 2px}
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.sp-grid>*{min-width:0}
+.sp-cap{font:600 12.5px/1.35 var(--f-doc);margin:0 0 6px}
+</style>
+
+<div class="doc">
+
+<div class="eyebrow">Club Tier · Public team page · Round 1 drawings</div>
+<h1>Who decides which coach names are public</h1>
+<p class="muted" style="max-width:78ch">Today every coach on a team can put their own name on the team's public page, and the club has no say. These drawings give the club one setting, with four choices, that decides it for every team at once. Every name, number and club in these frames is an example.</p>
+
+<div class="verdict">
+  <h2>What these drawings decide</h2>
+  <ul>
+    <li><b>One club-wide setting, four choices:</b> Coaches choose (today), Head coaches always, Head and assistant coaches always, No coach names.</li>
+    <li><b>It decides display, it never overwrites a coach.</b> A coach's own switch is left exactly as they set it. If the club later goes back to "Coaches choose", everyone is where they were.</li>
+    <li><b>A coach is never left guessing.</b> Where the club has decided, their switch is replaced by one plain sentence that says what the club does.</li>
+    <li><b>Six asks at the bottom.</b> Where the setting lives, who may change it, the other staff, when it asks first, telling coaches, and what a coach reads when no names are listed.</li>
+  </ul>
+</div>
+
+<h2 id="s1">1 · The club’s side: one new row on Public site</h2>
+<div class="chips"><span class="eyebrow">Whole screen, before and after</span>
+  <button class="mk new" data-note="NEW. One row, Coaches on team pages, between Contacts and documents and Visibility. It is closed by default like every other row, so the page grows by one 60 px row until the owner opens it. The page has had five rows; this is a sixth, which is an owner call (ask A1).">New row</button>
+  <button class="mk unc" data-note="UNCHANGED. The five existing rows and the live preview. Their summaries and the preview picture here are examples; the preview’s real size is as built.">Everything else</button></div>
+<div class="dt-tools"><button class="btn-d" data-fit>Show at true size</button><span class="zl"></span></div>
+<p class="cap" style="margin:6px 0"><b>Before.</b> Today’s Public site page, at a desk.</p>
+<div class="dt-wrap fit"><div class="dt"><div class="ak"><div class="tb"><span class="lg"></span>FIELDLOGICHQ<span class="ar">ADMIN AREA</span></div><div class="shell"><div class="sb"><div class="it">Overview</div><div class="it">Calendar</div><div class="it">Schedules</div><div class="grp">Programs</div><div class="it">Rep teams</div><div class="it">House league</div><div class="it">Accounting</div><div class="it">Families</div><div class="it on">Public site</div><div class="it">Tournaments</div><div class="grp">Organization</div><div class="it">Settings</div></div><div class="mn"><div class="orgrow">Lakeshore Lynx</div><div class="pg2"><div class="rowscol"><div class="phd"><div class="ey">Public site</div><h1>Your public site</h1></div><div class="brow"><div class="bh"><span class="tx"><b>Look</b><span class="sm">Navy and gold</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Home page</b><span class="sm">5 sections</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>About the club</b><span class="sm">Tagline and description written</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Contacts and documents</b><span class="sm">3 contacts · 2 documents</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Visibility</b><span class="sm">Online · Listed in the directory</span></span><i class="ch"></i></div></div></div><div class="prev"><div class="ph-h">Preview · how families see it</div><div class="site"><div class="nv">LAKESHORE LYNX</div><div class="hero">Lakeshore Lynx</div><div class="ln"></div><div class="ln s"></div></div><div class="note">Unchanged. The preview shows the club’s home page, so it does not react to the new row.</div></div></div></div></div></div></div></div>
+<p class="cap" style="margin:18px 0 6px"><b>After.</b> The new row closed, then open. Closed, it reads like its neighbours and its summary names the current choice.</p>
+<div class="dt-wrap fit"><div class="dt"><div class="ak"><div class="tb"><span class="lg"></span>FIELDLOGICHQ<span class="ar">ADMIN AREA</span></div><div class="shell"><div class="sb"><div class="it">Overview</div><div class="it">Calendar</div><div class="it">Schedules</div><div class="grp">Programs</div><div class="it">Rep teams</div><div class="it">House league</div><div class="it">Accounting</div><div class="it">Families</div><div class="it on">Public site</div><div class="it">Tournaments</div><div class="grp">Organization</div><div class="it">Settings</div></div><div class="mn"><div class="orgrow">Lakeshore Lynx</div><div class="pg2"><div class="rowscol"><div class="phd"><div class="ey">Public site</div><h1>Your public site</h1></div><div class="brow"><div class="bh"><span class="tx"><b>Look</b><span class="sm">Navy and gold</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Home page</b><span class="sm">5 sections</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>About the club</b><span class="sm">Tagline and description written</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Contacts and documents</b><span class="sm">3 contacts · 2 documents</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Coaches on team pages</b><span class="sm">Coaches choose</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Visibility</b><span class="sm">Online · Listed in the directory</span></span><i class="ch"></i></div></div></div><div class="prev"><div class="ph-h">Preview · how families see it</div><div class="site"><div class="nv">LAKESHORE LYNX</div><div class="hero">Lakeshore Lynx</div><div class="ln"></div><div class="ln s"></div></div><div class="note">Unchanged. The preview shows the club’s home page, so it does not react to the new row.</div></div></div></div></div></div></div></div>
+<p class="cap" style="margin:18px 0 6px"><b>After, row open.</b></p>
+<div class="dt-wrap fit"><div class="dt"><div class="ak"><div class="tb"><span class="lg"></span>FIELDLOGICHQ<span class="ar">ADMIN AREA</span></div><div class="shell"><div class="sb"><div class="it">Overview</div><div class="it">Calendar</div><div class="it">Schedules</div><div class="grp">Programs</div><div class="it">Rep teams</div><div class="it">House league</div><div class="it">Accounting</div><div class="it">Families</div><div class="it on">Public site</div><div class="it">Tournaments</div><div class="grp">Organization</div><div class="it">Settings</div></div><div class="mn"><div class="orgrow">Lakeshore Lynx</div><div class="pg2"><div class="rowscol"><div class="phd"><div class="ey">Public site</div><h1>Your public site</h1></div><div class="brow"><div class="bh"><span class="tx"><b>Look</b><span class="sm">Navy and gold</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Home page</b><span class="sm">5 sections</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>About the club</b><span class="sm">Tagline and description written</span></span><i class="ch"></i></div></div><div class="brow"><div class="bh"><span class="tx"><b>Contacts and documents</b><span class="sm">3 contacts · 2 documents</span></span><i class="ch"></i></div></div><div class="brow open"><div class="bh"><span class="tx"><b>Coaches on team pages</b><span class="sm">Coaches choose</span></span><i class="ch"></i></div><div class="bb"><p class="lead">Who is listed under Coaches on each team’s public page. It is the same for every team. A listing shows a name and a role, never an email address, a phone number or a player.</p><div class="radios" role="radiogroup" aria-label="Coaches on team pages"><div class="rad on"><i class="dot"></i><div><b>Coaches choose</b><span class="s">Each coach decides whether their own name shows. Everyone starts not listed.</span></div></div><div class="rad"><i class="dot"></i><div><b>Head coaches always</b><span class="s">Every head coach is listed. Assistant coaches and other staff choose for themselves.</span></div></div><div class="rad"><i class="dot"></i><div><b>Head and assistant coaches always</b><span class="s">Every head coach and assistant coach is listed. Team managers, treasurers and helpers choose for themselves.</span></div></div><div class="rad"><i class="dot"></i><div><b>No coach names</b><span class="s">Nobody is listed, whatever a coach has chosen. Their choices are kept and apply again if you change this.</span></div></div></div><p class="hint">A coach with no name on file is left out. Names show only while the team has a live season.</p></div></div><div class="brow"><div class="bh"><span class="tx"><b>Visibility</b><span class="sm">Online · Listed in the directory</span></span><i class="ch"></i></div></div></div><div class="prev"><div class="ph-h">Preview · how families see it</div><div class="site"><div class="nv">LAKESHORE LYNX</div><div class="hero">Lakeshore Lynx</div><div class="ln"></div><div class="ln s"></div></div><div class="note">Unchanged. The preview shows the club’s home page, so it does not react to the new row.</div></div></div></div></div></div></div></div>
+<p class="cap" style="max-width:none"><b>Reading the change.</b> Open, the row is a lead sentence, one framed list of four choices and one hint line, about 330 px. The preview does not change: it shows the home page, and team pages are not in it.</p>
+
+<h3>The same row for an admin who is not the owner (if A2 stays owner-only)</h3>
+<div class="chips"><span class="eyebrow">Read-only state</span>
+  <button class="mk new" data-note="NEW. The house shape for something an admin may read but not change: the Visibility row’s non-owner view is plain facts and one sentence naming who changes it. No radio is shown, not even a disabled one.">Admin view</button></div>
+<div class="fr" style="max-width:640px"><div class="ak co" style="padding:14px"><div class="rowscol" style="display:flex;flex-direction:column;gap:10px"><div class="brow open"><div class="bh"><span class="tx"><b>Coaches on team pages</b><span class="sm">Head coaches always</span></span><i class="ch"></i></div><div class="bb"><dl class="facts"><dt>Listed</dt><dd>Every head coach</dd><dt>Choose for themselves</dt><dd>Assistant coaches and other staff</dd></dl><p class="hint">The owner chooses who is listed.</p></div></div></div></div></div>
+
+<h3>Phone, 390</h3>
+<div class="stage">
+  <div class="col">
+    <div class="chips"><span class="eyebrow">After · phone</span>
+      <button class="mk new" data-note="NEW. Same words as the desk, wrapping. Each choice is at least 44 px tall and the whole row is the tap target.">Choices</button></div>
+    <div class="ph"><div class="ak">
+      <div class="pbar">Lakeshore Lynx</div>
+      <div style="padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)">
+        <div class="brow"><div class="bh"><span class="tx"><b>Contacts and documents</b><span class="sm">3 contacts · 2 documents</span></span><i class="ch"></i></div></div>
+        <div class="brow open"><div class="bh"><span class="tx"><b>Coaches on team pages</b><span class="sm">Coaches choose</span></span><i class="ch"></i></div><div class="bb"><p class="lead">Who is listed under Coaches on each team’s public page. It is the same for every team. A listing shows a name and a role, never an email address, a phone number or a player.</p><div class="radios" role="radiogroup" aria-label="Coaches on team pages"><div class="rad on"><i class="dot"></i><div><b>Coaches choose</b><span class="s">Each coach decides whether their own name shows. Everyone starts not listed.</span></div></div><div class="rad"><i class="dot"></i><div><b>Head coaches always</b><span class="s">Every head coach is listed. Assistant coaches and other staff choose for themselves.</span></div></div><div class="rad"><i class="dot"></i><div><b>Head and assistant coaches always</b><span class="s">Every head coach and assistant coach is listed. Team managers, treasurers and helpers choose for themselves.</span></div></div><div class="rad"><i class="dot"></i><div><b>No coach names</b><span class="s">Nobody is listed, whatever a coach has chosen. Their choices are kept and apply again if you change this.</span></div></div></div><p class="hint">A coach with no name on file is left out. Names show only while the team has a live season.</p></div></div>
+        <div class="brow"><div class="bh"><span class="tx"><b>Visibility</b><span class="sm">Online · Listed in the directory</span></span><i class="ch"></i></div></div>
+      </div>
+    </div></div>
+  </div>
+  <div class="col read" style="flex:1 1 320px">
+    <div class="eyebrow">Phone notes</div>
+    <p style="margin:0">Nothing is shortened for the phone. The sentences wrap and the hint stays.</p>
+    <div class="measure">Choice rows: 44 px minimum, full width<br>Radio: 18 px, the whole row is the target</div>
+  </div>
+</div>
+
+<h2 id="s2">2 · When a choice saves, and when it asks first</h2>
+<p class="muted" style="max-width:78ch">A pick on this row saves by itself and shows the “Saved” pill, like the other rows. The exception is a pick that publishes people’s names: that one holds and asks first, with a count, because listing a volunteer’s name is something other people see. “Coaches choose” and “No coach names” only reduce what is public, so they save at once (ask A4 lets you rule otherwise). The numbers in these windows are examples; the real ones are counted from the club’s live teams.</p>
+<div class="chips"><span class="eyebrow">The window, and the moment behind it</span>
+  <button class="mk new" data-note="NEW. The window follows the house question window: a question, a sentence, buttons only at the foot with the cancelling button on the left, no close glyph. It is 416 px wide at most.">Window</button></div>
+<div class="sp-grid" style="max-width:1000px">
+  <div class="ak win"><div class="dlg">
+    <h4>List every head coach on team pages?</h4>
+    <p>7 head coaches, one on each of 7 teams, will be listed under Coaches on their team’s public page, with their name and role. Coaches will see this in their Team settings.</p>
+    <div class="btns"><span class="btn">Not now</span><span class="btn pri">List them</span></div>
+  </div></div>
+  <div class="ak win" style="padding:18px"><div style="background:#fff;border-radius:8px;opacity:.55;margin-bottom:12px"><div class="brow open" style="border:0"><div class="bb" style="padding-top:12px"><div class="radios" role="radiogroup" aria-label="Coaches on team pages"><div class="rad on"><i class="dot"></i><div><b>Coaches choose</b><span class="s">Each coach decides whether their own name shows. Everyone starts not listed.</span></div></div><div class="rad tap"><i class="dot"></i><div><b>Head coaches always</b><span class="s">Every head coach is listed. Assistant coaches and other staff choose for themselves.</span></div></div><div class="rad"><i class="dot"></i><div><b>Head and assistant coaches always</b><span class="s">Every head coach and assistant coach is listed. Team managers, treasurers and helpers choose for themselves.</span></div></div><div class="rad"><i class="dot"></i><div><b>No coach names</b><span class="s">Nobody is listed, whatever a coach has chosen. Their choices are kept and apply again if you change this.</span></div></div></div></div></div></div>
+    <div class="dlg" style="padding:16px"><p>Behind the window the list stays on <b>Coaches choose</b>. “Not now”, Escape and a tap outside the window all leave it there. The pick only changes after “List them”.</p></div></div>
+</div>
+<div class="sp-grid" style="max-width:1000px;margin-top:14px">
+  <div class="ak win"><div class="dlg">
+    <h4>List head and assistant coaches on team pages?</h4>
+    <p>7 head coaches and 11 assistant coaches, on 7 teams, will be listed under Coaches on their team’s public page, with their name and role. Coaches will see this in their Team settings.</p>
+    <div class="btns"><span class="btn">Not now</span><span class="btn pri">List them</span></div>
+  </div></div>
+  <div class="ak win"><div class="dlg">
+    <h4>Stop listing coach names?</h4>
+    <p>No coach will be listed on a team’s public page. 4 coaches who chose to show their name will no longer be listed. Their choice is kept and applies again if you go back to Coaches choose.</p>
+    <div class="btns"><span class="btn">Not now</span><span class="btn pri">Stop listing</span></div>
+    <p style="font-size:12px;color:var(--dim)">Drawn only for ask A4’s second option. In the recommended version this pick saves at once.</p>
+  </div></div>
+</div>
+<p class="cap">The count only includes people who are not already listed, so going from “Head coaches always” to “Head and assistant coaches always” counts the assistants alone. Going the other way quietly puts assistants back to their own choice and needs no window.</p>
+<h3>A pick that saves by itself</h3>
+<div class="fr" style="max-width:640px"><div class="ak co" style="position:relative;padding:14px;padding-bottom:64px"><div class="rowscol" style="display:flex;flex-direction:column;gap:10px"><div class="brow open"><div class="bh"><span class="tx"><b>Coaches on team pages</b><span class="sm">No coach names</span></span><i class="ch"></i></div><div class="bb"><p class="lead">Who is listed under Coaches on each team’s public page. It is the same for every team. A listing shows a name and a role, never an email address, a phone number or a player.</p><div class="radios" role="radiogroup" aria-label="Coaches on team pages"><div class="rad"><i class="dot"></i><div><b>Coaches choose</b><span class="s">Each coach decides whether their own name shows. Everyone starts not listed.</span></div></div><div class="rad"><i class="dot"></i><div><b>Head coaches always</b><span class="s">Every head coach is listed. Assistant coaches and other staff choose for themselves.</span></div></div><div class="rad"><i class="dot"></i><div><b>Head and assistant coaches always</b><span class="s">Every head coach and assistant coach is listed. Team managers, treasurers and helpers choose for themselves.</span></div></div><div class="rad on"><i class="dot"></i><div><b>No coach names</b><span class="s">Nobody is listed, whatever a coach has chosen. Their choices are kept and apply again if you change this.</span></div></div></div><p class="hint">A coach with no name on file is left out. Names show only while the team has a live season.</p></div></div></div><span class="pill-saved">Saved</span></div></div>
+<p class="cap">The pill fades by itself. Nothing else on the row changes.</p>
+
+<h2 id="s3">3 · The coach’s side: what each coach reads in Team settings</h2>
+<p class="muted" style="max-width:78ch">The coach’s row keeps its label, “Show my name on the team’s public page”, in every state, so a coach hunting for it finds it. Where the club has decided for that coach’s role, the switch is replaced by plain text in the same place, the way the Schedule visibility row already says “only coaches who manage the schedule can change it”. The row sits under Your team’s public page, as today.</p>
+<div class="chips"><span class="eyebrow">Five states</span>
+  <button class="mk new" data-note="NEW. No switch the coach cannot use is shown. The sentence moves into the description and the control slot carries plain text, with no tag or pill, matching the card’s own read-only idiom.">Text instead of a switch</button>
+  <button class="mk unc" data-note="UNCHANGED. State A is today’s row, word for word, with the door row above it.">State A</button></div>
+<div class="fr" style="margin-top:12px"><div class="ak co"><div class="scard"><h3>Sharing<i class="ch"></i></h3><p class="sl">Who outside your staff can see what. Each setting is yours alone — nothing is shared by surprise.</p><div class="sbox"><div class="srow"><div class="m"><div class="l">Your team’s public page</div><div class="u">https://lakeshorelynx.example/teams/15u-aaa</div><div class="d" style="margin-top:6px">Anyone with the link sees the team’s name, its about text and open tryouts (your club edits those), and your games, because you chose Public.</div></div><div class="b2"><span class="btn-o">Copy link</span><span class="btn-o">Open</span></div></div><div class="srow"><div class="m"><div class="l">Show my name on the team’s public page</div><div class="d">Your name and role only.</div></div><i class="sw" role="img" aria-label="Off"></i></div></div></div></div></div>
+<p class="cap"><b>A · Coaches choose.</b> Today, unchanged. Everyone.</p>
+<div class="fr" style="margin-top:12px"><div class="ak co"><div class="scard"><h3>Sharing<i class="ch"></i></h3><div class="sbox"><div class="folded" style="border:0;border-bottom:1px dashed var(--line2);border-radius:10px 10px 0 0">Above, unchanged: Schedule visibility and Your team’s public page.</div><div class="srow"><div class="m"><div class="l">Show my name on the team’s public page</div><div class="d">Your club lists every head coach, with your name and role. Nothing else.</div></div><span class="ctlt">Listed by your club</span></div></div></div></div></div>
+<p class="cap"><b>B · The club lists head coaches. Viewer: a head coach.</b> Also what an assistant coach reads when the club lists head and assistant coaches (the role word follows the coach’s role).</p>
+<div class="fr" style="margin-top:12px"><div class="ak co"><div class="scard"><h3>Sharing<i class="ch"></i></h3><div class="sbox"><div class="folded" style="border:0;border-bottom:1px dashed var(--line2);border-radius:10px 10px 0 0">Above, unchanged: Schedule visibility and Your team’s public page.</div><div class="srow"><div class="m"><div class="l">Show my name on the team’s public page</div><div class="d">Your club lists head coaches. For other staff it’s your choice. Your name and role only.</div></div><i class="sw" role="img" aria-label="Off"></i></div></div></div></div></div>
+<p class="cap"><b>C · The club lists head coaches. Viewer: an assistant coach, team manager, treasurer or helper.</b> Their switch stays and works as today.</p>
+<div class="fr" style="margin-top:12px"><div class="ak co"><div class="scard"><h3>Sharing<i class="ch"></i></h3><div class="sbox"><div class="folded" style="border:0;border-bottom:1px dashed var(--line2);border-radius:10px 10px 0 0">Above, unchanged: Schedule visibility and Your team’s public page.</div><div class="srow"><div class="m"><div class="l">Show my name on the team’s public page</div><div class="d">Your club lists head and assistant coaches. For other staff it’s your choice. Your name and role only.</div></div><i class="sw on" role="img" aria-label="On"></i></div></div></div></div></div>
+<p class="cap"><b>D · The club lists head and assistant coaches. Viewer: a team manager, treasurer or helper.</b> Switch kept. Shown on, to draw that state once.</p>
+<div class="fr" style="margin-top:12px"><div class="ak co"><div class="scard"><h3>Sharing<i class="ch"></i></h3><div class="sbox"><div class="folded" style="border:0;border-bottom:1px dashed var(--line2);border-radius:10px 10px 0 0">Above, unchanged: Schedule visibility and Your team’s public page.</div><div class="srow"><div class="m"><div class="l">Show my name on the team’s public page</div><div class="d">Your club isn’t listing coach names on team pages.</div></div><span class="ctlt">Not listed by your club</span></div></div></div></div></div>
+<p class="cap"><b>E · No coach names.</b> Everyone. The coach’s own earlier choice is kept out of sight and returns if the club changes this.</p>
+
+<h3>Phone, 390 · state B</h3>
+<div class="stage">
+  <div class="col">
+    <div class="ph"><div class="ak">
+      <div class="pbar">15U AAA · Team settings</div>
+      <div class="phone-in"><div class="scard" style="padding:14px"><h3>Sharing<i class="ch"></i></h3>
+        <div class="sbox"><div class="folded" style="border:0;border-bottom:1px dashed var(--line2);border-radius:10px 10px 0 0">Above, unchanged: Schedule visibility and Your team’s public page.</div><div class="srow"><div class="m" style="flex-basis:100%"><div class="l">Show my name on the team’s public page</div><div class="d">Your club lists every head coach, with your name and role. Nothing else.</div></div><span class="ctlt" style="max-width:none;text-align:left">Listed by your club</span></div></div>
+      </div></div>
+    </div></div>
+  </div>
+  <div class="col read" style="flex:1 1 320px">
+    <div class="eyebrow">What the coach cannot do</div>
+    <ul style="margin:0;padding-left:18px">
+      <li>Turn their own name off, while the club lists their role.</li>
+      <li>See or change anyone else’s listing (there is no such control today either).</li>
+    </ul>
+    <div class="eyebrow" style="margin-top:8px">What still holds</div>
+    <ul style="margin:0;padding-left:18px">
+      <li>The listing is name and role only.</li>
+      <li>It ends when the coach’s seat on the team ends, and when the season closes.</li>
+      <li>A coach with no name on file is left out rather than shown by email address.</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="s4">4 · What a family or anyone else sees: the Coaches shelf, by choice</h2>
+<p class="muted" style="max-width:78ch">The shelf itself does not change. These frames show one team, 15U AAA, with a head coach, an assistant coach (who had switched their name on) and a team manager (who had not), under each choice.</p>
+<div class="chips"><span class="eyebrow">Four renders of one shelf</span>
+  <button class="mk unc" data-note="UNCHANGED. The Coaches shelf keeps its look, its sort (head coach first, then by name) and its words. Only who is in it changes.">The shelf</button></div>
+<div class="sp-grid">
+  <div><p class="sp-cap">Coaches choose</p><div class="fam"><p class="sh">Coaches</p><div class="cr"><div class="co"><b>Sam Okafor</b><span>Assistant coach</span></div></div></div></div>
+  <div><p class="sp-cap">Head coaches always</p><div class="fam"><p class="sh">Coaches</p><div class="cr"><div class="co"><b>Jordan Reyes</b><span>Head coach</span></div><div class="co"><b>Sam Okafor</b><span>Assistant coach</span></div></div></div></div>
+  <div><p class="sp-cap">Head and assistant coaches always</p><div class="fam"><p class="sh">Coaches</p><div class="cr"><div class="co"><b>Jordan Reyes</b><span>Head coach</span></div><div class="co"><b>Sam Okafor</b><span>Assistant coach</span></div></div></div></div>
+  <div><p class="sp-cap">No coach names</p><div class="fam"><p class="none">The Coaches shelf is not on the page.</p></div></div>
+</div>
+<p class="cap">The manager, Dana Whitfield, is in none of them because she never switched her name on. Under “Head and assistant coaches always” Sam is listed even without having switched it on, which is the point of the choice. Under “Head coaches always” Sam is listed only because Sam did switch it on.</p>
+
+<h2 id="s5">5 · The rule, in one table</h2>
+<div class="tw" style="max-width:860px"><table class="t">
+  <thead><tr><th>Club’s choice</th><th>Head coach</th><th>Assistant coach</th><th>Manager · treasurer · helper</th></tr></thead>
+  <tbody>
+    <tr><td><b>Coaches choose</b></td><td><span class="pill half">Their choice</span></td><td><span class="pill half">Their choice</span></td><td><span class="pill half">Their choice</span></td></tr>
+    <tr><td><b>Head coaches always</b></td><td><span class="pill ok">Listed</span></td><td><span class="pill half">Their choice</span></td><td><span class="pill half">Their choice</span></td></tr>
+    <tr><td><b>Head and assistant coaches always</b></td><td><span class="pill ok">Listed</span></td><td><span class="pill ok">Listed</span></td><td><span class="pill half">Their choice</span></td></tr>
+    <tr><td><b>No coach names</b></td><td><span class="pill bad">Not listed</span></td><td><span class="pill bad">Not listed</span></td><td><span class="pill bad">Not listed</span></td></tr>
+  </tbody></table></div>
+<p class="cap" style="max-width:none">“Their choice” means today’s personal switch, which starts off. The choice applies to every team in the club at once; there is no per-team exception in this round. It decides what is shown and never changes a coach’s own switch.</p>
+
+<h2 id="asks">Asks</h2>
+<p class="muted">Pick one per ask, or write your own. The box at the bottom collects everything to paste back.</p>
+
+<div class="ask" data-ask="A1"><h3><span class="no">A1</span>Where does the setting live?</h3>
+  <p class="rides">Drawn on Public site, because that is where the club already decides what the world sees, and Settings points there for it. That page has had five rows, so this is a sixth. Settings holds the birthday cut-off today, which is a rule about eligibility, not about what is public.</p>
+  <div class="opts"><label class="rec"><input type="radio" name="A1" value="Own row on Public site"> Its own new row on Public site, as drawn.</label>
+  <label><input type="radio" name="A1" value="Inside the Visibility row"> Inside the existing Visibility row, as a second part beside the online and directory switches (no sixth row).</label>
+  <label><input type="radio" name="A1" value="Settings card"> A card on Settings, beside “When birthdays count from”.</label></div>
+  <textarea placeholder="Notes" aria-label="Notes for A1"></textarea></div>
+
+<div class="ask" data-ask="A2"><h3><span class="no">A2</span>Who may change it?</h3>
+  <p class="rides">The Public site’s online switch is already owner-only, and an admin reads it as plain text. This would work the same way (the admin view in section 1).</p>
+  <div class="opts"><label class="rec"><input type="radio" name="A2" value="Owner only"> The owner only.</label>
+  <label><input type="radio" name="A2" value="Owner and admins"> The owner and club admins.</label></div>
+  <textarea placeholder="Notes" aria-label="Notes for A2"></textarea></div>
+
+<div class="ask" data-ask="A3"><h3><span class="no">A3</span>Under an "always" choice, what about everyone not covered?</h3>
+  <p class="rides">Drawn as: the roles the club picked are listed; every other staff member keeps their own switch (section 5). The other way is stricter.</p>
+  <div class="opts"><label class="rec"><input type="radio" name="A3" value="Others keep their own choice"> They keep their own switch, as drawn.</label>
+  <label><input type="radio" name="A3" value="Only the picked roles"> Only the roles the club picked are ever listed; everyone else is hidden while it is on.</label></div>
+  <textarea placeholder="Notes" aria-label="Notes for A3"></textarea></div>
+
+<div class="ask" data-ask="A4"><h3><span class="no">A4</span>Ask before saving?</h3>
+  <p class="rides">Section 2. A wrong tap on either “always” choice would publish names on every team page. Hiding names only takes things away, and the Visibility row asks only when going dark breaks something.</p>
+  <div class="opts"><label class="rec"><input type="radio" name="A4" value="Ask for the two that list people"> Ask first, with a count, for the two “always” choices only. “Coaches choose” and “No coach names” save at once.</label>
+  <label><input type="radio" name="A4" value="Ask for all three"> Ask first for all three choices that change who is listed (the fourth window in section 2).</label>
+  <label><input type="radio" name="A4" value="Save every pick at once"> Save every pick at once and show “Saved”, with no window.</label></div>
+  <textarea placeholder="Notes" aria-label="Notes for A4"></textarea></div>
+
+<div class="ask" data-ask="A5"><h3><span class="no">A5</span>Are coaches told when the club changes it?</h3>
+  <p class="rides">A volunteer's name becoming public with no warning is the sensitive part. The sentence in Team settings is always there, but a coach may not open it for weeks.</p>
+  <div class="opts"><label class="rec"><input type="radio" name="A5" value="One in-app notice"> One in-app notice to each coach it affects, when a choice lists them.</label>
+  <label><input type="radio" name="A5" value="Sentence only"> The Team settings sentence only.</label></div>
+  <textarea placeholder="Notes" aria-label="Notes for A5"></textarea></div>
+
+<div class="ask" data-ask="A6"><h3><span class="no">A6</span>When the club chooses "No coach names", what does a coach's row become?</h3>
+  <p class="rides">Drawn as a sentence plus “Not listed by your club” in the control slot (state E). Removing the row is quieter but leaves a coach wondering where their switch went.</p>
+  <div class="opts"><label class="rec"><input type="radio" name="A6" value="Sentence and text"> A sentence and “Not listed by your club”, as drawn.</label>
+  <label><input type="radio" name="A6" value="Row removed"> The row is removed.</label></div>
+  <textarea placeholder="Notes" aria-label="Notes for A6"></textarea></div>
+
+<div class="paste"><b>Paste-back</b><span class="muted" style="font-size:13px">Your picks and notes, ready to paste into the chat.</span>
+  <textarea id="out" readonly aria-label="Collected answers"></textarea>
+  <div><button class="btn-d" id="copy">Copy</button> <span id="copied" class="muted" style="font-size:13px"></span></div>
+</div>
+
+<h2>Design check</h2>
+<p class="muted">Run before hand-off. Proposals only until ruled.</p>
+<div class="card" id="dcheck">
+  <p style="margin:0 0 8px"><b>What the review changed in these drawings</b> (a first version used looks copied from older drawings instead of the product’s own):</p>
+  <ul style="margin:0 0 10px;padding-left:20px">
+    <li>The four choices are one framed list with the product’s round radio, not four separate cards.</li>
+    <li>The new row is drawn like the real rows: summary under the title, 60 px head, no rule inside.</li>
+    <li>The whole-screen frames now include the live preview, and say it does not change.</li>
+    <li>Added the admin’s read-only view of the row (plain text, no radio, not even a greyed one).</li>
+    <li>The coach’s green and grey tags are gone. The row keeps its old label and says “Listed by your club” or “Not listed by your club” as plain text, the way Schedule visibility already does.</li>
+    <li>The coach’s Sharing card now shows the door row above the name row, and type sizes follow the product’s 16 / 14 / 12.</li>
+    <li>The phone no longer shortens any sentence.</li>
+    <li>One word pair throughout: listed and not listed.</li>
+    <li>Ask A4 now follows the house rule that a change which tells other people asks first, and one that only removes things saves at once. A1 gained a third place for the row.</li>
+  </ul>
+  <p style="margin:0"><b>Left for the build to confirm:</b> the radio’s exact colours in the warm portal (the product’s radio is scoped to the Email families window), and real counts in the window sentences.</p>
+</div>
+
+</div>
+
+<dialog class="note" id="dlg"><div class="nh"><h3 id="dlgT">Note</h3><button class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+  var dlg=document.getElementById('dlg');
+  document.querySelectorAll('[data-note]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.getElementById('dlgT').textContent=b.textContent;
+      document.getElementById('dlgB').textContent=b.getAttribute('data-note');
+      if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open','');
+    });
+  });
+  document.getElementById('dlgX').addEventListener('click',function(){dlg.close();});
+  function fitAll(true1){
+    document.querySelectorAll('.dt-wrap').forEach(function(w){
+      var z=true1?1:Math.min(1,(w.parentElement.clientWidth)/1440);
+      w.style.setProperty('--z',z);
+      w.classList.toggle('fit',!true1);
+    });
+  }
+  var trueSize=false;
+  document.querySelectorAll('[data-fit]').forEach(function(b){
+    b.addEventListener('click',function(){
+      trueSize=!trueSize;
+      fitAll(trueSize);
+      document.querySelectorAll('[data-fit]').forEach(function(x){x.textContent=trueSize?'Fit to width':'Show at true size';});
+      document.querySelectorAll('.zl').forEach(function(z){z.textContent=trueSize?'True size (1440 wide). Scroll sideways.':'Scaled to fit; use the button for true size.';});
+    });
+  });
+  window.addEventListener('resize',function(){if(!trueSize)fitAll(false);});
+  fitAll(false);
+  document.querySelectorAll('.zl').forEach(function(z){z.textContent='Scaled to fit; use the button for true size.';});
+
+  var out=document.getElementById('out');
+  function collect(){
+    var lines=[];
+    document.querySelectorAll('.ask').forEach(function(a){
+      var id=a.getAttribute('data-ask');
+      var sel=a.querySelector('input:checked');
+      var note=a.querySelector('textarea').value.trim();
+      lines.push(id+': '+(sel?sel.value:'(no pick)')+(note?' — '+note:''));
+    });
+    out.value=lines.join('\n');
+  }
+  document.querySelectorAll('.ask input,.ask textarea').forEach(function(e){e.addEventListener('input',collect);e.addEventListener('change',collect);});
+  collect();
+  document.getElementById('copy').addEventListener('click',function(){
+    var c=document.getElementById('copied');
+    function ok(){c.textContent='Copied.';}
+    function bad(){out.select();c.textContent='Press Ctrl+C to copy.';}
+    try{navigator.clipboard.writeText(out.value).then(ok,bad);}catch(e){bad();}
+  });
+})();
+</script>

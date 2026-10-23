@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-23 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 162 divergence(s)** across dev/prod.
+**⚠️ 164 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 7 | 0 | — |
-| Columns | 77 | 0 | 0 |
+| Columns | 78 | 0 | 0 |
 | Indexes | 19 | 0 | 0 |
 | Constraints | 30 | 0 | — |
-| RLS / CHECK | 29 | 0 | 0 (RLS state) |
+| RLS / CHECK | 30 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (7)
@@ -26,7 +26,7 @@
 _none_
 
 ## Columns
-### Only in DEV (77)
+### Only in DEV (78)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -61,6 +61,7 @@ _none_
 - `org_site_notices.posted_by_email`
 - `org_site_notices.posted_by_user_id`
 - `organizations.birthday_cutoffs`
+- `organizations.coach_names_policy`
 - `rep_program_years.born_from_year`
 - `rep_program_years.born_to_year`
 - `rep_program_years.born_years_carried`
@@ -179,7 +180,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (29)
+### CHECK only in DEV (30)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -200,6 +201,7 @@ _none_
 - `org_site_notices.org_site_notices_ends_after_post`
 - `org_site_notices.org_site_notices_notice_check`
 - `organizations.organizations_birthday_cutoffs_shape`
+- `organizations.organizations_coach_names_policy_check`
 - `rep_program_years.rep_program_years_born_years_check`
 - `rep_program_years.rep_program_years_tryout_description_length`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_email_check`

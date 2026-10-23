@@ -40,6 +40,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   // `club_season_changed` has ONE preferences row: "Your club" on a club coach's card in
   // /account/notifications (session 3), where it can arrive; never on a standalone portal's.
   club_season_changed:               'Season changed by your club',
+  club_coach_listed:                 'Your club lists you as a coach',
   club_coach_joined:                 'Coach joined from your invitation',
   club_coach_declined:               'Coach declined your invitation',
   team_move_requested:               'A request to bring a team into a club',
@@ -110,6 +111,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   coach_insights_digest:             'Your team’s Sunday week-in-review — the top Insights findings, only when something stood out.',
   practice_plan_sent:                'A coach sent you the practice plan to read before practice — with the stations you’re running.',
   club_season_changed:               'Your club closed, started or reopened your team’s season.',
+  club_coach_listed:                 'Your club chose to list you under Coaches on a team’s public page.',
   club_coach_joined:                 'A coach you invited from a team’s Coaches page accepted and joined the team.',
   club_coach_declined:               'A coach you invited from a team’s Coaches page declined the invitation.',
   team_move_requested:               'A club asked to bring your own team in, or a coach asked to bring theirs into your club. Nothing moves until you say yes.',
@@ -279,6 +281,8 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'practice_plan_sent',
   // Rare, and it changes what the coach can do today (their screens close or reopen).
   'club_season_changed',
+  // Rare, and it puts a name on a public page, so the coach should hear it.
+  'club_coach_listed',
   'club_coach_joined',
   'club_coach_declined',
   // Rare, and it waits on the recipient's yes (or reports the answer to theirs).
@@ -384,6 +388,7 @@ export const NOTIFICATION_CATEGORY = {
   practice_plan_sent:                 'know',
   // The club changed the season / a club-invited coach joined — news, not a decision to make.
   club_season_changed:                'know',
+  club_coach_listed:                  'know',
   club_coach_joined:                  'know',
   club_coach_declined:                'know',
   // A team move: the request is a decision to make; the answer is news.

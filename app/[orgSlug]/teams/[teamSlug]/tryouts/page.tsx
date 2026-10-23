@@ -40,7 +40,7 @@ export default async function TeamTryoutsPage({
   const [{ season, standing }, contact] = await Promise.all([
     readTeamTryout(team, seasons, today),
     // A failed read falls back to the club's line rather than taking the page down.
-    team.isArchived ? Promise.resolve(null) : getPublicTryoutContact(org.id, team.id).catch(() => null),
+    team.isArchived ? Promise.resolve(null) : getPublicTryoutContact(org.id, team.id, org.coachNamesPolicy).catch(() => null),
   ]);
   const coachContact = tryoutStateShowsCoachContact(standing.state) ? contact : null;
   return (

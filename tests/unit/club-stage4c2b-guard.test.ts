@@ -48,7 +48,7 @@ describe('1 · the coach\'s tryout address has one public surface', () => {
   });
   it('the tryout page reads it only while open or not open yet, and hands it to the view alone', () => {
     const code = readCode(TRYOUT_PAGE);
-    assert.match(code, /getPublicTryoutContact\(org\.id, team\.id\)/);
+    assert.match(code, /getPublicTryoutContact\(org\.id, team\.id, org\.coachNamesPolicy\)/);
     assert.match(code, /const coachContact = tryoutStateShowsCoachContact\(standing\.state\) \? contact : null;/);
     assert.match(code, /coachContact=\{coachContact\}/);
   });
@@ -96,7 +96,7 @@ describe('2 · Coaches on the team page: name and role only, never a player', ()
     assert.doesNotMatch(block, /c\.email|phone|player|roster|athlete/i);
   });
   it('names show only while the team has a live season (owner ruling 2026-10-22)', () => {
-    assert.match(readCode(TEAM_PAGE), /!team\.isArchived && liveSeasonOf\(programYears\) \? getPublicTeamCoaches\(org\.id, team\.id\)/);
+    assert.match(readCode(TEAM_PAGE), /!team\.isArchived && liveSeasonOf\(programYears\) \? getPublicTeamCoaches\(org\.id, team\.id, org\.coachNamesPolicy\)/);
   });
   it('no player is ever read for the team page', () => {
     assert.doesNotMatch(readCode(TEAM_PAGE), /rep_team_players|getRepTeamRoster|roster/i);

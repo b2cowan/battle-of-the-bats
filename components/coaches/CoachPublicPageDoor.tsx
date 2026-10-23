@@ -7,6 +7,8 @@ import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CoachPublicPageDoor.module.css';
 import type { ScheduleVisibility } from '@/lib/family-access';
+import { coachNameRowWords } from '@/lib/coach-names-words';
+import type { CoachNamesPolicy } from '@/lib/coach-names-policy';
 
 /**
  * Team settings › Sharing — "Your team's public page" and the coach's own name switch (Club Tier Stage 4c-2 Part B,
@@ -19,6 +21,10 @@ import type { ScheduleVisibility } from '@/lib/family-access';
  *
  * The switch is the CALLER's own (every coach can open Settings since Part B, owner ruling 2026-10-22): name and role
  * only, off by default, and a removal turns it off. It autosaves with the portal's pill.
+ *
+ * Where the CLUB has decided for this coach's role (mig 352) the switch is replaced by one sentence and plain text — no
+ * tag, pill or greyed switch. The server decides who is listed (`ownSwitchApplies`, `listedByClub`); this only reads them,
+ * and the coach's own stored switch is never touched by the club's choice.
  */
 
 /** The three words a coach reads on Schedule visibility — the same three the retired card used, so a coach who set this
@@ -40,13 +46,17 @@ export function publicPageSentence(visibility: ScheduleVisibility | null, canCha
 }
 
 export default function CoachPublicPageDoor({
-  path, siteOff, visibility, canChangeVisibility, showMyName, onSaveName,
+  path, siteOff, visibility, canChangeVisibility, showMyName, namesPolicy, ownSwitchApplies, listedByClub, onSaveName,
 }: {
   path: string;
   siteOff: boolean;
   visibility: ScheduleVisibility | null;
   canChangeVisibility: boolean;
   showMyName: boolean;
+  /** The club's choice and what it means for THIS coach, computed on the server (mig 352). */
+  namesPolicy: CoachNamesPolicy;
+  ownSwitchApplies: boolean;
+  listedByClub: boolean;
   /** Saves the caller's own switch (the page then holds the saved value), or throws. */
   onSaveName: (show: boolean) => Promise<void>;
 }) {
@@ -63,6 +73,7 @@ export default function CoachPublicPageDoor({
   const wanted = useRef(showMyName);
   const name = pending ?? showMyName;
   const saving = pending !== null;
+  const row = coachNameRowWords({ policy: namesPolicy, ownSwitchApplies, listedByClub });
 
   async function save(next: boolean) {
     wanted.current = next;
@@ -107,11 +118,14 @@ export default function CoachPublicPageDoor({
       <div className={shared.settingRow}>
         <div className={shared.settingRowMain}>
           <span className={shared.settingRowLabel} id="show-my-name-label">Show my name on the team&rsquo;s public page</span>
-          <span className={shared.settingRowDesc}>Your name and role only.</span>
+          <span className={shared.settingRowDesc}>{row.description}</span>
         </div>
         <div className={shared.settingRowCtl}>
           {/* A switch, not a checkbox: the whole 44 px button is the target (the rendered check measured a bare checkbox
-              at 16 px), and a screen reader hears "on" / "off". */}
+              at 16 px), and a screen reader hears "on" / "off". Where the club has decided, plain text takes its place. */}
+          {row.controlText ? (
+            <span className={shared.settingRowDesc}>{row.controlText}</span>
+          ) : (
           <button
             type="button"
             role="switch"
@@ -123,6 +137,7 @@ export default function CoachPublicPageDoor({
           >
             <span className={styles.track} aria-hidden><span className={styles.knob} /></span>
           </button>
+          )}
         </div>
       </div>
       <SaveStatusPill saving={saving} dirty={false} error={error} onRetry={() => save(wanted.current)} />

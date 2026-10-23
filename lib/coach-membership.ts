@@ -752,6 +752,38 @@ export async function listPublicNameMemberships(orgId: string, teamId: string): 
 }
 
 /**
+ * The team's ACTIVE seats, switch on or off — the Coaches shelf under a club choice other than "Coaches choose"
+ * (mig 352), where the club's rule, not the coach's switch alone, decides who is listed. Read-only. The caller filters
+ * through `seatNameListing()` (lib/coach-names-policy.ts). `listPublicNameMemberships` above keeps serving "Coaches choose".
+ */
+export async function listActiveMemberships(orgId: string, teamId: string): Promise<TeamStaffMembership[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('team_id', teamId)
+    .eq('status', 'active');
+  if (error) throw error;
+  return ((data ?? []) as MembershipRow[]).map(mapMembership);
+}
+
+/**
+ * Every ACTIVE seat on several teams of one org, switch on or off — the club's coach-names counts and notice audience
+ * (mig 352; lib/coach-names-audience.ts). Read-only, org-scoped. Membership semantics stay in this module.
+ */
+export async function listActiveMembershipsForTeams(orgId: string, teamIds: readonly string[]): Promise<TeamStaffMembership[]> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('status', 'active')
+    .in('team_id', [...teamIds]);
+  if (error) throw error;
+  return ((data ?? []) as MembershipRow[]).map(mapMembership);
+}
+
+/**
  * A coach's OWN "Show my name on the team's public page" (Club Tier Stage 4c-2 Part B). The WHERE re-asserts an ACTIVE
  * seat, so a coach removed after their screen loaded cannot switch their name back on a revoked row (which a re-add
  * would then carry). Returns the saved value, or null when no active seat remains.

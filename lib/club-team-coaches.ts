@@ -1,7 +1,8 @@
 import 'server-only';
 import { getOrgMemberDisplayNames } from './db';
-import { listPublicNameMemberships, resolveMembershipCapabilities } from './coach-membership';
+import { listActiveMemberships, listPublicNameMemberships, resolveMembershipCapabilities } from './coach-membership';
 import { staffKindWord } from './coach-capabilities';
+import { DEFAULT_COACH_NAMES_POLICY, seatNameListing, type CoachNamesPolicy } from './coach-names-policy';
 import { publicPersonName } from './tryout-contact-rules';
 
 /**
@@ -18,8 +19,17 @@ export interface PublicTeamCoach {
   role: string;
 }
 
-export async function getPublicTeamCoaches(orgId: string, teamId: string): Promise<PublicTeamCoach[]> {
-  const seats = await listPublicNameMemberships(orgId, teamId);
+export async function getPublicTeamCoaches(
+  orgId: string,
+  teamId: string,
+  policy: CoachNamesPolicy = DEFAULT_COACH_NAMES_POLICY,
+): Promise<PublicTeamCoach[]> {
+  // The club's choice (mig 352): "No coach names" reads nothing; "Coaches choose" keeps the switch-on read exactly as it
+  // was; the two "always" choices read every active seat and let the one rule decide who is listed.
+  if (policy === 'none') return [];
+  const seats = policy === 'coaches_choose'
+    ? await listPublicNameMemberships(orgId, teamId)
+    : (await listActiveMemberships(orgId, teamId)).filter(m => seatNameListing(policy, m).listed);
   if (seats.length === 0) return [];
   // One members read; only a member the club never named pays for an account read (a public page: no per-coach call).
   const names = await getOrgMemberDisplayNames(orgId, seats.map(m => m.userId));

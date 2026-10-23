@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-23",
-  "total": 162,
+  "total": 164,
   "counts": {
     "tables": 7,
-    "columns": 77,
+    "columns": 78,
     "indexes": 19,
     "constraints": 30,
-    "rls": 29
+    "rls": 30
   },
   "items": [
     {
@@ -87,6 +87,10 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_birthday_cutoffs_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organizations.organizations_coach_names_policy_check",
       "sig": ""
     },
     {
@@ -259,6 +263,10 @@
     },
     {
       "key": "column:only-dev:organizations.birthday_cutoffs",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.coach_names_policy",
       "sig": ""
     },
     {

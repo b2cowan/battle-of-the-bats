@@ -26,7 +26,7 @@ import { useCallback, useMemo, useRef, useState, useSyncExternalStore, useEffect
 import { Check, Copy, Eye, ExternalLink, Globe } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
-import { isClubPlan } from '@/lib/module-entitlements';
+import { isClubPlan, hasModuleEntitlement } from '@/lib/module-entitlements';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { ClubRow, ClubRowList, LoadFailed, NoticePill, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
@@ -54,11 +54,14 @@ import ClubNoticeStrip from './ClubNotice';
 import BuilderRow from './BuilderRow';
 import LookPanel from './LookPanel';
 import VisibilityPanel from './VisibilityPanel';
+import CoachNamesPanel from './CoachNamesPanel';
+import { COACH_NAMES_WORDS as CW, coachNamesChoiceName } from '@/lib/coach-names-words';
+import { sanitizeCoachNamesPolicy, type CoachNamesPolicy } from '@/lib/coach-names-policy';
 import SitePreview from './SitePreview';
 import styles from './public-site.module.css';
 
 type TextKey = SiteTextField;
-type RowKey = Exclude<SiteEditRow, 'notice'> | 'visibility';
+type RowKey = Exclude<SiteEditRow, 'notice'> | 'visibility' | 'coaches';
 const TEXT_KEYS = Object.keys(SITE_FIELD_MAX) as TextKey[];
 const SOCIAL: { key: TextKey; label: string; placeholder: string }[] = [
   { key: 'socialInstagram', label: W.instagram, placeholder: 'https://instagram.com/yourclub' },
@@ -333,6 +336,25 @@ export default function PublicSitePage() {
     redraw();
     await refresh();
   }, [query, refresh, redraw]);
+  // Coaches on team pages (mig 352): the owner's choice saves through the page's one pill, which carries its failure and Retry.
+  const [coachNamesSave, setCoachNamesSave] = useState<{ saving: boolean; error: string | null; last: CoachNamesPolicy | null }>({ saving: false, error: null, last: null });
+  const saveCoachNames = useCallback(async (policy: CoachNamesPolicy) => {
+    setCoachNamesSave({ saving: true, error: null, last: policy });
+    try {
+      const res = await fetch(`/api/admin/org/coach-names${query}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ policy }),
+      });
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : CW.saveFailed);
+      await refresh();
+      setCoachNamesSave({ saving: false, error: null, last: policy });
+    } catch (e) {
+      setCoachNamesSave({ saving: false, error: e instanceof Error && e.message ? e.message : CW.saveFailed, last: policy });
+      throw e;
+    }
+  }, [query, refresh]);
   const [goingLive, setGoingLive] = useState(false);
   const goLive = async () => {
     setGoingLive(true);
@@ -429,7 +451,10 @@ export default function PublicSitePage() {
     ]),
     lists: W.listsSummary(counts.contacts, counts.documents, counts.questions),
     visibility: W.visibilitySummary(on, currentOrg.isDiscoverable, noun),
+    coaches: coachNamesChoiceName(sanitizeCoachNamesPolicy(currentOrg.coachNamesPolicy)),
   };
+  // Team pages are a Club feature: the sixth row is absent (never locked) without Rep teams.
+  const showCoachNames = hasModuleEntitlement(currentOrg, 'module_rep_teams');
 
   const textField = (key: TextKey, label: string, opts: { placeholder?: string; hint?: ReactNode; area?: boolean; inputType?: string; pastYear?: boolean }) => {
     const id = `site-${key}`;
@@ -572,6 +597,12 @@ export default function PublicSitePage() {
             {listPart('questions')}
           </BuilderRow>
 
+          {showCoachNames && (
+            <BuilderRow id="coaches" title={CW.rowTitle} summary={summary.coaches} open={rowOpen === 'coaches'} onToggle={() => toggle('coaches')}>
+              <CoachNamesPanel orgSlug={orgSlug} policy={sanitizeCoachNamesPolicy(currentOrg.coachNamesPolicy)} isOwner={isOwner} onSave={saveCoachNames} />
+            </BuilderRow>
+          )}
+
           <BuilderRow id="visibility" title={W.visibility} summary={summary.visibility} open={rowOpen === 'visibility'} onToggle={() => toggle('visibility')}>
             <VisibilityPanel orgSlug={orgSlug} clubName={currentOrg.name} noun={noun} address={shownAddress}
               on={on} listed={currentOrg.isDiscoverable} isOwner={isOwner}
@@ -593,8 +624,8 @@ export default function PublicSitePage() {
 
       {/* One pill for the three queues. Retry replays the failed one (the typed fields were put back when their save
           failed, so they are sent again — once, never twice). */}
-      <SavePill saving={typedQ.saving || sectionQ.saving || lookQ.saving} dirty={waiting} error={lookQ.error ?? sectionQ.error ?? typedQ.error}
-        onRetry={() => (lookQ.error ? lookQ.retry() : sectionQ.error ? sectionQ.retry() : flush())} />
+      <SavePill saving={typedQ.saving || sectionQ.saving || lookQ.saving || coachNamesSave.saving} dirty={waiting} error={lookQ.error ?? sectionQ.error ?? typedQ.error ?? coachNamesSave.error}
+        onRetry={() => (lookQ.error ? lookQ.retry() : sectionQ.error ? sectionQ.retry() : typedQ.error ? flush() : coachNamesSave.error && coachNamesSave.last ? void saveCoachNames(coachNamesSave.last).catch(() => undefined) : flush())} />
       {told && <NoticePill message={told} onDone={() => setTold(null)} />}
 
       {/* The window is for a narrow window only: widened past the desk width the preview stands beside the rows. */}

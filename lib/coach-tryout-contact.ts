@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getOrgMemberDisplayNames, resolveCoachUserIdentities } from './db';
 import { getTeamStaffMembershipById, type TeamStaffMembership } from './coach-membership';
 import { liveTryoutContactEmail, publicPersonName } from './tryout-contact-rules';
+import { DEFAULT_COACH_NAMES_POLICY, seatNameListing, type CoachNamesPolicy } from './coach-names-policy';
 
 /**
  * lib/coach-tryout-contact.ts — THE HEAD COACH'S TRYOUT QUESTIONS ADDRESS (Club Tier Stage 4c-2 Part B, Asks 1–3; words
@@ -65,10 +66,13 @@ export async function readTryoutContact(orgId: string, teamId: string): Promise<
 export async function getPublicTryoutContact(
   orgId: string,
   teamId: string,
+  policy: CoachNamesPolicy = DEFAULT_COACH_NAMES_POLICY,
 ): Promise<{ email: string; name: string | null } | null> {
   const live = await readLive(orgId, teamId);
   if (!live.email || !live.setter) return null;
-  const name = live.setter.showNamePublic
+  // The name follows the club's choice (mig 352) through the one rule: "No coach names" reads "the head coach"; either
+  // "always" choice names the head coach who set the address; "Coaches choose" is their own switch, as before.
+  const name = seatNameListing(policy, live.setter).listed
     ? publicPersonName((await getOrgMemberDisplayNames(orgId, [live.setter.userId]))[live.setter.userId])
     : null;
   return { email: live.email, name };

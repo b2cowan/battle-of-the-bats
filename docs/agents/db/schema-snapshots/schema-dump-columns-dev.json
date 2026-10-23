@@ -9927,6 +9927,15 @@
     "ordinal_position": 45
   },
   {
+    "table_name": "organizations",
+    "column_name": "coach_names_policy",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'coaches_choose'::text",
+    "ordinal_position": 46
+  },
+  {
     "table_name": "pitch_decks",
     "column_name": "id",
     "data_type": "uuid",

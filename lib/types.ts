@@ -281,6 +281,9 @@ export interface Organization {
   /** When birthdays count from, per normalized sport id (mig 349, Stage 4c-2). Absent sport = January 1. Read it
    *  through `cutoffFor()` in lib/born-years.ts, never directly. */
   birthdayCutoffs?: Record<string, { m: number; d: number }>;
+  /** Who the club lists under Coaches on a team's public page (mig 352). Absent = 'coaches_choose'. Read it through
+   *  `coachNameListing()` in lib/coach-names-policy.ts, never by comparing strings. */
+  coachNamesPolicy?: import('./coach-names-policy').CoachNamesPolicy;
 }
 
 export interface OrganizationMember {
@@ -3384,6 +3387,9 @@ export type NotificationEventType =
   // 2026-09-28 that neither database constrains event_type (pg_constraint on dev and prod), so a
   // TS-union change only.
   | 'club_season_changed'
+  // Coach names (mig 352) — the club's choice newly lists a coach on their team's public page. Targeted lifecycle bell,
+  // 'know' (never Needs attention); TS-union only (neither database constrains event_type).
+  | 'club_coach_listed'
   // Club Tier Stage 2 — a coach the club invited from a team's Coaches page accepted (mig 312).
   // Reaches the person at the club who sent the invitation. Targeted lifecycle bell; TS-union only.
   | 'club_coach_joined'
