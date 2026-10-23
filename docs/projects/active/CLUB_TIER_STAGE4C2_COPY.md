@@ -2,7 +2,7 @@
 
 > Written 2026-10-22 by `/marketing`, before any code (Part 0 of `CLUB_TIER_STAGE4C2_BUILD_PROMPT.md`). **Status: settled by
 > `/marketing`; Part A builds from it.** Build from this table, not from the drawings, where they differ. The two rows marked
-> **OWNER** (F7, H7, both Part B) wait for a yes, asked when Part B starts. C12 was ruled 2026-10-22. Inventory IDs follow the string inventory (A1 to K11); the drawings are `CLUB_TIER_STAGE4C2_DRAWINGS.html`.
+> **OWNER** (F7, H7, both Part B) were ruled 2026-10-22 as recommended (F7 shortened, H7 under the hint). C12 was ruled 2026-10-22. Inventory IDs follow the string inventory (A1 to K11); the drawings are `CLUB_TIER_STAGE4C2_DRAWINGS.html`.
 >
 > **House rules applied:** sentence case; "8:00 a.m." (no clock time is new in this stage); the bare possessive; sport-neutral
 > examples; "installment" is not used; Canadian spellings; one spelling per thing; no "(optional)" tag on the house-league field.
@@ -196,6 +196,9 @@ HR-8 resolved by the D2 cell. In the tryout page meta the same line is lower-cas
 | E19 | Phone | Both words stay (named exception). | |
 | E20 | After the reset | Nothing is sent. The coach's row says so (H10). | |
 | E21 | Confirmation / failure | `Tryout questions now go to {club address}.` / `Couldn't change the address. Try again.` | GAP filled; the second is the product's action-failure idiom. |
+| E16b | Window title, the club has no address (E14b) | `Remove this address from {team}'s tryout page?` | Added at /review 2026-10-22: the E16 title contradicted E14b's button and body. Possessive through `possessive()`. |
+| E21b | Confirmation, the club has no address | `This tryout page now shows no questions address.` | Added at /review. Matches H2b's words; "questions … show no address" said the questions show something. |
+| E22 | The coach changed it while the window was open | `The head coach changed the address since this page opened. Check it and try again.` | Added at /review: the window resets only the address it showed. K8 stays for an address that is gone. |
 
 ---
 
@@ -211,7 +214,7 @@ HR-8 resolved by the D2 cell. In the tryout page meta the same line is lower-cas
 | F4 | Sentence, schedule is Public | `Anyone with the link sees the team's name, its about text and open tryouts (your club edits those), and your games, because you chose Public.` | **Changed from the ruled line.** It said "the schedule" and "Public link". Two earlier rulings break it: the choice is called **Public** (10-20) and a public page shows **games only**, never practices. The spec's own Sharing row reads "Public". |
 | F5 | Site-off notice, moved in | `Your club's public site is turned off, so your team's public page doesn't open for anyone right now. The club's owner turns it back on.` | Existing words, existing curly apostrophes. |
 | F6 | Name switch label | `Show my name on the team's public page` | |
-| F7 | Name switch hint | `Your name and role only. Families' questions go to the club.` | **OWNER.** Ruled, kept, but untrue on a tryout page once a head coach sets a tryout address (families then write to the coach). HR-11. Proposed: `Your name and role only. Never your email or phone.` |
+| F7 | Name switch hint | `Your name and role only.` | **Owner ruled 2026-10-22.** The ruled line ("…Families' questions go to the club.") turns untrue on a tryout page once a head coach sets a tryout address, and the proposal ("Never your email or phone.") reads as false when that address shows beside the coach's name. The switch adds a name and a role and nothing else, so the hint says only that. HR-11. |
 | F8 | Sentence, schedule is not Public | `Anyone with the link sees the team's name, its about text and open tryouts (your club edits those). Your games stay off it because you chose {Staff only / Families}. Choose Public in Schedule visibility to show them.` | GAP filled. Uses the setting's own labels. |
 | F9 | Copied | `Copied` | Existing. |
 
@@ -240,6 +243,7 @@ once an address is set the status line takes the chip's place, as "Sat, Nov 14 +
 | H7 | Accepted with the nudge | `A role address such as tryouts@ keeps working when a volunteer changes. You can use this one if you prefer.` Shown **under** the hint, quiet, never red. |
 | H8 | Another head coach set it (you are a head coach) | Status `{address} · set by {name}`; field editable; line `Any head coach can change or remove it. If you change it, it becomes yours and ends when your role does.` |
 | H9 | Assistant with tryouts access | Status `{address} · set by {name}`; no field, no remove; line `Only a head coach can change it.` |
+| H9b | Assistant with tryouts access, nothing set | Status: H2's first sentence alone (`They go to the club ({club address}).`), H2b's (`The page shows no questions address yet.`), or H10 without `You can set your own again.` Added at /review 2026-10-22: the invitation to set one is a head coach's alone. |
 | H10 | The club put its own back | `The club put its own address back on {Oct 22}. Questions go to {club address}. You can set your own again.` (chip `Optional`; the year shows when it is not this year) |
 | H11 | Loading | The field stays disabled and the row reads `Loading the address…` |
 | H12 | Save failed | The house pill: `Couldn't save · Retry`. The page keeps what it showed. |
@@ -248,7 +252,7 @@ once an address is set the status line takes the chip's place, as "Sat, Nov 14 +
 | H15 | Another assistant | Row absent. |
 | H16 | Variants B / C | Not built. |
 
-**OWNER (small):** H7. The drawing put the nudge *in place of* the hint. That drops "anyone can read it" and "it comes off when you stop being head coach" at the one moment a coach has typed something. I kept the hint and added the nudge beneath it. A layout call.
+**H7, owner ruled 2026-10-22: the nudge sits under the hint**, which stays. The drawing put the nudge *in place of* the hint; that would drop "anyone can read it" and "it comes off when you stop being head coach" at the one moment a coach has typed something.
 
 ## I. Family tryout page, the questions line
 

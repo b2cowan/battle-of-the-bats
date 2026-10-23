@@ -8640,6 +8640,56 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "rep_team_tryout_contacts",
+    "constraint_name": "rep_team_tryout_contacts_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_tryout_contacts",
+    "constraint_name": "rep_team_tryout_contacts_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "team_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_team_tryout_contacts",
+    "constraint_name": "rep_team_tryout_contacts_reset_by_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "reset_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_tryout_contacts",
+    "constraint_name": "rep_team_tryout_contacts_setter_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "set_by_membership_id",
+    "foreign_table": "rep_team_staff_memberships",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_tryout_contacts",
+    "constraint_name": "rep_team_tryout_contacts_team_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "rep_teams",
     "constraint_name": "rep_teams_group_id_fkey",
     "constraint_type": "FOREIGN KEY",

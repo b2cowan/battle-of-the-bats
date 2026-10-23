@@ -157,8 +157,10 @@ describe('nav item labels are the capability-gate keys, so they are pinned', () 
       money: 'off', documents: 'off', tryouts: false, rosterPii: false, announcementsSend: false,
       staffChat: false,
     });
-    // Overview is deliberately ungated — it is where a helper lands, and it renders their practice.
-    const ungated = sidebarItems.filter(l => l !== 'Overview' && isCoachNavItemVisible(helper, l));
+    // Overview is deliberately ungated — it is where a helper lands, and it renders their practice. Settings is open
+    // to every coach by its OWN case since 2026-10-22 (Club Tier 4c-2 Part B: each coach's public-name switch).
+    const DELIBERATELY_OPEN = ['Overview', 'Settings'];
+    const ungated = sidebarItems.filter(l => !DELIBERATELY_OPEN.includes(l) && isCoachNavItemVisible(helper, l));
     assert.deepEqual(ungated, [],
       'these nav labels have no case in isCoachNavItemVisible and fall through to `return true`');
   });

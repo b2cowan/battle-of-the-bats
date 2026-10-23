@@ -597,3 +597,15 @@
   color: var(--home-ink-soft);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .breakdownNote strong { color: var(--home-amber); }
+
+/* Club Tier 4c-2 Part B (Ask 12): under the days, above Add session — a quiet fact, never a warning. */
+.publicLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0.6rem 0 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.45;
+}
+.publicIcon { flex: none; margin-top: 2px; }

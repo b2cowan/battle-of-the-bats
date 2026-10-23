@@ -72,6 +72,7 @@
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --calendar-club   (rebuild ONLY the calendar club)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --rep-only-club   (rebuild ONLY the rep-only club, Stage 4b-2a)
  *        node --env-file=.env.local scripts/seed-club-fixture.mjs --club-venues     (ADD the Stage 6a venues + bookings)
+ *        node --env-file=.env.local scripts/seed-club-fixture.mjs --part-b-coaches  (ADD the Stage 4c-2 Part B coaches to the rep-only club)
  *   · Club Tier Stage 6a (the venue book and the clash check, 2026-10-08): the club's Venue library — Lions Park
  *     (Diamonds 1–3), Kinsmen Park (Diamonds A, B), Westfield School (no facilities) — 13U AAA's own places (its own
  *     "Lions Park", never merged, and Centennial Park), and a week of bookings on them from the first Tuesday at least
@@ -312,6 +313,16 @@ const tournamentGamesArg = process.argv.find(a => a === '--tournament-games' || 
 if (tournamentGamesArg) {
   head(`Club Tier Stage 7d — the tournament's games for ${ORG_NAME} (added; nothing rebuilt)`);
   await addTournamentGames(tournamentGamesArg.endsWith('=finished') ? 'finished' : 'upcoming');
+  head('Done');
+  process.exit(0);
+}
+
+// ── Club Tier Stage 4c-2 Part B — `--part-b-coaches`: ADD the walk's coaches to the rep-only club, and stop ──────────
+// Additive, never a rebuild (owner yes 2026-10-22: a rebuild would reset the club's saved sign-ins). Re-running puts the
+// same three coaches, switches and addresses back exactly as below; nothing else on the club is touched.
+if (process.argv.includes('--part-b-coaches')) {
+  head(`Club Tier Stage 4c-2 Part B — coaches for ${REP_ONLY_NAME} (added; nothing rebuilt)`);
+  await addPartBCoaches();
   head('Done');
   process.exit(0);
 }
@@ -1548,4 +1559,54 @@ async function buildRepOnlyClub() {
 function printRepOnlyClub() {
   console.log(`  Rep-only club: http://localhost:3000/${REP_ONLY_SLUG}   (the home, Teams, Tryouts, /teams/15u-aaa, /teams/13u-aaa, /teams/14u-aa/tryouts, /teams/18u-aa)`);
   console.log(`  owner             ${REP_ONLY_OWNER.email}  /  ${REP_ONLY_OWNER.password}   (turn 15U AAA's tryouts off for "nothing open")`);
+}
+
+/**
+ * Club Tier Stage 4c-2 Part B — walk B's coaches on the rep-only club (owner yes 2026-10-22, the smallest set):
+ *   · 15U AAA (sign-ups open): head coach Jordan Reyes — name shown, their own tryout questions address set;
+ *     assistant Sam Okafor — tryouts access, name NOT shown (reads the address "set by Jordan Reyes").
+ *   · 13U AAA: sign-ups opened; head coach Pat Lindqvist — no address (the club's line), name not shown.
+ * Written the way the club's Coaches route writes staff: the coach org membership, the staff membership (access truth,
+ * mig 245), the live season's projection. Idempotent: a re-run resets these three seats' switches and the two addresses.
+ */
+async function addPartBCoaches() {
+  const club = await one('find rep-only club', db.from('organizations').select('id').eq('slug', REP_ONLY_SLUG).single());
+  const teamOf = async slug => one(`find ${slug}`, db.from('rep_teams').select('id').eq('org_id', club.id).eq('slug', slug).single());
+  const liveYear = async teamId => one('live year', db.from('rep_program_years').select('id').eq('team_id', teamId).eq('status', 'active').single());
+  const t15 = await teamOf('15u-aaa');
+  const t13 = await teamOf('13u-aaa');
+  const SEATS = [
+    { team: t15, email: 'uat-lynx-head-15aaa@uat-rep-club.local', name: 'Jordan Reyes', role: 'head_coach', kind: null, grants: null, show: true },
+    { team: t15, email: 'uat-lynx-assistant-15aaa@uat-rep-club.local', name: 'Sam Okafor', role: 'assistant_coach', kind: 'assistant', grants: { tryouts: true }, show: false },
+    { team: t13, email: 'uat-lynx-head-13aaa@uat-rep-club.local', name: 'Pat Lindqvist', role: 'head_coach', kind: null, grants: null, show: false },
+  ];
+  const seatIds = {};
+  for (const seat of SEATS) {
+    const user = await ensureUser(seat.email, DEFAULT_PASSWORD, seat.name);
+    const member = await one('org member', db.from('organization_members').select('id').eq('organization_id', club.id).eq('user_id', user.id).maybeSingle());
+    if (!member) die(`org member ${seat.name}`, (await db.from('organization_members').insert({
+      organization_id: club.id, user_id: user.id, role: 'coach', status: 'active', display_name: seat.name, invited_at: nowIso, accepted_at: nowIso,
+    })).error);
+    const row = await one(`staff membership ${seat.name}`, db.from('rep_team_staff_memberships').upsert({
+      org_id: club.id, team_id: seat.team.id, user_id: user.id, coach_role: seat.role, status: 'active', revoked_at: null, revoked_by: null,
+      staff_kind: seat.kind, capabilities: seat.grants, show_name_public: seat.show,
+    }, { onConflict: 'team_id,user_id' }).select('id').single());
+    seatIds[seat.email] = row.id;
+    const py = await liveYear(seat.team.id);
+    const projected = await one('projection', db.from('rep_team_coaches').select('id').eq('program_year_id', py.id).eq('user_id', user.id).maybeSingle());
+    if (!projected) die(`projection ${seat.name}`, (await db.from('rep_team_coaches').insert({
+      program_year_id: py.id, team_id: seat.team.id, org_id: club.id, user_id: user.id, coach_role: seat.role, capabilities: seat.grants,
+    })).error);
+    ok(`${seat.name} — ${seat.role === 'head_coach' ? 'head coach' : 'assistant'}, ${seat.show ? 'name shown' : 'name not shown'}: ${seat.email} / ${DEFAULT_PASSWORD}`);
+  }
+  // 13U AAA takes sign-ups too, so the walk has an open page with the club's line beside one with the coach's.
+  const py13 = await liveYear(t13.id);
+  die('open 13U AAA sign-ups', (await db.from('rep_program_years').update({ tryout_open: true }).eq('id', py13.id)).error);
+  // The tryout questions addresses: 15U AAA's is Jordan's; 13U AAA has none.
+  die('15U AAA tryout address', (await db.from('rep_team_tryout_contacts').upsert({
+    team_id: t15.id, org_id: club.id, email: 'tryouts.15u@lakeshorelynx.ca',
+    set_by_membership_id: seatIds['uat-lynx-head-15aaa@uat-rep-club.local'], set_at: nowIso, reset_at: null, reset_by: null, updated_at: nowIso,
+  }, { onConflict: 'team_id' })).error);
+  die('13U AAA no address', (await db.from('rep_team_tryout_contacts').delete().eq('team_id', t13.id)).error);
+  ok('15U AAA: questions go to tryouts.15u@lakeshorelynx.ca (set by Jordan Reyes) · 13U AAA: sign-ups open, the club’s address');
 }

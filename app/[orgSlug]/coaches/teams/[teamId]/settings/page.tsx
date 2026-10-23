@@ -20,6 +20,7 @@ import { ARRIVAL_PRESET_MINUTES, arrivalPresetLabel } from '@/lib/coach-arrival'
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import ClubSiteOffNotice from '@/components/coaches/ClubSiteOffNotice';
+import CoachPublicPageDoor, { VISIBILITY_LABEL } from '@/components/coaches/CoachPublicPageDoor';
 
 interface SettingsData {
   team: { id: string; name: string; division: string | null; sport: string };
@@ -40,6 +41,9 @@ interface SettingsData {
   scheduleVisibility: { value: ScheduleVisibility; canEdit: boolean } | null;
   /** The club's public site is off, so the team's public page opens for no one (Club Tier Stage 4a, S4-08). */
   clubSiteOff: boolean;
+  /** "Your team's public page" + the caller's OWN name switch (Club Tier 4c-2 Part B). Null ⇒ no public team page in
+   *  the plan ⇒ both absent. Served to every coach: each decides about their own name. */
+  publicPage: { path: string; showMyName: boolean } | null;
   /** The team's arrival habit (mig 307): minutes before a game / a practice a new event starts at. */
   arrivalDefaults: { game: number | null; practice: number | null; canEdit: boolean };
   /** Null when this coach has no money access — the server omits the figures entirely. */
@@ -62,13 +66,7 @@ const STATUS_LABEL: Record<string, string> = {
   draft: 'Draft', active: 'Active', completed: 'Completed', archived: 'Archived',
 };
 
-/** The three words a coach reads on the control — the same three the retired card used, so a
- *  coach who set this last month finds the setting they remember. */
-const VISIBILITY_LABEL: Record<ScheduleVisibility, string> = {
-  staff: 'Staff only',
-  families: 'Families',
-  public_link: 'Public',
-};
+// The three words on the control live with the door (VISIBILITY_LABEL): one table for the control and its sentence.
 
 /** One sentence per setting, stating what it DOES rather than restating its name. Each names
  *  the consequence a coach can actually observe: the family schedule, the public team page. */
@@ -299,6 +297,29 @@ export default function TeamSettingsPage({
     }
   }
 
+  /** The caller's own "Show my name on the team's public page". On a failure, re-read the server's answer for THIS
+   *  switch only (the club-book switch's reason: a committed write whose response was lost must not read as off) —
+   *  never `load()`, which shows the page's loading state and would unmount the door with its Retry pill. */
+  async function saveShowMyName(next: boolean): Promise<void> {
+    const url = `/api/coaches/${orgSlug}/teams/${teamId}`;
+    try {
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showMyName: next }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? 'Couldn’t save');
+      const saved = json.showMyName === true;
+      setData(prev => prev?.publicPage ? { ...prev, publicPage: { ...prev.publicPage, showMyName: saved } } : prev);
+    } catch (e) {
+      const fresh = await fetch(url).then(r => (r.ok ? r.json() : null)).catch(() => null) as Pick<SettingsData, 'publicPage'> | null;
+      if (fresh?.publicPage) setData(prev => (prev ? { ...prev, publicPage: fresh.publicPage } : prev));
+      throw e;
+    }
+  }
+
+
   async function toggleClubBookSharing(next: boolean) {
     setSavingShare(true);
     setShareError('');
@@ -472,6 +493,10 @@ export default function TeamSettingsPage({
   // Kept as two inline checks at the render site rather than folded in here, so the compiler
   // narrows the two nullable settings for the rows below instead of taking them on trust.
   const showMoney = hasMoneyAccess && autoReminders !== null && creditMode !== null;
+  // Sharing's two TEAM-WIDE rows belong to whoever configures the team; the door and the name switch, to every coach
+  // (Club Tier 4c-2 Part B). Decided once, so the section's gate, its summary and its rows cannot disagree.
+  const visibilityRow = showTeamGroups ? data.scheduleVisibility : null;
+  const bookRow = showTeamGroups && data.clubBook.showSwitch;
 
   // ── Collapsed-header value summaries ───────────────────────────────────────────
   // Each group states what it is currently SET TO, so the CLOSED page answers more than the old
@@ -910,14 +935,16 @@ export default function TeamSettingsPage({
             section shows when EITHER row is available and each row hides on its own rule —
             absent, never locked, so a coach is never offered a control that does nothing. The
             summary names the visibility first: it is the one a coach changes more than once. */}
-        {showTeamGroups && (data.scheduleVisibility || data.clubBook.showSwitch) && (
+        {/* Club Tier 4c-2 Part B: the section also shows for EVERY coach when the team has a public page — the door
+            and the coach's own name switch. The two team-wide rows below still need `showTeamGroups`. */}
+        {(visibilityRow || bookRow || data.publicPage) && (
           <CoachCollapseSection
             sectionId="club-book"
             title="Sharing"
             defaultOpen={false}
             meta={[
-              data.scheduleVisibility ? `Schedule: ${VISIBILITY_LABEL[data.scheduleVisibility.value]}` : null,
-              data.clubBook.showSwitch ? (data.clubBook.sharing ? 'Book shared with the club' : 'Book not shared') : null,
+              visibilityRow ? `Schedule: ${VISIBILITY_LABEL[visibilityRow.value]}` : null,
+              bookRow ? (data.clubBook.sharing ? 'Book shared with the club' : 'Book not shared') : null,
             ].filter(Boolean).join(' · ')}
           >
             <p className={styles.settingWho}>
@@ -925,23 +952,23 @@ export default function TeamSettingsPage({
               by surprise.
             </p>
             <div className={styles.settingRows}>
-              {data.scheduleVisibility && (
+              {visibilityRow && (
                 <div className={styles.settingRow}>
                   <div className={styles.settingRowMain}>
                     <span className={styles.settingRowLabel}>Schedule visibility</span>
                     <span className={styles.settingRowDesc}>
-                      Who can see games and practices. {VISIBILITY_HELP[data.scheduleVisibility.value]}
+                      Who can see games and practices. {VISIBILITY_HELP[visibilityRow.value]}
                     </span>
                   </div>
                   <div className={`${styles.settingRowCtl} ${styles.settingRowCtlWide}`}>
-                    {data.scheduleVisibility.canEdit ? (
+                    {visibilityRow.canEdit ? (
                       <div className={styles.segChoice} role="group" aria-label="Who can see games and practices">
                         {(['staff', 'families', 'public_link'] as ScheduleVisibility[]).map(v => (
                           <button
                             key={v}
                             type="button"
-                            aria-pressed={data.scheduleVisibility?.value === v}
-                            className={`${styles.segBtn}${data.scheduleVisibility?.value === v ? ' ' + styles.segBtnActive : ''}`}
+                            aria-pressed={visibilityRow?.value === v}
+                            className={`${styles.segBtn}${visibilityRow?.value === v ? ' ' + styles.segBtnActive : ''}`}
                             onClick={() => changeVisibility(v)}
                             disabled={savingVisibility}
                           >
@@ -951,14 +978,15 @@ export default function TeamSettingsPage({
                       </div>
                     ) : (
                       <span className={styles.settingRowDesc}>
-                        {VISIBILITY_LABEL[data.scheduleVisibility.value]} — only coaches who manage the
+                        {VISIBILITY_LABEL[visibilityRow.value]} — only coaches who manage the
                         schedule can change it.
                       </span>
                     )}
                   </div>
                 </div>
               )}
-              {data.scheduleVisibility && data.clubSiteOff && (
+              {/* The site-off notice moved INTO the door (4c-2 Part B); it stays here only where no door exists. */}
+              {visibilityRow && data.clubSiteOff && !data.publicPage && (
                 <div className={styles.settingRow}><ClubSiteOffNotice /></div>
               )}
               {visibilityError && (
@@ -966,7 +994,17 @@ export default function TeamSettingsPage({
                   <p className={styles.errorText} style={{ margin: 0 }} role="alert">{visibilityError}</p>
                 </div>
               )}
-              {data.clubBook.showSwitch && (
+              {data.publicPage && (
+                <CoachPublicPageDoor
+                  path={data.publicPage.path}
+                  siteOff={data.clubSiteOff}
+                  visibility={data.scheduleVisibility?.value ?? null}
+                  canChangeVisibility={!!data.scheduleVisibility?.canEdit}
+                  showMyName={data.publicPage.showMyName}
+                  onSaveName={saveShowMyName}
+                />
+              )}
+              {bookRow && (
               <div className={styles.settingRow}>
                 <div className={styles.settingRowMain}>
                   <span className={styles.settingRowLabel}>Share our book with the club</span>
@@ -1046,7 +1084,7 @@ export default function TeamSettingsPage({
 
         {/* A coach who can reach Settings always has at least one group — but a grant change
             mid-session could empty it, and an empty page must still say why. */}
-        {!showTeamGroups && !showMoney && (
+        {!showTeamGroups && !showMoney && !data.publicPage && (
           <p className={styles.muted}>There are no settings you can change for this team.</p>
         )}
       </div>

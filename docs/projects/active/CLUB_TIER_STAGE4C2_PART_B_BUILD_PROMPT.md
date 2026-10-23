@@ -32,6 +32,21 @@ The long prompt's "Verified state" table rows for **Coach Sharing, Staff, Coach 
 Contact pieces and Guards that fail by design** are Part B's; **re-verify them against the code** (line numbers have moved).
 The rows for birth years, the blurb, the past-year hint and the public born lines are now Part A as built.
 
+## Rulings at the gate (owner, 2026-10-22)
+
+- **F7:** the name switch's hint is `Your name and role only.` (both earlier wordings turn untrue once a head coach's tryout
+  address shows beside their name). **H7:** the role-address nudge sits under the hint, which stays.
+- **Every coach can open Team settings.** The code gap behind this: Settings opened only for a head coach, a schedule-editing
+  assistant or a money coach, so "each coach gets their own switch" could not reach a plain assistant. The drawings never covered
+  that case. Ruled the same way as the money-coach widening: the door opens for every active coach, and the page narrows. A coach
+  with no other settings sees only Sharing, with the public page's address (Copy link, Open) and their own name switch. F8's last
+  sentence ("Choose Public in Schedule visibility…") shows only to a coach who can change that choice.
+- **Coaches show only while the team has a live season** (ruled after /review). Between seasons a team opens only to its
+  closed-season page, where a coach could not switch their name off, so the public team page names no coach then. The
+  switch's save itself also works between seasons (it is consent, not season configuration).
+- **Removal turns the name switch off.** A re-added coach gets their grants back by design, but not their public name: they
+  decide again. Demotion (head coach to assistant) keeps the switch; only the role line changes.
+
 ## Before any code (the gate)
 
 1. **Ask the owner F7 and H7** (above). One short question each, with the proposal, as the copy doc words them. Do not build the

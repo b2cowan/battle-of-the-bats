@@ -2,19 +2,25 @@
  * lib/club-team-page.ts — THE PUBLIC TEAM PAGE'S RECIPE (Club Tier Stage 4b-2a; End state 3, ruled 2026-10-19).
  *
  * The name, its division and season → the tryout door (or one quiet sentence) → the schedule, when the coach
- * chose Public link → About the team. A part with nothing to show is absent. No Past seasons list (DC-07); no Coaches
- * section (it arrives in 4c with the coach's own switch). Pure, so the absences are unit-tested.
+ * chose Public link → Coaches → About the team. A part with nothing to show is absent. No Past seasons list (DC-07).
+ * Coaches (Club Tier 4c-2 Part B) lists only coaches who turned on their own name switch — name and role only — and is
+ * absent when none has. Pure, so the absences are unit-tested.
  */
 
-export type TeamPagePart = 'concluded' | 'tryoutDoor' | 'tryoutQuiet' | 'schedule' | 'about';
+export type TeamPagePart = 'concluded' | 'tryoutDoor' | 'tryoutQuiet' | 'schedule' | 'about' | 'coaches';
 
 /** The page's parts in phone order. An archived team's page still opens for old links, says it has concluded, and offers
  *  no tryout part at all (a "not taking sign-ups right now" would promise a later). */
-export function teamPageParts(has: { archived: boolean; tryoutOpen: boolean; schedule: boolean; about: boolean }): TeamPagePart[] {
+export function teamPageParts(has: {
+  archived: boolean; tryoutOpen: boolean; schedule: boolean; about: boolean; coaches?: boolean;
+}): TeamPagePart[] {
   const out: TeamPagePart[] = [];
   if (has.archived) out.push('concluded');
   else out.push(has.tryoutOpen ? 'tryoutDoor' : 'tryoutQuiet');
   if (has.schedule && !has.archived) out.push('schedule');
+  // Coaches before About, as End state › 3 draws it. An archived team's page names no coaches: the program has
+  // concluded, and a seat on it is not a current one.
+  if (has.coaches && !has.archived) out.push('coaches');
   if (has.about) out.push('about');
   return out;
 }

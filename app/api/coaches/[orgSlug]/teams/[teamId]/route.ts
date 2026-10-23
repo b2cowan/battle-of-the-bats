@@ -9,18 +9,29 @@ import {
   updateRepProgramYear,
   setRepTeamShareClubBook,
 } from '@/lib/db';
-import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
+import { getEntitledTeamMembership, resolveMembershipCapabilities, setOwnShowNamePublic } from '@/lib/coach-membership';
 import { mayManageSeasons, orgManagesOwnSeasons } from '@/lib/season-doors';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import { normalizeArrivalDefault } from '@/lib/coach-arrival';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { isPublicClubSiteOpen } from '@/lib/public-club-access';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { denyUnless, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import {
   SCHEDULE_VISIBILITIES, isFamilyLayerEnabled, setScheduleVisibility, type ScheduleVisibility,
 } from '@/lib/family-access';
+
+/**
+ * Does the plan carry a public team page at all — whatever the site switch says (a closed site still has the door,
+ * Copy link only, and its notice). The same two facts `publicClubRefusal(…, 'teams')` asks after the switch: a
+ * standalone team carries its page per team; a club needs Rep Teams.
+ */
+function hasPublicTeamPage(org: Organization): boolean {
+  return isTeamWorkspaceOrg(org) || hasModuleEntitlement(org, 'module_rep_teams');
+}
 
 /**
  * M1 (2026-08-16): the gate is TEAM MEMBERSHIP, and the between-seasons state is ordinary.
@@ -60,7 +71,7 @@ async function resolveCoachContext(
     return { error: NextResponse.json({ error: 'No active program year' }, { status: 404 }) };
   }
 
-  return { ctx, team, assignment, programYear };
+  return { ctx, team, membership, assignment, programYear };
 }
 
 /** Who may self-manage seasons + division: a head coach of a STANDALONE Team workspace (not an
@@ -88,7 +99,7 @@ export const GET = withObservability(async (_req: Request,
   // Read: works between seasons too (newest closed year stands in; status says which it is).
   const resolved = await resolveCoachContext(orgSlug, teamId, { requireLiveSeason: false });
   if ('error' in resolved) return resolved.error!;
-  const { ctx, team, assignment, programYear } = resolved;
+  const { ctx, team, membership, assignment, programYear } = resolved;
 
   const scope = computeScope(ctx.org, assignment.coachRole);
   const clubAccess = resolveClubBookAccessFor(ctx.org, team);
@@ -133,6 +144,15 @@ export const GET = withObservability(async (_req: Request,
      * Sharing can say so; there is nothing for the coach to set.
      */
     clubSiteOff: !isPublicClubSiteOpen(ctx.org),
+    /**
+     * "Your team's public page" and the coach's OWN name switch (Club Tier Stage 4c-2 Part B, Stage 4 Ask 2). Served to
+     * EVERY coach on the team — every coach can open Settings since Part B (owner ruling 2026-10-22), and each decides
+     * about their own name. NULL when the plan carries no public team page (absent, never locked); a closed site still
+     * has the door (Copy link only) and the notice. The path is relative: the client prefixes its own origin.
+     */
+    publicPage: hasPublicTeamPage(ctx.org)
+      ? { path: `/${ctx.org.slug}/teams/${team.slug}`, showMyName: membership.showNamePublic }
+      : null,
     scheduleVisibility: (await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))
       ? { value: team.scheduleVisibility, canEdit: canManageSchedule(assignment.capabilities) }
       : null,
@@ -187,12 +207,27 @@ export const GET = withObservability(async (_req: Request,
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  // Write: the live season only — a finished season's configuration is part of its record.
-  const resolved = await resolveCoachContext(orgSlug, teamId, { requireLiveSeason: true });
-  if ('error' in resolved) return resolved.error!;
-  const { ctx, team, assignment, programYear } = resolved;
-
   const body = await req.json().catch(() => ({}));
+  // The caller's own public-name switch is consent, not season configuration: it can be turned off between seasons
+  // too (the Coaches section has no season condition). Every other write: the live season only — a finished
+  // season's configuration is part of its record.
+  const ownName = !!body && typeof body === 'object' && 'showMyName' in body;
+  const resolved = await resolveCoachContext(orgSlug, teamId, { requireLiveSeason: !ownName });
+  if ('error' in resolved) return resolved.error!;
+  const { ctx, team, membership, assignment, programYear } = resolved;
+
+  /**
+   * "Show my name on the team's public page" — the caller's OWN switch (Club Tier Stage 4c-2 Part B). Any active coach
+   * of the team, and only ever their own membership: the body names no person, so there is no one else's to change.
+   */
+  if (ownName) {
+    if (typeof body.showMyName !== 'boolean') {
+      return NextResponse.json({ error: 'showMyName must be true or false' }, { status: 400 });
+    }
+    const saved = await setOwnShowNamePublic(membership.id, teamId, body.showMyName);
+    if (saved === null) return NextResponse.json({ error: "Couldn't save your changes. Try again." }, { status: 409 });
+    return NextResponse.json({ ok: true, showMyName: saved });
+  }
 
   /**
    * Club Shared Book — "Share our book with the club" (owner ruling §8 Q1: the club admin

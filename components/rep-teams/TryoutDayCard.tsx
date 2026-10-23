@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, ChevronRight } from 'lucide-react';
+import { Plus, ChevronRight, Globe } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { touched } from '@/components/coaches/useDiscardGuard';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
@@ -113,6 +113,8 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
   // The club's venues (Club Tier Stage 6a): read with the sessions, offered in the Venue field — in a club only.
   const [clubVenues, setClubVenues] = useState<{ inClub: boolean; venues: ClubVenueOption[] }>({ inClub: false, venues: [] });
   const [loading, setLoading] = useState(true);
+  // Club Tier 4c-2 Part B (Ask 12): null while the club's site is off — then there is no line.
+  const [tryoutPage, setTryoutPage] = useState<{ signupsOpen: boolean } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const confirm = useConfirm();
 
@@ -154,6 +156,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
       if (!res.ok) throw new Error(data.error ?? 'Failed to load tryout day');
       setTryout(data.tryout ?? null);
       setSessions(data.sessions ?? []);
+      setTryoutPage(data.tryoutPage ?? null);
       setClubVenues(data.clubVenues?.inClub ? { inClub: true, venues: data.clubVenues.venues ?? [] } : { inClub: false, venues: [] });
     } catch (e: any) {
       fail(e.message ?? 'Failed to load tryout day.');
@@ -377,6 +380,16 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
                 );
               })}
             </div>
+          )}
+
+          {/* Ask 12: under the days, above Add session — the days are public before sign-ups open. */}
+          {tryoutPage && sessions.length > 0 && (
+            <p className={styles.publicLine}>
+              <Globe size={15} aria-hidden className={styles.publicIcon} />
+              {tryoutPage.signupsOpen
+                ? 'Anyone can see these days on your team’s tryout page.'
+                : 'Anyone can see these days on your team’s tryout page, even before sign-ups open.'}
+            </p>
           )}
 
           {canWrite && (

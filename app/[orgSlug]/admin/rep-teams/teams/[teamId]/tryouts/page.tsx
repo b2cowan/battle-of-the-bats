@@ -30,6 +30,7 @@ import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import TryoutBlurb from '@/components/admin/kit/club/TryoutBlurb';
+import TryoutCoachAddressLine from '@/components/admin/kit/club/TryoutCoachAddressLine';
 import ViewPills from '@/components/shared/ViewPills';
 import {
   ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, repKit, TwoOpenNote, useDeferredLoad,
@@ -386,6 +387,13 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
               }}
             />
           )}
+          {/* Club Tier 4c-2 Part B (Ask 2): a head coach's own address for this page's questions, and the club's way back. */}
+          <TryoutCoachAddressLine
+            api={`/api/admin/rep-teams/teams/${teamId}/tryout-contact?${q}`}
+            teamName={team.name}
+            canWrite={canWrite}
+            onDone={(tone, text) => setNotice({ tone, text })}
+          />
         </ClubSection>
       ) : (
         <div className={repKit.section}>

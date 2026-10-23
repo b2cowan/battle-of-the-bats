@@ -4035,6 +4035,21 @@
     "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_tournament_team_unique ON public.rep_team_tournament_registrations USING btree (tournament_team_id)"
   },
   {
+    "tablename": "rep_team_tryout_contacts",
+    "indexname": "idx_rep_team_tryout_contacts_org",
+    "indexdef": "CREATE INDEX idx_rep_team_tryout_contacts_org ON public.rep_team_tryout_contacts USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_tryout_contacts",
+    "indexname": "idx_rep_team_tryout_contacts_setter",
+    "indexdef": "CREATE INDEX idx_rep_team_tryout_contacts_setter ON public.rep_team_tryout_contacts USING btree (set_by_membership_id)"
+  },
+  {
+    "tablename": "rep_team_tryout_contacts",
+    "indexname": "rep_team_tryout_contacts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_tryout_contacts_pkey ON public.rep_team_tryout_contacts USING btree (team_id)"
+  },
+  {
     "tablename": "rep_teams",
     "indexname": "idx_rep_teams_org_share_club_book",
     "indexdef": "CREATE INDEX idx_rep_teams_org_share_club_book ON public.rep_teams USING btree (org_id) WHERE share_club_book"

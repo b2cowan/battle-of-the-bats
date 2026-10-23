@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-22",
-  "total": 143,
+  "generated": "2026-10-23",
+  "total": 162,
   "counts": {
-    "tables": 6,
-    "columns": 68,
-    "indexes": 16,
-    "constraints": 25,
-    "rls": 28
+    "tables": 7,
+    "columns": 77,
+    "indexes": 19,
+    "constraints": 30,
+    "rls": 29
   },
   "items": [
     {
@@ -95,6 +95,10 @@
     },
     {
       "key": "check:only-dev:rep_program_years.rep_program_years_tryout_description_length",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_email_check",
       "sig": ""
     },
     {
@@ -270,6 +274,42 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_staff_memberships.show_name_public",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.reset_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.reset_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.set_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.set_by_membership_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tryout_contacts.updated_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:teams.fee_book_baseline",
       "sig": ""
     },
@@ -414,6 +454,26 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_org_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_reset_by_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_setter_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_team_fk",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:teams.teams_fee_changed_by_fkey",
       "sig": ""
     },
@@ -502,11 +562,23 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_team_tryout_contacts_org",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_tryout_contacts_setter",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_site_notices_org_idx",
       "sig": ""
     },
     {
       "key": "index:only-dev:org_site_notices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_tryout_contacts_pkey",
       "sig": ""
     },
     {
@@ -563,6 +635,10 @@
     },
     {
       "key": "table:only-dev:org_site_notices",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_tryout_contacts",
       "sig": ""
     },
     {

@@ -1,0 +1,23 @@
+/* Tryouts › Set up, "Questions from families" (Club Tier Stage 4c-2 Part B). */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-width: 34rem;
+}
+
+/* A refused address (H5, H6): the drawn red edge, and the held reason at the hint's size. Never saved. */
+.field[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.held {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--danger);
+}
+
+.remove {
+  align-self: flex-start;
+  min-height: 44px;
+}

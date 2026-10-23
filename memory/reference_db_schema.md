@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-22 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-23 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-22
+# DB Schema Reference — 2026-10-23
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -380,7 +380,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_team_plan_templates_name_uniq, rep_team_plan_templates_org_idx, rep_team_plan_templates_team_idx
 
 ### rep_team_staff_memberships
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, user_id (uuid) NOT NULL, coach_role NOT NULL, capabilities (jsonb), status, created_at, revoked_at, revoked_by (uuid), staff_kind, calendar_link_generation (integer), calendar_last_read_on
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, user_id (uuid) NOT NULL, coach_role NOT NULL, capabilities (jsonb), status, created_at, revoked_at, revoked_by (uuid), staff_kind, calendar_link_generation (integer), calendar_last_read_on, show_name_public (boolean)
 - Indexes: rep_team_staff_memberships_org_user_idx, rep_team_staff_memberships_team_idx, rep_team_staff_memberships_team_user_key
 
 ### rep_team_tags
@@ -390,6 +390,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 ### rep_team_tournament_registrations
 id (uuid), tournament_team_id (uuid) → teams.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, linked_by_user_id (uuid), link_source, created_at
 - Indexes: rep_team_tournament_registrations_org_idx, rep_team_tournament_registrations_rep_team_idx, rep_team_tournament_registrations_tournament_team_unique
+
+### rep_team_tryout_contacts
+team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, email, set_by_membership_id (uuid) → rep_team_staff_memberships.id, set_at, reset_at, reset_by (uuid), updated_at
+- Indexes: idx_rep_team_tryout_contacts_org, idx_rep_team_tryout_contacts_setter
 
 ### rep_teams
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer), sponsor_payment_details (jsonb)
@@ -880,11 +884,11 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **213 tables** across 10 modules.
+Total: **214 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 75 tables
+- Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

@@ -1,0 +1,10 @@
+/* The admin Tryouts page's coach-address line, inside the house Callout (Club Tier Stage 4c-2 Part B, E14–E15). */
+.first {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* E15 — a phone: the footer clause drops (the Callout already puts its action under the words). */
+@media (max-width: 640px) {
+  .deskOnly { display: none; }
+}

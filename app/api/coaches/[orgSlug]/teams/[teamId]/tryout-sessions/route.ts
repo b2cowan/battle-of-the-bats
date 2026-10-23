@@ -16,6 +16,7 @@ import { withObservability } from '@/lib/observability';
 import { wallClockStringToUtc } from '@/lib/timezone';
 import { resolveRepEventWhere } from '@/lib/rep-event-where';
 import { clashesForSavedTryoutSessions, getClubVenueLibrary } from '@/lib/venue-clash-lookup';
+import { publicClubRefusal } from '@/lib/public-club-access';
 import type { Organization, RepProgramYear } from '@/lib/types';
 
 type Resolved =
@@ -58,7 +59,10 @@ export const GET = withObservability(async (_req: Request,
     // The tryout day's Venue field (Club Tier Stage 6a, Ask 13): the club's venues, read-only, in a club only.
     getClubVenueLibrary(r.org),
   ]);
-  return NextResponse.json({ tryout, sessions, clubVenues });
+  // The setup line under the days (Club Tier 4c-2 Part B, Ask 12): only while the team's tryout page can open, and
+  // whether sign-ups are open decides its last clause.
+  const tryoutPage = publicClubRefusal(r.org, 'teams') === null ? { signupsOpen: r.programYear.tryoutOpen } : null;
+  return NextResponse.json({ tryout, sessions, clubVenues, tryoutPage });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions' });
 
 export const POST = withObservability(async (req: Request,

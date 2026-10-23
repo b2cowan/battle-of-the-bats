@@ -121,11 +121,12 @@ describe('the doors each kind meets on their first sign-in', () => {
     }
   });
 
-  it('helper: Schedule and Insights (the book tab) only — unchanged from Phase 4 + the 09-11 ruling', () => {
+  it('helper: Schedule, Insights (the book tab) and Settings (their own name switch, 2026-10-22) only', () => {
     const h = preset('helper');
     assert.equal(isCoachNavItemVisible(h, 'Schedule'), true);
     assert.equal(isCoachNavItemVisible(h, 'Insights'), true);
-    for (const door of ['Money', 'Settings', 'Chat', 'Roster', 'Documents', 'Tournaments', 'Staff', 'Lineups', 'Attendance']) {
+    assert.equal(isCoachNavItemVisible(h, 'Settings'), true);
+    for (const door of ['Money', 'Chat', 'Roster', 'Documents', 'Tournaments', 'Staff', 'Lineups', 'Attendance']) {
       assert.equal(isCoachNavItemVisible(h, door), false, `${door} must stay shut for a helper`);
     }
   });

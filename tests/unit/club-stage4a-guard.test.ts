@@ -183,7 +183,9 @@ describe('6 · the coach is told; the owner\'s switch says what it does', () => 
   it('Sharing shows the notice when the site is off', () => {
     const src = readSource('components/coaches/ClubSiteOffNotice.tsx');
     assert.ok(src.includes('Your club’s public site is turned off, so your team’s public page doesn’t open for anyone right now. The club’s owner turns it back on.'));
-    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx'), /data\.clubSiteOff && \(\s*<div className=\{styles\.settingRow\}><ClubSiteOffNotice \/>/);
+    // Club Tier 4c-2 Part B moved it INTO "Your team's public page" (F5); it stays as its own row only where no door exists.
+    assert.match(readCode('components/coaches/CoachPublicPageDoor.tsx'), /\{siteOff && <ClubSiteOffNotice \/>\}/);
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx'), /siteOff=\{data\.clubSiteOff\}/);
   });
   it('the switch and its dialog say every club page goes offline, never the tournaments', () => {
     // Moved with the switch from Settings into the Public site editor's Visibility row (Public site builder, 2026-10-21).

@@ -202,6 +202,11 @@ describe('the team page recipe (End state 3): a part with nothing to show is abs
   it('an archived team: concluded, no tryout part at all', () => {
     assert.deepEqual(teamPageParts({ archived: true, tryoutOpen: false, schedule: false, about: true }), ['concluded', 'about']);
   });
+  it('Coaches (4c-2 Part B) comes before About, only when a coach switched their name on, never on an archived team', () => {
+    assert.deepEqual(teamPageParts({ archived: false, tryoutOpen: true, schedule: true, about: true, coaches: true }), ['tryoutDoor', 'schedule', 'coaches', 'about']);
+    assert.deepEqual(teamPageParts({ archived: false, tryoutOpen: false, schedule: false, about: false, coaches: false }), ['tryoutQuiet']);
+    assert.deepEqual(teamPageParts({ archived: true, tryoutOpen: false, schedule: false, about: false, coaches: true }), ['concluded']);
+  });
   it('division and season under the name; either alone; nothing when neither', () => {
     assert.equal(teamMetaLine('Provincial AAA', 2026), 'Provincial AAA · 2026 season');
     assert.equal(teamMetaLine(null, 2026), '2026 season');

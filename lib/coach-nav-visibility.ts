@@ -1,5 +1,5 @@
 import {
-  hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canConfigureTeam, canOpenTournaments, canWriteMoney, canManageStaff,
+  hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canOpenTournaments, canManageStaff,
   canWriteDevelopment,
   type CoachCapabilities,
 } from './coach-capabilities';
@@ -281,8 +281,14 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * This is a door widening, so the PAGE narrows to match: each group renders only for the
      * grant that owns it, and a money-only coach finds a settings page containing Money and
      * nothing else. Every write is still refused server-side by its own route.
+     *
+     * ⚖ EVERY COACH since Club Tier Stage 4c-2 Part B (owner ruling 2026-10-22): each coach decides whether their own
+     * name shows on the team's public page, and that switch lives in Settings › Sharing — which a plain assistant could
+     * not reach. The same widening as money's, and the page narrows the same way: a coach with no other group finds
+     * Sharing alone (the page's address and their own switch). `canConfigureTeam` / `canWriteMoney` still decide every
+     * OTHER group on the page.
      */
-    case 'Settings':      return canConfigureTeam(caps) || canWriteMoney(caps);
+    case 'Settings':      return true;
     default:              return true;
   }
 }

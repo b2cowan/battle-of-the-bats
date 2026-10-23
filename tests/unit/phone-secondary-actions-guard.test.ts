@@ -50,10 +50,17 @@ describe('a tryout status card — Copy is built like Directions above it (owner
   it('a desk: the kit small button, labelled, at the card edge in line with Directions; never wrapped under the address', () => {
     const tsx = readCode(CARD_TSX);
     assert.match(tsx, /kit\.btn\} \$\{kit\.btnSecondary\} \$\{kit\.btnSm\} \$\{styles\.copy\}/);
-    assert.match(tsx, /aria-label="Copy email address"/);
+    // Named for whose address it is (Club Tier 4c-2 Part B, I7): two identical names on one page can't be told apart.
+    assert.match(tsx, /aria-label=\{copyLabel\}/);
+    assert.match(tsx, /COPY_CLUB_EMAIL = 'Copy the club’s email address'/);
     const css = readCode(CARD_CSS);
     assert.match(css, /\.mailRow \.copy \{[^}]*margin-left: auto/);
     assert.doesNotMatch(css.slice(css.indexOf('.mailRow {'), css.indexOf('}', css.indexOf('.mailRow {'))), /flex-wrap: wrap/);
+  });
+  it('the open tryout page\'s questions line uses the same Copy (Club Tier 4c-2 Part B, Ask 13 D3)', () => {
+    const line = readCode('components/public/TryoutQuestionsLine.tsx');
+    assert.match(line, /<ContactCopyRow email=\{email\} copyLabel=\{copyLabel\} \/>/);
+    assert.match(readCode('components/rep-teams/TryoutLandingView.tsx'), /<TryoutQuestionsLine /);
   });
   it('a phone: borderless, fill-free, label hidden, a 44px box', () => {
     const block = phoneBlock(readCode(CARD_CSS), '.copyLabel');

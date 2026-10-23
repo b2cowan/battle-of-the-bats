@@ -20,6 +20,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { firstSentence } from '@/lib/club-site';
 import { sportLabel } from '@/lib/sports';
 import { shareCardPath, sportsTeamJsonLd, teamCard, TEAM_DESCRIPTION_FALLBACK } from '@/lib/club-share';
+import { getPublicTeamCoaches } from '@/lib/club-team-coaches';
 
 /** Where the club's pages live, for the team's description to search engines (the sitemap's own base). */
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
@@ -75,12 +76,18 @@ export default async function TeamPublicPage({
   // cancelled-club check the feed made, so a cancelled club's Public link schedule kept showing here (D07, S6D-09).
   // The visibility check still runs first, off the already-loaded team row, so a team that never turned Public link on
   // pays no extra query on a page that gets public traffic.
-  const [publicSchedule, siteContent, tryout] = await Promise.all([
+  const [publicSchedule, siteContent, tryout, coaches] = await Promise.all([
     getPublicTeamSchedule({ org, team }),
     // The club's public contact (the Public Site editor's), for the quiet tryout sentence — never the org row (F09).
     getClubSiteContent(org.id),
     // The door's days line (Stage 4b-2b): the tryout days still ahead — read only when the door shows.
     openYear ? readTeamTryout(team, programYears, tournamentToday()) : Promise.resolve(null),
+    // Coaches (Club Tier 4c-2 Part B): only coaches who switched their own name on, name and role only. Never an email,
+    // a phone or a player — and never the head coach's tryout address, which belongs to the tryout page alone.
+    // An optional section: a failed read leaves it out rather than taking the page down. Only while the team has a live
+    // season (owner ruling 2026-10-22): between seasons a team opens only to its closed-season page, where a coach could
+    // not switch their name off, so no name stands on a page nobody is tending.
+    !team.isArchived && liveSeasonOf(programYears) ? getPublicTeamCoaches(org.id, team.id).catch(() => []) : Promise.resolve([]),
   ]);
   const daysLine = tryoutDaysLine(tryout?.standing.upcoming ?? []);
   // The season under the name is the team's live one; an archived team has none.
@@ -89,8 +96,10 @@ export default async function TeamPublicPage({
   const about = team.description?.trim() || null;
   const email = siteContent?.contactEmail?.trim() || null;
   // End state 3: a part with nothing to show is absent. No Past seasons (DC-07: a door to an old season would be a new
-  // look-back surface); no Coaches (4c, with the coach's own switch).
-  const parts = teamPageParts({ archived: team.isArchived, tryoutOpen: !!openYear, schedule: !!publicSchedule, about: !!about });
+  // look-back surface). Coaches only when a coach switched their name on (4c-2 Part B).
+  const parts = teamPageParts({
+    archived: team.isArchived, tryoutOpen: !!openYear, schedule: !!publicSchedule, about: !!about, coaches: coaches.length > 0,
+  });
 
   // The parts in the phone's order, which is also the reading order; at a desk the schedule takes the left column and
   // the rest stand beside it (TeamPage.module.css grid areas) — the layout moves them, never the order a reader hears.
@@ -144,6 +153,21 @@ export default async function TeamPublicPage({
       <section key={part} className={`${kit.section} ${styles.about}`} aria-labelledby="about-team">
         <h2 id="about-team" className={kit.sectionTitle}>About the team</h2>
         <div className={kit.list}><p className={kit.cardText}>{about}</p></div>
+      </section>
+    );
+    if (part === 'coaches') return (
+      <section key={part} className={`${kit.section} ${styles.coaches}`} aria-labelledby="team-coaches">
+        <h2 id="team-coaches" className={kit.sectionTitle}>Coaches</h2>
+        <ul className={`${kit.list} ${styles.coachList}`} role="list">
+          {coaches.map((c, i) => (
+            <li key={`${i}-${c.name}`} className={styles.coachRow}>
+              <span className={styles.coachName}>{c.name}</span>
+              <span className={styles.coachRole}>{c.role}</span>
+            </li>
+          ))}
+          {/* G3: the club's address, never a coach's. Absent when the club has none. */}
+          {email && <li className={styles.coachesAsk}>Questions about the team? Email the club at <b>{email}</b>.</li>}
+        </ul>
       </section>
     );
     return null;

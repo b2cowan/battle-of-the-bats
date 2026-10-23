@@ -5,6 +5,7 @@ import { CheckSquare, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import TryoutDayCard from './TryoutDayCard';
 import TryoutRubricCard from './TryoutRubricCard';
 import TryoutEvaluatorsCard from './TryoutEvaluatorsCard';
+import TryoutQuestionsCard from './TryoutQuestionsCard';
 import styles from './TryoutSetupChecklist.module.css';
 
 /**
@@ -16,7 +17,7 @@ import styles from './TryoutSetupChecklist.module.css';
  */
 
 export interface SetupItemStatus { done: boolean; summary: string | null }
-type ItemKey = 'dates' | 'scorecard' | 'helpers';
+type ItemKey = 'dates' | 'scorecard' | 'helpers' | 'questions';
 
 interface Props {
   /** Coach team API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}`. */
@@ -31,10 +32,11 @@ interface Props {
   blind?: boolean;
 }
 
-const ROW_META: Record<ItemKey, { title: string; required: boolean; emptyStatus: string }> = {
+/** `emptyStatus` is left out for a row whose card always reports its own line. */
+const ROW_META: Record<ItemKey, { title: string; required: boolean; emptyStatus?: string }> = {
   dates: {
     title: 'Tryout dates', required: true,
-    emptyStatus: 'No sessions yet — they show on your schedule once added.',
+    emptyStatus: 'No sessions yet. Once added, they show on your schedule and on your team’s tryout page.',
   },
   scorecard: {
     title: 'Evaluation scorecard', required: true,
@@ -43,6 +45,11 @@ const ROW_META: Record<ItemKey, { title: string; required: boolean; emptyStatus:
   helpers: {
     title: 'Helpers who score', required: false,
     emptyStatus: 'Share a scoring link with an assistant — no account needed.',
+  },
+  // Club Tier 4c-2 Part B (Asks 1–3): the head coach's own address for this team's tryout page. Optional; its status
+  // line is the card's report (where questions go now, or the address and who set it).
+  questions: {
+    title: 'Questions from families', required: false,
   },
 };
 
@@ -94,7 +101,7 @@ function Row({ itemKey, status, isOpen, onToggle, children }: {
 
 export default function TryoutSetupChecklist({ apiBase, canWrite, sport, onError, onChanged, blind }: Props) {
   const [status, setStatus] = useState<Partial<Record<ItemKey, SetupItemStatus>>>({});
-  const [open, setOpen] = useState<Record<ItemKey, boolean>>({ dates: false, scorecard: false, helpers: false });
+  const [open, setOpen] = useState<Record<ItemKey, boolean>>({ dates: false, scorecard: false, helpers: false, questions: false });
   const autoOpened = useRef(false);
 
   // Reports merge into state (returning `prev` unchanged when nothing moved keeps re-renders and
@@ -183,6 +190,9 @@ export default function TryoutSetupChecklist({ apiBase, canWrite, sport, onError
           onError={onError}
           onStatus={report('helpers')}
         />
+      </Row>
+      <Row itemKey="questions" status={status.questions} isOpen={open.questions} onToggle={toggle}>
+        <TryoutQuestionsCard apiBase={`${apiBase}/tryout-contact`} onStatus={report('questions')} />
       </Row>
     </div>
   );

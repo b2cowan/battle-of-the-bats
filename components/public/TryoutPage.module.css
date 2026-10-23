@@ -160,3 +160,13 @@
 /* The club Tryouts page: the row's chip stays on the right; the title block is the Teams page's. */
 .rowChip { flex: none; }
 .title :global(h1) { margin-bottom: 6px; }
+
+/* The OPEN tryout page's questions line (Club Tier Stage 4c-2 Part B, Ask 3 / D3): who to ask over the address, with
+   Copy built like the status card's — the same mailRow, so the two line up the same way under the days. */
+.qline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font: 400 1rem/1.35 var(--club-text-face);
+  color: var(--club-soft);
+}

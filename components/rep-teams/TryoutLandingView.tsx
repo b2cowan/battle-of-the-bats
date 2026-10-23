@@ -2,8 +2,8 @@ import Link from 'next/link';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from '@/components/public/TryoutPage.module.css';
 import TryoutDays from '@/components/public/TryoutDays';
-import ClubContactCard from '@/components/public/ClubContactCard';
-import ClubContactLine from '@/components/public/ClubContactLine';
+import ClubContactCard, { COPY_CLUB_EMAIL } from '@/components/public/ClubContactCard';
+import TryoutQuestionsLine from '@/components/public/TryoutQuestionsLine';
 import TryoutChip from '@/components/public/TryoutChip';
 import {
   tryoutSeasonMeta,
@@ -11,6 +11,8 @@ import {
   type TryoutDay,
   type TryoutState,
 } from '@/lib/tryout-season';
+import { tryoutStateShowsCoachContact } from '@/lib/tryout-contact-rules';
+import { possessive } from '@/lib/utils';
 
 /**
  * A team's public tryout page (Club Tier Stage 4b-2b; End state 4, the closed and finished frames, the asks page ruled
@@ -28,7 +30,8 @@ import {
  * in every state (a second "See the team" at the foot went to the same page and was removed, owner 2026-10-21).
  */
 export default function TryoutLandingView({
-  orgSlug, teamSlug, team, state, season, born = null, upcoming, lastDay, today, contactEmail, registerHref, preview = false,
+  orgSlug, teamSlug, team, state, season, born = null, upcoming, lastDay, today, contactEmail, coachContact = null, registerHref,
+  preview = false,
 }: {
   orgSlug: string;
   teamSlug: string;
@@ -44,6 +47,12 @@ export default function TryoutLandingView({
   today: string;
   /** The club's public-site contact (resolvePublicTryout), never the org's phantom `contactEmail` (F09). */
   contactEmail: string | null;
+  /**
+   * The head coach's own address for this page's questions (Club Tier 4c-2 Part B, Ask 3), with their name only when their
+   * own name switch is on. ⚠ Passed by the team-named tryout page ALONE (`getPublicTryoutContact`), and shown only while
+   * open or not open yet; finished and closed keep the club's line (I5).
+   */
+  coachContact?: { email: string; name: string | null } | null;
   registerHref: string;
   /** The admin's "How families see it" box (the tryout blurb): the same page minus its way back, which is the page's own. */
   preview?: boolean;
@@ -60,6 +69,14 @@ export default function TryoutLandingView({
     </section>
   );
   const seasonName = { year: season?.year ?? null, name: season?.name ?? '' };
+  // I1–I3: the coach's line replaces the club's while open or not open yet; the footer keeps the club's (I6).
+  const coach = coachContact && tryoutStateShowsCoachContact(state) ? coachContact : null;
+  // Whom a family asks, decided once: the coach's line (I1–I3), or null for the club's own words below.
+  const coachAsk = coach && {
+    email: coach.email,
+    lead: `Questions about these tryouts? Email ${coach.name ? `${coach.name}, head coach` : 'the head coach'}`,
+    copyLabel: coach.name ? `Copy ${possessive(coach.name)} email address` : 'Copy the head coach’s email address',
+  };
 
   return (
     <div className={styles.page}>
@@ -83,10 +100,13 @@ export default function TryoutLandingView({
       {state === 'open' ? (
         <>
           <Link href={registerHref} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnFull}`}>Sign up for tryouts</Link>
-          <ClubContactLine email={contactEmail} />
+          <TryoutQuestionsLine {...(coachAsk ?? { email: contactEmail, lead: 'Questions? Email the club at', copyLabel: COPY_CLUB_EMAIL })} />
         </>
       ) : (
-        <ClubContactCard sentence={tryoutStateSentence(state, team.name, seasonName, lastDay, today)} email={contactEmail} />
+        <ClubContactCard
+          sentence={tryoutStateSentence(state, team.name, seasonName, lastDay, today)}
+          {...(coachAsk ?? { email: contactEmail })}
+        />
       )}
     </div>
   );

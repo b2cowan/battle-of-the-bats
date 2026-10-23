@@ -1,21 +1,22 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-23 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 143 divergence(s)** across dev/prod.
+**⚠️ 162 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 6 | 0 | — |
-| Columns | 68 | 0 | 0 |
-| Indexes | 16 | 0 | 0 |
-| Constraints | 25 | 0 | — |
-| RLS / CHECK | 28 | 0 | 0 (RLS state) |
+| Tables | 7 | 0 | — |
+| Columns | 77 | 0 | 0 |
+| Indexes | 19 | 0 | 0 |
+| Constraints | 30 | 0 | — |
+| RLS / CHECK | 29 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (6)
+### Only in DEV (7)
 - `family_email_sends`
 - `org_site_notices`
+- `rep_team_tryout_contacts`
 - `tournament_fee_book_settings`
 - `tournament_fee_receipt_allocations`
 - `tournament_fee_receipts`
@@ -25,7 +26,7 @@
 _none_
 
 ## Columns
-### Only in DEV (68)
+### Only in DEV (77)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -63,6 +64,15 @@ _none_
 - `rep_program_years.born_from_year`
 - `rep_program_years.born_to_year`
 - `rep_program_years.born_years_carried`
+- `rep_team_staff_memberships.show_name_public`
+- `rep_team_tryout_contacts.email`
+- `rep_team_tryout_contacts.org_id`
+- `rep_team_tryout_contacts.reset_at`
+- `rep_team_tryout_contacts.reset_by`
+- `rep_team_tryout_contacts.set_at`
+- `rep_team_tryout_contacts.set_by_membership_id`
+- `rep_team_tryout_contacts.team_id`
+- `rep_team_tryout_contacts.updated_at`
 - `teams.fee_book_baseline`
 - `teams.fee_changed_by`
 - `tournament_fee_book_settings.category_id`
@@ -102,11 +112,14 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (16)
+### Only in DEV (19)
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
+- `idx_rep_team_tryout_contacts_org`
+- `idx_rep_team_tryout_contacts_setter`
 - `org_site_notices_org_idx`
 - `org_site_notices_pkey`
+- `rep_team_tryout_contacts_pkey`
 - `tournament_fee_allocations_team_idx`
 - `tournament_fee_book_settings_org_id_idx`
 - `tournament_fee_book_settings_pkey`
@@ -127,12 +140,17 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (25)
+### Only in DEV (30)
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
 - `org_site_notices.org_site_notices_org_fk`
 - `org_site_notices.org_site_notices_pkey`
+- `rep_team_tryout_contacts.rep_team_tryout_contacts_org_fk`
+- `rep_team_tryout_contacts.rep_team_tryout_contacts_pkey`
+- `rep_team_tryout_contacts.rep_team_tryout_contacts_reset_by_fk`
+- `rep_team_tryout_contacts.rep_team_tryout_contacts_setter_fk`
+- `rep_team_tryout_contacts.rep_team_tryout_contacts_team_fk`
 - `teams.teams_fee_changed_by_fkey`
 - `tournament_fee_book_settings.tournament_fee_book_settings_category_id_fkey`
 - `tournament_fee_book_settings.tournament_fee_book_settings_item_id_fkey`
@@ -161,7 +179,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (28)
+### CHECK only in DEV (29)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -184,6 +202,7 @@ _none_
 - `organizations.organizations_birthday_cutoffs_shape`
 - `rep_program_years.rep_program_years_born_years_check`
 - `rep_program_years.rep_program_years_tryout_description_length`
+- `rep_team_tryout_contacts.rep_team_tryout_contacts_email_check`
 - `tournament_fee_receipt_allocations.tournament_fee_receipt_allocations_amount_check`
 - `tournament_team_payments.tournament_team_payments_amount_chk`
 - `tournament_team_payments.tournament_team_payments_date_chk`

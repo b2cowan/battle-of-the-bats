@@ -19073,6 +19073,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 14,
+        "column_name": "show_name_public",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
         "table_name": "rep_team_tags",
         "pos": 1,
         "column_name": "id",
@@ -19211,6 +19220,78 @@
         "table_name": "rep_team_tournament_registrations",
         "pos": 7,
         "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 1,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 3,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 4,
+        "column_name": "set_by_membership_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 5,
+        "column_name": "set_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 6,
+        "column_name": "reset_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 7,
+        "column_name": "reset_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "pos": 8,
+        "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -26880,6 +26961,34 @@
         "constraint_name": "rep_team_tournament_registrations_tournament_team_id_fkey"
       },
       {
+        "table_name": "rep_team_tryout_contacts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_tryout_contacts_org_fk"
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "column_name": "reset_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_tryout_contacts_reset_by_fk"
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "column_name": "set_by_membership_id",
+        "foreign_table": "rep_team_staff_memberships",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_tryout_contacts_setter_fk"
+      },
+      {
+        "table_name": "rep_team_tryout_contacts",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_tryout_contacts_team_fk"
+      },
+      {
         "table_name": "rep_teams",
         "column_name": "group_id",
         "foreign_table": "rep_team_groups",
@@ -31603,6 +31712,21 @@
         "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_tournament_team_unique ON public.rep_team_tournament_registrations USING btree (tournament_team_id)"
       },
       {
+        "tablename": "rep_team_tryout_contacts",
+        "indexname": "idx_rep_team_tryout_contacts_org",
+        "indexdef": "CREATE INDEX idx_rep_team_tryout_contacts_org ON public.rep_team_tryout_contacts USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_tryout_contacts",
+        "indexname": "idx_rep_team_tryout_contacts_setter",
+        "indexdef": "CREATE INDEX idx_rep_team_tryout_contacts_setter ON public.rep_team_tryout_contacts USING btree (set_by_membership_id)"
+      },
+      {
+        "tablename": "rep_team_tryout_contacts",
+        "indexname": "rep_team_tryout_contacts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_tryout_contacts_pkey ON public.rep_team_tryout_contacts USING btree (team_id)"
+      },
+      {
         "tablename": "rep_teams",
         "indexname": "idx_rep_teams_org_share_club_book",
         "indexdef": "CREATE INDEX idx_rep_teams_org_share_club_book ON public.rep_teams USING btree (org_id) WHERE share_club_book"
@@ -35569,6 +35693,18 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_tournament_registrations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_tryout_contacts",
+        "detail": "rep_team_tryout_contacts_email_check",
+        "check_clause": "((email IS NULL) OR (((char_length(email) >= 3) AND (char_length(email) <= 254)) AND (POSITION(('@'::text) IN (email)) > 1) AND (set_at IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_tryout_contacts",
         "detail": "ENABLED",
         "check_clause": null
       },

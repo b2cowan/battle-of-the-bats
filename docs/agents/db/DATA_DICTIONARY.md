@@ -2733,6 +2733,41 @@ moment it lands.
 <!-- dict:col:rep_team_staff_memberships.calendar_last_read_on -->
 **`calendar_last_read_on`** (date, nullable; **mig 323**) — the club-local day a calendar last read this coach's feed: the window's "Read by your calendar today". **Written at most once a day per feed** (the owner's cost ruling, 2026-10-11): the feed writes only when the stored day is before today (`shouldRecordCalendarRead`), and the WHERE repeats the question. Written on a LIVE read only (a stopped link records nothing). NULL = never read, or reset since (Reset clears it).
 
+<!-- dict:col:rep_team_staff_memberships.show_name_public -->
+**`show_name_public`** (boolean, NOT NULL, default false; **mig 350**, Club Tier Stage 4c-2 Part B) — **this coach's own "Show my name on the team's public page" switch**, per team. True = the public team page's Coaches section lists them by **name and role only** (never an email or phone), and on the team's own tryout page the head coach's questions line names them ("Email {Name}, head coach"). Only the coach themself writes it (Team settings › Sharing, which every active coach can open since Part B — owner ruling 2026-10-22). Every public reader also filters `status='active'`, so the name leaves the page with the seat. ⚠ **`removeStaffMember` writes it false in the revoke** (owner ruling 2026-10-22): unlike the grants, which a re-add restores (gotcha 1), a re-added coach decides about their public name again. Demotion keeps it (the role line changes).
+
+### `rep_team_tryout_contacts`
+<!-- dict:table:rep_team_tryout_contacts -->
+
+**Purpose:** **the head coach's tryout questions address** (mig 350, Club Tier Stage 4c-2 Part B, Asks 1–3). One row per team, **carried across seasons** — it is not on `rep_program_years`, because a head coach's address outlives a rollover while they hold the role. Families see it on exactly ONE public surface: the team's own tryout page while open or not open yet ("Questions about these tryouts? Email the head coach"). The footer, the club's Tryouts page, the team page, the sign-up form, share cards, JSON-LD and link previews always keep the club's address.
+
+**Gotchas (read first):**
+1. **A separate table on purpose, not columns on `rep_teams`**: public pages read the team row whole, and this address may reach one public surface only. Here nothing reads it but its own reader (`lib/coach-tryout-contact.ts`).
+2. **It ends with the setter's head-coach role, twice over.** `removeStaffMember` and a demotion in `setStaffMemberRole` clear it in app code, AND every reader shows it only while `set_by_membership_id` is an **active `head_coach` membership of this team**. A NULL setter (its membership deleted with its user) reads as unset. Never handed on: the next head coach finds the row empty.
+3. **Any head coach of the team may set, change or remove it**, and whoever sets it becomes its owner. Decided by `coach_role`, **not** the `tryouts` capability (an assistant holding that grant reads it, "set by …", and cannot change it). The sign-in address is refused.
+4. **Service-role only** — RLS enabled, zero policies, `service_role` granted in the migration.
+5. **It moves with the team into a club** (`move_team_into_club`, re-created by mig 351 with this table in `c_moves`): the address is the team's, and the setter's membership moves with it keeping its id.
+
+**Fields:**
+
+<!-- dict:col:rep_team_tryout_contacts.team_id -->
+<!-- dict:col:rep_team_tryout_contacts.org_id -->
+**`team_id`** (PK, FK → `rep_teams.id` ON DELETE CASCADE) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL, indexed) — the team, and its tenant for every org-filtered read.
+
+<!-- dict:col:rep_team_tryout_contacts.email -->
+**`email`** (text, nullable; CHECK 3–254 chars with an `@` after the first character, and `set_at` present) — the address. NULL = no coach address (questions go to the club's). The CHECK is the weak form; the real check is the shared site-field email check, at the coach route.
+
+<!-- dict:col:rep_team_tryout_contacts.set_by_membership_id -->
+<!-- dict:col:rep_team_tryout_contacts.set_at -->
+**`set_by_membership_id`** (FK → `rep_team_staff_memberships.id` ON DELETE SET NULL, nullable, indexed) / **`set_at`** (timestamptz, nullable) — who set the current address and when. The membership, not the user, so "is this still an active head coach of THIS team" is one join (gotcha 2). Written together with `email`; every app write clears them together. ⚠ One path does not: deleting a user removes their membership and the FK sets `set_by_membership_id` NULL, leaving `email` stored but unread (every reader treats a NULL setter as unset). Any add, re-add or role change of a membership also clears what that membership set, so an address never comes back with its seat (`lib/coach-membership.ts`).
+
+<!-- dict:col:rep_team_tryout_contacts.reset_at -->
+<!-- dict:col:rep_team_tryout_contacts.reset_by -->
+**`reset_at`** (timestamptz, nullable) / **`reset_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — when and by whom **the club** put its own address back (the admin Tryouts page's "Use the club's address"). Drives the coach's row "The club put its own address back on {date}." Cleared when a head coach sets an address again. A removal or demotion clearing the address does NOT write these (that was not the club).
+
+<!-- dict:col:rep_team_tryout_contacts.updated_at -->
+**`updated_at`** (timestamptz, NOT NULL, default now()) — last write, set by the writer.
+
 ### `assistant_invite_tokens`
 <!-- dict:table:assistant_invite_tokens -->
 

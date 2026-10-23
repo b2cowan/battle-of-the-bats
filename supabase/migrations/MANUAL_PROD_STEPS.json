@@ -290,6 +290,10 @@
     "349_birth_years_and_when_birthdays_count.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 4c-2 Part A: birth years on rep_program_years and league_divisions, rep_program_years.born_years_carried, organizations.birthday_cutoffs with its shape CHECK (function birthday_cutoffs_valid), and the 500-character cap on tryout_description (longest on prod 162 on 2026-10-22; re-check before applying: SELECT max(char_length(tryout_description)) FROM rep_program_years -> <= 500). Apply BEFORE promoting the 4c-2 Part A code. Verify on prod after applying: SELECT count(*) FROM pg_proc WHERE proname = 'birthday_cutoffs_valid' -> 1; SELECT public.birthday_cutoffs_valid('{\"softball\":{\"m\":2,\"d\":29}}') -> false; then refresh both snapshots."
+    },
+    "351_the_team_move_carries_the_tryout_address.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 4c-2 Part B: re-creates move_team_into_club with rep_team_tryout_contacts added to the tables the team move carries (the head coach's tryout questions address is the team's; the setter's membership moves with it). Needs 350 first (the table). Apply 350 then 351 BEFORE promoting the 4c-2 Part B code. A function body is invisible to check:migrations. Verify on prod after applying: SELECT position('rep_team_tryout_contacts' in pg_get_functiondef('public.move_team_into_club(uuid,text,uuid,text,integer)'::regprocedure)) > 0 -> true; then refresh both snapshots."
     }
   }
 }

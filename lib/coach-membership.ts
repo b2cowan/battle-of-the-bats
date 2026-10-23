@@ -23,6 +23,7 @@ import {
 } from './coach-capabilities';
 import { isTeamWorkspaceOrg, getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyTournamentGrant } from './coach-tournament-grant';
+import { clearTryoutContactSetBy } from './coach-tryout-contact-clear';
 import type { Organization, RepProgramYear } from './types';
 
 /**
@@ -68,6 +69,11 @@ export interface TeamStaffMembership {
   status: 'active' | 'revoked';
   createdAt: string;
   revokedAt: string | null;
+  /**
+   * This coach's own "Show my name on the team's public page" (mig 350, Club Tier 4c-2 Part B). Name and role only; off
+   * by default; the removal write turns it off, so a re-added coach decides again (owner ruling 2026-10-22).
+   */
+  showNamePublic: boolean;
 }
 
 interface MembershipRow {
@@ -81,6 +87,7 @@ interface MembershipRow {
   status: 'active' | 'revoked';
   created_at: string;
   revoked_at: string | null;
+  show_name_public?: boolean | null;
 }
 
 function mapMembership(r: MembershipRow): TeamStaffMembership {
@@ -95,6 +102,8 @@ function mapMembership(r: MembershipRow): TeamStaffMembership {
     status: r.status,
     createdAt: r.created_at,
     revokedAt: r.revoked_at,
+    // `=== true`: a row read before mig 350 reaches a database shows no name (fails closed).
+    showNamePublic: r.show_name_public === true,
   };
 }
 
@@ -492,6 +501,22 @@ export interface AddStaffMemberInput {
    * omitted on a reactivation with no invite so the stored word survives. Ignored for a head coach.
    */
   staffKind?: StaffKind | null;
+  /**
+   * The last-head race restore only (`removeStaffMember`): the removal was undone, so the seat keeps the tryout
+   * questions address it set. Every other add or re-add clears it (below).
+   */
+  keepTryoutContact?: boolean;
+}
+
+/**
+ * The tryout questions address must never come back with a seat (Club Tier 4c-2 Part B, Ask 1: "never handed on").
+ * Best-effort, logged: the membership write has landed and must not 500, and while the seat is revoked or an assistant
+ * every reader already treats the address as unset.
+ */
+async function clearTryoutContactOf(teamId: string, membershipId: string, why: string): Promise<void> {
+  await clearTryoutContactSetBy(teamId, membershipId).catch((e) => {
+    console.error(`[coach-membership] tryout address clear failed (${why} succeeded):`, e);
+  });
 }
 
 /**
@@ -530,6 +555,9 @@ export async function addStaffMember(input: AddStaffMemberInput): Promise<TeamSt
     .single<MembershipRow>();
   if (error) throw error;
   const membership = mapMembership(data);
+  // A reactivated (or re-promoted) seat never brings back an address it set before — a removal or demotion that
+  // missed its own clear would otherwise revive it the moment the read-time check passes again.
+  if (!input.keepTryoutContact) await clearTryoutContactOf(membership.teamId, membership.id, 'staff add');
 
   await syncLiveSeasonProjection(membership);
   // Best-effort here: an invite acceptance has already consumed its token and written the row, so
@@ -617,6 +645,10 @@ export async function setStaffMemberRole(
   await syncLiveSeasonProjection(membership);
   // A head coach always holds Run tournaments; a demoted one holds what their stored grants say.
   await syncTournamentGrantProjection(membership.orgId, membership.userId);
+  // The tryout questions address ends with the setter's head-coach role (Club Tier 4c-2 Part B, Ask 1): a demotion
+  // clears it, and so does a promotion (a new head coach never inherits a stale one). Last, and after the second
+  // check, so a demotion undone by the race above keeps it and a failed clear never skips the projection.
+  await clearTryoutContactOf(teamId, membershipId, 'role change');
   return { ok: true, membership };
 }
 
@@ -664,9 +696,10 @@ export async function removeStaffMember(
   const liveYearId = await getLiveRepProgramYearIdStrict(teamId);
   if (liveYearId) await deleteProjectionRow(liveYearId, userId);
 
+  // `show_name_public: false` (owner ruling 2026-10-22): a re-add restores the grants, never the public name.
   const { data, error } = await supabaseAdmin
     .from('rep_team_staff_memberships')
-    .update({ status: 'revoked', revoked_at: new Date().toISOString(), revoked_by: revokedBy })
+    .update({ status: 'revoked', revoked_at: new Date().toISOString(), revoked_by: revokedBy, show_name_public: false })
     .eq('org_id', orgId)
     .eq('team_id', teamId)
     .eq('user_id', userId)
@@ -677,9 +710,17 @@ export async function removeStaffMember(
 
   // The second check: lost the race with another head coach's removal — put this one back.
   if (data && targetWasHead && (await countActiveHeadCoaches(teamId)) === 0) {
-    await addStaffMember({ orgId, teamId, userId, coachRole: 'head_coach' });
+    await addStaffMember({ orgId, teamId, userId, coachRole: 'head_coach', keepTryoutContact: true });
     return 'last_head';
   }
+
+  // The tryout questions address ends with the seat (Club Tier 4c-2 Part B, Ask 1) — after the second check, so a
+  // removal undone by the race above keeps it. Never handed on: the next head coach finds the row empty. Keyed on the
+  // seat whatever this call revoked, so a second click heals a removal whose clear never ran.
+  const seatId = data?.id ?? (await supabaseAdmin
+    .from('rep_team_staff_memberships').select('id').eq('team_id', teamId).eq('user_id', userId).maybeSingle<{ id: string }>()
+  ).data?.id;
+  if (seatId) await clearTryoutContactOf(teamId, seatId, 'removal');
 
   // Best-effort: the removal itself is complete; a failed guest-row cleanup must not 500 an
   // action that succeeded (it only leaves a capability-less org membership to clean up later).
@@ -692,6 +733,40 @@ export async function removeStaffMember(
     console.error('[coach-membership] tournament-grant projection failed (removal succeeded):', e);
   });
   return data ? 'removed' : 'nothing';
+}
+
+/**
+ * The team's ACTIVE coaches who switched their own name on — the public team page's Coaches (Club Tier 4c-2 Part B).
+ * Read-only; the caller names them through the club's names and prints name and role only (lib/club-team-coaches.ts).
+ */
+export async function listPublicNameMemberships(orgId: string, teamId: string): Promise<TeamStaffMembership[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('team_id', teamId)
+    .eq('status', 'active')
+    .eq('show_name_public', true);
+  if (error) throw error;
+  return ((data ?? []) as MembershipRow[]).map(mapMembership);
+}
+
+/**
+ * A coach's OWN "Show my name on the team's public page" (Club Tier Stage 4c-2 Part B). The WHERE re-asserts an ACTIVE
+ * seat, so a coach removed after their screen loaded cannot switch their name back on a revoked row (which a re-add
+ * would then carry). Returns the saved value, or null when no active seat remains.
+ */
+export async function setOwnShowNamePublic(membershipId: string, teamId: string, show: boolean): Promise<boolean | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .update({ show_name_public: show })
+    .eq('id', membershipId)
+    .eq('team_id', teamId)
+    .eq('status', 'active')
+    .select('show_name_public')
+    .maybeSingle<{ show_name_public: boolean }>();
+  if (error) throw error;
+  return data ? data.show_name_public === true : null;
 }
 
 /**

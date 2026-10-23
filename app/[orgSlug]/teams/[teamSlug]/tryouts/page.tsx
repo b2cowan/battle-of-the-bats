@@ -7,6 +7,8 @@ import { readTeamTryout } from '@/lib/club-tryouts';
 import { bornFactsOf } from '@/lib/club-born-public';
 import { tournamentToday } from '@/lib/timezone';
 import { teamTryoutPageMeta } from './tryout-metadata';
+import { getPublicTryoutContact } from '@/lib/coach-tryout-contact';
+import { tryoutStateShowsCoachContact } from '@/lib/tryout-contact-rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +34,15 @@ export default async function TeamTryoutsPage({
   if (!resolved) notFound();
   const { org, team, seasons, contactEmail } = resolved;
   const today = tournamentToday();
-  const { season, standing } = await readTeamTryout(team, seasons, today);
+  // The head coach's own address (Club Tier 4c-2 Part B, Ask 3): THIS page only — never the metadata, the preview card,
+  // the sign-up form, the season-numbered pages or anything else. Read beside the days (no added wait) and shown only
+  // while open or not open yet.
+  const [{ season, standing }, contact] = await Promise.all([
+    readTeamTryout(team, seasons, today),
+    // A failed read falls back to the club's line rather than taking the page down.
+    team.isArchived ? Promise.resolve(null) : getPublicTryoutContact(org.id, team.id).catch(() => null),
+  ]);
+  const coachContact = tryoutStateShowsCoachContact(standing.state) ? contact : null;
   return (
     <TryoutLandingView
       orgSlug={orgSlug}
@@ -45,6 +55,7 @@ export default async function TeamTryoutsPage({
       lastDay={standing.lastDay}
       today={today}
       contactEmail={contactEmail}
+      coachContact={coachContact}
       registerHref={publicTryoutRegisterHref(orgSlug, teamSlug)}
     />
   );

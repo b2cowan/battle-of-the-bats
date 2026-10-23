@@ -95,8 +95,8 @@ describe('3 · the team page (End state 3)', () => {
     assert.match(code, /isn’t taking tryout sign-ups right now/);
     assert.match(code, /getClubSiteContent\(/);
   });
-  it('no Coaches section (moved to 4c with the coach\'s own switch)', () => {
-    assert.doesNotMatch(readCode(TEAM), />Coaches</);
+  it('Coaches arrived in 4c-2 Part B — its own guard (club-stage4c2b-guard) bans any email, phone or player there', () => {
+    assert.match(readCode(TEAM), /getPublicTeamCoaches\(/);
   });
 });
 

@@ -53,6 +53,29 @@
   gap: 20px;
 }
 
+/* Coaches (Club Tier 4c-2 Part B, G2): a name over its role, one row each — name and role only. */
+.coachList { list-style: none; margin: 0; padding: 0; }
+.coachRow {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--club-line);
+}
+.coachRow:first-child { border-top: 0; }
+.coachName { font-weight: 600; color: var(--club-text); }
+.coachRole { font-size: 0.875rem; color: var(--club-soft); }
+/* G3 inside the card, under a hairline, the address in ink (End state › 3). */
+.coachesAsk {
+  padding: 12px 16px;
+  border-top: 1px solid var(--club-line);
+  font-size: 0.875rem;
+  color: var(--club-soft);
+}
+.coachesAsk b { color: var(--club-text); font-weight: 600; word-break: break-all; }
+
 /* The tryout sentence's address: its own line, and it only breaks when it cannot fit the card at all (never at a hyphen). */
 .address {
   display: block;
@@ -75,9 +98,10 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) 380px;
     /* The side's parts size to themselves; the last row takes the schedule's extra height. */
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
     grid-template-areas:
       'schedule tryouts'
+      'schedule coaches'
       'schedule about'
       'schedule .';
     align-items: start;
@@ -88,4 +112,5 @@
   .withSchedule .schedule { grid-area: schedule; min-width: 0; }
   .withSchedule .tryouts { grid-area: tryouts; }
   .withSchedule .about { grid-area: about; }
+  .withSchedule .coaches { grid-area: coaches; }
 }
