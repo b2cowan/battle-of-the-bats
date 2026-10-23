@@ -1,0 +1,311 @@
+<title>Club Tier 4c-2 walk B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single reading column of walk parts; each part is a card with its steps, a verdict row and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+.purpose{font-size:14px;color:var(--ink)}
+ol,ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ul.plain li{padding:2px 4px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+.heads-up{border-color:var(--warn);background:var(--warn-bg)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>Club Tier 4c-2 Part B · the coach's side: the team's public page, coaches' names, the head coach's tryout address and the setup line</h1>
+    <p>Owner QA Ledger §362. One purpose: every coach shares the team's public page and decides whether their own name is on it; a head coach gives the team's tryout page their own address for families' questions, which ends by itself with their role; the club sees it and can put its own back; families reach that address only on the team's own tryout page. Birth years and the blurb (Part A, §360) are not here.</p>
+    <p>The test club is <b>UAT Lakeshore Lynx</b>. Its coaches, seeded for this walk: <b>15U AAA</b>, head coach <b>Jordan Reyes</b> (name shown on the public page; tryout address <b>tryouts.15u@lakeshorelynx.ca</b>) and assistant <b>Sam Okafor</b> (tryouts access, the schedule to view only, name not shown); <b>13U AAA</b>, head coach <b>Pat Lindqvist</b> (name not shown, no tryout address). The club's own questions address is <b>info@uat-lakeshore-lynx.local</b>. 15U AAA's Schedule visibility is Public, 13U AAA's is Families. 15U AAA's sign-ups are closed with four tryout days ahead ("not open yet"); 13U AAA's are open with no days.</p>
+    <p>Parts run in order: B needs Jordan's switch on (A leaves it on), D needs Pat's address from C, and F ends with everything back as it began.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server), signing in at <code>/auth/login</code>. A computer for Parts A to F; the browser's phone view at 390 px for Part G. Keep this card private: it carries test passwords.</dd>
+      <dt>JORDAN · head coach, 15U AAA</dt><dd><code>uat-lynx-head-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>SAM · assistant, 15U AAA</dt><dd><code>uat-lynx-assistant-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>PAT · head coach, 13U AAA</dt><dd><code>uat-lynx-head-13aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>OWNER · Lakeshore club owner</dt><dd><code>uat-rep-only-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · admin at <code>/uat-rep-only/admin</code></dd>
+      <dt>Signed out</dt><dd>A private window next to the signed-in one for the public pages (<code>/uat-rep-only/teams/15u-aaa</code>, <code>/uat-rep-only/teams/15u-aaa/tryouts</code>, <code>/uat-rep-only/teams/13u-aaa/tryouts</code>, <code>/uat-rep-only/tryouts</code>), so you can change something and watch it land.</dd>
+      <dt>Two coaches at once</dt><dd>One person per browser window: sign out before switching, or use a second private window for the second coach.</dd>
+    </dl>
+  </section>
+
+  <section class="card heads-up" aria-labelledby="warn-h">
+    <h2 id="warn-h">Before you start</h2>
+    <ul class="plain">
+      <li>Written 2026-10-22 against commit 5b9635f99 and the fixture "--part-b-coaches". If a step's starting state doesn't hold (someone opened 15U AAA's sign-ups, a switch is in the other position), put it back first; re-seeding is <code>node --env-file=.env.local scripts/seed-club-fixture.mjs --part-b-coaches</code> (add-only, it resets nothing else and signs nobody out).</li>
+      <li>Parts C, D, E and F change addresses and roles on the fixture; each says how to put things back, and F ends where A began.</li>
+      <li>Where this walk quotes the product's words, apostrophes may be straight or curly. Don't log that as a difference. Today's date in E reads as month and day.</li>
+      <li>If a step's words don't match, tick nothing, write what you saw in that part's notes and mark Issue.</li>
+    </ul>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="known-h">
+    <h2 id="known-h">Not in this walk</h2>
+    <p class="where">Covered by tests, or for a later stage. Don't log these.</p>
+    <ul class="plain">
+      <li>Removing a coach from the team (it clears their address and turns their name switch off), a save landing at the moment of a removal, and the club's reset racing a coach's change: pinned by unit tests; F walks the demotion, which takes the same path.</li>
+      <li>The club's site switched off (the door then shows Copy link only and the site-off notice, and the setup line disappears): turning the site off takes every Lakeshore page down for other walks.</li>
+      <li>Share cards, link previews and search listings never carry a coach's address: pinned by a guard test.</li>
+      <li>Between seasons a team's public page lists no coaches (owner ruling 2026-10-22): no fixture team is between seasons.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  {
+    "id": "pA",
+    "title": "A · Team settings: the public page door, and each coach's own name",
+    "purpose": "Every coach on a team can open Team settings, find the team's public page there, and decide for themselves whether their name shows on it.",
+    "where": "A computer. Sign in as each coach in turn at /auth/login. Jordan and Sam are on 15U AAA (/uat-rep-only/coaches/teams/28e196de-c6ac-4039-9d52-f4b5577be4d8/settings); Pat is on 13U AAA (/uat-rep-only/coaches/teams/eef9db33-c192-4745-9ebe-3591ba3e00ed/settings).",
+    "steps": [
+      "JORDAN (head coach, 15U AAA): Team settings opens. Open the Sharing section: under Schedule visibility (set to Public) comes \"Your team's public page\", then the address ending \"/uat-rep-only/teams/15u-aaa\", then Copy link and Open side by side.",
+      "JORDAN: the sentence under the buttons reads \"Anyone with the link sees the team's name, its about text and open tryouts (your club edits those), and your games, because you chose Public.\"",
+      "JORDAN: press Copy link. It turns to a tick and \"Copied\" for a moment. Paste into the address bar of a private window: the 15U AAA team page opens. Back in Settings, Open opens the same page in a new tab.",
+      "JORDAN: below the door, \"Show my name on the team's public page\" with \"Your name and role only.\" under it, and a switch that is ON. Nothing else on the row (no email, no phone).",
+      "JORDAN: turn the switch off. A \"Saved\" word appears at the foot and fades. Reload the page: the switch is still off. Turn it back on (it must end ON for Part B).",
+      "SAM (assistant, 15U AAA; sign out of Jordan first): the menu has Team settings (it did not before this stage). Open it: the page holds the Sharing section alone. No Team, Lineup rules, Money or other groups, and no \"There are no settings you can change\" line.",
+      "SAM: Sharing shows the door (same address, Copy link and Open) and the same sentence ending \"because you chose Public.\" It has NO Schedule visibility row and no \"Share our book\" row: those are the head coach's.",
+      "SAM: his own switch \"Show my name on the team's public page\" is OFF. Leave it off.",
+      "PAT (head coach, 13U AAA): Sharing shows Schedule visibility on Families, then the door with 13U AAA's address, and the sentence \"Anyone with the link sees the team's name, its about text and open tryouts (your club edits those). Your games stay off it because you chose Families. Choose Public in Schedule visibility to show them.\"",
+      "PAT: his switch is OFF. Leave it off for now (Part B turns it on)."
+    ]
+  },
+  {
+    "id": "pB",
+    "title": "B · Coaches on the public team page",
+    "purpose": "Families see a team's coaches by name and role only, and only the coaches who chose to be named.",
+    "where": "A private window, signed out: /uat-rep-only/teams/15u-aaa and /uat-rep-only/teams/13u-aaa. Pat's steps need PAT signed in in the other window.",
+    "steps": [
+      "15U AAA's page has a \"Coaches\" section above \"About the team\", with one row: \"Jordan Reyes\" over \"Head coach\". Sam is not listed.",
+      "Under the row, inside the same card: \"Questions about the team? Email the club at info@uat-lakeshore-lynx.local.\" The club's address, not Jordan's.",
+      "Nowhere on the team page is there an email address for a coach, a phone number, or a player's name. Jordan's tryout address (tryouts.15u@lakeshorelynx.ca) does not appear on this page.",
+      "13U AAA's page has no Coaches section at all (no one on that team has switched their name on): not an empty heading.",
+      "PAT: turn his switch ON in Settings › Sharing. Reload 13U AAA's public page: Coaches now shows \"Pat Lindqvist\" over \"Head coach\".",
+      "PAT: turn his switch OFF again. Reload: the Coaches section is gone again."
+    ]
+  },
+  {
+    "id": "pC",
+    "title": "C · The head coach's tryout address: the row in Tryouts › Set up",
+    "purpose": "A head coach gives the team's tryout page their own address for families' questions; it saves only when it is a real, separate address; an assistant can read it but not change it.",
+    "where": "A computer. PAT on 13U AAA: /uat-rep-only/coaches/teams/eef9db33-c192-4745-9ebe-3591ba3e00ed/tryouts, then SAM on 15U AAA: /uat-rep-only/coaches/teams/28e196de-c6ac-4039-9d52-f4b5577be4d8/tryouts. In \"Get set up\", the fourth row.",
+    "steps": [
+      "PAT: the fourth row reads \"Questions from families\" with an \"Optional\" chip, and its line \"They go to the club (info@uat-lakeshore-lynx.local). Add your own address for this team's tryout page.\" The heading still counts \"of 2 required\": this row is not one of them.",
+      "PAT: open the row. The field is labelled \"Address for tryout questions\", its grey placeholder is \"tryouts@yourclub.ca\", and under it the hint \"Shown on your team's tryout page, where anyone can read it. Use an inbox you're happy to share, not the one you sign in with. It comes off when you stop being head coach.\"",
+      "PAT: type \"pat at home\" and click outside the field. The field's edge turns red and \"That doesn't look like an email address.\" shows under it. No \"Saved\" appears. Reload: the field is empty again (nothing was saved).",
+      "PAT: type his own sign-in address, uat-lynx-head-13aaa@uat-rep-club.local, and click outside. \"That's the address you sign in with. Use a separate one, so your sign-in stays private.\" Nothing saved.",
+      "PAT: type \"pat.lindqvist@gmail.com\". A quiet line under the hint reads \"A role address such as tryouts@ keeps working when a volunteer changes. You can use this one if you prefer.\" It is not red, and the hint above it is still there.",
+      "PAT: click outside. \"Saved\" appears and fades. The row's line now reads \"pat.lindqvist@gmail.com · on your tryout page\", the Optional chip is gone, and a \"Remove and use the club's address\" link sits under the field.",
+      "PAT: empty the field and click outside: the address comes back into the field (emptying it is not a remove). Then press \"Remove and use the club's address\": no question is asked, the field empties and the row's line goes back to \"They go to the club (info@uat-lakeshore-lynx.local)…\". Set \"pat.lindqvist@gmail.com\" again for Part D.",
+      "PAT: 13U AAA has no tryout sessions, so the dates row reads \"No sessions yet. Once added, they show on your schedule and on your team's tryout page.\" and there is no \"Anyone can see these days\" line.",
+      "SAM (assistant with tryouts access, 15U AAA): the row's line reads \"tryouts.15u@lakeshorelynx.ca · set by Jordan Reyes\". Open it: no field and no remove, only \"Only a head coach can change it.\""
+    ]
+  },
+  {
+    "id": "pD",
+    "title": "D · The family tryout page, by state",
+    "purpose": "Families who write about a team's tryouts reach the person running them: only on that team's own tryout page, and only before and while sign-ups are open.",
+    "where": "A private window, signed out, on a computer. The Lakeshore OWNER in the other window for the sign-ups switch: /uat-rep-only/admin/rep-teams/teams/28e196de-c6ac-4039-9d52-f4b5577be4d8/tryouts. JORDAN for step 8.",
+    "steps": [
+      "Check first: 15U AAA's tryout page (/uat-rep-only/teams/15u-aaa/tryouts) shows the \"not open yet\" card (sign-ups closed, days ahead). If it shows \"Sign up for tryouts\" instead, someone opened sign-ups: ask the owner window to press \"Close sign-ups\" first.",
+      "15U AAA, not open yet: the card ends with \"Questions about these tryouts? Email Jordan Reyes, head coach\" over tryouts.15u@lakeshorelynx.ca, with a \"Copy\" button at the right, in line with the days' Directions.",
+      "Press Copy: it turns to a tick and \"Copied\". Paste somewhere: it is tryouts.15u@lakeshorelynx.ca.",
+      "OWNER: press \"Open sign-ups\" on 15U AAA's Tryouts page. Reload the family page: \"Sign up for tryouts\", and under it \"Questions about these tryouts? Email Jordan Reyes, head coach\" with the address and Copy.",
+      "The page's footer still reads the club's address (info@uat-lakeshore-lynx.local), not Jordan's.",
+      "13U AAA's tryout page (/uat-rep-only/teams/13u-aaa/tryouts), open: \"Questions about these tryouts? Email the head coach\" (the head coach, NOT Pat's name, because Pat's own switch is off) over pat.lindqvist@gmail.com, with Copy.",
+      "The club's Tryouts page (/uat-rep-only/tryouts) and both teams' pages (/uat-rep-only/teams/15u-aaa and /13u-aaa) show only the club's address: neither coach's address appears anywhere on them.",
+      "JORDAN: Tryouts › Set up, open \"Tryout dates\". Under the four sessions, above \"+ Add session\", a quiet line with a globe: \"Anyone can see these days on your team's tryout page.\" (sign-ups are open now, so the \"even before sign-ups open\" ending is gone).",
+      "OWNER: press \"Close sign-ups\" on 15U AAA (back to how you found it). JORDAN: reload Set up: the line now reads \"Anyone can see these days on your team's tryout page, even before sign-ups open.\""
+    ]
+  },
+  {
+    "id": "pE",
+    "title": "E · The club sees it, and can put its own address back",
+    "purpose": "The club always knows where a team's tryout questions go, and can put its own address back in one asked step.",
+    "where": "The Lakeshore OWNER, on a computer: /uat-rep-only/admin/rep-teams/teams/28e196de-c6ac-4039-9d52-f4b5577be4d8/tryouts (the Sign-ups section). Then JORDAN in the coach window.",
+    "steps": [
+      "In Sign-ups, under the address and the \"From the club\" box, a card with an olive edge: \"Tryout questions on this page go to tryouts.15u@lakeshorelynx.ca\", then \"Set by Jordan Reyes, head coach. Your footer and the club's Tryouts page keep info@uat-lakeshore-lynx.local.\", and a \"Use the club's address\" button at its right.",
+      "Press it: a window asks \"Use the club's address on 15U AAA's tryout page?\" with \"Jordan Reyes set tryouts.15u@lakeshorelynx.ca for tryout questions. The page will show info@uat-lakeshore-lynx.local instead, and Jordan Reyes will see that the club changed it.\" \"Keep it\" and \"Use the club's address\" sit together at the foot's right.",
+      "Press \"Keep it\": the window closes and nothing changed (the card is still there).",
+      "Open it again and press \"Use the club's address\": the page says \"Tryout questions now go to info@uat-lakeshore-lynx.local.\" and the card is gone.",
+      "JORDAN: reload Tryouts › Set up. The row reads \"The club put its own address back on\" today's date (month and day, no year), then \"Questions go to info@uat-lakeshore-lynx.local. You can set your own again.\", with the Optional chip.",
+      "JORDAN: put it back. Type tryouts.15u@lakeshorelynx.ca and click outside: \"Saved\"; the row reads \"tryouts.15u@lakeshorelynx.ca · on your tryout page\". The owner's page shows the card again on reload."
+    ]
+  },
+  {
+    "id": "pF",
+    "title": "F · The address ends with the head coach's role",
+    "purpose": "An address belongs to the head coach who set it and ends by itself the moment they stop being head coach. It is never handed on.",
+    "where": "JORDAN on the coach Staff page (/uat-rep-only/coaches/teams/28e196de-c6ac-4039-9d52-f4b5577be4d8/staff), SAM in the other window, and a private window for the family page. Ends with everything as it began.",
+    "steps": [
+      "JORDAN: open Sam's access on the Staff page, choose \"Make head coach\" and confirm. SAM: reload Tryouts › Set up. The row now has the field (a head coach's view) showing tryouts.15u@lakeshorelynx.ca, with \"Any head coach can change or remove it. If you change it, it becomes yours and ends when your role does.\"",
+      "SAM: change it to 15u.questions@lakeshorelynx.ca and click outside. \"Saved\"; his row reads \"15u.questions@lakeshorelynx.ca · on your tryout page\". JORDAN's row (reload) reads \"15u.questions@lakeshorelynx.ca · set by Sam Okafor\".",
+      "Family page (/uat-rep-only/teams/15u-aaa/tryouts, private window): the card reads \"Questions about these tryouts? Email the head coach\" over 15u.questions@lakeshorelynx.ca (\"the head coach\", because Sam's name switch is off).",
+      "JORDAN: open Sam's access, choose \"Make assistant coach\" and confirm. Reload the family page: the card is back to the club's \"Questions? Email the club\" over info@uat-lakeshore-lynx.local. Sam's address is gone at once, and it did NOT pass to Jordan.",
+      "JORDAN: reload Set up. The row reads \"They go to the club (info@uat-lakeshore-lynx.local). Add your own address…\" (no \"club put its own back\" line: the club didn't). SAM's row reads \"They go to the club (info@uat-lakeshore-lynx.local).\" with no invitation to add one.",
+      "Put it back: JORDAN sets tryouts.15u@lakeshorelynx.ca again. SAM's Team settings is back to Sharing alone."
+    ]
+  },
+  {
+    "id": "pG",
+    "title": "G · On a phone",
+    "purpose": "The same, at a phone's width: a fingertip can hit every control, and Copy is its symbol alone.",
+    "where": "The browser's phone view at 390 px. Signed out for the family pages; JORDAN and the OWNER for theirs.",
+    "steps": [
+      "15U AAA's tryout page: Copy beside the address is a copy symbol alone in a fingertip-sized box (no border, no word). Tap it: a tick for a moment.",
+      "13U AAA's tryout page (open): the same bare Copy symbol on the \"Email the head coach\" line, under \"Sign up for tryouts\".",
+      "15U AAA's team page: Coaches comes before About the team; Jordan's row and the club's line fit without sideways scrolling.",
+      "JORDAN, Team settings › Sharing: Copy link and Open share the row's width, each a full fingertip tall, both still labelled; the sentence sits under them; the name switch is a fingertip-sized target.",
+      "JORDAN, Tryouts › Set up › Questions from families: the field, the hint, the nudge (type a gmail address to see it, then put tryouts.15u@lakeshorelynx.ca back) and the Remove link fit the width.",
+      "OWNER, the admin Tryouts page: the coach-address card shows its first line and \"Set by Jordan Reyes, head coach.\" only (the footer clause drops on a phone), with the button under the words."
+    ]
+  }
+];
+
+const KEY = 'club-stage4c2-walk-b-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="purpose"></p><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.purpose').textContent = part.purpose;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((text, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = text;
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['§362 Club Tier 4c-2 Part B — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((t, i) => { if (!state[`${part.id}-s${i}`]) lines.push(`  ☐ ${t}`); });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>

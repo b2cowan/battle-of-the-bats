@@ -1564,7 +1564,8 @@ function printRepOnlyClub() {
 /**
  * Club Tier Stage 4c-2 Part B — walk B's coaches on the rep-only club (owner yes 2026-10-22, the smallest set):
  *   · 15U AAA (sign-ups open): head coach Jordan Reyes — name shown, their own tryout questions address set;
- *     assistant Sam Okafor — tryouts access, name NOT shown (reads the address "set by Jordan Reyes").
+ *     assistant Sam Okafor — tryouts access and the schedule to view only, name NOT shown (reads the address "set by
+ *     Jordan Reyes"; with no schedule editing and no money, his Team settings holds Sharing alone).
  *   · 13U AAA: sign-ups opened; head coach Pat Lindqvist — no address (the club's line), name not shown.
  * Written the way the club's Coaches route writes staff: the coach org membership, the staff membership (access truth,
  * mig 245), the live season's projection. Idempotent: a re-run resets these three seats' switches and the two addresses.
@@ -1577,7 +1578,7 @@ async function addPartBCoaches() {
   const t13 = await teamOf('13u-aaa');
   const SEATS = [
     { team: t15, email: 'uat-lynx-head-15aaa@uat-rep-club.local', name: 'Jordan Reyes', role: 'head_coach', kind: null, grants: null, show: true },
-    { team: t15, email: 'uat-lynx-assistant-15aaa@uat-rep-club.local', name: 'Sam Okafor', role: 'assistant_coach', kind: 'assistant', grants: { tryouts: true }, show: false },
+    { team: t15, email: 'uat-lynx-assistant-15aaa@uat-rep-club.local', name: 'Sam Okafor', role: 'assistant_coach', kind: 'assistant', grants: { tryouts: true, schedule: true, scheduleManage: false }, show: false },
     { team: t13, email: 'uat-lynx-head-13aaa@uat-rep-club.local', name: 'Pat Lindqvist', role: 'head_coach', kind: null, grants: null, show: false },
   ];
   const seatIds = {};
@@ -1597,6 +1598,7 @@ async function addPartBCoaches() {
     if (!projected) die(`projection ${seat.name}`, (await db.from('rep_team_coaches').insert({
       program_year_id: py.id, team_id: seat.team.id, org_id: club.id, user_id: user.id, coach_role: seat.role, capabilities: seat.grants,
     })).error);
+    else die(`projection ${seat.name}`, (await db.from('rep_team_coaches').update({ coach_role: seat.role, capabilities: seat.grants }).eq('id', projected.id)).error);
     ok(`${seat.name} — ${seat.role === 'head_coach' ? 'head coach' : 'assistant'}, ${seat.show ? 'name shown' : 'name not shown'}: ${seat.email} / ${DEFAULT_PASSWORD}`);
   }
   // 13U AAA takes sign-ups too, so the walk has an open page with the club's line beside one with the coach's.

@@ -1274,6 +1274,27 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 >
 > **Lakeshore fixture:** birth years on every live team except 10U Development; blurbs on 15U AAA (birth years) and 13U AAA (a past
 > year, 2025); written by script, on dev.
+>
+> **🔨 4c-2 Part B BUILT 2026-10-22, COMMITTED `5b9635f99`.** The coach's side: Team settings opens for every coach; Sharing gains
+> "Your team's public page" (address, Copy link, Open, the games-only sentence, the site-off notice inside it) and each coach's own
+> "Show my name on the team's public page"; the public team page gains Coaches (name and role only, live season only); Tryouts › Set up
+> gains the optional "Questions from families" row (a head coach's own address for the team's tryout page, ending with their role);
+> the club sees it and can put its own address back from the team's Tryouts page; families reach it only on the team's own tryout page
+> while open or not open yet; the setup line under the tryout days. **Migrations 350 (the name switch, the tryout address table) and
+> 351 (the team move carries it) are on DEV only;** apply 350 then 351 BEFORE the code ships (351 is in `MANUAL_PROD_STEPS`).
+> Passes: `/simplify`, `/review` (five lenses, high-risk; the confirmed findings fixed, among them an address that could revive on a
+> re-add), `/marketing` (F7, H7, H9b, E16b, E21b, E22), `/design`, `/docs`. Fixture `--part-b-coaches` (add-only) on Lakeshore.
+> **Walk B = Owner QA Ledger §362,** https://claude.ai/artifact/9nA8ggC3RChiK8UobGpZSd (source
+> `docs/projects/active/CLUB_TIER_STAGE4C2_PART_B_WALK.html`), result owed.
+>
+> **⚖ Owner rulings 2026-10-22, Part B:** F7 = "Your name and role only."; the H7 nudge sits under the hint; **every coach can open
+> Team settings** (a plain assistant could not reach their own name switch; the drawings never covered it); **removal turns the name
+> switch off** (a re-add restores grants, never the public name); **Coaches show only while the team has a live season** (a team
+> between seasons opens only to its closed-season page, where the switch can't be reached). Recorded in
+> `CLUB_TIER_STAGE4C2_PART_B_BUILD_PROMPT.md` "Rulings at the gate".
+>
+> **Left as built, for the owner's awareness:** a coach the club never named shows on the public page by their own account name;
+> inside the club, "set by" falls back to the sign-in email for an unnamed head coach.
 > **⚖ Ruled the same day (owner): a club's own web address is Stage 4e, inside the release, as recommended; payments
 > processing is inside the release and the release has no date (§7).** The evidence behind both: **a club's own web address** (evidence 2026-10-19: 8 of the 10 club sites use their own
 > domain; the 2 that do not are on free or low-end tools; every platform that documents it hosts the site on the club's domain
