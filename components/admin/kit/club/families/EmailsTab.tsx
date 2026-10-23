@@ -195,7 +195,7 @@ function EmailRecord({ q, row, onClose }: { q: string; row: EmailLogRow; onClose
         {c && (
           <>
             <dt>{W.factGoingTo}</dt><dd>{c.families}</dd>
-            <dt>{W.factReached}</dt><dd>{reachedText(r)}</dd>
+            <dt>{W.factReached}</dt><dd>{r.state === 'stopped' ? W.reached(c.reached, c.families) : reachedText(r)}</dd>
             <dt>{W.factOptedOut}</dt><dd className={c.optedOut ? undefined : fam.quiet}>{c.optedOut}</dd>
             <dt>{W.factFailed}</dt><dd className={c.failed ? undefined : fam.quiet}>{c.failed}</dd>
             <dt>{W.factCoaches}</dt><dd className={c.coaches ? undefined : fam.quiet}>{c.coaches}</dd>

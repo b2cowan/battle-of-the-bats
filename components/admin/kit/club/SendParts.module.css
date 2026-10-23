@@ -6,6 +6,13 @@
 .row:first-child { border-top: 0; }
 .rowPick { cursor: pointer; }
 .row input { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--home-olive); }
+/* A pick-one row's radio wears the checkbox's look (globals.css "Branded Checkbox"): the native radio drew an unticked disc
+   MORE filled than the ticked one in the dark theme, beside branded checkboxes. Scoped here — other screens' radios are theirs. */
+.row input[type="radio"] { appearance: none; -webkit-appearance: none; display: grid; place-content: center; flex-shrink: 0; border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42); border-radius: 50%; background: rgba(255, 255, 255, 0.05); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+.row input[type="radio"]::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--logic-lime); opacity: 0; transition: opacity 0.12s ease; }
+.row input[type="radio"]:checked { border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.85); background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.14); }
+.row input[type="radio"]:checked::before { opacity: 1; }
+.row input[type="radio"]:focus-visible { outline: 2px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45); outline-offset: 2px; }
 .rowMain { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
 .rowMain small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .rowOff { color: var(--text-secondary); }

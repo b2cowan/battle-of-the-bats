@@ -371,7 +371,7 @@ export const FAMILY_EMAIL_WORDS = {
   seeEmail: 'See the email',
   lastSent: 'Last sent',
   lastSentValue: (at: string, by: string | null, subject: string, families: number) =>
-    `${day(at)}${by ? ` by ${by}` : ''} · “${subject}” · ${pluralize(families, 'family', 'families')}`,
+    `${formatStoredDate(at, { withYear: !inThisYear(at) })}${by ? ` by ${by}` : ''} · “${subject}” · ${pluralize(families, 'family', 'families')}`,
   neverSent: 'Not sent from here yet',
   /** The foot's sentence, left of the buttons: who it reaches, then who it won't. */
   reach: (n: number, optedOut: number) =>
@@ -386,7 +386,7 @@ export const FAMILY_EMAIL_WORDS = {
     closed(`Your club has sent ${CLUB_EMAIL_CAP} emails to families in the last 24 hours. The next can go ${whenNext(nextAt)}`),
   justSent: 'This was just sent. Check Last sent before sending it again.',
   changed: (n: number) => `Who this reaches changed while you were writing: it now goes to ${pluralize(n, 'family', 'families')}. Check it and send again.`,
-  nobodyOptedOut: 'Every family in this choice opted out of club email, so nobody would get it.',
+  nobodyOptedOut: 'Every family you picked opted out of club email, so nobody would get it.',
   nobodyAtAll: 'There are no families to send to yet.',
   pickTeams: 'Pick at least one team.',
   pickSeason: 'Pick a season.',
@@ -406,7 +406,7 @@ export const FAMILY_EMAIL_WORDS = {
   coachSubject: (subject: string) => `Copy: ${subject}`,
   coachGreeting: (name: string | null) => (name ? `Hi ${name},` : 'Hi,'),
   coachLead: (org: string, audience: string, families: number) =>
-    `A copy of the email ${org} sent to ${audience === AUDIENCE_EVERY ? 'every family' : `the families of ${audience}`} (${pluralize(families, 'family', 'families')}). You’re getting it as a head coach. Families don’t see this note.`,
+    `A copy of the email ${org} sent to ${audience === AUDIENCE_EVERY ? 'every family' : `the families on ${audience}`} (${families} reached). You’re getting it as a head coach. Families don’t see this note.`,
   coachOutro: (sender: string) => `Reply to this email to reach ${sender}.`,
 } as const;
 
@@ -430,8 +430,8 @@ export const FAMILY_EMAILS_TAB_WORDS = {
   // This year's emails are "Oct 22 · 1:44 p.m." (drawing 5); an earlier year keeps its year.
   sentAt: (at: string) => `${formatStoredDate(at, { withYear: !inThisYear(at) })} · ${clock(at)}`,
   emptyTitle: 'No emails yet',
-  emptyBody: 'Emails sent from Families, to every family, some teams, a season or one family, are listed here.',
-  loadFailed: 'The emails didn’t load.',
+  emptyBody: 'Emails sent from Families are listed here: to every family, some teams, a season, a list or one family.',
+  loadFailed: 'We couldn’t load the emails.',
   showMore: 'Show more',
   open: (subject: string) => `Open ${subject}`,
   /** The row's window: the email as sent and its counts — never a list of families (owner 2026-10-22). */

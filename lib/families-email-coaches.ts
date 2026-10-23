@@ -42,7 +42,7 @@ export function coachCopyWords(o: { orgName: string; audience: string; families:
   return {
     subject: W.coachSubject(o.subject),
     greeting: W.coachGreeting(o.coachName?.split(' ')[0] ?? null),
-    paragraphs: [W.coachLead(o.orgName, o.audience, o.families), o.subject, ...o.body.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)],
+    paragraphs: [W.coachLead(o.orgName, o.audience, o.families), `${W.subject}: ${o.subject}`, ...o.body.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)],
     lists: [],
     link: null,
     outro: W.coachOutro(o.sender),
