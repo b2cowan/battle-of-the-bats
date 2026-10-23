@@ -190,9 +190,6 @@
   "components/shared/AccountMenu.module.css": {
     "face": 1
   },
-  "components/shared/BrandLockup.module.css": {
-    "heavy": 1
-  },
   "components/shared/FanViewLink.module.css": {
     "face": 1
   },
@@ -204,9 +201,6 @@
     "caps": 1
   },
   "components/shared/ViewPills.module.css": {
-    "face": 1
-  },
-  "components/volunteer/DayOfShell.module.css": {
     "face": 1
   }
 }

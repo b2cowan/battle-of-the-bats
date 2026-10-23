@@ -90,11 +90,7 @@ export default function CoachTopStrip({ wall = false, free = false }: {
 
   return (
     <header className={`${styles.strip}${free ? ` ${styles.stripFree}` : ''}`}>
-      <BrandLockup
-        fieldClassName={styles.logoField}
-        logicClassName={styles.logoLogic}
-        hqClassName={styles.logoHq}
-      />
+      <BrandLockup tone="follow" size={15} />
       <span className={styles.stripDivider} aria-hidden />
       <span className={styles.stripLabel}>Coaches Portal</span>
       <div className={styles.doors}>

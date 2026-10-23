@@ -1,0 +1,257 @@
+<title>Marketing Set Warm Walk</title>
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · public face, warm · S4 Part A</span>
+    <h1>The marketing set, warm</h1>
+    <p class="sub">Built 2026-10-23 (commit <code>a2d8726c</code>). One purpose: every marketing page is warm and plain, matches the approved drawings, and says what it is when shared. The new mark is Walk B's.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The home page, Pricing, the four For pages, both walkthroughs, Live demos, What's new and their bar, footer and Founding Season strip moved from the dark terminal look to the warm paper look the sign-up pages already wear. Compare each page with the "End state drawn" tab of the walk page (<code>https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft</code>).</p>
+    <p><strong>It passes when</strong> no marketing page shows a dark area, typewriter capitals or a lime word on paper; each view has one lime button; every section is there when the page loads; and the words are today's apart from the approved changes listed in each part.</p>
+    <p><strong>Expected, not a failure:</strong> the name in the bar is the NEW mark (Walk B checks it); the walkthrough slide drawings keep their small capitals labels (they are product pictures); the Founding Season chip is in the typewriter face on purpose (the one plan chip).</p>
+    <p><strong>Not in this walk:</strong> the new mark at every size (Walk B), the 404 and crash screens (S5), the public tournament pages' type (its own project).</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code>, a normal window</dd>
+      <dt>Signed-in check</dt><dd><code>uat-coach@uat-test-org.local</code> · <code>UATPassword2026!</code> (dev only, keep this page private)</dd>
+      <dt>Restart</dt><dd>This build adds files and changes the site config, so restart the dev server first (stop it, delete <code>.next</code>, <code>npm run dev</code>).</dd>
+      <dt>Widths</dt><dd>A desktop window, and a phone (or the browser's device toolbar at about 375 wide).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+var WALK_NAME = 'Marketing set, warm walk (S4 Part A, 2026-10-23)';
+(function () {
+  var KEY = 'pfw-s4a-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'The bar, the strip and the footer',
+      steps: [
+        { who: 'Nobody signed in', do: 'Open <code>/</code> on a desktop.', see: 'A paper strip at the top ("Founding Season · Your 2027 season, free — sign up by December 31, 2026 · See the offer", the link in olive, no arrow), then a white bar: the name, Tournaments · Coaches · Leagues · Clubs · Pricing in plain sentence case, "Sign in" as quiet text and "Get started" as a white button with an edge.' },
+        { who: 'Nobody signed in', do: 'Open <code>/pricing</code> and look at the bar.', see: '"Pricing" is the darker link with an olive line under it.' },
+        { who: 'Nobody signed in', do: 'Scroll to the foot of any marketing page.', see: 'A paper footer: column heads as small spaced capitals (Product, Get started), links in plain type, "Live demos", "What’s new", "Start free", "Sign in" in sentence case. No typewriter.' },
+        { who: 'Coach', do: 'Sign in, choose Dark on <code>/account</code>, then open <code>/</code> and <code>/pricing</code>.', see: 'Both are still warm (the marketing pages have no Dark version). The bar shows "Account" and "Open app" (no arrow).' },
+        { who: 'Coach', do: 'Still signed in with Dark, open the Account menu in the bar.', see: 'The menu opens warm (white, ink text), not a dark card.' }
+      ] },
+    { id: 'B', title: 'Home',
+      steps: [
+        { who: 'Nobody signed in', do: 'Open <code>/</code>.', see: 'The headline "Less admin. More sport." in the condensed heading face, "More sport." in olive; the lead paragraph; a lime "Start free" button with "Not sure? See your options" beside it, both in the first screen.' },
+        { who: 'Nobody signed in', do: 'Look at the Founding Season card and the two persona cards under it.', see: 'A white card with an olive left edge (eyebrow, "Your 2027 season, free.", the two "Normally $…" prices). Two white cards: an eyebrow, a quiet tag, a bold title, the paragraph, then olive links "I’m a tournament organizer" / "I’m a coach" and "See it live — no sign-up" with a small red dot.' },
+        { who: 'Nobody signed in', do: 'Scroll through What’s included, How it works and Pricing.', see: 'White cards with olive ticks; "This is me" links (no arrow); the in-development cards end in "See what League Plus includes" and "See what Club includes"; How it works shows "Step 1", "Step 2", "Step 3" with sentence-case titles and no giant faded numbers.' },
+        { who: 'Nobody signed in', do: 'Find the House league card under "What it actually replaces".', see: 'It ends: "Parents hear about their registration automatically, and you can message the whole league in one go." (the old "automated game notifications" line is gone).' },
+        { who: 'Nobody signed in', do: 'Scroll to the bottom band.', see: 'A white band, "Your season belongs on a real platform." at section-heading size, and a lime "Start your organization" button.' }
+      ] },
+    { id: 'C', title: 'Pricing',
+      steps: [
+        { who: 'Nobody signed in', do: 'Open <code>/pricing</code>.', see: 'Eyebrow "Pricing", the headline "Plans built around how you actually operate." in the heading face (it was typewriter), four facts with olive dots in sentence case.' },
+        { who: 'Nobody signed in', do: 'Look at the plan cards.', see: 'Only Tournament Plus has a lime button and a 2px olive edge; the other cards’ buttons are white. Buttons read "Start free" with "No credit card required" under the button on the Founding Season cards; Tournament reads "Get started free". Prices line up across the cards.' },
+        { who: 'Nobody signed in', do: 'Find the Tournament → Tournament Plus section and the League Plus / Club strip.', see: 'The bridge button reads "Start Tournament Plus free"; the interest buttons read "Express interest in League Plus or Club" (or name one plan).' },
+        { who: 'Nobody signed in', do: 'Open the FAQ and the interest form (any "Express interest" button).', see: 'The form opens warm: plain type, a lime submit button, "Early access" in sentence case, a plain × to close.' }
+      ] },
+    { id: 'D', title: 'The four For pages',
+      steps: [
+        { who: 'Nobody signed in', do: 'Open <code>/for-clubs</code>.', see: 'An eyebrow, one headline with an olive accent phrase, a lime "Express interest in Club" button, "Running a tournament? See tournament plans" as an olive link, the "Coming soon" line, and facts with olive dots.' },
+        { who: 'Nobody signed in', do: 'Open <code>/for-leagues</code>, <code>/for-coaches</code> and <code>/for-tournament-organizers</code>.', see: 'The same layout on each. For coaches: "See a coach’s season" (not "See it live"). For tournament organizers: "See a live tournament"; the two plan cards read "Start free" and "Start Tournament Plus free".' },
+        { who: 'Nobody signed in', do: 'On each, find the cross-sell cards near the foot.', see: 'The Coaches Portal card reads "See the Coaches Portal" or "Express interest in the Coaches Portal"; a Tournament card on For coaches reads "See tournament plans". No arrows, no capitals, no watermark numbers.' }
+      ] },
+    { id: 'E', title: 'The walkthroughs',
+      steps: [
+        { who: 'Nobody signed in', do: 'Open <code>/for-coaches/walkthrough</code> and <code>/for-tournament-organizers/walkthrough</code>.', see: 'Eyebrow, headline, lead, a lime "Start free" and a white demo button with the red dot ("See a coach’s season" / "See a live tournament"), then the fine print with "Present the full deck" as an olive link.' },
+        { who: 'Nobody signed in', do: 'Scroll the problems and press "Present the full deck".', see: 'Each problem: "1 / 7", "The old way", a heading and its screen. The presenter opens on paper; the ← → keys still move the slides.' },
+        { who: 'Nobody signed in', do: 'At the foot of each walkthrough, read the last link.', see: '"Everything else the Coaches Portal does" / "Everything else Tournament does".' },
+        { who: 'Nobody signed in', do: 'Print a walkthrough to PDF from the browser (Ctrl+P).', see: 'Paper and ink, the problems readable, no stray "·" at the end of the fine-print line.' }
+      ] },
+    { id: 'F', title: 'Live demos and What’s new',
+      steps: [
+        { who: 'Nobody signed in', do: 'Open <code>/demos</code>.', see: 'Headline "Walk the real product. Nothing to sign up for.", two white cards with olive ticks; the tournament card’s button is lime, the coach card’s is white.' },
+        { who: 'Nobody signed in', do: 'Open <code>/changelog</code>.', see: 'Dates in olive plain type as written ("October 20, 2026", not capitals), entry titles in bold, quiet "New" tags, and a lime "Get started free" at the foot.' }
+      ] },
+    { id: 'G', title: 'Titles and shared links',
+      steps: [
+        { who: 'Nobody signed in', do: 'Read the browser tab on Home, Pricing, a For page and What’s new.', see: '"FieldLogicHQ: less admin, more sport", "Pricing | FieldLogicHQ", "For club executives | FieldLogicHQ", "What’s new | FieldLogicHQ". The brand appears once.' },
+        { who: 'Nobody signed in', do: 'Open <code>/share-card.png</code>.', see: 'A warm card: the name with the new mark, "Less admin. More sport." large ("More sport." in olive), the olive tile bottom right.' },
+        { who: 'Anyone', do: 'Paste a marketing link (for example the dev or staging address of /pricing) into a chat app or a link-preview checker.', see: 'The warm card, the page’s own title and its description. If the dev server is not reachable from outside, tick Skipped.', optionPair: true, skip: 'Skipped it (no public address to test)' }
+      ] },
+    { id: 'H', title: 'Nothing waits for a scroll, and the phone',
+      steps: [
+        { who: 'Nobody signed in', do: 'In devtools, set the network to Slow 3G and reload <code>/</code>; then scroll quickly to the bottom.', see: 'Every section is already there; nothing fades or slides in as you reach it.' },
+        { who: 'Nobody signed in', do: 'At phone width, open Home, Pricing and a For page.', see: 'No sideways scroll; cards stack to one column; the bottom bar shows the five roles in plain type with an olive line on the current one.' },
+        { who: 'Nobody signed in', do: 'On a real Android phone in Chrome, open the home page.', see: 'The browser’s top bar is the paper colour, not near-black.', optionPair: true, skip: 'Skipped it (no Android phone to hand)' }
+      ] },
+    { id: 'I', title: 'Retired pages and what moved with the set',
+      steps: [
+        { who: 'Nobody signed in', do: 'Open <code>/platform/accounting</code>.', see: 'It lands on the home page.' },
+        { who: 'Nobody signed in', do: 'Press "Get started" and look at the chooser (<code>/start</code>).', see: 'Its small labels are plain spaced capitals in olive and grey (no typewriter face) and its title and button are no longer extra-heavy.' },
+        { who: 'Nobody signed in', do: 'Open a public tournament page on a desktop and look at the slim strip at the top.', see: 'Home, Scores, Get started and the pill in plain sentence case, not typewriter capitals.' },
+        { who: 'Admin', do: 'Sign in as <code>uat-admin@uat-test-org.local</code> and open the plan chooser in setup (Settings, Plan or the onboarding plan step), in Warm and then in Dark.', see: 'The plan cards read correctly in both: the lead plan has the lime button, the current plan shows its "Current plan" tag and a faded, unclickable button.', optionPair: true, skip: 'Skipped it (could not reach the plan chooser)' }
+      ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var rows = s.optionPair ? [[id + 'a', 'Checked it'], [id + 'b', s.skip || 'Skipped it']] : [[id, null]];
+      rows.forEach(function (r, ri) {
+        var row = el('label', 'step');
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + r[0]; cb.checked = !!state.ticks[r[0]];
+        cb.addEventListener('change', function () { state.ticks[r[0]] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, id: r[0], cb: cb });
+        var t = el('span', 'txt');
+        if (ri === 0) {
+          t.appendChild(el('span', 'who', id + ' · ' + s.who));
+          t.appendChild(el('span', null, s.do));
+          t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+        }
+        if (r[1]) t.appendChild(el('span', null, '<strong>' + r[1] + '</strong>'));
+        row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+      });
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [WALK_NAME];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

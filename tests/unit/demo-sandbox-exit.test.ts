@@ -102,7 +102,7 @@ describe('when the rule fires', () => {
     // cookies. Judged by path alone each one looks like "outside the demo", so the demo tore its
     // own session down moments after the door opened, while the visitor sat on the page that had
     // just asked for its favicon. Only a NAVIGATION counts.
-    for (const asset of ['/favicon.svg', '/sw.js', '/manifest.json', '/icons/pwa-192.png', '/robots.txt']) {
+    for (const asset of ['/favicon.ico', '/sw.js', '/manifest.json', '/icons/fl-192.png', '/robots.txt']) {
       assert.equal(leaving({ pathname: asset, isNavigation: false }), false, `${asset} is not a visit`);
     }
     // …and the same paths ARE a visit when the visitor actually typed one in.

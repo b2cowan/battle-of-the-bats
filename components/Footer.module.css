@@ -86,16 +86,8 @@
   .qrCol    { grid-column: span 4; }
 }
 
-.wordmark {
-  font-family: var(--font-data, monospace); /* type-ok: wordmark */
-  font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: -0.05em;
-  margin-bottom: 0.75rem;
-}
-.wordmarkA { color: var(--home-ink); }
-.wordmarkB { color: var(--home-olive); }
-.wordmarkC { color: var(--home-dim); }
+/* The one name (BrandLockup) draws itself; the footer only spaces it. */
+.wordmark { margin-bottom: 0.75rem; }
 
 .blurb {
   font-size: var(--type-body);

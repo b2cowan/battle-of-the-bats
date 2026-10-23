@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
 import PlatformAdminNav from './PlatformAdminNav';
 import PlatformVisitRecorder from './PlatformVisitRecorder';
+import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import styles from './platform-admin.module.css';
 
 export const metadata: Metadata = { title: 'Platform Admin — FieldLogicHQ' };
@@ -30,6 +31,8 @@ export default async function PlatformAdminLayout({
   if (pathname.startsWith('/platform-admin/help')) {
     return (
       <main className={`${styles.main} ${styles.helpMain}`}>
+        {/* The console is dark in every setting, and the root default bar is the paper (S4 Part B), so it pins its own. */}
+        <CoachThemeColor fixed="dark" />
         <PlatformVisitRecorder />
         {children}
       </main>
@@ -45,6 +48,7 @@ export default async function PlatformAdminLayout({
     <div className={styles.shell}>
       <PlatformAdminNav sessionEmail={auth.user.email ?? ''} role={auth.role} />
       <main className={styles.main}>
+        <CoachThemeColor fixed="dark" />
         <PlatformVisitRecorder />
         {children}
       </main>

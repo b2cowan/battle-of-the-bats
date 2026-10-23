@@ -6,6 +6,7 @@
  */
 
 import type { Metadata } from 'next';
+import BrandLockup from '@/components/shared/BrandLockup';
 
 export const metadata: Metadata = {
   title: 'Unsubscribed — FieldLogicHQ',
@@ -37,22 +38,13 @@ export default async function UnsubscribeConfirmedPage({ searchParams }: Props) 
         padding: '2.5rem 2rem',
         background: 'rgba(255,255,255,0.02)',
       }}>
-        {/* Wordmark */}
+        {/* The one name (P9): the one-colour lockup on this dark card. The page's own look is S5's. */}
         <div style={{
           marginBottom: '2rem',
           paddingBottom: '1.25rem',
           borderBottom: '1px solid rgba(217, 249, 157, 0.12)',
         }}>
-          <span style={{
-            fontFamily: 'monospace, sans-serif', // type-ok: wordmark
-            fontSize: '0.65rem',
-            fontWeight: 900,
-            color: '#D9F99D',
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase', // type-ok: wordmark
-          }}>
-            FIELDLOGICHQ
-          </span>
+          <BrandLockup href={null} tone="mono" size={16} />
         </div>
 
         {isError ? (

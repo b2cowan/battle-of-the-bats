@@ -1,0 +1,245 @@
+<title>New Mark Walk</title>
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · public face, warm · S4 Part B</span>
+    <h1>The new mark, everywhere</h1>
+    <p class="sub">Built 2026-10-23. One purpose: the refined Joined FL mark and the "FieldLogicHQ" name appear the same way in every place, at every size, in light and dark, and no trace of the old marks is left.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The ruled identity: an olive F whose middle arm turns down into an L, beside "FieldLogic" in bold ink and "HQ" in olive. On an olive tile it is the app and tab icon. Lime is not in the mark anywhere. Compare with the refinement drawing (<code>https://claude.ai/artifact/9xDNVQyR3wJRcf7hCgiDBr</code>).</p>
+    <p><strong>It passes when</strong> every place below shows the new mark or name, the 16 px tab icon is crisp (it is a separate cut), Dark shows the name in light text with no olive, and nothing still shows FIELD·LOGIC·HQ in typewriter capitals, the lime ">" or the old "FL / HQ" icon.</p>
+    <p><strong>Devices you may not have:</strong> each phone, push and mail-app step has a Skipped twin. Tick Skipped rather than leaving it blank.</p>
+    <p><strong>Not in this walk:</strong> the warm marketing pages themselves (Walk A); the name and logo search, which is owed before anything is printed or stitched.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code></dd>
+      <dt>Coach</dt><dd><code>uat-coach@uat-test-org.local</code></dd>
+      <dt>Admin</dt><dd><code>uat-admin@uat-test-org.local</code> (organization <code>uat-test-org</code>)</dd>
+      <dt>Password</dt><dd><code>UATPassword2026!</code> for both. Dev only. Keep this page private.</dd>
+      <dt>Restart</dt><dd>Restart the dev server first (stop, delete <code>.next</code>, <code>npm run dev</code>), and hard-reload once (Ctrl+Shift+R) so the browser drops the old tab icon.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+var WALK_NAME = 'The new mark walk (S4 Part B, 2026-10-23)';
+(function () {
+  var KEY = 'pfw-s4b-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'The browser tab and a bookmark',
+      steps: [
+        { who: 'Anyone', do: 'Open <code>/</code> and look at the tab at normal zoom.', see: 'An olive rounded square with a paper F-L mark. Not the lime ">" on black.' },
+        { who: 'Anyone', do: 'Switch the browser to its dark look (or a dark tab strip) and look again.', see: 'The olive tile still reads; the paper letters carry it.' },
+        { who: 'Anyone', do: 'Bookmark the page and look at the bookmark bar.', see: 'The same olive tile, crisp at that small size (the separate 16 px cut).' }
+      ] },
+    { id: 'B', title: 'The name in every bar',
+      steps: [
+        { who: 'Nobody signed in', do: 'Look at the marketing bar and the footer on <code>/</code>.', see: 'The olive mark, "FieldLogic" in bold ink, "HQ" in olive. No typewriter capitals.' },
+        { who: 'Nobody signed in', do: 'Open <code>/discover</code>.', see: 'The app bar shows the same name; it is a link to Home.' },
+        { who: 'Coach', do: 'Sign in with Warm, open the coaches portal on a desktop; then choose Dark.', see: 'Warm: the olive mark and name in the top strip, where the ">" used to be. Dark: the mark and the name in light text, HQ a little dimmer, no olive.' },
+        { who: 'Admin', do: 'Sign in as the admin and open the admin on a desktop, in Warm and in Dark.', see: 'The same as the coaches portal’s strip.' },
+        { who: 'Admin', do: 'Open <code>/uat-test-org/check-in</code> and <code>/uat-test-org/scorekeeper</code>.', see: 'The name at the top in olive and ink, as text (tapping it goes nowhere), with the club’s name under it.' },
+        { who: 'Nobody signed in', do: 'Open a public tournament page, one set light and one set dark by its organizer, on a desktop.', see: 'The slim top strip shows the one-colour name in the strip’s own text colour on both, readable on each.', optionPair: true, skip: 'Skipped it (no dark tournament to hand)' },
+        { who: 'Anyone', do: 'Open the "See it live" tournament demo and look at the name.', see: 'The name is there but is not a link (inside a demo it never leads out).' }
+      ] },
+    { id: 'C', title: 'Sign-in and system pages',
+      steps: [
+        { who: 'Anyone', do: 'Open <code>/platform-admin/login</code>.', see: 'The one-colour name in light text on the dark card, above "Staff access".' },
+        { who: 'Anyone', do: 'Open <code>/unsubscribe/confirmed</code>.', see: 'The one-colour name at the top of the dark card (the page’s own look is S5’s).' },
+        { who: 'Nobody signed in', do: 'Open <code>/offline.html</code>.', see: 'Paper ground, the name at the foot in olive and ink.' },
+        { who: 'Coach', do: 'Signed in with Dark saved, open <code>/offline.html</code>.', see: 'Dark ground, the name in light text.' }
+      ] },
+    { id: 'D', title: 'The phone home screen',
+      steps: [
+        { who: 'Anyone', do: 'On an iPhone, remove the app if it is already on the home screen, open the site in Safari and Add to Home Screen.', see: 'A full olive square with the paper mark (no black corners). The splash screen while it opens is paper, not near-black.', optionPair: true, skip: 'Skipped it (no iPhone to hand)' },
+        { who: 'Anyone', do: 'On Android, install the app from Chrome.', see: 'The olive icon in your launcher’s shape, the mark inside it whole (not cropped); the launch screen is paper.', optionPair: true, skip: 'Skipped it (no Android phone to hand)' }
+      ] },
+    { id: 'E', title: 'A push notification',
+      steps: [
+        { who: 'Coach', do: 'On an Android phone with notifications on, trigger a notice (for example a schedule change on a followed team).', see: 'In the status bar a small white F-L silhouette, crisp; in the shade the olive app tile as the picture (unless the organizer sent its own logo).', optionPair: true, skip: 'Skipped it (no Android notifications to test)' }
+      ] },
+    { id: 'F', title: 'Exports',
+      steps: [
+        { who: 'Coach', do: 'Export a coach money view to PDF (Money, Export, PDF) and look at the footer.', see: '"Generated by FieldLogicHQ" with the new one-colour mark in ink beside it (not the old FL tile).' },
+        { who: 'Coach', do: 'Export the same view to Excel and look at the last rows.', see: 'The ink mark beside "Generated by FieldLogicHQ".' }
+      ] },
+    { id: 'G', title: 'The email name line',
+      steps: [
+        { who: 'Admin', do: 'Open <code>/dev/email-preview</code> and open any email.', see: 'At the top of the white card: "FieldLogic" in bold dark text and "HQ" in olive, in Arial. No Courier capitals, no image.' },
+        { who: 'Admin', do: 'Send a test email to yourself (any template editor’s test send) and open it in your mail app, light and dark.', see: 'The same name line, readable in both.', optionPair: true, skip: 'Skipped it (no test send)' }
+      ] },
+    { id: 'H', title: 'No trace of the old marks',
+      steps: [
+        { who: 'Anyone', do: 'Open <code>/favicon.svg</code> and <code>/icons/pwa-192.png</code>.', see: 'Both are gone (not found). The old lime ">" and "FL / HQ" files no longer exist.' },
+        { who: 'Anyone', do: 'Open <code>/share-card.png</code>.', see: 'The new lockup at the top left and the olive tile at the bottom right.' }
+      ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var rows = s.optionPair ? [[id + 'a', 'Checked it'], [id + 'b', s.skip || 'Skipped it']] : [[id, null]];
+      rows.forEach(function (r, ri) {
+        var row = el('label', 'step');
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + r[0]; cb.checked = !!state.ticks[r[0]];
+        cb.addEventListener('change', function () { state.ticks[r[0]] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, id: r[0], cb: cb });
+        var t = el('span', 'txt');
+        if (ri === 0) {
+          t.appendChild(el('span', 'who', id + ' · ' + s.who));
+          t.appendChild(el('span', null, s.do));
+          t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+        }
+        if (r[1]) t.appendChild(el('span', null, '<strong>' + r[1] + '</strong>'));
+        row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+      });
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [WALK_NAME];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

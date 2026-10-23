@@ -15,11 +15,8 @@
     "face": 5,
     "caps": 1
   },
-  "app/unsubscribe/confirmed/page.tsx": {
-    "heavy": 1
-  },
   "components/Navbar.module.css": {
-    "heavy": 4,
+    "heavy": 3,
     "caps": 4,
     "face": 3
   },
@@ -40,14 +37,10 @@
   "components/shared/AccountMenu.module.css": {
     "face": 2
   },
-  "components/shared/BrandLockup.module.css": {
-    "heavy": 1
-  },
   "components/shared/WorkspacesPill.module.css": {
     "face": 1
   },
   "public/offline.html": {
-    "heavy": 2,
-    "caps": 1
+    "heavy": 1
   }
 }

@@ -13,10 +13,9 @@
  */
 
 import { useEffect } from 'react';
-import { getEffectiveTheme, THEME_CHANGE_EVENT, THEME_COLORS, type UserTheme } from '@/lib/user-theme';
+import { getEffectiveTheme, THEME_CHANGE_EVENT, THEME_COLORS, DEFAULT_THEME_COLOR, type UserTheme } from '@/lib/user-theme';
 
-// The root-layout default (dark); restored when leaving the coaches portal.
-const DEFAULT_THEME_COLOR = '#0a0a0f';
+// The root-layout default (lib/user-theme.ts) is restored when leaving the coaches portal.
 
 /**
  * `fixed` — a surface whose palette does NOT follow the setting (the volunteer shells on the admin kit,

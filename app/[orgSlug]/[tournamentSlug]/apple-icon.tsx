@@ -103,7 +103,7 @@ export default async function AppleIcon({
 
   // Default: re-serve the clean platform icon (identical look to non-tournament
   // pages); a typographic mark is the last-resort fallback if it can't be fetched.
-  const platform = origin ? await fetchAsDataUrl(`${origin}/icons/pwa-512.png`) : null;
+  const platform = origin ? await fetchAsDataUrl(`${origin}/icons/fl-512.png`) : null;
   if (!platform) return letterMark();
   return new ImageResponse(
     (

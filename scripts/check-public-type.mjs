@@ -5,7 +5,7 @@
  *
  * The marketing site, the system screens and about fifty emails set whole sentences, buttons, headings and
  * navigation links in the typewriter face, many of them in capitals. A newcomer reads that as a terminal. The
- * first look's screens proved the cure: the typewriter face for the wordmark and nothing else. The rule is P1
+ * first look's screens proved the cure: the typewriter face for a plan chip and real data, nothing else. The rule is P1
  * (and P3, P2) in `docs/agents/brand/VISUAL_IDENTITY.md`; the walk and the rulings are in
  * `docs/projects/active/PUBLIC_FACE_WARM_PLAN.md`.
  *
@@ -18,21 +18,21 @@
  *
  * Not counted: TRACKING. Nothing in P1–P10 limits letter-spacing by itself (the eyebrow is spaced on purpose),
  * and the lettering it travels with is already counted: spaced capitals are `caps`, spaced typewriter is
- * `face`. Counting it too would only make the wordmark carry a second marker for the same fact.
+ * `face`. Counting it too would only make a plan chip carry a second marker for the same fact.
  *
  * ⚖ AN ALLOWED PLACE SAYS WHICH ONE IT IS. A line that holds an allowed role carries a `type-ok: <role>`
- * comment on that line or the one above (`/* type-ok: wordmark *\/`, `// type-ok: plan chip`), and a marker
+ * comment on that line or the one above (`/* type-ok: eyebrow *\/`, `// type-ok: plan chip`), and a marker
  * exempts only the signals its role may carry. A marker covers the line it is on; one standing ALONE on its own
  * line also covers the next line (that is how an email template string, which cannot hold a comment, is marked).
  * A marker trailing a declaration covers that declaration only, so each declaration in a rule takes its own.
  * A declaration split across lines is read as one and belongs to the line it starts on. The roles, and the rule each comes from:
  *
- *   wordmark   face, caps   P9  FIELD · LOGIC · HQ, in the typewriter face
- *   plan chip  face, caps   P1  the one typewriter label besides the wordmark
+ *   plan chip  face, caps   P1  the one typewriter label on the public face
  *   eyebrow    caps         P3  the Inter 600 eyebrow line (capitals, never the typewriter face)
  *   data       face         P1  a figure or code a person reads as data, such as a price code
  *
- * `heavy` has no role: the wordmark and the headline are 700. A marker that names none of these is an error.
+ * `heavy` has no role: the headline is 700. A marker that names none of these is an error — including `wordmark`, a
+ * role retired in S4 Part B (2026-10-23) when the name became the Inter lockup (P9).
  * Anything else is the old lettering, and the fix is Inter in sentence case (the headline face is Barlow
  * Condensed 700, sentence case).
  *
@@ -47,7 +47,7 @@
  * Scope — the public surfaces The public face, warm owns (found in the code, not from a plan):
  *   marketing         the home page, /pricing, the four /for-* pages and their walkthroughs, /changelog, /demos,
  *                     /see-it-live, /pitch, the bar, the footer, the plan cards, components/marketing
- *   signed-out shell  the consumer bar, /start, /auth/*, components/auth, the shared wordmark lockup
+ *   signed-out shell  the consumer bar, /start, /auth/*, components/auth, the shared name lockup
  *   system screens    the 404, the crash and fatal-crash screens, the offline page, /unsubscribe, the paused screen
  *   emails            lib/ files that build one: the listed builders plus any lib/*.ts named like one
  *                     (email, notify, announcement, reminder, mail), so a new builder starts at none
@@ -261,7 +261,7 @@ if (rises.length) {
     console.error(`    ${r.f}: ${what}\n        lines ${where[r.f].join(', ')}`);
   }
   console.error('  The public face sets every sentence, label, button, heading and link in Inter, sentence case (P1–P4,');
-  console.error('  docs/agents/brand/VISUAL_IDENTITY.md). The wordmark, a plan chip, an eyebrow and a figure read as data are');
+  console.error('  docs/agents/brand/VISUAL_IDENTITY.md). A plan chip, an eyebrow and a figure read as data are');
   console.error('  allowed: say so with `type-ok: <role>` on the line or the one above.');
 }
 if (drops.length) {

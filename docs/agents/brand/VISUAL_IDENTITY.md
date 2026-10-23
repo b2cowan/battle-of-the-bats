@@ -26,10 +26,9 @@ disagree, the home wins and this document is the one that is wrong: fix it.
 |---|---|---|
 | **Barlow Condensed**, 700, sentence case | every heading (P2) | `--font-display` |
 | **Inter** | every sentence, label, button, link and eyebrow | `--font-sans` |
-| **IBM Plex Mono** | the wordmark, a plan chip, and real data — nothing else (P1). **From S4: a plan chip and real data only**; the new wordmark is Inter (§4) | `--font-data` (`--font-mono`) |
+| **IBM Plex Mono** | a plan chip and real data — nothing else (P1). The name is the Inter lockup (§4) | `--font-data` (`--font-mono`) |
 
-Email cannot load our fonts. It uses Arial and Helvetica, and Courier New for the wordmark (see §3). From S4 the email
-wordmark is Arial too.
+Email cannot load our fonts. It uses Arial and Helvetica, the name line included (see §3).
 
 ### The public rules, P1–P10
 
@@ -37,7 +36,7 @@ Owner ruling 2026-10-23 (Ask 3 A), carried over as ruled.
 
 | Rule | What it says |
 |---|---|
-| **P1 · The typewriter face is for the wordmark, a plan chip and real data** | Never a sentence, a label, a button, a heading or a navigation link. (Scores and records on the sport pages are data, so R1-4 keeps them. That belongs to Q6's project.) *Q6 was ruled Ask 7 A: the tournament pages' type is its own project, §6.* |
+| **P1 · The typewriter face is for a plan chip and real data** | Never a sentence, a label, a button, a heading, a navigation link or the name. (Scores and records on the sport pages are data, so R1-4 keeps them. That belongs to Q6's project.) *Q6 was ruled Ask 7 A: the tournament pages' type is its own project, §6.* *Rewritten when S4 shipped the lockup (2026-10-23); it used to allow the wordmark.* |
 | **P2 · One heading face** | Barlow Condensed 700, sentence case. A page has one face for its headings. |
 | **P3 · Sentence case wherever a person reads** | The only capitals are the eyebrow line (Inter 600 12, letter-spaced, olive: the first look's step line, coloured) and a plan chip. |
 | **P4 · A button says what happens** | Inter 700, sentence case, 48px, lime fill with ink text, 10px corners, no arrow. One lime button per view. Secondary: white with an edge. A text link is olive. |
@@ -45,15 +44,15 @@ Owner ruling 2026-10-23 (Ask 3 A), carried over as ruled.
 | **P6 · Complete when it loads** | Nothing waits for a scroll to appear. A screenshot, a slow phone and a skimming reader see the whole page. |
 | **P7 · Every page says what it is when shared** | A title, a description and a share card. |
 | **P8 · No system words** | Say what happened and the way forward, in one sentence each. |
-| **P9 · One wordmark** | FIELD ink · LOGIC olive · HQ dim, IBM Plex Mono 700 (Courier New in email, which cannot load our fonts). On dark: FIELD white · LOGIC lime · HQ dim. |
+| **P9 · One name, the lockup** | The bare olive mark + "FieldLogic" in Inter 700 ink + "HQ" in Inter olive, drawn by ONE component (`components/shared/BrandLockup.tsx`) wherever a screen shows the name. On Dark the mark and the name take the text colour, HQ a little dimmer. In email: Arial text, no mark. See §4. *Rewritten when S4 shipped it (2026-10-23); it used to be FIELD · LOGIC · HQ in the typewriter face.* |
 | **P10 · One email envelope** | The warm envelope the first look built. A family email adds the club's identity to it (Q5) and never replaces it. |
 
 **Rulings that sit on top of the table** (all owner, 2026-10-23, in the plan's "Round 1 rulings"):
 
 - **Scroll-reveal comes out (P6).** This is a rule here; removing it from the home page is S4's work.
 - **The marketing headline is one named exception to the ladder** (Ask 3 A). See "The headline" below.
-- **The wordmark is redrawn and RULED** (Ask 2 C; the refined Joined FL, 2026-10-23). P1 and P9 describe today until S4
-  ships it. See §4.
+- **The wordmark is redrawn and RULED** (Ask 2 C; the refined Joined FL, 2026-10-23), and S4 Part B built it: P1 and P9
+  above are the rules as shipped. See §4.
 
 ### The headline: one named exception
 
@@ -80,12 +79,13 @@ comment on the line or the one above:
 
 | Role | May carry | From |
 |---|---|---|
-| `wordmark` | the face, capitals | P9 |
 | `plan chip` | the face, capitals | P1 |
 | `eyebrow` | capitals (never the face; the public eyebrow is Inter) | P3 |
 | `data` | the face (a figure or code read as data) | P1 |
 
-No role allows a heavy weight. Scope and the full rules are in the script's header. Org-branded tournament and club
+No role allows a heavy weight, and there is no `wordmark` role any more (retired in S4 Part B: the name is the Inter
+lockup). Since S4 the check also counts the lettering a class name carries in a page's markup (`font-mono`,
+`uppercase`, `font-black`, and the global classes that set the face). Scope and the full rules are in the script's header. Org-branded tournament and club
 pages, the admin and the coaches portal are not on its list (§6).
 
 ---
@@ -141,25 +141,27 @@ never reach), so it is built once, there.
 - **Family emails wear the club's identity on the warm envelope** (owner, Ask 6 A, 2026-10-23). A parent should
   recognize their club: its logo and colour join the warm envelope, FieldLogicHQ stays in the footer, and the envelope is
   never replaced. S3b builds it, with the club-contrast and logo-in-email questions that come with it.
-- **The wordmark in email is Courier New, three inks** (P9), because email cannot load Plex Mono. **From S4** it is text
-  in Arial: "FieldLogic" 700 ink, "HQ" 400 olive, no image (§4). S3a keeps today's line; S4 changes that one line.
+- **The name in email is text in Arial**: "FieldLogic" 700 ink, "HQ" 400 olive, no image and no mark, so every mail app
+  shows the same thing with images on or off (§4). It is drawn by `emailNameLineHtml()` in `lib/brand-mark.ts` with the
+  email palette's colours. (S3a kept the old Courier line; S4 Part B changed that one line, 2026-10-23.)
 
 ---
 
 ## 4. The wordmark and the marks
 
-**Current state (shown for reference; it is being redrawn).** The wordmark is FIELD · LOGIC · HQ in the typewriter face
-in three inks (P9). Today it exists in five slightly different versions: the marketing bar's, the consumer bar's
-(the three-ink one the first look shipped), the footer's, the emails' on the old card (lime capitals, spaced), and the
-unsubscribe page's (spaced). The lime ">" chevron on a dark square is the browser-tab mark and the admin and coaches-portal top
-strips' mark, and the phone home-screen icon is a separate "FL / HQ" mark on a dark square (`public/icons/pwa-*.png`).
-The shared lockup component is `components/shared/BrandLockup.tsx`.
+**Where it lives (S4 Part B, built 2026-10-23).** The geometry and the name's two parts are `lib/brand-mark.ts` (the
+paths copied from the refinement page, never redrawn). Every screen draws the name with `components/shared/BrandLockup.tsx`
+(tones: `warm` always paper, `follow` the account's Warm / Dark, `mono` the one-colour lockup in the surface's own ink).
+The three places that cannot import it draw from the same file: the offline page (`lockupStaticHtml()`, pinned), the email
+name line (`emailNameLineHtml()`) and the share card. Every icon file is drawn from it by
+`scripts/generate-brand-icons.mjs` under `fl-*` names. `tests/unit/public-face-s4-identity.test.ts` holds all of it.
+*Before S4:* FIELD · LOGIC · HQ in the typewriter face in five slightly different versions, a lime ">" chevron on a dark
+square as the tab and strip mark, and a separate "FL / HQ" phone icon.
 
 **RULED 2026-10-23 (owner, "go ahead with your proposal" on the refinement page
 https://claude.ai/artifact/9xDNVQyR3wJRcf7hCgiDBr, taken as its seven asks as recommended): the refined Joined FL, olive
-leading, lime kept for actions.** It ships in S4's release, all at once. **Until then today's wordmark and marks stay
-where they are, and P1 and P9 above describe today.** When S4 ships, P1 becomes "the typewriter face is for a plan chip
-and real data" and P9 becomes the lockup below. Drawing history: round 1 (`PUBLIC_FACE_WARM_W_DRAWINGS.html`, did not
+leading, lime kept for actions.** It ships in S4's release, all at once, with the warm marketing set (Part A). P1 and P9
+above are already written as shipped. Drawing history: round 1 (`PUBLIC_FACE_WARM_W_DRAWINGS.html`, did not
 sell it), Codex's second opinion (`PUBLIC_FACE_WARM_W_CODEX_OPINION.md`), the refinement (`PUBLIC_FACE_WARM_W_REFINEMENT.html`,
 the source of record for the geometry).
 
@@ -175,7 +177,7 @@ the source of record for the geometry).
 anywhere; it stays the action colour (buttons). In Dark the mark and the name take the Dark text colour, HQ a little dimmer.
 Olive on the Dark ground fails (about 3:1), so Dark never uses an olive mark.
 
-**The lockup (P9 from S4).** The bare olive mark (no tile) + "FieldLogic" in Inter 700 ink + "HQ" in Inter olive, 600 below
+**The lockup (P9).** The bare olive mark (no tile) + "FieldLogic" in Inter 700 ink + "HQ" in Inter olive, 600 below
 18 px and 500 above. The mark is about 1.4 times the capitals' height, centred on them, with a gap of about 0.45 em. One
 mark at every size. The tile appears only where the mark stands alone: the tab, the phone, the share card.
 

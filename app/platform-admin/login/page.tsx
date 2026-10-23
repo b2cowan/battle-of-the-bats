@@ -5,6 +5,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { signIn } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import styles from './platform-login.module.css';
+import BrandLockup from '@/components/shared/BrandLockup';
+import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 
 
 function LoginForm() {
@@ -74,11 +76,7 @@ function LoginForm() {
     return (
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.wordmark}>
-            <span className={styles.wordmarkField}>FIELD</span>
-            <span className={styles.wordmarkLogic}>LOGIC</span>
-            <span className={styles.wordmarkHq}>HQ</span>
-          </div>
+          <BrandLockup href={null} tone="mono" size={17} className={styles.wordmark} />
           <h1 className={styles.title}>Reset Password</h1>
           <p className={styles.sub}>We&apos;ll send a reset link to your email</p>
         </div>
@@ -128,11 +126,7 @@ function LoginForm() {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.wordmark}>
-          <span className={styles.wordmarkField}>FIELD</span>
-          <span className={styles.wordmarkLogic}>LOGIC</span>
-          <span className={styles.wordmarkHq}>HQ</span>
-        </div>
+        <BrandLockup href={null} tone="mono" size={17} className={styles.wordmark} />
         <h1 className={styles.title}>Staff Access</h1>
         <p className={styles.sub}>Internal platform — authorized personnel only</p>
       </div>
@@ -189,6 +183,8 @@ function LoginForm() {
 export default function PlatformLoginPage() {
   return (
     <div className={styles.page}>
+      {/* A dark page in every setting; the root default bar is the paper (S4 Part B). */}
+      <CoachThemeColor fixed="dark" />
       <Suspense fallback={<div className={styles.card} />}>
         <LoginForm />
       </Suspense>

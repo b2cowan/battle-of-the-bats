@@ -12,6 +12,7 @@ import { NO_FLASH_SCRIPT } from '@/lib/no-flash-script';
 import NoFlashRestore from '@/components/NoFlashRestore';
 import ThemeSessionWatch from '@/components/ThemeSessionWatch';
 import { SITE_DESCRIPTION } from '@/lib/marketing-metadata';
+import { DEFAULT_THEME_COLOR } from '@/lib/user-theme';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -65,12 +66,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${barlow.variable} ${ibmPlexMono.variable}`} data-scroll-behavior="smooth">
       <head>
-        {/* PWA theme colour — also controls browser address bar tint on Android */}
-        <meta name="theme-color" content="#0a0a0f" />
-        {/* Favicons — SVG primary (modern browsers), ICO fallback (legacy) */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        {/* Apple touch icon for "Add to Home Screen" */}
-        <link rel="apple-touch-icon" href="/icons/pwa-192.png" />
+        {/* PWA theme colour — also controls browser address bar tint on Android. The paper (lib/user-theme.ts). */}
+        <meta name="theme-color" content={DEFAULT_THEME_COLOR} />
+        {/* The tab icon (S4 Part B): the 16 px cut at 16, the main cut at 32, under NEW names so every cache fetches
+            them; app/favicon.ico carries 16/32/48 for anything that asks for the .ico. No SVG favicon: a browser
+            would draw it at 16 from the main cut, which is mush there. */}
+        <link rel="icon" type="image/png" sizes="16x16" href="/icons/fl-tab-16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/fl-tab-32.png" />
+        {/* "Add to Home Screen" on an iPhone: a full square (iOS paints transparent corners black). */}
+        <link rel="apple-touch-icon" href="/icons/fl-apple-180.png" />
         {/* No-flash attributes (density + user theme) — set on <html> before first paint.
             Lives in the ROOT layout only (never re-created on client nav) so React only ever
             hydrates it; a nested layout would make React re-create it client-side, which it

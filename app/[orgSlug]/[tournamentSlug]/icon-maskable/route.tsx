@@ -84,7 +84,7 @@ export async function GET(
   // Fallback: re-serve the platform maskable icon full-bleed (it is already
   // designed with its own safe-zone padding, so no extra inset). Last resort if
   // even that can't be fetched: a plain dark square (a valid maskable surface).
-  const platform = origin ? await fetchAsDataUrl(`${origin}/icons/pwa-512-maskable.png`) : null;
+  const platform = origin ? await fetchAsDataUrl(`${origin}/icons/fl-512-maskable.png`) : null;
   return new ImageResponse(
     (
       <div

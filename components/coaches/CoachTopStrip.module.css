@@ -40,11 +40,6 @@
   z-index: 200;
 }
 
-/* Zone 1 — wordmark colors only; the lockup's geometry/markup is the shared BrandLockup.
-   --white re-anchors to ink under the warm marker; --logic-lime remaps to olive. */
-.logoField { color: var(--text-primary); }
-.logoLogic { color: var(--logic-lime); }
-.logoHq { color: var(--text-tertiary); }
 
 /* "COACHES PORTAL" beside the wordmark (2026-08-17 shell slimdown): the sidebar header's
    own micro-label voice, moved up — same size/tracking/dim as .sidebarPortalLabel had, so

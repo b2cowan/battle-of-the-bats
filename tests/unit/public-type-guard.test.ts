@@ -10,7 +10,7 @@ import { countsOfSource as count, compareToBaseline, markerRole, KINDS, ROLES } 
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * THE PUBLIC FACE'S TYPE CHECK (The public face, warm: S1, 2026-10-23) — `scripts/check-public-type.mjs`
  *
- * The check holds P1 (docs/agents/brand/VISUAL_IDENTITY.md): the typewriter face is for the wordmark, a plan
+ * The check holds P1 (docs/agents/brand/VISUAL_IDENTITY.md): the typewriter face is for a plan
  * chip and real data, never a sentence, a label, a button, a heading or a link. Its counter lives in
  * `scripts/lib/public-type.mjs` so it can be fed a string here. What must stay true:
  *
@@ -114,9 +114,16 @@ describe('public type check — the lettering a class name carries (S4)', () => 
 });
 
 describe('public type check — the allowed roles', () => {
-  it('exempts the wordmark\'s face and capitals, but never its weight', () => {
-    const { c } = count('x.module.css', `.w {\n  font-family: var(--font-data); /* type-ok: wordmark */\n  font-weight: 900;\n  text-transform: uppercase; /* type-ok: wordmark */\n}\n`);
+  it('exempts a plan chip\'s face and capitals, but never its weight', () => {
+    const { c } = count('x.module.css', `.w {\n  font-family: var(--font-data); /* type-ok: plan chip */\n  font-weight: 900;\n  text-transform: uppercase; /* type-ok: plan chip */\n}\n`);
     assert.deepEqual(c, { heavy: 1 });
+  });
+
+  it('no longer knows a wordmark role (retired in S4 Part B: the name is the Inter lockup)', () => {
+    assert.ok(!('wordmark' in ROLES));
+    const { c, badRoles } = count('x.module.css', `.w { font-family: var(--font-data); } /* type-ok: wordmark */\n`);
+    assert.deepEqual(c, { face: 1 });
+    assert.deepEqual(badRoles, [1]);
   });
 
   it('takes a marker from the line above', () => {
@@ -125,7 +132,7 @@ describe('public type check — the allowed roles', () => {
   });
 
   it('takes a marker above an email template string, where a comment cannot sit inside the string', () => {
-    const src = "// type-ok: wordmark\nconst WORDMARK = `<p style=\"font-family:'Courier New',monospace;\">FIELD</p>`;\n";
+    const src = "// type-ok: data\nconst CODE = `<p style=\"font-family:'Courier New',monospace;\">A1B2</p>`;\n";
     assert.deepEqual(count('lib/email-envelope-warm.ts', src).c, {});
   });
 
@@ -165,7 +172,7 @@ describe('public type check — the allowed roles', () => {
 
   it('reads a role out of a comment however it is closed', () => {
     assert.equal(markerRole('x /* type-ok: plan chip */'), 'plan chip');
-    assert.equal(markerRole('x <!-- type-ok: wordmark -->'), 'wordmark');
+    assert.equal(markerRole('x <!-- type-ok: eyebrow -->'), 'eyebrow');
     assert.equal(markerRole('x // type-ok: data — a count'), 'data');
     assert.equal(markerRole('no marker'), null);
     assert.equal(markerRole('type-ok: datastore'), '');
@@ -250,7 +257,7 @@ describe('public type check — the command, end to end', () => {
   });
 
   it('passes when the same line carries its role', () => {
-    const dir = scratch(`// type-ok: wordmark\n${COURIER}`, {});
+    const dir = scratch(`// type-ok: data\n${COURIER}`, {});
     assert.equal(run(dir).status, 0);
   });
 

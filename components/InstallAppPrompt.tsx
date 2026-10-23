@@ -289,7 +289,7 @@ export default function InstallAppPrompt({
       role="complementary"
       aria-label="Install app prompt"
     >
-      <img src={iconUrl || '/icons/pwa-192.png'} alt={appName} className={styles.icon} />
+      <img src={iconUrl || '/icons/fl-192.png'} alt={appName} className={styles.icon} />
 
       <div className={styles.body}>
         <p className={styles.title}>Install {appName}</p>

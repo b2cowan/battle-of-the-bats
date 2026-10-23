@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { SITE_DESCRIPTION } from '@/lib/marketing-metadata';
+import { THEME_COLORS } from '@/lib/user-theme';
 
 /**
  * app/manifest.json/route.ts — dynamic PWA web-app manifest.
@@ -35,14 +36,16 @@ export function GET(req: NextRequest) {
       start_url: '/?source=pwa',
       scope: '/',
       display: 'standalone',
-      background_color: '#0a0a0f',
-      // Dev gets a distinct address-bar / splash tint so it's obvious which app
-      // you're in; prod keeps the near-black brand tint.
-      theme_color: isDev ? '#3a0f2f' : '#0a0a0f',
+      // The launch screen and the bar are the paper (S4 Part B: off the old near-black). Dev gets a distinct
+      // address-bar / splash tint so it's obvious which app you're in.
+      background_color: THEME_COLORS.warm,
+      theme_color: isDev ? '#3a0f2f' : THEME_COLORS.warm,
+      // The new mark (lib/brand-mark.ts, drawn by scripts/generate-brand-icons.mjs). "any" and maskable are separate
+      // files: the maskable one keeps the glyph inside the safe circle.
       icons: [
-        { src: '/icons/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-        { src: '/icons/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-        { src: '/icons/pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        { src: '/icons/fl-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: '/icons/fl-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: '/icons/fl-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
       ],
     },
     { headers: { 'Content-Type': 'application/manifest+json' } },

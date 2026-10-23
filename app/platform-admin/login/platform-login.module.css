@@ -28,17 +28,8 @@
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.12);
 }
 
-.wordmark {
-  font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  margin-bottom: 1rem;
-}
-
-.wordmarkField  { color: var(--fl-text); }
-.wordmarkLogic  { color: var(--logic-lime); }
-.wordmarkHq     { color: var(--fl-text); }
+/* The one name (BrandLockup, on its dark tone) draws itself; this only spaces it. */
+.wordmark { margin-bottom: 1rem; }
 
 .title {
   font-family: var(--font-data);

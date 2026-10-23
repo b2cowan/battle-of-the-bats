@@ -82,16 +82,8 @@
 }
 
 /* The INERT wordmark — text, never a door (top-nav audit §3: a gloved volunteer mid-game is never one
-   mis-tap from the consumer app). Its three parts in the strip's warm inks. */
-.wordmark {
-  font-family: var(--font-data);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  white-space: nowrap;
-  color: var(--text-primary);
-}
-.markLogic { color: var(--home-olive); }
-.markHq { color: var(--text-tertiary); }
+   mis-tap from the consumer app). The one name (BrandLockup, warm) draws itself; the strip keeps it whole. */
+.wordmark { flex: none; }
 
 /* The club's name under the wordmark — a proper name, so it is set as typed: the body face, no capitals, no
    tracking (owner A12). Only the FIELDLOGICHQ wordmark above it is the brand mark. */

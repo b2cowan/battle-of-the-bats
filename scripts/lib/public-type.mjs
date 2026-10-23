@@ -17,11 +17,14 @@ export const KINDS = ['face', 'caps', 'heavy'];
  * The allowed roles on the public side, each with the signals it may carry and the rule it comes from
  * (docs/agents/brand/VISUAL_IDENTITY.md, P1–P10). A `type-ok: <role>` marker exempts a line only for the
  * signals its role allows; any other signal on that line is still counted. `heavy` is allowed by no role:
- * the headline and the wordmark are 700 (P2, P9).
+ * the headline is 700 (P2).
+ *
+ * ⚖ The `wordmark` role is RETIRED (S4 Part B, 2026-10-23): the name is the Inter lockup now (BrandLockup, P9), so
+ * nothing on the public face may set the typewriter face for it. A `type-ok: wordmark` marker is an error like any
+ * other unknown role.
  */
 export const ROLES = {
-  wordmark: ['face', 'caps'],        // P9 — FIELD · LOGIC · HQ in the typewriter face
-  'plan chip': ['face', 'caps'],     // P1 — the one typewriter label besides the wordmark
+  'plan chip': ['face', 'caps'],     // P1 — the one typewriter label on the public face
   eyebrow: ['caps'],                 // P3 — Inter 600, 12px, spaced, olive: capitals, never the typewriter face
   data: ['face'],                    // P1 — a figure or code a person reads as data (a price code)
 };

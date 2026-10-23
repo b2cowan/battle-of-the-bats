@@ -45,9 +45,9 @@
     "tailwind.config.ts",
     "playwright.config.ts",
     "eslint.config.mjs",
-    // ⚠ `.js` belongs here as well as `.mjs`: `scripts/outline-svg-text.js` is a CommonJS program,
-    // and leaving it unscanned reported its `opentype.js` dependency as unused — a false positive
-    // that would have argued for uninstalling a package the brand-asset workflow depends on.
+    // `.js` belongs here as well as `.mjs`: CommonJS scripts live here too, and leaving them unscanned reports their
+    // dependencies as unused. (`opentype.js` WAS only `scripts/outline-svg-text.js`'s, retired with the old marks in
+    // The public face, warm S4 Part B, 2026-10-23 — if knip now reports it unused, that is true: it can be uninstalled.)
     "scripts/**/*.{mjs,js,ts}",
     "tests/**/*.{ts,tsx}",
     "public/sw.js"

@@ -85,13 +85,8 @@
   min-width: 0;
 }
 
+/* The one name (BrandLockup) draws itself; the bar keeps it whole and makes it a fingertip on a phone. */
 .wordmark {
-  font-family: var(--font-data, monospace); /* type-ok: wordmark */
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-  white-space: nowrap;
   flex-shrink: 0;
 }
 /* The mark is the way home, so under a finger it is a fingertip (release sweep 2026-10-20: 27px tall on all ten sign-in
@@ -99,9 +94,6 @@
 @media (max-width: 900px), (pointer: coarse) {
   a.wordmark { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
 }
-.wm1 { color: var(--fl-text); }
-.wm2 { color: var(--primary-light); }
-.wm3 { color: var(--white-45); }
 
 .topNav {
   display: flex;
@@ -470,9 +462,6 @@
   background: var(--home-nav-bg);
   border-bottom-color: var(--home-line);
 }
-.topbarWarm .wm1 { color: var(--home-ink); }
-.topbarWarm .wm2 { color: var(--home-olive); }
-.topbarWarm .wm3 { color: var(--home-dim); }
 .topbarWarm .topLink { color: var(--home-dim); }
 .topbarWarm .topLink:hover { color: var(--home-ink); }
 .topbarWarm .topLink.active { color: var(--home-olive); }

@@ -59,11 +59,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
 
   return (
     <header className={styles.strip}>
-      <BrandLockup
-        fieldClassName={styles.logoField}
-        logicClassName={styles.logoLogic}
-        hqClassName={styles.logoHq}
-      />
+      <BrandLockup tone="follow" size={15} />
       {/* ⚖ The strip names its portal (the nav standard's N6, Ask A6, 2026-10-17), as the coach strip says "Coaches
           Portal": someone with both hats flips between two shells that look alike. The word is this workspace's name
           in the Workspaces list beside it — read from there, never retyped. */}

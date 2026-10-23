@@ -13,6 +13,7 @@ import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
+import BrandLockup from '@/components/shared/BrandLockup';
 import { DEMOS_PATH } from '@/lib/sandbox-door';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
@@ -160,14 +161,9 @@ export default function Navbar() {
           data-warm-base="marketing"
         >
           <div className={`container ${styles.marketingInner}`}>
-            {/* §68: the wordmark's size steps down on a phone — see .marketingWordmark. Part A keeps
-                today's three-ink mark (FIELD ink · LOGIC olive · HQ dim, P9); Part B replaces it with
-                the lockup. */}
-            <Link href="/" className={styles.marketingWordmark}>
-              <span className={styles.wmField}>FIELD</span>
-              <span className={styles.wmLogic}>LOGIC</span>
-              <span className={styles.wmHq}>HQ</span>
-            </Link>
+            {/* The one name (P9): the marketing bar is warm always. Its size steps down on a phone —
+                see .marketingWordmark, which the lockup reads because no `size` is passed. */}
+            <BrandLockup href="/" tone="warm" className={styles.marketingWordmark} />
 
             <div className={styles.marketingLinks}>
               {MARKETING_NAV_LINKS.map(({ href, label }) => (

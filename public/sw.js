@@ -38,14 +38,16 @@
 //     per-tournament/scorekeeper manifests.
 // v10: Chunk D — /family added to NEVER_CACHE_PREFIXES; the bump forces a clean SW refresh
 //      so no already-installed worker keeps caching the new authed route.
-const CACHE_VERSION = 'v10';
+// v11: The public face, warm S4 Part B — the new mark under new icon names (fl-*); the bump drops the
+//      old icons and the old offline page from every installed worker's cache.
+const CACHE_VERSION = 'v11';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
 const CURRENT_CACHES = [SHELL_CACHE, PAGES_CACHE, DATA_CACHE];
 
 const OFFLINE_URL = '/offline.html';
-const PRECACHE_URLS = [OFFLINE_URL, '/icons/pwa-192.png', '/icons/badge-72.png'];
+const PRECACHE_URLS = [OFFLINE_URL, '/icons/fl-192.png', '/icons/fl-badge-96.png'];
 
 /* ── Path classification ───────────────────────────────────────────────────── */
 
@@ -107,7 +109,7 @@ function isPublicApi(pathname) {
 function isStaticAsset(pathname) {
   return pathname.indexOf('/_next/static/') === 0 ||
     pathname.indexOf('/icons/') === 0 ||
-    pathname === '/favicon.svg' || pathname === '/favicon.ico';
+    pathname === '/favicon.ico';
 }
 
 // A public tournament page worth keeping for offline "last scores": /{org}/{tournament}[/...].
@@ -282,9 +284,10 @@ self.addEventListener('push', function (event) {
   const options = {
     body:  payload.body  || '',
     // Branded icon from the push payload (e.g. tournament/org logo) when present,
-    // else the platform icon (J6-051).
-    icon:  payload.icon  || '/icons/pwa-192.png',
-    badge: '/icons/badge-72.png',
+    // else the platform's app tile (J6-051). The badge is the mark's white 16 px-cut
+    // silhouette: the phone paints the status-bar icon by alpha alone.
+    icon:  payload.icon  || '/icons/fl-192.png',
+    badge: '/icons/fl-badge-96.png',
     data:  { url: payload.link || '/' },
     // Show notification even if the app tab is focused
     requireInteraction: false,

@@ -38,6 +38,28 @@ export const BRAND_OLIVE = '#57651E';
 export const BRAND_PAPER = '#F8F4ED';
 export const BRAND_INK = '#241E15';
 
+/** The name, in its two parts: "FieldLogic" (700, ink) and "HQ" (olive). Every drawing of the name reads these. */
+export const BRAND_NAME = 'FieldLogic';
+export const BRAND_NAME_HQ = 'HQ';
+
+/**
+ * The name line in an EMAIL (VISUAL_IDENTITY.md §3, §4): text in Arial, "FieldLogic" 700 ink and "HQ" 400 olive, no
+ * image and no mark — every mail app shows the same thing with images on or off. Colours are passed in from the
+ * email palette (`WARM_EMAIL`), which owns email colour.
+ */
+export function emailNameLineHtml({ ink, olive, font }: { ink: string; olive: string; font: string }): string {
+  return `<span style="font-family:${font};font-size:18px;line-height:1;font-weight:700;color:${ink};letter-spacing:-0.01em;">${BRAND_NAME}<span style="font-weight:400;color:${olive};">${BRAND_NAME_HQ}</span></span>`;
+}
+
+/**
+ * The lockup as plain HTML, for the one page that cannot import a component: the service worker's offline page
+ * (`public/offline.html`, zero network, no React). Its colours come from the page's own CSS classes `.lk-mark` (the
+ * mark's fill) and `.lk-hq`. `tests/unit/public-face-s4-identity.test.ts` holds the page's copy equal to this.
+ */
+export function lockupStaticHtml(): string {
+  return `<span class="lk" role="img" aria-label="FieldLogicHQ"><svg class="lk-mark" viewBox="${MARK_BARE_VIEWBOX}" aria-hidden="true"><path d="${MARK_PATH_MAIN}"/></svg><span class="lk-name">${BRAND_NAME}<span class="lk-hq">${BRAND_NAME_HQ}</span></span></span>`;
+}
+
 /** The mark on its olive tile, as SVG markup on the 64 grid. `rx` 12 is the rounded tab tile; 0 is a full square. */
 export function markTileSvg({ size, rx = 12, small = false }: { size: number; rx?: number; small?: boolean }): string {
   const glyph = small

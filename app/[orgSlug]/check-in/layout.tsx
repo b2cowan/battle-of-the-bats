@@ -16,6 +16,7 @@ import DayOfTabBar from '@/components/volunteer/DayOfBottomBars';
 import { getUserDisplayName } from '@/lib/user-display';
 import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
 import shell from '@/components/volunteer/DayOfShell.module.css';
+import BrandLockup from '@/components/shared/BrandLockup';
 
 export async function generateMetadata({
   params,
@@ -107,11 +108,8 @@ export default async function CheckInVolunteerLayout({
         {/* `identity` clips — see the scorekeeper twin: the wordmark is `nowrap` and the actions
             beside it cannot shrink, so a narrow row made the mark paint across them. */}
         <div className={shell.identity}>
-          <div className={shell.wordmark}>
-            <span>FIELD</span>
-            <span className={shell.markLogic}>LOGIC</span>
-            <span className={shell.markHq}>HQ</span>
-          </div>
+          {/* The one name, inert (top-nav audit §3: a gloved volunteer is never one mis-tap from the consumer app). */}
+          <BrandLockup href={null} tone="warm" size={16} className={shell.wordmark} />
           <div className={shell.orgName}>{authCtx.org.name}</div>
         </div>
         {/* On a phone both of these live in the tab bar instead — marked `deskOnly`, not deleted.

@@ -23,11 +23,11 @@ import {
   THEME_CHANGE_EVENT,
   THEME_COLORS,
   type UserTheme,
+  DEFAULT_THEME_COLOR,
 } from '@/lib/user-theme';
 import { isWarmSkinPath } from '@/lib/consumer-routes';
 
-// The root-layout default (dark); restored whenever no consumer-route rule applies.
-const DEFAULT_THEME_COLOR = '#0a0a0f';
+// The root-layout default (lib/user-theme.ts DEFAULT_THEME_COLOR) is restored whenever no consumer-route rule applies.
 
 export default function ConsumerThemeManager({ accountTheme }: { accountTheme: UserTheme | null }) {
   const pathname = usePathname();

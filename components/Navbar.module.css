@@ -90,14 +90,6 @@
   line-height: 1;
 }
 
-.logoMain {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: var(--white);
-  letter-spacing: 0.08em;
-}
-
 .orgName {
   font-family: var(--font-display);
   font-size: 1.4rem;
@@ -356,22 +348,12 @@
   gap: 1.5rem; /* = the global .gap-3 this replaced; see the warning above */
 }
 
-/* The size lives here because it is the only piece of the wordmark that changes on a phone. Today's three-ink mark
-   (P9) until Part B's lockup replaces it. */
+/* The one name (BrandLockup) draws itself; the bar sets only its size, because the size is the one thing that changes on
+   a phone. 17px keeps HQ at the lockup's small-size weight (VISUAL_IDENTITY.md §4). */
 .marketingWordmark {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-data, monospace); /* type-ok: wordmark */
-  font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: -0.05em;
-  text-decoration: none;
-  white-space: nowrap;
+  font-size: 1.0625rem;
   flex-shrink: 0;
 }
-.wmField { color: var(--home-ink); }
-.wmLogic { color: var(--home-olive); }
-.wmHq { color: var(--home-dim); }
 
 /* The door into the product: the kit's button at the bar's size, as the white secondary (see Navbar.tsx, Ask 14). */
 .marketingCta {
@@ -425,7 +407,7 @@
      ⚠ The tap floor comes WITH it. The mark is a link home, it was a 24px target long before this
      pass, and shrinking the type would have made an already-failing target smaller — review caught
      that. The 64px bar has the room, so this pays the debt off rather than adding to it. */
-  .marketingWordmark { font-size: 1.05rem; min-height: var(--tap-min, 44px); }
+  .marketingWordmark { font-size: 1rem; min-height: var(--tap-min, 44px); }
 }
 
 /* ⚠ 375px, NOT the portal's 361. This bar is on the PUBLIC site, which is read on every phone
@@ -434,7 +416,7 @@
    iPhone SE 2/3 and 6/7/8 class; below it the three-piece row stops fitting with words on both
    pills, and the lime one is the piece that must not give way (see Navbar.tsx). */
 @media (max-width: 375px) {
-  .marketingWordmark { font-size: 0.95rem; }
+  .marketingWordmark { font-size: 0.9375rem; }
   .marketingCtaLabel { display: none; }
   .marketingCtaIcon  { display: block; }
   /* A square door at the tap floor. `justify-content` earns its place ONLY here: everywhere else

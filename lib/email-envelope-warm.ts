@@ -16,6 +16,7 @@
  * Framework-free: the send path and the template editor's live preview (a client component) both import it.
  */
 import type { LookStyles } from './email-markup';
+import { emailNameLineHtml } from './brand-mark';
 
 /** The envelope's colours. Fixed values, not tokens: an email never sees the product's theme. */
 export const WARM_EMAIL = {
@@ -157,10 +158,12 @@ export function warmEmailButton(label: string, href: string): string {
     + `</td></tr></table>`;
 }
 
-/** The wordmark (D-F11): FIELD in ink, LOGIC in olive, HQ in the dark grey. */
-// type-ok: wordmark
-const WORDMARK = `<p style="margin:0 0 22px;font-family:'Courier New',Courier,monospace;font-size:15px;line-height:1.2;font-weight:700;letter-spacing:0.02em;color:${W.ink};">`
-  + `FIELD<span style="color:${W.olive};">LOGIC</span><span style="color:${W.hq};">HQ</span></p>`;
+/**
+ * The name line (S4 Part B, VISUAL_IDENTITY.md §3–4): text in Arial, "FieldLogic" 700 ink and "HQ" 400 olive, no image
+ * and no mark, so every mail app shows the same thing with images on or off. Drawn by lib/brand-mark.ts, the one home of
+ * the name's pieces; the colours are this palette's.
+ */
+const WORDMARK = `<p style="margin:0 0 22px;line-height:1;">${emailNameLineHtml({ ink: W.ink, olive: W.olive, font: W.font })}</p>`;
 
 /**
  * The envelope without a document around it: the white card with the wordmark and `inner`. There is no beige frame

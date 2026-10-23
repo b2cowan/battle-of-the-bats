@@ -25,8 +25,10 @@ describe('the warm envelope (D-F11, U8)', () => {
     assert.doesNotMatch(doc, /fl-ground|#f6f1ea/, 'the beige frame is gone');
     assert.doesNotMatch(doc, /text-align:center;">FieldLogicHQ<\/p>/, 'and so is the footer word');
     assert.doesNotMatch(doc, /<div/, 'no div carries the layout');
-    assert.match(doc, /font-family:'Courier New',Courier,monospace;font-size:15px;[^"]*font-weight:700;[^"]*">FIELD<span style="color:#55641c;">LOGIC<\/span><span style="color:#4b463f;">HQ<\/span><\/p>/);
-    assert.ok(doc.indexOf('<p>inner</p>') > doc.indexOf('LOGIC'), 'the content sits in the card, under the wordmark');
+    // The name line (S4 Part B): Arial text, "FieldLogic" 700 ink and "HQ" 400 olive, no image, no Courier.
+    assert.match(doc, /font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1;font-weight:700;color:#211c15;[^"]*">FieldLogic<span style="font-weight:400;color:#55641c;">HQ<\/span><\/span><\/p>/);
+    assert.doesNotMatch(doc, /Courier/, 'the typewriter name line is gone');
+    assert.ok(doc.indexOf('<p>inner</p>') > doc.indexOf('FieldLogic'), 'the content sits in the card, under the name');
   });
   it('asks mail apps for light only and tightens the padding on a phone', () => {
     assert.match(doc, /<meta name="color-scheme" content="light only">/);

@@ -24,9 +24,17 @@ export const THEME_CHANGE_EVENT = 'fl:user-theme-change';
 
 /** OS status-bar / address-bar tint per theme, for the dynamic `theme-color` meta on consumer routes. */
 export const THEME_COLORS: Record<UserTheme, string> = {
-  dark: '#0a0a0f', // platform near-black (matches the root default + dark shell)
+  dark: '#0a0a0a', // the Dark ground (--bg / --pitch-black at :root)
   warm: '#f8f4ed', // warm paper ground (--home-paper)
 };
+
+/**
+ * The bar colour a page gets before (or without) a theme manager: the root layout's static `theme-color`, and what
+ * CoachThemeColor / ConsumerThemeManager put back when the visitor leaves their routes. Warm, because warm is the
+ * platform's default and every signed-out page is warm (The public face, warm: S4 Part B — it was the old near-black).
+ * A public tournament page in the organizer's dark mode keeps this paper bar, as a light one kept the near-black before.
+ */
+export const DEFAULT_THEME_COLOR = THEME_COLORS.warm;
 
 export function isUserTheme(value: unknown): value is UserTheme {
   return value === 'dark' || value === 'warm';

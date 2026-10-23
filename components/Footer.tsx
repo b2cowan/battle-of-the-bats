@@ -6,6 +6,7 @@ import { isConsumerShellPath, isWarmJourneyPath } from '@/lib/consumer-routes';
 import { DEMOS_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import GetAppQr from './shared/GetAppQr';
 import styles from './Footer.module.css';
+import BrandLockup from '@/components/shared/BrandLockup';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
 // (Consumer-shell routes like /discover are handled earlier via isConsumerShellPath.)
@@ -118,11 +119,9 @@ export default function Footer() {
       <div className={styles.inner}>
         <div className={styles.grid}>
           <div className={styles.brandCol}>
-            <div className={styles.wordmark}>
-              <span className={styles.wordmarkA}>FIELD</span>
-              <span className={styles.wordmarkB}>LOGIC</span>
-              <span className={styles.wordmarkC}>HQ</span>
-            </div>
+            {/* The one name (P9), as text: the footer's links are below it. Warm always on marketing; the consumer
+                app's footer follows the account's setting. */}
+            <BrandLockup href={null} tone={surface === 'warm' ? 'follow' : 'warm'} size={17} className={styles.wordmark} />
             <p className={styles.blurb}>
               From first registration to final standings — built for the people running community sport.
             </p>

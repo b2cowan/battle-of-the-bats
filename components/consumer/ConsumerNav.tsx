@@ -38,6 +38,7 @@ import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
+import BrandLockup from '@/components/shared/BrandLockup';
 
 const ALL_TABS = [
   { href: '/discover', label: 'Home', icon: Home },
@@ -289,27 +290,15 @@ export default function ConsumerNav({
       </Link>
     );
   });
-  // The one wordmark block — shared by the consumer top bar and the tournament strip.
-  const wordmarkText = (
-    <>
-      <span className={styles.wm1}>FIELD</span>
-      <span className={styles.wm2}>LOGIC</span>
-      <span className={styles.wm3}>HQ</span>
-    </>
-  );
-  // In the demo the mark stays — whose product this is, is the whole point — but it stops being a
-  // door out. Rendered as plain text rather than a disabled link: a control that looks pressable
-  // and isn't is worse than one that never invited the press.
-  const wordmark = inSandbox ? (
-    <span className={styles.wordmark}>{wordmarkText}</span>
-  ) : (
-    <Link href="/discover" className={styles.wordmark} aria-label="FieldLogicHQ home">
-      {wordmarkText}
-    </Link>
-  );
   // The nav skin decision, shared by the pill popover and the bar classes below (pure,
   // variant+path only — safe to compute before the tournament early return never uses it).
   const warmRoute = isWarmSkinPath(pathname) || variant === 'coach';
+  // The one name (BrandLockup, P9) — shared by the consumer top bar and the tournament strip. On the app's warm
+  // routes it follows the account's Warm / Dark; on a public tournament page's strip it is the one-colour lockup in
+  // the strip's own ink, because that page's light or dark is the organizer's. Inside a demo it goes inert by itself.
+  const wordmark = (
+    <BrandLockup href={inSandbox ? null : '/discover'} tone={warmRoute ? 'follow' : 'mono'} size={17} className={styles.wordmark} />
+  );
 
   // ONE persistent operator door (WI-3 precedence + Stage D.2 pill-vs-popover), via the
   // shared resolver: 2+ places → the "Workspaces ▾" popover (every place, one tap each,

@@ -1769,7 +1769,7 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
      *
      * ⚠ IT CARRIES OUR MARK NOW (owner, 2026-09-05). It shipped as text that morning under a note
      * saying a spreadsheet can only embed a raster and our brand asset was an SVG — which was half
-     * true and stopped one step early: `public/favicon.svg` is a vector, but the PWA icons beside
+     * true and stopped one step early: the old tab icon was a vector, but the PWA icons beside
      * it have been real PNGs since July. Nothing had to be stored; it had to be found. The mark
      * fails soft, so a footer that cannot load it is still the sentence it always was.
      */

@@ -1,29 +1,70 @@
 /**
- * BrandLockup — geometry + typography only (identical in every shell, by ruling).
- * Wordmark colors come from the host via the three span classNames.
+ * BrandLockup — the one name (S4 Part B; VISUAL_IDENTITY.md §4). Geometry and the three tones. Sized in em off the
+ * component's `size`, so a host only chooses how big, never how it is drawn.
  */
 
 .lockup {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.45em;
   min-width: 0;
-  color: inherit;
-  text-decoration: none;
-}
-
-.brandLogo {
-  flex-shrink: 0;
-  display: block;
-  width: 22px;
-  height: 22px;
-}
-
-.logoMain {
-  font-family: var(--font-data); /* type-ok: wordmark */
-  font-size: 0.9rem;
-  font-weight: 900;
-  letter-spacing: 0;
+  white-space: nowrap;
   line-height: 1;
-  text-transform: uppercase; /* type-ok: wordmark */
+  text-decoration: none;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  color: var(--lockup-name);
+}
+.lockup:focus-visible { outline: 3px solid var(--lockup-mark); outline-offset: 3px; border-radius: 4px; }
+
+.mark {
+  flex: none;
+  display: block;
+  width: 1.1em;
+  height: 1.1em;
+  fill: var(--lockup-mark);
+}
+
+.name {
+  font-weight: 700;
+  letter-spacing: -0.018em;
+}
+
+.hq,
+.hqSmall {
+  color: var(--lockup-hq);
+  opacity: var(--lockup-hq-opacity, 1);
+  letter-spacing: -0.01em;
+}
+.hq { font-weight: 500; }
+.hqSmall { font-weight: 600; }
+
+/* ── Tones ───────────────────────────────────────────────────────────────────────── */
+
+/* Paper, always: ink name, olive mark and HQ. */
+.warm {
+  --lockup-name: var(--home-ink);
+  --lockup-mark: var(--home-olive);
+  --lockup-hq: var(--home-olive);
+}
+
+/* The one-colour lockup: everything in the surface's own text colour (--fl-text, which every themed surface points at
+   its ink), HQ a little dimmer. A dark page, and a public tournament page whose light or dark the organizer chose. */
+.mono {
+  --lockup-name: var(--fl-text);
+  --lockup-mark: var(--fl-text);
+  --lockup-hq: var(--fl-text);
+  --lockup-hq-opacity: 0.78;
+}
+
+/* The account's choice: warm by default, the Dark text colour under an explicit Dark. The surfaces that use it define
+   --home-ink for both themes, so the name follows them; only the mark and HQ need telling to leave olive. */
+.follow {
+  --lockup-name: var(--home-ink);
+  --lockup-mark: var(--home-olive);
+  --lockup-hq: var(--home-olive);
+}
+:global(html[data-user-theme="dark"]) .follow {
+  --lockup-mark: var(--home-ink);
+  --lockup-hq: var(--home-ink);
+  --lockup-hq-opacity: 0.78;
 }

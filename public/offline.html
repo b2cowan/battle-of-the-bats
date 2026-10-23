@@ -3,14 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="theme-color" content="#f8f4ed" />
   <title>You're offline · FieldLogicHQ</title>
   <!-- Self-contained: the service worker serves this when a navigation fails and no
        last-good page is cached. NO external CSS/JS/font/image so it always renders
        with zero network. The document URL stays the page the user requested, so
-       "Try again" reloads that real page (J6-044). -->
+       "Try again" reloads that real page (J6-044).
+       The name at the foot is the one lockup (S4 Part B), copied from lib/brand-mark.ts
+       lockupStaticHtml(); tests/unit/public-face-s4-identity.test.ts fails if this copy drifts. -->
   <style>
-    :root { color-scheme: dark; }
+    /* Warm is the default (the platform's, and every signed-out page's): the paper ground, the
+       launch colour the app manifest uses too. Dark only for a signed-in device that chose it. */
+    :root { color-scheme: light; }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
     body {
@@ -21,71 +25,65 @@
       gap: 1.25rem;
       padding: 2rem calc(1.5rem + env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom)) calc(1.5rem + env(safe-area-inset-left));
       text-align: center;
-      background: #0a0a0f;
-      color: #f5f5f7;
+      background: #f8f4ed;
+      color: #241e15;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    .mark {
-      font-weight: 800;
-      font-size: 1.05rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: rgba(245, 245, 247, 0.55);
-    }
-    .mark b { color: #d9f99d; }
     .glyph {
       width: 64px; height: 64px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 16px;
-      background: rgba(217, 249, 157, 0.12);
-      border: 1px solid rgba(217, 249, 157, 0.35);
+      background: rgba(87, 101, 30, 0.10);
+      border: 1px solid rgba(87, 101, 30, 0.35);
     }
-    .glyph svg { width: 30px; height: 30px; stroke: #d9f99d; }
+    .glyph svg { width: 30px; height: 30px; stroke: #57651e; }
     h1 { margin: 0; font-size: 1.5rem; font-weight: 800; }
-    p { margin: 0; max-width: 22rem; font-size: 0.95rem; line-height: 1.5; color: rgba(245, 245, 247, 0.62); }
+    p { margin: 0; max-width: 22rem; font-size: 0.95rem; line-height: 1.5; color: #615a54; }
     button {
       margin-top: 0.25rem;
       padding: 0.7rem 1.4rem;
       border: none;
       border-radius: 10px;
       background: #d9f99d;
-      color: #0f1123;
+      color: #241e15;
       font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
     }
     button:active { transform: translateY(1px); }
 
-    /* Warm theme (the platform default since 2026-07-22): the tiny script below mirrors
-       the app's no-flash rule — warm unless the device explicitly stored 'dark'. The
-       lime "Try again" button keeps its dark ink (ink-on-lime reads on both grounds);
-       lime-as-TEXT darkens to the olive family per the E3 rule. */
-    html[data-theme="warm"] { color-scheme: light; }
-    html[data-theme="warm"] body { background: #f8f4ed; color: #241e15; }
-    html[data-theme="warm"] .mark { color: rgba(36, 30, 21, 0.55); }
-    html[data-theme="warm"] .mark b { color: #57651e; }
-    html[data-theme="warm"] .glyph {
-      background: rgba(87, 101, 30, 0.10);
-      border-color: rgba(87, 101, 30, 0.35);
-    }
-    html[data-theme="warm"] .glyph svg { stroke: #57651e; }
-    html[data-theme="warm"] p { color: #6f675c; }
+    /* The lockup: the bare mark + "FieldLogic" 700 + "HQ", olive on paper (VISUAL_IDENTITY.md §4). */
+    .lk { display: inline-flex; align-items: center; gap: 0.45em; font-size: 15px; line-height: 1; white-space: nowrap; color: #241e15; }
+    .lk-mark { width: 1.1em; height: 1.1em; fill: #57651e; }
+    .lk-name { font-weight: 700; letter-spacing: -0.018em; }
+    .lk-hq { font-weight: 600; color: #57651e; }
+
+    /* Dark, for a signed-in device that stored it: the Dark ground and text, no olive (it fails on Dark). The lime
+       "Try again" button keeps its dark ink (ink-on-lime reads on both grounds). */
+    html[data-theme="dark"] { color-scheme: dark; }
+    html[data-theme="dark"] body { background: #0a0a0a; color: #f5f5f7; }
+    html[data-theme="dark"] .glyph { background: rgba(217, 249, 157, 0.12); border-color: rgba(217, 249, 157, 0.35); }
+    html[data-theme="dark"] .glyph svg { stroke: #d9f99d; }
+    html[data-theme="dark"] p { color: rgba(245, 245, 247, 0.62); }
+    html[data-theme="dark"] .lk { color: #f5f5f7; }
+    html[data-theme="dark"] .lk-mark { fill: #f5f5f7; }
+    html[data-theme="dark"] .lk-hq { color: #f5f5f7; opacity: 0.78; }
   </style>
   <script>
     // Same pre-paint rule as lib/no-flash-script.ts: warm for everyone except an explicit
     // stored 'dark' in a SIGNED-IN browser (a Supabase session cookie is present). Signed
     // out, the device's Dark is not consulted. Inline + try/catch so the page still renders
-    // with zero storage access (private mode, cleared storage → dark fallback).
+    // with zero storage access (private mode, cleared storage → warm, the default).
     try {
       var flIn = document.cookie.split(';').some(function (c) {
         var n = c.split('=')[0].trim().replace(/\.\d+$/, '');
         return n.indexOf('sb-') === 0 && n.slice(-11) === '-auth-token';
       });
-      if (localStorage.getItem('fl_user_theme') !== 'dark' || !flIn) {
-        document.documentElement.setAttribute('data-theme', 'warm');
+      if (localStorage.getItem('fl_user_theme') === 'dark' && flIn) {
+        document.documentElement.setAttribute('data-theme', 'dark');
         var flMeta = document.querySelector('meta[name="theme-color"]');
-        if (flMeta) flMeta.setAttribute('content', '#f8f4ed');
+        if (flMeta) flMeta.setAttribute('content', '#0a0a0a');
       }
     } catch (e) {}
   </script>
@@ -105,6 +103,6 @@
   <h1>You're offline</h1>
   <p>Reconnect to pick up where you left off — this page reloads once you're back. Pages you've already opened stay available.</p>
   <button type="button" onclick="location.reload()">Try again</button>
-  <div class="mark">Field<b>Logic</b>HQ</div>
+  <span class="lk" role="img" aria-label="FieldLogicHQ"><svg class="lk-mark" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="lk-name">FieldLogic<span class="lk-hq">HQ</span></span></span>
 </body>
 </html>
