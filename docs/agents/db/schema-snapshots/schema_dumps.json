@@ -7661,6 +7661,258 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_custom_domains",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 3,
+        "column_name": "full_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 4,
+        "column_name": "domain",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 5,
+        "column_name": "prefix",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 6,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'waiting'::text"
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 7,
+        "column_name": "host_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 8,
+        "column_name": "host_branch",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 9,
+        "column_name": "record1_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 10,
+        "column_name": "record1_value",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 11,
+        "column_name": "record2_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 12,
+        "column_name": "record2_value",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 13,
+        "column_name": "record2_host_target",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 14,
+        "column_name": "last_checked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 15,
+        "column_name": "last_check",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 16,
+        "column_name": "waiting_since",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 17,
+        "column_name": "connected_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 18,
+        "column_name": "needs_attention_since",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 19,
+        "column_name": "not_working_since",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 20,
+        "column_name": "padlock_expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 21,
+        "column_name": "live_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 22,
+        "column_name": "padlock_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 23,
+        "column_name": "padlock_reminder_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 24,
+        "column_name": "gave_up_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 25,
+        "column_name": "not_working_email_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 26,
+        "column_name": "created_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 27,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_custom_domains",
+        "pos": 28,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "org_fiscal_year_reopenings",
         "pos": 1,
         "column_name": "id",
@@ -11628,6 +11880,195 @@
         "udt_name": "jsonb",
         "is_nullable": "NO",
         "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 1,
+        "column_name": "expense_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 2,
+        "column_name": "revision",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 3,
+        "column_name": "expense_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 4,
+        "column_name": "supplier",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 5,
+        "column_name": "category",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 6,
+        "column_name": "business_purpose",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 7,
+        "column_name": "original_currency",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 8,
+        "column_name": "original_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 9,
+        "column_name": "cad_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 10,
+        "column_name": "tax_cad_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 11,
+        "column_name": "tax_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 12,
+        "column_name": "business_use_percent",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 13,
+        "column_name": "payment_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 14,
+        "column_name": "conversion_note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 15,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 16,
+        "column_name": "change_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 17,
+        "column_name": "receipt_path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 18,
+        "column_name": "receipt_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 19,
+        "column_name": "void_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 20,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "pos": 21,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
       },
       {
         "table_name": "push_subscriptions",
@@ -24151,6 +24592,13 @@
         "constraint_name": "org_budget_periods_budget_line_id_fkey"
       },
       {
+        "table_name": "org_custom_domains",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_custom_domains_org_fk"
+      },
+      {
         "table_name": "org_fiscal_year_reopenings",
         "column_name": "fiscal_year_id",
         "foreign_table": "org_fiscal_years",
@@ -24611,6 +25059,13 @@
         "foreign_table": "divisions",
         "foreign_column": "id",
         "constraint_name": "pools_age_group_id_fkey"
+      },
+      {
+        "table_name": "proprietor_expense_revisions",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "proprietor_expense_revisions_created_by_fkey"
       },
       {
         "table_name": "push_subscriptions",
@@ -29180,6 +29635,31 @@
         "indexdef": "CREATE UNIQUE INDEX org_budget_periods_pkey ON public.org_budget_periods USING btree (id)"
       },
       {
+        "tablename": "org_custom_domains",
+        "indexname": "org_custom_domains_domain_uidx",
+        "indexdef": "CREATE UNIQUE INDEX org_custom_domains_domain_uidx ON public.org_custom_domains USING btree (domain)"
+      },
+      {
+        "tablename": "org_custom_domains",
+        "indexname": "org_custom_domains_full_name_uidx",
+        "indexdef": "CREATE UNIQUE INDEX org_custom_domains_full_name_uidx ON public.org_custom_domains USING btree (full_name)"
+      },
+      {
+        "tablename": "org_custom_domains",
+        "indexname": "org_custom_domains_org_uidx",
+        "indexdef": "CREATE UNIQUE INDEX org_custom_domains_org_uidx ON public.org_custom_domains USING btree (org_id)"
+      },
+      {
+        "tablename": "org_custom_domains",
+        "indexname": "org_custom_domains_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_custom_domains_pkey ON public.org_custom_domains USING btree (id)"
+      },
+      {
+        "tablename": "org_custom_domains",
+        "indexname": "org_custom_domains_status_idx",
+        "indexdef": "CREATE INDEX org_custom_domains_status_idx ON public.org_custom_domains USING btree (status, last_checked_at)"
+      },
+      {
         "tablename": "org_fiscal_year_reopenings",
         "indexname": "org_fiscal_year_reopenings_by_idx",
         "indexdef": "CREATE INDEX org_fiscal_year_reopenings_by_idx ON public.org_fiscal_year_reopenings USING btree (reopened_by) WHERE (reopened_by IS NOT NULL)"
@@ -29883,6 +30363,16 @@
         "tablename": "pools",
         "indexname": "pools_pkey",
         "indexdef": "CREATE UNIQUE INDEX pools_pkey ON public.pools USING btree (id)"
+      },
+      {
+        "tablename": "proprietor_expense_revisions",
+        "indexname": "proprietor_expense_revisions_date_idx",
+        "indexdef": "CREATE INDEX proprietor_expense_revisions_date_idx ON public.proprietor_expense_revisions USING btree (expense_date DESC, expense_id)"
+      },
+      {
+        "tablename": "proprietor_expense_revisions",
+        "indexname": "proprietor_expense_revisions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX proprietor_expense_revisions_pkey ON public.proprietor_expense_revisions USING btree (expense_id, revision)"
       },
       {
         "tablename": "push_subscriptions",
@@ -33514,6 +34004,30 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "org_custom_domains",
+        "detail": "org_custom_domains_lowercase",
+        "check_clause": "((full_name = lower(full_name)) AND (domain = lower(domain)) AND (prefix = lower(prefix)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_custom_domains",
+        "detail": "org_custom_domains_name_parts",
+        "check_clause": "(full_name = ((prefix || '.'::text) || domain))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_custom_domains",
+        "detail": "org_custom_domains_status_check",
+        "check_clause": "(status = ANY (ARRAY['waiting'::text, 'connected'::text, 'needs_attention'::text, 'not_connected'::text, 'not_working'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_custom_domains",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "org_fiscal_year_reopenings",
         "detail": "org_fiscal_year_reopenings_reason_check",
         "check_clause": "((reason = btrim(reason)) AND ((char_length(reason) >= 1) AND (char_length(reason) <= 500)))"
@@ -34235,6 +34749,120 @@
       {
         "kind": "RLS",
         "table_name": "pools",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_business_purpose_check",
+        "check_clause": "((length(btrim(business_purpose)) >= 1) AND (length(btrim(business_purpose)) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_business_use_percent_check",
+        "check_clause": "((business_use_percent >= 1) AND (business_use_percent <= 100))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_cad_cents_check",
+        "check_clause": "(cad_cents > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_category_check",
+        "check_clause": "((length(btrim(category)) >= 1) AND (length(btrim(category)) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_change_reason_check",
+        "check_clause": "((change_reason IS NULL) OR ((length(btrim(change_reason)) >= 1) AND (length(btrim(change_reason)) <= 500)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_check",
+        "check_clause": "((tax_cad_cents >= 0) AND (tax_cad_cents <= cad_cents))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_check1",
+        "check_clause": "((receipt_path IS NULL) = (receipt_name IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_check2",
+        "check_clause": "((revision = 1) OR (change_reason IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_check3",
+        "check_clause": "((original_currency = 'CAD'::text) OR (conversion_note IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_conversion_note_check",
+        "check_clause": "((conversion_note IS NULL) OR (length(conversion_note) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_notes_check",
+        "check_clause": "((notes IS NULL) OR (length(notes) <= 2000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_original_cents_check",
+        "check_clause": "(original_cents > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_original_currency_check",
+        "check_clause": "(original_currency = ANY (ARRAY['CAD'::text, 'USD'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_payment_source_check",
+        "check_clause": "(payment_source = ANY (ARRAY['business_bank'::text, 'business_card'::text, 'personal'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_revision_check",
+        "check_clause": "(revision > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_supplier_check",
+        "check_clause": "((length(btrim(supplier)) >= 1) AND (length(btrim(supplier)) <= 160))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_tax_status_check",
+        "check_clause": "(tax_status = ANY (ARRAY['pending'::text, 'none'::text, 'reviewed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "proprietor_expense_revisions",
+        "detail": "proprietor_expense_revisions_void_reason_check",
+        "check_clause": "((void_reason IS NULL) OR ((length(btrim(void_reason)) >= 1) AND (length(btrim(void_reason)) <= 500)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "proprietor_expense_revisions",
         "detail": "ENABLED",
         "check_clause": null
       },

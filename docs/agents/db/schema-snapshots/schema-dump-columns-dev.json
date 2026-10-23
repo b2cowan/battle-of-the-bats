@@ -7659,6 +7659,258 @@
     "ordinal_position": 7
   },
   {
+    "table_name": "org_custom_domains",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "full_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "domain",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "prefix",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'waiting'::text",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "host_status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "host_branch",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "record1_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "record1_value",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "record2_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "record2_value",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "record2_host_target",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "last_checked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "last_check",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "waiting_since",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "connected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "needs_attention_since",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "not_working_since",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "padlock_expires_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "live_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "padlock_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "padlock_reminder_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "gave_up_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "not_working_email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "created_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "org_custom_domains",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 28
+  },
+  {
     "table_name": "org_fiscal_year_reopenings",
     "column_name": "id",
     "data_type": "uuid",
@@ -11626,6 +11878,195 @@
     "is_nullable": "NO",
     "column_default": "'{}'::jsonb",
     "ordinal_position": 6
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "expense_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "revision",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "expense_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "supplier",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "category",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "business_purpose",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "original_currency",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "original_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "cad_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "tax_cad_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "tax_status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "business_use_percent",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "payment_source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "conversion_note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "change_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "receipt_path",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "receipt_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "void_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 21
   },
   {
     "table_name": "push_subscriptions",

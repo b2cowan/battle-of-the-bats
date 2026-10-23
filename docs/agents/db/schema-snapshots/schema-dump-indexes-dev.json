@@ -1485,6 +1485,31 @@
     "indexdef": "CREATE UNIQUE INDEX org_budget_periods_pkey ON public.org_budget_periods USING btree (id)"
   },
   {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_domain_uidx",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_domain_uidx ON public.org_custom_domains USING btree (domain)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_full_name_uidx",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_full_name_uidx ON public.org_custom_domains USING btree (full_name)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_org_uidx",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_org_uidx ON public.org_custom_domains USING btree (org_id)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_custom_domains_pkey ON public.org_custom_domains USING btree (id)"
+  },
+  {
+    "tablename": "org_custom_domains",
+    "indexname": "org_custom_domains_status_idx",
+    "indexdef": "CREATE INDEX org_custom_domains_status_idx ON public.org_custom_domains USING btree (status, last_checked_at)"
+  },
+  {
     "tablename": "org_fiscal_year_reopenings",
     "indexname": "org_fiscal_year_reopenings_by_idx",
     "indexdef": "CREATE INDEX org_fiscal_year_reopenings_by_idx ON public.org_fiscal_year_reopenings USING btree (reopened_by) WHERE (reopened_by IS NOT NULL)"
@@ -2188,6 +2213,16 @@
     "tablename": "pools",
     "indexname": "pools_pkey",
     "indexdef": "CREATE UNIQUE INDEX pools_pkey ON public.pools USING btree (id)"
+  },
+  {
+    "tablename": "proprietor_expense_revisions",
+    "indexname": "proprietor_expense_revisions_date_idx",
+    "indexdef": "CREATE INDEX proprietor_expense_revisions_date_idx ON public.proprietor_expense_revisions USING btree (expense_date DESC, expense_id)"
+  },
+  {
+    "tablename": "proprietor_expense_revisions",
+    "indexname": "proprietor_expense_revisions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX proprietor_expense_revisions_pkey ON public.proprietor_expense_revisions USING btree (expense_id, revision)"
   },
   {
     "tablename": "push_subscriptions",

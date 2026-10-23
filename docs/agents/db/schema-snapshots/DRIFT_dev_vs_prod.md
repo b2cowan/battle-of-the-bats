@@ -2,20 +2,22 @@
 
 **Generated:** 2026-10-23 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 166 divergence(s)** across dev/prod.
+**⚠️ 249 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 7 | 0 | — |
-| Columns | 79 | 0 | 0 |
-| Indexes | 19 | 0 | 0 |
-| Constraints | 30 | 0 | — |
-| RLS / CHECK | 31 | 0 | 0 (RLS state) |
+| Tables | 9 | 0 | — |
+| Columns | 128 | 0 | 0 |
+| Indexes | 26 | 0 | 0 |
+| Constraints | 34 | 0 | — |
+| RLS / CHECK | 52 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (7)
+### Only in DEV (9)
 - `family_email_sends`
+- `org_custom_domains`
 - `org_site_notices`
+- `proprietor_expense_revisions`
 - `rep_team_tryout_contacts`
 - `tournament_fee_book_settings`
 - `tournament_fee_receipt_allocations`
@@ -26,7 +28,7 @@
 _none_
 
 ## Columns
-### Only in DEV (79)
+### Only in DEV (128)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -45,6 +47,34 @@ _none_
 - `family_email_sends.team_ids`
 - `league_divisions.born_from_year`
 - `league_divisions.born_to_year`
+- `org_custom_domains.connected_at`
+- `org_custom_domains.created_at`
+- `org_custom_domains.created_by_user_id`
+- `org_custom_domains.domain`
+- `org_custom_domains.full_name`
+- `org_custom_domains.gave_up_email_sent_at`
+- `org_custom_domains.host_branch`
+- `org_custom_domains.host_status`
+- `org_custom_domains.id`
+- `org_custom_domains.last_check`
+- `org_custom_domains.last_checked_at`
+- `org_custom_domains.live_email_sent_at`
+- `org_custom_domains.needs_attention_since`
+- `org_custom_domains.not_working_email_sent_at`
+- `org_custom_domains.not_working_since`
+- `org_custom_domains.org_id`
+- `org_custom_domains.padlock_email_sent_at`
+- `org_custom_domains.padlock_expires_at`
+- `org_custom_domains.padlock_reminder_sent_at`
+- `org_custom_domains.prefix`
+- `org_custom_domains.record1_name`
+- `org_custom_domains.record1_value`
+- `org_custom_domains.record2_host_target`
+- `org_custom_domains.record2_name`
+- `org_custom_domains.record2_value`
+- `org_custom_domains.status`
+- `org_custom_domains.updated_at`
+- `org_custom_domains.waiting_since`
 - `org_public_site_content.contacts`
 - `org_public_site_content.documents`
 - `org_public_site_content.home_section_order`
@@ -63,6 +93,27 @@ _none_
 - `org_site_notices.posted_by_user_id`
 - `organizations.birthday_cutoffs`
 - `organizations.coach_names_policy`
+- `proprietor_expense_revisions.business_purpose`
+- `proprietor_expense_revisions.business_use_percent`
+- `proprietor_expense_revisions.cad_cents`
+- `proprietor_expense_revisions.category`
+- `proprietor_expense_revisions.change_reason`
+- `proprietor_expense_revisions.conversion_note`
+- `proprietor_expense_revisions.created_at`
+- `proprietor_expense_revisions.created_by`
+- `proprietor_expense_revisions.expense_date`
+- `proprietor_expense_revisions.expense_id`
+- `proprietor_expense_revisions.notes`
+- `proprietor_expense_revisions.original_cents`
+- `proprietor_expense_revisions.original_currency`
+- `proprietor_expense_revisions.payment_source`
+- `proprietor_expense_revisions.receipt_name`
+- `proprietor_expense_revisions.receipt_path`
+- `proprietor_expense_revisions.revision`
+- `proprietor_expense_revisions.supplier`
+- `proprietor_expense_revisions.tax_cad_cents`
+- `proprietor_expense_revisions.tax_status`
+- `proprietor_expense_revisions.void_reason`
 - `rep_program_years.born_from_year`
 - `rep_program_years.born_to_year`
 - `rep_program_years.born_years_carried`
@@ -114,13 +165,20 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (19)
+### Only in DEV (26)
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
 - `idx_rep_team_tryout_contacts_org`
 - `idx_rep_team_tryout_contacts_setter`
+- `org_custom_domains_domain_uidx`
+- `org_custom_domains_full_name_uidx`
+- `org_custom_domains_org_uidx`
+- `org_custom_domains_pkey`
+- `org_custom_domains_status_idx`
 - `org_site_notices_org_idx`
 - `org_site_notices_pkey`
+- `proprietor_expense_revisions_date_idx`
+- `proprietor_expense_revisions_pkey`
 - `rep_team_tryout_contacts_pkey`
 - `tournament_fee_allocations_team_idx`
 - `tournament_fee_book_settings_org_id_idx`
@@ -142,12 +200,16 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (30)
+### Only in DEV (34)
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
+- `org_custom_domains.org_custom_domains_org_fk`
+- `org_custom_domains.org_custom_domains_pkey`
 - `org_site_notices.org_site_notices_org_fk`
 - `org_site_notices.org_site_notices_pkey`
+- `proprietor_expense_revisions.proprietor_expense_revisions_created_by_fkey`
+- `proprietor_expense_revisions.proprietor_expense_revisions_pkey`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_org_fk`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_pkey`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_reset_by_fk`
@@ -181,7 +243,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (31)
+### CHECK only in DEV (52)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -193,6 +255,9 @@ _none_
 - `family_email_sends.family_email_sends_status_check`
 - `family_email_sends.family_email_sends_subject_check`
 - `league_divisions.league_divisions_born_years_check`
+- `org_custom_domains.org_custom_domains_lowercase`
+- `org_custom_domains.org_custom_domains_name_parts`
+- `org_custom_domains.org_custom_domains_status_check`
 - `org_public_site_content.org_public_site_content_contacts_cap`
 - `org_public_site_content.org_public_site_content_documents_cap`
 - `org_public_site_content.org_public_site_content_home_section_order_known`
@@ -204,6 +269,24 @@ _none_
 - `org_site_notices.org_site_notices_notice_check`
 - `organizations.organizations_birthday_cutoffs_shape`
 - `organizations.organizations_coach_names_policy_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_business_purpose_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_business_use_percent_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_cad_cents_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_category_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_change_reason_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_check1`
+- `proprietor_expense_revisions.proprietor_expense_revisions_check2`
+- `proprietor_expense_revisions.proprietor_expense_revisions_check3`
+- `proprietor_expense_revisions.proprietor_expense_revisions_conversion_note_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_notes_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_original_cents_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_original_currency_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_payment_source_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_revision_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_supplier_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_tax_status_check`
+- `proprietor_expense_revisions.proprietor_expense_revisions_void_reason_check`
 - `rep_program_years.rep_program_years_born_years_check`
 - `rep_program_years.rep_program_years_tryout_description_length`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_email_check`

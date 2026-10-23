@@ -294,6 +294,10 @@
     "351_the_team_move_carries_the_tryout_address.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 4c-2 Part B: re-creates move_team_into_club with rep_team_tryout_contacts added to the tables the team move carries (the head coach's tryout questions address is the team's; the setter's membership moves with it). Needs 350 first (the table). Apply 350 then 351 BEFORE promoting the 4c-2 Part B code. A function body is invisible to check:migrations. Verify on prod after applying: SELECT position('rep_team_tryout_contacts' in pg_get_functiondef('public.move_team_into_club(uuid,text,uuid,text,integer)'::regprocedure)) > 0 -> true; then refresh both snapshots."
+    },
+    "355_a_club_connects_its_own_web_address.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 4e Part 2: a NEW table, org_custom_domains (a club's own web address: one row per club, unique name and domain). No policy, function or data write; RLS on, anon/authenticated revoked, service_role granted. Applied to DEV 2026-10-23. Apply BEFORE promoting the 4e code (the Public site page and the proxy read it). The 4e release also needs the Amplify domain keys (CLUB_DOMAINS_* env vars), sites.fieldlogichq.ca and the Part 6 pg_cron job, which are prod steps of their own. Verify on prod after applying: SELECT to_regclass('public.org_custom_domains') IS NOT NULL -> true; then refresh both snapshots."
     }
   }
 }

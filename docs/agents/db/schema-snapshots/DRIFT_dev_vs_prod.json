@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-23",
-  "total": 166,
+  "total": 249,
   "counts": {
-    "tables": 7,
-    "columns": 79,
-    "indexes": 19,
-    "constraints": 30,
-    "rls": 31
+    "tables": 9,
+    "columns": 128,
+    "indexes": 26,
+    "constraints": 34,
+    "rls": 52
   },
   "items": [
     {
@@ -54,6 +54,18 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:org_custom_domains.org_custom_domains_lowercase",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_custom_domains.org_custom_domains_name_parts",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_custom_domains.org_custom_domains_status_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:org_public_site_content.org_public_site_content_contacts_cap",
       "sig": ""
     },
@@ -95,6 +107,78 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_coach_names_policy_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_business_purpose_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_business_use_percent_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_cad_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_category_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_change_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check1",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check2",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check3",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_conversion_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_notes_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_original_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_original_currency_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_payment_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_revision_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_supplier_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_tax_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_void_reason_check",
       "sig": ""
     },
     {
@@ -206,6 +290,118 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:org_custom_domains.connected_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.created_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.domain",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.full_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.gave_up_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.host_branch",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.host_status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.last_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.last_checked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.live_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.needs_attention_since",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.not_working_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.not_working_since",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.padlock_email_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.padlock_expires_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.padlock_reminder_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.prefix",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.record1_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.record1_value",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.record2_host_target",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.record2_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.record2_value",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_custom_domains.waiting_since",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:org_public_site_content.contacts",
       "sig": ""
     },
@@ -275,6 +471,90 @@
     },
     {
       "key": "column:only-dev:organizations.coach_names_policy",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.business_purpose",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.business_use_percent",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.cad_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.category",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.change_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.conversion_note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.expense_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.expense_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.notes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.original_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.original_currency",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.payment_source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.receipt_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.receipt_path",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.revision",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.supplier",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.tax_cad_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.tax_status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:proprietor_expense_revisions.void_reason",
       "sig": ""
     },
     {
@@ -462,11 +742,27 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:org_custom_domains.org_custom_domains_org_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_custom_domains.org_custom_domains_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_site_notices.org_site_notices_org_fk",
       "sig": ""
     },
     {
       "key": "constraint:only-dev:org_site_notices.org_site_notices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_pkey",
       "sig": ""
     },
     {
@@ -586,11 +882,39 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:org_custom_domains_domain_uidx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_custom_domains_full_name_uidx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_custom_domains_org_uidx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_custom_domains_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_custom_domains_status_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_site_notices_org_idx",
       "sig": ""
     },
     {
       "key": "index:only-dev:org_site_notices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:proprietor_expense_revisions_date_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:proprietor_expense_revisions_pkey",
       "sig": ""
     },
     {
@@ -650,7 +974,15 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:org_custom_domains",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:org_site_notices",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:proprietor_expense_revisions",
       "sig": ""
     },
     {

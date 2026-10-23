@@ -2790,6 +2790,26 @@
     "update_rule": null
   },
   {
+    "table_name": "org_custom_domains",
+    "constraint_name": "org_custom_domains_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_custom_domains",
+    "constraint_name": "org_custom_domains_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "org_fiscal_year_reopenings",
     "constraint_name": "org_fiscal_year_reopenings_fiscal_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -4134,6 +4154,36 @@
     "constraint_name": "pools_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "constraint_name": "proprietor_expense_revisions_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "constraint_name": "proprietor_expense_revisions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "expense_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "proprietor_expense_revisions",
+    "constraint_name": "proprietor_expense_revisions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "revision",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": null,

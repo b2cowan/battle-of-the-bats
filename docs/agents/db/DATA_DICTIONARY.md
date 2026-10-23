@@ -524,6 +524,73 @@ hides the public site and suspends the org while the comp still has months to ru
 
 ---
 
+## `org_custom_domains`
+<!-- dict:table:org_custom_domains -->
+
+**Purpose:** a **club's own web address** (Club Tier Stage 4e, mig 355) — `www.lakeshorelynx.ca` served by the host (AWS Amplify) in place of `fieldlogichq.ca/lakeshore-lynx`. One live row per club: the name, the two records the club copies to where it bought the address, where the connection stands, what our own lookups last saw, and which owner emails have gone. **Deleted on Stop / Cancel**, never marked ended.
+
+**Gotchas (read first):**
+1. **At most one row per club, and a name or a domain belongs to one club.** Unique indexes on `org_id`, `full_name` and `domain`. The proxy resolves host → club from `full_name` through an in-process cache (Part 4), never a read per request.
+2. **`status` is what the rest of the product reads.** Only `connected` and `needs_attention` hand out the club's own address and forward the old one; `waiting`, `not_connected` and `not_working` hand out `fieldlogichq.ca/{slug}` (lib/club-domain.ts `usesOwnAddress`). `not_working` also **stops** the forward, or every old poster would land on an error.
+3. **A lookup never makes a connection live.** `last_check` is OUR DNS lookup of the two records (found / not seen / points elsewhere); only the host knows the site is live, and the status job (Part 6) is what asks it. `host_status` is the host's own word, kept for diagnosis.
+4. **Service role only** — RLS on, no policies, anon/authenticated revoked. The routes enforce "an admin reads, only the owner writes".
+5. **Record names are relative to `domain`** (what a club types: `_c3e2d2…`, `www`); our lookups add the domain back. `record2_value` is a name of ours (`sites.fieldlogichq.ca`) or, when none is configured, the host's own target; `record2_host_target` always keeps the host's, and a club that typed it works just as well.
+6. **Email bookkeeping clears when a stretch ends** (the `*_email_sent_at` columns), so the next stretch of the same trouble is told again — and none repeats within one.
+
+**Fields:**
+
+<!-- dict:col:org_custom_domains.id -->
+**`id`** (uuid PK).
+
+<!-- dict:col:org_custom_domains.org_id -->
+**`org_id`** (FK → organizations.id ON DELETE CASCADE, NOT NULL, UNIQUE) — the club. One row each.
+
+<!-- dict:col:org_custom_domains.full_name -->
+<!-- dict:col:org_custom_domains.domain -->
+<!-- dict:col:org_custom_domains.prefix -->
+**`full_name`** / **`domain`** / **`prefix`** (text, NOT NULL, lowercase, CHECK `full_name = prefix || '.' || domain`) — `www.lakeshorelynx.ca` = `www` on `lakeshorelynx.ca`. `full_name` and `domain` are each unique across clubs.
+
+<!-- dict:col:org_custom_domains.status -->
+**`status`** (text, NOT NULL, default `'waiting'`, CHECK in `waiting | connected | needs_attention | not_connected | not_working`) — gotcha 2.
+
+<!-- dict:col:org_custom_domains.host_status -->
+<!-- dict:col:org_custom_domains.host_branch -->
+**`host_status`** (text, nullable) / **`host_branch`** (text, nullable) — the host's status word (`PENDING_VERIFICATION`, `AVAILABLE`, …) and the branch the address serves (`master` in production, `dev` on dev). Diagnosis only.
+
+<!-- dict:col:org_custom_domains.record1_name -->
+<!-- dict:col:org_custom_domains.record1_value -->
+**`record1_name`** / **`record1_value`** (text, NOT NULL) — the **padlock check** record: a CNAME the certificate issuer looks for. The padlock renews only while it stays.
+
+<!-- dict:col:org_custom_domains.record2_name -->
+<!-- dict:col:org_custom_domains.record2_value -->
+<!-- dict:col:org_custom_domains.record2_host_target -->
+**`record2_name`** (NOT NULL — the prefix) / **`record2_value`** (NOT NULL — what we hand out) / **`record2_host_target`** (nullable — the host's own target) — the **site** record. Gotcha 5.
+
+<!-- dict:col:org_custom_domains.last_checked_at -->
+<!-- dict:col:org_custom_domains.last_check -->
+**`last_checked_at`** (timestamptz, nullable) / **`last_check`** (jsonb, nullable) — when our lookups last ran and what they saw: `{ record1, record2, bare_forwards }`, each record `{ state: 'found' | 'not_seen' | 'points_elsewhere', sees? }`, `bare_forwards` true/false/null (null until the status job has looked).
+
+<!-- dict:col:org_custom_domains.waiting_since -->
+<!-- dict:col:org_custom_domains.connected_at -->
+<!-- dict:col:org_custom_domains.needs_attention_since -->
+<!-- dict:col:org_custom_domains.not_working_since -->
+<!-- dict:col:org_custom_domains.padlock_expires_at -->
+**`waiting_since`** (timestamptz, NOT NULL, default now()) / **`connected_at`** / **`needs_attention_since`** / **`not_working_since`** / **`padlock_expires_at`** (timestamptz, nullable) — the dates the screen and emails name. Checking gives up two days after `waiting_since`; `padlock_expires_at` is the date record 1 must be back by.
+
+<!-- dict:col:org_custom_domains.live_email_sent_at -->
+<!-- dict:col:org_custom_domains.padlock_email_sent_at -->
+<!-- dict:col:org_custom_domains.padlock_reminder_sent_at -->
+<!-- dict:col:org_custom_domains.gave_up_email_sent_at -->
+<!-- dict:col:org_custom_domains.not_working_email_sent_at -->
+**`live_email_sent_at`** / **`padlock_email_sent_at`** / **`padlock_reminder_sent_at`** / **`gave_up_email_sent_at`** / **`not_working_email_sent_at`** (timestamptz, nullable) — which of the four owner emails have gone for this stretch (gotcha 6).
+
+<!-- dict:col:org_custom_domains.created_by_user_id -->
+<!-- dict:col:org_custom_domains.created_at -->
+<!-- dict:col:org_custom_domains.updated_at -->
+**`created_by_user_id`** (uuid, nullable, no FK) / **`created_at`** / **`updated_at`** (timestamptz, NOT NULL, default now()) — who connected it and when; `updated_at` is written by the store on every change.
+
+---
+
 *End of Org / Platform core domain. `organizations` carries the Stripe/billing **columns** documented here; the Stripe/Billing phase adds the `stripe_prices` table + the billing-flow narrative. `platform_audit_log` (where override + internal-note mutations are logged) and the `platform_*`/`plan_*` control plane are the Platform-admin phase. `rep_team_groups` (FK target of `org_member_rep_group_scopes.group_id`) is the Rep domain.*
 
 ---
