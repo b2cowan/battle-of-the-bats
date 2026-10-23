@@ -12,7 +12,8 @@
  *     narrows to its icon strip under it (lib/sidebar-strip.ts, Sidebar Strip & Grid Width Stage 2).
  *   - data-density     (fl_admin_density → 'comfortable' | 'compact'; coarse-pointer default)
  *   - data-user-theme  (fl_user_theme → 'dark' | 'warm'; WARM is the platform default — the
- *     attribute is always set to 'warm' unless the user explicitly stored 'dark')
+ *     attribute is always set to 'warm' unless the user explicitly stored 'dark' AND is signed in;
+ *     a signed-out browser is warm whatever the device holds)
  *   - data-coach-setup-skipped  (set only on /coaches/team/{id} when THAT team's setup panel was
  *     skipped). The skip lives on the device, so the server always renders the setup card; without
  *     this a coach who opted out watched the full card paint and collapse to a one-line link on
@@ -24,6 +25,7 @@
  * coachNudgeStorageKey/COACH_SETUP_NUDGE (components/coaches/useCoachNudgeDismiss). Kept minimal
  * + fully try/caught so blocked storage never throws before hydration. The account theme (source
  * of truth) reconciles after fetch — one rare repaint, the accepted density-precedent tradeoff.
+ * `applyNoFlashAttributes(true)` runs the theme rule alone (the auth watcher's call).
  *
  * ⚠ ONE FUNCTION, TWO JOBS (2026-10-13). The inline script is this function's own source,
  * stringified — an inline script can't import modules, and a hand-written string beside a
@@ -34,9 +36,33 @@
  * a Warm coach's screen went half dark. So this function must stay SELF-CONTAINED: no imports,
  * no outer variables, nothing a bundler could rename out from under the stringified copy.
  */
-export function applyNoFlashAttributes(): void {
+export function applyNoFlashAttributes(themeOnly?: boolean): void {
   try {
     const root = document.documentElement;
+    // User theme: WARM is the platform default — 'dark' only on an explicit stored 'dark' AND a
+    // signed-in browser (owner 2026-10-23: signed out is warm everywhere). The stored choice is
+    // never cleared or rewritten here, so signing back in finds Dark exactly where it was left;
+    // a signed-out visit simply does not consult it. "Signed in" is the PRESENCE of a Supabase
+    // session cookie — the same match as isSupabaseAuthCookieName (lib/sandbox-exit-rule) except
+    // that the half-finished-sign-in `-code-verifier` sibling does not count; this self-contained
+    // function cannot import the helper, so tests/unit/no-flash-script.test.ts pins the two together. A hint, never an auth decision: a stale cookie only paints Dark until the auth
+    // watcher (components/ThemeSessionWatch) hears the session is gone.
+    let tv: string | null = null;
+    try { tv = localStorage.getItem('fl_user_theme'); } catch { /* blocked storage */ }
+    let signedIn = false;
+    try {
+      const parts = document.cookie.split(';');
+      for (let i = 0; i < parts.length; i++) {
+        // The SESSION cookie only: `sb-<ref>-auth-token`, optionally chunked `.0`, `.1`. Its sibling
+        // `…-auth-token-code-verifier` is left on a device by a sign-in that was started and never
+        // finished (a password-reset or sign-up link not yet opened) — that is NOT a session.
+        const base = parts[i].split('=')[0].trim().replace(/\.\d+$/, '');
+        if (base.indexOf('sb-') === 0 && base.slice(-11) === '-auth-token') { signedIn = true; break; }
+      }
+    } catch { /* no cookie access: treated as signed out */ }
+    root.setAttribute('data-user-theme', tv === 'dark' && signedIn ? 'dark' : 'warm');
+    // The auth watcher re-runs ONLY the theme rule when a session starts or ends mid-page.
+    if (themeOnly) return;
     // Admin density: honour the stored choice, else default by pointer type.
     let dv: string | null = null;
     try { dv = localStorage.getItem('fl_admin_density'); } catch { /* blocked storage */ }
@@ -44,12 +70,6 @@ export function applyNoFlashAttributes(): void {
       dv = window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? 'comfortable' : 'compact';
     }
     root.setAttribute('data-density', dv);
-    // User theme: WARM is the platform default — set 'dark' only on an explicit stored 'dark',
-    // otherwise 'warm'. (The attribute is always present so both shells default warm; the coaches
-    // portal warms via its marker + this attribute, the consumer shell's dark override never fires.)
-    let tv: string | null = null;
-    try { tv = localStorage.getItem('fl_user_theme'); } catch { /* blocked storage */ }
-    root.setAttribute('data-user-theme', tv === 'dark' ? 'dark' : 'warm');
     // Free coach portal: hide the Overview setup card before first paint when THIS team's panel was
     // already skipped. Team id comes from the path, so the flag is never applied to another team.
     const cm = location.pathname.match(/^\/coaches\/team\/([^/]+)/);

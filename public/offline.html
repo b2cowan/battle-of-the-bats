@@ -73,11 +73,16 @@
     html[data-theme="warm"] p { color: #6f675c; }
   </style>
   <script>
-    // Same pre-paint default as lib/no-flash-script.ts: warm for everyone except an
-    // explicit stored 'dark'. Inline + try/catch so the page still renders with zero
-    // storage access (private mode, cleared storage → dark fallback).
+    // Same pre-paint rule as lib/no-flash-script.ts: warm for everyone except an explicit
+    // stored 'dark' in a SIGNED-IN browser (a Supabase session cookie is present). Signed
+    // out, the device's Dark is not consulted. Inline + try/catch so the page still renders
+    // with zero storage access (private mode, cleared storage → dark fallback).
     try {
-      if (localStorage.getItem('fl_user_theme') !== 'dark') {
+      var flIn = document.cookie.split(';').some(function (c) {
+        var n = c.split('=')[0].trim().replace(/\.\d+$/, '');
+        return n.indexOf('sb-') === 0 && n.slice(-11) === '-auth-token';
+      });
+      if (localStorage.getItem('fl_user_theme') !== 'dark' || !flIn) {
         document.documentElement.setAttribute('data-theme', 'warm');
         var flMeta = document.querySelector('meta[name="theme-color"]');
         if (flMeta) flMeta.setAttribute('content', '#f8f4ed');

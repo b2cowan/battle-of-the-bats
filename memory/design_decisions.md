@@ -30,7 +30,8 @@ binding — weight them accordingly, and say so when citing one.
   out means they don't get to view their theme choices."* Reason: a signed-out visitor has no Warm / Dark control, and the browser kept
   the last Dark choice after sign-out, so a shared device showed the next newcomer a dark sign-up door. This narrows the 2026-07-23
   "auth screens follow the user theme" to signed-in people. Not affected: the public tournament pages (the organizer's per-tournament
-  light/dark).
+  light/dark). **Mechanism (owner, at build, same day):** the device KEEPS its saved Dark; sign-out clears nothing, and a browser with no
+  session cookie is simply not shown it. So signing back in finds Dark with no restore step, in every portal.
 
 **Rationale:** the 2026-07-23 clause's only written reason was "M2 unchanged", and M2 concerns org-branded pages, which the marketing
 pages are not; what it protected in practice, the set moving as one, is kept by Ask 1. The terminal feel is type and words, and the

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { NO_FLASH_SCRIPT } from '../../lib/no-flash-script.ts';
+import { applyNoFlashAttributes, NO_FLASH_SCRIPT } from '../../lib/no-flash-script.ts';
+import { isSupabaseAuthCookieName } from '../../lib/sandbox-exit-rule.ts';
 import { readCode } from './_source-code.ts';
 
 /**
@@ -18,14 +19,17 @@ import { readCode } from './_source-code.ts';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
+const SESSION = 'sb-abcdefgh-auth-token=base64-xyz';
+
 function run({
   store = {} as Record<string, string>,
   path = '/',
   coarse = false,
   blocked = false,
+  cookie = '',
 } = {}): Map<string, string> {
   const attrs = new Map<string, string>();
-  const documentStub = { documentElement: { setAttribute: (k: string, v: string) => attrs.set(k, String(v)) } };
+  const documentStub = { cookie, documentElement: { setAttribute: (k: string, v: string) => attrs.set(k, String(v)) } };
   const storageStub = {
     getItem: (k: string) => {
       if (blocked) throw new Error('SecurityError');
@@ -47,10 +51,57 @@ describe('the no-flash script', () => {
     assert.equal(attrs.get('data-density'), 'compact');
   });
 
-  it('goes Dark only on an explicit stored Dark', () => {
-    assert.equal(run({ store: { fl_user_theme: 'dark' } }).get('data-user-theme'), 'dark');
-    assert.equal(run({ store: { fl_user_theme: 'warm' } }).get('data-user-theme'), 'warm');
-    assert.equal(run({ store: { fl_user_theme: 'junk' } }).get('data-user-theme'), 'warm');
+  it('goes Dark only on an explicit stored Dark, signed in', () => {
+    assert.equal(run({ cookie: SESSION, store: { fl_user_theme: 'dark' } }).get('data-user-theme'), 'dark');
+    assert.equal(run({ cookie: SESSION, store: { fl_user_theme: 'warm' } }).get('data-user-theme'), 'warm');
+    assert.equal(run({ cookie: SESSION, store: { fl_user_theme: 'junk' } }).get('data-user-theme'), 'warm');
+  });
+
+  it('is Warm whenever nobody is signed in, whatever the device holds', () => {
+    const dark = { fl_user_theme: 'dark' };
+    assert.equal(run({ store: dark }).get('data-user-theme'), 'warm');
+    assert.equal(run({ store: dark, cookie: 'flhq-in-sandbox=1; other=2' }).get('data-user-theme'), 'warm');
+    // A cookie that merely CONTAINS the words is not a session.
+    assert.equal(run({ store: dark, cookie: 'x=sb-abc-auth-token' }).get('data-user-theme'), 'warm');
+  });
+
+  it('reads a chunked session cookie anywhere in the jar as signed in', () => {
+    const dark = { fl_user_theme: 'dark' };
+    assert.equal(run({ store: dark, cookie: 'a=1; sb-abcdefgh-auth-token.0=aaa; sb-abcdefgh-auth-token.1=bbb' }).get('data-user-theme'), 'dark');
+    assert.equal(run({ store: dark, cookie: 'a=1;sb-abcdefgh-auth-token=zzz' }).get('data-user-theme'), 'dark');
+  });
+
+  it('matches the same cookie names as the one shared helper, minus the half-finished-sign-in verifier', () => {
+    for (const name of ['sb-abc-auth-token', 'sb-abc-auth-token.0', 'sb-abc-auth-token.12', 'flhq-in-sandbox', 'other-sb-abc-auth-token', 'sb-abc']) {
+      const viaScript = run({ store: { fl_user_theme: 'dark' }, cookie: `${name}=v` }).get('data-user-theme') === 'dark';
+      assert.equal(viaScript, isSupabaseAuthCookieName(name), `cookie "${name}"`);
+    }
+  });
+
+  it('does not count a half-finished sign-in as a session', () => {
+    // `…-code-verifier` is left behind by a password-reset or sign-up link that was never opened.
+    const dark = { fl_user_theme: 'dark' };
+    assert.equal(run({ store: dark, cookie: 'sb-abc-auth-token-code-verifier=v' }).get('data-user-theme'), 'warm');
+    assert.equal(run({ store: dark, cookie: 'sb-abc-auth-token-code-verifier=v; sb-abc-auth-token=s' }).get('data-user-theme'), 'dark');
+  });
+
+  it('never rewrites the stored choice, so signing back in finds Dark', () => {
+    // The stub has no setItem: a script that tried to clear or write the choice would throw and,
+    // being fully try/caught, silently skip the rest — so assert the attribute still lands.
+    assert.equal(run({ store: { fl_user_theme: 'dark' } }).get('data-user-theme'), 'warm');
+    assert.doesNotMatch(NO_FLASH_SCRIPT, /setItem|removeItem|\.clear\(/);
+  });
+
+  it('runs the theme rule alone for the auth watcher', () => {
+    const attrs = new Map<string, string>();
+    const documentStub = { cookie: SESSION, documentElement: { setAttribute: (k: string, v: string) => attrs.set(k, String(v)) } };
+    const storageStub = { getItem: (k: string) => (k === 'fl_user_theme' ? 'dark' : null) };
+    new Function('document', 'localStorage', 'window', 'location', `(${applyNoFlashAttributes.toString()})(true);`)(
+      documentStub, storageStub, { matchMedia: () => ({ matches: false }) }, { pathname: '/' },
+    );
+    assert.equal(attrs.get('data-user-theme'), 'dark');
+    assert.equal(attrs.has('data-density'), false);
+    assert.equal(attrs.has('data-sidebar'), false);
   });
 
   it('stays Warm when storage is blocked (private mode)', () => {
@@ -87,5 +138,27 @@ describe('the restore after a root rebuild', () => {
 
   it('re-runs the same function the script is made from', () => {
     assert.match(readCode('components/NoFlashRestore.tsx'), /applyNoFlashAttributes\(\)/);
+  });
+});
+
+describe('signed out is warm (owner 2026-10-23)', () => {
+  it('has a root watcher that re-runs the theme rule when a session starts or ends', () => {
+    assert.match(readCode('app/layout.tsx'), /<ThemeSessionWatch\s*\/>/);
+    const watcher = readCode('components/ThemeSessionWatch.tsx');
+    assert.match(watcher, /applyNoFlashAttributes\(true\)/);
+    for (const event of ['SIGNED_IN', 'SIGNED_OUT', 'INITIAL_SESSION']) assert.match(watcher, new RegExp(event));
+    // The device's saved choice is the sign-in restore — the watcher must never touch it.
+    assert.doesNotMatch(watcher, /applyTheme|removeItem|setItem|localStorage/);
+  });
+
+  it('keeps sign-out from clearing the saved choice', () => {
+    assert.doesNotMatch(readCode('lib/auth.ts'), /fl_user_theme|THEME_STORAGE_KEY|applyTheme/);
+  });
+
+  it('applies the same rule on the static offline page', () => {
+    const offline = readCode('public/offline.html');
+    assert.match(offline, /document\.cookie/);
+    assert.match(offline, /indexOf\('sb-'\) === 0/);
+    assert.match(offline, /slice\(-11\) === '-auth-token'/);
   });
 });

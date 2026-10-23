@@ -10,6 +10,7 @@ import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
 import LegacyInstallBanner from '@/components/LegacyInstallBanner';
 import { NO_FLASH_SCRIPT } from '@/lib/no-flash-script';
 import NoFlashRestore from '@/components/NoFlashRestore';
+import ThemeSessionWatch from '@/components/ThemeSessionWatch';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -90,6 +91,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {/* Puts the no-flash attributes back if a root hydration failure rebuilds <html> without them. */}
         <NoFlashRestore />
+        {/* Signed out is warm: flips the theme when a session starts or ends without a page load. */}
+        <ThemeSessionWatch />
         <OrgNavProvider>
           <a href="#main-content" className="skip-link">Skip to content</a>
           <SiteChrome />
