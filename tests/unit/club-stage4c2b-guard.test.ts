@@ -111,7 +111,7 @@ describe('3 · who writes the address', () => {
       const body = code.slice(code.indexOf(`export const ${verb}`));
       assert.match(body.slice(0, 600), /if \(!r\.isHead/, `${verb} refuses anyone but a head coach`);
     }
-    assert.match(code, /checkTryoutContactEmail\(body\.email, r\.ctx\.user\.email\)/);
+    assert.match(code, /checkTryoutContactEmail\(body\.email\)/);
   });
   it('the club\'s reset is the rep-teams write gate', () => {
     const code = readCode('app/api/admin/rep-teams/teams/[teamId]/tryout-contact/route.ts');

@@ -19,10 +19,11 @@ import styles from './TryoutQuestionsCard.module.css';
  * CLUB_TIER_STAGE4C2_COPY.md §H). Optional — it never counts toward "2 required".
  *
  * A head coach gives this team's tryout page their own address for families' questions. It SAVES ON LEAVING THE FIELD,
- * only when complete and valid — never part-typed; the server refuses the coach's sign-in address (H5) and a malformed
- * one (H6) and the field keeps what was typed, with the reason under it. The role-address nudge (H7) sits under the
- * hint, quiet. An assistant with tryouts access reads it ("set by …") and cannot change it (H9). The address ends with
- * the setter's head-coach role, so the row reports the server's LIVE answer, never a cached one.
+ * only when complete and valid — never part-typed; the server refuses a malformed one (H6) and the field keeps what was
+ * typed, with the reason under it. The coach's own sign-in address is allowed: a quiet note (H5) says it is public. The
+ * role-address nudge (H7) sits under the hint, quiet. An assistant with tryouts access reads it ("set by …") and
+ * cannot change it (H9). The address ends with the setter's head-coach role, so the row reports the server's LIVE
+ * answer, never a cached one.
  */
 
 interface View {
@@ -32,6 +33,7 @@ interface View {
   resetAt: string | null;
   canChange: boolean;
   clubAddress: string | null;
+  signInEmail: string | null;
 }
 
 export default function TryoutQuestionsCard({ apiBase, onStatus }: {
@@ -125,7 +127,7 @@ export default function TryoutQuestionsCard({ apiBase, onStatus }: {
     );
   }
 
-  const nudge = !refusal ? tryoutContactNudge(draft.trim()) : null;
+  const nudge = !refusal ? tryoutContactNudge(draft.trim(), view.signInEmail) : null;
   const anotherSetIt = !!view.email && !view.setByYou;
   return (
     <div className={styles.body}>

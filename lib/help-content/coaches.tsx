@@ -447,7 +447,7 @@ const coachesHelp: HelpPageContent = {
               <p>By default, families&rsquo; tryout questions go to your club&rsquo;s address. A <strong>head coach</strong> can give the team&rsquo;s tryout page their own instead, on the optional <strong>Questions from families</strong> row of the tryout setup. Anyone can read it on the tryout page, so use an inbox you&rsquo;re happy to share.</p>
               <HelpDefs>
                 <HelpDef term="Setting it">Type an address under <strong>Address for tryout questions</strong>. It saves when it&rsquo;s complete and valid. A role address such as <em>tryouts@</em> keeps working when a volunteer changes; a quiet note under the hint suggests one, and you can use yours anyway.</HelpDef>
-                <HelpDef term="Not allowed">The address you sign in with. The row says <em>That&rsquo;s the address you sign in with. Use a separate one, so your sign-in stays private.</em></HelpDef>
+                <HelpDef term="The address you sign in with">Allowed. If you use one address for everything, you can use it here. A quiet note under the field reminds you that anyone can read it on the tryout page.</HelpDef>
                 <HelpDef term="Changing or removing it">Any head coach on the team can change or remove it. If you change one someone else set, it becomes yours. <strong>Remove and use the club&rsquo;s address</strong> puts the club&rsquo;s back, with no confirm.</HelpDef>
                 <HelpDef term="When it ends">By itself, when you stop being head coach.</HelpDef>
                 <HelpDef term="An assistant with tryouts access">Reads the address and who set it, but can&rsquo;t change it. Only a head coach can.</HelpDef>

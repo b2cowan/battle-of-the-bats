@@ -9,7 +9,7 @@ import {
   publicPersonName,
   tryoutContactUnsetLine,
   tryoutContactSetLine,
-  SIGN_IN_ADDRESS_REFUSAL,
+  SIGN_IN_ADDRESS_NOTE,
   NOT_AN_ADDRESS,
   TRYOUT_ROLE_ADDRESS_NUDGE,
   type TryoutContactRow,
@@ -22,7 +22,7 @@ import {
  *
  * One address per team. Any head coach sets it; it belongs to whoever set it and ENDS WITH THEIR HEAD-COACH ROLE —
  * removed or demoted — twice over: the membership writes clear it, and every reader shows it only while the setter is
- * an active head coach of the team. The sign-in address is refused. Words: CLUB_TIER_STAGE4C2_COPY.md §H.
+ * an active head coach of the team. The sign-in address is allowed, with a note. Words: CLUB_TIER_STAGE4C2_COPY.md §H.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -36,26 +36,29 @@ const dana = (over: Partial<TryoutContactSetter> = {}): TryoutContactSetter => (
 
 describe('the address a head coach types (H5, H6, H7)', () => {
   it('a valid address is kept, trimmed', () => {
-    assert.deepEqual(checkTryoutContactEmail('  tryouts@lynx.ca ', 'dana@home.ca'), { ok: true, value: 'tryouts@lynx.ca' });
+    assert.deepEqual(checkTryoutContactEmail('  tryouts@lynx.ca '), { ok: true, value: 'tryouts@lynx.ca' });
   });
-  it('the sign-in address is refused, compared trimmed and ignoring case', () => {
-    assert.deepEqual(checkTryoutContactEmail(' Dana@Home.CA ', 'dana@home.ca '), { ok: false, error: SIGN_IN_ADDRESS_REFUSAL });
+  it('the sign-in address is ALLOWED and gets a quiet note, compared trimmed and ignoring case (owner 2026-10-23)', () => {
+    assert.deepEqual(checkTryoutContactEmail(' Dana@Home.CA '), { ok: true, value: 'Dana@Home.CA' });
+    assert.equal(tryoutContactNudge('Dana@Home.CA', ' dana@home.ca '), SIGN_IN_ADDRESS_NOTE);
+    assert.equal(tryoutContactNudge('dana@home.ca', 'someone@else.ca'), null);
+    assert.match(SIGN_IN_ADDRESS_NOTE, /sign in with/);
   });
   it('a malformed address is refused with the shared words', () => {
-    assert.deepEqual(checkTryoutContactEmail('dana at home', 'dana@home.ca'), { ok: false, error: NOT_AN_ADDRESS });
+    assert.deepEqual(checkTryoutContactEmail('dana at home'), { ok: false, error: NOT_AN_ADDRESS });
     assert.equal(NOT_AN_ADDRESS, "That doesn't look like an email address.");
   });
   it('blank is refused here — removing is its own door, never a part-typed save', () => {
-    assert.equal(checkTryoutContactEmail('   ', 'dana@home.ca').ok, false);
-    assert.equal(checkTryoutContactEmail(undefined, 'dana@home.ca').ok, false);
+    assert.equal(checkTryoutContactEmail('   ').ok, false);
+    assert.equal(checkTryoutContactEmail(undefined).ok, false);
   });
   it('an address that could carry extra mailto fields is refused', () => {
-    assert.equal(checkTryoutContactEmail('a@b.ca?cc=x@y.ca', null).ok, false);
+    assert.equal(checkTryoutContactEmail('a@b.ca?cc=x@y.ca').ok, false);
   });
   it('the nudge is for a personal-looking address and is never a refusal', () => {
     assert.equal(tryoutContactNudge('dana.whitfield@gmail.com'), TRYOUT_ROLE_ADDRESS_NUDGE);
     assert.equal(tryoutContactNudge('tryouts@lynx.ca'), null);
-    assert.equal(checkTryoutContactEmail('dana.whitfield@gmail.com', 'dana@home.ca').ok, true);
+    assert.equal(checkTryoutContactEmail('dana.whitfield@gmail.com').ok, true);
     assert.match(TRYOUT_ROLE_ADDRESS_NUDGE, /tryouts@/);
   });
 });

@@ -236,9 +236,9 @@ once an address is set the status line takes the chip's place, as "Sat, Nov 14 +
 | H1 | Row title | `Questions from families` + chip `Optional` |
 | H2 | Closed, nothing set | `They go to the club ({club address}). Add your own address for this team's tryout page.` |
 | H2b | Closed, the club has no address | `The page shows no questions address yet. Add your own for this team's tryout page.` |
-| H3 | Open, empty | Label `Address for tryout questions`; placeholder `tryouts@yourclub.ca`; hint `Shown on your team's tryout page, where anyone can read it. Use an inbox you're happy to share, not the one you sign in with. It comes off when you stop being head coach.` |
+| H3 | Open, empty | Label `Address for tryout questions`; placeholder `tryouts@yourclub.ca`; hint `Shown on your team's tryout page, where anyone can read it. Use an inbox you're happy to share. It comes off when you stop being head coach.` |
 | H4 | Open, filled (you set it) | Status `{address} · on your tryout page`; field as H3; door `Remove and use the club's address` |
-| H5 | Refused, your sign-in address | `That's the address you sign in with. Use a separate one, so your sign-in stays private.` |
+| H5 | Your sign-in address (ALLOWED — owner 2026-10-23: many people use one address everywhere; was a refusal) | Quiet note under the hint, never red, saves normally: `This is the address you sign in with. Anyone can read it on your tryout page. Fine if you're happy with that.` |
 | H6 | Refused, not an address | `That doesn't look like an email address.` |
 | H7 | Accepted with the nudge | `A role address such as tryouts@ keeps working when a volunteer changes. You can use this one if you prefer.` Shown **under** the hint, quiet, never red. |
 | H8 | Another head coach set it (you are a head coach) | Status `{address} · set by {name}`; field editable; line `Any head coach can change or remove it. If you change it, it becomes yours and ends when your role does.` |
@@ -293,7 +293,7 @@ I7 changes the ruled accessible name (`Copy email address`): two identical butto
 | K5 | Year boxes | January 1: `Earliest birth year` and `Latest birth year`. Other cut-off: `Earliest birth year, counted from {Sep 1}` and `Latest birth year, up to {Aug 31}`. |
 | K6 | Blurb | Named by its label `From the club`; the counter is read as `{n} of 500 characters`, polite. |
 | K7 | Cut-off dropdowns | See C5. |
-| K8 | API refusals | Years: A15, A16, A17 or A18. Blurb: E10, E11. Cut-off: `Pick a month and day from the lists.` Unknown sport: `That isn't a sport your club runs.` Tryout address: H5, H6, H14. Reset with none set: `No coach address is set on this page.` Not the owner: C11. Anything else: `Couldn't save your changes. Try again.` (existing) |
+| K8 | API refusals | Years: A15, A16, A17 or A18. Blurb: E10, E11. Cut-off: `Pick a month and day from the lists.` Unknown sport: `That isn't a sport your club runs.` Tryout address: H6, H14. Reset with none set: `No coach address is set on this page.` Not the owner: C11. Anything else: `Couldn't save your changes. Try again.` (existing) |
 | K9 | Name switch | The portal's pill: `Saved` / `Couldn't save · Retry`. Refusal for another person's switch: `You can only change your own setting.` |
 | K10 | Names and addresses in the drawings | Sample data, not copy. |
 | K11 | Help articles | `/docs` owes Team details, house-league divisions, Settings, the admin Tryouts page, the coach's Sharing and tryout setup, and the public-site articles (keywords and `searchText` too: one spelling). |

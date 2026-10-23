@@ -8,7 +8,7 @@ import { formatStoredDate, orgDayKey } from './timezone';
 
 /** H3 — the field's hint. The nudge (H7) sits under it, never in its place (owner ruling 2026-10-22). */
 export const TRYOUT_CONTACT_HINT =
-  'Shown on your team’s tryout page, where anyone can read it. Use an inbox you’re happy to share, not the one you sign in with. It comes off when you stop being head coach.';
+  'Shown on your team’s tryout page, where anyone can read it. Use an inbox you’re happy to share. It comes off when you stop being head coach.';
 /** H8 — another head coach set it; the reader is a head coach too. */
 export const ANOTHER_HEAD_SET_IT =
   'Any head coach can change or remove it. If you change it, it becomes yours and ends when your role does.';
@@ -43,8 +43,8 @@ export function tryoutContactSetLine(email: string, setByYou: boolean, setByName
   return setByYou || !setByName ? `${email} · on your tryout page` : `${email} · set by ${setByName}`;
 }
 
-/** H5 — the coach typed the address they sign in with. */
-export const SIGN_IN_ADDRESS_REFUSAL = "That's the address you sign in with. Use a separate one, so your sign-in stays private.";
+/** H5 — the coach typed the address they sign in with. A quiet note under the hint, never a refusal (owner 2026-10-23). */
+export const SIGN_IN_ADDRESS_NOTE = 'This is the address you sign in with. Anyone can read it on your tryout page. Fine if you’re happy with that.';
 /** H6 — the shared check's words. */
 export const NOT_AN_ADDRESS = BAD_EMAIL;
 /** H14 — the route, for anyone who is not a head coach of the team. */
@@ -58,21 +58,24 @@ export const TRYOUT_ROLE_ADDRESS_NUDGE =
   'A role address such as tryouts@ keeps working when a volunteer changes. You can use this one if you prefer.';
 
 /**
- * The address a head coach typed: trimmed, the shared site check, and never their sign-in address (compared trimmed,
- * ignoring case). Blank is refused here — removing is its own door.
+ * The address a head coach typed: trimmed and the shared site check. The coach's own sign-in address is allowed (many
+ * people use one address everywhere); the row only tells them it is public. Blank is refused here — removing is its own
+ * door.
  */
-export function checkTryoutContactEmail(raw: unknown, signInEmail: string | null | undefined): Checked<string> {
+export function checkTryoutContactEmail(raw: unknown): Checked<string> {
   const checked = checkEmail(raw);
   if (!checked.ok) return checked;
   if (!checked.value) return { ok: false, error: NOT_AN_ADDRESS };
-  if (signInEmail && checked.value.toLowerCase() === signInEmail.trim().toLowerCase()) {
-    return { ok: false, error: SIGN_IN_ADDRESS_REFUSAL };
-  }
   return { ok: true, value: checked.value };
 }
 
-/** The nudge under the hint, for a personal-looking address. Never a refusal. */
-export function tryoutContactNudge(email: string | null | undefined): string | null {
+/**
+ * The quiet note under the hint. The sign-in address (compared trimmed, ignoring case) gets its own note; any other
+ * personal-looking address gets the role-address nudge. Never a refusal.
+ */
+export function tryoutContactNudge(email: string | null | undefined, signInEmail?: string | null): string | null {
+  const typed = email?.trim();
+  if (typed && signInEmail && typed.toLowerCase() === signInEmail.trim().toLowerCase()) return SIGN_IN_ADDRESS_NOTE;
   return looksPersonalEmail(email) ? TRYOUT_ROLE_ADDRESS_NUDGE : null;
 }
 

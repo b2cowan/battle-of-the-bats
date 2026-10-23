@@ -13,7 +13,7 @@ import { withObservability } from '@/lib/observability';
  *
  * READ: whoever holds the `tryouts` grant (a head coach, or an assistant granted tryouts — H9 reads it, "set by …").
  * WRITE (PUT / DELETE): a HEAD COACH of the team, by `coach_role` on their active membership — never the `tryouts`
- * grant, which an assistant can hold (H14). Saved only complete and valid; the sign-in address is refused (H5).
+ * grant, which an assistant can hold (H14). Saved only complete and valid; the sign-in address is allowed, with a note on the row (H5).
  */
 
 type Ctx = { params: Promise<{ orgSlug: string; teamId: string }> };
@@ -39,6 +39,7 @@ async function view(r: Extract<Awaited<ReturnType<typeof resolve>>, { ok: true }
     resetAt: contact.resetAt,
     canChange: r.isHead,
     clubAddress: site?.contactEmail ?? null,
+    signInEmail: r.ctx.user.email ?? null,
   };
 }
 
@@ -58,7 +59,7 @@ export const PUT = withObservability(async (req: Request, { params }: Ctx) => {
   if (!r.ok) return r.res;
   if (!r.isHead || !r.membership) return NextResponse.json({ error: ONLY_HEAD_COACH_SETS }, { status: 403 });
   const body = await req.json().catch(() => ({})) as { email?: unknown };
-  const checked = checkTryoutContactEmail(body.email, r.ctx.user.email);
+  const checked = checkTryoutContactEmail(body.email);
   if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
   await setTryoutContact({ orgId: r.ctx.org.id, teamId: r.team.id, membershipId: r.membership.id, email: checked.value });
   // The second check (the convergence this module family uses for the last-head race): a removal or demotion that
