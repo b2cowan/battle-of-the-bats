@@ -1,11 +1,11 @@
 /**
- * THE WARM EMAIL ENVELOPE — the account emails' one layout (The first look, Stage 2a: owner Ask 1 + Ask 8 2026-10-19,
- * U5/U6/U8 2026-10-20; drawn in docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html, S2, and FIRST_LOOK_STAGE2_UNDRAWN.html).
+ * THE WARM EMAIL ENVELOPE — every email's one layout (built for the account emails by The first look, Stage 2a: owner Ask 1 +
+ * Ask 8 2026-10-19, U5/U6/U8 2026-10-20; drawn in docs/projects/archive/FIRST_LOOK_SIGNUP_HUB.html, S2, and
+ * FIRST_LOOK_STAGE2_UNDRAWN.html; carried to every other email by The public face's S3a, owner Ask 9 2026-10-23).
  *
- * The verification email and the password-reset email wear it, in their built-in builders (lib/email.ts) AND when a
- * platform admin customises their template (lib/platform-email-templates.ts), so a saved edit can never bring back the
- * old dark card. Every other email still wears `wrap()` in lib/email.ts; moving them onto this one is The public face's
- * S3, a migration onto this envelope, not a design.
+ * `wrap()` in lib/email.ts, the senders' own shells and the platform templates (built-in, customised, campaigns, the
+ * editor's preview and the test-send) all produce this document, so there is no second look to drift. S3a was a
+ * migration onto this envelope, not a design.
  *
  * Email cannot load the product's fonts or know Warm/Dark, so this is warm and fixed: inline styles throughout,
  * Arial/Helvetica, no web fonts. Two things live in the document head and are progressive only (U8, ruled as
@@ -15,7 +15,7 @@
  *
  * Framework-free: the send path and the template editor's live preview (a client component) both import it.
  */
-import type { EmailLook, LookStyles } from './email-markup';
+import type { LookStyles } from './email-markup';
 
 /** The envelope's colours. Fixed values, not tokens: an email never sees the product's theme. */
 export const WARM_EMAIL = {
@@ -36,18 +36,6 @@ export const WARM_EMAIL = {
   font: 'Arial,Helvetica,sans-serif',
 } as const;
 
-/** The templates that wear this envelope when customised. Every other key keeps `wrap()`. */
-const WARM_ENVELOPE_KEYS = new Set(['signup_verification', 'password_reset']);
-
-export function wearsWarmEnvelope(key: string | null | undefined): boolean {
-  return !!key && WARM_ENVELOPE_KEYS.has(key);
-}
-
-/** The markup look a template renders in: the one decision every render path (send, preview, editor) asks. */
-export function emailLookFor(key: string | null | undefined): EmailLook {
-  return wearsWarmEnvelope(key) ? 'warm' : 'house';
-}
-
 const W = WARM_EMAIL;
 
 /** Inline styles for the envelope's text, shared with the customisable markup's warm look (lib/email-markup.ts). */
@@ -55,17 +43,87 @@ export const WARM_EMAIL_STYLE = {
   heading: `margin:0 0 14px;font-family:${W.font};font-size:24px;line-height:1.2;font-weight:700;color:${W.ink};`,
   paragraph: `margin:0 0 14px;font-family:${W.font};font-size:16px;line-height:1.55;color:${W.ink};`,
   small: `margin:0 0 14px;font-family:${W.font};font-size:13px;line-height:1.55;color:${W.secondary};`,
+  // A box lifted off the card (a details block, a callout): the ground tone and the card's edge, as WARM_MARKUP_LOOK's.
+  panel: `background:${W.ground};border:1px solid ${W.cardEdge};padding:16px 18px;margin:18px 0;border-radius:10px;`,
+  // The label that opens a panel: sentence case, bold ink (P3: no forced capitals).
+  panelLabel: `margin:0 0 8px;font-family:${W.font};font-size:16px;line-height:1.3;font-weight:700;color:${W.ink};`,
+  // The rule and fine print at the foot of the card: a footer, an unsubscribe line, the coach portal link.
+  footRule: `margin:28px 0 0;padding-top:16px;border-top:1px solid ${W.cardEdge};`,
+  finePrint: `margin:0;font-family:${W.font};font-size:12px;line-height:1.55;color:${W.secondary};`,
+  finePrintLink: `color:${W.olive};text-decoration:underline;`,
+  // A bulleted list at paragraph size.
+  list: `margin:0 0 14px;font-family:${W.font};font-size:16px;line-height:1.55;color:${W.ink};padding-left:22px;`,
+  // The small bold line above a heading that names whose message it is (a team).
+  eyebrow: `margin:0 0 14px;font-family:${W.font};font-size:14px;line-height:1.4;font-weight:700;color:${W.secondary};`,
+  // A quiet olive text link (the secondary action under a button).
+  textLink: `color:${W.olive};text-decoration:underline;font-weight:700;`,
 } as const;
+
+/**
+ * The style of a boxed block inside an email's content (a details box, a payment box): the ground tone, the card's edge and
+ * a 3px accent on the left, olive for the good-news kind and grey for the rest. The builders' wider padding is the default;
+ * a box that sits tighter passes its own.
+ */
+export function warmPanelStyle(edge: 'secondary' | 'olive', box: { padding?: string; margin?: string } = {}): string {
+  return `background:${W.ground};border:1px solid ${W.cardEdge};border-left:3px solid ${W[edge]};padding:${box.padding ?? '1.25rem'};margin:${box.margin ?? '1.5rem 0'};`;
+}
+
+/** Fine print at the foot of the card, under a rule: a sender line, a reason, a notice. `inner` is trusted HTML. */
+export function warmEmailFootnote(inner: string): string {
+  return `<div style="${WARM_EMAIL_STYLE.footRule}"><p style="${WARM_EMAIL_STYLE.finePrint}">${inner}</p></div>`;
+}
+
+/**
+ * Where the card ends. A footer that is added after the content is built (the unsubscribe line) goes in here, so it
+ * sits on the white card, not on the mail app's own ground. A comment: the plain-text part strips it with the tags.
+ */
+export const WARM_CARD_END = '<!--fl-card-end-->';
+
+/**
+ * The CASL footer every marketing send carries: why the person is getting it, and the way out. One builder for the send
+ * (lib/email-sender.ts) and the admin's preview of it, so a preview can never show a footer the email does not carry.
+ */
+export function warmUnsubscribeFooterHtml(unsubscribeUrl: string): string {
+  return `
+<div style="${WARM_EMAIL_STYLE.footRule}">
+  <p style="${WARM_EMAIL_STYLE.finePrint}margin-bottom:6px;">
+    You're receiving this because you signed up for FieldLogicHQ.
+  </p>
+  <p style="${WARM_EMAIL_STYLE.finePrint}">
+    <a href="${unsubscribeUrl}" style="${WARM_EMAIL_STYLE.finePrintLink}">Unsubscribe</a>
+    &nbsp;·&nbsp; FieldLogicHQ · Canada
+  </p>
+</div>`;
+}
+
+/**
+ * The words a person reads in a whole-document email, for a page that shows it inline (the dues reminder's sample):
+ * the document's head carries a style block that would otherwise reach the page around it, a colour-scheme request
+ * included.
+ */
+export function warmEmailForPreview(html: string): string {
+  const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  return body ? body[1] : html;
+}
+
+/** `fragment` inside the card, at its end; at the end of `html` when it is not an envelope (a hand-built document). */
+export function insertAtWarmCardEnd(html: string, fragment: string): string {
+  if (html.includes(WARM_CARD_END)) return html.replace(WARM_CARD_END, () => `${fragment}
+${WARM_CARD_END}`);
+  if (html.includes('</body>')) return html.replace('</body>', () => `${fragment}
+</body>`);
+  return html + fragment;
+}
 
 /** The customisable markup's warm look (lib/email-markup.ts): ink on the white card, the envelope's button. */
 export const WARM_MARKUP_LOOK: LookStyles = {
   p: WARM_EMAIL_STYLE.paragraph,
   h: WARM_EMAIL_STYLE.heading,
-  ul: `${WARM_EMAIL_STYLE.paragraph}padding-left:22px;`,
-  calloutBase: `background:${W.ground};border:1px solid ${W.cardEdge};padding:16px 18px;margin:18px 0;border-radius:10px;`,
-  calloutLime: `border-left:3px solid ${W.olive};`,
-  calloutBlue: `border-left:3px solid ${W.secondary};`,
-  calloutLabel: `margin:0 0 8px;font-family:${W.font};font-size:16px;line-height:1.3;font-weight:700;color:${W.ink};`,
+  ul: WARM_EMAIL_STYLE.list,
+  calloutBase: WARM_EMAIL_STYLE.panel,
+  calloutOlive: `border-left:3px solid ${W.olive};`,
+  calloutGrey: `border-left:3px solid ${W.secondary};`,
+  calloutLabel: WARM_EMAIL_STYLE.panelLabel,
   link: `display:inline-block;color:${W.olive};text-decoration:underline;font-family:${W.font};font-weight:700;font-size:16px;padding:6px 0;`,
   // type-ok: data — a {{token}} placeholder in the template editor's preview
   chip: `background:${W.chipGround};border:1px solid ${W.chipEdge};padding:0 3px;font-family:monospace;font-size:0.9em;color:${W.chipInk};`,
@@ -118,6 +176,7 @@ export function warmEmailBody(inner: string): string {
 <tr><td class="fl-card" style="background:${W.card};border:1px solid ${W.groundEdge};border-radius:12px;padding:28px 26px;font-family:${W.font};color:${W.ink};text-align:left;">
 ${WORDMARK}
 ${inner}
+${WARM_CARD_END}
 </td></tr>
 </table>`;
 }

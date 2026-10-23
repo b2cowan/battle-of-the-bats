@@ -28,6 +28,7 @@
  */
 
 import { possessive } from './utils.ts';
+import { warmEmailFootnote } from './email-envelope-warm.ts';
 
 /** Escapes for an HTML text node. Local so this module never reaches the email transport (see header). */
 const esc = (s: string) =>
@@ -42,22 +43,14 @@ export interface TransactionalFamilyFooter {
   noticeKind: string;
   /** What it is about, completing "Sent by {org} about {…} for {team}". */
   about: string;
-  /** `dark` matches the near-black tryout/announcement templates; `light` the plain dues notices. */
-  tone?: 'light' | 'dark';
 }
 
 export function transactionalFamilyFooterHtml(p: TransactionalFamilyFooter): string {
   const sender = esc((p.orgName ?? '').trim() || p.teamName);
-  const dark = p.tone === 'dark';
-  const ink = dark ? 'rgba(241,245,249,0.45)' : 'rgba(0,0,0,0.55)';
-  const rule = dark ? 'rgba(241,245,249,0.14)' : 'rgba(0,0,0,0.1)';
-  return `
-  <p style="color:${ink};font-size:0.8rem;line-height:1.55;margin-top:2rem;padding-top:1rem;border-top:1px solid ${rule};">
-    Sent by <strong>${sender}</strong> about ${esc(p.about)} for ${esc(p.teamName)}.<br>
-    ${esc(p.noticeKind)} are account notices rather than announcements, so they are sent even if you
-    have unsubscribed from ${possessive(sender)} emails. If you believe you received this in error, please
-    speak to your coach.
-  </p>`;
+  return warmEmailFootnote(`Sent by <strong>${sender}</strong> about ${esc(p.about)} for ${esc(p.teamName)}.<br>
+${esc(p.noticeKind)} are account notices rather than announcements, so they are sent even if you
+have unsubscribed from ${possessive(sender)} emails. If you believe you received this in error, please
+speak to your coach.`);
 }
 
 /**

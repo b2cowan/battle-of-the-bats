@@ -22,12 +22,15 @@ import { buildUnsubscribeUrl, buildUserUnsubscribeUrl } from '@/lib/unsubscribe-
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { MARKETING_EMAIL_AUDIENCE, type MarketingAudience } from '@/lib/marketing-email-defaults';
 import { isDemoOrgId } from '@/lib/demo-org-server';
+import { insertAtWarmCardEnd, warmUnsubscribeFooterHtml } from '@/lib/email-envelope-warm';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <hello@fieldlogichq.ca>';
 
 function htmlToText(html: string): string {
   return html
+    // A whole-document email (the warm envelope) has a head with a style block: none of it is words.
+    .replace(/<head\b[\s\S]*?<\/head>/i, '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
     .replace(/<\/div>/gi, '\n')
@@ -48,22 +51,8 @@ function htmlToText(html: string): string {
  * Injected before the closing </body> or at the end of the HTML string.
  */
 function injectUnsubscribeFooter(html: string, unsubscribeUrl: string): string {
-  const footer = `
-<div style="margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;">
-  <p style="margin:0 0 0.4rem;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;">
-    You're receiving this because you signed up for FieldLogicHQ.
-  </p>
-  <p style="margin:0;color:rgba(241,245,249,0.25);font-size:0.72rem;line-height:1.55;">
-    <a href="${unsubscribeUrl}" style="color:rgba(217,249,157,0.5);text-decoration:underline;">Unsubscribe</a>
-    &nbsp;·&nbsp; FieldLogicHQ · Canada
-  </p>
-</div>`;
-
-  // Insert before </body> if present, otherwise append
-  if (html.includes('</body>')) {
-    return html.replace('</body>', `${footer}\n</body>`);
-  }
-  return html + footer;
+  // Inside the card, at its end; before </body> or at the end for a document that is not the envelope
+  return insertAtWarmCardEnd(html, warmUnsubscribeFooterHtml(unsubscribeUrl));
 }
 
 export interface SendEmailOptions {

@@ -22,14 +22,13 @@
  *   - item                     → bullet list item (consecutive `- ` lines = one <ul>)
  *   ::button Label | {{url}}   → primary (lime) call-to-action button
  *   ::link Label | {{url}}     → secondary (quiet) text link
- *   ::callout Label            → start a lime callout box titled "Label"
- *   ::callout.blue Label       → start a blue callout box
+ *   ::callout Label            → start a callout box titled "Label" (olive edge)
+ *   ::callout.blue Label       → start a callout box with a grey edge
  *   ::end                      → close the nearest ::callout / ::if
  *   ::if token                 → render the enclosed block only if `token` is truthy
  *   ::else                     → (optional) alternate block for the enclosing ::if
  *
- * The same markup renders in either envelope's look (`EmailLook`): the house dark one by
- * default, or the warm account-email one for the templates that wear it.
+ * The markup renders in the warm envelope's look (lib/email-envelope-warm.ts `WARM_MARKUP_LOOK`).
  *
  * The markup itself is authored by trusted operators / our own seeds, so it is NOT
  * HTML-escaped. VARIABLE VALUES (which may carry customer-entered text like an org
@@ -37,6 +36,14 @@
  */
 
 import { WARM_MARKUP_LOOK } from './email-envelope-warm';
+
+/** The inline styles one rendering of the markup uses. Defined here so the envelope file can type its own copy. */
+export type LookStyles = {
+  p: string; h: string; ul: string;
+  calloutBase: string; calloutOlive: string; calloutGrey: string; calloutLabel: string;
+  link: string; chip: string;
+  button: (label: string, href: string) => string;
+};
 
 /**
  * Local copy of the standard HTML escape (mirrors lib/email.ts `escapeHtml`). Kept
@@ -56,43 +63,6 @@ function escapeHtml(value: string): string {
 export type EmailVars = Record<string, string | number | null | undefined>;
 
 export type TokenMode = 'fill' | 'chip';
-
-// ── Style tokens (mirror the hand-built founding/spotlight emails) ─────────────
-const P_STYLE = 'margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);';
-const H_STYLE = 'color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;';
-const UL_STYLE = 'margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);';
-const CALLOUT_BASE = 'background:#0F172A;padding:1.25rem;margin:1.5rem 0;';
-const CALLOUT_LIME = 'border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);';
-const CALLOUT_BLUE = 'border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);';
-const CALLOUT_LABEL = 'margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;';
-const BTN_STYLE = 'display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;';
-const LINK_STYLE = 'display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;';
-// type-ok: data — a {{token}} placeholder in the template editor's preview
-const CHIP_STYLE = 'background:rgba(30,58,138,0.35);border:1px solid rgba(30,58,138,0.6);padding:0 3px;font-family:monospace;font-size:0.9em;color:#93c5fd;';
-
-/**
- * Which envelope the markup is rendered for. `house` is every email's dark `wrap()` (the default, unchanged); `warm`
- * is the account emails' envelope, whose white card needs ink, not light text. Each envelope owns its look: the warm
- * one lives with its envelope (lib/email-envelope-warm.ts `WARM_MARKUP_LOOK`).
- */
-export type EmailLook = 'house' | 'warm';
-
-export type LookStyles = {
-  p: string; h: string; ul: string;
-  calloutBase: string; calloutLime: string; calloutBlue: string; calloutLabel: string;
-  link: string; chip: string;
-  button: (label: string, href: string) => string;
-};
-
-const LOOKS: Record<EmailLook, LookStyles> = {
-  house: {
-    p: P_STYLE, h: H_STYLE, ul: UL_STYLE,
-    calloutBase: CALLOUT_BASE, calloutLime: CALLOUT_LIME, calloutBlue: CALLOUT_BLUE, calloutLabel: CALLOUT_LABEL,
-    link: LINK_STYLE, chip: CHIP_STYLE,
-    button: (label, href) => `<a href="${href}" style="${BTN_STYLE}">${label}</a>`,
-  },
-  warm: WARM_MARKUP_LOOK,
-};
 
 // ── Token fill ─────────────────────────────────────────────────────────────────
 
@@ -204,7 +174,7 @@ function parseBlocks(cur: Cursor, vars: EmailVars, mode: TokenMode, look: LookSt
       cur.i++; // consume the ::callout line
       const inner = parseBlocks(cur, vars, mode, look);
       consumeEnd(cur); // consume the matching ::end
-      const border = variant === 'blue' ? look.calloutBlue : look.calloutLime;
+      const border = variant === 'blue' ? look.calloutGrey : look.calloutOlive;
       const labelHtml = label ? `<p style="${look.calloutLabel}">${inline(label, vars, mode, look)}</p>` : '';
       out.push(`<div style="${look.calloutBase}${border}">${labelHtml}${inner}</div>`);
       continue;
@@ -284,9 +254,9 @@ export function fillSubjectTokens(text: string, vars: EmailVars = {}): string {
  * callers that compose their own wrapper.
  */
 export function renderMarkupToHtml(
-  markup: string, vars: EmailVars = {}, mode: TokenMode = 'fill', look: EmailLook = 'house',
+  markup: string, vars: EmailVars = {}, mode: TokenMode = 'fill',
 ): string {
-  return renderBlocks(markup, vars, mode, LOOKS[look]);
+  return renderBlocks(markup, vars, mode, WARM_MARKUP_LOOK);
 }
 
 function renderBlocks(markup: string, vars: EmailVars, mode: TokenMode, styles: LookStyles): string {
@@ -317,11 +287,10 @@ export function renderHeadingAndBody(p: {
   body: string;
   vars?: EmailVars;
   mode?: TokenMode;
-  look?: EmailLook;
 }): string {
   const vars = p.vars ?? {};
   const mode = p.mode ?? 'fill';
-  const styles = LOOKS[p.look ?? 'house'];
+  const styles = WARM_MARKUP_LOOK;
   const headingHtml = p.heading?.trim()
     ? `<h2 style="${styles.h}">${inline(p.heading, vars, mode, styles)}</h2>`
     : '';

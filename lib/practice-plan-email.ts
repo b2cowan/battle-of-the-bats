@@ -1,5 +1,8 @@
 import { endOnClock, joinNames } from './practice-plan-send';
 import { possessive } from './utils';
+import {
+  WARM_EMAIL, warmEmailButton, warmEmailDocument, warmEmailFootnote, warmEmailHeading, warmEmailParagraph,
+} from './email-envelope-warm';
 
 /**
  * The coach's own email for "Send to staff" — ruled J and K (COACH_PRACTICE_WHO_RUNS_IT, owner
@@ -57,7 +60,7 @@ export interface PracticePlanEmailInput {
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-const YOU = '<span style="font-weight:700;color:#57651E;"> · you</span>';
+const YOU = `<span style="font-weight:700;color:${WARM_EMAIL.olive};"> · you</span>`;
 
 export function practicePlanEmail(input: PracticePlanEmailInput): { subject: string; html: string } {
   const subject = `${possessive(input.dayLabel)} practice plan — ${input.teamName}`;
@@ -71,25 +74,23 @@ export function practicePlanEmail(input: PracticePlanEmailInput): { subject: str
 
   const rows = input.outline.map(b => {
     const stationLines = b.stations.map(s =>
-      `<div style="margin:2px 0 0 0;font-size:13px;color:${s.mine ? '#241E15' : '#4A4235'};">${esc(s.name)}${s.staffLine ? ` — ${esc(s.staffLine)}` : ''}${s.mine ? YOU : ''}</div>`,
+      `<div style="margin:2px 0 0 0;font-size:13px;color:${s.mine ? WARM_EMAIL.ink : WARM_EMAIL.secondary};">${esc(s.name)}${s.staffLine ? ` — ${esc(s.staffLine)}` : ''}${s.mine ? YOU : ''}</div>`,
     ).join('');
     return `<tr>
-      <td style="padding:8px 10px 8px 0;vertical-align:top;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:#241E15;">${esc(b.time)}</td>
-      <td style="padding:8px 0;vertical-align:top;font-size:14px;color:#241E15;border-bottom:1px solid rgba(70,55,30,0.12);">
+      <td style="padding:8px 10px 8px 0;vertical-align:top;white-space:nowrap;font-family:${WARM_EMAIL.font};font-variant-numeric:tabular-nums;font-size:13px;color:${WARM_EMAIL.ink};">${esc(b.time)}</td>
+      <td style="padding:8px 0;vertical-align:top;font-family:${WARM_EMAIL.font};font-size:14px;color:${WARM_EMAIL.ink};border-bottom:1px solid ${WARM_EMAIL.cardEdge};">
         <div style="font-weight:600;">${esc(b.title)}${b.mine ? YOU : ''}</div>
-        ${b.staffLine ? `<div style="font-size:13px;color:#4A4235;">${esc(b.staffLine)}</div>` : ''}
+        ${b.staffLine ? `<div style="font-size:13px;color:${WARM_EMAIL.secondary};">${esc(b.staffLine)}</div>` : ''}
         ${stationLines}
       </td>
     </tr>`;
   }).join('');
 
-  const html = `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:2rem;color:#241E15;background:#ffffff;">
-  <h2 style="font-size:1.15rem;font-weight:700;margin:0 0 0.5rem;">${possessive(esc(input.dayLabel))} practice plan is ready</h2>
-  <p style="margin:0 0 1rem;line-height:1.55;">${esc(input.coachName)} sent you the plan for <strong>${esc(input.whenLine)}</strong>${input.whereLine ? ` at ${esc(input.whereLine)}` : ''}.${mine}${arrive}</p>
-  <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 1.25rem;">${rows}</table>
-  <p style="margin:0 0 1.5rem;"><a href="${esc(input.planUrl)}" style="display:inline-block;background:#D9F99D;color:#1e2a0f;padding:0.6rem 1.1rem;border-radius:7px;text-decoration:none;font-weight:600;font-size:0.9rem;border:1px solid #b9d88c;">Open the plan</a></p>
-  <p style="margin:0;padding-top:0.75rem;border-top:1px solid rgba(70,55,30,0.12);font-size:0.78rem;color:#615A54;line-height:1.5;">${esc(input.coachName)} sent this to you directly as staff of ${esc(input.teamName)} — it isn’t affected by your notification settings.</p>
-</div>`;
+  const html = warmEmailDocument(`
+${warmEmailHeading(`${possessive(esc(input.dayLabel))} practice plan is ready`)}
+${warmEmailParagraph(`${esc(input.coachName)} sent you the plan for <strong>${esc(input.whenLine)}</strong>${input.whereLine ? ` at ${esc(input.whereLine)}` : ''}.${mine}${arrive}`)}
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 1.25rem;">${rows}</table>
+${warmEmailButton('Open the plan', esc(input.planUrl))}
+${warmEmailFootnote(`${esc(input.coachName)} sent this to you directly as staff of ${esc(input.teamName)} — it isn’t affected by your notification settings.`)}`);
   return { subject, html };
 }

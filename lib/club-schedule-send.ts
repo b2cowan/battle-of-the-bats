@@ -9,6 +9,7 @@ import { notify } from './notify';
 import { clearSettled } from './needs-attention';
 import { isScheduleBuilder } from './club-schedule-gate';
 import { escapeHtml, sendEmail, wrap, SITE_URL } from './email';
+import { WARM_EMAIL } from './email-envelope-warm';
 import { joinWithAnd } from './utils';
 import { addCalendarDays, isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from './timezone';
 import { fiscalYearOf } from './club-fiscal-year';
@@ -661,12 +662,12 @@ async function checkWritten(orgId: string, written: { slotIds: string[]; teamIds
   }
 }
 
-/** The email, wrapped in the house mail (`wrap`): every word escaped. */
+/** The email, in the warm envelope (`wrap`): every word escaped. */
 export function emailHtml(w: EmailWords): string {
   const p = (t: string) => `<p style="margin:0 0 0.75rem;">${escapeHtml(t)}</p>`;
   const lists = w.lists.map(l => `${l.title ? `<p style="margin:0 0 0.35rem;font-weight:700;">${escapeHtml(l.title)}</p>` : ''}<ul style="margin:0 0 0.75rem;padding-left:1.25rem;">${l.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`).join('');
-  const link = w.link ? `<p style="margin:1rem 0;"><a href="${escapeHtml(`${SITE_URL}${w.link.path}`)}" style="color:#D9F99D;font-weight:700;">${escapeHtml(w.link.label)}</a></p>` : '';
-  const also = w.alsoLink ? `<p style="margin:0 0 1rem;"><a href="${escapeHtml(`${SITE_URL}${w.alsoLink.path}`)}" style="color:#cbd5e1;">${escapeHtml(w.alsoLink.label)}</a></p>` : '';
+  const link = w.link ? `<p style="margin:1rem 0;"><a href="${escapeHtml(`${SITE_URL}${w.link.path}`)}" style="color:${WARM_EMAIL.olive};font-weight:700;">${escapeHtml(w.link.label)}</a></p>` : '';
+  const also = w.alsoLink ? `<p style="margin:0 0 1rem;"><a href="${escapeHtml(`${SITE_URL}${w.alsoLink.path}`)}" style="color:${WARM_EMAIL.secondary};">${escapeHtml(w.alsoLink.label)}</a></p>` : '';
   return wrap(`${p(w.greeting)}${w.paragraphs.map(p).join('')}${lists}${link}${also}${w.outro ? p(w.outro) : ''}`);
 }
 

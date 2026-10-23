@@ -12,6 +12,7 @@ import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { resolvePlatformTemplate, renderTemplateEmail } from '@/lib/platform-email-templates';
 import { getMarketingEmailDefault } from '@/lib/marketing-email-defaults';
 import type { EmailVars } from '@/lib/email-markup';
+import { warmUnsubscribeFooterHtml } from '@/lib/email-envelope-warm';
 import { withObservability } from '@/lib/observability';
 
 // Placeholder values so a preview reads naturally without a real recipient. These mirror
@@ -38,14 +39,8 @@ const SAMPLE_VARS: EmailVars = {
   hasCard: '',
 };
 
-// The CASL unsubscribe footer is injected at send time by lib/email-sender.ts; show a
-// sample copy here so the preview looks like the delivered email.
-const SAMPLE_FOOTER =
-  `<div style="margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);">` +
-  `<p style="margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;">` +
-  `You're receiving this because you signed up for FieldLogicHQ.&nbsp;` +
-  `<a href="#" style="color:rgba(217,249,157,0.5);text-decoration:underline;">Unsubscribe</a>` +
-  `&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>`;
+// The CASL unsubscribe footer lib/email-sender.ts adds at send time: the same builder, so the preview matches.
+const SAMPLE_FOOTER = warmUnsubscribeFooterHtml('#');
 
 export const GET = withObservability(async (request: NextRequest) => {
   const auth = await requirePlatformAreaApi('email', 'view');

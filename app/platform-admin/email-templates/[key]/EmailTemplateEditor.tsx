@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Loader, ArrowLeft, Send, RotateCcw, Check, Undo2, X } from 'lucide-react';
 import { renderHeadingAndBody } from '@/lib/email-markup';
-import { emailLookFor, warmEmailBody } from '@/lib/email-envelope-warm';
+import { warmEmailBody } from '@/lib/email-envelope-warm';
 import styles from '../email-templates.module.css';
 
 type Template = {
@@ -28,7 +28,7 @@ type Template = {
 // This understands the full markup — paragraphs, **bold**, - bullets, ::callout,
 // ::button, ::link, ::if — so a rich campaign previews exactly as it will send. A
 // dedicated cta_label (used by the transactional templates) is appended as a ::button.
-// The account emails (verification, password reset) preview in the warm envelope they send in.
+// Every email previews in the warm envelope it sends in.
 function buildPreviewHtml(fields: {
   key: string;
   heading: string;
@@ -38,17 +38,7 @@ function buildPreviewHtml(fields: {
   const body = fields.cta_label
     ? `${fields.body}\n\n::button ${fields.cta_label} | #`
     : fields.body;
-  const look = emailLookFor(fields.key);
-  const inner = renderHeadingAndBody({ heading: fields.heading, body, mode: 'chip', look });
-  if (look === 'warm') return warmEmailBody(inner);
-
-  return `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
-  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
-    <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
-  </div>
-  ${inner}
-</div>`;
+  return warmEmailBody(renderHeadingAndBody({ heading: fields.heading, body, mode: 'chip' }));
 }
 
 export default function EmailTemplateEditor({ templateKey }: { templateKey: string }) {

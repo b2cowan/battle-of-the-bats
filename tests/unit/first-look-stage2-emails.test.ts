@@ -3,15 +3,15 @@
  * U8 2026-10-20 with `/marketing`'s read and the owner's two calls; plan docs/projects/archive/FIRST_LOOK_SIGNUP_PLAN.md).
  *
  * Pins: the envelope is the drawing's; the confirmation email names the right next step for every way in and never
- * promises Home to someone its link takes elsewhere; a customised template for either key wears the warm envelope on
- * every render path (send, preview, the editor, test-send) while every other key keeps the dark `wrap()`; and the
- * dark markup look is untouched.
+ * promises Home to someone its link takes elsewhere; and (since The public face's S3a, 2026-10-23) there is ONE envelope:
+ * `wrap()` is the warm document, a template of any key wears it on every render path (send, preview, the editor,
+ * test-send), and the dark "house" look is gone.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readCode } from './_source-code.ts';
 import {
-  WARM_EMAIL, emailLookFor, wearsWarmEnvelope, warmEmailBody, warmEmailButton, warmEmailDocument,
+  WARM_EMAIL, WARM_MARKUP_LOOK, warmEmailBody, warmEmailButton, warmEmailDocument,
 } from '../../lib/email-envelope-warm.ts';
 import { renderHeadingAndBody, renderMarkupToHtml } from '../../lib/email-markup.ts';
 import { VERIFICATION_NEXT_STEP, verificationNextStep } from '../../lib/verification-next-step.ts';
@@ -45,30 +45,26 @@ describe('the warm envelope (D-F11, U8)', () => {
     assert.doesNotMatch(body, /<head|<style|<html|<!doctype/i);
     assert.ok(doc.includes(body), 'the document is the same envelope');
   });
-  it('wears only on the two account emails', () => {
-    assert.ok(wearsWarmEnvelope('signup_verification') && wearsWarmEnvelope('password_reset'));
-    assert.equal(emailLookFor('password_reset'), 'warm');
-    for (const k of ['registration_received', 'founding_welcome', '', null, undefined]) {
-      assert.equal(wearsWarmEnvelope(k), false, String(k));
-      assert.equal(emailLookFor(k), 'house', String(k));
-    }
+  it('there is no per-key split left: every email wears the one envelope', () => {
+    assert.doesNotMatch(readCode('lib/email-envelope-warm.ts'), /wearsWarmEnvelope|emailLookFor|WARM_ENVELOPE_KEYS/);
+    assert.doesNotMatch(readCode('lib/email-markup.ts'), /EmailLook|'house'|LOOKS\b/);
   });
 });
 
 describe('the markup in the warm look (a customised template)', () => {
   it('reads in ink on the white card, and its button is the envelope’s', () => {
-    const html = renderHeadingAndBody({ heading: 'Confirm your email', body: 'Hi.\n\n::button Confirm my email | {{verifyUrl}}', vars: { verifyUrl: 'https://x.test/' }, look: 'warm' });
+    const html = renderHeadingAndBody({ heading: 'Confirm your email', body: 'Hi.\n\n::button Confirm my email | {{verifyUrl}}', vars: { verifyUrl: 'https://x.test/' } });
     assert.match(html, new RegExp(`<h2 style="[^"]*font-size:24px;[^"]*color:${WARM_EMAIL.ink};">Confirm your email</h2>`));
     assert.match(html, new RegExp(`<p style="[^"]*font-size:16px;line-height:1.55;color:${WARM_EMAIL.ink};">Hi.</p>`));
     assert.ok(html.includes(warmEmailButton('Confirm my email', 'https://x.test/')));
     assert.doesNotMatch(html, /rgba\(241,245,249/, 'no light text from the dark look');
   });
-  it('the house look is unchanged, and is the default', () => {
+  it('the warm look is the only look, and is the default', () => {
     assert.equal(
       renderMarkupToHtml('Hello **there**.\n\n::button Go | {{u}}\n::link More | {{u}}', { u: 'https://x.test/' }),
-      '<p style="margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);">Hello <strong>there</strong>.</p>\n'
-        + '<a href="https://x.test/" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;">Go</a>\n'
-        + '<a href="https://x.test/" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">More</a>',
+      `<p style="${WARM_MARKUP_LOOK.p}">Hello <strong>there</strong>.</p>\n`
+        + `${warmEmailButton('Go', 'https://x.test/')}\n`
+        + `<a href="https://x.test/" style="${WARM_MARKUP_LOOK.link}">More</a>`,
     );
   });
 });
@@ -131,18 +127,19 @@ describe('the two emails and their render paths', () => {
       assert.ok(email.includes(w), w);
     }
   });
-  it('a customised template wears the warm envelope on every path; every other key keeps wrap()', () => {
-    assert.match(templates, /key: string;\s*\}\): string \{\s*const look = emailLookFor\(p\.key\);[\s\S]*mode: p\.mode, look \}\);\s*return \(look === 'warm' \? warmEmailDocument : wrap\)\(/);
-    assert.match(templates, /footerHtml: opts\?\.footerHtml,\s*key: row\.key,/, 'renderTemplateEmail (the preview route)');
-    assert.match(templates, /body: bodyWithCta\(row\),\s*vars,\s*key,\s*\}\);/, 'renderResolvedEmail (the send)');
-    assert.match(readCode('app/api/platform-admin/email-templates/[key]/test-send/route.ts'), /renderPlatformEmailHtml\(\{ heading, body: bodyMarkup, vars, footerHtml: testNote, key \}\)/);
+  it('a template of any key wears the one envelope on every path (send, preview, editor, test-send)', () => {
+    assert.match(templates, /mode\?: TokenMode;\s*\}\): string \{\s*const inner = renderHeadingAndBody\(\{ heading: p\.heading, body: p\.body, vars: p\.vars, mode: p\.mode \}\);\s*return wrap\(/);
+    assert.match(templates, /footerHtml: opts\?\.footerHtml,\s*\}\);/, 'renderTemplateEmail (the preview route)');
+    assert.match(templates, /body: bodyWithCta\(row\),\s*vars,\s*\}\);/, 'renderResolvedEmail (the send)');
+    assert.match(readCode('app/api/platform-admin/email-templates/[key]/test-send/route.ts'), /renderPlatformEmailHtml\(\{ heading, body: bodyMarkup, vars, footerHtml: testNote \}\)/);
     const editor = readCode('app/platform-admin/email-templates/[key]/EmailTemplateEditor.tsx');
-    assert.match(editor, /const look = emailLookFor\(fields\.key\);[\s\S]*if \(look === 'warm'\) return warmEmailBody\(inner\);/);
+    assert.match(editor, /return warmEmailBody\(renderHeadingAndBody\(\{ heading: fields\.heading, body, mode: 'chip' \}\)\);/);
     assert.match(editor, /buildPreviewHtml\(\{ key: templateKey,/);
   });
-  it('the shared dark wrap() is not the warm one, and the plain-text part skips the head', () => {
-    assert.match(email, /export const wrap = \(content: string\) => `\n<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;/);
+  it('wrap() IS the warm document, and the plain-text part skips the head', () => {
+    assert.match(email, /export const wrap = \(content: string\) => warmEmailDocument\(content\);/);
     assert.match(email, /\.replace\(\/<head\\b\[\\s\\S\]\*\?<\\\/head>\/i, ''\)/);
+    assert.match(readCode('lib/email-sender.ts'), /\.replace\(\/<head\\b\[\\s\\S\]\*\?<\\\/head>\/i, ''\)/, 'the marketing send’s text part too');
   });
   it('every sender says where its link returns, so the step is chosen from facts', () => {
     assert.match(readCode('app/api/auth/coach-signup/route.ts'), /actionLink: linkData\.properties\.action_link, next, door: startDoor, registration: !!continueName,/);

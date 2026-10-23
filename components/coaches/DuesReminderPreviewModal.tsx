@@ -1,6 +1,7 @@
 'use client';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import { duesReminderEmail, GUARDIAN_FIRST_NAME_PLACEHOLDER } from '@/lib/dues-reminder-email';
+import { warmEmailForPreview } from '@/lib/email-envelope-warm';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -182,7 +183,7 @@ export default function DuesReminderPreviewModal({
               </div>
               {/* The template's own inline styles carry the email's look; colours here only
                   ground it on the white "email client" card. */}
-              <div style={{ color: 'black', fontSize: '0.85rem' }} dangerouslySetInnerHTML={{ __html: shownHtml }} />
+              <div style={{ color: 'black', fontSize: '0.85rem' }} dangerouslySetInnerHTML={{ __html: warmEmailForPreview(shownHtml) }} />
             </div>
             {realLetter?.missingEmail ? (
               // The one caption that is a WARNING, in the same ink as the confirmation's courtesy

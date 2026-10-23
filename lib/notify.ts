@@ -10,6 +10,7 @@
 
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, escapeHtml } from './email';
+import { warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph } from './email-envelope-warm';
 import { sendWebPush, isPushConfigured } from './web-push';
 import { captureError } from './observability';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
@@ -97,21 +98,12 @@ function systemDefaults(eventType: NotificationEventType, role: string): Channel
 function notificationEmailHtml(rawTitle: string, rawBody?: string, link?: string, appUrl = '') {
   const title = escapeHtml(rawTitle);
   const body = rawBody ? escapeHtml(rawBody) : rawBody;
-  const linkHtml = link
-    ? `<p style="margin:1rem 0 0;"><a href="${appUrl}${link}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.6rem 1.25rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View →</a></p>`
-    : '';
-  const bodyHtml = body
-    ? `<p style="margin:0 0 0.5rem;color:rgba(241,245,249,0.75);line-height:1.6;">${body}</p>`
-    : '';
-  return `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
-  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
-    <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
-  </div>
-  <h2 style="color:#fff;font-size:1.1rem;font-weight:700;margin:0 0 0.75rem;">${title}</h2>
-  ${bodyHtml}
-  ${linkHtml}
-</div>`;
+  const linkHtml = link ? warmEmailButton('View', `${appUrl}${link}`) : '';
+  const bodyHtml = body ? warmEmailParagraph(body) : '';
+  return warmEmailDocument(`
+${warmEmailHeading(title)}
+${bodyHtml}
+${linkHtml}`);
 }
 
 // ── Main dispatch ─────────────────────────────────────────────────────────────

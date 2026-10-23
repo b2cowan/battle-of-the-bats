@@ -127,30 +127,6 @@
   "components/shared/WorkspacesPill.module.css": {
     "face": 1
   },
-  "lib/basic-coach-announcements.ts": {
-    "caps": 1,
-    "heavy": 1
-  },
-  "lib/email-markup.ts": {
-    "heavy": 2,
-    "caps": 1
-  },
-  "lib/email.ts": {
-    "caps": 30,
-    "heavy": 20,
-    "face": 8
-  },
-  "lib/family-email.ts": {
-    "caps": 1,
-    "heavy": 1
-  },
-  "lib/notify.ts": {
-    "caps": 1,
-    "heavy": 1
-  },
-  "lib/practice-plan-email.ts": {
-    "face": 1
-  },
   "public/offline.html": {
     "heavy": 2,
     "caps": 1

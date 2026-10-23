@@ -1,0 +1,266 @@
+<title>Public face S3a walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single reading column of walk parts; each part is a card with its steps, a verdict row and notes. */
+:root{
+  --bg:#F3F1EC; --panel:#FFFFFF; --ink:#1F1B16; --soft:#4E473D; --dim:#6F675B; --line:#DDD8CE;
+  --accent:#1F3A5F; --ok:#2C6A2A; --ok-bg:#E6F0E2; --warn:#8A4B12; --warn-bg:#F7EBDD; --bad:#9A2E17; --bad-bg:#F6E3DE;
+  --title:'Barlow Condensed','Arial Narrow',sans-serif; --body:'Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140F; --panel:#211E18; --ink:#F1EDE5; --soft:#CFC7B9; --dim:#A9A092; --line:#3A352C;
+  --accent:#9DB8E0; --ok:#8FCB86; --ok-bg:#22331F; --warn:#F0B27A; --warn-bg:#3A2A1A; --bad:#F09A86; --bad-bg:#3A201A; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:700 32px/1.05 var(--title);margin:0;text-wrap:balance}
+h2{font:700 24px/1.1 var(--title);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{display:flex;flex-direction:column;gap:8px;color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px 16px;display:flex;flex-direction:column;gap:12px}
+.signin dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.signin dt{font-weight:600;color:var(--soft)}
+.signin dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font:500 13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.progress{display:flex;align-items:center;gap:12px;font-weight:600}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.part-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.count{font-size:13px;color:var(--dim)}
+.where{font-size:14px;color:var(--soft)}
+.purpose{font-size:14px;color:var(--ink)}
+ol,ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ul.plain li{padding:2px 4px}
+li label{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;border-radius:6px;cursor:pointer;min-height:44px}
+li label:hover{background:var(--bg)}
+input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+li.done span{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--line)}
+.verdict{display:flex;gap:8px;flex-wrap:wrap}
+.verdict button{font:600 14px/1 var(--body);min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.verdict button[aria-pressed=true][data-v=pass]{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=issue]{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.verdict button[aria-pressed=true][data-v=call]{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+textarea{width:100%;box-sizing:border-box;min-height:64px;font:14px/1.5 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--panel);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#summary{min-height:180px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.note{font-size:13px;color:var(--dim)}
+.heads-up{border-color:var(--warn);background:var(--warn-bg)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.verdict button[aria-pressed=true][data-v=skip]{background:var(--bg);color:var(--soft);border-color:var(--soft)}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <h1>The public face, warm · S3a · one envelope for every email</h1>
+    <p>One purpose: every email the platform sends is the same white card with dark text, one lime button and the unchanged wordmark line. Before this build only the verification and password-reset emails were; about 45 others, and five with their own shells, were a near-black card with a lime banner.</p>
+    <p>The words are unchanged except four things the copy pass settled (docs/projects/active/PUBLIC_FACE_WARM_S3A_EMAIL_COPY.md): the Premium welcome's first line, the coach portal link at the foot of coach emails, the arrow dropped from button labels, and the forced capitals dropped from box titles. The "FieldLogicHQ · Canada" sign-off and the registration email's "does not process online payments" line are held as they were.</p>
+    <p>Parts A and B need only the dev server. C needs a place that really sends mail. D is optional.</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Where and who</h2>
+    <dl>
+      <dt>Dev server</dt><dd><code>http://localhost:3000</code>. Restart <code>npm run dev</code> first: this build added files and changed shared modules, so a server that was already running will not show it.</dd>
+      <dt>Part A</dt><dd><code>/dev/email-preview</code>. No sign-in.</dd>
+      <dt>Platform admin</dt><dd><code>/platform-admin/login</code>. Email and password: <code>UAT_PLATFORM_ADMIN_EMAIL</code> and <code>UAT_PLATFORM_ADMIN_PASSWORD</code> in <code>.env.local</code>. Keep this page private if you paste them anywhere.</dd>
+      <dt>Coach (Part B step 4, Part D)</dt><dd>A coach whose team has Player dues set up. JORDAN from the Club Tier 4c-2 walk (head coach, 15U AAA) is the usual one; use any coach with dues if his team has none.</dd>
+      <dt>Mail apps (Part C)</dt><dd>Your own inbox in Gmail, Apple Mail and Outlook, in light and dark mode. Each has a Skipped step if you do not have one.</dd>
+    </dl>
+  </section>
+
+  <section class="card heads-up" aria-labelledby="warn-h">
+    <h2 id="warn-h">Before you start</h2>
+    <ul class="plain">
+      <li>Written 2026-10-23 against the working tree on dev, before the commit. The change is a look, not behaviour: who gets which email and when did not change.</li>
+      <li>Mail apps differ. Outlook's desktop app draws squarer corners and ignores some padding; Gmail and Apple Mail may darken a light card in dark mode. Only unreadable text, a missing button or a cut-off card is a defect.</li>
+      <li>If a step's words don't match, tick nothing, write what you saw in that part's notes and mark Issue.</li>
+    </ul>
+  </section>
+
+  <div class="progress" aria-live="polite"><span id="prog-text">0 of 0</span><span class="bar" aria-hidden="true"><i id="prog-bar"></i></span></div>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="notin-h">
+    <h2 id="notin-h">Not in this walk</h2>
+    <ul class="plain">
+      <li>The club's logo and colour on family emails (S3b), and the new wordmark (S4).</li>
+      <li>The operator alert email (internal), and who receives which email.</li>
+      <li>The unsubscribe footer in a real inbox: it is added only on a real marketing send, so Part B step 3 (the admin preview, which builds it the same way) is the check. A real campaign send is not part of this walk.</li>
+      <li>Light-only colour on every client: pinned by tests as far as markup goes; the inbox part is how you see the rest.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Send it back</h2>
+    <p class="where">Build the summary and paste it into the chat.</p>
+    <div class="actions">
+      <button class="btn" id="build" type="button">Build summary</button>
+      <button class="btn sec" id="copy" type="button">Copy</button>
+      <button class="btn sec" id="reset" type="button">Clear my ticks</button>
+    </div>
+    <label for="summary" class="note">Summary</label>
+    <textarea id="summary" readonly></textarea>
+  </section>
+</div>
+
+<script>
+const PARTS = [
+  {
+    "id": "pA",
+    "title": "A · Every coach, tournament and account email, in the browser",
+    "purpose": "Every email in the dev gallery is one white card with dark text and one button style, with the wordmark line unchanged and no leftover from the near-black card.",
+    "where": "A computer. http://localhost:3000/dev/email-preview (no sign-in; it only exists on the dev server). Scroll the gallery top to bottom. Each email is a frame; look at the whole frame, not only its top.",
+    "steps": [
+      "The gallery lists 4 groups (Automatic, Organizer-initiated, To the organizer, Account emails) and about 20 emails. Not one frame has a near-black background or a lime heading. Every frame is a white card with dark text on the page's plain ground.",
+      "Every frame opens with the same wordmark line, FIELDLOGICHQ in typewriter lettering: FIELD dark, LOGIC olive, HQ grey. It is the line the verification email already had. There is no lime spaced banner above it.",
+      "REGISTRATION RECEIVED: the heading is dark. \"Registration Details\" and \"Track your registration\" are bold dark titles in cream boxes with a thin grey or olive left edge. They are not small capitals, and the text inside is dark and easy to read.",
+      "REGISTRATION RECEIVED: one lime button with a thin olive edge, \"Open your Coaches Portal\", with no arrow. It is the only button in the email.",
+      "REGISTRATION RECEIVED: \"pending review\" is dark and bold (it used to be amber). The paragraph under it still ends \"FieldLogicHQ does not process online payments.\" That line is held as it is until Club Stage 12.",
+      "PAYMENT RECORDED, foot of the email: a thin rule, then a small olive underlined link \"See your team's schedule, status and updates in your Coaches Portal\". It says \"and\", not \"&\", and has no arrow. (It sits at the foot of Waitlisted, Payment recorded, Payment reminder, Schedule published, Final results posted and the announcement email too; check two of them.)",
+      "TEAM ACCEPTED (with payment instructions): the payment box is cream with dark text; the amount-due line is bold and readable; \"Questions? Contact …\" shows a grey line with an olive underlined address. One lime button, \"View Your Registration Dashboard\".",
+      "REJECTION: the \"Contact the organizer\" button is white with an olive edge and dark text (the one second-choice button). It is readable and has the same corner shape as the lime buttons.",
+      "PREMIUM COACHES PORTAL WELCOME: the first paragraph reads \"Your Premium Coaches Portal is ready for Toronto Blue Jays U13, with the full season toolkit.\" It no longer mentions a free portal carrying over. The \"What's included now\" box is cream, and the one button is lime.",
+      "FINAL RESULTS POSTED: the three links (final standings, scores and schedule, teams) are olive and easy to tell from the text around them. \"Keep this team going\" is a cream box, not a dark one.",
+      "TO THE ORGANIZER (new registration): the contact and \"Registered by\" addresses are olive links. The button \"Review in Admin Panel\" is lime with no arrow.",
+      "CONFIRM YOUR EMAIL and RESET YOUR PASSWORD: look exactly as they did before this change (they were already on the envelope).",
+      "Across all of them: no pale grey text that is hard to read on white, no dark box left over, no two different button styles in one email, nothing cut off at the right edge. If one is wrong, write which email in the notes."
+    ]
+  },
+  {
+    "id": "pB",
+    "title": "B · The same look in the screens that show an email",
+    "purpose": "Where the product shows a sample of an email, the sample wears the same white card, and a sample cannot change the page around it.",
+    "where": "A computer, localhost:3000. PLATFORM ADMIN for the first two steps (sign in at /platform-admin/login; the email and password are UAT_PLATFORM_ADMIN_EMAIL and UAT_PLATFORM_ADMIN_PASSWORD in .env.local). A COACH with a team that has Player dues for the third step (for example JORDAN from the Club Tier 4c-2 walk, if his team has dues set up).",
+    "steps": [
+      "PLATFORM ADMIN › Email Templates › open \"Registration Received\": the live preview beside the editor is a white card under the wordmark line, with the template's {{tokens}} shown as small olive-tinted chips. Type a word into the body: the preview updates and stays white.",
+      "PLATFORM ADMIN › Email Templates: open \"Subscription Cancelled\" (a billing one) and \"Password Reset\". All three previews look like one family: same card, same button. Before this change only the password reset did.",
+      "PLATFORM ADMIN › Email: open the preview of a campaign (for example \"Founding — Welcome\"). At the end of the card, inside it, a thin rule and two small grey lines: \"You're receiving this because you signed up for FieldLogicHQ.\" and \"Unsubscribe · FieldLogicHQ · Canada\", where Unsubscribe is an olive underlined link. The footer is not outside the card.",
+      "COACH › that team's Player dues screen, beside the automatic dues reminders switch: \"See an example\". A window shows the dues letter in a white card with the wordmark line. It ends with a rule and the grey fine print \"Sent by … about player dues for …\", including \"so they are sent even if you have unsubscribed\".",
+      "Close the dues window. The coach screen behind it looks exactly as it did before (Warm stays Warm, Dark stays Dark; no colour or scrollbar change on the page). Open and close it twice."
+    ]
+  },
+  {
+    "id": "pC",
+    "title": "C · Real mail, in a real inbox",
+    "purpose": "In the mail apps people actually use, a FieldLogicHQ email reads as a white card with dark text and a lime button, in light and dark mode.",
+    "where": "This part needs a place that really sends mail. Localhost does not: its mail key is empty, so \"Send test\" shows an error there (that is expected; tick Skipped for the whole part). Use staging after release, or any environment where mail is on. Sending test mail to your own address is your call. PLATFORM ADMIN › Email Templates › open a template › Send test: it goes to the address you are signed in with. Send these five: Password Reset, Registration Received, League Registration Approved, Trial Ending Soon, Founding — Welcome. Mail apps: Gmail (web or phone), Apple Mail, Outlook. Light mode, then dark mode.",
+    "steps": [
+      "Sending: all five arrive. Each subject starts \"[TEST]\". Each has a small grey line at the end of the card, \"Test email sent from Platform Admin · Template key: …\".",
+      "GMAIL, light: each is a white card on the app's own ground, dark text, the wordmark line at the top, one lime button with an olive edge that you can tap. Nothing is cut off, and the card does not run past the screen on a phone.",
+      "GMAIL, dark mode: the card either stays white or the app darkens it. Either way every word is readable, the button is still visibly a button, and no text disappears into its background.",
+      "GMAIL: skipped, no Gmail available.",
+      "APPLE MAIL, light: same as Gmail light.",
+      "APPLE MAIL, dark mode: same as Gmail dark. The card keeps its light look where the app honours it.",
+      "APPLE MAIL: skipped, no Apple Mail available.",
+      "OUTLOOK (desktop app or web), light: the card sits in a fixed 600 px column. The lime button is still a filled button with an olive edge (not a bare underlined link), and the card's corners may be square there, which is fine.",
+      "OUTLOOK, dark mode: every word is readable and the button is still visible.",
+      "OUTLOOK: skipped, no Outlook available.",
+      "A test send draws the saved template text, so its words can differ from the built-in email you saw in Part A. Check only that each heading and button label is readable and the button is a button."
+    ]
+  },
+  {
+    "id": "pD",
+    "title": "D · Optional: family, team and practice-plan mail for real",
+    "purpose": "The emails with their own builders (a family announcement, a team announcement, a practice plan) wear the same card and keep their footer words.",
+    "where": "Only where mail is on, as a coach or club admin with a family announcement, a team announcement and a practice plan to send, all to your own address. Tick Skipped for the whole part if you do not want to send real mail; the look is also covered by automated tests and by Part B's dues sample.",
+    "steps": [
+      "A FAMILY ANNOUNCEMENT (from the Families screen, to your own address): a white card with the team name as a small bold grey line under the wordmark, the heading, the message, and at the foot a rule with \"Sent by … because …\" and an olive underlined \"Unsubscribe from … emails\". The words of that footer are exactly as before.",
+      "A TEAM ANNOUNCEMENT to a roster contact: team name line, heading, message; at the foot \"You are receiving this because your email is listed as a roster contact for …\". No unsubscribe link (as before).",
+      "A PRACTICE PLAN sent to staff: heading \"<day>'s practice plan is ready\", the table of blocks with times in plain figures (not typewriter lettering), \"· you\" in olive on your rows, one lime button \"Open the plan\", and at the foot the line that says the coach sent it directly and that notification settings do not affect it.",
+      "A NOTIFICATION that also emails (for example a needs-attention one): heading, one line of text, a lime button \"View\" with no arrow."
+    ]
+  }
+];
+
+const KEY = 'public-face-s3a-walk-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const host = document.getElementById('parts');
+for (const part of PARTS) {
+  const sec = document.createElement('section');
+  sec.className = 'card';
+  sec.setAttribute('aria-labelledby', part.id + '-h');
+  sec.innerHTML = `<div class="part-head"><h2 id="${part.id}-h"></h2><span class="count" id="${part.id}-count"></span></div><p class="purpose"></p><p class="where"></p><ol></ol>
+    <div class="verdict" role="group" aria-label="Verdict for this part">
+      <button type="button" data-v="pass" aria-pressed="false">Pass</button>
+      <button type="button" data-v="issue" aria-pressed="false">Issue</button>
+      <button type="button" data-v="call" aria-pressed="false">Needs a call</button>
+      <button type="button" data-v="skip" aria-pressed="false">Skipped</button>
+    </div>
+    <label class="note" for="${part.id}-notes">Notes</label>
+    <textarea id="${part.id}-notes"></textarea>`;
+  sec.querySelector('h2').textContent = part.title;
+  sec.querySelector('.purpose').textContent = part.purpose;
+  sec.querySelector('.where').textContent = part.where;
+  const ol = sec.querySelector('ol');
+  part.steps.forEach((text, i) => {
+    const id = `${part.id}-s${i}`;
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox" id="${id}"><span></span></label>`;
+    li.querySelector('span').textContent = text;
+    const box = li.querySelector('input');
+    box.checked = !!state[id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', () => { state[id] = box.checked; li.classList.toggle('done', box.checked); save(); tally(); });
+    ol.appendChild(li);
+  });
+  const vKey = part.id + '-verdict';
+  sec.querySelectorAll('.verdict button').forEach(b => {
+    b.setAttribute('aria-pressed', String(state[vKey] === b.dataset.v));
+    b.addEventListener('click', () => {
+      state[vKey] = state[vKey] === b.dataset.v ? '' : b.dataset.v;
+      sec.querySelectorAll('.verdict button').forEach(x => x.setAttribute('aria-pressed', String(state[vKey] === x.dataset.v)));
+      save();
+    });
+  });
+  const notes = sec.querySelector('textarea');
+  notes.value = state[part.id + '-notes'] || '';
+  notes.addEventListener('input', () => { state[part.id + '-notes'] = notes.value; save(); });
+  host.appendChild(sec);
+}
+
+function tally() {
+  let all = 0, done = 0;
+  for (const part of PARTS) {
+    let d = 0;
+    part.steps.forEach((_, i) => { all++; if (state[`${part.id}-s${i}`]) { done++; d++; } });
+    document.getElementById(part.id + '-count').textContent = `${d} of ${part.steps.length}`;
+  }
+  document.getElementById('prog-text').textContent = `${done} of ${all} checked`;
+  document.getElementById('prog-bar').style.width = all ? `${Math.round(done / all * 100)}%` : '0';
+}
+tally();
+
+const VERDICT = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL', skip: 'SKIPPED', '': 'not marked' };
+document.getElementById('build').addEventListener('click', () => {
+  const lines = ['The public face, warm, S3a (one envelope for every email) — walk results'];
+  for (const part of PARTS) {
+    const done = part.steps.filter((_, i) => state[`${part.id}-s${i}`]).length;
+    lines.push('', `${part.title}: ${VERDICT[state[part.id + '-verdict'] || '']} (${done}/${part.steps.length})`);
+    part.steps.forEach((t, i) => { if (!state[`${part.id}-s${i}`]) lines.push(`  ☐ ${t}`); });
+    const n = (state[part.id + '-notes'] || '').trim();
+    if (n) lines.push(`  Notes: ${n}`);
+  }
+  document.getElementById('summary').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const box = document.getElementById('summary');
+  if (!box.value) document.getElementById('build').click();
+  try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); }
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.querySelectorAll('input[type=checkbox]').forEach(b => { b.checked = false; const li = b.closest('li'); if (li) li.classList.remove('done'); });
+  document.querySelectorAll('.verdict button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.querySelectorAll('textarea').forEach(t => { if (t.id !== 'summary') t.value = ''; });
+  tally();
+});
+</script>

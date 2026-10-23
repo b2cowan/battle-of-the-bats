@@ -17,6 +17,7 @@
  */
 import { formatStoredDate } from './timezone';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
+import { WARM_EMAIL_STYLE, warmEmailDocument, warmEmailParagraph } from './email-envelope-warm';
 
 export interface DuesReminderEmailItem {
   playerFirstName: string;
@@ -122,17 +123,15 @@ export function duesReminderEmail(opts: {
   // credits lowered these bills, the email opens with the earning, not the ask.
   const totalEarned = Math.round(items.reduce((s, i) => s + (i.creditApplied ?? 0) * 100, 0)) / 100;
   const earnedIntro = totalEarned > 0.005
-    ? `<p>Your family's fundraising has earned <strong>${fmt(totalEarned)}</strong> toward dues — thank you. The amounts below are what is still left to send.</p>`
+    ? warmEmailParagraph(`Your family's fundraising has earned <strong>${fmt(totalEarned)}</strong> toward dues — thank you. The amounts below are what is still left to send.`)
     : '';
-  const html = `
-<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
-  <p>Hi ${esc(guardianFirst)},</p>
-  ${earnedIntro}
-  <p>This is a friendly reminder that the following dues installments are ${anyOverdue ? 'due' : 'coming due'} for your player(s) on <strong>${esc(teamName)}</strong>:</p>
-  <ul style="padding-left:1.25rem;">${rows}</ul>
-  <p>If you've already sent a payment, it may not be recorded yet — just let your coach know. To view your full payment schedule, contact your coach directly.</p>
-  ${duesReminderFooterHtml({ orgName, teamName })}
-</div>`;
+  const html = warmEmailDocument(`
+${warmEmailParagraph(`Hi ${esc(guardianFirst)},`)}
+${earnedIntro}
+${warmEmailParagraph(`This is a friendly reminder that the following dues installments are ${anyOverdue ? 'due' : 'coming due'} for your player(s) on <strong>${esc(teamName)}</strong>:`)}
+<ul style="${WARM_EMAIL_STYLE.list}">${rows}</ul>
+${warmEmailParagraph(`If you've already sent a payment, it may not be recorded yet — just let your coach know. To view your full payment schedule, contact your coach directly.`)}
+${duesReminderFooterHtml({ orgName, teamName })}`);
   const subject = window
     ? `Upcoming dues reminder (${window} days) — ${teamName}`
     : anyOverdue

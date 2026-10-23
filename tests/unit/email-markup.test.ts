@@ -68,13 +68,13 @@ describe('renderMarkupToHtml — buttons & links', () => {
   it('renders a primary button with filled href', () => {
     const html = renderMarkupToHtml('::button Go now → | {{url}}', { url: 'https://x.test/setup' });
     assert.match(html, /<a href="https:\/\/x\.test\/setup"[^>]*>Go now →<\/a>/);
-    assert.match(html, /background:#D9F99D/);
+    assert.match(html, /background:#d9f99d/); // the envelope's button
   });
 
   it('renders a quiet secondary link', () => {
     const html = renderMarkupToHtml('::link See plans → | {{url}}', { url: 'https://x.test/pricing' });
     assert.match(html, /<a href="https:\/\/x\.test\/pricing"[^>]*>See plans →<\/a>/);
-    assert.doesNotMatch(html, /background:#D9F99D/); // link variant has no fill
+    assert.doesNotMatch(html, /background:#d9f99d/); // link variant has no fill
   });
 
   it('escapes & in a filled URL to &amp; (attribute-safe)', () => {
@@ -121,14 +121,15 @@ describe('renderMarkupToHtml — callouts', () => {
   it('renders a lime callout with a label and inner bullets', () => {
     const md = '::callout What you get\n- One\n- Two\n::end';
     const html = renderMarkupToHtml(md);
-    assert.match(html, /rgba\(217,249,157/); // lime border
-    assert.match(html, /text-transform:uppercase[^"]*">What you get<\/p>/);
+    assert.match(html, /border-left:3px solid #55641c/); // the olive edge
+    assert.match(html, /font-weight:700;color:#211c15;">What you get<\/p>/, 'the label is sentence case ink, no forced capitals');
+    assert.doesNotMatch(html, /text-transform/);
     assert.equal((html.match(/<li>/g) ?? []).length, 2);
   });
 
   it('renders a blue callout via ::callout.blue', () => {
     const html = renderMarkupToHtml('::callout.blue Heads up\nBody line\n::end');
-    assert.match(html, /rgba\(30,58,138/); // blue border
+    assert.match(html, /border-left:3px solid #665f57/); // the grey edge
     assert.match(html, />Heads up<\/p>/);
     assert.match(html, /Body line/);
   });
@@ -171,7 +172,7 @@ describe('renderMarkupToHtml — conditionals', () => {
 });
 
 describe('renderHeadingAndBody', () => {
-  it('renders a lime heading followed by the body, with tokens filled', () => {
+  it('renders a heading followed by the body, with tokens filled', () => {
     const html = renderHeadingAndBody({
       heading: 'Welcome, {{orgName}}',
       body: 'You are **in**.',

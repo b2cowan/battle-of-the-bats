@@ -1,5 +1,6 @@
 import 'server-only';
 import { sendEmail } from './email';
+import { WARM_EMAIL_STYLE, warmEmailDocument, warmEmailFootnote, warmEmailHeading } from './email-envelope-warm';
 import { supabaseAdmin } from './supabase-admin';
 
 /**
@@ -129,17 +130,11 @@ function announcementEmailHtml(params: { teamName: string; subject: string; body
   const subject = escapeHtml(params.subject);
   const body = escapeHtml(params.body).replace(/\n/g, '<br>');
   const teamName = escapeHtml(params.teamName);
-  return `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2rem;border:1px solid rgba(217,249,157,0.2);">
-  <div style="margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid rgba(217,249,157,0.16);">
-    <span style="font-size:0.72rem;font-weight:900;color:#D9F99D;letter-spacing:0.14em;text-transform:uppercase;">${teamName}</span>
-  </div>
-  <h2 style="margin:0 0 1rem;color:#fff;font-size:1.25rem;line-height:1.3;">${subject}</h2>
-  <div style="color:rgba(241,245,249,0.82);font-size:0.95rem;line-height:1.7;">${body}</div>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.45);font-size:0.78rem;line-height:1.5;">
-    You are receiving this because your email is listed as a roster contact for ${teamName}.
-  </p>
-</div>`;
+  return warmEmailDocument(`
+<p style="${WARM_EMAIL_STYLE.eyebrow}">${teamName}</p>
+${warmEmailHeading(subject)}
+<div style="${WARM_EMAIL_STYLE.paragraph}">${body}</div>
+${warmEmailFootnote(`You are receiving this because your email is listed as a roster contact for ${teamName}.`)}`);
 }
 
 function statusFor(sentCount: number, failedCount: number): BasicCoachTeamAnnouncementStatus {

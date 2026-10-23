@@ -11,6 +11,7 @@ import {
 } from '@/lib/plan-config';
 import { INVITATION_EMAIL_WORDS as INVITE } from '@/lib/invite-only-words';
 import {
+  WARM_EMAIL, WARM_EMAIL_STYLE, warmPanelStyle,
   warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall,
 } from '@/lib/email-envelope-warm';
 import { VERIFICATION_NEXT_STEP, type VerificationNextStep } from '@/lib/verification-next-step';
@@ -138,15 +139,14 @@ export { coachEmailsPaused, coachEmailEnabled, coachEmailBlock, resolveCoachReci
 
 // ── Email templates ────────────────────────────────────────────────────────────
 
-// The shared dark envelope. The two account emails (verification, password reset) wear the warm one instead
-// (lib/email-envelope-warm.ts); moving the rest onto it is The public face's S3.
-export const wrap = (content: string) => `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
-  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
-    <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
-  </div>
-  ${content}
-</div>`;
+// The shared envelope: the warm one (lib/email-envelope-warm.ts), for every email. The verification and password-reset
+// emails call it directly; The public face's S3a moved the rest onto it, so this is its name for the builders below.
+export const wrap = (content: string) => warmEmailDocument(content);
+
+// A reference number or an ID is set as data (P1: the typewriter face is for the wordmark, a plan chip and real data).
+// One place carries the marker, because an email template string cannot hold a comment.
+// type-ok: data
+const DATA_FACE = 'font-family:monospace;';
 
 /**
  * Build the coach-portal link for an email. Carries registrationId + email so it doubles as a
@@ -174,8 +174,8 @@ export function coachPortalUrl(p: { registrationId?: string; email?: string; reg
  */
 export function coachPortalFooter(p: { registrationId?: string; email?: string }): string {
   return `
-    <div style="margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid rgba(30,58,138,0.2);">
-      <a href="${coachPortalUrl(p)}" style="color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;">See your team's schedule, status &amp; updates in your Coaches Portal &rarr;</a>
+    <div style="${WARM_EMAIL_STYLE.footRule}">
+      <a href="${coachPortalUrl(p)}" style="${WARM_EMAIL_STYLE.textLink}font-family:${WARM_EMAIL.font};font-size:14px;line-height:1.55;">See your team's schedule, status and updates in your Coaches Portal</a>
     </div>`;
 }
 
@@ -240,24 +240,24 @@ export function registrationConfirmationHtml(p: RegistrationEmailParams & {
   const divisionName = escapeEmailHtml(p.divisionName);
   const tournamentName = escapeEmailHtml(p.tournamentName);
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
     <p>Hi <strong>${greetingName(p.registrantName)}</strong>,</p>
     <p>Thanks for registering <strong>${teamName}</strong> for <strong>${tournamentName}</strong>! 🎉 We've got your entry for the <strong>${divisionName}</strong> division.</p>
     ${updatesGoToHtml(p)}
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Team: <strong>${teamName}</strong><br>
         ${coachLineHtml(p.coachName)}
         Division: <strong>${divisionName}</strong><br>
         Tournament: <strong>${tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>.${p.paymentsTracked === false ? '' : ' If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.'}</p>
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Track your registration</p>
-      <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Your free FieldLogicHQ Coaches Portal account is ready. Open it to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
-      <a href="${joinUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your Coaches Portal →</a>
+    <p>Your registration is currently <strong>pending review</strong>.${p.paymentsTracked === false ? '' : ' If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.'}</p>
+    <div style="${warmPanelStyle('olive')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Track your registration</p>
+      <p style="margin:0 0 1rem;color:${WARM_EMAIL.ink};line-height:1.6;">Your free FieldLogicHQ Coaches Portal account is ready. Open it to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
+      ${warmEmailButton('Open your Coaches Portal', joinUrl)}
     </div>
   `);
 }
@@ -276,19 +276,19 @@ export function manualTeamRegistrationHtml(p: {
       ? 'The organizer has marked your tournament fee as paid.'
       : 'If payment is required, the organizer will follow up with payment instructions.';
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p><strong>${p.teamName}</strong> has been registered in the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName || 'Not provided'}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
-    ${paymentLine ? `<p style="color:rgba(255,255,255,0.7);">${paymentLine}</p>` : ''}
+    ${paymentLine ? `<p>${paymentLine}</p>` : ''}
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
@@ -309,22 +309,22 @@ export function teamInvitationHtml(p: {
   const tournamentName = escapeEmailHtml(p.tournamentName);
   const claimUrl = coachPortalUrl({ registrationId: p.registrationId, email: p.coachEmail });
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${INVITE.heading}</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${INVITE.heading}</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>${INVITE.body(`<strong>${tournamentName}</strong>`, `<strong>${teamName}</strong>`, `<strong>${divisionName}</strong>`)}</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">${INVITE.detailsHeading}</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">${INVITE.detailsHeading}</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Team: <strong>${teamName}</strong><br>
         ${coachLineHtml(p.coachName)}
         Division: <strong>${divisionName}</strong><br>
         Tournament: <strong>${tournamentName}</strong>
       </p>
     </div>
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">${INVITE.claimHeading}</p>
-      <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">${INVITE.claimBody}</p>
-      <a href="${claimUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">${INVITE.button}</a>
+    <div style="${warmPanelStyle('olive')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">${INVITE.claimHeading}</p>
+      <p style="margin:0 0 1rem;color:${WARM_EMAIL.ink};line-height:1.6;">${INVITE.claimBody}</p>
+      ${warmEmailButton(INVITE.button, claimUrl)}
     </div>
   `);
 }
@@ -344,18 +344,18 @@ export function adminNotificationHtml(p: {
   const by = p.registeredBy;
   const byEmail = by ? escapeEmailHtml(by.email) : '';
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">📋 New Team Registration</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">📋 New Team Registration</h2>
     <p>A new team has registered for <strong>${escapeEmailHtml(p.tournamentName)}</strong>:</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1rem 0;">
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary', { margin: '1rem 0' })}">
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
         ${coachLineHtml(p.coachName)}
         Division: <strong>${escapeEmailHtml(p.divisionName)}</strong><br>
-        Contact: <a href="mailto:${email}" style="color:#D9F99D;">${email}</a>
-        ${by ? `<br>Registered by: ${by.name?.trim() ? `<strong>${escapeEmailHtml(by.name.trim())}</strong>, ` : ''}<a href="mailto:${byEmail}" style="color:#D9F99D;">${byEmail}</a>` : ''}
+        Contact: <a href="mailto:${email}" style="color:${WARM_EMAIL.olive};">${email}</a>
+        ${by ? `<br>Registered by: ${by.name?.trim() ? `<strong>${escapeEmailHtml(by.name.trim())}</strong>, ` : ''}<a href="mailto:${byEmail}" style="color:${WARM_EMAIL.olive};">${byEmail}</a>` : ''}
       </p>
     </div>
-    <a href="${adminUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Review in Admin Panel →</a>
+    ${warmEmailButton('Review in Admin Panel', adminUrl)}
   `);
 }
 
@@ -433,18 +433,18 @@ export function acceptanceHtml(p: {
     ? escapeHtml(instructions)
     : 'If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.';
   return wrap(`
-    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     ${p.paymentsTracked === false ? `
-    <p style="margin:1.5rem 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>` : `
-    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.35);border-left:3px solid rgba(34,197,94,0.6);padding:1.5rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Payment</p>
-      ${p.feeLine ? `<p style="margin:0 0 0.75rem;color:#fff;font-size:0.98rem;"><strong>Amount due:</strong> ${p.feeLine}</p>` : ''}
-      <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">${paymentBody}</p>
-      <p style="margin:1rem 0 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
+    <p style="margin:1.5rem 0;color:${WARM_EMAIL.secondary};font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.</p>` : `
+    <div style="${warmPanelStyle('secondary', { padding: '1.5rem' })}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Payment</p>
+      ${p.feeLine ? `<p style="margin:0 0 0.75rem;color:${WARM_EMAIL.ink};font-size:0.98rem;"><strong>Amount due:</strong> ${p.feeLine}</p>` : ''}
+      <p style="margin:0 0 0.75rem;color:${WARM_EMAIL.ink};">${paymentBody}</p>
+      <p style="margin:1rem 0 0;color:${WARM_EMAIL.secondary};font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.</p>
     </div>`}
-    <a href="${dashboardUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View Your Registration Dashboard →</a>
+    ${warmEmailButton('View Your Registration Dashboard', dashboardUrl)}
   `);
 }
 
@@ -453,20 +453,20 @@ export function waitlistConfirmationHtml(p: RegistrationEmailParams) {
   const divisionName = escapeEmailHtml(p.divisionName);
   const tournamentName = escapeEmailHtml(p.tournamentName);
   return wrap(`
-    <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
     <p>Hi <strong>${greetingName(p.registrantName)}</strong>,</p>
     <p>Thanks for registering <strong>${teamName}</strong> for the <strong>${divisionName}</strong> division of <strong>${tournamentName}</strong>.</p>
     ${updatesGoToHtml(p)}
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Team: <strong>${teamName}</strong><br>
         ${coachLineHtml(p.coachName)}
         Division: <strong>${divisionName}</strong><br>
         Tournament: <strong>${tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">The <strong>${divisionName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
+    <p>The <strong>${divisionName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
@@ -477,11 +477,11 @@ export function rejectionHtml(p: {
 }) {
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
-    <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.divisionName}</strong> division at this time.</p>
-    <p style="color:rgba(241,245,249,0.7);">This may be due to division capacity or eligibility requirements. If you'd like to be considered for another division or a future event, reach out — many organizers run more than one tournament a season.</p>
-    <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Contact the organizer</a>
+    <p>This may be due to division capacity or eligibility requirements. If you'd like to be considered for another division or a future event, reach out — many organizers run more than one tournament a season.</p>
+    ${warmEmailButton('Contact the organizer', `mailto:${contact}`)}
   `);
 }
 
@@ -492,10 +492,10 @@ export function paymentConfirmationHtml(p: {
   coachEmail?: string;
 }) {
   return wrap(`
-    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Payment Recorded</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Payment Recorded</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
-    <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong style="color:#22C55E;">paid</strong>.</p>
-    <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements — good luck this season!</p>
+    <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong>paid</strong>.</p>
+    <p>Stay tuned for schedule announcements — good luck this season!</p>
     ${coachPortalFooter({ registrationId: p.teamId, email: p.coachEmail })}
   `);
 }
@@ -544,13 +544,13 @@ export function announcementHtml(p: {
 }) {
   const bodyHtml = escapeEmailHtml(p.body)
     .split('\n')
-    .map(line => (line.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.7;color:rgba(241,245,249,0.85);">${line}</p>` : ''))
+    .map(line => (line.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.7;color:${WARM_EMAIL.ink};">${line}</p>` : ''))
     .join('');
   return wrap(`
-    <p style="margin:0 0 0.35rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Announcement &middot; ${escapeEmailHtml(p.tournamentName)}</p>
-    <h2 style="color:#fff;font-size:1.35rem;margin:0 0 1.25rem;">${escapeEmailHtml(p.title)}</h2>
+    <p style="${WARM_EMAIL_STYLE.eyebrow}">Announcement &middot; ${escapeEmailHtml(p.tournamentName)}</p>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.35rem;margin:0 0 1.25rem;">${escapeEmailHtml(p.title)}</h2>
     ${bodyHtml}
-    ${p.contactEmail ? `<p style="color:rgba(241,245,249,0.55);font-size:0.85rem;margin-top:1.5rem;">Questions? Contact <a href="mailto:${escapeEmailHtml(p.contactEmail)}" style="color:#D9F99D;">${escapeEmailHtml(p.contactEmail)}</a></p>` : ''}
+    ${p.contactEmail ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.85rem;margin-top:1.5rem;">Questions? Contact <a href="mailto:${escapeEmailHtml(p.contactEmail)}" style="color:${WARM_EMAIL.olive};">${escapeEmailHtml(p.contactEmail)}</a></p>` : ''}
     ${coachPortalFooter({ email: p.coachEmail })}
   `);
 }
@@ -573,20 +573,20 @@ export function paymentReminderHtml(p: {
     .join('');
 
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tournament Payment Reminder</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Tournament Payment Reminder</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>This is a friendly reminder that payment is still outstanding for <strong>${escapeEmailHtml(p.teamName)}</strong> in the <strong>${escapeEmailHtml(p.divisionName)}</strong> division of <strong>${escapeEmailHtml(p.tournamentName)}</strong>.</p>
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.35);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Payment Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Payment Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Amount due: <strong>${escapeEmailHtml(p.amountDue)}</strong><br>
         ${p.dueDate ? `Due date: <strong>${escapeEmailHtml(p.dueDate)}</strong><br>` : ''}
         Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
         Division: <strong>${escapeEmailHtml(p.divisionName)}</strong>
       </p>
     </div>
-    <div style="color:rgba(241,245,249,0.75);">${instructions}</div>
-    <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
+    <div style="color:${WARM_EMAIL.ink};">${instructions}</div>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
@@ -597,20 +597,20 @@ export function basicCoachTeamWelcomeHtml(p: {
   teamUrl: string;
 }) {
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your team home is ready</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Your team home is ready</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p><strong>${escapeEmailHtml(p.teamName)}</strong> now has a free FieldLogicHQ team home.</p>
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Start with the basics</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.82);">
+    <div style="${warmPanelStyle('olive')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Start with the basics</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Build your roster<br>
         Add practices and games<br>
         Track manual team fees<br>
         Send announcements to roster contacts
       </p>
     </div>
-    <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open Team Home</a>
-    <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">Advanced tools like lineups, attendance, documents, budget, and dues automation can be requested from your team home.</p>
+    ${warmEmailButton('Open Team Home', escapeEmailHtml(p.teamUrl))}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;margin-top:1.5rem;">Advanced tools like lineups, attendance, documents, budget, and dues automation can be requested from your team home.</p>
   `);
 }
 
@@ -630,22 +630,22 @@ export function teamWorkspaceWelcomeHtml(p: {
   comp?: boolean;
 }) {
   const closingLine = p.comp
-    ? `<p style="color:rgba(241,245,249,0.62);font-size:0.86rem;margin-top:1.5rem;">Your Premium Coaches Portal is <strong style="color:rgba(241,245,249,0.82);">free through ${FOUNDING_SEASON_END_LABEL}</strong> — no credit card, and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. We'll email you during the summer so you can choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.</p>`
-    : `<p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>`;
+    ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;margin-top:1.5rem;">Your Premium Coaches Portal is <strong>free through ${FOUNDING_SEASON_END_LABEL}</strong> — no credit card, and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. We'll email you during the summer so you can choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.</p>`
+    : `<p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>`;
   return wrap(`
-    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Welcome to the Premium Coaches Portal 🎉</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Welcome to the Premium Coaches Portal 🎉</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
-    <p>Your <strong>Premium Coaches Portal</strong> is ready for <strong>${escapeEmailHtml(p.teamName)}</strong>. Everything from your free portal carries over — plus the full season toolkit.</p>
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's included now</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.82);">
+    <p>Your <strong>Premium Coaches Portal</strong> is ready for <strong>${escapeEmailHtml(p.teamName)}</strong>, with the full season toolkit.</p>
+    <div style="${warmPanelStyle('olive')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">What's included now</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player positions, attendance &amp; game-day lineups<br>
         Recurring events &amp; calendar sync<br>
         Dues schedules, reminders &amp; a season budget<br>
         Documents for waivers and team forms
       </p>
     </div>
-    <a href="${escapeEmailHtml(p.portalUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your Coaches Portal &rarr;</a>
+    ${warmEmailButton('Open your Coaches Portal', escapeEmailHtml(p.portalUrl))}
     ${closingLine}
   `);
 }
@@ -665,13 +665,13 @@ export function coachAccessReminderHtml(p: {
   mentionsChat?: boolean;
 }) {
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Registration Dashboard</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Your Registration Dashboard</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Here's your access link for <strong>${escapeEmailHtml(p.teamName)}</strong> in <strong>${escapeEmailHtml(p.tournamentName)}</strong>. Your dashboard shows your registration status, game schedule, and any announcements from the organizer.</p>
     ${p.mentionsChat ? `<p>The organizer has also opened a group chat for this event's coaches — you'll join it automatically once you're signed in.</p>` : ''}
-    <a href="${escapeEmailHtml(p.joinUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;margin:1rem 0;">Create Account &amp; View Dashboard →</a>
-    <p style="color:rgba(241,245,249,0.55);font-size:0.85rem;">Already have an account? <a href="${escapeEmailHtml(p.loginUrl)}" style="color:#D9F99D;">Sign in instead →</a></p>
-    <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;">If you did not register for this tournament, you can ignore this email.</p>
+    ${warmEmailButton('Create Account &amp; View Dashboard', escapeEmailHtml(p.joinUrl))}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.85rem;">Already have an account? <a href="${escapeEmailHtml(p.loginUrl)}" style="color:${WARM_EMAIL.olive};">Sign in instead →</a></p>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">If you did not register for this tournament, you can ignore this email.</p>
   `);
 }
 
@@ -694,27 +694,27 @@ export function tournamentResultsFinalizedHtml(p: {
   // checkout-flavored billing link was removed (Phase 5m / J5-059); teamUrl now points at the
   // repaired express-interest destination.
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">That's a wrap — final results are in 🎉</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">That's a wrap — final results are in 🎉</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>The organizer has finalized results for <strong>${escapeEmailHtml(p.tournamentName)}</strong>. See where your team landed, then relive the weekend from the public tournament site.</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">See how it finished</p>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">See how it finished</p>
       <p style="margin:0;line-height:1.9;">
-        <a href="${escapeEmailHtml(p.resultsUrl)}" style="color:#D9F99D;font-weight:700;">View final standings</a><br>
-        <a href="${escapeEmailHtml(p.scheduleUrl)}" style="color:#D9F99D;">View scores &amp; schedule</a><br>
-        <a href="${escapeEmailHtml(p.teamsUrl)}" style="color:#D9F99D;">View teams</a>
+        <a href="${escapeEmailHtml(p.resultsUrl)}" style="color:${WARM_EMAIL.olive};font-weight:700;">View final standings</a><br>
+        <a href="${escapeEmailHtml(p.scheduleUrl)}" style="color:${WARM_EMAIL.olive};">View scores &amp; schedule</a><br>
+        <a href="${escapeEmailHtml(p.teamsUrl)}" style="color:${WARM_EMAIL.olive};">View teams</a>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.65);font-size:0.88rem;">Thanks for being part of the tournament.</p>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.88rem;">Thanks for being part of the tournament.</p>
     ${p.teamUrl ? `
-      <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-        <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Keep this team going</p>
-        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Your Coaches Portal stays free between tournaments — roster, schedule, and team comms in one place. Tell us which tools you'd want next; no commitment.</p>
-        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Explore the Coaches Portal</a>
+      <div style="${warmPanelStyle('olive')}">
+        <p style="${WARM_EMAIL_STYLE.panelLabel}">Keep this team going</p>
+        <p style="margin:0 0 1rem;color:${WARM_EMAIL.ink};line-height:1.6;">Your Coaches Portal stays free between tournaments — roster, schedule, and team comms in one place. Tell us which tools you'd want next; no commitment.</p>
+        ${warmEmailButton('Explore the Coaches Portal', escapeEmailHtml(p.teamUrl))}
       </div>
     ` : ''}
-    <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
-      Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:#D9F99D;">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
+      Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:${WARM_EMAIL.olive};">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
     </p>
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
@@ -745,17 +745,15 @@ export function gameDayReminderHtml(p: {
     p.location ? `Where: <strong>${escapeEmailHtml(p.location)}</strong>` : null,
   ].filter(Boolean).join('<br>');
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${escapeEmailHtml(p.teamName)} plays soon</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${escapeEmailHtml(p.teamName)} plays soon</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Your first game at <strong>${escapeEmailHtml(p.tournamentName)}</strong> is coming up. Here's what to know.</p>
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0;line-height:1.9;color:rgba(241,245,249,0.9);">${detailRows}</p>
+    <div style="${warmPanelStyle('olive')}">
+      <p style="margin:0;line-height:1.9;color:${WARM_EMAIL.ink};">${detailRows}</p>
     </div>
-    <p style="color:rgba(241,245,249,0.72);font-size:0.9rem;line-height:1.6;">Plan to check in with the organizer when you arrive — they'll confirm your roster${p.paymentsTracked === false ? '' : ' and payment'} at the gate.</p>
-    <p style="margin:1.25rem 0;">
-      <a href="${escapeEmailHtml(p.portalUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your team in the Coaches Portal</a>
-    </p>
-    ${p.contactEmail ? `<p style="color:rgba(241,245,249,0.5);font-size:0.82rem;">Questions? <a href="mailto:${escapeEmailHtml(p.contactEmail)}" style="color:#D9F99D;">${escapeEmailHtml(p.contactEmail)}</a></p>` : ''}
+    <p style="color:${WARM_EMAIL.ink};font-size:0.9rem;line-height:1.6;">Plan to check in with the organizer when you arrive — they'll confirm your roster${p.paymentsTracked === false ? '' : ' and payment'} at the gate.</p>
+    ${warmEmailButton('Open your team in the Coaches Portal', escapeEmailHtml(p.portalUrl))}
+    ${p.contactEmail ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">Questions? <a href="mailto:${escapeEmailHtml(p.contactEmail)}" style="color:${WARM_EMAIL.olive};">${escapeEmailHtml(p.contactEmail)}</a></p>` : ''}
   `);
 }
 
@@ -773,19 +771,19 @@ export function leagueRegistrationApprovedHtml(input: {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
   return wrap(`
-    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Great news — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> has been approved.</p>
-    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+    <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
   `);
 }
 
@@ -801,19 +799,19 @@ export function leagueRegistrationPendingHtml(input: {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> in <strong>${p.seasonName}</strong>. A league administrator will review it shortly.</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">Your registration status is currently <strong style="color:#F59E0B;">pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
+    <p>Your registration status is currently <strong>pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
   `);
 }
 
@@ -830,20 +828,20 @@ export function leagueRegistrationWaitlistHtml(input: {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
   return wrap(`
-    <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> for <strong>${p.seasonName}</strong>.</p>
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
         Waitlist Position: <strong>#${p.waitlistPosition}</strong><br>
-        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);"><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
+    <p><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
   `);
 }
 
@@ -861,19 +859,19 @@ export function leagueAdminApprovedHtml(input: {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
   return wrap(`
-    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Great news! <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
-    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+    <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
   `);
 }
 
@@ -890,20 +888,20 @@ export function leagueAdminWaitlistedHtml(input: {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
   return wrap(`
-    <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">Added to Waitlist</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Added to Waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Unfortunately <strong>${p.divisionName}</strong> is currently full. <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>.</p>
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
         Waitlist Position: <strong>#${p.waitlistPosition}</strong><br>
-        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
+    <p>You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
   `);
 }
 
@@ -919,19 +917,19 @@ export function leagueWaitlistPromotedHtml(input: {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
   return wrap(`
-    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 You're Off the Waitlist!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">🎉 You're Off the Waitlist!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has been moved off the waitlist and is now registered for <strong>${p.divisionName}</strong>. Welcome!</p>
-    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+    <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
   `);
 }
 
@@ -947,10 +945,10 @@ export function leagueRegistrationDeclinedHtml(input: {
   const p = escapeEmailFields(input);
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
-    <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We're sorry — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
-    <p style="color:rgba(241,245,249,0.7);">Please contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> for more information.</p>
+    <p>Please contact <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a> for more information.</p>
   `);
 }
 
@@ -974,18 +972,18 @@ export function tryoutRegistrationConfirmationHtml(input: {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Application Details</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Application Details</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Program: <strong>${p.teamName} — ${p.yearName}</strong><br>
-        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">Our coaching staff will review all applications and be in touch. No further action is required at this time.</p>
+    <p>Our coaching staff will review all applications and be in touch. No further action is required at this time.</p>
   `);
 }
 
@@ -1035,15 +1033,15 @@ export function schedulePublishedHtml(p: {
   // Published schedules always show real team names (mig 129).
   const nameNote = 'Your team name appears on the public schedule.';
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Schedule is Live!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Your Schedule is Live!</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>The schedule for <strong>${p.tournamentName}</strong> has been published. You can now view game times, dates, and locations on the public tournament page.</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Published Divisions</p>
-      <ul style="margin:0;padding-left:1.25rem;line-height:1.8;color:rgba(241,245,249,0.8);">${divisionList}</ul>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Published Divisions</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.8;color:${WARM_EMAIL.ink};">${divisionList}</ul>
     </div>
-    <p style="color:rgba(241,245,249,0.65);font-size:0.88rem;">${nameNote}</p>
-    <a href="${p.scheduleUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">View Schedule &rarr;</a>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.88rem;">${nameNote}</p>
+    ${warmEmailButton('View Schedule', p.scheduleUrl)}
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
@@ -1058,7 +1056,7 @@ export function billingRetentionWarningHtml(p: {
   const rows = p.records.map(r => `
     <li style="margin-bottom:0.5rem;">
       <strong>${r.displayName}</strong>
-      <span style="color:rgba(255,255,255,0.45);">(${r.recordType}, retained until ${r.retentionUntil})</span>
+      <span style="color:${WARM_EMAIL.secondary};">(${r.recordType}, retained until ${r.retentionUntil})</span>
     </li>
   `).join('');
 
@@ -1068,14 +1066,14 @@ export function billingRetentionWarningHtml(p: {
     : `The retained data below is scheduled to leave the restore window in about ${p.daysUntilExpiry} day${p.daysUntilExpiry === 1 ? '' : 's'}.`;
 
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${title}</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${title}</h2>
     <p>Hi,</p>
     <p>${body}</p>
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.35);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">${p.orgName}</p>
-      <ul style="margin:0;padding-left:1.25rem;color:rgba(241,245,249,0.72);">${rows}</ul>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">${p.orgName}</p>
+      <ul style="margin:0;padding-left:1.25rem;color:${WARM_EMAIL.ink};">${rows}</ul>
     </div>
-    <a href="${p.retentionUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Review Subscription</a>
+    ${warmEmailButton('Review Subscription', p.retentionUrl)}
   `);
 }
 
@@ -1086,17 +1084,17 @@ export function trialEndingHtml(p: {
   billingUrl: string;
 }) {
   return wrap(`
-    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Your trial ends soon</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Your trial ends soon</h2>
     <p style="margin:0 0 1rem;">Your FieldLogicHQ <strong>${p.planLabel}</strong> trial for <strong>${p.orgName}</strong> ends on <strong>${p.trialEndDate}</strong>.</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What happens next</p>
-      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">What happens next</p>
+      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">
         Your payment method on file will be charged automatically when the trial expires.<br>
         No action is needed if you'd like to continue.
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);margin:0 0 1.5rem;">To update your payment method or review your plan before the trial ends, visit your billing settings.</p>
-    <a href="${p.billingUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;">Manage Billing &rarr;</a>
+    <p style="color:${WARM_EMAIL.ink};margin:0 0 1.5rem;">To update your payment method or review your plan before the trial ends, visit your billing settings.</p>
+    ${warmEmailButton('Manage Billing', p.billingUrl)}
   `);
 }
 
@@ -1109,17 +1107,17 @@ export function planDowngradedHtml(p: {
   billingUrl: string;
 }) {
   const retainedNote = p.retainedTournaments > 0 && p.retentionUntil
-    ? `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">${p.retainedTournaments} tournament${p.retainedTournaments === 1 ? '' : 's'} that exceed the ${p.toPlanLabel} limit have been archived and retained until <strong>${p.retentionUntil}</strong>. They will be restored if you upgrade again before that date.</p>`
-    : `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your account is active on the ${p.toPlanLabel} plan.</p>`;
+    ? `<p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">${p.retainedTournaments} tournament${p.retainedTournaments === 1 ? '' : 's'} that exceed the ${p.toPlanLabel} limit have been archived and retained until <strong>${p.retentionUntil}</strong>. They will be restored if you upgrade again before that date.</p>`
+    : `<p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">Your account is active on the ${p.toPlanLabel} plan.</p>`;
 
   return wrap(`
-    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Plan updated</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Plan updated</h2>
     <p style="margin:0 0 1rem;">Your <strong>${p.orgName}</strong> subscription has been changed from <strong>${p.fromPlanLabel}</strong> to <strong>${p.toPlanLabel}</strong>.</p>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What changed</p>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">What changed</p>
       ${retainedNote}
     </div>
-    <a href="${p.billingUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Manage Billing &rarr;</a>
+    ${warmEmailButton('Manage Billing', p.billingUrl)}
   `);
 }
 
@@ -1130,13 +1128,13 @@ export function teamWorkspaceCancelledHtml(p: {
   retentionUntil: string;
 }) {
   return wrap(`
-    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Coaches Portal cancelled</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Coaches Portal cancelled</h2>
     <p style="margin:0 0 1rem;">Your <strong>${escapeHtml(p.workspaceName)}</strong> Coaches Portal subscription has been cancelled. Premium tools are now inactive.</p>
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Your data</p>
-      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your team is kept until <strong>${p.retentionUntil}</strong>. Resubscribe before then and everything comes back as you left it. Basic tournament records remain available in Coaches Portal.</p>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Your data</p>
+      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">Your team is kept until <strong>${p.retentionUntil}</strong>. Resubscribe before then and everything comes back as you left it. Basic tournament records remain available in Coaches Portal.</p>
     </div>
-    <a href="${p.resubscribeUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Resubscribe</a>
+    ${warmEmailButton('Resubscribe', p.resubscribeUrl)}
   `);
 }
 
@@ -1147,17 +1145,17 @@ export function welcomeBackHtml(p: {
   dashboardUrl: string;
 }) {
   const restoredNote = p.restoredTournaments > 0
-    ? `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">We've restored <strong>${p.restoredTournaments} tournament${p.restoredTournaments === 1 ? '' : 's'}</strong> to your account — everything is exactly as you left it.</p>`
-    : `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your account is active and ready to go.</p>`;
+    ? `<p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">We've restored <strong>${p.restoredTournaments} tournament${p.restoredTournaments === 1 ? '' : 's'}</strong> to your account — everything is exactly as you left it.</p>`
+    : `<p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">Your account is active and ready to go.</p>`;
 
   return wrap(`
-    <h2 style="color:#D9F99D;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Welcome back!</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Welcome back!</h2>
     <p style="margin:0 0 1rem;">Your <strong>${p.planLabel}</strong> subscription for <strong>${p.orgName}</strong> is active again.</p>
-    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Your account</p>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Your account</p>
       ${restoredNote}
     </div>
-    <a href="${p.dashboardUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;">Go to Dashboard &rarr;</a>
+    ${warmEmailButton('Go to Dashboard', p.dashboardUrl)}
   `);
 }
 
@@ -1168,12 +1166,12 @@ export function orgClosedHtml(p: {
 }) {
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
-    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Account closed</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Account closed</h2>
     <p style="margin:0 0 1rem;">Your FieldLogicHQ account for <strong>${p.orgName}</strong> (${p.planLabel}) has been permanently closed.</p>
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">The tournaments, registrations, and other data tied to this organization have been removed. This can't be undone.</p>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">The tournaments, registrations, and other data tied to this organization have been removed. This can't be undone.</p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);margin:0;">If you have questions or this was unexpected, contact us at <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
+    <p style="color:${WARM_EMAIL.ink};margin:0;">If you have questions or this was unexpected, contact us at <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.</p>
   `);
 }
 
@@ -1187,17 +1185,17 @@ export function orgInviteHtml(p: {
   /** Who sent it (J10-010, Club Tier Stage 1) — named when known, so the invitee knows who is asking. */
   inviterName?: string | null;
 }) {
-  const note = p.note ? `<p style="color:rgba(241,245,249,0.7);">${p.note}</p>` : '';
+  const note = p.note ? `<p>${p.note}</p>` : '';
   // org.name and the sender's name are editable by other people → escape before interpolating.
   const org = escapeEmailHtml(p.orgName);
   const who = p.inviterName ? `<strong>${escapeEmailHtml(p.inviterName)}</strong> invited you` : "You've been invited";
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You're invited</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're invited</h2>
     <p>${who} to join <strong>${org}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>
     ${note}
-    <p style="color:rgba(241,245,249,0.7);">Click below to accept your invitation and set up your account.</p>
-    <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">${p.ctaLabel} &rarr;</a>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link expires in 24 hours. If you weren't expecting this invitation, you can safely ignore this email.</p>
+    <p>Click below to accept your invitation and set up your account.</p>
+    ${warmEmailButton(p.ctaLabel, p.inviteUrl)}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This link expires in 24 hours. If you weren't expecting this invitation, you can safely ignore this email.</p>
   `);
 }
 
@@ -1224,11 +1222,11 @@ export function assistantCoachInviteHtml(p: {
   const line = `${by} invited you ${copy.inviteVerb} <strong>${escapeEmailHtml(p.teamName)}</strong> as <strong>${copy.asA}</strong> on <strong>FieldLogicHQ</strong>.`;
   const what = copy.emailWhat;
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
     <p>${line}</p>
-    <p style="color:rgba(241,245,249,0.7);">${what}</p>
-    <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Accept invite &rarr;</a>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link expires in 7 days. If you weren't expecting this, you can safely ignore this email.</p>
+    <p>${what}</p>
+    ${warmEmailButton('Accept invite', p.inviteUrl)}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This link expires in 7 days. If you weren't expecting this, you can safely ignore this email.</p>
   `);
 }
 
@@ -1272,10 +1270,10 @@ export function clubCoachInviteHtml(p: {
     ? `${inviter} on <strong>FieldLogicHQ</strong>. You’ll run the team in its Coaches Portal: roster, schedule, practices, tryouts, money and your own staff. The club manages the team’s seasons.`
     : `${inviter} on <strong>FieldLogicHQ</strong> as <strong>an assistant coach</strong>. ${STAFF_KIND_COPY.assistant.emailWhat}`;
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
     <p>${line}</p>
-    <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Accept and set up your account &rarr;</a>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link works for 7 days. If you weren't expecting this, you can safely ignore this email.</p>
+    ${warmEmailButton('Accept and set up your account', p.inviteUrl)}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This link works for 7 days. If you weren't expecting this, you can safely ignore this email.</p>
   `);
 }
 
@@ -1289,11 +1287,11 @@ export function orgMemberAddedHtml(p: {
 }) {
   const note = p.note ?? 'No action is required — just sign in to get started.';
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You've been added to ${p.orgName}</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You've been added to ${p.orgName}</h2>
     <p>You now have access to <strong>${p.orgName}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>
-    <p style="color:rgba(241,245,249,0.7);">${note}</p>
-    <a href="${p.signInUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">${p.ctaLabel} &rarr;</a>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you weren't expecting this, you can safely ignore this email.</p>
+    <p>${note}</p>
+    ${warmEmailButton(p.ctaLabel, p.signInUrl)}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">If you weren't expecting this, you can safely ignore this email.</p>
   `);
 }
 
@@ -1309,10 +1307,10 @@ export function memberSuspendedHtml(p: {
   // body, as memberRemovedHtml below already did.
   const org = escapeEmailHtml(p.orgName);
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} was suspended</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} was suspended</h2>
     <p>An administrator at <strong>${org}</strong> has suspended your access on <strong>FieldLogicHQ</strong>.</p>
-    <p style="color:rgba(241,245,249,0.7);">You won't be able to sign in to this workspace until your access is restored. If you think this was a mistake, please contact an administrator at ${org} directly.</p>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This message is about your access to ${org} only; any other organizations or workspaces on your account are unaffected.</p>
+    <p>You won't be able to sign in to this workspace until your access is restored. If you think this was a mistake, please contact an administrator at ${org} directly.</p>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This message is about your access to ${org} only; any other organizations or workspaces on your account are unaffected.</p>
   `);
 }
 
@@ -1331,11 +1329,11 @@ export function memberAccessChangedHtml(p: {
     .map(line => `<li style="margin:0 0 0.4rem;">${escapeEmailHtml(line)}</li>`)
     .join('');
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} changed</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} changed</h2>
     <p>An administrator at <strong>${org}</strong> changed what you can do on <strong>FieldLogicHQ</strong>:</p>
     <ul style="margin:0.75rem 0 1rem;padding-left:1.25rem;">${items}</ul>
-    <a href="${p.signInUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Sign In &rarr;</a>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you think this was a mistake, please contact an administrator at ${org} directly. This message is about your access to ${org} only.</p>
+    ${warmEmailButton('Sign In', p.signInUrl)}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">If you think this was a mistake, please contact an administrator at ${org} directly. This message is about your access to ${org} only.</p>
   `);
 }
 
@@ -1345,10 +1343,10 @@ export function memberRemovedHtml(p: {
   // org.name is admin-editable → escape before interpolating into the (different) recipient's HTML body.
   const org = escapeEmailHtml(p.orgName);
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} was removed</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} was removed</h2>
     <p>An administrator at <strong>${org}</strong> has removed your access on <strong>FieldLogicHQ</strong>.</p>
-    <p style="color:rgba(241,245,249,0.7);">You no longer have access to this workspace. If you think this was a mistake, please contact an administrator at ${org} directly — they can re-invite you.</p>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This message is about your access to ${org} only. Your account and any other organizations, teams, or coaching portals you belong to are unaffected.</p>
+    <p>You no longer have access to this workspace. If you think this was a mistake, please contact an administrator at ${org} directly — they can re-invite you.</p>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This message is about your access to ${org} only. Your account and any other organizations, teams, or coaching portals you belong to are unaffected.</p>
   `);
 }
 
@@ -1362,14 +1360,14 @@ export function orgDeletionRequestHtml(p: {
   requestedAt: string;
 }) {
   const row = (label: string, value: string) =>
-    `<tr><td style="padding:0.4rem 1rem 0.4rem 0;color:rgba(241,245,249,0.45);white-space:nowrap;vertical-align:top;">${label}</td><td style="padding:0.4rem 0;color:rgba(241,245,249,0.85);">${value}</td></tr>`;
+    `<tr><td style="padding:0.4rem 1rem 0.4rem 0;color:${WARM_EMAIL.secondary};white-space:nowrap;vertical-align:top;">${label}</td><td style="padding:0.4rem 0;color:${WARM_EMAIL.ink};">${value}</td></tr>`;
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Organization Deletion Request</h2>
-    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.25rem 0;">
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Organization Deletion Request</h2>
+    <div style="${warmPanelStyle('secondary', { margin: '1.25rem 0' })}">
       <table style="border-collapse:collapse;width:100%;font-size:0.88rem;line-height:1.5;">
         ${row('Organization', `<strong>${p.orgName}</strong>`)}
         ${row('Slug', p.orgSlug)}
-        ${row('Org ID', `<span style="font-family:monospace;font-size:0.8rem;">${p.orgId}</span>`)}
+        ${row('Org ID', `<span style="${DATA_FACE}font-size:0.8rem;">${p.orgId}</span>`)}
         ${row('Owner', p.ownerEmail)}
         ${row('Plan', p.planLabel)}
         ${row('Reason', p.reason || '<em>No reason provided</em>')}
@@ -1398,17 +1396,17 @@ export function tournamentPlusWelcomeHtml(p: {
 }) {
   const greeting = p.firstName ? `Hi ${p.firstName},` : 'Hi there,';
   const unsubscribeBlock = p.unsubscribeUrl
-    ? `<div style="margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);">
-        <p style="margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;">
+    ? `<div style="margin-top:2rem;padding-top:1.25rem;border-top:1px solid ${WARM_EMAIL.cardEdge};">
+        <p style="margin:0;color:${WARM_EMAIL.secondary};font-size:0.72rem;line-height:1.55;">
           You're receiving this because you signed up for FieldLogicHQ.&nbsp;
-          <a href="${p.unsubscribeUrl}" style="color:rgba(217,249,157,0.5);text-decoration:underline;">Unsubscribe</a>
+          <a href="${p.unsubscribeUrl}" style="color:${WARM_EMAIL.olive};text-decoration:underline;">Unsubscribe</a>
           &nbsp;·&nbsp; FieldLogicHQ · Canada
         </p>
       </div>`
     : '';
 
   return wrap(`
-    <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;">
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.35rem;font-weight:700;margin:0 0 1.25rem;letter-spacing:-0.01em;">
       You're on Tournament Plus.
     </h2>
     <p style="margin:0 0 1rem;">${greeting}</p>
@@ -1418,9 +1416,9 @@ export function tournamentPlusWelcomeHtml(p: {
       and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.
     </p>
 
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's included now</p>
-      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+    <div style="${warmPanelStyle('olive')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">What's included now</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:${WARM_EMAIL.ink};">
         <li>Public registration, fees, and payment tracking</li>
         <li>Check-in and unlimited volunteers</li>
         <li>Unlimited tournaments and the round-robin generator</li>
@@ -1431,12 +1429,12 @@ export function tournamentPlusWelcomeHtml(p: {
       </ul>
     </div>
 
-    <a href="${p.dashboardUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Open your dashboard →</a>
+    ${warmEmailButton('Open your dashboard', p.dashboardUrl)}
 
-    <p style="margin:1.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">
+    <p style="margin:1.75rem 0 0;line-height:1.7;color:${WARM_EMAIL.secondary};">
       If anything doesn't work the way you'd expect, reply to this email. We read everything.
     </p>
-    <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+    <p style="margin:0.75rem 0 0;color:${WARM_EMAIL.secondary};">— The FieldLogicHQ team</p>
     ${unsubscribeBlock}
   `);
 }
@@ -1457,7 +1455,7 @@ export function tournamentPlusUpsellHtml(p: {
   const greeting = p.firstName ? `Hi ${p.firstName},` : 'Hi there,';
 
   return wrap(`
-    <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;">
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.35rem;font-weight:700;margin:0 0 1.25rem;letter-spacing:-0.01em;">
       Tournament Plus is free this season.
     </h2>
     <p style="margin:0 0 1rem;">${greeting}</p>
@@ -1467,9 +1465,9 @@ export function tournamentPlusUpsellHtml(p: {
       ${FOUNDING_SEASON_END_LABEL}</strong> (normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month), and it adds the tools that save the most time.
     </p>
 
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What Tournament Plus adds</p>
-      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+    <div style="${warmPanelStyle('olive')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">What Tournament Plus adds</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:${WARM_EMAIL.ink};">
         <li>Public registration — teams register on your site, and you approve, waitlist, or decline</li>
         <li>Fees and payment tracking, with payment reminders</li>
         <li>Check-in and unlimited volunteers on game day</li>
@@ -1479,12 +1477,12 @@ export function tournamentPlusUpsellHtml(p: {
       </ul>
     </div>
 
-    <a href="${p.upgradeUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Switch to Tournament Plus — free →</a>
+    ${warmEmailButton('Switch to Tournament Plus — free', p.upgradeUrl)}
 
-    <p style="margin:1.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">
+    <p style="margin:1.75rem 0 0;line-height:1.7;color:${WARM_EMAIL.secondary};">
       Staying on the free plan is totally fine too — the free season is yours if you upgrade by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}.
     </p>
-    <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+    <p style="margin:0.75rem 0 0;color:${WARM_EMAIL.secondary};">— The FieldLogicHQ team</p>
   `);
 }
 
@@ -1501,13 +1499,13 @@ export function cancellationConfirmationHtml(p: {
     : `Your account data is retained until <strong>${p.retentionUntil}</strong>. If you resubscribe before that date, everything will be restored.`;
 
   return wrap(`
-    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Subscription cancelled</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Subscription cancelled</h2>
     <p style="margin:0 0 1rem;">Your <strong>${p.planLabel}</strong> subscription for <strong>${p.orgName}</strong> has been cancelled. Your organization is now inactive.</p>
-    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Your data</p>
-      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">${retainedNote}</p>
+    <div style="${warmPanelStyle('secondary')}">
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Your data</p>
+      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">${retainedNote}</p>
     </div>
-    <a href="${p.resubscribeUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Resubscribe</a>
+    ${warmEmailButton('Resubscribe', p.resubscribeUrl)}
   `);
 }
 

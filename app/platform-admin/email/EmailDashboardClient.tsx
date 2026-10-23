@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Send, Eye, ChevronDown, ChevronRight, X, RotateCcw, Pencil, Lock, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import type { EmailBatch, OptOutOrg, MarketingSchedule } from './page';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
+import { warmEmailForPreview } from '@/lib/email-envelope-warm';
 import { UPCOMING_WINDOW_DAYS, classifyCampaignSend, daysUntil, formatPlannedDate } from '@/lib/marketing-schedule';
 import { LIVE_MARKETING_CAMPAIGNS } from '@/lib/marketing-email-defaults';
 import styles from './email.module.css';
@@ -206,7 +207,7 @@ function PreviewModal({
             </div>
           ) : (
             <div className={styles.previewFrame}>
-              <div dangerouslySetInnerHTML={{ __html: html }} />
+              <div dangerouslySetInnerHTML={{ __html: warmEmailForPreview(html) }} />
             </div>
           )}
         </div>

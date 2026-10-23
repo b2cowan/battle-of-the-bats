@@ -5,6 +5,7 @@ import { buildGuardianUnsubscribeUrl } from './unsubscribe-token';
 import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-email';
 import { fetchAll as readAllPaged, chunked } from './supabase-paging';
 import { familyEnvelopeFooterWords } from './family-mail-footer';
+import { WARM_EMAIL_STYLE, warmEmailDocument, warmEmailFootnote, warmEmailHeading } from './email-envelope-warm';
 
 /**
  * lib/family-email.ts — the ONE way to email a family.
@@ -132,21 +133,15 @@ function familyEmailHtml(content: FamilyEmailContent, orgId: string, recipientEm
   const footer = familyEnvelopeFooterWords(sender, escapeHtml(content.reason));
   const unsubscribeUrl = buildGuardianUnsubscribeUrl(orgId, recipientEmail);
   const cta = content.cta
-    ? `<p style="margin:1.5rem 0 0;"><a href="${content.cta.href}" style="color:#D9F99D;font-weight:700;">${escapeHtml(content.cta.label)}</a></p>`
+    ? `<p style="${WARM_EMAIL_STYLE.paragraph}margin-top:22px;"><a href="${content.cta.href}" style="${WARM_EMAIL_STYLE.textLink}">${escapeHtml(content.cta.label)}</a></p>`
     : '';
-  return `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2rem;border:1px solid rgba(96,165,250,0.25);">
-  <div style="margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid rgba(96,165,250,0.18);">
-    <span style="font-size:0.72rem;font-weight:900;color:#60A5FA;letter-spacing:0.14em;text-transform:uppercase;">${escapeHtml(content.teamName)}</span>
-  </div>
-  <h2 style="margin:0 0 1rem;color:#fff;font-size:1.25rem;line-height:1.3;">${escapeHtml(content.title)}</h2>
-  <div style="color:rgba(241,245,249,0.82);font-size:0.95rem;line-height:1.7;">${escapeHtml(content.body)}</div>
-  ${cta}
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.45);font-size:0.78rem;line-height:1.5;">
-    ${footer.sentBy}<br>
-    <a href="${unsubscribeUrl}" style="color:rgba(241,245,249,0.6);">${footer.unsubscribe}</a>
-  </p>
-</div>`;
+  return warmEmailDocument(`
+<p style="${WARM_EMAIL_STYLE.eyebrow}">${escapeHtml(content.teamName)}</p>
+${warmEmailHeading(escapeHtml(content.title))}
+<div style="${WARM_EMAIL_STYLE.paragraph}">${escapeHtml(content.body)}</div>
+${cta}
+${warmEmailFootnote(`${footer.sentBy}<br>
+<a href="${unsubscribeUrl}" style="${WARM_EMAIL_STYLE.finePrintLink}">${footer.unsubscribe}</a>`)}`);
 }
 
 export type FamilySendResult = SendEmailResult | { status: 'suppressed' };
