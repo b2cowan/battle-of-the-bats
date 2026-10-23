@@ -28,7 +28,7 @@ import {
  * in every state (a second "See the team" at the foot went to the same page and was removed, owner 2026-10-21).
  */
 export default function TryoutLandingView({
-  orgSlug, teamSlug, team, state, season, born = null, upcoming, lastDay, today, contactEmail, registerHref,
+  orgSlug, teamSlug, team, state, season, born = null, upcoming, lastDay, today, contactEmail, registerHref, preview = false,
 }: {
   orgSlug: string;
   teamSlug: string;
@@ -45,6 +45,8 @@ export default function TryoutLandingView({
   /** The club's public-site contact (resolvePublicTryout), never the org's phantom `contactEmail` (F09). */
   contactEmail: string | null;
   registerHref: string;
+  /** The admin's "How families see it" box (the tryout blurb): the same page minus its way back, which is the page's own. */
+  preview?: boolean;
 }) {
   const teamHref = `/${orgSlug}/teams/${teamSlug}`;
   // The closed frame names no season (there is nothing to sign up for); the others say which season the tryouts are for.
@@ -62,9 +64,11 @@ export default function TryoutLandingView({
   return (
     <div className={styles.page}>
       {/* The way back to the team stays: the tab row has no entry for one team (design log 2026-10-20). */}
-      <Link href={teamHref} className={`${kit.back} ${styles.back}`} aria-label={`Back to ${team.name}`}>
-        ← {team.name}
-      </Link>
+      {!preview && (
+        <Link href={teamHref} className={`${kit.back} ${styles.back}`} aria-label={`Back to ${team.name}`}>
+          ← {team.name}
+        </Link>
+      )}
 
       <div className={styles.head}>
         <h1 className={kit.title}>{team.name} tryouts</h1>

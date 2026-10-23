@@ -45,6 +45,8 @@ import {
 import { publicTryoutHref } from '@/lib/public-tryout-links';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
 import { previousBlurbOf } from '@/lib/program-year-patch';
+import { bornFactsOf } from '@/lib/club-born-public';
+import { clubFace } from '@/lib/club-site';
 import { startButton } from '@/lib/club-season-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { pluralize, possessive } from '@/lib/utils';
@@ -375,6 +377,13 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
               previous={previousBlurbOf(read.programYears, season)}
               canWrite={canWrite}
               onSaved={blurbSaved}
+              preview={{
+                teamName: team.name,
+                sport: team.sport,
+                season: { year: season.year, name: season.name },
+                born: bornFactsOf({ from: season.bornFromYear, to: season.bornToYear }, currentOrg?.birthdayCutoffs, team.sport).meta,
+                face: clubFace(currentOrg?.themeFont),
+              }}
             />
           )}
         </ClubSection>

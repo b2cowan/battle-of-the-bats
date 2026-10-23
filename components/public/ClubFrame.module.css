@@ -7,7 +7,11 @@
    under the bar and over the footer). Nothing here is tinted (DC-02). */
 
 /* ── The site: one light ground for every club, whatever the visitor's theme (TH-1) ─────────────────────────────── */
-.site {
+/* `.tokens` is the same scope WITHOUT the page frame: the admin's "How families see it" preview (the tryout blurb) wears the
+   club's tokens inside a box on an admin page. It must not be `.site`, because `:has(.site)` below paints the whole <body>
+   and zeroes the phone bar — things only a real club page may do. */
+.site,
+.tokens {
   /* The ground, the same for every club (the drawings' --g-* values). A fixed palette by ruling — club pages never
      follow the account theme (TH-1) — so it is declared HERE, once, and every club page reads these names. The ground
      and card are also lib/club-colour-roles.ts's CLUB_GROUND / CLUB_CARD (the ink is measured against them);
@@ -122,22 +126,27 @@
 
   /* Native controls (a date picker's popup, a select's list, scrollbars) follow the page, not the visitor's theme. */
   color-scheme: light;
-  position: relative;         /* the frame's own skip link positions against the site */
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
   background: var(--club-ground);
   color: var(--club-text);
   font-family: var(--club-text-face);
 }
+/* What only the page frame needs: the site fills the screen, its own skip link positions against it. */
+.site {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
 
 /* The club's chosen font is kept (Ask 1A): DM Serif titles over DM Sans; Inter alone. */
-.site[data-club-face='dm-serif'] {
+.site[data-club-face='dm-serif'],
+.tokens[data-club-face='dm-serif'] {
   --club-title-face:   var(--font-dm-serif), 'DM Serif Display', Georgia, serif;
   --club-text-face:    var(--font-dm-sans), 'DM Sans', 'Inter', system-ui, sans-serif;
   --club-title-weight: 400;
 }
-.site[data-club-face='inter'] {
+.site[data-club-face='inter'],
+.tokens[data-club-face='inter'] {
   --club-title-face: var(--club-text-face);
 }
 

@@ -1,0 +1,316 @@
+<title>Tryout Blurb Preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;600;700&display=swap">
+<style>
+/* Layout: a decision sheet. Document chrome on a cool slate ground; every product frame is a fixed-size specimen on its own warm ground. */
+:root {
+  --doc-bg: #E9ECF1;
+  --doc-ink: #1B2430;
+  --doc-soft: #4A5565;
+  --doc-line: #CBD2DC;
+  --doc-card: #F7F8FA;
+  --doc-accent: #2F4C7A;
+  --tag-new: #1F6B3A;
+  --tag-new-bg: #DDF0E3;
+  --tag-same: #4A5565;
+  --tag-same-bg: #DEE2E9;
+  --tag-ask: #8A5300;
+  --tag-ask-bg: #F8E9CC;
+  --font-doc: 'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #12171F; --doc-ink: #E6EAF0; --doc-soft: #9AA5B5; --doc-line: #2B3544; --doc-card: #1A212C; --doc-accent: #8FB0E6;
+    --tag-new: #7CD39B; --tag-new-bg: #1D3A29; --tag-same: #9AA5B5; --tag-same-bg: #252E3B; --tag-ask: #E9B965; --tag-ask-bg: #3A2D12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #12171F; --doc-ink: #E6EAF0; --doc-soft: #9AA5B5; --doc-line: #2B3544; --doc-card: #1A212C; --doc-accent: #8FB0E6;
+  --tag-new: #7CD39B; --tag-new-bg: #1D3A29; --tag-same: #9AA5B5; --tag-same-bg: #252E3B; --tag-ask: #E9B965; --tag-ask-bg: #3A2D12;
+  color-scheme: dark;
+}
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-doc); font-size: 15px; line-height: 1.55; padding-inline: 16px; padding-block: 28px 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+h1 { font: 700 28px/1.15 var(--font-doc); margin: 0 0 6px; text-wrap: balance; }
+h2 { font: 700 19px/1.25 var(--font-doc); margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.lede { color: var(--doc-soft); max-width: 68ch; }
+.sec { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.sec > p { max-width: 72ch; color: var(--doc-soft); }
+.tag { display: inline-block; font: 700 11px/1 var(--font-doc); letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; vertical-align: middle; margin-right: 8px; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.tag.ask { color: var(--tag-ask); background: var(--tag-ask-bg); }
+.asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.ask b { font-size: 14px; }
+.ask span { color: var(--doc-soft); font-size: 14px; }
+.scroller { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 8px; background: var(--doc-card); padding: 16px; }
+.cap { font: 600 12px/1.4 var(--font-doc); letter-spacing: .04em; text-transform: uppercase; color: var(--doc-soft); margin-bottom: 8px; }
+.note { font-size: 13px; color: var(--doc-soft); }
+.ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--doc-soft); }
+.ctl button { font: 600 13px var(--font-doc); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--doc-line); background: var(--doc-card); color: var(--doc-ink); cursor: pointer; min-height: 36px; }
+.ctl button[aria-pressed="true"] { background: var(--doc-accent); color: var(--doc-bg); border-color: var(--doc-accent); }
+.ctl button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.specrow { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.spec { display: flex; flex-direction: column; gap: 8px; width: 392px; max-width: 100%; }
+.measure { font: 600 12px var(--font-doc); color: var(--doc-soft); }
+
+/* ── Product frames: FieldLogicHQ admin (warm portal) ─────────────────────────────────────────── */
+.adm { --a-bg: #F6F1EA; --a-card: #FFFFFF; --a-line: #E6DECF; --a-input: #F7F2EB; --a-ink: #2B2418; --a-soft: #6B6254; --a-lime: #D8F56E; --a-link: #4B5A12; --a-chip: #E3EEDB; --a-chip-ink: #2C5A22;
+  font-family: 'Inter', system-ui, sans-serif; color: var(--a-ink); background: var(--a-bg); color-scheme: light; width: 1366px; border: 1px solid #CFC6B5; border-radius: 6px; overflow: hidden; }
+.adm * { box-sizing: border-box; }
+.adm .top { height: 52px; background: #fff; border-bottom: 1px solid var(--a-line); display: flex; align-items: center; padding: 0 18px; gap: 14px; font-weight: 700; letter-spacing: .06em; font-size: 13px; }
+.adm .top i { width: 22px; height: 22px; background: #111; display: inline-block; }
+.adm .body { display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+.adm .side { background: #fff; border-right: 1px solid var(--a-line); padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: var(--a-soft); }
+.adm .side b { color: var(--a-ink); }
+.adm .side .grp { font-size: 11px; letter-spacing: .1em; font-weight: 700; margin-top: 8px; }
+.adm .main { padding: 20px 56px 28px 56px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.adm .hd { display: flex; align-items: center; gap: 20px; }
+.adm .hd .crumb { font: 600 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--a-soft); }
+.adm .hd h3 { margin: 0; font: 700 26px/1.1 'Inter'; display: inline-flex; align-items: center; gap: 12px; }
+.adm .pill { font: 700 11px 'Inter'; letter-spacing: .06em; text-transform: uppercase; padding: 5px 9px; border-radius: 20px; background: var(--a-chip); color: var(--a-chip-ink); border: 1px solid #C9DDBB; }
+.adm .btn { font: 600 14px 'Inter'; padding: 10px 16px; border-radius: 6px; border: 1px solid var(--a-line); background: #fff; color: var(--a-ink); }
+.adm .btn.lime { background: var(--a-lime); border-color: #BFE04A; margin-left: auto; }
+.adm .btn.ghost { background: #F1ECE3; }
+.adm .card { background: var(--a-card); border: 1px solid var(--a-line); border-radius: 10px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+.adm .card h4 { margin: 0; font: 700 18px 'Inter'; display: flex; align-items: center; gap: 10px; }
+.adm .card .row { display: flex; align-items: center; gap: 10px; }
+.adm .addr { border: 1px dashed #D9CFBC; border-radius: 6px; padding: 12px 14px; font-size: 15px; color: var(--a-ink); }
+.adm .zone { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: start; }
+.adm .zone.solo { grid-template-columns: minmax(0, 1fr); }
+.adm label.l { font: 700 13px 'Inter'; display: block; margin-bottom: 6px; }
+.adm textarea { width: 100%; min-height: 112px; resize: vertical; font: 400 15px/1.6 'Inter'; color: var(--a-ink); background: var(--a-input); border: 1px solid var(--a-line); border-radius: 6px; padding: 10px 12px; }
+.adm textarea:focus-visible { outline: 2px solid var(--a-link); outline-offset: 1px; }
+.adm .hint { font-size: 13px; color: var(--a-soft); margin-top: 6px; }
+.adm .count { font-size: 13px; color: var(--a-soft); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.adm .empty { background: #fff; border: 1px solid var(--a-line); border-radius: 10px; padding: 18px 22px; }
+.adm .empty h4 { margin: 0 0 4px; font: 700 18px 'Inter'; }
+.adm .empty p { color: var(--a-soft); font-size: 15px; }
+.adm .pv-label { font: 700 13px 'Inter'; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.adm .pv-label span { font-weight: 400; color: var(--a-soft); font-size: 12px; }
+.adm .pv-note { font-size: 13px; color: var(--a-soft); margin-top: 8px; }
+.adm .pv-note.warn { color: #8A5300; }
+
+/* ── Product frames: the club's public site (fixed light ground, club colour = navy for the drawing) ── */
+.club { --club-ground: #F6F5F2; --club-card: #FFFFFF; --club-text: #1F1B16; --club-soft: #4E473D; --club-dim: #6F675B; --club-line: #E4E0D8; --club-line-2: #D6D0C4; --club-field: #948B7D;
+  --club-ok: #2C6A2A; --club-ok-bg: #E6F0E2; --club-fill: #1F3A5F; --club-on-fill: #FFFFFF; --club-edge: #1F3A5F;
+  font-family: 'Inter', system-ui, sans-serif; background: var(--club-ground); color: var(--club-text); color-scheme: light; }
+.club * { box-sizing: border-box; }
+.club .page { padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 20px; }
+.club .head { display: flex; flex-direction: column; align-items: flex-start; }
+.club h1 { margin: 0 0 6px; font: 700 2rem/1.1 'Barlow Condensed', 'Arial Narrow', sans-serif; color: var(--club-text); letter-spacing: 0; }
+.club .meta { margin: 0; font: 400 .875rem/1.4 'Inter'; color: var(--club-soft); }
+.club .chip { margin-top: 10px; display: inline-flex; align-items: center; padding: 6px 10px; border: 1px solid transparent; border-radius: 20px; font: 600 .75rem/1 'Inter'; white-space: nowrap; }
+.club .chip.ok { color: var(--club-ok); background: var(--club-ok-bg); }
+.club .chip.wait { color: var(--club-soft); background: var(--club-ground); border-color: var(--club-line-2); }
+.club .chip.dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--club-field); margin-right: 6px; }
+.club .section { display: flex; flex-direction: column; gap: .6rem; }
+.club .section h2 { margin: 0; font: 700 1rem/1.25 'Inter'; color: var(--club-text); }
+.club .list { border: 1px solid var(--club-line); border-radius: 8px; background: var(--club-card); overflow: hidden; }
+.club .blurb { margin: 0; padding: 14px 16px; font: 400 1rem/1.6 'Inter'; color: var(--club-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.club .go { display: flex; align-items: center; justify-content: center; min-height: 44px; width: 100%; border-radius: 8px; background: var(--club-fill); color: var(--club-on-fill); border: 1.5px solid var(--club-edge); font: 600 1rem 'Inter'; }
+.club .status { background: var(--club-card); border: 1px solid var(--club-line); border-radius: 8px; display: flex; flex-direction: column; }
+.club .status p { margin: 0; padding: 14px 16px; font: 400 1rem/1.5 'Inter'; color: var(--club-soft); }
+.club .status .ct { border-top: 1px solid var(--club-line); padding: 12px 16px 14px; font: 400 1rem/1.5 'Inter'; color: var(--club-soft); }
+.club .status .ct b { display: block; color: var(--club-text); font-weight: 600; word-break: break-all; }
+.club .ctline { margin: 0; font: 400 .875rem/1.5 'Inter'; color: var(--club-soft); }
+.club .ctline b { display: block; margin-top: 2px; font-weight: 600; color: var(--club-text); }
+.club .day { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 60px; padding: 10px 16px; border-top: 1px solid var(--club-line); }
+.club .day:first-child { border-top: 0; }
+.club .day .w { font: 400 .875rem/1.35 'Inter'; color: var(--club-dim); }
+.club .day .t { font: 600 1rem/1.3 'Inter'; }
+.club .day .p { margin-top: 2px; font: 400 .75rem/1.4 'Inter'; color: var(--club-dim); }
+.club .day .d { font: 600 .875rem 'Inter'; color: var(--club-fill); }
+.pvframe { width: 360px; max-width: 100%; border: 1px solid #E4E0D8; border-radius: 8px; overflow: hidden; background: #F6F5F2; }
+.inert { pointer-events: none; user-select: none; cursor: default; }
+.phoneadm { width: 390px; max-width: 100%; }
+@media (max-width: 700px) { body { font-size: 14px; } }
+</style>
+
+<div class="wrap">
+  <header class="sec">
+    <h1>Tryout blurb preview</h1>
+    <p class="lede">The “From the club” box on a team’s admin Tryouts page changes what families read on the public tryout page, but the club can’t see that page while typing. This sheet draws a small preview beside the box. It shows on a laptop-wide window only. A phone shows what it shows today.</p>
+    <p class="note">Words, layout and colours inside the preview are the real public tryout page’s, drawn at phone width because that is where most families read it. The club colour here (navy) stands in for whatever colour the club saved. The “Preview as” buttons in drawing 1 are for this sheet only and are not part of the product.</p>
+  </header>
+
+  <section class="sec" aria-labelledby="asks">
+    <h2 id="asks">Five calls for you</h2>
+    <div class="asks">
+      <div class="ask"><span><span class="tag ask">Ask 1</span>How much of the page</span><b>Recommended: the title block, “From the club”, and the Sign up button.</b><span>Not the back link, the tryout days or the contact line, which are not the club’s words. Drawing 3 compares the two sizes.</span></div>
+      <div class="ask"><span><span class="tag ask">Ask 2</span>Where it shows</span><b>Recommended: right of the box, inside the Sign-ups card, on a laptop-wide window.</b><span>When the Sign-ups card is wide enough for the box and a 360 px preview side by side (about 1,300 px and up with the sidebar open). Narrower, and on a phone, no preview and nothing moves.</span></div>
+      <div class="ask"><span><span class="tag ask">Ask 3</span>When it updates</span><b>Recommended: as the club types, before the autosave.</b><span>A preview that lags the box would mislead. Type in drawing 1 to see it.</span></div>
+      <div class="ask"><span><span class="tag ask">Ask 4</span>It follows the page’s real state</span><b>Open, Not open yet, or Closed.</b><span>When families would not see the words (closed), the preview shows the page without them and says so once, in amber. The box’s own “when families read this” sentence steps aside whenever the preview already says it.</span></div>
+      <div class="ask"><span><span class="tag ask">Ask 5</span>Name</span><b>“How families see it”, with “Updates as you type” beside it.</b><span>Nothing in it can be clicked; the Sign up button is a picture.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="d1">
+    <h2 id="d1">1 · The whole screen, before and after <span class="tag new">NEW</span></h2>
+    <p>A 1,366 px laptop window, page area only. The Sign-ups card gets the preview in a right column; the card grows by about the preview’s extra height, so “No applicants yet” moves down.</p>
+
+    <div>
+      <div class="cap">Before <span class="tag same">UNCHANGED</span> · shown at true size, scroll sideways on a narrower screen</div>
+      <div class="scroller"><div id="before"></div></div>
+    </div>
+
+    <div>
+      <div class="cap">After</div>
+      <div class="ctl" role="group" aria-label="Preview as (drawing control)">
+        <span>Preview as:</span>
+        <button type="button" data-state="open" aria-pressed="true">Tryouts open</button>
+        <button type="button" data-state="notOpenYet" aria-pressed="false">Not open yet</button>
+        <button type="button" data-state="closed" aria-pressed="false">Closed</button>
+        <span>· The box is live; type in it.</span>
+      </div>
+      <div class="scroller" style="margin-top:8px"><div id="after"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="d2">
+    <h2 id="d2">2 · The preview’s four states, at phone width <span class="tag new">NEW</span></h2>
+    <p>Each frame is 360 px wide, the width of a small phone, and uses the public page’s own type and spacing. What sits under each frame is the admin line that goes with it.</p>
+    <div class="specrow" id="states"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="d3">
+    <h2 id="d3">3 · Ask 1: how much of the page <span class="tag ask">ASK 1</span></h2>
+    <p>Left is the recommendation. Right shows the whole page, with tryout days and the club’s contact line. Heights are estimates from the page’s own spacing and will be measured in the build.</p>
+    <div class="specrow">
+      <div class="spec">
+        <div class="cap">Recommended · about 330 px tall</div>
+        <div class="pvframe"><div id="pv-trim"></div></div>
+        <p class="measure">Title block · From the club · Sign up. The card grows by about 140 px.</p>
+      </div>
+      <div class="spec">
+        <div class="cap">Whole page · about 640 px tall</div>
+        <div class="pvframe"><div id="pv-full"></div></div>
+        <p class="measure">Adds the tryout days and the contact line. The card grows by about 480 px, and the days are edited somewhere else.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="d4">
+    <h2 id="d4">4 · On a phone, nothing changes <span class="tag same">UNCHANGED</span></h2>
+    <p>Below the laptop-wide point the preview is not drawn at all, rather than drawn small. The box, its hints and the counter stay exactly as they are today.</p>
+    <div class="phoneadm"><div class="adm" style="width:100%"><div class="main" style="padding:16px">
+      <div class="card" style="padding:16px">
+        <h4>Sign-ups <span class="pill">Open</span></h4>
+        <div class="addr">uat-rep-only/teams/15u-aaa/tryouts</div>
+        <div><label class="l">From the club</label>
+          <textarea readonly style="min-height:96px">Open to players born 2012 and 2013. The tryout fee is $40, paid at the first session. Bring a glove, cleats and water. We call every family by the end of the week.</textarea>
+          <p class="hint">Families read this on the tryout page, above Sign up for tryouts, before and while sign-ups are open.</p>
+          <p class="count">163 / 500</p></div>
+      </div></div></div></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var BLURB = 'Open to players born 2012 and 2013. The tryout fee is $40, paid at the first session. Bring a glove, cleats and water. We call every family by the end of the week.';
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var CHIP = { open: ['ok', 'Tryouts open'], notOpenYet: ['wait', 'Not open yet'], closed: ['wait dot', 'Tryouts closed'] };
+
+  // The real page's pieces, in the real page's order. trim = title block + From the club + the button or the state card.
+  function preview(state, text, full) {
+    var t = (text || '').trim();
+    var showBlurb = t && (state === 'open' || state === 'notOpenYet');
+    var c = CHIP[state];
+    var h = '<div class="club inert" aria-hidden="true"><div class="page">';
+    h += '<div class="head"><h1>15U AAA tryouts</h1>' + (state !== 'closed' ? '<p class="meta">For the 2026 season · born 2012–2013</p>' : '') + '<span class="chip ' + c[0] + '">' + c[1] + '</span></div>';
+    if (full && state !== 'closed') {
+      h += '<section class="section"><h2>Tryout days</h2><div class="list">'
+        + '<div class="day"><div class="w">Sat, Nov 7</div><div><div class="t">9:00 a.m. – 11:00 a.m.</div><div class="p">Lakeshore Arena, Field 2</div></div><div class="d">Directions</div></div>'
+        + '<div class="day"><div class="w">Sat, Nov 14</div><div><div class="t">9:00 a.m. – 11:00 a.m.</div><div class="p">Lakeshore Arena, Field 2</div></div><div class="d">Directions</div></div>'
+        + '</div></section>';
+    }
+    if (showBlurb) h += '<section class="section"><h2>From the club</h2><div class="list"><p class="blurb">' + esc(t) + '</p></div></section>';
+    if (state === 'open') {
+      h += '<div class="go">Sign up for tryouts</div>';
+      if (full) h += '<p class="ctline">Questions? Email the club at<b>tryouts@lakeshorelynx.example</b></p>';
+    } else {
+      var s = state === 'notOpenYet' ? 'Sign-ups for 15U AAA tryouts aren’t open yet.' : '15U AAA isn’t taking tryout sign-ups right now.';
+      h += '<div class="status"><p>' + s + '</p><div class="ct">Questions? Email the club at<b>tryouts@lakeshorelynx.example</b></div></div>';
+    }
+    return h + '</div></div>';
+  }
+
+  var HINT = {
+    open: 'Families read this on the tryout page, above Sign up for tryouts, before and while sign-ups are open.',
+    notOpenYet: 'Families read this on the tryout page now, with your tryout days. Sign-ups aren’t open yet.',
+    closed: 'Families read this once a tryout day is coming up, and while sign-ups are open. Right now the page doesn’t show it.'
+  };
+
+  function side(opts) {
+    // The sidebar, header and Sign-ups card are the admin's; opts.preview adds the NEW right column.
+    var state = opts.state, text = opts.text;
+    var pill = state === 'open' ? '<span class="pill">Open</span>' : '<span class="pill" style="background:#EEE8DC;color:#6B6254;border-color:#DDD3C0">Closed</span>';
+    var btns = (state === 'open' ? '<span class="btn ghost">Copy link</span>' : '') + '<span class="btn">' + (state === 'open' ? 'Close sign-ups' : 'Open sign-ups') + '</span>';
+    var box = '<div><label class="l" for="' + opts.id + '">From the club</label>'
+      + '<textarea id="' + opts.id + '" ' + (opts.live ? '' : 'readonly') + ' maxlength="500" placeholder="What it costs, who can try out, what to bring and when families hear back.">' + esc(text) + '</textarea>'
+      + (opts.preview && state !== 'notOpenYet' ? '' : '<p class="hint" id="' + opts.id + '-hint">' + HINT[state] + '</p>')
+      + '<p class="count" id="' + opts.id + '-n">' + Array.from(text).length + ' / 500</p></div>';
+    var right = '';
+    if (opts.preview) {
+      var note = state === 'closed'
+        ? '<p class="pv-note warn">Families don’t see your words right now.</p>'
+        : (!text.trim() ? '<p class="pv-note">Nothing written yet, so families see the page without a “From the club” section.</p>'
+          : '');
+      right = '<div id="' + opts.id + '-pv"><div class="pv-label">How families see it <span>Updates as you type</span></div><div class="pvframe">' + preview(state, text, false) + '</div>' + note + '</div>';
+    }
+    return '<div class="adm"><div class="top"><i></i> FIELDLOGICHQ <span style="font-weight:600;color:#6B6254;letter-spacing:.08em;font-size:12px">ADMIN AREA</span></div>'
+      + '<div class="body"><div class="side"><b>Overview</b><span>Calendar</span><span>Schedules</span><span class="grp">PROGRAMS</span><b>Rep teams</b><span>&nbsp;&nbsp;Teams</span><span>&nbsp;&nbsp;Assistant coaches</span><span>&nbsp;&nbsp;Past seasons</span><span class="grp">15U AAA</span><span>&nbsp;&nbsp;Team page</span><span>&nbsp;&nbsp;Roster</span><b>&nbsp;&nbsp;Tryouts</b></div>'
+      + '<div class="main"><div class="hd"><div><div class="crumb">Rep teams · AAA</div><h3>Tryouts <span class="pill" style="font-size:10px">2026 Season · Live</span></h3></div><span class="btn lime">+ Add applicant</span></div>'
+      + '<div class="card"><div class="row"><h4>Sign-ups ' + pill + '</h4><span style="margin-left:auto;display:flex;gap:10px">' + btns + '</span></div>'
+      + '<div class="addr">uat-rep-only/teams/15u-aaa/tryouts</div>'
+      + '<div class="zone' + (opts.preview ? '' : ' solo') + '">' + box + right + '</div></div>'
+      + '<div class="empty"><h4>No applicants yet</h4><p>Applicants appear here when sign-ups are open and families use the link.</p></div></div></div></div>';
+  }
+
+  document.getElementById('before').innerHTML = side({ state: 'open', text: BLURB, id: 'b', live: false, preview: false });
+
+  var afterEl = document.getElementById('after');
+  var st = 'open', tx = BLURB;
+  function drawAfter() {
+    afterEl.innerHTML = side({ state: st, text: tx, id: 'a', live: true, preview: true });
+    var ta = document.getElementById('a');
+    ta.addEventListener('input', function () {
+      tx = ta.value;
+      document.getElementById('a-n').textContent = Array.from(tx).length + ' / 500';
+      var node = document.getElementById('a-pv');
+      node.querySelector('.pvframe').innerHTML = preview(st, tx, false);
+      var old = node.querySelector('.pv-note'); if (old) old.remove();
+      var n = document.createElement('p');
+      if (st === 'closed') { n.className = 'pv-note warn'; n.textContent = 'Families don’t see your words right now.'; }
+      else if (!tx.trim()) { n.className = 'pv-note'; n.textContent = 'Nothing written yet, so families see the page without a “From the club” section.'; }
+      else { n = null; }
+      if (n) node.appendChild(n);
+    });
+  }
+  drawAfter();
+  document.querySelectorAll('.ctl button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      st = b.getAttribute('data-state');
+      document.querySelectorAll('.ctl button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      drawAfter();
+    });
+  });
+
+  // Drawing 2: the four states.
+  var S = [
+    ['Tryouts open, words written', 'open', BLURB, ''],
+    ['Not open yet, words written', 'notOpenYet', BLURB, ''],
+    ['Tryouts open, box still empty', 'open', '', 'Nothing written yet, so families see the page without a “From the club” section.'],
+    ['Closed: families don’t see the words', 'closed', BLURB, 'Families don’t see your words right now.']
+  ];
+  document.getElementById('states').innerHTML = S.map(function (s) {
+    return '<div class="spec"><div class="cap">' + s[0] + '</div><div class="pvframe">' + preview(s[1], s[2], false) + '</div>'
+      + (s[3] ? '<p class="note"' + (s[1] === 'closed' ? ' style="color:var(--tag-ask)"' : '') + '>' + s[3] + '</p>' : '') + '</div>';
+  }).join('');
+
+  document.getElementById('pv-trim').innerHTML = preview('open', BLURB, false);
+  document.getElementById('pv-full').innerHTML = preview('open', BLURB, true);
+})();
+</script>
