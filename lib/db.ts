@@ -1386,6 +1386,10 @@ export async function getOrgPublicSiteContent(orgId: string): Promise<OrgPublicS
     contacts:                 cleanSiteList('contacts', data.contacts) as OrgPublicSiteContent['contacts'],
     documents:                cleanSiteList('documents', data.documents) as OrgPublicSiteContent['documents'],
     questions:                cleanSiteList('questions', data.questions) as OrgPublicSiteContent['questions'],
+    // ⚠ Includes the ENDED ones: the editor reads this too and marks them. The public pages filter (lib/club-sponsors.ts
+    // `sponsorsShowing`), so this read never does. Only a LOGO that is not the club's own upload is dropped (the sponsor
+    // stays); a row that is otherwise bad (no name, a bad link or last day) is dropped whole, as in the other three lists.
+    sponsors:                 cleanSiteList('sponsors', data.sponsors, { orgId }) as OrgPublicSiteContent['sponsors'],
     createdAt:                data.created_at,
     updatedAt:                data.updated_at,
   };
@@ -1405,6 +1409,7 @@ const PUBLIC_SITE_COLUMN = {
   contacts:           'contacts',
   documents:          'documents',
   questions:          'questions',
+  sponsors:           'sponsors',
 } as const;
 
 export type OrgPublicSiteContentPatch = Partial<Pick<OrgPublicSiteContent, keyof typeof PUBLIC_SITE_COLUMN>>;

@@ -802,9 +802,18 @@ export interface OrgPublicSiteContent {
   contacts: SiteContact[];
   documents: SiteDocument[];
   questions: SiteQuestion[];
+  /** The club's sponsors (≤20, mig 353): a thank-you wall on the home page and the About page. Ended ones stay here. */
+  sponsors: SiteSponsor[];
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * A club sponsor (≤20). Only the name is required; an absent field is an ABSENT key, never an empty string. `logoUrl` is a
+ * file the club uploaded (lib/sponsor-logo.ts); `endsOn` is the LAST day it shows (YYYY-MM-DD, inclusive). This is the
+ * club's public thank-you, nothing to do with the coach money book's sponsorships.
+ */
+export interface SiteSponsor { id: string; name: string; logoUrl?: string; link?: string; endsOn?: string }
 
 /** Who to contact (≤12): a role the club names and its address. */
 export interface SiteContact { id: string; role: string; email: string }

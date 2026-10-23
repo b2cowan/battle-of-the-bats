@@ -8946,6 +8946,15 @@
     "ordinal_position": 18
   },
   {
+    "table_name": "org_public_site_content",
+    "column_name": "sponsors",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 19
+  },
+  {
     "table_name": "org_site_notices",
     "column_name": "id",
     "data_type": "uuid",

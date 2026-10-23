@@ -26279,3 +26279,14 @@ republished; tick positions unchanged).
 
 **Not in the walk (tests cover it, or no fixture):** the rule table and counts; a coach with no name on file; a team between seasons or archived; Schedule visibility (separate).
 <!-- /§363 -->
+
+## §366 · Club Tier · Stage 4d, the club's sponsors — **a club lists its sponsors once in the Public site editor (name, optional logo, link and last day); families see them as a strip at the foot of the home page and a Sponsors section at the foot of the About page; a sponsor whose last day has passed leaves both by itself and stays in the editor marked Ended, so renewing is one edit; a logo is opened and re-saved on upload, never stored as sent**
+
+**Built:** 2026-10-23 from `CLUB_TIER_STAGE4D_BUILD_PROMPT.md`; BUILT, uncommitted (the owner says when). Migration 353 (the `sponsors` column, cap 20) applied to **dev only**. Drawings https://claude.ai/artifact/CAKV9xcGQoW4zudF5TvGcE (owner: all recommendations); words `CLUB_TIER_STAGE4D_COPY.md` (approved 2026-10-23); `/design`, `/simplify`, `/review` and `/docs` done. Editor row renamed "Contacts, documents and sponsors"; the public footer link keeps "Contacts and documents"; a sponsor alone never opens the About page; sponsors never count toward "N of 4 ready". Fixture: the rep-only club gets three sponsors on a rebuild (`seed-club-fixture.mjs --rep-only-club`), which resets that club's sign-in.
+
+**The walk:** [Club sponsors walk](CLUB_TIER_STAGE4D_WALK.html), published https://claude.ai/artifact/R67agccQP1Vw5VqcKmEFz4 2026-10-23. 30 ticks in eight parts: A the Sponsors list in the editor · B the home strip · C the About page · D adding a sponsor and its logo (three refusals) · E a sponsor ends and comes back · F removing a sponsor · G a phone · H help.
+
+**Owed:** the walk; the rebuild above before it; a dev-server restart (new files and a route); `check:layout --changed` on the editor, the home and the About page once the rebuild has put sponsors on the club; prod: apply 343 then 353 before the Club release.
+
+**Not in the walk (tests cover it, or out of scope):** the day-edge in other time zones (every club is Toronto today; the check takes the zone as a parameter); a logo file's deletion after cancel (no screen shows it); two admins editing the sponsors in the same second (the last save wins, as for the other three lists).
+<!-- /§366 -->

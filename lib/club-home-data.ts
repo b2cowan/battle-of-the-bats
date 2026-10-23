@@ -15,6 +15,7 @@ import { clubHomeTournaments, clubTeamBands, orderOpenNow, runningLeagueSeason, 
 import { isSectionShown } from '@/lib/club-site-sections';
 import { siteSectionCarries } from '@/lib/public-site-editor-facts';
 import { clubAboutPageShows } from '@/lib/club-about';
+import { sponsorsShowing } from '@/lib/club-sponsors';
 import { readClubTeams } from '@/lib/club-public-teams';
 import { readClubTryouts } from '@/lib/club-tryouts';
 import { homeTryoutsRowSub, isListedTryout, openNowTryouts, sharedSeasonYear, tryoutDaysLine, tryoutSeasonMeta, tryoutsPageTitle } from '@/lib/tryout-season';
@@ -132,6 +133,8 @@ export async function loadClubHome(org: Organization, orgSlug: string): Promise<
     tournaments,
     about: siteContent?.description?.trim() || null,
     aboutPageHref: clubAboutPageShows(siteContent) ? `/${orgSlug}/about` : null,
+    // Only the sponsors a family may see now: the filter is HERE (a page's loader), never in the shared read the editor uses.
+    sponsors: sponsorsShowing(siteContent?.sponsors),
     showFollow,
     sectionPrefs,
     carries,

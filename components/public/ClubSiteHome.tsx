@@ -1,7 +1,9 @@
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import FollowOrgButton from './FollowOrgButton';
+import { ClubSponsorStrip } from './ClubSponsors';
 import { siteEdit } from '@/lib/site-edit-marks';
+import type { SiteSponsor } from '@/lib/types';
 import kit from './ClubKit.module.css';
 import styles from './ClubSiteHome.module.css';
 import {
@@ -65,6 +67,8 @@ export interface ClubSiteHomeProps {
   about: string | null;
   /** The About page, when it says more than the about text (a contact, a document or a question). */
   aboutPageHref: string | null;
+  /** The sponsors a family may see now (Stage 4d): the strip at the foot of the home, absent when there are none. */
+  sponsors: SiteSponsor[];
   showFollow: boolean;
   /** The club's order and show/hide (Stage 4c-1) and what its plan carries. */
   sectionPrefs: SectionPrefs;
@@ -194,6 +198,9 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
         style={twoColumns ? ({ '--home-rows': besideAbout } as CSSProperties) : undefined}>
         {sections.map(k => <Fragment key={k}>{drawn[k]}</Fragment>)}
       </div>
+      {/* The sponsors (Stage 4d): the last thing on the home, above the footer — not a section (no order, no hide switch) and
+          not the shared frame's, so no other club page carries it. Absent when there is nothing to show. */}
+      <ClubSponsorStrip sponsors={p.sponsors} />
     </div>
   );
 }

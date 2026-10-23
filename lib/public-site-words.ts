@@ -19,8 +19,10 @@ export const PUBLIC_SITE_WORDS = {
   saveFailed: "Couldn't save your changes. Try again.",
 
   // ── The builder (Public site builder, ruled 2026-10-21; drawing https://claude.ai/artifact/LSWvZmV9r1772Zt4etqcaM) ──
-  // The five rows, in order (Look, Home page, About the club, Contacts and documents, Visibility).
-  lists: 'Contacts and documents',
+  // The five rows, in order (Look, Home page, About the club, Contacts, documents and sponsors, Visibility). Renamed in
+  // Stage 4d so "Change in …" on the sponsor strip names a row that holds sponsors; the PUBLIC footer door keeps
+  // "Contacts and documents" (a sponsor alone does not open the About page).
+  lists: 'Contacts, documents and sponsors',
   visibility: 'Visibility',
   setupTitle: 'Set up your site',
   // Said only while the site is offline (a new club's site starts online): what families meet, in plain words.
@@ -37,8 +39,10 @@ export const PUBLIC_SITE_WORDS = {
   aboutNoTagline: 'No tagline yet',
   aboutNoEmail: 'No email for questions yet',
   socialCount: (n: number) => `${n} social ${n === 1 ? 'link' : 'links'}`,
-  listsSummary: (c: number, d: number, q: number) =>
-    [c ? `${c} ${c === 1 ? 'contact' : 'contacts'}` : null, d ? `${d} ${d === 1 ? 'document' : 'documents'}` : null, q ? `${q} ${q === 1 ? 'question' : 'questions'}` : null]
+  // Sponsors (Stage 4d) join as a fourth count; `ended` is how many of them have passed their last day.
+  listsSummary: (c: number, d: number, q: number, s = 0, ended = 0) =>
+    [c ? `${c} ${c === 1 ? 'contact' : 'contacts'}` : null, d ? `${d} ${d === 1 ? 'document' : 'documents'}` : null, q ? `${q} ${q === 1 ? 'question' : 'questions'}` : null,
+      s ? `${s} ${s === 1 ? 'sponsor' : 'sponsors'}` : null, s && ended ? `${ended} ended` : null]
       .filter(Boolean).join(' · ') || 'Optional · none yet',
   // `noun` is the directory's name in the switch's own label (club, league or organization), so the two read alike.
   visibilitySummary: (on: boolean, listed: boolean, noun = 'club') => on ? (listed ? `Online · listed in the ${noun} directory` : `Online · not in the ${noun} directory`) : 'Offline',
@@ -215,6 +219,44 @@ export const PUBLIC_SITE_WORDS = {
   questionSaved: 'Question saved.',
   questionRemoved: 'Question removed.',
 
+  // Sponsors (Club Tier Stage 4d; CLUB_TIER_STAGE4D_COPY.md, owner-approved 2026-10-23)
+  sponsors: 'Sponsors',
+  sponsorsLead: 'The businesses and people who back your club. Families see them at the bottom of your home page and on your About page. Up to twenty.',
+  addSponsor: 'Add a sponsor',
+  editSponsor: 'Edit sponsor',
+  sponsorName: 'Name',
+  sponsorNamePlaceholder: 'Riverside Dental',
+  sponsorLinkPlaceholder: 'https://riversidedental.ca',
+  sponsorLinkHint: 'Families who tap the sponsor go here.',
+  lastDay: 'Last day',
+  lastDayHint: 'Families see the sponsor through this day, then it leaves by itself. Leave it empty to keep it up.',
+  sponsorEnded: 'Ended',
+  /** A sponsor row's second line in the editor. */
+  sponsorUntil: (day: string) => `Until ${day}`,
+  sponsorNoLastDay: 'No last day',
+  sponsorLastDayWas: (day: string) => `Last day was ${day}`,
+  sponsorEndedBanner: 'This sponsor has ended, so families no longer see it. Pick a later last day to bring it back.',
+  noLogoYet: 'No logo yet',
+  noLogoThumb: 'No logo',
+  logoNotSaved: 'Not saved',
+  sponsorLogoHint: 'JPG, PNG or WebP, up to 2 MB. Without a logo, families see the name.',
+  removeLogo: 'Remove logo',
+  removeSponsor: 'Remove sponsor',
+  removeSponsorBodyLogo: 'Families will no longer see it, and its logo is deleted.',
+  sponsorSaved: 'Sponsor saved.',
+  sponsorRemoved: 'Sponsor removed.',
+  nameTooLong: (max: number) => `The name can be up to ${max} characters.`,
+  badLastDay: "That isn't a date. Pick the last day from the calendar.",
+  logoNotOurs: "That logo didn't come from here. Upload it again.",
+  logoWrongType: "That file isn't a JPG, PNG or WebP image. Choose a different one.",
+  logoTooBig: 'That file is over 2 MB. Choose a smaller one.',
+  logoUnreadable: "We couldn't read that image. Try a different file.",
+  logoUploadFailed: "Couldn't upload the logo. Try again.",
+  /** The family-facing section heading on the home strip and the About page. */
+  sponsorsHeading: 'Sponsors',
+  /** Said to a screen reader after a sponsor's name when it links out. */
+  opensNewTab: 'opens in a new tab',
+
   save: 'Save',
   saving: 'Saving…',
   cancel: 'Cancel',
@@ -227,8 +269,8 @@ export const PUBLIC_SITE_WORDS = {
   /** A list row missing a field: "Add the role or name first." (said by the window and by the route). */
   missing: (label: string) => `Add the ${label.toLowerCase()} first.`,
   /** A list at its cap: "You have twelve contacts. Remove one to add another." */
-  listFull: (max: number, noun: 'contacts' | 'documents' | 'questions') =>
-    `You have ${({ 10: 'ten', 12: 'twelve', 30: 'thirty' } as Record<number, string>)[max] ?? max} ${noun}. Remove one to add another.`,
+  listFull: (max: number, noun: 'contacts' | 'documents' | 'questions' | 'sponsors') =>
+    `You have ${({ 10: 'ten', 12: 'twelve', 20: 'twenty', 30: 'thirty' } as Record<number, string>)[max] ?? max} ${noun}. Remove one to add another.`,
   noticeTooLong: (max: number) => `The notice can be up to ${max} characters.`,
   detailTooLong: (max: number) => `The detail can be up to ${max} characters.`,
 } as const;

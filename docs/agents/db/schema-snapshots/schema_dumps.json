@@ -8948,6 +8948,15 @@
         "column_default": "'[]'::jsonb"
       },
       {
+        "table_name": "org_public_site_content",
+        "pos": 19,
+        "column_name": "sponsors",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
         "table_name": "org_site_notices",
         "pos": 1,
         "column_name": "id",
@@ -33772,6 +33781,12 @@
         "table_name": "org_public_site_content",
         "detail": "org_public_site_content_questions_cap",
         "check_clause": "((jsonb_typeof(questions) = 'array'::text) AND (jsonb_array_length(questions) <= 10))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_public_site_content",
+        "detail": "org_public_site_content_sponsors_cap",
+        "check_clause": "((jsonb_typeof(sponsors) = 'array'::text) AND (jsonb_array_length(sponsors) <= 20))"
       },
       {
         "kind": "RLS",

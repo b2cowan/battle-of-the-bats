@@ -7,6 +7,12 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-23 — CLUB TIER STAGE 4D, SPONSORS: A LOGO BOX THAT SHOWS WHAT FAMILIES SEE; AN ENDED SPONSOR IS THE QUIET GREY PILL; THE PHONE WINDOW IS A FULL SCREEN (owner, "I agree with your recommendations", drawing https://claude.ai/artifact/CAKV9xcGQoW4zudF5TvGcE)
+
+**Decision:** (1) A sponsor's logo is shown contained, never cropped, in a fixed tile (160 by 72 in the editor's logo box, the same shape on the home strip and the About row), so no sponsor looks bigger than another and the editor previews what families see. (2) The logo uploads when chosen and is deleted again if the create window is cancelled. (3) "Ended" is the quiet grey over-and-done pill with the row dimmed, NOT amber (amber is for what waits). (4) The sponsor window on a phone is a full-screen window with a ← (the One window rule), not a bottom sheet. (5) The logo's own button is "Remove logo", because the window also ends with "Remove sponsor". (6) The Sponsors section is the last section of the About page, and the strip is the last thing on the home page, above the footer. Only Name carries the required star.
+**Rationale:** the design pass found the first draw broke the One window rule (sheet), the title face (condensed instead of Inter 700) and the "amber waits" rule; the bare "Remove" appeared twice in one window.
+**Applies to:** the Public site editor's Sponsors card and window, the club home page, the club About page.
+
 ### 2026-10-23 — THE NEW MARK: JOINED FL, REFINED; OLIVE LEADS, LIME STAYS FOR ACTIONS (owner, "ok let's forget it, I want to go ahead with your proposal", https://claude.ai/artifact/9xDNVQyR3wJRcf7hCgiDBr)
 
 **Decision (as ruled; taken as the refinement page's seven asks as recommended, which the owner may correct):** the

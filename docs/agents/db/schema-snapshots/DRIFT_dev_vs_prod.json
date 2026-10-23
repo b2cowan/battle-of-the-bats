@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-23",
-  "total": 164,
+  "total": 166,
   "counts": {
     "tables": 7,
-    "columns": 78,
+    "columns": 79,
     "indexes": 19,
     "constraints": 30,
-    "rls": 30
+    "rls": 31
   },
   "items": [
     {
@@ -71,6 +71,10 @@
     },
     {
       "key": "check:only-dev:org_public_site_content.org_public_site_content_questions_cap",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_public_site_content.org_public_site_content_sponsors_cap",
       "sig": ""
     },
     {
@@ -219,6 +223,10 @@
     },
     {
       "key": "column:only-dev:org_public_site_content.questions",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_public_site_content.sponsors",
       "sig": ""
     },
     {

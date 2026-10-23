@@ -8,8 +8,10 @@
  * Every check is the route's own (`checkListRow`, lib/public-site-patch): a missing field or a refused address holds the
  * save and says why; a personal-looking contact address is nudged, never refused.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
+import SponsorLogoField from './SponsorLogoField';
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { RecordDelete, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -25,8 +27,13 @@ export interface ListField {
   key: string;
   label: string;
   placeholder?: string;
-  kind: 'text' | 'textarea' | 'email' | 'link';
+  /** `logo` is a sponsor's picture (the upload box, Stage 4d); `date` is a day (a native date field, kept as YYYY-MM-DD). */
+  kind: 'text' | 'textarea' | 'email' | 'link' | 'logo' | 'date';
   maxLength: number;
+  /** Not required: the one star marks a required field, and an optional one is simply bare (no "(optional)" tag). */
+  optional?: boolean;
+  /** A line of help under the field. */
+  hint?: string;
   /** Offered as you type (a document's headings); any words are allowed. */
   suggestions?: readonly string[];
   /** A hint, never a block (the past-year hint under an answer). */
@@ -44,10 +51,18 @@ export interface SiteList {
   words: { title: string; lead: string; add: string; edit: string; remove: string; saved: string; removed: string };
   /** A row's name (its title in the list and in this window) and its caption. */
   title: (row: Values) => string;
-  caption: (row: Values) => string;
+  /** `today` is the club's calendar day (a sponsor's caption says whether it has ended). */
+  caption: (row: Values, today: string) => string;
+  /** What a row wears in the editor's list beyond its title and caption: a lead picture, a dimmed look, a trailing pill
+   *  (a sponsor's logo thumbnail and its Ended pill). */
+  row?: (row: Values, today: string) => { mark?: ReactNode; markWide?: boolean; muted?: boolean; trail?: ReactNode };
+  /** A line above the fields for a row in a state worth saying (an ended sponsor). */
+  banner?: (row: Values, today: string) => string | null;
+  /** The remove question's sentence, when it is not the usual one (a sponsor with a logo says the logo goes too). */
+  removeBody?: (row: Values) => string;
 }
 
-export default function SiteListRecord({ item, list, canWrite, thisYear, onSave, onRemove, onClose }: {
+export default function SiteListRecord({ item, list, canWrite, thisYear, onSave, onRemove, onClose, onUploadLogo, onDiscardLogo }: {
   /** null = add one (the same window, asking). */
   item: (Values & { id: string }) | null;
   list: SiteList;
@@ -57,6 +72,10 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
   onSave: (values: Values) => Promise<void>;
   onRemove: () => Promise<void>;
   onClose: () => void;
+  /** A sponsor's logo: sends the file; resolves with the address the server made, or throws with the sentence to show. */
+  onUploadLogo?: (file: File) => Promise<string>;
+  /** Throws a logo file away (the server refuses one a saved sponsor still points at). */
+  onDiscardLogo?: (url: string) => Promise<void>;
 }) {
   const { fields, words, title: nameOf } = list;
   const creating = item === null;
@@ -65,11 +84,36 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
   const [editing, setEditing] = useState(creating);
   const changed = useRef(false);
   const mistake = checkListRow(list.kind, values);
+  const today = tournamentToday();
+  const bannerText = list.banner?.(values, today) ?? null;
+  const banner = bannerText && <p className={styles.sponsorEndedBanner}>{bannerText}</p>;
+
+  // ── A sponsor's logo FILES: one may be thrown away only AFTER the list that stopped using it has been saved ──
+  // `retired` holds the files that stopped being this sponsor's logo (replaced or removed); the current one is `values.logoUrl`.
+  const retired = useRef(new Set<string>());
+  const [uploading, setUploading] = useState(false);
+  const discard = useCallback(async (url: string) => { try { await onDiscardLogo?.(url); } catch { /* housekeeping; an orphan file is harmless */ } }, [onDiscardLogo]);
+  /** The list was saved with `stored` as this sponsor's logo: files it moved off can go. */
+  const sweep = useCallback(async (stored: string) => {
+    for (const url of [...retired.current]) {
+      // Still the saved logo (a replacement was chosen while this save was in flight): kept for the next save's sweep.
+      if (url === stored) continue;
+      retired.current.delete(url);
+      await discard(url);
+    }
+  }, [discard]);
+  /** Every file this sponsor has had goes: a new sponsor was cancelled, or an existing one was removed. */
+  const discardAll = async () => {
+    for (const url of new Set([values.logoUrl ?? '', ...retired.current].filter(Boolean))) await discard(url);
+    retired.current.clear();
+  };
+  const cancel = () => { void discardAll(); onClose(); };
 
   const write = useCallback(async () => {
     await onSave(values);
     changed.current = true;
-  }, [onSave, values]);
+    await sweep(values.logoUrl ?? '');
+  }, [onSave, values, sweep]);
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing && !creating, loading: false, sig: JSON.stringify(values),
     blocked: editing && !creating ? mistake : null, write, failText: W.saveFailed,
@@ -85,16 +129,22 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
     resetRefused();
     setCreateError('');
   };
+  const changeLogo = (next: string) => {
+    const prev = values.logoUrl ?? '';
+    if (prev && prev !== next) retired.current.add(prev);
+    set('logoUrl', next);
+  };
 
   // ── Add: asks ──
   const [busy, setBusy] = useState(false);
   const [createError, setCreateError] = useState('');
   async function create() {
-    if (busy) return;
+    if (busy || uploading) return;
     if (mistake) { setCreateError(mistake); return; }
     setBusy(true);
     try {
       await onSave(values);
+      await sweep(values.logoUrl ?? '');
       onClose();
     } catch (e) {
       setCreateError(e instanceof Error && e.message ? e.message : W.saveFailed);
@@ -111,6 +161,8 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
     setAskError('');
     try {
       await onRemove();
+      // The list without this row is saved, so none of its logo files is pointed at any more.
+      await discardAll();
       setAsking(false);
       onClose();
     } catch {
@@ -127,20 +179,28 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
     const yearHint = f.pastYearHint ? pastYearHint(value, thisYear) : null;
     const hint = yearHint ? null : (f.nudge && value.trim() && !mistake ? f.nudge(value.trim()) : null);
     const listId = f.suggestions ? `${id}-suggestions` : undefined;
+    if (f.kind === 'logo') {
+      return (
+        <SponsorLogoField key={f.key} label={f.label} value={value} canWrite={canWrite}
+          upload={file => (onUploadLogo ? onUploadLogo(file) : Promise.reject(new Error(W.logoUploadFailed)))}
+          onChange={changeLogo} onBusy={setUploading} />
+      );
+    }
     return (
       <label key={f.key} className={ck.field} htmlFor={id}>
-        <span className={ck.label}>{f.label}<span className={repKit.req} aria-hidden>*</span></span>
+        <span className={ck.label}>{f.label}{!f.optional && <span className={repKit.req} aria-hidden>*</span>}</span>
         {f.kind === 'textarea' ? (
           <textarea id={id} className={ck.textarea} rows={4} value={value} maxLength={f.maxLength} placeholder={f.placeholder}
             onChange={e => set(f.key, e.target.value)} />
         ) : (
           <input id={id} className={ck.input} value={value} maxLength={f.maxLength} placeholder={f.placeholder} list={listId}
-            type={f.kind === 'email' ? 'email' : f.kind === 'link' ? 'url' : 'text'} inputMode={f.kind === 'link' ? 'url' : undefined}
+            type={f.kind === 'email' ? 'email' : f.kind === 'link' ? 'url' : f.kind === 'date' ? 'date' : 'text'} inputMode={f.kind === 'link' ? 'url' : undefined}
             onChange={e => set(f.key, e.target.value)} />
         )}
         {listId && <datalist id={listId}>{f.suggestions!.map(s => <option key={s} value={s} />)}</datalist>}
         {yearHint && <p className={styles.yearHint}>{yearHint}</p>}
         {hint && <p className={ck.hint}>{hint}</p>}
+        {f.hint && <p className={ck.hint}>{f.hint}</p>}
       </label>
     );
   });
@@ -151,16 +211,17 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
         kind="form"
         title={words.add}
         identity={words.title}
-        onClose={() => { if (!busy) onClose(); }}
+        onClose={() => { if (!busy) cancel(); }}
         busy={busy}
         footerStart={createError ? <FormError>{createError}</FormError> : undefined}
         footer={(
           <>
-            <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{W.cancel}</button>
-            <button type="button" className="btn btn-lime" onClick={() => void create()} disabled={busy}>{busy ? W.saving : W.save}</button>
+            <button type="button" className="btn btn-outline" onClick={cancel} disabled={busy}>{W.cancel}</button>
+            <button type="button" className="btn btn-lime" onClick={() => void create()} disabled={busy || uploading}>{busy ? W.saving : W.save}</button>
           </>
         )}
       >
+        {banner}
         {fieldsForm}
       </KitDialog>
     );
@@ -181,10 +242,20 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
         busy={busy}
         levelKey={item!.id}
       >
+        {banner}
         {editing ? fieldsForm : (
           <dl className={screenParts.recordFacts}>
             {fields.map(f => (
-              <div key={f.key}><dt>{f.label}</dt><dd style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-line' }}>{item![f.key] || '—'}</dd></div>
+              <div key={f.key}>
+                <dt>{f.label}</dt>
+                <dd style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-line' }}>
+                  {f.kind === 'logo'
+                    ? (item![f.key] ? <span className={styles.sponsorBox}><img src={item![f.key]} alt="" /></span> : '—')
+                    : f.kind === 'date'
+                      ? (item![f.key] ? formatStoredDate(item![f.key], { withYear: true }) : '—')
+                      : item![f.key] || '—'}
+                </dd>
+              </div>
             ))}
           </dl>
         )}
@@ -208,7 +279,7 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
             </>
           )}
         >
-          <p>{W.removeBody}</p>
+          <p>{list.removeBody ? list.removeBody(item!) : W.removeBody}</p>
           {askError && <p className={screenParts.recordBefore} role="alert">{askError}</p>}
         </KitDialog>
       )}

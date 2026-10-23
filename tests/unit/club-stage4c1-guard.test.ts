@@ -20,7 +20,8 @@ const NOTICE_ROUTE = 'app/api/admin/public-site/notice/route.ts';
 describe('the editor saves through one checked patch', () => {
   it('the route checks every field with parsePublicSitePatch, answers a refusal with its field, and writes only what was sent', () => {
     const route = read(ROUTE);
-    assert.match(route, /parsePublicSitePatch\(body\)/);
+    // 4d moved this pin: the route now names the club (a sponsor's logo is held to the club's own upload folder).
+    assert.match(route, /parsePublicSitePatch\(body, undefined, \{ orgId: r\.ctx\.org\.id \}\)/);
     assert.match(route, /\{ error: parsed\.error, field: parsed\.field \}, \{ status: 400 \}/);
     // Who may save: one rule for both editor routes (lib/public-site-access.ts) — owner or admin to write.
     assert.match(route, /publicSiteEditor\(req, \{ write: true \}\)/);

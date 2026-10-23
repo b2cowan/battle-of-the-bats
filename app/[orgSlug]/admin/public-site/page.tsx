@@ -45,10 +45,12 @@ import { builderReadiness } from '@/lib/public-site-builder';
 import type { SiteEditRow } from '@/lib/site-edit-marks';
 import {
   checkSiteField, Refused, LIST_MAX, SITE_FIELD_MAX, CONTACT_ROLE_MAX, DOCUMENT_HEADING_MAX, DOCUMENT_TITLE_MAX, QUESTION_MAX,
-  ANSWER_MAX, type ListKind, type SiteTextField,
+  ANSWER_MAX, SPONSOR_NAME_MAX, type ListKind, type SiteTextField,
 } from '@/lib/public-site-patch';
+import { sponsorCounts, sponsorEnded, sponsorRowSub } from '@/lib/club-sponsors';
+import { tournamentToday } from '@/lib/timezone';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
-import type { ClubNotice, OrgPublicSiteContent, SiteContact, SiteDocument, SiteQuestion } from '@/lib/types';
+import type { ClubNotice, OrgPublicSiteContent, SiteContact, SiteDocument, SiteQuestion, SiteSponsor } from '@/lib/types';
 import SiteListRecord, { type SiteList } from './SiteListRecord';
 import ClubNoticeStrip from './ClubNotice';
 import BuilderRow from './BuilderRow';
@@ -86,8 +88,8 @@ function without<T extends object>(o: T, key: keyof T): T {
   return copy;
 }
 
-type AnyItem = SiteContact | SiteDocument | SiteQuestion;
-/** Each About-page list: its fields, its words, and what its rows say. */
+type AnyItem = SiteContact | SiteDocument | SiteQuestion | SiteSponsor;
+/** Each list the club keeps (the About page's three, and the sponsors): its fields, its words, and what its rows say. */
 const LISTS: Record<ListKind, SiteList> = {
   contacts: {
     kind: 'contacts',
@@ -116,6 +118,34 @@ const LISTS: Record<ListKind, SiteList> = {
     ],
     words: { title: W.questions, lead: W.questionsLead, add: W.addQuestion, edit: W.editQuestion, remove: W.removeQuestion, saved: W.questionSaved, removed: W.questionRemoved },
     title: i => i.question, caption: i => (i.answer ?? '').split('\n')[0],
+  },
+  // Sponsors (Stage 4d): only the name is required, so only it carries the star. An ended sponsor stays in the list.
+  sponsors: {
+    kind: 'sponsors',
+    fields: [
+      { key: 'name', label: W.sponsorName, placeholder: W.sponsorNamePlaceholder, kind: 'text', maxLength: SPONSOR_NAME_MAX },
+      { key: 'logoUrl', label: W.logo, kind: 'logo', maxLength: LINK_MAX, optional: true },
+      { key: 'link', label: W.link, placeholder: W.sponsorLinkPlaceholder, kind: 'link', maxLength: LINK_MAX, optional: true, hint: W.sponsorLinkHint },
+      { key: 'endsOn', label: W.lastDay, kind: 'date', maxLength: 10, optional: true, hint: W.lastDayHint },
+    ],
+    words: { title: W.sponsors, lead: W.sponsorsLead, add: W.addSponsor, edit: W.editSponsor, remove: W.removeSponsor, saved: W.sponsorSaved, removed: W.sponsorRemoved },
+    title: i => i.name, caption: (i, today) => sponsorRowSub(i, today),
+    // A row wears its logo (the same shape families see, small); an ended one dims and says so.
+    row: (i, today) => {
+      const ended = sponsorEnded({ endsOn: i.endsOn }, today);
+      return {
+        markWide: true,
+        mark: (
+          <span className={`${styles.sponsorThumb}${i.logoUrl ? '' : ` ${styles.sponsorThumbNone}`}`}>
+            {i.logoUrl ? <img src={i.logoUrl} alt="" /> : <span className={styles.noImage}>{W.noLogoThumb}</span>}
+          </span>
+        ),
+        muted: ended,
+        trail: ended ? <span className={ck.chip}>{W.sponsorEnded}</span> : undefined,
+      };
+    },
+    banner: (i, today) => (sponsorEnded(i, today) ? W.sponsorEndedBanner : null),
+    removeBody: i => (i.logoUrl ? W.removeSponsorBodyLogo : W.removeBody),
   },
 };
 
@@ -322,6 +352,23 @@ export default function PublicSitePage() {
     if (word) setTold(word);
   };
 
+  // ── A sponsor's logo file: made by the server (opened and re-saved), thrown away only after the list stopped using it ──
+  const uploadSponsorLogo = async (file: File): Promise<string> => {
+    const body = new FormData();
+    body.append('file', file);
+    const res = await fetch(`/api/admin/public-site/sponsor-logo${query}`, { method: 'POST', body });
+    const data = await res.json().catch(() => ({})) as { error?: string; logoUrl?: string };
+    if (!res.ok || typeof data.logoUrl !== 'string') throw new Error(typeof data.error === 'string' && data.error ? data.error : W.logoUploadFailed);
+    return data.logoUrl;
+  };
+  const discardSponsorLogo = async (logoUrl: string): Promise<void> => {
+    await fetch(`/api/admin/public-site/sponsor-logo${query}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logoUrl }),
+    });
+  };
+
   // ── The look and the switches: the org is read again, the preview redrawn ──
   // The preview reads the saved club itself, so it is asked to redraw at once and does not wait for the org read.
   const lookChanged = useCallback(async () => { redraw(); await refresh(); }, [refresh, redraw]);
@@ -428,6 +475,9 @@ export default function PublicSitePage() {
 
   // ── What each row holds, and whether it is ready (A8) ──
   const counts = { contacts: content?.contacts?.length ?? 0, documents: content?.documents?.length ?? 0, questions: content?.questions?.length ?? 0 };
+  // Sponsors are optional thank-yous: they say how many there are, but an empty list is never "not set up" (not in `counts`).
+  const today = tournamentToday();
+  const sponsorFacts = sponsorCounts(content?.sponsors, today);
   const ready = builderReadiness({
     logoUrl: currentOrg.logoUrl, themePreset: currentOrg.themePreset, themePrimary: currentOrg.themePrimary,
     tagline: content?.tagline, contactEmail: content?.contactEmail, ...counts,
@@ -449,7 +499,7 @@ export default function PublicSitePage() {
       content?.contactEmail?.trim() || W.aboutNoEmail,
       ...(socials ? [W.socialCount(socials)] : []),
     ]),
-    lists: W.listsSummary(counts.contacts, counts.documents, counts.questions),
+    lists: W.listsSummary(counts.contacts, counts.documents, counts.questions, sponsorFacts.total, sponsorFacts.ended),
     visibility: W.visibilitySummary(on, currentOrg.isDiscoverable, noun),
     coaches: coachNamesChoiceName(sanitizeCoachNamesPolicy(currentOrg.coachNamesPolicy)),
   };
@@ -484,7 +534,7 @@ export default function PublicSitePage() {
   const listPart = (kind: ListKind) => {
     // Read as plain rows: a list's words (title, caption) are keyed by its own field names.
     const items = (content?.[kind] ?? []) as unknown as (Record<string, string> & { id: string })[];
-    const { words: w, title, caption } = LISTS[kind];
+    const { words: w, title, caption, row } = LISTS[kind];
     return (
       <div className={styles.listPart} id={kind}>
         <h3 className={styles.lookPartTitle}>{w.title}</h3>
@@ -493,7 +543,7 @@ export default function PublicSitePage() {
           <ClubRowList inset label={w.title}>
             {items.map(i => (
               <ClubRow key={i.id} as="button" aria-haspopup="dialog" chevron onClick={() => setOpenRecord({ kind, id: i.id })}
-                title={title(i)} caption={caption(i)} />
+                title={title(i)} caption={caption(i, today)} {...row?.(i, today)} />
             ))}
           </ClubRowList>
         )}
@@ -595,6 +645,7 @@ export default function PublicSitePage() {
             {listPart('contacts')}
             {listPart('documents')}
             {listPart('questions')}
+            {listPart('sponsors')}
           </BuilderRow>
 
           {showCoachNames && (
@@ -644,6 +695,8 @@ export default function PublicSitePage() {
           list={LISTS[openRecord.kind]}
           canWrite={canWrite}
           thisYear={thisYear}
+          onUploadLogo={uploadSponsorLogo}
+          onDiscardLogo={discardSponsorLogo}
           onSave={async values => {
             const kind = openRecord.kind;
             const items = (content?.[kind] ?? []) as AnyItem[];

@@ -4,7 +4,9 @@ import { ExternalLink } from 'lucide-react';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata, getClubSiteContent } from '@/lib/club-page-meta';
 import { clubAboutPageShows, documentBands } from '@/lib/club-about';
+import { sponsorsShowing } from '@/lib/club-sponsors';
 import ClubAboutContacts from '@/components/public/ClubAboutContacts';
+import { ClubSponsorList } from '@/components/public/ClubSponsors';
 import ClubContactLine from '@/components/public/ClubContactLine';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from '@/components/public/ClubAbout.module.css';
@@ -23,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
  * The about text, Who to contact (a role and an address, each with Copy), Documents and policies (the club's links under
  * its own headings, each opening in a new tab), and Questions families ask — each section absent when empty, never a
  * placeholder. No meta line (owner gate 2026-10-21: no invented "since 1979"). No back link (owner 2026-10-21: the Home
- * tab is the way back — a back link stays only where the tab row does not go). Sponsors join in 4d.
+ * tab is the way back — a back link stays only where the tab row does not go). Sponsors (Stage 4d) close the page.
  *
  * Reached from the home's About card and the footer's "Contacts and documents", both shown only when the page has a
  * contact, a document or a question (`clubAboutPageShows`). Opened directly with none, it still answers: the about text
@@ -42,6 +44,7 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
   const contacts = content?.contacts ?? [];
   const bands = documentBands(content?.documents);
   const questions = content?.questions ?? [];
+  const sponsors = sponsorsShowing(content?.sponsors);
 
   return (
     <div className={styles.column}>
@@ -91,6 +94,9 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
           </div>
         </section>
       )}
+
+      {/* Sponsors (Stage 4d): last, after what families came for. Only those showing today; none opens this page by itself. */}
+      <ClubSponsorList sponsors={sponsors} />
 
       {!clubAboutPageShows(content) && contactEmail && <ClubContactLine email={contactEmail} />}
     </div>

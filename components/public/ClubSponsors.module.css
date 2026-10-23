@@ -1,0 +1,102 @@
+/* The club's sponsors (Club Tier Stage 4d). Type steps only; the club's own tokens; no tints, no shadows, no typewriter
+   face. Every tile is the same size (no tiers), and a logo is scaled to fit and never cropped. A phone wraps and never
+   scrolls sideways. */
+
+/* The strip's place on the home: below the column, in the column's own width (1,200 px) and gutters. */
+.band {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 64px;
+  padding: 6px 10px;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  color: var(--club-soft);
+  font: 700 0.875rem/1.2 var(--club-text-face);
+  text-align: center;
+  text-decoration: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.tile img {
+  display: block;
+  width: 100%;
+  height: 52px;
+  object-fit: contain;
+}
+
+/* Linked: the whole tile is the target, and says so on hover and on keyboard focus. */
+a.tile:hover { border-color: var(--club-edge); }
+a.tile:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: 2px;
+}
+
+/* The About page's section: the logo beside the name; a linked row is one door (the external-link glyph, last). */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--club-line);
+  color: var(--club-text);
+  text-decoration: none;
+}
+.row:first-child { border-top: 0; }
+a.row:hover { background: var(--club-ground); }
+a.row:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: -2px;
+}
+.logo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 44px;
+}
+.logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.name {
+  flex: 1;
+  min-width: 0;
+  font: 600 1rem/1.3 var(--club-text-face);
+  overflow-wrap: anywhere;
+}
+.ext {
+  flex: none;
+  color: var(--club-soft);
+}
+
+@media (min-width: 901px) {
+  .band { padding: 0 24px 40px; }
+  .strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+  }
+  .tile {
+    width: 184px;
+    min-height: 72px;
+  }
+}

@@ -106,6 +106,8 @@ type RowBase = {
   /** The row's ONE lead mark (standard §3.10.7) — an icon in a column of its own before the title, at
    *  every width (How it finished's trophy, Tournament admin redesign Stage 4). The caller colours it. */
   mark?: ReactNode;
+  /** The mark is a picture wider than an icon (a sponsor's logo thumbnail): its column takes the picture's width. */
+  markWide?: boolean;
   /** The date column (the portal's `lead`): a column of its own at a desk; on a phone it moves onto
    *  the caption's line, ahead of the caption, joined by " ·". Formatted by the caller. */
   lead?: ReactNode;
@@ -145,13 +147,13 @@ export type ClubRowProps =
   | (RowBase & { as?: 'static' });
 
 export function ClubRow(props: ClubRowProps) {
-  const { title, caption, mark, lead, leadTime, captionFirst, trail, chevron, actions, beside, muted, grip, itemRef, itemStyle } = props;
+  const { title, caption, mark, markWide, lead, leadTime, captionFirst, trail, chevron, actions, beside, muted, grip, itemRef, itemStyle } = props;
   const opens = props.as === 'link' || props.as === 'button';
   const cls = `${styles.row}${opens ? ` ${styles.rowDoor}` : ''}`;
   const chevronEl = <span className={styles.rowChevron}><ChevronRight size={16} aria-hidden /></span>;
   const inner = (
     <>
-      {mark != null && <span className={styles.rowMark} aria-hidden>{mark}</span>}
+      {mark != null && <span className={`${styles.rowMark}${markWide ? ` ${styles.rowMarkWide}` : ''}`} aria-hidden>{mark}</span>}
       {lead != null && <span className={`${styles.rowLead}${leadTime ? ` ${styles.rowLeadTime}` : ''}`}>{lead}</span>}
       <span className={styles.rowMain}>
         <span className={styles.rowTitle}>{title}</span>

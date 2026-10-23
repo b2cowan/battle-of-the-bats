@@ -186,6 +186,35 @@ const LAKESHORE_ABOUT = {
     { id: 'q-tryouts', question: 'When are tryouts?', answer: 'Tryouts for the 2025 season run in early September. Each team posts its days on its tryout page.' },
   ],
 };
+// Club Tier Stage 4d — the club's sponsors (walk fixture; owner yes 2026-10-23: the smallest set that shows every shape).
+// Riverside Dental has a logo and a link; Hall Real Estate is a name only (the strip shows the name as text, and it is no
+// link); Summit Physio has a logo and a link and an end day long past, so it is ENDED: families do not see it, the editor
+// marks it Ended, and bringing it back is one edit. `mark` is drawn here into a small PNG stored where the admin's upload
+// route puts one; `lakeshoreSponsorRows` turns it into the row's `logoUrl`.
+const LAKESHORE_SPONSORS = [
+  { id: 's-riverside', name: 'Riverside Dental', link: 'https://example.com/lynx/riverside-dental', mark: { top: 'Riverside', bottom: 'Dental', colour: '#14595C' } },
+  { id: 's-hall', name: 'Hall Real Estate' },
+  { id: 's-summit', name: 'Summit Physio', link: 'https://example.com/lynx/summit-physio', endsOn: '2025-12-31', mark: { top: 'Summit', bottom: 'Physio', colour: '#243B57' } },
+];
+async function lakeshoreSponsorRows(clubId) {
+  const sharp = (await import('sharp')).default;
+  const { data: buckets } = await db.storage.listBuckets();
+  if (!buckets?.some(b => b.name === 'org-logos')) die('sponsor logo bucket', (await db.storage.createBucket('org-logos', { public: true })).error);
+  const rows = [];
+  for (const { mark, ...row } of LAKESHORE_SPONSORS) {
+    if (mark) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="216" viewBox="0 0 160 72">
+        <circle cx="34" cy="36" r="17" fill="${mark.colour}"/>
+        <text x="62" y="33" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="${mark.colour}">${mark.top}</text>
+        <text x="62" y="51" font-family="Arial, sans-serif" font-size="15" fill="${mark.colour}">${mark.bottom}</text></svg>`;
+      const path = `${clubId}/sponsors/${crypto.randomUUID()}.png`;
+      die('sponsor logo upload', (await db.storage.from('org-logos').upload(path, await sharp(Buffer.from(svg)).png().toBuffer(), { contentType: 'image/png', upsert: false })).error);
+      row.logoUrl = db.storage.from('org-logos').getPublicUrl(path).data.publicUrl;
+    }
+    rows.push(row);
+  }
+  return rows;
+}
 const REP_ONLY_OWNER = {
   name: 'Dana Whitfield',
   email: (process.env.UAT_REP_ONLY_OWNER_EMAIL ?? 'uat-rep-only-owner@uat-rep-club.local').toLowerCase(),
@@ -1419,6 +1448,9 @@ async function buildRepOnlyClub() {
     }
     // Its banner lives in storage under the old id, which the org's delete does not reach.
     await db.storage.from('org-assets').remove([`${prior.id}/hero-banner.jpg`]);
+    // And its sponsors' logos (Stage 4d), in the public logo bucket under the same old id.
+    const oldLogos = await db.storage.from('org-logos').list(`${prior.id}/sponsors`);
+    if (oldLogos.data?.length) await db.storage.from('org-logos').remove(oldLogos.data.map(f => `${prior.id}/sponsors/${f.name}`));
     die('delete rep-only club', (await db.from('organizations').delete().eq('id', prior.id)).error);
     ok('old rep-only club deleted (its sign-in kept; it is re-used)');
   }
@@ -1441,6 +1473,7 @@ async function buildRepOnlyClub() {
     description: 'The Lakeshore Lynx are a volunteer-run rep baseball club. Nine teams from 9U to 16U play in the provincial AA and AAA divisions from April to August, with winter training at Lakeshore Dome. (Walk fixture — not a real club.)',
     contact_email: 'info@uat-lakeshore-lynx.local',
     ...LAKESHORE_ABOUT,
+    sponsors: await lakeshoreSponsorRows(club.id),
   })).error);
 
   // The banner, stored where the admin's upload puts it (app/api/admin/org-hero-banner/route.ts).

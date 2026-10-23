@@ -3,6 +3,7 @@ import { getLiveClubNotice, getOrgPublicSiteContent, upsertOrgPublicSiteContent 
 import { publicSiteEditor } from '@/lib/public-site-access';
 import { publicSiteEditorFacts } from '@/lib/public-site-editor-facts';
 import { parsePublicSitePatch } from '@/lib/public-site-patch';
+import { withoutMissingLogos } from '@/lib/sponsor-logo-storage';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import { withObservability } from '@/lib/observability';
 
@@ -35,9 +36,12 @@ export const PATCH = withObservability(async (req: Request) => {
   if (r.error) return r.error;
 
   const body = await req.json().catch(() => null);
-  const parsed = parsePublicSitePatch(body);
+  // The club's id lets a sponsor's logo be held to the club's own upload folder (lib/sponsor-logo.ts).
+  const parsed = parsePublicSitePatch(body, undefined, { orgId: r.ctx.org.id });
   if (!parsed.ok) return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
   if (Object.keys(parsed.patch).length === 0) return NextResponse.json({ ok: true, saved: {} });
+  // A stale tab must not save a sponsor pointing at a logo file another admin already replaced and removed.
+  if (parsed.patch.sponsors) parsed.patch.sponsors = await withoutMissingLogos(r.ctx.org.id, parsed.patch.sponsors);
 
   try {
     await upsertOrgPublicSiteContent(r.ctx.org.id, parsed.patch);

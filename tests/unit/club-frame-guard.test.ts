@@ -48,6 +48,9 @@ const CLUB_SURFACES = [
   // Stage 4b-2a: the club's home, its Teams page and the team page's own styles.
   'components/public/ClubSiteHome.tsx',
   'components/public/ClubSiteHome.module.css',
+  // Stage 4d: the sponsors' strip and the About page's section (a deliberate move of this pin: new surfaces join the scan).
+  'components/public/ClubSponsors.tsx',
+  'components/public/ClubSponsors.module.css',
   'components/public/FollowOrgButton.tsx',
   'components/public/FollowOrgButton.module.css',
   `${ORG}/teams/ClubTeams.module.css`,

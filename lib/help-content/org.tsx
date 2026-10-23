@@ -1123,11 +1123,12 @@ const orgHelp: HelpPageContent = {
     {
       id: 'public-site-editor',
       heading: 'Running your public site — the Public site editor',
-      summary: 'Set your club’s logo, colours and type, choose your home page’s sections and their order, write your words and contacts, list your documents, post a notice, and watch it all in a live preview.',
+      summary: 'Set your club’s logo, colours and type, choose your home page’s sections and their order, write your words and contacts, list your documents and sponsors, post a notice, and watch it all in a live preview.',
       keywords: [
         'preview', 'live preview', 'go live', 'set up your site', 'visibility', 'logo', 'upload a logo', 'stock logos', 'colours',
         'from your logo', 'your own colours', 'main colour', 'accent colour', 'type', 'classic serif clean', 'banner photo',
         'computer phone preview', 'offline preview', 'site builder',
+        'sponsors', 'sponsor', 'sponsor logo', 'thank you', 'sponsor strip', 'last day', 'ended sponsor', 'contacts documents and sponsors',
         'public site editor', 'public site', 'site editor', 'home page sections', 'reorder sections', 'hide a section',
         'show a section', 'section order', 'tagline', 'about the club', 'families questions go to', 'contact email',
         'social links', 'instagram', 'facebook', 'website link', 'saved as', 'that isn’t a web address', 'look', 'colours',
@@ -1136,10 +1137,10 @@ const orgHelp: HelpPageContent = {
         'fields closed', 'rain out', 'post notice', 'end now', 'mentions 2025', 'still true', 'past year',
         'coaches on team pages', 'who is listed as a coach', 'coach names', 'list coaches on team pages', 'coaches choose', 'head coaches always', 'head and assistant coaches always', 'no coach names', 'listed', 'not listed', 'list them',
       ],
-      searchText: 'public site editor admin public site six rows open in place one at a time look home page about the club contacts and documents coaches on team pages who is listed as a coach coaches choose head coaches always head and assistant coaches always no coach names listed not listed list them not now visibility preview computer phone change in look point at a part outlines click to change links in the preview don’t go anywhere only you and your admins can see this your site is offline preview button eye set up your site n of 4 ready go live the owner puts it online nothing is required to go live ready tick dashed ring logo upload a logo replace logo browse stock logos remove colours from your logo nine presets your own colours main colour accent colour darkened readable type classic serif clean banner photo computer only phones leave it out visibility public site switch take offline listed in the club directory web address change it in settings owner or admin can change the look only the owner turns the site on and off card style tournament branding page cards save themselves saved pill no save button online offline chip families see it at your address copy link open home page sections open now always first teams house league tournaments about the club past tournaments switch hide show hold and drag the number reorder order shows once you publish a season shows once you host a tournament shows once you add a team plan does not carry tab row follows tagline about families questions go to footer team and tryout pages mentions a past year still true hint founding year since social links instagram facebook x website https saved as refused that isn’t a web address paste the link who to contact up to twelve role address registrar@ personal address gmail nudge documents and policies up to thirty heading title link opens in a new tab codes of conduct safety the club never says compliant questions families ask up to ten about page contacts and documents footer link look logo colours font readable darkened club notice showing now edit post a notice field closure fields closed tonight rain more detail ends tonight tomorrow night date and time post notice update notice end now posted by the club ends by itself one at a time every public page every team page',
+      searchText: 'public site editor admin public site six rows open in place one at a time look home page about the club contacts documents and sponsors contacts and documents coaches on team pages who is listed as a coach coaches choose head coaches always head and assistant coaches always no coach names listed not listed list them not now visibility preview computer phone change in look point at a part outlines click to change links in the preview don’t go anywhere only you and your admins can see this your site is offline preview button eye set up your site n of 4 ready go live the owner puts it online nothing is required to go live ready tick dashed ring logo upload a logo replace logo browse stock logos remove colours from your logo nine presets your own colours main colour accent colour darkened readable type classic serif clean banner photo computer only phones leave it out visibility public site switch take offline listed in the club directory web address change it in settings owner or admin can change the look only the owner turns the site on and off card style tournament branding page cards save themselves saved pill no save button online offline chip families see it at your address copy link open home page sections open now always first teams house league tournaments about the club past tournaments switch hide show hold and drag the number reorder order shows once you publish a season shows once you host a tournament shows once you add a team plan does not carry tab row follows tagline about families questions go to footer team and tryout pages mentions a past year still true hint founding year since social links instagram facebook x website https saved as refused that isn’t a web address paste the link who to contact up to twelve role address registrar@ personal address gmail nudge documents and policies up to thirty heading title link opens in a new tab codes of conduct safety the club never says compliant questions families ask up to ten about page contacts and documents footer link look logo colours font readable darkened club notice showing now edit post a notice field closure fields closed tonight rain more detail ends tonight tomorrow night date and time post notice update notice end now posted by the club ends by itself one at a time every public page every team page sponsors sponsor up to twenty add a sponsor thank you strip at the foot of the home page sponsors section on the about page name logo upload a logo replace logo remove logo link opens in a new tab last day through that day leaves by itself ended mark renew pick a later day jpg png webp 2 mb scaled to fit never cropped no tiers only sponsors',
       content: (
         <>
-          <p><strong>Public site</strong> in the admin is where you build your club&rsquo;s pages. It is six rows that open in place, one at a time, each with a one-line summary while it is closed: <strong>Look</strong>, <strong>Home page</strong>, <strong>About the club</strong>, <strong>Contacts and documents</strong>, <strong>Coaches on team pages</strong> and <strong>Visibility</strong>. (<strong>Coaches on team pages</strong> is there only for a club with Rep teams.) On a computer, a live preview of your home page stands beside them. It&rsquo;s for the owner and admins. Every change saves itself (a <strong>Saved</strong> pill appears and fades), except a notice, which waits for <strong>Post notice</strong>.</p>
+          <p><strong>Public site</strong> in the admin is where you build your club&rsquo;s pages. It is six rows that open in place, one at a time, each with a one-line summary while it is closed: <strong>Look</strong>, <strong>Home page</strong>, <strong>About the club</strong>, <strong>Contacts, documents and sponsors</strong>, <strong>Coaches on team pages</strong> and <strong>Visibility</strong>. (<strong>Coaches on team pages</strong> is there only for a club with Rep teams.) On a computer, a live preview of your home page stands beside them. It&rsquo;s for the owner and admins. Every change saves itself (a <strong>Saved</strong> pill appears and fades), except a notice, which waits for <strong>Post notice</strong>.</p>
           <p>The owner or an admin can change everything except <strong>Visibility</strong> and <strong>Coaches on team pages</strong>, which are the owner&rsquo;s. Only the owner turns the site on and off, changes the directory listing, or changes the club&rsquo;s name and web address.</p>
         </>
       ),
@@ -1179,7 +1180,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Look</strong> is ready with a logo or any colour but the default.</li>
                 <li><strong>Home page</strong> is always ready.</li>
                 <li><strong>About the club</strong> is ready with a tagline and the address families&rsquo; questions go to.</li>
-                <li><strong>Contacts and documents</strong> is ready with any one entry.</li>
+                <li><strong>Contacts, documents and sponsors</strong> is ready with any contact, document or question. Sponsors are a thank-you, so they never count toward ready.</li>
               </ul>
               <p>While the site is offline, the owner has a <strong>Go live</strong> button on the card. An admin reads <em>When it&rsquo;s ready, the owner puts it online.</em> Nothing is required to go live, and you can go live at any time.</p>
             </>
@@ -1244,13 +1245,29 @@ const orgHelp: HelpPageContent = {
           title: 'Contacts, documents and questions for your About page',
           content: (
             <>
-              <p>The <strong>Contacts and documents</strong> row holds three lists that fill your club&rsquo;s <strong>About</strong> page. Each entry opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
+              <p>The <strong>Contacts, documents and sponsors</strong> row holds four lists. Three of them fill your club&rsquo;s <strong>About</strong> page, and the fourth, sponsors, has its own topic below. Each entry opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
               <ul>
                 <li><strong>Who to contact</strong> (up to twelve): a role, such as Registration, and its email address. When an address looks personal, the window suggests a role address like registrar@, which keeps working when a volunteer changes. It never refuses yours.</li>
                 <li><strong>Documents and policies</strong> (up to thirty): a heading, a title and a link to a document you already publish. Families see them under your headings, such as Codes of conduct or Safety, and each opens in a new tab. Your site shows your documents; it never says your club is compliant.</li>
                 <li><strong>Questions families ask</strong> (up to ten): short answers to what you get asked every season.</li>
               </ul>
               <p>Families reach the About page from the <strong>About the club</strong> card on your home page and the <strong>Contacts and documents</strong> link in your footer. Both appear once you have added a contact, a document or a question.</p>
+            </>
+          ),
+        },
+        {
+          id: 'public-site-editor-sponsors',
+          title: 'Sponsors on your home page and About page',
+          content: (
+            <>
+              <p>The <strong>Sponsors</strong> list, in the <strong>Contacts, documents and sponsors</strong> row, is your club&rsquo;s thank-you to the businesses and people who back it. Families see them in a strip at the foot of your home page, and in a <strong>Sponsors</strong> section at the foot of your About page. Add up to twenty. Each one opens a small window.</p>
+              <ul>
+                <li><strong>Name</strong> is the only thing required. A sponsor with no logo shows as its name.</li>
+                <li><strong>Logo</strong> is a JPG, PNG or WebP up to 2 MB. We open it and save a small copy, so a file that isn&rsquo;t really a picture is refused. It shows scaled to fit and never cropped, so every sponsor gets the same space.</li>
+                <li><strong>Link</strong> is where a family goes when they tap the sponsor. It opens in a new tab.</li>
+                <li><strong>Last day</strong>: families see the sponsor through that day, then it leaves both places by itself. Leave it empty to keep it up.</li>
+              </ul>
+              <p>A sponsor past its last day stays in your list with an <strong>Ended</strong> mark, so renewing is one edit: open it and pick a later day. Sponsors alone don&rsquo;t open your About page, so a club with only sponsors shows them on its home page.</p>
             </>
           ),
         },

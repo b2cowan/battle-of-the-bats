@@ -477,6 +477,9 @@ hides the public site and suspends the org while the comp still has months to ru
 <!-- dict:col:org_public_site_content.questions -->
 **`questions`** (jsonb array, NOT NULL, default `[]`, ≤10) — the About page's Questions families ask: `[{ id, question, answer }]`.
 
+<!-- dict:col:org_public_site_content.sponsors -->
+**`sponsors`** (jsonb array, NOT NULL, default `[]`, ≤20, mig 353) — the club's sponsors, shown as a strip at the foot of the home page and a section of the About page: `[{ id, name, logoUrl?, link?, endsOn? }]`, in the club's order. Only `name` is required and an absent field is an absent key. `logoUrl` is only ever a file the club's own upload route wrote (`org-logos/{org_id}/sponsors/{uuid}.png`, re-encoded); `link` is https; `endsOn` is the LAST day it shows (`YYYY-MM-DD`, inclusive, club zone). **An ended sponsor stays in the column** (the editor marks it Ended so renewing is one edit): the "has it ended" filter belongs to the public pages' loaders, never to the read that the editor shares. Not the coach side's `sponsorships` (a team's money) — no relation. The cap is `LIST_MAX.sponsors`; a test holds the CHECK equal to it.
+
 ---
 
 ## `org_site_notices`

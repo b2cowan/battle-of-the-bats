@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-23 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 164 divergence(s)** across dev/prod.
+**⚠️ 166 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 7 | 0 | — |
-| Columns | 78 | 0 | 0 |
+| Columns | 79 | 0 | 0 |
 | Indexes | 19 | 0 | 0 |
 | Constraints | 30 | 0 | — |
-| RLS / CHECK | 30 | 0 | 0 (RLS state) |
+| RLS / CHECK | 31 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (7)
@@ -26,7 +26,7 @@
 _none_
 
 ## Columns
-### Only in DEV (78)
+### Only in DEV (79)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -50,6 +50,7 @@ _none_
 - `org_public_site_content.home_section_order`
 - `org_public_site_content.home_sections_hidden`
 - `org_public_site_content.questions`
+- `org_public_site_content.sponsors`
 - `org_site_notices.detail`
 - `org_site_notices.ended_at`
 - `org_site_notices.ended_by_email`
@@ -180,7 +181,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (30)
+### CHECK only in DEV (31)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -197,6 +198,7 @@ _none_
 - `org_public_site_content.org_public_site_content_home_section_order_known`
 - `org_public_site_content.org_public_site_content_home_sections_hidden_known`
 - `org_public_site_content.org_public_site_content_questions_cap`
+- `org_public_site_content.org_public_site_content_sponsors_cap`
 - `org_site_notices.org_site_notices_detail_check`
 - `org_site_notices.org_site_notices_ends_after_post`
 - `org_site_notices.org_site_notices_notice_check`
