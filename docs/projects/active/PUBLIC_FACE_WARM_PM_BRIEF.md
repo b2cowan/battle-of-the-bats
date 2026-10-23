@@ -33,7 +33,13 @@ looks like a terminal tells them the product is for someone else. They form that
 in the first email, before they see the part we have already made comfortable.
 
 **What was decided (owner, 2026-10-23).** The marketing pages leave the dark look, all together in one release, and stay
-warm for every visitor. The FieldLogicHQ wordmark is redrawn as its own piece of work before the marketing pages change. Family
+warm for every visitor. The FieldLogicHQ wordmark is redrawn as its own piece of work before the marketing pages change.
+**The new identity is ruled (owner, 2026-10-23):** one mark built from the name's initials, an F whose arm turns down
+into an L, drawn soft rather than blocky. It sits on an olive tile, beside the name in plain bold type with "HQ" in olive.
+Lime stays the colour of buttons, not of the brand. It replaces the ">" in every browser tab and the portals' top strips,
+the "FL" phone icon, the notification badge and the export mark, and it appears everywhere at once, with the marketing
+pages. People with the app installed are told about the new icon. A name and logo search comes before anything is
+printed. Family
 emails carry the club's logo and colour. The shared email design moves now, ahead of Club's new emails; the club-branded part
 runs alongside Club's own email work. The public tournament pages get their own project afterwards. The order is: the written
 identity and rules, then every email on one design, then the marketing pages, then the error screens, then family emails.

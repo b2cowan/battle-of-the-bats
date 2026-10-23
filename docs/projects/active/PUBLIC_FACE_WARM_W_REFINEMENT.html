@@ -1,0 +1,308 @@
+<title>Joined FL, Refined</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@600;700&family=IBM+Plex+Sans:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house review document (cool grey chrome, Plex) holding two specimens side by side in every place.
+   Specimens use fixed product values (paper, ink, olive, lime) and never follow this page's theme. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC; --info:#1D4A6E; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D; --info:#8FC2E7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D; --info:#8FC2E7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 120px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+.doc a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em}
+.doc p,.doc li{max-width:78ch}
+.lede{font-size:17px}
+.muted{color:var(--muted)}
+.tight{margin:4px 0}
+code{font:500 .9em var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.doc h2,.place{scroll-margin-top:84px}
+@media (max-width:600px){.top{position:static!important}.top-in .st{display:none}}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+@media (max-width:600px){.top-in{padding:10px 16px}}
+.top-in h1{font-size:19px;margin:0}
+.top-in .st{font-size:13px;color:var(--muted)}
+.top-in nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.top-in nav a{font:600 13px/1 var(--f-doc);color:var(--ink);text-decoration:none;padding:0 10px;min-height:44px;display:inline-flex;align-items:center;border-radius:8px}
+.top-in nav a:hover{background:var(--surface)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict h3{margin:0 0 6px}
+/* the two-up: every place is drawn once per version, same size, same order */
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:10px 0}
+@media (max-width:820px){.pair{grid-template-columns:1fr}}
+.pair>div{min-width:0}
+.vlab{display:flex;gap:8px;align-items:center;font:700 12px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px}
+.vlab.cx{color:var(--muted)} .vlab.rf{color:var(--fix)}
+.vlab i{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;font-family:var(--f-doc)}
+.place{border-top:1px solid var(--line);margin-top:34px;padding-top:12px}
+.place h3{margin:0 0 4px;font-size:18px}
+.place h3 .no{font:600 12px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.place .sub{margin:0 0 8px;font-size:14px;color:var(--muted)}
+.scroll{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.box{border-radius:12px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow);width:max-content;max-width:none}
+.cap{font-size:13px;color:var(--muted);margin:6px 0 0}
+.cap b{color:var(--ink)}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.row figure{margin:0;display:flex;flex-direction:column;gap:5px;align-items:center;font:600 12px/1.25 var(--f-mono);color:var(--muted);text-align:center}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
+/* hero */
+.hero{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}
+@media (max-width:820px){.hero{grid-template-columns:1fr}}
+.hero .card{display:flex;flex-direction:column;gap:14px}
+.hero .big{background:#57651E;border-radius:14px;display:grid;place-items:center;aspect-ratio:16/9;max-width:100%}
+.hero .big svg{width:42%;height:auto}
+.hero .lock{background:#F8F4ED;border-radius:10px;padding:16px 18px}
+.chg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.chg .card h4{margin:0 0 4px;font-size:15px}
+.overlay{display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+.overlay figure{margin:0;display:flex;flex-direction:column;gap:6px;align-items:center;font:600 11px/1.3 var(--f-mono);color:var(--muted);text-align:center;max-width:220px}
+/* specimens */
+.sp{--pp:#F8F4ED;--pc:#FFFFFF;--pi:#241E15;--ps:#4A4235;--pd:#615A54;--pl:rgba(70,55,30,.12);--po:#57651E;--plime:#D9F99D;--hole:#F8F4ED;
+  background:var(--pp);color:var(--pi);font:400 15px/1.5 'Inter',system-ui,sans-serif}
+.sp.dk{--pp:#0A0A0A;--pc:#111827;--pi:#F1F5F9;--ps:rgba(255,255,255,.72);--pd:rgba(255,255,255,.58);--pl:rgba(255,255,255,.09);--po:#D9F99D}
+.sp *{box-sizing:border-box}
+.wm{display:inline-flex;align-items:center;gap:.45em;white-space:nowrap;line-height:1;color:var(--pi,#241E15)}
+.wm svg{flex:none;height:1.1em;width:1.1em}
+.wm .nm{font-family:'Inter',sans-serif;font-weight:700;letter-spacing:-.018em}
+.wm .hq{font-weight:500;color:var(--po,#57651E);letter-spacing:-.01em}
+.wm.dk .hq{color:#F1F5F9;opacity:.78}
+.chrome{width:430px;padding:8px 8px 0;font:12px/1 'Segoe UI',system-ui,sans-serif}
+.chrome.l{background:#DEE1E6;color:#1F1F1F} .chrome.d{background:#1F2023;color:#E3E3E3}
+.chrome .tabsrow{display:flex;gap:2px;align-items:flex-end}
+.chrome .tb{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px 8px 0 0;width:180px;white-space:nowrap;overflow:hidden}
+.chrome.l .tb.on{background:#fff} .chrome.d .tb.on{background:#35363A}
+.chrome .tb canvas{width:16px;height:16px;flex:none}
+.chrome .dot{width:16px;height:16px;border-radius:50%;flex:none}
+.chrome .addr{height:30px;margin:0 -8px;display:flex;align-items:center;padding:0 12px}
+.chrome.l .addr{background:#fff} .chrome.d .addr{background:#35363A}
+.chrome .addr i{flex:1;height:22px;border-radius:11px;font-style:normal;display:flex;align-items:center;padding:0 12px;opacity:.75}
+.chrome.l .addr i{background:#F1F3F4} .chrome.d .addr i{background:#28292C}
+.home{box-sizing:border-box;width:100%;max-width:390px;background:#4F5D57;padding:22px 14px;border-radius:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 6px;justify-items:center}
+.home .app{display:flex;flex-direction:column;align-items:center;gap:6px;font:500 11px/1.2 -apple-system,'Segoe UI',sans-serif;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);max-width:76px;text-align:center}
+.home .app span{max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home .ph{width:58px;height:58px;border-radius:13px}
+.home .ic{width:58px;height:58px;overflow:hidden;line-height:0}
+.home .ic.ios{border-radius:13px} .home .ic.circle{border-radius:50%}
+.crop{width:104px;height:104px;position:relative;overflow:hidden;line-height:0}
+.crop svg{width:100%;height:100%}
+.crop.circle{border-radius:50%} .crop.sq{border-radius:30%} .crop.ios{border-radius:22.4%}
+.crop.safe::after{content:"";position:absolute;inset:10%;border:2px dashed #E0475C;border-radius:50%}
+.shade{box-sizing:border-box;width:100%;max-width:380px;background:#202124;color:#E8EAED;border-radius:16px;padding:10px 12px 14px;font:13px/1.35 'Segoe UI',Roboto,system-ui,sans-serif}
+.shade .sb{display:flex;align-items:center;gap:8px;height:24px;font-size:12.5px;padding:0 6px}
+.shade .sb .r{margin-left:auto;opacity:.8}
+.shade .nt{background:#303134;border-radius:14px;padding:12px 14px;margin-top:8px}
+.shade .nt .h{display:flex;align-items:center;gap:8px;font-size:12px;color:#BDC1C6}
+.shade .nt b{display:block;margin:6px 0 2px;font-size:14px;color:#fff}
+.shade .nt .row2{display:flex;gap:10px;align-items:center}
+.shade .nt .lg{margin-left:auto;width:36px;height:36px;border-radius:50%;overflow:hidden;line-height:0;flex:none}
+.bar{display:flex;align-items:center;gap:20px;height:60px;padding:0 22px;background:var(--pc);border-bottom:1px solid var(--pl);width:560px;font:600 13.5px/1 'Inter',sans-serif;color:var(--ps)}
+.bar.paper{background:var(--pp)}
+.bar .nav{display:flex;gap:16px;margin:0 auto}
+.bar .right{display:flex;gap:12px;align-items:center;margin-left:auto}
+.bar .btn{display:inline-flex;align-items:center;height:38px;padding:0 14px;border-radius:10px;background:var(--plime);color:#241E15;font-weight:700}
+.bar .av{width:30px;height:30px;border-radius:50%;background:var(--po);color:var(--pp);display:grid;place-items:center;font:700 12px/1 'Inter',sans-serif}
+.bar.strip{height:50px}
+.bar .sep{width:1px;height:20px;background:var(--pl)}
+.foot{width:560px;padding:22px 22px 16px;border-top:1px solid var(--pl);font:400 13.5px/1.5 'Inter',sans-serif;color:var(--ps)}
+.foot p{margin:8px 0 0}
+.foot .copy{margin-top:14px;padding-top:10px;border-top:1px solid var(--pl);font-size:12px;color:var(--pd)}
+.mail{box-sizing:border-box;width:100%;max-width:360px;background:#fff;color:#211c15;font:15px/1.5 Arial,Helvetica,sans-serif;padding:12px;border-radius:12px;outline:1px solid var(--line)}
+.mail .lbl{font:600 11px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:#56606B;margin:0 0 8px}
+.mail .env{border:1px solid #c9c1b2;border-radius:12px;padding:18px 16px}
+.mail .h{font:700 19px/1.2 Arial,Helvetica,sans-serif;margin:12px 0 8px}
+.mail p{margin:0 0 10px}
+.mail .b{display:inline-block;background:#d9f99d;border:1px solid #55641c;border-radius:10px;padding:10px 16px;font-weight:700}
+.mail.inv{background:#1F1F1F}.mail.inv .env{filter:invert(1) hue-rotate(180deg)}.mail.inv .lbl{color:#B8B8B8}
+.share{box-sizing:border-box;width:1200px;height:630px;background:#F8F4ED;position:relative;padding:72px 80px;color:#241E15;overflow:hidden;font-family:'Inter',sans-serif}
+.share h6{font:700 112px/.98 'Barlow Condensed','Arial Narrow',sans-serif;margin:78px 0 22px}
+.share h6 span{color:#57651E}
+.share p{font-size:34px;color:#4A4235;margin:0;max-width:760px}
+.share .bigmark{position:absolute;right:80px;bottom:72px;width:176px;height:176px;border-radius:36px;overflow:hidden;line-height:0}
+.share-wrap{width:100%;max-width:600px;aspect-ratio:1200/630;overflow:hidden;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);position:relative}
+.share-wrap .share{position:absolute;left:0;top:0;transform-origin:0 0}
+.print{box-sizing:border-box;width:100%;max-width:520px;background:#fff;color:#000;padding:18px 22px;font:12px/1.4 Arial,sans-serif;border-radius:4px;outline:1px solid var(--line)}
+.print table{border-collapse:collapse;width:100%;margin-top:8px}
+.print td,.print th{border-bottom:1px solid #999;padding:4px 6px;text-align:left}
+.print .pf{margin-top:14px;display:flex;justify-content:space-between;align-items:center;font:10px/1.2 Arial,sans-serif}
+.neg{background:#1F3A6E;color:#fff;padding:10px 14px;border-radius:8px;display:inline-flex;align-items:center;gap:8px;font:600 12px/1 'Inter',sans-serif;--hole:#1F3A6E}
+.shirt{width:170px;height:150px;border-radius:18px 18px 10px 10px;position:relative;display:grid;place-items:start center;padding-top:34px;line-height:0}
+.shirt::before{content:"";position:absolute;top:0;left:50%;width:46px;height:16px;border-radius:0 0 24px 24px;transform:translateX(-50%);background:rgba(0,0,0,.18)}
+.shirt svg{margin-left:58px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--info);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:6px}
+.ask .why{font-size:13.5px;color:var(--muted);margin:0}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:8px 10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 12px/1.5 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:56px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical;margin-top:6px}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);margin-top:20px}
+.paste .hd{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.paste textarea{min-height:170px;font:12.5px/1.45 var(--f-mono);background:var(--surface-2)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:44px;padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<header class="top"><div class="top-in">
+  <h1>Joined FL, refined</h1><span class="st">Codex's first choice and the same mark refined · drawn 2026-10-23 · asks open</span>
+  <nav aria-label="Sections"><a href="#change">What changed</a><a href="#places">In every place</a><a href="#carry">Carried forward</a><a href="#asks">Asks</a></nav>
+</div></header>
+
+<main class="doc">
+  <h2>Two versions of one idea</h2>
+  <p class="lede">Codex's first choice is Joined FL: the F's middle arm turns down into an L, so the name's two initials become one shape. This page draws it as Codex drew it, beside the same mark with my refinement. The refinement is warmer corners and Open F's rounded shoulder. The letters, the colours, the name beside it and every placement are the same in both. Nothing is built.</p>
+  <div class="hero" id="hero"></div>
+  <div class="verdict"><h3>My recommendation: the refined version</h3>
+    <p class="tight">Codex's version is thick square slabs with one small rounded corner. At tab and phone size it reads like a letter from a pixel font, which is the "terminal" feeling the project is leaving. Codex named the same risk ("too engineered"). The refined version keeps every proportion and the two-letter idea. It rounds the shoulder the way Open F does and softens every other corner by the same amount, so it reads as drawn and not computed. Its 16-pixel version evens the strokes, which Codex's left uneven, so the tab gains clarity.</p></div>
+
+  <h2 id="change">What changed, and nothing else</h2>
+  <div class="chg">
+    <div class="card"><h4>The shoulder</h4><p class="tight">The top-left corner, where the stem meets the top bar, becomes one curve, as on Open F. It is a little wider than the stem (12 of 64 against 10), so the stroke stays the same thickness all the way round (<code>/design</code> found a curve exactly as wide as the stem swells at its widest point). This is the biggest change, and it takes most of the "machine" out of the shape.</p></div>
+    <div class="card"><h4>Every other corner</h4><p class="tight">The outer corners get one small radius, the same everywhere. The inside corners get a smaller one. Codex rounded one corner and left the rest square, which reads as an accident at small size.</p></div>
+    <div class="card"><h4>The 16-pixel version and the centring</h4><p class="tight">Codex's 16-pixel F stem is 2 pixels and everything else 3, so the F looked thinner than the L. Refined, every stroke is 3 pixels and the gap stays 2. The shape's weight sits on its left, so on the tile it moves 1.5 of 64 to the right to look centred.</p></div>
+    <div class="card"><h4>Unchanged</h4><p class="tight">Stroke thickness at full size, the gap between the F and the L, the foot, the olive tile, the paper letters, the Inter name and the olive HQ. Codex's maskable placement too (84%, inside the safe circle).</p></div>
+    <div class="card"><h4>Same in both columns</h4><p class="tight">So only the mark differs, both lockups get <code>/design</code>'s fixes: the mark beside the name is sized to the letters (about 1.4 times the capitals), and HQ is set a step heavier below 18 pixels so it does not look hairline beside the bold name.</p></div>
+  </div>
+  <div class="overlay" id="overlay"></div>
+
+  <h2 id="places">In every place, side by side</h2>
+  <p>The left column is always Codex's, and the right is always the refined one. The 16 and 32 pixel tiles are rendered at that size and then enlarged, so you see real pixels.</p>
+  <div id="places-body"></div>
+
+  <h2 id="carry">Carried forward, whichever version you pick</h2>
+  <p>Codex and the first drawing agree on these. They are drawn above and need no new decision unless you want to change one (Ask 5).</p>
+  <ul>
+    <li><b>Email shows the name as text in Arial,</b> with no image. Outlook blocks images by default, and the email looks the same either way.</li>
+    <li><b>No lime in the mark on a page.</b> The page's lime button keeps the one lime. Olive is the mark's colour. On Dark the mark takes the Dark text colour.</li>
+    <li><b>The new mark replaces the ">" in the admin and coaches-portal top strips,</b> so one symbol appears in every shell.</li>
+    <li><b>Everything changes in one release, with the marketing restyle.</b> That covers the tab, the phone icons, the notification badge, the export mark, the strips, every copy of the name and the new share card.</li>
+    <li><b>A line in What's new</b> tells people their home-screen icon changed. An iPhone keeps the old icon until the app is added again.</li>
+    <li><b>The typewriter rules move:</b> the typewriter face is now only for a plan chip and real data, and the one-wordmark rule describes this lockup.</li>
+    <li><b>Before anything is printed or stitched:</b> a name and logo search on "FieldLogic" and on this mark.</li>
+  </ul>
+
+  <h2 id="asks">Asks</h2>
+  <p>One checkbox per option, with a recommendation on each. Your ticks and notes build the paste-back block.</p>
+  <div id="asks-body"></div>
+  <div class="paste"><div class="hd"><b>Paste-back</b><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-d" id="pb-select" type="button">Select all</button><button class="btn-d pri" id="pb-copy" type="button">Copy</button></span></div>
+    <label for="pb-out" class="muted" style="display:block;margin-top:6px;font-size:13px">Paste this into the chat. It updates as you tick.</label>
+    <textarea id="pb-out" readonly></textarea></div>
+</main>
+
+<script>
+/* ════════ THE TWO MARKS (64-unit grid; the 16 px cuts sit on the 4-unit pixel grid) ════════ */
+const P={
+  // Codex, verbatim from its review
+  cx:'M16 12H48V22H22V28H40V42H52V52H30V38H22V52H12V16Q12 12 16 12Z',
+  cx16:'M12 12H48V24H20V28H40V40H52V52H28V40H20V52H12Z',
+  // refined: the same edges; shoulder R12 (keeps the 10-unit stroke even round the curve), outer corners r3, inner corners r2
+  rf:'M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z',
+  // refined 16 px cut: on the pixel grid, every stroke 3 px (Codex's F stem was 2), the 2 px gap kept, shoulder 3 px, corners 1 px
+  rf16:'M24 12H48a4 4 0 0 1 4 4V20a4 4 0 0 1-4 4H24V28H40a4 4 0 0 1 4 4V40H52a4 4 0 0 1 4 4V48a4 4 0 0 1-4 4H32V40H24V52H12V24a12 12 0 0 1 12-12Z'
+};
+const V={cx:{name:'Codex, as drawn',cls:'cx',main:'cx',small:'cx16',dx:0},rf:{name:'Refined',cls:'rf',main:'rf',small:'rf16',dx:1.5}};
+const onTile=(v,d,fill,small)=>small||!V[v].dx?glyph(d,fill):`<g transform="translate(${V[v].dx} 0)">${glyph(d,fill)}</g>`;
+const OL='#57651E',PA='#F8F4ED',INK='#241E15';
+const svg=(inner,size,label,vb='0 0 64 64')=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${size}" height="${size}" ${label?`role="img" aria-label="${label}"`:'aria-hidden="true"'}>${inner}</svg>`;
+const glyph=(d,fill)=>`<path d="${d}" fill="${fill}"/>`;
+// favicon tile: rounded; app sources: full square (the phone masks it); maskable: Codex's 84%
+const tile=(v,size,bg=OL,fg=PA,small=false)=>svg(`<rect width="64" height="64" rx="12" fill="${bg}"/>${onTile(v,P[small?V[v].small:V[v].main],fg,small)}`,size,`${V[v].name} tile`);
+const square=(v,size,bg=OL,fg=PA)=>svg(`<rect width="64" height="64" fill="${bg}"/>${onTile(v,P[V[v].main],fg)}`,size,`${V[v].name} app icon`);
+const mask=(v,size)=>svg(`<rect width="64" height="64" fill="${OL}"/><g transform="translate(32 32) scale(.84) translate(-32 -32)">${onTile(v,P[V[v].main],PA)}</g>`,size,`${V[v].name} maskable icon`);
+const sil=(v,size,color='#fff',small=false)=>svg(glyph(P[small?V[v].small:V[v].main],color),size,`${V[v].name} one colour`,small?'0 0 64 64':'10 10 44 44');
+const pageMark=(v,color)=>svg(glyph(P[V[v].main],color),0,'','10 10 44 44').replace(' width="0" height="0"','');
+function wm(v,{size=17,dk=false,mono=false,color}={}){
+  const c = mono ? color : (dk ? '#F1F5F9' : OL);
+  return `<span class="wm${dk?' dk':''}" style="font-size:${size}px;${mono?`color:${color}`:''}" role="img" aria-label="FieldLogicHQ">${pageMark(v,c)}<span class="nm">FieldLogic<span class="hq" style="font-weight:${size<18?600:500};${mono?'color:inherit;opacity:1':''}">HQ</span></span></span>`;
+}
+const emailWm=()=>`<span style="font:700 18px/1 Arial,Helvetica,sans-serif;color:#211c15;letter-spacing:-.01em">FieldLogic<span style="font-weight:400;color:#55641c">HQ</span></span>`;
+/* real pixels: render to an N-pixel canvas, then enlarge without smoothing */
+const queue=[];
+function px(s,n,scale,bg){const id='c'+Math.random().toString(36).slice(2,9);queue.push({id,s,n,bg});return `<canvas class="px" id="${id}" width="${n}" height="${n}" style="width:${n*scale}px;height:${n*scale}px" aria-label="Rendered at ${n} pixels"></canvas>`;}
+function flush(){while(queue.length){const {id,s,n,bg}=queue.shift();const c=document.getElementById(id);if(!c)continue;const x=c.getContext('2d');const im=new Image();im.onload=()=>{if(bg){x.fillStyle=bg;x.fillRect(0,0,n,n);}x.drawImage(im,0,0,n,n);};im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.replace(/width="\d+" height="\d+"/,`width="${n}" height="${n}"`));}}
+
+/* ════════ HERO + OVERLAY ════════ */
+document.getElementById('hero').innerHTML=['cx','rf'].map(v=>`<div class="card"><p class="vlab ${V[v].cls}">${V[v].name}${v==='rf'?' <i>· recommended</i>':''}</p>
+  <div class="big">${svg(glyph(P[V[v].main],PA),200,`${V[v].name}, large`)}</div>
+  <div class="lock sp">${wm(v,{size:26})}</div></div>`).join('');
+document.getElementById('overlay').innerHTML=`
+  <figure>${svg(`<rect width="64" height="64" fill="#F8F4ED"/>${glyph(P.cx,'rgba(87,101,30,.28)')}<path d="${P.rf}" fill="none" stroke="#241E15" stroke-width=".8"/>`,200,'The refined outline drawn over Codex’s shape')}The refined outline over Codex's shape</figure>
+  <figure>${svg(`<rect width="64" height="64" fill="#F8F4ED"/>${glyph(P.cx16,'rgba(87,101,30,.28)')}<path d="${P.rf16}" fill="none" stroke="#241E15" stroke-width=".8"/>`,200,'The refined 16 pixel cut over Codex’s')}The 16 px cut, refined over Codex's</figure>
+  <p class="muted" style="max-width:420px;margin:0">The tinted shape is Codex's. The line is the refined edge. At full size they differ only at the corners: no edge moves, no thickness changes. The 16-pixel cut differs more, because its strokes were evened out.</p>`;
+
+/* ════════ EVERY PLACE ════════ */
+const two=(f)=>`<div class="pair">${['cx','rf'].map(v=>`<div><p class="vlab ${V[v].cls}">${V[v].name}</p>${f(v)}</div>`).join('')}</div>`;
+const chrome=(v,mode)=>`<div class="box"><div class="chrome ${mode}"><div class="tabsrow"><div class="tb on">${px(tile(v,16,OL,PA,true),16,1)}<span>Pricing · FieldLogicHQ</span></div><div class="tb"><span class="dot" style="background:#4A7DE0"></span><span>Inbox</span></div></div><div class="addr"><i>fieldlogichq.ca/pricing</i></div></div></div>`;
+const PLACES=[
+ ['The browser tab, 16 and 32 pixels','True size first, then the same pixels enlarged. On dark chrome the olive tile is only about 2:1 against the tab, so the paper letters carry it (5.8:1 on olive).',v=>`<div class="scroll" style="display:grid;gap:8px">${chrome(v,'l')}${chrome(v,'d')}</div>
+   <div class="row" style="margin-top:10px"><figure>${px(tile(v,16,OL,PA,true),16,4,'#FFFFFF')}16 ×4 · light</figure><figure>${px(tile(v,16,OL,PA,true),16,4,'#35363A')}16 ×4 · dark</figure><figure>${px(tile(v,32),32,2,'#FFFFFF')}32 ×2</figure></div>`],
+ ['The phone home screen','At true size among other apps: an iPhone square on the top row, an Android circle below it. Then the crops.',v=>{
+   const n=['#C9CFCB','#4A7DE0','#E8453C','#F2B630','#1F8A4C','#7A4FD0'];
+   return `<div class="home"><div class="app"><div class="ph" style="background:${n[0]}"></div><span>Calendar</span></div><div class="app"><div class="ic ios">${square(v,58)}</div><span>FieldLogicHQ</span></div><div class="app"><div class="ph" style="background:${n[1]}"></div><span>Mail</span></div><div class="app"><div class="ph" style="background:${n[2]}"></div><span>Photos</span></div>
+   <div class="app"><div class="ph" style="background:${n[3]}"></div><span>Notes</span></div><div class="app"><div class="ph" style="background:${n[4]}"></div><span>Maps</span></div><div class="app"><div class="ic circle">${mask(v,58)}</div><span>FieldLogicHQ</span></div><div class="app"><div class="ph" style="background:${n[5]}"></div><span>Weather</span></div></div>
+   <div class="row" style="margin-top:12px"><figure><div class="crop ios">${square(v,104)}</div>iPhone</figure><figure><div class="crop safe">${mask(v,104)}</div>Safe zone</figure><figure><div class="crop circle">${mask(v,104)}</div>Circle</figure><figure><div class="crop sq">${mask(v,104)}</div>Rounded</figure></div>`;}],
+ ['The notification','The status-bar badge is a white shape the phone tints. It is drawn on the pixel grid, so it is crisp at 16, 32, 48 and 96. The large picture is the app tile, unless an organizer sends its own logo.',v=>`<div class="shade"><div class="sb">${px(sil(v,16,'#fff',true),16,1)}<span>9:41</span><span class="r">82%</span></div>
+   <div class="nt"><div class="h">${px(sil(v,16,'#BDC1C6',true),16,1)}<span>FieldLogicHQ · now</span></div><div class="row2"><div><b>U13 game moved to 6:30 p.m. Saturday</b><span>Tap to see the schedule.</span></div><span class="lg">${square(v,36)}</span></div></div></div>
+   <div class="row" style="margin-top:10px"><figure><span style="background:#202124;padding:8px;border-radius:8px;line-height:0">${px(sil(v,32,'#fff',true),32,2)}</span>32 px ×2</figure><figure><span style="background:#202124;padding:8px;border-radius:8px;line-height:0">${px(sil(v,48,'#fff',true),48,1)}</span>48 px</figure><figure><span style="background:#202124;padding:8px;border-radius:8px;line-height:0">${sil(v,72)}</span>72 px badge</figure></div>`],
+ ['The marketing bar and footer','Always warm. The bar’s layout is today’s, and only the mark changes. No lime in the mark.',v=>`<div class="scroll"><div class="box"><div class="sp"><div class="bar paper">${wm(v,{size:16})}<div class="nav"><span>Clubs</span><span>Leagues</span><span>Pricing</span></div><div class="right"><span class="btn">Get started</span></div></div>
+   <div class="bar paper" style="width:358px;height:56px">${wm(v,{size:16})}<span class="muted" style="margin-left:auto;font-size:11.5px;font-weight:500">phone bar, rest as ruled</span></div>
+   <div class="foot">${wm(v,{size:15})}<p>Built for how community sport actually runs.</p><div class="copy">© 2026 FieldLogicHQ</div></div></div></div></div>`],
+ ['The account bar, warm and Dark','Signed out it is warm. A signed-in Dark user sees Dark: the mark and name take the Dark text colour, HQ a little dimmer.',v=>`<div class="scroll" style="display:grid;gap:8px"><div class="box"><div class="sp"><div class="bar">${wm(v,{size:16})}<div class="right"><span>My teams</span><span class="av">JM</span></div></div></div></div><div class="box"><div class="sp dk"><div class="bar">${wm(v,{size:16,dk:true})}<div class="right"><span>My teams</span><span class="av">JM</span></div></div></div></div></div>`],
+ ['The admin and coaches-portal top strips','Where the ">" sits today. The strip keeps its layout.',v=>`<div class="scroll" style="display:grid;gap:8px"><div class="box"><div class="sp"><div class="bar strip">${wm(v,{size:14})}<span class="sep"></span><span>Coaches portal</span><div class="right"><span>Help</span></div></div></div></div><div class="box"><div class="sp dk"><div class="bar strip">${wm(v,{size:14,dk:true})}<span class="sep"></span><span>Riverdale Minor Ball · Admin</span><div class="right"><span>Help</span></div></div></div></div></div>
+   <p class="cap">"Riverdale Minor Ball" is the tournament demo's fictional club.</p>`],
+ ['Email','The name is text in Arial, so every mail app shows the same thing, images on or off. The mark is not in email, which is why both columns match.',v=>`<div style="display:grid;gap:10px"><div class="mail"><p class="lbl">Gmail, Apple Mail, Outlook</p><div class="env">${emailWm()}<p class="h">Confirm your email</p><p>Confirm your email to finish your account. Then you'll land on your Home page.</p><span class="b">Confirm my email</span></div></div>
+   <div class="mail inv"><p class="lbl">Gmail app · forced dark</p><div class="env">${emailWm()}<p class="h">Confirm your email</p><p>Confirm your email to finish your account.</p><span class="b">Confirm my email</span></div></div></div>`],
+ ['The share card, 1200 × 630','What a marketing link shows when it is pasted into a chat. Scaled to fit.',v=>`<div class="share-wrap"><div class="share">${wm(v,{size:30})}<h6>Less admin.<br><span>More sport.</span></h6><p>Run your team, league, tournament or club in one place.</p><div class="bigmark">${square(v,176)}</div></div></div>`],
+ ['Small, one colour, and on a shirt','Black on a club’s printed schedule at 11 pixels, white on a club colour, and stitched small on a chest.',v=>`<div class="print"><b style="font-size:14px">Riverdale Ridge · U13 spring schedule</b><table><tr><th>Date</th><th>Time</th><th>Place</th></tr><tr><td>Sat May 2</td><td>9:00 a.m.</td><td>North Park, field 2</td></tr></table>
+   <div class="pf"><span>Printed May 1</span><span style="display:inline-flex;gap:5px;align-items:center">Generated by ${wm(v,{size:11,mono:true,color:'#000'})}</span></div></div>
+   <div class="row" style="margin-top:10px;align-items:center"><span class="neg">Built on ${wm(v,{size:12,mono:true,color:'#fff'})}</span>
+   <span class="shirt" style="background:#2E3A33" role="img" aria-label="${V[v].name} stitched on a dark shirt">${sil(v,30,'#F8F4ED')}</span><span class="shirt" style="background:#ECE6DA" role="img" aria-label="${V[v].name} stitched on a light shirt">${sil(v,30,OL)}</span></div>
+   <p class="cap">"Riverdale Ridge" is the coach demo's fictional team.</p>`]
+];
+const PLACES_HTML=PLACES.map((p,i)=>`<section class="place" id="p${i+1}"><h3><span class="no">${i+1}</span>${p[0]}</h3><p class="sub">${p[1]}</p>${two(p[2])}</section>`).join('');
+document.getElementById('places-body').innerHTML=PLACES_HTML;
+document.querySelectorAll('.place').forEach(pl=>{const t=pl.querySelector('h3').textContent.replace(/^\d+/,'');pl.querySelectorAll('.scroll').forEach((sc,k)=>{sc.tabIndex=0;sc.setAttribute('role','region');sc.setAttribute('aria-label',t+(k?' (refined)':' (Codex)'));});});
+// the share card scales to its frame
+function fitShare(){document.querySelectorAll('.share-wrap').forEach(w=>{const s=w.querySelector('.share');s.style.transform=`scale(${w.clientWidth/1200})`;});}
+addEventListener('resize',fitShare);
+
+/* ════════ ASKS ════════ */
+const ASKS=[
+ {id:'ask-1',q:'Which version of Joined FL do you rule?',why:'The same letters, colours and placements. Only the corners differ.',opts:[['The refined version: rounded shoulder, every corner softened alike',1],['Codex’s version, as drawn'],['Neither yet: refine further (say how in the notes)']]},
+ {id:'ask-2',q:'If refined: how soft should the corners be?',why:'Drawn here: the shoulder as wide as the stem, outer corners 3 of 64, inner corners 2. Final optical spacing comes later.',opts:[['As drawn',1],['Softer: bigger outer corners, the shape gets rounder'],['Only the shoulder rounded, the other corners square']]},
+ {id:'ask-3',q:'Olive leads the identity, lime stays for actions (Codex’s colour move)?',why:'Olive is already the product’s link and accent colour. The app tile is olive with paper letters.',opts:[['Yes: olive tile, paper letters; lime only on buttons',1],['Ink tile with paper letters instead'],['Keep lime as the signature colour']]},
+ {id:'ask-4',q:'How much checking with people before the mark is final?',why:'Codex suggests showing it to 6 to 10 coaches, volunteers and parents. The marketing restyle waits on this ruling. Either way, ask "what letters do you see?" first: the L is carried mostly by its foot, and /design saw a soft R in it.',opts:[['A few informal reactions (coaches, a parent or two), not a gate',1],['Codex’s full 6 to 10 person check before ruling'],['None: rule from the drawings']]},
+ {id:'ask-6',q:'Beside the name, a bare mark or a small tile?',why:'Drawn here: the bare olive mark in the bars, the tile only where it stands alone (tab, phone, share card).',opts:[['Bare mark beside the name, tile when it stands alone',1],['A small tile beside the name too']]},
+ {id:'ask-7',q:'One mark at every size, or a lighter one for beside the name?',why:'The mark\u2019s strokes are about 1.8 times as heavy as the bold name\u2019s. Normal for a symbol, but it is the loudest thing in a 14-pixel strip.',opts:[['One mark at every size',1],['A lighter version (thinner strokes) for beside the name only']]},
+ {id:'ask-5',q:'The carried-forward list (email as text, no lime in the page mark, one release, the strips, What’s new, the typewriter rules, the name search)?',why:'Agreed by Codex and the first drawing. Tick to keep all of it, or say which line to change.',opts:[['Keep all of it',1],['Change a line (say which in the notes)']]}
+];
+document.getElementById('asks-body').innerHTML=ASKS.map((a,i)=>`<div class="ask" id="${a.id}"><h3><span class="no">Ask ${i+1}</span>${a.q}</h3><p class="why">${a.why}</p><div class="opts">${a.opts.map((o,j)=>`<label class="${o[1]?'rec':''}" for="${a.id}-o${j}"><input type="checkbox" id="${a.id}-o${j}" data-ask="${i}" data-opt="${j}">${String.fromCharCode(65+j)} · ${o[0]}</label>`).join('')}</div><label for="${a.id}-n" class="muted" style="font-size:13px">Notes on ask ${i+1}</label><textarea id="${a.id}-n" placeholder="Anything to add"></textarea></div>`).join('');
+function paste(){const L=['Joined FL refinement - answers'];ASKS.forEach((a,i)=>{const p=[...document.querySelectorAll(`input[data-ask="${i}"]:checked`)].map(x=>String.fromCharCode(65+ +x.dataset.opt));const n=document.getElementById(a.id+'-n').value.trim();L.push(`Ask ${i+1}: ${p.length?p.join(', '):'-'}${n?'  | notes: '+n.replace(/\s+/g,' '):''}`);});document.getElementById('pb-out').value=L.join('\n');}
+document.getElementById('asks-body').addEventListener('input',paste);document.getElementById('asks-body').addEventListener('change',paste);paste();
+document.getElementById('pb-select').addEventListener('click',()=>{const t=document.getElementById('pb-out');t.focus();t.select();});
+document.getElementById('pb-copy').addEventListener('click',async e=>{const t=document.getElementById('pb-out');try{await navigator.clipboard.writeText(t.value);e.target.textContent='Copied';setTimeout(()=>e.target.textContent='Copy',1600);}catch(err){t.focus();t.select();}});
+flush(); fitShare(); (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{flush();fitShare();});
+</script>

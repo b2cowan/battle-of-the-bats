@@ -7,6 +7,27 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-23 — THE NEW MARK: JOINED FL, REFINED; OLIVE LEADS, LIME STAYS FOR ACTIONS (owner, "ok let's forget it, I want to go ahead with your proposal", https://claude.ai/artifact/9xDNVQyR3wJRcf7hCgiDBr)
+
+**Decision (as ruled; taken as the refinement page's seven asks as recommended, which the owner may correct):** the
+wordmark, the browser-tab mark, the phone icon and the notification badge become one identity: **Joined FL**, an F whose
+middle arm turns down into an L, in one filled shape, **refined** with a rounded shoulder, even corners and an evened 16 px
+cut. **The app tile is olive with the mark in paper; lime leaves the brand mark and stays the action colour.** The lockup is
+the bare olive mark + "FieldLogic" Inter 700 ink + "HQ" Inter olive (600 below 18 px). Dark: the mark and name take the Dark
+text colour. Email: the name as Arial text, no image. One mark at every size; the tile only where the mark stands alone.
+It ships all at once with the marketing stage (S4); until then today's marks stay. Spec and geometry:
+`docs/agents/brand/VISUAL_IDENTITY.md` §4 (the refinement page's paths are the source).
+**Rationale:** the bar is "made to run my team, not a terminal". The ">" is a command-line prompt and the typewriter
+wordmark reads as a console. Round 1's pennant, tag and clipboard did not sell it (owner): a sports object is generic, and
+the platform sits behind clubs that already have their own crests. Codex's second opinion moved the mark to the name's own
+initials and let olive (already the product's link and accent colour) lead. Claude's refinement answered Codex's own named
+risk ("too engineered"): square slabs read like a pixel font at tab size, and a rounded shoulder and even corners read as
+drawn. **Owed:** a name and logo search before anything is printed or stitched; a few informal "what letters do you see?"
+reactions (not a gate).
+**Applies to:** every surface that shows FieldLogicHQ's own name or mark: the bars and footer, the admin and coach top
+strips, the volunteer shells, the tab icon, the phone icons, the push badge and picture, exports, email, the share card.
+Not a club's or organizer's own pages, which keep their brand (M2).
+
 ### 2026-10-23 — THE PUBLIC FACE, WARM, ROUND 1: THE MARKETING SET LEAVES THE DARK LOOK AS ONE SET AND IS ALWAYS WARM; THE WORDMARK IS REDRAWN; ONE LIME PER VIEW; FAMILY EMAILS WEAR THE CLUB (owner, walk answers round 1, https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft)
 
 **Decision (as ruled; the asks' full wording is on the walk page and in `PUBLIC_FACE_WARM_PLAN.md` "Round 1 rulings"):**

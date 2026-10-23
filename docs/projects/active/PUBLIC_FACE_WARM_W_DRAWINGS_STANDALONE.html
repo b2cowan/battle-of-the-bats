@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<title>The Marks, Redrawn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the walk page's review document (cool grey chrome, Plex) holding specimens of FieldLogicHQ's marks.
+   Specimens wear the product's fixed warm and Dark values, so they never follow this page's theme. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --accent-soft:#DCEAE5; --flag:#A8361F; --flag-soft:#F7E2DC; --fix:#2B672A; --fix-soft:#DFEEDB;
+  --ask:#8A5A00; --ask-soft:#F6ECD6; --info:#1D4A6E;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --ask:#E8B75A; --ask-soft:#3A2E17; --info:#8FC2E7;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --accent-soft:#1E3731; --flag:#F0907A; --flag-soft:#3A221D; --fix:#93CF8B; --fix-soft:#1E321F;
+  --ask:#E8B75A; --ask-soft:#3A2E17; --info:#8FC2E7;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 120px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+.doc a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+.doc h2{font-size:24px;margin:40px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:18px;margin:28px 0 6px}
+.doc p,.doc li{max-width:78ch}
+.lede{font-size:17px}
+.muted{color:var(--muted)}
+.tight{margin:4px 0}
+code{font:500 .9em var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:10px 20px 0;display:flex;flex-direction:column;gap:8px}
+@media (max-width:600px){.top-in{padding:8px 16px 0}}
+.top-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.top-row h1{font-size:19px;margin:0}
+.top-row .st{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -4px}
+@media (max-width:900px){.tabs{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);padding-right:28px}}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:12px 10px 11px;min-height:44px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button .n{font:600 11px/1 var(--f-mono);background:var(--ask-soft);color:var(--ask);border-radius:9px;padding:2px 6px;margin-left:5px;vertical-align:1px}
+section.tab{padding-top:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.card h3{margin:0 0 6px;font-size:16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+@media (max-width:400px){.grid2,.grid3{grid-template-columns:1fr}}
+.grid2>*,.grid3>*{min-width:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--flag);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict.ok{border-left-color:var(--fix)}
+.verdict.info{border-left-color:var(--info)}
+.verdict h2,.verdict h3{margin-top:0}
+table.t{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface)}
+table.t th{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tw table.t tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font:600 12px/1.4 var(--f-doc);border-radius:20px;padding:2px 10px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.pill.ok{background:var(--fix-soft);color:var(--fix);border-color:transparent}
+.pill.bad{background:var(--flag-soft);color:var(--flag);border-color:transparent}
+.pill.half{background:var(--ask-soft);color:var(--ask);border-color:transparent}
+/* annotation chips: every one opens its explanation on click */
+.fl,.fx,.mk{position:relative;font:700 11px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:5px 7px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);vertical-align:middle;white-space:nowrap;min-height:24px}
+.fl{color:var(--flag);background:var(--flag-soft);border-color:transparent}
+.fx{color:var(--fix);background:var(--fix-soft);border-color:transparent}
+.fl::before{content:"▲ ";font-size:9px}
+.fl::after,.fx::after,.mk::after{content:"";position:absolute;inset:-10px -4px}
+.mk.keep{color:var(--fix)} .mk.drop{color:var(--flag)} .mk.new{color:var(--info)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 10px}
+.subnav{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.subnav a{font:600 13px/1 var(--f-doc);padding:10px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink);min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center}
+.frame-h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;margin:30px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+.frame-h h3{margin:0;font-size:17px}
+.frame-h .no{font:600 12px/1 var(--f-mono);color:var(--muted)}
+.stage{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;margin:10px 0}
+.stage>*{min-width:0;max-width:100%}
+.cap{font-size:13px;color:var(--muted);max-width:420px;margin:6px 0 0}
+.cap b{color:var(--ink)}
+.scroll{overflow-x:auto;max-width:100%}
+.keepdrop{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0}
+.keepdrop div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px}
+.keepdrop b{display:block;font:600 11.5px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.keepdrop .k b{color:var(--fix)} .keepdrop .d b{color:var(--flag)} .keepdrop .n b{color:var(--info)}
+.pushback{display:grid;gap:12px}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--info);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:6px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:8px 10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer;border:1px solid transparent}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 12px/1.5 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:56px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical;margin-top:6px}
+.ask .why{font-size:13.5px;color:var(--muted)}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);margin-top:20px}
+.paste textarea{min-height:180px;font:12.5px/1.45 var(--f-mono);background:var(--surface-2)}
+.paste .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:44px;padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+dialog.note{max-width:min(560px,calc(100vw - 32px));border:1px solid var(--line);border-radius:14px;padding:0;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog.note::backdrop{background:rgba(15,20,25,.45)}
+dialog.note .nh{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:16px 18px 6px}
+dialog.note .nh h3{margin:0;font-size:17px}
+dialog.note .nb{padding:0 18px 18px;font-size:14.5px}
+dialog.note .nb p{margin:0 0 8px}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px;margin:-10px -10px 0 0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* ═══ SPECIMENS: fixed product values, never the page's theme ═══
+   paper #F8F4ED · card #FFF · ink #241E15 · ink-soft #4A4235 · dim #615A54 · olive #57651E · lime #D9F99D (a fill only)
+   Dark: ground #0A0A0A · surface #111827 · text #F1F5F9 · lime as the accent. Email: Arial, its own palette. */
+.sp{--pp:#F8F4ED;--pc:#FFFFFF;--pi:#241E15;--ps:#4A4235;--pd:#615A54;--pl:rgba(70,55,30,.12);--po:#57651E;--plime:#D9F99D;
+  background:var(--pp);color:var(--pi);font:400 15px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+.sp.dk{--pp:#0A0A0A;--pc:#111827;--pi:#F1F5F9;--ps:rgba(255,255,255,.72);--pd:rgba(255,255,255,.58);--pl:rgba(255,255,255,.09);--po:#D9F99D}
+.sp *{box-sizing:border-box}
+.spec-box{border-radius:12px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%}
+/* browser tab strips */
+.chrome{width:520px;max-width:100%;padding:8px 8px 0;font:12px/1 'Segoe UI',system-ui,sans-serif}
+.chrome.l{background:#DEE1E6;color:#1F1F1F} .chrome.d{background:#1F2023;color:#E3E3E3}
+.chrome .tabsrow{display:flex;gap:2px;align-items:flex-end}
+.chrome .tb{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px 8px 0 0;width:180px;min-width:0;overflow:hidden;white-space:nowrap}
+.chrome .tb span{overflow:hidden;text-overflow:ellipsis}
+.chrome.l .tb.on{background:#FFFFFF} .chrome.d .tb.on{background:#35363A}
+.chrome .tb img,.chrome .tb canvas{width:16px;height:16px;flex:none}
+.chrome .addr{height:34px;margin:0 -8px;display:flex;align-items:center;padding:0 12px}
+.chrome.l .addr{background:#FFFFFF;border-bottom:1px solid #D0D3D8} .chrome.d .addr{background:#35363A}
+.chrome .addr i{flex:1;height:24px;border-radius:12px;font-style:normal;display:flex;align-items:center;padding:0 12px;color:inherit;opacity:.75}
+.chrome.l .addr i{background:#F1F3F4} .chrome.d .addr i{background:#28292C}
+.pix{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.pix figure{margin:0;display:flex;flex-direction:column;gap:4px;align-items:center;font:600 11px/1.2 var(--f-mono);color:var(--muted)}
+.pix canvas{image-rendering:pixelated;image-rendering:crisp-edges;border-radius:2px}
+/* home screen */
+.home{box-sizing:border-box;width:390px;max-width:100%;background:#4F5D57;padding:28px 18px 24px;border-radius:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 8px;justify-items:center}
+.home .app{display:flex;flex-direction:column;align-items:center;gap:6px;font:500 11.5px/1.2 -apple-system,'Segoe UI',sans-serif;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);width:76px;text-align:center}
+.home .app span{max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home .ph{width:60px;height:60px;border-radius:14px;background:#C9CFCB}
+.home .ph.b{background:#9DB3C2} .home .ph.c{background:#E2D5BF} .home .ph.d{background:#B8B0C9}
+.home .ic{width:60px;height:60px;overflow:hidden}
+.home .ic.ios{border-radius:13.4px} .home .ic.circle{border-radius:50%} .home .ic svg{display:block;width:100%;height:100%}
+.crops{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.crops figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px;font:600 11px/1.2 var(--f-mono);color:var(--muted)}
+.crop{width:128px;height:128px;position:relative;overflow:hidden}
+.crop svg{display:block;width:100%;height:100%}
+.crop.circle{border-radius:50%} .crop.squircle{border-radius:30%} .crop.ios{border-radius:22.4%}
+.crop.safe::after{content:"";position:absolute;inset:10%;border:2px dashed #E0475C;border-radius:50%}
+/* notification */
+.shade{width:390px;max-width:100%;background:#202124;color:#E8EAED;border-radius:18px;padding:10px 12px 14px;font:13px/1.35 'Segoe UI',Roboto,system-ui,sans-serif}
+.shade .sb{display:flex;align-items:center;gap:8px;height:26px;font-size:12.5px;padding:0 6px}
+.shade .sb svg{width:16px;height:16px}
+.shade .sb .r{margin-left:auto;opacity:.8}
+.shade .nt{background:#303134;border-radius:16px;padding:12px 14px;margin-top:8px}
+.shade .nt .h{display:flex;align-items:center;gap:8px;font-size:12px;color:#BDC1C6}
+.shade .nt .h svg{width:16px;height:16px}
+.shade .nt b{display:block;margin:6px 0 2px;font-size:14px;color:#fff}
+/* bars */
+.bar{display:flex;align-items:center;gap:22px;height:64px;padding:0 28px;background:var(--pc);border-bottom:1px solid var(--pl);width:900px;max-width:none;font:600 14px/1 'Inter',sans-serif;color:var(--ps)}
+.bar.paper{background:var(--pp)}
+.bar .nav{display:flex;gap:22px;margin:0 auto}
+.bar .right{display:flex;gap:16px;align-items:center;margin-left:auto}
+.bar .btn{display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:10px;background:var(--plime);color:#241E15;font-weight:700}
+.bar .btn.w{background:var(--pc);border:1px solid rgba(70,55,30,.22);color:var(--pi)}
+.strip .av,.bar .av{width:32px;height:32px;border-radius:50%;background:var(--po);color:var(--pp);display:grid;place-items:center;font:700 13px/1 'Inter',sans-serif}
+.strip{display:flex;align-items:center;gap:16px;height:52px;padding:0 20px;background:var(--pc);border-bottom:1px solid var(--pl);width:900px;font:600 14px/1 'Inter',sans-serif;color:var(--ps)}
+.strip .sep{width:1px;height:22px;background:var(--pl)}
+.strip .right{margin-left:auto;display:flex;gap:14px;align-items:center}
+.foot{padding:28px 28px 20px;width:900px;border-top:1px solid var(--pl);font:400 14px/1.5 'Inter',sans-serif;color:var(--ps);display:grid;grid-template-columns:2fr 1fr 1fr;gap:20px}
+.foot h5{font:600 12px/1.3 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--pd);margin:0 0 8px}
+.foot p{margin:8px 0 0}
+.foot .copy{grid-column:1/-1;border-top:1px solid var(--pl);padding-top:12px;font-size:12px;color:var(--pd)}
+/* email */
+.mailrow{display:flex;gap:16px;flex-wrap:wrap}
+.mail{width:360px;max-width:100%;background:#fff;color:#211c15;font:15px/1.5 Arial,Helvetica,sans-serif;padding:14px;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.mail .env{border:1px solid #c9c1b2;border-radius:12px;padding:20px 18px}
+.mail .h{font:700 20px/1.2 Arial,Helvetica,sans-serif;margin:0 0 10px}
+.mail p{margin:0 0 10px}
+.mail .b{display:inline-block;background:#d9f99d;border:1px solid #55641c;border-radius:10px;padding:10px 18px;font-weight:700}
+.mail .lbl{font:600 11px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.mail.inv .env{filter:invert(1) hue-rotate(180deg)}
+.mail.inv{background:#1F1F1F}
+.mail.inv .lbl{color:#B8B8B8}
+.blocked{display:inline-flex;align-items:center;gap:6px;border:1px solid #B5B5B5;background:#F2F2F2;color:#555;font:12px/1.2 'Segoe UI',Arial,sans-serif;padding:0 8px;height:30px;width:150px}
+/* share card */
+.share{box-sizing:border-box;width:1200px;height:630px;background:#F8F4ED;position:relative;padding:72px 80px;color:#241E15;overflow:hidden;font-family:'Inter',sans-serif}
+.share h6{font:700 112px/.98 'Barlow Condensed','Arial Narrow',sans-serif;margin:78px 0 22px}
+.share h6 span{color:#57651E}
+.share p{font-size:34px;color:#4A4235;margin:0;max-width:760px}
+.share .bigmark{position:absolute;right:80px;bottom:72px;width:168px;height:168px}
+.share-wrap{width:600px;max-width:100%;overflow:hidden;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.share-wrap .share{zoom:.5}
+@media (max-width:640px){.share-wrap{width:340px}.share-wrap .share{zoom:.2834}}
+/* print */
+.print{width:560px;max-width:100%;background:#fff;color:#000;padding:22px 26px;font:13px/1.45 Georgia,'Times New Roman',serif;border-radius:4px;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.print table{border-collapse:collapse;width:100%;font:12px/1.4 Arial,sans-serif}
+.print td,.print th{border-bottom:1px solid #999;padding:4px 6px;text-align:left}
+.print .pfoot{margin-top:16px;display:flex;justify-content:space-between;align-items:center;font:10px/1.2 Arial,sans-serif;color:#000}
+.neg{background:#1F3A6E;color:#fff;padding:10px 14px;border-radius:8px;display:inline-flex;align-items:center;gap:8px;font:600 12px/1 'Inter',sans-serif}
+/* the wordmarks (drawn live in Google Fonts; shipped as outlined SVG where an image is needed) */
+.wm{display:inline-flex;align-items:center;gap:.36em;white-space:nowrap;line-height:1;color:var(--pi,#241E15)}
+.wm svg{flex:none;height:1.18em;width:auto}
+.wmA .nm{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.025em}
+.wmA .tag{font:700 .92em/1 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.01em;background:var(--pi,#241E15);color:var(--pp,#F8F4ED);border-radius:.2em;padding:.12em .24em .1em;margin-left:.1em}
+.dk .wmA .tag,.wmA.dk .tag{background:#D9F99D;color:#241E15}
+.wmA{gap:0}
+.wmB .nm{font:700 1.3em/1 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.005em}
+.wmB .hq,.wmC .hq{color:var(--po,#57651E)}
+.wmC .nm{font-family:'Inter',sans-serif;font-weight:700;letter-spacing:-.015em}
+.mono-wm{color:currentColor}.mono-wm .hq{color:currentColor!important}.mono-wm .tag{background:currentColor!important}
+.mono-wm .tag b{color:#fff;font-weight:inherit}
+.neg .mono-wm .tag b{color:#1F3A6E}
+/* today's five wordmarks, drawn from the code */
+.today-wm{display:grid;gap:0;border-radius:12px;overflow:hidden;outline:1px solid var(--line)}
+.today-wm>div{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:center;padding:14px 18px}
+@media (max-width:600px){.today-wm>div{grid-template-columns:1fr;gap:6px}}
+.today-wm .lab{font:600 12.5px/1.35 var(--f-doc)}
+.today-wm .lab small{display:block;font-weight:400;opacity:.8}
+.big-marks{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-end}
+.big-marks figure{margin:0;display:flex;flex-direction:column;gap:6px;align-items:center;font:600 11px/1.2 var(--f-mono);color:var(--muted);text-align:center;max-width:150px}
+.big-marks img{display:block;border-radius:4px}
+.hero-row{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch;margin:14px 0}
+.hero-row .card{flex:1 1 260px}
+.hero-row .sym{display:flex;gap:12px;align-items:center;margin:8px 0 10px}
+.hero-row .sym>svg{width:56px;height:56px;border-radius:12px;flex:none}
+.chipbg{display:inline-block;background:#F8F4ED;padding:8px 10px;border-radius:8px}
+.chipbg.w{background:#fff}
+.neg{--hole:#1F3A6E}
+.cmp{width:100%;border-collapse:collapse;font-size:14px}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="top-row">
+      <h1>The marks, redrawn</h1>
+      <span class="st">Drawing session W · drawn 2026-10-23 · asks open · part of The public face, warm</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="start" aria-selected="true">Start here</button>
+      <button role="tab" data-tab="today" aria-selected="false">Today</button>
+      <button role="tab" data-tab="A" aria-selected="false">A · The tag</button>
+      <button role="tab" data-tab="B" aria-selected="false">B · The pennant</button>
+      <button role="tab" data-tab="C" aria-selected="false">C · The clipboard</button>
+      <button role="tab" data-tab="side" aria-selected="false">Side by side</button>
+      <button role="tab" data-tab="ship" aria-selected="false">When it ships</button>
+      <button role="tab" data-tab="asks" aria-selected="false">Asks<span class="n">9</span></button>
+    </nav>
+  </div>
+</header>
+<main class="doc">
+
+<!-- ═════════ START ═════════ -->
+<section class="tab" id="tab-start" data-tab="start">
+  <h2>What this page is for</h2>
+  <p class="lede">On 2026-10-23 you ruled that the wordmark is redrawn before the marketing stage (S4), and that the redraw covers the browser-tab mark and the phone home-screen icon as one identity. This page shows today's three marks where they appear, draws three directions in every place a mark has to work, recommends one, and asks you to rule. Nothing is built.</p>
+  <div class="verdict ok">
+    <h3>The recommendation: B, the pennant</h3>
+    <p class="tight">The chevron becomes a pennant, the flag a team hangs. It keeps today's forward-pointing shape and lime-on-dark tile, so a coach who installed the app still recognises it. It stops being a command-line prompt. The wordmark moves into Barlow Condensed, the face the marketing headlines already use, in two inks. At 16 pixels it is the most distinctive of the three: one solid shape you can pick out of a row of tabs without reading it. A's letters are legible at that size too. They are just two more letters among the tab titles. The argument is on <a href="#side" data-jump="side">Side by side</a>.</p>
+  </div>
+
+  <div class="hero-row" id="hero-row"></div>
+
+  <h2>Push back first</h2>
+  <p>These come from the code, not from the plan's description of it.</p>
+  <div class="pushback">
+    <div class="card"><h3>1 · There are four marks, not three. The ">" is also the notification badge.</h3>
+      <p class="tight">The badge a phone shows in the status bar for a FieldLogicHQ notification (<code>badge-72.png</code>) is the chevron drawn as a white silhouette. A coach meets it more often than the home-screen icon, every time a game moves. Every direction below draws it. <button class="fl" data-note="badge">W-01</button></p></div>
+    <div class="card"><h3>2 · Today's home-screen icon is broken, as well as mismatched.</h3>
+      <p class="tight">The rule between "F" and "L" runs straight through the L, so the icon reads "F, L struck out". The "HQ" in its corner is navy on black at about 1.5:1, so it disappears at icon size. The maskable version, which Android uses, has no HQ at all. A coach's phone shows "FL" in lime on black, which spells nothing and is the most terminal-looking of the four marks. <button class="fl" data-note="pwa">W-02</button></p></div>
+    <div class="card"><h3>3 · "One lime per view" means the mark needs a version without lime</h3>
+      <p class="tight">You ruled one lime per view on the marketing pages (Ask 14 A). A lime-filled mark in the bar would be a second lime on every page that has its own. So every direction is drawn twice: <b>a tile</b> for icons, where lime is the fill and the only colour, and <b>a page version</b> in ink and olive for the bars, where lime appears only on Dark. That is a constraint the drawings follow. It does not reopen the lime ruling. <button class="fl" data-note="lime">W-03</button></p></div>
+    <div class="card"><h3>4 · Redrawing the wordmark rewrites two ruled rules, P1 and P9</h3>
+      <p class="tight">P1 says the typewriter face is for "the wordmark, a plan chip and real data". P9 fixes the wordmark as IBM Plex Mono in three inks. All three directions take the wordmark out of the typewriter face, because the typewriter is what makes it read as a terminal. That follows from Ask 2 C and does not reopen it. If you rule a direction, S1 writes P1 as "a plan chip and real data" and P9 as the new wordmark. <button class="fl" data-note="p1p9">W-04</button></p></div>
+    <div class="card"><h3>5 · The bigger risk is the email, not the icon</h3>
+      <p class="tight">Email cannot load our fonts, and Outlook on Windows blocks images until the reader allows them. Today the email wordmark falls back to Courier New, so the most-read copy of the name is the most typewriter-like. Each direction below draws its email wordmark in Arial, as text, and I recommend text with no image (<a href="#ask-5" data-jump="ask-5">Ask 5</a>). B pays for this: its condensed letters become ordinary Arial bold in email, so the two inks carry it there. <button class="fl" data-note="email">W-05</button></p></div>
+    <div class="card"><h3>6 · Widened: the "FL" icon reaches further than the home screen</h3>
+      <p class="tight">The same "FL" file is the <b>large picture on every push notification</b> that has no organizer logo, and the <b>mark printed on every export</b>: the club schedule, the coach money exports and the PDFs. A family meets it on paper more than on a home screen. The redraw replaces it in all three places, and the shipping list counts them. <button class="fl" data-note="reach">W-06</button></p></div>
+    <div class="card"><h3>7 · Found, routed rather than drawn: whose icon a family installs</h3>
+      <p class="tight">A tournament page already installs with the <b>organizer's own logo</b> on an iPhone when its plan allows branding. That follows M2: an organization's brand wins on its own pages. The new club site does not. A family who adds their club's page to their phone gets FieldLogicHQ's icon. That is a Club Tier question (the public site builder), not this drawing's, so it is routed there and drawn nowhere here. <button class="fl" data-note="install">W-07</button></p></div>
+    <div class="card"><h3>8 · The name is written about ten ways, not five</h3>
+      <p class="tight">The brief counted five wordmarks. The code has about ten. These include the volunteer check-in and scorekeeper shells, the platform-admin sign-in (two inks, HQ white), the offline page (system sans, not the typewriter), and three copies of the old email header in lime capitals. The admin and coach lockup asks for a weight the typewriter face is not loaded in, so the browser fakes the bold. Whichever direction you rule, S1 should make the name <b>one shared piece</b> that every surface uses, or a redraw becomes an eleventh version. <button class="fl" data-note="ten">W-08</button></p></div>
+  </div>
+
+  <h2>What /design and /marketing changed before the hand-off</h2>
+  <div class="tw"><table class="t"><thead><tr><th>From</th><th>Change, as drawn now</th></tr></thead><tbody>
+    <tr><td><b>D1, D2</b></td><td>The pennant redrawn long and tapered (about 2 to 1) with a short pole, as one filled shape. The first drawing read as a golf flag.</td></tr>
+    <tr><td><b>D3, D6</b></td><td>The pennant sits on the 16-pixel grid (a clean 2-pixel pole). The badge and the page mark are cropped to the shape, so it fills its box.</td></tr>
+    <tr><td><b>D4</b></td><td>The Android maskable icons are larger. Each mark's farthest point now sits just inside the safe circle.</td></tr>
+    <tr><td><b>D5</b></td><td>The iPhone icon is drawn as a full square, because an iPhone paints transparent corners black.</td></tr>
+    <tr><td><b>D7</b></td><td>Each tile has a faint 1-pixel edge, so an ink tile still shows on dark browser chrome and A's lime tile on light chrome.</td></tr>
+    <tr><td><b>D8</b></td><td>B's email wordmark is Arial bold at 20 pixels. The page no longer claims Arial Narrow or that the two inks "carry" it, because HQ's olive is a quiet 2.6:1 split.</td></tr>
+    <tr><td><b>D9</b></td><td>The share card shows the mark once (the tile), and its line no longer runs under the tile.</td></tr>
+    <tr><td><b>D10</b></td><td>On Dark the mark is white and HQ is lime, so the lockup has one lime.</td></tr>
+    <tr><td><b>D11, D12</b></td><td>This page: the home-screen frame fits a phone, the chips and section links have 44-pixel tap areas, the tab row fades at its edge and answers arrow keys.</td></tr>
+    <tr><td><b>D13</b></td><td>The 16-pixel argument is restated: A is legible there, and B is the most distinctive, not the only readable one.</td></tr>
+    <tr><td><b>Design calls</b></td><td>The chat's flag-shaped Report icon (Ask 9). Whether a pennant leans toward baseball (Ask 1 notes). A name and logo search (Side by side).</td></tr>
+    <tr><td><b>M1–M4</b></td><td>The footer line is the home page's own eyebrow. The share card names all four segments. The notification names the team and drops "Same place", which the product cannot know.</td></tr>
+    <tr><td><b>M6–M8</b></td><td>The email frames carry the shipped verify email's words and button ("Confirm my email"). Drawing notes moved out of the email body into labels.</td></tr>
+    <tr><td><b>M (brand)</b></td><td>A's filled tag reads as a plan chip ("which plan you're on") and splits a one-word name. Added to A's watch-point. <code>/marketing</code> also prefers B.</td></tr>
+    <tr><td class="muted">Not changed</td><td class="muted">D14 (an 11-pixel check on the club colour) is covered by the 12-pixel club-colour frame on each tab. M10 (the "Built on" line) needs no drawing: the mark sizing is the same.</td></tr>
+  </tbody></table></div>
+
+  <h2>How to read the drawings</h2>
+  <p>Each direction tab shows the same nine places in the same order: the browser tab, the phone home screen and its crops, the notification badge, the marketing bar and footer, the consumer bar, the admin and coach top strips, email, the share card, and small one-colour use. Marketing is drawn warm only (Ask 5 B). The consumer bar and the operator strips are drawn warm and Dark. The 16 and 32 pixel tiles are rendered at that size and then enlarged, so you see the real pixels and not a sharp vector. Every flag and chip opens its explanation when tapped.</p>
+  <div class="chips"><button class="mk keep" data-note="key-keep">KEEPS</button><button class="mk drop" data-note="key-drop">DROPS</button><button class="mk new" data-note="key-new">NEW</button><button class="fl" data-note="key-flag">W-00</button></div>
+  <p class="muted">The marks are pure geometry: no font is needed to draw any icon. The wordmarks are drawn here in the real Google Fonts. Where a wordmark has to be an image (the share card), it ships with the letters converted to outlines, so it needs no font either. That respects the no-self-hosted-fonts ruling (2026-10-07). The bars' layout is ruled, so only the mark changes in them, and no navigation is drawn as a proposal.</p>
+</section>
+
+<!-- ═════════ TODAY ═════════ -->
+<section class="tab" id="tab-today" data-tab="today" hidden>
+  <h2>Today: four marks that do not match</h2>
+  <p>Captured from the code on 2026-10-23. The icons are the real files, embedded unchanged.</p>
+  <div id="today-body"></div>
+</section>
+
+<!-- ═════════ DIRECTIONS (built by script, same nine places each) ═════════ -->
+<section class="tab" id="tab-A" data-tab="A" hidden></section>
+<section class="tab" id="tab-B" data-tab="B" hidden></section>
+<section class="tab" id="tab-C" data-tab="C" hidden></section>
+
+<!-- ═════════ SIDE BY SIDE ═════════ -->
+<section class="tab" id="tab-side" data-tab="side" hidden>
+  <h2>Side by side, at the sizes that decide it</h2>
+  <p>A mark is judged at its smallest. These are the three tiles at 16 and 32 pixels on both browser chromes, then the badge silhouette, then the wordmark in the bar.</p>
+  <div id="side-body"></div>
+  <h2>The recommendation, argued</h2>
+  <div class="verdict ok">
+    <h3>B, the pennant</h3>
+    <ul>
+      <li><b>It passes the bar.</b> A pennant is something a team owns, in every sport: hockey, soccer, baseball, swimming, debate. It says "your team" and not "your terminal". The chevron was a command-line prompt. The pennant keeps its forward-pointing shape and gives that shape a meaning a volunteer recognises.</li>
+      <li><b>It is the most distinctive at 16 pixels.</b> One solid shape, drawn on the pixel grid so the pole is a clean 2 pixels. A's "HQ" is legible at 16 pixels, and it is the quietest. C's clipboard lines blur into a block. In a row of browser tabs, B is the one you can find without reading it.</li>
+      <li><b>It changes the least for people who already have it.</b> A lime shape on a dark tile, pointing right. A coach whose phone or browser updates the icon sees a relative of the old one, not a stranger.</li>
+      <li><b>The wordmark belongs to the page.</b> Barlow Condensed is the marketing headline face (P2). The name in that face, with HQ in olive, looks like part of the page it sits on. A and C use Inter 800 and 700, which is quieter but borrows the reading face for the name.</li>
+      <li><b>Sport-neutral, with two watch-points.</b> A flag on a pole can read as a golf hole flag. <code>/design</code> found the first drawing did, so the pennant is redrawn long and tapered (about 2 to 1), with only a short pole below it. In North America a pennant also leans a little toward baseball ("win the pennant"). The product's chat already uses a flag icon for Report (Ask 9). If you still see a golf flag or a Report button, that is a reason to pick A, not C.</li>
+    </ul>
+    <p class="tight"><b>What B costs.</b> In email, Barlow Condensed becomes Arial bold, so the email wordmark is wider and plainer than the site's. The two inks still carry it. A and C lose less in email because Inter falls back to Arial with little change.</p>
+    <p class="tight"><b>Why not A.</b> A is the strongest in a bar and the most honest about what we are: a name, not a picture. It is the weakest icon. "HQ" on a phone home screen reads as headquarters and says nothing about sport or teams, and at 16 pixels it is two small letters.</p>
+    <p class="tight"><b>Before any mark is committed:</b> nobody has searched for names or logos that are already taken. A search on "FieldLogic" and "Field Logic", and on a pennant mark in sports and forms software, is yours or counsel's to run. <code>/marketing</code> flagged it and could not check it. The more a mark leans on a picture and the less on the generic "HQ", the easier it is to own, which also favours B.</p>
+    <p class="tight"><b>Why not C.</b> The clipboard fits the job: the organized person on the volunteer board carries one. In a row of browser tabs it reads as "paste" or a to-do app, which makes it an office tool and not a team's.</p>
+  </div>
+</section>
+
+<!-- ═════════ SHIPPING ═════════ -->
+<section class="tab" id="tab-ship" data-tab="ship" hidden>
+  <h2>What changes when it ships</h2>
+  <p>Whichever direction you rule, these are the consequences. No navigation is drawn: the bars' layout is ruled, and only the mark in them changes.</p>
+  <div id="ship-body"></div>
+</section>
+
+<!-- ═════════ ASKS ═════════ -->
+<section class="tab" id="tab-asks" data-tab="asks" hidden>
+  <h2>Asks</h2>
+  <p>One checkbox per option, with a recommendation on each. Tick one per ask unless it says otherwise. Your ticks and notes build the paste-back block at the bottom.</p>
+  <div id="asks-body"></div>
+  <div class="paste">
+    <div class="row"><b>Paste-back</b><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-d" id="pb-select" type="button">Select all</button><button class="btn-d pri" id="pb-copy" type="button">Copy</button></span></div>
+    <label for="pb-out" class="muted" style="display:block;margin-top:6px;font-size:13px">Paste this into the chat. It updates as you tick.</label>
+    <textarea id="pb-out" readonly></textarea>
+  </div>
+</section>
+</main>
+
+<dialog class="note" id="note"><div class="nh"><h3 id="note-h"></h3><button class="x" id="note-x" aria-label="Close" type="button">×</button></div><div class="nb" id="note-b"></div></dialog>
+
+<script>
+/* ════════ THE MARKS: pure geometry on a 64 grid ════════ */
+const INK='#241E15', PAPER='#F8F4ED', OLIVE='#57651E', LIME='#D9F99D', DK='#0A0A0A';
+// each direction: glyph(fg, bg-for-knockouts, accent) returns the inner shapes on a 64 box, centred.
+const G = {
+  A: { // "HQ" as a tag. Letters: cap height 30, stems 6.
+    glyph:(fg)=>`<rect x="12" y="17" width="6" height="30" fill="${fg}"/><rect x="24" y="17" width="6" height="30" fill="${fg}"/><rect x="12" y="29" width="18" height="6" fill="${fg}"/>`+
+      `<path fill-rule="evenodd" fill="${fg}" d="M41 17h4a7 7 0 0 1 7 7v16a7 7 0 0 1-7 7h-4a7 7 0 0 1-7-7V24a7 7 0 0 1 7-7Zm0 6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V24a1 1 0 0 0-1-1Z"/><path d="M44.5 40.5 L53 49" stroke="${fg}" stroke-width="6" stroke-linecap="square"/>`,
+    tileBg: LIME, tileFg: INK
+  },
+  B: { // a long pennant (about 2:1) on a short pole, one filled shape, on the 4-unit grid (1 px at 16 px)
+    glyph:(fg)=>`<path d="M8 12H16L56 24L16 36V46a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2Z" fill="${fg}"/>`,
+    tileBg: INK, tileFg: LIME, mask:.8
+  },
+  C: { // a clipboard: board, clip, two lines
+    glyph:(fg,bg,acc)=>`<rect x="16" y="13" width="32" height="41" rx="5" fill="${fg}"/><rect x="23" y="8" width="18" height="11" rx="3.5" fill="${acc||fg}" stroke="${bg}" stroke-width="2.5"/><rect x="22" y="27" width="20" height="4.5" rx="2.25" fill="${bg}"/><rect x="22" y="37" width="13" height="4.5" rx="2.25" fill="${bg}"/>`,
+    tileBg: INK, tileFg: PAPER, tileAcc: LIME
+  }
+};
+function svgWrap(inner, size, label, extra=''){
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" role="img" aria-label="${label}" ${extra}>${inner}</svg>`;
+}
+// the tile: the favicon, and the app icon (rounded square)
+// the edge: 1 px at 16 px, so the tile still shows on a browser chrome of its own colour (ink on dark, lime on light)
+function edge(d){ return d==='A' ? `<rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="rgba(36,30,21,.24)" stroke-width="3"/>` : `<rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="3"/>`; }
+function tile(d, size=64, label){
+  const g=G[d]; return svgWrap(`<rect width="64" height="64" rx="14" fill="${g.tileBg}"/>${edge(d)}${g.glyph(g.tileFg,g.tileBg,g.tileAcc)}`, size, label||`Direction ${d} tile`);
+}
+// the maskable icon: full bleed, glyph scaled so its farthest point sits inside the 80% safe circle
+function maskable(d, size=128){
+  const g=G[d], k=g.mask||.88; return svgWrap(`<rect width="64" height="64" fill="${g.tileBg}"/><g transform="translate(32 32) scale(${k}) translate(-32 -32)">${g.glyph(g.tileFg,g.tileBg,g.tileAcc)}</g>`, size, `Direction ${d} maskable icon`);
+}
+// the iPhone icon (180 / 192): a full square, because iOS paints transparent corners black and rounds the square itself
+function appleTile(d, size=128){
+  const g=G[d]; return svgWrap(`<rect width="64" height="64" fill="${g.tileBg}"/><g transform="translate(32 32) scale(.92) translate(-32 -32)">${g.glyph(g.tileFg,g.tileBg,g.tileAcc)}</g>`, size, `Direction ${d} iPhone icon`);
+}
+const CROP={B:'7 5 50 50',C:'7 5 50 50'}; // the badge and the page mark crop to the glyph, so it fills its box
+// on a page: no tile. Paper = ink/olive, Dark = lime. C keeps a clip in a second colour.
+function inline(d, theme){
+  const dk = theme==='dk';
+  if(d==='A') return ''; // A's mark in a page IS the tag inside the wordmark
+  // on Dark the mark is white and HQ carries the lime, so the lockup has one lime (design D10)
+  if(d==='B') return svgWrap(G.B.glyph(dk?'#F1F5F9':OLIVE), 0, 'FieldLogicHQ pennant', 'aria-hidden="true"').replace('viewBox="0 0 64 64"','viewBox="7 11 50 38"').replace(' width="0" height="0"','');
+  if(d==='C') return svgWrap(G.C.glyph(dk?'#F1F5F9':OLIVE, dk?'#111827':'#FFFFFF', dk?'#F1F5F9':INK), 0, 'FieldLogicHQ clipboard', 'aria-hidden="true"').replace('viewBox="0 0 64 64"','viewBox="13 6 38 50"').replace(' width="0" height="0"','');
+}
+// one colour: badge (white silhouette) and print. Knock-outs are real holes, via a mask.
+function silhouette(d, size, color='#FFFFFF', label){
+  const id='m'+d+Math.random().toString(36).slice(2,7);
+  let inner;
+  if(d==='A') inner=`<mask id="${id}"><rect width="64" height="64" rx="14" fill="#fff"/>${G.A.glyph('#000')}</mask><rect width="64" height="64" rx="14" fill="${color}" mask="url(#${id})"/>`;
+  if(d==='B') inner=G.B.glyph(color);
+  if(d==='C') inner=`<mask id="${id}"><rect width="64" height="64" fill="#fff"/><rect x="22" y="27" width="20" height="4.5" rx="2.25" fill="#000"/><rect x="22" y="37" width="13" height="4.5" rx="2.25" fill="#000"/><rect x="21" y="6" width="22" height="15" rx="4.5" fill="#000"/></mask><g mask="url(#${id})"><rect x="16" y="13" width="32" height="41" rx="5" fill="${color}"/></g><rect x="23.5" y="8.5" width="17" height="10" rx="3.5" fill="${color}"/>`;
+  const s=svgWrap(inner, size, label||`Direction ${d}, one colour`);
+  return CROP[d] ? s.replace('viewBox="0 0 64 64"',`viewBox="${CROP[d]}"`) : s;
+}
+function svgURL(s){ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s); }
+// render an SVG to a real N-pixel canvas (what a browser tab actually shows), optionally enlarged
+const pending=[];
+function pixCanvas(svg, px, scale, bg){
+  const id='c'+Math.random().toString(36).slice(2,9);
+  pending.push({id,svg,px,bg});
+  return `<canvas id="${id}" width="${px}" height="${px}" style="width:${px*scale}px;height:${px*scale}px" aria-label="Rendered at ${px} pixels"></canvas>`;
+}
+function flushCanvases(){
+  while(pending.length){
+    const {id,svg,px,bg}=pending.shift(); const c=document.getElementById(id); if(!c) continue;
+    const ctx=c.getContext('2d'); const img=new Image();
+    img.onload=()=>{ if(bg){ctx.fillStyle=bg;ctx.fillRect(0,0,px,px);} ctx.drawImage(img,0,0,px,px); };
+    img.src=svgURL(svg.replace(/width="\d+" height="\d+"/,`width="${px}" height="${px}"`));
+  }
+}
+
+/* ════════ THE WORDMARKS ════════ */
+function wm(d, opts={}){
+  const size=opts.size||18, dk=opts.dk, mono=opts.mono;
+  const cls=`wm wm${d}${dk?' dk':''}${mono?' mono-wm':''}`;
+  const st=`font-size:${size}px;${mono?`color:${opts.color||'#000'};`:''}`;
+  const lab='FieldLogicHQ';
+  if(d==='A') return `<span class="${cls}" style="${st}" role="img" aria-label="${lab}"><span class="nm">FieldLogic</span><span class="tag">${mono?'<b>HQ</b>':'HQ'}</span></span>`;
+  const m = opts.noMark ? '' : mono ? svgWrap(G[d]==G.B?G.B.glyph('currentColor'):silhouetteInner(d), 0,'','aria-hidden="true"').replace('viewBox="0 0 64 64"', d==='B'?'viewBox="7 11 50 38"':'viewBox="13 6 38 50"').replace(' width="0" height="0"','') : inline(d, dk?'dk':'pp');
+  return `<span class="${cls}" style="${st}" role="img" aria-label="${lab}">${m}<span class="nm">FieldLogic<span class="hq">HQ</span></span></span>`;
+}
+function silhouetteInner(d){ // C in one colour, for print: board with holes drawn in white
+  return `<rect x="16" y="13" width="32" height="41" rx="5" fill="currentColor"/><rect x="22" y="27" width="20" height="4.5" rx="2.25" style="fill:var(--hole,#fff)"/><rect x="22" y="37" width="13" height="4.5" rx="2.25" style="fill:var(--hole,#fff)"/><rect x="23" y="8" width="18" height="11" rx="3.5" fill="currentColor" style="stroke:var(--hole,#fff)" stroke-width="2.5"/>`;
+}
+// email: Arial only, as text (the recommendation). A's tag is a filled table cell.
+function emailWm(d){
+  if(d==='A') return `<span style="font:700 17px/1 Arial,Helvetica,sans-serif;letter-spacing:-.02em;color:#211c15">FieldLogic</span><span style="font:700 14px/1 'Arial Narrow',Arial,sans-serif;background:#211c15;color:#ffffff;border-radius:3px;padding:2px 4px;margin-left:2px;vertical-align:1px">HQ</span>`;
+  const f = d==='B' ? `700 20px/1 Arial,Helvetica,sans-serif` : `700 17px/1 Arial,Helvetica,sans-serif`;
+  return `<span style="font:${f};color:#211c15;letter-spacing:-.01em">FieldLogic<span style="color:#55641c">HQ</span></span>`;
+}
+
+/* ════════ THE DIRECTIONS ════════ */
+const DIRS = {
+  A:{ name:'The tag', idea:'The name is the mark. "HQ" sits in a filled tag, like the plan chip, and the tag alone is the icon. No picture.',
+      keeps:'The three-part name and its stress on HQ. Lime, as the icon’s fill.', drops:'The chevron. The typewriter face. The blueprint navy.', adds:'A tag shape, which echoes the plan chip people already see on the pricing cards.',
+      face:'Inter 800, tight spacing, with "HQ" in Barlow Condensed 700 on an ink tag (lime on Dark).',
+      risk:'At 16 pixels the icon is two small letters. On a home screen "HQ" reads as headquarters and says nothing about teams. In this product a filled chip means "your plan", so an HQ tag can read as a tier badge, and it splits a one-word name in two.' },
+  B:{ name:'The pennant', idea:'The chevron becomes a pennant, the flag a team hangs. Same forward-pointing shape, now a thing a team owns instead of a prompt.',
+      keeps:'The right-pointing shape. The lime-on-dark tile. One symbol in every shell, the job the 2026-06-17 decision gave it.', drops:'The command-line ">" and its square ends. The typewriter face. The blueprint navy border. "FL" on the home screen.', adds:'A pole, which turns the shape into an object.',
+      face:'Barlow Condensed 700, the marketing headline face, in two inks: FieldLogic ink, HQ olive (lime on Dark).',
+      risk:'A flag on a pole can read as a golf flag, and the chat already uses a flag icon for Report. Redrawn long and tapered, with a short pole and no ground, so it reads as a pennant.' },
+  C:{ name:'The clipboard', idea:'The organizer’s instrument. Every volunteer coach, convenor and tournament desk carries one, in every sport.',
+      keeps:'Lime, as a small accent on the clip. The dark tile.', drops:'The chevron. The typewriter face. The blueprint navy.', adds:'A picture of the job: a board with a list on it.',
+      face:'Inter 700, in two inks: FieldLogic ink, HQ olive.',
+      risk:'In a row of browser tabs a clipboard reads as "paste" or a to-do app. An office tool, not a team’s.' }
+};
+
+function chromeTab(d, mode){
+  const svg=tile(d,16);
+  return `<div class="spec-box" style="display:inline-block"><div class="chrome ${mode}"><div class="tabsrow"><div class="tb on">${pixCanvas(svg,16,1)}<span>Pricing · FieldLogicHQ</span></div><div class="tb"><span style="width:16px;height:16px;border-radius:50%;background:${mode==='l'?'#9AA0A6':'#6F7378'};flex:none"></span><span>Inbox</span></div></div><div class="addr"><i>fieldlogichq.ca/pricing</i></div></div></div>`;
+}
+function homeScreen(d){
+  return `<div class="home" role="img" aria-label="A phone home screen with the FieldLogicHQ icon among other apps">
+    <div class="app"><div class="ph"></div><span>Calendar</span></div><div class="app"><div class="ph b"></div><span>Photos</span></div><div class="app"><div class="ic ios">${appleTile(d,60)}</div><span>FieldLogicHQ</span></div><div class="app"><div class="ph c"></div><span>Notes</span></div>
+    <div class="app"><div class="ph d"></div><span>Weather</span></div><div class="app"><div class="ic circle">${maskable(d,60)}</div><span>FieldLogicHQ</span></div><div class="app"><div class="ph"></div><span>Messages</span></div><div class="app"><div class="ph b"></div><span>Maps</span></div></div>`;
+}
+function places(d){
+  const D=DIRS[d]; let h='';
+  h+=`<h2>${d} · ${D.name}</h2><p class="lede">${D.idea}</p>
+  <div class="keepdrop"><div class="k"><b>Keeps</b>${D.keeps}</div><div class="d"><b>Drops</b>${D.drops}</div><div class="n"><b>Adds</b>${D.adds}</div></div>
+  <p><b>Wordmark:</b> ${D.face} <b>Watch-point:</b> ${D.risk}</p>
+  <div class="subnav">${['Tab','Home screen','Badge','Marketing','Consumer bar','Top strips','Email','Share card','Small and one colour'].map((t,i)=>`<a href="#${d}-p${i+1}" data-jump="${d}-p${i+1}">${i+1} ${t}</a>`).join('')}</div>`;
+  // 1 tab
+  h+=`<div class="frame-h" id="${d}-p1"><span class="no">1</span><h3>The browser tab, 16 and 32 pixels</h3></div>
+  <div class="stage"><div>${chromeTab(d,'l')}<p class="cap"><b>Light browser chrome</b>, true size.</p></div><div>${chromeTab(d,'d')}<p class="cap"><b>Dark browser chrome</b>, true size.</p></div></div>
+  <div class="pix">
+    <figure>${pixCanvas(tile(d,16),16,4,'#FFFFFF')}16 px ×4, on light</figure>
+    <figure>${pixCanvas(tile(d,16),16,4,'#35363A')}16 px ×4, on dark</figure>
+    <figure>${pixCanvas(tile(d,32),32,2,'#FFFFFF')}32 px ×2, on light</figure>
+    <figure>${pixCanvas(tile(d,32),32,2,'#35363A')}32 px ×2, on dark</figure>
+    <figure>${tile(d,64)}The drawing</figure>
+  </div>`;
+  // 2 home
+  h+=`<div class="frame-h" id="${d}-p2"><span class="no">2</span><h3>The phone home screen, 192 and 512</h3></div>
+  <div class="stage"><div>${homeScreen(d)}<p class="cap"><b>True size on a phone.</b> Top row: an iPhone's rounded square, from the 192 icon. Second row: an Android circle, from the maskable 512.</p></div>
+  <div><div class="crops">
+    <figure><div class="crop">${tile(d,128)}</div>Tab and "any" icon</figure>
+    <figure><div class="crop ios">${appleTile(d,128)}</div>iPhone, full square</figure>
+    <figure><div class="crop safe">${maskable(d,128)}</div>Maskable, safe zone</figure>
+    <figure><div class="crop circle">${maskable(d,128)}</div>Circle crop</figure>
+    <figure><div class="crop squircle">${maskable(d,128)}</div>Rounded-square crop</figure>
+  </div><p class="cap"><b>The dashed circle is the maskable safe zone</b> (80% of the width). Everything that matters sits inside it, so no Android crop cuts the mark.</p></div></div>`;
+  // 3 badge
+  h+=`<div class="frame-h" id="${d}-p3"><span class="no">3</span><h3>The notification badge, 72 pixels, one colour</h3></div>
+  <div class="stage"><div class="shade">
+     <div class="sb">${silhouette(d,16)}<span>9:41</span><span class="r">▾ 82%</span></div>
+     <div class="nt"><div class="h">${silhouette(d,16,'#BDC1C6')}<span>FieldLogicHQ · now</span></div><b>U13 game moved to 6:30 p.m. Saturday</b><span>Tap to see the schedule.</span></div>
+   </div>
+   <div class="pix"><figure><div style="background:#202124;padding:10px;border-radius:10px">${pixCanvas(silhouette(d,24),24,3)}</div>24 px ×3, in the status bar</figure><figure><div style="background:#202124;padding:10px;border-radius:10px">${silhouette(d,72)}</div>72 px file</figure></div>
+  </div><p class="cap"><b>Android draws the badge as a white shape</b> and tints it. Only its outline and holes survive, so the silhouette is the test.</p>`;
+  // 4 marketing
+  h+=`<div class="frame-h" id="${d}-p4"><span class="no">4</span><h3>The marketing bar and footer, warm</h3><span class="muted">Always warm (Ask 5 B). The layout is today's, ruled.</span></div>
+  <div class="scroll spec-box"><div class="sp">
+    <div class="bar paper">${wm(d,{size:18})}<div class="nav"><span>Clubs</span><span>Leagues</span><span>Tournaments</span><span>Coaches</span><span>Pricing</span></div><div class="right"><span>Sign in</span><span class="btn">Get started</span></div></div>
+    <div style="height:46px;border-bottom:1px solid var(--pl);display:flex;align-items:center;padding:0 28px;color:var(--pd);font-size:13px">… the page …</div>
+    <div class="foot"><div>${wm(d,{size:16})}<p>Built for how community sport actually runs.</p></div><div><h5>Product</h5>Pricing<br>Demos<br>What’s new</div><div><h5>Who it’s for</h5>Clubs<br>Leagues<br>Coaches</div><div class="copy">© 2026 FieldLogicHQ</div></div>
+  </div></div><p class="cap"><b>No lime in the mark.</b> On a page that already has a lime button, the mark stays ink and olive (one lime per view). The footer line is the home page's own eyebrow line (<code>/marketing</code>); S4 settles the footer's words.</p>`;
+  // 5 consumer bar
+  h+=`<div class="frame-h" id="${d}-p5"><span class="no">5</span><h3>The consumer bar, warm and Dark</h3><span class="muted">Signed out it is warm. A signed-in Dark user sees Dark.</span></div>
+  <div class="scroll" style="display:grid;gap:10px"><div class="spec-box" style="width:max-content"><div class="sp"><div class="bar">${wm(d,{size:17})}<div class="right"><span>My teams</span><span class="av">JM</span></div></div></div></div>
+  <div class="spec-box" style="width:max-content"><div class="sp dk"><div class="bar">${wm(d,{size:17,dk:true})}<div class="right"><span>My teams</span><span class="av">JM</span></div></div></div></div></div>`;
+  // 6 strips
+  h+=`<div class="frame-h" id="${d}-p6"><span class="no">6</span><h3>The admin and coaches-portal top strips, warm and Dark</h3><span class="muted">Where the ">" sits today. One symbol in every shell.</span></div>
+  <div class="scroll" style="display:grid;gap:10px">
+    <div class="spec-box" style="width:max-content"><div class="sp"><div class="strip">${wm(d,{size:15})}<span class="sep"></span><span>Coaches portal</span><div class="right"><span>Help</span><span class="av" style="width:28px;height:28px;font-size:12px">JM</span></div></div></div></div>
+    <div class="spec-box" style="width:max-content"><div class="sp dk"><div class="strip">${wm(d,{size:15,dk:true})}<span class="sep"></span><span>Riverdale Minor Ball · Admin</span><div class="right"><span>Help</span><span class="av" style="width:28px;height:28px;font-size:12px">JM</span></div></div></div></div>
+  </div><p class="cap"><b>The strip keeps its layout.</b> Only the lockup inside it changes. "Riverdale Minor Ball" is the tournament demo's fictional club.</p>`;
+  // 7 email
+  h+=`<div class="frame-h" id="${d}-p7"><span class="no">7</span><h3>Email: what each mail app shows</h3><span class="muted">Text in Arial, no image (Ask 5, recommended)</span></div>
+  <div class="mailrow">
+    <div class="mail"><p class="lbl">Gmail, Apple Mail · light</p><div class="env"><div style="margin-bottom:16px">${emailWm(d)}</div><p class="h">Confirm your email</p><p>Confirm your email to finish your account. Then you'll land on your Home page.</p><span class="b">Confirm my email</span></div></div>
+    <div class="mail"><p class="lbl">Outlook on Windows · images blocked · text needs no download</p><div class="env"><div style="margin-bottom:16px">${emailWm(d)}</div><p class="h">Confirm your email</p><p>Confirm your email to finish your account. Then you'll land on your Home page.</p><span class="b">Confirm my email</span></div></div>
+    <div class="mail inv"><p class="lbl">Gmail app, forced dark · colours inverted</p><div class="env"><div style="margin-bottom:16px">${emailWm(d)}</div><p class="h">Confirm your email</p><p>Confirm your email to finish your account. Then you'll land on your Home page.</p><span class="b">Confirm my email</span></div></div>
+  </div><p class="cap"><b>The words are the shipped verify email's.</b> Only the wordmark line changes. With images off, Outlook shows the same thing, because the name is text. In Gmail's forced dark the two inks still separate.</p>${d==='B'?'<p class="cap"><b>B loses its condensed letters in email.</b> It is set in Arial bold at 20 pixels. HQ’s olive is a quiet split (about 2.6:1 against the ink), so in email the name reads as one word, which is how it is spelled. If you want HQ to stand out more there, that is a weight or colour call (Ask 4 notes).</p>':''}`;
+  // 8 share card
+  h+=`<div class="frame-h" id="${d}-p8"><span class="no">8</span><h3>The marketing share card, 1200 × 630</h3><span class="muted">Shown at half size</span></div>
+  <div class="share-wrap"><div class="share">${wm(d,{size:30,noMark:true})}<h6>Less admin.<br><span>More sport.</span></h6><p>Run your team, league, tournament or club in one place.</p><div class="bigmark">${tile(d,168)}</div></div></div>
+  <p class="cap"><b>The tile is the card's one lime</b> (for A and B it is the whole lime; for C, the clip). The words are the home page's and a draft line for <code>/marketing</code>.</p>`;
+  // 9 small
+  h+=`<div class="frame-h" id="${d}-p9"><span class="no">9</span><h3>Small and one colour</h3><span class="muted">A club's printed page, a "Powered by" line, on a club colour</span></div>
+  <div class="stage"><div class="print"><b style="font:700 16px/1.2 Arial,sans-serif">Riverdale Ridge · U13 spring schedule</b><table style="margin-top:10px"><tr><th>Date</th><th>Time</th><th>Place</th></tr><tr><td>Sat May 2</td><td>9:00 a.m.</td><td>North Park, field 2</td></tr><tr><td>Sat May 9</td><td>10:30 a.m.</td><td>Centennial Park</td></tr></table>
+    <div class="pfoot"><span>Printed May 1</span><span style="display:inline-flex;align-items:center;gap:6px">Powered by ${wm(d,{size:11,mono:true,color:'#000'})}</span></div></div>
+    <div style="display:flex;flex-direction:column;gap:10px"><div class="neg">Powered by ${wm(d,{size:12,mono:true,color:'#fff'})}</div><div class="pix"><figure><div style="background:#fff;padding:8px;border-radius:6px">${silhouette(d,24,'#000')}</div>24 px, black</figure></div></div></div>
+  <p class="cap"><b>One colour at 11 pixels.</b> Black on a club's printed schedule, white on a club's colour. "Riverdale Ridge" is the coach demo's fictional team.</p>`;
+  return h;
+}
+
+/* ════════ NOTES (every chip opens one) ════════ */
+const NOTES={
+  'key-keep':['Keeps','Something today’s marks have that the direction carries forward.'],
+  'key-drop':['Drops','Something today’s marks have that the direction removes.'],
+  'key-new':['New','Something no mark has today.'],
+  'key-flag':['A finding','A problem with today’s marks, measured in the code or the files. Tap any W- flag for its detail.'],
+  badge:['W-01 · The fourth mark','<p><code>public/icons/badge-72.png</code> is a white ">" on transparent. The service worker hands it to every push notification, so Android shows it in the status bar and on the notification itself.</p><p>It was never listed as a mark, so a redraw of the tab and home-screen icons alone would leave the chevron in every notification.</p>'],
+  pwa:['W-02 · The home-screen icon','<p>Measured from <code>pwa-512.png</code>: the olive rule at y 308 crosses the L’s stem, so the L looks struck out. "HQ" is navy (#1E3A8A family) on near-black, about 1.5:1. A navy corner triangle and a lime corner sit bottom-right.</p><p><code>pwa-512-maskable.png</code> draws F and L only, with the same rule through the L. Android uses the maskable file, so most installed coaches see "FL" and no HQ.</p>'],
+  lime:['W-03 · One lime per view','<p>Ruled 2026-10-23 (Ask 14 A) for the marketing pages: the page’s own lime wins, and the bar’s Get started turns white on a page with its own lime.</p><p>A lime mark in the bar would be a second lime on every such page. So in a page the mark is ink and olive. On Dark, olive becomes lime as the accent, as it does everywhere in Dark. Lime keeps its full place on the icon tile, outside the page.</p>'],
+  p1p9:['W-04 · P1 and P9 move with the wordmark','<p>P1 (the typewriter face is for the wordmark, a plan chip and real data) and P9 (one wordmark: three inks, IBM Plex Mono 700, Courier New in email) were written before Ask 2 C.</p><p>Every direction takes the name out of the typewriter face, because the typewriter is what makes it read as a terminal. So S1 writes P1 as "a plan chip and real data" and P9 as whichever wordmark you rule. That follows from Ask 2 C and reopens nothing.</p>'],
+  reach:['W-06 · Where the "FL" file is used','<p>Measured in the code: the iPhone add-to-home icon for the whole product, the Android icon in the manifest, the push notification’s large icon whenever the payload carries no organizer logo, and the export mark printed on the club schedule, the coach money exports and the PDF footers.</p><p>So "the home-screen icon" is really "the picture of FieldLogicHQ wherever we cannot use the name".</p>'],
+  install:['W-07 · Installing a club’s page','<p>Tournament pages have their own iPhone icon and maskable icon: the organizer’s logo on a square painted in the logo’s own colour, when the plan allows branding, else the platform icon.</p><p>The club site has no such override, so it falls back to the platform’s icon. Under M2 it would install as the club. Routed to Club Tier’s public site work as a question. It does not change which direction you pick.</p>'],
+  ten:['W-08 · The census','<p>Three inks, typewriter: the marketing bar (fixed dark colours), the consumer bar and the tournament strip (one shared block), the footer, the admin and coach lockup (weight 900, which the typewriter face is not loaded in), the volunteer check-in and scorekeeper shells, and the warm account email (Courier New).</p><p>Two inks: the platform-admin sign-in (HQ in white), the offline page (system sans, spaced capitals).</p><p>One ink, lime capitals: the old email shell and its two copies (notifications and the template editor’s preview), and the unsubscribe page (generic monospace).</p><p>No wordmark at all: the share cards’ fallback is "FieldLogicHQ" in white sans on near-black.</p>'],
+  email:['W-05 · Email','<p>Email cannot load web fonts. Today’s email wordmark is set in Courier New, so every email’s first line is a typewriter.</p><p>Images: Outlook on Windows blocks them for senders the reader has not trusted, and shows an empty box with a download prompt instead. Gmail and Apple Mail show them. A wordmark drawn as an image would be a grey box in Outlook. Text in Arial needs nothing and looks the same everywhere.</p>']
+};
+
+/* ════════ ASKS ════════ */
+const ASKS=[
+  {id:'ask-1',q:'Which direction becomes the identity?',why:'It sets the wordmark, the tab mark, the home-screen icon and the badge together.',opts:[
+    ['B · The pennant: the chevron becomes a team’s pennant, wordmark in Barlow Condensed, two inks',1],
+    ['A · The tag: no picture, "HQ" in a tag, wordmark in Inter 800'],
+    ['C · The clipboard: the organizer’s board, wordmark in Inter 700, two inks'],
+    ['None yet: draw another round (say what is missing in the notes)']]},
+  {id:'ask-2',q:'Where does lime go?',why:'One lime per view is ruled for marketing pages. This applies the same answer to the mark everywhere.',opts:[
+    ['On the icon tile only. In a page the mark is ink and olive, and lime on Dark',1],
+    ['In the bar’s mark too, which needs a named exception to one lime per view']]},
+  {id:'ask-3',q:'Which letters does the wordmark use?',why:'Each direction pairs a face. You can keep the symbol and change the letters.',opts:[
+    ['The direction’s own face, as drawn',1],
+    ['Inter for any direction (quieter, closest in email)'],
+    ['Barlow Condensed for any direction'],
+    ['Keep IBM Plex Mono (keeps P1 and P9 as written, keeps the typewriter)']]},
+  {id:'ask-4',q:'How many inks in the name?',why:'Today’s first-look version uses three: FIELD ink, LOGIC olive, HQ grey. For A the tag does this job.',opts:[
+    ['Two: FieldLogic in ink, HQ in olive (lime on Dark)',1],
+    ['One: the whole name in ink'],
+    ['Three, as the first look shipped it']]},
+  {id:'ask-5',q:'How does an email show the wordmark?',why:'Email cannot load our fonts, and Outlook blocks images by default.',opts:[
+    ['Text in Arial, no image. It looks the same in every mail app',1],
+    ['An image with alt text "FieldLogicHQ". Exact letters, a grey box in Outlook until images are allowed'],
+    ['Both: the image, with the text name under it']]},
+  {id:'ask-6',q:'When do the new marks go live?',why:'Your ruled order is S1, S3a, S4, S5, S3b. W must be ruled before S4.',opts:[
+    ['All at once in S4’s release: icons, badge, the strips, the bars, the share card. S3a ships with today’s email wordmark and S4 changes that one line',1],
+    ['The icons and the badge first, on their own, ahead of S4'],
+    ['Each surface as its own stage reaches it']]},
+  {id:'ask-7',q:'What do we tell people whose home-screen icon changes?',why:'Android may ask the user to accept the new icon. An iPhone keeps the old one until the app is added again.',opts:[
+    ['A line in What’s new, no email',1],
+    ['Nothing'],
+    ['An email to coaches with the app installed']]},
+  {id:'ask-8',q:'What sits in the admin and coaches-portal top strips?',why:'The 2026-06-17 decision made the logo the one symbol in every shell. Its reason survives a new mark.',opts:[
+    ['The new lockup, mark and name, replacing the ">"',1],
+    ['The name alone, with no mark']]},
+  {id:'ask-9',q:'If B is ruled: does the chat’s flag-shaped Report button matter?',why:'/design found that the chat’s manage panel uses a flag icon for Report. A brand pennant and a Report flag in one product could be read as the same symbol.',opts:[
+    ['Keep both. A filled pennant on a tile and an outline flag in a menu are different shapes in different places',1],
+    ['Change the Report icon when B ships'],
+    ['It matters enough to pick A instead']]}
+];
+function renderAsks(){
+  const el=document.getElementById('asks-body');
+  el.innerHTML=ASKS.map((a,i)=>`<div class="ask" id="${a.id}"><h3><span class="no">Ask ${i+1}</span>${a.q}</h3><p class="why tight">${a.why}</p>
+    <div class="opts">${a.opts.map((o,j)=>{const id=`${a.id}-o${j}`;return `<label class="${o[1]?'rec':''}" for="${id}"><input type="checkbox" id="${id}" data-ask="${i}" data-opt="${j}">${String.fromCharCode(65+j)} · ${o[0]}</label>`}).join('')}</div>
+    <label for="${a.id}-n" class="muted" style="font-size:13px">Notes on ask ${i+1}</label><textarea id="${a.id}-n" data-note-ask="${i}" placeholder="Anything to add"></textarea></div>`).join('');
+  el.addEventListener('input',buildPaste); el.addEventListener('change',buildPaste); buildPaste();
+}
+function buildPaste(){
+  const lines=['W drawings (the marks, redrawn) - answers'];
+  ASKS.forEach((a,i)=>{
+    const picked=[...document.querySelectorAll(`input[data-ask="${i}"]:checked`)].map(x=>String.fromCharCode(65+ +x.dataset.opt));
+    const note=(document.getElementById(`${a.id}-n`)||{}).value||'';
+    lines.push(`Ask ${i+1} (${a.q}): ${picked.length?picked.join(', '):'-'}${note.trim()?'  | notes: '+note.trim().replace(/\s+/g,' '):''}`);
+  });
+  document.getElementById('pb-out').value=lines.join('\n');
+}
+
+/* ════════ TODAY ════════ */
+const FAV=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64" role="img" aria-label="Today's browser-tab mark: a lime chevron on near-black with a navy border"><rect width="32" height="32" fill="#0a0a0f"/><rect x="0" y="0" width="32" height="32" fill="none" stroke="#1E3A8A" stroke-width="2"/><polyline points="7,5 23,16 7,27" fill="none" stroke="#D9F99D" stroke-width="4.5" stroke-linecap="square" stroke-linejoin="miter"/></svg>`;
+const IMG={pwa192:'data:image/png;base64,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',mask:'data:image/png;base64,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',badge:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABiElEQVR4nO3boW5UQRgF4CEEDAmiiiaYCgwGgasChaoDRd+hHoXmAXDU8Ah1TfoGRYDBIipIICEBARXtRxpWQHJ3dnZCSbhzPr1qkrvnzH/vX0pEREREXArs4FmOdwLu45tf9nFt6ndDwhY++tMhbpbRYQPvTXuDzTIqXMeRuhPcK6PBFbzW5iselZHghfWcYreMAHfww/rOh6kB2MYnfcaoAbiLD52HNEYNwOYiznuMUQNwAwedhzRGDcBVvOw8pC94WEaAPZx1HNJQNeAxvnfWgOdlBFIDVksNaIBbONbnHW6XuZMa8E9qwIMyAqkBq6UGNEgNaJAa0CDTgAapAQ1SAxpdzKwXl9aeacDTMnfSk6blEavIn3RFYr4iRbHiYki/uKX3eDXrF494kpn1EonxJRLjFYnxyxvav5310F6+/lguMV6RGK9IjC+RGK9IjFfkNl6RGF/94u9zbuMT8iF5g6wi/N1llnE+X/ld1qEaZKGuQVYy11/qnfdQvVfWwiMiIiLKf+knnmFpI1u2ReoAAAAASUVORK5CYII='};
+function renderToday(){
+  const favSmall=FAV.replace('width="64" height="64"','width="22" height="22"');
+  document.getElementById('today-body').innerHTML=`
+  <div class="tw"><table class="t"><thead><tr><th>Mark</th><th>Where a person meets it</th><th>Reads as</th></tr></thead><tbody>
+   <tr><td><b>The wordmark</b>, typewriter capitals</td><td>Every bar and footer, the admin and coach strips, the volunteer shells, every email, the unsubscribe and offline pages</td><td><span class="pill bad">Terminal</span> About ten versions, in three, two and one ink</td></tr>
+   <tr><td><b>The ">"</b>, lime on near-black</td><td>Every browser tab and bookmark. The admin and coach strips. The notification badge</td><td><span class="pill bad">Terminal</span> A command-line prompt</td></tr>
+   <tr><td><b>"FL" over "HQ"</b>, lime on black</td><td>The phone home screen (iPhone and Android). The large picture on push notifications. The mark on every export</td><td><span class="pill bad">Broken</span> The rule strikes through the L, and HQ is invisible</td></tr>
+   <tr><td><b>No share card</b></td><td>A marketing link pasted into a chat shows no picture. Other cards fall back to "FieldLogicHQ" in white sans on near-black</td><td><span class="pill half">Missing</span></td></tr>
+  </tbody></table></div>
+
+  <div class="frame-h"><span class="no">1</span><h3>The icons, as the files are</h3></div>
+  <div class="big-marks">
+    <figure>${FAV}<span>favicon.svg · the tab</span></figure>
+    <figure>${pixCanvas(FAV.replace('width="64" height="64"','width="16" height="16"'),16,4,'#FFFFFF')}<span>the tab at 16 px ×4</span></figure>
+    <figure><img src="${IMG.pwa192}" width="96" height="96" alt="Today's home-screen icon: lime F over L, an olive rule through the L, navy HQ in the corner, a navy and lime corner triangle"><span>pwa-192 / 512 · iPhone, Android, push, exports</span></figure>
+    <figure><img src="${IMG.mask}" width="96" height="96" alt="Today's maskable icon: lime F over L on black, the rule through the L, no HQ" style="border-radius:50%"><span>maskable, as an Android circle</span></figure>
+    <figure><div style="background:#202124;padding:12px;border-radius:10px"><img src="${IMG.badge}" width="72" height="72" alt="Today's notification badge: a white chevron"></div><span>badge-72 · the status bar</span></figure>
+  </div>
+  <div class="chips"><button class="fl" data-note="pwa">W-02</button><button class="fl" data-note="badge">W-01</button><button class="fl" data-note="reach">W-06</button></div>
+  <ul>
+    <li><b>What works:</b> the ">" is pure geometry, so it renders the same at every size, and lime on a dark tile is easy to find in a row of tabs. The first look's three-ink wordmark already reads warmer than the dark versions. The admin and coach lockup is already one component used by both strips.</li>
+    <li><b>What reads as a terminal:</b> a command-line prompt in every tab; the typewriter face and capitals on the name everywhere; "FL" in lime on black on the phone, where it reads like a console font. The blueprint navy border and corner come from the old dark look and appear nowhere else.</li>
+  </ul>
+
+  <div class="frame-h"><span class="no">2</span><h3>The name, about ten ways</h3><button class="fl" data-note="ten">W-08</button></div>
+  <div class="today-wm">
+    <div style="background:#0A0A0A;color:#F1F5F9"><span class="lab">Marketing bar<small>always dark colours</small></span><span style="font:700 20px/1 'IBM Plex Mono',monospace;letter-spacing:-.05em">FIELD<span style="color:#D9F99D">LOGIC</span><span style="color:rgba(148,163,184,.5)">HQ</span></span></div>
+    <div style="background:#FFFFFF;color:#241E15"><span class="lab">Consumer bar, warm<small>the first look's three inks</small></span><span style="font:700 17px/1 'IBM Plex Mono',monospace;letter-spacing:-.02em">FIELD<span style="color:#57651E">LOGIC</span><span style="color:#615A54">HQ</span></span></div>
+    <div style="background:#FFFFFF;color:#241E15"><span class="lab">Admin and coach strips<small>the ">" plus weight 900, faked</small></span><span style="display:inline-flex;gap:9px;align-items:center">${favSmall}<span style="font:900 14.4px/1 'IBM Plex Mono',monospace;text-transform:uppercase">Field<span style="color:#57651E">Logic</span><span style="color:#615A54">HQ</span></span></span></div>
+    <div style="background:#FFFFFF;color:#211c15"><span class="lab">Account emails<small>Courier New</small></span><span style="font:700 15px/1.2 'Courier New',Courier,monospace;letter-spacing:.02em">FIELD<span style="color:#55641c">LOGIC</span><span style="color:#4b463f">HQ</span></span></div>
+    <div style="background:#0A0A12;color:#D9F99D"><span class="lab" style="color:#F1F5F9">Every other email<small>three copies, lime capitals</small></span><span style="font:900 12px/1 Inter,sans-serif;letter-spacing:.16em">FIELDLOGICHQ</span></div>
+    <div style="background:#0A0A0A;color:#D9F99D"><span class="lab" style="color:#F1F5F9">Unsubscribe page<small>generic monospace</small></span><span style="font:900 10.4px/1 monospace;letter-spacing:.18em">FIELDLOGICHQ</span></div>
+    <div style="background:#0A0A0A;color:#F1F5F9"><span class="lab">Platform-admin sign-in<small>two inks, HQ white</small></span><span style="font:900 16px/1 'IBM Plex Mono',monospace;letter-spacing:-.02em">FIELD<span style="color:#D9F99D">LOGIC</span>HQ</span></div>
+    <div style="background:#F8F4ED;color:rgba(36,30,21,.55)"><span class="lab" style="color:#241E15">Offline page<small>system sans, spaced capitals</small></span><span style="font:800 16.8px/1 -apple-system,'Segoe UI',Roboto,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase">Field<b style="color:#57651e">Logic</b>HQ</span></div>
+  </div>
+  <p class="cap">Drawn from each one's own styles. The footer and the volunteer shells match the consumer bar's three inks, with small differences in spacing.</p>`;
+}
+
+/* ════════ START: the three at a glance ════════ */
+function renderHero(){
+  document.getElementById('hero-row').innerHTML=['A','B','C'].map(d=>`<div class="card"><p class="eyebrow">Direction ${d}${d==='B'?' · recommended':''}</p><h3>${DIRS[d].name}</h3><div class="sym">${tile(d,56)}<span class="sp chipbg">${wm(d,{size:17})}</span></div><p class="tight" style="font-size:14px">${DIRS[d].idea}</p><p class="tight"><a href="#${d}" data-jump="${d}">See it in all nine places</a></p></div>`).join('');
+}
+
+/* ════════ SIDE BY SIDE ════════ */
+function renderSide(){
+  const row=(lab,cells)=>`<tr><td><b>${lab}</b></td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
+  const ds=['A','B','C'];
+  const favTab=FAV.replace('width="64" height="64"','width="16" height="16"');
+  document.getElementById('side-body').innerHTML=`<div class="tw"><table class="t"><thead><tr><th></th><th>Today</th><th>A · The tag</th><th>B · The pennant</th><th>C · The clipboard</th></tr></thead><tbody>
+   ${row('16 px, light chrome ×4',[pixCanvas(favTab,16,4,'#FFFFFF'),...ds.map(d=>pixCanvas(tile(d,16),16,4,'#FFFFFF'))])}
+   ${row('16 px, dark chrome ×4',[pixCanvas(favTab,16,4,'#35363A'),...ds.map(d=>pixCanvas(tile(d,16),16,4,'#35363A'))])}
+   ${row('32 px ×2',[pixCanvas(FAV.replace('width="64" height="64"','width="32" height="32"'),32,2,'#FFFFFF'),...ds.map(d=>pixCanvas(tile(d,32),32,2,'#FFFFFF'))])}
+   ${row('Badge, 24 px ×3',[`<div style="background:#202124;padding:6px;border-radius:6px;display:inline-block"><img src="${IMG.badge}" width="72" height="72" alt="Today's badge"></div>`,...ds.map(d=>`<div style="background:#202124;padding:6px;border-radius:6px;display:inline-block">${pixCanvas(silhouette(d,24),24,3)}</div>`)])}
+   ${row('Home screen, Android circle',[`<img src="${IMG.mask}" width="60" height="60" alt="Today's maskable icon in a circle" style="border-radius:50%">`,...ds.map(d=>`<div style="width:60px;height:60px;border-radius:50%;overflow:hidden">${maskable(d,60)}</div>`)])}
+   ${row('In the bar, warm',[`<span class="chipbg w"><span style="font:700 15px/1 'IBM Plex Mono',monospace;letter-spacing:-.02em;color:#241E15">FIELD<span style="color:#57651E">LOGIC</span><span style="color:#615A54">HQ</span></span></span>`,...ds.map(d=>`<span class="sp chipbg">${wm(d,{size:15})}</span>`)])}
+   ${row('In email',[`<span class="chipbg w"><span style="font:700 14px/1.2 'Courier New',monospace;letter-spacing:.02em;color:#211c15">FIELD<span style="color:#55641c">LOGIC</span><span style="color:#4b463f">HQ</span></span></span>`,...ds.map(d=>`<span class="chipbg w">${emailWm(d)}</span>`)])}
+   ${row('Reads as',['A command line','A name, headquarters','A team’s pennant','An office tool'])}
+  </tbody></table></div>`;
+}
+
+/* ════════ SHIPPING ════════ */
+function renderShip(){
+  document.getElementById('ship-body').innerHTML=`
+  <h3>Where each mark lives, and who changes it</h3>
+  <div class="tw"><table class="t"><thead><tr><th>Surface</th><th>Today</th><th>Becomes</th><th>Picked up by</th></tr></thead><tbody>
+   <tr><td>Browser tab and bookmarks</td><td>The ">" (the tab icon file, plus a 16 and 32 pixel fallback for old browsers)</td><td>The tile</td><td>S4's release (Ask 6)</td></tr>
+   <tr><td>Phone home screen, iPhone and Android</td><td>"FL" (192, 512, maskable 512). The app's launch screen and bar colour are near-black</td><td>The tile and the maskable tile. Launch screen paper, so an installed app opens warm</td><td>S4's release</td></tr>
+   <tr><td>Notifications</td><td>Badge: the ">". Large picture: "FL", unless an organizer logo is sent</td><td>The silhouette and the tile. An organizer's logo still wins</td><td>S4's release</td></tr>
+   <tr><td>Exports and print</td><td>"FL" printed beside "Generated by FieldLogicHQ"</td><td>The one-colour mark beside the same words</td><td>S4's release (one file)</td></tr>
+   <tr><td>Admin and coach top strips</td><td>The ">" plus the typewriter name</td><td>The new lockup (Ask 8)</td><td>S4's release, as one component change</td></tr>
+   <tr><td>Marketing bar, footer, consumer bar, tournament strip, volunteer shells, platform-admin sign-in, offline page</td><td>About ten copies of the name</td><td>One shared wordmark (W-08)</td><td>S1 writes it, S4 puts it everywhere at once</td></tr>
+   <tr><td>Account emails, every other email, unsubscribe</td><td>Courier, lime capitals, generic monospace</td><td>Text in Arial, two inks (Ask 5)</td><td>S3a moves every email onto the warm envelope with today's wordmark line. S4 changes that one line</td></tr>
+   <tr><td>Marketing share card</td><td>None</td><td>The card drawn on each direction tab</td><td>S4 (P7, already ruled)</td></tr>
+   <tr><td>"Powered by" and "Built on" lines</td><td>Words only</td><td>Unchanged words, in the new face where they are ours</td><td>S4 for the marketing set. The tournament pages' own type waits for their project (S6)</td></tr>
+  </tbody></table></div>
+
+  <h3>People who already have the old icon</h3>
+  <div class="grid3">
+    <div class="card"><h3>Android</h3><p class="tight">Chrome checks the app's details when the installed app opens. When the icon changes it can show the person a one-time "this app's icon has changed" notice to accept. After that the new icon is on their home screen.</p></div>
+    <div class="card"><h3>iPhone</h3><p class="tight">An iPhone takes the icon once, when the person adds the app, and never updates it. Existing installs keep the "FL" icon until the person removes the app and adds it again. Nothing breaks. It just looks old. Ask 7 covers whether we say so.</p></div>
+    <div class="card"><h3>Computers</h3><p class="tight">Browsers keep tab icons for days or weeks. Shipping the new tab icon under a <b>new file name</b> makes every browser fetch it on the next visit, and the old file can be removed. Bookmarks update the next time the page is opened.</p></div>
+  </div>
+
+  <h3>What each stage picks up</h3>
+  <ul>
+    <li><b>S1</b> writes the ruled identity once: the mark and its tile, page and one-colour versions, the wordmark, the email wordmark, and where lime goes. It rewrites P1 ("the typewriter face is for a plan chip and real data") and P9 (the new wordmark). It names one shared wordmark that every surface uses.</li>
+    <li><b>S3a</b> moves every email onto the warm envelope. Under the recommendation it keeps today's wordmark line, so it does not wait for the icon files.</li>
+    <li><b>S4</b> ships the whole identity in one release: the icon files, the badge, the launch screen colour, the export mark, the lockup in the strips, the shared wordmark everywhere, the email line and the new share card. Nobody sees two identities at once.</li>
+    <li><b>Checks that move with it:</b> the test that pins the account emails' Courier wordmark is updated in S4. The demo build already fails if a tour anchor disappears, so a lockup change that moved one would be caught.</li>
+  </ul>`;
+}
+
+/* ════════ BOOT ════════ */
+document.querySelectorAll('.tabs button').forEach(b=>{b.id='t-'+b.dataset.tab;b.setAttribute('aria-controls','tab-'+b.dataset.tab);});
+document.querySelectorAll('section.tab').forEach(s=>{s.setAttribute('role','tabpanel');s.setAttribute('aria-labelledby','t-'+s.dataset.tab);});
+document.querySelector('.tabs').addEventListener('keydown',e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const bs=[...document.querySelectorAll('.tabs button')];const i=bs.indexOf(document.activeElement);if(i<0)return;const n=bs[(i+(e.key==='ArrowRight'?1:bs.length-1))%bs.length];n.focus();show(n.dataset.tab);});
+function show(tab){
+  document.querySelectorAll('.tabs button').forEach(b=>{const on=b.dataset.tab===tab;b.setAttribute('aria-selected',on?'true':'false');b.tabIndex=on?0:-1;});
+  document.querySelectorAll('section.tab').forEach(s=>s.hidden=s.dataset.tab!==tab);
+  try{localStorage.setItem('w-tab',tab)}catch(e){}
+}
+function jump(id){
+  const tabs=['start','today','A','B','C','side','ship','asks'];
+  if(tabs.includes(id)){show(id);window.scrollTo(0,0);return;}
+  const el=document.getElementById(id); if(!el) return;
+  const sec=el.closest('section.tab'); if(sec) show(sec.dataset.tab);
+  el.scrollIntoView({block:'start'}); window.scrollBy(0,-110);
+}
+function openNote(key){
+  const n=NOTES[key]; if(!n) return;
+  document.getElementById('note-h').textContent=n[0];
+  document.getElementById('note-b').innerHTML=n[1].startsWith('<')?n[1]:`<p>${n[1]}</p>`;
+  const d=document.getElementById('note'); if(d.showModal) d.showModal(); else d.setAttribute('open','');
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('.tabs button'); if(t){show(t.dataset.tab);return;}
+  const j=e.target.closest('[data-jump]'); if(j){e.preventDefault();jump(j.dataset.jump);return;}
+  const n=e.target.closest('[data-note]'); if(n){openNote(n.dataset.note);return;}
+});
+document.getElementById('note-x').addEventListener('click',()=>document.getElementById('note').close());
+document.getElementById('note').addEventListener('click',e=>{if(e.target.id==='note')e.target.close();});
+document.getElementById('pb-select').addEventListener('click',()=>{const t=document.getElementById('pb-out');t.focus();t.select();});
+document.getElementById('pb-copy').addEventListener('click',async e=>{const t=document.getElementById('pb-out');try{await navigator.clipboard.writeText(t.value);e.target.textContent='Copied';setTimeout(()=>e.target.textContent='Copy',1600);}catch(err){t.focus();t.select();}});
+['A','B','C'].forEach(d=>document.getElementById('tab-'+d).innerHTML=places(d));
+renderHero(); renderToday(); renderSide(); renderShip(); renderAsks();
+const doFlush=()=>flushCanvases();
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(doFlush); doFlush();
+let start='start'; try{start=localStorage.getItem('w-tab')||'start'}catch(e){}
+const h=(location.hash||'').slice(1); if(h) jump(h); else show(start);
+</script>
+
+</body>
+</html>

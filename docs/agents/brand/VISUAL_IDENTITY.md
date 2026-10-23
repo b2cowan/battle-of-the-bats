@@ -26,9 +26,10 @@ disagree, the home wins and this document is the one that is wrong: fix it.
 |---|---|---|
 | **Barlow Condensed**, 700, sentence case | every heading (P2) | `--font-display` |
 | **Inter** | every sentence, label, button, link and eyebrow | `--font-sans` |
-| **IBM Plex Mono** | the wordmark, a plan chip, and real data — nothing else (P1) | `--font-data` (`--font-mono`) |
+| **IBM Plex Mono** | the wordmark, a plan chip, and real data — nothing else (P1). **From S4: a plan chip and real data only**; the new wordmark is Inter (§4) | `--font-data` (`--font-mono`) |
 
-Email cannot load our fonts. It uses Arial and Helvetica, and Courier New for the wordmark (see §3).
+Email cannot load our fonts. It uses Arial and Helvetica, and Courier New for the wordmark (see §3). From S4 the email
+wordmark is Arial too.
 
 ### The public rules, P1–P10
 
@@ -51,7 +52,8 @@ Owner ruling 2026-10-23 (Ask 3 A), carried over as ruled.
 
 - **Scroll-reveal comes out (P6).** This is a rule here; removing it from the home page is S4's work.
 - **The marketing headline is one named exception to the ladder** (Ask 3 A). See "The headline" below.
-- **The wordmark is being redrawn** (Ask 2 C). P9 describes today's. See §4.
+- **The wordmark is redrawn and RULED** (Ask 2 C; the refined Joined FL, 2026-10-23). P1 and P9 describe today until S4
+  ships it. See §4.
 
 ### The headline: one named exception
 
@@ -139,7 +141,8 @@ never reach), so it is built once, there.
 - **Family emails wear the club's identity on the warm envelope** (owner, Ask 6 A, 2026-10-23). A parent should
   recognize their club: its logo and colour join the warm envelope, FieldLogicHQ stays in the footer, and the envelope is
   never replaced. S3b builds it, with the club-contrast and logo-in-email questions that come with it.
-- **The wordmark in email is Courier New, three inks** (P9), because email cannot load Plex Mono.
+- **The wordmark in email is Courier New, three inks** (P9), because email cannot load Plex Mono. **From S4** it is text
+  in Arial: "FieldLogic" 700 ink, "HQ" 400 olive, no image (§4). S3a keeps today's line; S4 changes that one line.
 
 ---
 
@@ -152,11 +155,46 @@ unsubscribe page's (spaced). The lime ">" chevron on a dark square is the browse
 strips' mark, and the phone home-screen icon is a separate "FL / HQ" mark on a dark square (`public/icons/pwa-*.png`).
 The shared lockup component is `components/shared/BrandLockup.tsx`.
 
-**The wordmark is being redrawn** (owner, Ask 2 C, 2026-10-23), **together with the browser-tab mark and the phone
-home-screen icon** (owner follow-up, "yes"), as their own piece of work before S4. The drawing session is
-`docs/projects/active/PUBLIC_FACE_WARM_W_DRAWING_PROMPT.md`. **This document does not settle the wordmark.** P9's
-description is today's, and it will be replaced by whatever that session rules. Until then, build against P9 and do not
-invent a sixth version.
+**RULED 2026-10-23 (owner, "go ahead with your proposal" on the refinement page
+https://claude.ai/artifact/9xDNVQyR3wJRcf7hCgiDBr, taken as its seven asks as recommended): the refined Joined FL, olive
+leading, lime kept for actions.** It ships in S4's release, all at once. **Until then today's wordmark and marks stay
+where they are, and P1 and P9 above describe today.** When S4 ships, P1 becomes "the typewriter face is for a plan chip
+and real data" and P9 becomes the lockup below. Drawing history: round 1 (`PUBLIC_FACE_WARM_W_DRAWINGS.html`, did not
+sell it), Codex's second opinion (`PUBLIC_FACE_WARM_W_CODEX_OPINION.md`), the refinement (`PUBLIC_FACE_WARM_W_REFINEMENT.html`,
+the source of record for the geometry).
+
+**The mark.** An F whose middle arm turns down into an L: one filled shape, the name's two initials. Geometry on a 64 grid
+(the paths in the refinement page's `P.rf` and `P.rf16` are canonical; copy them, never redraw):
+- **Main cut** (32 px and up): Codex's edges, with the top-left shoulder a 12-unit curve (a little wider than the 10-unit
+  stem, so the stroke stays even round it), outer corners 3, inner corners 2.
+- **16 px cut**: on the 4-unit pixel grid, every stroke 3 px, the gap between F and L 2 px, shoulder 3 px, corners 1 px.
+  The main cut at 16 px is mush; the separate cut is required.
+- On a tile, square or maskable icon the glyph sits 1.5 units right of centre (its weight is on the left). Not in the lockup.
+
+**Colours.** The app tile is olive `--home-olive` with the mark in paper `--home-paper`. Lime is **not** in the mark
+anywhere; it stays the action colour (buttons). In Dark the mark and the name take the Dark text colour, HQ a little dimmer.
+Olive on the Dark ground fails (about 3:1), so Dark never uses an olive mark.
+
+**The lockup (P9 from S4).** The bare olive mark (no tile) + "FieldLogic" in Inter 700 ink + "HQ" in Inter olive, 600 below
+18 px and 500 above. The mark is about 1.4 times the capitals' height, centred on them, with a gap of about 0.45 em. One
+mark at every size. The tile appears only where the mark stands alone: the tab, the phone, the share card.
+
+**Every place.**
+- **Browser tab:** a rounded olive tile, the 16 px cut at 16, the main cut at 32. Ship under a new file name so caches refetch.
+- **Phone:** the iPhone icon is a full square (iOS paints transparent corners black). The maskable icon puts the glyph at 84%
+  inside the safe circle. The "any" and maskable icons are separate files. The launch screen and bar colour move off near-black.
+- **Notification badge:** a white silhouette from the 16 px cut, crisp at 16, 32, 48 and 96. The large picture is the app tile
+  unless an organizer sends its own logo.
+- **Exports and print:** the one-colour lockup beside the existing "Generated by" words.
+- **Email:** the name as text in Arial, "FieldLogic" 700 ink and "HQ" 400 olive. No image, no mark.
+- **Share card:** the marketing card gets one (P7), with the tile as its one lime-free accent.
+- **One colour:** the same path in black or white, holes real.
+
+**Owed before printing or stitching anything:** a name and logo search on "FieldLogic" and this mark (owner or counsel).
+**Recommended, not a gate:** a few informal reactions (coaches, a parent or two) that ask "what letters do you see?" first.
+The admin and coaches-portal top strips take the new lockup in place of the ">". People with the app installed get a
+What's new line (an iPhone keeps the old icon until the app is added again). Every copy of the name becomes one shared
+piece, so the redraw does not become an eleventh version.
 
 On the sign-up steps, signed out, the wordmark leads to the marketing home page (Ask 13).
 
