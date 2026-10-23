@@ -28,7 +28,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { isClubPlan, hasModuleEntitlement } from '@/lib/module-entitlements';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { ClubRow, ClubRowList, LoadFailed, NoticePill, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { ClubRow, ClubRowList, LoadFailed, NoticePill, RepChip, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { SwitchButton } from '@/components/admin/tournament/SwitchRows';
@@ -57,13 +57,17 @@ import BuilderRow from './BuilderRow';
 import LookPanel from './LookPanel';
 import VisibilityPanel from './VisibilityPanel';
 import CoachNamesPanel from './CoachNamesPanel';
+import OwnAddressPanel from './OwnAddressPanel';
+import { useOwnAddress } from './useOwnAddress';
+import { headerAddress, ownAddressInUse, rowChip, rowSummary } from '@/lib/own-address-view';
+import { OWN_ADDRESS_WORDS as OW } from '@/lib/own-address-screen-words';
 import { COACH_NAMES_WORDS as CW, coachNamesChoiceName } from '@/lib/coach-names-words';
 import { sanitizeCoachNamesPolicy, type CoachNamesPolicy } from '@/lib/coach-names-policy';
 import SitePreview from './SitePreview';
 import styles from './public-site.module.css';
 
 type TextKey = SiteTextField;
-type RowKey = Exclude<SiteEditRow, 'notice'> | 'visibility' | 'coaches';
+type RowKey = Exclude<SiteEditRow, 'notice'> | 'visibility' | 'coaches' | 'address';
 const TEXT_KEYS = Object.keys(SITE_FIELD_MAX) as TextKey[];
 const SOCIAL: { key: TextKey; label: string; placeholder: string }[] = [
   { key: 'socialInstagram', label: W.instagram, placeholder: 'https://instagram.com/yourclub' },
@@ -150,7 +154,7 @@ const LISTS: Record<ListKind, SiteList> = {
 };
 
 export default function PublicSitePage() {
-  const { currentOrg, userRole, userCapabilities, loading, refresh } = useOrg();
+  const { currentOrg, user, userRole, userCapabilities, loading, refresh } = useOrg();
   const orgSlug = currentOrg?.slug ?? '';
   const query = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const canWrite = userRole === 'owner' || userRole === 'admin';
@@ -417,8 +421,14 @@ export default function PublicSitePage() {
   }, [currentOrg?.isPublic]);
 
   const { copied, copy } = useCopyToClipboard();
-  const address = typeof window !== 'undefined' && orgSlug ? `${window.location.origin}/${orgSlug}` : '';
-  const shownAddress = address.replace(/^https?:\/\//, '');
+  // The club's own web address (Club Tier Stage 4e): one state, read by the header, the closed row and the preview.
+  const own = useOwnAddress(query);
+  const fieldlogicLink = typeof window !== 'undefined' && orgSlug ? `${window.location.origin}/${orgSlug}` : '';
+  const fieldlogicAddress = fieldlogicLink.replace(/^https?:\/\//, '');
+  // What the header says families use, and what Copy link and Open hand out: the club's own address only while it is handed out.
+  const shownAddress = headerAddress(own.connection, fieldlogicAddress);
+  const address = ownAddressInUse(own.connection) ? `https://${shownAddress}` : fieldlogicLink;
+  const ownerName = ((user?.user_metadata?.full_name ?? user?.user_metadata?.name) as string | undefined)?.trim() || null;
   const look = useMemo(() => currentOrg ? lookWords({ preset: currentOrg.themePreset, primary: currentOrg.themePrimary, accent: currentOrg.themeAccent, font: currentOrg.themeFont }) : null, [currentOrg]);
 
   if (loading) return <LoadingState label={W.loading} />;
@@ -503,6 +513,7 @@ export default function PublicSitePage() {
     visibility: W.visibilitySummary(on, currentOrg.isDiscoverable, noun),
     coaches: coachNamesChoiceName(sanitizeCoachNamesPolicy(currentOrg.coachNamesPolicy)),
   };
+  const chip = rowChip(own.connection?.status);
   // Team pages are a Club feature: the sixth row is absent (never locked) without Rep teams.
   const showCoachNames = hasModuleEntitlement(currentOrg, 'module_rep_teams');
 
@@ -654,8 +665,15 @@ export default function PublicSitePage() {
             </BuilderRow>
           )}
 
+          {/* The Web address row (Club Tier Stage 4e, ask 1): the FieldLogicHQ address and, once connected, the club's own. Its state is a chip. */}
+          <BuilderRow id="address" title={OW.rowTitle} summary={rowSummary(own.connection, fieldlogicAddress)}
+            chip={chip ? <RepChip tone={chip.tone}>{chip.label}</RepChip> : null} open={rowOpen === 'address'} onToggle={() => toggle('address')}>
+            <OwnAddressPanel orgSlug={orgSlug} query={query} clubName={currentOrg.name} ownerName={ownerName}
+              fieldlogicAddress={fieldlogicAddress} isOwner={isOwner} own={own} onTell={setTold} />
+          </BuilderRow>
+
           <BuilderRow id="visibility" title={W.visibility} summary={summary.visibility} open={rowOpen === 'visibility'} onToggle={() => toggle('visibility')}>
-            <VisibilityPanel orgSlug={orgSlug} clubName={currentOrg.name} noun={noun} address={shownAddress}
+            <VisibilityPanel clubName={currentOrg.name} noun={noun} address={fieldlogicAddress}
               on={on} listed={currentOrg.isDiscoverable} isOwner={isOwner}
               onSwitch={async body => {
                 await orgPatch(body);
@@ -668,7 +686,7 @@ export default function PublicSitePage() {
         {/* The preview stands beside the rows at a desk (A1); the owner's and admins' only — the page asks the same. */}
         {canWrite && wide && (
           <aside className={styles.builderPreview} aria-label={W.preview}>
-            <SitePreview orgSlug={orgSlug} version={version} online={on} onEdit={editFromPreview} />
+            <SitePreview orgSlug={orgSlug} version={version} online={on} onEdit={editFromPreview} ownAddress={ownAddressInUse(own.connection) ? shownAddress : null} />
           </aside>
         )}
       </div>
@@ -683,7 +701,7 @@ export default function PublicSitePage() {
       {previewOpen && !wide && (
         <KitDialog kind="form" size="wide" title={W.preview} onClose={() => setPreviewOpen(false)}>
           <div className={styles.previewWindow}>
-            <SitePreview orgSlug={orgSlug} version={version} online={on} onEdit={editFromPreview} startOn="phone" />
+            <SitePreview orgSlug={orgSlug} version={version} online={on} onEdit={editFromPreview} startOn="phone" ownAddress={ownAddressInUse(own.connection) ? shownAddress : null} />
           </div>
         </KitDialog>
       )}

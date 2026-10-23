@@ -95,7 +95,7 @@ export const PUBLIC_SITE_WORDS = {
   directoryOffHint: 'When the public site is off, the directory switch is off too.',
   webAddress: 'Web address',
   changeAddress: 'Change it in Settings',
-  visibilityAdmin: 'The owner turns the site on and off and changes its address.',
+  visibilityAdmin: 'The owner turns the site on and off.',
   yes: 'Yes.',
   no: 'No.',
   onlineWord: 'Online.',

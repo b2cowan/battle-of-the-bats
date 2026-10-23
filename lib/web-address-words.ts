@@ -41,4 +41,11 @@ export const WEB_ADDRESS_WORDS = {
   publicUrlClub: 'Change it in your organization’s Settings.',
   /** The club's Settings: the field's warning once it is changed (its field and hint are unchanged). */
   clubWarning: 'Changing your web address immediately breaks every existing link to your organization — your schedule, standings, registration form, team pages, and any links sent to coaches in past emails or posted publicly.',
+  /** The club's Settings field hint (Club Tier 4e): unchanged until the club has its own web address handed out. */
+  clubHint: 'Only lowercase letters, numbers, and hyphens. Changing it breaks existing links.',
+  /** While the club's own address is handed out, its links do not depend on this field; only the FieldLogicHQ ones do. */
+  clubHintOwn: (own: string, slug: string) =>
+    `Only lowercase letters, numbers, and hyphens. Links to ${own} keep working if you change it. Links to fieldlogichq.ca/${slug} stop.`,
+  clubWarningOwn: (own: string, slug: string) =>
+    `Changing your web address immediately breaks every link that uses fieldlogichq.ca/${slug}. Links to ${own} keep working.`,
 } as const;

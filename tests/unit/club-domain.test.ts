@@ -6,6 +6,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   cleanAddressInput,
+  cleanAddressWhileTyping,
   judgePadlockRecord,
   judgeSiteRecord,
   parseAddress,
@@ -17,6 +18,12 @@ describe('cleaning what was typed or pasted', () => {
     assert.equal(cleanAddressInput('https://WWW.LakeshoreLynx.ca/home'), 'lakeshorelynx.ca');
     assert.equal(cleanAddressInput('  http://www.lynx.ca:8080/a?b=1#c '), 'lynx.ca');
     assert.equal(cleanAddressInput('lakeshorelynx.ca.'), 'lakeshorelynx.ca');
+  });
+  it('keeps a trailing dot while it is being typed, because `lakeshorelynx.` is on its way to `.ca`', () => {
+    assert.equal(cleanAddressWhileTyping('lakeshorelynx.'), 'lakeshorelynx.');
+    assert.equal(cleanAddressWhileTyping('https://www.lakeshorelynx.'), 'lakeshorelynx.');
+    assert.equal(cleanAddressWhileTyping('Teams.Lynx.ca/x', 'other'), 'teams.lynx.ca');
+    assert.equal(cleanAddressInput('lakeshorelynx.'), 'lakeshorelynx');
   });
   it('never leaves www.www. in the fixed-prefix mode', () => {
     assert.equal(cleanAddressInput('www.www.lynx.ca'), 'lynx.ca');

@@ -261,6 +261,9 @@ export interface DomainView {
   /** When checking gives up if the records are still not in. */
   giveUpAt: string;
   connectedAt: string | null;
+  /** When we noticed record 1 gone / record 2 gone (the dates the warnings name). */
+  needsAttentionSince: string | null;
+  notWorkingSince: string | null;
   padlockExpiresAt: string | null;
 }
 
@@ -280,6 +283,8 @@ export function toDomainView(row: DomainRow): DomainView {
     waitingSince: row.waiting_since,
     giveUpAt: new Date(new Date(row.waiting_since).getTime() + WAITING_GIVE_UP_MS).toISOString(),
     connectedAt: row.connected_at,
+    needsAttentionSince: row.needs_attention_since,
+    notWorkingSince: row.not_working_since,
     padlockExpiresAt: row.padlock_expires_at,
   };
 }

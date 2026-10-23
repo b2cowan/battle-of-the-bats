@@ -54,6 +54,9 @@ export default function SettingsKit() {
   const [deleteSent, setDeleteSent] = useState(false);
   const [guardOpen, setGuardOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  // The club's own web address, only while it is handed out (Club Tier Stage 4e): the field's hint then names it. A plan
+  // without the Public site, or a failed read, simply leaves today's hint.
+  const [ownAddress, setOwnAddress] = useState<string | null>(null);
 
   function adopt(data: OrgSettings) {
     setSettings(data);
@@ -71,6 +74,18 @@ export default function SettingsKit() {
     ])
       .then(([d, cutoffs]: [OrgSettings, CardData | null]) => { if (!stale) { adopt(d); setCutoffData(cutoffs); } })
       .catch(() => { if (!stale) setLoadFailed(true); });
+    return () => { stale = true; };
+  }, [orgQuery]);
+
+  useEffect(() => {
+    if (!orgQuery) return;
+    let stale = false;
+    fetch(`/api/admin/public-site/own-address${orgQuery}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { connection?: { fullName: string; status: string } | null } | null) => {
+        if (!stale) setOwnAddress(d?.connection && (d.connection.status === 'connected' || d.connection.status === 'needs_attention') ? d.connection.fullName : null);
+      })
+      .catch(() => { if (!stale) setOwnAddress(null); });
     return () => { stale = true; };
   }, [orgQuery]);
 
@@ -240,10 +255,10 @@ export default function SettingsKit() {
               {urlSlug !== settings.slug ? (
                 <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
                   <AlertTriangle size={15} aria-hidden />
-                  <div className={ck.noticeBody}>{WA.clubWarning}</div>
+                  <div className={ck.noticeBody}>{ownAddress ? WA.clubWarningOwn(ownAddress, settings.slug) : WA.clubWarning}</div>
                 </div>
               ) : (
-                <p className={ck.hint}>Only lowercase letters, numbers, and hyphens. Changing it breaks existing links.</p>
+                <p className={ck.hint}>{ownAddress ? WA.clubHintOwn(ownAddress, settings.slug) : WA.clubHint}</p>
               )}
             </div>
           </section>

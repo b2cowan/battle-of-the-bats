@@ -30,16 +30,21 @@ export function usesOwnAddress(status: ClubDomainStatus | null | undefined): boo
  * `lakeshorelynx.ca`. The `www.` is fixed on screen in the default mode, so a leading one is always dropped
  * there (it would read `www.www.`); in the other-name mode it is kept as the club typed it.
  */
-export function cleanAddressInput(raw: string, mode: 'www' | 'other' = 'www'): string {
+export function cleanAddressInput(raw: string, mode: 'www' | 'other' = 'www', opts: { whileTyping?: boolean } = {}): string {
   let s = String(raw ?? '').trim().toLowerCase();
   s = s.replace(/^[a-z][a-z0-9+.-]*:\/\//, ''); // https://
   s = s.replace(/^[^@/]*@/, ''); // user:pass@
   s = s.split(/[/?#]/, 1)[0]; // a trailing path, query or fragment
   s = s.replace(/:\d+$/, ''); // a port
-  s = s.replace(/\.+$/, ''); // a trailing dot
+  // A trailing dot is dropped when the address is read, never while it is being typed: `lakeshorelynx.` is on its way to `.ca`.
+  if (!opts.whileTyping) s = s.replace(/\.+$/, '');
   if (mode === 'www') s = s.replace(/^(www\.)+/, '');
   return s;
 }
+
+/** The field's own clean-up as the club types or pastes: everything above except the trailing dot. */
+export const cleanAddressWhileTyping = (raw: string, mode: 'www' | 'other' = 'www') =>
+  cleanAddressInput(raw, mode, { whileTyping: true });
 
 /** Why an address is refused. The sentences are the copy doc's §4b. */
 export type AddressRefusal =

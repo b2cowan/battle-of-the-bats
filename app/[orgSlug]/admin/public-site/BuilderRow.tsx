@@ -7,18 +7,23 @@
  * The body STAYS MOUNTED while closed (hidden, not removed), so a field being typed in keeps its words and its waiting
  * save when the club opens another row.
  *
+ * `chip` — a status said once, at the row's end (Club Tier Stage 4e: Waiting, Needs attention, Not connected, Not working on
+ * the Web address row). Rendered after the title block, before the chevron; absent for every other row.
+ *
  * `mark` — the first-run marks (A8): a filled tick for a part that is ready, a dashed ring for one that is not; absent
  * once the site is online and every part is ready.
  */
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import styles from './public-site.module.css';
+import own from './own-address.module.css';
 
-export default function BuilderRow({ id, title, summary, mark, open, onToggle, children }: {
+export default function BuilderRow({ id, title, summary, mark, chip, open, onToggle, children }: {
   id: string;
   title: string;
   summary: ReactNode;
   mark?: { ready: boolean; label: string } | null;
+  chip?: ReactNode;
   open: boolean;
   onToggle: () => void;
   children: ReactNode;
@@ -47,6 +52,7 @@ export default function BuilderRow({ id, title, summary, mark, open, onToggle, c
             <span id={`${id}-title`} className={styles.rowTitle}>{title}</span>
             <span className={styles.rowSummary}>{summary}</span>
           </span>
+          {chip && <span className={own.rowChip}>{chip}</span>}
           <ChevronDown size={18} className={styles.rowChevron} aria-hidden />
         </button>
       </h2>

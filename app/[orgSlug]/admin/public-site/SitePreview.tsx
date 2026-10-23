@@ -16,18 +16,21 @@ import { PREVIEW_MESSAGE } from '@/lib/public-site-builder';
 import { isSiteEditRow, type SiteEditRow } from '@/lib/site-edit-marks';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import styles from './public-site.module.css';
+import own from './own-address.module.css';
 
 type Device = 'desk' | 'phone';
 const WIDTH: Record<Device, number> = { desk: 1280, phone: 390 };
 const PHONE_HEIGHT = 844;
 
-export default function SitePreview({ orgSlug, version, online, onEdit, startOn = 'desk' }: {
+export default function SitePreview({ orgSlug, version, online, onEdit, startOn = 'desk', ownAddress = null }: {
   orgSlug: string;
   /** Bumped after every save: the preview is fetched again. */
   version: number;
   online: boolean;
   onEdit: (row: SiteEditRow) => void;
   startOn?: Device;
+  /** The club's own web address, only while it is handed out (connected or needs attention): a padlock strip names it. */
+  ownAddress?: string | null;
 }) {
   const [device, setDevice] = useState<Device>(startOn);
   const stage = useRef<HTMLDivElement>(null);
@@ -96,6 +99,7 @@ export default function SitePreview({ orgSlug, version, online, onEdit, startOn 
           </button>
         </div>
       </div>
+      {ownAddress && <p className={own.previewAddress}><Lock size={13} aria-hidden /> <span className={own.mono}>{ownAddress}</span></p>}
       {!online && <p className={styles.previewOffline}><Lock size={13} aria-hidden /> {W.previewOffline}</p>}
       <div ref={stage} className={`${styles.previewStage} ${device === 'phone' ? styles.previewStagePhone : ''}`}>
         {shownId == null && <p className={styles.previewLoading}>{W.previewLoading}</p>}
