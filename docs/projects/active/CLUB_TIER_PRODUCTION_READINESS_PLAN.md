@@ -1307,6 +1307,24 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > pages, shared links, previews and sitemap use it; sign-in and the admin stay on FieldLogicHQ; a hosting spike first (how the host
 > serves many club domains with automatic certificates); **every plan with the public site carries it, no extra charge** (owner via /strategy 2026-10-19). Forwarding a domain needs no build and
 > gets a help article now; masking is not offered.
+> **📝 4e hosting spike prompt written 2026-10-23:** `CLUB_TIER_STAGE4E_HOSTING_SPIKE_PROMPT.md` (a new chat; no product code).
+> It answers whether Amplify carries many club domains with automatic certificates (and if not, compares at most three fronts),
+> sizes what the app must learn (the host never reaches the proxy for public pages today; links, previews and sitemap are built
+> for www; form posts trust only our own domain), and runs one proof on an owner-supplied domain, asking before any AWS or DNS
+> write. The 4e drawing and build prompt wait for its answer.
+> **🔬 4e hosting spike RUN 2026-10-23 — `CLUB_TIER_STAGE4E_HOSTING_SPIKE.md`:** **Amplify carries it natively**, on one
+> condition. Proven on the owner's `club.b2cowan.com` (dev branch, added and removed the same afternoon): a domain attaches by
+> API, the club's two DNS records are known in 10 s, the certificate issues and renews itself, live in 4½ minutes, www and dev
+> undisturbed, no rebuild; Amplify's edge refuses any name it was not given. **Per-club cost $0.** The condition: the quota is
+> 5 domains per app (2 used), adjustable, no published ceiling — **a request for 500 was filed 2026-10-23 (pending); AWS's
+> answer is the last fact the path needs.** Fallback if refused: CloudFront SaaS Manager in front (~$20–50/month at 50–500
+> clubs, unproven in front of Amplify). The apex is the same on every affordable path: connect `www`, forward the bare name
+> (ALIAS where the host offers it). The build is one large stage, mostly routing and links; the proof showed two things the build
+> must fix first (old shortcut forwards send `/teams` on ANY host to milton-bats; robots advertises our sitemap on a club's host). **The five asks RULED 2026-10-23,
+> all as recommended** (spike doc §7); a $5 add-on was raised and declined the same day — it stays included at no extra
+> charge; the AWS limit is not a blocker (owner). **📝 4e drawing prompt written 2026-10-23:** `CLUB_TIER_STAGE4E_DRAWING_PROMPT.md`
+> (a new chat; its first ask is where the door lives — the ruling says Settings, but the public-site controls moved into the Public
+> site page on 2026-10-21). Then the build prompt.
 > **Security fix found on the way (owner "fix it now", 2026-10-19):** every response now sends frame-ancestors 'self',
 > X-Frame-Options SAMEORIGIN and HSTS (this host only); production sent none, leaving admin and coach screens open to
 > clickjacking. Guard: tests/unit/security-headers.test.ts. Committed `7b28c175` 2026-10-19 (local, not pushed); verified on dev.
