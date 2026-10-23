@@ -899,12 +899,12 @@ export interface Walkthrough {
    */
   door: { path: string; label: string };
   /**
-   * The way back into the full persona page, for a reader who wants everything else. Href only —
-   * the LABEL is the same sentence for every persona ("everything else *it* does" is deliberately
-   * persona-agnostic), so it lives with the walkthrough's other invariant copy in the renderer
-   * rather than being re-typed, and silently re-worded, once per persona.
+   * The way back into the full persona page, for a reader who wants everything else. The LABEL
+   * names the product the persona page is about ("Everything else Tournament does", "Everything
+   * else the Coaches Portal does"), so it is data here, not one shared sentence (The public face,
+   * warm: S4 label list row 13, ruled 2026-10-23; it was "Everything else it does →").
    */
-  back: { href: string };
+  back: { href: string; label: string };
   /**
    * THE CODE FALLBACK PULL — a subset of this persona's deck, in deck order (`pullProblems`
    * enforces both, at build time for this list and at save time for the owner's).
@@ -935,7 +935,7 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
   persona: 'tournament',
   path: '/for-tournament-organizers/walkthrough',
   seo: {
-    title: 'The 90-Second Walkthrough for Tournament Organizers — FieldLogicHQ',
+    title: 'The 90-second walkthrough for tournament organizers',
     // ⚠ The description is DERIVED from the slides the page actually shows — see
     // `derivedSeoDescription`, which hangs its phrase list on this clause. It carries no "real
     // screens, not a brochure" claim (see the note on `closing.body` below): every one of the
@@ -947,8 +947,8 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
   eyebrow: 'For tournament organizers · a 90-second walkthrough',
   title: 'The weekend the phone stayed in your pocket.',
   sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — and a live demo you can walk when you are done.',
-  door: { path: SEE_IT_LIVE_PATH, label: 'See it live — no sign-up →' },
-  back: { href: '/for-tournament-organizers' },
+  door: { path: SEE_IT_LIVE_PATH, label: 'See a live tournament' },
+  back: { href: '/for-tournament-organizers', label: 'Everything else Tournament does' },
   fallbackPull: [
     '#11',
     // ⚠ The map, second — same reasoning as the coach page's #26. Added 2026-08-21 (owner).
@@ -985,7 +985,7 @@ export const COACH_WALKTHROUGH: Walkthrough = {
   persona: 'coach',
   path: '/for-coaches/walkthrough',
   seo: {
-    title: 'The 90-Second Walkthrough for Head Coaches — FieldLogicHQ',
+    title: 'The 90-second walkthrough for head coaches',
     // ⚠ The description is DERIVED from the panels that EXIST — each slide's `seoPhrase`, in the
     // order the page shows them, hung on this clause. It used to be hand-written and was widened
     // by hand every time the pull grew; an owner-editable pull would have let it rot silently
@@ -995,8 +995,8 @@ export const COACH_WALKTHROUGH: Walkthrough = {
   eyebrow: 'For head coaches · a 90-second walkthrough',
   title: 'Run the team. Keep your evenings.',
   sub: 'The jobs the Coaches Portal takes off your plate — and a whole demo season you can walk when you are done.',
-  door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season →' },
-  back: { href: '/for-coaches' },
+  door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season' },
+  back: { href: '/for-coaches', label: 'Everything else the Coaches Portal does' },
   /**
    * ⚠ SEVEN PANELS AS THE CODE DEFAULT — the pull walks the same year the deck does: tryout day
    * → the shape of the year → the practice → Saturday's opponent → the money → the off-season

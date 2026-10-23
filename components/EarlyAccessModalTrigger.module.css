@@ -1,3 +1,8 @@
+/* The early-access (express interest) window — The public face, warm: S4. It opens from the marketing pages, the
+   sign-up pages (/start/club, /start/league) and the League cap prompt in the admin, so it reads ONLY the --home-*
+   tokens (each of those surfaces defines them) and Inter. The scrim is the admin kit's themed one; the fallback is the
+   warm ink for a surface that does not define it. */
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -6,17 +11,19 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(8px);
+  background: var(--home-scrim, rgba(36, 30, 21, 0.34)); /* token-exempt: scrim fallback for a surface without --home-scrim */
 }
 
 .modal {
   width: min(760px, 100%);
   max-height: min(88vh, 820px);
   overflow: auto;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
-  background: var(--pitch-black);
-  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius);
+  background: var(--home-card);
+  color: var(--home-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  box-shadow: var(--home-shadow);
 }
 
 .header {
@@ -25,54 +32,57 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.25rem 1.25rem 0.75rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
+  border-bottom: 1px solid var(--home-line);
 }
 
 .kicker {
   margin: 0 0 0.35rem;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  color: var(--home-olive);
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .title {
   margin: 0;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: clamp(1rem, 3vw, 1.35rem);
-  font-weight: 800;
-  line-height: 1.25;
+  color: var(--home-ink);
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: var(--type-display);
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .copy {
   max-width: 54ch;
   margin: 0.45rem 0 0;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.75rem;
+  color: var(--home-ink-soft);
+  font-size: var(--type-body);
   line-height: 1.55;
 }
 
+/* A close × is a plain glyph: no border, no fill, a 44px target. */
 .close {
-  width: 34px;
-  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   flex: 0 0 auto;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  border-radius: 0;
+  margin: -0.5rem -0.5rem 0 0;
+  border: 0;
+  border-radius: var(--home-radius-sm);
   background: transparent;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.8rem;
-  font-weight: 800;
+  color: var(--home-dim);
+  font-family: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
   cursor: pointer;
 }
 
-.close:hover {
-  border-color: var(--logic-lime);
-  color: var(--logic-lime);
+.close:hover { color: var(--home-ink); }
+.close:focus-visible {
+  outline: 3px solid var(--home-olive);
+  outline-offset: 2px;
 }
 
 @media (max-width: 680px) {

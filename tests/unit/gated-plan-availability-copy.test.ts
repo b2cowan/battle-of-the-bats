@@ -61,7 +61,6 @@ describe('closed-plan availability words', () => {
       'app/page.tsx',
       'app/for-leagues/page.tsx',
       'app/(consumer)/start/league/page.tsx',
-      'app/platform/house-league/page.tsx',
       'app/[orgSlug]/admin/AdminHubClient.tsx',
       'components/admin/kit/club/ClubHubKit.tsx',
     ];

@@ -199,14 +199,6 @@
   "components/shared/FilterPill.module.css": {
     "caps": 1
   },
-  "components/shared/FlipPill.module.css": {
-    "caps": 1,
-    "face": 1
-  },
-  "components/shared/GetAppQr.module.css": {
-    "face": 1,
-    "caps": 1
-  },
   "components/shared/SidebarStrip.module.css": {
     "face": 1,
     "caps": 1

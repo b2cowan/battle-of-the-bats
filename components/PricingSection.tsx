@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
 import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, showsFoundingZero, FOUNDING_SEASON_END_LABEL, clubTrialLine, gatedPlanTag, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
 import { parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
+import kit from './marketing/MarketingKit.module.css';
 import styles from './PricingSection.module.css';
 
 type Billing = 'monthly' | 'annual';
+
+/** The words "Start free — no credit card required" carried before the button said only what happens (P4). */
+const NO_CARD_LINE = 'No credit card required';
 
 interface Plan {
   key: OrgPlan;
@@ -63,7 +66,7 @@ const PLANS: Plan[] = [
       '3 staff / admin seats',
       '1 tournament at a time',
     ],
-    cta: 'Get Started Free',
+    cta: 'Get started free',
     ctaHref: '/start/tournament',
   },
   {
@@ -97,7 +100,7 @@ const PLANS: Plan[] = [
       'Permanent sealed archives, tournament cloning, and targeted announcements',
       'Unlimited staff / admin seats · unlimited volunteers',
     ],
-    cta: 'Start free — no credit card required',
+    cta: 'Start free',
     ctaHref: '/start/tournament',
   },
   {
@@ -119,7 +122,7 @@ const PLANS: Plan[] = [
       'League-scoped communications',
       'Advanced member roles and permissions',
     ],
-    cta: 'Start free — no credit card required',
+    cta: 'Start free',
     ctaHref: '/start/tournament',
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
@@ -184,7 +187,7 @@ const TEAM_PLAN: Plan = {
     'Host one tournament at a time — you invite the teams',
     'Works standalone — no organization account required',
   ],
-  cta: 'Start free — no credit card required',
+  cta: 'Start free',
   ctaHref: '/coaches/start?source=pricing',
   initialPlanInterest: ['coaches_portal'],
   initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
@@ -222,7 +225,14 @@ const GATED_STRIP_LINES: Partial<Record<OrgPlan, string>> = {
  */
 export const RENDERED_PLAN_KEYS: readonly OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
 
-const CTA_CLASS = 'block font-mono text-xs uppercase tracking-widest font-bold text-center bg-logic-lime text-pitch-black px-4 py-3 max-[900px]:py-3.5 hover:bg-white transition-colors w-full border-0 cursor-pointer';
+/**
+ * A plan card's button (P4: says what happens, sentence case, no arrow). The kit's lime button is the view's ONE primary,
+ * worn by the plan it leads with; every other card's is the white secondary. Both read only --home-* tokens, so the same
+ * classes serve the always-warm marketing pages and the admin onboarding's chooser (which follows Warm / Dark).
+ */
+function ctaClass(primary: boolean): string {
+  return `${kit.btn} ${kit.btnFull}${primary ? '' : ` ${kit.btnSecondary}`}`;
+}
 
 interface PricingSectionProps {
   gatingMap: Record<OrgPlan, boolean>;
@@ -295,6 +305,15 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
     return withStartPricing(plan.ctaHref, parseStartPricing(plan.key, billing));
   }
 
+  // The plan this view leads with carries its ONE lime button and the 2px olive edge. The marketing pages lead with
+  // Tournament Plus (the plan the page leads with); the onboarding chooser names its own via `featuredPlan`.
+  const leadPlan = featuredPlan ?? (marketingLayout ? 'tournament_plus' : undefined);
+  // The strip's button names the plans it covers ("Express interest in League Plus or Club"), never a bare "Express interest"
+  // beside a card that is also one (label list row 4).
+  const stripLabel = stripPlans.length > 0 && stripPlans.every(p => p.key === 'league' || p.key === 'club')
+    ? `Express interest in ${stripPlans.map(p => p.name).join(' or ')}`
+    : 'Express interest';
+
   return (
     <>
       {/* Billing toggle */}
@@ -332,7 +351,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           // Every caller that doesn't pass `currentPlan` is unaffected.
           const isCurrent = currentPlan === plan.key;
           const isIncluded = !!onChoosePlan && (disabledPlans?.includes(plan.key) ?? false);
-          const isFeatured = !isGated && featuredPlan === plan.key;
+          const isFeatured = !isGated && leadPlan === plan.key;
           const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
           const displayPrice = isGated ? gatedPlanTag(plan.key) : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
           // Promo wording only while the promo is actually running — afterwards the card falls
@@ -351,27 +370,38 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
               ? plan.promoNote!
               : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : plan.freeNote);
           const defaultCta = plan.promoNote && !promoActive ? 'Start now' : plan.cta;
+          // "Start free" no longer carries "no credit card required" in its own words (label list row 14; the drawing's
+          // split). Where the card's note under the price already says it, that stays the only copy; where the price block
+          // shows another note (the Founding Season "Normally …" line), the same words the button used to carry sit under
+          // it as fine print. No new words either way.
+          const overrideLabel = onChoosePlan || takesOverrides ? ctaLabel?.(plan.key) : undefined;
+          const finePrint = defaultCta === 'Start free' && !overrideLabel && !isGated && !isCurrent && !isIncluded && displayNote !== NO_CARD_LINE
+            ? NO_CARD_LINE
+            : null;
+          // The one lime button: the lead plan's, unless the viewer is already on it (then it is a quiet door).
+          const primary = isFeatured && !isCurrent && !isIncluded;
 
           return (
-            <div key={plan.key} className={`${styles.planCard} ${isGated ? styles.planCardPending : ''} ${isCurrent ? styles.planCardCurrent : ''} ${isFeatured ? styles.planCardFeatured : ''}`}>
-              {/* Band 1: header */}
-              <div className={styles.planHeader}>
-                <div className={styles.planHeaderTop}>
-                  <p className={styles.planName}>{plan.name}</p>
+            <div key={plan.key} className={`${styles.planCard} ${isFeatured ? styles.planCardFeatured : ''}`}>
+              {/* Band 1: header. The chip row is always chip-high, so a card with no chip still starts its name on the
+                  same line as the cards beside it. */}
+              <div>
+                <div className={styles.planBadgeRow}>
                   {isGated && (
-                    <span className={styles.statusBadge}>{gatedPlanTag(plan.key)}</span>
+                    <span className={kit.tag}>{gatedPlanTag(plan.key)}</span>
                   )}
                   {/* The Founding Season chip (owner-approved 2026-09-07): the offer moved INTO the
-                      price block below, so the header keeps only the program's name — same chip
-                      recipe as "Coming soon", never a second box above the tagline. */}
+                      price block below, so the header keeps only the program's name — the plan chip,
+                      never a second box above the tagline. */}
                   {promoActive && !isCurrent && (
-                    <span className={styles.statusBadge}>Founding Season</span>
+                    <span className={kit.chip}>Founding Season</span>
                   )}
                   {!isGated && isCurrent && (
-                    <span className={styles.currentBadge}>Current plan</span>
+                    <span className={kit.tag}>Current plan</span>
                   )}
                 </div>
-                <p className={styles.planTagline}>{plan.tagline}</p>
+                <p className={kit.title}>{plan.name}</p>
+                <p className={`${kit.small} ${styles.planTagline}`}>{plan.tagline}</p>
               </div>
 
               {/* Band 2: price. While the signup window is open the two promo cards show "$0
@@ -383,46 +413,42 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                 <div className={styles.planPrice}>
                   {promoActive ? (
                     <>
-                      <span className={styles.planPromoCurrency}>$</span>
-                      <span className={styles.planAmount}>0</span>
-                      <span className={styles.planPeriod}>through {FOUNDING_SEASON_END_LABEL}</span>
+                      <span className={kit.price}>$0</span>
+                      <span className={kit.small}>through {FOUNDING_SEASON_END_LABEL}</span>
                     </>
                   ) : (
                     <>
-                      <span className={`${styles.planAmount} ${isGated ? styles.pendingAmount : ''}`}>
+                      <span className={isGated ? kit.title : kit.price}>
                         {displayPrice}
                       </span>
                       {!isGated && plan.currency && (
-                        <span className={styles.planCurrency}>{plan.currency}</span>
+                        <span className={kit.small}>{plan.currency}</span>
                       )}
                       {!isGated && (isAnnual || plan.period) && (
-                        <span className={styles.planPeriod}>{isAnnual ? '/year' : plan.period}</span>
+                        <span className={kit.small}>{isAnnual ? '/year' : plan.period}</span>
                       )}
                     </>
                   )}
                 </div>
-                <p className={styles.planNote}>{displayNote}</p>
+                <p className={`${kit.small} ${styles.planNote}`}>{displayNote}</p>
               </div>
 
               {/* Band 3: divider */}
               <hr className={styles.planDivider} />
 
               {/* Band 4: features */}
-              <ul className={styles.planFeatures}>
+              <ul className={`${kit.ticks} ${styles.planFeatures}`}>
                 {plan.features.map(f => (
-                  <li key={f} className={styles.planRow}>
-                    <Check size={13} className={styles.rowCheck} />
-                    <span>{f}</span>
-                  </li>
+                  <li key={f}>{f}</li>
                 ))}
               </ul>
 
-              {/* Band 5: CTA — one wrapper so the subgrid row can also hold the quiet demo line
+              {/* Band 5: CTA — one wrapper so the subgrid row can also hold the fine print and the quiet demo line
                   on marketing surfaces without becoming a sixth band. */}
               <div className={styles.planCtaBand}>
               {isGated ? (
                 <EarlyAccessModalTrigger
-                  className={`${CTA_CLASS} ${styles.pendingCta}`}
+                  className={ctaClass(false)}
                   initialPlanInterest={plan.initialPlanInterest}
                   initialFeaturesInterested={plan.initialFeaturesInterested}
                 >
@@ -431,7 +457,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
               ) : onChoosePlan ? (
                 <button
                   type="button"
-                  className={`${CTA_CLASS} ${(isCurrent || isIncluded) ? styles.ctaDisabled : ''}`}
+                  className={`${ctaClass(primary)} ${(isCurrent || isIncluded) ? styles.ctaDisabled : ''}`}
                   onClick={() => onChoosePlan(plan.key, billing)}
                   disabled={isCurrent || isIncluded || planLoading !== null}
                 >
@@ -450,16 +476,19 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                    never drift between a "current" and a "not current" copy of it. */
                 <Link
                   href={(takesOverrides ? ctaHrefFor?.(plan.key) : undefined) ?? getSignupHref(plan)}
-                  className={`${CTA_CLASS}${isCurrent ? ` ${styles.viewerCurrentCta}` : ''}`}
+                  className={`${ctaClass(primary)}${isCurrent ? ` ${styles.viewerCurrentCta}` : ''}`}
                 >
                   {(takesOverrides ? ctaLabel?.(plan.key) : undefined) ?? defaultCta}
                 </Link>
               )}
+              {finePrint && (
+                <p className={`${kit.small} ${styles.planFinePrint}`}>{finePrint}</p>
+              )}
               {demoDoorsOpen && !isGated && !onChoosePlan && DEMO_DOORS[plan.key] && (
-                <p className={styles.planDemoLine}>
+                <p className={`${kit.small} ${styles.planDemoLine}`}>
                   Not ready?{' '}
-                  <Link href={DEMO_DOORS[plan.key]!.href} className={styles.planDemoLink}>
-                    {DEMO_DOORS[plan.key]!.label} →
+                  <Link href={DEMO_DOORS[plan.key]!.href} className={`${kit.link} ${styles.planDemoLink}`}>
+                    {DEMO_DOORS[plan.key]!.label}
                   </Link>
                 </p>
               )}
@@ -472,9 +501,9 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
       {/* Marketing coming-soon strip — the gated plans, at footnote weight. Visible, priced, and
           capturing interest, but never peers of what's actually on sale. */}
       {marketingLayout && stripPlans.length > 0 && (
-        <div className={styles.comingSoonStrip}>
-          <span className={styles.comingSoonStripLabel}>Not open yet</span>
-          <span className={styles.comingSoonStripBody}>
+        <div className={`${kit.card} ${kit.cardFlat} ${styles.comingSoonStrip}`}>
+          <span className={kit.tag}>Not open yet</span>
+          <p className={`${kit.small} ${styles.comingSoonStripBody}`}>
             {stripPlans.map((p, i) => (
               <span key={p.key}>
                 {i > 0 && ' · '}
@@ -483,13 +512,13 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
               </span>
             ))}
             {'. '}Express interest to be notified when self-serve checkout opens.
-          </span>
+          </p>
           <EarlyAccessModalTrigger
-            className={styles.comingSoonStripCta}
+            className={`${kit.btn} ${kit.btnSecondary}`}
             initialPlanInterest={[...new Set(stripPlans.flatMap(p => p.initialPlanInterest ?? []))]}
             initialFeaturesInterested={[...new Set(stripPlans.flatMap(p => p.initialFeaturesInterested ?? []))]}
           >
-            Express interest →
+            {stripLabel}
           </EarlyAccessModalTrigger>
         </div>
       )}

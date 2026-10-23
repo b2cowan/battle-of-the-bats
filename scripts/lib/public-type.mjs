@@ -47,9 +47,28 @@ const TS = {
   caps: [/(?<![-\w])textTransform\s*:\s*['"`]uppercase/gi],
   heavy: [/(?<![-\w])fontWeight\s*:\s*['"`]?(?:800|900)\b/g],
 };
+// ⚠ THE LETTERING A CLASS NAME CARRIES (S4, 2026-10-23). A page can set the typewriter face without a single
+// `font-family` in its own code: a Tailwind utility in its markup (`font-mono`, `uppercase`, `font-black`) or a GLOBAL
+// class `app/globals.css` gives the face to (`hud-label`, `btn-data`, `badge`, `form-label`). Neither was counted
+// at S1, so a page could read as clean with the typewriter still on screen. In a .tsx file, every string literal is
+// read as a class list and these tokens are counted. A token preceded by `-` is a custom property (`--font-mono`),
+// not a class; a Tailwind variant prefix (`md:uppercase`) still counts.
+const CLASS_TOKENS = {
+  face: /(?<![-\w])(?:font-mono|hud-label|btn-data|badge|form-label)(?![-\w])/g,
+  caps: /(?<![-\w])uppercase(?![-\w])/g,
+  heavy: /(?<![-\w])font-(?:black|extrabold)(?![-\w])/g,
+};
+// A string literal: "…", '…' or `…`, matched leftmost-first so a quote inside another string is part of it. A template
+// may span lines; its `${…}` holes are blanked below, apart from the strings inside them.
+// ⚠ Known limits (review 2026-10-23), acceptable for a ratchet that only moves when a count changes: an apostrophe in
+// JSX text can pair with a later quote; a hole with nested braces or a nested template is not blanked exactly; the
+// global classes count as the face only (`.badge` also sets capitals). A wrong count shows up as a changed number,
+// and `type-ok: <role>` or Inter is the way through.
+const STRING_LITERAL = /"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\[\s\S]|[^`\\])*`/g;
+
 // Blanking comments is the slow part. Comments can only REMOVE hits, and none of these words can be created
 // by blanking, so a file holding none of them cannot have a hit and skips it.
-const PREFILTER = /uppercase|font-data|font-mono|monospace|courier|plex mono|\b(?:800|900)\b/i;
+const PREFILTER = /uppercase|font-data|font-mono|monospace|courier|plex mono|\b(?:800|900)\b|hud-label|btn-data|badge|form-label|font-black|font-extrabold/i;
 
 // A TS/TSX file holds both shapes: inline style objects (camel) and CSS inside strings (an email's styles).
 const SOURCE = Object.fromEntries(KINDS.map((k) => [k, [...CSS[k], ...TS[k]]]));
@@ -93,13 +112,27 @@ export function countsOfSource(file, raw) {
     return lo;
   };
   const hits = new Map(); // line index → { signal: count }
+  const hit = (k, at) => {
+    const line = lineOf(at);
+    const here = hits.get(line) ?? {};
+    here[k] = (here[k] ?? 0) + 1;
+    hits.set(line, here);
+  };
   for (const k of KINDS) {
     for (const re of rules[k]) {
-      for (const m of code.matchAll(re)) {
-        const line = lineOf(m.index);
-        const here = hits.get(line) ?? {};
-        here[k] = (here[k] ?? 0) + 1;
-        hits.set(line, here);
+      for (const m of code.matchAll(re)) hit(k, m.index);
+    }
+  }
+  if (file.endsWith('.tsx')) {
+    for (const s of code.matchAll(STRING_LITERAL)) {
+      // The value of a style property the patterns above already count (`textTransform: 'uppercase'`) is not a class.
+      if (/(?:textTransform|fontFamily|fontWeight)\s*:\s*$/.test(code.slice(Math.max(0, s.index - 40), s.index))) continue;
+      // A template's `${…}` holes are code, not class text: a variable named `badge` is not the global class. Only the
+      // strings INSIDE a hole (`${on ? 'uppercase' : ''}`) are class text; the rest is blanked, newlines kept.
+      const text = s[0].startsWith('`') ? s[0].replace(/\$\{[^{}]*\}/g, (hole) =>
+        hole.replace(/"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|[^\n]/g, (m) => (m.length > 1 ? m : ' '))) : s[0];
+      for (const k of KINDS) {
+        for (const m of text.matchAll(CLASS_TOKENS[k])) hit(k, s.index + m.index);
       }
     }
   }

@@ -156,7 +156,7 @@ export default function EarlyAccessForm({
       )}
 
       <button className={styles.submit} type="submit" disabled={status === 'submitting'}>
-        {status === 'submitting' ? 'Saving...' : 'Join Early Access'}
+        {status === 'submitting' ? 'Saving...' : 'Join early access'}
       </button>
     </form>
   );

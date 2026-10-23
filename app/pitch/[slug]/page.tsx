@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { readDeckBySlug } from '@/lib/pitch-deck-store';
 import { builtSlides, resolveDeckIds } from '@/lib/walkthrough-content';
 import ProspectDeckPage from '@/components/marketing/ProspectDeckPage';
+import { marketingMetadata } from '@/lib/marketing-metadata';
 
 /**
  * /pitch/[slug] — an owner-composed deck on its unlisted link (Pitch Deck Studio stage D).
@@ -19,10 +19,12 @@ import ProspectDeckPage from '@/components/marketing/ProspectDeckPage';
  */
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'A FieldLogicHQ walkthrough',
-  robots: { index: false, follow: false },
-};
+// Unlisted: the slug is the gate, so the page stays out of search (noindex). The title says what the page is when the
+// link is shared (P7); it names no prospect.
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return marketingMetadata({ title: 'Your walkthrough', path: '/pitch/' + slug, noindex: true });
+}
 
 export default async function PitchLinkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import { marketingMetadata } from '@/lib/marketing-metadata';
+import kit from '@/components/marketing/MarketingKit.module.css';
+import { cn } from '@/lib/utils';
 import { getDemoOrgByKind } from '@/lib/demo-org';
 import { SEE_IT_LIVE_PATH, SANDBOX_SWITCH_ENDPOINT } from '@/lib/sandbox-door';
 import styles from './switch.module.css';
@@ -25,11 +27,12 @@ import styles from './switch.module.css';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Open the live demo — FieldLogicHQ',
-  // Not a page anybody should arrive at from a search result; it only makes sense mid-flow.
-  robots: { index: false, follow: false },
-};
+// Not a page anybody should arrive at from a search result; it only makes sense mid-flow, so it stays out of search.
+export const metadata = marketingMetadata({
+  title: 'Open the live demo',
+  path: SEE_IT_LIVE_PATH + '/switch',
+  noindex: true,
+});
 
 export default async function SandboxSwitchPage() {
   const demo = getDemoOrgByKind('tournament');
@@ -57,18 +60,17 @@ export default async function SandboxSwitchPage() {
   if (!user) redirect(SEE_IT_LIVE_PATH);
 
   return (
-    <main className={styles.page}>
-      <div className={styles.card}>
-        <p className={styles.eyebrow}>
-          <span className={styles.bulb} aria-hidden="true" />
+    <main className={cn(kit.page, styles.page)} data-warm-base="marketing">
+      <div className={cn(kit.card, styles.card)}>
+        <p className={cn(kit.eyebrow, kit.live, styles.eyebrow)}>
           {/* Matches the demo's own banner — see the note in SandboxChrome. */}
           Live demo
         </p>
         {/* Copy aligned to the approved D5 mockup (TOURNAMENT_SANDBOX_PHASE3_DECISIONS.html,
             ratified 2026-08-04): lead with what they're stepping into, name the account being
             signed out in its own chip, and make declining a first-class choice. */}
-        <h1 className={styles.title}>Step into the organizer&apos;s seat?</h1>
-        <p className={styles.body}>
+        <h1 className={kit.heading}>Step into the organizer&apos;s seat?</h1>
+        <p className={kit.body}>
           The demo&apos;s organizer side uses a <strong>shared demo account</strong>. Continuing
           signs this browser out of your own account while you explore —{' '}
           <strong>nothing about your account or your organization changes</strong>, and signing
@@ -84,15 +86,15 @@ export default async function SandboxSwitchPage() {
         {/* A POST, not a link: a GET that destroys a session can be fired by any page that can
             embed a URL. One button, no fields — there is nothing here to fill in. */}
         <form action={SANDBOX_SWITCH_ENDPOINT} method="post" className={styles.actions}>
-          <button type="submit" className={styles.primary}>
+          <button type="submit" className={kit.btn}>
             Continue to the organizer&apos;s seat
           </button>
-          <Link href={demo.landingPath} className={styles.secondary}>
+          <Link href={demo.landingPath} className={cn(kit.btn, kit.btnSecondary)}>
             Stay in my account — watch as a fan
           </Link>
         </form>
 
-        <p className={styles.note}>
+        <p className={cn(kit.small, styles.note)}>
           The public side of the demo never needs this — live scores, standings and the bracket
           are open to everyone, no account involved.
         </p>

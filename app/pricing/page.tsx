@@ -9,13 +9,15 @@ import {
   FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL, closedProgramPlansSentence,
 } from '@/lib/plan-config';
 import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
+import kit from '@/components/marketing/MarketingKit.module.css';
+import { marketingMetadata } from '@/lib/marketing-metadata';
 import styles from './page.module.css';
 
-export const metadata = {
-  title: 'Pricing — FieldLogicHQ',
+export const metadata = marketingMetadata({
+  title: 'Pricing',
   description: 'Simple, honest pricing for every role in your organization — from one tournament or one competitive team to a full club.',
-  alternates: { canonical: '/pricing' },
-};
+  path: '/pricing',
+});
 
 const TRUST_SIGNALS = [
   'Billed in CAD — no conversion surprises',
@@ -48,7 +50,7 @@ const BUYER_SEGMENTS: Array<{
     eyebrow: 'Coach or team manager',
     title: 'I manage one competitive team.',
     body: 'Your free Coaches Portal follows every tournament you enter. Premium is the operations HQ for one competitive team — roster, lineups, budget, and schedule. No org account needed.',
-    cta: 'Express interest',
+    cta: 'Express interest in the Coaches Portal',
     earlyAccess: true,
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
@@ -84,7 +86,7 @@ const UPGRADE_BRIDGES = [
     from: 'Tournament',
     to: 'Tournament Plus',
     label: 'Tournament → Tournament Plus',
-    cta: 'Start Free — No Credit Card',
+    cta: 'Start Tournament Plus free',
     href: '/start/tournament?plan=tournament_plus&billing=monthly',
     earlyAccess: false,
   },
@@ -227,17 +229,16 @@ export default async function PricingPage() {
       );
 
   return (
-    <main>
+    <main className={kit.page}>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className={styles.hero}>
+      <section className={kit.hero}>
         <div className="container">
-          <p className="font-mono text-xs uppercase tracking-widest text-blueprint-light mb-4">Pricing</p>
-          <h1 className={styles.heroTitle}>
-            Plans built around how<br />
-            you actually operate.
+          <p className={kit.eyebrow}>Pricing</p>
+          <h1 className={kit.headline}>
+            Plans built around how you actually operate.
           </h1>
-          <p className={styles.heroSub}>
+          <p className={kit.lead}>
             {teamCheckoutOpen ? (
               <>
                 Tournament, Tournament Plus, and the Premium Coaches Portal are live — start free,
@@ -251,36 +252,33 @@ export default async function PricingPage() {
               </>
             )}
           </p>
-          <div className={styles.trustRow}>
+          <ul className={kit.facts}>
             {TRUST_SIGNALS.map(s => (
-              <div key={s} className={styles.trustItem}>
-                <span className={styles.trustDot} />
-                <span>{s}</span>
-              </div>
+              <li key={s}>{s}</li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
       {/* ── Segment picker ───────────────────────────────────────────────── */}
-      <section className={styles.segmentSection} aria-labelledby="pricing-segments-title">
+      <section className={kit.section} aria-labelledby="pricing-segments-title">
         <div className="container">
           <div className={styles.sectionIntro}>
-            <p className={styles.sectionEyebrow}>Find your plan</p>
-            <h2 id="pricing-segments-title" className={styles.sectionTitle}>What does your role look like?</h2>
-            <p className={styles.sectionSub}>
+            <p className={kit.eyebrow}>Find your plan</p>
+            <h2 id="pricing-segments-title" className={kit.heading}>What does your role look like?</h2>
+            <p className={kit.body}>
               Not every plan is for every organization. Pick the role that fits — you&apos;ll land in the right place.
             </p>
           </div>
-          <div className={styles.segmentGrid}>
+          <div className={kit.grid4}>
             {segments.map(segment => {
-              const cardClass = `${styles.segmentCard} ${segment.featured ? styles.segmentCardFeatured : ''}`;
+              const cardClass = `${kit.card} ${kit.stack} ${styles.segmentCard}`;
               const cardContent = (
                 <>
-                  <span className={styles.segmentEyebrow}>{segment.eyebrow}</span>
-                  <span className={styles.segmentTitle}>{segment.title}</span>
-                  <span className={styles.segmentBody}>{segment.body}</span>
-                  <span className={styles.segmentCta}>{segment.cta} →</span>
+                  <span className={`${kit.eyebrow}`}>{segment.eyebrow}</span>
+                  <span className={`${kit.title}`}>{segment.title}</span>
+                  <span className={`${kit.small}`}>{segment.body}</span>
+                  <span className={`${kit.link} ${kit.push}`}>{segment.cta}</span>
                 </>
               );
               if (segment.earlyAccess) {
@@ -306,12 +304,12 @@ export default async function PricingPage() {
       </section>
 
       {/* ── Org plans + Coaches Portal callout ──────────────────────────── */}
-      <section className={styles.plansSection} id="org-plans">
+      <section className={kit.section} id="org-plans">
         <div className="container">
           <div className={styles.sectionIntro}>
-            <p className={styles.sectionEyebrow}>Plans</p>
-            <h2 className={styles.sectionTitle}>Available now</h2>
-            <p className={styles.sectionSub}>
+            <p className={kit.eyebrow}>Plans</p>
+            <h2 className={kit.heading}>Available now</h2>
+            <p className={kit.body}>
               {teamCheckoutOpen
                 ? 'Organization plans for tournaments and operations, plus the standalone Premium Coaches Portal for coaches. League Plus and Club are open for early interest below.'
                 : 'Use these plans when you manage events or organization-wide operations.'}
@@ -333,7 +331,7 @@ export default async function PricingPage() {
           <ViewerAwarePlans gatingMap={gatingMap} marketingLayout />
 
           {tpPromoActive && (
-            <p className={`${styles.sectionSub} mt-3 text-center`} style={{ fontSize: '0.78rem' }}>
+            <p className={`${kit.small} ${kit.center} ${styles.afterLine}`}>
               {FOUNDING_SEASON_AFTER_LINE}
             </p>
           )}
@@ -341,29 +339,31 @@ export default async function PricingPage() {
       </section>
 
       {/* ── Upgrade bridges ──────────────────────────────────────────────── */}
-      <section className={styles.bridgeSection}>
+      <section className={kit.section}>
         <div className="container">
-          <div className={styles.bridgeGrid}>
+          <div className={kit.grid3}>
             {UPGRADE_BRIDGES.map(b => (
-              <div key={b.label} className={styles.bridgeCard}>
-                <div className={styles.bridgeLabel}>
-                  {b.label}
+              <div key={b.label} className={`${kit.card} ${kit.stack}`}>
+                <p className={styles.bridgeLabel}>
+                  <span className={kit.tag}>{b.label}</span>
+                </p>
+                <h3 className={`${kit.title} ${styles.plainHeading}`}>{b.headline}</h3>
+                <p className={kit.small}>{b.body}</p>
+                <div className={kit.push}>
+                  {b.earlyAccess ? (
+                    <EarlyAccessModalTrigger
+                      className={`${kit.btn} ${kit.btnSecondary}`}
+                      initialPlanInterest={b.initialPlanInterest}
+                      initialFeaturesInterested={b.initialFeaturesInterested}
+                    >
+                      {b.cta}
+                    </EarlyAccessModalTrigger>
+                  ) : (
+                    <Link href={b.href ?? '/start/tournament'} className={`${kit.btn} ${kit.btnSecondary}`}>
+                      {b.cta}
+                    </Link>
+                  )}
                 </div>
-                <h3 className={styles.bridgeHeadline}>{b.headline}</h3>
-                <p className={styles.bridgeBody}>{b.body}</p>
-                {b.earlyAccess ? (
-                  <EarlyAccessModalTrigger
-                    className={styles.bridgeCta}
-                    initialPlanInterest={b.initialPlanInterest}
-                    initialFeaturesInterested={b.initialFeaturesInterested}
-                  >
-                    {b.cta} →
-                  </EarlyAccessModalTrigger>
-                ) : (
-                  <Link href={b.href ?? '/start/tournament'} className={styles.bridgeCta}>
-                    {b.cta} →
-                  </Link>
-                )}
               </div>
             ))}
           </div>
@@ -371,36 +371,36 @@ export default async function PricingPage() {
       </section>
 
       {/* ── Coming soon deep-dive ────────────────────────────────────────── */}
-      <section className={styles.clubSection} id="early-access">
+      <section className={kit.section} id="early-access">
         <div className="container">
           <div className={styles.clubInner}>
             <div>
-              <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Not open yet</p>
-              <h2 className={styles.clubTitle}>League Plus and Club — what they cover</h2>
-              {closedPlansLine && <p className={styles.clubSub}>{closedPlansLine}</p>}
-              <p className={styles.clubBody}>
+              <p className={kit.eyebrow}>Not open yet</p>
+              <h2 className={kit.heading}>League Plus and Club — what they cover</h2>
+              {closedPlansLine && <p className={kit.subhead}>{closedPlansLine}</p>}
+              <p className={kit.body}>
                 {teamCheckoutOpen
                   ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are the live plans available today. '
                   : 'Tournament and Tournament Plus are the live plans available today. '}
                 League Plus and Club are shown here so organizations can understand the full platform
                 direction before committing their tournament workflow to us.
               </p>
-              <p className={styles.clubBody}>
+              <p className={kit.body}>
                 League Plus is focused on house league registration, divisions, seasons, public organization
                 pages, and registrar workflows. Club adds rep teams and accounting — plus a Premium Coaches
                 Portal for your whole coaching staff, every team included with no per-team fee — for
                 organizations that need the complete operating system.
               </p>
-              <p className={styles.clubBody}>
+              <p className={kit.body}>
                 If you want either tier, start on a live tournament plan now or express interest below.
                 That keeps the launch honest while giving interested clubs a path into the roadmap.
               </p>
               <EarlyAccessModalTrigger
-                className="tap-target inline-flex font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-6 py-3 hover:bg-white transition-colors border-0 cursor-pointer"
+                className={`${kit.btn} ${kit.btnSecondary}`}
                 initialPlanInterest={['league', 'club']}
                 initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
               >
-                Express interest →
+                Express interest in League Plus or Club
               </EarlyAccessModalTrigger>
             </div>
             <div className={styles.clubStats}>
@@ -424,9 +424,9 @@ export default async function PricingPage() {
                   body: 'Share your details and plan priorities. We\'ll notify you when self-serve checkout opens — no commitment required.',
                 },
               ].map(s => (
-                <div key={s.label} className={styles.clubStat}>
-                  <p className={styles.clubStatLabel}>{s.label}</p>
-                  <p className={styles.clubStatBody}>{s.body}</p>
+                <div key={s.label} className={`${kit.card} ${kit.cardFlat} ${kit.cardEdge}`}>
+                  <p className={kit.subhead}>{s.label}</p>
+                  <p className={kit.small}>{s.body}</p>
                 </div>
               ))}
             </div>
@@ -435,10 +435,10 @@ export default async function PricingPage() {
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
-      <section className={styles.faqSection}>
+      <section className={kit.section}>
         <div className="container">
-          <h2 className={styles.sectionTitle}>Common questions — answered plainly.</h2>
-          <p className={styles.sectionSub}>
+          <h2 className={kit.heading}>Common questions — answered plainly.</h2>
+          <p className={kit.body}>
             No jargon. No sales pitch. Just what you need to know before signing up.
           </p>
 
@@ -446,10 +446,10 @@ export default async function PricingPage() {
             {faqsForWindow.map(faq => (
               <details key={faq.q} className={`${styles.faqItem} ${faq.featured ? styles.faqFeatured : ''}`}>
                 <summary className={styles.faqQuestion}>
-                  {faq.featured && <span className={styles.faqBadge}>Volunteer orgs</span>}
+                  {faq.featured && <span className={kit.tag}>Volunteer orgs</span>}
                   {faq.q}
                 </summary>
-                <p className={styles.faqAnswer}>{faq.a}</p>
+                <p className={`${kit.small} ${styles.faqAnswer}`}>{faq.a}</p>
               </details>
             ))}
           </div>
@@ -457,36 +457,32 @@ export default async function PricingPage() {
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className={styles.ctaSection}>
-        <div className={styles.ctaBg} />
+      <section className={`${kit.section} ${kit.band} ${kit.center}`}>
         <div className="container">
-          <h2 className={styles.ctaTitle}>
+          <h2 className={kit.heading}>
             Less admin.{' '}
-            <span style={{ color: 'var(--logic-lime)' }}>More sport.</span>
+            <span className={kit.accent}>More sport.</span>
           </h2>
-          <p className={styles.ctaSub}>
+          <p className={kit.lead}>
             {teamCheckoutOpen
               ? <>Start free with Tournament.{tpPromoActive && teamPromoActive ? ` Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
                 {closedPlansLine && <>{' '}{closedPlansLine} Express interest to be notified.</>}</>
               : <>Start free with Tournament.{tpPromoActive ? ` Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
                 {' '}The Coaches Portal is coming soon.{closedPlansLine && <> {closedPlansLine}</>} Express interest to be notified.</>}
           </p>
-          <div className={styles.ctaActions}>
-            <Link
-              href="/start/tournament"
-              className="tap-target font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-            >
-              Get Started Free
+          <div className={`${kit.row} ${styles.ctaActions}`}>
+            <Link href="/start/tournament" className={kit.btn}>
+              Get started free
             </Link>
             <EarlyAccessModalTrigger
-              className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 bg-transparent px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors cursor-pointer"
+              className={`${kit.btn} ${kit.btnSecondary}`}
               initialPlanInterest={['league', 'club']}
               initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
             >
-              Express interest →
+              Express interest in League Plus or Club
             </EarlyAccessModalTrigger>
           </div>
-          <p className={styles.ctaFootnote}>All plans are billed in CAD. No contracts. No setup fees.</p>
+          <p className={kit.small}>All plans are billed in CAD. No contracts. No setup fees.</p>
         </div>
       </section>
 

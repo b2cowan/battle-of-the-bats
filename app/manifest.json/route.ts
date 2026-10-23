@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import { SITE_DESCRIPTION } from '@/lib/marketing-metadata';
 
 /**
  * app/manifest.json/route.ts — dynamic PWA web-app manifest.
@@ -28,8 +29,8 @@ export function GET(req: NextRequest) {
     {
       name: isDev ? 'FieldLogicHQ (Dev)' : 'FieldLogicHQ',
       short_name: isDev ? 'FLHQ Dev' : 'FieldLogicHQ',
-      description:
-        'The all-in-one platform for Canadian sports organizations — tournaments, house leagues, rep teams, and accounting in one place.',
+      // The site's one description (words doc item 1), shared with the root layout so the two cannot drift.
+      description: SITE_DESCRIPTION,
       id: '/',
       start_url: '/?source=pwa',
       scope: '/',

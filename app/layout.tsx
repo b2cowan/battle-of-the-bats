@@ -11,6 +11,7 @@ import LegacyInstallBanner from '@/components/LegacyInstallBanner';
 import { NO_FLASH_SCRIPT } from '@/lib/no-flash-script';
 import NoFlashRestore from '@/components/NoFlashRestore';
 import ThemeSessionWatch from '@/components/ThemeSessionWatch';
+import { SITE_DESCRIPTION } from '@/lib/marketing-metadata';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -41,7 +42,8 @@ export const metadata: Metadata = {
     default: 'FieldLogicHQ',
     template: '%s | FieldLogicHQ',
   },
-  description: 'The all-in-one platform for Canadian sports organizations — tournaments, house leagues, rep teams, and accounting in one place.',
+  // The site's one description (The public face, warm: S4, words doc item 1), shared with the app manifest.
+  description: SITE_DESCRIPTION,
   // manifest and apple-mobile-web-app-* are intentionally NOT set here.
   // They are added only in the layouts/pages that mount InstallAppPrompt
   // (admin, scorekeeper, coaches, /home, auth) so that the browser's native

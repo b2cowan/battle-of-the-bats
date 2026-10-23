@@ -1,10 +1,13 @@
 import Link from 'next/link';
-import type { Metadata } from 'next';
 import {
   DEMOS_PATH,
   SEE_IT_LIVE_PATH,
   SEE_IT_LIVE_COACHES_PATH,
 } from '@/lib/sandbox-door';
+import { marketingMetadata } from '@/lib/marketing-metadata';
+import kit from '@/components/marketing/MarketingKit.module.css';
+import { cn } from '@/lib/utils';
+import styles from './page.module.css';
 
 /**
  * `/demos` — both sandbox doors on one short, shareable address.
@@ -23,15 +26,13 @@ import {
  * anything. No form, no email, no interstitial — two links and what is behind them.
  */
 
-export const metadata: Metadata = {
-  // Bare, unlike its `/for-*` siblings, which each hardcode "— FieldLogicHQ" and then collect the
-  // root template's "| FieldLogicHQ" on top of it. This page's title is the preview text on a link
-  // we hand to strangers, so it is the one place the doubling is worth not inheriting.
-  title: 'Live Demos',
+// Bare title (the layout adds the brand once): this page's title is the preview text on a link we hand to strangers.
+export const metadata = marketingMetadata({
+  title: 'Live demos',
   description:
     'Walk the real product with no sign-up and no email: a live tournament weekend, and a full rep-team season. Two fictional clubs running the actual FieldLogicHQ software.',
-  alternates: { canonical: DEMOS_PATH },
-};
+  path: DEMOS_PATH,
+});
 
 const DEMOS = [
   {
@@ -77,23 +78,16 @@ const DEMOS = [
 
 export default function DemosPage() {
   return (
-    <main className="bg-pitch-black min-h-screen">
-      <section className="pt-32 pb-16 md:pt-40 md:pb-20">
+    <main className={kit.page}>
+      <section className={kit.hero}>
         <div className="container">
-          {/* NOT `hud-label` + a colour utility. The global `.hud-label` rule sets its own ink
-              (--blueprint-light) and is declared after @tailwind utilities, so at equal
-              specificity it BEATS `text-logic-lime` and the eyebrow silently renders blue —
-              the same trap app/error.tsx had to route around. The homepage's lime eyebrows
-              spell the type out instead, so this matches them. */}
-          <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-logic-lime mb-6">
-            Live demos
-          </p>
-          <h1 className="font-mono font-bold tracking-tighter text-fl-text text-4xl md:text-6xl leading-[1.05] max-w-4xl">
+          <p className={kit.eyebrow}>Live demos</p>
+          <h1 className={kit.headline}>
             Walk the real product.
             <br />
-            <span className="text-logic-lime">Nothing to sign up for.</span>
+            <span className={kit.accent}>Nothing to sign up for.</span>
           </h1>
-          <p className="font-mono text-sm md:text-base text-data-gray leading-relaxed max-w-2xl mt-8">
+          <p className={kit.lead}>
             These are not recordings or screenshots. Both demos are the actual FieldLogicHQ
             software, running on two fictional clubs we operate ourselves. Pick a door and
             you are inside it — no form, no email, no credit card.
@@ -101,55 +95,41 @@ export default function DemosPage() {
         </div>
       </section>
 
-      <section className="pb-20 md:pb-28">
+      <section className={cn(kit.section, styles.cards)}>
         <div className="container">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className={kit.grid2}>
             {DEMOS.map(demo => (
-              <div
-                key={demo.id}
-                className="flex flex-col border border-blueprint-blue/40 p-7 md:p-8 transition-colors hover:border-logic-lime/30"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-logic-lime">
-                    {demo.label}
-                  </span>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-data-gray text-right leading-relaxed">
-                    No sign-up
-                  </span>
+              <div key={demo.id} className={cn(kit.card, kit.stack)}>
+                <div className={styles.cardHead}>
+                  <p className={kit.eyebrow}>{demo.label}</p>
+                  <span className={kit.tag}>No sign-up</span>
                 </div>
 
-                <h2 className="font-mono font-bold text-fl-text text-xl md:text-2xl tracking-tight mt-5">
-                  {demo.title}
-                </h2>
-                <p className="font-mono text-[11px] uppercase tracking-widest text-data-gray mt-2">
-                  {demo.org}
-                </p>
+                <h2 className={kit.title}>{demo.title}</h2>
+                <p className={cn(kit.small, styles.org)}>{demo.org}</p>
 
-                <p className="font-mono text-sm text-data-gray leading-relaxed mt-5">
-                  {demo.body}
-                </p>
+                <p className={kit.body}>{demo.body}</p>
 
-                <ul className="mt-6 space-y-3 flex-1">
+                <ul className={kit.ticks}>
                   {demo.seeing.map(item => (
-                    <li key={item} className="flex gap-3 font-mono text-xs text-data-gray leading-relaxed">
-                      <span className="text-logic-lime shrink-0" aria-hidden="true">›</span>
-                      <span>{item}</span>
-                    </li>
+                    <li key={item}>{item}</li>
                   ))}
                 </ul>
 
-                <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                {/* The tournament card's door is the page's one lime button; the coach card's is the
+                    secondary (one primary per view, S4). Each pitch link is an olive text link. */}
+                <div className={cn(kit.push, styles.foot)}>
                   <Link
                     href={demo.door}
-                    className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-7 py-3.5 hover:bg-white transition-colors"
+                    className={cn(kit.btn, demo.id !== 'tournament' && kit.btnSecondary)}
                   >
-                    {demo.doorCta} →
+                    {demo.doorCta}
                   </Link>
                   <Link
                     href={demo.learnMore.href}
-                    className="tap-target font-mono text-[10px] uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
+                    className={cn(kit.link, kit.linkBlock)}
                   >
-                    {demo.learnMore.label} →
+                    {demo.learnMore.label}
                   </Link>
                 </div>
               </div>
@@ -159,20 +139,18 @@ export default function DemosPage() {
           {/* The two questions everyone asks on arrival, answered before they have to ask.
               Both are load-bearing promises the sandbox actually keeps (the central write
               block and the three outbound chokepoints) — not reassurance copy. */}
-          <div className="mt-12 border-t border-blueprint-blue/25 pt-8 grid gap-6 md:grid-cols-2 max-w-4xl">
+          <div className={cn(kit.grid2, styles.faq)}>
             <div>
-              {/* Bare `hud-label` — it carries its own AA-cleared ink and, being declared after
-                  @tailwind utilities, would override any colour utility paired with it anyway. */}
-              <p className="hud-label mb-3">Can I break it?</p>
-              <p className="font-mono text-xs text-data-gray leading-relaxed">
+              <h2 className={kit.subhead}>Can I break it?</h2>
+              <p className={kit.body}>
                 No. Both demos are read-only — you can open anything, but nothing you do is
                 saved, and no email or notification can leave them. Everyone who visits sees
                 the same club, freshly re-set.
               </p>
             </div>
             <div>
-              <p className="hud-label mb-3">Can I see both?</p>
-              <p className="font-mono text-xs text-data-gray leading-relaxed">
+              <h2 className={kit.subhead}>Can I see both?</h2>
+              <p className={kit.body}>
                 Yes — come back to this page and open the other one. They are separate worlds,
                 and switching between them takes one click with nothing to sign out of.
               </p>

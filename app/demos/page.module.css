@@ -1,0 +1,30 @@
+/* Live demos — layout only, on the marketing kit (The public face, warm: S4; the drawing's `t-demos`). */
+
+/* The cards follow the hero directly: no rule between them. */
+.cards.cards { padding-top: 0.5rem; border-top: 0; }
+
+/* The card's head: the demo's name on the left, the "No sign-up" tag on the right. */
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* The club's name sits under the title and apart from the body. */
+.org.org { margin-bottom: 1rem; }
+
+/* The door and its pitch link share the pushed-down foot. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+
+/* The two questions everyone asks on arrival, under the cards. */
+.faq { margin-top: 2.5rem; max-width: 56rem; }
+
+@media (max-width: 600px) {
+  .foot > a:first-child { width: 100%; }
+}

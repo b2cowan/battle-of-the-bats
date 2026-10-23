@@ -53,27 +53,12 @@ const AA_NORMAL = 4.5;
  */
 const ALLOWED = [
   {
-    file: 'app/page.tsx',
-    cls: 'text-blueprint-blue/20',
-    reason:
-      'The oversized step numeral watermarked behind each "how it works" card (absolute, ' +
-      'select-none). Pure texture at 1.08:1; the step is stated in full-strength text beside it.',
-  },
-  {
     file: 'app/not-found.tsx',
     cls: 'text-blueprint-blue/30',
     reason:
       'The 7xl "404" watermark. The readable statement is the full-strength ' +
       '"[DIAGNOSTIC]: ROUTE_NOT_FOUND" line directly beneath it, so the numeral is a decorative ' +
       'echo rather than the message.',
-  },
-  {
-    file: 'components/Navbar.tsx',
-    cls: 'text-data-gray/50',
-    reason:
-      'The dimmed "HQ" in the FIELDLOGICHQ wordmark. WCAG 1.4.3 explicitly exempts text that is ' +
-      'part of a logo or brand name; changing it would alter the mark, which is a brand decision ' +
-      'and not this script\'s to force.',
   },
 ];
 

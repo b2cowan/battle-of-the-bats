@@ -35,16 +35,16 @@ const FOOTER_GROUPS = [
       // the same mistake as advertising the doors themselves — and offering a DEMO to somebody
       // already signed in and using the product is the "marketing layout only" rule (binding,
       // design_decisions 2026-08-10 rule 1) being broken by a shared component's reach.
-      ['Live Demos', DEMOS_PATH],
-      ['What’s New', '/changelog'],
+      ['Live demos', DEMOS_PATH],
+      ['What’s new', '/changelog'],
     ],
   },
   {
     heading: 'Get started',
     links: [
-      ['Start Free', '/start/tournament'],
+      ['Start free', '/start/tournament'],
       ['Coaches', '/coaches/start'],
-      ['Sign In', '/auth/login'],
+      ['Sign in', '/auth/login'],
     ],
   },
 ] as const;
@@ -135,7 +135,7 @@ export default function Footer() {
             if (links.length === 0) return null;
             return (
               <div key={group.heading} className={styles.linkCol}>
-                <div className={`hud-label ${styles.colHead}`}>{group.heading}</div>
+                <div className={styles.colHead}>{group.heading}</div>
                 <ul className={styles.links}>
                   {links.map(([label, href]) => (
                     <li key={href}>

@@ -51,10 +51,12 @@
  *   system screens    the 404, the crash and fatal-crash screens, the offline page, /unsubscribe, the paused screen
  *   emails            lib/ files that build one: the listed builders plus any lib/*.ts named like one
  *                     (email, notify, announcement, reminder, mail), so a new builder starts at none
- * ⚠ What it cannot see: the typewriter face a page gets from a GLOBAL class. `app/globals.css` sets it on
- * `.hud-label`, `.btn-data`, `.badge`, `.form-label` and `.public-page-header .eyebrow`, and an element that wears
- * one is not counted (about a dozen uses in the marketing TSX at S1; the home page, /demos, the Founding Season
- * pieces and the footer). S4 retires those uses as part of restyling; do not read a zero here as "no typewriter".
+ * The lettering a CLASS NAME carries is counted too (S4, 2026-10-23): in a .tsx file every string literal is read as
+ * a class list, and the Tailwind utilities `font-mono` (face), `uppercase` (caps) and `font-black`/`font-extrabold`
+ * (heavy), and the global classes `app/globals.css` gives the face to — `hud-label`, `btn-data`, `badge`,
+ * `form-label` — count like the declarations above (S1 could not see them, about 65 uses on the marketing set).
+ * ⚠ Still out of sight: `.public-page-header .eyebrow` (the face comes from the PARENT's class, on the public
+ * tournament pages, which are not in this scope), and a class composed in from another stylesheet.
  * Out of scope: the org-branded tournament and club pages (their type is their own project, and scores and
  * records keep the typewriter face under R1-4), the admin (`check-admin-type.mjs`), the coaches portal, and
  * `app/globals.css` (every surface's sheet). The OG/share-card renderers (lib/share-card.ts and kin) are
@@ -103,7 +105,6 @@ const FILES = [
   'components/Footer.module.css',
   'components/PricingSection.tsx',
   'components/PricingSection.module.css',
-  'components/AnimateIn.tsx',
   'components/consumer/ConsumerNav.tsx',
   'components/consumer/ConsumerShell.module.css',
   'components/consumer/StartMenu.tsx',

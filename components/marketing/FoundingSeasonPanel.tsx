@@ -5,15 +5,19 @@ import {
   FOUNDING_SEASON_AFTER_LINE,
   FOUNDING_SEASON_YEAR_LABEL,
 } from '@/lib/plan-config';
+import kit from './MarketingKit.module.css';
 import styles from './FoundingSeasonPanel.module.css';
 
 /**
  * The Founding Season offer panel (Founding Season 2027, owner-approved mockups 2026-09-07).
+ * Restyled in The public face, warm: S4 — a white card with an olive edge (the portal's rule for a
+ * callout: tinted panels are retired). The words are unchanged.
  *
- * ONE component, two placements: the homepage hero (directly under the sub-headline, above the
- * persona cards — `showProducts` lists the two products with the price being waived) and the top
- * of the pricing page (`showProducts` off, because the plan cards beneath carry the prices; it
- * also owns the `#founding-season` anchor the site-wide bar links to).
+ * ONE component, two placements: the homepage (directly under the hero, above the persona cards —
+ * `showProducts` lists the two products with the price being waived) and the top of the pricing
+ * page (`showProducts` off, because the plan cards beneath carry the prices; it also owns the
+ * `#founding-season` anchor the site-wide bar links to). Both mount it inside a page that wears
+ * `kit.page`, which supplies the --home-* tokens.
  *
  * The words are the copy canon's, single-sourced from lib/plan-config.ts so the date can never
  * drift from its own wording: the promise at headline weight, the one offer sentence, and the
@@ -40,23 +44,23 @@ export default function FoundingSeasonPanel({
   id?: string;
 }) {
   return (
-    <section id={id} className={styles.panel} aria-label="Founding Season offer">
+    <section id={id} className={`${kit.card} ${kit.cardEdge} ${styles.panel}`} aria-label="Founding Season offer">
       <div className={styles.lead}>
-        <p className={styles.eyebrow}>Founding Season</p>
-        <h2 className={styles.headline}>Your {FOUNDING_SEASON_YEAR_LABEL} season, free.</h2>
-        <p className={styles.offerLine}>{foundingSeasonOfferLine(product)}</p>
-        <p className={styles.afterLine}>{FOUNDING_SEASON_AFTER_LINE}</p>
+        <p className={kit.eyebrow}>Founding Season</p>
+        <h2 className={kit.heading}>Your {FOUNDING_SEASON_YEAR_LABEL} season, free.</h2>
+        <p className={kit.body}>{foundingSeasonOfferLine(product)}</p>
+        <p className={`${kit.small} ${styles.afterLine}`}>{FOUNDING_SEASON_AFTER_LINE}</p>
       </div>
       {showProducts && (
         <dl className={styles.products}>
           <div className={styles.product}>
-            <dt className={styles.productName}>Tournament Plus</dt>
-            <dd className={styles.productPrice}>normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month</dd>
+            <dt className={`${kit.subhead} ${styles.productName}`}>Tournament Plus</dt>
+            <dd className={`${kit.small} ${styles.productPrice}`}>Normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month</dd>
           </div>
           {product !== 'tournament_plus' && (
             <div className={styles.product}>
-              <dt className={styles.productName}>Premium Coaches Portal</dt>
-              <dd className={styles.productPrice}>normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month</dd>
+              <dt className={`${kit.subhead} ${styles.productName}`}>Premium Coaches Portal</dt>
+              <dd className={`${kit.small} ${styles.productPrice}`}>Normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month</dd>
             </div>
           )}
         </dl>

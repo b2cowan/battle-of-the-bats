@@ -1,6 +1,8 @@
 import Link from 'next/link';
-import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import kit from '@/components/marketing/MarketingKit.module.css';
+import fp from '@/components/marketing/ForPage.module.css';
+import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import {
   PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, foundingSeasonOfferCore,
@@ -9,14 +11,13 @@ import {
 } from '@/lib/plan-config';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
-import styles from './page.module.css';
 
-export const metadata: Metadata = {
-  title: 'For Tournament Organizers — FieldLogicHQ',
+export const metadata = marketingMetadata({
+  title: 'For tournament organizers',
   description:
     'From first team registration to final standings — without the spreadsheets. Brackets, live scoring, scheduling, and registration all in one place. Start free with an invite-only event — no credit card required.',
-  alternates: { canonical: '/for-tournament-organizers' },
-};
+  path: '/for-tournament-organizers',
+});
 
 const { painItems: PAIN_ITEMS, steps: STEPS, features: PLUS_FEATURES } =
   PLAN_ARTICLE_CONTENT.tournament_plus;
@@ -74,12 +75,12 @@ const CROSS_SELLS: Array<{
     label: 'Coaches Portal',
     q: 'Coaching a single competitive team?',
     body: 'A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed.',
-    cta: 'Express interest',
+    cta: 'Express interest in the Coaches Portal',
     // Live when the coach checkout gate is open — the card becomes a link to /for-coaches with a
     // live CTA instead of an express-interest trigger. Same flip /for-coaches itself performs;
     // this card held a hardcoded express-interest for a live product until 2026-08-08.
     liveHref: '/for-coaches',
-    liveCta: 'Start free',
+    liveCta: 'See the Coaches Portal',
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
   },
@@ -95,84 +96,75 @@ export default async function ForTournamentOrganizersPage() {
   // window and falls back to the list-price words the day it closes.
   const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
   return (
-    <main className="bg-pitch-black min-h-screen">
+    <main className={kit.page}>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className={styles.hero}>
-        <div className={styles.heroBg} />
+      <section className={kit.hero}>
         <div className="container">
-          <p className={styles.heroEyebrow}>For tournament organizers</p>
-          <h1 className={styles.heroTitle}>
+          <p className={kit.eyebrow}>For tournament organizers</p>
+          <h1 className={kit.headline}>
             From first registration<br />
-            <span className={styles.heroAccent}>to final standings.</span>
+            <span className={kit.accent}>to final standings.</span>
           </h1>
-          <p className={styles.heroSub}>
+          <p className={kit.lead}>
             Add your teams or open registration, build your schedule, run the bracket, and post live scores — all in one place.{' '}
             {tpPromoActive ? (
               <>
-                <span className={styles.heroNoteAccent}>Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
+                <span className={fp.noteStrong}>Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
                 {' '}when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month.
               </>
             ) : (
               <>Free to start, no credit card required.</>
             )}
           </p>
-          <div className={styles.heroActions}>
+          <div className={`${kit.row} ${fp.heroRow}`}>
             {/* "Start free", matching /for-coaches word for word (owner-directed 2026-08-07): the
                 two persona pages are one product and were reading as two. The credit-card objection
-                is NOT lost — the sub-line directly above answers it, and the trust list below says
+                is NOT lost — the sub-line directly above answers it, and the facts list below says
                 it a third time, which is where it belongs. */}
-            <Link
-              href="/start/tournament"
-              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-            >
+            <Link href="/start/tournament" className={kit.btn}>
               Start free
             </Link>
-            {/* Second position, deliberately: lime OUTLINE with a live dot, so it reads as a live
-                thing without out-shouting the solid-lime primary. The sandbox is the proof;
+            {/* Second position, deliberately: a secondary button with a live dot, so it reads as a
+                live thing without out-shouting the lime primary. The sandbox is the proof;
                 signup is still the ask. */}
             {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_PATH} className={styles.seeItLive}>
-                <span className={styles.seeItLiveDot} aria-hidden="true" />
-                See it live →
+              <Link href={SEE_IT_LIVE_PATH} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
+                See a live tournament
               </Link>
             )}
-            <Link
-              href="/pricing"
-              className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
-            >
-              See all plans →
+            <Link href="/pricing" className={`${kit.link} ${kit.linkBlock}`}>
+              See all plans
             </Link>
           </div>
           {/* The objection this answers — "is this another form?" — is the whole reason the door
               converts. It is also literally true: no email, no form, no lead capture, ever. */}
           {showSandboxDoor && (
-            <p className={styles.seeItLiveNote}>No sign-up, no email. Walk into a tournament that&apos;s running right now.</p>
+            <p className={kit.small}>No sign-up, no email. Walk into a tournament that&apos;s running right now.</p>
           )}
-          <div className={styles.trustRow}>
-            {(tpPromoActive
-              ? [`Free through ${FOUNDING_SEASON_END_LABEL}`, `Normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month`, 'No credit card required']
-              : ['Free plan — no time limit', 'No credit card required', 'Billed in CAD']
-            ).map(s => (
-              <div key={s} className={styles.trustItem}>
-                <span className={styles.trustDot} />
-                <span>{s}</span>
-              </div>
-            ))}
+          <div className={fp.afterNote}>
+            <ul className={kit.facts}>
+              {(tpPromoActive
+                ? [`Free through ${FOUNDING_SEASON_END_LABEL}`, `Normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month`, 'No credit card required']
+                : ['Free plan — no time limit', 'No credit card required', 'Billed in CAD']
+              ).map(s => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
       {/* ── Pain recognition ─────────────────────────────────────────────── */}
-      <section className={styles.section}>
+      <section className={kit.section}>
         <div className="container">
-          <p className={styles.sectionEyebrow}>The old way</p>
-          <h2 className={styles.sectionTitle}>If this is your tournament setup, we know the drill.</h2>
-          <div className={styles.painGrid}>
+          <p className={kit.eyebrow}>The old way</p>
+          <h2 className={kit.heading}>If this is your tournament setup, we know the drill.</h2>
+          <div className={`${kit.grid2} ${fp.gridTop}`}>
             {PAIN_ITEMS.map(item => (
-              <div key={item.title} className={styles.painCard}>
-                <p className={styles.painCardTitle}>{item.title}</p>
-                <p className={styles.painCardBody}>{item.body}</p>
+              <div key={item.title} className={kit.card}>
+                <p className={kit.title}>{item.title}</p>
+                <p className={kit.body}>{item.body}</p>
               </div>
             ))}
           </div>
@@ -180,27 +172,29 @@ export default async function ForTournamentOrganizersPage() {
               recognized themselves in these cards gets the visual version — 90 seconds of screens
               and diagrams — before the page moves on to features. Text-weight on purpose;
               signup stays the ask, this is deeper proof. */}
-          <Link href="/for-tournament-organizers/walkthrough" className={styles.walkthroughLink}>
-            See them fixed — the 90-second walkthrough →
-          </Link>
+          <div className={fp.calloutTop}>
+            <Link href="/for-tournament-organizers/walkthrough" className={`${kit.link} ${kit.linkBlock}`}>
+              See them fixed — the 90-second walkthrough
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section className={styles.section}>
+      <section className={kit.section}>
         <div className="container">
-          <p className={styles.sectionEyebrow}>How it works</p>
-          <h2 className={styles.sectionTitle}>Four phases. One platform.</h2>
-          <p className={styles.sectionSub}>
+          <p className={kit.eyebrow}>How it works</p>
+          <h2 className={kit.heading}>Four phases. One platform.</h2>
+          <p className={`${kit.body} ${fp.measure}`}>
             From the moment teams register to the final standings post — everything runs here.
           </p>
-          <div className={styles.stepsGrid}>
+          <div className={`${kit.grid2} ${fp.gridTop}`}>
             {STEPS.map(step => (
-              <div key={step.num} className={styles.stepCard}>
-                <span className={styles.stepNum}>{step.num}</span>
-                <p className={styles.stepLabel}>{step.label}</p>
-                <p className={styles.stepTitle}>{step.title}</p>
-                <p className={styles.stepBody}>{step.body}</p>
+              <div key={step.num} className={kit.card}>
+                <p className={kit.counter}>{step.num}</p>
+                <p className={kit.eyebrow}>{step.label}</p>
+                <p className={kit.title}>{step.title}</p>
+                <p className={kit.body}>{step.body}</p>
               </div>
             ))}
           </div>
@@ -208,93 +202,94 @@ export default async function ForTournamentOrganizersPage() {
       </section>
 
       {/* ── Plan comparison ──────────────────────────────────────────────── */}
-      <section className={styles.section}>
+      <section className={kit.section}>
         <div className="container">
-          <p className={styles.sectionEyebrow}>Choose your plan</p>
-          <h2 className={styles.sectionTitle}>Start free. Add more when you need it.</h2>
-          <p className={styles.sectionSub}>
+          <p className={kit.eyebrow}>Choose your plan</p>
+          <h2 className={kit.heading}>Start free. Add more when you need it.</h2>
+          <p className={`${kit.body} ${fp.measure}`}>
             Both plans are built for tournament organizers. Tournament is free for an invite-only event: you add the teams.
             Tournament Plus is for events teams register for, with entry fees you track, and for organizers running more
             than one event at a time.
           </p>
-          <div className={styles.planGrid}>
+          <div className={`${fp.planGrid} ${fp.planGridEven} ${fp.gridTop}`}>
 
             {/* ── Tournament (free) ──────────────────────────────────────── */}
-            <div className={styles.planCard}>
+            <div className={`${kit.card} ${kit.stack}`}>
               <div>
-                <p className={styles.planName}>Tournament</p>
-                <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>Free</span>
+                <p className={kit.title}>Tournament</p>
+                <div className={fp.priceRow}>
+                  <span className={kit.price}>Free</span>
                 </div>
-                <p className={styles.planNote}>No credit card. No time limit.</p>
+                <p className={kit.small}>No credit card. No time limit.</p>
               </div>
-              <p className={styles.planTagline}>
+              <p className={kit.body}>
                 Everything you need for an invite-only event — you add the teams, then scheduling, brackets, and live results.
               </p>
-              <div className={styles.planFeatures}>
-                <p className={styles.planFeatureLabel}>Included</p>
-                {FREE_FEATURES.map(f => (
-                  <div key={f} className={styles.planFeatureItem}>
-                    <span className={styles.planFeatureBullet}>—</span>
-                    <span>{f}</span>
-                  </div>
-                ))}
+              <div>
+                <p className={kit.subhead}>Included</p>
+                <ul className={kit.ticks}>
+                  {FREE_FEATURES.map(f => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
               </div>
-              <Link href="/start/tournament" className={`${styles.planCta} ${styles.planCtaFree}`}>
-                Start free →
-              </Link>
+              <div className={kit.push}>
+                <Link href="/start/tournament" className={`${kit.btn} ${kit.btnSecondary} ${kit.btnFull}`}>
+                  Start free
+                </Link>
+              </div>
             </div>
 
             {/* ── Tournament Plus ────────────────────────────────────────── */}
-            <div className={`${styles.planCard} ${styles.planCardFeatured}`}>
+            <div className={`${kit.card} ${kit.cardFeatured} ${kit.stack}`}>
               <div>
-                <p className={styles.planName}>Tournament Plus</p>
+                <p className={kit.title}>Tournament Plus</p>
                 {tpPromoActive ? (
                   <>
                     {/* "$0 through …", not "Free": the free Tournament card beside it already says
                         "Free" with no end date, and the permanent and the promotional must stay
                         distinguishable at a glance (owner choice 3 of 3, 2026-09-07). */}
-                    <div className={styles.planPrice}>
-                      <span className={styles.planAmount}>$0</span>
-                      <span className={styles.planPeriod}>through {FOUNDING_SEASON_END_LABEL}</span>
+                    <div className={fp.priceRow}>
+                      <span className={kit.price}>$0</span>
+                      <span className={kit.small}>through {FOUNDING_SEASON_END_LABEL}</span>
                     </div>
-                    <p className={styles.planNote}>Founding Season · normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or {formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year</p>
+                    <p className={kit.small}>Founding Season · normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or {formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year</p>
                   </>
                 ) : (
                   <>
-                    <div className={styles.planPrice}>
-                      <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
-                      <span className={styles.planPeriod}>/month</span>
+                    <div className={fp.priceRow}>
+                      <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
+                      <span className={kit.small}>/month</span>
                     </div>
-                    <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year — save two months</p>
+                    <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year — save two months</p>
                   </>
                 )}
               </div>
-              <p className={styles.planTagline}>
+              <p className={kit.body}>
                 For events teams register for — public registration, fees and payment tracking, check-in, and volunteers — and for organizers running more than one event a year.
               </p>
-              <div className={styles.planFeatures}>
-                <p className={styles.planFeatureLabel}>Everything in Tournament, plus</p>
-                {PLUS_FEATURES.map(f => (
-                  <div key={f} className={styles.planFeatureItem}>
-                    <span className={styles.planFeatureBullet}>—</span>
-                    <span>{f}</span>
-                  </div>
-                ))}
+              <div>
+                <p className={kit.subhead}>Everything in Tournament, plus</p>
+                <ul className={kit.ticks}>
+                  {PLUS_FEATURES.map(f => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
               </div>
-              {/* Same relabel as the hero, and for the same reason — a page whose hero says
-                  "Start free" and whose plan card says something longer reads as two hands. This
-                  matches the Premium Coaches Portal card's "Start free →" exactly. */}
-              <Link href="/start/tournament?plan=tournament_plus&billing=monthly" className={`${styles.planCta} ${styles.planCtaPaid}`}>
-                Start free →
-              </Link>
+              {/* The label names the plan it opens ("Start Tournament Plus free", S4 label list row 10) —
+                  the free card beside it says "Start free", so the two no longer read as one. */}
+              <div className={kit.push}>
+                <Link href="/start/tournament?plan=tournament_plus&billing=monthly" className={`${kit.btn} ${kit.btnFull}`}>
+                  Start Tournament Plus free
+                </Link>
+              </div>
             </div>
 
           </div>
-          <p className={styles.planNote2}>
+          <p className={fp.afterCards}>
             Not sure which plan? Start free — you can upgrade at any time.{' '}
-            <Link href="/pricing#org-plans" className="tap-target text-logic-lime hover:opacity-75 transition-opacity">
-              See every plan and price →
+            <Link href="/pricing#org-plans" className={`${kit.link} ${kit.linkBlock}`}>
+              See every plan and price
             </Link>
           </p>
         </div>
@@ -308,27 +303,24 @@ export default async function ForTournamentOrganizersPage() {
           organization that stops moves to the free Tournament plan with everything it built. The
           whole section is a promo artifact: gone the day the signup window closes. */}
       {tpPromoActive && (
-        <section className={styles.section}>
+        <section className={kit.section}>
           <div className="container">
-            <div className={styles.foundingSeasonCard}>
-              <div className={styles.foundingSeasonEyebrow}>Taking registrations, or running more than one event in {FOUNDING_SEASON_YEAR_LABEL}?</div>
-              <h2 className={styles.foundingSeasonTitle}>
+            <div className={`${kit.card} ${kit.cardEdge}`}>
+              <p className={kit.eyebrow}>Taking registrations, or running more than one event in {FOUNDING_SEASON_YEAR_LABEL}?</p>
+              <h2 className={kit.heading}>
                 Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season.
               </h2>
-              <p className={styles.foundingSeasonBody}>
+              <p className={`${kit.body} ${fp.measure}`}>
                 Public registration and payment tracking, auto-scheduling, communications, and archives for every event you run
                 through {FOUNDING_SEASON_END_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month.
                 Sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}. No credit card.
               </p>
-              <p className={styles.foundingSeasonConsequence}>
+              <p className={`${kit.body} ${fp.measure}`}>
                 In {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season.
                 If you don&apos;t continue, your organization moves to the free Tournament plan and keeps everything it built.
               </p>
-              <div className={styles.foundingSeasonActions}>
-                <Link
-                  href="/start/tournament"
-                  className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-                >
+              <div className={fp.calloutTop}>
+                <Link href="/start/tournament" className={`${kit.btn} ${kit.btnSecondary}`}>
                   Start free
                 </Link>
               </div>
@@ -338,10 +330,10 @@ export default async function ForTournamentOrganizersPage() {
       )}
 
       {/* ── Cross-sell ───────────────────────────────────────────────────── */}
-      <section className={styles.crossSellSection}>
+      <section className={kit.section}>
         <div className="container">
-          <p className={styles.crossSellEyebrow}>More from FieldLogicHQ</p>
-          <div className={styles.crossSellGrid}>
+          <p className={kit.eyebrow}>More from FieldLogicHQ</p>
+          <div className={`${kit.grid3} ${fp.gridTop}`}>
             {CROSS_SELLS.map(cs => {
               // Only the Coaches Portal card carries liveHref today, so the team gate is the
               // right check; a future live cross-sell must key off its own plan's gate.
@@ -349,15 +341,15 @@ export default async function ForTournamentOrganizersPage() {
               const linkHref = cs.alwaysHref ?? (isLive ? cs.liveHref : undefined);
               const content = (
                 <>
-                  <span className={styles.crossSellLabel}>{cs.label}</span>
-                  <span className={styles.crossSellQ}>{cs.q}</span>
-                  <span className={styles.crossSellBody}>{cs.body}</span>
-                  <span className={styles.crossSellCta}>{(isLive ? cs.liveCta : undefined) ?? cs.cta} →</span>
+                  <span className={kit.eyebrow}>{cs.label}</span>
+                  <span className={kit.title}>{cs.q}</span>
+                  <span className={kit.body}>{cs.body}</span>
+                  <span className={fp.crossCta}>{(isLive ? cs.liveCta : undefined) ?? cs.cta}</span>
                 </>
               );
               if (linkHref) {
                 return (
-                  <Link key={cs.label} href={linkHref} className={styles.crossSellCard}>
+                  <Link key={cs.label} href={linkHref} className={`${kit.card} ${fp.crossCard}`}>
                     {content}
                   </Link>
                 );
@@ -365,7 +357,7 @@ export default async function ForTournamentOrganizersPage() {
               return (
                 <EarlyAccessModalTrigger
                   key={cs.label}
-                  className={styles.crossSellCard}
+                  className={`${kit.card} ${fp.crossCard}`}
                   initialPlanInterest={cs.initialPlanInterest}
                   initialFeaturesInterested={cs.initialFeaturesInterested}
                 >
@@ -378,41 +370,35 @@ export default async function ForTournamentOrganizersPage() {
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className={styles.ctaSection}>
-        <div className={styles.ctaBg} />
+      <section className={`${kit.section} ${kit.band} ${kit.center}`}>
         <div className="container">
-          <h2 className={styles.ctaTitle}>
+          <h2 className={kit.heading}>
             Your next tournament{' '}
-            <span className={styles.ctaAccent}>starts here.</span>
+            <span className={kit.accent}>starts here.</span>
           </h2>
-          <p className={styles.ctaSub}>
+          <p className={kit.lead}>
             {tpPromoActive
               ? `${foundingSeasonOfferCore('tournament_plus')} — normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card.`
               : 'Free to start. No credit card required.'}
           </p>
-          <div className={styles.ctaActions}>
-            <Link
-              href="/start/tournament"
-              className="tap-target font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-            >
-              Get Started Free
+          <div className={kit.row}>
+            <Link href="/start/tournament" className={kit.btn}>
+              Get started free
             </Link>
             {/* The reader who finished the whole pitch and still isn't ready gets one more exit
                 that isn't "leave" (2026-08-10 door placements). */}
             {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_PATH} className={styles.seeItLive}>
-                <span className={styles.seeItLiveDot} aria-hidden="true" />
-                See it live →
+              <Link href={SEE_IT_LIVE_PATH} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
+                See a live tournament
               </Link>
             )}
-            <Link
-              href="/pricing"
-              className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
-            >
-              View pricing →
+            <Link href="/pricing" className={`${kit.btn} ${kit.btnSecondary}`}>
+              View pricing
             </Link>
           </div>
-          <p className={styles.ctaFootnote}>All plans are billed in CAD. No contracts. No setup fees.</p>
+          <div className={fp.afterNote}>
+            <p className={kit.small}>All plans are billed in CAD. No contracts. No setup fees.</p>
+          </div>
         </div>
       </section>
 

@@ -19,6 +19,8 @@
  * anywhere (owner ruling 2026-08-21).
  */
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import kit from './MarketingKit.module.css';
 import {
   PITCH_SLIDES,
   builtSlides,
@@ -113,18 +115,15 @@ export default function WalkthroughPage({
   const showSandboxDoor = sandboxDoorsVisible();
 
   // The standing placement ruling, rendered once: the ask leads, the door follows one step
-  // behind it. Both CTA rows carry the identical pair, so they cannot drift apart.
+  // behind it. Both CTA rows carry the identical pair, so they cannot drift apart. The ask is the
+  // page's lime button; the door is the secondary, with the live dot (no arrow on either).
   const askThenDoor = (
     <>
-      <Link
-        href="/start/tournament"
-        className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-      >
+      <Link href="/start/tournament" className={kit.btn}>
         Start free
       </Link>
       {showSandboxDoor && (
-        <Link href={w.door.path} className={styles.seeItLive}>
-          <span className={styles.seeItLiveDot} aria-hidden="true" />
+        <Link href={w.door.path} className={cn(kit.btn, kit.btnSecondary, kit.live)}>
           {w.door.label}
         </Link>
       )}
@@ -132,20 +131,21 @@ export default function WalkthroughPage({
   );
 
   return (
-    <main className="bg-pitch-black min-h-screen">
+    <main className={kit.page}>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className={styles.hero}>
-        <div className={styles.heroBg} />
+      <section className={kit.hero}>
         <div className="container">
-          <p className={styles.heroEyebrow}>{w.eyebrow}</p>
-          <h1 className={styles.heroTitle}>{w.title}</h1>
-          <p className={styles.heroSub}>{w.sub}</p>
-          <div className={styles.heroActions}>{askThenDoor}</div>
+          <p className={kit.eyebrow}>{w.eyebrow}</p>
+          <h1 className={kit.headline}>{w.title}</h1>
+          <p className={kit.lead}>{w.sub}</p>
+          <div className={cn(kit.row, styles.heroActions)}>{askThenDoor}</div>
           {/* Computed from the pull it describes (finding F3) — a hand-typed count cannot see
               the owner recomposing the page. */}
-          <p className={styles.heroMeta}>{derivedMeta(pulled.length)}</p>
-          <WalkthroughPresent slides={slides} deckCount={deck.length} label={`${w.title} — presentation`} />
+          <div className={styles.finePrint}>
+            <p className={kit.small}>{derivedMeta(pulled.length)}<span className={styles.metaSep} aria-hidden="true"> ·</span></p>
+            <WalkthroughPresent slides={slides} deckCount={deck.length} label={`${w.title} — presentation`} />
+          </div>
         </div>
       </section>
 
@@ -154,17 +154,17 @@ export default function WalkthroughPage({
       <SlidePanels panels={pulled} />
 
       {/* ── Closing: the proof, then the ask ─────────────────────────────── */}
-      <section className={styles.ctaSection}>
+      <section className={cn(kit.section, styles.ctaSection)}>
         <div className="container">
-          <p className={styles.heroEyebrow}>{w.closing.eyebrow}</p>
-          <h2 className={styles.ctaTitle}>{w.closing.title}</h2>
-          <p className={styles.ctaBody}>{w.closing.body}</p>
-          <div className={styles.heroActions}>
+          <p className={kit.eyebrow}>{w.closing.eyebrow}</p>
+          <h2 className={cn(kit.heading, styles.ctaTitle)}>{w.closing.title}</h2>
+          <p className={cn(kit.body, styles.ctaBody)}>{w.closing.body}</p>
+          <div className={cn(kit.row, styles.heroActions)}>
             {askThenDoor}
-            {/* Invariant copy: "everything else IT does" reads right for every persona, so it
-                lives here rather than being re-typed once per walkthrough. */}
-            <Link href={w.back.href} className={styles.backLink}>
-              Everything else it does →
+            {/* The label is the walkthrough's own data (`back.label`): it names the product the
+                persona page is about, so it differs by persona. */}
+            <Link href={w.back.href} className={cn(kit.link, kit.linkBlock, styles.backLink)}>
+              {w.back.label}
             </Link>
           </div>
           {/* The leave-behind carries its own way back: buttons don't survive a PDF, an

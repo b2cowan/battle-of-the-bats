@@ -720,7 +720,7 @@ body:has([data-chat-fullbleed]) {
      one. It mints NO ninth token, and that is a choice, not an omission: the ladder names a size so
      that the portals' many consumers cannot drift apart, and this job has one consumer (the
      marketing set's single shared headline rule, built once in the public face's S4, where both
-     values are written). A token would also need a second one for the phone, since a step has
+     values are written: `.headline` in components/marketing/MarketingKit.module.css). A token would also need a second one for the phone, since a step has
      one value. Nothing else on a marketing page borrows these two sizes: a section heading is
      `--type-display` and a card title `--type-title`. The public rules are P1–P10 in
      docs/agents/brand/VISUAL_IDENTITY.md. */
@@ -1073,7 +1073,11 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
    'pref', which follows the theme (so Dark keeps the dark base, matching its dark paper) — on the tabs
    and, since The first look 1d (Ask 10, 2026-10-19), the sign-up journey too, which no longer stays warm
    under Dark. The workspace switcher (/home) is not warm and carries no marker. Keep the coach selector
-   LAST: the test finds the rule by it. */
+   LAST: the test finds the rule by it.
+   ⚖ The MARKETING bar marks its pages `data-warm-base="marketing"`, which needs no theme condition: the marketing set is
+   warm under every setting (The public face, warm: S4, owner Ask 5 B, 2026-10-23). It is its own word, not "always", so
+   the sign-up journey cannot borrow it — that one follows the setting (Ask 10). */
+html:has([data-warm-base="marketing"]) body,
 html:not([data-user-theme="dark"]):has([data-warm-base="pref"]) body,
 html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #F8F4ED; }
 
@@ -2623,27 +2627,10 @@ tbody tr:last-child td { border-bottom: none; }
   top: 1rem;
 }
 
-/* ─── Scroll animation ───────────────────────────────────────────────────────── */
-.animateIn {
-  opacity: 0;
-}
-
-.animateIn.visible {
-  animation: fadeInUp 0.5s ease forwards;
-}
-
-/* J1-002: fallbacks so AnimateIn sections are never stuck invisible.
-   The base rule holds opacity:0 until JS (IntersectionObserver) adds `.visible`.
-   Without these, no-JS users see the section permanently blank, and
-   reduced-motion users see a blank void until they happen to scroll it into view.
-   Both cases: show the content by default (no entrance animation needed). */
-@media (prefers-reduced-motion: reduce) {
-  .animateIn { opacity: 1; }
-}
-
-@media (scripting: none) {
-  .animateIn { opacity: 1; }
-}
+/* ─── Scroll animation: retired ──────────────────────────────────────────────────
+   P6 (The public face, warm: S4, 2026-10-23): nothing on a public page waits for a scroll to appear. The
+   AnimateIn wrapper and its .animateIn rules are gone; a screenshot, a slow phone and a skimming reader see the
+   whole page. Do not bring a reveal back (tests/unit/public-face-s4-marketing.test.ts). */
 
 /* ─── Utility ───────────────────────────────────────────────────────────────── */
 .text-primary  { color: var(--primary-light); }

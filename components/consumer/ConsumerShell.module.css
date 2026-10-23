@@ -281,27 +281,8 @@
 .topLink:hover { color: var(--fl-text); }
 .topLink.active { color: var(--primary-light); }
 
-/* THE TOURNAMENT STRIP KEEPS THE NAV-LABEL LETTERING (Admin type sweep P1, owner 2026-10-19): with the public
-   tournament pages' flip pill (FlipPill .strip), it stays in the typewriter face until The public face, warm
-   (PUBLIC_FACE_WARM_PLAN.md, Coordination) moves the public bars' whole idiom at once. Delete this rule then;
-   the rules above are already the product's lettering. */
-.topbarStrip .topLink,
-.topbarStrip .utilLink,
-.topbarStrip .utilCta,
-.topbarStrip .utilCoach {
-  font-family: var(--font-data, monospace);
-  letter-spacing: var(--nav-label-tracking);
-  text-transform: uppercase;
-}
-/* …and the strip's Get started menu with it, so one menu never mixes two letterings. */
-.topbarStrip .startItemTitle,
-.topbarStrip .startGroup {
-  font-family: var(--font-data, monospace);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.topbarStrip .startItemTitle { font-size: 0.72rem; letter-spacing: 0.04em; }
-.topbarStrip .startGroup { font-size: 0.58rem; letter-spacing: 0.12em; }
+/* The tournament strip and its Get started menu wear the product's lettering above (Inter, sentence case): the public
+   face, warm (S4, 2026-10-23) moved the public bars' whole idiom at once, as the Admin type sweep's P1 ruling waited for. */
 
 /* Desktop Chat-tab unread pill — rolled-up count (self-muted rooms excluded); red (semantic --danger,
    the platform red family — R3-1's #D9482B). */

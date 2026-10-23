@@ -474,7 +474,7 @@ The new pricing model bundles all modules into four named plans. There are no à
 > Plans that match how your organization actually operates.
 
 ### Alternative Headlines
-> Simple, honest pricing for Canadian sports organizations.
+> Simple, honest pricing for people who run community sport.
 
 > From your first tournament to your full club — one platform that grows with you.
 

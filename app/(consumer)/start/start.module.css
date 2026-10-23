@@ -44,14 +44,14 @@
   margin-bottom: 1.6rem;
 }
 
-/* Mono eyebrow — replaces the old blueprint icon badge on the chooser (matches the warm mockup). */
+/* The eyebrow (P3): Inter 600, letter-spaced, olive — the public face's one capitals line (S4 moved it off the
+   typewriter face, so the warm home page never hands a newcomer to a typewriter screen). */
 .kicker {
   display: block;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--home-olive);
   margin-bottom: 0.55rem;
 }
@@ -72,7 +72,7 @@
 
 .title {
   font-size: 1.4rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.12;
   color: var(--home-ink);
@@ -143,11 +143,10 @@
 }
 
 .cardLabel {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--home-dim);
 }
 
@@ -223,8 +222,7 @@
    by the link's own padding. */
 .basicLine {
   margin: 0.9rem 0 0;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--home-dim);
   text-align: center;
@@ -305,7 +303,7 @@
   width: 100%;
   padding: 0.85rem 1rem;
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--home-ink);
   background: var(--home-lime);
   border: 0;

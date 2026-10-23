@@ -1,22 +1,18 @@
-/* Present mode — the walkthrough as full-screen slides. Same visual system as the page;
-   bigger type, one thought per screen. The trigger is a tool, not a CTA: text-weight, muted. */
+/* Present mode — the walkthrough as full-screen slides (The public face, warm: S4). Same warm paper as the page it
+   opens from, with the kit's type; bigger type, one thought per screen. ⚖ It is NOT a dark "projector mode": the
+   deck is shown on a screen share or a laptop beside the person, and the marketing set has no Dark version. The
+   trigger is a tool, not a CTA: a text link in the fine print, never competing with "Start free". */
 
-.trigger {
-  display: inline-block;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
+.trigger { composes: link linkBlock from './MarketingKit.module.css'; }
+.trigger.trigger {
+  font-family: inherit;
+  font-size: var(--type-body);
   background: none;
   border: none;
   padding: 0;
-  margin-top: 0.9rem;
   cursor: pointer;
+  text-align: left;
 }
-
-.trigger:hover { color: var(--fl-text); }
-.trigger:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
 
 /* ── The deck ────────────────────────────────────────────────────────────── */
 .deck {
@@ -25,7 +21,9 @@
   z-index: 80;
   display: flex;
   flex-direction: column;
-  background: var(--pitch-black);
+  background: var(--home-paper);
+  color: var(--home-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 .deck:focus { outline: none; }
@@ -50,48 +48,28 @@
   min-height: 0;
 }
 
-.slideIndex {
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  color: var(--data-gray);
-  letter-spacing: 0.08em;
+.slideIndex { composes: counter from './MarketingKit.module.css'; }
+.deck .slideIndex {
   margin: 0 0 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
-.slideEyebrow,
-.slideOld {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin: 0 0 0.8rem;
-}
+.slideEyebrow { composes: eyebrow from './MarketingKit.module.css'; }
+.slideOld { composes: eyebrow from './MarketingKit.module.css'; }
+.deck .slideEyebrow,
+.deck .slideOld { margin: 0 0 0.8rem; }
 
-.slideEyebrow { color: var(--logic-lime); }
-.slideOld { color: var(--warning-light); }
-
-.slideTitle {
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 4.5vh, 2.8rem);
-  font-weight: 900;
-  color: var(--fl-text);
-  line-height: 1.12;
-  letter-spacing: -0.01em;
+.slideTitle { composes: heading from './MarketingKit.module.css'; }
+.deck .slideTitle {
+  font-size: clamp(1.75rem, 4.5vh, 2.8rem);
   margin: 0 0 1.6vh;
   max-width: 20ch;
-  text-wrap: balance;
 }
 
-/* Sans, not the data face — mono at paragraph length is what made the first attempt read like
-   a terminal (ratified 2026-08-20). The kickers above stay mono. */
-.slideBody {
-  font-family: var(--font-sans, system-ui, sans-serif);
+.slideBody { composes: body from './MarketingKit.module.css'; }
+.deck .slideBody {
   font-size: clamp(0.95rem, 2.2vh, 1.15rem);
-  color: var(--data-gray);
   max-width: 44ch;
-  line-height: 1.6;
   margin: 0;
 }
 
@@ -102,10 +80,10 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.8rem 1.5rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  color: var(--data-gray);
+  border-top: 1px solid var(--home-line);
+  background: var(--home-card);
+  font-size: var(--type-body);
+  color: var(--home-dim);
 }
 
 .counter { font-variant-numeric: tabular-nums; }
@@ -116,12 +94,13 @@
 .footActions { display: flex; gap: 0.5rem; }
 
 .footBtn {
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  color: var(--data-gray);
-  background: none;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
-  border-radius: 6px;
+  font-family: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-ink);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 10px;
   padding: 0.45rem 0.9rem;
   cursor: pointer;
   /* 44px floor is a coach-portal gate, but fingers are fingers on a phone deck too.
@@ -130,8 +109,8 @@
   min-height: 2.75rem;
 }
 
-.footBtn:hover { color: var(--fl-text); border-color: rgba(var(--blueprint-blue-rgb), 0.8); }
-.footBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.footBtn:hover { border-color: var(--home-ink-soft); }
+.footBtn:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
 
 /* Present mode is an on-screen tool; it has no business in the leave-behind. */
 @media print {

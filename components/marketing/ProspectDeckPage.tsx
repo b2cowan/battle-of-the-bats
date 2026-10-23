@@ -20,6 +20,8 @@
  * reuses WalkthroughPage.module.css verbatim: the @media print layout IS the deck's PDF.
  */
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import kit from './MarketingKit.module.css';
 import { derivedMeta, type PitchSlide } from '@/lib/walkthrough-content';
 import { pictureFor } from './slide-picture';
 import SlidePanels from './SlidePanels';
@@ -62,21 +64,22 @@ export default function ProspectDeckPage({ slides }: { slides: PitchSlide[] }) {
   ];
 
   return (
-    <main className="bg-pitch-black min-h-screen">
+    <main className={cn(kit.page, styles.deckPage)} data-warm-base="marketing">
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className={styles.hero}>
-        <div className={styles.heroBg} />
+      <section className={kit.hero}>
         <div className="container">
-          <p className={styles.heroEyebrow}>{HERO.eyebrow}</p>
-          <h1 className={styles.heroTitle}>{HERO.title}</h1>
-          <p className={styles.heroSub}>{HERO.sub}</p>
-          <p className={styles.heroMeta}>{derivedMeta(slides.length)}</p>
-          <WalkthroughPresent
-            slides={present}
-            deckCount={slides.length}
-            label="A FieldLogicHQ walkthrough — presentation"
-          />
+          <p className={kit.eyebrow}>{HERO.eyebrow}</p>
+          <h1 className={kit.headline}>{HERO.title}</h1>
+          <p className={kit.lead}>{HERO.sub}</p>
+          <div className={styles.finePrint}>
+            <p className={kit.small}>{derivedMeta(slides.length)}<span className={styles.metaSep} aria-hidden="true"> ·</span></p>
+            <WalkthroughPresent
+              slides={present}
+              deckCount={slides.length}
+              label="A FieldLogicHQ walkthrough — presentation"
+            />
+          </div>
         </div>
       </section>
 
@@ -87,16 +90,13 @@ export default function ProspectDeckPage({ slides }: { slides: PitchSlide[] }) {
       <SlidePanels panels={slides.map(slide => ({ slide, shown: shownFor.get(slide.id) ?? null }))} />
 
       {/* ── Closing: the proof, then the ask ─────────────────────────────── */}
-      <section className={styles.ctaSection}>
+      <section className={cn(kit.section, styles.ctaSection)}>
         <div className="container">
-          <p className={styles.heroEyebrow}>{CLOSING.eyebrow}</p>
-          <h2 className={styles.ctaTitle}>{CLOSING.title}</h2>
-          <p className={styles.ctaBody}>{CLOSING.body}</p>
-          <div className={styles.heroActions}>
-            <Link
-              href="/demos"
-              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-            >
+          <p className={kit.eyebrow}>{CLOSING.eyebrow}</p>
+          <h2 className={cn(kit.heading, styles.ctaTitle)}>{CLOSING.title}</h2>
+          <p className={cn(kit.body, styles.ctaBody)}>{CLOSING.body}</p>
+          <div className={cn(kit.row, styles.heroActions)}>
+            <Link href="/demos" className={kit.btn}>
               Walk the demos
             </Link>
           </div>

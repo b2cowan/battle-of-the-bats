@@ -4,8 +4,9 @@
  * PRESENT MODE — the walkthrough as full-screen slides (PRESALES_WALKTHROUGH_PLAN.md P2).
  *
  * Same slides, second rendering: the owner pitching a board or screen-sharing a call walks
- * the identical story the scroll page tells. This is a TOOL, not a CTA — the trigger sits
- * text-weight under the hero meta and must never compete with "Start free".
+ * the identical story the scroll page tells. This is a TOOL, not a CTA — the trigger is an olive text
+ * link in the hero fine print and must never compete with "Start free". Warm like the page (S4): not a
+ * dark projector mode.
  *
  * ⚠ THIS IS THE SHAPE THE SLIDE FORMAT WAS DESIGNED FOR (ratified 2026-08-20): words on the
  * left, the picture on the right in the shared stage, body copy in the sans face. The scroll
@@ -108,7 +109,7 @@ export default function WalkthroughPresent(
             passed in rather than computed as `slides.length - 2` because that offset is a fact
             about how the caller assembles the array, and it would go quietly wrong the day a
             second framing panel is added at either end. */}
-        ▸ Present the full deck — {deckCount} slides, arrow keys
+        Present the full deck — {deckCount} slides, arrow keys
       </button>
 
       {open && (

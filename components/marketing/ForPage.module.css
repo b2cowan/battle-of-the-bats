@@ -1,0 +1,107 @@
+/* The four "For" pages' layout — /for-clubs, /for-coaches, /for-leagues, /for-tournament-organizers (The public face,
+   warm: S4). The four pages were ~600-line copies of one another; they now share this one sheet and the marketing kit
+   (`MarketingKit.module.css`). LAYOUT ONLY: a colour, a face, a heading size or a button written here is drift from
+   the kit. Class names are kept off the kit's own properties on purpose (no margin written here for an element the kit
+   already gives one), so the order the two sheets load in cannot change how a page looks. */
+
+/* ── Hero ────────────────────────────────────────────────────────────────────── */
+
+/* The action row under the lead: primary, secondary, text link. */
+.heroRow { margin-bottom: 1.125rem; }
+
+/* A run of facts under the fine print. */
+.afterNote { margin-top: 1rem; }
+
+/* The bold lead-in of a fine-print line ("Coming soon", "Free through …"). Ink, not an accent colour. */
+.noteStrong {
+  color: var(--home-ink);
+  font-weight: 700;
+}
+
+/* A line of body text kept to a readable measure. */
+.measure { max-width: 66ch; }
+
+/* ── Sections ────────────────────────────────────────────────────────────────── */
+
+/* A grid or a block that follows a section's heading and subline. */
+.gridTop { margin-top: 1.375rem; }
+
+/* The olive-edged callout that closes a block of cards. */
+.calloutTop { margin-top: 1rem; }
+
+/* A line of links that closes a section, centred under the cards. */
+.afterCards {
+  margin: 1.125rem 0 0;
+  text-align: center;
+}
+
+/* ── Plans ───────────────────────────────────────────────────────────────────── */
+
+/* The page's plan card, wider, beside its companion. */
+.planGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1rem;
+}
+/* Two plans of equal weight. */
+.planGridEven { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 900px) {
+  .planGrid,
+  .planGridEven { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* "$0 through …" / "$89 /month": the figure and its period on one baseline. */
+.priceRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+/* A short run of tags (the plans a companion card names). */
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+}
+
+/* An unbordered paragraph inside a card that sits beside a coloured edge: the coaches page's "rate" note. */
+.noteEdge {
+  border-left: 3px solid var(--home-olive);
+  padding-left: 0.75rem;
+}
+
+/* ── Cross-sell ──────────────────────────────────────────────────────────────── */
+
+/* A whole card that is a link or a button: it reads as a card and behaves as one control. */
+.crossCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.crossCard:hover { border-color: var(--home-olive); }
+.crossCard:focus-visible {
+  outline: 3px solid var(--home-olive);
+  outline-offset: 2px;
+}
+
+/* The card's closing line, pushed to the foot so a row of cards lines up. */
+.crossCta {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  color: var(--home-olive);
+  font-weight: 600;
+}
+.crossCard:hover .crossCta {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

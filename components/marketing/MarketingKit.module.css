@@ -1,0 +1,357 @@
+/* The marketing set's ONE kit — The public face, warm: S4 (owner rulings 2026-10-23, Ask 1 + Ask 3 A + Ask 5 B;
+   docs/projects/active/PUBLIC_FACE_WARM_PLAN.md, rules P1–P10 in docs/agents/brand/VISUAL_IDENTITY.md).
+
+   ⚖ THE MARKETING PAGES ARE ALWAYS WARM. There is no Dark version of them, whatever the visitor's setting, so the
+   palette is the first look's own warm module, `.warm` (paper ground, the --home-* tokens) — NOT `.warmTab`, which
+   follows the account's Warm / Dark choice. No new palette and no second theme mechanism: every colour below is a
+   --home-* token, and nothing here reads the dark set (--pitch-black, --fl-text, the blueprint blues) or a Tailwind
+   colour utility. `tests/unit/public-face-s4-marketing.test.ts` holds that for every marketing page and the chrome.
+
+   Every page wears `.page` on its outermost element; the bar, the footer and the Founding Season strip compose the same
+   tokens on their own roots (they mount outside the page). The pieces below are the drawing's vocabulary
+   ("End state drawn", https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft), named for the job each does. A page's own
+   module holds only its layout; a colour, a face, a button or a heading size written there is drift from this file. */
+
+.page {
+  composes: warmVars warm from '../consumer/warmTheme.module.css';
+  display: block;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
+  overflow-x: clip;
+}
+
+/* ── Rhythm ──────────────────────────────────────────────────────────────────── */
+
+/* The first block under the bar. It clears the fixed bar by its token (the ONE marketing clearance rule) and then
+   opens the drawing's 72px of air (36px on a phone). */
+.hero {
+  position: relative;
+  padding: calc(var(--marketing-bar-h) + 4.5rem) 0 3.5rem;
+}
+
+.section {
+  position: relative;
+  padding: 4.5rem 0;
+  border-top: 1px solid var(--home-line);
+}
+
+/* A band that closes a page: the card ground, edge to edge. */
+.band { background: var(--home-card); }
+
+.center { text-align: center; }
+.center .lead { margin-inline: auto; }
+
+@media (max-width: 600px) {
+  .hero { padding: calc(var(--marketing-bar-h) + 2.25rem) 0 2rem; }
+  .section { padding: 2.75rem 0; }
+}
+
+/* ── Type ─────────────────────────────────────────────────────────────────────── */
+
+/* ⚖ THE MARKETING HEADLINE — the ladder's second named exception (owner, Ask 3 A): ONE per page, the poster line a
+   visitor reads first. Barlow Condensed 700, sentence case, 64px on a desktop and 40px on a phone. These two sizes
+   are written here and nowhere else (the ladder's comment in app/globals.css says why there is no token). Nothing
+   else borrows them: a section heading is `.heading`, a card title `.title`. */
+.headline {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: 64px; /* LADDER-EXEMPT: the marketing headline, the named exception above */
+  line-height: 1.02;
+  letter-spacing: -0.005em;
+  color: var(--home-ink);
+  margin: 0 0 1.125rem;
+  text-wrap: balance;
+}
+@media (max-width: 600px) {
+  .headline { font-size: 40px; } /* LADDER-EXEMPT: the marketing headline's phone size */
+}
+
+/* The accent phrase in a headline or heading. Olive, never lime (E3: lime is a fill, never text on paper). */
+.accent { color: var(--home-olive); }
+
+/* A section heading: the display step, in the heading face. */
+.heading {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  letter-spacing: normal;
+  font-size: var(--type-display);
+  line-height: 1.1;
+  color: var(--home-ink);
+  margin: 0 0 0.625rem;
+  text-wrap: balance;
+}
+
+/* A card's title, in Inter. ⚠ Named in full (face, tracking) because the global h1–h6 rule in app/globals.css sets
+   the display face and a tracking on every heading element, and a card title is often an h3. */
+.title {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: normal;
+  font-size: var(--type-title);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--home-ink);
+  margin: 0 0 0.375rem;
+}
+
+/* A smaller title: a list entry, a step, a strip's name. */
+.subhead {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: normal;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--home-ink);
+  margin: 0 0 0.25rem;
+}
+
+/* The eyebrow (P3): the one line in capitals besides a plan chip. Inter 600, letter-spaced, olive. */
+.eyebrow {
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--home-olive);
+  margin: 0 0 0.625rem;
+}
+
+.lead {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--home-ink-soft);
+  max-width: 60ch;
+  margin: 0 0 1.625rem;
+}
+
+.body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--home-ink-soft);
+  margin: 0 0 0.75rem;
+}
+
+/* Fine print and meta lines. */
+.small {
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-dim);
+  margin: 0;
+}
+
+/* A price or a figure a card exists to show, in the heading face. */
+.price {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: var(--type-display);
+  line-height: 1;
+  color: var(--home-ink);
+}
+
+/* "Step 1", "1 of 7": a quiet counter. */
+.counter {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--home-dim);
+  margin: 0;
+}
+
+/* ── Actions (P4) ───────────────────────────────────────────────────────────────
+   A button says what happens: Inter 700, sentence case, 48px, 10px corners, no arrow. Lime with ink is the ONE
+   primary per view; the secondary is white with an edge; a text link is olive. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.375rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
+
+.btnSecondary {
+  background: var(--home-card);
+  color: var(--home-ink);
+  border-color: var(--home-line-strong);
+}
+.btnSecondary:hover { filter: none; border-color: var(--home-ink-soft); }
+
+/* The bar's size: a control row, not a page's first door. */
+.btnSmall {
+  min-height: 44px;
+  padding: 0 1rem;
+  font-size: var(--type-body);
+}
+
+.btnFull { width: 100%; }
+
+.link {
+  color: var(--home-olive);
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.link:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+
+/* A link standing on its own line is a tap target. */
+.linkBlock {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+}
+
+/* The one "this is happening now" signal: the live red the scores use. */
+.live { display: inline-flex; align-items: center; gap: 0.5rem; }
+.live::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--home-live);
+  box-shadow: 0 0 0 3px var(--home-live-soft);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+.center .row { justify-content: center; }
+
+/* ── Surfaces ────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  padding: 1.5rem;
+  box-shadow: var(--home-shadow);
+  min-width: 0;
+  color: var(--home-ink);
+}
+.cardFlat { box-shadow: none; }
+
+/* A callout: a white card with a coloured edge (the portal's rule; tinted panels are retired). */
+.cardEdge { border-left: 3px solid var(--home-olive); }
+
+/* The plan a page leads with: a 2px olive edge, carrying the page's one lime. */
+.cardFeatured { border: 2px solid var(--home-olive); }
+
+/* Cards in a row line their last block up along the bottom. */
+.stack { display: flex; flex-direction: column; }
+.push { margin-top: auto; padding-top: 1.25rem; }
+
+.grid2, .grid3, .grid4 {
+  display: grid;
+  gap: 1rem;
+}
+.grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) {
+  .grid3, .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid3, .grid4 { grid-template-columns: minmax(0, 1fr); }
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--home-line);
+  margin: 1.125rem 0;
+}
+
+/* ── Labels ──────────────────────────────────────────────────────────────────── */
+
+/* A quiet tag: availability, "New", "No sign-up". Inter, sentence case. */
+.tag {
+  display: inline-block;
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--home-dim);
+  background: var(--home-fill);
+  padding: 5px 9px;
+  border-radius: var(--home-radius-pill);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* The plan chip (P1): the one typewriter label on the marketing set. */
+.chip {
+  display: inline-block;
+  font-family: var(--font-data), monospace; /* type-ok: plan chip */
+  font-size: var(--type-label);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase; /* type-ok: plan chip */
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  padding: 5px 8px;
+  border-radius: var(--home-radius-pill);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* ── Lists ───────────────────────────────────────────────────────────────────── */
+
+/* A feature list: olive ticks. */
+.ticks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: var(--home-ink-soft);
+}
+.ticks li { position: relative; padding-left: 1.5rem; }
+.ticks li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.4em;
+  width: 11px;
+  height: 6px;
+  border-left: 2px solid var(--home-olive);
+  border-bottom: 2px solid var(--home-olive);
+  transform: rotate(-45deg);
+}
+
+/* A run of short facts: olive dots. */
+.facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: var(--type-body);
+  color: var(--home-ink-soft);
+}
+.facts li { display: flex; align-items: center; gap: 0.5rem; }
+.facts li::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--home-olive);
+}
+.center .facts { justify-content: center; }

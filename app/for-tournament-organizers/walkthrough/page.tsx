@@ -1,5 +1,6 @@
 import { getWalkthroughRender } from '@/lib/pitch-deck-store';
 import { walkthroughMetadata } from '@/lib/walkthrough-content';
+import { marketingMetadata } from '@/lib/marketing-metadata';
 import WalkthroughPage from '@/components/marketing/WalkthroughPage';
 
 // The story lives in lib/walkthrough-content.ts; the rendering (scroll page, present mode,
@@ -14,7 +15,14 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
   const { walkthrough, pull } = await getWalkthroughRender('tournament');
-  return walkthroughMetadata(walkthrough, pull);
+  // The description stays the one DERIVED from the slides shown; the title and the card are the marketing set's
+  // (the layout adds the brand once, so the title carries none).
+  const { description } = walkthroughMetadata(walkthrough, pull);
+  return marketingMetadata({
+    title: walkthrough.seo.title,
+    description: typeof description === 'string' ? description : undefined,
+    path: walkthrough.path,
+  });
 }
 
 export default async function TournamentWalkthroughPage() {

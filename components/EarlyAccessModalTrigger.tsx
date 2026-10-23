@@ -15,7 +15,7 @@ type EarlyAccessModalTriggerProps = {
 };
 
 export default function EarlyAccessModalTrigger({
-  children = 'Join Early Access',
+  children = 'Join early access',
   className,
   initialPlanInterest,
   initialFeaturesInterested,
@@ -58,14 +58,14 @@ export default function EarlyAccessModalTrigger({
           >
             <div className={styles.header}>
               <div>
-                <p className={styles.kicker}>Early Access</p>
+                <p className={styles.kicker}>Early access</p>
                 <h2 id={titleId} className={styles.title}>Tell us what you want to see next</h2>
                 <p className={styles.copy}>
                   Share a few details and we&apos;ll use them for release updates and early access planning.
                 </p>
               </div>
               <button type="button" className={styles.close} onClick={() => setOpen(false)} aria-label="Close early access form">
-                X
+                ×
               </button>
             </div>
 

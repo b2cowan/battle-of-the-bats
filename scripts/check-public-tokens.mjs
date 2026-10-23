@@ -162,7 +162,7 @@ const SCOPES = {
     // guarded from the moment it exists.
     // app/see-it-live is the sandbox door's confirm screen — a funnel surface between the
     // marketing site and the demo, wearing the marketing ground.
-    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'components/marketing', 'app/see-it-live'],
+    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'app/demos', 'components/marketing', 'app/see-it-live'],
     files: [
       'app/page.module.css',
       'components/PricingSection.module.css',

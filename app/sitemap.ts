@@ -21,6 +21,8 @@ const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/for-coaches',              priority: 0.6, changeFrequency: 'monthly' },
   { path: '/for-coaches/walkthrough',  priority: 0.55, changeFrequency: 'monthly' },
   { path: '/changelog',                priority: 0.5, changeFrequency: 'weekly'  },
+  // The demo chooser: a shared outbound link, the page a stranger most often arrives on cold (S4, 2026-10-23).
+  { path: '/demos',                    priority: 0.5, changeFrequency: 'monthly' },
 ];
 
 /**

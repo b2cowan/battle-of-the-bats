@@ -227,6 +227,11 @@ describe('warm palette — legible by construction', () => {
       !css.includes('data-warm-base="always"'),
       'a page base is painted warm under Dark again; the sign-up journey follows the setting (Ask 10)',
     );
+    // The marketing set is warm under every setting (S4, Ask 5 B), so its marker carries no theme condition.
+    assert.ok(
+      rule[1].includes('html:has([data-warm-base="marketing"]) body,'),
+      'the marketing pages left the warm page-base rule',
+    );
     const consumerPaper = readPalette(CONSUMER_PALETTE).paper;
     assert.ok(consumerPaper, '--home-paper not found in the consumer warm theme');
     assert.deepEqual(parseHex(rule[2]), consumerPaper, 'the page base and the consumer --home-paper must move together');

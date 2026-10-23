@@ -99,7 +99,7 @@ export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatin
       // sending "choose Club" somewhere else would fork one decision across two surfaces.
       ctaHrefFor={() => billingHref}
       ctaLabel={planKey =>
-        planKey === currentPlan ? 'Manage your plan →' : `Choose ${PLAN_CONFIG[planKey].label} →`
+        planKey === currentPlan ? 'Manage your plan' : `Choose ${PLAN_CONFIG[planKey].label}`
       }
     />
   );

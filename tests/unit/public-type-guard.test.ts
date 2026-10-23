@@ -82,6 +82,37 @@ describe('public type check — what is counted', () => {
   });
 });
 
+describe('public type check — the lettering a class name carries (S4)', () => {
+  // A page sets the typewriter face from its markup as easily as from a stylesheet: a Tailwind utility, or a global
+  // class app/globals.css gives the face to. S1 could not see either; S4 counts them in .tsx string literals.
+  it('counts Tailwind face, capitals and heavy utilities in a className', () => {
+    const { c } = count('x.tsx', '<span className="font-mono text-xs uppercase font-black">a</span>\n');
+    assert.deepEqual(c, { face: 1, caps: 1, heavy: 1 });
+  });
+
+  it('counts the global classes that carry the face', () => {
+    const { c } = count('x.tsx', '<div className="hud-label" /><b className="badge">x</b><i className="btn-data form-label" />\n');
+    assert.deepEqual(c, { face: 4 });
+  });
+
+  it('counts a class list held in a variable or a template, and a variant prefix', () => {
+    const { c } = count('x.tsx', 'const k = `tap-target font-mono ${on ? "md:uppercase" : ""}`;\nconst h = \'font-extrabold\';\n');
+    assert.deepEqual(c, { face: 1, caps: 1, heavy: 1 });
+  });
+
+  it('does not read a custom property, a sentence outside quotes, a .ts file, or a comment as a class', () => {
+    assert.deepEqual(count('x.tsx', 'const s = "var(--font-mono)";\n').c, {});
+    assert.deepEqual(count('x.tsx', "<p>I'm writing uppercase words here</p>\n").c, {});
+    assert.deepEqual(count('x.ts', 'export const a = "font-mono uppercase";\n').c, {});
+    assert.deepEqual(count('x.tsx', '// className="font-mono"\nconst a = 1;\n').c, {});
+  });
+
+  it('reads a template hole as code, not class text — only the strings inside it count', () => {
+    assert.deepEqual(count('x.tsx', 'const l = `${badge} ${badgeNoun[h]}`;\n').c, {});
+    assert.deepEqual(count('x.tsx', 'const k = `a ${on ? "md:uppercase" : ""} b`;\n').c, { caps: 1 });
+  });
+});
+
 describe('public type check — the allowed roles', () => {
   it('exempts the wordmark\'s face and capitals, but never its weight', () => {
     const { c } = count('x.module.css', `.w {\n  font-family: var(--font-data); /* type-ok: wordmark */\n  font-weight: 900;\n  text-transform: uppercase; /* type-ok: wordmark */\n}\n`);

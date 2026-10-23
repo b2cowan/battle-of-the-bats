@@ -36,9 +36,23 @@
    alone lives here so it can ride --offer-bar-h, published by the Founding Season offer bar while
    the signup window is open (components/marketing/FoundingSeasonOfferBar). Unset → 0px → today's
    exact geometry. */
+/* ⚖ The marketing bar is WARM, ALWAYS (The public face, warm: S4, owner Ask 1 + Ask 5 B, 2026-10-23): a white bar with a
+   hairline, on the first look's warm palette (`.warmVars`, which has no Dark gate). It composes the tokens rather than
+   being nested in a warm wrapper because SiteChrome mounts it outside the page. Its button is the marketing kit's. */
 .marketingNav {
+  composes: warmVars from './consumer/warmTheme.module.css';
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 50;
   top: var(--offer-bar-h, 0px);
+  background: var(--home-card);
+  border-bottom: 1px solid var(--home-line);
+  color: var(--home-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  transition: box-shadow 0.2s ease;
 }
+.marketingNavScrolled { box-shadow: var(--home-shadow-sm); }
 
 .inner {
   display: flex;
@@ -302,20 +316,21 @@
   }
 }
 
-/* T1 — marketing's nav labels join the platform spec. Its own room is expressed by the
-   ratified 64px bar (--marketing-bar-h), not by a type spec nobody chose: these were 12px/400
-   at 0.1em tracking, the only bar of the five doing it that way. Colour stays Tailwind's
-   (marketing keeps its own palette); only the metrics are shared. */
+/* The links: Inter 600 at the body step, sentence case, like the consumer bar the first look shipped (P1, P3). The page
+   you are on is ink with an olive rule under it; the rest are the soft ink. */
 .marketingLink {
-  font-family: var(--font-data, monospace);
-  font-size: var(--nav-label-size);
-  font-weight: var(--nav-label-weight);
-  letter-spacing: var(--nav-label-tracking);
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--nav-pill-h);
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-ink-soft);
   text-decoration: none;
   white-space: nowrap;
-  transition: color 0.2s ease;
+  transition: color 0.15s ease;
 }
+.marketingLink:hover { color: var(--home-ink); }
+.marketingLinkOn { color: var(--home-ink); box-shadow: 0 2px 0 var(--home-olive); }
 
 /* ⚠ §68 — THE MARKETING BAR IS THE ONE ROW IN THIS PRODUCT WITH NO FLEXIBLE MEMBER, and until
    2026-08-21 it had no phone behaviour at all. Logo (132px) + "Sign In" (87) + gap (24) +
@@ -341,31 +356,47 @@
   gap: 1.5rem; /* = the global .gap-3 this replaced; see the warning above */
 }
 
-/* The size lives here, not on Tailwind's `text-xl`, because it is the only piece of the wordmark
-   that changes on a phone. 1.25rem IS `text-xl` — desktop renders the identical mark. */
+/* The size lives here because it is the only piece of the wordmark that changes on a phone. Today's three-ink mark
+   (P9) until Part B's lockup replaces it. */
 .marketingWordmark {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-data, monospace); /* type-ok: wordmark */
+  font-weight: 700;
   font-size: 1.25rem;
+  letter-spacing: -0.05em;
+  text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
 }
+.wmField { color: var(--home-ink); }
+.wmLogic { color: var(--home-olive); }
+.wmHq { color: var(--home-dim); }
 
-/* The bar's two right-hand controls share the platform pill silhouette (30px, = the icon-door
-   size) instead of the 32px their hand-written padding happened to produce. Side padding moved
-   off Tailwind's `px-4` for the same reason the wordmark's size did — it steps down on a phone,
-   and a utility class in the markup cannot be stepped without a specificity fight. */
+/* The door into the product: the kit's button at the bar's size, as the white secondary (see Navbar.tsx, Ask 14). */
 .marketingCta {
-  display: inline-flex;
-  align-items: center;
-  padding-inline: 1rem; /* = px-4 */
-  min-height: var(--nav-pill-h);
-  font-family: var(--font-data, monospace);
-  font-size: var(--nav-label-size);
-  font-weight: 700;
-  letter-spacing: var(--nav-label-tracking);
-  text-transform: uppercase;
-  text-decoration: none;
+  composes: btn btnSecondary btnSmall from './marketing/MarketingKit.module.css';
   white-space: nowrap;
 }
+
+/* Sign in / Account: a quiet text door, no border, no fill. */
+.marketingQuiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: var(--nav-pill-h);
+  padding-inline: 0.25rem;
+  background: none;
+  border: 0;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.marketingQuiet:hover { color: var(--home-ink); }
 
 /* The person glyph the quiet pill wears once its label goes. Hidden by default, so every width
    above the phone step renders exactly what it rendered before. Its SIZE is a prop on the icon
@@ -381,7 +412,8 @@
    it; /review flagged that this pass shaved 2px off rather than fixing it). The 64px bar has the
    room. Deliberately scoped to ≤900px so the ratified 30px pill row is untouched on desktop. */
 @media (max-width: 900px) {
-  .marketingCta { min-height: var(--tap-min, 44px); padding-inline: 0.625rem; }
+  .marketingActions .marketingCta { min-height: var(--tap-min, 44px); padding-inline: 0.75rem; }
+  .marketingQuiet { min-height: var(--tap-min, 44px); }
   .marketingActions { gap: 0.5rem; }
   /* The account menu opens 240px wide from its trigger's right edge — but on a phone the trigger
      sits LEFT of "Open app →", so that edge is ~110px in from the screen's, and at 320px the menu
@@ -414,23 +446,20 @@
   }
 }
 
-/* Bottom nav (marketing pages, mobile only) */
+/* Bottom nav (marketing pages, mobile only): white, warm always, like the bar above it. The five roles in Inter 600,
+   sentence case; the page you are on is ink with an olive rule along the top. */
 .bottomNav {
+  composes: warmVars from './consumer/warmTheme.module.css';
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 50;
-  background: var(--nav-mobile-bg);
-  -webkit-backdrop-filter: blur(var(--blur-bar));
-  backdrop-filter: blur(var(--blur-bar));
-  border-top: 1px solid var(--border);
+  background: var(--home-card);
+  border-top: 1px solid var(--home-line);
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .bottomNav { background: var(--bg); }
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 .bottomNavLink {
@@ -438,23 +467,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.875rem 0.25rem;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--white-60);
+  min-height: 48px;
+  padding: 0 0.25rem;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-ink-soft);
   white-space: nowrap;
+  text-decoration: none;
   border-top: 2px solid transparent;
-  transition: var(--transition);
+  transition: color 0.15s ease;
 }
 
-.bottomNavLink:hover { color: var(--white); }
+.bottomNavLink:hover { color: var(--home-ink); }
 
 .bottomNavActive {
-  color: var(--primary-light) !important;
-  border-top-color: var(--primary-light) !important;
+  color: var(--home-ink);
+  border-top-color: var(--home-olive);
+}
+
+/* The narrowest phones: five words at the body step need their room. */
+@media (max-width: 375px) {
+  .bottomNavLink { font-size: var(--type-support); }
 }
 
 /* Responsive */

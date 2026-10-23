@@ -17,8 +17,7 @@
 }
 
 .copy {
-  font-family: var(--font-data, monospace);
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--data-gray);
   line-height: 1.5;
   max-width: 15rem;
@@ -33,8 +32,6 @@
   display: block;
   color: var(--fl-text);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.62rem;
+  font-size: var(--type-body);
   margin-bottom: 0.25rem;
 }

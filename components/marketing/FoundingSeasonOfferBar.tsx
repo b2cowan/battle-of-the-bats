@@ -11,8 +11,8 @@ import {
 import styles from './FoundingSeasonOfferBar.module.css';
 
 /**
- * The site-wide Founding Season offer bar (Founding Season 2027, owner-approved mockups 2026-09-07,
- * variant A — dark bar, lime type).
+ * The site-wide Founding Season offer bar (Founding Season 2027, owner-approved mockups 2026-09-07;
+ * restyled warm in The public face, warm: S4, 2026-10-23 — the words are unchanged).
  *
  * One line at the very top of every MARKETING page, above the navigation: the promise, the
  * deadline, one link into the pricing page's offer strip. It renders only while the Founding
@@ -82,8 +82,8 @@ export default function FoundingSeasonOfferBar() {
         <span className={styles.deadlineFull}>{FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}</span>
         <span className={styles.deadlineShort}>{FOUNDING_SEASON_SIGNUP_CLOSE_LABEL.replace(/,\s*\d{4}$/, '')}</span>
       </span>
-      <span className={`${styles.sep} ${styles.sepWide}`} aria-hidden="true">·</span>
-      <span className={styles.link}><span className={styles.linkWords}>See the offer </span>→</span>
+      <span className={styles.sep} aria-hidden="true">·</span>
+      <span className={styles.link}>See the offer</span>
     </Link>
   );
 }

@@ -1,20 +1,19 @@
 import Link from 'next/link';
-import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import kit from '@/components/marketing/MarketingKit.module.css';
 import styles from './page.module.css';
-import AnimateIn from '@/components/AnimateIn';
+import { marketingMetadata } from '@/lib/marketing-metadata';
 import PricingSection from '@/components/PricingSection';
 import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, gatedPlanTag, closedProgramPlansSentence } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, gatedPlanTag, closedProgramPlansSentence } from '@/lib/plan-config';
 import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
-export const metadata: Metadata = {
-  alternates: { canonical: '/' },
-};
+// The home page's one absolute title; its description is the site's own (words doc items 1 and 4).
+export const metadata = marketingMetadata({ title: 'FieldLogicHQ: less admin, more sport', absolute: true, path: '/' });
 
 /**
  * The role deep-dive cards ("One platform. Every role.").
@@ -40,7 +39,7 @@ const MODULE_CARDS: Array<{
 }> = [
   {
     id: '01',
-    name: 'Tournament Organizer',
+    name: 'Tournament organizer',
     href: '/for-tournament-organizers',
     planKey: 'tournament',
     planLabel: 'Tournament',
@@ -64,7 +63,7 @@ const MODULE_CARDS: Array<{
   },
   {
     id: '02',
-    name: 'Head Coach',
+    name: 'Head coach',
     href: '/for-coaches',
     planKey: 'team',
     planLabel: 'Coaches Portal',
@@ -81,7 +80,7 @@ const MODULE_CARDS: Array<{
   },
   {
     id: '03',
-    name: 'House league Admin',
+    name: 'House league admin',
     href: '/for-leagues',
     planKey: 'league',
     planLabel: 'League Plus',
@@ -98,7 +97,7 @@ const MODULE_CARDS: Array<{
   },
   {
     id: '04',
-    name: 'Club Executive',
+    name: 'Club executive',
     href: '/for-clubs',
     planKey: 'club',
     planLabel: 'Club',
@@ -117,18 +116,15 @@ const MODULE_CARDS: Array<{
 
 const STEPS = [
   {
-    num: '01',
-    label: 'SET UP YOUR ORGANIZATION',
+    label: 'Set up your organization',
     desc: 'Create your organization and set up the tournament tools you need today. League Plus and Club modules can be added as they open.',
   },
   {
-    num: '02',
-    label: 'OPEN YOUR PROGRAMS',
+    label: 'Open your programs',
     desc: 'Publish tournament pages, manage teams and contacts, and keep registration work organized without extra spreadsheets.',
   },
   {
-    num: '03',
-    label: 'RUN YOUR WHOLE SEASON',
+    label: 'Run your whole season',
     desc: 'Enter scores from the field, publish results, and keep your tournament history on record — every event your org has run, in one place.',
   },
 ];
@@ -142,7 +138,7 @@ const PLATFORM_BENEFITS = [
   {
     id: 'BEN-002',
     module: 'House league module',
-    entry: 'Open registration, run your draft, publish the schedule, and track standings — all in one dashboard. Parents get automated game notifications without staff sending a single email.',
+    entry: 'Open registration, run your draft, publish the schedule, and track standings — all in one dashboard. Parents hear about their registration automatically, and you can message the whole league in one go.',
   },
   {
     id: 'BEN-003',
@@ -310,319 +306,258 @@ export default async function HomePage({
   const liveModules = MODULE_CARDS.filter(m => !gatingMap[m.planKey] && m.liveBadge !== null);
   const roadmapModules = MODULE_CARDS.filter(m => gatingMap[m.planKey] || m.liveBadge === null);
   return (
-    <>
+    <div className={kit.page}>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className={styles.hero}>
-        <div className={styles.heroBg} />
-        <div className={styles.heroGrid} />
+      <section className={`${kit.hero} ${kit.center}`}>
         <div className="container">
-          <div className={styles.heroHeader}>
-            {/* The Founding Season eyebrow row that sat here (12px uppercase above the headline)
-                was removed 2026-09-07: the site-wide offer bar above the nav and the offer panel
-                below the sub-headline carry the offer at the weight it deserves. */}
-            <h1 className={styles.heroTitle}>
-              Less admin.{' '}
-              <span className={styles.heroAccent}>More sport.</span>
-            </h1>
-
-            <p className={styles.heroSub}>
-              Purpose-built for the people running community sports organizations on evenings
-              and weekends — from your first tournament to a full club program.
-            </p>
-          </div>
-
-          {/* The Founding Season offer panel (owner-approved 2026-09-07): the promise at headline
-              weight, the one offer sentence, the two prices being waived, and the after line —
-              BEFORE the visitor chooses a door. The persona cards below stay the doors and keep
-              their availability-only badges (BUSINESS_DECISIONS 2026-08-07): the panel carries the
-              calendar so they never have to. A promo artifact: gone the day the signup window
-              closes. */}
-          {tpPromoActive && <FoundingSeasonPanel showProducts product={bothPromosLive ? undefined : 'tournament_plus'} />}
-          <AnimateIn>
-            <div className={styles.heroPersonaGrid}>
-              {livePersonas.map((p) => {
-                const body = (
-                  <>
-                    <div className="flex items-start justify-between gap-4">
-                      <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest font-bold">
-                        {p.label}
-                      </span>
-                      {/* Defensive only — `resolvePersonas` guarantees a string either way. Absent
-                          rather than empty, so a future path that does yield no badge leaves no
-                          stray element in the flex row. */}
-                      {p.badge && (
-                        <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray'}`}>
-                          {p.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-mono text-sm font-bold text-fl-text leading-snug">{p.question}</p>
-                    <p className="font-mono text-xs text-data-gray leading-relaxed flex-1">{p.body}</p>
-                  </>
-                );
-                const ctaClass = `tap-target font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray'}`;
-
-                // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
-                // a public demo carries a second, quieter link into it — proof one step after the
-                // claim, never competing with the ask. Two links cannot nest, so a doored card
-                // becomes a div and the persona link stretches over it (::after) to keep
-                // whole-card clickability. A persona with no demo gets no door — a door pattern
-                // on League/Club would promise a demo that does not exist.
-                const doorPath =
-                  p.id === 'tournament' ? SEE_IT_LIVE_PATH
-                  : p.id === 'coaches' ? SEE_IT_LIVE_COACHES_PATH
-                  : null;
-                if (showSandboxDoor && doorPath) {
-                  return (
-                    <div key={p.id} className={`${styles.heroPersonaCard} ${styles.heroPersonaCardStack}`}>
-                      {body}
-                      <Link href={p.href} className={`${ctaClass} ${styles.heroPersonaStretch}`}>
-                        {p.cta} →
-                      </Link>
-                      {/* One label for both worlds — the card's own title says which "it" you'll
-                          see. Product-specific wording was considered and parked (2026-08-10). */}
-                      <Link href={doorPath} className={`${ctaClass} ${styles.heroPersonaSecondary}`}>
-                        <span className={styles.heroPersonaLiveDot} aria-hidden="true" />
-                        See it live — no sign-up →
-                      </Link>
-                    </div>
-                  );
-                }
-
-                return (
-                  <Link key={p.id} href={p.href} className={styles.heroPersonaCard}>
-                    {body}
-                    <span className={ctaClass}>{p.cta} →</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* The roadmap strip — every not-yet-purchasable persona, at footnote weight. Its
-                doors and interest capture survive; only the real estate shrinks. Data-driven from
-                the same gate as the cards, so it empties itself as products launch. */}
-            {roadmapPersonas.length > 0 && (
-              <div className={styles.heroRoadmap}>
-                <span className={styles.heroRoadmapLabel}>On the roadmap</span>
-                {roadmapPersonas.map(p => (
-                  <Link key={p.id} href={p.href} className={styles.heroRoadmapItem}>
-                    <span className={styles.heroRoadmapQ}>{p.question}</span>
-                    <span className={styles.heroRoadmapCta}>{p.cta} →</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </AnimateIn>
-
-          <div className={styles.heroFooterNote}>
-            <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
-              Already know what you need?
-            </span>
-            <Link
-              href="/start"
-              className="tap-target font-mono text-xs uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
-            >
-              Start free →
-            </Link>
-            <Link
-              href="/start"
-              className="tap-target font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
-            >
-              Not sure? See your options →
-            </Link>
+          {/* The Founding Season eyebrow row that sat here (12px uppercase above the headline)
+              was removed 2026-09-07: the site-wide offer bar above the nav and the offer panel
+              below the lead carry the offer at the weight it deserves. */}
+          <h1 className={kit.headline}>
+            Less admin. <span className={kit.accent}>More sport.</span>
+          </h1>
+          <p className={kit.lead}>
+            Purpose-built for the people running community sports organizations on evenings
+            and weekends — from your first tournament to a full club program.
+          </p>
+          {/* The page's one lime (design check D6, Ask 14): the first screen carries its own action. */}
+          <div className={kit.row}>
+            <Link href="/start" className={kit.btn}>Start free</Link>
+            <Link href="/start" className={`${kit.link} ${kit.linkBlock}`}>Not sure? See your options</Link>
           </div>
         </div>
       </section>
 
-      {/* ── Modules ───────────────────────────────────────────────────── */}
-      <section className={styles.features}>
-        <div className="container">
-          <AnimateIn>
-            <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>What&apos;s included</p>
-              <h2 className={styles.sectionTitle}>One platform. Every role.</h2>
-              <p className={styles.sectionSub}>
-                {teamOpen
-                  ? 'Tournament organizers and coaches can start today — free, no credit card required. League Plus and Club are in active development.'
-                  : 'Tournament organizers can start today — free, no credit card required. League Plus, Club, and Coaches Portal are in active development.'}
-              </p>
-            </div>
-          </AnimateIn>
-          <AnimateIn>
-            <div className="flex flex-col gap-4">
-              {/* Live roles: the full deep-dive. */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {liveModules.map((mod) => (
-                  <div key={mod.id} className="border border-blueprint-blue/30 p-8 flex flex-col gap-5 hover:border-blueprint-blue/60 transition-colors">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <span className="font-mono text-[10px] text-data-gray uppercase tracking-widest">{mod.id}</span>
-                        <h3 className="font-mono text-sm font-bold text-fl-text uppercase tracking-wide mt-0.5">{mod.name}</h3>
-                      </div>
-                      <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest text-right leading-relaxed">{mod.planLabel} · {mod.liveBadge}</span>
-                    </div>
-                    <p className="font-mono text-xs text-data-gray leading-relaxed">{mod.tagline}</p>
-                    <ul className="flex flex-col gap-2 flex-1">
-                      {mod.features.map(f => (
-                        <li key={f} className="font-mono text-xs text-data-gray flex gap-2">
-                          <span className="text-logic-lime flex-shrink-0">—</span>
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      href={mod.href}
-                      className="tap-target font-mono text-xs text-logic-lime uppercase tracking-widest hover:text-fl-text transition-colors self-start"
-                    >
-                      This is me →
+      <div className={`container ${styles.doors}`}>
+        {/* The Founding Season offer panel (owner-approved 2026-09-07): the promise at headline
+            weight, the one offer sentence, the two prices being waived, and the after line —
+            BEFORE the visitor chooses a door. The persona cards below stay the doors and keep
+            their availability-only badges (BUSINESS_DECISIONS 2026-08-07): the panel carries the
+            calendar so they never have to. A promo artifact: gone the day the signup window
+            closes. */}
+        {tpPromoActive && <FoundingSeasonPanel showProducts product={bothPromosLive ? undefined : 'tournament_plus'} />}
+
+        <div className={`${kit.grid2} ${styles.doorsGrid}`}>
+          {livePersonas.map((p) => {
+            const body = (
+              <>
+                <div className={styles.cardHead}>
+                  <p className={`${kit.eyebrow} ${styles.flush}`}>{p.label}</p>
+                  {/* Defensive only — `resolvePersonas` guarantees a string either way. Absent
+                      rather than empty, so a future path that does yield no badge leaves no
+                      stray element in the row. */}
+                  {p.badge && <span className={kit.tag}>{p.badge}</span>}
+                </div>
+                <h3 className={kit.title}>{p.question}</h3>
+                <p className={`${kit.body} ${styles.grow}`}>{p.body}</p>
+              </>
+            );
+            const linkClass = `${kit.link} ${kit.linkBlock}`;
+
+            // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
+            // a public demo carries a second, quieter link into it — proof one step after the
+            // claim, never competing with the ask. Two links cannot nest, so a doored card
+            // becomes a div and the persona link stretches over it (::after) to keep
+            // whole-card clickability. A persona with no demo gets no door — a door pattern
+            // on League/Club would promise a demo that does not exist.
+            const doorPath =
+              p.id === 'tournament' ? SEE_IT_LIVE_PATH
+              : p.id === 'coaches' ? SEE_IT_LIVE_COACHES_PATH
+              : null;
+            if (showSandboxDoor && doorPath) {
+              return (
+                <div key={p.id} className={`${kit.card} ${kit.stack} ${styles.doored}`}>
+                  {body}
+                  <div className={styles.links}>
+                    <Link href={p.href} className={`${linkClass} ${styles.stretch}`}>
+                      {p.cta}
+                    </Link>
+                    {/* One label for both worlds — the card's own title says which "it" you'll
+                        see. Product-specific wording was considered and parked (2026-08-10). */}
+                    <Link href={doorPath} className={`${linkClass} ${kit.live} ${styles.secondary}`}>
+                      See it live — no sign-up
                     </Link>
                   </div>
-                ))}
-              </div>
-              {/* In-development roles: one confident sentence each — discoverable, not a peer.
-                  The full pitch lives on each role's own page, one click away. */}
-              {roadmapModules.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {roadmapModules.map((mod) => (
-                    <Link
-                      key={mod.id}
-                      href={mod.href}
-                      className="border border-blueprint-blue/20 px-6 py-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 hover:border-blueprint-blue/50 transition-colors"
-                    >
-                      <span className="font-mono text-xs font-bold text-data-gray uppercase tracking-wide">{mod.name}</span>
-                      <span className="font-mono text-[10px] text-data-gray uppercase tracking-widest">{mod.planLabel} · In development</span>
-                      <span className="font-mono text-xs text-data-gray leading-relaxed w-full">
-                        {mod.stripLine}{' '}
-                        <span className="text-data-gray uppercase text-[10px] tracking-widest">Learn more →</span>
-                      </span>
-                    </Link>
-                  ))}
                 </div>
-              )}
+              );
+            }
+
+            return (
+              <Link key={p.id} href={p.href} className={`${kit.card} ${kit.stack} ${styles.whole}`}>
+                {body}
+                <span className={`${linkClass} ${styles.ctaText}`}>{p.cta}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* The roadmap strip — every not-yet-purchasable persona, at footnote weight. Its
+            doors and interest capture survive; only the real estate shrinks. Data-driven from
+            the same gate as the cards, so it empties itself as products launch. */}
+        {roadmapPersonas.length > 0 && (
+          <div className={`${kit.card} ${kit.cardFlat} ${kit.row} ${styles.roadmap}`}>
+            <p className={`${kit.eyebrow} ${styles.flush}`}>On the roadmap</p>
+            {roadmapPersonas.map(p => (
+              <Link key={p.id} href={p.href} className={styles.roadmapItem}>
+                <span className={kit.small}>{p.question}</span>
+                <span className={`${kit.link} ${styles.ctaText}`}>{p.cta}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Modules ───────────────────────────────────────────────────── */}
+      <section className={kit.section}>
+        <div className="container">
+          <div className={styles.head}>
+            <p className={kit.eyebrow}>What&apos;s included</p>
+            <h2 className={kit.heading}>One platform. Every role.</h2>
+            <p className={`${kit.body} ${styles.sub}`}>
+              {teamOpen
+                ? 'Tournament organizers and coaches can start today — free, no credit card required. League Plus and Club are in active development.'
+                : 'Tournament organizers can start today — free, no credit card required. League Plus, Club, and Coaches Portal are in active development.'}
+            </p>
+          </div>
+          {/* Live roles: the full deep-dive. */}
+          <div className={kit.grid2}>
+            {liveModules.map((mod) => (
+              <div key={mod.id} className={`${kit.card} ${kit.stack}`}>
+                <p className={styles.tagRow}>
+                  <span className={kit.tag}>{mod.planLabel} · {mod.liveBadge}</span>
+                </p>
+                <h3 className={kit.title}>{mod.name}</h3>
+                <p className={kit.body}>{mod.tagline}</p>
+                <ul className={`${kit.ticks} ${styles.grow}`}>
+                  {mod.features.map(f => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+                <div className={kit.push}>
+                  <Link href={mod.href} className={`${kit.link} ${kit.linkBlock}`}>
+                    This is me
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* In-development roles: one confident sentence each — discoverable, not a peer.
+              The full pitch lives on each role's own page, one click away. */}
+          {roadmapModules.length > 0 && (
+            <div className={`${kit.grid2} ${styles.roadmapModules}`}>
+              {roadmapModules.map((mod) => (
+                <div key={mod.id} className={`${kit.card} ${kit.cardFlat}`}>
+                  <div className={styles.nameRow}>
+                    <h3 className={`${kit.subhead} ${styles.flush}`}>{mod.name}</h3>
+                    <span className={kit.tag}>{mod.planLabel} · In development</span>
+                  </div>
+                  <p className={kit.small}>{mod.stripLine}</p>
+                  <Link href={mod.href} className={`${kit.link} ${kit.linkBlock}`}>
+                    {mod.planKey === 'team' ? 'See the Coaches Portal' : `See what ${mod.planLabel} includes`}
+                  </Link>
+                </div>
+              ))}
             </div>
-          </AnimateIn>
+          )}
         </div>
       </section>
 
-      {/* ── Initialization Sequence ───────────────────────────────────── */}
-      <section className={styles.howItWorks}>
+      {/* ── How it works ──────────────────────────────────────────────── */}
+      <section className={kit.section}>
         <div className="container">
-          <AnimateIn>
-            <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>How It Works</p>
-              <h2 className={styles.sectionTitle}>Up and running in a day</h2>
-              <p className={styles.sectionSub}>
-                No manual needed. Set up your organization, open your programs, run your whole season.
-              </p>
-            </div>
-          </AnimateIn>
-          <div className={styles.stepsGrid}>
-            {STEPS.map(({ num, label, desc }, i) => (
-              <AnimateIn key={num} delay={i * 100}>
-                <div className="p-8 border border-blueprint-blue/30 hover:border-blueprint-blue/60 transition-colors relative">
-                  <span className="font-mono text-6xl font-bold text-blueprint-blue/20 absolute top-5 right-6 leading-none select-none">
-                    {num}
-                  </span>
-                  <div className="hud-label text-blueprint-blue mb-3">{label}</div>
-                  <p className="font-mono text-xs text-data-gray leading-relaxed">{desc}</p>
-                </div>
-              </AnimateIn>
+          <div className={styles.head}>
+            <p className={kit.eyebrow}>How it works</p>
+            <h2 className={kit.heading}>Up and running in a day</h2>
+            <p className={`${kit.body} ${styles.sub}`}>
+              No manual needed. Set up your organization, open your programs, run your whole season.
+            </p>
+          </div>
+          <div className={kit.grid3}>
+            {STEPS.map(({ label, desc }, i) => (
+              <div key={label} className={`${kit.card} ${kit.cardFlat}`}>
+                <p className={kit.counter}>Step {i + 1}</p>
+                <h3 className={`${kit.subhead} ${styles.stepTitle}`}>{label}</h3>
+                <p className={kit.small}>{desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── Pricing ───────────────────────────────────────────────────── */}
-      <section className={styles.pricing} id="pricing">
+      <section className={kit.section} id="pricing">
         <div className="container">
-          <AnimateIn>
-            <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>Pricing</p>
-              <h2 className={styles.sectionTitle}>Plans built for how you operate.</h2>
-              <p className={styles.sectionSub}>
-                {[
-                  teamOpen
-                    ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now.'
-                    : 'Tournament and Tournament Plus are available now.',
-                  closedProgramPlansSentence(gatingMap),
-                ].filter(Boolean).join(' ')}
-              </p>
-            </div>
-          </AnimateIn>
+          <div className={styles.head}>
+            <p className={kit.eyebrow}>Pricing</p>
+            <h2 className={kit.heading}>Plans built for how you operate.</h2>
+            <p className={`${kit.body} ${styles.sub}`}>
+              {[
+                teamOpen
+                  ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now.'
+                  : 'Tournament and Tournament Plus are available now.',
+                closedProgramPlansSentence(gatingMap),
+              ].filter(Boolean).join(' ')}
+            </p>
+          </div>
 
           {/* Founding Season — one line, not a second box (owner-approved 2026-09-07): the hero
               panel already made the pitch three screens up. Speaks for BOTH promos while both are
               running (Tournament Plus-only otherwise); a promo artifact, gone when the signup
               window closes. */}
           {tpPromoActive && (
-            <p className="font-mono text-xs text-data-gray text-center leading-relaxed max-w-2xl mx-auto -mt-2 mb-8">
-              <span className="font-bold text-logic-lime">Founding Season:</span>{' '}
+            <p className={`${kit.small} ${styles.promoLine}`}>
+              <strong className={styles.promoName}>Founding Season:</strong>{' '}
               {bothPromosLive ? 'Tournament Plus and the Premium Coaches Portal are' : 'Tournament Plus is'} free through {FOUNDING_SEASON_END_LABEL} when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}.
             </p>
           )}
 
           <PricingSection gatingMap={gatingMap} marketingLayout />
 
-          <div className="flex justify-center mt-6">
-            <Link
-              href="/pricing"
-              className="tap-target font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/30 px-6 py-2.5 hover:border-blueprint-blue hover:text-fl-text transition-colors"
-            >
-              Compare all plans in detail →
+          <p className={styles.after}>
+            <Link href="/pricing" className={`${kit.btn} ${kit.btnSecondary}`}>
+              Compare all plans in detail
             </Link>
-          </div>
+          </p>
         </div>
       </section>
 
-      {/* ── Platform Benefits ─────────────────────────────────────────── */}
-      <section className={styles.testimonials}>
+      {/* ── Platform highlights ───────────────────────────────────────── */}
+      <section className={kit.section}>
         <div className="container">
-          <AnimateIn>
-            <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>Platform highlights</p>
-              <h2 className={styles.sectionTitle}>What it actually replaces</h2>
-            </div>
-          </AnimateIn>
-          <div className={styles.testimonialGrid}>
-            {PLATFORM_BENEFITS.map(({ id, module, entry }, i) => (
-              <AnimateIn key={id} delay={i * 120}>
-                <div className="border-l-2 border-blueprint-blue bg-hud-surface p-6 flex flex-col gap-4">
-                  <div className="font-mono text-[10px] text-data-gray uppercase tracking-widest">
-                    {module}
-                  </div>
-                  <p className="font-mono text-xs text-fl-text/80 leading-relaxed">{entry}</p>
-                </div>
-              </AnimateIn>
+          <div className={styles.head}>
+            <p className={kit.eyebrow}>Platform highlights</p>
+            <h2 className={kit.heading}>What it actually replaces</h2>
+          </div>
+          <div className={kit.grid2}>
+            {PLATFORM_BENEFITS.map(({ id, module, entry }) => (
+              <div key={id} className={`${kit.card} ${kit.cardFlat}`}>
+                <p className={kit.eyebrow}>{module}</p>
+                <p className={`${kit.body} ${styles.flush}`}>{entry}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── Bottom CTA ────────────────────────────────────────────────── */}
-      <section className={styles.ctaSection}>
-        <div className={styles.ctaBg} />
+      <section className={`${kit.section} ${kit.band} ${kit.center}`}>
         <div className="container">
-          <p className={`${styles.eyebrow} mb-6`}>Built for how community sport actually runs</p>
-          <p className={styles.ctaSub}>
+          <p className={kit.eyebrow}>Built for how community sport actually runs</p>
+          <p className={kit.lead}>
             Your organization isn&apos;t just running a tournament. You&apos;re managing house league
             registrations, rep team tryouts, field bookings, and a treasurer who tracks
             dues in a spreadsheet — all with volunteers, on nights and weekends, for the
             kids in your community.
           </p>
-          <h2 className={styles.ctaTitle}>
+          <h2 className={`${kit.heading} ${styles.ctaHeading}`}>
             Your season belongs{' '}
-            <span className={styles.heroAccent}>on a real platform.</span>
+            <span className={kit.accent}>on a real platform.</span>
           </h2>
-          <div className={styles.ctaActions}>
-            <Link
-              href="/start"
-              className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-            >
-              Start Your Organization
-            </Link>
-          </div>
+          <Link href="/start" className={kit.btn}>
+            Start your organization
+          </Link>
         </div>
       </section>
-    </>
+    </div>
   );
 }

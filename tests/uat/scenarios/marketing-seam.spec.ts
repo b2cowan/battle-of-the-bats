@@ -108,7 +108,7 @@ test.describe('R4 — the plan cards point at real actions for an operator', () 
   test('the SSR payload stays role-free — /pricing is still statically cacheable', async ({ request }) => {
     const html = await (await request.get('/pricing')).text();
     expect(html, 'billing deep-link must never be server-rendered').not.toContain('/admin/org/billing');
-    expect(html).toContain('Sign In');
+    expect(html).toContain('Sign in');
   });
 });
 

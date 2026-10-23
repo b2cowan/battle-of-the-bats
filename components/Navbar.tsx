@@ -12,6 +12,7 @@ import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import AccountMenu from '@/components/shared/AccountMenu';
+import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import { DEMOS_PATH } from '@/lib/sandbox-door';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
@@ -37,7 +38,6 @@ const MARKETING_NAV_LINKS = [
 function isMarketingPath(pathname: string) {
   return (
     pathname === '/' ||
-    pathname.startsWith('/platform') ||
     pathname.startsWith('/for-') ||
     pathname.startsWith('/coaches') ||
     pathname.startsWith('/pricing') ||
@@ -134,9 +134,9 @@ export default function Navbar() {
 
   /* ── Marketing nav (/, /pricing, /for-*, /changelog, /coaches/join…) ── */
   if (isMarketingPath(pathname)) {
-    // The quiet pill's ONE shell and face, worn by the Sign In link and the account menu's trigger
+    // The quiet door's ONE shell and face, worn by the Sign in link and the account menu's trigger
     // alike, so the two states can never drift apart.
-    const quietCtaClass = `${styles.marketingCta} ${styles.marketingQuietCta} text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue transition-colors`;
+    const quietCtaClass = `${styles.marketingQuiet} ${styles.marketingQuietCta}`;
     const quietCtaFace = (label: string) => (
       <>
         {/* Sized by prop, matching how the coach and admin strips render this same glyph. */}
@@ -150,21 +150,23 @@ export default function Navbar() {
             offer bar publishes --offer-bar-h while it is mounted and this bar must sit beneath it
             (the rendered layout check caught every nav link hidden under the bar when the utility
             pinned it to 0 — /review 2026-09-07). */}
-        <nav className={cn(
-          styles.marketingNav,
-          'fixed left-0 right-0 z-50 transition-all duration-300',
-          'border-b border-blueprint-blue/30',
-          scrolled && 'border-blueprint-blue/80 bg-pitch-black/85 backdrop-blur-md',
-          !scrolled && 'bg-transparent'
-        )}>
+        {/* ⚖ ALWAYS WARM (The public face, warm: S4, owner Ask 5 B, 2026-10-23): the marketing set has no
+            Dark version, so the phone's browser bar takes the paper too, whatever the setting, and
+            `data-warm-base` paints <body> the paper under it (the bounce past either end of a page,
+            app/globals.css). The bar is white with a hairline at every scroll position, as drawn. */}
+        <CoachThemeColor fixed="warm" />
+        <nav
+          className={cn(styles.marketingNav, scrolled && styles.marketingNavScrolled)}
+          data-warm-base="marketing"
+        >
           <div className={`container ${styles.marketingInner}`}>
-            {/* §68: the type size moved off Tailwind's `text-xl` and into the module, because it is
-                the one piece of this row that has to STEP DOWN on a phone — see .marketingWordmark.
-                Same mark, same three colours, same 1.25rem on every desktop. */}
-            <Link href="/" className={`${styles.marketingWordmark} flex items-center font-mono font-bold tracking-tighter`}>
-              <span className="text-fl-text">FIELD</span>
-              <span className="text-logic-lime">LOGIC</span>
-              <span className="text-data-gray/50">HQ</span>
+            {/* §68: the wordmark's size steps down on a phone — see .marketingWordmark. Part A keeps
+                today's three-ink mark (FIELD ink · LOGIC olive · HQ dim, P9); Part B replaces it with
+                the lockup. */}
+            <Link href="/" className={styles.marketingWordmark}>
+              <span className={styles.wmField}>FIELD</span>
+              <span className={styles.wmLogic}>LOGIC</span>
+              <span className={styles.wmHq}>HQ</span>
             </Link>
 
             <div className={styles.marketingLinks}>
@@ -172,11 +174,8 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className={cn(
-                    styles.marketingLink,
-                    'transition-colors',
-                    pathname.startsWith(href) ? 'text-logic-lime' : 'text-data-gray hover:text-fl-text'
-                  )}
+                  className={cn(styles.marketingLink, pathname.startsWith(href) && styles.marketingLinkOn)}
+                  aria-current={pathname.startsWith(href) ? 'page' : undefined}
                 >
                   {label}
                 </Link>
@@ -215,19 +214,18 @@ export default function Navbar() {
                 identical shell and face; signing out from it stays on this page. */}
             <div className={styles.marketingActions}>
               {marketingSignedIn ? (
-                <AccountMenu className={quietCtaClass} wrapClassName={styles.marketingAccount} signOutTo="here">
+                <AccountMenu className={quietCtaClass} wrapClassName={styles.marketingAccount} signOutTo="here" warm>
                   {quietCtaFace('Account')}
                 </AccountMenu>
               ) : (
-                <Link href="/auth/login" aria-label="Sign In" className={quietCtaClass}>
-                  {quietCtaFace('Sign In')}
+                <Link href="/auth/login" aria-label="Sign in" className={quietCtaClass}>
+                  {quietCtaFace('Sign in')}
                 </Link>
               )}
-              <Link
-                href={marketingSignedIn ? '/discover' : '/start'}
-                className={`${styles.marketingCta} bg-logic-lime text-pitch-black hover:bg-white transition-colors`}
-              >
-                {marketingSignedIn ? 'Open app →' : 'Get Started'}
+              {/* Ask 14 (one lime per view): every marketing page carries its own lime door, and this
+                  bar is in every view, so its door is the white secondary. */}
+              <Link href={marketingSignedIn ? '/discover' : '/start'} className={styles.marketingCta}>
+                {marketingSignedIn ? 'Open app' : 'Get started'}
               </Link>
             </div>
           </div>

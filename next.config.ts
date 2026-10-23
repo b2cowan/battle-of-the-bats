@@ -96,6 +96,10 @@ const nextConfig: NextConfig = {
       // billing) passed through; `?account=1` is the account-only sign-up and stays. Not permanent: the address still
       // serves account-only, so no browser should learn to skip it.
       { source: '/auth/signup', missing: [{ type: 'query', key: 'account', value: '1' }], destination: '/start/tournament', permanent: false },
+      // The four pre-rename product pages (/platform/accounting, /house-league, /rep-teams, /tournaments) were retired in
+      // The public face, warm: S4 (owner, 2026-10-23): nothing linked to them, they were out of the sitemap, and the warm
+      // marketing set would have left them dark under a warm bar. An old bookmark or search result lands on the home page.
+      { source: '/platform/:page(accounting|house-league|rep-teams|tournaments)', destination: '/', permanent: true },
     ];
   },
 };
