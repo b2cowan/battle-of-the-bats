@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { networkInterfaces } from "node:os";
+import { OWN_HOST_PATTERN } from "./lib/own-hosts";
 
 // This PC's own LAN addresses (e.g. 192.168.2.200), read at startup so a new DHCP lease needs only
 // a dev-server restart, never an edit here.
@@ -9,6 +10,9 @@ function ownLanAddresses(): string[] {
     .filter((a) => !!a && a.family === "IPv4" && !a.internal)
     .map((a) => a!.address);
 }
+
+// `has` clause limiting a redirect to the hosts that are ours (see lib/own-hosts.ts).
+const ownHost = [{ type: 'host' as const, value: OWN_HOST_PATTERN }];
 
 const nextConfig: NextConfig = {
   // Phone testing against `npm run dev` (owner, 2026-10-09). Next 16 answers 403 to its dev-only
@@ -82,15 +86,17 @@ const nextConfig: NextConfig = {
         destination: 'https://www.fieldlogichq.ca/:path*',
         permanent: true,
       },
-      // Legacy path redirects (pre-multi-tenancy)
-      { source: '/schedule',     destination: '/milton-bats/schedule',     permanent: true },
-      { source: '/results',      destination: '/milton-bats/results',      permanent: true },
-      { source: '/register',     destination: '/milton-bats/register',     permanent: true },
-      { source: '/rules',        destination: '/milton-bats/rules',        permanent: true },
-      { source: '/news',         destination: '/milton-bats/news',         permanent: true },
-      { source: '/teams',        destination: '/milton-bats/teams',        permanent: true },
-      { source: '/teams/:id',    destination: '/milton-bats/teams/:id',    permanent: true },
-      { source: '/admin/:path*', destination: '/milton-bats/admin/:path*', permanent: true },
+      // Legacy path redirects (pre-multi-tenancy). Our own hosts ONLY (Club Tier 4e): a club's own web address
+      // (www.lakeshorelynx.ca) is not ours, and there /teams is THAT club's Teams page - proven live, these sent it
+      // to another club's. A host that is not listed is by definition a club's, so the list is the safe side to keep.
+      { source: '/schedule',     has: ownHost, destination: '/milton-bats/schedule',     permanent: true },
+      { source: '/results',      has: ownHost, destination: '/milton-bats/results',      permanent: true },
+      { source: '/register',     has: ownHost, destination: '/milton-bats/register',     permanent: true },
+      { source: '/rules',        has: ownHost, destination: '/milton-bats/rules',        permanent: true },
+      { source: '/news',         has: ownHost, destination: '/milton-bats/news',         permanent: true },
+      { source: '/teams',        has: ownHost, destination: '/milton-bats/teams',        permanent: true },
+      { source: '/teams/:id',    has: ownHost, destination: '/milton-bats/teams/:id',    permanent: true },
+      { source: '/admin/:path*', has: ownHost, destination: '/milton-bats/admin/:path*', permanent: true },
       // Run a tournament's step 1 moved to /start/tournament when its intro page folded into it (The first look, Ask 6,
       // 2026-10-19). An old /auth/signup link forwards there before any render, its query (the pricing page's plan and
       // billing) passed through; `?account=1` is the account-only sign-up and stays. Not permanent: the address still

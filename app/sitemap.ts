@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { getClubPageSitemapEntries, getDirectorySitemapEntries, getOrgSitemapEntries } from '@/lib/directory';
 import { isDemoOrgSlug } from '@/lib/demo-org';
+import { isOwnHost } from '@/lib/own-hosts';
+import { requestHost } from '@/lib/request-host';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
@@ -50,6 +52,10 @@ async function safeEntries<T extends { href: string }>(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // A club's own web address (Club Tier 4e) is not ours: it must never list FieldLogicHQ's marketing pages or other
+  // clubs' pages under its name. Its own pages arrive with the host-to-club lookup (Part 4); until then it lists none.
+  if (!isOwnHost(await requestHost())) return [];
+
   const staticEntries: MetadataRoute.Sitemap = STATIC_PATHS.map(s => ({
     url: `${SITE_URL}${s.path}`,
     changeFrequency: s.changeFrequency,
