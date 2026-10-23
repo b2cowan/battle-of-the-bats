@@ -105,7 +105,7 @@
 }
 
 .wordmark {
-  font-family: var(--font-data, monospace);
+  font-family: var(--font-data, monospace); /* type-ok: wordmark */
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.05em;

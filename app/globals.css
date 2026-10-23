@@ -711,7 +711,19 @@ body:has([data-chat-fullbleed]) {
      a first-run page heading — one per screen, no back arrow — takes the display step. A sign-up
      screen is not a working page: its heading is the one thing on it ("Start a team", "Create
      your account"). It uses this token as it is; it does not mint a new one, and a working page's
-     title stays on `--type-title`. */
+     title stays on `--type-title`.
+
+     ⚠ A SECOND NAMED EXCEPTION, ABOVE THE LADDER (owner, The public face Ask 3 A, 2026-10-23):
+     a marketing page's headline — ONE PER PAGE, the poster line a visitor reads first ("Less admin.
+     More sport.") — is Barlow Condensed 700 in sentence case at 64px on a desktop and 40px on a
+     phone. It is larger than any step here and is not a working page's title, so it does not take
+     one. It mints NO ninth token, and that is a choice, not an omission: the ladder names a size so
+     that the portals' many consumers cannot drift apart, and this job has one consumer (the
+     marketing set's single shared headline rule, built once in the public face's S4, where both
+     values are written). A token would also need a second one for the phone, since a step has
+     one value. Nothing else on a marketing page borrows these two sizes: a section heading is
+     `--type-display` and a card title `--type-title`. The public rules are P1–P10 in
+     docs/agents/brand/VISUAL_IDENTITY.md. */
   --type-display: 2rem;      /* 32px — a number read from the bench or across a room: the score,
                                 the season record. NOT a big card figure. */
   --type-figure:  1.5rem;    /* 24px — the number a card exists to show, with its title above it */

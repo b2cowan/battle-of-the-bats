@@ -153,11 +153,11 @@
 
 /* Free pill = ink-on-lime (the pillOn treatment; raw lime never renders as text on warm). */
 .tag {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: plan chip */
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: plan chip */
   border-radius: var(--home-radius-pill);
   padding: 0.16rem 0.5rem;
   color: var(--home-ink);

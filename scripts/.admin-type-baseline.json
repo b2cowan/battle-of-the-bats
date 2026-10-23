@@ -191,9 +191,7 @@
     "face": 1
   },
   "components/shared/BrandLockup.module.css": {
-    "face": 1,
-    "heavy": 1,
-    "caps": 1
+    "heavy": 1
   },
   "components/shared/FanViewLink.module.css": {
     "face": 1

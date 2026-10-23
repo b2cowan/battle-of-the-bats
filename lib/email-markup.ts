@@ -67,6 +67,7 @@ const CALLOUT_BLUE = 'border:1px solid rgba(30,58,138,0.25);border-left:3px soli
 const CALLOUT_LABEL = 'margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;';
 const BTN_STYLE = 'display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;';
 const LINK_STYLE = 'display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;';
+// type-ok: data — a {{token}} placeholder in the template editor's preview
 const CHIP_STYLE = 'background:rgba(30,58,138,0.35);border:1px solid rgba(30,58,138,0.6);padding:0 3px;font-family:monospace;font-size:0.9em;color:#93c5fd;';
 
 /**

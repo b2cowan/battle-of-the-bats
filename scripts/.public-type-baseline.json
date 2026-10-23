@@ -1,0 +1,158 @@
+{
+  "app/(consumer)/auth/auth.module.css": {
+    "face": 4,
+    "caps": 3
+  },
+  "app/(consumer)/start/start.module.css": {
+    "face": 3,
+    "caps": 2,
+    "heavy": 2
+  },
+  "app/changelog/page.module.css": {
+    "face": 8,
+    "caps": 4,
+    "heavy": 3
+  },
+  "app/for-clubs/page.module.css": {
+    "face": 34,
+    "caps": 14,
+    "heavy": 3
+  },
+  "app/for-coaches/page.module.css": {
+    "face": 35,
+    "caps": 14,
+    "heavy": 3
+  },
+  "app/for-leagues/page.module.css": {
+    "face": 32,
+    "caps": 13,
+    "heavy": 3
+  },
+  "app/for-tournament-organizers/page.module.css": {
+    "face": 34,
+    "caps": 15,
+    "heavy": 4
+  },
+  "app/global-error.tsx": {
+    "face": 1,
+    "caps": 2
+  },
+  "app/page.module.css": {
+    "face": 4,
+    "caps": 3,
+    "heavy": 3
+  },
+  "app/pricing/page.module.css": {
+    "face": 29,
+    "caps": 11
+  },
+  "app/see-it-live/switch/switch.module.css": {
+    "face": 3,
+    "heavy": 2,
+    "caps": 3
+  },
+  "app/unsubscribe/confirmed/page.tsx": {
+    "heavy": 1
+  },
+  "components/EarlyAccessForm.module.css": {
+    "face": 5,
+    "heavy": 2,
+    "caps": 2
+  },
+  "components/EarlyAccessModalTrigger.module.css": {
+    "face": 4,
+    "heavy": 3,
+    "caps": 1
+  },
+  "components/Footer.module.css": {
+    "face": 3
+  },
+  "components/Navbar.module.css": {
+    "heavy": 4,
+    "caps": 7,
+    "face": 6
+  },
+  "components/PricingSection.module.css": {
+    "face": 16,
+    "caps": 7
+  },
+  "components/auth/StartSteps.module.css": {
+    "caps": 1,
+    "heavy": 1
+  },
+  "components/consumer/ConsumerShell.module.css": {
+    "face": 2,
+    "caps": 2
+  },
+  "components/marketing/FoundingSeasonOfferBar.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/marketing/FoundingSeasonPanel.module.css": {
+    "face": 5,
+    "caps": 2,
+    "heavy": 1
+  },
+  "components/marketing/SlideDrawings.module.css": {
+    "face": 1
+  },
+  "components/marketing/WalkthroughPage.module.css": {
+    "face": 11,
+    "caps": 6,
+    "heavy": 3
+  },
+  "components/marketing/WalkthroughPresent.module.css": {
+    "face": 5,
+    "caps": 2,
+    "heavy": 1
+  },
+  "components/marketing/tournament-growth.module.css": {
+    "face": 1,
+    "heavy": 1
+  },
+  "components/shared/AccountMenu.module.css": {
+    "face": 2
+  },
+  "components/shared/BrandLockup.module.css": {
+    "heavy": 1
+  },
+  "components/shared/FlipPill.module.css": {
+    "caps": 1,
+    "face": 1
+  },
+  "components/shared/GetAppQr.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/shared/WorkspacesPill.module.css": {
+    "face": 1
+  },
+  "lib/basic-coach-announcements.ts": {
+    "caps": 1,
+    "heavy": 1
+  },
+  "lib/email-markup.ts": {
+    "heavy": 2,
+    "caps": 1
+  },
+  "lib/email.ts": {
+    "caps": 30,
+    "heavy": 20,
+    "face": 8
+  },
+  "lib/family-email.ts": {
+    "caps": 1,
+    "heavy": 1
+  },
+  "lib/notify.ts": {
+    "caps": 1,
+    "heavy": 1
+  },
+  "lib/practice-plan-email.ts": {
+    "face": 1
+  },
+  "public/offline.html": {
+    "heavy": 2,
+    "caps": 1
+  }
+}

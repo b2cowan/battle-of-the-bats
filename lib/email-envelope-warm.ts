@@ -67,6 +67,7 @@ export const WARM_MARKUP_LOOK: LookStyles = {
   calloutBlue: `border-left:3px solid ${W.secondary};`,
   calloutLabel: `margin:0 0 8px;font-family:${W.font};font-size:16px;line-height:1.3;font-weight:700;color:${W.ink};`,
   link: `display:inline-block;color:${W.olive};text-decoration:underline;font-family:${W.font};font-weight:700;font-size:16px;padding:6px 0;`,
+  // type-ok: data — a {{token}} placeholder in the template editor's preview
   chip: `background:${W.chipGround};border:1px solid ${W.chipEdge};padding:0 3px;font-family:monospace;font-size:0.9em;color:${W.chipInk};`,
   button: (label, href) => warmEmailButton(label, href),
 };
@@ -99,6 +100,7 @@ export function warmEmailButton(label: string, href: string): string {
 }
 
 /** The wordmark (D-F11): FIELD in ink, LOGIC in olive, HQ in the dark grey. */
+// type-ok: wordmark
 const WORDMARK = `<p style="margin:0 0 22px;font-family:'Courier New',Courier,monospace;font-size:15px;line-height:1.2;font-weight:700;letter-spacing:0.02em;color:${W.ink};">`
   + `FIELD<span style="color:${W.olive};">LOGIC</span><span style="color:${W.hq};">HQ</span></p>`;
 

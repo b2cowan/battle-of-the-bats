@@ -1,5 +1,7 @@
 ﻿# FieldLogicHQ Brand Strategy
 
+> This document covers positioning, voice and audience. **How the public face looks** (type rules, colour, email, the wordmark) is written in [`VISUAL_IDENTITY.md`](VISUAL_IDENTITY.md), which links back here for voice.
+
 ## Coaches Portal Unification Addendum
 
 **Added 2026-05-25.** The product previously described as Coach Portal, Team, or standalone Team is now one customer-facing product: **Coaches Portal**.

@@ -86,7 +86,7 @@
 }
 
 .wordmark {
-  font-family: var(--font-data, monospace);
+  font-family: var(--font-data, monospace); /* type-ok: wordmark */
   font-weight: 700;
   font-size: 1.05rem;
   letter-spacing: -0.02em;
@@ -317,7 +317,7 @@
   border-radius: 999px;
   background: var(--danger);
   color: var(--fl-text);
-  font-family: var(--font-data, monospace);
+  font-family: var(--font-data, monospace); /* type-ok: data — a count */
   font-size: 0.6rem;
   font-weight: 700;
   line-height: 1;
@@ -455,7 +455,7 @@
     border-radius: 999px;
     background: var(--danger);
     color: var(--fl-text);
-    font-family: var(--font-data, monospace);
+    font-family: var(--font-data, monospace); /* type-ok: data — a count */
     font-size: 0.58rem;
     font-weight: 700;
     line-height: 1;

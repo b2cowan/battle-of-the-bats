@@ -44,12 +44,12 @@ export default async function UnsubscribeConfirmedPage({ searchParams }: Props) 
           borderBottom: '1px solid rgba(217, 249, 157, 0.12)',
         }}>
           <span style={{
-            fontFamily: 'monospace, sans-serif',
+            fontFamily: 'monospace, sans-serif', // type-ok: wordmark
             fontSize: '0.65rem',
             fontWeight: 900,
             color: '#D9F99D',
             letterSpacing: '0.18em',
-            textTransform: 'uppercase',
+            textTransform: 'uppercase', // type-ok: wordmark
           }}>
             FIELDLOGICHQ
           </span>

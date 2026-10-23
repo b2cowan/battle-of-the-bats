@@ -83,7 +83,7 @@
 
 /* The signed-in email stays in the data face: an address is read character by character (A2). */
 .identityValue {
-  font-family: var(--font-data); /* type-ok: an address */
+  font-family: var(--font-data); /* type-ok: data — an address */
   font-size: 0.74rem;
   font-weight: 500;
   color: var(--fl-text);

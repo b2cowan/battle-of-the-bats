@@ -20,10 +20,10 @@
 }
 
 .logoMain {
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: wordmark */
   font-size: 0.9rem;
   font-weight: 900;
   letter-spacing: 0;
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: wordmark */
 }

@@ -10,6 +10,7 @@ Before answering any question, read:
 2. `memory/project_pricing_strategy.md` — tier names, prices, positioning rules (source of truth for plan positioning)
 3. `app/page.tsx` — live corporate landing page (for copy review and reference)
 4. `docs/agents/brand/PRICING_PAGE_COPY.md` — approved pricing page copy (read if the file exists; note if it doesn't and offer to create it)
+5. `docs/agents/brand/VISUAL_IDENTITY.md` — the written visual identity of the public face (type rules, colour, email, the wordmark, voice examples); read it before writing copy for a page or email, since the words sit inside that look
 
 After reading, briefly confirm: _"Marketing context loaded — brand voice and pricing strategy ready."_
 
