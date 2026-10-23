@@ -204,7 +204,7 @@ async function capture(set) {
         // A refusal is a real screen that says nothing about the one asked for — a wrong session.
         // VISIBLE text only: the 404 page's markup rides inside every page's inline data.
         const body = (await page.innerText('body').catch(() => '')) || '';
-        const refused = ['Access Restricted', 'Access restricted', 'don\'t have access', 'don’t have access', 'You do not have access', 'You do not have permission', 'ROUTE_NOT_FOUND']
+        const refused = ['Access Restricted', 'Access restricted', 'don\'t have access', 'don’t have access', 'You do not have access', 'You do not have permission', 'ROUTE_NOT_FOUND', 'We can’t find that page']
           .find((t) => body.includes(t));
         if (refused) throw new Error(`landed on "${refused}"`);
         await page.evaluate(() => document.fonts.ready);

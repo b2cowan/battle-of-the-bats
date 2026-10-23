@@ -1,0 +1,397 @@
+<title>System Screens Walk</title>
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · public face, warm · S5</span>
+    <h1>The system screens</h1>
+    <p class="sub">Built 2026-10-23. One purpose: the six screens a person meets when something is missing or wrong (a page that does not exist, a page that crashed, no connection, an unsubscribe link, a paused account) look like one family, say only what is true, and give one obvious next step. Two small carry-ins ride at the end.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Every one of these screens used to read like a terminal printout ("[DIAGNOSTIC]: ROUTE_NOT_FOUND"). Now each has a small olive icon tile, a plain headline, one sentence, one next step, and the FieldLogicHQ name at the foot. Warm paper for everyone signed out; Dark only for a signed-in person who chose it (the unsubscribe page is always paper). The words are the ones <code>/marketing</code> ruled in <code>PUBLIC_FACE_WARM_S5_COPY.md</code>.</p>
+    <p><strong>It passes when</strong> each screen shows its tile, the plain words, exactly one lime button (the unsubscribe and paused pages have none), no typewriter capitals, and nothing scrolls sideways on a phone.</p>
+    <p><strong>Steps you may not be able to do:</strong> a real crash cannot be forced from the product. I proved Try again recovers with a temporary test page (a page that fails for six seconds, then works): the new Try again recovered it on one tap; the old reset button stayed stuck. If you want to see the crash screens yourself, ask me to switch the test page on, then tick the steps. Those steps have a Skipped twin.</p>
+    <p><strong>Not in this walk:</strong> the club site's own "not found" screen (a separate screen, unchanged); the paused page only reaching people with no active workspace (noted for its own plan); the marketing share card's squarer-preview crop (an S4 follow-up).</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code></dd>
+      <dt>Coach</dt><dd><code>uat-coach@uat-test-org.local</code> (use it to get Dark: Account, Appearance, Dark)</dd>
+      <dt>Admin</dt><dd><code>uat-admin@uat-test-org.local</code> (organization <code>uat-test-org</code>)</dd>
+      <dt>Password</dt><dd><code>UATPassword2026!</code> for both. Dev only. Keep this page private.</dd>
+      <dt>Restart</dt><dd>Restart the dev server first (stop, delete <code>.next</code>, <code>npm run dev</code>), then hard-reload once (Ctrl+Shift+R).</dd>
+      <dt>Phone</dt><dd>Phone steps: use your phone on the same network, or the browser's phone-size view (about 390 wide).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+var WALK_NAME = 'The system screens walk (S5, 2026-10-23)';
+(function () {
+  var KEY = 'pfw-s5-walk-v1';
+  var PARTS = [
+    {
+      "id": "A",
+      "title": "A page that does not exist (the 404)",
+      "steps": [
+        {
+          "who": "Nobody signed in",
+          "do": "Open <code>/discover/nothing/here</code>.",
+          "see": "Warm paper. A small broken-link tile, the small line \"404 · Page not found\", the headline \"We can’t find that page\", the sentence \"The link may be old, or the address may have a typo. Start from Home and look for it there.\", one lime button \"Go to Home\", then the FieldLogicHQ name. No \"DIAGNOSTIC\" words."
+        },
+        {
+          "who": "Nobody signed in",
+          "do": "Tap \"Go to Home\".",
+          "see": "You land on Home (<code>/discover</code>)."
+        },
+        {
+          "who": "Coach",
+          "do": "Signed in with Dark saved, open <code>/discover/nothing/here</code>, then tap \"Go to Home\".",
+          "see": "Dark ground, the tile in lime tones, the name in light text; the button lands on Home, the same place as when signed out."
+        },
+        {
+          "who": "Anyone",
+          "do": "Open the same address at phone width.",
+          "see": "The headline steps down to a smaller size, the button is full width, nothing scrolls sideways, and you cannot scroll down past the end of the page into an empty strip."
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "title": "A crash inside a page, and Try again",
+      "steps": [
+        {
+          "who": "Anyone",
+          "do": "Ask me to switch the temporary crash test page on, then open it and wait for the crash screen.",
+          "see": "An alert tile, \"Something went wrong on our side\", \"We’ve logged it automatically. Try again, and if it keeps happening, go back to Home.\", a lime \"Try again\" and a quiet white \"Go to Home\" side by side (stacked on a phone), the name at the foot. In development only, the raw message sits in a small card above the buttons.",
+          "optionPair": true,
+          "skip": "Skipped it (did not use the test page)"
+        },
+        {
+          "who": "Anyone",
+          "do": "Wait until the test page says it can recover, then tap \"Try again\".",
+          "see": "The real page comes back. (This is the fix: before, Try again could leave the same failure on screen.)",
+          "optionPair": true,
+          "skip": "Skipped it (did not use the test page)"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "title": "A crash in the page frame (the last-resort screen)",
+      "steps": [
+        {
+          "who": "Anyone",
+          "do": "This screen only appears if the whole app frame fails, so it cannot be forced from the product. Look at the screenshot I will send, or skip.",
+          "see": "Paper ground for everyone, a system-bold headline \"Something went wrong on our side\", \"The page couldn’t load. We’ve logged it automatically. Try again, or go to Home.\", a lime \"Try again\" and a white \"Go to Home\", the name at the foot. On a phone it is not tiny or desktop-scaled.",
+          "optionPair": true,
+          "skip": "Skipped it (cannot force it)"
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "title": "No connection (offline)",
+      "steps": [
+        {
+          "who": "Nobody signed in",
+          "do": "Open <code>/offline.html</code>, with the network on.",
+          "see": "Paper ground, a no-signal tile, \"You’re offline\", \"Check your connection, then try again. Tournament pages you’ve opened before should still open.\", a lime \"Try again\", the name at the foot. The headline is bold, not extra-heavy. The browser tab reads \"You’re offline | FieldLogicHQ\"."
+        },
+        {
+          "who": "Coach",
+          "do": "Signed in with Dark saved, open <code>/offline.html</code>.",
+          "see": "Dark ground; the same words."
+        },
+        {
+          "who": "Anyone",
+          "do": "Open a tournament page, turn the network off (browser tools, Network, Offline), then open a page you have never opened.",
+          "see": "The offline page shows. Tap \"Try again\" with the network still off: nothing changes. Turn the network on and tap it: the real page loads. (An installed phone picks up the new words after one visit with a connection.)",
+          "optionPair": true,
+          "skip": "Skipped it (could not test offline)"
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "title": "An unsubscribe link (three states)",
+      "steps": [
+        {
+          "who": "Nobody signed in",
+          "do": "Open <code>/unsubscribe/confirmed</code>.",
+          "see": "Always paper. A mail-with-a-tick tile, \"You’re unsubscribed\", \"You won’t get these emails again.\" No button, no \"transactional emails\" note. The name sits under the sentence and the small line \"FieldLogicHQ · Canada\" sits quietly at the very bottom of the page."
+        },
+        {
+          "who": "Nobody signed in",
+          "do": "Open <code>/unsubscribe/confirmed?error=invalid</code>.",
+          "see": "A broken-link tile, \"We can’t use that link\", \"This unsubscribe link has expired or isn’t valid. Reply to any email you received and we’ll remove you within 10 business days as required by CASL.\""
+        },
+        {
+          "who": "Nobody signed in",
+          "do": "Open <code>/unsubscribe/confirmed?error=db</code>.",
+          "see": "An alert tile, \"That didn’t go through\", \"Something went wrong on our side, so you’re not unsubscribed yet. Open the link in your email again in a few minutes. If it still doesn’t work, reply to any email you received and we’ll remove you within 10 business days as required by CASL.\" (Before, this looked like a bad link.)"
+        },
+        {
+          "who": "Nobody signed in",
+          "do": "Open <code>/unsubscribe?org=abc&amp;token=wrong</code>.",
+          "see": "It sends you to the \"We can’t use that link\" page. A wrong link never unsubscribes anyone."
+        },
+        {
+          "who": "Coach",
+          "do": "Signed in with Dark saved, open <code>/unsubscribe/confirmed</code>.",
+          "see": "Still paper (this page is never dark)."
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "title": "A paused account",
+      "steps": [
+        {
+          "who": "Admin",
+          "do": "In the club members window pause a test member who belongs to only that one club, then sign in as that member. (No such test member? Tick Skipped.)",
+          "see": "Inside the app bar: a circle-slash tile, \"Your access to [club name] is paused\", \"You can’t open [club name] right now. Ask an administrator there to restore your access.\", a smaller \"Your FieldLogicHQ account still works. You can browse scores and manage your account.\" (chat is paused, so no \"use chat\"), a white \"Sign out\" button, then \"Signed in as [email]\". No lime button anywhere on the page.",
+          "optionPair": true,
+          "skip": "Skipped it (no one to pause)"
+        },
+        {
+          "who": "Paused member",
+          "do": "Tap \"Sign out\".",
+          "see": "You are signed out and land on the sign-in page.",
+          "optionPair": true,
+          "skip": "Skipped it (no one to pause)"
+        },
+        {
+          "who": "Admin",
+          "do": "Un-pause the test member again.",
+          "see": "Their access is back.",
+          "optionPair": true,
+          "skip": "Skipped it (nothing to put back)"
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "title": "The preview card for a missing club",
+      "steps": [
+        {
+          "who": "Anyone",
+          "do": "Open <code>/no-such-club-xyz/opengraph-image</code>.",
+          "see": "A picture 1200 by 630: paper, a big olive tile with the paper F-L mark, and \"FieldLogicHQ\" beneath it. No club name, no sentence. Everything sits in the middle half."
+        },
+        {
+          "who": "Anyone",
+          "do": "Paste a link to a missing or closed club page into a chat app or a link-preview checker.",
+          "see": "The same card appears. (Needs a public address, so tick Skipped on this computer.)",
+          "optionPair": true,
+          "skip": "Skipped it (needs a public address)"
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "title": "Carry-in: no install banner mid sign-up",
+      "steps": [
+        {
+          "who": "Nobody signed in",
+          "do": "On a phone that has never dismissed the install prompt, open <code>/start</code> and go through the first steps.",
+          "see": "No \"Install the app\" banner at any step.",
+          "optionPair": true,
+          "skip": "Skipped it (no phone to hand)"
+        },
+        {
+          "who": "Nobody signed in",
+          "do": "On the same phone open Home (<code>/discover</code>).",
+          "see": "The install banner can still appear on Home.",
+          "optionPair": true,
+          "skip": "Skipped it (no phone to hand)"
+        }
+      ]
+    },
+    {
+      "id": "I",
+      "title": "Carry-in: the sign-in form with a screen reader",
+      "steps": [
+        {
+          "who": "Anyone",
+          "do": "With a screen reader on, open <code>/auth/login</code> and tab through the form.",
+          "see": "Reading order is email, password, \"Show password\" button, then Sign in. The button is announced as \"Show password, toggle button\" and says pressed or not pressed when you use it.",
+          "optionPair": true,
+          "skip": "Skipped it (no screen reader)"
+        },
+        {
+          "who": "Anyone",
+          "do": "Sign in with a wrong password.",
+          "see": "The error is read out without you moving to it.",
+          "optionPair": true,
+          "skip": "Skipped it (no screen reader)"
+        }
+      ]
+    }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var rows = s.optionPair ? [[id + 'a', 'Checked it'], [id + 'b', s.skip || 'Skipped it']] : [[id, null]];
+      rows.forEach(function (r, ri) {
+        var row = el('label', 'step');
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + r[0]; cb.checked = !!state.ticks[r[0]];
+        cb.addEventListener('change', function () { state.ticks[r[0]] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, id: r[0], cb: cb });
+        var t = el('span', 'txt');
+        if (ri === 0) {
+          t.appendChild(el('span', 'who', id + ' · ' + s.who));
+          t.appendChild(el('span', null, s.do));
+          t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+        }
+        if (r[1]) t.appendChild(el('span', null, '<strong>' + r[1] + '</strong>'));
+        row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+      });
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [WALK_NAME];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

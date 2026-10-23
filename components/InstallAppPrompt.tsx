@@ -16,6 +16,7 @@
  * this component only renders the prompt.
  */
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { X, Download } from 'lucide-react';
 import { followKey, useFollowedTeam } from '@/lib/follow';
 import warm from './consumer/warmTheme.module.css';
@@ -81,6 +82,10 @@ interface Props {
   tournamentSlug?: string;
 }
 
+// Sign-up steps never carry the install banner: a person mid-sign-up is not shopping for a home-screen icon.
+// Home (/discover) and the signed-in app keep it. (/coaches/* journey pages sit outside this layout's mount.)
+const SIGN_UP_STEP_PREFIXES = ['/start', '/auth/signup', '/auth/signup-confirm', '/auth/accept-invite', '/auth/accept-assistant-invite', '/family/claim'];
+
 // Delay before the install banner appears on iOS (engagement gate — J6-005).
 const ENGAGE_DELAY_MS = 30_000;
 
@@ -93,6 +98,8 @@ export default function InstallAppPrompt({
   orgSlug,
   tournamentSlug,
 }: Props) {
+  const pathname = usePathname() ?? '';
+  const onSignUpStep = SIGN_UP_STEP_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
   const [mode, setMode] = useState<Mode>('hidden');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   // True while the visible banner came from the explicit "Download app" trigger —
@@ -262,7 +269,7 @@ export default function InstallAppPrompt({
   const bannerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = bannerRef.current;
-    if (mode === 'hidden' || !el) return;
+    if (mode === 'hidden' || onSignUpStep || !el) return;
     const root = document.documentElement;
     const publish = () => root.style.setProperty('--install-banner-h', `${Math.ceil(el.getBoundingClientRect().height)}px`);
     publish();
@@ -276,11 +283,11 @@ export default function InstallAppPrompt({
       if (other && other !== el) root.style.setProperty('--install-banner-h', `${Math.ceil(other.getBoundingClientRect().height)}px`);
       else root.style.removeProperty('--install-banner-h');
     };
-  }, [mode]);
+  }, [mode, onSignUpStep]);
 
   // Never inside a frame: a page shown inside another (the Public site editor's preview) is not where anyone installs an
   // app, and its clicks are not the visitor's own.
-  if (mode === 'hidden' || (typeof window !== 'undefined' && window.self !== window.top)) return null;
+  if (mode === 'hidden' || onSignUpStep || (typeof window !== 'undefined' && window.self !== window.top)) return null;
 
   return (
     <div

@@ -98,6 +98,8 @@ const FILES = [
   'app/error.tsx',
   'app/global-error.tsx',
   'app/system-screens.module.css',
+  'components/shared/SystemScreen.tsx',
+  'components/shared/SystemScreen.module.css',
   'public/offline.html',
   'components/Navbar.tsx',
   'components/Navbar.module.css',

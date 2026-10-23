@@ -1,20 +1,4 @@
 {
-  "app/(consumer)/auth/auth.module.css": {
-    "face": 4,
-    "caps": 3
-  },
-  "app/error.tsx": {
-    "face": 6,
-    "caps": 2
-  },
-  "app/global-error.tsx": {
-    "face": 1,
-    "caps": 2
-  },
-  "app/not-found.tsx": {
-    "face": 5,
-    "caps": 1
-  },
   "components/Navbar.module.css": {
     "heavy": 3,
     "caps": 4,
@@ -39,8 +23,5 @@
   },
   "components/shared/WorkspacesPill.module.css": {
     "face": 1
-  },
-  "public/offline.html": {
-    "heavy": 1
   }
 }

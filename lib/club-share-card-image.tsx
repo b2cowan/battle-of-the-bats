@@ -5,6 +5,8 @@ import { deriveLogoDataUrl } from './export/resolve-pdf-settings';
 import { clubInitials } from './club-site';
 import type { ShareCardText } from './club-share';
 import type { Organization } from './types';
+import { cardFonts } from './share-card-fonts';
+import { BRAND_INK, BRAND_NAME, BRAND_NAME_HQ, BRAND_OLIVE, BRAND_PAPER, MARK_BARE_VIEWBOX, MARK_PATH_MAIN, MARK_TILE_NUDGE_X } from './brand-mark';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -75,17 +77,38 @@ export async function clubShareCard(org: Organization, text: ShareCardText): Pro
   );
 }
 
-/** A club whose site is off shares a plain card: never its name (the refusal names no club either). */
-export function neutralShareCard(): ImageResponse {
+/**
+ * A club whose site is off shares a plain card: never its name (the refusal names no club either). Card A of The public
+ * face, warm: S5 — the paper, the mark's olive tile, and the FieldLogicHQ name beneath it, no sentence. The tile and the
+ * name sit inside the middle 600 px, so a squarer chat preview that crops the sides still shows both. Drawn from
+ * lib/brand-mark.ts only.
+ */
+export async function neutralShareCard(): Promise<ImageResponse> {
+  const { sans, fonts } = await cardFonts();
   return new ImageResponse(
     (
       <div style={{
-        width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: '#0A0A12', color: '#FFFFFF', fontSize: 88, fontWeight: 800, fontFamily: 'sans-serif',
+        width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        gap: 44, background: BRAND_PAPER, color: BRAND_INK, fontFamily: sans,
       }}>
-        FieldLogicHQ
+        <div style={{ width: 220, height: 220, borderRadius: 44, background: BRAND_OLIVE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={220} height={220} viewBox="0 0 64 64">
+            <g transform={`translate(${MARK_TILE_NUDGE_X} 0)`}>
+              <path d={MARK_PATH_MAIN} fill={BRAND_PAPER} />
+            </g>
+          </svg>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 29 }}>
+          <svg width={70} height={70} viewBox={MARK_BARE_VIEWBOX}>
+            <path d={MARK_PATH_MAIN} fill={BRAND_OLIVE} />
+          </svg>
+          <div style={{ display: 'flex', fontSize: 64, lineHeight: 1, letterSpacing: -1.2 }}>
+            <span style={{ fontWeight: 700 }}>{BRAND_NAME}</span>
+            <span style={{ fontWeight: 500, color: BRAND_OLIVE }}>{BRAND_NAME_HQ}</span>
+          </div>
+        </div>
       </div>
     ),
-    { ...SHARE_CARD_SIZE, headers: NEUTRAL_CACHE },
+    { ...SHARE_CARD_SIZE, fonts, headers: NEUTRAL_CACHE },
   );
 }

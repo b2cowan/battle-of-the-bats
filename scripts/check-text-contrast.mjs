@@ -52,14 +52,8 @@ const AA_NORMAL = 4.5;
  * don't churn this list.
  */
 const ALLOWED = [
-  {
-    file: 'app/not-found.tsx',
-    cls: 'text-blueprint-blue/30',
-    reason:
-      'The 7xl "404" watermark. The readable statement is the full-strength ' +
-      '"[DIAGNOSTIC]: ROUTE_NOT_FOUND" line directly beneath it, so the numeral is a decorative ' +
-      'echo rather than the message.',
-  },
+  // None. The one entry, the root 404's "404" watermark, went when the 404 moved to the system-screen family
+  // (The public face, warm: S5); a dead entry fails this check, so a new one is added here with its reason.
 ];
 
 // ── colour maths ────────────────────────────────────────────────────────────────────────────

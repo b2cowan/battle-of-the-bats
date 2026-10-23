@@ -94,9 +94,11 @@ export function PasswordField({ id, value, onChange, purpose = 'create', disable
           type="button"
           className={styles.eye}
           onClick={() => setShowPw(s => !s)}
-          // One name and a pressed state, so a screen reader hears "Show password, toggle button, pressed".
-          aria-label="Show password"
+          // One fixed name that says the action (named for its field: "Show new password" on the reset screen) and a
+          // pressed state, so a screen reader hears "Show password, toggle button, pressed" and never a flipping name.
+          aria-label={`Show ${label.toLowerCase()}`}
           aria-pressed={showPw}
+          aria-controls={id}
         >
           {showPw ? <EyeOff size={20} strokeWidth={1.8} aria-hidden /> : <Eye size={20} strokeWidth={1.8} aria-hidden />}
         </button>

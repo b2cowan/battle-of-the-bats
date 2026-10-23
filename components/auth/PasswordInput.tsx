@@ -14,7 +14,7 @@ export default function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputE
   return (
     <div className={styles.wrap}>
       <input {...props} type={show ? 'text' : 'password'} />
-      <button type="button" className={styles.eye} onClick={() => setShow(s => !s)} aria-label="Show password" aria-pressed={show}>
+      <button type="button" className={styles.eye} onClick={() => setShow(s => !s)} aria-label="Show password" aria-pressed={show} aria-controls={props.id}>
         {show ? <EyeOff size={20} strokeWidth={1.8} aria-hidden /> : <Eye size={20} strokeWidth={1.8} aria-hidden />}
       </button>
     </div>

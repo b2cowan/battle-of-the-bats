@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/lib/auth';
-import styles from '../auth.module.css';
+import { SystemAction } from '@/components/shared/SystemScreen';
 
-/** Sign-out button for the suspended page (J10-019) — the one action a suspended user can take. */
+/** Sign-out button for the suspended page (J10-019). The quiet button of the system-screen family: the page has no lime button. */
 export default function SignOutButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -17,8 +17,8 @@ export default function SignOutButton() {
   }
 
   return (
-    <button type="button" className={styles.submitBtn} onClick={handleSignOut} disabled={loading}>
+    <SystemAction kind="secondary" onClick={handleSignOut} disabled={loading}>
       {loading ? 'Signing out…' : 'Sign out'}
-    </button>
+    </SystemAction>
   );
 }

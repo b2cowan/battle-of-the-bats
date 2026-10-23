@@ -48,7 +48,10 @@ describe('S4 Part B — the mark is the ruled one, copied', () => {
 
 describe('S4 Part B — one component owns the name', () => {
   // Every app, component and lib source, read as code. The name's own home and its three drawn copies are allowed.
-  const OWNERS = new Set(['components/shared/BrandLockup.tsx', 'lib/brand-mark.ts', 'app/share-card.png/route.tsx']);
+  // The places that cannot import the component draw it from lib/brand-mark.ts themselves: the marketing card, the
+  // neutral club card (both image-renderer pages) and the root-layout crash (its layout, and so its components, is gone).
+  const OWNERS = new Set(['components/shared/BrandLockup.tsx', 'lib/brand-mark.ts', 'app/share-card.png/route.tsx',
+    'lib/club-share-card-image.tsx', 'app/global-error.tsx']);
   const sources = ['app', 'components', 'lib'].flatMap((d) => [...filesUnder(d, '.tsx'), ...filesUnder(d, '.ts')])
     .filter((f) => !/\.test\.tsx?$/.test(f) && !OWNERS.has(f));
 
@@ -59,9 +62,10 @@ describe('S4 Part B — one component owns the name', () => {
     }
   });
 
+  const OLD = /(?:>|['"`])\s*(?:FIELD|LOGIC|FIELDLOGIC(?:HQ)?)\s*(?:<|['"`])/; // a span or string holding a piece of the old mark
+  const NEW = /FieldLogic\s*<span/;                                           // the new lockup drawn by hand
+
   it('no screen hand-draws FIELD · LOGIC · HQ or the lockup', () => {
-    const OLD = /(?:>|['"`])\s*(?:FIELD|LOGIC|FIELDLOGIC(?:HQ)?)\s*(?:<|['"`])/; // a span or string holding a piece of the old mark
-    const NEW = /FieldLogic\s*<span/;                                           // the new lockup drawn by hand
     const found: string[] = [];
     for (const f of sources) {
       readCode(f).split('\n').forEach((line, i) => {
@@ -74,8 +78,19 @@ describe('S4 Part B — one component owns the name', () => {
   it('every place that showed the name now mounts the one component', () => {
     for (const f of ['components/Navbar.tsx', 'components/Footer.tsx', 'components/consumer/ConsumerNav.tsx',
       'components/admin/AdminTopStrip.tsx', 'components/coaches/CoachTopStrip.tsx', 'app/[orgSlug]/check-in/layout.tsx',
-      'app/[orgSlug]/scorekeeper/layout.tsx', 'app/platform-admin/login/page.tsx', 'app/unsubscribe/confirmed/page.tsx']) {
+      'app/[orgSlug]/scorekeeper/layout.tsx', 'app/platform-admin/login/page.tsx', 'components/shared/SystemScreen.tsx']) {
       assert.match(readCode(f), /<BrandLockup\b/, `${f} draws the name without the one component`);
+    }
+  });
+
+  it('the root-layout crash and the neutral share card draw the name from lib/brand-mark.ts, never their own copy', () => {
+    for (const f of ['app/global-error.tsx', 'lib/club-share-card-image.tsx']) {
+      const code = readCode(f);
+      assert.match(code, /MARK_PATH_MAIN/, `${f} draws the mark from the shared path`);
+      assert.match(code, /BRAND_NAME/, `${f} draws the name from the shared constants`);
+      assert.match(code, /BRAND_NAME_HQ/, `${f} draws the HQ from the shared constants`);
+      assert.doesNotMatch(code, /M24 12H4/, `${f} must not hold its own copy of the path`);
+      assert.ok(!code.split('\n').some((line) => OLD.test(line) || NEW.test(line)), `${f} must not hand-draw the old or new lockup`);
     }
   });
 

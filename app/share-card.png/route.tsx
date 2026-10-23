@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { MARK_BARE_VIEWBOX, MARK_PATH_MAIN, MARK_TILE_NUDGE_X, BRAND_INK, BRAND_OLIVE, BRAND_PAPER } from '@/lib/brand-mark';
 import { MARKETING_SHARE_CARD } from '@/lib/marketing-metadata';
+import { cardFonts } from '@/lib/share-card-fonts';
 
 /**
  * THE MARKETING SITE'S SHARE CARD (The public face, warm: S4; owner Ask 8 A, 2026-10-23; words `/marketing` item 7).
@@ -16,34 +17,8 @@ import { MARKETING_SHARE_CARD } from '@/lib/marketing-metadata';
 // until the next deploy.
 export const revalidate = 86400;
 
-type CardFont = { name: string; data: ArrayBuffer; weight: 500 | 700; style: 'normal' };
-
-/**
- * The card's two faces, from Google Fonts — the same source next/font uses for the site (fonts are never copied into
- * the repo: the self-hosting proposal was ruled NO-GO, 2026-10-07). The renderer needs TrueType, which the CSS API serves
- * to a request with no browser user agent. A failed fetch draws the card in the renderer's own face rather than failing:
- * ⚠ an EMPTY list must not be passed on — next/og reads `fonts || defaultFonts`, so `[]` would replace its default face
- * with none and the draw would throw.
- */
-async function loadFonts(): Promise<CardFont[]> {
-  try {
-    const css = await (await fetch(
-      'https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Barlow+Condensed:wght@700',
-    )).text();
-    const faces = [...css.matchAll(/font-family:\s*'([^']+)';[^}]*?font-weight:\s*(\d+);[^}]*?src:\s*url\(([^)]+)\)/g)];
-    return await Promise.all(faces.map(async ([, name, weight, url]) => ({
-      name, weight: Number(weight) as 500 | 700, style: 'normal' as const, data: await (await fetch(url)).arrayBuffer(),
-    })));
-  } catch {
-    return [];
-  }
-}
-
 export async function GET() {
-  const fonts = await loadFonts();
-  const has = (name: string) => fonts.some((f) => f.name === name);
-  const sans = has('Inter') ? 'Inter' : 'sans-serif';
-  const display = has('Barlow Condensed') ? 'Barlow Condensed' : sans;
+  const { sans, display, fonts } = await cardFonts();
   return new ImageResponse(
     (
       <div style={{
@@ -79,7 +54,7 @@ export async function GET() {
     {
       width: MARKETING_SHARE_CARD.width,
       height: MARKETING_SHARE_CARD.height,
-      fonts: fonts.length ? fonts : undefined,
+      fonts,
       headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' },
     },
   );

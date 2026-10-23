@@ -1,123 +1,47 @@
 /**
  * /unsubscribe/confirmed
  *
- * Minimal dark-theme confirmation page shown after a successful (or invalid)
- * unsubscribe request. Matches the FieldLogicHQ marketing style.
+ * Where /unsubscribe sends a person: done, a link that does not work, or a failure on our side. Always paper (the first
+ * look's warm ground, never a Dark island): people reach it from an email, very often signed out. Wears the system-screen
+ * family (The public face, warm: S5). The route and what it does are unchanged.
  */
 
 import type { Metadata } from 'next';
-import BrandLockup from '@/components/shared/BrandLockup';
-
-export const metadata: Metadata = {
-  title: 'Unsubscribed — FieldLogicHQ',
-  robots: 'noindex',
-};
+import SystemScreen, { type SystemIcon } from '@/components/shared/SystemScreen';
 
 interface Props {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string | string[] }>;
+}
+
+type State = 'done' | 'invalid' | 'db';
+
+/** No `error` is done; `db` is our failure; anything else, including an empty or repeated value, is a link we cannot use. */
+function stateOf(error: string | string[] | undefined): State {
+  if (error === undefined) return 'done';
+  return (Array.isArray(error) ? error[0] : error) === 'db' ? 'db' : 'invalid';
+}
+
+const REMOVE = 'we’ll remove you within 10 business days as required by CASL.';
+
+const COPY: Record<State, { icon: SystemIcon; title: string; body: string }> = {
+  done: { icon: 'mail', title: 'You’re unsubscribed', body: 'You won’t get these emails again.' },
+  invalid: { icon: 'broken', title: 'We can’t use that link', body: `This unsubscribe link has expired or isn’t valid. Reply to any email you received and ${REMOVE}` },
+  db: { icon: 'alert', title: 'That didn’t go through', body: `Something went wrong on our side, so you’re not unsubscribed yet. Open the link in your email again in a few minutes. If it still doesn’t work, reply to any email you received and ${REMOVE}` },
+};
+
+// The tab and history say what the page says: only the done state claims "Unsubscribed". (The root title template adds the brand.)
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const state = stateOf((await searchParams).error);
+  return { title: state === 'done' ? 'Unsubscribed' : COPY[state].title, robots: 'noindex' };
 }
 
 export default async function UnsubscribeConfirmedPage({ searchParams }: Props) {
-  const params = await searchParams;
-  const isError = Boolean(params.error);
+  const state = stateOf((await searchParams).error);
+  const { icon, title, body } = COPY[state];
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0b0f14',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-      padding: '2rem',
-    }}>
-      <div style={{
-        maxWidth: '480px',
-        width: '100%',
-        border: '1px solid rgba(217, 249, 157, 0.15)',
-        padding: '2.5rem 2rem',
-        background: 'rgba(255,255,255,0.02)',
-      }}>
-        {/* The one name (P9): the one-colour lockup on this dark card. The page's own look is S5's. */}
-        <div style={{
-          marginBottom: '2rem',
-          paddingBottom: '1.25rem',
-          borderBottom: '1px solid rgba(217, 249, 157, 0.12)',
-        }}>
-          <BrandLockup href={null} tone="mono" size={16} />
-        </div>
-
-        {isError ? (
-          <>
-            <h1 style={{
-              color: '#F1F5F9',
-              fontSize: '1.25rem',
-              fontWeight: 700,
-              margin: '0 0 1rem',
-              lineHeight: 1.3,
-            }}>
-              Link not recognised
-            </h1>
-            <p style={{
-              color: 'rgba(241, 245, 249, 0.65)',
-              fontSize: '0.9rem',
-              lineHeight: 1.65,
-              margin: 0,
-            }}>
-              This unsubscribe link has expired or is invalid. If you'd like to
-              stop receiving FieldLogicHQ marketing emails, reply to any email
-              you received and we'll remove you within 10 business days as
-              required by CASL.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 style={{
-              color: '#F1F5F9',
-              fontSize: '1.25rem',
-              fontWeight: 700,
-              margin: '0 0 1rem',
-              lineHeight: 1.3,
-            }}>
-              You've been unsubscribed
-            </h1>
-            <p style={{
-              color: 'rgba(241, 245, 249, 0.65)',
-              fontSize: '0.9rem',
-              lineHeight: 1.65,
-              margin: '0 0 1.25rem',
-            }}>
-              Your organization has been removed from FieldLogicHQ marketing
-              emails. You won't receive any further promotional messages.
-            </p>
-            <p style={{
-              color: 'rgba(241, 245, 249, 0.4)',
-              fontSize: '0.82rem',
-              lineHeight: 1.6,
-              margin: 0,
-            }}>
-              Transactional emails — billing, account security, and tournament
-              notifications — are not affected by this unsubscribe.
-            </p>
-          </>
-        )}
-
-        {/* Footer */}
-        <div style={{
-          marginTop: '2.5rem',
-          paddingTop: '1.25rem',
-          borderTop: '1px solid rgba(217, 249, 157, 0.08)',
-        }}>
-          <p style={{
-            color: 'rgba(241, 245, 249, 0.25)',
-            fontSize: '0.72rem',
-            margin: 0,
-            letterSpacing: '0.02em',
-          }}>
-            FieldLogicHQ · Canada
-          </p>
-        </div>
-      </div>
-    </div>
+    <SystemScreen surface="warm" wide={state !== 'done'} icon={icon} title={title} legal="FieldLogicHQ · Canada">
+      {body}
+    </SystemScreen>
   );
 }

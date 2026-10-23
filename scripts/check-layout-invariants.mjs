@@ -230,7 +230,7 @@ const LANDING_FAILURES = [
  * documents refusal, the coach capability default), so it is held to what a person can SEE on
  * every screen rather than to text that may only ride in a page's data.
  */
-const VISIBLE_LANDING_FAILURES = ['ROUTE_NOT_FOUND', 'You do not have permission',
+const VISIBLE_LANDING_FAILURES = ['We can’t find that page', 'You do not have permission',
   // The FREE portal's team 404 (`app/coaches/team/[basicTeamId]/not-found.tsx`, 2026-10-19): a free-coach session that
   // is not the account the context resolved lands here on every team screen — and a free entry has no `area`, so
   // nothing else would hold it to where it was sent.

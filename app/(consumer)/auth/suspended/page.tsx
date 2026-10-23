@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { findSuspendedMembershipOrg, getUserAccessContexts } from '@/lib/user-contexts';
 import SignOutButton from './SignOutButton';
-import styles from '../auth.module.css';
+import SystemScreen from '@/components/shared/SystemScreen';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,38 +39,20 @@ export default async function SuspendedPage() {
   // No suspended membership either → nothing to explain here; route to the normal front door.
   if (!suspended) redirect('/start');
 
-  const orgName = suspended.name?.trim() || 'your organization';
+  const orgName = suspended.name?.trim() || '';
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-            </svg>
-          </div>
-          <h1 className={styles.title}>Workspace access paused</h1>
-          <p className={styles.sub}>
-            Your access to <strong>{orgName}</strong> is paused.
-          </p>
-        </div>
-
-        <p className={styles.footerText} style={{ textAlign: 'center', margin: '0.5rem 0 1.25rem' }}>
-          You can&apos;t open that workspace right now — contact an administrator at{' '}
-          <strong>{orgName}</strong> to restore your access. Your FieldLogicHQ account still works:
-          you can browse scores{CHAT_PAUSED ? ' and' : ', use chat and'} manage your account from the tabs below.
-        </p>
-
-        <SignOutButton />
-
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            Signed in as {user.email}
-          </p>
-        </div>
-      </div>
-    </div>
+    <SystemScreen
+      surface="inline"
+      icon="pause"
+      title={orgName ? `Your access to ${orgName} is paused` : 'Your access is paused'}
+      notes={[
+        `Your FieldLogicHQ account still works. You can browse scores${CHAT_PAUSED ? ' and' : ', use chat and'} manage your account.`,
+      ]}
+      actions={<SignOutButton />}
+      afterActions={`Signed in as ${user.email}`}
+    >
+      {orgName ? `You can’t open ${orgName} right now.` : 'You can’t open your organization right now.'} Ask an administrator there to restore your access.
+    </SystemScreen>
   );
 }

@@ -1,0 +1,511 @@
+<title>System Screens, Drawn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the house review document (cool grey chrome, Plex) holding true-size specimens of each screen. Specimens use fixed
+   product values (paper, ink, olive, lime, Dark) and never follow this page's theme. Every screen is drawn whole, Today then Proposed. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC; --info:#1D4A6E; --info-soft:#DDE9F3; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D; --info:#8FC2E7; --info-soft:#1C2C3A; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D; --info:#8FC2E7; --info-soft:#1C2C3A; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 120px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+.doc a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:84px}
+.doc p,.doc li{max-width:78ch}
+.lede{font-size:17px}
+.muted{color:var(--muted)}
+.tight{margin:4px 0}
+code{font:500 .9em var(--f-mono)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+@media (max-width:600px){.top{position:static!important}.top-in .st{display:none}}
+.top-in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+@media (max-width:600px){.top-in{padding:10px 16px}}
+.top-in h1{font-size:19px;margin:0}
+.top-in .st{font-size:13px;color:var(--muted)}
+.top-in nav{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
+.top-in nav a{font:600 13px/1 var(--f-doc);color:var(--ink);text-decoration:none;padding:0 9px;min-height:44px;display:inline-flex;align-items:center;border-radius:8px}
+.top-in nav a:hover{background:var(--surface)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.card h4{margin:0 0 6px;font-size:15px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict h3{margin:0 0 6px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin:12px 0}
+.place{border-top:1px solid var(--line);margin-top:40px;padding-top:12px;scroll-margin-top:84px}
+.place h3{margin:0 0 4px;font-size:21px}
+.place h3 .no{font:600 12px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.place .sub{margin:0 0 10px;font-size:14.5px;color:var(--muted)}
+.vlab{display:flex;gap:8px;align-items:center;font:700 12px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;margin:18px 0 8px}
+.vlab.cx{color:var(--muted)} .vlab.rf{color:var(--fix)}
+.vlab i{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;font-family:var(--f-doc)}
+.frow{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.fg{margin:0;min-width:0;max-width:100%}
+.fc{font:600 12px/1.35 var(--f-mono);color:var(--muted);margin:0 0 6px}
+.scroll{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.box{border-radius:12px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow);width:max-content;max-width:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-width:640px}
+.chip{font:600 12.5px/1.2 var(--f-doc);min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.chip.fl{background:var(--flag-soft);border-color:var(--flag);color:var(--flag)} .chip.fl::before{background:var(--flag)}
+.chip.ok{background:var(--fix-soft);border-color:var(--fix);color:var(--fix)} .chip.ok::before{background:var(--fix)}
+.chip.nw{background:var(--info-soft);border-color:var(--info);color:var(--info)} .chip.nw::before{background:var(--info)}
+.chip.hd{background:var(--ask-soft);border-color:var(--ask);color:var(--ask)} .chip.hd::before{background:var(--ask)}
+.chip:hover{filter:brightness(.96)}
+.tbl{overflow-x:auto;max-width:100%}
+.tbl table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tbl th{font:700 11.5px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tbl td:first-child{white-space:nowrap;font-weight:600}
+.tbl .del{color:var(--muted);text-decoration:line-through}
+ul.tight li{margin:4px 0}
+/* ───────── specimens: fixed product values ───────── */
+.sp{--pp:#F8F4ED;--pc:#FFFFFF;--pi:#241E15;--ps:#4A4235;--pd:#615A54;--pl:rgba(70,55,30,.14);--po:#57651E;--pos:rgba(87,101,30,.10);--pob:rgba(87,101,30,.35);--plime:#D9F99D;--plink:#241E15;--live:#B03A22;--edge:#8E8576;
+  --hl:#4A4235;--hb:rgba(70,55,30,.30);--ht:#241E15;--hy:#4A4235;--hc:#57651E;
+  background:var(--pp);color:var(--pi);font:400 15px/1.5 'Inter',system-ui,sans-serif;box-sizing:border-box;position:relative;overflow:hidden}
+.sp.dk{--pp:#0A0A0A;--pc:#111827;--pi:#F1F5F9;--ps:rgba(241,245,249,.74);--pd:rgba(241,245,249,.58);--pl:rgba(255,255,255,.10);--po:#D9F99D;--pos:rgba(217,249,157,.12);--pob:rgba(217,249,157,.35);--plink:#0A0A0A;--live:#EF4444;--edge:rgba(255,255,255,.45);
+  --hl:#859BD5;--hb:rgba(110,140,230,.30);--ht:#F1F5F9;--hy:#94A3B8;--hc:#D9F99D}
+.sp *{box-sizing:border-box}
+.vp{display:flex}
+.wm{display:inline-flex;align-items:center;gap:.45em;white-space:nowrap;line-height:1;color:var(--pi)}
+.wm svg{flex:none;height:1.1em;width:1.1em;fill:var(--po)}
+.sp.dk .wm svg{fill:#F1F5F9}
+.wm .nm{font-weight:700;letter-spacing:-.018em}
+.wm .hq{font-weight:600;color:var(--po)}
+.sp.dk .wm .hq{color:#F1F5F9;opacity:.78}
+.wm.sys{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+/* the proposed family: glyph tile, heading, sentence, buttons, name at the foot */
+.ps{margin:auto;width:100%;max-width:440px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
+.ps.ph{padding:24px 20px;max-width:none}
+.ps.sys{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.gt{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:var(--pos);border:1px solid var(--pob)}
+.gt svg{width:30px;height:30px;stroke:var(--po);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.eb{font:600 12px/1.3 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--po)}
+.sp.dk .eb{color:var(--pd)}
+.ps h4{margin:0;font:700 36px/1.05 'Barlow Condensed','Arial Narrow',sans-serif;color:var(--pi);text-wrap:balance}
+.ps.ph h4{font-size:32px}
+.ps.sys h4{font:700 26px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.ps p{margin:0;font-size:16px;line-height:1.5;color:var(--ps);max-width:34ch}
+.ps p.sm{font-size:14px;color:var(--pd)}
+.bs{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center;width:100%}
+.ps.ph .bs{flex-direction:column}
+.b{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 22px;border-radius:10px;font:700 16px/1 'Inter',sans-serif;white-space:nowrap}
+.ps.sys .b{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.b.pri{background:var(--plime);color:#241E15}
+.sp.dk .b.pri{color:#0A0A0A}
+.b.sec{background:var(--pc);color:var(--pi);border:1px solid var(--edge)}
+.sp.dk .b.sec{background:transparent}
+.ft{margin-top:14px;font-size:15px}
+/* today: the terminal look */
+.hud{margin:auto;width:100%;max-width:512px;padding:28px 28px;text-align:left}
+.sp.dk.unbg{background:#0b0f14}
+.sp.dk.hudbg{background-image:linear-gradient(rgba(133,155,213,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(133,155,213,.07) 1px,transparent 1px);background-size:40px 40px}
+.hl{font:600 10px/1.3 'IBM Plex Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--hl);margin-bottom:22px}
+.hbig{font:700 72px/1 'IBM Plex Mono',monospace;color:var(--hb);margin-bottom:8px}
+.ht{font:700 20px/1.3 'IBM Plex Mono',monospace;color:var(--ht);margin-bottom:12px}
+.hy{font:400 12px/1.65 'IBM Plex Mono',monospace;color:var(--hy);margin-bottom:28px}
+.hc{display:inline-block;font:400 12px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--hc);border:1px solid var(--hc);padding:13px 32px}
+.hcard{border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.05);padding:28px}
+.sp:not(.dk) .hcard{background:#fff;border-color:rgba(176,58,34,.45)}
+.hcard .hl{color:#EF4444}
+.sp:not(.dk) .hcard .hl{color:var(--live)}
+.hcard .ht{font-size:18px}
+.hcard .hy{margin-bottom:22px}
+.hbtns{display:flex;gap:14px;flex-wrap:wrap}
+.hb1{font:400 11px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;border:1px solid #859BD5;color:#859BD5;padding:12px 22px}
+.sp:not(.dk) .hb1{border-color:var(--po);color:var(--po)}
+.hb2{font:400 11px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,255,255,.4);color:#94A3B8;padding:12px 22px}
+.sp:not(.dk) .hb2{border-color:var(--pd);color:var(--ps)}
+.sp.old-os{background:#0a0a0a;color:#e5e5e5}
+.hroot{margin:auto;width:100%;max-width:512px;padding:28px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.hroot .c{border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.05);padding:28px}
+.hroot .l{color:#f87171;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px}
+.hroot .t{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.hroot .y{font-size:.78rem;color:#9ca3af;margin-bottom:24px;line-height:1.6}
+.hroot .r{display:inline-block;font-size:.72rem;text-transform:uppercase;letter-spacing:.15em;border:1px solid #2563eb;color:#93c5fd;padding:12px 24px}
+/* offline today (the file's own rules) */
+.off{margin:auto;width:100%;max-width:440px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.off h1{margin:0;font-size:1.5rem;font-weight:800}
+.off p{margin:0;max-width:22rem;font-size:.95rem;line-height:1.5;color:#615a54}
+.sp.dk .off p{color:rgba(245,245,247,.62)}
+.off .ob{margin-top:4px;padding:11px 22px;border-radius:10px;background:#d9f99d;color:#241e15;font-size:.95rem;font-weight:700}
+/* unsubscribe today */
+.un{margin:auto;width:100%;max-width:480px;border:1px solid rgba(217,249,157,.15);padding:40px 32px;background:rgba(255,255,255,.02);font-family:'Inter',sans-serif}
+.un .wmw{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid rgba(217,249,157,.12)}
+.un h1{color:#F1F5F9;font-size:1.25rem;font-weight:700;margin:0 0 16px;line-height:1.3}
+.un p{color:rgba(241,245,249,.65);font-size:.9rem;line-height:1.65;margin:0 0 18px}
+.un p.s{color:rgba(241,245,249,.4);font-size:.82rem;line-height:1.6;margin:0}
+.un .fo{margin-top:36px;padding-top:20px;border-top:1px solid rgba(217,249,157,.08);color:rgba(241,245,249,.25);font-size:.72rem;letter-spacing:.02em}
+.un .wm{color:#F1F5F9}.un .wm svg{fill:#F1F5F9}.un .wm .hq{color:#F1F5F9;opacity:.78}
+/* the consumer shell around the suspended page */
+.shell{display:flex;flex-direction:column;width:100%}
+.shbar{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--pc);border-bottom:1px solid var(--pl)}
+.sp:not(.dk) .shbar{background:#fff}
+.shbar .av{width:30px;height:30px;border-radius:50%;background:var(--po);color:var(--pp);display:grid;place-items:center;font:700 12px/1 'Inter',sans-serif}
+.sp.dk .shbar .av{color:#0A0A0A}
+.shbody{flex:1;min-height:0;opacity:1;position:relative;display:flex;justify-content:center}
+.shtabs{height:56px;flex:none;display:flex;border-top:1px solid var(--pl);background:var(--pc);font:600 11px/1 'Inter',sans-serif;color:var(--pd)}
+.shtabs span{flex:1;display:flex;align-items:center;justify-content:center}
+.shbar,.shtabs{opacity:.55}
+.shlinks{display:flex;gap:22px;font:600 13.5px/1 'Inter',sans-serif;color:var(--ps)}
+.fo2{position:absolute;left:0;right:0;bottom:14px;margin:0;text-align:center;font-size:12px;color:var(--pd)}
+/* suspended today (auth.module.css) */
+.su{width:100%;max-width:420px;padding:28px 20px;font-family:'IBM Plex Mono',monospace;text-align:center}
+.su .hdr{padding-bottom:18px;margin-bottom:22px;border-bottom:1px solid rgba(100,120,200,.30)}
+.su .iw{width:42px;height:42px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:var(--pos);border:1px solid var(--pob);color:var(--pd)}
+.sp.dk .su .iw{background:rgba(100,120,200,.10);border-color:rgba(100,120,200,.5)}
+.su .tt{font-size:17.6px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--pi);margin-bottom:6px}
+.su .sb{font-size:11.2px;letter-spacing:.08em;text-transform:uppercase;color:var(--pd)}
+.su .ft2{font-size:11.2px;letter-spacing:.06em;color:var(--pd);margin:8px 0 20px;line-height:1.7}
+.su .sob{display:block;padding:14px;font-size:11.2px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:var(--plime);color:#241E15}
+.sp.dk .su .sob{color:#0A0A0A}
+.su .em{margin-top:22px;padding-top:18px;border-top:1px solid var(--pl);font-size:11.2px;letter-spacing:.06em;color:var(--pd)}
+/* share cards, drawn 1200 x 630 and shown at 50% */
+.cardwrap{width:600px;height:315px;overflow:hidden;position:relative;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.card12{width:1200px;height:630px;transform:scale(.5);transform-origin:0 0;position:absolute;left:0;top:0;font-family:'Inter',sans-serif;overflow:hidden}
+.card12.old{background:#0A0A12;color:#fff;display:flex;align-items:center;justify-content:center;font-size:88px;font-weight:800;font-family:sans-serif}
+.card12.new{background:#F8F4ED;color:#241E15;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:44px}
+.card12 .tile{width:220px;height:220px;border-radius:44px;background:#57651E;display:flex;align-items:center;justify-content:center}
+.card12 .big{display:inline-flex;align-items:center;gap:.45em;font-size:64px;font-weight:700;letter-spacing:-.018em;line-height:1}
+.card12 .big svg{width:1.1em;height:1.1em;fill:#57651E}
+.card12 .big .hq{color:#57651E;font-weight:500}
+.card12.mk{background:#F8F4ED;color:#241E15;padding:72px 80px}
+.card12.mk .l1{display:flex;align-items:center;gap:14px;font-size:34px;font-weight:700;letter-spacing:-.6px}
+.card12.mk .l1 svg{width:40px;height:40px;fill:#57651E}
+.card12.mk .l1 .hq{color:#57651E;font-weight:500}
+.card12.mk h6{font:700 124px/1 'Barlow Condensed','Arial Narrow',sans-serif;margin:96px 0 0}
+.card12.mk h6 span{color:#57651E;display:block}
+.card12.mk .t2{position:absolute;right:80px;bottom:72px;width:176px;height:176px;border-radius:36px;background:#57651E;display:flex;align-items:center;justify-content:center}
+.safe{position:absolute;left:300px;right:300px;top:0;bottom:0;border-left:3px dashed rgba(224,71,92,.7);border-right:3px dashed rgba(224,71,92,.7)}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--info);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:6px}
+.ask .why{font-size:13.5px;color:var(--muted);margin:0}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:8px 10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 12px/1.5 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:56px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical;margin-top:6px}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);margin-top:20px}
+.paste .hd{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.paste textarea{min-height:200px;font:12.5px/1.45 var(--f-mono);background:var(--surface-2)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:44px;padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+/* explanation dialog */
+#veil{position:fixed;inset:0;background:rgba(10,14,18,.55);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+#dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:min(560px,100%);max-height:calc(100% - 16px);overflow:auto;padding:20px 22px}
+#dlg h3{margin:0 0 4px;font-size:19px}
+#dlg .kind{font:700 11.5px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+#dlg h5{margin:14px 0 2px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#dlg p{margin:0;font-size:14.5px}
+#dlg .x{float:right}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<header class="top"><div class="top-in">
+  <h1>System screens, drawn</h1><span class="st">The public face, warm: S5 · drawn 2026-10-23 · ruled 2026-10-23, every ask as recommended · nothing is built</span>
+  <nav aria-label="Sections"><a href="#found">Found</a><a href="#s404">404</a><a href="#scrash">Crash</a><a href="#sroot">Root crash</a><a href="#soff">Offline</a><a href="#sunsub">Unsubscribe</a><a href="#ssus">Suspended</a><a href="#scard">Card</a><a href="#build">Build</a><a href="#asks">Asks</a></nav>
+</div></header>
+
+<main class="doc">
+  <h2 style="margin-top:28px">Six screens a person meets when something is wrong or missing</h2>
+  <p class="lede">Each screen is drawn whole, as it is today and as I propose it, in warm and in Dark where the screen follows the setting, on a desktop window and a phone. The proposal gives them one family look: a small line-icon tile, a plain headline, one sentence, one obvious next step, and the name at the foot. It is the offline page's existing look, carried to the others. Nothing is built. The wording was ruled by <code>/marketing</code> on 2026-10-23.</p>
+  <p class="muted">Every coloured chip under a drawing opens an explanation when you click it. <span style="color:var(--flag)">Red</span> is what reads as a terminal or is wrong. <span style="color:var(--fix)">Green</span> is kept or fixed. <span style="color:var(--info)">Blue</span> is new. <span style="color:var(--ask)">Amber</span> is held for a decision that is not this session's. Drawings are true size. A desktop window is drawn 600 wide because these screens are a centred column. Open the page on a phone to judge the phone drawings at real size.</p>
+
+  <div class="verdict"><h3>My recommendation</h3>
+    <p class="tight">The direction is right: one family, warm everywhere a signed-out person can land, Dark only for a signed-in person who chose it. The trouble is not the look. <b>Four of these screens say things that are not true, and one cannot recover the way its button says.</b> A warm coat of paint over those would be the wrong job, so the proposal fixes the words and the two behaviours first and the styling second. They are listed below, each opens its evidence, and each has an ask.</p></div>
+
+  <div class="verdict" style="border-left-color:var(--info)"><h3>Ruled 2026-10-23</h3>
+    <p class="tight">The owner took every ask as recommended (the boxes below are ticked to show it) and every drawing change from the <code>/design</code> pass. This version of the page has those changes applied: the Today drawings now match the product, the suspended screen’s shell is faded and shows the computer’s links, the button edges clear 3:1, the neutral card sits inside the safe area, and the held footer line is back at the foot. Then <code>/marketing</code> ruled on the words, and the drawings show its wording.</p></div>
+
+  <h2 id="found">What the code showed that the brief did not list</h2>
+  <div class="grid2" id="found-body"></div>
+
+  <div id="screens"></div>
+
+  <h2 id="build">What the build will touch, and what could regress</h2>
+  <div class="grid2" id="build-body"></div>
+
+  <h2 id="carry">Two carry-ins, not drawn</h2>
+  <div class="grid2">
+    <div class="card"><h4>The install banner off the sign-up steps (U7)</h4><p class="tight"><b>The build:</b> the install prompt is mounted by the consumer layout, which the sign-up steps sit under, so it can appear over a half-finished sign-up. The build stops mounting it on those steps. Home and the signed-in app keep it.</p><p class="tight"><b>Check:</b> open the sign-up steps on a phone that has never dismissed the prompt and see no banner. Open Home on the same phone and see it.</p></div>
+    <div class="card"><h4>The screen-reader pass on the shared account form</h4><p class="tight"><b>The build:</b> a pass over the shared account form (sign-in, sign-up, forgot and reset) for labels, the error announcement, the password eye's name and focus order. It changes announcements, not the look.</p><p class="tight"><b>Check:</b> with a screen reader on, sign in with a wrong password and hear the error read out without moving to it; tab through the form in reading order.</p></div>
+  </div>
+
+  <h2 id="asks">Asks</h2>
+  <p>One checkbox per option, with a recommendation on each. Your ticks and notes build the paste-back block.</p>
+  <div id="asks-body"></div>
+  <div class="paste"><div class="hd"><b>Paste-back</b><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-d" id="pb-select" type="button">Select all</button><button class="btn-d pri" id="pb-copy" type="button">Copy</button></span></div>
+    <label for="pb-out" class="muted" style="display:block;margin-top:6px;font-size:13px">Paste this into the chat. It updates as you tick.</label>
+    <textarea id="pb-out" readonly></textarea></div>
+</main>
+
+<div id="veil" hidden><div id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t"><button class="btn-d x" id="dlg-x" type="button">Close</button><div class="kind" id="dlg-k"></div><h3 id="dlg-t"></h3><div id="dlg-b"></div></div></div>
+
+<script>
+/* ════════ THE NAME: the refined Joined FL path (lib/brand-mark.ts), 44-unit viewBox ════════ */
+const MARK='M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z';
+const wm=(o={})=>`<span class="wm${o.sys?' sys':''}" style="font-size:${o.size||15}px"><svg viewBox="10 10 44 44" aria-hidden="true"><path d="${MARK}"/></svg><span class="nm">FieldLogic<span class="hq">HQ</span></span></span>`;
+const IC={
+  off:'<path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
+  nf:'<path d="M18.84 12.25l1.72-1.71a5 5 0 0 0-7.07-7.07l-1.71 1.72"/><path d="M5.17 11.75l-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="2" y1="8" x2="5" y2="8"/><line x1="16" y1="19" x2="16" y2="22"/><line x1="19" y1="16" x2="22" y2="16"/>',
+  err:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  mail:'<path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/>',
+  pause:'<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>'
+};
+const tile=k=>`<div class="gt"><svg viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg></div>`;
+
+/* ════════ SPECIMEN BUILDERS ════════ */
+const W=600,H=400,PW=390,PH=660;
+const spec=(w,h,dk,inner,label,cls='')=>`<div class="box"><div class="sp vp${dk?' dk':''} ${cls}" style="width:${w}px;height:${h}px" role="img" aria-label="${label}">${inner}</div></div>`;
+const scr=o=>`<div class="ps${o.phone?' ph':''}${o.sys?' sys':''}">${o.icon?tile(o.icon):''}${o.eb?`<div class="eb">${o.eb}</div>`:''}<h4>${o.h}</h4><p>${o.p}</p>${o.sm?`<p class="sm">${o.sm}</p>`:''}${o.btns?`<div class="bs">${o.btns}</div>`:''}${o.foot===false?'':`<div class="ft">${wm({size:o.phone?15:15,sys:o.sys})}</div>`}</div>`;
+const pri=t=>`<span class="b pri">${t}</span>`, sec=t=>`<span class="b sec">${t}</span>`;
+const fig=(label,box,chipIds)=>`<figure class="fg"><figcaption class="fc">${label}</figcaption><div class="scroll">${box}</div>${chipIds&&chipIds.length?`<div class="chips">${chipIds.map(chip).join('')}</div>`:''}</figure>`;
+const row=(...f)=>`<div class="frow">${f.join('')}</div>`;
+const vl=(cls,t,i='')=>`<div class="vlab ${cls}">${t}${i?` <i>${i}</i>`:''}</div>`;
+const KIND={fl:'Reads as a terminal, or is wrong',ok:'Kept, or already works',nw:'New or restyled',hd:'Held for a decision outside S5',in:'Constraint'};
+const chip=id=>{const n=NOTES[id];return `<button type="button" class="chip ${n.k}" data-note="${id}">${n.s}</button>`};
+
+/* ════════ WHAT EACH CHIP SAYS ════════ */
+const NOTES={
+ f1:{k:'fl',s:'F1 · Try again may not recover',t:'The crash screens’ “Retry” can bring the same screen straight back',
+  today:'Both crash screens call <code>reset()</code>. The Next 16.3 guide in this repo says <code>reset()</code> clears the error and re-renders <b>without re-fetching</b>, and tells you to use <code>retry()</code> instead, which re-fetches and re-renders. After a failed server read, “Retry” can therefore show the same failure again.',
+  prop:'Both crash screens call <code>retry()</code>. Reporting the error to us is unchanged. I read this from the guide and have not reproduced it in a browser; the build tests it by forcing a one-time server failure (Ask 5).'},
+ f2:{k:'fl',s:'F2 · Offline says two untrue things',t:'The offline page promises things nothing in it does',
+  today:'It says “this page reloads once you’re back.” The page has no listener for coming back online (only a button that reloads), and the service worker only mentions “online” in a comment. It also says “Pages you’ve already opened stay available.” The service worker keeps only the last good copy of <b>public tournament pages</b> and never signed-in pages, so for most people most pages do not stay available.',
+  prop:'The words say only what ships: check your connection, try again, tournament pages you have opened still work. Auto-reload on reconnect is the other way to fix it (Ask 6).'},
+ f3:{k:'fl',s:'F3 · Unsubscribe says one thing for three cases',t:'One confirmation for three different opt-outs',
+  today:'The link can opt out an <b>organization</b> (the page says so), one <b>person</b> (a coach’s campaign emails), or one <b>parent</b> from a club’s family emails. The route redirects to the same page for all three, and the page always says “Your organization has been removed.” A parent or a coach reads a sentence about someone else. The reasons the line is unsafe to keep: it is false for two of three and it names a party the reader may not be.',
+  prop:'One sentence that is true for all three: “You won’t get these emails again.” Naming who was removed needs the route to say which kind it was; I draw that as the alternative (Ask 7).'},
+ f4:{k:'fl',s:'F4 · Our fault reads as theirs',t:'A server failure tells the person their link is bad',
+  today:'The route sends a database failure to the same page with <code>?error=db</code>, and the page treats any error the same: “This unsubscribe link has expired or is invalid.” The person is not unsubscribed, and they are told it is their link.',
+  prop:'A third state: “That didn’t go through… you’re not unsubscribed yet. Open the link again in a few minutes.” It costs one more line on the page and no new tracking.'},
+ f5:{k:'fl',s:'F5 · Suspended reaches too few people',t:'Only a person with no active workspace sees this page',
+  today:'The page redirects anyone with at least one active workspace to Home, and shows one organization at most. Someone suspended from one of several workspaces is never told why it disappeared. A suspension email exists (the club members window says it is sent), so the person gets one door, not two, and the page is the second.',
+  prop:'Not an S5 drawing. Routed: a “your access to {club} is paused” line on Home for people with other workspaces. Say if you want it planned.'},
+ f6:{k:'fl',s:'F6 · The neutral card is a hand-set name',t:'The fallback share card is a fourth copy of the name, in the wrong colours',
+  today:'It is dark <code>#0A0A12</code> (Dark is <code>#0A0A0A</code>, so this is no palette colour) with “FieldLogicHQ” set in the renderer’s generic sans at 88 px, weight 800, with no mark. It is what a link shows for a club that is not found, a club whose site is off, a team that is missing and a tryout page that is missing.',
+  prop:'The marketing card’s paper ground and the shared lockup, so every pasted link from the product looks like one family.'},
+ f7:{k:'fl',s:'F7 · Unsubscribe is dark for signed-out people',t:'The one page every email recipient sees is a dark island',
+  today:'Hard-coded <code>#0b0f14</code> ground and inline styles. People who click an unsubscribe link are very often signed out, and the signed-out ruling (2026-10-23) is warm on every signed-out page. The type check does not list this page (no mention of it in the check’s scope list), so nothing was flagging it.',
+  prop:'Always warm, like the marketing set. A Dark choice does not apply because the recipient is not signed in.'},
+ // 404
+ a1:{k:'fl',s:'Diagnostic wording',t:'“Diagnostic Output” and “[DIAGNOSTIC]: ROUTE_NOT_FOUND”',today:'The eyebrow and the title are system words in capitals, in the typewriter face. They tell a volunteer nothing about what to do.',prop:'“We can’t find that page.” The rule (P8): say what happened and the way forward, one sentence each.'},
+ a2:{k:'fl',s:'Typewriter on sentences',t:'The sentence, the title and the button are all typewriter',today:'The title, the 12 px body and the capitalised button are IBM Plex Mono. The type rule (P1) allows the typewriter only for a plan chip and real data. The type check counts five face findings and one capitals finding in this file.',prop:'Headline in the heading face (Barlow Condensed 700), the sentence in Inter, the button in Inter 700, sentence case, 48 px, lime fill.'},
+ a3:{k:'fl',s:'“Return to Root Node” goes to the sales page',t:'The button’s label and its destination',today:'It links to <code>/</code>. For a browser visit, <code>/</code> is the marketing home (only an installed-app launch with <code>?source=pwa</code> is routed on). A parent who followed a stale game link is dropped on a sales page.',prop:'“Go to Home” (<code>/discover</code>), the public front door that carries a signed-in person’s workspaces. Ask 1.'},
+ a4:{k:'ok',s:'Dark follows the saved choice',t:'Warm for everyone, Dark only for a signed-in person who chose it',today:'This screen sits outside every shell, so it reads the saved theme itself. Under the 2026-10-23 ruling a browser with no session cookie is never shown Dark. That stays.',prop:'Same rule. Dark uses the Dark ground, the Dark text colour and the lime button with dark ink. Olive never appears on Dark.'},
+ a5:{k:'nw',s:'Line-icon tile',t:'The offline page’s tile, on every screen',today:'Only the offline page has a picture: a 64 px tile with a 30 px line icon in olive on a soft olive wash.',prop:'The same tile with a different line icon per screen (a broken link here). It is the smallest picture that works and no new illustration style. Ask 2 lets you remove it from all six. On Dark the eyebrow is the dim text colour (olive fails on Dark) and the tile is lime-washed, both as on the offline page today. Whether a lime tile counts toward “one lime button per view” is your call; the rule as written is about buttons.'},
+ a6:{k:'ok',s:'Stays a real 404',t:'The status code and the static page',today:'This is the app-wide boundary and returns a real 404. It reads no session.',prop:'Unchanged. The button goes to one fixed address for everyone, so the page stays static (Ask 1 A). Reading the session to send signed-in people elsewhere would make every 404, including bots, a dynamic render.'},
+ // crash
+ b1:{k:'fl',s:'“System Diagnostic Report”',t:'Eyebrow, title and body',today:'“System Diagnostic Report”, “[SYSTEM]: INTERNAL_FAULT” and “An unhandled exception was encountered during request processing.”',prop:'“Something went wrong on our side.” The next step is in the sentence and the buttons.'},
+ b2:{k:'fl',s:'The red frame',t:'A red-edged card carries the alarm',today:'Since the 2026-07-27 legibility pass the card has a red hairline on paper and a red wash on Dark so the screen still reads as an error. It is the loudest thing on a screen whose job is to calm someone.',prop:'No frame and no red. The tile and the words say it. A calm screen is the aim; the person already knows it broke.'},
+ b3:{k:'ok',s:'Reporting is unchanged',t:'The error is still sent to us',today:'When this screen appears the error is posted to the observability store (name, message, stack and the path). The sentence “logged automatically” is true because of it.',prop:'Unchanged. No new tracking. I do not add the error reference to the screen; the report does not carry it today.'},
+ b4:{k:'ok',s:'Developer message stays',t:'The raw error text, development only',today:'In development a block shows the error message. In production it is absent.',prop:'Unchanged, restyled to the paper card style in development only. Not drawn.'},
+ b5:{k:'nw',s:'A second way out',t:'“Go to Home” beside “Try again”',today:'Two buttons already: Retry Request and Return to Root.',prop:'Same two, with the new words and the home destination from Ask 1. Ask 4 lets you drop the second one.'},
+ // root crash
+ c1:{k:'in',s:'What this screen cannot do',t:'The root-layout crash replaces the whole document',today:'It draws its own <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code>. The root layout failed, so nothing the layout provides exists: no stylesheet, no loaded fonts, no theme attributes, no name component (it needs the layout’s providers). The Next guide says the same: it does not include your global styles, and a theme toggle will not reach it.',prop:'It can draw: inline styles, the system font stack, fixed colours, the mark as inline SVG from the shared path, and plain links. It cannot draw: the heading face, Inter, any CSS module, the shared name component, or a theme that follows the person. Everything drawn here is inside those limits.'},
+ c2:{k:'fl',s:'Black ground and typewriter',t:'Hard-coded near-black and a monospace stack',today:'Ground <code>#0a0a0a</code>, a monospace stack, a red card, a blue button, and the words “System Diagnostic Report” and “[SYSTEM]: FATAL_FAULT”.',prop:'Paper ground, the system font stack in bold for the headline (so it will not match the heading face on other screens, and that is the honest limit), the lime button.'},
+ c3:{k:'hd',s:'Theme: paper always, or follow Dark',t:'Ask 3',today:'Nothing follows the person today. The screen is dark for everyone.',prop:'A: paper for everyone, no script. B: a small script, as on the offline page, to honour a saved Dark for a signed-in person. B has a trap: when the root fails, React rebuilds the document element and has been seen stripping attributes a script set before it, so B can flash white or lose Dark. A is rare-screen simple.'},
+ c4:{k:'nw',s:'Name from the shared mark',t:'The name as inline SVG and text',today:'There is no name on this screen today.',prop:'The mark is drawn from the same path the offline page and the email use, with “FieldLogic” and “HQ” as system-bold text. The identity test already fails on a drifted copy; this adds one more place it watches.'},
+ // offline
+ d1:{k:'ok',s:'Already works',t:'The offline page is mostly right',today:'S4 gave it the paper ground, the new name, the lime button with ink text and a pre-paint rule for a signed-in Dark. The tile and icon are the family’s origin.',prop:'Three small changes only: the words (F2), the headline weight (800 to 700), and the title’s separator.'},
+ d2:{k:'fl',s:'Weight 800',t:'A heavier weight than the rules allow',today:'The headline is weight 800. The type check lists it (“heavy 1”); no role is allowed 800 or 900.',prop:'700, in the system bold, since a static page with no network cannot load a font.'},
+ d3:{k:'in',s:'What this page cannot do',t:'A static file served when the network is gone',today:'No stylesheet, font, script or image from outside the file, because there is no network. The service worker precaches it.',prop:'Same limits: the heading is system bold, not Barlow. Changing the file means raising the service worker’s cache version from 11 to 12, as S4 did, or installed phones keep the old copy.'},
+ // unsubscribe
+ e1:{k:'fl',s:'Dark island, inline styles',t:'See F7',today:'Dark ground, a dark card with a lime hairline, small grey text at 40% and 25% opacity, and a one-colour name. The grey footer line is at 25% opacity on near-black, below readable contrast.',prop:'Paper, the family look, and text at the house inks.'},
+ e2:{k:'hd',s:'“FieldLogicHQ · Canada”',t:'The footer line is held, so it is drawn unchanged',today:'The same line is held on the emails too, until you give a mailing address and counsel confirms what a sender line must carry. The brand rule is never to claim Canadian identity.',prop:'Drawn exactly as it is today, in the quiet text colour. It changes when the email sign-off does, not before.'},
+ e3:{k:'ok',s:'The 10-business-day sentence',t:'The sentence that points to the law stays as written',today:'“…we’ll remove you within 10 business days as required by CASL.” This is a legal commitment.',prop:'Kept word for word apart from the apostrophe. Not mine to reword.'},
+ e4:{k:'hd',s:'“Not affected” list',t:'Needs your confirmation for a parent’s opt-out',today:'“Transactional emails — billing, account security, and tournament notifications — are not affected.” For an organization this reads true. For a parent who opted out of a club’s family emails, the opt-out silences the club’s family emails, which can include things a parent wants (game changes). I cannot tell from the code whether that sentence is true for them.',prop:'Ruled (Ask 8 B): the note comes off the page until you confirm it holds for a parent’s opt-out, or say what it should say. The proposed drawings below no longer show it.'},
+ // suspended
+ g1:{k:'fl',s:'Uppercase typewriter',t:'Title, sub-line, footer and button',today:'The stylesheet sets the title in uppercase mono with letter spacing, the sub-line in uppercase mono and the button in uppercase mono at 11 px, on a square icon box. The type check counts four face findings and three capitals in the sign-in stylesheet, whose own rules this page is the last to use.',prop:'The family look. The old rules in that stylesheet go when the page leaves them. The one rule the whole sign-in group still uses (its warm colour remap, imported by the sign-in layout) stays, so the file shrinks and is not deleted.'},
+ g2:{k:'fl',s:'The lime button is Sign out',t:'The primary action is not the next step',today:'The page tells you to contact an administrator and says your account still works, and the one loud button signs you out. The comment in the page itself records that sign-out is not the only action.',prop:'Sign out becomes the quiet button. The next step (ask an administrator) cannot be a button, because the page does not know their address, so this screen has no lime button (Ask 9).'},
+ g3:{k:'ok',s:'The shell stays',t:'The top bar and tabs are unchanged and the words stay true',today:'The consumer shell mounts around this page, and its tabs really work, which is why the copy says the account still works. If the page ever stops mounting the shell, the sentence has to change back. The words “from the tabs below” are wrong on a computer: there the links (Home, Scores, Account, and Chat when chat is on) sit in the top bar, and only a phone has a bottom bar.',prop:'Drawn faded: the shell is context, not part of this screen, and the computer drawing now shows its links in the top bar. The sentence stops pointing at “the tabs” at all, so it is true on both. The “chat” half stays tied to the chat pause, exactly as the code does.'},
+ g4:{k:'hd',s:'F5 · only some people see it',t:'See F5',today:'See F5.',prop:'See F5.'},
+ // card
+ h1:{k:'fl',s:'Dark card, generic sans, no mark',t:'See F6',today:'See F6.',prop:'See F6.'},
+ h2:{k:'in',s:'Where it is used',t:'Four situations',today:'<code>neutralShareCard()</code> answers for a club that is not found or whose site is off, a team that is missing and a tryout page that is missing. It is never cached.',prop:'Same four. Same no-store behaviour. The font fetch the marketing card uses (Inter and Barlow from Google) must not run on every uncached request; the build shares one loader with an in-memory copy and falls back to the renderer’s own face.'},
+ h3:{k:'in',s:'Chat-app crop',t:'The dashed lines are the safe middle',today:'Some chat apps crop the card to a squarer middle.',prop:'Card A keeps the name and the tile inside the dashed lines. Card B’s headline sits to the left of them and would be cropped in a squarer preview. The marketing card S4 built is drawn the same way and has the same risk, so it is a follow-up for S4, not part of S5. The dashes are for this page only.'}
+};
+
+/* ════════ THE FINDINGS ════════ */
+document.getElementById('found-body').innerHTML=['f1','f2','f3','f4','f5','f6','f7'].map(id=>{const n=NOTES[id];return `<div class="card"><h4>${n.t}</h4><p class="tight">${n.today.split('. ')[0]}.</p><div class="chips"><button type="button" class="chip fl" data-note="${id}">Open the evidence</button></div></div>`}).join('');
+
+/* ════════ SCREEN 1 · 404 ════════ */
+const hud404=(dk)=>spec(W,H,dk,`<div class="hud"><div class="hl">Diagnostic Output</div><div class="hbig">404</div><div class="ht">[DIAGNOSTIC]: ROUTE_NOT_FOUND</div><div class="hy">Requested resource is outside the current system scope.<br>Verify the URL and retry, or return to root.</div><span class="hc">Return to Root Node</span></div>`,'The 404 as it is today: Diagnostic Output, 404, [DIAGNOSTIC]: ROUTE_NOT_FOUND, a sentence about system scope, and a button, Return to Root Node',dk?'hudbg':'');
+const p404=(dk,phone)=>spec(phone?PW:W,phone?PH:H,dk,scr({icon:'nf',eb:'404 · Page not found',h:'We can’t find that page',p:'The link may be old, or the address may have a typo. Start from Home and look for it there.',btns:pri('Go to Home'),phone}),'The proposed 404: a broken-link tile, the line 404 · Page not found, the headline We can’t find that page, one sentence, a lime button Go to Home, and the FieldLogicHQ name');
+const s404=`<section class="place" id="s404"><h3><span class="no">1</span>The 404</h3><p class="sub">Every address that matches nothing, app-wide. It draws outside any shell and follows the saved theme itself.</p>
+ ${vl('cx','Today','warm and Dark')}
+ ${row(fig('Warm · desktop',hud404(false),['a1','a2','a3']),fig('Dark · desktop (signed in, chose Dark)',hud404(true),['a4','a6']))}
+ ${vl('rf','Proposed','whole screen, desktop and phone, warm and Dark')}
+ ${row(fig('Warm · desktop',p404(false),['a5','a6']),fig('Dark · desktop',p404(true),['a4']),fig('Warm · phone',p404(false,true),[]),fig('Dark · phone',p404(true,true),[]))}
+ <div class="grid2">
+  <div class="card"><h4>Words (ruled by <code>/marketing</code>)</h4><div class="tbl"><table><tr><th>Where</th><th>Today</th><th>Proposed</th></tr>
+   <tr><td>Eyebrow</td><td class="del">Diagnostic Output</td><td>404 · Page not found</td></tr>
+   <tr><td>Headline</td><td class="del">[DIAGNOSTIC]: ROUTE_NOT_FOUND</td><td>We can’t find that page</td></tr>
+   <tr><td>Sentence</td><td class="del">Requested resource is outside the current system scope. Verify the URL and retry, or return to root.</td><td>The link may be old, or the address may have a typo. Start from Home and look for it there.</td></tr>
+   <tr><td>Button</td><td class="del">Return to Root Node</td><td>Go to Home</td></tr></table></div></div>
+  <div class="card"><h4>What happens</h4><ul class="tight"><li>The button opens Home (<code>/discover</code>) for everyone, signed in or not. Ask 1 has the alternatives.</li><li>The page stays a real 404 and stays static. It reads no session, and reports nothing, as today.</li><li>The name at the foot is plain text, not a link. The button is the one way out.</li><li>The club-site 404 (a missing club or page inside a club) is a separate screen from Club Tier and is not redrawn here.</li></ul></div>
+ </div></section>`;
+
+/* ════════ SCREEN 2 · CRASH INSIDE A PAGE ════════ */
+const hudErr=(dk)=>spec(W,H,dk,`<div class="hud"><div class="hcard"><div class="hl">System Diagnostic Report</div><div class="ht">[SYSTEM]: INTERNAL_FAULT</div><div class="hy">An unhandled exception was encountered during request processing. Event has been logged automatically.</div><div class="hbtns"><span class="hb1">Retry Request</span><span class="hb2">Return to Root</span></div></div></div>`,'The page-crash screen as it is today: a red card headed System Diagnostic Report, [SYSTEM]: INTERNAL_FAULT, a sentence about an unhandled exception, and two buttons, Retry Request and Return to Root');
+const pErr=(dk,phone)=>spec(phone?PW:W,phone?PH:H,dk,scr({icon:'err',h:'Something went wrong on our side',p:'We’ve logged it automatically. Try again, and if it keeps happening, go back to Home.',btns:pri('Try again')+sec('Go to Home'),phone}),'The proposed page-crash screen: an alert tile, the headline Something went wrong on our side, one sentence, a lime button Try again, a secondary button Go to Home, and the FieldLogicHQ name');
+const sErr=`<section class="place" id="scrash"><h3><span class="no">2</span>A crash inside a page</h3><p class="sub">A page that threw while the rest of the app was fine. It draws inside the root layout, so the fonts, the theme and the stylesheet all exist.</p>
+ ${vl('cx','Today','warm and Dark')}
+ ${row(fig('Warm · desktop',hudErr(false),['b1','b2','f1']),fig('Dark · desktop',hudErr(true),['b3','b4']))}
+ ${vl('rf','Proposed','whole screen, desktop and phone, warm and Dark')}
+ ${row(fig('Warm · desktop',pErr(false),['b5','f1']),fig('Dark · desktop',pErr(true),[]),fig('Warm · phone',pErr(false,true),[]),fig('Dark · phone',pErr(true,true),[]))}
+ <div class="grid2">
+  <div class="card"><h4>Words (ruled by <code>/marketing</code>)</h4><div class="tbl"><table><tr><th>Where</th><th>Today</th><th>Proposed</th></tr>
+   <tr><td>Eyebrow</td><td class="del">System Diagnostic Report</td><td>none</td></tr>
+   <tr><td>Headline</td><td class="del">[SYSTEM]: INTERNAL_FAULT</td><td>Something went wrong on our side</td></tr>
+   <tr><td>Sentence</td><td class="del">An unhandled exception was encountered during request processing. Event has been logged automatically.</td><td>We’ve logged it automatically. Try again, and if it keeps happening, go back to Home.</td></tr>
+   <tr><td>Buttons</td><td class="del">Retry Request · Return to Root</td><td>Try again · Go to Home</td></tr></table></div></div>
+  <div class="card"><h4>What happens</h4><ul class="tight"><li><b>Try again</b> calls <code>retry()</code>, which re-fetches and re-renders. Today’s button calls <code>reset()</code> (F1, Ask 5).</li><li>The error is reported exactly as today. Nothing is added.</li><li>In development only, the raw error message shows in a paper card above the buttons.</li><li>If Try again fails, the same screen returns. The second button is the way out: a full page load of Home.</li></ul></div>
+ </div></section>`;
+
+/* ════════ SCREEN 3 · CRASH IN THE ROOT LAYOUT ════════ */
+const hudRoot=()=>spec(W,H,true,`<div class="hroot"><div class="c"><div class="l">System Diagnostic Report</div><div class="t">[SYSTEM]: FATAL_FAULT</div><div class="y">A fault was encountered before the interface could load. The event has been logged automatically.</div><span class="r">Retry Request</span></div></div>`,'The root-crash screen as it is today: a black page with a red card headed System Diagnostic Report, [SYSTEM]: FATAL_FAULT, a sentence about a fault, and one button, Retry Request','old-os');
+const pRoot=(dk,phone)=>spec(phone?PW:W,phone?PH:H,dk,scr({icon:'err',sys:true,h:'Something went wrong on our side',p:'The page couldn’t load. We’ve logged it automatically. Try again, or go to Home.',btns:pri('Try again')+sec('Go to Home'),phone}),'The proposed root-crash screen: an alert tile, the headline Something went wrong on our side in the system font, one sentence, a lime button Try again, a secondary button Go to Home, and the FieldLogicHQ name in the system font');
+const sRoot=`<section class="place" id="sroot"><h3><span class="no">3</span>A crash in the root layout</h3><p class="sub">The one screen that cannot use the app at all. When the layout itself throws, this replaces the entire page. I drew only what it can really do.</p>
+ <div class="verdict" style="border-left-color:var(--info)"><h3>What it can and cannot do</h3><p class="tight"><b>Can:</b> inline styles, the system font stack, fixed colours, the mark as inline SVG from the shared path, plain links, and the same error report as every other screen. <b>Cannot:</b> the heading face, Inter, any stylesheet or CSS module, the shared name component, or a theme that follows the person. That is why the headline here is the system bold and does not match the other five. <button type="button" class="chip in" style="min-height:44px" data-note="c1">Open the reasons</button></p></div>
+ ${vl('cx','Today','dark for everyone, nothing follows the person')}
+ ${row(fig('Desktop',hudRoot(),['c2','b3']))}
+ ${vl('rf','Proposed','whole screen')}
+ ${row(fig('Warm · desktop (Ask 3 A)',pRoot(false),['c1','c4']),fig('Warm · phone',pRoot(false,true),[]),fig('Dark · desktop (only if Ask 3 B)',pRoot(true),['c3']))}
+ <div class="grid2">
+  <div class="card"><h4>Words (ruled by <code>/marketing</code>)</h4><p class="tight">The headline and the buttons match screen 2. The sentence changes to say the page could not load, because on this screen the person has not seen the app yet:</p><p class="tight"><b>The page couldn’t load. We’ve logged it automatically. Try again, or go to Home.</b></p><p class="muted tight">Today: “[SYSTEM]: FATAL_FAULT. A fault was encountered before the interface could load. The event has been logged automatically.”</p></div>
+  <div class="card"><h4>What happens</h4><ul class="tight"><li><b>Try again</b> calls <code>retry()</code> as on screen 2. If the layout still throws, this screen returns.</li><li><b>Go to Home</b> is a plain link. It loads Home from the server from scratch, which is the better recovery when the failure was in the page’s own startup.</li><li>The report goes out as today. If the app is down it may not arrive; the sentence says “logged”, as it does now. If you would rather it said less, say so.</li></ul></div>
+ </div></section>`;
+
+/* ════════ SCREEN 4 · OFFLINE ════════ */
+const offToday=(dk)=>spec(W,H,dk,`<div class="off"><div class="gt" style="border-radius:16px"><svg viewBox="0 0 24 24" aria-hidden="true">${IC.off}</svg></div><h1>You're offline</h1><p>Reconnect to pick up where you left off — this page reloads once you're back. Pages you've already opened stay available.</p><span class="ob">Try again</span>${wm({size:15,sys:true})}</div>`,'The offline page as it is today: a no-signal tile, You’re offline, a sentence promising a reload and that opened pages stay available, a lime Try again button, and the name');
+const pOff=(dk,phone)=>spec(phone?PW:W,phone?PH:H,dk,scr({icon:'off',sys:true,h:'You’re offline',p:'Check your connection, then try again. Tournament pages you’ve opened before should still open.',btns:pri('Try again'),phone}),'The proposed offline page: the same no-signal tile, the headline You’re offline in bold system type, two short sentences, a lime Try again button, and the name');
+const sOff=`<section class="place" id="soff"><h3><span class="no">4</span>Offline</h3><p class="sub">A single static file the service worker serves when a page cannot load and there is no saved copy. It follows a signed-in person’s Dark choice already.</p>
+ ${vl('cx','Today','warm and Dark')}
+ ${row(fig('Warm · desktop',offToday(false),['d1','f2','d2']),fig('Dark · desktop',offToday(true),['d3']))}
+ ${vl('rf','Proposed','three small changes, whole screen')}
+ ${row(fig('Warm · desktop',pOff(false),['f2','d3']),fig('Dark · desktop',pOff(true),[]),fig('Warm · phone',pOff(false,true),[]),fig('Dark · phone',pOff(true,true),[]))}
+ <div class="grid2">
+  <div class="card"><h4>Words (ruled by <code>/marketing</code>)</h4><div class="tbl"><table><tr><th>Where</th><th>Today</th><th>Proposed</th></tr>
+   <tr><td>Headline</td><td>You're offline</td><td>You’re offline <span class="muted">(typographic apostrophe, bold not extra-bold)</span></td></tr>
+   <tr><td>Sentence</td><td class="del">Reconnect to pick up where you left off — this page reloads once you're back. Pages you've already opened stay available.</td><td>Check your connection, then try again. Tournament pages you’ve opened before should still open.</td></tr>
+   <tr><td>Button</td><td>Try again</td><td>Try again</td></tr></table></div></div>
+  <div class="card"><h4>What happens</h4><ul class="tight"><li>Try again reloads the address the person asked for, so they land on the real page if the network is back.</li><li>Nothing reloads by itself today. Ask 6 is the choice to make that true instead of removing the claim.</li><li>The name at the foot is the shared static lockup and is not touched; the identity test pins it.</li><li>The tab title’s separator moves from a dot to the house “ | ”. A static file cannot take the layout’s title, so the brand stays in it.</li></ul></div>
+ </div></section>`;
+
+/* ════════ SCREEN 5 · UNSUBSCRIBE ════════ */
+const unToday=(err)=>spec(W,H+40,true,`<div class="un"><div class="wmw">${wm({size:16})}</div>${err?`<h1>Link not recognised</h1><p style="margin:0">This unsubscribe link has expired or is invalid. If you'd like to stop receiving FieldLogicHQ marketing emails, reply to any email you received and we'll remove you within 10 business days as required by CASL.</p>`:`<h1>You've been unsubscribed</h1><p>Your organization has been removed from FieldLogicHQ marketing emails. You won't receive any further promotional messages.</p><p class="s">Transactional emails — billing, account security, and tournament notifications — are not affected by this unsubscribe.</p>`}<div class="fo">FieldLogicHQ · Canada</div></div>`,err?'The unsubscribe page today, error state: a dark card, the heading Link not recognised and a sentence about an expired or invalid link':'The unsubscribe page today, confirmed state: a dark card, the heading You’ve been unsubscribed, a sentence saying your organization has been removed, and a smaller note about transactional emails','unbg');
+const unNew=(kind,phone)=>{
+ const L={ok:{icon:'mail',h:'You’re unsubscribed',p:'You won’t get these emails again.'},
+  bad:{icon:'nf',h:'We can’t use that link',p:'This unsubscribe link has expired or isn’t valid. Reply to any email you received and we’ll remove you within 10 business days as required by CASL.'},
+  db:{icon:'err',h:'That didn’t go through',p:'Something went wrong on our side, so you’re not unsubscribed yet. Open the link in your email again in a few minutes. If it still doesn’t work, reply to any email you received and we’ll remove you within 10 business days as required by CASL.'}}[kind];
+ return spec(phone?PW:W,phone?PH:H+40,false,`<div class="ps${phone?' ph':''}">${tile(L.icon)}<h4>${L.h}</h4><p>${L.p}</p>${L.sm?`<p class="sm">${L.sm}</p>`:''}<div class="ft">${wm({size:15})}</div><p class="fo2">FieldLogicHQ · Canada</p></div>`,`The proposed unsubscribe page, ${kind==='ok'?'confirmed':kind==='bad'?'bad link':'our error'} state: a tile, the heading ${L.h}, ${L.p}`)};
+const sUn=`<section class="place" id="sunsub"><h3><span class="no">5</span>Unsubscribe confirmed</h3><p class="sub">The page behind the unsubscribe link in marketing, coach-campaign and family emails. It has three states: done, a link that does not work, and a failure on our side (which today shows as a bad link).</p>
+ ${vl('cx','Today','always dark, whoever you are')}
+ ${row(fig('Done · desktop',unToday(false),['f7','f3','e2']),fig('Link not valid · desktop (our failure shows this too)',unToday(true),['f4','e3']))}
+ ${vl('rf','Proposed','always warm: a signed-out reader never sees Dark')}
+ ${row(fig('Done · desktop',unNew('ok'),['e4','e2']),fig('Link not valid · desktop',unNew('bad'),['e3']),fig('Our failure · desktop (new state)',unNew('db'),['f4']),fig('Done · phone',unNew('ok',true),[]))}
+ <div class="grid2">
+  <div class="card"><h4>Words (ruled by <code>/marketing</code>)</h4><div class="tbl"><table><tr><th>State</th><th>Today</th><th>Proposed</th></tr>
+   <tr><td>Done</td><td class="del">You've been unsubscribed. Your organization has been removed from FieldLogicHQ marketing emails. You won't receive any further promotional messages.</td><td>You’re unsubscribed. You won’t get these emails again.</td></tr>
+   <tr><td>Done, note</td><td>Transactional emails — billing, account security, and tournament notifications — are not affected by this unsubscribe.</td><td class="muted">Removed from the page until you confirm it holds for a parent’s opt-out (Ask 8 B)</td></tr>
+   <tr><td>Bad link</td><td class="del">Link not recognised. This unsubscribe link has expired or is invalid. If you'd like to stop receiving FieldLogicHQ marketing emails, reply to any email you received and we'll remove you within 10 business days as required by CASL.</td><td>We can’t use that link. This unsubscribe link has expired or isn’t valid. Reply to any email you received and we’ll remove you within 10 business days as required by CASL.</td></tr>
+   <tr><td>Our failure</td><td class="muted">shows the bad-link words</td><td>That didn’t go through. Something went wrong on our side, so you’re not unsubscribed yet. Open the link in your email again in a few minutes. If it still doesn’t work, reply to any email you received and we’ll remove you within 10 business days as required by CASL.</td></tr></table></div></div>
+  <div class="card"><h4>What happens</h4><ul class="tight"><li>The unsubscribe itself is unchanged: the link still opts out on the first visit and redirects here. Only the page changes.</li><li>No button on the “done” and error states: the person is finished, and the name is plain text.</li><li>The page needs no sign-in and reports nothing.</li><li>An email scanner that opens links before the person does (common in company mail) would unsubscribe them without a click, because the link acts on the first visit. That is how the route behaves; I have not measured whether it happens here. I raise it so you can route it; it is not an S5 change.</li></ul></div>
+ </div></section>`;
+
+/* ════════ SCREEN 6 · SUSPENDED ════════ */
+const shell=(dk,phone,inner,ctx)=>`<div class="shell"><div class="shbar">${wm({size:15})}${phone?'':`<span class="shlinks"><span>Home</span><span>Scores</span><span>Account</span></span>`}<span class="av">KD</span></div><div class="shbody">${inner}</div>${phone?`<div class="shtabs"><span>Home</span><span>Scores</span><span>Account</span></div>`:''}</div>`;
+const suToday=(dk,phone)=>spec(phone?PW:W,phone?PH:H+40,dk,shell(dk,phone,`<div class="su"><div class="hdr"><div class="iw"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${IC.pause}</svg></div><div class="tt">Workspace access paused</div><div class="sb">Your access to <b>Riverdale Minor Ball</b> is paused.</div></div><div class="ft2">You can't open that workspace right now — contact an administrator at <b>Riverdale Minor Ball</b> to restore your access. Your FieldLogicHQ account still works: you can browse scores and manage your account from the tabs below.</div><span class="sob">Sign out</span><div class="em">Signed in as coach@example.com</div></div>`),'The suspended-account page today: inside the app’s top bar, an uppercase typewriter title Workspace access paused, a sub-line, an explanation, a lime Sign out button and the signed-in email');
+const suNew=(dk,phone)=>spec(phone?PW:W,phone?PH:H+40,dk,shell(dk,phone,`<div class="ps${phone?' ph':''}">${tile('pause')}<h4>Your access to Riverdale Minor Ball is paused</h4><p>You can’t open Riverdale Minor Ball right now. Ask an administrator there to restore your access.</p><p class="sm">Your FieldLogicHQ account still works. You can browse scores and manage your account.</p><div class="bs">${sec('Sign out')}</div><p class="sm" style="font-size:13px">Signed in as coach@example.com</p></div>`),'The proposed suspended-account page: inside the app’s top bar, a pause tile, the headline Your access to Riverdale Minor Ball is paused, two sentences, a secondary Sign out button and the signed-in email');
+const sSus=`<section class="place" id="ssus"><h3><span class="no">6</span>Suspended account</h3><p class="sub">Shown to a signed-in person whose only workspace is paused. It sits inside the app’s own top bar and tabs, which are not redrawn (they are faded to say so). It is the last page that uses that old sign-in stylesheet’s own rules.</p>
+ ${vl('cx','Today','warm and Dark')}
+ ${row(fig('Warm · desktop',suToday(false),['g1','g2','g3']),fig('Dark · desktop',suToday(true),['f5']))}
+ ${vl('rf','Proposed','whole screen with its shell, desktop and phone')}
+ ${row(fig('Warm · desktop',suNew(false),['g2','g3']),fig('Dark · desktop',suNew(true),[]),fig('Warm · phone',suNew(false,true),[]),fig('Dark · phone',suNew(true,true),['f5']))}
+ <div class="grid2">
+  <div class="card"><h4>Words (ruled by <code>/marketing</code>)</h4><div class="tbl"><table><tr><th>Where</th><th>Today</th><th>Proposed</th></tr>
+   <tr><td>Headline</td><td class="del">WORKSPACE ACCESS PAUSED</td><td>Your access to {club} is paused</td></tr>
+   <tr><td>Sentence</td><td class="del">You can't open that workspace right now — contact an administrator at {club} to restore your access.</td><td>You can’t open {club} right now. Ask an administrator there to restore your access.</td></tr>
+   <tr><td>Reassurance</td><td class="del">Your FieldLogicHQ account still works: you can browse scores and manage your account from the tabs below.</td><td>Your FieldLogicHQ account still works. You can browse scores and manage your account. <span class="muted">(the pointer to the tabs is dropped, and the chat half stays tied to the chat pause)</span></td></tr>
+   <tr><td>Button</td><td>SIGN OUT (lime)</td><td>Sign out (quiet)</td></tr></table></div><p class="muted tight">When the organization has no name, the headline reads “Your access is paused” and the sentence “You can’t open your organization right now.”</p></div>
+  <div class="card"><h4>What happens, and one answer to your question</h4><ul class="tight"><li>Behaviour is unchanged: it redirects anyone with an active workspace to Home, and anyone with no suspended membership to the start page.</li><li><b>Is this the same thing as a “your account is paused” notice? No.</b> The paused person is also emailed by the club (the members window says so). The email and this page are two doors for one event. They should use the same word, “paused”, and the proposal does.</li><li>The page cannot reach most people who are suspended (F5). That is the bigger gap.</li></ul></div>
+ </div></section>`;
+
+/* ════════ SCREEN 7 · THE NEUTRAL CARD ════════ */
+const oldCard=`<div class="cardwrap"><div class="card12 old" role="img" aria-label="The neutral card today: FieldLogicHQ in plain white type on a near-black ground">FieldLogicHQ</div></div>`;
+const newA=`<div class="cardwrap"><div class="card12 new" role="img" aria-label="Proposed neutral card A: a large olive tile with the mark, and the FieldLogicHQ name beneath it, on paper"><div class="tile"><svg width="220" height="220" viewBox="0 0 64 64" aria-hidden="true"><g transform="translate(1.5 0)"><path d="${MARK}" fill="#F8F4ED"/></g></svg></div><div class="big"><svg viewBox="10 10 44 44" aria-hidden="true"><path d="${MARK}"/></svg><span>FieldLogic<span class="hq">HQ</span></span></div><div class="safe"></div></div></div>`;
+const newB=`<div class="cardwrap"><div class="card12 mk" role="img" aria-label="Proposed neutral card B: the same card as the marketing pages, the name, Less admin. More sport., and the olive tile"><div class="safe"></div><div class="l1"><svg viewBox="10 10 44 44" aria-hidden="true"><path d="${MARK}"/></svg><span>FieldLogic<span class="hq">HQ</span></span></div><h6>Less admin.<span>More sport.</span></h6><div class="t2"><svg width="176" height="176" viewBox="0 0 64 64" aria-hidden="true"><g transform="translate(1.5 0)"><path d="${MARK}" fill="#F8F4ED"/></g></svg></div></div></div>`;
+const sCard=`<section class="place" id="scard"><h3><span class="no">7</span>The neutral link-preview card</h3><p class="sub">What a chat app shows when someone pastes a club link and the product has nothing specific to show. 1200 × 630, drawn here at half size. It carries no club name by design.</p>
+ ${vl('cx','Today')}
+ ${row(fig('Today · 1200 × 630 at 50%',oldCard,['f6','h2']))}
+ ${vl('rf','Proposed','two versions of the same idea')}
+ ${row(fig('A · the name and the tile, no sentence',newA,['h3','h2']),fig('B · the marketing card, as built in S4',newB,[]))}
+ <div class="grid2">
+  <div class="card"><h4>Words</h4><p class="tight">A carries only the name. B carries the name and “Less admin. More sport.” (already ruled for the marketing card). Neither names a club, a team or a person, so nothing on it can go stale or point at the wrong club.</p></div>
+  <div class="card"><h4>What happens</h4><ul class="tight"><li>The answer is chosen exactly as today (the four cases), and is never cached.</li><li>Fonts: the marketing card fetches Inter and Barlow from Google. This card is uncached and requested by crawlers, so the build shares one loader that keeps the fonts in memory and falls back to the renderer’s own face if the fetch fails.</li><li>The tile is the only accent, as on the marketing card, so there is no lime and no second colour.</li></ul></div>
+ </div></section>`;
+
+document.getElementById('screens').innerHTML=s404+sErr+sRoot+sOff+sUn+sSus+sCard;
+
+/* ════════ BUILD IMPACT ════════ */
+document.getElementById('build-body').innerHTML=[
+ ['Shared files that change together','The 404 and the page-crash screen share one stylesheet, so they are rewritten as one piece. The root crash is inline styles in its own file. The suspended page leaves the old sign-in stylesheet, which shrinks to the one rule the sign-in layout still imports (the warm colour remap) and is not deleted. The unsubscribe page moves from inline styles into a stylesheet so the type check can see it.'],
+ ['The offline page and the phones that have it','Changing the static file means raising the service worker’s cache version from 11 to 12 with a dated comment, as S4 did. Without it an installed phone keeps the old page. The name at the foot is not touched; the identity test pins its copy.'],
+ ['What the checks will say','The type check’s system-screens section (12 face, 5 capitals, 1 heavy across four files, and the suspended stylesheet’s 4 and 3) falls to zero, so its baseline file is updated in the same change. The identity test will gain two watched places: the root crash’s inline name and the neutral card. Other checks that mention these screens: the club 404 guard test, the layout, token and contrast scripts, and the admin identity script. They are run, not edited.'],
+ ['Behaviour to test, not just look at','Try again after a forced one-time server failure (F1). The 404 button’s destination signed in and out. The unsubscribe route’s three redirects, the new third state, and that a bad token still opts nobody out. The offline page with the network off, in Dark and warm. The share card endpoint for a missing club.'],
+ ['What I did not touch','The club-site 404, the weak spot in F5, the “Canada” footer, the legal sentence, the error report, any tracking, the installed-app icons, and any other page’s Dark. The marketing share card S4 built has the same squarer-preview crop risk as card B; it is flagged for S4, not changed here.'],
+ ['Order and size','One build session, Sonnet at medium effort, as the plan says, ending in a review and a checkable walk. Words come from this page after you rule.']
+].map(([t,b])=>`<div class="card"><h4>${t}</h4><p class="tight">${b}</p></div>`).join('');
+
+/* ════════ ASKS ════════ */
+const ASKS=[
+ {id:'a1',t:'Where the 404 button goes',why:'A 404 is most often a parent or a volunteer following an old or mistyped link. Home (the directory) is where they can find the thing again. The marketing home is a sales page.',o:[['Home (the directory) for everyone, signed in or not. The page stays static.',1],['The marketing home for everyone.'],['Home when signed in and the marketing home when not. This reads the session, so every 404, including bots, renders on demand.']]},
+ {id:'a2',t:'A small icon tile on each screen',why:'The offline page already has one, so this carries it to the other five. It is the smallest picture that works and no new style.',o:[['Yes, the tile on all six, a different line icon on each.',1],['No tile anywhere. Words and the name only (offline loses its tile too).']]},
+ {id:'a3',t:'The root crash screen and Dark',why:'This screen has no theme. A saved Dark could be honoured by a small script, as the offline page does, but when the root fails React rebuilds the document element and has been seen stripping what the script set, so it can flash white or lose Dark.',o:[['Paper for everyone. No script. Simple and reliable on a rare screen.',1],['Follow a signed-in person’s saved Dark with a pre-paint script, and accept the flash risk.']]},
+ {id:'a4',t:'A second way out on the crash screens',why:'When Try again fails, the person needs another door.',o:[['“Go to Home” beside Try again, on both crash screens.',1],['Try again only.']]},
+ {id:'a5',t:'Make Try again actually re-fetch',why:'Next 16.3 says reset() re-renders without re-fetching and retry() re-fetches. We use reset(). I read it in the guide and did not reproduce it. The build will test it with a forced one-time failure.',o:[['Switch both crash screens to retry().',1],['Leave reset() as it is.']]},
+ {id:'a6',t:'The offline page’s two untrue sentences',why:'It promises an automatic reload and that opened pages stay available. Neither is true as built.',o:[['Change the words to say only what is true. No new behaviour.',1],['Keep the promise and make it true: reload by itself when the connection returns. The tournament-pages part of the sentence changes either way.']]},
+ {id:'a7',t:'What the unsubscribe confirmation says',why:'One page serves an organization opt-out, a coach’s own opt-out and a parent’s opt-out. Today it names “your organization” for all three.',o:[['One sentence that is true for all three: “You won’t get these emails again.” No route change.',1],['Three messages that say who was removed. The route passes a small marker saying which kind, and the page names the club for a parent.']]},
+ {id:'a8',t:'The “not affected” note on unsubscribe',why:'It lists billing, account security and tournament emails. I cannot tell from the code whether that is true for a parent who opted out of a club’s family emails.',o:[['Keep it as written and I will mark it for you to confirm.'],['Remove the note from the page until it is confirmed.',1],['I will tell you what it should say (use the notes box).']]},
+ {id:'a9',t:'The suspended page’s buttons',why:'The next step is “ask an administrator”, which cannot be a button because the page does not know their address. Today the lime button is Sign out, which is not the next step.',o:[['Sign out becomes the quiet button, and the page has no lime button.',1],['Keep Sign out as the lime button.'],['Add a lime “Go to Home” and make Sign out quiet (the tabs already do that job).']]},
+ {id:'a10',t:'The neutral link-preview card',why:'It answers for a missing club, a club whose site is off, a missing team and a missing tryout page. It never names a club.',o:[['A: the name and the tile, no sentence.',1],['B: the marketing card, with “Less admin. More sport.”'],['Keep it as it is today.']]},
+ {id:'a11',t:'The suspended-account gap (F5)',why:'A person suspended from one of several workspaces is never told. This is outside S5.',o:[['Note it for a plan of its own.',1],['Leave it.']]}
+];
+const askHtml=a=>`<div class="ask" id="ask-${a.id}"><h3><span class="no">Ask ${a.id.slice(1)}</span>${a.t}</h3><p class="why">${a.why}</p><div class="opts">${a.o.map((o,i)=>`<label class="${o[1]?'rec':''}"><input type="checkbox" data-ask="${a.id}" data-opt="${i}" ${o[1]?'checked':''}> <span><b>${String.fromCharCode(65+i)}.</b> ${o[0]}</span></label>`).join('')}</div><label for="${a.id}-n" class="muted" style="font-size:13px">Notes</label><textarea id="${a.id}-n" rows="2"></textarea></div>`;
+document.getElementById('asks-body').innerHTML=ASKS.map(askHtml).join('');
+const out=document.getElementById('pb-out');
+function paste(){const L=['System screens (S5) - answers'];ASKS.forEach(a=>{const p=[...document.querySelectorAll(`input[data-ask="${a.id}"]:checked`)].map(x=>String.fromCharCode(65+ +x.dataset.opt));const n=document.getElementById(a.id+'-n').value.trim();L.push(`Ask ${a.id.slice(1)}: ${p.length?p.join(', '):'-'}${n?'  | notes: '+n.replace(/\s+/g,' '):''}`);});out.value=L.join('\n');}
+const ab=document.getElementById('asks-body');ab.addEventListener('input',paste);ab.addEventListener('change',paste);paste();
+document.getElementById('pb-select').addEventListener('click',()=>{out.focus();out.select();});
+document.getElementById('pb-copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(out.value);}catch(e){out.focus();out.select();}});
+
+/* ════════ THE EXPLANATION DIALOG ════════ */
+const veil=document.getElementById('veil');let lastBtn=null;
+function openNote(id,btn){const n=NOTES[id];if(!n)return;lastBtn=btn;
+ document.getElementById('dlg-k').textContent=KIND[n.k];document.getElementById('dlg-k').style.color=n.k==='fl'?'var(--flag)':n.k==='ok'?'var(--fix)':n.k==='nw'?'var(--info)':n.k==='hd'?'var(--ask)':'var(--muted)';
+ document.getElementById('dlg-t').textContent=n.t;
+ document.getElementById('dlg-b').innerHTML=`<h5>What the code does today</h5><p>${n.today}</p><h5>What the proposal does</h5><p>${n.prop}</p>`;
+ veil.hidden=false;document.getElementById('dlg-x').focus();}
+function closeNote(){veil.hidden=true;if(lastBtn)lastBtn.focus();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-note]');if(b){openNote(b.dataset.note,b);return;}if(e.target===veil)closeNote();});
+document.getElementById('dlg-x').addEventListener('click',closeNote);
+document.addEventListener('keydown',e=>{if(veil.hidden)return;if(e.key==='Escape')closeNote();else if(e.key==='Tab'){e.preventDefault();document.getElementById('dlg-x').focus();}});
+</script>

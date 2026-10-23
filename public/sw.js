@@ -40,7 +40,9 @@
 //      so no already-installed worker keeps caching the new authed route.
 // v11: The public face, warm S4 Part B — the new mark under new icon names (fl-*); the bump drops the
 //      old icons and the old offline page from every installed worker's cache.
-const CACHE_VERSION = 'v11';
+// v12: The public face, warm S5 (2026-10-23) — the offline page's new words; the bump drops the old copy of the
+//      offline page from every installed phone's saved shell.
+const CACHE_VERSION = 'v12';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
