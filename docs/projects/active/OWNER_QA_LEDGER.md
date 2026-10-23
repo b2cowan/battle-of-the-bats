@@ -26290,3 +26290,25 @@ republished; tick positions unchanged).
 
 **Not in the walk (tests cover it, or out of scope):** the day-edge in other time zones (every club is Toronto today; the check takes the zone as a parameter); a logo file's deletion after cancel (no screen shows it); two admins editing the sponsors in the same second (the last save wins, as for the other three lists).
 <!-- /§366 -->
+
+## §367 · The public face, warm · S4 Part A, the marketing set warm and plain — **every marketing page (home, Pricing, the four For pages, both walkthroughs, Live demos, What's new, the prospect and "open the live demo" pages) and its bar, footer and Founding Season strip are warm under every setting: headings in the heading face, no typewriter lettering, one lime button per view, nothing waits for a scroll; each page has its own title with the brand added once and one warm share card; the four old /platform pages go home**
+
+**Built:** 2026-10-23 from `PUBLIC_FACE_WARM_S4_BUILD_PROMPT.md` (Part A), COMMITTED `a2d8726c` on `dev` (not pushed). No migration. Words from `PUBLIC_FACE_WARM_S4_COPY.md` only (item 6 applied: Stage 9 has not shipped game notifications; the 14-row label list approved by the owner at build). `/review` run (three lenses): nine fixes before the commit, among them the share card failing when Google Fonts is unreachable, the Account menu opening dark from the warm bar, two unapproved labels, a stray dot in the printed walkthrough. New guard `tests/unit/public-face-s4-marketing.test.ts`; `check:public-type` now counts the lettering a class name carries.
+
+**The walk:** [Marketing set walk](PUBLIC_FACE_WARM_S4A_WALK.html), published https://claude.ai/artifact/YJTw1dC4Ny11xTjg2zdQH8 2026-10-23. Nine parts: A the bar, strip and footer (incl. a signed-in Dark visitor) · B Home · C Pricing · D the four For pages · E the walkthroughs (incl. print) · F Live demos and What's new · G titles and shared links · H nothing waits for a scroll, and the phone · I retired pages and what moved with the set.
+
+**Open for the owner:** the coach walkthrough's "Start free" opens the tournament sign-up (true before S4; flagged, not changed); "Join early access" on the interest form sits on the retired-wording list (`/marketing`); Pricing may still promise "automated parent notifications" (Stage 9's I06, not S4's).
+
+**Not in the walk:** the new mark (§368); the 404, crash and offline screens' look (S5); the whole-product layout sweep, which runs on staging at release because the shared stylesheet changed.
+<!-- /§367 -->
+
+## §368 · The public face, warm · S4 Part B, the new mark everywhere — **the refined Joined FL and the FieldLogicHQ name (olive mark, "FieldLogic" ink, "HQ" olive) in every bar, strip, shell, sign-in and system page, the browser tab, the phone icons, the push badge, exports and the email name line; on Dark the name takes the text colour; the old lime chevron, FL/HQ icon and typewriter wordmark are gone**
+
+**Built:** 2026-10-23 from `PUBLIC_FACE_WARM_S4_BUILD_PROMPT.md` (Part B), COMMITTED `a9f154e8` on `dev` (not pushed). No migration. One name component (`components/shared/BrandLockup.tsx`); the mark copied from the refinement page; every icon under new `fl-*` names, service worker cache v11; launch screen and default bar on the paper (the platform-admin console and its sign-in pin a dark bar, found by `/review`). New guard `tests/unit/public-face-s4-identity.test.ts`; P1 and P9 rewritten in `VISUAL_IDENTITY.md`; the `wordmark` type role retired.
+
+**The walk:** [New mark walk](PUBLIC_FACE_WARM_S4B_WALK.html), published https://claude.ai/artifact/5TyMKPtZADGy6zu11tyhYe 2026-10-23. Eight parts: A the browser tab and a bookmark · B the name in every bar (marketing, app, coach and admin strips in Warm and Dark, volunteer shells, tournament strip light and dark, a demo) · C sign-in and system pages · D the phone home screen (iPhone re-add, Android install) · E a push notification · F exports · G the email name line · H no trace of the old marks. Phone, push and mail-app steps have Skipped twins.
+
+**Open for the owner:** the name and logo search on "FieldLogic" and the mark before anything is printed or stitched; the What's new line goes to `/release` at promote (an iPhone keeps the old icon until the app is added again); `opentype.js` is now unused and can be uninstalled.
+
+**Not in the walk:** a club's own app icon (the club site installs with ours; routed to the public site builder); the share card's fonts on a server with no internet (it falls back to the plain face).
+<!-- /§368 -->
