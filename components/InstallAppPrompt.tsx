@@ -16,7 +16,7 @@
  * this component only renders the prompt.
  */
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { X, Download } from 'lucide-react';
 import { followKey, useFollowedTeam } from '@/lib/follow';
 import warm from './consumer/warmTheme.module.css';
@@ -98,7 +98,7 @@ export default function InstallAppPrompt({
   orgSlug,
   tournamentSlug,
 }: Props) {
-  const pathname = usePathname() ?? '';
+  const pathname = usePublicPathname() ?? '';
   const onSignUpStep = SIGN_UP_STEP_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
   const [mode, setMode] = useState<Mode>('hidden');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);

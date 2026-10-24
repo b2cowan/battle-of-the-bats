@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { usePublicPathname } from './use-public-pathname';
 import { getSession } from '@/lib/auth';
 import { createClient } from '@/lib/supabase-browser';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
@@ -50,7 +51,7 @@ export function useClientSignedIn(enabled = true): boolean {
   // lib/sandbox-exit.ts), which leaves this half as the ONLY thing that notices a visitor
   // stepping out of the demo without a full page load. Reading the path once at mount made it
   // blind to exactly that.
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const router = useRouter();
   useEffect(() => {
     if (!enabled) return;

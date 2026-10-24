@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ClipboardList, Trophy, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { readFollowedTeam } from '@/lib/follow';
 import {
   buildTeamWorkspaceAcquisitionHref,
@@ -36,7 +36,7 @@ export default function TournamentAcquisitionBanner({
   tournamentSlug,
   tournamentName,
 }: TournamentAcquisitionBannerProps) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [dismissed, setDismissed] = useState(true);
   const [variant, setVariant] = useState<BannerVariant | null>(null);
   const dismissKey = `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;

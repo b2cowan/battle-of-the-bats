@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { HelpDrawerContext, type HelpRequest } from './help-drawer-context';
 
 // Load the drawer (and, through it, the content registry + all guide content)
@@ -38,7 +38,7 @@ export default function HelpDrawerProvider({ children, warm = false }: { childre
   // reset (the React "derive from props" pattern), not an effect — same-render
   // state adjustment, no cascading effect pass. Pathname only on purpose: query
   // changes (e.g. the Money hub's ?section= tab switches) keep the drawer up.
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [lastPathname, setLastPathname] = useState(pathname);
   if (pathname !== lastPathname) {
     setLastPathname(pathname);

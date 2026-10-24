@@ -18,7 +18,7 @@
  * Not on a club whose site is closed: every club page there is the 4a refusal, which wears no club bar (owner
  * 2026-10-20). Not on a tournament page ("the venue" keeps its own look and the platform's bars, Ask 8's carve-out).
  */
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { wearsClubFrame } from '@/lib/club-not-found-face';
 import type { OrgSection } from '@/lib/org-public-sections';
 import type { ClubSocialKind } from '@/lib/club-site';
@@ -52,7 +52,7 @@ export interface ClubFrameClub {
  * club's own owner and admins, whatever the switch says (A2). Its bar is the one a signed-out family sees.
  */
 export default function ClubFrame({ club, preview = false, children }: { club: ClubFrameClub; preview?: boolean; children: React.ReactNode }) {
-  const pathname = usePathname() ?? '';
+  const pathname = usePublicPathname() ?? '';
   // The club's slug and whether its site is open come from the one provider the "not found" faces read too.
   const wears = wearsClubFrame(pathname, usePublicClub());
   // The preview is deliberately OUTSIDE `wearsClubFrame`: it is the one place the frame is drawn at an admin address, and

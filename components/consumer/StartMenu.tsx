@@ -13,7 +13,7 @@
  */
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { ChevronDown } from 'lucide-react';
 import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './ConsumerShell.module.css';
@@ -34,7 +34,7 @@ export default function StartMenu({
   // layout chrome, so browser Back/Forward (no pointerdown, no click) would otherwise
   // leave a stale open popover over the new page. Render-time adjustment (the repo's
   // established lastPath pattern) rather than a setState-in-effect.
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [lastPath, setLastPath] = useState(pathname);
   if (lastPath !== pathname) {
     setLastPath(pathname);

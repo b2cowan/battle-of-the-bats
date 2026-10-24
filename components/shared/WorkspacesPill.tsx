@@ -16,7 +16,7 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { ChevronDown } from 'lucide-react';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { WORKSPACES_POPOVER_THRESHOLD } from '@/lib/use-role-summary';
@@ -43,7 +43,7 @@ export default function WorkspacesPill({
   // chrome, so browser Back/Forward (no pointerdown, no click) would otherwise leave a stale
   // open popover over the new page. Render-time adjustment (the repo's established lastPath
   // pattern — mirrors StartMenu), never setState-in-effect.
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [lastPath, setLastPath] = useState(pathname);
   if (lastPath !== pathname) {
     setLastPath(pathname);

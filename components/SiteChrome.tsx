@@ -1,12 +1,12 @@
 'use client';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
 import { isConsumerShellPath, isWarmJourneyPath, isOrgOperatorShellPath } from '@/lib/consumer-routes';
 import Navbar from './Navbar';
 import FoundingSeasonOfferBar from './marketing/FoundingSeasonOfferBar';
 
 export default function SiteChrome() {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   // Every org-scoped OPERATOR shell renders its own chrome, so the global Navbar must not double up
   // and overlap it: the volunteer day-of shells (`/{org}/scorekeeper`, `/{org}/check-in`), the
   // org-scoped Coaches Portal (`/{org}/coaches…` — isCoachPortalShellPath below only covers the

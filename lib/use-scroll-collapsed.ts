@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from './use-public-pathname';
 
 /**
  * "Has the visitor scrolled far enough that top chrome should stand down?"
@@ -49,7 +49,7 @@ export function useScrollCollapsed(options: {
   scrollToTop: () => void;
 } {
   const { maxWidth, collapseAt = 64, expandAt = 12 } = options;
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [collapsed, setCollapsed] = useState(false);
   // The element that last reported a scroll we accepted — null means the document is the scroller.
   const scrollerRef = useRef<HTMLElement | null>(null);

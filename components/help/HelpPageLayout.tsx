@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { Search, X, ChevronRight } from 'lucide-react';
 import type { HelpFaq, HelpSection, HelpSubtopic } from '@/lib/help-content';
 import { resolveSectionId, resolveFaqId, resolveSubtopicId } from '@/lib/help-content';
@@ -121,7 +121,7 @@ export default function HelpPageLayout({
   const normalizedQuery = query.trim().toLowerCase();
   const hasSearch = normalizedQuery.length > 0;
 
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   /* ⚠ There is deliberately NO "← All guides" crumb (owner ruling 2026-08-14).
      It never led to a list of guides: it stripped the last path segment, which
      on the admin side reached the help hub but on the coaches portal — a portal

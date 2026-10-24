@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import {
   isFoundingSeasonPromoActive,
   FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
@@ -51,7 +51,7 @@ export function isMarketingSitePath(pathname: string): boolean {
 }
 
 export default function FoundingSeasonOfferBar() {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const show = isMarketingSitePath(pathname) && isFoundingSeasonPromoActive('tournament_plus');
   const barRef = useRef<HTMLAnchorElement | null>(null);
 

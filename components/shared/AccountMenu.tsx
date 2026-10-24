@@ -41,7 +41,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { User, Bell, Settings, MessageSquarePlus, LogOut, Check } from 'lucide-react';
 import { getSession, signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -98,7 +98,7 @@ export default function AccountMenu({
   // Close on ANY route change — persistent layout chrome, so browser Back/Forward would
   // otherwise leave a stale popover over the new page. The repo's lastPath render-time
   // pattern (mirrors WorkspacesPill), never setState-in-effect.
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [lastPath, setLastPath] = useState(pathname);
   if (lastPath !== pathname) {
     setLastPath(pathname);

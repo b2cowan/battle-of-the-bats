@@ -15,7 +15,7 @@
  */
 
 import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import {
   applyTheme,
   getActiveTheme,
@@ -30,7 +30,7 @@ import { isWarmSkinPath } from '@/lib/consumer-routes';
 // The root-layout default (lib/user-theme.ts DEFAULT_THEME_COLOR) is restored whenever no consumer-route rule applies.
 
 export default function ConsumerThemeManager({ accountTheme }: { accountTheme: UserTheme | null }) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
 
   // 1. Account reconcile (account wins): adopt the account's explicit theme when it differs from
   // what the device fast-path applied. Keyed on `accountTheme` — NOT `[]` — because signing in

@@ -16,7 +16,8 @@
  *    show an explainer instead of a blank/dead button.
  */
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { Bell, BellRing, BellOff, BellPlus, Loader2 } from 'lucide-react';
 import { isPushSupported, getCurrentPushEndpoint } from '@/lib/push-client';
 import { isIOSLike, isStandalonePWA } from '@/lib/device';
@@ -47,7 +48,7 @@ interface Props {
 export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, variant = 'default', className, labelClassName }: Props) {
   const pill = variant === 'pill';
   const iconSize = pill ? 12 : 14;
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const router = useRouter();
   // Shorter label in the compact pill row so three actions fit inline on a phone.
   const offLabel = pill ? 'Score alerts' : 'Get score alerts';

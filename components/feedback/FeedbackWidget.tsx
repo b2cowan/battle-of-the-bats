@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { X, Bug, Lightbulb, MessageSquare, CheckCircle } from 'lucide-react';
 import { getLastRequestId } from '@/lib/observability/client-request-id';
 import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
@@ -32,7 +32,7 @@ export default function FeedbackWidget({
   onClose: () => void;
   helpSection?: string;
 }) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [type, setType] = useState<FeedbackType>('bug');
   const [category, setCategory] = useState<string>(() => categoryFromRoute(pathname));
   const [title, setTitle] = useState('');

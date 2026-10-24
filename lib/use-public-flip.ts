@@ -1,6 +1,7 @@
 'use client';
 
-import { useParams, usePathname } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { usePublicPathname } from './use-public-pathname';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { useEventRoleHats } from '@/lib/use-event-role-hats';
@@ -45,7 +46,7 @@ export function usePublicFlip(): PublicFlip {
   // The public game score-card is a real dynamic route (`/schedule/[gameId]`), so useParams already
   // exposes the id — no bespoke pathname parsing. Present only on that page; the admin twin uses it.
   const gameId = typeof params?.gameId === 'string' ? params.gameId : null;
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   // The event KEY comes from the ROUTE, which is readable on the very first render. It used to come
   // from OrgNavContext, which `TournamentNavSync` only populates in an effect a render later — and
   // that lag is what let a caller's "still resolving?" probe finish before this hook had even

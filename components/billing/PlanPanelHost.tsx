@@ -15,13 +15,13 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { planPanelFromHref, type PanelPlanKey } from '@/lib/plan-upgrade';
 
 const PlanPanelDrawer = dynamic(() => import('./PlanPanelDrawer'), { ssr: false });
 
 export default function PlanPanelHost() {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [plan, setPlan] = useState<PanelPlanKey | null>(null);
 
   // The panel belongs to the page it was opened over: a navigation closes it (render-time reset, as the help drawer).

@@ -13,7 +13,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { Star, ChevronUp } from 'lucide-react';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -69,7 +69,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
   // Everywhere else the full bar is unchanged. Matched against explicit hrefs
   // built from props (the BottomNav idiom) — game detail (/schedule/{id}) and
   // the teams LIST (/teams) deliberately keep the full bar.
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const tournamentBase = `/${orgSlug}/${tournamentSlug}`;
   const routeMinimized =
     pathname === `${tournamentBase}/schedule` ||

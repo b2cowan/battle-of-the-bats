@@ -2,7 +2,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { User } from 'lucide-react';
 import { useOrgNav } from './OrgNavContext';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
@@ -49,7 +50,7 @@ function isMarketingPath(pathname: string) {
 }
 
 export default function Navbar() {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;

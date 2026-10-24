@@ -19,7 +19,7 @@
  * an anonymous visitor carries no one's doors (the anonymous-public invariant).
  */
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { User } from 'lucide-react';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useRoleSummary } from '@/lib/use-role-summary';
@@ -39,7 +39,7 @@ import styles from './ClubFrame.module.css';
 /** `preview` (the editor's preview of the home): Home lit, and the visitor's corner a signed-out family's — never the
  *  editing owner's own Account or staff door. */
 export default function ClubBar({ club, preview = false }: { club: ClubFrameClub; preview?: boolean }) {
-  const realPath = usePathname() ?? '';
+  const realPath = usePublicPathname() ?? '';
   const pathname = preview ? `/${club.slug}` : realPath;
   const signedIn = useClientSignedIn(!preview) && !preview;
   const roles = useRoleSummary(signedIn);

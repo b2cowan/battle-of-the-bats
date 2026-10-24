@@ -24,7 +24,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { Building2, ChevronDown, Globe } from 'lucide-react';
 import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipSurfaceLabel, flipLandsOnPublic, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -44,7 +44,7 @@ interface FlipPillProps {
 }
 
 export default function FlipPill({ resolution, variant = 'inline', compact = false, ariaLabel, className }: FlipPillProps) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 

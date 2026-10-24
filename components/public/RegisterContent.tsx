@@ -2,7 +2,8 @@
 import { Fragment, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail, Eye, Check, Lock } from 'lucide-react';
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { getRegistrationState } from '@/lib/registration-state';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
@@ -250,7 +251,7 @@ function registrationPortalPath(registrationId: string | undefined, email: strin
 export default function RegisterContent({ isPreview = false, initialData = null }: { isPreview?: boolean; initialData?: PublicTournamentPageData | null }) {
   const params         = useParams();
   const router         = useRouter();
-  const pathname       = usePathname();
+  const pathname       = usePublicPathname();
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
 

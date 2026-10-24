@@ -16,7 +16,8 @@
  *    matches the preview pathname.
  */
 import Link from 'next/link';
-import { usePathname, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
@@ -41,7 +42,7 @@ export default function TournamentSideRail({
   colorMode,
   hiddenPages,
 }: TournamentSideRailProps = {}) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const params = useParams();
   const ctx = useOrgNav();
   const orgSlug = (params?.orgSlug as string) || '';

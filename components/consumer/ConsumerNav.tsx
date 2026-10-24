@@ -20,7 +20,8 @@
  * bar is Home · Scores · Account, the same shape as the signed-out Home · Scores · Sign In.
  */
 import Link from 'next/link';
-import { usePathname, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { Home, Radio, MessageCircle, User, LogIn } from 'lucide-react';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
@@ -109,7 +110,7 @@ export default function ConsumerNav({
    *  only on a portal page with NO team — a team's pages wear the team bar (CoachFreeBottomNav). */
   variant?: 'consumer' | 'tournament' | 'coach';
 }) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const params = useParams();
   const isActive = (href: string) => underPrefix(pathname, href);
 

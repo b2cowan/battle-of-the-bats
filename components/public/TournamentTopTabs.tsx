@@ -25,7 +25,8 @@
  */
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import { usePathname, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
@@ -43,7 +44,7 @@ type TournamentTopTabsProps = {
 };
 
 export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: TournamentTopTabsProps = {}) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';

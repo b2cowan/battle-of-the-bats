@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { clubNotFoundFace } from '@/lib/club-not-found-face';
 import { usePublicClub } from './PublicClubContext';
 import RootNotFound from '@/app/not-found';
@@ -26,7 +26,7 @@ import kit from './ClubKit.module.css';
  * Each face is a <div>: the root layout already owns the page's <main>.
  */
 export default function ClubNotFound() {
-  const pathname = usePathname() ?? '';
+  const pathname = usePublicPathname() ?? '';
   const club = usePublicClub();
   const face = clubNotFoundFace(pathname, club);
 

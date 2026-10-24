@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import type { DemoOrgKind } from '@/lib/demo-org';
 import { useScrollCollapsed } from '@/lib/use-scroll-collapsed';
 import {
@@ -280,7 +281,7 @@ export default function SandboxChrome({
    *  shared demo account, one tap from creating a team or a checkout on it (/review 2026-10-20). */
   startHref: string;
 }) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   // Reactive, unlike window.location: a query-only navigation (a Money-hub tab switch) changes no
   // pathname, and arrival at a query-addressed destination must still settle. Requires a Suspense
   // boundary above (the org layout provides one around this component).

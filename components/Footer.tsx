@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
 import { isConsumerShellPath, isWarmJourneyPath } from '@/lib/consumer-routes';
 import { DEMOS_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -102,7 +102,7 @@ function resolveSurface(pathname: string): 'marketing' | 'warm' | null {
 }
 
 export default function Footer() {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   const surface = resolveSurface(pathname);
   if (!surface) return null;
 

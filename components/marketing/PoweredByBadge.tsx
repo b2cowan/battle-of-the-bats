@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePublicPathname } from '@/lib/use-public-pathname';
 import {
   buildTournamentAcquisitionHref,
   isAcquisitionHiddenOnPath,
@@ -17,7 +17,7 @@ type PoweredByBadgeProps = {
 };
 
 export default function PoweredByBadge({ orgSlug, tournamentSlug, offsetForBanner = false }: PoweredByBadgeProps) {
-  const pathname = usePathname();
+  const pathname = usePublicPathname();
   // Same page rule as the banner: the badge is absent on the registration form and the
   // score-entry screens, where it floated over the form's fields and submit button (2026-10-16).
   const hiddenForFlow = isAcquisitionHiddenOnPath(pathname);
