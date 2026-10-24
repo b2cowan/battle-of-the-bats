@@ -74,9 +74,15 @@ export function createClubHostCache(deps: {
 
   async function ensure(missed: boolean): Promise<void> {
     const t = now();
-    if (t - loadedAt >= ttl && t - attemptedAt >= missGap) await refresh();
-    else if (missed && t - attemptedAt >= missGap) await refresh();
-    else if (inFlight) await inFlight;
+    if (t - loadedAt >= ttl && t - attemptedAt >= missGap) {
+      // Stale. With something remembered, answer from it and refresh in the background: a slow table read must never stall a
+      // page. Only a cold cache (nothing remembered) waits for the first read.
+      const reading = refresh();
+      if (!hasData) await reading;
+      return;
+    }
+    if (missed && t - attemptedAt >= missGap) { await refresh(); return; }
+    if (!hasData && inFlight) await inFlight;
   }
 
   return {
@@ -106,12 +112,21 @@ export async function fetchClubHosts(): Promise<ClubHostEntry[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error('club hosts: Supabase is not configured');
-  const res = await fetch(`${url}/rest/v1/org_custom_domains?select=full_name,status,org_id,organizations!inner(slug)`, {
-    headers: { apikey: key, Authorization: `Bearer ${key}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error(`club hosts: ${res.status}`);
-  const rows = (await res.json()) as { full_name: string; status: ClubDomainStatus; org_id: string; organizations: { slug: string } | { slug: string }[] | null }[];
+  type Row = { full_name: string; status: ClubDomainStatus; org_id: string; organizations: { slug: string } | { slug: string }[] | null };
+  const rows: Row[] = [];
+  // PostgREST answers at most 1000 rows a request: read in pages until one comes back short, so a growing table never silently
+  // drops the clubs past the cap. Each page has its own deadline: a hung read must not hold every page of the site.
+  for (let from = 0; from < 20_000; from += 1000) {
+    const res = await fetch(`${url}/rest/v1/org_custom_domains?select=full_name,status,org_id,organizations!inner(slug)&order=full_name`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Range-Unit': 'items', Range: `${from}-${from + 999}` },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) throw new Error(`club hosts: ${res.status}`);
+    const page = (await res.json()) as Row[];
+    rows.push(...page);
+    if (page.length < 1000) break;
+  }
   return rows.flatMap(r => {
     const org = Array.isArray(r.organizations) ? r.organizations[0] : r.organizations;
     return org?.slug ? [{ host: r.full_name.toLowerCase(), orgId: r.org_id, slug: org.slug, status: r.status }] : [];
@@ -127,8 +142,16 @@ export const clubHosts: ClubHostCache = createClubHostCache({ load: fetchClubHos
 const PUBLIC_SECTIONS = new Set(['about', 'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams', 'tryouts']);
 /** Day-of and operator shells: never served on a club's own address, whatever their slug. */
 const OPERATOR_SECTIONS = new Set(['admin', 'check-in', 'coaches', 'official', 'scorekeeper']);
-/** API paths a club's own host must never reach: the signed-in operator and platform surfaces have no session here anyway. */
-const BLOCKED_API = ['/api/admin', '/api/platform-admin', '/api/dev', '/api/billing', '/api/coaches'];
+/**
+ * The ONLY API paths a club's own host forwards: the public pages' own data and forms, the registration a visitor files, the
+ * public follow and feedback doors, and the two sign-up calls a registration makes. Everything else is a 404 (an ALLOW-list:
+ * a new operator or signed-in API is closed here by default). A club's host has no session, but "no session" is a fact about
+ * cookies today, not a gate.
+ */
+const ALLOWED_API = [
+  '/api/public', '/api/register', '/api/registrations', '/api/league', '/api/events', '/api/calendar', '/api/client',
+  '/api/feedback', '/api/consumer', '/api/auth/coach-signup', '/api/auth/resend-verification',
+];
 
 export type ClubHostRoute =
   | { kind: 'pass' } // static files, data routes the public pages call: left alone
@@ -141,19 +164,25 @@ const hasExtension = (pathname: string) => /\.[a-z0-9]{2,8}$/i.test(pathname.spl
 const PUBLIC_STATIC_DIRS = new Set(['brand', 'help', 'icons', 'marketing', 'stock-logos']);
 
 export function routeClubHostPath(slug: string, pathname: string): ClubHostRoute {
-  const path = pathname === '' ? '/' : pathname;
+  const original = pathname === '' ? '/' : pathname;
+  // Every DECISION is made on the decoded, lower-cased path: Next decodes a path before it matches a route, so `/%61dmin` is
+  // `/admin` to the router and must be to this check too. An undecodable path, an encoded slash or a backslash is never a page.
+  let decoded: string;
+  try { decoded = decodeURIComponent(original); } catch { return { kind: 'notfound' }; }
+  if (/%2f|%5c/i.test(original) || decoded.includes('\\') || /%2f|%5c/i.test(decoded)) return { kind: 'notfound' };
+  const path = decoded.toLowerCase();
   const segs = path.split('/').filter(Boolean);
-  const first = segs[0]?.toLowerCase() ?? '';
+  const first = segs[0] ?? '';
 
   // Static: the framework's files, a file at the root (robots.txt, favicon.ico, sw.js) or inside a /public folder. A path with an
   // extension deeper than that is a CLUB route that happens to have one (a tournament's manifest.webmanifest): it is rewritten.
   if (first === '_next') return { kind: 'pass' };
   if (hasExtension(path) && (segs.length === 1 || PUBLIC_STATIC_DIRS.has(first))) return { kind: 'pass' };
-  if (first === 'api') return BLOCKED_API.some(p => path === p || path.startsWith(`${p}/`)) ? { kind: 'notfound' } : { kind: 'pass' };
+  if (first === 'api') return ALLOWED_API.some(p => path === p || path.startsWith(`${p}/`)) ? { kind: 'pass' } : { kind: 'notfound' };
 
   // The club's own name in the path (an unconverted link, an old bookmark): one hop to the same page without it.
   if (first === slug.toLowerCase()) {
-    const rest = segs.slice(1).join('/');
+    const rest = original.split('/').filter(Boolean).slice(1).join('/');
     return { kind: 'redirect', to: rest ? `/${rest}` : '/' };
   }
 
@@ -161,7 +190,8 @@ export function routeClubHostPath(slug: string, pathname: string): ClubHostRoute
   // A reserved word is a top-level route of ours (auth, discover, coaches ...), never the club's, unless it is a public section.
   if (first && RESERVED_ORG_SLUGS.has(first) && !PUBLIC_SECTIONS.has(first)) return { kind: 'notfound' };
   // The club's own sections may not be reached through a tournament slug that spells an operator word (`/spring/admin`).
-  if (segs.length >= 2 && OPERATOR_SECTIONS.has(segs[1].toLowerCase())) return { kind: 'notfound' };
+  if (segs.length >= 2 && OPERATOR_SECTIONS.has(segs[1])) return { kind: 'notfound' };
 
-  return { kind: 'rewrite', to: `/${slug}${path === '/' ? '' : path}` };
+  // The decisions are made; the page is asked for by the path as it came (a slug's own case and encodings are the page's).
+  return { kind: 'rewrite', to: `/${slug}${original === '/' ? '' : original}` };
 }

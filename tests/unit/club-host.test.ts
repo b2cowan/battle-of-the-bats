@@ -66,6 +66,24 @@ describe('the host cache reads the table rarely, never per request', () => {
     assert.equal(await cold.lookup('www.lakeshorelynx.ca'), 'unavailable');
   });
 
+  it('never makes a page wait for a refresh once it remembers something: a slow table read is served stale', async () => {
+    const c = clock();
+    let release: () => void = () => {};
+    let reads = 0;
+    const cache = createClubHostCache({
+      load: () => { reads++; return reads === 1 ? Promise.resolve([lynx]) : new Promise<ClubHostEntry[]>(res => { release = () => res([lynx]); }); },
+      now: c.now,
+      ttlMs: 60_000,
+    });
+    assert.equal(await cache.lookup('www.lakeshorelynx.ca'), lynx);
+    c.advance(61_000);
+    // The refresh hangs; the lookup must still answer at once, from memory.
+    const answered = await Promise.race([cache.lookup('www.lakeshorelynx.ca'), new Promise(res => setTimeout(() => res('HUNG'), 200))]);
+    assert.equal(answered, lynx);
+    assert.equal(reads, 2, 'and the refresh did start');
+    release();
+  });
+
   it('answers by slug for the page layer', async () => {
     const cache = createClubHostCache({ load: async () => [lynx, bats] });
     assert.equal(await cache.forSlug('lakeshore-lynx'), lynx);
@@ -110,6 +128,27 @@ describe('what a path on a club\'s own address means', () => {
     for (const p of ['/api/admin/org-settings', '/api/platform-admin/x', '/api/billing/portal', '/api/coaches/basic-teams', '/api/dev/seed']) {
       assert.deepEqual(r(p), { kind: 'notfound' }, p);
     }
+  });
+
+  it('the API is an allow-list: everything not named is a 404, in any spelling', () => {
+    for (const p of ['/api/scorekeeper/x', '/api/official/x', '/api/rep-teams/x', '/api/org/x', '/api/org-context', '/api/me/role-summary',
+      '/api/chat/unread', '/api/notifications/push', '/api/account/theme', '/api/sandbox/switch', '/api/auth/signup', '/api/auth/me',
+      '/api/Admin/x', '/Api/billing/portal', '/API/coaches/basic-teams', '/api/%61dmin/x', '/api/plan-gating/x']) {
+      assert.deepEqual(r(p), { kind: 'notfound' }, p);
+    }
+    for (const p of ['/api/public/club-origin', '/api/register', '/api/registrations', '/api/league/x', '/api/events/x', '/api/calendar/x',
+      '/api/client/error-capture', '/api/feedback', '/api/consumer/follows', '/api/auth/coach-signup', '/api/auth/resend-verification']) {
+      assert.deepEqual(r(p), { kind: 'pass' }, p);
+    }
+  });
+
+  it('decides on the decoded, lower-cased path, so an encoded or odd-cased spelling of a closed door is closed too', () => {
+    for (const p of ['/%61dmin', '/%41dmin/x', '/%63oaches', '/Admin', '/COACHES/teams', '/%73corekeeper', '/spring/%61dmin', '/teams/%43oaches',
+      '/auth/login', '/%61uth/login', '/teams%2Fadmin', '/teams%2fadmin', '/teams%5cadmin', '/teams\\admin', '/%2e%2e/admin', '/%']) {
+      assert.deepEqual(r(p), { kind: 'notfound' }, p);
+    }
+    assert.deepEqual(r('/teams/13u%20aa'), { kind: 'rewrite', to: '/lakeshore-lynx/teams/13u%20aa' }, 'a harmless encoding is kept for the page');
+    assert.deepEqual(r('/Lakeshore-Lynx/Teams/13U-AA'), { kind: 'redirect', to: '/Teams/13U-AA' }, 'the hop keeps the path as it came');
   });
 
   it('a tournament\'s manifest.webmanifest is the club\'s route, not a static file', () => {

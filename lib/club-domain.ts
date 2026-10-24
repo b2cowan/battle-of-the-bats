@@ -31,13 +31,19 @@ export function usesOwnAddress(status: ClubDomainStatus | null | undefined): boo
  * there (it would read `www.www.`); in the other-name mode it is kept as the club typed it.
  */
 export function cleanAddressInput(raw: string, mode: 'www' | 'other' = 'www', opts: { whileTyping?: boolean } = {}): string {
-  let s = String(raw ?? '').trim().toLowerCase();
+  // Capped FIRST: nothing below is allowed to work on an unbounded string (a 200,000-dot body once cost a server 23 s in the
+  // trailing-dot trim). 400 is far past any real address (253 at most).
+  let s = String(raw ?? '').slice(0, 400).trim().toLowerCase();
   s = s.replace(/^[a-z][a-z0-9+.-]*:\/\//, ''); // https://
   s = s.replace(/^[^@/]*@/, ''); // user:pass@
   s = s.split(/[/?#]/, 1)[0]; // a trailing path, query or fragment
   s = s.replace(/:\d+$/, ''); // a port
   // A trailing dot is dropped when the address is read, never while it is being typed: `lakeshorelynx.` is on its way to `.ca`.
-  if (!opts.whileTyping) s = s.replace(/\.+$/, '');
+  if (!opts.whileTyping) {
+    let end = s.length;
+    while (end > 0 && s[end - 1] === '.') end--;
+    s = s.slice(0, end);
+  }
   if (mode === 'www') s = s.replace(/^(www\.)+/, '');
   return s;
 }
@@ -69,7 +75,24 @@ function validLabels(host: string): string[] | null {
   if (labels.length < 2 || !labels.every((l) => LABEL.test(l))) return null;
   // The last label (the ending, like "ca") is letters, at least two: never an IP address or a bare number.
   if (!/^[a-z]{2,63}$/.test(labels[labels.length - 1])) return null;
+  // Endings that are never a club's own web address (local and test names), and names that are a host's or a cloud's own.
+  if (NOT_A_CLUB_ENDING.has(labels[labels.length - 1])) return null;
+  if (isPublicSuffixOnly(labels) || isCloudName(labels)) return null;
   return labels;
+}
+
+const NOT_A_CLUB_ENDING = new Set(['local', 'localhost', 'internal', 'invalid', 'test', 'example', 'lan', 'home', 'corp', 'intranet', 'arpa']);
+/** The second-level labels a country's registry sells names under: `co.uk`, `on.ca` are endings, not something a club owns. */
+const SECOND_LEVELS = new Set(['co', 'com', 'org', 'net', 'gov', 'edu', 'ac', 'ab', 'bc', 'mb', 'nb', 'nl', 'ns', 'nt', 'nu', 'on', 'pe', 'qc', 'sk', 'yk']);
+/** A name that is only a public suffix (`co.uk`, `on.ca`, `com.au`): two labels, the first a registry's second level, the last a country. */
+function isPublicSuffixOnly(labels: string[]): boolean {
+  return labels.length === 2 && SECOND_LEVELS.has(labels[0]) && labels[1].length === 2;
+}
+const CLOUD_ROOTS = ['cloudfront.net', 'amazonaws.com', 'herokuapp.com', 'vercel.app', 'netlify.app', 'github.io', 'pages.dev', 'workers.dev', 'azurewebsites.net', 'web.app', 'firebaseapp.com'];
+/** A cloud provider's own address (or one under it): never something a club owns, and ours to refuse before it reaches the host. */
+function isCloudName(labels: string[]): boolean {
+  const name = labels.join('.');
+  return CLOUD_ROOTS.some(r => name === r || name.endsWith(`.${r}`));
 }
 
 /**

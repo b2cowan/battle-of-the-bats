@@ -100,6 +100,8 @@ export interface ServiceDeps {
   /** Fail-closed: throws when the demo list cannot load. */
   isDemoOrg(orgId: string): Promise<boolean>;
   now(): Date;
+  /** Where the real cause of a failure goes (observability), so the owner's "couldn't start" is not the only trace of it. Never shown. */
+  report?(error: unknown, where: string): void;
 }
 
 // ── Connect ───────────────────────────────────────────────────────────────────────────────────────
@@ -135,18 +137,27 @@ export async function connectClubDomain(
     try {
       records = await deps.host.create({ domain, prefix });
     } catch (e) {
-      return { ok: false, reason: classifyHostError(e) };
+      const reason = classifyHostError(e);
+      if (reason === 'failed') deps.report?.(e, 'connect: the host refused to create the address');
+      return { ok: false, reason };
     }
 
+    // Clean up our own half-made association, but never one a racing request's row now relies on.
+    const releaseUnlessHeld = async () => {
+      const holder = await deps.store.getByDomain(domain).catch(() => null);
+      if (!holder) await deps.host.remove(domain).catch(() => {});
+    };
+
     if (!records.record1 || records.state === 'failed') {
-      await deps.host.remove(domain).catch(() => {});
+      deps.report?.(new Error('the host returned no padlock record'), 'connect: incomplete answer from the host');
+      await releaseUnlessHeld();
       return { ok: false, reason: 'failed' };
     }
 
     const hostTarget = records.record2HostTarget;
     const record2Value = deps.siteTarget ?? hostTarget;
     if (!record2Value) {
-      await deps.host.remove(domain).catch(() => {});
+      await releaseUnlessHeld();
       return { ok: false, reason: 'failed' };
     }
 
@@ -167,10 +178,15 @@ export async function connectClubDomain(
       });
       return { ok: true, row };
     } catch (e) {
-      await deps.host.remove(domain).catch(() => {});
-      return { ok: false, reason: (e as { code?: string } | null)?.code === '23505' ? 'taken' : 'failed' };
+      // A duplicate key means a racing request (two tabs, a double press) got there first: its row relies on the association we
+      // just asked for again, so it is left alone. Anything else: ours to take back.
+      const duplicate = (e as { code?: string } | null)?.code === '23505';
+      if (!duplicate) deps.report?.(e, 'connect: saving the connection failed');
+      await releaseUnlessHeld();
+      return { ok: false, reason: duplicate ? 'taken' : 'failed' };
     }
-  } catch {
+  } catch (e) {
+    deps.report?.(e, 'connect');
     return { ok: false, reason: 'failed' };
   }
 }
@@ -202,7 +218,8 @@ export async function checkClubDomainNow(deps: ServiceDeps, orgId: string): Prom
 
   const updated = await deps.store.update(orgId, {
     last_checked_at: deps.now().toISOString(),
-    last_check: { record1, record2, bare_forwards: row.last_check?.bare_forwards ?? null },
+    // Merged, never replaced: the status check's own clocks (the first miss, the daily look) live in the same object.
+    last_check: { ...(row.last_check ?? { bare_forwards: null }), record1, record2 } as LastCheck,
   });
   return { ok: true, row: updated, record1, record2 };
 }

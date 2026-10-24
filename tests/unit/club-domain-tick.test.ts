@@ -178,7 +178,7 @@ describe('the runner', () => {
 
   it('does nothing, and writes nothing, for a club with nothing due or one that gave up', async () => {
     const quiet = withLast(row({ org_id: 'a' }), { record2_checked_at: at(-10 * MIN).toISOString(), daily_at: at(-HOUR).toISOString() });
-    const w = world([quiet, row({ org_id: 'b', status: 'not_connected' })]);
+    const w = world([quiet, row({ org_id: 'b', status: 'not_connected', gave_up_email_sent_at: at(-DAY).toISOString() })]);
     const s = await runClubDomainTick(w.deps);
     assert.equal(s.looked, 0);
     assert.equal(w.updates.length, 0);
@@ -215,5 +215,94 @@ describe('the runner', () => {
     const s = await runClubDomainTick(w.deps);
     assert.equal(s.failed, 1);
     assert.deepEqual(w2, ['good']);
+  });
+});
+
+describe('review fixes (2026-10-24): what the first review of the status check found', () => {
+  const wakeAgain = (r: DomainRow, patch: Partial<DomainRow>): DomainRow => ({ ...r, ...patch, last_check: (patch.last_check ?? r.last_check) as DomainRow['last_check'] });
+
+  it('an email that failed to go is sent on a LATER wake even though the change that called for it is already saved', () => {
+    // Wake 1: a waiting address goes live, but the mail provider fails. The runner saves the new status and un-stamps the email.
+    const waiting = row({ status: 'waiting', waiting_since: at(-HOUR).toISOString(), connected_at: null, live_email_sent_at: null });
+    const first = decideTick(waiting, { host: { state: 'live', hostStatus: 'AVAILABLE' }, record1: FOUND, record2: FOUND }, T0);
+    assert.deepEqual(first.emails, ['live']);
+    const saved = wakeAgain(waiting, { ...first.patch, live_email_sent_at: null }); // the send failed: stamp restored to null
+    assert.equal(saved.status, 'connected');
+    // Wake 2, nothing else changed: the state ALONE says the email is owed.
+    assert.deepEqual(decideTick(saved, {}, at(15 * MIN)).emails, ['live']);
+    // Once it goes, it never goes again.
+    const sent = wakeAgain(saved, { live_email_sent_at: at(15 * MIN).toISOString() });
+    assert.deepEqual(decideTick(sent, {}, at(30 * MIN)).emails, []);
+  });
+
+  it('the same holds for "gave up" and "not working"', () => {
+    const gaveUp = row({ status: 'not_connected', gave_up_email_sent_at: null });
+    assert.deepEqual(decideTick(gaveUp, {}, T0).emails, ['gave_up']);
+    const down = row({ status: 'not_working', not_working_since: at(-HOUR).toISOString(), not_working_email_sent_at: null });
+    assert.deepEqual(decideTick(down, { record2: GONE }, T0).emails, ['not_working']);
+  });
+
+  it('the runner keeps looking at a row that owes an email even when nothing else is due', async () => {
+    const owed = withLast(row({ org_id: 'a', status: 'connected', live_email_sent_at: null }), { record2_checked_at: at(-5 * MIN).toISOString(), daily_at: at(-HOUR).toISOString() });
+    const sent: string[] = [];
+    const deps: TickDeps = {
+      listAll: async () => [owed], update: async () => {}, hostRead: async () => null, cnames: async () => [], certificateExpiry: async () => null,
+      bareForwards: async () => true, email: async (r, which) => { sent.push(`${r.org_id}:${which}`); return true; }, now: () => T0,
+    };
+    await runClubDomainTick(deps);
+    assert.deepEqual(sent, ['a:live']);
+  });
+
+  it('an address the HOST stopped serving does not look fixed because DNS answers, and the owner is told once, not every day', () => {
+    const connected = row();
+    const wake1 = decideTick(connected, { host: { state: 'missing', hostStatus: null }, record1: FOUND }, T0);
+    assert.equal(wake1.patch.status, 'not_working');
+    assert.equal(wake1.patch.host_status, 'MISSING');
+    assert.deepEqual(wake1.emails, ['not_working']);
+    const down = wakeAgain(connected, { ...wake1.patch });
+    // Fifteen minutes later DNS is fine, and the host is read again: still gone. No recovery.
+    const wake2 = decideTick(down, { host: { state: 'missing', hostStatus: null }, record2: FOUND }, at(15 * MIN));
+    assert.equal(wake2.patch.status, undefined);
+    assert.deepEqual(wake2.emails, []);
+    // Even if the host read FAILED this wake, the last read (gone) stands.
+    assert.equal(decideTick(down, { record2: FOUND }, at(15 * MIN)).patch.status, undefined);
+    // Back only when the host serves it again and record 2 is found.
+    const back = decideTick(down, { host: { state: 'live', hostStatus: 'AVAILABLE' }, record2: FOUND }, at(30 * MIN));
+    assert.equal(back.patch.status, 'connected');
+  });
+
+  it('a failed read of the host never ends the looking, and never calls the host gone', () => {
+    const w = row({ status: 'waiting', waiting_since: at(-WAITING_GIVE_UP_MS - HOUR).toISOString(), connected_at: null, live_email_sent_at: null });
+    const d = decideTick(w, { record1: FOUND, record2: FOUND }, T0); // no host answer
+    assert.equal(d.patch.status, undefined);
+    assert.deepEqual(d.emails, []);
+    const connected = decideTick(row(), { record1: FOUND }, T0); // host unread on a connected row
+    assert.equal(connected.patch.status, undefined);
+  });
+
+  it('an address goes live only when the host says so AND our own lookup finds record 2 (a leftover certificate record alone is not enough)', () => {
+    const w = row({ status: 'waiting', waiting_since: at(-HOUR).toISOString(), connected_at: null, live_email_sent_at: null });
+    assert.equal(decideTick(w, { host: { state: 'live', hostStatus: 'AVAILABLE' }, record1: FOUND, record2: { state: 'points_elsewhere', sees: 'ghs.googlehosted.com' } }, T0).patch.status, undefined);
+    assert.equal(decideTick(w, { host: { state: 'live', hostStatus: 'AVAILABLE' }, record1: FOUND, record2: GONE }, T0).patch.status, undefined);
+    assert.equal(decideTick(w, { host: { state: 'live', hostStatus: 'AVAILABLE' }, record1: FOUND, record2: FOUND }, T0).patch.status, 'connected');
+  });
+
+  it('the daily clock moves only when the daily look was made; a not-working row is not stamped for a look it ignores', () => {
+    const down = row({ status: 'not_working', not_working_since: at(-HOUR).toISOString(), not_working_email_sent_at: at(-HOUR).toISOString() });
+    const d = decideTick(down, { host: { state: 'live', hostStatus: 'AVAILABLE' }, record2: GONE }, T0);
+    assert.equal(d.patch.last_check?.daily_at ?? null, null);
+  });
+
+  it('a wake that runs long stops starting new clubs and leaves them for the next', async () => {
+    let t = T0.getTime();
+    const rows = [row({ org_id: 'a', status: 'waiting', waiting_since: at(-HOUR).toISOString(), connected_at: null, live_email_sent_at: null }), row({ org_id: 'b', status: 'waiting', waiting_since: at(-HOUR).toISOString(), connected_at: null, live_email_sent_at: null })];
+    const seen: string[] = [];
+    const deps: TickDeps = {
+      listAll: async () => rows, update: async (orgId) => { seen.push(orgId); t += 200_000; }, hostRead: async () => ({ hostStatus: 'PENDING', state: 'pending', record1: null, record2HostTarget: null }),
+      cnames: async () => [], certificateExpiry: async () => null, bareForwards: async () => true, email: async () => true, now: () => new Date(t),
+    };
+    const s = await runClubDomainTick(deps, { budgetMs: 150_000 });
+    assert.deepEqual(seen, ['a']);
+    assert.equal(s.deferred, 1);
   });
 });

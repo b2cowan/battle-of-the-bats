@@ -110,8 +110,14 @@ export const amplifyDomainHost: DomainHost = {
   },
 
   async remove(domain) {
-    const { appId } = config();
+    const { appId, branchName } = config();
     try {
+      // Dev and production are two branches of ONE Amplify app, so one set of keys can reach both. An association that serves a
+      // branch other than ours belongs to the other environment: never delete it from here (a dev Stop must not take down a
+      // production address). It is not ours to remove; the caller's own row is still released.
+      const current = await amplify().send(new GetDomainAssociationCommand({ appId, domainName: domain }));
+      const others = (current.domainAssociation?.subDomains ?? []).some(s => s.subDomainSetting?.branchName && s.subDomainSetting.branchName !== branchName);
+      if (others) return;
       await amplify().send(new DeleteDomainAssociationCommand({ appId, domainName: domain }));
     } catch (e) {
       if (!isHostNotFound(e)) throw e;

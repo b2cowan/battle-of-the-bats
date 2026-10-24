@@ -360,7 +360,7 @@ export const config = {
     // Evaluated by the router before the proxy runs, so a request to www.fieldlogichq.ca pays nothing for this entry. It must
     // stay AFTER the cookie entry above (tests/unit/demo-sandbox-exit.test.ts reads the matcher up to that entry's `has`).
     // ⚠ The host pattern is a LITERAL copy of OWN_HOST_PATTERN (lib/own-hosts.ts): matcher values must be statically analyzable
-    // and a variable is silently ignored. tests/unit/club-host-proxy.test.ts pins the two together.
+    // and a variable is silently ignored. tests/unit/club-host.test.ts pins the two together.
     { source: '/((?!_next/static|_next/image).*)',
       missing: [{ type: 'host', value: '(?:(?:[a-z0-9-]+\\.)*fieldlogichq\\.(?:ca|com)|(?:[a-z0-9-]+\\.)*amplifyapp\\.com|localhost|(?:\\d{1,3}\\.){3}\\d{1,3})' }] },
   ],

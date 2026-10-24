@@ -6,7 +6,9 @@ import { sendEmail, orgClosedHtml } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureError } from '@/lib/observability';
+import { stopClubDomain } from '@/lib/club-domain-service';
+import { clubDomainDeps } from '@/lib/club-domain-deps';
 
 type OrgRow = {
   id: string;
@@ -169,6 +171,18 @@ export const DELETE = withObservability(async (req: NextRequest,
   // Purge billing records before the org delete — FK on org_id may not cascade.
   await supabaseAdmin.from('billing_retained_records').delete().eq('org_id', id);
   await supabaseAdmin.from('billing_retention_intents').delete().eq('org_id', id);
+
+  // A club's own web address (Club Tier Stage 4e): let the host release the name BEFORE the row cascades away with the org, or
+  // the association would be left holding the domain (and a slot of our domain limit) with nothing in our database naming it.
+  // Best effort: a host that cannot be reached must not block closing an account; the cause is reported and the delete goes on.
+  try {
+    const stopped = await stopClubDomain(clubDomainDeps(), id);
+    if (!stopped.ok && stopped.reason === 'failed') {
+      await captureError(new Error(`org delete: the host did not release the club's own address for org ${id}`));
+    }
+  } catch (e) {
+    await captureError(e);
+  }
 
   // Hard-delete. DB cascade handles members, tournaments, overrides, notes,
   // org_audit_log entries (if FK is CASCADE — validated before prod use).

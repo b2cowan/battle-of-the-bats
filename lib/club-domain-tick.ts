@@ -8,12 +8,16 @@
  *   connected, needs attention
  *                    record 2 (the club's site) EVERY HOUR; the rest (record 1, the host's status, the padlock date, whether the
  *                    bare name forwards) once a DAY.
- *   not working      record 2 every wake, so a fix clears itself within a quarter of an hour.
+ *   not working      the host and record 2 every wake, so a fix clears itself within a quarter of an hour.
  *   not connected    nothing: it waits for the owner's Try again.
  * ⚖ A MISS on record 2 is never acted on at once: it is written down and looked at again on the NEXT wake, and only a second
  *   miss in a row makes the address "not working" and emails the owner, so one failed lookup cannot send a false "your site is
  *   down". Worst case from loss to email: about an hour and a quarter.
- * ⚖ No email repeats within a stretch: each has a stamp on the row, set when it goes and cleared when the stretch ends.
+ * ⚖ A lookup that could not be MADE is not a miss and not an answer: it is left unobserved. In particular a failed read of the
+ *   host never ends the looking, and never calls the host gone.
+ * ⚖ No email repeats within a stretch: each has a stamp on the row, set when it goes and cleared when the stretch ends. An email
+ *   that did not go is unstamped, and is OWED from the row's state alone (connected without its live email, and so on), so the
+ *   next wake sends it even though the transition that first called for it is behind us (review 2026-10-24).
  * ⚖ Reads only. This never writes to the host or to anyone's DNS.
  */
 import type { ClubDomainStatus, RecordSighting } from './club-domain';
@@ -25,6 +29,8 @@ export const RECORD2_EVERY_MS = 60 * 60 * 1000;
 export const DAILY_MS = 24 * 60 * 60 * 1000;
 /** The second email about a missing padlock record goes this long before the padlock date. */
 export const PADLOCK_REMINDER_BEFORE_MS = 14 * 24 * 60 * 60 * 1000;
+/** A wake stops starting new clubs after this long and leaves the rest for the next wake (the route's limit is 300 s). */
+export const TICK_BUDGET_MS = 240 * 1000;
 
 export type OwnerEmail = 'live' | 'padlock_missing' | 'padlock_reminder' | 'gave_up' | 'not_working';
 
@@ -47,8 +53,9 @@ export function planTick(row: DomainRow, now: Date): TickPlan {
     case 'not_connected':
       return { host: false, record1: false, record2: false, extras: false };
     case 'not_working':
-      // Every wake: a fixed record 2 is noticed within a quarter of an hour. The daily look still happens on its day.
-      return { host: older(last?.daily_at, DAILY_MS), record1: older(last?.daily_at, DAILY_MS), record2: true, extras: older(last?.daily_at, DAILY_MS) };
+      // Every wake, and only these two: the host (a fix on our side must clear it, and a host that is still gone must not look
+      // recovered because DNS is fine) and record 2. The daily look resumes the wake after it recovers.
+      return { host: true, record1: false, record2: true, extras: false };
     default: {
       const daily = older(last?.daily_at, DAILY_MS);
       const record2Due = older(last?.record2_checked_at, RECORD2_EVERY_MS) || !!last?.record2_first_miss_at;
@@ -57,7 +64,7 @@ export function planTick(row: DomainRow, now: Date): TickPlan {
   }
 }
 
-/** What the looking found. A field is `undefined` when this wake did not look at it. */
+/** What the looking found. A field is `undefined` when this wake did not look at it (or could not). */
 export interface TickObservation {
   /** The host's own word, `missing` when it has no such association any more. */
   host?: { state: HostRecords['state'] | 'missing'; hostStatus: string | null };
@@ -74,6 +81,9 @@ export interface TickDecision {
 }
 
 const iso = (d: Date) => d.toISOString();
+/** The host_status values that mean the host no longer serves the name (we store `MISSING` when it has no association). */
+const HOST_GONE_STATUSES = new Set(['MISSING', 'FAILED']);
+export const hostStatusMeansGone = (s: string | null | undefined) => HOST_GONE_STATUSES.has(String(s ?? '').toUpperCase());
 
 export function decideTick(row: DomainRow, obs: TickObservation, now: Date): TickDecision {
   const t = now.getTime();
@@ -88,28 +98,31 @@ export function decideTick(row: DomainRow, obs: TickObservation, now: Date): Tic
     daily_at: row.last_check?.daily_at ?? null,
   };
   let status: ClubDomainStatus = row.status;
+  const stamp = (key: keyof DomainRow) => (key in patch ? patch[key] : row[key]);
 
   if (obs.record1) last.record1 = obs.record1;
   if (obs.record2) last.record2 = obs.record2;
   if (obs.bareForwards !== undefined) last.bare_forwards = obs.bareForwards;
   if (obs.padlockExpiresAt !== undefined && obs.padlockExpiresAt !== row.padlock_expires_at) patch.padlock_expires_at = obs.padlockExpiresAt;
-  if (obs.host) patch.host_status = obs.host.hostStatus;
-  const dailyDone = obs.record1 !== undefined || obs.host !== undefined;
-  if (dailyDone) last.daily_at = iso(now);
+  if (obs.host) patch.host_status = obs.host.state === 'missing' ? 'MISSING' : obs.host.hostStatus;
+  // The daily clock moves only when the daily look was actually made (a record 1 answer or a host answer).
+  if (obs.record1 !== undefined || (obs.host !== undefined && row.status !== 'not_working')) last.daily_at = iso(now);
 
-  const hostGone = obs.host && (obs.host.state === 'failed' || obs.host.state === 'missing');
+  const hostGone = !!obs.host && (obs.host.state === 'failed' || obs.host.state === 'missing');
 
-  // ── Waiting: the host decides when it is live; two days with no records ends the looking ──────────
+  // ── Waiting: the host decides when it is live; two days of a host that says "not live" ends the looking ──
   if (row.status === 'waiting') {
     last.record2_checked_at = iso(now);
-    if (obs.host?.state === 'live') {
+    const record2Reaches = last.record2.state === 'found';
+    if (obs.host?.state === 'live' && record2Reaches) {
+      // Live means the host says so AND the club's address reaches the site (our own lookup agrees): a leftover certificate
+      // record alone must not put an address in service.
       status = 'connected';
       patch.connected_at = iso(now);
       patch.padlock_expires_at = obs.padlockExpiresAt ?? row.padlock_expires_at;
-      if (!row.live_email_sent_at) { emails.push('live'); patch.live_email_sent_at = iso(now); }
-    } else if (t - new Date(row.waiting_since).getTime() >= WAITING_GIVE_UP_MS) {
+    } else if (obs.host && obs.host.state !== 'live' && t - new Date(row.waiting_since).getTime() >= WAITING_GIVE_UP_MS) {
+      // A give-up needs a SUCCESSFUL read that said "not live": a failed read (a wrong key, a host outage) is not an answer.
       status = 'not_connected';
-      if (!row.gave_up_email_sent_at) { emails.push('gave_up'); patch.gave_up_email_sent_at = iso(now); }
     }
   } else if (row.status !== 'not_connected') {
     // ── Live: record 2 (hourly; a second miss in a row is the verdict) ──────────────────────────────
@@ -126,17 +139,19 @@ export function decideTick(row: DomainRow, obs: TickObservation, now: Date): Tic
       }
     }
     // The host itself no longer serving the name is the same trouble from the club's side: the address does not reach the site.
-    if (hostGone) site2Down = true;
+    // While the host is not read this wake, what the last read said stands: a host that was gone does not look fixed because
+    // DNS answers.
+    const hostBad = obs.host ? hostGone : hostStatusMeansGone(row.host_status);
+    if (hostBad) site2Down = true;
 
     if (site2Down) {
       if (row.status !== 'not_working') {
         status = 'not_working';
         patch.not_working_since = iso(now);
-        if (!row.not_working_email_sent_at) { emails.push('not_working'); patch.not_working_email_sent_at = iso(now); }
       }
     } else if (row.status === 'not_working') {
       // Back: to needs attention if the padlock record was already gone before (needs_attention_since survives the stretch), else
-      // connected. Everything about the not-working stretch is cleared. A record 1 looked at this very wake is judged below.
+      // connected. Everything about the not-working stretch is cleared.
       status = row.needs_attention_since ? 'needs_attention' : 'connected';
       patch.not_working_since = null;
       patch.not_working_email_sent_at = null;
@@ -145,7 +160,7 @@ export function decideTick(row: DomainRow, obs: TickObservation, now: Date): Tic
     // ── Live: record 1, the padlock check (daily) ───────────────────────────────────────────────────
     if (obs.record1 && status !== 'not_working') {
       if (obs.record1.state === 'found') {
-        if (status === 'needs_attention' || row.status === 'needs_attention') status = 'connected';
+        if (status === 'needs_attention') status = 'connected';
         if (row.needs_attention_since) patch.needs_attention_since = null;
         if (row.padlock_email_sent_at) patch.padlock_email_sent_at = null;
         if (row.padlock_reminder_sent_at) patch.padlock_reminder_sent_at = null;
@@ -154,9 +169,9 @@ export function decideTick(row: DomainRow, obs: TickObservation, now: Date): Tic
           status = 'needs_attention';
           patch.needs_attention_since = iso(now);
         }
-        if (!row.padlock_email_sent_at) { emails.push('padlock_missing'); patch.padlock_email_sent_at = iso(now); }
         const expires = (patch.padlock_expires_at ?? row.padlock_expires_at) as string | null | undefined;
         if (expires && !row.padlock_reminder_sent_at && t >= new Date(expires).getTime() - PADLOCK_REMINDER_BEFORE_MS) {
+          // Said once the padlock email has also gone (below owes it first).
           emails.push('padlock_reminder');
           patch.padlock_reminder_sent_at = iso(now);
         }
@@ -165,6 +180,18 @@ export function decideTick(row: DomainRow, obs: TickObservation, now: Date): Tic
   }
 
   if (status !== row.status) patch.status = status;
+
+  // ── The emails each state OWES, from the state alone ─────────────────────────────────────────────
+  // Not "on the wake it changed": an email that failed to go is unstamped, and the state it called for is already saved, so the
+  // only way the next wake can send it is to read what is owed. Each is owed once per stretch (the stamp).
+  const owe = (which: OwnerEmail, key: keyof DomainRow) => {
+    if (!stamp(key) && !emails.includes(which)) { emails.unshift(which); (patch as Record<string, unknown>)[key] = iso(now); }
+  };
+  if (status === 'connected') owe('live', 'live_email_sent_at');
+  if (status === 'not_connected') owe('gave_up', 'gave_up_email_sent_at');
+  if (status === 'not_working') owe('not_working', 'not_working_email_sent_at');
+  if (status === 'needs_attention') owe('padlock_missing', 'padlock_email_sent_at');
+
   patch.last_checked_at = iso(now);
   patch.last_check = last;
   return { patch, emails };
@@ -178,23 +205,35 @@ export interface TickDeps {
   hostRead(domain: string, prefix: string): Promise<HostRecords | null>;
   /** Every CNAME value at a name; empty when none; throws when the lookup could not be made. */
   cnames(name: string): Promise<string[]>;
+  /** The live certificate's end date; throws when it could not be read (never a null that would wipe a good date). */
   certificateExpiry(host: string): Promise<string | null>;
-  bareForwards(bare: string, fullName: string): Promise<boolean | null>;
-  /** Tell the owner. Returns true when it went (or was deliberately skipped); false asks for a retry on the next wake. */
+  /** True / false when answered; throws when no answer could be had (an unanswered question is not "no"). */
+  bareForwards(bare: string, fullName: string): Promise<boolean>;
+  /** Tell the owner. Returns true only when it went; false asks for a retry on the next wake. */
   email(row: DomainRow, which: OwnerEmail, patch: Partial<DomainRow>): Promise<boolean>;
   now(): Date;
 }
 
-export interface TickSummary { looked: number; changed: number; emailed: Record<string, number>; failed: number }
+export interface TickSummary { looked: number; changed: number; emailed: Record<string, number>; failed: number; deferred: number }
+
+const STAMP_OF: Record<OwnerEmail, keyof DomainRow> = {
+  live: 'live_email_sent_at', padlock_missing: 'padlock_email_sent_at', padlock_reminder: 'padlock_reminder_sent_at',
+  gave_up: 'gave_up_email_sent_at', not_working: 'not_working_email_sent_at',
+};
 
 /** Look at what is due for every connection, write what changed, send what is owed. One row's failure never stops the others. */
-export async function runClubDomainTick(deps: TickDeps): Promise<TickSummary> {
+export async function runClubDomainTick(deps: TickDeps, opts: { budgetMs?: number } = {}): Promise<TickSummary> {
   const now = deps.now();
-  const summary: TickSummary = { looked: 0, changed: 0, emailed: {}, failed: 0 };
+  const started = now.getTime();
+  const budget = opts.budgetMs ?? TICK_BUDGET_MS;
+  const summary: TickSummary = { looked: 0, changed: 0, emailed: {}, failed: 0, deferred: 0 };
   const rows = await deps.listAll();
   for (const row of rows) {
     const plan = planTick(row, now);
-    if (!plan.host && !plan.record1 && !plan.record2 && !plan.extras) continue;
+    const owed = decideTick(row, {}, now).emails.length > 0; // an email the row's state owes (a failed send, retried)
+    if (!plan.host && !plan.record1 && !plan.record2 && !plan.extras && !owed) continue;
+    // A long wake stops starting new clubs and leaves the rest (each keeps its own clocks) for the next wake.
+    if (deps.now().getTime() - started > budget) { summary.deferred++; continue; }
     summary.looked++;
     try {
       const obs: TickObservation = {};
@@ -212,22 +251,27 @@ export async function runClubDomainTick(deps: TickDeps): Promise<TickSummary> {
         const seen = await deps.cnames(row.full_name).catch(() => undefined);
         if (seen !== undefined) obs.record2 = judgeSiteRecord(seen, accepted);
       }
-      if (plan.extras && row.status !== 'waiting') {
-        obs.padlockExpiresAt = await deps.certificateExpiry(row.full_name).catch(() => undefined);
-        if (row.prefix === 'www') obs.bareForwards = await deps.bareForwards(row.domain, row.full_name).catch(() => undefined);
+      // The certificate and the bare name: on the daily look, and once on the wake a waiting address goes live (so the live
+      // email can say whether the bare name forwards). The certificate is the club's own only when our lookup says the address
+      // reaches us: otherwise the handshake would read the old website's certificate.
+      const goingLive = row.status === 'waiting' && obs.host?.state === 'live';
+      if (plan.extras || goingLive) {
+        const reaches = (obs.record2 ?? row.last_check?.record2)?.state === 'found';
+        if (reaches) {
+          const cert = await deps.certificateExpiry(row.full_name).catch(() => undefined);
+          if (cert !== undefined) obs.padlockExpiresAt = cert;
+        }
+        if (row.prefix === 'www') {
+          const forwards = await deps.bareForwards(row.domain, row.full_name).catch(() => undefined);
+          if (forwards !== undefined) obs.bareForwards = forwards;
+        }
       }
       const { patch, emails } = decideTick(row, obs, now);
-      // An email that could not be sent is not stamped, so the next wake tries again.
+      // An email that could not be sent is unstamped, so the next wake owes it again (decideTick reads it from the state).
       for (const which of emails) {
         const ok = await deps.email(row, which, patch).catch(() => false);
-        summary.emailed[which] = (summary.emailed[which] ?? 0) + (ok ? 1 : 0);
-        if (!ok) {
-          const stamp: Record<OwnerEmail, keyof DomainRow> = {
-            live: 'live_email_sent_at', padlock_missing: 'padlock_email_sent_at', padlock_reminder: 'padlock_reminder_sent_at',
-            gave_up: 'gave_up_email_sent_at', not_working: 'not_working_email_sent_at',
-          };
-          (patch as Record<string, unknown>)[stamp[which]] = (row as unknown as Record<string, unknown>)[stamp[which]] ?? null;
-        }
+        if (ok) summary.emailed[which] = (summary.emailed[which] ?? 0) + 1;
+        else (patch as Record<string, unknown>)[STAMP_OF[which]] = (row as unknown as Record<string, unknown>)[STAMP_OF[which]] ?? null;
       }
       await deps.update(row.org_id, patch);
       if (patch.status && patch.status !== row.status) summary.changed++;

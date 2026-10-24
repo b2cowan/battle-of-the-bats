@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { publicSiteEditor } from '@/lib/public-site-access';
+import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { clubDomainDeps } from '@/lib/club-domain-deps';
 import { clubDomainStore } from '@/lib/club-domain-store';
 import { connectClubDomain, stopClubDomain, toDomainView } from '@/lib/club-domain-service';
@@ -50,11 +51,14 @@ export const POST = withObservability(async (req: Request) => {
 
 /** DELETE: the owner stops using the address, or cancels a connection still waiting. Everything reverts at once. */
 export const DELETE = withObservability(async (req: Request) => {
-  const r = await publicSiteEditor(req, { write: true });
-  if (r.error) return r.error;
-  if (r.ctx.role !== 'owner') return NextResponse.json({ error: W.ownerOnly }, { status: 403 });
+  // Stop asks only for the owner, NOT for the Public site plan feature: a club whose plan lapsed or changed must still be able to
+  // let its address go (the host holds the name and the proxy keeps serving it until someone does).
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return unauthorized();
+  if (ctx.role !== 'owner') return NextResponse.json({ error: W.ownerOnly }, { status: 403 });
 
-  const result = await stopClubDomain(clubDomainDeps(), r.ctx.org.id);
+  const result = await stopClubDomain(clubDomainDeps(), ctx.org.id);
   if (!result.ok) {
     return result.reason === 'none'
       ? NextResponse.json({ error: W.none }, { status: 404 })

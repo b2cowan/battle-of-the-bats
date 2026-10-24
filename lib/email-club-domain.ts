@@ -30,6 +30,10 @@ export interface DomainEmailFacts {
   bareNotForwarding?: boolean;
   /** What was never found when checking gave up: "either record", "record 1" or "record 2". */
   whichMissing?: string;
+  /** Checking gave up although both records were found: the host never finished (not a record the club can add). */
+  bothRecordsFound?: boolean;
+  /** The address stopped working because the host no longer serves it (nothing the club can put back). */
+  hostCause?: boolean;
 }
 
 export interface DomainEmail { subject: string; html: string }
@@ -84,9 +88,17 @@ export function clubDomainEmail(kind: DomainEmailKind, f: DomainEmailFacts): Dom
         subject: 'We stopped checking for your records',
         html: doc('We stopped checking for your records', note(
           hi(f),
-          `We looked for the two records for ${address} for two days and did not find ${e(f.whichMissing ?? 'either record')}.`,
-          `Nothing has changed on your site. It still works at ${e(f.oldAddress)}, and every link we hand out still uses that address.`,
-          `Check that the records are saved exactly as shown where you bought ${e(f.bare)}, then press Try again on the Web address row. The records stay the same.`,
+          ...(f.bothRecordsFound
+            ? [
+              `We looked for two days and found both records for ${address}, but the address has not finished setting up on our side.`,
+              `Nothing has changed on your site. It still works at ${e(f.oldAddress)}, and every link we hand out still uses that address.`,
+              'Press Try again on the Web address row. If it stops again, write to us from Help and we will look into it.',
+            ]
+            : [
+              `We looked for the two records for ${address} for two days and did not find ${e(f.whichMissing ?? 'either record')}.`,
+              `Nothing has changed on your site. It still works at ${e(f.oldAddress)}, and every link we hand out still uses that address.`,
+              `Check that the records are saved exactly as shown where you bought ${e(f.bare)}, then press Try again on the Web address row. The records stay the same.`,
+            ]),
         ), 'Open Web address'),
       };
     case 'not_working':
@@ -94,9 +106,11 @@ export function clubDomainEmail(kind: DomainEmailKind, f: DomainEmailFacts): Dom
         subject: `${f.address} is not reaching your site`,
         html: doc(`${e(f.address)} is not reaching your site`, note(
           hi(f),
-          `${f.noticedDate ? `On ${e(f.noticedDate)}${f.noticedTime ? ` at ${e(f.noticedTime)}` : ''} we found` : 'We found'} that record 2 for ${address} was changed or removed where you bought ${e(f.bare)}.`,
+          `${f.noticedDate ? `On ${e(f.noticedDate)}${f.noticedTime ? ` at ${e(f.noticedTime)}` : ''} we found` : 'We found'} ${f.hostCause ? `that ${address} has stopped answering on our side` : `that record 2 for ${address} was changed or removed where you bought ${e(f.bare)}`}.`,
           `Anyone who uses ${e(f.address)} sees an error until it is back. Until then, every link we hand out uses ${e(f.oldAddress)}, which works, and the old address has stopped forwarding so nobody lands on the error.`,
-          'Put record 2 back as shown on the Web address row and this clears by itself. If you meant to stop using the address, you can do that from the same row.',
+          f.hostCause
+            ? 'There is nothing for you to put back. Write to us from Help and we will sort it out, and this clears by itself once it is working. If you meant to stop using the address, you can do that from the Web address row.'
+            : 'Put record 2 back as shown on the Web address row and this clears by itself. If you meant to stop using the address, you can do that from the same row.',
         ), 'See the record'),
       };
   }
