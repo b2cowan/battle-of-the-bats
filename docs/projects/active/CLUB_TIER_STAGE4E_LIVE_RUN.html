@@ -1,0 +1,388 @@
+<title>Own Address Live Run</title>
+<style>
+/* Layout: one column, a sticky progress bar, one part open at a time. Each step is Do -> You should see. */
+:root {
+  --bg: #f2f4ef;
+  --card: #ffffff;
+  --ink: #1b2620;
+  --muted: #5d6a62;
+  --line: #d9dfd5;
+  --accent: #4f6b1a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6eed3;
+  --good: #1f7a45;
+  --good-soft: #def2e5;
+  --warn: #9a5b00;
+  --warn-soft: #fbecd0;
+  --bad: #b3261e;
+  --bad-soft: #fbe0dd;
+  --code: #eef1ea;
+  --focus: #1c6dd0;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131a15; --card: #1b241e; --ink: #e8eee6; --muted: #9aa99f; --line: #2c392f;
+    --accent: #a9c862; --accent-ink: #121a0c; --accent-soft: #28351a;
+    --good: #6fd197; --good-soft: #1b3426; --warn: #f0b95a; --warn-soft: #3a2c10;
+    --bad: #ff8e85; --bad-soft: #3d1b18; --code: #232e26; --focus: #7db3ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131a15; --card: #1b241e; --ink: #e8eee6; --muted: #9aa99f; --line: #2c392f;
+  --accent: #a9c862; --accent-ink: #121a0c; --accent-soft: #28351a;
+  --good: #6fd197; --good-soft: #1b3426; --warn: #f0b95a; --warn-soft: #3a2c10;
+  --bad: #ff8e85; --bad-soft: #3d1b18; --code: #232e26; --focus: #7db3ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); padding-inline: 16px; padding-block: 0 64px; }
+.wrap { max-width: 860px; margin: 0 auto; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 1.7rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: 1rem; }
+p { margin: 0 0 0.6rem; max-width: 68ch; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--code); padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 10px; margin-inline: -16px; padding-inline: 16px; }
+.bar-in { max-width: 860px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.meter { flex: 1 1 160px; min-width: 0; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width 0.2s; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+button { font: inherit; cursor: pointer; }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 600; min-height: 38px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+
+header.top { padding-block: 28px 8px; }
+.kicker { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.lead { color: var(--muted); font-size: 1.02rem; margin-top: 8px; }
+
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+.panel h2 { margin-bottom: 8px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 24px; }
+.cols > div { min-width: 0; }
+dl.kv { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.private { color: var(--warn); font-size: 0.85rem; }
+ul.tight { margin: 0 0 0.5rem; padding-left: 1.2rem; }
+ul.tight li { margin-bottom: 3px; }
+
+.part { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-top: 14px; overflow: hidden; }
+.part > summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.part > summary::-webkit-details-marker { display: none; }
+.part > summary .t { flex: 1 1 240px; min-width: 0; }
+.part > summary .t b { display: block; font-size: 1.05rem; }
+.part > summary .t span { color: var(--muted); font-size: 0.88rem; }
+.chip { font-size: 0.78rem; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--code); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chip.pass { background: var(--good-soft); color: var(--good); }
+.chip.issue { background: var(--bad-soft); color: var(--bad); }
+.chip.call { background: var(--warn-soft); color: var(--warn); }
+.chip.prog { background: var(--accent-soft); color: var(--accent); }
+.part-body { padding: 4px 18px 18px; border-top: 1px solid var(--line); }
+.intro { color: var(--muted); margin-top: 12px; }
+
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+.step:last-of-type { border-bottom: 0; }
+.step input[type=checkbox], .step input[type=radio] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
+.step .main { min-width: 0; }
+.who { display: inline-block; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; padding: 1px 7px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
+.who.you { background: var(--accent-soft); color: var(--accent); }
+.who.claude { background: var(--warn-soft); color: var(--warn); }
+.who.wait { background: var(--code); color: var(--muted); }
+.sid { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); margin-right: 6px; }
+.do { font-weight: 500; }
+.see { margin-top: 6px; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+.see::before { content: "You should see "; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; color: var(--accent); margin-bottom: 2px; }
+.opt { display: flex; gap: 18px; margin-top: 8px; flex-wrap: wrap; }
+.opt label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.step.done .do { color: var(--muted); }
+
+.verdict { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.verdict .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.vb { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 8px; padding: 7px 12px; min-height: 38px; font-weight: 600; }
+.vb[aria-pressed=true].pass { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.vb[aria-pressed=true].issue { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.vb[aria-pressed=true].call { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; min-height: 70px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+.out { margin-top: 16px; }
+.out textarea { font-family: var(--mono); font-size: 0.8rem; min-height: 200px; }
+.note { font-size: 0.86rem; color: var(--muted); }
+.flag { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 8px 0; }
+</style>
+
+<div class="bar"><div class="bar-in">
+  <div class="meter" aria-hidden="true"><i id="meterfill"></i></div>
+  <div class="count" id="count" aria-live="polite">0 of 0</div>
+  <button class="btn" id="summarize" type="button">Build summary to paste back</button>
+</div></div>
+
+<div class="wrap">
+<header class="top">
+  <div class="kicker">Club Tier Stage 4e close-out · step 5</div>
+  <h1>Own Address Live Run</h1>
+  <p class="lead">Connect a real address to a dev club, watch it go live, break it on purpose, and take it away again. About an hour and a half, most of it waiting for the 15-minute check.</p>
+</header>
+
+<section class="panel">
+  <h2>What this run is for</h2>
+  <p>Everything built for a club's own address has so far been proven with fakes. This run proves it against the real thing: a real domain you own (<code>b2cowan.com</code>), real DNS in your AWS account, and the real host (Amplify) serving the club on it.</p>
+  <p><b>It passes when</b> the club's pages answer on <code>club.b2cowan.com</code> with a padlock, the old address forwards to it for signed-out visitors, the row warns when you remove a record and clears itself when you put it back, and <b>Stop</b> puts everything back the way it was.</p>
+  <p class="note"><b>Not in this run:</b> a design review of the screens, the words, or 390-pixel phone layouts (those are the two follow-up walks), and the plain-name forwarding at a registrar (this test name is not <code>www</code>, and Route 53 cannot forward).</p>
+</section>
+
+<section class="panel">
+  <h2>Sign in as</h2>
+  <div class="cols">
+    <div>
+      <dl class="kv">
+        <dt>Site</dt><dd><a href="https://dev.d3ld0l2bgmmlga.amplifyapp.com/uat-rep-club/admin/public-site" target="_blank" rel="noopener">dev.d3ld0l2bgmmlga.amplifyapp.com</a></dd>
+        <dt>Club</dt><dd>UAT Rep Club <code>uat-rep-club</code></dd>
+        <dt>Account</dt><dd><code>uat-club-owner@uat-rep-club.local</code></dd>
+        <dt>Password</dt><dd><code>UATPassword2026!</code></dd>
+      </dl>
+      <p class="private">Dev only. Keep this page private.</p>
+    </div>
+    <div>
+      <ul class="tight">
+        <li><b>Use the deployed dev site, not localhost.</b> The club's address is answered by the deployed site.</li>
+        <li><b>A private window</b> (signed out) is needed for the visitor checks.</li>
+        <li><b>AWS console</b> &rsaquo; Route 53 &rsaquo; Hosted zones &rsaquo; <code>b2cowan.com</code>.</li>
+        <li>Test name: <code>club.b2cowan.com</code>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="flag"><b>Why this club, not Dev Club Org:</b> UAT Rep Club has the Public site switched on, 11 teams and a live tournament, so the "pages on the new address" steps have something to show. The account's email is a test address, so nobody receives the owner emails; <b>Claude confirms each email from the records instead</b> (marked Claude below).</div>
+  <p class="note">Steps are labelled <span class="who you">You</span> do it, <span class="who claude">Claude</span> does it or checks it (tell me when you reach it), <span class="who wait">Wait</span> nothing to do.</p>
+</section>
+
+<div id="parts"></div>
+
+<section class="panel out">
+  <h2>Paste-back</h2>
+  <p>Press <b>Build summary to paste back</b> at the top, then copy this box into the chat. A part's verdict and its ticks are separate: the count is what says what was actually walked.</p>
+  <textarea id="summary" readonly aria-label="Summary to paste back"></textarea>
+  <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
+    <button class="btn" id="copy" type="button">Copy summary</button>
+    <button class="btn ghost" id="reset" type="button">Clear every tick on this page</button>
+    <span class="note" id="copymsg" aria-live="polite"></span>
+  </div>
+</section>
+</div>
+
+<script>
+var KEY = "own-address-live-run-v1";
+var PARTS = [
+{ id: "A", title: "Get ready", sub: "Check the starting point. Nothing is changed.",
+  intro: "Start here so a surprise later is not a leftover from before.",
+  steps: [
+   { id: "A1", who: "you", do: "Sign in as the UAT Rep Club owner on the dev site and open <b>Public site</b> (the link in the card above lands there).",
+     see: "The Public site page for UAT Rep Club. A <b>Web address</b> row sits above <b>Visibility</b>. Closed, it reads <code>fieldlogichq.ca/uat-rep-club</code> with no chip." },
+   { id: "A2", who: "you", do: "Open the <b>Visibility</b> row.",
+     see: "The site is shown as online. (If it says offline, tell me before going on; the club's pages would refuse visitors.)" },
+   { id: "A3", who: "you", do: "In Route 53, open the <code>b2cowan.com</code> zone and look at its records.",
+     see: "About six records: NS, SOA, a <code>_…</code> padlock CNAME left from the hosting test, a <code>resend._domainkey</code> TXT, and two <code>send</code> records (MX and TXT). <b>No <code>club</code> record.</b>" }
+  ]},
+{ id: "B", title: "Connect the address", sub: "The Web address row, owner view.",
+  intro: "This writes to the real host: a domain connection is created on the live app. It is removed again in part I.",
+  steps: [
+   { id: "B1", who: "you", do: "Open the <b>Web address</b> row.",
+     see: "The block <b>Your own address</b> with the sentence about owning an address like www.lakeshorelynx.ca, and an outline button <b>Use your own address</b>." },
+   { id: "B2", who: "you", do: "Press <b>Use your own address</b>, type <code>fieldlogichq.ca</code> in the field, and press <b>Next</b>.",
+     see: "A refusal under the field: <i>That is FieldLogicHQ's address. Type the address your club bought, like lakeshorelynx.ca.</i> Nothing is created." },
+   { id: "B3", who: "you", do: "Clear the field and press the quiet link <b>Use a name other than www</b>. Type <code>club.b2cowan.com</code>.",
+     see: "The field loses its fixed <code>www.</code> prefix and takes the whole name (placeholder <code>teams.lakeshorelynx.ca</code>). The hint reads <i>Type the whole name…</i> and the warning reads <i>If something already uses this name, this site replaces it once you add the records.</i> A link <b>Use www instead</b> appears." },
+   { id: "B4", who: "you", do: "Press <b>Next</b>.",
+     see: "<i>Loading your two records…</i> for about ten seconds, then two cards: <b>1 · Padlock check</b> and <b>2 · Your site</b>. The row's chip reads <b>Waiting</b> and its closed summary reads <code>club.b2cowan.com</code>. Record 2's name is <code>club</code> and its value is <code>sites.fieldlogichq.ca</code>. Record 1 has a name starting with an underscore and a value ending in <code>acm-validations.aws</code>." },
+   { id: "B5", who: "you", do: "Write down record 1's <b>Name</b> and <b>Value</b> in the notes box below. Note each card's chip.",
+     see: "Record 1 may already read <b>Found</b> (the leftover padlock record). Record 2 reads <b>Not seen yet</b>. <b>No</b> forwarding box appears (it is only for www), and the line about email not being affected is there." },
+   { id: "B6", who: "you", do: "Press <b>Copy both as a message</b> and paste it into any note.",
+     see: "The button reads <b>Message copied</b>. The text opens <i>Hi, could you add two records to b2cowan.com where it is registered?</i>, lists both records, ends with <i>How-to: fieldlogichq.ca/help/own-address</i>, and has <b>no</b> paragraph about forwarding the plain name." },
+   { id: "B7", who: "you", do: "In a private window open <a href=\"https://dev.d3ld0l2bgmmlga.amplifyapp.com/help/own-address\" target=\"_blank\" rel=\"noopener\">the how-to page</a>. Press the topic <b>Forward the plain name to www</b>, then its GoDaddy, Namecheap and Hover topics.",
+     see: "A public page (no sign-in) titled <i>Use your club's own address</i>. Each registrar topic opens alone with numbered steps. A topic called <i>If your place offers an ALIAS or ANAME record</i> says to forward instead." }
+  ]},
+{ id: "C", title: "Add the records", sub: "In Route 53, then Check now.",
+  intro: "Because the zone is in your own AWS account, the host may add records by itself. That is worth knowing, so look before you add.",
+  steps: [
+   { id: "C1", who: "you", do: "Refresh the Route 53 zone. Did any new <code>club</code> or padlock record appear on its own? Say which in the notes.",
+     see: "Either nothing new (you add them yourself), or the host added one or both. Both are fine; I need to know which." },
+   { id: "C2", who: "you", do: "If the padlock record from the row is not in the zone, create it: <b>Create record</b>, name = record 1's Name (the part before <code>.b2cowan.com</code>), type <b>CNAME</b>, value = record 1's Value, TTL 300.",
+     see: "The record is saved. (If the leftover record already matches, there is nothing to add: tick this step and say so.)" },
+   { id: "C3", who: "you", do: "Create record 2: name <code>club</code>, type <b>CNAME</b>, value <code>sites.fieldlogichq.ca</code>, TTL 300.",
+     see: "The record is saved: <code>club.b2cowan.com</code> CNAME <code>sites.fieldlogichq.ca</code>." },
+   { id: "C4", who: "you", do: "Back on the row press <b>Check now</b>.",
+     see: "The button fades to <b>Checking…</b>, then both cards read <b>Found</b> and the foot reads <i>Last checked</i> with a time. The row still says <b>Waiting</b>: Check now never says the site is live. (If a card still says <b>Not seen yet</b>, wait two minutes and press it again.)" }
+  ]},
+{ id: "D", title: "It goes live", sub: "The 15-minute check does this by itself.",
+  intro: "The host has to issue the padlock first, so allow up to an hour. Do not press anything; refresh the row now and then.",
+  steps: [
+   { id: "D1", who: "wait", do: "Wait for the 15-minute check. Refresh the Public site page every few minutes.",
+     see: "Within about 15 to 60 minutes the <b>Waiting</b> chip goes. Open, the row shows <b>Families find your site at</b> <code>club.b2cowan.com</code> with a <b>Connected</b> chip, <b>The old address</b> <code>fieldlogichq.ca/uat-rep-club</code> <b>forwards here</b>, and <b>Padlock</b> <i>Renews by itself before</i> a date. If it is still Waiting after 90 minutes, stop and tell me." },
+   { id: "D2", who: "claude", do: "Tell me the row says Connected. I check the records for the \"club.b2cowan.com is live\" email.",
+     see: "A \"live\" email is recorded as sent for this club (and the check's audit row shows one email). The owner account's address is a test address, so nobody has a copy; I confirm it from the records and report here." },
+   { id: "D3", who: "you", do: "Look at the page header of Public site.",
+     see: "<b>Families see it at</b> now shows <code>club.b2cowan.com</code>, with <b>Copy link</b> and <b>Open</b>." }
+  ]},
+{ id: "E", title: "The club on its own address", sub: "What a visitor sees. Use a private window.",
+  intro: "Everything here is signed out, in a private window. The address in the browser bar should stay on club.b2cowan.com throughout.",
+  steps: [
+   { id: "E1", who: "you", do: "Open <code>https://club.b2cowan.com/</code>.",
+     see: "UAT Rep Club's home page with a closed padlock (no warning). The bar shows the club's own look and, at the right, one plain link: <b>Sign in</b>. No account menu, no <b>Follow</b>, no alerts, no <b>My team</b>." },
+   { id: "E2", who: "you", do: "Open <code>https://club.b2cowan.com/teams</code> and press one team.",
+     see: "The teams list, then that team's page. The browser bar never shows <code>fieldlogichq</code> or <code>uat-rep-club</code> in the path." },
+   { id: "E3", who: "you", do: "Open <code>https://club.b2cowan.com/uat-rep-club-invitational-2026</code>.",
+     see: "The tournament page (UAT Rep Club Invitational), on the club's address." },
+   { id: "E4", who: "you", do: "Press <b>Sign in</b> in the bar.",
+     see: "You land on the dev site's (FieldLogicHQ's) sign-in, not on the club's address. After signing in you come back to the same page, on the dev site address, with the account pieces present." },
+   { id: "E5", who: "you", do: "In the private window try <code>https://club.b2cowan.com/admin</code>, then <code>https://club.b2cowan.com/platform-admin</code>.",
+     see: "Both say <i>Not found</i>. No sign-in page, no admin screen: those do not exist on a club's address." },
+   { id: "E6", who: "you", do: "Open <code>https://club.b2cowan.com/robots.txt</code> and <code>https://club.b2cowan.com/sitemap.xml</code>.",
+     see: "Both name <code>club.b2cowan.com</code> only. The sitemap lists the club's own pages and none of another club's." }
+  ]},
+{ id: "F", title: "The old address forwards", sub: "Signed out forwards, signed in stays.",
+  intro: "The FieldLogicHQ copy of the club's pages sends signed-out visitors to the club's own address, so old posters keep working.",
+  steps: [
+   { id: "F1", who: "you", do: "In a <b>private window</b> (signed out) open <code>https://dev.d3ld0l2bgmmlga.amplifyapp.com/uat-rep-club/teams</code>.",
+     see: "You end up at <code>https://club.b2cowan.com/teams</code> (the address in the bar changes)." },
+   { id: "F2", who: "you", do: "In your <b>normal window, signed in</b> as the club owner, open the same address.",
+     see: "You stay on the dev site address. No forward, and the team pages carry their usual signed-in pieces." },
+   { id: "F3", who: "you", do: "On Public site press <b>Copy link</b> in the header and paste it somewhere.",
+     see: "The pasted link is <code>https://club.b2cowan.com</code>, not the dev site address." },
+   { id: "F4", who: "you", do: "Open the tournament's <b>Event settings</b> for the UAT Rep Club Invitational and find its public link. If you cannot find where, note where you looked.",
+     see: "The public link starts with <code>club.b2cowan.com</code>. A link meant for staff (for example one that opens the admin) still uses the dev site address on purpose." }
+  ]},
+{ id: "G", title: "Take the padlock record away", sub: "The row warns, then clears by itself.",
+  intro: "The padlock record is checked once a day, so I will nudge that clock for you. Your part is the record.",
+  steps: [
+   { id: "G1", who: "you", do: "In Route 53 note record 1's exact name and value, then <b>delete</b> it. Tell me when it is gone.",
+     see: "The record is gone from the zone. The club's address still works for now (the padlock does not fail until its renewal date)." },
+   { id: "G2", who: "claude", do: "I nudge the daily check so it runs on the next 15-minute wake. Wait about 15 to 30 minutes, then refresh Public site.",
+     see: "An amber <b>Needs attention</b> chip. The open row says <i>The padlock check record is gone.</i> with the date it needs to be back by, record 1's card reads <b>Missing</b>, and the foot says <i>We check every day.</i> The club's address still serves." },
+   { id: "G3", who: "claude", do: "I check that the \"padlock check record is missing\" email was recorded as sent.",
+     see: "One such email is recorded for this club, and only one (it does not repeat on later checks)." },
+   { id: "G4", who: "you", do: "Put record 1 back in Route 53 exactly as before, then press <b>Check now</b>. Tell me.",
+     see: "Record 1's card reads <b>Found</b> again. The chip may stay amber until the next daily look." },
+   { id: "G5", who: "claude", do: "I nudge the daily check again. Wait about 15 to 30 minutes and refresh.",
+     see: "The amber chip clears by itself and the row is <b>Connected</b> again. No action from you." }
+  ]},
+{ id: "H", title: "Take the site record away", sub: "Recommended. A bigger failure, in red.",
+  intro: "This breaks the live address on purpose for up to about an hour and a quarter. Record 2 is checked every hour, and a miss is confirmed on the next wake before anyone is told.",
+  steps: [
+   { id: "H1", who: "you", do: "In Route 53 <b>delete</b> the <code>club</code> record (record 2). Tell me.",
+     see: "<code>club.b2cowan.com</code> stops reaching the site. (Optional check: reload it in a private window and note what you get.)",
+     opt: true },
+   { id: "H2", who: "claude", do: "I nudge the hourly check. Wait up to about an hour, then refresh Public site.",
+     see: "A red <b>Not working</b> chip. The open row says <i>club.b2cowan.com is not reaching your site.</i> with record 2's card reading <b>Missing</b> and the foot <i>We check every hour.</i> The page header's <b>Families see it at</b> goes back to the FieldLogicHQ address, and a signed-out visit to the old dev site address <b>no longer forwards</b> (the old address is the one that works).",
+     opt: true },
+   { id: "H3", who: "claude", do: "I check that the \"stopped working\" email was recorded as sent, once.",
+     see: "One such email for this club.",
+     opt: true },
+   { id: "H4", who: "you", do: "Put the <code>club</code> record back (CNAME to <code>sites.fieldlogichq.ca</code>). Tell me.",
+     see: "Within about 15 minutes the red chip clears by itself, the row is <b>Connected</b> again, and the old address forwards again.",
+     opt: true }
+  ]},
+{ id: "I", title: "Stop, and clean up", sub: "Everything goes back. The records go too.",
+  intro: "Last on purpose: this undoes the test.",
+  steps: [
+   { id: "I1", who: "you", do: "On the row press <b>Stop using your own address</b>.",
+     see: "A question window titled <i>Stop using club.b2cowan.com?</i> with no ×, saying the site goes back to <code>fieldlogichq.ca/uat-rep-club</code> at once and about the two-year padlock rule. Buttons: <b>Keep it</b> and <b>Stop using it</b>." },
+   { id: "I2", who: "you", do: "Press <b>Stop using it</b>.",
+     see: "The row returns to its starting state: no chip, summary <code>fieldlogichq.ca/uat-rep-club</code>, and a notice that fades: <i>Your site is back at fieldlogichq.ca/uat-rep-club. You can delete the two records where you bought b2cowan.com.</i>" },
+   { id: "I3", who: "you", do: "In a private window open <code>https://dev.d3ld0l2bgmmlga.amplifyapp.com/uat-rep-club/teams</code>, and the page header on Public site.",
+     see: "No forward any more: it stays on the dev site address. <b>Families see it at</b> shows the FieldLogicHQ address again." },
+   { id: "I4", who: "you", do: "Delete the <code>club</code> record from Route 53. Leave the original <code>_…</code> padlock record and the others alone. (If the host or you added a second padlock record, delete only that one.)",
+     see: "The zone is back to its original six records." },
+   { id: "I5", who: "claude", do: "Tell me you are done. I confirm the host no longer holds <code>b2cowan.com</code> and that no row remains for the club.",
+     see: "No domain connection on the app for <code>b2cowan.com</code>, no row for UAT Rep Club, and the zone matches its original records." }
+  ]}
+];
+
+var state = { ticks: {}, opt: {}, verdict: {}, notes: {}, open: "A" };
+function load() { try { var s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && typeof s === "object") { state.ticks = s.ticks || {}; state.opt = s.opt || {}; state.verdict = s.verdict || {}; state.notes = s.notes || {}; state.open = s.open || "A"; } } catch (e) {} }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+function stepDone(s) { return s.opt ? !!state.opt[s.id] : !!state.ticks[s.id]; }
+function partCounts(p) { var n = p.steps.length, d = 0; p.steps.forEach(function (s) { if (stepDone(s)) d++; }); return { n: n, d: d }; }
+function allCounts() { var n = 0, d = 0; PARTS.forEach(function (p) { var c = partCounts(p); n += c.n; d += c.d; }); return { n: n, d: d }; }
+
+function render() {
+  var host = document.getElementById("parts");
+  host.innerHTML = PARTS.map(function (p) {
+    var c = partCounts(p), v = state.verdict[p.id] || "";
+    var chip = v === "pass" ? '<span class="chip pass">Pass</span>' : v === "issue" ? '<span class="chip issue">Issue</span>' : v === "call" ? '<span class="chip call">Needs a call</span>' : (c.d === 0 ? '<span class="chip">Not started</span>' : '<span class="chip prog">In progress</span>');
+    var steps = p.steps.map(function (s) {
+      var ctl = s.opt
+        ? '<input type="checkbox" id="c_' + s.id + '" data-opt-any="' + s.id + '" ' + (state.opt[s.id] ? "checked" : "") + ' aria-label="Step ' + s.id + ' dealt with">'
+        : '<input type="checkbox" id="c_' + s.id + '" data-tick="' + s.id + '" ' + (state.ticks[s.id] ? "checked" : "") + ' aria-label="Step ' + s.id + ' done">';
+      var optHtml = s.opt ? '<div class="opt" role="radiogroup" aria-label="Step ' + s.id + '"><label><input type="radio" name="o_' + s.id + '" data-optval="did" data-for="' + s.id + '" ' + (state.opt[s.id] === "did" ? "checked" : "") + '> Did it</label><label><input type="radio" name="o_' + s.id + '" data-optval="skip" data-for="' + s.id + '" ' + (state.opt[s.id] === "skip" ? "checked" : "") + '> Skipped it</label></div>' : "";
+      return '<div class="step' + (stepDone(s) ? " done" : "") + '">' +
+        (s.opt ? '<span></span>' : ctl) +
+        '<div class="main"><div class="do"><span class="sid">' + s.id + '</span><span class="who ' + s.who + '">' + (s.who === "you" ? "You" : s.who === "claude" ? "Claude" : "Wait") + '</span>' + s.do + (s.opt ? ' <span class="note">(Recommended. Tick Did it or Skipped it.)</span>' : "") + '</div>' +
+        '<div class="see">' + s.see + '</div>' + optHtml + '</div></div>';
+    }).join("");
+    var verdict = '<div class="verdict"><div class="row"><b>Verdict for part ' + p.id + '</b>' +
+      ['pass:Pass', 'issue:Issue', 'call:Needs a call'].map(function (x) { var k = x.split(":"); return '<button type="button" class="vb ' + k[0] + '" data-verdict="' + p.id + ':' + k[0] + '" aria-pressed="' + (v === k[0]) + '">' + k[1] + '</button>'; }).join("") + '</div>' +
+      '<label for="n_' + p.id + '" class="note">Notes for part ' + p.id + ' (what you saw, the record values, anything odd)</label>' +
+      '<textarea id="n_' + p.id + '" data-notes="' + p.id + '">' + esc(state.notes[p.id] || "") + '</textarea></div>';
+    return '<details class="part" id="part-' + p.id + '" data-part="' + p.id + '"' + (state.open === p.id ? " open" : "") + '><summary><div class="t"><b>' + p.id + ' · ' + p.title + '</b><span>' + p.sub + '</span></div>' + chip + '<span class="chip">' + c.d + '/' + c.n + '</span></summary><div class="part-body"><p class="intro">' + p.intro + '</p>' + steps + verdict + '</div></details>';
+  }).join("");
+  var t = allCounts();
+  document.getElementById("count").textContent = t.d + " of " + t.n;
+  document.getElementById("meterfill").style.width = (t.n ? Math.round(100 * t.d / t.n) : 0) + "%";
+}
+
+document.addEventListener("change", function (e) {
+  var el = e.target;
+  if (el.dataset.tick) { state.ticks[el.dataset.tick] = el.checked; save(); refreshCounts(); }
+  else if (el.dataset.optval) { state.opt[el.dataset.for] = el.dataset.optval; save(); refreshCounts(); }
+  else if (el.dataset.optAny) { /* the radios own optional steps */ el.checked = !!state.opt[el.dataset.optAny]; }
+});
+document.addEventListener("input", function (e) { var el = e.target; if (el.dataset && el.dataset.notes) { state.notes[el.dataset.notes] = el.value; save(); } });
+document.addEventListener("click", function (e) {
+  var b = e.target.closest ? e.target.closest("[data-verdict]") : null;
+  if (b) { var kv = b.dataset.verdict.split(":"); state.verdict[kv[0]] = state.verdict[kv[0]] === kv[1] ? "" : kv[1]; save(); keepOpenRender(); }
+});
+document.addEventListener("toggle", function (e) {
+  var d = e.target; if (d && d.dataset && d.dataset.part) { if (d.open) { state.open = d.dataset.part; save(); } else if (state.open === d.dataset.part) { state.open = ""; save(); } }
+}, true);
+
+function keepOpenRender() { var y = window.scrollY; render(); window.scrollTo(0, y); }
+function refreshCounts() { var y = window.scrollY; render(); window.scrollTo(0, y); }
+
+function buildSummary() {
+  var t = allCounts(), L = [];
+  L.push("Own Address Live Run (step 5). Checked " + t.d + " of " + t.n + ".");
+  PARTS.forEach(function (p) {
+    var c = partCounts(p), v = state.verdict[p.id] || "no verdict";
+    L.push("");
+    L.push(p.id + " " + p.title + " [" + v + "] " + c.d + "/" + c.n);
+    var open = p.steps.filter(function (s) { return !stepDone(s); }).map(function (s) { return s.id; });
+    if (open.length) L.push("  not ticked: " + open.join(", "));
+    p.steps.forEach(function (s) { if (s.opt && state.opt[s.id]) L.push("  " + s.id + ": " + (state.opt[s.id] === "did" ? "did it" : "skipped it")); });
+    if ((state.notes[p.id] || "").trim()) L.push("  notes: " + state.notes[p.id].trim().replace(/\n/g, "\n         "));
+  });
+  return L.join("\n");
+}
+document.getElementById("summarize").addEventListener("click", function () {
+  var box = document.getElementById("summary"); box.value = buildSummary();
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+document.getElementById("copy").addEventListener("click", function () {
+  var box = document.getElementById("summary"), msg = document.getElementById("copymsg");
+  if (!box.value) box.value = buildSummary();
+  function fallback() { box.focus(); box.select(); msg.textContent = "Selected. Press copy on your keyboard."; }
+  try { navigator.clipboard.writeText(box.value).then(function () { msg.textContent = "Copied."; }, fallback); } catch (e) { fallback(); }
+});
+document.getElementById("reset").addEventListener("click", function () {
+  var b = this;
+  if (b.dataset.sure === "1") { state = { ticks: {}, opt: {}, verdict: {}, notes: {}, open: "A" }; save(); b.dataset.sure = ""; b.textContent = "Clear every tick on this page"; render(); }
+  else { b.dataset.sure = "1"; b.textContent = "Press again to clear everything"; setTimeout(function () { b.dataset.sure = ""; b.textContent = "Clear every tick on this page"; }, 4000); }
+});
+load(); render();
+</script>
