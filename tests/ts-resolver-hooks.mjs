@@ -11,6 +11,13 @@ export async function resolve(specifier, context, nextResolve) {
   try {
     return await nextResolve(specifier, context);
   } catch (err) {
+    // `next/server` and its siblings have no exports map: the bundler adds the extension, plain Node does not (Club Tier 4e's
+    // proxy tests build real NextRequest / NextResponse objects). Only for Next's own entry points, only after Node failed.
+    if (/^next\/[a-z-]+$/.test(specifier)) {
+      try {
+        return await nextResolve(`${specifier}.js`, context);
+      } catch { /* fall through to the original failure */ }
+    }
     if (!specifier.startsWith('.')) throw err;
     for (const ext of CANDIDATES) {
       try {

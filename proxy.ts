@@ -8,6 +8,8 @@ import { getDemoOrgBySlug } from './lib/demo-org';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH } from './lib/sandbox-door';
 import { sandboxExitResponse, isSandboxSurfacePath } from './lib/sandbox-exit';
 import { decodePathSegment } from './lib/demo-org';
+import { isOwnHost } from './lib/own-hosts';
+import { clubHostResponse } from './lib/club-host-response';
 
 /**
  * The org sections this file bounces an unauthenticated visitor out of (see the guards below).
@@ -26,6 +28,14 @@ export async function proxy(request: NextRequest) {
   // on the response (supabaseResponse.headers.set) does NOT make them available
   // via headers() in layouts/pages. We must forward via NextResponse.next request option.
   const { pathname } = request.nextUrl;
+
+  // ── A club's OWN web address (Club Tier Stage 4e) ──────────────────────────────────────────────
+  // A host that is not ours is a club's own address: serve that club's public pages at the host's root and nothing else. This
+  // comes first and returns, so such a request pays only an in-memory host lookup: no session work, no sandbox rules, none of
+  // the guards below (a club's own host has no session, no sandbox and no operator surface). The matcher below runs the proxy
+  // for these hosts and for no other public page, so www's pages still pay nothing. See lib/club-host-response.ts.
+  if (!isOwnHost(request.headers.get('host'))) return clubHostResponse(request);
+
   const segments = pathname.split('/').filter(Boolean);
 
   // Build augmented request headers that include x-pathname and x-org-slug
@@ -346,5 +356,12 @@ export const config = {
     // SANDBOX_MARKER_COOKIE by tests/unit/demo-sandbox-exit.test.ts instead.
     { source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
       has: [{ type: 'cookie', key: 'flhq-in-sandbox' }] },
+    // ── A club's own web address (Club Tier Stage 4e): every request to a host that is NOT ours ──────────
+    // Evaluated by the router before the proxy runs, so a request to www.fieldlogichq.ca pays nothing for this entry. It must
+    // stay AFTER the cookie entry above (tests/unit/demo-sandbox-exit.test.ts reads the matcher up to that entry's `has`).
+    // ⚠ The host pattern is a LITERAL copy of OWN_HOST_PATTERN (lib/own-hosts.ts): matcher values must be statically analyzable
+    // and a variable is silently ignored. tests/unit/club-host-proxy.test.ts pins the two together.
+    { source: '/((?!_next/static|_next/image).*)',
+      missing: [{ type: 'host', value: '(?:(?:[a-z0-9-]+\\.)*fieldlogichq\\.(?:ca|com)|(?:[a-z0-9-]+\\.)*amplifyapp\\.com|localhost|(?:\\d{1,3}\\.){3}\\d{1,3})' }] },
   ],
 };
