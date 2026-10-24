@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
+import { canAccessBookkeeping } from '@/lib/bookkeeping-access';
 import PlatformAdminNav from './PlatformAdminNav';
 import PlatformVisitRecorder from './PlatformVisitRecorder';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
@@ -46,7 +47,7 @@ export default async function PlatformAdminLayout({
        different audience, not a fourth surface of the same one. Do not "unify" it into the
        operator strip family. */
     <div className={styles.shell}>
-      <PlatformAdminNav sessionEmail={auth.user.email ?? ''} role={auth.role} />
+      <PlatformAdminNav sessionEmail={auth.user.email ?? ''} role={auth.role} canBookkeep={canAccessBookkeeping(auth)} />
       <main className={styles.main}>
         <CoachThemeColor fixed="dark" />
         <PlatformVisitRecorder />

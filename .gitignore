@@ -81,3 +81,6 @@ next-env.d.ts
 # owner reviews it here (latest.md, reports/, history.jsonl), and a daily file in git would be noise
 # in every session's `git status` on a shared working copy.
 .health/
+
+# Encrypted proprietor bookkeeping archives are private local artifacts.
+.bookkeeping-backups/

@@ -1,0 +1,4 @@
+schema_version,provider,environment,platform_account_id,connected_account_id,movement_id,movement_type,source_object_id,parent_movement_id,occurred_at_utc,currency,gross_cents,tax_cents,fee_cents,net_cents,seller_kind,tax_liability_kind,status,policy_version,invoice_id,payment_id,refund_id,payout_id,service_from,service_to,evidence_url
+1,stripe,test,acct_synthetic,,txn_sub_001,subscription_sale,pi_synthetic_001,,2026-10-23T14:00:00Z,CAD,11000,1000,0,11000,platform,platform,posted,synthetic-v1,in_synthetic_001,pi_synthetic_001,,,,,
+1,stripe,test,acct_synthetic,,txn_fee_001,processor_fee,txn_fee_001,txn_sub_001,2026-10-23T14:00:01Z,CAD,0,0,300,-300,platform,none,posted,synthetic-v1,,pi_synthetic_001,,,,,
+1,stripe,test,acct_synthetic,,txn_payout_001,payout_out,po_synthetic_001,,2026-10-24T14:00:00Z,CAD,-10700,0,0,-10700,platform,none,posted,synthetic-v1,,,,po_synthetic_001,,,

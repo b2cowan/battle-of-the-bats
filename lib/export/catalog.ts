@@ -321,6 +321,22 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
 
   // ── Platform Admin: Early Access Leads ──────────────────────────────────
   {
+    id: 'platform-admin-bookkeeping-expenses',
+    label: 'Proprietor expense detail',
+    module: 'platform_admin',
+    page: 'Private Bookkeeping',
+    file: 'app/platform-admin/bookkeeping/BookkeepingClient.tsx',
+    formats: ['csv'],
+    defaultFormat: 'csv',
+    audiences: ['platform_admin'],
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'included_justified',
+    sensitiveFieldJustification: 'Only the named proprietor can reach this export after an exact-email platform-session check. Original amounts, notes, correction reasons and receipt references are needed for accountant review.',
+    respectsCurrentFilters: true,
+    serverSide: true,
+    helpSummary: 'Owner-only CSV of selected expenses and all their revisions, with private receipt download references.',
+  },
+  {
     id: 'platform-admin-early-access',
     label: 'Early Access Leads',
     module: 'platform_admin',

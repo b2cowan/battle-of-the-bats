@@ -298,6 +298,14 @@
     "355_a_club_connects_its_own_web_address.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 4e Part 2: a NEW table, org_custom_domains (a club's own web address: one row per club, unique name and domain). No policy, function or data write; RLS on, anon/authenticated revoked, service_role granted. Applied to DEV 2026-10-23. Apply BEFORE promoting the 4e code (the Public site page and the proxy read it). The 4e release also needs the Amplify domain keys (CLUB_DOMAINS_* env vars), sites.fieldlogichq.ca and the Part 6 pg_cron job, which are prod steps of their own. Verify on prod after applying: SELECT to_regclass('public.org_custom_domains') IS NOT NULL -> true; then refresh both snapshots."
+    },
+    "354_proprietor_expense_revisions.sql": {
+      "prod": "held",
+      "note": "Owner selected separate AWS Aurora DSQL/S3 storage in us-east-2 on 2026-10-23; this Supabase migration was applied only to product dev before that decision and is not the production bookkeeping path. Do not apply 354 to product prod. The routes now use AWS; see docs/projects/active/BOOKKEEPING_AWS_RESOURCES.md. Later remove the unused empty product-dev table/bucket with a coordinated new migration and snapshot/dictionary refresh. CLEANED UP 2026-10-24 by mig 356 (dev table, guard function and empty bucket removed)."
+    },
+    "356_drop_the_unused_proprietor_expense_table.sql": {
+      "prod": "held",
+      "note": "Removes the unused dev-only proprietor expense table and guard function left by mig 354 (the owner chose AWS storage instead; 354 was never applied to prod). Applied to DEV 2026-10-24; the empty dev bucket proprietor-receipts was deleted through the Storage API. Every statement is IF EXISTS, so applying it to prod would do nothing, and prod needs nothing from it. Cleared 2 of the 3 new dev security-advisor findings (the function warning and the table notice)."
     }
   }
 }

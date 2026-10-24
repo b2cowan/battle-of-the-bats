@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bookkeeping · Owner QA walk</title>
+  <style>
+    :root { color-scheme: light; --bg:#f3f5f1; --card:#fff; --ink:#18221c; --muted:#536257; --line:#cbd7cb; --accent:#315c36; --pale:#e8f2e7; --bad:#a03731; --bad-pale:#fbeceb; --hold:#8a651c; --hold-pale:#fff5de; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:920px; padding:30px 18px 80px; margin:auto; }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { font-size:clamp(2rem,5vw,3.2rem); line-height:1.08; margin-bottom:.65rem; }
+    h2 { font-size:1.2rem; margin-bottom:.65rem; }
+    h3 { font-size:1rem; margin:0; }
+    a { color:#225c9c; text-underline-offset:3px; }
+    a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible { outline:3px solid #4886bb; outline-offset:2px; }
+    code,.mono { font: .9em ui-monospace,SFMono-Regular,Consolas,monospace; overflow-wrap:anywhere; }
+    code { background:#e9eee8; padding:.1rem .25rem; border-radius:3px; }
+    .eyebrow { color:var(--accent); font:bold .7rem ui-monospace,SFMono-Regular,Consolas,monospace; text-transform:uppercase; letter-spacing:.13em; }
+    .intro { color:var(--muted); max-width:65ch; }
+    .card,details.part { background:var(--card); border:1px solid var(--line); border-radius:12px; }
+    .card { padding:20px; margin:18px 0; }
+    .card p:last-child { margin-bottom:0; }
+    .success { border-left:5px solid var(--accent); }
+    .warning { border-left:5px solid var(--hold); }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .field { display:grid; gap:5px; font-weight:650; font-size:.86rem; }
+    input[type=text] { width:100%; min-width:0; border:1px solid #9dac9d; border-radius:6px; background:#fff; padding:10px; color:var(--ink); font:inherit; }
+    .field small,.small { color:var(--muted); font-size:.79rem; font-weight:400; }
+    .buttons { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+    button,.button-link { display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--accent); border-radius:7px; padding:8px 12px; background:#fff; color:var(--accent); font:650 .86rem system-ui,-apple-system,"Segoe UI",sans-serif; text-decoration:none; cursor:pointer; }
+    button:hover,.button-link:hover { background:var(--pale); }
+    button.primary { background:var(--accent); color:#fff; }
+    button.primary:hover { background:#254a2a; }
+    .progress { position:sticky; top:0; z-index:10; box-shadow:0 4px 18px #18221c16; }
+    .progress-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:baseline; }
+    .meter { height:8px; background:#e2e8e0; border-radius:20px; overflow:hidden; margin:12px 0 0; }
+    .meter > span { display:block; height:100%; width:0; background:var(--accent); }
+    .counts { color:var(--muted); font-size:.88rem; }
+    .counts strong { color:var(--ink); }
+    details.part { margin:18px 0; overflow:hidden; }
+    details.part > summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:15px; align-items:center; padding:16px 20px; }
+    details.part > summary::-webkit-details-marker { display:none; }
+    .part-name { display:flex; flex-direction:column; gap:2px; }
+    .part-name small { color:var(--muted); font-size:.77rem; }
+    .part-count { flex:none; border-radius:20px; background:#e9eee8; padding:4px 9px; font-size:.76rem; font-weight:700; }
+    .steps { list-style:none; padding:0; margin:0; }
+    .step { border-top:1px solid var(--line); padding:18px 20px; }
+    .step[data-status=pass] { background:#f5faf3; }
+    .step[data-status=issue] { background:#fff8f7; }
+    .step[data-status=blocked] { background:#fffaf0; }
+    .step-heading { display:flex; gap:10px; align-items:baseline; margin-bottom:10px; }
+    .number { color:var(--accent); font:bold .82rem ui-monospace,SFMono-Regular,Consolas,monospace; }
+    .step-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .step-grid > div { background:#f5f7f4; border-radius:7px; padding:11px 12px; }
+    .step-grid b { display:block; font-size:.73rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:5px; }
+    .step-grid p { margin:0; }
+    .status-line { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .pass-label { display:inline-flex; align-items:center; gap:8px; font-weight:700; color:var(--accent); cursor:pointer; }
+    .pass-label input { width:19px; height:19px; margin:0; accent-color:var(--accent); }
+    .status-line button { padding:5px 9px; font-size:.76rem; border-color:var(--line); color:var(--ink); }
+    .status-line button[aria-pressed=true].issue { background:var(--bad-pale); color:var(--bad); border-color:var(--bad); }
+    .status-line button[aria-pressed=true].blocked { background:var(--hold-pale); color:var(--hold); border-color:var(--hold); }
+    .note-label { display:block; margin-top:10px; font-size:.78rem; color:var(--muted); }
+    textarea { width:100%; min-height:48px; border:1px solid var(--line); border-radius:6px; padding:8px; resize:vertical; font:inherit; color:var(--ink); }
+    .end { text-align:center; padding:25px; }
+    .end strong { display:block; font-size:1.15rem; margin-bottom:6px; }
+    .storage-warning { color:var(--bad); font-weight:650; }
+    @media(max-width:640px) { main { padding:20px 12px 55px; } .grid,.step-grid { grid-template-columns:1fr; } .progress { position:static; } .card,.step { padding:15px; } details.part > summary { padding:14px 15px; } }
+    @media print { body { background:#fff; } main { max-width:none; padding:0; } .progress,.buttons,.status-line button { display:none; } details.part { break-inside:avoid; } .step { break-inside:avoid; } textarea { border:0; min-height:0; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">FieldLogicHQ · Private bookkeeping · Owner QA</p>
+    <h1>Expense and receipt walk</h1>
+    <p class="intro">Follow this in order in your web browser. Mark a step Pass only when its stated result appears. Choose Issue when the result differs, or Blocked when you cannot run it. Your progress and notes stay in this browser; download the results before clearing browser data.</p>
+  </header>
+
+  <section class="card success" aria-labelledby="measure-title">
+    <h2 id="measure-title">Measure of success</h2>
+    <p><strong>All steps pass</strong> when the owner can enter, correct, find, void and export a sample expense; both original receipts remain retrievable; the report totals match the numbers below; and signed-out and non-owner accounts cannot read the page or its private files. Any Issue or Blocked step leaves this walk open.</p>
+  </section>
+
+  <section class="card warning" aria-labelledby="setup-title">
+    <h2 id="setup-title">Before you start</h2>
+    <p>Use the <strong>local development app</strong> at <a href="http://localhost:3000/platform-admin/bookkeeping" target="_blank" rel="noopener">http://localhost:3000/platform-admin/bookkeeping</a>. Sign in as <code>fieldlogichq@gmail.com</code>. Use the generated sample PDFs below, not a real receipt. The sample expense remains in development as a voided audit record at the end.</p>
+    <div class="grid">
+      <label class="field">Test date <input id="test-date" type="text" readonly><small>Use this same date for entry and report filters.</small></label>
+      <label class="field">Unique test supplier <input id="supplier" type="text" autocomplete="off" spellcheck="false"><small>Keep this exact name throughout the walk; it isolates your test from other expenses.</small></label>
+      <label class="field">Expense ID from the CSV <input id="expense-id" type="text" placeholder="Paste expense_id after the CSV step" autocomplete="off" spellcheck="false"><small>Used for the private receipt access check near the end.</small></label>
+      <div class="field">Sample receipts <div class="buttons"><button type="button" id="receipt-a">Download sample A PDF</button><button type="button" id="receipt-b">Download sample B PDF</button></div><small>The PDFs say “QA receipt A” and “QA receipt B” inside.</small></div>
+    </div>
+    <p class="small">If localhost is unavailable, note that as Blocked. This HTML file runs offline; it does not start the app or submit expenses itself.</p>
+  </section>
+
+  <section class="card progress" aria-label="Walk progress">
+    <div class="progress-line"><h2 style="margin:0">Progress</h2><span class="counts" id="counts" aria-live="polite">0 passed</span></div>
+    <div class="meter" aria-hidden="true"><span id="meter-fill"></span></div>
+    <div class="buttons"><button type="button" class="primary" id="download-results">Download QA results</button><button type="button" id="print-results">Print</button><button type="button" id="reset">Start a new walk</button></div>
+    <p id="storage-warning" class="storage-warning" hidden>This browser did not allow local saving for this file. Keep the tab open and download your results before closing it.</p>
+  </section>
+
+  <div id="parts"></div>
+
+  <section class="card end" aria-live="polite"><strong id="final-title">Walk in progress</strong><span id="final-detail">Run the steps above and record the result for each one.</span></section>
+</main>
+
+<script>
+(() => {
+  const KEY = 'fieldlogichq-bookkeeping-owner-qa-v1';
+  const PARTS = [
+    { id:'A', title:'Open the private workspace', hint:'Owner access and the two synthetic files', steps:[
+      { id:'A1', title:'Owner sign-in', action:'Open the local Bookkeeping link above and sign in with fieldlogichq@gmail.com.', success:'The Bookkeeping page loads with “Add an expense”, “Expense report” and “Expense register”. The Bookkeeping navigation link is visible. No error banner appears.' },
+      { id:'A2', title:'Prepare the two receipts', action:'Use the two download buttons above. Open both PDFs on your computer before uploading anything.', success:'Sample A opens and visibly says “QA receipt A”. Sample B opens and visibly says “QA receipt B”. You can tell the originals apart.' }
+    ]},
+    { id:'B', title:'Create and find an expense', hint:'One known amount, one receipt, and exact report math', steps:[
+      { id:'B1', title:'Save the first revision', action:'In Add an expense, use the test date and supplier above. Category: “QA verification”. Business purpose: “Synthetic receipt and report check”. Currency CAD; Invoice total $12.34; CAD total $12.34; Purchase tax in CAD $1.34; Tax treatment “Pending review”; Business use 50%; Paid from “Paid personally”. Attach sample A PDF and press Save expense.', success:'“Expense saved.” appears. A new row for the test supplier appears in Expense register, with Rev. 1 and a Download receipt link. There is no red error banner.' },
+      { id:'B2', title:'Check the first report', action:'Type the unique test supplier into Find. Leave other filters clear.', success:'Exactly one expense matches. Recorded business spend is $6.17; Expenses is 1; Purchase tax pending review is $0.67. The row says Paid personally and Rev. 1. This is 50% of $12.34 and 50% of $1.34, rounded to cents.' },
+      { id:'B3', title:'Retrieve original A', action:'On that row, click Download receipt. Open the downloaded PDF.', success:'The file opens and says “QA receipt A”. It is the file you uploaded, not a page error or a blank file.' }
+    ]},
+    { id:'C', title:'Correct it without losing history', hint:'A new amount and replacement receipt must leave revision 1 intact', steps:[
+      { id:'C1', title:'Save revision 2', action:'Click Correct on the test row. Change BOTH Invoice total and CAD total to $14.34; keep purchase tax $1.34 and business use 50%. Attach sample B PDF. Enter “QA correction: amount and receipt” in Reason for correction, then Save correction.', success:'“Correction saved with history.” appears. The row shows Rev. 2 and $7.17 recorded business spend. The report still shows one expense and $0.67 pending purchase tax. No second expense was created.' },
+      { id:'C2', title:'Inspect the revision trail', action:'Click History on the test row.', success:'There are two entries. Rev. 1 shows $12.34; Rev. 2 shows $14.34 and the correction reason. Both have a Receipt link.' },
+      { id:'C3', title:'Open both originals', action:'Click Download receipt on the current row, then the Receipt link on Rev. 1 in History. Open both downloads.', success:'The current file says “QA receipt B”; Rev. 1 says “QA receipt A”. Replacing the current receipt did not erase the earlier original.' }
+    ]},
+    { id:'D', title:'Reports and accountant downloads', hint:'Filters, CSV history and a complete original-receipt package', steps:[
+      { id:'D1', title:'Filter the report', action:'Keep Find set to the unique supplier. Set From and To to the test date; select “QA verification” in Category. Then temporarily change Find to a word that cannot match; restore the supplier afterward.', success:'With the supplier, one expense and $7.17 spend appear. With no match, the report shows zero expenses and $0.00, and the register says no expenses match this view. Restoring the supplier brings the row back.' },
+      { id:'D2', title:'Check the CSV', action:'With the matching filters still set, click Export expense detail CSV and open the file. Copy the value in its expense_id column into the box above.', success:'The CSV contains two rows for the same expense_id: revision 1 is “superseded” at $12.34 CAD; revision 2 is “current” at $14.34 CAD. Each row names its receipt and has a receipt_download path. There are no rows for unrelated expenses.' },
+      { id:'D3', title:'Check the ZIP package', action:'With the same filters, click Download receipt package and open the ZIP. Open expenses.csv, receipt-index.csv and both files in the receipts folder.', success:'The ZIP opens without an error. expenses.csv has the same two revisions. receipt-index.csv maps each revision to its own file and shows a 64-character SHA-256 value. There are two PDFs: one says “QA receipt A” and the other “QA receipt B”.' }
+    ]},
+    { id:'E', title:'Void but retain the evidence', hint:'The report drops the cost; the audit trail and files remain', steps:[
+      { id:'E1', title:'Void the test expense', action:'Click Correct, then Void expense. Enter “QA void test” in Reason for correction AND “Synthetic QA record” in Reason to void. Press Confirm void.', success:'The row says Voided and Rev. 3. The matching report shows Expenses 0, Recorded business spend $0.00, and Purchase tax pending review $0.00. The voided row remains in the register for review.' },
+      { id:'E2', title:'Check retained history and exports', action:'Open History again, download the earlier receipts, then export the matching CSV and ZIP once more.', success:'History has Rev. 1, 2 and 3 with the correction and void reasons. Both original PDFs still open. The CSV has three revision rows, the latest marked “void”. The ZIP index has three revision rows and still includes both distinct original PDFs.' },
+      { id:'E3', title:'Refresh and confirm persistence', action:'Reload the Bookkeeping page, re-enter the unique supplier in Find and open History.', success:'The row is still Voided at Rev. 3, the report totals remain zero, and all three history entries remain visible. The change survived a page reload.' }
+    ]},
+    { id:'F', title:'Private access boundary', hint:'The page, data routes, and original files must all refuse other accounts', steps:[
+      { id:'F1', title:'Signed-out visitor', action:'Sign out. In the same browser, open the Bookkeeping page and the /expenses, /export and /package API links listed below.', success:'The page goes to platform-admin sign-in or away from Bookkeeping. Each API shows Forbidden or HTTP 403. No expense data, CSV or ZIP downloads.' },
+      { id:'F2', title:'A different signed-in account', action:'Sign in with a normal club account or a platform-admin email other than fieldlogichq@gmail.com. Try the Bookkeeping page and the same three API links.', success:'The non-owner cannot reach the Bookkeeping page and cannot download expense data. Each private API returns Forbidden or HTTP 403. If no such account is available, mark Blocked and record which role could not be tested.' },
+      { id:'F3', title:'Protect the direct receipt URL', action:'With that non-owner account still signed in, paste the expense_id from the CSV above, then open the generated Rev. 1 receipt link below.', success:'The original PDF does not download. The response is Forbidden or HTTP 403. If you could not obtain an expense_id or a non-owner account, mark Blocked.' }
+    ]},
+    { id:'G', title:'Usability and finish', hint:'A practical screen at desktop and phone widths', steps:[
+      { id:'G1', title:'Phone-width check', action:'Sign back in as the owner. Open Bookkeeping on a phone, or set the browser window near 390 px wide. Scan the form, report, row actions and both export buttons.', success:'Fields and buttons are readable and reachable; the page has no horizontal scrolling or clipped controls. The receipt and History links can be tapped without hitting the wrong action.' },
+      { id:'G2', title:'Record the verdict', action:'Review all earlier steps and add notes to every Issue or Blocked result. If they all passed, mark this step Pass, then click Download QA results.', success:'The downloaded summary says PASS only when every step is marked Pass. If any step is Issue, Blocked or Not run, the summary says OPEN and identifies what still needs work.' }
+    ]}
+  ];
+
+  const isoLocalDate = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const freshState = () => ({ date:isoLocalDate(), supplier:`QA Bookkeeping ${isoLocalDate()} ${Math.floor(1000 + Math.random()*9000)}`, expenseId:'', status:{}, notes:{} });
+  let state = freshState();
+  let storageAllowed = true;
+  try { const raw = localStorage.getItem(KEY); if (raw) state = { ...state, ...JSON.parse(raw) }; }
+  catch { storageAllowed = false; document.getElementById('storage-warning').hidden = false; }
+  const save = () => { if (!storageAllowed) return; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { document.getElementById('storage-warning').hidden = false; storageAllowed = false; } };
+  const allSteps = PARTS.flatMap(part => part.steps);
+  const html = value => value.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+  const partsHost = document.getElementById('parts');
+  for (const part of PARTS) {
+    const details = document.createElement('details'); details.className = 'part'; details.open = true;
+    details.innerHTML = `<summary><span class="part-name"><strong>${html(part.id + ' · ' + part.title)}</strong><small>${html(part.hint)}</small></span><span class="part-count" id="count-${part.id}"></span></summary><ol class="steps"></ol>`;
+    const list = details.querySelector('ol');
+    for (const step of part.steps) {
+      const item = document.createElement('li'); item.className = 'step'; item.id = `step-${step.id}`;
+      item.innerHTML = `<div class="step-heading"><span class="number">${step.id}</span><h3>${html(step.title)}</h3></div><div class="step-grid"><div><b>Do this</b><p>${html(step.action)}</p></div><div><b>Look for · Pass when</b><p>${html(step.success)}</p></div></div><div class="status-line"><label class="pass-label"><input type="checkbox" data-pass="${step.id}">Pass</label><button type="button" class="issue" data-issue="${step.id}" aria-pressed="false">Issue</button><button type="button" class="blocked" data-blocked="${step.id}" aria-pressed="false">Blocked</button></div><label class="note-label" for="note-${step.id}">What happened / evidence</label><textarea id="note-${step.id}" data-note="${step.id}" placeholder="Optional for Pass; describe the result for Issue or Blocked."></textarea>`;
+      list.append(item);
+    }
+    partsHost.append(details);
+  }
+
+  const dateField = document.getElementById('test-date');
+  const supplierField = document.getElementById('supplier');
+  const idField = document.getElementById('expense-id');
+  dateField.value = state.date; supplierField.value = state.supplier; idField.value = state.expenseId;
+  supplierField.addEventListener('input', () => { state.supplier = supplierField.value; save(); });
+  idField.addEventListener('input', () => { state.expenseId = idField.value.trim(); save(); updateReceiptLink(); });
+  for (const input of document.querySelectorAll('[data-pass]')) input.addEventListener('change', () => { state.status[input.dataset.pass] = input.checked ? 'pass' : ''; save(); refresh(); });
+  for (const button of document.querySelectorAll('[data-issue],[data-blocked]')) button.addEventListener('click', () => { const id = button.dataset.issue || button.dataset.blocked; const next = button.dataset.issue ? 'issue' : 'blocked'; state.status[id] = state.status[id] === next ? '' : next; save(); refresh(); });
+  for (const area of document.querySelectorAll('[data-note]')) { area.value = state.notes[area.dataset.note] || ''; area.addEventListener('input', () => { state.notes[area.dataset.note] = area.value; save(); }); }
+
+  function refresh() {
+    const count = { pass:0, issue:0, blocked:0 };
+    for (const step of allSteps) {
+      const status = state.status[step.id] || '';
+      if (count[status] !== undefined) count[status]++;
+      const row = document.getElementById(`step-${step.id}`); row.dataset.status = status;
+      row.querySelector('[data-pass]').checked = status === 'pass';
+      row.querySelector('[data-issue]').setAttribute('aria-pressed', status === 'issue');
+      row.querySelector('[data-blocked]').setAttribute('aria-pressed', status === 'blocked');
+    }
+    for (const part of PARTS) document.getElementById(`count-${part.id}`).textContent = `${part.steps.filter(step => state.status[step.id] === 'pass').length} / ${part.steps.length} passed`;
+    document.getElementById('counts').innerHTML = `<strong>${count.pass} / ${allSteps.length} passed</strong> · ${count.issue} issues · ${count.blocked} blocked`;
+    document.getElementById('meter-fill').style.width = `${100 * count.pass / allSteps.length}%`;
+    const complete = count.pass === allSteps.length;
+    document.getElementById('final-title').textContent = complete ? 'PASS · Owner walk complete' : 'OPEN · More evidence needed';
+    document.getElementById('final-detail').textContent = complete ? 'Every observed result matched its success measure.' : `${allSteps.length - count.pass} step(s) still need a passing result. Issues and blocked steps keep the gate open.`;
+  }
+
+  function buildPdf(label) {
+    const stream = `BT\n/F1 18 Tf\n50 740 Td\n(${label}) Tj\nET\n`;
+    const objects = [
+      '<< /Type /Catalog /Pages 2 0 R >>',
+      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+      `<< /Length ${stream.length} >>\nstream\n${stream}endstream`,
+      '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+    ];
+    let data = '%PDF-1.4\n'; const offsets = [0];
+    objects.forEach((body, i) => { offsets.push(data.length); data += `${i+1} 0 obj\n${body}\nendobj\n`; });
+    const start = data.length;
+    data += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    offsets.slice(1).forEach(offset => { data += `${String(offset).padStart(10,'0')} 00000 n \n`; });
+    data += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${start}\n%%EOF\n`;
+    return new Blob([data], { type:'application/pdf' });
+  }
+  function download(name, blob) { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000); }
+  document.getElementById('receipt-a').addEventListener('click', () => download('bookkeeping-qa-receipt-A.pdf', buildPdf('QA receipt A')));
+  document.getElementById('receipt-b').addEventListener('click', () => download('bookkeeping-qa-receipt-B.pdf', buildPdf('QA receipt B')));
+
+  const urls = [
+    ['Expenses','http://localhost:3000/api/platform-admin/bookkeeping/expenses'],
+    ['CSV','http://localhost:3000/api/platform-admin/bookkeeping/export'],
+    ['ZIP','http://localhost:3000/api/platform-admin/bookkeeping/package']
+  ];
+  const accessBox = document.createElement('div'); accessBox.className = 'card';
+  accessBox.innerHTML = `<h2>Direct URLs for the private access check</h2><p>Use these after signing out or while signed in as a different account. A protected route should show Forbidden or HTTP 403.</p><p>${urls.map(([label,url]) => `<strong>${label}:</strong> <a href="${url}" target="_blank" rel="noopener">${url}</a>`).join('<br>')}</p><p id="receipt-url">Paste expense_id above to make the Rev. 1 receipt link.</p>`;
+  partsHost.insertBefore(accessBox, document.getElementById('step-F1').closest('details'));
+  function updateReceiptLink() {
+    const target = document.getElementById('receipt-url');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(state.expenseId)) { target.textContent = 'Paste expense_id above to make the Rev. 1 receipt link.'; return; }
+    const url = `http://localhost:3000/api/platform-admin/bookkeeping/receipt/${state.expenseId}/1`;
+    target.innerHTML = `<strong>Rev. 1 receipt:</strong> <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+  }
+  updateReceiptLink();
+
+  document.getElementById('download-results').addEventListener('click', () => {
+    const passed = allSteps.every(step => state.status[step.id] === 'pass');
+    const lines = [`FieldLogicHQ bookkeeping owner QA · ${new Date().toLocaleString('en-CA')}`, `Verdict: ${passed ? 'PASS' : 'OPEN'}`, `Test date: ${state.date}`, `Supplier: ${state.supplier}`, `Expense ID: ${state.expenseId || '(not recorded)'}`, ''];
+    for (const part of PARTS) {
+      lines.push(`${part.id}. ${part.title}`);
+      for (const step of part.steps) { lines.push(`  ${step.id} ${step.title}: ${(state.status[step.id] || 'NOT RUN').toUpperCase()}`); if (state.notes[step.id]) lines.push(`    Notes: ${state.notes[step.id].replaceAll('\n',' / ')}`); }
+      lines.push('');
+    }
+    download(`bookkeeping-owner-qa-${state.date}.txt`, new Blob([lines.join('\n')], { type:'text/plain;charset=utf-8' }));
+  });
+  document.getElementById('print-results').addEventListener('click', () => window.print());
+  document.getElementById('reset').addEventListener('click', () => {
+    if (!confirm('Start a new QA walk? This clears this browser’s ticks and notes. Download results first if you need them.')) return;
+    state = freshState(); save(); dateField.value = state.date; supplierField.value = state.supplier; idField.value = '';
+    for (const area of document.querySelectorAll('[data-note]')) area.value = '';
+    updateReceiptLink(); refresh();
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>

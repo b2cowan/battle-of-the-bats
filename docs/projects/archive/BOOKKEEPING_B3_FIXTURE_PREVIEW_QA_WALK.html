@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FieldLogicHQ bookkeeping B3 fixture preview QA</title>
+  <style>
+    :root { color-scheme: light; --ink:#1f2d29; --muted:#62716b; --line:#dce5df; --paper:#f5f8f5; --green:#176b50; --amber:#835400; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 system-ui,sans-serif; }
+    main { max-width:900px; margin:0 auto; padding:32px 20px 60px; } h1 { font-size:clamp(1.8rem,4vw,2.4rem); line-height:1.15; }
+    .panel { background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; }
+    .note { border-left:4px solid #c58b24; padding:12px 14px; background:#fff9e9; }
+    .step { padding:14px 0; border-bottom:1px solid var(--line); } .step:last-child { border:0; }
+    .step h2 { font-size:1.05rem; margin:0 0 .4rem; } .step p { margin:.25rem 0; }
+    .subtle { color:var(--muted); } code { overflow-wrap:anywhere; background:#eef3ef; padding:2px 5px; }
+    a { color:var(--green); } @media(max-width:600px) { main { padding:22px 14px 40px; } .panel { padding:16px; } }
+  </style>
+</head>
+<body><main>
+  <p class="subtle">FieldLogicHQ · Private bookkeeping · B3 fixture preview</p>
+  <h1>Owner QA walk</h1>
+  <p>Use this walk to review the CSV preview only. It does not import or post revenue movements.</p>
+  <p class="note"><strong>Source contract pending:</strong> the CSV mapping is synthetic and has not been accepted by the Revenue workstream. No live records or tax decisions belong in this walk.</p>
+  <section class="panel">
+    <h2>Before you start</h2>
+    <p>Sign in as the bookkeeping owner and open <a href="/platform-admin/bookkeeping">Platform Admin → Bookkeeping</a>. Download the synthetic preview file from the page, or use <a href="/bookkeeping-b3-import-fixtures.csv" download>the fixture CSV</a>.</p>
+  </section>
+  <section class="panel" aria-label="QA steps">
+    <div class="step"><h2>B3-P1 · Check the private page and sample file</h2><p>Confirm the import preview appears above the expense form and the synthetic CSV download works. Check that the page still requires the authorized owner session.</p></div>
+    <div class="step"><h2>B3-P2 · Review the valid rows and source scope</h2><p>Select <code>BOOKKEEPING_B3_IMPORT_FIXTURES.csv</code>. Expect 9 rows: 7 ready, 1 needing attention, and 1 repeated identity. Confirm both the platform balance and the connected account scope are shown, and that subscription sale, processor fee, linked refund, fee refund, application fee and payout transfer appear as separate movements.</p></div>
+    <div class="step"><h2>B3-P3 · Confirm currency totals stay separate</h2><p>Ready CAD movements should net to CAD $0.00. The USD movement should show separately as USD $12.34. The incomplete and repeated rows are excluded from ready totals.</p></div>
+    <div class="step"><h2>B3-P4 · Inspect the duplicate and incomplete refund</h2><p>Confirm the repeated sale is labelled “Repeated identity” and the orphan refund explains that <code>parent_movement_id</code> is required. The preview must not silently treat the repeated sale as another movement.</p></div>
+    <div class="step"><h2>B3-P5 · Confirm the file stays local and nothing posts</h2><p>Look for the “Preview only · no records posted” status and the Revenue handoff notice. There should be no accept/import action. Refresh the page and confirm the expense register is unchanged.</p></div>
+    <div class="step"><h2>B3-P6 · Check malformed input handling</h2><p>Select a non-CSV file or a CSV with a required column removed. Confirm the page reports the issue without crashing and offers no posting action.</p></div>
+  </section>
+  <section class="panel"><h2>Current boundary</h2><p class="subtle">This walk covers only fixture preview. It does not prove persisted deduplication, replay or interruption recovery, bookkeeping entries, payout reconciliation, production mapping, or tax attribution. Those remain later B3 gates.</p></section>
+</main></body></html>

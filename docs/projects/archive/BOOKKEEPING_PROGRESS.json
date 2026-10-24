@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "project": "fieldlogichq-internal-bookkeeping",
+  "updatedOn": "2026-10-23",
+  "lifecycleStatus": "stopped_by_owner",
+  "closedOn": "2026-10-23",
+  "closureReason": "Owner requested the project be stopped and archived. This is a closure of work, not completion of the accounting readiness gates.",
+  "currentFocus": "Stopped and archived by owner on 2026-10-23. B2.5 expense-only readiness is complete. B3 source acceptance, posting and reconciliation remain incomplete; B4 recurring backup custody, production recovery, accountant review and first real full close remain incomplete. Existing development expense and preview code remains in the repository.",
+  "phases": [
+    {
+      "id": "B0",
+      "title": "Scope, technical audit and design",
+      "dependency": "Can start now",
+      "scope": "current",
+      "stages": [
+        {
+          "id": "B0.1",
+          "title": "Record custom-build owner decision, scope and PM brief",
+          "status": "done",
+          "kind": "work",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Prepared deliverable",
+              "path": "REVENUE_ACCOUNTING_BOOKKEEPING_PLAN.md"
+            }
+          ]
+        },
+        {
+          "id": "B0.2",
+          "title": "Define parallel ownership, tracking and build handoff",
+          "status": "done",
+          "kind": "work",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Prepared deliverable",
+              "path": "BOOKKEEPING_BUILD_PROMPT.md"
+            }
+          ]
+        },
+        {
+          "id": "B0.3",
+          "title": "Audit existing code, schema, private auth, storage and reusable ledger/export patterns",
+          "status": "done",
+          "kind": "work",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Code, schema and access audit",
+              "path": "BOOKKEEPING_B0_AUDIT_AND_CONTRACT.md"
+            }
+          ]
+        },
+        {
+          "id": "B0.4",
+          "title": "Define minimal posting rules and expense/report screen experience",
+          "status": "in_progress",
+          "kind": "work",
+          "owner": "Engineering + owner",
+          "evidence": [
+            {
+              "label": "Four screen designs for owner review",
+              "path": "BOOKKEEPING_B0_SCREEN_DESIGNS.html"
+            },
+            {
+              "label": "Proposed posting rules",
+              "path": "BOOKKEEPING_B0_AUDIT_AND_CONTRACT.md"
+            }
+          ]
+        },
+        {
+          "id": "B0.5",
+          "title": "Agree sample Stripe CSV contract, mapping and financial fixtures",
+          "status": "needs_input",
+          "kind": "stub",
+          "owner": "Engineering + owner"
+        }
+      ]
+    },
+    {
+      "id": "B1",
+      "title": "Private expense and receipt core",
+      "dependency": "After B0 technical and UX design",
+      "scope": "current",
+      "stages": [
+        {
+          "id": "B1.1",
+          "title": "Build private proprietor workspace and approved schema/access boundary",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Separate AWS dev and production resources with restricted app roles",
+              "path": "BOOKKEEPING_AWS_RESOURCES.md"
+            }
+          ]
+        },
+        {
+          "id": "B1.2",
+          "title": "Implement transaction amounts, categories, payment source and correction history",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Owner-reported pass of expense entry, correction, report math and void history browser steps",
+              "path": "BOOKKEEPING_OWNER_QA_WALK.html"
+            }
+          ]
+        },
+        {
+          "id": "B1.3",
+          "title": "Upload, attach and retrieve private original receipts",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Owner-reported pass of original and corrected receipt retrieval browser steps",
+              "path": "BOOKKEEPING_OWNER_QA_WALK.html"
+            }
+          ]
+        },
+        {
+          "id": "B1.4",
+          "title": "Find and review expenses, receipts and missing evidence",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Active missing-receipt and missing-USD-evidence filters with focused unit coverage",
+              "path": "BOOKKEEPING_B2_VERIFICATION.md"
+            }
+          ]
+        },
+        {
+          "id": "B1.5",
+          "title": "Verify unauthorized roles cannot access entries, files or exports",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Owner-reported pass of signed-out, non-owner and direct receipt URL denial browser steps",
+              "path": "BOOKKEEPING_OWNER_QA_WALK.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B2",
+      "title": "Reports, exports and expense-only readiness",
+      "dependency": "Can finish before Stripe paid launch",
+      "scope": "current",
+      "stages": [
+        {
+          "id": "B2.1",
+          "title": "Implement expense-only period, category, purchase-tax and payment-source reports",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Period report math, tax status categories and focused filters are covered by expense unit tests",
+              "path": "BOOKKEEPING_B2_VERIFICATION.md"
+            },
+            {
+              "label": "Owner-reported B2 browser QA pass",
+              "path": "BOOKKEEPING_B2_OWNER_QA_WALK.html"
+            }
+          ]
+        },
+        {
+          "id": "B2.2",
+          "title": "Export transaction detail, original receipts and document index",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Revision CSV and original receipt ZIP with SHA-256 document index; owner reported browser download pass",
+              "path": "BOOKKEEPING_AWS_RESOURCES.md"
+            }
+          ]
+        },
+        {
+          "id": "B2.3",
+          "title": "Verify personally paid expenses, owner movements and foreign-invoice CAD values",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Business-use-adjusted personal payment totals, USD source/date validation, latest revision and filtered history export tests",
+              "path": "BOOKKEEPING_B2_VERIFICATION.md"
+            },
+            {
+              "label": "Filtered export alignment and void/history selection tests",
+              "path": "BOOKKEEPING_B2_VERIFICATION.md"
+            },
+            {
+              "label": "No reimbursement movement record exists; follow-up boundary documented",
+              "path": "REVENUE_ACCOUNTING_BOOKKEEPING_PLAN.md"
+            }
+          ]
+        },
+        {
+          "id": "B2.4",
+          "title": "Owner walkthrough and historical receipt backfill process",
+          "status": "done",
+          "kind": "stub",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Documented manual historical receipt backfill workflow",
+              "path": "REVENUE_ACCOUNTING_BOOKKEEPING_PLAN.md"
+            },
+            {
+              "label": "Owner-reported pass of all 13 B2 browser QA steps at 10:43 p.m.",
+              "path": "BOOKKEEPING_B2_OWNER_QA_RESULTS.md"
+            }
+          ]
+        },
+        {
+          "id": "B2.5",
+          "title": "Gate: usable expense/receipt/reporting tool independent of live Stripe",
+          "status": "done",
+          "kind": "gate",
+          "owner": "Engineering + owner",
+          "completedOn": "2026-10-23",
+          "evidence": [
+            {
+              "label": "Implementation and focused verification evidence",
+              "path": "BOOKKEEPING_B2_VERIFICATION.md"
+            },
+            {
+              "label": "Expense-only gate owner QA pass",
+              "path": "BOOKKEEPING_B2_OWNER_QA_RESULTS.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B3",
+      "title": "Stripe imports and reconciliation",
+      "dependency": "Fixtures now; real proof depends on revenue model",
+      "scope": "current",
+      "stages": [
+        {
+          "id": "B3.1",
+          "title": "Import subscription sales, tax, fees and linked credits/refunds without duplicates",
+          "status": "in_progress",
+          "kind": "work",
+          "owner": "Engineering + owner + finance",
+          "evidence": [
+            {
+              "label": "Fixture adapter implementation plan",
+              "path": "BOOKKEEPING_B3_IMPORT_PLAN.md"
+            },
+            {
+              "label": "Owner import preview mockup",
+              "path": "BOOKKEEPING_B3_IMPORT_MOCKUP.html"
+            },
+            {
+              "label": "Synthetic import fixtures",
+              "path": "BOOKKEEPING_B3_IMPORT_FIXTURES.csv"
+            },
+            {
+              "label": "Owner fixture preview QA walk",
+              "path": "BOOKKEEPING_B3_FIXTURE_PREVIEW_QA_WALK.html"
+            }
+          ]
+        },
+        {
+          "id": "B3.2",
+          "title": "Reconcile Stripe balance and payouts as transfers to the receiving account",
+          "status": "planned",
+          "kind": "stub",
+          "owner": "Engineering + owner + finance"
+        },
+        {
+          "id": "B3.3",
+          "title": "Import actual Connect platform fees, tax, refunds and cost allocation",
+          "status": "planned",
+          "kind": "stub",
+          "owner": "Engineering + owner + finance"
+        },
+        {
+          "id": "B3.4",
+          "title": "Prove replay, interruption, out-of-order and exception recovery",
+          "status": "planned",
+          "kind": "stub",
+          "owner": "Engineering + owner + finance"
+        },
+        {
+          "id": "B3.5",
+          "title": "Gate: subscription and Connect accounting handoff accepted for revenue A+B",
+          "status": "planned",
+          "kind": "gate",
+          "owner": "Engineering + owner + finance"
+        }
+      ]
+    },
+    {
+      "id": "B4",
+      "title": "Hardening, accountant handoff and operating close",
+      "dependency": "Controls before live use; full close after activity",
+      "scope": "current",
+      "stages": [
+        {
+          "id": "B4.1",
+          "title": "Prove backup/restore, retained receipt access and correction/audit export",
+          "status": "in_progress",
+          "kind": "stub",
+          "owner": "Engineering + owner + finance",
+          "evidence": [
+            {
+              "label": "Encrypted backup and synthetic development restore drill; recurring copy and production recovery remain",
+              "path": "BOOKKEEPING_AWS_RESOURCES.md"
+            }
+          ]
+        },
+        {
+          "id": "B4.2",
+          "title": "Accountant review of categories, adjustments and final delivery package",
+          "status": "planned",
+          "kind": "stub",
+          "owner": "Engineering + owner + finance"
+        },
+        {
+          "id": "B4.3",
+          "title": "First real full close, exception review and monthly ownership",
+          "status": "planned",
+          "kind": "stub",
+          "owner": "Engineering + owner + finance"
+        }
+      ]
+    },
+    {
+      "id": "B5",
+      "title": "Optional expansion",
+      "dependency": "Separate future priority decision",
+      "scope": "expansion",
+      "stages": [
+        {
+          "id": "B5.1",
+          "title": "Receipt reading and optional entry suggestions",
+          "status": "deferred",
+          "kind": "stub",
+          "owner": "Engineering + owner"
+        },
+        {
+          "id": "B5.2",
+          "title": "Scheduled API sync after controlled imports are reliable",
+          "status": "deferred",
+          "kind": "stub",
+          "owner": "Engineering + owner"
+        },
+        {
+          "id": "B5.3",
+          "title": "Additional reports or accounting features justified by actual use",
+          "status": "deferred",
+          "kind": "stub",
+          "owner": "Engineering + owner"
+        }
+      ]
+    }
+  ]
+}

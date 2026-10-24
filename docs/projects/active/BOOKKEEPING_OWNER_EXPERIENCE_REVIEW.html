@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Owner bookkeeping · Project review</title>
+  <style>
+    :root { --paper:#f8f4ed; --white:#fffdf8; --ink:#241e15; --muted:#645d52; --line:#ded7c9; --olive:#57651e; --olive-soft:#e8edda; --amber:#8d5d11; --amber-soft:#fff0d2; --blue:#335d68; --blue-soft:#e5f0f1; --shadow:0 10px 30px #34250f0a; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    a { color:#365319; text-underline-offset:3px; }
+    a:hover { color:#21340e; }
+    :focus-visible { outline:3px solid var(--olive); outline-offset:3px; }
+    .shell { max-width:1280px; margin:auto; padding:0 24px 96px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:21px 0; border-bottom:1px solid var(--line); }
+    .brand { font-weight:800; letter-spacing:.01em; }
+    .brand span { display:inline-grid; place-items:center; width:33px; height:33px; margin-right:9px; background:var(--olive); color:white; border-radius:8px; font-size:.78rem; }
+    .topbar nav { display:flex; flex-wrap:wrap; gap:10px 22px; font-size:.88rem; font-weight:650; }
+    .topbar nav a { text-decoration:none; color:var(--muted); }
+    .topbar nav a:hover { color:var(--ink); }
+    .hero { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(290px,.55fr); gap:28px; align-items:stretch; padding:56px 0 34px; }
+    .eyebrow { color:var(--olive); text-transform:uppercase; letter-spacing:.13em; font-size:.7rem; font-weight:800; margin:0 0 12px; }
+    h1,h2,h3,h4,p { margin-top:0; }
+    h1 { font-size:clamp(2.4rem,5.3vw,4.75rem); line-height:1.02; letter-spacing:-.055em; max-width:800px; margin-bottom:20px; }
+    .lead { font-size:1.15rem; color:#4c473e; max-width:730px; margin-bottom:25px; }
+    .hero-actions { display:flex; flex-wrap:wrap; gap:10px; }
+    .button { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 17px; border-radius:9px; background:var(--olive); border:1px solid var(--olive); color:white; text-decoration:none; font-size:.87rem; font-weight:750; }
+    .button:hover { background:#465418; color:white; }
+    .button.secondary { background:transparent; color:var(--olive); }
+    .button.secondary:hover { background:var(--olive-soft); color:var(--olive); }
+    .progress-card { background:var(--white); border:1px solid var(--line); border-radius:18px; padding:23px; box-shadow:var(--shadow); }
+    .progress-card .status { display:inline-block; border:1px solid #c7d6a6; background:var(--olive-soft); color:#394910; border-radius:99px; padding:4px 10px; font-size:.73rem; font-weight:750; }
+    .progress-card h2 { font-size:1.08rem; margin:18px 0 8px; }
+    .progress-number { font-size:2.5rem; font-weight:800; letter-spacing:-.05em; line-height:1; margin:7px 0; }
+    .progress-card p { color:var(--muted); font-size:.85rem; }
+    .progress-track { height:9px; background:#e9e3d6; border-radius:99px; overflow:hidden; margin:16px 0 19px; }
+    .progress-track span { display:block; width:0; height:100%; background:var(--olive); transition:width .25s; }
+    .next-label { font-size:.67rem; text-transform:uppercase; letter-spacing:.1em; color:var(--olive); font-weight:850; }
+    .next-copy { color:var(--ink)!important; font-weight:650; margin:5px 0 0; }
+    .context { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:42px; }
+    .note { background:var(--white); border:1px solid var(--line); border-radius:12px; padding:18px 21px; }
+    .note strong { display:block; margin-bottom:5px; }
+    .note p { margin:0; color:var(--muted); font-size:.89rem; }
+    .note.caution { background:var(--amber-soft); border-color:#e8c98d; }
+    .section { margin-top:53px; scroll-margin-top:18px; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:20px; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:20px; }
+    .section-head h2 { font-size:clamp(1.55rem,3vw,2.2rem); letter-spacing:-.035em; line-height:1.1; margin:0; }
+    .section-head p { margin:0; color:var(--muted); font-size:.84rem; max-width:460px; }
+    .stage-map { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
+    .stage-map a { display:block; padding:16px; min-height:145px; background:var(--white); border:1px solid var(--line); border-radius:12px; text-decoration:none; color:var(--ink); box-shadow:var(--shadow); }
+    .stage-map a:hover { border-color:#8da058; }
+    .stage-no { display:inline-grid; place-items:center; height:29px; min-width:29px; border-radius:7px; background:var(--olive-soft); color:var(--olive); font-weight:850; margin-bottom:12px; }
+    .stage-map strong { display:block; font-size:.87rem; line-height:1.25; }
+    .stage-map small { display:block; color:var(--muted); line-height:1.35; margin-top:6px; }
+    .stage { background:var(--white); border:1px solid var(--line); border-radius:16px; padding:22px 24px; margin:14px 0; box-shadow:var(--shadow); scroll-margin-top:20px; }
+    .stage-top { display:flex; align-items:start; justify-content:space-between; gap:16px; }
+    .stage-top h3 { font-size:1.35rem; letter-spacing:-.02em; line-height:1.2; margin:0 0 7px; }
+    .stage-top p { color:var(--muted); margin:0; max-width:760px; font-size:.91rem; }
+    .stage-count { flex:0 0 auto; color:var(--olive); background:var(--olive-soft); border-radius:99px; padding:6px 10px; font-size:.78rem; font-weight:800; white-space:nowrap; }
+    .tasks { list-style:none; margin:17px 0 0; padding:0; }
+    .task { display:grid; grid-template-columns:23px minmax(0,1fr); gap:10px; padding:12px 0; border-top:1px solid #eee8dd; }
+    .check { display:grid; place-items:center; width:21px; height:21px; border:1.5px solid #b7b5aa; border-radius:5px; color:transparent; font-size:.77rem; font-weight:900; margin-top:2px; }
+    .task[data-state="done"] .check { background:var(--olive); color:white; border-color:var(--olive); }
+    .task[data-state="blocked"] .check { background:var(--amber-soft); color:var(--amber); border-color:#d3a95c; }
+    .task strong { font-size:.88rem; }
+    .task p { margin:2px 0 0; color:var(--muted); font-size:.8rem; }
+    .task .id { color:#756f61; font-size:.72rem; font-weight:700; margin-right:7px; }
+    .task[data-state="done"] strong { color:#34431c; }
+    .exit { margin:17px 0 0; padding:12px 14px; border-left:3px solid var(--olive); background:#f3f5e9; color:#414b30; font-size:.83rem; }
+    .mock-shell { border:1px solid #d3ccbe; background:#eeeadf; border-radius:16px; padding:14px; box-shadow:var(--shadow); }
+    .mock-nav { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:5px 7px 14px; color:#5a554b; font-weight:700; font-size:.8rem; }
+    .mock-tabs { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
+    .mock-tabs button { border:1px solid #d2cab9; background:#faf8f2; color:#4e493f; border-radius:8px; min-height:40px; padding:7px 13px; font-size:.78rem; font-weight:700; }
+    .mock-tabs button[aria-selected="true"] { background:var(--olive); color:white; border-color:var(--olive); }
+    .mock-screen { background:#fffdf8; border:1px solid #ded6c6; border-radius:12px; padding:22px; min-height:355px; }
+    .mock-screen[hidden] { display:none; }
+    .mock-kicker { text-transform:uppercase; color:var(--olive); letter-spacing:.1em; font-size:.64rem; font-weight:850; }
+    .mock-title { display:flex; justify-content:space-between; gap:15px; align-items:start; margin-bottom:20px; }
+    .mock-title h3 { font-size:1.45rem; letter-spacing:-.025em; margin:3px 0 3px; }
+    .mock-title p { font-size:.78rem; color:var(--muted); margin:0; }
+    .mock-action { display:inline-flex; justify-content:center; align-items:center; min-height:39px; padding:7px 13px; border:1px solid var(--olive); color:white; background:var(--olive); border-radius:7px; font-size:.75rem; font-weight:750; white-space:nowrap; }
+    .mock-action.alt { color:var(--olive); background:white; }
+    .mock-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-bottom:17px; }
+    .mock-metric,.mock-box { border:1px solid #e5dfd4; background:#fff; border-radius:9px; padding:14px; }
+    .mock-metric span { display:block; color:var(--muted); font-size:.73rem; }
+    .mock-metric strong { display:block; font-size:1.35rem; margin-top:7px; }
+    .mock-columns { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .mock-box h4 { font-size:.82rem; margin:0 0 9px; }
+    .mock-box p { font-size:.77rem; color:var(--muted); margin:0 0 7px; }
+    .mock-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-top:1px solid #eee8df; font-size:.76rem; }
+    .mock-row strong { display:block; }
+    .mock-row small { color:var(--muted); }
+    .mock-pill { display:inline-block; background:var(--amber-soft); color:var(--amber); font-size:.68rem; font-weight:700; border-radius:99px; padding:3px 7px; }
+    .mock-form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .mock-field { display:grid; gap:5px; color:#4e493f; font-size:.72rem; font-weight:700; }
+    .mock-field.wide { grid-column:1/-1; }
+    .mock-value { display:block; border:1px solid #cec8bb; background:#faf8f2; border-radius:6px; min-height:38px; padding:9px 10px; color:#514b41; font-size:.78rem; font-weight:500; }
+    .mock-date-group { grid-column:1/-1; display:grid; gap:9px; padding:12px; border:1px solid #dfe5cc; border-radius:8px; background:#f7f8f1; }
+    .mock-field input[type="date"] { width:100%; max-width:260px; min-height:40px; border:1px solid #cec8bb; border-radius:6px; background:white; padding:7px 10px; color:#514b41; font:inherit; font-size:.82rem; }
+    .mock-date-toggle { display:flex; align-items:center; gap:8px; width:fit-content; min-height:40px; color:#4e493f; font-size:.76rem; font-weight:650; cursor:pointer; }
+    .mock-date-toggle input { width:18px; height:18px; accent-color:var(--olive); }
+    .mock-date-group [hidden] { display:none; }
+    .mock-more { background:#f1f3e8; border:1px solid #dfe5cc; border-radius:8px; padding:11px; grid-column:1/-1; font-size:.73rem; color:#4a5540; }
+    .mock-side { color:var(--muted); font-size:.74rem; margin-top:13px; }
+    .mock-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    .mock-facts div { border-top:1px solid #eee8df; padding:9px 0; font-size:.74rem; }
+    .mock-facts span { display:block; color:var(--muted); }
+    .mock-facts strong { display:block; margin-top:3px; }
+    .mock-bars { display:grid; gap:12px; }
+    .mock-bar { display:grid; grid-template-columns:100px minmax(0,1fr) 60px; gap:9px; align-items:center; font-size:.72rem; }
+    .mock-bar i { display:block; height:10px; border-radius:99px; background:var(--olive-soft); overflow:hidden; }
+    .mock-bar em { display:block; height:100%; background:var(--olive); border-radius:99px; }
+    .decision-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .decision { background:var(--white); border:1px solid var(--line); border-radius:11px; padding:17px; }
+    .decision b { color:var(--olive); font-size:.7rem; letter-spacing:.08em; }
+    .decision h3 { font-size:.94rem; margin:5px 0; }
+    .decision p { color:var(--muted); font-size:.81rem; margin:0; }
+    .foot { border-top:1px solid var(--line); margin-top:50px; padding-top:19px; color:var(--muted); font-size:.79rem; }
+    .foot a { margin-right:16px; }
+    @media (max-width:950px) { .hero { grid-template-columns:1fr; } .stage-map { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media (max-width:650px) { .shell { padding:0 15px 60px; } .topbar { display:block; } .topbar nav { margin-top:13px; } .hero { padding-top:32px; } .context,.decision-grid,.mock-columns { grid-template-columns:1fr; } .stage-map { grid-template-columns:repeat(2,minmax(0,1fr)); } .stage { padding:18px 15px; } .stage-top,.section-head,.mock-title { display:block; } .stage-count { display:inline-block; margin-top:12px; } .section-head p { margin-top:6px; } .mock-screen { padding:15px; } .mock-metrics { grid-template-columns:1fr; } .mock-form,.mock-facts { grid-template-columns:1fr; } .mock-field.wide,.mock-more { grid-column:auto; } .mock-title .mock-action { margin-top:12px; } }
+    @media print { body { background:white; } .shell { max-width:none; padding:0; } .topbar nav,.hero-actions,.mock-tabs { display:none; } .progress-card,.stage,.stage-map a,.mock-shell,.decision { box-shadow:none; break-inside:avoid; } .mock-screen[hidden] { display:block; margin-top:12px; } .section { break-before:page; } }
+  </style>
+</head>
+<body>
+  <!-- Progress is stored in this file. When work is verified, change its task's data-state to done, add the completion date and evidence in its text, then update the plan/TODO as appropriate. Browser clicks never change project status. -->
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><span>FL</span> FieldLogicHQ <span style="display:inline;background:none;color:#6b6358;width:auto;height:auto;margin:0;font-weight:500">/ private finance</span></div>
+      <nav aria-label="Project review"><a href="#stages">Stages</a><a href="#screens">Screen direction</a><a href="#decisions">Decisions</a><a href="#sources">Source documents</a></nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="project-title">
+        <div>
+          <p class="eyebrow">Project review · 24 October 2026</p>
+          <h1 id="project-title">Bookkeeping that feels simple</h1>
+          <p class="lead">A private daily workspace for one sole proprietor: record a purchase, keep its receipt, see what needs attention, and hand a clear report to an accountant.</p>
+          <div class="hero-actions"><a class="button" href="#stage-0">Begin with Stage 0</a><a class="button secondary" href="#screens">See the proposed screens</a></div>
+        </div>
+        <aside class="progress-card" aria-label="Project progress">
+          <span class="status">Proposal · owner review</span>
+          <h2>Project checklist</h2>
+          <div class="progress-number" id="progress-number">—</div>
+          <p>Tasks recorded complete in this file. The count updates when the file is edited and refreshed.</p>
+          <div class="progress-track" aria-hidden="true"><span id="progress-fill"></span></div>
+          <span class="next-label">Next action</span>
+          <p class="next-copy">Walk the five screen concepts with an ordinary CAD expense, then settle the legacy-date mapping and first category list.</p>
+        </aside>
+      </section>
+
+      <div class="context">
+        <div class="note"><strong>What works today</strong><p>The private expense register, receipt storage, revision history, filtered expense reports and accountant package passed the recorded expense-only owner walk on 23 October.</p></div>
+        <div class="note caution"><strong>What the current data can say</strong><p>Reports can explain recorded expenses. Income, bank movements and real Stripe imports have not been posted, so the first dashboard will not claim profit or cash on hand.</p></div>
+      </div>
+
+      <section class="section" id="stages" aria-labelledby="stages-title">
+        <div class="section-head"><h2 id="stages-title">Project stages</h2><p>Daily expense work first. The proprietor ledger follows accepted revenue sources and owner-movement rules.</p></div>
+        <div class="stage-map" aria-label="Jump to a stage">
+          <a href="#stage-0"><span class="stage-no">0</span><strong>Set the daily flow</strong><small>Mockup, owner walk and field meanings</small></a>
+          <a href="#stage-1"><span class="stage-no">1</span><strong>Record and find expenses</strong><small>Focused form, list and record</small></a>
+          <a href="#stage-2"><span class="stage-no">2</span><strong>Trust the reports</strong><small>Clear facts, review queue and drill-down</small></a>
+          <a href="#stage-3"><span class="stage-no">3</span><strong>Proprietor ledger</strong><small>Income, transfers and reconciliation</small></a>
+          <a href="#stage-4"><span class="stage-no">4</span><strong>Operating handoff</strong><small>Recovery, accountant review and close</small></a>
+        </div>
+
+        <article class="stage" id="stage-0" data-stage="0">
+          <div class="stage-top"><div><p class="eyebrow">Stage 0 · current starting point</p><h3>Set the daily flow</h3><p>Agree on the first click, the few fields needed for a normal purchase, and the meaning of the figures before changing financial records.</p></div><span class="stage-count">—</span></div>
+          <ul class="tasks">
+            <li class="task" data-state="done"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.1</span>Review the existing expense page, data model, exports and app money patterns.</strong><p>Completed 2026-10-24 · findings are in the project plan.</p></div></li>
+            <li class="task" data-state="done"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.2</span>Write the staged plan and plain-language PM brief.</strong><p>Completed 2026-10-24 · linked at the foot of this page.</p></div></li>
+            <li class="task" data-state="done"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.3</span>Create this browser review page with durable progress markers.</strong><p>Completed 2026-10-24 · the checklist state is kept in this HTML source.</p></div></li>
+            <li class="task" data-state="done"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.4</span>Sketch the five proposed screen directions.</strong><p>Completed 2026-10-24 · first-pass concepts below, using synthetic figures; owner review is still to come.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.5</span>Walk CAD, USD, missing receipt and correction journeys with the owner.</strong><p>Mark complete when each journey has a clear first action, save result and return path.</p></div></li>
+            <li class="task" data-state="done"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.6</span>Settle new-entry date and unknown-tax meanings.</strong><p>Completed 2026-10-24 · owner chose separate incurred and paid dates, with paid defaulting to incurred; approved unknown tax distinct from confirmed $0. Legacy records still need mapping in BKX-0.8.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.7</span>Select the first category labels and review the approved receipt and report flow.</strong><p>Receipt placement and the three monthly questions have owner direction; the exact starting category labels remain open.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-0.8</span>Confirm the report-date rule and map legacy dates without inventing history.</strong><p>Proposed: filter expense reports by incurred date. Review existing rows and decide how unknown incurred or paid dates appear in reports and exports before migration.</p></div></li>
+          </ul>
+          <p class="exit"><strong>Stage exit:</strong> The owner can explain where to start, what they must enter, where the saved expense lands, and what each reported date and tax state means.</p>
+        </article>
+
+        <article class="stage" id="stage-1" data-stage="1">
+          <div class="stage-top"><div><p class="eyebrow">Stage 1 · first build</p><h3>Record and find expenses</h3><p>Turn the existing expense features into one short daily path while preserving revisions, receipts and exports.</p></div><span class="stage-count">—</span></div>
+          <ul class="tasks">
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-1.0</span>Store incurred and paid dates separately before shipping the new form.</strong><p>Apply the Stage 0 legacy mapping; preserve revision history and make both dates available to exports.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-1.1</span>Make Overview and Expenses the daily doors.</strong><p>Show recent expenses and work needing attention; move the fixture-only CSV preview to Sources.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-1.2</span>Build the focused Add expense flow.</strong><p>Incurred date first; paid date defaults to it and appears when different. One CAD amount; USD and advanced details appear only when needed.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-1.3</span>Make payment source a deliberate choice and show useful category suggestions.</strong><p>Replace the silent Paid personally default and reduce accidental category spellings.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-1.4</span>Open an expense as one readable record.</strong><p>Place receipt and change history together; put Correct, Void and permanent Delete in distinct places.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-1.5</span>Use plain refusals, safe form dismissal and the app's phone controls.</strong><p>Follow the shared window and toolbar rules, including the 44px phone tap floor.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-1.6</span>Complete the owner expense-flow walk.</strong><p>CAD, USD, missing receipt, correction, void and delete; record the result here.</p></div></li>
+          </ul>
+          <p class="exit"><strong>Stage exit:</strong> A normal CAD purchase takes one amount entry; the owner saves it, finds it, opens its receipt and corrects it without searching through the report.</p>
+        </article>
+
+        <article class="stage" id="stage-2" data-stage="2">
+          <div class="stage-top"><div><p class="eyebrow">Stage 2 · clearer money facts</p><h3>Trust the reports</h3><p>Make each period total traceable to its expenses and keep unknown facts visibly unknown.</p></div><span class="stage-count">—</span></div>
+          <ul class="tasks">
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-2.1</span>Implement unknown tax separately from confirmed zero and apply the date rules to reports.</strong><p>Expense reports use incurred dates; legacy rows follow the explicit Stage 0 mapping.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-2.2</span>Give missing receipts, USD evidence and pending details one worklist.</strong><p>Each item opens the expense that needs action.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-2.3</span>Build period, category and supplier reports with entry drill-down.</strong><p>Show recorded expenses only; name the selected period on screen and export.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-2.4</span>Align CSV and receipt package exports with the visible report.</strong><p>Decide with the owner whether a printable summary is needed for the accountant.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-2.5</span>Complete the owner report walk.</strong><p>Trace every headline figure to its entries, including corrections and voids.</p></div></li>
+          </ul>
+          <p class="exit"><strong>Stage exit:</strong> The owner can answer “What did I spend this period, on what, and what still needs a receipt?” from the same records they export.</p>
+        </article>
+
+        <article class="stage" id="stage-3" data-stage="3">
+          <div class="stage-top"><div><p class="eyebrow">Stage 3 · dependent on Revenue</p><h3>Proprietor ledger</h3><p>Add income and cash movement only after their real sources and classifications are agreed.</p></div><span class="stage-count">—</span></div>
+          <ul class="tasks">
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-3.1</span>Accept the versioned Stripe source contract and real example movements.</strong><p>Revenue owns source IDs, seller/tax attribution, fees, refunds and payouts.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-3.2</span>Define owner contributions, draws and reimbursements as separate movements.</strong><p>A personal expense is counted once; paying the owner back is not another expense.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-3.3</span>Build the source-linked ledger and safe import.</strong><p>Each line opens its source; repeated or interrupted imports keep one movement identity.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-3.4</span>Add reconciliation and period reporting for accepted income and cash movements.</strong><p>A payout is a transfer; organizer money stays outside proprietor revenue.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-3.5</span>Walk normal, refund, fee, payout, duplicate and recovery cases.</strong><p>Record the owner and accountant evidence before calling the ledger ready.</p></div></li>
+          </ul>
+          <p class="exit"><strong>Stage exit:</strong> The owner can open every line's source and reconcile income, expenses and transfers without double-counting a payment or payout.</p>
+        </article>
+
+        <article class="stage" id="stage-4" data-stage="4">
+          <div class="stage-top"><div><p class="eyebrow">Stage 4 · operating proof</p><h3>Operating handoff</h3><p>Prove the records can be recovered and understood by the accountant before relying on them for a full close.</p></div><span class="stage-count">—</span></div>
+          <ul class="tasks">
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-4.1</span>Name backup cadence, custody and the separate retained copy.</strong><p>Carry forward the incomplete operating gate from the archived bookkeeping project.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-4.2</span>Restore records and original receipts from an operating backup.</strong><p>Retain evidence of the recovery result.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-4.3</span>Have an accountant review report and source-document handoff.</strong><p>Record any classifications or exports they need changed.</p></div></li>
+            <li class="task" data-state="open"><span class="check" aria-hidden="true"></span><div><strong><span class="id">BKX-4.4</span>Complete the first real operating close.</strong><p>Resolve exceptions and link the closing evidence from this page.</p></div></li>
+          </ul>
+          <p class="exit"><strong>Stage exit:</strong> One full period can be traced, exported and recovered, with named owners for the remaining routine work.</p>
+        </article>
+      </section>
+
+      <section class="section" id="screens" aria-labelledby="screens-title">
+        <div class="section-head"><h2 id="screens-title">Proposed screen direction</h2><p>First-pass concepts for reviewing the flow. Names and figures below are synthetic; controls here do not save records.</p></div>
+        <div class="mock-shell">
+          <div class="mock-nav"><span>FieldLogicHQ / Bookkeeping</span><span>Private to the owner</span></div>
+          <div class="mock-tabs" role="tablist" aria-label="Screen concepts">
+            <button type="button" role="tab" id="tab-overview" aria-controls="screen-overview" aria-selected="true" data-screen="overview">Overview</button>
+            <button type="button" role="tab" id="tab-expenses" aria-controls="screen-expenses" aria-selected="false" data-screen="expenses">Expenses</button>
+            <button type="button" role="tab" id="tab-add" aria-controls="screen-add" aria-selected="false" data-screen="add">Add expense</button>
+            <button type="button" role="tab" id="tab-record" aria-controls="screen-record" aria-selected="false" data-screen="record">Expense record</button>
+            <button type="button" role="tab" id="tab-reports" aria-controls="screen-reports" aria-selected="false" data-screen="reports">Reports</button>
+          </div>
+          <div class="mock-screen" role="tabpanel" id="screen-overview" aria-labelledby="tab-overview">
+            <div class="mock-title"><div><span class="mock-kicker">Bookkeeping · This month</span><h3>How things stand</h3><p>Recorded expenses and the few things still to finish.</p></div><span class="mock-action">+ Add expense</span></div>
+            <div class="mock-metrics"><div class="mock-metric"><span>Recorded spend</span><strong>$60.40</strong></div><div class="mock-metric"><span>Receipts to add</span><strong>1</strong></div><div class="mock-metric"><span>Paid personally</span><strong>$42.00</strong></div></div>
+            <div class="mock-columns"><div class="mock-box"><h4>Needs your attention</h4><p><span class="mock-pill">Receipt missing</span> Domain service · $18.40</p><p>Open the purchase to attach its receipt.</p></div><div class="mock-box"><h4>Recent expenses</h4><div class="mock-row"><span><strong>Maple Hosting</strong><small>Oct 22 · Software</small></span><b>$42.00</b></div><div class="mock-row"><span><strong>Domain service</strong><small>Oct 20 · Web services</small></span><b>$18.40</b></div></div></div>
+          </div>
+          <div class="mock-screen" role="tabpanel" id="screen-expenses" aria-labelledby="tab-expenses" hidden>
+            <div class="mock-title"><div><span class="mock-kicker">Your records</span><h3>Expenses</h3><p>Find a purchase, receipt or correction.</p></div><span class="mock-action">+ Add expense</span></div>
+            <div class="mock-box"><p>Search by supplier or purpose &nbsp; · &nbsp; This month &nbsp; · &nbsp; All categories &nbsp; · &nbsp; Needs attention</p><div class="mock-row"><span><strong>Maple Hosting</strong><small>Oct 22 · Software · Business card · Receipt attached</small></span><b>$42.00 ›</b></div><div class="mock-row"><span><strong>Domain service</strong><small>Oct 20 · Web services · Paid personally · Receipt missing</small></span><b>$18.40 ›</b></div></div><p class="mock-side">The row opens the record. Edit and permanent actions live inside it.</p>
+          </div>
+          <div class="mock-screen" role="tabpanel" id="screen-add" aria-labelledby="tab-add" hidden>
+            <div class="mock-title"><div><span class="mock-kicker">Expenses / New</span><h3>Add an expense</h3><p>Record the purchase once. Keep the receipt with it.</p></div><span class="mock-action alt">Back to expenses</span></div>
+            <div class="mock-form"><div class="mock-date-group"><label class="mock-field">Expense date (incurred)<input id="mock-incurred-date" type="date" value="2026-10-22" /></label><label class="mock-date-toggle"><input id="mock-paid-different" type="checkbox" /> Payment date is different from expense date</label><label class="mock-field" id="mock-paid-field" hidden>Payment date<input id="mock-paid-date" type="date" value="2026-10-22" /></label></div><label class="mock-field">Supplier<span class="mock-value">Maple Hosting</span></label><label class="mock-field">Amount<span class="mock-value">$42.00 CAD</span></label><label class="mock-field">Category<span class="mock-value">Software</span></label><label class="mock-field">What was it for?<span class="mock-value">Website hosting</span></label><label class="mock-field">How did you pay?<span class="mock-value">Choose one…</span></label><label class="mock-field wide">Receipt<span class="mock-value">Choose PDF or photo · You can add it later</span></label><div class="mock-more"><strong>More details ›</strong> Business use and purchase tax. USD conversion fields appear only for a USD expense.</div></div>
+            <p class="mock-side">Payment date uses the expense date unless you check the box. Try it here; this mockup does not save. Proposed reporting rule: expense periods use incurred date; future payment and cash views use paid date.</p>
+          </div>
+          <div class="mock-screen" role="tabpanel" id="screen-record" aria-labelledby="tab-record" hidden>
+            <div class="mock-title"><div><span class="mock-kicker">Expenses / Maple Hosting</span><h3>Maple Hosting</h3><p>Oct 22 · Software · Website hosting</p></div><span class="mock-action alt">Correct expense</span></div>
+            <div class="mock-columns"><div class="mock-box"><h4>Expense details</h4><div class="mock-facts"><div><span>Business amount</span><strong>$42.00 CAD</strong></div><div><span>Expense date</span><strong>Oct 22, 2026</strong></div><div><span>Payment date</span><strong>Oct 22, 2026</strong></div><div><span>Paid from</span><strong>Business card</strong></div><div><span>Receipt</span><strong>Attached</strong></div><div><span>Tax details</span><strong>Pending review</strong></div></div></div><div class="mock-box"><h4>Original receipt</h4><p>maple-hosting-oct.pdf</p><p><span class="mock-action">Download receipt</span></p><h4 style="margin-top:18px">Changes</h4><p>Oct 22 · First entry</p></div></div><p class="mock-side">Void and permanent Delete are separate, secondary actions with distinct consequences.</p>
+          </div>
+          <div class="mock-screen" role="tabpanel" id="screen-reports" aria-labelledby="tab-reports" hidden>
+            <div class="mock-title"><div><span class="mock-kicker">Bookkeeping / Reports</span><h3>Expense report</h3><p>This month · Recorded expenses by incurred date</p></div><span class="mock-action alt">Export this report</span></div>
+            <div class="mock-metrics"><div class="mock-metric"><span>Recorded spend</span><strong>$60.40</strong></div><div class="mock-metric"><span>Expenses</span><strong>2</strong></div><div class="mock-metric"><span>Needs a receipt</span><strong>1</strong></div></div>
+            <div class="mock-columns"><div class="mock-box"><h4>Where it went</h4><div class="mock-bars"><div class="mock-bar"><span>Software</span><i><em style="width:100%"></em></i><b>$42.00</b></div><div class="mock-bar"><span>Web services</span><i><em style="width:44%"></em></i><b>$18.40</b></div></div></div><div class="mock-box"><h4>Behind this report</h4><p>Each figure opens the expenses counted in it. CSV and the receipt package follow the same selected period and filters.</p><p>Purchase tax remains a recorded detail pending review.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="decisions" aria-labelledby="decisions-title">
+        <div class="section-head"><h2 id="decisions-title">Stage 0 decisions</h2><p>Resolve these against the owner journey before changing stored money meanings.</p></div>
+        <div class="decision-grid">
+          <div class="decision"><b>D1 · OWNER DIRECTION</b><h3>Two dates, one short default</h3><p>Enter an incurred date. Paid date defaults to it; “Payment date is different” reveals a second date. Proposed report rule: expense periods use incurred date; future payment/cash views use paid date. Existing “paid or incurred” rows need a separate legacy mapping.</p></div>
+          <div class="decision"><b>D2 · APPROVED</b><h3>Unknown tax is not $0</h3><p>Store an unknown amount separately from confirmed $0. Let the owner record receipt tax without claiming a credit.</p></div>
+          <div class="decision"><b>D3 · DIRECTION APPROVED</b><h3>Start with a short category list</h3><p>Offer recognizable choices and a clear way to add one. The exact initial labels still need selection; keep old spelling history readable.</p></div>
+          <div class="decision"><b>D4 · APPROVED</b><h3>Put the receipt in the entry flow</h3><p>Show receipt upload beside the core expense fields and make “add it later” clear. Missing receipts appear in the review queue.</p></div>
+          <div class="decision"><b>D5 · APPROVED</b><h3>Three monthly answers</h3><p>Show how much was spent, which purchases need evidence, and how much was paid personally.</p></div>
+        </div>
+      </section>
+
+      <footer class="foot" id="sources"><strong>Project sources</strong><p>This HTML is the browser-facing progress record. The Markdown plan holds the full scope and decisions; completed tasks are checked here only when their evidence is recorded.</p><a href="BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md">Implementation plan</a><a href="BOOKKEEPING_OWNER_EXPERIENCE_PM_BRIEF.md">PM brief</a><a href="../archive/BOOKKEEPING_CLOSURE_RECORD.md">Earlier project closure</a><a href="../archive/BOOKKEEPING_B0_SCREEN_DESIGNS.html">Earlier screen designs</a></footer>
+    </main>
+  </div>
+  <script>
+    const tasks = [...document.querySelectorAll('.task')];
+    for (const task of tasks) {
+      const mark = task.querySelector('.check');
+      mark.textContent = task.dataset.state === 'done' ? '✓' : task.dataset.state === 'blocked' ? '!' : '';
+      mark.setAttribute('aria-label', task.dataset.state === 'done' ? 'Complete' : task.dataset.state === 'blocked' ? 'Blocked' : 'Open');
+    }
+    const done = tasks.filter(task => task.dataset.state === 'done').length;
+    document.getElementById('progress-number').textContent = `${done} / ${tasks.length}`;
+    document.getElementById('progress-fill').style.width = `${Math.round(done / tasks.length * 100)}%`;
+    for (const stage of document.querySelectorAll('.stage')) {
+      const items = [...stage.querySelectorAll('.task')];
+      stage.querySelector('.stage-count').textContent = `${items.filter(item => item.dataset.state === 'done').length} / ${items.length} complete`;
+    }
+    const incurredDate = document.getElementById('mock-incurred-date');
+    const paidDate = document.getElementById('mock-paid-date');
+    const differentDate = document.getElementById('mock-paid-different');
+    const paidField = document.getElementById('mock-paid-field');
+    incurredDate.addEventListener('change', () => { if (!differentDate.checked) paidDate.value = incurredDate.value; });
+    differentDate.addEventListener('change', () => {
+      paidDate.value = incurredDate.value;
+      paidField.hidden = !differentDate.checked;
+    });
+    const tabs = [...document.querySelectorAll('.mock-tabs button')];
+    function showScreen(name) {
+      for (const tab of tabs) {
+        const active = tab.dataset.screen === name;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+        document.getElementById(`screen-${tab.dataset.screen}`).hidden = !active;
+      }
+    }
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => showScreen(tab.dataset.screen));
+      tab.addEventListener('keydown', event => {
+        if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        showScreen(tabs[next].dataset.screen);
+        tabs[next].focus();
+      });
+    });
+  </script>
+</body>
+</html>

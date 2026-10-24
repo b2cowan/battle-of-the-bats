@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-23",
-  "total": 249,
+  "generated": "2026-10-24",
+  "total": 205,
   "counts": {
-    "tables": 9,
-    "columns": 128,
-    "indexes": 26,
-    "constraints": 34,
-    "rls": 52
+    "tables": 8,
+    "columns": 107,
+    "indexes": 24,
+    "constraints": 32,
+    "rls": 34
   },
   "items": [
     {
@@ -107,78 +107,6 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_coach_names_policy_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_business_purpose_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_business_use_percent_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_cad_cents_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_category_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_change_reason_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check1",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check2",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_check3",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_conversion_note_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_notes_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_original_cents_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_original_currency_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_payment_source_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_revision_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_supplier_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_tax_status_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_void_reason_check",
       "sig": ""
     },
     {
@@ -474,90 +402,6 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:proprietor_expense_revisions.business_purpose",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.business_use_percent",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.cad_cents",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.category",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.change_reason",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.conversion_note",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.created_at",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.created_by",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.expense_date",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.expense_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.notes",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.original_cents",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.original_currency",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.payment_source",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.receipt_name",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.receipt_path",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.revision",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.supplier",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.tax_cad_cents",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.tax_status",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:proprietor_expense_revisions.void_reason",
-      "sig": ""
-    },
-    {
       "key": "column:only-dev:rep_program_years.born_from_year",
       "sig": ""
     },
@@ -758,14 +602,6 @@
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_created_by_fkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:proprietor_expense_revisions.proprietor_expense_revisions_pkey",
-      "sig": ""
-    },
-    {
       "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_org_fk",
       "sig": ""
     },
@@ -910,14 +746,6 @@
       "sig": ""
     },
     {
-      "key": "index:only-dev:proprietor_expense_revisions_date_idx",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:proprietor_expense_revisions_pkey",
-      "sig": ""
-    },
-    {
       "key": "index:only-dev:rep_team_tryout_contacts_pkey",
       "sig": ""
     },
@@ -979,10 +807,6 @@
     },
     {
       "key": "table:only-dev:org_site_notices",
-      "sig": ""
-    },
-    {
-      "key": "table:only-dev:proprietor_expense_revisions",
       "sig": ""
     },
     {

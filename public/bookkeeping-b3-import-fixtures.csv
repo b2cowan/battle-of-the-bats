@@ -1,0 +1,10 @@
+schema_version,provider,environment,platform_account_id,connected_account_id,movement_id,movement_type,source_object_id,parent_movement_id,occurred_at_utc,currency,gross_cents,tax_cents,fee_cents,net_cents,seller_kind,tax_liability_kind,status,policy_version,invoice_id,payment_id,refund_id,payout_id,service_from,service_to,evidence_url
+1,stripe,test,acct_fixture,,txn_sub_001,subscription_sale,pi_fixture_001,,2026-10-20T14:00:00Z,CAD,11000,1000,0,11000,platform,platform,posted,synthetic-b3-v1,in_fixture_001,pi_fixture_001,,,,,
+1,stripe,test,acct_fixture,,txn_fee_001,processor_fee,txn_fee_001,txn_sub_001,2026-10-20T14:00:01Z,CAD,0,0,300,-300,platform,none,posted,synthetic-b3-v1,,pi_fixture_001,,,,,
+1,stripe,test,acct_fixture,,txn_refund_001,refund,re_fixture_001,txn_sub_001,2026-10-21T10:00:00Z,CAD,-5500,-500,0,-5500,platform,platform,posted,synthetic-b3-v1,,pi_fixture_001,re_fixture_001,,,,
+1,stripe,test,acct_fixture,,txn_fee_refund_001,fee_refund,txn_fee_refund_001,txn_fee_001,2026-10-21T10:00:01Z,CAD,0,0,-50,50,platform,none,posted,synthetic-b3-v1,,pi_fixture_001,re_fixture_001,,,,
+1,stripe,test,acct_fixture,acct_connected_fixture,txn_app_fee_001,application_fee,fee_fixture_001,,2026-10-22T10:00:00Z,CAD,2000,0,0,2000,platform,none,posted,synthetic-b3-v1,,pi_fixture_002,,,,,
+1,stripe,test,acct_fixture,,txn_payout_001,payout_out,po_fixture_001,,2026-10-23T14:00:00Z,CAD,-7250,0,0,-7250,platform,none,posted,synthetic-b3-v1,,,,po_fixture_001,,,
+1,stripe,test,acct_fixture,,txn_sub_001,subscription_sale,pi_fixture_001,,2026-10-20T14:00:00Z,CAD,11000,1000,0,11000,platform,platform,posted,synthetic-b3-v1,in_fixture_001,pi_fixture_001,,,,,
+1,stripe,test,acct_fixture,,txn_refund_orphan,refund,re_orphan_001,,2026-10-24T10:00:00Z,CAD,-1000,-100,0,-1000,platform,platform,posted,synthetic-b3-v1,,pi_fixture_003,re_orphan_001,,,,
+1,stripe,test,acct_fixture,,txn_sub_usd_001,subscription_sale,pi_fixture_usd_001,,2026-10-24T14:00:00Z,USD,1234,0,0,1234,platform,platform,posted,synthetic-b3-v1,in_fixture_usd_001,pi_fixture_usd_001,,,,,

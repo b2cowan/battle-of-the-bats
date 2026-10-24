@@ -2215,16 +2215,6 @@
     "indexdef": "CREATE UNIQUE INDEX pools_pkey ON public.pools USING btree (id)"
   },
   {
-    "tablename": "proprietor_expense_revisions",
-    "indexname": "proprietor_expense_revisions_date_idx",
-    "indexdef": "CREATE INDEX proprietor_expense_revisions_date_idx ON public.proprietor_expense_revisions USING btree (expense_date DESC, expense_id)"
-  },
-  {
-    "tablename": "proprietor_expense_revisions",
-    "indexname": "proprietor_expense_revisions_pkey",
-    "indexdef": "CREATE UNIQUE INDEX proprietor_expense_revisions_pkey ON public.proprietor_expense_revisions USING btree (expense_id, revision)"
-  },
-  {
     "tablename": "push_subscriptions",
     "indexname": "push_subscriptions_endpoint_key",
     "indexdef": "CREATE UNIQUE INDEX push_subscriptions_endpoint_key ON public.push_subscriptions USING btree (endpoint)"

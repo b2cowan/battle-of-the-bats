@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bookkeeping B3 — Import preview mockup</title>
+  <style>
+    :root { color-scheme: light; --ink:#1f2d29; --muted:#62716b; --line:#dce5df; --paper:#f5f8f5; --green:#176b50; --amber:#835400; --red:#9b3535; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.5 system-ui,sans-serif; }
+    main { max-width:1120px; margin:0 auto; padding:32px 20px 56px; }
+    h1,h2,p { margin-top:0; } h1 { font-size:clamp(1.7rem,4vw,2.35rem); line-height:1.15; }
+    .subtle { color:var(--muted); } .panel { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin:18px 0; }
+    .top { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .badge { background:#fff1ce; color:#674400; border-radius:999px; padding:5px 10px; font-weight:700; font-size:.82rem; }
+    .upload { border:2px dashed #aabbb0; background:#f9fbf9; text-align:center; padding:24px; border-radius:12px; }
+    button { border:0; border-radius:9px; padding:10px 15px; font-weight:700; background:var(--green); color:white; }
+    button.secondary { background:#edf2ee; color:var(--ink); border:1px solid var(--line); }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(120px,1fr)); gap:12px; }
+    .stat { background:#f7faf7; border:1px solid var(--line); border-radius:10px; padding:13px; }
+    .stat strong { display:block; font-size:1.3rem; }
+    .scope { display:grid; grid-template-columns:repeat(4,minmax(150px,1fr)); gap:16px; }
+    .scope span { display:block; color:var(--muted); font-size:.82rem; }
+    .table-wrap { overflow-x:auto; } table { width:100%; border-collapse:collapse; min-width:790px; }
+    th,td { text-align:left; padding:11px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { color:var(--muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
+    .status { font-weight:700; white-space:nowrap; } .ok { color:var(--green); } .blocked { color:var(--red); }
+    .review { color:var(--amber); } .actions { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+    .callout { border-left:4px solid #c58b24; background:#fff9e9; padding:12px 14px; border-radius:6px; }
+    @media(max-width:650px) { main { padding:22px 14px 40px; } .stats { grid-template-columns:repeat(2,1fr); } .scope { grid-template-columns:repeat(2,1fr); } .panel { padding:16px; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div><p class="subtle">Platform Admin / Bookkeeping</p><h1>Review source import</h1><p class="subtle">Check the source movements before adding them to the books.</p></div>
+    <span class="badge">Preview only · no records posted</span>
+  </div>
+
+  <section class="panel" aria-labelledby="file-title">
+    <h2 id="file-title">1. Choose a source file</h2>
+    <div class="upload"><p><strong>Stripe balance movements CSV</strong></p><p class="subtle">Select the exported CSV. The file is checked before any import is accepted.</p><button type="button">Choose CSV file</button></div>
+  </section>
+
+  <section class="panel" aria-labelledby="source-title">
+    <h2 id="source-title">2. Confirm source and totals</h2>
+    <div class="scope">
+      <div><span>Provider</span><strong>Stripe</strong></div><div><span>Environment</span><strong>Test</strong></div>
+      <div><span>Platform account</span><strong>acct_synthetic</strong></div><div><span>Connected account</span><strong>None</strong></div>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <div class="stats">
+      <div class="stat"><span class="subtle">Rows found</span><strong>6</strong></div>
+      <div class="stat"><span class="subtle">Ready to review</span><strong>4</strong></div>
+      <div class="stat"><span class="subtle">Needs attention</span><strong>1</strong></div>
+      <div class="stat"><span class="subtle">Repeated identity</span><strong>1</strong></div>
+    </div>
+    <p style="margin:16px 0 0"><strong>CAD net movement for ready rows:</strong> $55.00 <span class="subtle">(flagged rows are excluded; tax is included in gross)</span></p>
+  </section>
+
+  <section class="panel" aria-labelledby="rows-title">
+    <div class="top"><div><h2 id="rows-title">3. Review movements</h2><p class="subtle">A payout moves funds between accounts. It is not another sale.</p></div><button class="secondary" type="button">Download review CSV</button></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Movement</th><th>Date</th><th>Type</th><th>Currency</th><th>Net</th><th>Review</th></tr></thead>
+      <tbody>
+        <tr><td>txn_sub_001</td><td>23 Oct 2026</td><td>Subscription sale</td><td>CAD</td><td>$110.00</td><td class="status ok">Ready</td></tr>
+        <tr><td>txn_fee_001</td><td>23 Oct 2026</td><td>Processor fee</td><td>CAD</td><td>−$3.00</td><td class="status ok">Ready · linked</td></tr>
+        <tr><td>txn_ref_001</td><td>24 Oct 2026</td><td>Refund</td><td>CAD</td><td>−$27.50</td><td class="status review">Review parent movement</td></tr>
+        <tr><td>txn_ref_001</td><td>24 Oct 2026</td><td>Refund</td><td>CAD</td><td>−$27.50</td><td class="status blocked">Repeated identity</td></tr>
+        <tr><td>txn_app_001</td><td>25 Oct 2026</td><td>Application fee</td><td>CAD</td><td>$18.00</td><td class="status ok">Ready · synthetic</td></tr>
+        <tr><td>txn_payout_001</td><td>26 Oct 2026</td><td>Payout transfer</td><td>CAD</td><td>−$70.00</td><td class="status ok">Ready · transfer</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <p class="callout"><strong>Source contract pending:</strong> these rows illustrate a proposed format. Revenue must confirm source identifiers, seller and tax attribution, fee/refund links, payout mapping, and export columns before live records can be imported.</p>
+  <div class="actions"><button class="secondary" type="button">Cancel</button><button type="button" disabled style="opacity:.55">Accept reviewed rows</button></div>
+</main>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ConnectBookkeepingDatabase",
+      "Effect": "Allow",
+      "Action": "dsql:DbConnect",
+      "Resource": "arn:aws:dsql:us-east-2:859850635274:cluster/wbufvbnlahjfagmjgrheg4ee5q"
+    },
+    {
+      "Sid": "PrivateReceiptObjects",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::fieldlogichq-bookkeeping-receipts-dev-859850635274/receipts/*"
+    }
+  ]
+}

@@ -4160,36 +4160,6 @@
     "update_rule": null
   },
   {
-    "table_name": "proprietor_expense_revisions",
-    "constraint_name": "proprietor_expense_revisions_created_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "created_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "NO ACTION",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "proprietor_expense_revisions",
-    "constraint_name": "proprietor_expense_revisions_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "expense_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "proprietor_expense_revisions",
-    "constraint_name": "proprietor_expense_revisions_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "revision",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
     "table_name": "push_subscriptions",
     "constraint_name": "push_subscriptions_endpoint_key",
     "constraint_type": "UNIQUE",

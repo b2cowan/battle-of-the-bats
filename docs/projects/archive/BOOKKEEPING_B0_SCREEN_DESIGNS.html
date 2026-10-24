@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bookkeeping B0 · Screen designs for owner review</title>
+  <style>
+    :root { color-scheme: light; --ink:#18253a; --muted:#526177; --paper:#f2f4f1; --line:#d7ddd5; --dark:#090c0b; --panel:#101411; --dark-line:#344030; --lime:#d8f8a2; --blue:#a8cfff; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.5 system-ui,sans-serif; }
+    a { color:#234b79; text-underline-offset:3px; }
+    a:focus-visible { outline:3px solid #3767a1; outline-offset:4px; }
+    .wrap { max-width:1500px; margin:auto; padding:28px 28px 90px; }
+    .intro { border-top:5px solid #a8c76b; padding:23px 0 20px; }
+    .kicker { margin:0; color:#476425; font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+    h1 { margin:8px 0 12px; font:clamp(32px,4vw,55px)/1.08 Georgia,serif; }
+    .intro p:not(.kicker) { max-width:800px; margin:0; color:var(--muted); }
+    .notice { border-left:4px solid #91b75a; background:#e7eddc; padding:12px 16px; margin:20px 0; max-width:920px; }
+    .jump { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 36px; }
+    .jump a { display:inline-block; padding:9px 13px; border:1px solid #bac7b1; background:white; text-decoration:none; font-size:13px; font-weight:700; }
+    .design { margin:36px 0 55px; scroll-margin-top:20px; }
+    .section-head { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:15px; }
+    .section-head h2 { margin:0; font:30px/1.15 Georgia,serif; }
+    .section-head span { background:#e4e9dc; padding:4px 8px; font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+    .why { max-width:920px; color:var(--muted); margin:0 0 16px; }
+    .frame { display:grid; grid-template-columns:180px minmax(0,1fr); background:var(--dark); border:1px solid #3d4939; box-shadow:0 22px 55px #26382d22; color:#eff4e9; min-height:540px; }
+    .side { padding:22px 14px; border-right:1px solid var(--dark-line); background:#0c100d; }
+    .brand { margin:0 0 28px; color:var(--lime); font:800 14px/1.2 ui-monospace,monospace; letter-spacing:.04em; }
+    .side small { display:block; color:#8a9b8c; margin:0 8px 8px; font:700 10px ui-monospace,monospace; text-transform:uppercase; letter-spacing:.1em; }
+    .side .item { display:block; padding:9px 10px; margin:2px 0; font:12px ui-monospace,monospace; color:#a9b9aa; }
+    .side .active { color:var(--dark); background:var(--lime); font-weight:800; }
+    .screen { min-width:0; padding:28px 32px 35px; }
+    .eyebrow { color:var(--lime); font:800 10px ui-monospace,monospace; letter-spacing:.15em; text-transform:uppercase; }
+    .top { display:flex; justify-content:space-between; align-items:end; gap:15px; padding-bottom:18px; border-bottom:1px solid var(--dark-line); }
+    .top h3 { font:700 clamp(22px,2.5vw,31px)/1.2 system-ui,sans-serif; margin:5px 0 4px; }
+    .top p { color:var(--blue); font-size:12px; margin:0; }
+    .mock-button { display:inline-block; padding:10px 14px; background:var(--lime); color:#111b0d; font:800 11px ui-monospace,monospace; white-space:nowrap; }
+    .mock-button.secondary { background:transparent; border:1px solid #829774; color:#e6f1da; }
+    .tabs { display:flex; gap:20px; border-bottom:1px solid var(--dark-line); margin:18px 0 20px; font:700 11px ui-monospace,monospace; }
+    .tabs span { padding:0 0 11px; color:#9bb59a; white-space:nowrap; }
+    .tabs .selected { color:var(--lime); border-bottom:2px solid var(--lime); }
+    .toolbar { display:grid; grid-template-columns:1.2fr repeat(3,minmax(115px,.7fr)); gap:10px; margin-bottom:17px; }
+    .field { min-width:0; }
+    .field b { display:block; margin-bottom:5px; color:#b9cde5; font:700 10px ui-monospace,monospace; }
+    .input { min-height:37px; padding:9px 10px; border:1px solid #516047; color:#ecf1e9; background:#0b0d0c; font:12px ui-monospace,monospace; overflow-wrap:anywhere; }
+    .input.placeholder { color:#859586; }
+    .input.tall { min-height:66px; }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:15px 0; }
+    .card, .box { border:1px solid var(--dark-line); background:var(--panel); padding:14px; }
+    .card small { display:block; min-height:28px; color:#adbed5; font:700 10px ui-monospace,monospace; }
+    .card strong { display:block; margin-top:6px; font:800 20px ui-monospace,monospace; }
+    .box h4 { margin:0 0 12px; font:700 15px system-ui,sans-serif; }
+    .muted { color:#a9b9aa; font-size:11px; }
+    .table-wrap { overflow:auto; }
+    .mock-table { width:100%; border-collapse:collapse; min-width:650px; font:11px ui-monospace,monospace; }
+    .mock-table th { color:#afc3d9; text-align:left; border-bottom:1px solid var(--dark-line); padding:9px 7px; }
+    .mock-table td { border-bottom:1px solid #293328; padding:12px 7px; vertical-align:top; }
+    .mock-table td strong { display:block; color:#f3f6f0; }
+    .mock-table td small { display:block; color:#98aa98; margin-top:3px; }
+    .linkish { color:var(--lime); font-weight:800; text-decoration:underline; }
+    .pill { display:inline-block; border:1px solid #687c5b; padding:3px 6px; color:#d6e8c8; font-size:10px; white-space:nowrap; }
+    .pill.warn { border-color:#ab8753; color:#f2ce9c; }
+    .split { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(230px,.7fr); gap:14px; margin-top:20px; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:13px; }
+    .form-grid .wide { grid-column:1/-1; }
+    .stack { display:grid; gap:14px; align-content:start; }
+    .rule { border-top:1px solid var(--dark-line); margin:18px 0; }
+    .detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .detail-grid div { padding:10px; background:#0b0f0c; }
+    .detail-grid small { display:block; color:#a7bed4; font:10px ui-monospace,monospace; }
+    .detail-grid strong { display:block; margin-top:6px; font:700 13px ui-monospace,monospace; }
+    .receipt { display:grid; place-items:center; min-height:170px; border:1px dashed #6e8163; text-align:center; background:#0b0f0c; }
+    .receipt strong { display:block; font-size:32px; }
+    .timeline { margin:0; padding-left:20px; color:#dce9d6; font:12px/1.7 ui-monospace,monospace; }
+    .timeline li { padding:0 0 13px 8px; }
+    .timeline small { color:#9cae9c; }
+    .bars { display:grid; gap:10px; }
+    .bar-row { display:grid; grid-template-columns:95px minmax(0,1fr) 65px; gap:10px; align-items:center; font:11px ui-monospace,monospace; }
+    .bar { height:15px; background:#263522; }
+    .bar i { display:block; height:100%; background:var(--lime); }
+    .two { display:grid; grid-template-columns:1.1fr .9fr; gap:13px; margin-top:14px; }
+    .callout { border-left:3px solid #ad8954; background:#2b2419; color:#f0d5ae; padding:10px 13px; font-size:11px; margin-top:14px; }
+    .review { background:white; border:1px solid var(--line); padding:24px; max-width:960px; }
+    .review h2 { margin:0 0 10px; font:27px Georgia,serif; }
+    .review li { margin:7px 0; }
+    @media(max-width:850px) { .frame { grid-template-columns:1fr; } .side { display:none; } .screen { padding:22px; } .toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); } .split,.two { grid-template-columns:1fr; } }
+    @media(max-width:570px) { .wrap { padding:17px 13px 55px; } .screen { padding:16px; } .top { display:block; } .top .mock-button { margin-top:12px; } .toolbar,.form-grid,.cards,.detail-grid { grid-template-columns:1fr; } .form-grid .wide { grid-column:auto; } .tabs { overflow:auto; gap:13px; } .card small { min-height:0; } }
+    @media print { body { background:white; } .wrap { max-width:none; padding:0; } .jump { display:none; } .design { break-before:page; } .frame { box-shadow:none; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="intro">
+      <p class="kicker">FieldLogicHQ · B0.4 · Owner review · 2026-10-23</p>
+      <h1>Bookkeeping screen designs</h1>
+      <p>Four proposed views for recording and reviewing proprietor expenses. The examples are synthetic. These are screen designs, not live records or a promise that every control is built.</p>
+    </header>
+    <p class="notice"><strong>Why this exists:</strong> The first working page was built before these designs were shown. B0.4 remains open for your review. The proposed layout gives the register, entry form, record detail and reports separate space; the current page combines the form and report on one screen.</p>
+    <nav class="jump" aria-label="Screen designs"><a href="#register">1 · Expense register</a><a href="#entry">2 · Add an expense</a><a href="#detail">3 · Receipt and corrections</a><a href="#reports">4 · Reports and export</a><a href="#review">Review points</a></nav>
+
+    <section class="design" id="register">
+      <div class="section-head"><span>B1 · Home</span><h2>1. Expense register</h2></div>
+      <p class="why">The owner lands on the records, sees missing receipts immediately, and starts a new entry with one clear action. Filters change the visible list without hiding the total's meaning.</p>
+      <div class="frame"><aside class="side"><p class="brand">FIELDLOGICHQ</p><small>Platform admin</small><span class="item">Overview</span><span class="item active">Bookkeeping</span><span class="item">Organizations</span></aside><div class="screen">
+        <div class="top"><div><div class="eyebrow">Private finance</div><h3>Expenses</h3><p>Find a purchase, its receipt and every correction.</p></div><span class="mock-button">+ Add expense</span></div>
+        <div class="tabs"><span class="selected">Expense register</span><span>Reports</span><span>Exports</span><span>Stripe imports · later</span></div>
+        <div class="toolbar"><div class="field"><b>Find</b><div class="input placeholder">Supplier or purpose</div></div><div class="field"><b>From</b><div class="input">2026-10-01</div></div><div class="field"><b>To</b><div class="input">2026-10-31</div></div><div class="field"><b>Category</b><div class="input">All categories ▾</div></div></div>
+        <div class="cards"><div class="card"><small>Recorded business spend</small><strong>$115.61</strong></div><div class="card"><small>Expenses in view</small><strong>2</strong></div><div class="card"><small>Receipts missing</small><strong>1</strong></div></div>
+        <div class="box"><h4>Expenses in this period</h4><div class="table-wrap"><table class="mock-table"><thead><tr><th>Expense</th><th>Date</th><th>Business spend</th><th>Paid from</th><th>Receipt</th><th></th></tr></thead><tbody><tr><td><strong>Northstar Office</strong><small>Supplies · Printer paper</small></td><td>Oct 12</td><td>$82.49</td><td>Personal</td><td><span class="pill warn">Missing</span></td><td class="linkish">Open</td></tr><tr><td><strong>Example Cloud</strong><small>Software · Hosting</small></td><td>Oct 3</td><td>$33.12</td><td>Personal</td><td><span class="pill">Attached</span></td><td class="linkish">Open</td></tr></tbody></table></div></div>
+        <p class="muted">Business spend includes recorded purchase tax. It is not a tax-credit or profit figure.</p>
+      </div></div>
+    </section>
+
+    <section class="design" id="entry">
+      <div class="section-head"><span>B1 · Capture</span><h2>2. Add an expense</h2></div>
+      <p class="why">A focused entry screen groups purchase facts, money and evidence. It keeps the original invoice amount, the CAD value and the receipt together so a later reviewer can understand the conversion.</p>
+      <div class="frame"><aside class="side"><p class="brand">FIELDLOGICHQ</p><small>Platform admin</small><span class="item">Overview</span><span class="item active">Bookkeeping</span></aside><div class="screen">
+        <div class="top"><div><div class="eyebrow">Expenses / New</div><h3>Add an expense</h3><p>Save the purchase and its original document.</p></div><span class="mock-button secondary">Back to expenses</span></div>
+        <div class="split"><div class="box"><h4>Purchase details</h4><div class="form-grid"><div class="field"><b>Supplier</b><div class="input">Example Cloud</div></div><div class="field"><b>Date paid or incurred</b><div class="input">2026-10-03</div></div><div class="field"><b>Category</b><div class="input">Software ▾</div></div><div class="field"><b>Paid from</b><div class="input">Paid personally ▾</div></div><div class="field wide"><b>Business purpose</b><div class="input">FieldLogicHQ hosting</div></div></div><div class="rule"></div><h4>Invoice and tax</h4><div class="form-grid"><div class="field"><b>Invoice currency</b><div class="input">USD ▾</div></div><div class="field"><b>Original invoice total</b><div class="input">24.00</div></div><div class="field"><b>CAD total, including tax</b><div class="input">33.12</div></div><div class="field"><b>Purchase tax in CAD</b><div class="input">0.00</div></div><div class="field"><b>Business use</b><div class="input">100%</div></div><div class="field"><b>Tax treatment</b><div class="input">Pending review ▾</div></div><div class="field wide"><b>USD conversion source and date</b><div class="input">Bank card statement, Oct 3, 2026</div></div></div></div><div class="stack"><div class="box"><h4>Original receipt</h4><div class="receipt"><div><strong>▣</strong>example-cloud-oct.pdf<br><span class="muted">PDF · 84 KB</span></div></div><p class="muted">PDF, JPEG or PNG · up to 10 MB. Keep the original document.</p></div><div class="box"><h4>Before saving</h4><p class="muted">The CAD amount includes purchase tax. Purchase tax remains pending until reviewed; this screen does not claim an input tax credit.</p></div><span class="mock-button">Save expense</span></div></div>
+      </div></div>
+    </section>
+
+    <section class="design" id="detail">
+      <div class="section-head"><span>B1 · Review</span><h2>3. Receipt and correction history</h2></div>
+      <p class="why">One record page holds the latest facts, the original document and prior versions. A correction requires a reason and keeps the old receipt; voiding removes the expense from reports while preserving its history.</p>
+      <div class="frame"><aside class="side"><p class="brand">FIELDLOGICHQ</p><small>Platform admin</small><span class="item">Overview</span><span class="item active">Bookkeeping</span></aside><div class="screen">
+        <div class="top"><div><div class="eyebrow">Expenses / Example Cloud</div><h3>Example Cloud</h3><p>Hosting · Oct 3, 2026 · Revision 2</p></div><span class="mock-button secondary">Back to expenses</span></div>
+        <div class="split"><div class="stack"><div class="box"><h4>Current record <span class="pill">Receipt attached</span></h4><div class="detail-grid"><div><small>Business spend</small><strong>$33.12 CAD</strong></div><div><small>Original invoice</small><strong>$24.00 USD</strong></div><div><small>Purchase tax</small><strong>$0.00 · pending</strong></div><div><small>Category</small><strong>Software</strong></div><div><small>Paid from</small><strong>Personal</strong></div><div><small>Business use</small><strong>100%</strong></div></div><p class="muted">Conversion evidence: bank card statement, Oct 3, 2026.</p></div><div class="box"><h4>Changes</h4><ol class="timeline"><li><strong>Revision 2 · Oct 4</strong><br>Corrected CAD value from card statement. <small>Original receipt retained.</small></li><li><strong>Revision 1 · Oct 3</strong><br>First entry. <small>Invoice and receipt attached.</small></li></ol></div></div><div class="stack"><div class="box"><h4>Original receipt</h4><div class="receipt"><div><strong>▣</strong>example-cloud-oct.pdf<br><span class="muted">Private original · PDF</span></div></div><p class="linkish">Download original receipt</p></div><div class="box"><h4>Change this record</h4><p class="muted">A correction creates another revision. The prior values and files stay available.</p><span class="mock-button">Correct expense</span> <span class="mock-button secondary">Void expense</span></div></div></div>
+      </div></div>
+    </section>
+
+    <section class="design" id="reports">
+      <div class="section-head"><span>B2 · Review and handoff</span><h2>4. Reports and export</h2></div>
+      <p class="why">The report has its own space for period filters, category totals and the matching transactions. Exports follow those filters; the later accountant package will include original files and a document index.</p>
+      <div class="frame"><aside class="side"><p class="brand">FIELDLOGICHQ</p><small>Platform admin</small><span class="item">Overview</span><span class="item active">Bookkeeping</span></aside><div class="screen">
+        <div class="top"><div><div class="eyebrow">Private finance</div><h3>Expense report</h3><p>Trace every total back to a purchase and its document.</p></div><span class="mock-button secondary">Export filtered detail CSV</span></div>
+        <div class="tabs"><span>Expense register</span><span class="selected">Reports</span><span>Exports</span><span>Stripe imports · later</span></div>
+        <div class="toolbar"><div class="field"><b>Report period</b><div class="input">Oct 1 – Oct 31, 2026</div></div><div class="field"><b>Category</b><div class="input">All categories ▾</div></div><div class="field"><b>Payment source</b><div class="input">All sources ▾</div></div><div class="field"><b>Tax status</b><div class="input">All statuses ▾</div></div></div>
+        <div class="cards"><div class="card"><small>Recorded business spend</small><strong>$115.61</strong></div><div class="card"><small>Purchase tax pending review</small><strong>$9.49</strong></div><div class="card"><small>Expenses in report</small><strong>2</strong></div></div>
+        <div class="two"><div class="box"><h4>Spend by category</h4><div class="bars"><div class="bar-row"><span>Supplies</span><div class="bar"><i style="width:100%"></i></div><strong>$82.49</strong></div><div class="bar-row"><span>Software</span><div class="bar"><i style="width:40%"></i></div><strong>$33.12</strong></div></div></div><div class="box"><h4>Exports</h4><p class="muted">Available now: expense detail CSV with revisions. Planned for B2: readable report, original receipts and document index.</p><span class="mock-button secondary">View export contents</span></div></div>
+        <div class="callout">These totals include recorded purchase tax and are not a tax-credit or profit calculation. Income and Stripe reconciliation appear after the revenue source contract is accepted.</div>
+      </div></div>
+    </section>
+
+    <section class="review" id="review"><h2>What needs your review</h2><ol><li><strong>Screen flow:</strong> should the register, entry and report be separate views as shown, or do you prefer the current combined page?</li><li><strong>Expense fields:</strong> are supplier, date, category, purpose, original/CAD totals, tax status, payment source, business use, conversion note and receipt the right initial set?</li><li><strong>First report:</strong> are period, category, payment source and tax status the most useful filters? Which totals would you want first?</li></ol><p>B0.4 stays in progress until this screen flow and the minimal posting rules are reviewed. B0.5 separately awaits agreement on the Stripe CSV source contract.</p><p><a href="BOOKKEEPING_REVIEW.html#index">Return to the project index</a></p></section>
+  </main>
+</body>
+</html>

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Table2, Eye, AlertTriangle, MessageSquare, Presentation, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Table2, Eye, AlertTriangle, MessageSquare, Presentation, Sparkles, Wallet } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { canViewPlatformArea, isPlatformAreaReadOnly, type PlatformArea } from '@/lib/platform-areas';
 import type { PlatformRole } from '@/lib/platform-auth';
@@ -70,7 +70,7 @@ const BASE_NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-export default function PlatformAdminNav({ sessionEmail, role }: { sessionEmail: string; role: PlatformRole }) {
+export default function PlatformAdminNav({ sessionEmail, role, canBookkeep }: { sessionEmail: string; role: PlatformRole; canBookkeep: boolean }) {
   const pathname = usePathname();
   const router   = useRouter();
 
@@ -130,6 +130,12 @@ export default function PlatformAdminNav({ sessionEmail, role }: { sessionEmail:
             })}
           </div>
         ))}
+        {canBookkeep && <div className={styles.navGroup}>
+          <div className={styles.navGroupLabel}>Private finance</div>
+          <Link href="/platform-admin/bookkeeping" className={`${styles.navLink} ${isActive('/platform-admin/bookkeeping') ? styles.navLinkActive : ''}`}>
+            <Wallet size={15} /><span>Bookkeeping</span>
+          </Link>
+        </div>}
       </nav>
       <div className={styles.sidebarFooter}>
         <div className={styles.sessionLabel}>ACTIVE SESSION</div>
