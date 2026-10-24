@@ -78,7 +78,6 @@ export function waitingLine(view: DomainView, now: Date): 'start' | 'record2_old
 }
 
 /** `lakeshorelynx.ca` for `www.lakeshorelynx.ca`: the name the club owns. */
-export const bareName = (view: Pick<DomainView, 'domain'>) => view.domain;
 
 /**
  * The plain-text message the owner pastes into an email or a text to whoever looks after the address. Plain text so it

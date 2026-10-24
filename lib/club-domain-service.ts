@@ -14,6 +14,7 @@ import {
   type AddressRefusal,
   type ClubDomainStatus,
   type RecordSighting,
+  acceptedSiteValues,
   judgePadlockRecord,
   judgeSiteRecord,
   parseAddress,
@@ -230,7 +231,7 @@ export async function checkClubDomainNow(deps: ServiceDeps, orgId: string): Prom
   }
 
   const record1 = judgePadlockRecord(seen1, row.record1_value);
-  const accepted = [row.record2_value, ...(row.record2_host_target ? [row.record2_host_target] : [])];
+  const accepted = acceptedSiteValues(row);
   const record2 = judgeSiteRecord(seen2, accepted);
 
   const updated = await deps.store.update(orgId, {

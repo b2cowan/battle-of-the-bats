@@ -152,6 +152,11 @@ export function judgePadlockRecord(observed: readonly string[] | null | undefine
  * host's own target (a club that typed the host's target works just as well), and "Points elsewhere" when it names
  * anything else, which is the single most common mistake: the old website's address still sitting there.
  */
+/** Every value record 2 may hold: the name we hand out, and the host's own target (a club that typed that works just as well). */
+export function acceptedSiteValues(row: { record2_value: string; record2_host_target: string | null }): string[] {
+  return [row.record2_value, ...(row.record2_host_target ? [row.record2_host_target] : [])];
+}
+
 export function judgeSiteRecord(
   observed: readonly string[] | null | undefined,
   acceptedValues: readonly string[],

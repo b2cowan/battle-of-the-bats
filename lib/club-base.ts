@@ -55,8 +55,7 @@ export function stripClubPrefix(path: string, slug: string): string {
 
 /** A page of the club (`/lakeshore-lynx/teams`) as an absolute address on the club's own host; null when the path is not the club's. */
 export function clubOwnUrl(origin: string, slug: string, href: string): string | null {
-  if (href === `/${slug}`) return `${origin}/`;
-  return href.startsWith(`/${slug}/`) ? `${origin}${href.slice(slug.length + 1)}` : null;
+  return startsWithSlug(href, slug) ? `${origin}${stripClubPrefix(href, slug)}` : null;
 }
 
 /**

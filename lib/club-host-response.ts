@@ -23,11 +23,13 @@ export async function clubHostResponse(request: NextRequest, cache: ClubHostCach
   if (found === 'unavailable') return text('This address is not available right now. Try again in a moment.', 503, { 'retry-after': '30' });
   if (!found) return text('Not found', 404);
 
+  const route = routeClubHostPath(found.slug, request.nextUrl.pathname);
+  // A path the club's address does not serve (crawlers probing for admin and API paths) is answered before any request is built.
+  if (route.kind === 'notfound') return text('Not found', 404);
+
   const requestId = crypto.randomUUID();
   const headers = new Headers(request.headers);
   headers.set('x-request-id', requestId);
-  const url = request.nextUrl.clone();
-  const route = routeClubHostPath(found.slug, request.nextUrl.pathname);
 
   let res: NextResponse;
   switch (route.kind) {
@@ -43,12 +45,12 @@ export async function clubHostResponse(request: NextRequest, cache: ClubHostCach
       res = NextResponse.redirect(new URL(`${route.to}${request.nextUrl.search}`, origin), 308);
       break;
     }
-    case 'notfound':
-      return text('Not found', 404);
-    case 'rewrite':
+    case 'rewrite': {
+      const url = request.nextUrl.clone();
       url.pathname = route.to;
       res = NextResponse.rewrite(url, { request: { headers } });
       break;
+    }
   }
   res.headers.set('x-request-id', requestId);
   return res;

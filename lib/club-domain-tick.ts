@@ -21,7 +21,7 @@
  * ⚖ Reads only. This never writes to the host or to anyone's DNS.
  */
 import type { ClubDomainStatus, RecordSighting } from './club-domain';
-import { judgePadlockRecord, judgeSiteRecord } from './club-domain';
+import { acceptedSiteValues, judgePadlockRecord, judgeSiteRecord } from './club-domain';
 import { WAITING_GIVE_UP_MS, type DomainRow, type LastCheck } from './club-domain-service';
 import type { HostRecords } from './amplify-domains';
 
@@ -81,6 +81,11 @@ export interface TickDecision {
 }
 
 const iso = (d: Date) => d.toISOString();
+/** The stamp on the row that says each owner email has gone for this stretch. */
+const STAMP_OF: Record<OwnerEmail, keyof DomainRow> = {
+  live: 'live_email_sent_at', padlock_missing: 'padlock_email_sent_at', padlock_reminder: 'padlock_reminder_sent_at',
+  gave_up: 'gave_up_email_sent_at', not_working: 'not_working_email_sent_at',
+};
 /** The host_status values that mean the host no longer serves the name (we store `MISSING` when it has no association). */
 const HOST_GONE_STATUSES = new Set(['MISSING', 'FAILED']);
 export const hostStatusMeansGone = (s: string | null | undefined) => HOST_GONE_STATUSES.has(String(s ?? '').toUpperCase());
@@ -184,13 +189,14 @@ export function decideTick(row: DomainRow, obs: TickObservation, now: Date): Tic
   // ── The emails each state OWES, from the state alone ─────────────────────────────────────────────
   // Not "on the wake it changed": an email that failed to go is unstamped, and the state it called for is already saved, so the
   // only way the next wake can send it is to read what is owed. Each is owed once per stretch (the stamp).
-  const owe = (which: OwnerEmail, key: keyof DomainRow) => {
+  const owe = (which: OwnerEmail) => {
+    const key = STAMP_OF[which];
     if (!stamp(key) && !emails.includes(which)) { emails.unshift(which); (patch as Record<string, unknown>)[key] = iso(now); }
   };
-  if (status === 'connected') owe('live', 'live_email_sent_at');
-  if (status === 'not_connected') owe('gave_up', 'gave_up_email_sent_at');
-  if (status === 'not_working') owe('not_working', 'not_working_email_sent_at');
-  if (status === 'needs_attention') owe('padlock_missing', 'padlock_email_sent_at');
+  if (status === 'connected') owe('live');
+  if (status === 'not_connected') owe('gave_up');
+  if (status === 'not_working') owe('not_working');
+  if (status === 'needs_attention') owe('padlock_missing');
 
   patch.last_checked_at = iso(now);
   patch.last_check = last;
@@ -216,10 +222,13 @@ export interface TickDeps {
 
 export interface TickSummary { looked: number; changed: number; emailed: Record<string, number>; failed: number; deferred: number }
 
-const STAMP_OF: Record<OwnerEmail, keyof DomainRow> = {
-  live: 'live_email_sent_at', padlock_missing: 'padlock_email_sent_at', padlock_reminder: 'padlock_reminder_sent_at',
-  gave_up: 'gave_up_email_sent_at', not_working: 'not_working_email_sent_at',
-};
+/** An email this row's state owes and has not sent (a failed send, retried): the same four state-to-stamp pairs `decideTick` owes. */
+function owesEmail(row: DomainRow): boolean {
+  return (row.status === 'connected' && !row.live_email_sent_at)
+    || (row.status === 'not_connected' && !row.gave_up_email_sent_at)
+    || (row.status === 'not_working' && !row.not_working_email_sent_at)
+    || (row.status === 'needs_attention' && !row.padlock_email_sent_at);
+}
 
 /** Look at what is due for every connection, write what changed, send what is owed. One row's failure never stops the others. */
 export async function runClubDomainTick(deps: TickDeps, opts: { budgetMs?: number } = {}): Promise<TickSummary> {
@@ -230,41 +239,35 @@ export async function runClubDomainTick(deps: TickDeps, opts: { budgetMs?: numbe
   const rows = await deps.listAll();
   for (const row of rows) {
     const plan = planTick(row, now);
-    const owed = decideTick(row, {}, now).emails.length > 0; // an email the row's state owes (a failed send, retried)
-    if (!plan.host && !plan.record1 && !plan.record2 && !plan.extras && !owed) continue;
+    if (!plan.host && !plan.record1 && !plan.record2 && !plan.extras && !owesEmail(row)) continue;
     // A long wake stops starting new clubs and leaves the rest (each keeps its own clocks) for the next wake.
     if (deps.now().getTime() - started > budget) { summary.deferred++; continue; }
     summary.looked++;
     try {
       const obs: TickObservation = {};
-      const accepted = [row.record2_value, ...(row.record2_host_target ? [row.record2_host_target] : [])];
-      if (plan.host) {
-        const h = await deps.hostRead(row.domain, row.prefix).catch(() => undefined);
-        // A failed read tells us nothing: leave it unobserved rather than call the host gone.
-        if (h !== undefined) obs.host = h ? { state: h.state, hostStatus: h.hostStatus } : { state: 'missing', hostStatus: null };
-      }
-      if (plan.record1) {
-        const seen = await deps.cnames(`${row.record1_name}.${row.domain}`).catch(() => undefined);
-        if (seen !== undefined) obs.record1 = judgePadlockRecord(seen, row.record1_value);
-      }
-      if (plan.record2) {
-        const seen = await deps.cnames(row.full_name).catch(() => undefined);
-        if (seen !== undefined) obs.record2 = judgeSiteRecord(seen, accepted);
-      }
+      const accepted = acceptedSiteValues(row);
+      // The three looks do not depend on each other; a look that could not be made is `undefined` (unobserved), never a verdict.
+      const [h, seen1, seen2] = await Promise.all([
+        plan.host ? deps.hostRead(row.domain, row.prefix).catch(() => undefined) : undefined,
+        plan.record1 ? deps.cnames(`${row.record1_name}.${row.domain}`).catch(() => undefined) : undefined,
+        plan.record2 ? deps.cnames(row.full_name).catch(() => undefined) : undefined,
+      ]);
+      // A failed host read tells us nothing: leave it unobserved rather than call the host gone.
+      if (plan.host && h !== undefined) obs.host = h ? { state: h.state, hostStatus: h.hostStatus } : { state: 'missing', hostStatus: null };
+      if (seen1 !== undefined) obs.record1 = judgePadlockRecord(seen1, row.record1_value);
+      if (seen2 !== undefined) obs.record2 = judgeSiteRecord(seen2, accepted);
       // The certificate and the bare name: on the daily look, and once on the wake a waiting address goes live (so the live
       // email can say whether the bare name forwards). The certificate is the club's own only when our lookup says the address
       // reaches us: otherwise the handshake would read the old website's certificate.
       const goingLive = row.status === 'waiting' && obs.host?.state === 'live';
       if (plan.extras || goingLive) {
         const reaches = (obs.record2 ?? row.last_check?.record2)?.state === 'found';
-        if (reaches) {
-          const cert = await deps.certificateExpiry(row.full_name).catch(() => undefined);
-          if (cert !== undefined) obs.padlockExpiresAt = cert;
-        }
-        if (row.prefix === 'www') {
-          const forwards = await deps.bareForwards(row.domain, row.full_name).catch(() => undefined);
-          if (forwards !== undefined) obs.bareForwards = forwards;
-        }
+        const [cert, forwards] = await Promise.all([
+          reaches ? deps.certificateExpiry(row.full_name).catch(() => undefined) : undefined,
+          row.prefix === 'www' ? deps.bareForwards(row.domain, row.full_name).catch(() => undefined) : undefined,
+        ]);
+        if (cert !== undefined) obs.padlockExpiresAt = cert;
+        if (forwards !== undefined) obs.bareForwards = forwards;
       }
       const { patch, emails } = decideTick(row, obs, now);
       // An email that could not be sent is unstamped, so the next wake owes it again (decideTick reads it from the state).
