@@ -36,6 +36,15 @@ frontend:
         # runtime. Unset ⇒ the Subscribe window says links are unavailable and every coach feed
         # answers 503 (fail-closed). Changing the value later stops every coach's link.
         - echo "CALENDAR_LINK_SECRET=$CALENDAR_LINK_SECRET" >> .env.production
+        # A club's own web address (Club Tier 4e): the app asks Amplify to serve the club's domain. The app id and the branch
+        # come from the build's own AWS_APP_ID / AWS_BRANCH (`master` on master, `dev` on dev), so no console variable needs a
+        # per-branch override and none can be forgotten at a promote. Only the two keys are console variables (all branches,
+        # an IAM user limited to Create/Get/DeleteDomainAssociation on this one app). Unset keys ⇒ connecting an address
+        # answers "We couldn't start the connection"; nothing else is affected.
+        - echo "CLUB_DOMAINS_AMPLIFY_APP_ID=$AWS_APP_ID" >> .env.production
+        - echo "CLUB_DOMAINS_AMPLIFY_BRANCH=$AWS_BRANCH" >> .env.production
+        - echo "CLUB_DOMAINS_AWS_ACCESS_KEY_ID=$CLUB_DOMAINS_AWS_ACCESS_KEY_ID" >> .env.production
+        - echo "CLUB_DOMAINS_AWS_SECRET_ACCESS_KEY=$CLUB_DOMAINS_AWS_SECRET_ACCESS_KEY" >> .env.production
         # NOTE: UNSUBSCRIBE_SECRET is deliberately NOT echoed here. The console var is set
         # (all-branches + dev), but production has been signing links with the insecure code
         # fallback because it was never on this copy list. Activating the console value flips
