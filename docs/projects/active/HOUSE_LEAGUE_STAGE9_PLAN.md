@@ -223,3 +223,4 @@ the org home's empty-tournaments hero for a league-only club.
 - 2026-10-24 — deep dive walked (12 stations, desk + phone), ladder proposed, 9a drawn, /ux and /design applied; published https://claude.ai/artifact/UtrYHLaqbkfQQC2kBbGEQ7; Club index row s9 → in-progress (log 2026-10-24-01); 24 asks open.
 - 2026-10-24 — owner ruled 26 of 27 (§0), committed fa1528058; round 2 (9b + the two questions) drawn, /ux and /design
   applied, published https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT; 15 asks open.
+- 2026-10-24 — 9a build prompt written (`HOUSE_LEAGUE_STAGE9A_BUILD_PROMPT.md`; recommends the Email families switch-over move to 9d with Q12c) and the Stage 12 kickoff prompt (`CLUB_TIER_STAGE12_KICKOFF_PROMPT.md`; 12a + 12b drawn together, 12c beside).
