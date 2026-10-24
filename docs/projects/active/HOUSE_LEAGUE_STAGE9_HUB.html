@@ -1,0 +1,1306 @@
+<title>House League Deep Dive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · deep dive · 2026-10-24</p>
+<h1>House league, walked end to end</h1>
+<p class="lede">House league is the club's biggest program and its biggest revenue line, and it is the least finished area of the product. This page walks it the way a volunteer convenor meets it, from setting up a season to closing it, at a desk and on a phone. It then proposes a ladder of stages and draws the first one. Nothing has been built.</p>
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li><b>Walk</b> holds 12 stations. Each has the captures (open the full size), what I measured, my read, and the shape questions. Tick Keep, Reshape or Not yet, and leave a note.</li>
+    <li>A red <button class="fl" data-f="F01" data-here="An example flag. Every red flag opens the finding it names.">F01</button> flag opens the finding: what the code does today, where you're looking, and what I'd change. Click any tag (<button class="mk new" data-note="An example tag. NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn in the kit.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button>) to read why it's there.</li>
+    <li><b>Standing back</b> holds the rules that cut across the stations, including the payments contract (the next stage after this one is payments, so everything here has to leave room for it).</li>
+    <li><b>Ladder</b> is my proposed order of stages, sized, to be tested against the walk.</li>
+    <li><b>9a drawn</b> is the first stage at true size: before = today's capture, after = drawn. Use the Warm/Dark switch on the right of the tab bar. Open this page on a phone to judge the phone drawings at their real size.</li>
+    <li><b>Asks &amp; paste-back</b> gathers every question in one list and builds the summary you paste back to me.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">Captured on the dev fixture club "Dev League Org" (League plan) as its owner. Seasons: 2025 finished, 2026 running, 2027 taking sign-ups. I extended it for this walk with a third division with its own capacity and age band, a venue with two diamonds and a permit, one family who paid $150 and was then declined, a cancelled game, and a guardian with two children. The 2026 games are in June, so "this week" has no games in it. Two fixture artifacts, not product bugs: the 6:00 a.m. game times, and 9 of the 10 paid ticks in 2026, which predate today's fee writer and so have no line in the season book.</p>
+</div>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="walk" aria-selected="true">Walk</button>
+  <button role="tab" data-pane="back" aria-selected="false">Standing back</button>
+  <button role="tab" data-pane="ladder" aria-selected="false">Ladder</button>
+  <button role="tab" data-pane="draw" aria-selected="false">9a drawn</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+
+
+<section class="pane" id="walk" data-pane="walk">
+<div class="verdict push">
+  <h3>The short version</h3>
+  <ul>
+    <li><b>The frame is the first problem.</b> A club admin can open every house-league screen and save nothing <button class="fl" data-f="F01" data-here="Every save on every house-league screen refuses the admin role.">F01</button>. The season's own home and its money page aren't in the side menu <button class="fl" data-f="F02" data-here="The rail lists five season pages; Overview and Ledger are missing.">F02</button>. On a phone there's no way into a season's pages at all except through card links.</li>
+    <li><b>The money says things that aren't true.</b> The season book shows <b>$0.00 outstanding</b> beside its own $2,100 expected and $150 collected <button class="fl" data-f="F14" data-here="Ledger, 2026: Expected $2,100.00, Collected $150.00, Outstanding $0.00.">F14</button>. A family who paid $150 and was declined vanishes from the books <button class="fl" data-f="F12" data-here="Ethan Brown: paid $150, declined; his line is now VOID and nothing says the club owes $150.">F12</button>. Editing the fee rewrites what every family owes <button class="fl" data-f="F11" data-here="The paid tick and the family record both read today's season fee.">F11</button>.</li>
+    <li><b>The public side contradicts itself.</b> The 2027 page says "Registration open" and, on the same screen, "Registration closes August 1, 2026". It is October 24, and the form still takes sign-ups <button class="fl" data-f="F08" data-here="The 2027 season page, today.">F08</button>. The club home hides the season that is actually being played <button class="fl" data-f="F04" data-here="The club home lists only 2027; the running 2026 season, with its schedule and standings, is not linked.">F04</button>.</li>
+    <li><b>Re-verified against the code:</b> email escaping, rate limits, reply-to addresses, export dates, the cross-tenant IDs, the "cancel game" misclick and the fee-to-ledger seam are <b>already fixed</b>; I drew no fix for them. Two claims in the brief were wrong: there are <b>no</b> browser confirm() pop-ups (the house-league windows are in-page; the real gap is one-click status changes), and the trust plan's "six" email templates are seven.</li>
+  </ul>
+</div>
+
+<!-- ===================== STATION 1 ===================== -->
+<div class="st" id="s1">
+<p class="eyebrow">Station 1 of 12 · at a desk</p>
+<h2>Set up a season</h2>
+<p class="who">The convenor opens House league, creates a season, adds divisions with ages and caps, sets the fee, the dates and the waiver, then opens registration.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:index-new-desk-warm}}" alt="Create season window over the seasons home, desk"></div><div class="bar"><span>Create season window · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:index-phone-warm}}" alt="Seasons home on a phone"></div><div class="bar"><span>Seasons home · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="cols"><div class="shot"><div class="sc"><img src="{{IMG:season27-desk-warm}}" alt="The 2027 season's overview, desk"></div><div class="bar"><span>Season overview (2027, taking sign-ups) · 1440</span><button type="button" class="op">Full size</button></div></div><div></div></div>
+<div class="meas">
+  <div class="bad"><b>1,366 px</b><span>Create season window at a 900 px desk screen; Create sits below the fold</span></div>
+  <div><b>12 + 3</b><span>fields and switches in the window; divisions, capacity and ages are not among them</span></div>
+  <div class="bad"><b>1 click</b><span>"Mark complete", "Close registration", "Complete season" and the season-page Archive; nothing asks</span></div>
+  <div class="bad"><b>16 px</b><span>"← All seasons" and the "?" status help, desk and phone</span></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>Create asks (a window with Create season), which matches "Edit autosaves, create asks".</li>
+    <li>The division cards show fill against capacity at a glance (9 / 12 · 1 waitlisted).</li>
+    <li>Age bands exist per division (born-from / born-to years) <button class="mk unc" data-note="Kept: a division's age band is the right home for an age cut-off.">UNCHANGED</button></li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>The window asks a volunteer for a URL <b>slug</b> and a free-text <b>"Division"</b> (U10) that then shows as a chip on every season and collides with the real divisions <button class="fl" data-f="F07" data-here="Create season: Slug *, and a Division field that becomes the 'U10' chip.">F07</button>.</li>
+    <li>The fee says "display-only; fees are not collected here", and an <b>Auto-generate fee entries</b> switch does nothing at all <button class="fl" data-f="F07" data-here="The third switch under Automation is stored and never read.">F07</button>.</li>
+    <li>A division's age band can be set when it is created and <b>never edited</b> after <button class="fl" data-f="F07" data-here="The division edit window only changes name and capacity.">F07</button>.</li>
+    <li>Status moves are one click, including Archive from the season page <button class="fl" data-f="F05" data-here="'Complete season' and 'Close registration' sit as plain buttons in the Status strip.">F05</button>.</li>
+    <li>Seasons sort by when they were created (2025, 2027, 2026), not by what's happening <button class="fl" data-f="F03" data-here="Seasons home: finished 2025 first, then next year, then the running season.">F03</button>.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change</h4><ul>
+    <li>Create asks only what a season needs to exist: name, sport, dates. The address is made from the name.</li>
+    <li>Divisions, ages, caps and price move into the season's Setup, edited in place, with the age band editable.</li>
+    <li>Every status move asks once, in a window that says what changes for families.</li>
+    <li>The home leads with what's running, then what's getting ready, with past seasons on a closed shelf. Drawn in 9a.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="S1-a"><h3><span class="no">S1·a</span>What does Create season ask?</h3>
+  <p class="rides">Rides on it: the season Setup page in 9b (price per division, early bird, real dates) and whether a volunteer ever sees the word "slug".</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="S1-a" value="Reshape: name, sport, dates; everything else in Setup">Reshape: name, sport and dates only. The web address is made from the name. Divisions, ages, caps, price, waiver and switches live on the season's Overview, in its Divisions and Sign-up blocks (drawn in 9a), edited in place; 9b-1 extends those blocks rather than adding a page.</label>
+    <label><input type="checkbox" name="S1-a" value="Keep the long window, drop slug and the Division label">Keep the one long window; only drop the slug and the free-text "Division" label.</label>
+    <label><input type="checkbox" name="S1-a" value="Not yet">Not yet.</label>
+  </div><textarea aria-label="Notes for S1·a" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="S1-b"><h3><span class="no">S1·b</span>The dead "Auto-generate fee entries" switch</h3>
+  <p class="rides">It promises "an accounting entry when a registration is approved". Nothing reads it; a fee posts only on the paid tick.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="S1-b" value="Remove it (9a)">Remove it in 9a. Money posts when money arrives (the paid tick today, a card payment in 12b).</label>
+    <label><input type="checkbox" name="S1-b" value="Make it work: post an 'owing' line on approval">Make it work: approval writes an "owing" line in the season book.</label>
+  </div><textarea aria-label="Notes for S1·b" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 2 ===================== -->
+<div class="st" id="s2">
+<p class="eyebrow">Station 2 of 12 · on a phone first</p>
+<h2>The family signs up</h2>
+<p class="who">A parent finds the season on the club's site, reads the page, fills in the form, gets the receipt email, and later checks their status with the email and a reference code.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:pub-season-desk-warm}}" alt="Public season page, desk"></div><div class="bar"><span>Public season page (2027) · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-season-phone-warm}}" alt="Public season page on a phone"></div><div class="bar"><span>Season page · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:pub-status-desk-warm}}" alt="Status lookup, desk"></div><div class="bar"><span>Status lookup · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-register-phone-warm}}" alt="Registration form on a phone"></div><div class="bar"><span>Sign-up form · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="meas">
+  <div class="bad"><b>84 days</b><span>since this season's own close date (Aug 1); the page still says "Registration open" and takes sign-ups</span></div>
+  <div class="bad"><b>2,297 px</b><span>the form on a phone, for one child</span></div>
+  <div class="bad"><b>22 px</b><span>the division radios and the waiver box</span></div>
+  <div class="bad"><b>0</b><span>email-consent (CASL) boxes; there is a waiver box only</span></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>The season page answers "when, how much, is there room" in one screen.</li>
+    <li>Spots remaining per division are shown live on the form.</li>
+    <li>The waiver writes a consent record on the family, and the form is rate-limited. The trust items here are fixed.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>The open and close dates are decoration. The form opens and closes only when the convenor flips the status <button class="fl" data-f="F08" data-here="Season page: 'Registration open' above 'Registration closes August 1, 2026'.">F08</button>.</li>
+    <li>One child per form. A family with two children types the guardian twice and gets two emails <button class="fl" data-f="F09" data-here="The form has one Player block.">F09</button>.</li>
+    <li>No email consent, although the plan says both exist. Date of birth is optional and doesn't steer the division; the U12 age band shows on the season page but not on the form <button class="fl" data-f="F09" data-here="Form header reads 'Division: U10' over a U12 choice.">F09</button>.</li>
+    <li>"$165.00 — payable separately to Dev League Org" with no how, where or by when <button class="fl" data-f="F09" data-here="The line above Submit registration.">F09</button>.</li>
+    <li>Two sign-ups at once can both take the last spot <button class="fl" data-f="F10" data-here="Spots remaining is counted, then the row is written.">F10</button>.</li>
+    <li>The status lookup never shows the team the child is on <button class="fl" data-f="F23" data-here="Status lookup answers the status only.">F23</button>.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change (9b)</h4><ul>
+    <li>The dates open and close the form; the status follows the dates.</li>
+    <li>Add a child, repeat the player block, keep one guardian. Each child stays its own registration, tied by one sign-up reference.</li>
+    <li>Date of birth is required when a season has age bands, and picks the division.</li>
+    <li>CASL consent sits beside the waiver and writes the same kind of consent record.</li>
+    <li>The price shows per division, with early bird when it applies. A drawn ghost spot is left for "Pay now" (12b).</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q5"><h3><span class="no">Q5</span>Can one sign-up register several children?</h3>
+  <p class="rides">Rides on it: the 12b checkout ("two registrations, one payment" needs a shared sign-up reference), the receipt email (one per family), and the form's length on a phone. Two children can land in different states (one accepted, one waitlisted): the form says so before Submit, the emails group by sign-up, and "one payment" means the children accepted at that moment.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q5" value="Yes: Add a child on one form, one guardian, one receipt">Yes. "Add another child" repeats the player block; one guardian, one receipt, one later payment.</label>
+    <label><input type="checkbox" name="Q5" value="No: one child per form, prefill the guardian on 'Register another'">No. One child per form, but "Register another child" pre-fills the guardian.</label>
+  </div><textarea aria-label="Notes for Q5" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="S2-b"><h3><span class="no">S2·b</span>Do the open and close dates run the form?</h3>
+  <p class="rides">Early bird means nothing while the dates are decorative (payments contract line 3).</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="S2-b" value="Dates run it; convenor can still close early or reopen">The dates run it. The convenor can still close early or reopen, and the season page says which.</label>
+    <label><input type="checkbox" name="S2-b" value="Status runs it; warn the convenor when the dates pass">The status keeps running it; the convenor gets a "your close date has passed" reminder.</label>
+  </div><textarea aria-label="Notes for S2·b" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 3 ===================== -->
+<div class="st" id="s3">
+<p class="eyebrow">Station 3 of 12 · at a desk, then the phone</p>
+<h2>Work the registrations</h2>
+<p class="who">Review pending sign-ups, approve, waitlist, decline, tick fees received, add a family by hand, export.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:regs-desk-warm}}" alt="Registrations, pending tab, desk"></div><div class="bar"><span>Registrations · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:regs-phone-warm}}" alt="Registrations on a phone, actions off-screen"></div><div class="bar"><span>Registrations · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="cols"><div class="shot"><div class="sc"><img src="{{IMG:regs-add-desk-warm}}" alt="Add registration window, desk"></div><div class="bar"><span>Add registration window · 1440</span><button type="button" class="op">Full size</button></div></div><div></div></div>
+<div class="meas">
+  <div class="bad"><b>71×24</b><span>Approve (Waitlist and Decline the same height)</span></div>
+  <div class="bad"><b>15×15</b><span>the "Fee paid" tick, the only way money enters house league</span></div>
+  <div class="bad"><b>851 in 358</b><span>table width in the phone frame; Status, Fee paid and the actions start at 644 px, off-screen with no hint</span></div>
+  <div class="bad"><b>0</b><span>Withdraw buttons and bulk actions; notes appear only in the export</span></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>Tabs with counts answer "what's waiting" (Pending 1, Active 14, Waitlist 1).</li>
+    <li>Decline asks, in a window. Auto-promote moved the next waitlisted child up when I declined one, and emailed that family.</li>
+    <li>One shared money write: the Registrations tick and the family record land in the same place, and a test holds that <button class="mk unc" data-note="Kept: one writer for house-league fees, guarded by a test. 12b's online payment must land in the same write.">UNCHANGED</button></li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>On a phone the convenor can't approve, decline or tick a fee without finding a hidden sideways scroll <button class="fl" data-f="F13" data-here="Phone: the table is 851 px wide inside 358 px.">F13</button>.</li>
+    <li>No Withdraw button (the server supports it), no bulk approve, no fee filter, notes invisible <button class="fl" data-f="F13" data-here="Actions: Approve · Waitlist · Decline only.">F13</button>.</li>
+    <li>Approve and add-by-hand ignore capacity <button class="fl" data-f="F10" data-here="Approve never checks the division's room.">F10</button>.</li>
+    <li>Declining a family that paid erases the payment <button class="fl" data-f="F12" data-here="Ethan Brown, declined after paying $150.">F12</button>.</li>
+    <li>A sign-up from the public form tells no one on staff <button class="fl" data-f="F23" data-here="Only an add-by-hand sends a staff notice.">F23</button>.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change</h4><ul>
+    <li>9a: the screen moves onto the kit inside the season frame: one toolbar, the amber waiting count, 44 px actions, and phone rows that carry their own actions.</li>
+    <li>9b: Withdraw, bulk approve and waitlist, a Paid / Owing filter, approve that respects capacity, and one "end this registration" window that asks what happened to the money.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q1"><h3><span class="no">Q1</span>When does a family pay: at sign-up, or once accepted?</h3>
+  <p class="rides">Interacts with auto-approve under capacity (an existing season switch: with it on, a sign-up is accepted at once), the waitlist and declines. Pay-at-sign-up needs the spot taken atomically (F10) and makes a decline a refund. Pay-on-acceptance keeps declines free but needs a "hold" rule (Q3). Q3 and Q4 only arise if this is "when accepted".</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q1" value="When accepted (an auto-approved sign-up is accepted at once and can pay then)">When accepted. An auto-approved sign-up is accepted at once and can pay on the spot. A pending or waitlisted family pays nothing until a person says yes.</label>
+    <label><input type="checkbox" name="Q1" value="At sign-up, always">At sign-up, always. A decline or a full waitlist then means a refund.</label>
+    <label><input type="checkbox" name="Q1" value="The club chooses per season">The club chooses per season.</label>
+  </div><textarea aria-label="Notes for Q1" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="Q3"><h3><span class="no">Q3</span>If Q1 is "when accepted": does an accepted, unpaid registration hold its spot, and for how long?</h3><p class="rides">An unpaid child who holds a spot keeps a waitlisted child out, so the convenor needs a way to let the spot go.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q3" value="Holds; convenor sees an 'unpaid N days' flag and decides">It holds. The convenor sees an "unpaid for N days" flag with a "Release the spot" action (the waitlist moves up); nothing is released automatically.</label>
+    <label><input type="checkbox" name="Q3" value="Holds for a set number of days, then goes back to the waitlist">It holds for a number of days the club sets, then the spot goes to the waitlist.</label>
+  </div><textarea aria-label="Notes for Q3" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="Q6"><h3><span class="no">Q6</span>Ending a registration after money was received</h3>
+  <p class="rides">Today the payment is silently erased. Either way, a refund is recorded as money out, never as the payment disappearing. That is honest books now, and the hook 12b needs for "refund the card first". Who records it follows Q17: whoever can mark a payment received can record a refund; the treasurer reads it on Money.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q6" value="Ask each time: refund recorded, or kept (with a reason)">Ask each time, in the decline/withdraw window: "Refunded $150" or "Kept by the club", with an optional reason.</label>
+    <label><input type="checkbox" name="Q6" value="Always record a refund owed; convenor marks it paid out later">Always record a refund owed; the convenor marks it paid out later.</label>
+  </div><textarea aria-label="Notes for Q6" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 4 ===================== -->
+<div class="st" id="s4">
+<p class="eyebrow">Station 4 of 12 · at a desk</p>
+<h2>Make the teams</h2>
+<p class="who">Create teams, place players by hand, randomize or run a draft, and place a late registration.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:teams-desk-warm}}" alt="Teams and draft, desk"></div><div class="bar"><span>Teams &amp; draft · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:teams-phone-warm}}" alt="Teams and draft on a phone"></div><div class="bar"><span>Teams &amp; draft · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>A player pool beside the team columns is the right picture for this job.</li>
+    <li>The late child shows up: Zoe Leblanc, promoted off the waitlist, sits in the pool as unassigned.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>No ratings, so "balanced" is the convenor's memory. The draft is a pick order, and Randomize ignores skill <button class="fl" data-f="F16" data-here="Teams & draft: Randomize, Start draft; no rating anywhere.">F16</button>.</li>
+    <li>"Clear all assignments", a rare and destructive tool, sits in the main toolbar as a red button (it does ask first).</li>
+    <li>One draft per season, not per division.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change (9c)</h4><ul>
+    <li>A 1–5 rating per player (or "new / returning"), entered on the pool card, feeding a snake draft that balances totals.</li>
+    <li>Clear all moves behind Tools (one toolbar, rare tools behind Tools).</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q8"><h3><span class="no">Q8</span>Evaluations</h3>
+  <p class="rides">Balancing teams is the convenor's hardest hour of the season. A light rating is cheap to add and is what makes a draft "fair" in parents' eyes.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q8" value="Light: one 1-5 rating per player, feeding a balanced snake draft (9c)">Light: one 1–5 rating per player, feeding a balanced snake draft (9c). Seen only by the convenor, never in a coach's roster or an export. Carrying it into next season waits on Stage 14.</label>
+    <label><input type="checkbox" name="Q8" value="Full evaluations: a skills sheet per player, several evaluators">Full evaluations: a skills sheet per player, several evaluators (a tryouts-style project).</label>
+    <label><input type="checkbox" name="Q8" value="Not yet">Not yet.</label>
+  </div><textarea aria-label="Notes for Q8" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 5 ===================== -->
+<div class="st" id="s5">
+<p class="eyebrow">Station 5 of 12</p>
+<h2>Coaches and helpers</h2>
+<p class="who">Who coaches each team, what that coach sees, and the volunteers a league runs on (scorekeepers, umpires, team managers).</p>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>A team has a name, a colour and a coach name. That is enough for a schedule card.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>A coach is a typed name. There is no account, no email and no view of their own team; a house-league coach who signs in lands on a dead end <button class="fl" data-f="F16" data-here="The team edit window: Coach name is free text.">F16</button>.</li>
+    <li>No volunteers of any kind.</li>
+    <li>The chat ruling E5 already assumes house-league coaches will have accounts.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change (9c)</h4><ul>
+    <li>Light coach accounts: the convenor invites by email from the team. The coach sees their own roster with guardian contacts, their schedule, and enters scores. They are not given the coaches portal's rep-team tools.</li>
+    <li>Volunteers become their own project, with a note in the plan.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q7"><h3><span class="no">Q7</span>Coaches as people</h3>
+  <p class="rides">The biggest scope call in the stage. It touches the coaches portal, chat (E5), the score-entry path and privacy (a coach would see guardian contacts).</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q7" value="Light accounts: invite by email, own team only, roster contacts + schedule + scores">Yes, light: invited by email, sees only their own team (roster with guardian contacts, schedule), and enters scores.</label>
+    <label><input type="checkbox" name="Q7" value="Read-only link: a private team page with no account">A private team link with no account: roster and schedule to read, no scores.</label>
+    <label><input type="checkbox" name="Q7" value="Not yet: keep the typed name">Not yet: keep the typed name.</label>
+  </div><textarea aria-label="Notes for Q7" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="Q9"><h3><span class="no">Q9</span>Volunteers (scorekeepers, umpires, team managers)</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q9" value="Not in Stage 9: its own project, noted in the plan">Not in Stage 9. Its own project, with a note in the plan.</label>
+    <label><input type="checkbox" name="Q9" value="In 9c: a volunteer list per team">In 9c: a simple volunteer list per team.</label>
+  </div><textarea aria-label="Notes for Q9" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 6 ===================== -->
+<div class="st" id="s6">
+<p class="eyebrow">Station 6 of 12 · at a desk</p>
+<h2>Build the schedule</h2>
+<p class="who">Generate the games, add or move one, place practices, pick the venue under the club's permit, and check clashes.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:sched-desk-warm}}" alt="Admin schedule, week view, desk"></div><div class="bar"><span>Schedule · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:sched-phone-warm}}" alt="Admin schedule on a phone"></div><div class="bar"><span>Schedule · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="cols"><div class="shot"><div class="sc"><img src="{{IMG:sched-gen-desk-warm}}" alt="Generate schedule window, desk"></div><div class="bar"><span>Generate schedule window · 1440</span><button type="button" class="op">Full size</button></div></div><div></div></div>
+<div class="meas">
+  <div class="bad"><b>1 · 1 · 1</b><span>division, start date and game time per generator run</span></div>
+  <div class="bad"><b>0</b><span>days of the week, dates off, game length, slots or byes in the generator</span></div>
+  <div class="bad"><b>312 of 960</b><span>px the desk week view uses; one narrow column of cards</span></div>
+  <div class="bad"><b>26 px</b><span>Week · List · Practices; Generate is 32 px</span></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>Venues come from the club's venue library through the one Venue field; clashes across programs are checked; a game outside a permit gets a quiet line.</li>
+    <li>The club calendar already shows house-league games and practices and links back here.</li>
+    <li>Delete asks; the old one-press "Cancel game" is gone (fixed).</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>The generator stacks a round on one date and time, can't skip a long weekend, puts every game at one venue, and then warns about clashes it created <button class="fl" data-f="F17" data-here="Generate schedule — Division A: first date, one time, rounds per week, one venue.">F17</button>.</li>
+    <li>Off the calendar recipe: "Week of June 1, 2026", a chip on every scheduled game, opens on the first week instead of this one, and a reader gets a greyed form <button class="fl" data-f="F18" data-here="'SCHEDULED' chip; 'WEEK OF JUNE 1, 2026'.">F18</button>.</li>
+    <li>Practices can be cancelled but not moved; there is no "From {schedule}" link to the club scheduler (11b).</li>
+    <li>The permit isn't reachable from here; only a hint links to the venue library <button class="fl" data-f="F24" data-here="The Venue field's hint is the only link out.">F24</button>.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change (9d)</h4><ul>
+    <li>A generator that takes the season's weekdays, slots per field, game length, dates off and divisions together, and checks its own result before saving.</li>
+    <li>C1–C12: one season list grouped by week, opening on this week, "Oct 19 – 25, 2026", place on every game, "Final", no chip on scheduled, a read window for readers.</li>
+    <li>11b: house-league practices land on the club scheduler and can be moved there.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q11"><h3><span class="no">Q11</span>Schedule health score, or the clash warning box?</h3>
+  <p class="rides">The tournament schedule has a health button, window and engine. House league could use the same ones (drawn in 9d either way), or keep today's amber clash lines.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q11" value="Health score: the tournament's button, window and engine">The health score: the tournament's button, window and engine, so the generator can check itself before it saves.</label>
+    <label><input type="checkbox" name="Q11" value="Keep the clash warning lines">Keep today's clash warning lines.</label>
+  </div><textarea aria-label="Notes for Q11" placeholder="Notes"></textarea></div>
+</div>
+
+
+<!-- ===================== STATION 7 ===================== -->
+<div class="st" id="s7">
+<p class="eyebrow">Station 7 of 12</p>
+<h2>Game day and the season</h2>
+<p class="who">Enter a score, read the standings, call a rainout, move a game, and let families know.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:stand-desk-warm}}" alt="Admin standings, desk"></div><div class="bar"><span>Standings · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-stand-phone-warm}}" alt="Public standings on a phone"></div><div class="bar"><span>Public standings · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>Standings compute from final scores, with the rule printed under the table.</li>
+    <li>The public standings no longer clip on a phone (fixed).</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>Points are hard-coded (win 2, tie 1, runs as the tiebreak). The sport pack already says how each sport scores, and nothing reads it <button class="fl" data-f="F21" data-here="'Pts: W=2, T=1, L=0 · Tiebreaker: run differential'.">F21</button>.</li>
+    <li>Postponing or cancelling a game tells no family anything <button class="fl" data-f="F20" data-here="The game window's status change sends nothing.">F20</button>.</li>
+    <li>Scores hide behind a toggle in the game window.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change (9e, notices in 9d)</h4><ul>
+    <li>Standings read the sport pack.</li>
+    <li>A rainout is one action, "Postpone", that asks whether to tell the two teams' families, held until ✓.</li>
+    <li>A coach with an account enters the score (if Q7 says yes).</li>
+  </ul></div>
+</div>
+</div>
+
+<!-- ===================== STATION 8 ===================== -->
+<div class="st" id="s8">
+<p class="eyebrow">Station 8 of 12</p>
+<h2>Talking to families</h2>
+<p class="who">The season email, the automatic notices, and the Families book.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:notif-desk-warm}}" alt="Send notification composer, desk"></div><div class="bar"><span>"Notifications" · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:notif-phone-warm}}" alt="Send notification on a phone"></div><div class="bar"><span>"Notifications" · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="meas">
+  <div class="bad"><b>1 per child</b><span>a guardian with two children gets the season email twice</span></div>
+  <div class="bad"><b>no cap</b><span>Families › Email refuses a 4th send in 24 hours; this composer has no limit</span></div>
+  <div class="bad"><b>0</b><span>automatic notices on a schedule, practice, team-placement or rainout change</span></div>
+  <div><b>"← Registrations"</b><span>the back link, even when you came from the rail</span></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>Audiences now include Waitlist and Pending (fixed); replies go to the convenor, and unsubscribes are honoured (fixed).</li>
+    <li>Approval, waitlist and decline emails go out on their own.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>It sends one at a time with no de-duplication, counts a delivery failure as "no email on file", and shows a green "0 delivered" for an empty audience <button class="fl" data-f="F20" data-here="Season email: one send per registration.">F20</button>.</li>
+    <li>"Notifications" means a parent email composer here, the bell everywhere else, and "Needs attention" on the Overview.</li>
+    <li>Families › Email (the club's batched sender) already does this job properly, with the cap.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change</h4><ul>
+    <li>9a: the rail row is renamed (Q12). 9d: the composer sends through the club's batched sender (one email per guardian, the cap, an honest count), because 9d's change notices need that sender.</li>
+    <li>9d: change notices for games, practices and placements, held until ✓ and asked.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q12"><h3><span class="no">Q12</span>What is the house-league email composer called?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q12" value="Email families">"Email families". It says what it does, and matches the Families book.</label>
+    <label><input type="checkbox" name="Q12" value="Messages">"Messages".</label>
+    <label><input type="checkbox" name="Q12" value="Fold it into Families › Email with the season as the audience">Retire it: Families › Email gains "this season's families" as an audience, and the season row links there.</label>
+  </div><textarea aria-label="Notes for Q12" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 9 ===================== -->
+<div class="st" id="s9">
+<p class="eyebrow">Station 9 of 12</p>
+<h2>The money</h2>
+<p class="who">One fee per child, received by hand today, online in 12b. The season book, Budget vs. Actual, the Families book balance, and what a family sees owing.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:ledger-desk-warm}}" alt="Season ledger, desk"></div><div class="bar"><span>Ledger (2026) · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:ledger-phone-warm}}" alt="Season ledger on a phone"></div><div class="bar"><span>Ledger · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="meas">
+  <div class="bad"><b>$0.00</b><span>"Outstanding", beside $2,100 expected and $150 collected on the same page; it counts "pending entries", which no longer exist</span></div>
+  <div class="bad"><b>VOID</b><span>the only trace of Ethan Brown's $150; nothing says the club owes it back</span></div>
+  <div class="bad"><b>0 rows</b><span>house-league fees on the Budget vs. Actual Statement; the club's biggest revenue line is missing from Total revenue</span></div>
+  <div class="bad"><b>3 cards</b><span>separate tiles; the money rule is one joined band</span></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>A paid tick posts one line in the season's own book, in one transaction; un-ticking voids it (the old C18 seam is fixed).</li>
+    <li>The fee writer is shared and guarded; online payment can land in the same write.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>Outstanding is simply wrong <button class="fl" data-f="F14" data-here="Expected $2,100.00 · Collected $150.00 · Outstanding $0.00.">F14</button>.</li>
+    <li>The price is read live: edit the fee from $150 to $175 and every family's balance, and the next paid tick, follow it <button class="fl" data-f="F11" data-here="Registration fee $150.00 on the season; nothing is frozen per child.">F11</button>.</li>
+    <li>Ending a paid registration erases the money in <button class="fl" data-f="F12" data-here="Ethan Brown — registration fee, VOID.">F12</button>.</li>
+    <li>Nothing files on the club's Statement, and a League Plus club has no Statement at all <button class="fl" data-f="F15" data-here="The season book is not a club book.">F15</button>.</li>
+    <li>The Ledger is not in the rail; you reach it from a division card.</li>
+    <li>A family has no way to see what they owe (the status page shows status only).</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change (9b)</h4><ul>
+    <li>Rename it Money (Q18, in 9a). One band: Owed · Received · Still owing · Refunds, each figure from the frozen price per registration.</li>
+    <li>Until 12b, the club writes its own payment instructions (how, where, by when), shown on the approval email and the status page in place of a bare "payable separately".</li>
+    <li>Freeze the price on the registration; price per division with early bird through one resolver.</li>
+    <li>Ending a paid registration asks (Q6) and records the refund as money out.</li>
+    <li>File fees on the Statement under a house-league category (Q10).</li>
+    <li>Ghost "Pay now / Paid online" spots on the status page, the emails and the family record, for 12b to fill.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q2"><h3><span class="no">Q2</span>When is the price frozen on a registration?</h3>
+  <p class="rides">The highest-stakes line in the payments contract. Today nothing is frozen. Whatever is chosen, the registration records which price applied (regular or early bird).</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q2" value="At sign-up; early bird follows the sign-up date; convenor can correct one registration's price with a reason">At sign-up. Early bird follows the sign-up date, so a family who signed up early keeps the early price even if they are accepted, or promoted off the waitlist, weeks later. The convenor can correct one registration's price, with a reason, and moving a child to another division asks whether to re-price.</label>
+    <label><input type="checkbox" name="Q2" value="At acceptance; early bird follows the acceptance date">At acceptance. Early bird follows the date the club said yes.</label>
+  </div><textarea aria-label="Notes for Q2" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="Q4"><h3><span class="no">Q4</span>Does a waitlisted family get a pay-later link when promoted?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q4" value="Yes: the promotion email carries the pay spot (ghost in 9b, live in 12b)">Yes. The promotion email carries the pay spot: a ghost in 9b, live in 12b.</label>
+    <label><input type="checkbox" name="Q4" value="No: the convenor follows up by hand">No. The convenor follows up by hand.</label>
+  </div><textarea aria-label="Notes for Q4" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="Q10"><h3><span class="no">Q10</span>How do season fees show on Budget vs. Actual, and what's on the budget side?</h3>
+  <p class="rides">Owed by this stage. Walk 7a step 7.6 changes with it, and Stage 9 doesn't close until the Statement and the season books agree. Sketches:</p>
+  <div class="tw" style="max-width:820px"><table class="t" style="min-width:600px">
+    <thead><tr><th>A · a row per season</th><th class="n">Budget</th><th class="n">Actual</th><th>B · one fees row, seasons under it</th><th class="n">Budget</th><th class="n">Actual</th></tr></thead>
+    <tbody>
+      <tr><td><b>House league</b></td><td></td><td></td><td><b>House league registration fees</b></td><td class="n">$4,400</td><td class="n">$3,610</td></tr>
+      <tr><td>&nbsp;&nbsp;2026 season fees</td><td class="n">$2,100</td><td class="n">$1,800</td><td>&nbsp;&nbsp;&nbsp;&nbsp;2026 season</td><td class="n muted">$2,100</td><td class="n muted">$1,800</td></tr>
+      <tr><td>&nbsp;&nbsp;2027 season fees</td><td class="n">$2,300</td><td class="n">$1,810</td><td>&nbsp;&nbsp;&nbsp;&nbsp;2027 season</td><td class="n muted">$2,300</td><td class="n muted">$1,810</td></tr>
+    </tbody></table></div>
+  <p class="rides">Figures are illustrative. In both, a refund files as money out on the same row, and an online payment later lands where a cash one does. The family's processing fee is never in the club's book.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q10" value="B: one 'House league registration fees' row, seasons under it; budget = price x expected players per season">B: one "House league registration fees" row with the seasons under it. Its budget is the sum of each division's cap × its price, filled in and editable. A fee files in the fiscal year it was received (a December payment for a May season files in December's year).</label>
+    <label><input type="checkbox" name="Q10" value="A: a category per season with a fees item">A: a category per season, each with a fees item (room later for that season's costs, such as permits and umpires).</label>
+  </div><textarea aria-label="Notes for Q10" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="Q15"><h3><span class="no">Q15</span>A League Plus club has no accounting. Where do its fees live?</h3>
+  <p class="rides">The Facts doc: League Plus adds the public site, house league and Families; Club adds accounting. So for a League Plus club the season's Money page is the whole book and has to be right on its own (F14), and Budget vs. Actual only exists on Club. D11 (League Plus goes on sale) is logged as Proposed and confirmed when this stage opens, through /strategy.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q15" value="Season Money page is the book on League Plus; Club also files to the Statement">The season's Money page is the book on League Plus. Club also files the same lines to the Statement. Nothing new is sold.</label>
+    <label><input type="checkbox" name="Q15" value="Give League Plus a fees-only Statement">Give League Plus a fees-only Statement (a packaging change; /strategy first).</label>
+  </div><textarea aria-label="Notes for Q15" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 10 ===================== -->
+<div class="st" id="s10">
+<p class="eyebrow">Station 10 of 12 · phone first</p>
+<h2>The public pages</h2>
+<p class="who">The league index, the season page, schedule, standings, and the house-league part of the club home. House league has no team pages.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:club-home-desk-warm}}" alt="Club home, desk"></div><div class="bar"><span>Club home · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-sched-phone-warm}}" alt="Public schedule on a phone"></div><div class="bar"><span>Public schedule (2026) · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="cols"><div class="shot"><div class="sc"><img src="{{IMG:pub-index-desk-warm}}" alt="Public league index, desk"></div><div class="bar"><span>League index · 1440</span><button type="button" class="op">Full size</button></div></div><div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-index-phone-warm}}" alt="League index on a phone"></div><div class="bar"><span>League index · 390</span><button type="button" class="op">Full size</button></div></div></div>
+<div class="meas">
+  <div class="bad"><b>1 of 2</b><span>live seasons shown on the index and the club home; the one being played (2026) is the one hidden</span></div>
+  <div class="bad"><b>0</b><span>places on the public schedule</span></div>
+  <div class="bad"><b>hidden · "on"</b><span>a cancelled game vanishes; a postponed one (Jun 14) reads as on</span></div>
+  <div><b>"Week of Jun 1 – Jun 7"</b><span>opens on the first week, not this one; no time-zone line</span></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>Division buttons on the schedule are large and clear on a phone.</li>
+    <li>Practices never appear publicly, as ruled.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>The newest-created live season wins. Here 2027 sign-ups hide the running 2026 season from the club home <button class="fl" data-f="F04" data-here="Club home: 'House league — Dev House League 2027' only.">F04</button>.</li>
+    <li>The schedule hides the facts a parent needs most: where, and whether it's still on <button class="fl" data-f="F19" data-here="Public schedule: Jun 14 Cardinals vs Orioles reads as on; it's postponed.">F19</button>.</li>
+    <li>The club home's "House league" row reads "Schedule and standings from Jun 1, 2027" for a season that starts May 31. Worth a check in 9a.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change</h4><ul>
+    <li>9a: the index and the club home show every live season: "Playing now" and "Registration open", side by side when both exist. Drawn.</li>
+    <li>9d: the public schedule shows the place, Cancelled struck through, Postponed in words, opens on this week, and "Times in Eastern time." once.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q14"><h3><span class="no">Q14</span>Two live seasons at once (spring and fall overlap)</h3>
+  <p class="rides">Drawn in 9a: the home, the rail's season switcher, and the public index.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q14" value="Show both, labelled by what's happening: Playing now / Registration open">Show both everywhere, each labelled by what's happening ("Playing now", "Registration open"). The rail opens on the season you last worked in.</label>
+    <label><input type="checkbox" name="Q14" value="One 'current' season the club picks; others one click away">The club marks one season "current"; the others are one click away.</label>
+  </div><textarea aria-label="Notes for Q14" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 11 ===================== -->
+<div class="st" id="s11">
+<p class="eyebrow">Station 11 of 12</p>
+<h2>Season end and next season</h2>
+<p class="who">Complete the season, archive it, look back, copy it forward, and welcome the returning family.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:season25-desk-warm}}" alt="A completed season's page, desk"></div><div class="bar"><span>Completed season (2025) · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:season25-phone-warm}}" alt="Completed season on a phone"></div><div class="bar"><span>Completed season · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>A finished season keeps its public page and its records.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>A finished season still offers "Edit", "Add division" and "Add your first division": the live tools on a record <button class="fl" data-f="F22" data-here="2025, Completed: Add division, Edit.">F22</button>.</li>
+    <li>No Past seasons page (the old link 404'd and was removed, not rebuilt). No copy forward: next year is retyped, divisions and all.</li>
+    <li>A returning family re-types everything; the form doesn't know them.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change</h4><ul>
+    <li>9a: Past seasons as a closed shelf on the home, and a finished season that reads as a record (Q16).</li>
+    <li>9f: "Start next season" copies divisions (with ages moved up a year), prices, waiver and switches. "Invite last season's families" with a pre-filled form waits on Stage 14 (one player across seasons) and is drawn with it.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q16"><h3><span class="no">Q16</span>What does a finished season look like?</h3>
+  <p class="rides">The coaches portal ruled "a closed season is one page" for a coach's team, because teaching thirty screens a read-only branch cost seventeen branches and still left write controls the server refused. The club's fiscal year reads in place, locked. House league sits between them, and its cost is lower: 9a builds one gate that hides what a person can't do, so a finished season is one more input to that gate, not a branch per screen. Either way, Money stays open after Complete: fees are settled and refunds recorded after the last game.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q16" value="In place, locked: same season pages, no write controls, 'Finished' in the season switcher">In place, locked through the one gate: the same season pages with every write control absent (Money still takes payments and refunds), and "Finished" in the season switcher. Reached from the Past seasons shelf.</label>
+    <label><input type="checkbox" name="Q16" value="One record page: results, registrations, money, with shelves">One record page per finished season (results, registrations and money on shelves), like the coaches portal.</label>
+  </div><textarea aria-label="Notes for Q16" placeholder="Notes"></textarea></div>
+</div>
+
+<!-- ===================== STATION 12 ===================== -->
+<div class="st" id="s12">
+<p class="eyebrow">Station 12 of 12</p>
+<h2>Getting around</h2>
+<p class="who">The whole area's navigation, desk and phone, and who may do what: owner, club admin, league admin, registrar, treasurer.</p>
+<div class="cols">
+  <div class="shot"><div class="sc"><img src="{{IMG:season26-desk-warm}}" alt="Season overview with the rail, desk"></div><div class="bar"><span>Season overview + rail · 1440</span><button type="button" class="op">Full size</button></div></div>
+  <div class="shot ph-shot"><div class="sc"><img src="{{IMG:season26-phone-warm}}" alt="Season overview on a phone"></div><div class="bar"><span>Season overview · 390</span><button type="button" class="op">Full size</button></div></div>
+</div>
+<div class="meas">
+  <div class="bad"><b>5 of 7</b><span>season pages in the rail; Overview and Ledger are missing, and "Seasons" stays lit on all of them</span></div>
+  <div class="bad"><b>0</b><span>season pages reachable from the phone's navigation; the season block does not exist on a phone</span></div>
+  <div class="bad"><b>16 of 16</b><span>house-league server routes that save anything, and refuse the club admin</span></div>
+  <div class="bad"><b>9 files</b><span>on the old-look gate; the whole area is listed as "Club Tier Stage 9"</span></div>
+</div>
+<div class="tw"><table class="t">
+  <thead><tr><th>Today</th><th>Owner</th><th>Club admin</th><th>League admin</th><th>Registrar</th><th>Treasurer</th></tr></thead>
+  <tbody>
+    <tr><td>Sees house league</td><td class="y">yes</td><td class="y">yes (D8)</td><td class="y">yes</td><td class="y">yes</td><td class="x">no</td></tr>
+    <tr><td>Season setup, divisions, teams, schedule</td><td class="y">edit</td><td class="x">read only <button class="fl" data-f="F01" data-here="Season, divisions, teams, draft, schedule, practices: owner or league admin only.">F01</button></td><td class="y">edit</td><td class="x">read only</td><td class="x">—</td></tr>
+    <tr><td>Approve, decline, tick a fee</td><td class="y">yes</td><td class="x">no</td><td class="y">yes</td><td class="y">yes</td><td class="x">—</td></tr>
+    <tr><td>Add a family by hand</td><td class="y">yes</td><td class="x">no</td><td class="y">yes</td><td class="x">no</td><td class="x">—</td></tr>
+    <tr><td>Email families, and read what was sent</td><td class="y">yes</td><td class="x">no, not even the history</td><td class="y">yes</td><td class="x">no</td><td class="x">—</td></tr>
+    <tr><td>The season's money page</td><td class="y">read</td><td class="y">read</td><td class="y">read</td><td class="y">read</td><td class="x">no</td></tr>
+  </tbody></table></div>
+<div class="read">
+  <div class="w"><h4>Works</h4><ul>
+    <li>House league sits under "Also on your plan" until the club runs a season.</li>
+    <li>The rail already has a season block to build on.</li>
+  </ul></div>
+  <div class="g"><h4>Gets in the way</h4><ul>
+    <li>The admin role was given house league (D8) and every save still checks for owner or league admin <button class="fl" data-f="F01" data-here="Hard-coded on all 16 routes that save.">F01</button>.</li>
+    <li>The rail's holes and the phone's missing season pages <button class="fl" data-f="F02" data-here="Rail: Registrations · Teams & draft · Schedule · Standings · Notifications.">F02</button>.</li>
+    <li>The rail's season switcher never appears. It reads the season list in a shape the server doesn't send, drops every season, and so never draws, even for this club with three seasons <button class="fl" data-f="F02" data-here="No switcher under 'SEASON' in the rail, with 2025, 2026 and 2027 on file.">F02</button>.</li>
+    <li>The money page has no row in the rail, and the treasurer, the person whose job is money, can't see it.</li>
+  </ul></div>
+  <div class="c"><h4>What I'd change (9a)</h4><ul>
+    <li>Club admin = league admin for house league. Registrar = registrations, fees and family email. Treasurer reads Money (Q17).</li>
+    <li>The season block: Overview · Registrations · Teams · Schedule · Standings · Money · Email families, with the switcher on top. On a phone, the same pages as a scrolling tab strip at the top of each season page, inside house league's own frame. The phone bar is Stage 13's, and I haven't touched it.</li>
+  </ul></div>
+</div>
+<div class="ask" data-ask="Q17"><h3><span class="no">Q17</span>Who may do what in house league?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q17" value="Admin = league admin; registrar = registrations, fees, add by hand, email families; treasurer reads Money">Club admin = league admin. Registrar: registrations, fees and refunds, add by hand, email families, and reads the rest. Treasurer: reads the Money page. A coach (if Q7) is a column the same gate gains in 9c: their own team only.</label>
+    <label><input type="checkbox" name="Q17" value="Admin = league admin only; registrar and treasurer unchanged">Only fix the club admin (D8). Registrar and treasurer stay as they are.</label>
+  </div><textarea aria-label="Notes for Q17" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="Q18"><h3><span class="no">Q18</span>What is the season's money page called?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q18" value="Money">"Money", the coaches portal's word for a team's book.</label>
+    <label><input type="checkbox" name="Q18" value="Fees">"Fees". It is only fees today; costs could come later.</label>
+    <label><input type="checkbox" name="Q18" value="Ledger">Keep "Ledger".</label>
+  </div><textarea aria-label="Notes for Q18" placeholder="Notes"></textarea></div>
+</div>
+</section>
+
+
+<section class="pane" id="back" data-pane="back" hidden>
+<h2 style="margin-top:20px">Standing back: the rules across the stations</h2>
+<p>Each of these cuts across several stations. Each stage below applies them to the screens it rebuilds, rather than fixing one screen at a time.</p>
+
+<div class="card"><h3>1 · Who may do what is one decision, made once</h3>
+<ul>
+  <li>Today every save checks the role by name, so giving the club admin house league (D8) changed what they can see and nothing they can do <button class="fl" data-f="F01" data-here="All 16 routes that save.">F01</button>. The fix is one gate that every route reads, and one table of who does what (Q17).</li>
+  <li><b>What you can't do is not shown.</b> A registrar who can't move a game doesn't get a greyed game window (today a reader does). Absent beats disabled.</li>
+  <li>The treasurer, whose job is money, can't see the season's money today. Q17 asks.</li>
+</ul></div>
+
+<div class="card"><h3>2 · A season has one home, and every page of it is reachable from it</h3>
+<ul>
+  <li>The season's Overview is its home. Overview · Registrations · Teams · Schedule · Standings · Money · Email families are rows in the rail's season block and tabs at the top of every season page on a phone <button class="fl" data-f="F02" data-here="Overview and Ledger aren't in the rail; the phone has no season pages.">F02</button>.</li>
+  <li>The home leads with what's happening: running seasons, then the ones getting ready, then past seasons on a closed shelf <button class="fl" data-f="F03" data-here="Seasons sorted by creation order.">F03</button>.</li>
+  <li>A finished season reads as a record (Q16). It never offers "Add your first division".</li>
+  <li>Every status change asks once, in a window that says what changes for families <button class="fl" data-f="F05" data-here="Mark complete, Close registration, Archive.">F05</button>.</li>
+</ul></div>
+
+<div class="card"><h3>3 · What a family is told, and when</h3>
+<div class="tw"><table class="t">
+  <thead><tr><th>Moment</th><th>Today</th><th>Proposed</th><th>Stage</th></tr></thead>
+  <tbody>
+    <tr><td>Signed up</td><td>Receipt email (best effort)</td><td>One receipt per sign-up, listing each child; the pay spot as a ghost</td><td>9b</td></tr>
+    <tr><td>Accepted / waitlisted / promoted</td><td>An email each</td><td>Same, with the pay spot when money is due</td><td>9b</td></tr>
+    <tr><td>Declined / withdrawn</td><td>Decline emails; withdraw is silent</td><td>Both say what happened to any money paid</td><td>9b</td></tr>
+    <tr><td>Placed on a team</td><td>Nothing</td><td>"Ava is on the Jays", sent when the convenor presses a new "Publish teams" step (held until ✓); the status page then shows the team</td><td>9c</td></tr>
+    <tr><td>Schedule published, game moved, rainout</td><td>Nothing</td><td>A "Publish schedule" step sends the first notice; later changes are held until ✓ and go to the affected teams' guardians only</td><td>9d</td></tr>
+    <tr><td>A family wants out</td><td>Email the club</td><td>"Ask to withdraw" on the status page; it lands in the convenor's Needs attention</td><td>9b-2</td></tr>
+    <tr><td>Season email</td><td>One per child, no cap</td><td>The club's batched sender: one per guardian, the club's cap</td><td>9d</td></tr>
+  </tbody></table></div>
+<p class="muted" style="font-size:13.5px;margin:6px 0 0">House rules: a change that tells families is held until ✓ and asks; every message goes through the club's batched sender, and the cap is counted per guardian.</p></div>
+
+<div class="card" id="contract"><h3>4 · The payments contract: how Stage 9 leaves room for 12b</h3>
+<p style="margin:0 0 6px">Payments (Stage 12) owns the checkout. Stage 9 owns the data and the flows it will sit on. Prices, rates and plan inclusions are not restated here; the Facts doc is their only home.</p>
+<div class="tw"><table class="t">
+  <thead><tr><th>#</th><th>Line</th><th>Today (verified)</th><th>Where Stage 9 meets it</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>A price on the division, season price as default, one resolver</td><td>One season fee, read directly in about a dozen places</td><td>9b-1 · mirror the tournament's per-division fee rule</td></tr>
+    <tr><td>2</td><td>Early bird ends at a date, in the club's zone</td><td>None</td><td>9b-1 · same resolver</td></tr>
+    <tr><td>3</td><td>Open and close dates are real</td><td>Decorative <button class="fl" data-f="F08" data-here="2027: closed Aug 1, still open.">F08</button></td><td>9b-1 · S2·b</td></tr>
+    <tr><td>4</td><td>Price frozen on the registration, recording which price</td><td>Read live at the tick and in the family record <button class="fl" data-f="F11" data-here="Season fee read at tick time.">F11</button></td><td>9b-2 · Q2</td></tr>
+    <tr><td>5</td><td>Capacity can't overfill; waitlist positions constrained</td><td>Count, then insert <button class="fl" data-f="F10" data-here="Public sign-up and approve.">F10</button></td><td>9b-1</td></tr>
+    <tr><td>6</td><td>Paid is its own fact, read through one function</td><td>A paid flag beside the status <button class="mk unc" data-note="Kept: no 'payment pending' status. Status stays pending / active / waitlisted / declined / withdrawn.">UNCHANGED</button></td><td>9b-2 · one read for paid / owing / refunded</td></tr>
+    <tr><td>7</td><td>One writer for money</td><td>Held, with a guard test</td><td>Every stage · never a second fee writer</td></tr>
+    <tr><td>8</td><td>Ending a paid registration is honest</td><td>Silently voided <button class="fl" data-f="F12" data-here="Ethan Brown.">F12</button></td><td>9b-2 · Q6</td></tr>
+    <tr><td>9</td><td>Several children, one sign-up reference</td><td>One child per form</td><td>9b-1 · Q5</td></tr>
+    <tr><td>10</td><td>CASL consent beside the waiver, same consent row</td><td>Waiver only</td><td>9b-1</td></tr>
+    <tr><td>11</td><td>The payer is the guardian, linked to the Families book; no family account</td><td>Guardian on the registration, linked to a person</td><td>9b-1 · kept account-free</td></tr>
+    <tr><td>12</td><td>Statement filing by source; the club's revenue is the fee</td><td>Files nowhere <button class="fl" data-f="F15" data-here="Not a club book.">F15</button></td><td>9b-2 · Q10, Q15</td></tr>
+    <tr><td>13</td><td>Stable spots for the pay link</td><td>None</td><td>9b-2 · ghosts on status page, emails, Families book</td></tr>
+    <tr><td>14</td><td>"Payable separately" stays until 12b</td><td>Present</td><td>Kept <button class="mk unc" data-note="Kept until 12b replaces it with Pay now.">UNCHANGED</button></td></tr>
+  </tbody></table></div>
+<p class="muted" style="font-size:13.5px;margin:6px 0 0"><b>Not in Stage 9</b>, because 12 owns it: Stripe onboarding, checkout, a payments table, webhooks, processor refunds, payouts, tax on a fee, installments or discounts (cancelled), online-payment emails.</p></div>
+
+<div class="card"><h3>5 · One calendar recipe, admin and public</h3>
+<p style="margin:0">C1–C12 apply to both schedules: one season list grouped by week, opening on this week; "Oct 19 – 25, 2026"; the place on every game; "Final"; no chip on a scheduled game; a read window for readers; the division as the scope pill; Cancelled struck through and Postponed in words; "Times in Eastern time." once <button class="fl" data-f="F18" data-here="Admin schedule.">F18</button> <button class="fl" data-f="F19" data-here="Public schedule.">F19</button>.</p></div>
+
+<div class="card"><h3>6 · The old look goes as each screen is rebuilt</h3>
+<p style="margin:0">Nine files are on the old-look gate and the stylesheet is on the strict colour-debt list. Each stage moves the screens it rebuilds onto the kit and takes them off the list, so the list shrinks by stage: 9a the home and the season overview; 9b registrations, the form and money; 9c teams; 9d schedule; 9e standings and the composer <button class="fl" data-f="F06" data-here="9 files on the gate.">F06</button>.</p></div>
+
+<div class="card"><h3>7 · Found outside house league's block (inputs for Stage 13)</h3>
+<ul>
+  <li>On a League-plan club the phone bar reads Overview · Calendar · House league · Families · More. Whether house league earns a bar slot is Stage 13's call; I drew only inside house league's own frame.</li>
+  <li>"Notifications" is used for three different things across the product (the bell, Needs attention, this composer). Q12 renames house league's one; the others are Stage 13's.</li>
+</ul></div>
+</section>
+
+<section class="pane" id="ladder" data-pane="ladder" hidden>
+<h2 style="margin-top:20px">The ladder</h2>
+<p>I started from the proposal in the kickoff (9a–9f) and tested it against the walk. I kept its order and changed three things:</p>
+<div class="verdict push"><h3>Where the walk changed the proposal</h3><ul>
+  <li><b>9b splits in two.</b> The sign-up (dates, capacity, several children, consent, price per division) and the money (frozen price, honest endings, Money page, Statement) are two different reviews and two different builds. Each is large on its own. Both must be ruled before 12b is drawn, so the split costs payments nothing.</li>
+  <li><b>The season email moves onto the batched sender in 9d, not 9e.</b> 9d's change notices need that sender, and building it once avoids rework.</li>
+  <li><b>The season's Money page has to be right on its own, not only on the Statement.</b> A League Plus club has no accounting, so for them the season page is the whole book (Q15). That puts the wrong "Outstanding $0.00" in 9b-2's scope, not a later polish.</li>
+</ul></div>
+<div class="tw"><table class="t">
+  <thead><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>Size</th><th>State</th></tr></thead>
+  <tbody>
+    <tr><td><b>9a</b><br>The frame and who can do what</td><td>The house-league home (running · getting ready · past shelf); the season block with Overview, Money and Email families, and a working switcher; the phone's season tab strip; two live seasons, admin and public; every status change asks; the write gate matched to D8, plus registrar and treasurer; the dead fee switch removed; the old look retired on the home and the overview.</td><td>Q12 · Q14 · Q16 · Q17 · Q18 · S1·b · 9a·1–4</td><td>M</td><td>Drawn 2026-10-24 (this page)</td></tr>
+    <tr><td><b>9b-1</b><br>Sign-up, payments-ready</td><td>Create season reshaped and a Setup page; price per division and early bird through one resolver; real open and close dates; capacity taken atomically; waitlist constraint; one child can't be signed up twice; approve respects capacity; several children in one sign-up; CASL consent; date of birth picks the division; a staff notice for every public sign-up. Server and the public form only; the Registrations screen is rebuilt once, in 9b-2.</td><td>Q5 · S1·a · S2·b</td><td>L</td><td>Walked 2026-10-24</td></tr>
+    <tr><td><b>9b-2</b><br>Money, honest</td><td>The price frozen per registration; one "end this registration" path that asks about money and records refunds as money out; the Money page as one band; Registrations on the kit with Withdraw, Move division, Release the spot, bulk actions and a Paid / Owing filter; the club's own payment instructions until 12b; "Ask to withdraw" on the status page; fees on the Statement and Walk 7a step 7.6; ghost pay spots; the Families book balance from the frozen price. <b>12b is drawn right after this is ruled.</b></td><td>Q1 · Q2 · Q3 · Q4 · Q6 · Q10 · Q15</td><td>L</td><td>Walked 2026-10-24</td></tr>
+    <tr><td><b>9c</b><br>Teams and people</td><td>Ratings and a balanced snake draft (if Q8); a draft per division; coaches as people (if Q7), added as a column of 9a's gate; Publish teams with placement notices; the status page shows the team; teams on the kit.</td><td>Q7 · Q8 · Q9</td><td>M–L (L with coach accounts)</td><td>Walked 2026-10-24</td></tr>
+    <tr><td><b>9d</b><br>The schedule</td><td>The generator rebuilt (weekdays, slots, length, dates off, byes, several divisions, checks itself); C1–C12, admin and public; health score (if Q11); 11b on the club scheduler; venue and permit links; change notices to families; the season email onto the batched sender.</td><td>Q11</td><td>L</td><td>Walked 2026-10-24</td></tr>
+    <tr><td><b>9e</b><br>Game day</td><td>Standings by sport pack; score entry (by coaches if Q7); rainout as one action; standings and the composer on the kit.</td><td>none new</td><td>S–M</td><td>Walked 2026-10-24</td></tr>
+    <tr><td><b>9f</b><br>Season end</td><td>Archive; the finished-season record (Q16); Start next season copies it forward. Inviting last season's families with a pre-filled form waits on Stage 14 (one player across seasons).</td><td>none new</td><td>M</td><td>Walked 2026-10-24</td></tr>
+  </tbody></table></div>
+<p class="muted" style="font-size:13.5px">Order is by dependency and rework risk, not by date. 9a frames everything after it. 9b-1 and 9b-2 come before 12b. 9c comes before 9d because the generator needs teams. 9f leans on Stage 14. Volunteers are not in this ladder (Q9).</p>
+</section>
+
+
+<section class="pane" id="draw" data-pane="draw" hidden>
+<h2 style="margin-top:20px">9a drawn: the frame and who can do what</h2>
+<p>Every later stage draws inside this frame, so it goes first. Each surface has the capture (before) and the drawing (after). Tags say what's new, restyled or kept, and a green chip names the finding it fixes. A tag such as <button class="mk s" data-note="A part of the drawing that a LATER stage delivers, drawn here so the end state is visible. The tag names the stage.">9b-2</button> marks a later stage's part of the end state, so the screen isn't drawn twice. Switch Warm/Dark at the right of the tab bar. Desk drawings fit your screen; use "Show at true size" to see them at 1440. Open this page on a phone to judge the phone drawings at their real size.</p>
+<p class="muted" style="font-size:13.5px">The fixture's 2026 season ended on August 30 and nobody has completed it, so it is drawn as it would read today: past its end date, with the prompt to complete it. A season inside its dates reads "Playing now".</p>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<!-- ============ A · HOME ============ -->
+<h3 id="dA">A · The house-league home</h3>
+<div class="chips"><button class="fl fix" data-f="F03" data-here="Rows grouped by what's happening.">fixes F03</button><button class="fl fix" data-f="F04" data-here="Both live seasons lead the page.">fixes F04 (admin)</button><button class="fl fix" data-f="F05" data-here="Status buttons leave the home; they live in the season, and ask.">fixes F05</button><button class="fl fix" data-f="F06" data-here="The home moves onto the kit.">fixes F06 (home)</button></div>
+<p class="sp-cap">BEFORE · today, 1440</p>
+<div class="shot" style="max-width:1000px"><div class="sc"><img src="{{IMG:index-desk-warm}}" alt="Today's seasons home"></div><div class="bar"><span>Seasons home · 1440</span><button type="button" class="op">Full size</button></div></div>
+<p class="sp-cap" style="margin-top:14px">AFTER · drawn, 1440</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>
+      <span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk"><span class="it sub on">Seasons</span></div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+      <span class="grp">Also on your plan</span><span class="it"><i></i>Tournaments</span>
+      <span class="grp">Organization</span><span class="it"><i></i>Organization</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league</div><h1>Seasons</h1></div><span class="sp"></span><span class="btn pri">+ Create season</span> <button class="mk unc" data-note="Kept: Create season asks (create asks). What it asks is S1·a, a 9b-1 decision.">UNCHANGED</button></div>
+      <div class="panel">
+        <div class="hd"><h2>Running now</h2><button class="mk new" data-note="NEW: seasons grouped by what is happening, not by the order they were created. Every live season leads (Q14). An empty group is not drawn: a 'Getting ready' group appears only when a season is in draft.">NEW</button></div>
+        <div class="rows">
+          <div class="r"><div class="m"><b>Dev House League 2026 <span class="pill wait" style="margin-left:6px"><span class="dot"></span>Ended Aug 30</span></b><div class="d">May 31 – Aug 30, 2026 · Softball · 2 divisions · 14 players · 6 teams</div><div class="u">Past its end date: complete it from the season page</div></div><span class="amb" aria-label="1 registration to review">1</span> <button class="mk res" data-note="RESTYLED: the waiting count is the amber pill alone (house rule), not 'Pending 1' in a stat grid. It opens the season's Registrations on its To review tab.">RESTYLED</button><span class="chev" style="transform:rotate(-45deg);margin:0 4px"></span></div>
+          <div class="r"><div class="m"><b>Dev House League 2027 <span class="pill reg" style="margin-left:6px"><span class="dot"></span>Registration open</span></b><div class="d">May 31 – Aug 30, 2027 · 3 divisions · 5 of 38 spots taken</div><div class="u">Registration closes Aug 1, 2026 <button class="mk s" data-note="9b-1: the form closes itself on this date. Today the date is decoration (F08); until 9b-1 this line shows a date that has passed beside 'Registration open'.">9b-1</button></div></div><span class="chev" style="transform:rotate(-45deg);margin:0 4px"></span></div>
+        </div>
+      </div>
+      <div class="panel"><div class="fold"><b>Past seasons</b><span class="pill">1</span><span class="chev"></span><button class="mk new" data-note="NEW: Past seasons, as a closed shelf at the bottom of the home. The old rail link 404'd and was removed; this replaces it inside the page. What a finished season looks like is Q16.">NEW</button></div></div>
+    </div></div>
+  </div>
+</div></div>
+<p class="cap">Status changes (Mark complete, Close registration, Archive) leave the home; they live in the season and ask. The "U10" chip is gone, because a season isn't a division. The season card's stat grid becomes one line.</p>
+
+<!-- ============ B · SEASON OVERVIEW + RAIL ============ -->
+<h3 id="dB">B · The season's home, with its block in the rail</h3>
+<div class="chips"><button class="fl fix" data-f="F02" data-here="Overview and Money are rows; the switcher works.">fixes F02</button><button class="fl fix" data-f="F05" data-here="Complete is a rare door that asks.">fixes F05</button><button class="fl fix" data-f="F06" data-here="The season overview on the kit.">fixes F06 (overview)</button><button class="fl fix" data-f="F07" data-here="The dead fee switch is gone.">fixes F07 (switch)</button></div>
+<p class="sp-cap">BEFORE · today, 1440</p>
+<div class="shot" style="max-width:1000px"><div class="sc"><img src="{{IMG:season26-desk-warm}}" alt="Today's season overview"></div><div class="bar"><span>Season overview · 1440</span><button type="button" class="op">Full size</button></div></div>
+<p class="sp-cap" style="margin-top:14px">AFTER · drawn, 1440</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>
+      <span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk">
+        <span class="it sub">Seasons</span>
+        <span class="grp" style="padding-left:14px">Season</span>
+        <span class="sw" style="margin-left:14px">Dev House League 2026<span class="chev"></span></span>
+        <span class="it sub on">Overview<button class="mk new" data-note="NEW row: the season's own home. Today it shows only as the 'Seasons' row staying lit.">NEW</button></span>
+        <span class="it sub">Registrations <span class="amb" style="margin-left:auto" aria-label="1 to review">1</span></span>
+        <span class="it sub">Teams &amp; draft</span>
+        <span class="it sub">Schedule</span>
+        <span class="it sub">Standings</span>
+        <span class="it sub">Money<button class="mk new" data-note="NEW row: the season's money page, today 'Ledger', reachable only from a division card. Its name is Q18.">NEW</button></span>
+        <span class="it sub">Email families<button class="mk res" data-note="RESTYLED: today 'Notifications'. Its name is Q12.">RESTYLED</button></span>
+      </div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+      <span class="grp">Also on your plan</span><span class="it"><i></i>Tournaments</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league · season</div><h1>Dev House League 2026</h1><p class="sub">May 31 – Aug 30, 2026 · Softball</p></div><span class="pill wait"><span class="dot"></span>Ended Aug 30</span><span class="sp"></span><span class="btn">View public page</span></div>
+      <div class="band">
+        <div><div class="k">Players</div><div class="v">14</div><div class="h">of 26 spots</div></div>
+        <div><div class="k">To review</div><div class="v am">1</div><div class="h">Registrations</div></div>
+        <div><div class="k">Waitlist</div><div class="v">1</div><div class="h">Division A</div></div>
+        <div><div class="k">Teams</div><div class="v">6</div><div class="h">2 players unplaced</div></div>
+        <div><div class="k">Fees still owing</div><div class="v am">$600</div><div class="h">4 of 14 players</div><button class="mk s" data-note="9b-2: from the price frozen on each registration, so editing the season price never rewrites it. Today the Ledger says $0.00 outstanding (F14).">9b-2</button></div>
+      </div>
+      <div class="panel">
+        <div class="hd"><h2>Divisions</h2><span class="btn">+ Add division</span></div>
+        <table class="kt"><thead><tr><th>Division</th><th>Ages</th><th>Players</th><th>Teams</th><th>Price<button class="mk s" data-note="9b-1: a price per division, the season price as default, early bird through one resolver.">9b-1</button></th><th></th></tr></thead>
+        <tbody>
+          <tr><td><b>Division A</b></td><td>—</td><td><span class="meter"><i style="width:75%"></i></span>9 / 12 · 1 waitlisted</td><td>3</td><td>$150</td><td style="text-align:right"><span class="btn ic" aria-label="Edit Division A"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></td></tr>
+          <tr><td><b>Division B</b></td><td>—</td><td><span class="meter"><i style="width:36%"></i></span>5 / 14</td><td>3</td><td>$150</td><td style="text-align:right"><span class="btn ic" aria-label="Edit Division B"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="panel">
+        <div class="hd"><h2>Registration</h2><span class="btn ic" aria-label="Edit registration settings"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span><button class="mk res" data-note="RESTYLED: a record reads first and edits whole. The pencil flips the whole block into its form; the fields autosave (edit autosaves). One word for one thing: 'Registration' throughout.">RESTYLED</button></div>
+        <div style="padding:14px 16px;display:grid;grid-template-columns:max-content 1fr;gap:8px 24px;font-size:14px">
+          <span style="color:var(--dim)">Dates</span><span>Apr 1 – May 15, 2026 · closed</span>
+          <span style="color:var(--dim)">Waiver</span><span>On · "I acknowledge that softball involves risk…"</span>
+          <span style="color:var(--dim)">New registrations</span><span>Approved while a division has room; the waitlist moves up on its own</span>
+        </div>
+      </div>
+      <div class="rare">This season ended Aug 30. <a>Complete the season…</a> <button class="mk new" data-note="NEW: Complete is a rare door at the end of the body (house rule), and it asks in a window (drawing D). Today it is a one-click button in a Status strip. A season getting ready leads instead with a short checklist and a primary 'Open registration' (9a·4).">NEW</button></div>
+    </div></div>
+  </div>
+</div></div>
+<p class="cap">The Status strip, the "U10" chip, the five pill-links on every division card and the dead fee switch are gone. The rail's season block is set in under House league, and its switcher works (today it never appears).</p>
+
+<!-- ============ C · PHONE ============ -->
+<h3 id="dC">C · On a phone: the season's pages, inside house league's own frame</h3>
+<div class="chips"><button class="fl fix" data-f="F02" data-here="A strip of the season's pages at the top of every season page.">fixes F02 (phone)</button><button class="fl fix" data-f="F13" data-here="Each row carries its own actions.">fixes F13 (phone)</button></div>
+<div class="spec">
+  <div class="col"><p class="sp-cap">BEFORE · season, 390</p><div class="shot ph-shot"><div class="sc"><img src="{{IMG:season26-phone-warm}}" alt="Today's season overview on a phone"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">AFTER · season, 390</p>
+  <div class="ph"><div class="ak ph-in">
+    <div class="pbar"><span class="btn ic" aria-label="Back to seasons"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>House league<span class="sp"></span></div>
+    <div class="pswitch"><div class="t"><span class="ey">Season</span><b>Dev House League 2026</b></div><span class="pill wait"><span class="dot"></span>Ended Aug 30</span><span class="btn ic" aria-label="Switch season"><span class="chev"></span></span></div>
+    <div class="ptabs"><span class="on">Overview</span><span>Registrations <span class="amb" style="margin-left:6px">1</span></span><span>Teams</span><span>Schedule</span><span>Standings</span><span>Money</span><span>Email families</span></div>
+    <div class="pin">
+      <div class="band" style="grid-auto-flow:row;grid-template-columns:1fr 1fr">
+        <div><div class="k">Players</div><div class="v">14</div></div>
+        <div style="border-left:1px solid var(--line)"><div class="k">To review</div><div class="v am">1</div></div>
+        <div style="border-left:0;border-top:1px solid var(--line)"><div class="k">Waitlist</div><div class="v">1</div></div>
+        <div style="border-top:1px solid var(--line)"><div class="k">Still owing</div><div class="v am">$600</div></div>
+      </div>
+      <div class="panel"><div class="hd"><h2>Divisions</h2><span class="btn ic" aria-label="Add division"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></div>
+        <div class="rows"><div class="r"><div class="m"><b>Division A</b><div class="d">9 / 12 · 1 waitlisted · 3 teams · $150</div></div><span class="btn ic" aria-label="Edit Division A"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div><div class="r"><div class="m"><b>Division B</b><div class="d">5 / 14 · 3 teams · $150</div></div><span class="btn ic" aria-label="Edit Division B"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div></div></div>
+      <div class="rare">This season ended Aug 30. <a>Complete the season…</a></div>
+    </div>
+    <div class="bnav"><span><i></i>Overview</span><span><i></i>Calendar</span><span class="on"><i></i>House league</span><span><i></i>Families</span><span><i></i>More</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the season header with the season name, its state and a switch button (44 px, symbol alone), and a scrolling strip of the season's pages (44 px pills). It lives inside house league's own page, not in the phone bar.">NEW · season strip</button><button class="mk unc" data-note="UNCHANGED: the phone bar belongs to Stage 13. Drawn as it is today on a League-plan club.">UNCHANGED · phone bar</button></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · registrations, 390</p><div class="shot ph-shot"><div class="sc"><img src="{{IMG:regs-phone-warm}}" alt="Today's registrations on a phone"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">AFTER · registrations, 390</p>
+  <div class="ph"><div class="ak ph-in">
+    <div class="pbar"><span class="btn ic" aria-label="Back to seasons"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>House league<span class="sp"></span></div>
+    <div class="pswitch"><div class="t"><span class="ey">Season</span><b>Dev House League 2026</b></div><span class="pill wait"><span class="dot"></span>Ended Aug 30</span><span class="btn ic" aria-label="Switch season"><span class="chev"></span></span></div>
+    <div class="ptabs"><span>Overview</span><span class="on">Registrations <span class="amb" style="margin-left:6px">1</span></span><span>Teams</span><span>Schedule</span><span>Standings</span><span>Money</span><span>Email families</span></div>
+    <div class="pin">
+      <div style="display:flex;gap:4px;align-items:center"><span class="btn" style="flex:1;color:var(--dim);justify-content:flex-start;gap:8px"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>Search</span><span class="btn ic" aria-label="Filter"><svg class="ico" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v5l-4 2v-7z"/></svg></span><span class="btn ic" aria-label="Add a registration"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="btn ic" aria-label="Tools: Export, Email families"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+      <div class="utabs"><span class="on">To review <span class="c">1</span></span><span>Active <span class="c">14</span></span><span>Waitlist <span class="c">1</span></span><span>Ended <span class="c">3</span></span></div>
+      <div class="panel"><div class="rows">
+        <div class="r" style="flex-wrap:wrap"><div class="m"><b>Maya Singh</b><div class="d">Division A · signed up May 10 · $150 once accepted</div><div class="u">maya.singh@dev.local</div></div><span class="btn pri">Approve</span><span class="btn ic" aria-label="More for Maya Singh"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+      </div></div>
+    </div>
+    <div class="bnav"><span><i></i>Overview</span><span><i></i>Calendar</span><span class="on"><i></i>House league</span><span><i></i>Families</span><span><i></i>More</span></div>
+  </div></div>
+  <div class="chips"><button class="mk s" data-note="The rows and toolbar are 9b-2's (Registrations on the kit). Drawn here so the frame is judged with a real page inside it.">9b-2 · the rows</button><button class="mk new" data-note="NEW: one toolbar (Search · Filter · Add · Tools ⋯, with Export behind Tools). The status filter is the product's underline tabs, so it never looks like the season's page pills. A row carries its own actions: the primary keeps its word (Approve); the rest sit behind ⋯ (Waitlist, Decline, Withdraw, Mark received). Today they are 24 px and off-screen at x=644.">NEW · toolbar and rows</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · the same season, as a registrar</p>
+  <div class="ph"><div class="ak ph-in">
+    <div class="pbar"><span class="btn ic" aria-label="Back to seasons"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>House league<span class="sp"></span></div>
+    <div class="pswitch"><div class="t"><span class="ey">Season</span><b>Dev House League 2026</b></div><span class="pill wait"><span class="dot"></span>Ended Aug 30</span><span class="btn ic" aria-label="Switch season"><span class="chev"></span></span></div>
+    <div class="ptabs"><span class="on">Overview</span><span>Registrations <span class="amb" style="margin-left:6px">1</span></span><span>Teams</span><span>Schedule</span><span>Standings</span><span>Money</span><span>Email families</span></div>
+    <div class="pin">
+      <div class="band" style="grid-auto-flow:row;grid-template-columns:1fr 1fr">
+        <div><div class="k">Players</div><div class="v">14</div></div>
+        <div style="border-left:1px solid var(--line)"><div class="k">To review</div><div class="v am">1</div></div>
+        <div style="border-left:0;border-top:1px solid var(--line)"><div class="k">Waitlist</div><div class="v">1</div></div>
+        <div style="border-top:1px solid var(--line)"><div class="k">Still owing</div><div class="v am">$600</div></div>
+      </div>
+      <div class="panel"><div class="hd"><h2>Divisions</h2></div>
+        <div class="rows"><div class="r"><div class="m"><b>Division A</b><div class="d">9 / 12 · 1 waitlisted · 3 teams · $150</div></div></div><div class="r"><div class="m"><b>Division B</b><div class="d">5 / 14 · 3 teams · $150</div></div></div></div></div>
+    </div>
+    <div class="bnav"><span><i></i>Overview</span><span><i></i>Calendar</span><span class="on"><i></i>House league</span><span><i></i>Families</span><span><i></i>More</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: absent, not greyed. The registrar reads the season, but Add division, the pencils and Complete the season are simply not there. On Registrations and Email families they have the full tools (Q17).">NEW · a registrar's view</button></div></div>
+</div>
+
+<!-- ============ D · STATUS WINDOW ============ -->
+<h3 id="dD">D · A status change asks once</h3>
+<div class="chips"><button class="fl fix" data-f="F05" data-here="Complete, close registration, reopen and archive each ask.">fixes F05</button></div>
+<p class="sp-cap">BEFORE · one click, no window</p>
+<div class="shot" style="max-width:760px"><div class="sc"><img src="{{IMG:season26-strip-desk-warm}}" alt="Today's Status strip with Complete season"></div><div class="bar"><span>"Complete season" in the Status strip · one click</span><button type="button" class="op">Full size</button></div></div>
+<div class="spec" style="margin-top:14px">
+  <div class="col" style="flex:1 1 480px"><p class="sp-cap">AFTER · desk window</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg">
+    <div class="dh"><h4>Complete Dev House League 2026?</h4><span class="xx">×</span></div>
+    <div class="db"><p>The season moves to Past seasons. What changes:</p><ul><li>Registrations, teams and the schedule can no longer be changed.</li><li>Money stays open: you can still mark fees received and record refunds.</li><li>The public schedule and standings stay up, marked Final.</li><li>Families are not emailed.</li></ul><p style="color:var(--amber)">1 registration is still waiting for review, and 4 players still owe fees.</p></div>
+    <div class="df"><span class="s">You can reopen it from Past seasons.</span><span class="btn">Cancel</span><span class="btn pri">Complete season</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: one window per status change, saying what changes for families. Loose ends (waiting registrations, unpaid fees) warn and never block, as the coach's season close does. Money stays open after Complete. Foot: sentence left, buttons right.">NEW</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · phone, a full-screen window</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw">
+    <div class="fh"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Complete the season?</div>
+    <div class="fb"><b style="color:var(--ink)">Dev House League 2026</b><p style="margin:0">The season moves to Past seasons. What changes:</p><ul><li>Registrations, teams and the schedule can no longer be changed.</li><li>Money stays open: you can still mark fees received and record refunds.</li><li>The public schedule and standings stay up, marked Final.</li><li>Families are not emailed.</li></ul><p style="margin:0;color:var(--amber)">1 registration is still waiting for review, and 4 players still owe fees.</p></div>
+    <div class="ff"><span class="s">You can reopen it from Past seasons.</span><div class="bb"><span class="btn">Cancel</span><span class="btn pri">Complete season</span></div></div>
+  </div></div></div>
+  <div class="chips"><button class="mk unc" data-note="UNCHANGED rule: on a phone a window is a full screen with a back arrow (one window for the whole product). The foot's sentence sits above the buttons when there is no room beside them.">UNCHANGED · phone window rule</button></div></div>
+</div>
+
+<!-- ============ E · PUBLIC ============ -->
+<h3 id="dE">E · Two live seasons on the public side</h3>
+<div class="chips"><button class="fl fix" data-f="F04" data-here="Every live season, each labelled by what's happening.">fixes F04</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · club home, 1440</p><div class="shot"><div class="sc" style="max-height:340px"><img src="{{IMG:club-home-desk-warm}}" alt="Today's club home"></div><div class="bar"><span>Club home · 1440</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · club home, 390</p><div class="shot ph-shot"><div class="sc" style="max-height:420px"><img src="{{IMG:club-home-phone-warm}}" alt="Today's club home on a phone"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<p class="sp-cap" style="margin-top:14px">AFTER · drawn (the club site keeps its own look)</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 640px"><div class="dt-wrap"><div class="pub dt">
+    <div class="nv"><span class="hdr"><span class="mono">DL</span>Dev League Org</span><span class="on">Home</span><span>House league</span><span class="si">Sign in</span></div>
+    <div class="in" style="max-width:1160px"><div class="cols2">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h3>Open now</h3>
+        <div class="rw"><div class="m"><b>Dev House League 2027</b><div class="d">Registration open · $165 per player</div></div><span class="chev"></span></div>
+        <h3>House league</h3>
+        <div class="rw2"><div class="top"><b>Dev House League 2026</b><span class="tag g">Final standings</span><span class="chev"></span></div><div class="ln"><span class="lk">Schedule</span><span class="lk">Standings</span></div></div>
+        <div class="rw2"><div class="top"><b>Dev House League 2027</b><span class="tag">Registration open</span><span class="chev"></span></div><div class="ln"><span class="lk">Season page</span><span class="lk">Register</span></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px"><h3>About the club</h3><div class="rw" style="color:#555">Unchanged, not drawn: the About column and Follow.</div></div>
+    </div></div>
+  </div></div></div>
+  <div class="col"><div class="ph"><div class="pub">
+    <div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div>
+    <div class="in" style="padding:16px">
+      <h3>Open now</h3>
+      <div class="rw"><div class="m"><b>Dev House League 2027</b><div class="d">Registration open · $165</div></div><span class="chev"></span></div>
+      <h3>House league</h3>
+      <div class="rw2"><div class="top"><b>Dev House League 2026</b><span class="chev"></span></div><span class="tag g" style="align-self:flex-start">Final standings</span><div class="ln"><span class="lk">Schedule</span><span class="lk">Standings</span></div></div>
+      <div class="rw2"><div class="top"><b>Dev House League 2027</b><span class="chev"></span></div><span class="tag" style="align-self:flex-start">Registration open</span><div class="ln"><span class="lk">Season page</span><span class="lk">Register</span></div></div>
+    </div>
+  </div></div></div>
+</div>
+<p class="cap">Every live season shows, labelled by what's happening: "Playing now" inside its dates, "Final standings" once it has ended, "Registration open" while it takes sign-ups (Q14). Each row is a link, and its Schedule and Standings links are 44 px. The league index gets the same rows, with Past seasons below. "Open now" is Stage 4's list of everything taking sign-ups, so a season taking sign-ups appears there and in its program's section, as it does today (9a·7).</p>
+
+<!-- ============ F · WHO ============ -->
+<h3 id="dF">F · Who can do what (proposed, Q17)</h3>
+<div class="chips"><button class="fl fix" data-f="F01" data-here="One gate every route reads.">fixes F01</button></div>
+<div class="tw"><table class="t stick">
+  <thead><tr><th>Proposed</th><th>Owner</th><th>Club admin</th><th>League admin</th><th>Registrar</th><th>Treasurer</th></tr></thead>
+  <tbody>
+    <tr><td>Seasons, divisions, teams, schedule</td><td class="y">edit</td><td class="y">edit</td><td class="y">edit</td><td>read</td><td class="no">no access</td></tr>
+    <tr><td>Approve, decline, withdraw, mark received, record a refund, add by hand</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td><td class="no">no access</td></tr>
+    <tr><td>Email families</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td><td class="no">no access</td></tr>
+    <tr><td>Money page</td><td>read</td><td>read</td><td>read</td><td>read</td><td>read</td></tr>
+  </tbody></table></div>
+<p class="cap">A control a person can't use is absent, not greyed (the registrar's view in C). Money is written only by marking a payment received or recording a refund (and, in 12b, by a card payment), so nobody "edits" the Money page. A coach (if Q7) becomes a column of this same gate in 9c: their own team only.</p>
+
+<div class="card"><h3>Formatting check: what the /design pass changed (2026-10-24)</h3>
+<ul>
+  <li>Desk drawings fit the screen, with a true-size button; the club site drawing no longer leaves a stray strip.</li>
+  <li>Every phone control is at least 44 px; phone secondary actions are the symbol alone, with no border; outline icons replace the text glyphs.</li>
+  <li>The waiting-count pill no longer breaks inside a tab, and stays readable on the active tab in Dark.</li>
+  <li>The registrations status filter is drawn as underline tabs, so it doesn't look like the season's page pills; Export moved behind Tools (⋯).</li>
+  <li>D gained the phone version (a full-screen window); E gained a phone frame, whole-row links and the header it had dropped; "1 to review" became the pill alone.</li>
+  <li>Tags no longer push the figures or rail rows out of line; the season block in the rail is set in under House league.</li>
+  <li>The role table: "no access" in words, the treasurer's "read" no longer bold, the first column stays put on a phone; a registrar's view shows "absent, not greyed".</li>
+  <li>The empty "Getting ready" group is not drawn; one word ("Registration") for the sign-up block.</li>
+  <li>The "before" captures were re-shot: one had caught a dev server restart mid-load.</li>
+</ul>
+<p class="muted" style="margin:6px 0 0;font-size:13.5px">These are proposals until you rule them. Three are owner calls, asked as 9a·5 to 9a·7 below.</p></div>
+
+<h3>Asks on these drawings</h3>
+<div class="ask" data-ask="D1"><h3><span class="no">9a·1</span>The home: grouped rows, or today's cards?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D1" value="Grouped rows: Running now / Getting ready (only when one exists) / Past seasons shelf (drawing A)">Grouped rows: Running now, Getting ready (only when a season is in draft), and a closed Past seasons shelf (drawing A).</label>
+    <label><input type="checkbox" name="D1" value="Keep cards, sorted live-first, with a Past seasons shelf">Keep today's cards, sorted with live seasons first, and add the shelf.</label>
+  </div><textarea aria-label="Notes for 9a·1" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="D2"><h3><span class="no">9a·2</span>The season block in the rail</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D2" value="Switcher + Overview, Registrations, Teams & draft, Schedule, Standings, Money, Email families (drawing B)">Switcher, then Overview · Registrations · Teams &amp; draft · Schedule · Standings · Money · Email families, set in under House league (drawing B).</label>
+    <label><input type="checkbox" name="D2" value="Keep five rows; Overview and Money reached from the season page">Keep today's five rows; Overview and Money are reached from the season page only.</label>
+  </div><textarea aria-label="Notes for 9a·2" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="D3"><h3><span class="no">9a·3</span>On a phone: how does a convenor move between a season's pages?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D3" value="Season header + scrolling page strip on every season page (drawing C)">A season header with a scrolling strip of page pills on every season page (drawing C).</label>
+    <label><input type="checkbox" name="D3" value="A 'Season pages' button opening a sheet">A "Season pages" button that opens a sheet listing them.</label>
+  </div><textarea aria-label="Notes for 9a·3" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="D4"><h3><span class="no">9a·4</span>Where do status changes live, and do they ask?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D4" value="Getting ready: primary Open registration with a checklist; Complete and Archive as a rare door; every change asks (B, D)">A season getting ready leads with a short checklist (a division, a price, dates) and a primary "Open registration". Close registration sits on the Registration block. Complete and Archive are a rare door at the end of the page. Every one asks in a window (B, D).</label>
+    <label><input type="checkbox" name="D4" value="Keep a Status strip near the top; each button asks">Keep a Status strip near the top; each button asks.</label>
+  </div><textarea aria-label="Notes for 9a·4" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="D5"><h3><span class="no">9a·5</span>Phone Registrations: is Approve the only lime button?</h3>
+  <p class="rides">The /design pass drew today's lime "Add registration" as a bare + in the toolbar (a phone's secondary action is its symbol alone), leaving Approve as the one primary on the screen.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D5" value="Yes: Add registration is a + in the toolbar on a phone; Approve is the one primary">Yes. On a phone, Add registration is a + in the toolbar and Approve is the one primary.</label>
+    <label><input type="checkbox" name="D5" value="No: keep Add registration in words on a phone">No. Keep "Add registration" in words on a phone.</label>
+  </div><textarea aria-label="Notes for 9a·5" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="D6"><h3><span class="no">9a·6</span>Section headings: inside the card, or above it?</h3>
+  <p class="rides">Drawn inside the card ("Running now", "Divisions", "Registration"). Two rulings put headings above their card, for the game-day console and the public team page. Neither was ruled for the club admin.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D6" value="Inside the card, as drawn (the club admin's current pattern)">Inside the card, as drawn. It is the club admin's current pattern; a change belongs to Stage 13's one standard.</label>
+    <label><input type="checkbox" name="D6" value="Above the card, with actions on the heading line">Above the card, with the actions on the heading line.</label>
+  </div><textarea aria-label="Notes for 9a·6" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="D7"><h3><span class="no">9a·7</span>A season taking sign-ups appears twice on the club home</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D7" value="Keep both: Open now lists everything taking sign-ups; the program section lists its seasons">Keep both, on purpose. "Open now" lists everything taking sign-ups on the club; the House league section lists its seasons.</label>
+    <label><input type="checkbox" name="D7" value="Once: leave it out of the House league section while it is in Open now">Show it once: leave it out of the House league section while it is in "Open now".</label>
+  </div><textarea aria-label="Notes for 9a·7" placeholder="Notes"></textarea></div>
+<p class="muted">Also decided on these drawings, and asked on the Walk tab: two live seasons (Q14), a finished season (Q16), who does what (Q17), and the names "Money" (Q18) and "Email families" (Q12).</p>
+</section>
+
+
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:20px">Asks &amp; paste-back</h2>
+<p>Every question on this page, in one list. Tick on the Walk and 9a tabs (or here, via the links), then build the summary and paste it back to me. Your ticks and notes stay in this browser.</p>
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste">
+  <div class="row"><button type="button" class="btn-d pri" id="build">Build the summary</button><button type="button" class="btn-d" id="copy">Copy</button><span class="muted" id="copied" style="font-size:13px"></span></div>
+  <label for="out" class="eyebrow">Paste this back</label>
+  <textarea id="out" readonly></textarea>
+</div>
+</section>
+</div>
+
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ F01:{t:'A club admin can open every house-league screen and save nothing', today:'D8 gave the admin role the house-league capability, so every screen opens. All 16 server routes that save anything then check for "owner" or "league admin" by name, so every save is refused. The email composer refuses the admin even reading the send history.', fix:'One gate every route reads, matched to D8, plus the registrar and treasurer rows in Q17. A control a person can\'t use is absent.', st:'9a'},
+ F02:{t:'The season\'s home and its money page aren\'t in the navigation; the phone has none of a season\'s pages', today:'The rail\'s season block lists Registrations, Teams & draft, Schedule, Standings and Notifications. The season overview shows only as "Seasons" staying lit, and the Ledger is reachable only from a division card. The rail\'s season switcher never appears: it expects a different shape of season list than the server sends. On a phone there is no season block at all.', fix:'Season block: switcher, Overview, Registrations, Teams & draft, Schedule, Standings, Money, Email families. On a phone, a season header and tab strip on every season page.', st:'9a'},
+ F03:{t:'Seasons are ordered by when they were created, and there are no Past seasons', today:'The home shows 2025 (finished), 2027 (sign-ups), 2026 (running) as equal cards. The Past seasons link 404\'d and was removed.', fix:'Running now, Getting ready, and a closed Past seasons shelf.', st:'9a'},
+ F04:{t:'Two live seasons: the public side shows one, and it can be the wrong one', today:'The league index and the club home pick the newest-created live season. Here the 2027 sign-ups hide the 2026 season being played, so its schedule and standings have no link from the club home.', fix:'Every live season shows, labelled "Playing now" or "Registration open".', st:'9a'},
+ F05:{t:'Season status changes are one click', today:'Mark complete, Close registration, Complete season and the season-page Archive happen on one click. Only Archive on the seasons grid asks.', fix:'One next step as a rare door at the end of the season page, asking in a window that says what changes for families.', st:'9a'},
+ F06:{t:'The last area in the old look', today:'Nine house-league files are on the old-look gate and the stylesheet is on the strict colour-debt list. Measured: tabs 34 px, Approve 24 px, the fee tick 15×15, Week/List 26 px, "← All seasons" 16 px.', fix:'Each stage moves the screens it rebuilds onto the kit and takes them off the gate.', st:'9a–9e'},
+ F07:{t:'Create season asks the wrong things, and a switch does nothing', today:'Create season asks for a URL slug and a free-text "Division" label (the "U10" chip); divisions and caps come later. The fee is "display-only". "Auto-generate fee entries" is stored and never read. A division\'s age band can\'t be edited after it is created.', fix:'Create asks name, sport and dates; a Setup page holds the rest, edited in place; the dead switch goes.', st:'9a (switch) · 9b-1'},
+ F08:{t:'Registration dates are decoration', today:'The form opens and closes only on the status the convenor flips. The 2027 page says "Registration open" and "Registration closes August 1, 2026" on the same screen on October 24, and still takes sign-ups.', fix:'The dates run the form; the convenor can still close early or reopen (S2·b).', st:'9b-1'},
+ F09:{t:'The sign-up form: one child, no consent to email, age not used', today:'One child per form. A waiver box, but no CASL consent. Date of birth is optional and doesn\'t steer the division. "Payable separately" says no how, where or by when. 2,297 px long on a phone.', fix:'Add a child (Q5), CASL beside the waiver, date of birth picks the division, the price per division, a ghost pay spot.', st:'9b-1'},
+ F10:{t:'Capacity can overfill', today:'The public form counts active players and then writes the row, so two sign-ups at once can both take the last spot. Waitlist position is count + 1 with no constraint. Approve and add-by-hand never check capacity. Nothing stops the same child being registered twice.', fix:'Take the spot atomically; constrain waitlist positions; approve respects capacity.', st:'9b-1'},
+ F11:{t:'The fee is read live, so editing it rewrites what families owe', today:'The paid tick posts the season\'s fee as it is at that moment, and the family record\'s balance reads the current fee too. Change $150 to $175 mid-season and every balance moves.', fix:'Freeze the price on each registration, recording which price applied (Q2).', st:'9b-2'},
+ F12:{t:'Declining or withdrawing a paid registration erases the money', today:'Ethan Brown paid $150 (marked received) and was declined. His line is now VOID, his paid flag cleared, and nothing records that the club owes him $150. Withdraw is the same, and emails no one.', fix:'One "end this registration" window that asks what happened to the money and records a refund as money out (Q6).', st:'9b-2'},
+ F13:{t:'Registrations: missing actions, and none at all on a phone', today:'No Withdraw button, no bulk actions, no Paid / Owing filter; notes only in the export. On a phone the table is 851 px inside 358 px, and Status, Fee paid and the actions start at 644 px with no hint that it scrolls.', fix:'Rows that carry their own actions (primary in words, the rest behind ⋯), Withdraw, bulk approve, a Paid / Owing filter.', st:'9b-2'},
+ F14:{t:'The season book says $0.00 outstanding', today:'Expected $2,100.00 (14 × $150), Collected $150.00, Outstanding $0.00. Outstanding counts "pending entries", which no longer exist since fees post on the tick, so it reads zero for every season. The three figures are separate cards.', fix:'One band (owed, received, still owing, refunds) from the frozen prices. For a League Plus club this page is the whole book.', st:'9b-2'},
+ F15:{t:'House-league fees reach no Statement', today:'The season book is not a club book, so Budget vs. Actual leaves out the club\'s largest revenue line. A League Plus club has no accounting at all.', fix:'File fees on the Statement (Q10); the season Money page is the book on League Plus (Q15). Walk 7a step 7.6 changes.', st:'9b-2'},
+ F16:{t:'Teams: no ratings, and coaches are typed names', today:'The draft is a pick order and Randomize ignores skill. A coach is free text with no account, so a house-league coach who signs in lands on "No team assignments yet". No volunteers.', fix:'A light rating feeding a balanced draft (Q8); light coach accounts (Q7); volunteers as their own project (Q9).', st:'9c'},
+ F17:{t:'The schedule generator is thin', today:'One division, one start date and one game time per run; no weekdays, dates off, slots, game length or byes; a round lands on one date and time; one venue for every game; saving is a plain insert, and then it warns about clashes it created.', fix:'Rebuilt around the season\'s weekdays, slots, length and dates off, for several divisions, checking itself before it saves (Q11).', st:'9d'},
+ F18:{t:'The admin schedule is off the calendar recipe', today:'"Week of June 1, 2026"; a chip on every scheduled game; one narrow column at desk; opens on the first week; a reader gets a greyed form; practices can be cancelled but not moved.', fix:'C1–C12; practices on the club scheduler (11b).', st:'9d'},
+ F19:{t:'The public schedule is dishonest', today:'No place on any game; a cancelled game disappears; a postponed game reads as on (C6-04); "Week of Jun 1 – Jun 7"; opens on the first week; no time-zone line.', fix:'The place, Cancelled struck through, Postponed in words, opens on this week, "Times in Eastern time." once.', st:'9d'},
+ F20:{t:'Families are told almost nothing', today:'No notice on a schedule, practice, placement or rainout change. The season email sends one at a time, once per child, with no cap, counts a delivery failure as "no email on file", and shows a green "0 delivered" for an empty audience.', fix:'Change notices held until ✓; the season email through the club\'s batched sender.', st:'9d'},
+ F21:{t:'Standings ignore the sport', today:'Win 2, tie 1, runs as the tiebreak, hard-coded. The sport pack already defines points per win and draw and what standings sort by.', fix:'Standings read the sport pack.', st:'9e'},
+ F22:{t:'A finished season shows the live tools', today:'A completed season offers Edit, Add division and "Add your first division". There is no copy forward, and a returning family re-types everything.', fix:'A finished season reads as a record (Q16); Start next season copies it; returning families get a pre-filled form.', st:'9a (Q16) · 9f'},
+ F23:{t:'Loose ends around sign-up', today:'A sign-up from the public form notifies no one on staff (only add-by-hand does). Registration emails are fire-and-forget. The status lookup never shows the team.', fix:'A Needs attention item for each new sign-up; the status page shows the team and, in 12b, the pay spot.', st:'9b-1'},
+ F24:{t:'The permit isn\'t reachable from the schedule', today:'The Venue field picks from the venue library and checks permits quietly, but the only link out is a hint to the venue library. The generator applies one venue to every game.', fix:'Venue and permit links from the game window; the generator spreads games across fields.', st:'9d'}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Stage',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED':'Later stage';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+  var o=e.target.closest('.shot .op'); if(o){ var s=o.closest('.shot'); s.classList.toggle('open'); o.textContent=s.classList.contains('open')?'Fold':'Full size'; }
+}, true);
+// tabs
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9-tab',p)}catch(e){}
+  if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+// theme for specimens
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+// asks: persist
+var KEY='hl9-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=$$('input:checked',a).map(function(i){return i.value}); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(pane==='walk'?'Walk':'9a drawn')+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['House league · Stage 9 deep dive · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=$$('input:checked',a).map(function(i){return i.value}); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+// desk drawings: scaled to fit, or true size
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size (1440 wide). Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+tabs.forEach(function(t){ t.addEventListener('click',function(){ setTimeout(fitAll,0) }) });
+// restore
+var p0='walk', t0='warm'; try{ p0=localStorage.getItem('hl9-tab')||'walk'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(['walk','back','ladder','draw','asks'].indexOf(h)>=0) p0=h;
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>
