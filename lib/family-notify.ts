@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { getRepTeamCoaches } from './db';
 import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
+import { systemMailFace } from './club-email-context';
 import { formatInOrgZone } from './timezone';
 import { endSentence } from './utils';
 import { isVisibleToFamilies } from './family-access';
@@ -120,10 +121,11 @@ export async function notifyFamiliesOfGameUpdate(params: {
 
     const { data: orgRow } = await supabaseAdmin
       .from('organizations')
-      .select('name, slug')
+      .select('name, slug, logo_url, theme_preset, theme_primary, theme_accent')
       .eq('id', event.orgId)
       .maybeSingle();
-    const org = (orgRow as { name: string; slug: string } | null) ?? { name: 'Your team', slug: '' };
+    const orgFields = orgRow as { name: string; slug: string; logo_url: string | null; theme_preset: string | null; theme_primary: string | null; theme_accent: string | null } | null;
+    const org = orgFields ?? { name: 'Your team', slug: '' };
 
     // Verified links only. A pending, declined or revoked family is not a recipient — the
     // same rule that governs whether they can read the schedule governs whether we mail
@@ -191,6 +193,14 @@ export async function notifyFamiliesOfGameUpdate(params: {
     // that already runs inside a coach's save; a same-second opt-out arriving one message
     // late is the right side of that trade.
     const suppressed = await getFamilySuppressionList(event.orgId);
+    // The club's face and where a reply goes (S3b). A game-change notice is system mail: a reply reaches the club's public
+    // contact when it has one, else the line says so. Read once for the whole send, never once per family.
+    const face = orgFields
+      ? await systemMailFace({
+        id: event.orgId, name: org.name, logoUrl: orgFields.logo_url,
+        themePreset: orgFields.theme_preset, themePrimary: orgFields.theme_primary, themeAccent: orgFields.theme_accent,
+      })
+      : null;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     const recipients = Array.from(new Set(links.map(l => l.invited_email).filter(Boolean)));
 
@@ -213,9 +223,12 @@ export async function notifyFamiliesOfGameUpdate(params: {
               orgName: org.name,
               title,
               body,
-              cta: { href: `${appUrl}${link}`, label: 'See the full schedule →' },
+              cta: { href: `${appUrl}${link}`, label: 'See the full schedule' },
               reason: `you follow ${team.name}`,
+              club: face?.club,
+              replyLine: face?.replyLine,
             },
+            replyTo: face?.replyTo,
           }).catch(err => {
             console.error('[family-notify] one recipient failed:', err);
           }),

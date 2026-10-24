@@ -1,7 +1,10 @@
 'use client';
+import { useEffect, useState } from 'react';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import { duesReminderEmail, GUARDIAN_FIRST_NAME_PLACEHOLDER } from '@/lib/dues-reminder-email';
 import { warmEmailForPreview } from '@/lib/email-envelope-warm';
+import type { ClubEmailFacts } from '@/lib/email-club-identity';
+import { useOrg } from '@/lib/org-context';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -59,6 +62,24 @@ export default function DuesReminderPreviewModal({
      a phone. No busy gate and no ask — nothing here is typed and nothing here is saved. Every caller mounts it only
      while it is open, and it opens AFTER whatever it stands over (the reminder confirm, the dues drawer), so it is the
      top window of its layer. */
+  /* The club's face for the SAMPLE (The public face, warm: S3b): read from the same place the real send reads it, so the sample
+     wears the band the email will. The real letter (the `family` variant) arrives from the server already wearing it. Until
+     it answers the sample waits rather than flashing an unbranded email; a failed read shows the plain sample. */
+  const { currentOrg } = useOrg();
+  const orgSlug = currentOrg?.slug ?? null;
+  const [face, setFace] = useState<'loading' | 'none' | { club: ClubEmailFacts; replyLine: string | null }>('loading');
+  useEffect(() => {
+    // The real letter (the family variant) arrives from the server already wearing the club, so it needs no separate read.
+    if (!orgSlug || variant === 'family') { setFace('none'); return; }
+    let live = true;
+    fetch(`/api/coaches/${encodeURIComponent(orgSlug)}/club-email-face`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { if (live) setFace(j?.club ? { club: j.club, replyLine: j.replyLine ?? null } : 'none'); })
+      .catch(() => { if (live) setFace('none'); });
+    return () => { live = false; };
+  }, [orgSlug, variant]);
+  const faceFacts = typeof face === 'object' ? face : null;
+
   const today = tournamentToday();
   const bulk = variant === 'bulk';
   const family = variant === 'family';
@@ -70,6 +91,9 @@ export default function DuesReminderPreviewModal({
   // needs it ready rather than computed mid-render.
   const sample = duesReminderEmail({
     teamName: teamName || 'your team',
+    orgName: faceFacts?.club.name,
+    club: faceFacts?.club,
+    replyLine: faceFacts?.replyLine,
     guardianFirst: 'Jordan',
     window: bulk || family ? null : 30,
     items: family
@@ -158,6 +182,10 @@ export default function DuesReminderPreviewModal({
             {realEmpty.reason === 'skippedRecent'
               ? 'This family was reminded in the last 7 days — nothing sends again until that week is up.'
               : 'This installment is already paid — there is nothing left to remind them about.'}
+          </p>
+        ) : !realLetter && face === 'loading' ? (
+          <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+            Loading the email…
           </p>
         ) : (
           <>

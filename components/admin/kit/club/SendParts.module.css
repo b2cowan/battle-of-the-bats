@@ -33,3 +33,13 @@
   .row { min-height: var(--tap-min, 44px); }
   .details > summary { min-height: var(--tap-min, 44px); }
 }
+
+/* The club's band inside a sample (The public face, warm: S3b): the same strip the real family email wears, drawn from the same
+   `clubBand()` (lib/email-club-identity.ts), so a sample cannot promise a look the email does not have. The colours are the CLUB's,
+   set inline from its band; only the shape is here. Flush across the sample card, whose padding it cancels. */
+.sampleBand { display: flex; align-items: center; gap: 0.75rem; margin: -0.75rem -0.9rem 0.75rem; padding: 0.7rem 0.9rem; border-radius: 7px 7px 0 0; }
+.sampleBandTile { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 10px; font-size: 1rem; font-weight: 700; line-height: 1; } /* type-ok: data — the club's own initials in its tile, matched to the email's 16px tile (lib/email-envelope-warm.ts), not the kit */
+.sampleBandName { min-width: 0; font-size: 1.125rem; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; } /* type-ok: data — the club's name in its band, matched to the email's 18px band (lib/email-envelope-warm.ts), not the kit */
+.samplePlatform { margin: 0.75rem 0 0; color: var(--text-tertiary); }
+.samplePlatform b { color: var(--text-primary); }
+.samplePlatform i { font-style: normal; font-weight: 400; color: var(--home-olive); }

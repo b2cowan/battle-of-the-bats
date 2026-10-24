@@ -17,6 +17,7 @@
  */
 import type { LookStyles } from './email-markup';
 import { emailNameLineHtml } from './brand-mark';
+import { clubBand, platformLineWords, type ClubBand, type ClubEmailFacts } from './email-club-identity';
 
 /** The envelope's colours. Fixed values, not tokens: an email never sees the product's theme. */
 export const WARM_EMAIL = {
@@ -171,7 +172,8 @@ const WORDMARK = `<p style="margin:0 0 22px;line-height:1;">${emailNameLineHtml(
  * already names the sender). The card's edge is the darker one, so it holds against a mail app's white. For a preview
  * that drops it into a page (the template editor); a sent email uses `warmEmailDocument`.
  */
-export function warmEmailBody(inner: string): string {
+export function warmEmailBody(inner: string, club?: ClubEmailFacts | null): string {
+  if (club) return clubEmailBody(inner, club);
   // A table cell, not a div, carries the card's padding, colour and edge: Outlook's desktop app (the Word engine)
   // drops padding on a div. No indentation: the plain-text part (lib/email.ts htmlToText) keeps a line's leading
   // spaces.
@@ -184,12 +186,69 @@ ${WARM_CARD_END}
 </table>`;
 }
 
+const escText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * The club's band (The public face, warm: S3b), composed natively: a table cell with `bgcolor` and `background` (Outlook's
+ * desktop app ignores one of the two), the club's name as TEXT so it reads with images off, a 44 px tile holding the logo
+ * or the initials, and the accent rule as a `border-bottom` on the band cell — never an empty row, which Outlook stretches.
+ * The tile cell carries `data-fl-tile` so the plain-text part leaves the initials out and starts with the club's name.
+ */
+function clubBandHtml(band: ClubBand): string {
+  const tile = band.logo
+    ? `<td data-fl-tile="1" width="44" height="44" align="center" valign="middle" bgcolor="#ffffff" style="width:44px;height:44px;background:#ffffff;border-radius:10px;">`
+      + `<img src="${escText(band.logo.src)}" width="${band.logo.width}" height="${band.logo.height}" alt="${escText(band.initials)}" `
+      + `style="display:block;margin:0 auto;border:0;font-family:${W.font};font-size:16px;font-weight:700;color:${band.ink};"></td>`
+    : band.initials
+      ? `<td data-fl-tile="1" width="44" height="44" align="center" valign="middle" bgcolor="${band.tileBackground}" `
+        + `style="width:44px;height:44px;background:${band.tileBackground};border-radius:10px;font-family:${W.font};font-size:16px;line-height:1;font-weight:700;color:${band.tileInk};">${escText(band.initials)}</td>`
+      : '';
+  const rule = band.accent ? `border-bottom:3px solid ${band.accent};` : '';
+  const nameStyle = `${tile ? 'padding-left:12px;' : ''}font-family:${W.font};font-size:18px;line-height:1.25;font-weight:700;color:${band.onFill};word-break:break-word;`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr>`
+    + `<td class="fl-band" bgcolor="${band.fill}" style="background:${band.fill};border-radius:11px 11px 0 0;padding:14px 26px;${rule}">`
+    + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;"><tr>${tile}`
+    + `<td valign="middle" style="${nameStyle}">${escText(band.name)}</td></tr></table></td></tr></table>`;
+}
+
+/**
+ * The quiet platform line that closes a banded card (copy item 2): who the software is, in one clause, with the name line
+ * at 12 px inside it. It is its own line and never merges with "Sent by … because …", which is a legal sentence.
+ */
+function platformLineHtml(clubName: string): string {
+  const name = emailNameLineHtml({ ink: W.ink, olive: W.olive, font: W.font, size: 12 });
+  const words = platformLineWords(clubName);
+  return `<p style="margin:14px 0 0;font-family:${W.font};font-size:12px;line-height:1.4;color:${W.secondary};">${escText(words.lead)}${name}${escText(words.tail)}</p>`;
+}
+
+/** The envelope wearing a club's identity: the band flush across the card, the content in a padded block under it, the platform line at the foot. */
+function clubEmailBody(inner: string, club: ClubEmailFacts): string {
+  const band = clubBand(club);
+  // The card cell is `fl-flush`, not `fl-card`: the phone rule `.fl-card{padding:22px 18px!important}` beats an inline
+  // `padding:0` and would inset the band. The padding the card normally has moves onto the inner `fl-pad` cell (a cell, not a div: Outlook desktop drops padding on a div).
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;margin:0 auto;border-collapse:separate;">
+<tr><td class="fl-flush" style="background:${W.card};border:1px solid ${W.groundEdge};border-radius:12px;padding:0;font-family:${W.font};color:${W.ink};text-align:left;">
+${clubBandHtml(band)}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td class="fl-pad" style="padding:22px 26px 26px;">
+${inner}
+${platformLineHtml(band.name)}
+${WARM_CARD_END}
+</td></tr></table>
+</td></tr>
+</table>`;
+}
+
 /**
  * The envelope as the whole email: a document whose head asks for light only (U8) and tightens the padding on a phone
  * (the U8 drawing: 22px 18px inside the card). Outlook's desktop app ignores a max-width, so it
- * gets a fixed 600px table of its own.
+ * gets a fixed 600px table of its own. With a `club` (a family email) the card wears the club's band; with none the
+ * document is byte-for-byte what The public face's S3a ships.
  */
-export function warmEmailDocument(inner: string): string {
+export function warmEmailDocument(inner: string, club?: ClubEmailFacts | null): string {
+  const phoneRules = club
+    ? `
+  .fl-band { padding: 12px 18px !important; }
+  .fl-pad { padding: 18px 18px 22px !important; }`
+    : '';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -201,7 +260,7 @@ export function warmEmailDocument(inner: string): string {
 <style>
 :root { color-scheme: light only; supported-color-schemes: light only; }
 @media (max-width: 480px) {
-  .fl-card { padding: 22px 18px !important; }
+  .fl-card { padding: 22px 18px !important; }${phoneRules}
 }
 </style>
 </head>
@@ -209,7 +268,7 @@ export function warmEmailDocument(inner: string): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td align="center" style="padding:24px 8px;">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
-${warmEmailBody(inner)}
+${warmEmailBody(inner, club)}
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr>
 </table>

@@ -20,6 +20,7 @@ import {
   leagueRegistrationDeclinedHtml,
 } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
+import { systemMailFace } from '@/lib/club-email-context';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -190,6 +191,13 @@ export const PATCH = withObservability(async (req: Request,
     registrationId:  reg.id,
   };
 
+  // The club's face (The public face, warm: S3b): read at most once for this request, worn by every email below. A face that
+  // cannot be read is a plainer email, never a missed one.
+  let faceRead: ReturnType<typeof systemMailFace> | null = null;
+  const faceOnce = () => (faceRead ??= systemMailFace(ctx!.org));
+  const familyOf = (face: Awaited<ReturnType<typeof systemMailFace>>, playerFirstName: string) =>
+    face ? { face, reason: `${playerFirstName} was registered for ${season.name}` } : undefined;
+
   // Resolve division name for emails
   let divisionName = 'your division';
   if (divisionId) {
@@ -213,6 +221,7 @@ export const PATCH = withObservability(async (req: Request,
 
     void (async () => {
       try {
+        const face = await faceOnce();
         await sendTransactionalEmail({
           key: 'league_registration_approved',
           to: reg.guardianEmail,
@@ -224,7 +233,8 @@ export const PATCH = withObservability(async (req: Request,
             divisionName,
           },
           defaultSubject: `Registration approved — ${season.name}`,
-          defaultHtml: leagueAdminApprovedHtml({ ...emailBase, divisionName }),
+          defaultHtml: leagueAdminApprovedHtml({ ...emailBase, divisionName, face }),
+          family: familyOf(face, reg.playerFirstName),
         });
       } catch (e) { console.error('[email] leagueAdminApprovedHtml failed', e); }
     })();
@@ -257,6 +267,7 @@ export const PATCH = withObservability(async (req: Request,
 
     void (async () => {
       try {
+        const face = await faceOnce();
         await sendTransactionalEmail({
           key: 'league_registration_waitlisted',
           to: reg.guardianEmail,
@@ -269,7 +280,8 @@ export const PATCH = withObservability(async (req: Request,
             waitlistPosition:  newPos,
           },
           defaultSubject: `Waitlist update — ${season.name}`,
-          defaultHtml: leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos }),
+          defaultHtml: leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos, face }),
+          family: familyOf(face, reg.playerFirstName),
         });
       } catch (e) { console.error('[email] leagueAdminWaitlistedHtml failed', e); }
     })();
@@ -285,6 +297,7 @@ export const PATCH = withObservability(async (req: Request,
 
     void (async () => {
       try {
+        const face = await faceOnce();
         await sendTransactionalEmail({
           key: 'league_registration_declined',
           to: reg.guardianEmail,
@@ -296,7 +309,8 @@ export const PATCH = withObservability(async (req: Request,
             divisionName,
           },
           defaultSubject: `Registration update — ${season.name}`,
-          defaultHtml: leagueRegistrationDeclinedHtml({ ...emailBase, divisionName }),
+          defaultHtml: leagueRegistrationDeclinedHtml({ ...emailBase, divisionName, face }),
+          family: familyOf(face, reg.playerFirstName),
         });
       } catch (e) { console.error('[email] leagueRegistrationDeclinedHtml failed', e); }
     })();
@@ -315,6 +329,7 @@ export const PATCH = withObservability(async (req: Request,
         const promotedDivisionName = divisionName;
         void (async () => {
           try {
+            const face = await faceOnce();
             await sendTransactionalEmail({
               key: 'league_waitlist_promoted',
               to: next.guardianEmail,
@@ -333,7 +348,9 @@ export const PATCH = withObservability(async (req: Request,
                 seasonName:       season.name,
                 divisionName:     promotedDivisionName,
                 registrationId:   next.id,
+                face,
               }),
+              family: familyOf(face, next.playerFirstName),
             });
           } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
         })();
@@ -363,6 +380,7 @@ export const PATCH = withObservability(async (req: Request,
 
         void (async () => {
           try {
+            const face = await faceOnce();
             await sendTransactionalEmail({
               key: 'league_waitlist_promoted',
               to: next.guardianEmail,
@@ -381,7 +399,9 @@ export const PATCH = withObservability(async (req: Request,
                 seasonName:       season.name,
                 divisionName,
                 registrationId:   next.id,
+                face,
               }),
+              family: familyOf(face, next.playerFirstName),
             });
           } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
         })();

@@ -7,6 +7,8 @@ import { loadFamilyAudience, type FamilyAudienceWorld } from './families-read';
 import { audienceChoices, familyAudience, familyCounts, parseScope, type AudienceChoices, type AudiencePerson, type FamilyAudience, type FamilyAudienceScope } from './families-audience';
 import { coachCopyWords, headCoachesToCopy, sendCoachCopies } from './families-email-coaches';
 import { senderName } from './families-coach-ask';
+import { clubEmailFacts } from './club-email-context';
+import { familyReplyPlan, type ClubEmailFacts } from './email-club-identity';
 import { CLUB_EMAIL_CAP, FAMILY_EMAIL_WORDS as W, FAMILY_MESSAGE_REASON } from './families-words';
 
 /**
@@ -48,6 +50,9 @@ export interface FamilyEmailPreview {
   cap: { capped: boolean; nextAt: string | null };
   orgName: string;
   reason: string;
+  /** The club's face and the reply line the email will carry (S3b): the sample draws its band and foot from these. */
+  club: ClubEmailFacts | null;
+  replyLine: string;
 }
 
 function noFamilyIn(world: FamilyAudienceWorld, scope: FamilyAudienceScope): number {
@@ -107,8 +112,9 @@ async function lastSend(orgId: string): Promise<FamilyEmailPreview['lastSent']> 
 }
 
 export async function familyEmailPreview(ctx: AuthContextWithRole, scope: FamilyAudienceScope): Promise<FamilyEmailPreview> {
-  const [world, lastSent, cap] = await Promise.all([
+  const [world, lastSent, cap, club, sender] = await Promise.all([
     loadFamilyAudience(ctx.org.id, ctx.org.slug, { lists: true }), lastSend(ctx.org.id), capState(ctx.org.id),
+    clubEmailFacts(ctx.org), senderName(ctx).catch(() => null),
   ]);
   const senderEmail = ctx.user.email ?? null;
   const choices = audienceChoices(world.people, world.suppressed, senderEmail);
@@ -120,6 +126,7 @@ export async function familyEmailPreview(ctx: AuthContextWithRole, scope: Family
     families: audience.families.length, optedOut: audience.optedOut, senderSkipped: audience.senderSkipped,
     coaches: coaches.length, noFamily: noFamilyIn(world, scope),
     lastSent, cap, orgName: ctx.org.name, reason: FAMILY_MESSAGE_REASON,
+    club, replyLine: familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail, senderName: sender }).line,
   };
 }
 
@@ -174,12 +181,16 @@ export async function sendFamilyEmailToClub(ctx: AuthContextWithRole, body: Reco
   const sendId = c.sendId;
   const row = () => supabaseAdmin.from('family_email_sends');
 
+  // The club's face and where a reply goes (S3b). Both degrade to a plainer email, never to a failed send: the claim is held.
+  const [club, sender] = await Promise.all([clubEmailFacts(ctx.org), senderName(ctx).catch(() => null)]);
+  const reply = familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail, senderName: sender });
+
   // The family send — through the choke point only, with progress written as each batch goes.
   const results = await sendFamilyEmailBatch({
     orgId: ctx.org.id,
     to: audience.families.flatMap(f => f.addresses),
     subject,
-    content: { teamName: ctx.org.name, orgName: ctx.org.name, title: subject, body: message, reason: FAMILY_MESSAGE_REASON },
+    content: { teamName: ctx.org.name, orgName: ctx.org.name, title: subject, body: message, reason: FAMILY_MESSAGE_REASON, club, replyLine: reply.line },
     suppressed: world.suppressed,
     replyTo: senderEmail,
     onBatch: async so => {

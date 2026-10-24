@@ -3,6 +3,7 @@ import { sendEmail } from '@/lib/email';
 import { renderPlatformEmailHtml } from '@/lib/platform-email-templates';
 import { fillSubjectTokens } from '@/lib/email-markup';
 import { warmEmailSmall } from '@/lib/email-envelope-warm';
+import { familyTemplateSample } from '@/lib/email-family-template-sample';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getMarketingEmailDefault } from '@/lib/marketing-email-defaults';
 import { withObservability } from '@/lib/observability';
@@ -70,7 +71,9 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const testNote = warmEmailSmall(`Test email sent from Platform Admin · Template key: ${key}`);
 
   // Render through the SAME pipeline as send/preview so the test matches production.
-  const html = renderPlatformEmailHtml({ heading, body: bodyMarkup, vars, footerHtml: testNote });
+  // A family email is tested in the card a family will see, on a made-up club (The public face, warm: S3b).
+  const family = familyTemplateSample(key);
+  const html = renderPlatformEmailHtml({ heading, body: bodyMarkup, vars, footerHtml: `${family?.footerHtml ?? ''}${testNote}`, club: family?.club });
   const filledSubject = fillSubjectTokens(subject, vars);
 
   await sendEmail(user.email, `[TEST] ${filledSubject}`, html);

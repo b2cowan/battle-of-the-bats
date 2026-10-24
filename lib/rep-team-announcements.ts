@@ -2,6 +2,9 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-email';
 import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
+import { resolveCoachUserIdentities } from './db';
+import { clubEmailFacts } from './club-email-context';
+import { familyReplyPlan } from './email-club-identity';
 
 /**
  * One-way team announcements for the PREMIUM Coaches Portal (rep team workspace, table mig 138).
@@ -273,10 +276,23 @@ export async function sendRepTeamAnnouncement(params: {
   const teamName = params.teamName?.trim() || 'Your team';
   const { data: orgRow } = await supabaseAdmin
     .from('organizations')
-    .select('name')
+    .select('name, logo_url, theme_preset, theme_primary, theme_accent')
     .eq('id', params.orgId)
     .maybeSingle();
-  const orgName = (orgRow as { name?: string } | null)?.name ?? null;
+  const orgFields = orgRow as { name?: string; logo_url?: string | null; theme_preset?: string | null; theme_primary?: string | null; theme_accent?: string | null } | null;
+  const orgName = orgFields?.name ?? null;
+
+  // The club's face (S3b) and where a reply goes: this is the coach's own letter, so a reply reaches the coach who sent it.
+  // Both degrade to a plainer email, never to a failed send.
+  const club = orgName
+    ? await clubEmailFacts({
+      id: params.orgId, name: orgName, logoUrl: orgFields?.logo_url,
+      themePreset: orgFields?.theme_preset, themePrimary: orgFields?.theme_primary, themeAccent: orgFields?.theme_accent,
+    })
+    : null;
+  const coach = await resolveCoachUserIdentities(params.orgId, [params.createdByUserId])
+    .then(m => m.get(params.createdByUserId) ?? null).catch(() => null);
+  const reply = familyReplyPlan({ kind: 'person', clubName: orgName ?? teamName, senderEmail: coach?.email, senderName: coach?.displayName });
 
   let sentCount = 0;
   let failedCount = 0;
@@ -294,7 +310,9 @@ export async function sendRepTeamAnnouncement(params: {
         content: {
           teamName, orgName, title: subject, body,
           reason: `your email is listed as a guardian contact for ${teamName}`,
+          club, replyLine: reply.line,
         },
+        replyTo: reply.replyTo,
       });
       if (result.status === 'sent') sentCount++;
       // 'suppressed' is neither sent nor failed — the recipient list already excluded opt-outs,

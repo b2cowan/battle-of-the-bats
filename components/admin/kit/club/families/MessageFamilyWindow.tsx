@@ -18,17 +18,21 @@ import KitDialog, { DialogCancel } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit, useLatestRead } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
-import { SendRow, SendRows, SendSample, SendStanding, sendEnvelope } from '../SendParts';
+import { SampleBand, SamplePlatformLine, SendRow, SendRows, SendSample, SendStanding, sendEnvelope } from '../SendParts';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
 import { FAMILY_MESSAGE_WORDS as W } from '@/lib/families-words';
 import { familyEnvelopeFooterWords } from '@/lib/family-mail-footer';
+import type { ClubEmailFacts } from '@/lib/email-club-identity';
 
 interface Read {
   familyName: string;
   recipients: { name: string; email: string; optedOut: boolean }[];
   state: { lastMessaged: { at: string; by: string | null } | null; capped: boolean; nextAt: string | null };
   orgName: string;
+  /** The club's face and the reply line the email will carry (S3b). */
+  club?: ClubEmailFacts | null;
+  replyLine?: string | null;
   reason: string;
 }
 
@@ -151,10 +155,11 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
           </label>
           {footer && (
             <SendSample summary={W.seeEmail}>
-              <span className={sendEnvelope.kicker}>{read.orgName}</span>
+              {read.club ? <SampleBand club={read.club} /> : <span className={sendEnvelope.kicker}>{read.orgName}</span>}
               <p><b>{subject.trim() || W.subject}</b></p>
               <p className={sendEnvelope.body}>{message.trim() || W.message}</p>
-              <p className={sendEnvelope.foot}>{footer.sentBy}<br /><u>{footer.unsubscribe}</u></p>
+              <p className={sendEnvelope.foot}>{footer.sentBy}<br />{read.replyLine && <>{read.replyLine}<br /></>}<u>{footer.unsubscribe}</u></p>
+              {read.club && <SamplePlatformLine clubName={read.club.name} />}
             </SendSample>
           )}
         </>

@@ -15,33 +15,24 @@ import {
   warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall,
 } from '@/lib/email-envelope-warm';
 import { VERIFICATION_NEXT_STEP, type VerificationNextStep } from '@/lib/verification-next-step';
+import { htmlToText } from '@/lib/email-plain-text';
+import type { FamilyMailFace } from '@/lib/email-club-identity';
+import { accountNoticeFootnoteHtml } from '@/lib/family-mail-footer';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
+
+/**
+ * The From header for one send. The verified address never changes; a family email puts the club's name in front of it
+ * (lib/email-club-identity.ts familySenderName, already cleaned, so it is safe inside the quotes). The address is the part
+ * of RESEND_FROM inside <>, or the whole value when it has none.
+ */
+const FROM_ADDRESS = (FROM.match(/<([^>]+)>/)?.[1] ?? FROM).trim();
+function fromHeader(fromName?: string | null): string {
+  return fromName ? `"${fromName}" <${FROM_ADDRESS}>` : FROM;
+}
 const ADMIN_EMAIL = 'fieldlogichq@gmail.com';
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-
-function htmlToText(html: string): string {
-  return html
-    // A whole-document email (the warm envelope, lib/email-envelope-warm.ts) has a head with a style block: none of
-    // it is words.
-    .replace(/<head\b[\s\S]*?<\/head>/i, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/<\/tr>/gi, '\n')
-    .replace(/<a[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, '$2 ($1)')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&rarr;/g, '→')
-    .replace(/&larr;/g, '←')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
 
 /** Escape user/organizer-authored text before interpolating into an HTML email body. */
 export function escapeHtml(value: string): string {
@@ -64,7 +55,7 @@ export async function sendEmail(
   to: string,
   subject: string,
   html: string,
-  opts: { replyTo?: string | null } = {},
+  opts: { replyTo?: string | null; fromName?: string | null } = {},
 ): Promise<SendEmailResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -75,7 +66,7 @@ export async function sendEmail(
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: FROM, to, subject, html, text: htmlToText(html),
+      from: fromHeader(opts.fromName), to, subject, html, text: htmlToText(html),
       ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
     }),
   });
@@ -98,7 +89,7 @@ export const EMAIL_BATCH_SIZE = 100;
  * More than the limit is a caller's bug and throws before anything is sent.
  */
 export async function sendEmailBatch(
-  emails: readonly { to: string; subject: string; html: string; replyTo?: string | null }[],
+  emails: readonly { to: string; subject: string; html: string; replyTo?: string | null; fromName?: string | null }[],
 ): Promise<SendEmailResult> {
   if (emails.length === 0) return { status: 'sent' };
   if (emails.length > EMAIL_BATCH_SIZE) throw new Error(`sendEmailBatch: ${emails.length} emails exceeds the batch limit of ${EMAIL_BATCH_SIZE}`);
@@ -111,7 +102,7 @@ export async function sendEmailBatch(
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(emails.map(e => ({
-      from: FROM, to: e.to, subject: e.subject, html: e.html, text: htmlToText(e.html),
+      from: fromHeader(e.fromName), to: e.to, subject: e.subject, html: e.html, text: htmlToText(e.html),
       ...(e.replyTo ? { reply_to: e.replyTo } : {}),
     }))),
   };
@@ -759,6 +750,20 @@ export function gameDayReminderHtml(p: {
 
 // ── House League registration emails ──────────────────────────────────────────
 
+/**
+ * A family notice (a registration email, the tryout receipt) wearing the club (The public face, warm: S3b): the band, a
+ * footnote that says why it was sent and where a reply goes, the platform line. With no `face` it is exactly the plain
+ * `wrap()` document the builder always produced. `reason` completes "Sent by {club} because …" and is raw text.
+ */
+function familyNotice(content: string, face: FamilyMailFace | null | undefined, reason: string): string {
+  if (!face) return wrap(content);
+  return warmEmailDocument(
+    `${content}
+${accountNoticeFootnoteHtml({ clubName: face.club.name, reason, replyLine: face.replyLine })}`,
+    face.club,
+  );
+}
+
 export function leagueRegistrationApprovedHtml(input: {
   playerFirstName: string;
   playerLastName: string;
@@ -767,11 +772,13 @@ export function leagueRegistrationApprovedHtml(input: {
   divisionName: string;
   registrationId: string;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration approved</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Great news — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> has been approved.</p>
     <div style="${warmPanelStyle('secondary')}">
@@ -784,7 +791,7 @@ export function leagueRegistrationApprovedHtml(input: {
       </p>
     </div>
     <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `);
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
 export function leagueRegistrationPendingHtml(input: {
@@ -795,11 +802,13 @@ export function leagueRegistrationPendingHtml(input: {
   divisionName: string;
   registrationId: string;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Received</h2>
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> in <strong>${p.seasonName}</strong>. A league administrator will review it shortly.</p>
     <div style="${warmPanelStyle('secondary')}">
@@ -812,7 +821,7 @@ export function leagueRegistrationPendingHtml(input: {
       </p>
     </div>
     <p>Your registration status is currently <strong>pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
-  `);
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
 export function leagueRegistrationWaitlistHtml(input: {
@@ -824,11 +833,13 @@ export function leagueRegistrationWaitlistHtml(input: {
   waitlistPosition: number;
   registrationId: string;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're on the waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> for <strong>${p.seasonName}</strong>.</p>
     <div style="${warmPanelStyle('secondary')}">
@@ -842,7 +853,7 @@ export function leagueRegistrationWaitlistHtml(input: {
       </p>
     </div>
     <p><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
-  `);
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
 // ── House League admin-triggered status-change emails ─────────────────────────
@@ -855,11 +866,13 @@ export function leagueAdminApprovedHtml(input: {
   divisionName: string;
   registrationId: string;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration approved</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Great news! <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
     <div style="${warmPanelStyle('secondary')}">
@@ -872,7 +885,7 @@ export function leagueAdminApprovedHtml(input: {
       </p>
     </div>
     <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `);
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
 export function leagueAdminWaitlistedHtml(input: {
@@ -884,11 +897,13 @@ export function leagueAdminWaitlistedHtml(input: {
   registrationId: string;
   waitlistPosition: number;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Added to Waitlist</h2>
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Added to the waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Unfortunately <strong>${p.divisionName}</strong> is currently full. <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>.</p>
     <div style="${warmPanelStyle('secondary')}">
@@ -902,7 +917,7 @@ export function leagueAdminWaitlistedHtml(input: {
       </p>
     </div>
     <p>You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
-  `);
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
 export function leagueWaitlistPromotedHtml(input: {
@@ -913,11 +928,13 @@ export function leagueWaitlistPromotedHtml(input: {
   divisionName: string;
   registrationId: string;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">🎉 You're Off the Waitlist!</h2>
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're off the waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has been moved off the waitlist and is now registered for <strong>${p.divisionName}</strong>. Welcome!</p>
     <div style="${warmPanelStyle('secondary')}">
@@ -930,7 +947,7 @@ export function leagueWaitlistPromotedHtml(input: {
       </p>
     </div>
     <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `);
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
 export function leagueRegistrationDeclinedHtml(input: {
@@ -941,15 +958,23 @@ export function leagueRegistrationDeclinedHtml(input: {
   divisionName: string;
   registrationId: string;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
-  const contact = p.contactEmail ?? ADMIN_EMAIL;
-  return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
+  // The club's own address when it has a public contact (or the caller passed one); otherwise the club by name. The platform's
+  // inbox is no longer a place a declined family is sent (S3b, copy item 9). With no club at all the old line stands.
+  const club = input.face ? escapeEmailHtml(input.face.club.name) : null;
+  const contact = p.contactEmail ?? (input.face?.contact ? escapeEmailHtml(input.face.contact) : club ? null : ADMIN_EMAIL);
+  const contactLine = contact
+    ? `Please contact ${club ? `${club} at ` : ''}<a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a> for more information.`
+    : `Please contact ${club} for more information.`;
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We're sorry — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
-    <p>Please contact <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a> for more information.</p>
-  `);
+    <p>${contactLine}</p>
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
 /* `leagueBroadcastHtml` lived here until 2026-08-18. The season broadcast now goes through
@@ -968,10 +993,12 @@ export function tryoutRegistrationConfirmationHtml(input: {
   yearName: string;
   registrationId: string;
   contactEmail?: string;
+  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = registrationReference(p.registrationId);
-  return wrap(`
+  return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
@@ -984,7 +1011,7 @@ export function tryoutRegistrationConfirmationHtml(input: {
       </p>
     </div>
     <p>Our coaching staff will review all applications and be in touch. No further action is required at this time.</p>
-  `);
+  `, input.face, `${input.playerFirstName} applied for a tryout with ${input.teamName} ${input.yearName}`);
 }
 
 

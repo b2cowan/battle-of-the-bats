@@ -25,6 +25,9 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { wrap, sendEmail, type SendEmailResult } from '@/lib/email';
+import { warmEmailDocument } from '@/lib/email-envelope-warm';
+import { familySenderName, type ClubEmailFacts, type FamilyMailFace } from '@/lib/email-club-identity';
+import { accountNoticeFootnoteHtml } from '@/lib/family-mail-footer';
 import {
   renderHeadingAndBody,
   fillSubjectTokens,
@@ -44,10 +47,28 @@ export function renderPlatformEmailHtml(p: {
   body: string;
   vars?: EmailVars;
   footerHtml?: string;
+  /** A family email's club (The public face, warm: S3b): the card wears its band and platform line. Omitted, the plain envelope. */
+  club?: ClubEmailFacts | null;
   mode?: TokenMode;
 }): string {
   const inner = renderHeadingAndBody({ heading: p.heading, body: p.body, vars: p.vars, mode: p.mode });
-  return wrap(`${inner}\n${p.footerHtml ?? ''}`);
+  const content = `${inner}\n${p.footerHtml ?? ''}`;
+  return p.club ? warmEmailDocument(content, p.club) : wrap(content);
+}
+
+/**
+ * A FAMILY email's club-facing parts for a customised template: the club to wear and the footnote (why it was sent, where a
+ * reply goes). The operator's heading and body stay theirs; only the card around them is the club's. `reason` completes
+ * "Sent by {club} because …".
+ */
+export type FamilyTemplateFace = { face: FamilyMailFace; reason: string };
+
+export function familyTemplateParts(family: FamilyTemplateFace | undefined): { club?: ClubEmailFacts; footerHtml?: string } {
+  if (!family) return {};
+  return {
+    club: family.face.club,
+    footerHtml: accountNoticeFootnoteHtml({ clubName: family.face.club.name, reason: family.reason, replyLine: family.face.replyLine }),
+  };
 }
 
 export type PlatformEmailTemplate = {
@@ -132,6 +153,8 @@ export async function renderResolvedEmail(opts: {
   vars: EmailVars;
   fallback: { subject: string; html: string };
   alwaysRenderFromTemplate?: boolean;
+  /** A family email's club, footnote and reply line, for a customised template (the builders' own default already wears them). */
+  family?: FamilyTemplateFace;
 }): Promise<ResolvedEmail> {
   const { key, vars, fallback, alwaysRenderFromTemplate = false } = opts;
 
@@ -148,6 +171,7 @@ export async function renderResolvedEmail(opts: {
   }
 
   const html = renderPlatformEmailHtml({
+    ...familyTemplateParts(opts.family),
     heading: row.heading,
     body: bodyWithCta(row),
     vars,
@@ -175,11 +199,18 @@ export async function sendTransactionalEmail(opts: {
   vars: EmailVars;
   defaultSubject: string;
   defaultHtml: string;
+  /** A FAMILY email (a registration email, the tryout receipt): the club it wears, why it was sent and where a reply goes. It also names the sender in the inbox. */
+  family?: FamilyTemplateFace;
 }): Promise<SendEmailResult> {
   const { subject, html } = await renderResolvedEmail({
     key: opts.key,
     vars: opts.vars,
     fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
+    family: opts.family,
   });
-  return sendEmail(opts.to, subject, html);
+  if (!opts.family) return sendEmail(opts.to, subject, html);
+  return sendEmail(opts.to, subject, html, {
+    replyTo: opts.family.face.replyTo ?? null,
+    fromName: familySenderName(opts.family.face.club.name),
+  });
 }

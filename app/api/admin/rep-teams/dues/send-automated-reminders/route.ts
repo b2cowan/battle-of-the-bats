@@ -22,6 +22,7 @@ import {
 } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { duesReminderEmail } from '@/lib/dues-reminder-email';
+import { systemMailFace } from '@/lib/club-email-context';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -46,6 +47,8 @@ export const POST = withObservability(async (req: Request) => {
   const daysAhead = window === 30 ? 32 : 9;
 
   const teams = await getRepTeams(ctx!.org.id, undefined, ctx!.repGroupIds ?? undefined);
+  // The club's face and where a reply goes (S3b): read once for the whole wave.
+  const face = await systemMailFace(ctx!.org);
 
   let totalChecked = 0;
   let totalEmailed = 0;
@@ -86,9 +89,11 @@ export const POST = withObservability(async (req: Request) => {
         window,
         guardianFirst,
         items,
+        club: face?.club,
+        replyLine: face?.reply.line,
       });
 
-      await sendEmail(email, subject, html);
+      await sendEmail(email, subject, html, face?.sendOpts);
       totalEmailed++;
       for (const i of items) taggedIds.push(i.installmentId);
     }

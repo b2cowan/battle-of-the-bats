@@ -13,6 +13,7 @@ import {
 import type { RepDueReminderCandidate } from '@/lib/types';
 import { sendEmail } from '@/lib/email';
 import { duesReminderEmail, GUARDIAN_FIRST_NAME_PLACEHOLDER } from '@/lib/dues-reminder-email';
+import { systemMailFace } from '@/lib/club-email-context';
 import { DUE_REMINDER_DAYS_AHEAD } from '@/lib/dues-installment-view';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
@@ -83,6 +84,10 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Send either an automatic wave or one family’s reminder, not both.' }, { status: 400 });
   }
 
+  // The club's face and where a reply goes (S3b), read at most once and only by a mode that shows or sends an email.
+  let faceRead: ReturnType<typeof systemMailFace> | null = null;
+  const faceOnce = () => (faceRead ??= systemMailFace(ctx.org));
+
   // ⚠ "REMIND THIS FAMILY", UNBOUNDED (owner ruling 2026-09-21). `daysAhead: null` means no
   // installment is excluded for being too far away — the ONLY filters left are "unpaid" and "this
   // player's". Sorted so the FIRST row is the next bill; a family behind on two installments still
@@ -117,12 +122,15 @@ export const POST = withObservability(async (req: Request,
       const guardianFirst = !piiVisible || (missingEmail && !next.guardianFirstName)
         ? GUARDIAN_FIRST_NAME_PLACEHOLDER
         : next.guardianFirstName ?? 'there';
+      const face = await faceOnce();
       const { subject, html } = duesReminderEmail({
         teamName: team.name,
         orgName: ctx.org.name,
         window: null,
         guardianFirst,
         items: [next],
+        club: face?.club,
+        replyLine: face?.reply.line,
       });
       return NextResponse.json({
         subject,
@@ -136,14 +144,17 @@ export const POST = withObservability(async (req: Request,
     if (!next.guardianEmail) {
       return NextResponse.json({ remindersChecked: 1, emailsSent: 0, installmentsTagged: 0, missingEmail: true });
     }
+    const face = await faceOnce();
     const { subject, html } = duesReminderEmail({
       teamName: team.name,
       orgName: ctx.org.name,
       window: null,
       guardianFirst: next.guardianFirstName ?? 'there',
       items: [next],
+      club: face?.club,
+      replyLine: face?.reply.line,
     });
-    await sendEmail(next.guardianEmail, subject, html);
+    await sendEmail(next.guardianEmail, subject, html, face?.sendOpts);
     await markInstallmentsReminderSent([next.installmentId]);
     return NextResponse.json({ remindersChecked: 1, emailsSent: 1, installmentsTagged: 1 });
   }
@@ -189,6 +200,7 @@ export const POST = withObservability(async (req: Request,
 
   let emailsSent = 0;
   const taggedIds: string[] = [];
+  const face = await faceOnce();
 
   for (const [email, items] of byGuardian) {
     const first = items[0];
@@ -202,9 +214,11 @@ export const POST = withObservability(async (req: Request,
       window: window ?? null,
       guardianFirst,
       items,
+      club: face?.club,
+      replyLine: face?.reply.line,
     });
 
-    await sendEmail(email, subject, html);
+    await sendEmail(email, subject, html, face?.sendOpts);
     emailsSent++;
     for (const i of items) taggedIds.push(i.installmentId);
   }

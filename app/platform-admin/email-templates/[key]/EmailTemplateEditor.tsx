@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Loader, ArrowLeft, Send, RotateCcw, Check, Undo2, X } from 'lucide-react';
 import { renderHeadingAndBody } from '@/lib/email-markup';
 import { warmEmailBody } from '@/lib/email-envelope-warm';
+import { familyTemplateSample } from '@/lib/email-family-template-sample';
 import styles from '../email-templates.module.css';
 
 type Template = {
@@ -38,7 +39,10 @@ function buildPreviewHtml(fields: {
   const body = fields.cta_label
     ? `${fields.body}\n\n::button ${fields.cta_label} | #`
     : fields.body;
-  return warmEmailBody(renderHeadingAndBody({ heading: fields.heading, body, mode: 'chip' }));
+  const inner = renderHeadingAndBody({ heading: fields.heading, body, mode: 'chip' });
+  // A family email previews on a made-up club, in the card a family will see (The public face, warm: S3b).
+  const family = familyTemplateSample(fields.key);
+  return warmEmailBody(family ? `${inner}\n${family.footerHtml}` : inner, family?.club);
 }
 
 export default function EmailTemplateEditor({ templateKey }: { templateKey: string }) {

@@ -43,6 +43,8 @@ export interface TransactionalFamilyFooter {
   noticeKind: string;
   /** What it is about, completing "Sent by {org} about {…} for {team}". */
   about: string;
+  /** Where a reply goes (lib/email-club-identity.ts familyReplyPlan), after the "speak to your coach" sentence (S3b). */
+  replyLine?: string | null;
 }
 
 export function transactionalFamilyFooterHtml(p: TransactionalFamilyFooter): string {
@@ -50,7 +52,19 @@ export function transactionalFamilyFooterHtml(p: TransactionalFamilyFooter): str
   return warmEmailFootnote(`Sent by <strong>${sender}</strong> about ${esc(p.about)} for ${esc(p.teamName)}.<br>
 ${esc(p.noticeKind)} are account notices rather than announcements, so they are sent even if you
 have unsubscribed from ${possessive(sender)} emails. If you believe you received this in error, please
-speak to your coach.`);
+speak to your coach.${p.replyLine ? `<br>
+${esc(p.replyLine)}` : ''}`);
+}
+
+/**
+ * The foot of an ACCOUNT notice that is not a dues reminder — a registration email, a tryout receipt (S3b, copy items 7
+ * and 8): why it was sent, and where a reply goes. No unsubscribe line and no "sent even if you have unsubscribed"
+ * sentence: these were never on the unsubscribe list. `reason` completes "Sent by {club} because …" and is plain text;
+ * the caller escapes nothing — this does.
+ */
+export function accountNoticeFootnoteHtml(p: { clubName: string; reason: string; replyLine?: string | null }): string {
+  return warmEmailFootnote(`Sent by <strong>${esc(p.clubName.trim())}</strong> because ${esc(p.reason)}.${p.replyLine ? `<br>
+${esc(p.replyLine)}` : ''}`);
 }
 
 /**

@@ -219,7 +219,7 @@ colour follows the setting" becomes a fixed warm colour on the marketing pages.
 | S3a | One email envelope for every email (build) | Sonnet · high | broad but mechanical (~50 builders onto one envelope); mail-client quirks |
 | S4 | The marketing set as one (build), with the new identity everywhere | Sonnet · high | large restyle to approved drawings; W ruled 2026-10-23, its identity package rides this release (ladder row) |
 | S5 | System screens + carry-ins (build) | Sonnet · medium | small screens, drawn and worded |
-| S3b | Family emails in the club's name (build) | Sonnet · high | per-club colour contrast and logos in email; coordinated with Club 7c |
+| S3b | Family emails in the club's name (build) | Sonnet · high | per-club colour contrast and logos in email; coordinated with Club 7c. **BUILT 2026-10-23, not committed; walk §370 https://claude.ai/artifact/RmRhobxq1Cue6zbd5sU3fr owed (real-inbox part F optional); Club 7c's one-email-per-child follow-up not landed, untouched.** |
 | — | Tournament pages' type (its own project: walk + drawing first) | Opus · high | a new walk and drawing for families' pages |
 
 Writing each stage's build prompt: Opus · medium. Each build ends with `/review` (which tiers its own models) and a checkable walk.

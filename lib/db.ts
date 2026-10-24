@@ -3502,6 +3502,11 @@ export interface InsightsDigestTeam {
   /** The club's display name. The dues sweep signs its reminders with it — a family owed money
    *  must be able to see WHO is asking, and a slug is not a name a parent recognizes. */
   orgName: string | null;
+  /** The club's logo and colours, for the face a family email wears (The public face, warm: S3b). */
+  orgLogoUrl: string | null;
+  orgThemePreset: string | null;
+  orgThemePrimary: string | null;
+  orgThemeAccent: string | null;
   seasonPitcherCap: number | null;
   /** Per-program-year coach toggle (rep_program_years.auto_reminders_enabled). The dues
    *  sweep honors it; the Insights digest deliberately ignores it (different consent). */
@@ -3561,7 +3566,7 @@ export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?:
   // `if (!o) continue` below, so the sweep simply passes it over. (/review 2026-08-06.)
   const orgIds = [...new Set((teams ?? []).map(t => t.org_id as string))];
   const { data: orgs, error: oErr } = orgIds.length
-    ? await supabaseAdmin.from('organizations').select('id, slug, name')
+    ? await supabaseAdmin.from('organizations').select('id, slug, name, logo_url, theme_preset, theme_primary, theme_accent')
         .in('id', orgIds).neq('subscription_status', 'canceled')
     : { data: [], error: null };
   if (oErr) throw oErr;
@@ -3582,6 +3587,10 @@ export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?:
       orgId: t.org_id as string,
       orgSlug: o.slug as string,
       orgName: ((o as { name?: string | null }).name ?? '').trim() || null,
+      orgLogoUrl: (o.logo_url as string | null) ?? null,
+      orgThemePreset: (o.theme_preset as string | null) ?? null,
+      orgThemePrimary: (o.theme_primary as string | null) ?? null,
+      orgThemeAccent: (o.theme_accent as string | null) ?? null,
       seasonPitcherCap: (y.lineup_settings as { pitcherMaxInningsDefault?: number } | null)?.pitcherMaxInningsDefault ?? null,
       // Same null-coercion as mapRepProgramYear so the sweep and the org-admin wave
       // route can never disagree about whether a team's toggle is on.

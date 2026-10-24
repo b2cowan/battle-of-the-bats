@@ -21,7 +21,7 @@ import KitDialog, { DialogCancel } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit, useLatestRead } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
-import { SendRow, SendRows, SendSample, SendStanding, sendEnvelope } from '../SendParts';
+import { SampleBand, SamplePlatformLine, SendRow, SendRows, SendSample, SendStanding, sendEnvelope } from '../SendParts';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
@@ -267,10 +267,11 @@ export default function EmailFamiliesWindow({ q, initialList, onClose, onShowNoF
           )}
           {footer && (
             <SendSample summary={W.seeEmail}>
-              <span className={sendEnvelope.kicker}>{preview.orgName}</span>
+              {preview.club ? <SampleBand club={preview.club} /> : <span className={sendEnvelope.kicker}>{preview.orgName}</span>}
               <p><b>{subject.trim() || W.subject}</b></p>
               <p className={sendEnvelope.body}>{message.trim() || W.message}</p>
-              <p className={sendEnvelope.foot}>{footer.sentBy}<br /><u>{footer.unsubscribe}</u></p>
+              <p className={sendEnvelope.foot}>{footer.sentBy}<br />{preview.replyLine && <>{preview.replyLine}<br /></>}<u>{footer.unsubscribe}</u></p>
+              {preview.club && <SamplePlatformLine clubName={preview.club.name} />}
             </SendSample>
           )}
           <p className={ck.hint}>

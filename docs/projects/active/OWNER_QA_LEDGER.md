@@ -26329,3 +26329,16 @@ republished; tick positions unchanged).
 
 **Not in the walk:** the club site's own not-found screen; the paused page reaching only people with no active workspace (F5, its own plan); the marketing share card's squarer-preview crop.
 <!-- /§369 -->
+
+## §370 · The public face, warm · S3b, family emails in the club's name — **every family email wears its club's band, name and reply line, and goes out as "[Club] via FieldLogicHQ"; the registration emails and the tryout receipt name the club; the declined email stops pointing at the platform's Gmail**
+
+**Built:** 2026-10-23 from `PUBLIC_FACE_WARM_S3B_BUILD_PROMPT.md`, NOT COMMITTED (waiting for the owner's say-so). No migration. Words from `PUBLIC_FACE_WARM_S3B_COPY.md` only; `/marketing` approved the two "To confirm" lines as written (2026-10-23). Club 7c's one-email-per-child follow-up had not landed when this started and is untouched (the season email's sending loop is as it was; it only passes the club).
+
+**The walk:** [Family emails walk](PUBLIC_FACE_WARM_S3B_WALK.html), published https://claude.ai/artifact/RmRhobxq1Cue6zbd5sU3fr 2026-10-23. Six parts: A Email families' sample · B Message this family's sample · C the dues preview · D the six family templates in the platform admin · E a long club name on a phone · F a real inbox (Gmail web and app, Apple Mail, Outlook, light and dark, images off and on; the owner may skip all of it).
+
+**Not run by the builder:** the whole-product or `--changed` layout sweep (a shared stylesheet is changed by another session, so `--changed` widens to every screen, which is not run on the dev server; the coach session was also signed out); every real mail client (part F is the first time any of them sees this).
+
+**Guards the build had to change:** `family-email-guard` (its pin on the literal `{ replyTo: … }` object now also allows the new `fromName` beside it; it still demands the reply address reaches the transport) and three pins in `first-look-stage2-emails` (the template renderer, the editor's preview and the test-send now carry a club; the plain-text part moved to `lib/email-plain-text.ts`).
+
+**Open for the owner:** a logo's pixel size is remembered inside the organization's existing `pdf_settings` JSON (no schema change), measured the first time a send or sample needs it; until then a club shows its initials. The What's new line goes to `/release` at promote: "Emails to your families now show your club's name, colours and logo, and replies go where you expect." (not yet added to the release notes).
+<!-- /§370 -->

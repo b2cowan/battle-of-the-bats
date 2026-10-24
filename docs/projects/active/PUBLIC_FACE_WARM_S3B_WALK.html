@@ -1,0 +1,349 @@
+<title>Family Emails Walk</title>
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · public face, warm · S3b</span>
+    <h1>Family emails in the club's name</h1>
+    <p class="sub">Built 2026-10-23. One purpose: every email a family gets wears its club: a band in the club's colour with the club's name, a logo or initials tile, a thin accent line, one line saying where a reply goes, and FieldLogicHQ as a quiet line at the foot. In the inbox the sender reads "[Club] via FieldLogicHQ".</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Fourteen emails are covered: Email families, Message this family, a coach's announcement, the house-league season email, the game-change notice, the dues reminders, the tryout receipt and the seven registration emails. You see them through the screens that show them (the two Families samples, the dues preview, the platform admin's template editor) and, if you want, in a real inbox in part F. The free-tier coach announcement and the generic View email are deliberately unchanged.</p>
+    <p><strong>It passes when</strong> the club's name always reads on its band, the sample matches what the email will be, nothing scrolls sideways on a phone, and the reply line names the right place.</p>
+    <p><strong>Not in this walk:</strong> the one-email-per-child change to the season email (its own stage, not built yet); the real mail clients are checked only in part F, which you may skip.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code></dd>
+      <dt>Admin</dt><dd><code>uat-admin@uat-test-org.local</code> (organization <code>uat-test-org</code>)</dd>
+      <dt>Coach</dt><dd><code>uat-coach@uat-test-org.local</code></dd>
+      <dt>Password</dt><dd><code>UATPassword2026!</code> for both. Dev only. Keep this page private.</dd>
+      <dt>Restart</dt><dd>The dev server was restarted for this build; hard-reload once (Ctrl+Shift+R).</dd>
+      <dt>A logo</dt><dd>For the logo steps, give the test club a PNG or JPEG logo first. The first time a sample opens it reads the logo's size, so a logo can take one extra open to appear.</dd>
+      <dt>Phone</dt><dd>Phone steps: use your phone on the same network, or the browser's phone-size view (about 390 wide).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+
+<script>
+var WALK_NAME = 'Family emails walk (S3b, 2026-10-23)';
+(function () {
+  var KEY = 'pfw-s3b-walk-v1';
+  var PARTS = [
+    {
+      "id": "A",
+      "title": "Email families: the sample (admin)",
+      "steps": [
+        {
+          "who": "Admin",
+          "do": "Open Families, then Email families. Write a subject and a message, then open \"See the email\".",
+          "see": "A band in the club's colour across the top with the club's name as text and a tile (initials, or the logo if the club has a PNG or JPEG one) at its left. A thin accent line under the band if the club chose an accent. The subject and your message. Under them: \"Sent by [club] because …\", then \"Reply to this email to reach [your name].\", then the unsubscribe link. Last, a quiet line \"Sent through FieldLogicHQ, the software [club] uses.\" There is no small bold club name above the subject any more (the band already says it)."
+        },
+        {
+          "who": "Admin",
+          "do": "On a club with a pale colour (set the main colour to a soft yellow like #FFE9A8, or cream #F3F0E6) open the same sample.",
+          "see": "The club's name is dark on the pale band and easy to read. The tile reads too."
+        },
+        {
+          "who": "Admin",
+          "do": "On a club with a very dark colour (like #0F1B33) open the same sample.",
+          "see": "The name is white on the dark band and easy to read."
+        },
+        {
+          "who": "Admin",
+          "do": "On a club with no logo, then on a club whose logo is a PNG or JPEG, open the sample (the logo may need one open of the window before it shows, because its size is read once).",
+          "see": "No logo: the tile holds the club's initials. PNG or JPEG logo: the logo sits whole on a white tile, not stretched or squashed. A logo that is an SVG or WebP still shows initials.",
+          "optionPair": true,
+          "skip": "Skipped it (no club with a logo to hand)"
+        },
+        {
+          "who": "Admin",
+          "do": "Open the sample at phone width.",
+          "see": "The band runs edge to edge of the sample with nothing inset, and the footer lines wrap without sideways scrolling."
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "title": "Message this family: the sample (admin)",
+      "steps": [
+        {
+          "who": "Admin",
+          "do": "Open a family in Families, choose Message, write something, open \"See the email\".",
+          "see": "The same band, the message, \"Sent by [club] because …\", \"Reply to this email to reach [your name].\", the unsubscribe link, and the quiet FieldLogicHQ line. It matches part A for the same club."
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "title": "The dues reminder preview (coach)",
+      "steps": [
+        {
+          "who": "Coach",
+          "do": "In the coach's team settings turn to Automatic Dues Reminders and open \"See an example\".",
+          "see": "A moment of \"Loading the email…\", then the example with the club's band on top, the reminder text, the legal sentence about account notices, then one more line: either \"Reply to this email to reach [club].\" (if the club has a contact on its public site) or \"Replies to this email won't reach anyone. To get in touch, contact [club] directly.\", then the quiet FieldLogicHQ line."
+        },
+        {
+          "who": "Coach",
+          "do": "Open Dues, pick a family and open \"Remind this family\", then \"Preview this email\".",
+          "see": "The real letter in the same card, with the same band and foot."
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "title": "The six family templates (platform admin)",
+      "steps": [
+        {
+          "who": "Platform admin",
+          "do": "Open Email templates, then each of: league registration approved, pending, waitlisted, off the waitlist, declined, and tryout application received.",
+          "see": "The preview shows the Riverdale Minor Ball band (blue), the heading and body, then a foot: \"Sent by Riverdale Minor Ball because Alex was registered for Fall 2026.\" (the tryout one says \"Alex applied for a tryout with 12U AAA 2026-27\"), then the \"won't reach anyone\" line, then the quiet FieldLogicHQ line. No unsubscribe line on these."
+        },
+        {
+          "who": "Platform admin",
+          "do": "Open any other template (for example a billing one).",
+          "see": "The plain card as before: FieldLogicHQ at the top, no band, no club foot."
+        },
+        {
+          "who": "Platform admin",
+          "do": "Send a test of one family template to yourself.",
+          "see": "The email arrives with the sample band and foot, and a small grey \"Test email sent from Platform Admin\" line.",
+          "optionPair": true,
+          "skip": "Skipped it (email is not sending from this computer)"
+        },
+        {
+          "who": "Platform admin",
+          "do": "Look at the headings in the template list for the seven registration emails.",
+          "see": "Headlines read: Registration approved, Registration received, You're on the waitlist, Added to the waitlist, You're off the waitlist, Registration update. No emoji, no capital on every word."
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "title": "A long club name, on a phone",
+      "steps": [
+        {
+          "who": "Admin",
+          "do": "Name a test club something long (53 characters, for example \"The Northern Peninsula Amateur Baseball Association X\"), then open the Email families sample at phone width.",
+          "see": "The name wraps onto two or three lines beside the tile, centred against it. Nothing is cut off and nothing scrolls sideways.",
+          "optionPair": true,
+          "skip": "Skipped it (did not want to rename a test club)"
+        },
+        {
+          "who": "Admin",
+          "do": "Put the club's name back.",
+          "see": "The sample shows the short name again.",
+          "optionPair": true,
+          "skip": "Skipped it (nothing to put back)"
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "title": "Real email in a real inbox (you may skip this whole part)",
+      "steps": [
+        {
+          "who": "Admin",
+          "do": "Send \"Message this family\" to an address you control (a test family whose guardian email is yours). Look at the inbox list first.",
+          "see": "The sender reads \"[Club] via FieldLogicHQ\", not just \"FieldLogicHQ\".",
+          "optionPair": true,
+          "skip": "Skipped it (cannot send real email from here)"
+        },
+        {
+          "who": "Anyone",
+          "do": "Open it in Gmail on the web. Turn images off for the message (Gmail: Settings, Images, Ask before displaying), then open it again.",
+          "see": "With images off the club's name still reads in the band, and the initials or logo tile is the only thing missing. The band reaches the card's left and right edges.",
+          "optionPair": true,
+          "skip": "Skipped it (no Gmail to hand)"
+        },
+        {
+          "who": "Anyone",
+          "do": "Open it in the Gmail app on a phone, then in Apple Mail, then in Outlook on a computer if you have it. Note anything that looks different from the sample.",
+          "see": "The band is flush across the card on the phone, the foot is readable, and Reply goes to the address the foot says. Outlook may show a blocked-image box where a logo goes; the club's name still reads.",
+          "optionPair": true,
+          "skip": "Skipped it (only some of these to hand)"
+        },
+        {
+          "who": "Anyone",
+          "do": "View the same email with your phone or mail app in dark mode.",
+          "see": "Tell me what you see. The card is asked to stay light; an app that darkens it anyway may change the band's colours. The name must still read.",
+          "optionPair": true,
+          "skip": "Skipped it (no dark mode to try)"
+        },
+        {
+          "who": "Anyone",
+          "do": "Press Reply on the real email.",
+          "see": "The reply is addressed to the sender who wrote it (Message this family, Email families, a coach's announcement). A system email (game change, receipt, dues) replies to the club's public contact, or says nobody reads replies.",
+          "optionPair": true,
+          "skip": "Skipped it (nothing sent)"
+        }
+      ]
+    }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var rows = s.optionPair ? [[id + 'a', 'Checked it'], [id + 'b', s.skip || 'Skipped it']] : [[id, null]];
+      rows.forEach(function (r, ri) {
+        var row = el('label', 'step');
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + r[0]; cb.checked = !!state.ticks[r[0]];
+        cb.addEventListener('change', function () { state.ticks[r[0]] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, id: r[0], cb: cb });
+        var t = el('span', 'txt');
+        if (ri === 0) {
+          t.appendChild(el('span', 'who', id + ' · ' + s.who));
+          t.appendChild(el('span', null, s.do));
+          t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+        }
+        if (r[1]) t.appendChild(el('span', null, '<strong>' + r[1] + '</strong>'));
+        row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+      });
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [WALK_NAME];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

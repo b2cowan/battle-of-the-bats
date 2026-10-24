@@ -4,6 +4,9 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getRegistrationsForSeason, insertLeagueEmailLog, getLeagueEmailLog } from '@/lib/db';
 import { sendFamilyEmail, getFamilySuppressionList } from '@/lib/family-email';
+import { clubEmailFacts } from '@/lib/club-email-context';
+import { familyReplyPlan } from '@/lib/email-club-identity';
+import { senderName } from '@/lib/families-coach-ask';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -95,6 +98,9 @@ export const POST = withObservability(async (req: Request,
   // shared; it already covers addresses a parent has left behind, so an opt-out filed years
   // ago under a former address silences this season's broadcast too.
   const suppressedList = await getFamilySuppressionList(ctx!.org.id);
+  // The club's face and where a reply goes (S3b): the admin who wrote it. Read once for the whole season send.
+  const [club, sender] = await Promise.all([clubEmailFacts(ctx!.org), senderName(ctx!).catch(() => null)]);
+  const reply = familyReplyPlan({ kind: 'person', clubName: ctx!.org.name, senderEmail: ctx!.user.email, senderName: sender });
 
   let sent = 0;
   let skipped = 0;
@@ -117,7 +123,10 @@ export const POST = withObservability(async (req: Request,
           title: subject.trim(),
           body: message.trim(),
           reason: `you have a registration in ${season.name}`,
+          club,
+          replyLine: reply.line,
         },
+        replyTo: reply.replyTo,
       });
       if (result.status === 'sent') sent++;
       // Counted apart from `skipped`, which means "we could not send". A suppressed

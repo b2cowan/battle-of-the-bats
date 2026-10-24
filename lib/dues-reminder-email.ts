@@ -18,6 +18,7 @@
 import { formatStoredDate } from './timezone';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { WARM_EMAIL_STYLE, warmEmailDocument, warmEmailParagraph } from './email-envelope-warm';
+import type { ClubEmailFacts } from './email-club-identity';
 
 export interface DuesReminderEmailItem {
   playerFirstName: string;
@@ -64,12 +65,13 @@ const esc = (s: string) =>
  * body and must not grow its own version of this — five copies of the dues email is how the first
  * four drifted apart.
  */
-export function duesReminderFooterHtml(p: { orgName?: string | null; teamName: string }): string {
+export function duesReminderFooterHtml(p: { orgName?: string | null; teamName: string; replyLine?: string | null }): string {
   return transactionalFamilyFooterHtml({
     orgName: p.orgName,
     teamName: p.teamName,
     noticeKind: 'Dues reminders',
     about: 'player dues',
+    replyLine: p.replyLine,
   });
 }
 
@@ -95,8 +97,12 @@ export function duesReminderEmail(opts: {
   window: 30 | 7 | null;
   guardianFirst: string;
   items: DuesReminderEmailItem[];
+  /** The club's face (S3b): the band, and the platform line at the foot. Omitted, the email is what S3a shipped. */
+  club?: ClubEmailFacts | null;
+  /** Where a reply goes (lib/email-club-identity.ts familyReplyPlan): the foot's reply line. */
+  replyLine?: string | null;
 }): { subject: string; html: string } {
-  const { teamName, orgName, window, guardianFirst, items } = opts;
+  const { teamName, orgName, window, guardianFirst, items, club, replyLine } = opts;
   const rows = items
     .map(i => {
       const credit = i.creditApplied ?? 0;
@@ -131,7 +137,7 @@ ${earnedIntro}
 ${warmEmailParagraph(`This is a friendly reminder that the following dues installments are ${anyOverdue ? 'due' : 'coming due'} for your player(s) on <strong>${esc(teamName)}</strong>:`)}
 <ul style="${WARM_EMAIL_STYLE.list}">${rows}</ul>
 ${warmEmailParagraph(`If you've already sent a payment, it may not be recorded yet — just let your coach know. To view your full payment schedule, contact your coach directly.`)}
-${duesReminderFooterHtml({ orgName, teamName })}`);
+${duesReminderFooterHtml({ orgName, teamName, replyLine })}`, club);
   const subject = window
     ? `Upcoming dues reminder (${window} days) — ${teamName}`
     : anyOverdue

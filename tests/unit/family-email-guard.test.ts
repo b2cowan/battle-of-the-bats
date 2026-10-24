@@ -201,7 +201,8 @@ describe('Family email — the Families message door (claim + cap, then the guar
 
   it('the reply address is an additive option on the choke point, passed to the transport', () => {
     assert.match(choke, /replyTo\?:\s*string\s*\|\s*null/);
-    assert.match(choke, /return sendEmail\([^;]*\{ replyTo: params\.replyTo \?\? null \}\);/,
+    // S3b added the club's sender name beside it (fromName); the reply address is still handed to the transport.
+    assert.match(choke, /return sendEmail\([^;]*\{\s*replyTo: params\.replyTo \?\? null,\s*fromName: familyFromName\(params\.content\),?\s*\}\);/,
       'sendFamilyEmail takes replyTo but no longer hands it to sendEmail.');
   });
 

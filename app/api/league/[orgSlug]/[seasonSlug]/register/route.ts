@@ -12,6 +12,7 @@ import {
   leagueRegistrationWaitlistHtml,
 } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
+import { systemMailFace } from '@/lib/club-email-context';
 import { withObservability } from '@/lib/observability';
 import { throttlePublicForm, throttlePublicFormRecipient } from '@/lib/public-form-throttle';
 
@@ -183,6 +184,8 @@ export const POST = withObservability(async (req: Request,
 
   void (async () => {
     try {
+      // The club's face (The public face, warm: S3b); a face that cannot be read is a plainer email, never a missed one.
+      const face = await systemMailFace(org);
       let key: string;
       let subject: string;
       let html: string;
@@ -196,15 +199,15 @@ export const POST = withObservability(async (req: Request,
       if (regStatus === 'active') {
         key     = 'league_registration_approved';
         subject = `Registration approved — ${season.name}`;
-        html    = leagueRegistrationApprovedHtml(emailParams);
+        html    = leagueRegistrationApprovedHtml({ ...emailParams, face });
       } else if (regStatus === 'waitlisted') {
         key     = 'league_registration_waitlisted';
         subject = `You're on the waitlist — ${season.name}`;
-        html    = leagueRegistrationWaitlistHtml({ ...emailParams, waitlistPosition: waitlistPosition! });
+        html    = leagueRegistrationWaitlistHtml({ ...emailParams, waitlistPosition: waitlistPosition!, face });
       } else {
         key     = 'league_registration_pending';
         subject = `Registration received — ${season.name}`;
-        html    = leagueRegistrationPendingHtml(emailParams);
+        html    = leagueRegistrationPendingHtml({ ...emailParams, face });
       }
       await sendTransactionalEmail({
         key,
@@ -212,6 +215,7 @@ export const POST = withObservability(async (req: Request,
         vars: regStatus === 'waitlisted' ? { ...vars, waitlistPosition: waitlistPosition! } : vars,
         defaultSubject: subject,
         defaultHtml: html,
+        family: face ? { face, reason: `${playerFirstName} was registered for ${season.name}` } : undefined,
       });
     } catch (e) {
       console.error('[league-register] email send failed:', e);

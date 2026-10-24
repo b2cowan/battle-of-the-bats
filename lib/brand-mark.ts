@@ -47,8 +47,8 @@ export const BRAND_NAME_HQ = 'HQ';
  * image and no mark — every mail app shows the same thing with images on or off. Colours are passed in from the
  * email palette (`WARM_EMAIL`), which owns email colour.
  */
-export function emailNameLineHtml({ ink, olive, font }: { ink: string; olive: string; font: string }): string {
-  return `<span style="font-family:${font};font-size:18px;line-height:1;font-weight:700;color:${ink};letter-spacing:-0.01em;">${BRAND_NAME}<span style="font-weight:400;color:${olive};">${BRAND_NAME_HQ}</span></span>`;
+export function emailNameLineHtml({ ink, olive, font, size = 18 }: { ink: string; olive: string; font: string; size?: number }): string {
+  return `<span style="font-family:${font};font-size:${size}px;line-height:1;font-weight:700;color:${ink};letter-spacing:-0.01em;">${BRAND_NAME}<span style="font-weight:400;color:${olive};">${BRAND_NAME_HQ}</span></span>`;
 }
 
 /**

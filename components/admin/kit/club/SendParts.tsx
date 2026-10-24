@@ -12,6 +12,8 @@
  */
 import type { ReactNode } from 'react';
 import type { EmailWords } from '@/lib/club-schedule-words';
+import { clubBand, platformLineWords, type ClubEmailFacts } from '@/lib/email-club-identity';
+import { BRAND_NAME, BRAND_NAME_HQ } from '@/lib/brand-mark';
 import { repKit } from './RepKit';
 import s from './SendParts.module.css';
 
@@ -59,6 +61,34 @@ export function SendStanding({ children }: { children: ReactNode }) {
 
 /** The family envelope's parts inside a sample: the club as its kicker, the typed message as written, the footer. */
 export const sendEnvelope = { kicker: s.envelopeKicker, body: s.envelopeBody, foot: s.envelopeFoot };
+
+/**
+ * The club's band at the top of a family-email sample (The public face, warm: S3b): the strip the real email wears, from the
+ * same `clubBand()` — the club's name as text, its logo or initials in a tile, the accent rule under it. A logo only
+ * shows when the email would show it (a PNG or JPEG of known size), so the sample never promises a look the email lacks.
+ */
+export function SampleBand({ club }: { club: ClubEmailFacts }) {
+  const b = clubBand(club);
+  return (
+    <div className={s.sampleBand} style={{ background: b.fill, color: b.onFill, borderBottom: b.accent ? `3px solid ${b.accent}` : undefined }}>
+      {b.logo ? (
+        <span className={s.sampleBandTile} style={{ background: 'var(--white-fixed)' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- an email's own image, drawn as the email will draw it */}
+          <img src={b.logo.src} width={b.logo.width} height={b.logo.height} alt={b.initials} />
+        </span>
+      ) : b.initials ? (
+        <span className={s.sampleBandTile} style={{ background: b.tileBackground, color: b.tileInk }}>{b.initials}</span>
+      ) : null}
+      <span className={s.sampleBandName}>{b.name}</span>
+    </div>
+  );
+}
+
+/** The quiet platform line at the foot of a family-email sample: the email's own words (`platformLineWords`), the name line between. */
+export function SamplePlatformLine({ clubName }: { clubName: string }) {
+  const w = platformLineWords(clubName);
+  return <p className={s.samplePlatform}>{w.lead}<b>{BRAND_NAME}<i>{BRAND_NAME_HQ}</i></b>{w.tail}</p>;
+}
 
 /** A colleague email's words drawn inside a sample (`SendSample`) — Send the schedule's and Ask the coaches' (both build
  *  the scheduler's `EmailWords`, the shape the house mail renders). */

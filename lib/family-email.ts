@@ -6,6 +6,7 @@ import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-emai
 import { fetchAll as readAllPaged, chunked } from './supabase-paging';
 import { familyEnvelopeFooterWords } from './family-mail-footer';
 import { WARM_EMAIL_STYLE, warmEmailDocument, warmEmailFootnote, warmEmailHeading } from './email-envelope-warm';
+import { eyebrowRepeatsBand, familySenderName, type ClubEmailFacts } from './email-club-identity';
 
 /**
  * lib/family-email.ts — the ONE way to email a family.
@@ -124,6 +125,10 @@ export interface FamilyEmailContent {
   cta?: { href: string; label: string };
   /** Why this family is receiving it, completing "Sent by {org} because …". */
   reason: string;
+  /** The club's face (S3b): the band, the foot and the reply line. Omitted, the email is exactly what S3a shipped. */
+  club?: ClubEmailFacts | null;
+  /** The one sentence that says where a reply goes (lib/email-club-identity.ts familyReplyPlan), placed between the reason and the unsubscribe link. */
+  replyLine?: string | null;
 }
 
 /** The shared envelope. One home for the markup AND for the footer that carries sender
@@ -135,13 +140,23 @@ function familyEmailHtml(content: FamilyEmailContent, orgId: string, recipientEm
   const cta = content.cta
     ? `<p style="${WARM_EMAIL_STYLE.paragraph}margin-top:22px;"><a href="${content.cta.href}" style="${WARM_EMAIL_STYLE.textLink}">${escapeHtml(content.cta.label)}</a></p>`
     : '';
+  // The band already names the club: an eyebrow that would repeat it is dropped (copy item 6). A team or season stays.
+  const eyebrow = content.club && eyebrowRepeatsBand(content.teamName, content.club.name)
+    ? ''
+    : `<p style="${WARM_EMAIL_STYLE.eyebrow}">${escapeHtml(content.teamName)}</p>\n`;
+  // The club paragraph's fixed order: Sent by … because … → where a reply goes → the way out.
+  const reply = content.replyLine ? `${escapeHtml(content.replyLine)}<br>\n` : '';
   return warmEmailDocument(`
-<p style="${WARM_EMAIL_STYLE.eyebrow}">${escapeHtml(content.teamName)}</p>
-${warmEmailHeading(escapeHtml(content.title))}
+${eyebrow}${warmEmailHeading(escapeHtml(content.title))}
 <div style="${WARM_EMAIL_STYLE.paragraph}">${escapeHtml(content.body)}</div>
 ${cta}
 ${warmEmailFootnote(`${footer.sentBy}<br>
-<a href="${unsubscribeUrl}" style="${WARM_EMAIL_STYLE.finePrintLink}">${footer.unsubscribe}</a>`)}`);
+${reply}<a href="${unsubscribeUrl}" style="${WARM_EMAIL_STYLE.finePrintLink}">${footer.unsubscribe}</a>`)}`, content.club);
+}
+
+/** The inbox's sender name for a family email: the club's name via FieldLogicHQ when the email wears a club, else the platform's own. */
+function familyFromName(content: FamilyEmailContent): string | null {
+  return content.club ? familySenderName(content.club.name) : null;
 }
 
 export type FamilySendResult = SendEmailResult | { status: 'suppressed' };
@@ -178,7 +193,9 @@ export async function sendFamilyEmail(params: {
   const suppressed = params.suppressed ?? (await getFamilySuppressionList(params.orgId));
   if (suppressed.has(to)) return { status: 'suppressed' };
 
-  return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to), { replyTo: params.replyTo ?? null });
+  return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to), {
+    replyTo: params.replyTo ?? null, fromName: familyFromName(params.content),
+  });
 }
 
 /**
@@ -201,6 +218,7 @@ export async function sendFamilyEmailBatch(params: {
 }): Promise<Map<string, FamilySendResult>> {
   const results = new Map<string, FamilySendResult>();
   const going = new Set<string>();
+  const fromName = familyFromName(params.content);
   for (const raw of params.to) {
     const to = normalizeGuardianEmail(raw);
     if (!to || going.has(to) || results.has(to)) continue;
@@ -214,6 +232,7 @@ export async function sendFamilyEmailBatch(params: {
     try {
       result = await sendEmailBatch(chunk.map(to => ({
         to, subject: params.subject, html: familyEmailHtml(params.content, params.orgId, to), replyTo: params.replyTo ?? null,
+        fromName,
       })));
     } catch (err) {
       console.error('[family-email] a batch threw:', err instanceof Error ? err.message : String(err));

@@ -8,6 +8,7 @@ import { publicTryoutSeasonOf } from '@/lib/season-live';
 import { tryoutRegistrationConfirmationHtml } from '@/lib/email';
 import { resolvePublicClub } from '@/lib/public-club-page';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
+import { systemMailFace } from '@/lib/club-email-context';
 import { withObservability } from '@/lib/observability';
 import { clientIpFrom } from '@/lib/rate-limit';
 import { throttlePublicForm, throttlePublicFormRecipient } from '@/lib/public-form-throttle';
@@ -127,6 +128,8 @@ export const POST = withObservability(async (req: Request,
 
   void (async () => {
     try {
+      // The club's face (The public face, warm: S3b); a face that cannot be read is a plainer email, never a missed one.
+      const face = await systemMailFace(org);
       const html = tryoutRegistrationConfirmationHtml({
         guardianFirstName: guardianFirst!,
         playerFirstName:   playerFirstName!,
@@ -134,6 +137,7 @@ export const POST = withObservability(async (req: Request,
         teamName:          team.name,
         yearName:          programYear.name,
         registrationId:    registration.id,
+        face,
       });
       await sendTransactionalEmail({
         key: 'tryout_application_received',
@@ -147,6 +151,7 @@ export const POST = withObservability(async (req: Request,
         },
         defaultSubject: `Tryout application received — ${team.name} ${programYear.name}`,
         defaultHtml: html,
+        family: face ? { face, reason: `${playerFirstName} applied for a tryout with ${team.name} ${programYear.name}` } : undefined,
       });
     } catch (e) {
       console.error('[tryout-register] email send failed:', e);

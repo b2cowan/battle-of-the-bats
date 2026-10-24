@@ -130,17 +130,21 @@ describe('the two emails and their render paths', () => {
     }
   });
   it('a template of any key wears the one envelope on every path (send, preview, editor, test-send)', () => {
-    assert.match(templates, /mode\?: TokenMode;\s*\}\): string \{\s*const inner = renderHeadingAndBody\(\{ heading: p\.heading, body: p\.body, vars: p\.vars, mode: p\.mode \}\);\s*return wrap\(/);
+    // S3b: a family email's club rides in beside the footer; with none, the plain wrap() is still what renders.
+    assert.match(templates, /mode\?: TokenMode;\s*\}\): string \{\s*const inner = renderHeadingAndBody\(\{ heading: p\.heading, body: p\.body, vars: p\.vars, mode: p\.mode \}\);\s*const content = [^;]*;\s*return p\.club \? warmEmailDocument\(content, p\.club\) : wrap\(content\);/);
     assert.match(templates, /footerHtml: opts\?\.footerHtml,\s*\}\);/, 'renderTemplateEmail (the preview route)');
     assert.match(templates, /body: bodyWithCta\(row\),\s*vars,\s*\}\);/, 'renderResolvedEmail (the send)');
-    assert.match(readCode('app/api/platform-admin/email-templates/[key]/test-send/route.ts'), /renderPlatformEmailHtml\(\{ heading, body: bodyMarkup, vars, footerHtml: testNote \}\)/);
+    assert.match(readCode('app/api/platform-admin/email-templates/[key]/test-send/route.ts'), /renderPlatformEmailHtml\(\{ heading, body: bodyMarkup, vars, footerHtml: `\$\{family\?\.footerHtml \?\? ''\}\$\{testNote\}`, club: family\?\.club \}\)/);
     const editor = readCode('app/platform-admin/email-templates/[key]/EmailTemplateEditor.tsx');
-    assert.match(editor, /return warmEmailBody\(renderHeadingAndBody\(\{ heading: fields\.heading, body, mode: 'chip' \}\)\);/);
+    assert.match(editor, /const inner = renderHeadingAndBody\(\{ heading: fields\.heading, body, mode: 'chip' \}\);/);
+    assert.match(editor, /return warmEmailBody\(family \? `\$\{inner\}\\n\$\{family\.footerHtml\}` : inner, family\?\.club\);/);
     assert.match(editor, /buildPreviewHtml\(\{ key: templateKey,/);
   });
   it('wrap() IS the warm document, and the plain-text part skips the head', () => {
     assert.match(email, /export const wrap = \(content: string\) => warmEmailDocument\(content\);/);
-    assert.match(email, /\.replace\(\/<head\\b\[\\s\\S\]\*\?<\\\/head>\/i, ''\)/);
+    // S3b lifted the plain-text part out of lib/email.ts into its own module (the club band's tile is left out of it).
+    assert.match(email, /import \{ htmlToText \} from '@\/lib\/email-plain-text';/);
+    assert.match(readCode('lib/email-plain-text.ts'), /\.replace\(\/<head\\b\[\\s\\S\]\*\?<\\\/head>\/i, ''\)/);
     assert.match(readCode('lib/email-sender.ts'), /\.replace\(\/<head\\b\[\\s\\S\]\*\?<\\\/head>\/i, ''\)/, 'the marketing send’s text part too');
   });
   it('every sender says where its link returns, so the step is chosen from facts', () => {

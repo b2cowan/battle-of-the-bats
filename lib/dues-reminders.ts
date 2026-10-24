@@ -32,6 +32,7 @@ import {
 import type { RepDueReminderCandidate } from './types';
 import { duesReminderEmail } from './dues-reminder-email';
 import { sendEmail } from './email';
+import { systemMailFace, type SystemMailFace } from './club-email-context';
 import { excludeDemoOrgTeams } from './demo-org';
 
 // URGENT WAVE FIRST. The two windows overlap (30-day fires within 32 days, 7-day within 9),
@@ -85,12 +86,28 @@ export interface DuesRemindersSweepResult {
 // both send routes, and the on-screen "See an example" preview, so the sample a coach reads and
 // the email a family receives can never drift apart.
 
+/** What a reminder wears for one club. Read once per club per run, never once per email. */
+type ClubFace = SystemMailFace | null;
+
+function clubFaceFor(team: InsightsDigestTeam, cache: Map<string, Promise<ClubFace>>): Promise<ClubFace> {
+  let face = cache.get(team.orgId);
+  if (!face) {
+    face = systemMailFace({
+      id: team.orgId, name: team.orgName ?? team.teamName, logoUrl: team.orgLogoUrl,
+      themePreset: team.orgThemePreset, themePrimary: team.orgThemePrimary, themeAccent: team.orgThemeAccent,
+    });
+    cache.set(team.orgId, face);
+  }
+  return face;
+}
+
 async function sweepTeamWave(
   team: InsightsDigestTeam,
   wave: { window: 30 | 7; daysAhead: number },
   dryRun: boolean,
   result: DuesRemindersSweepResult,
   handled: Set<string>,
+  faces: Map<string, Promise<ClubFace>>,
 ): Promise<void> {
   const rawCandidates = await getDueReminderCandidates(team.teamId, wave.daysAhead, wave.window);
   // Drop anything a more-urgent wave already claimed this run, then claim the rest so a
@@ -123,16 +140,21 @@ async function sweepTeamWave(
   }
 
   const taggedIds: string[] = [];
+  // A face that cannot be read is a plainer reminder, never a missed one: dues mail is about money (systemMailFace never throws).
+  const face = await clubFaceFor(team, faces);
   for (const [email, items] of byGuardian) {
     const guardianFirst = items[0].guardianFirstName ?? 'there';
-    const { subject, html } = duesReminderEmail({ teamName: team.teamName, orgName: team.orgName, window: wave.window, guardianFirst, items });
+    const { subject, html } = duesReminderEmail({
+      teamName: team.teamName, orgName: team.orgName, window: wave.window, guardianFirst, items,
+      club: face?.club, replyLine: face?.reply.line,
+    });
     // sendEmail's fetch is unguarded and CAN throw (DNS/reset/timeout), distinct from its
     // 'provider_error' return. Contain it per-guardian: one family's network blip must not
     // abort the batch — that would skip the stamp for families ALREADY emailed above and
     // re-send to them tomorrow. A throw is just another failed send (unstamped ⇒ retried).
     let status: string;
     try {
-      status = (await sendEmail(email, subject, html)).status;
+      status = (await sendEmail(email, subject, html, face?.sendOpts)).status;
     } catch {
       status = 'threw';
     }
@@ -178,6 +200,7 @@ export async function runDuesRemindersSweep(
     ...(dryRun ? { previews: [] as DuesReminderPreview[] } : {}),
   };
 
+  const faces = new Map<string, Promise<ClubFace>>();
   for (const team of teams) {
     if (!team.autoRemindersEnabled) {
       result.teamsSkippedToggle += 1;
@@ -188,7 +211,7 @@ export async function runDuesRemindersSweep(
       // skips whatever it claimed (see WAVES ordering note).
       const handled = new Set<string>();
       for (const wave of WAVES) {
-        await sweepTeamWave(team, wave, dryRun, result, handled);
+        await sweepTeamWave(team, wave, dryRun, result, handled, faces);
       }
     } catch (e) {
       result.errors.push({ teamId: team.teamId, message: e instanceof Error ? e.message : String(e) });
