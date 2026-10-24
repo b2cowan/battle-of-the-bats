@@ -26,6 +26,7 @@ import FollowTeamPicker from '@/components/public/FollowTeamPicker';
 import RollingNumber from '@/components/public/RollingNumber';
 import MyTeamCard from '@/components/public/MyTeamCard';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
+import { useOrgHref } from '@/lib/use-public-pathname';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
@@ -161,6 +162,7 @@ interface Props {
 }
 
 export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
+  const orgHref = useOrgHref(orgSlug);
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [venues, setVenues]         = useState<Venue[]>(() => initialData?.venues ?? []);
@@ -585,9 +587,9 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   });
   const sortedDates = Object.keys(byDate).sort(compareDateKeys);
   const allUnpublished = divisions.length > 0 && divisions.every(g => (g.scheduleVisibility ?? 'unpublished') === 'unpublished');
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const registerHref = `/${orgSlug}/${tournamentSlug}/register`;
-  const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
+  const homeHref = orgHref(`/${tournamentSlug}`);
+  const registerHref = orgHref(`/${tournamentSlug}/register`);
+  const teamsHref = orgHref(`/${tournamentSlug}/teams`);
   const canRegister = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'register'));
   const showTeamsPage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'teams'));
 
@@ -1080,7 +1082,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   layout="strip"
                   hideOnDesktop
                   teamName={followedTeam.name}
-                  teamHref={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
+                  teamHref={orgHref(`/${tournamentSlug}/teams/${followedTeam.id}`)}
                   recordLabel={followedRecord ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}` : '0-0-0'}
                   rankLabel={followedStandingPos > 0 ? `${ordinal(followedStandingPos)}${followedTeamPool ? ` · ${followedTeamPool.name}` : ''}` : null}
                   opponentName={followedOpponentName ?? null}
@@ -1648,7 +1650,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                 <MyTeamCard
                   layout="rail"
                   teamName={followedTeam.name}
-                  teamHref={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
+                  teamHref={orgHref(`/${tournamentSlug}/teams/${followedTeam.id}`)}
                   recordLabel={followedRecord ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}` : '0-0-0'}
                   rankLabel={followedStandingPos > 0 ? `${ordinal(followedStandingPos)}${followedTeamPool ? ` · ${followedTeamPool.name}` : ''}` : null}
                   opponentName={followedOpponentName ?? null}

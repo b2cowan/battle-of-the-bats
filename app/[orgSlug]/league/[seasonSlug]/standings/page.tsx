@@ -1,9 +1,11 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getDivisionsForSeason, computeStandings } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import type { LeagueDivision, LeagueStandingsRow } from '@/lib/types';
 import column from '../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
@@ -16,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
     return season && season.status !== 'draft' ? `${season.name} standings` : null;
-  });
+  }, { path: `/league/${seasonSlug}/standings` });
 }
 
 export default async function PublicStandingsPage({
@@ -28,6 +30,8 @@ export default async function PublicStandingsPage({
 }) {
   const { orgSlug, seasonSlug } = await params;
   const { d: divisionIdParam } = await searchParams;
+  await forwardToOwnAddress(orgSlug, `/league/${seasonSlug}/standings${divisionIdParam ? `?d=${encodeURIComponent(divisionIdParam)}` : ''}`);
+  const href = await orgLinks(orgSlug);
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
@@ -38,7 +42,7 @@ export default async function PublicStandingsPage({
 
   const divisions = await getDivisionsForSeason(season.id);
   if (divisions.length === 0) {
-    return <EmptyState orgSlug={orgSlug} seasonSlug={seasonSlug} seasonName={season.name} />;
+    return <EmptyState backHref={href(`/league/${seasonSlug}`)} seasonName={season.name} />;
   }
 
   const activeDivision: LeagueDivision =
@@ -52,7 +56,7 @@ export default async function PublicStandingsPage({
       {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
         {/* Back */}
-        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
+        <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
         </Link>
 
@@ -70,7 +74,7 @@ export default async function PublicStandingsPage({
               return (
                 <Link
                   key={d.id}
-                  href={`/${orgSlug}/league/${seasonSlug}/standings?d=${d.id}`}
+                  href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`}
                   className={`${column.tab}${isActive ? ` ${column.tabActive}` : ''}`}
                 >
                   {d.name}
@@ -209,19 +213,17 @@ function StandingsRow({
 }
 
 function EmptyState({
-  orgSlug,
-  seasonSlug,
+  backHref,
   seasonName,
 }: {
-  orgSlug: string;
-  seasonSlug: string;
+  backHref: string;
   seasonName: string;
 }) {
   return (
     <div>
       {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
-        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
+        <Link href={backHref} className={kit.back}>
           ← {seasonName}
         </Link>
         <h1 className={kit.title} style={{ marginBottom: '1.5rem' }}>Standings</h1>

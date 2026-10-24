@@ -1,9 +1,11 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import RegisterForm, { DivisionWithCount } from '@/components/league/RegisterForm';
 import column from '../../league-column.module.css';
@@ -17,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
     return season ? `Register for ${season.name}` : null;
-  });
+  }, { path: `/league/${seasonSlug}/register` });
 }
 
 export default async function RegisterPage({
@@ -26,6 +28,8 @@ export default async function RegisterPage({
   params: Promise<{ orgSlug: string; seasonSlug: string }>;
 }) {
   const { orgSlug, seasonSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/league/${seasonSlug}/register`);
+  const href = await orgLinks(orgSlug);
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
@@ -54,7 +58,7 @@ export default async function RegisterPage({
       {/* R6: the shared 1200px page column; this page's 640px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '640px' } as React.CSSProperties}>
         {/* Back link */}
-        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
+        <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← Back to {season.name}
         </Link>
 

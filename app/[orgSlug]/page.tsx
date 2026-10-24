@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
@@ -8,6 +9,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import { loadClubHome } from '@/lib/club-home-data';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
 import ClubSiteHome from '@/components/public/ClubSiteHome';
@@ -24,7 +26,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
   const { orgSlug } = await params;
   // Its preview card is the club's (Stage 4b-2b, End state 8) — `clubPageMetadata`'s default.
-  return clubPageMetadata(orgSlug, () => null);
+  return clubPageMetadata(orgSlug, () => null, { path: '' });
 }
 
 /**
@@ -50,7 +52,7 @@ function HeroBanner({ url }: { url: string | null }) {
  * is still no club-wide tryouts index, so several open tryouts are several cards, not one card
  * pointing nowhere. The same card rendered in three branches of this page; this is the one copy.
  */
-function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: OpenTryout[] }) {
+function OpenTryoutsSection({ href, tryouts }: { href: (path?: string) => string; tryouts: OpenTryout[] }) {
   return (
     <section className="section">
       <div className="container">
@@ -62,7 +64,7 @@ function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: Op
           {tryouts.map(t => (
             <Link
               key={t.programYearId}
-              href={`/${orgSlug}/teams/${t.teamSlug}/tryouts`}
+              href={href(`/teams/${t.teamSlug}/tryouts`)}
               className={`card ${styles.archivesCta} ${club.archivesCta}`}
             >
               <div>
@@ -82,14 +84,16 @@ function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: Op
 
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
+  await forwardToOwnAddress(orgSlug, '');
   // The one rule (Club Tier Stage 4a, lib/public-club-access.ts); a tournament-only org keeps its basic home below.
   const org = await requirePublicClubPage(orgSlug, 'home');
+  const href = await orgLinks(orgSlug);
 
   // ── Public Site module branch: the club's home (Club Tier Stage 4b-2a, End state 1) ──────────────
   // Read and shaped by the one loader the editor's preview shares (lib/club-home-data.ts); ClubSiteHome draws, in the
   // ruled order, with every empty program absent.
   if (org && hasModuleEntitlement(org, 'module_public_site')) {
-    return <ClubSiteHome {...await loadClubHome(org, orgSlug)} />;
+    return <ClubSiteHome {...await loadClubHome(org, orgSlug, { ownHost: href('/') === '/' })} />;
   }
 
   // F1/F3: the hero Follow button shows only when the org passes the SAME eligibility gate a
@@ -104,7 +108,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   // ── Default branch (module not enabled) ───────────────────────────────────
   // Single active tournament → go straight to its home page
   if (activeTournaments.length === 1) {
-    redirect(`/${orgSlug}/${activeTournaments[0].slug}`);
+    redirect(href(`/${activeTournaments[0].slug}`));
   }
 
   // Fetch module-conditional data for the rendered cases (0 or 2+ tournaments)
@@ -159,7 +163,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
               <div className={`section-header ${club.sectionHeader}`}>
                 <h2 className={club.sectionTitle}>House league</h2>
               </div>
-              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
+              <Link href={href('/league')} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
                 <div>
                   <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
                     {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
@@ -180,7 +184,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </section>
         )}
 
-        {defaultShowTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={defaultOpenTryouts} />}
+        {defaultShowTryouts && <OpenTryoutsSection href={href} tryouts={defaultOpenTryouts} />}
       </div>
     );
   }
@@ -210,7 +214,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </div>
           <div className={`${styles.tournamentCards} ${club.tournamentCards}`}>
             {activeTournaments.map(t => (
-              <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard} ${club.tournamentCard}`}>
+              <Link key={t.id} href={href(`/${t.slug}`)} className={`card ${styles.tournamentCard} ${club.tournamentCard}`}>
                 <div className={`${styles.tournamentCardHeader} ${club.tournamentCardHeader}`}>
                   <span className={`${kit.chip} ${kit.chipOk}`}>
                     <Star size={10} fill="currentColor" /> Live
@@ -237,7 +241,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             <div className={`section-header ${club.sectionHeader}`}>
               <h2 className={club.sectionTitle}>House league</h2>
             </div>
-            <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
+            <Link href={href('/league')} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
               <div>
                 <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
                   {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
@@ -258,7 +262,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         </section>
       )}
 
-      {defaultShowTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={defaultOpenTryouts} />}
+      {defaultShowTryouts && <OpenTryoutsSection href={href} tryouts={defaultOpenTryouts} />}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { useOrgNav } from '@/components/OrgNavContext';
 import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import styles from './team-profile.module.css';
 // Canonical LIVE chip — one recipe platform-wide (same cross-module reuse as the
 // Playoff Picture chip); the local copies this page carried dropped the pulse.
@@ -73,6 +74,7 @@ export default function TeamProfilePage({
   params: Promise<{ orgSlug: string; tournamentSlug: string; id: string }>;
 }) {
   const { orgSlug, tournamentSlug, id } = use(params);
+  const orgHref = useOrgHref(orgSlug);
 
   const [data, setData]       = useState<TeamProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +151,7 @@ export default function TeamProfilePage({
   const ink = teamInk(cleanedName);
   const isFollowed = followedTeamId === team.id || accountFollowIds.has(team.id);
 
-  const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
+  const teamsHref = orgHref(`/${tournamentSlug}/teams`);
 
   function toggleFollow() {
     if (isFollowed) unfollowTeamEverywhere(orgSlug, tournamentSlug, team.id);
@@ -323,7 +325,7 @@ export default function TeamProfilePage({
                   />
                 )}
                 <SharePageButton
-                  url={`/${orgSlug}/${tournamentSlug}/teams/${id}?follow=${id}`}
+                  url={`${orgHref(`/${tournamentSlug}/teams/${id}`)}?follow=${id}`}
                   title={cleanedName}
                   text={`Follow ${cleanedName} on FieldLogicHQ`}
                   label="Share team"
@@ -431,7 +433,7 @@ export default function TeamProfilePage({
                   return (
                     <Link
                       key={g.id}
-                      href={`/${orgSlug}/${tournamentSlug}/schedule/${g.id}`}
+                      href={orgHref(`/${tournamentSlug}/schedule/${g.id}`)}
                       prefetch={false}
                       className={`${styles.gameRow} ${live ? styles.gameRowLive : ''}`}
                     >

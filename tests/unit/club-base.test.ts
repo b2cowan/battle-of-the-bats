@@ -4,7 +4,7 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { clubBaseFor, internalPath, orgHref } from '../../lib/club-base.ts';
+import { clubBaseFor, clubOwnUrl, internalPath, orgHref, stripClubPrefix, wwwHref } from '../../lib/club-base.ts';
 
 const S = 'lakeshore-lynx';
 
@@ -37,6 +37,27 @@ describe('the club\'s name, from the route', () => {
   });
 });
 
+describe('a path with the club\'s name taken off', () => {
+  it('spells a preview card for the club\'s own address, and leaves any other path as it is', () => {
+    assert.equal(stripClubPrefix('/lakeshore-lynx/opengraph-image', S), '/opengraph-image');
+    assert.equal(stripClubPrefix('/lakeshore-lynx/teams/13u-aa/opengraph-image', S), '/teams/13u-aa/opengraph-image');
+    assert.equal(stripClubPrefix('/lakeshore-lynx', S), '/');
+    assert.equal(stripClubPrefix('/lakeshore-lynx-extra/x', S), '/lakeshore-lynx-extra/x');
+    assert.equal(stripClubPrefix('/somewhere/else', S), '/somewhere/else');
+  });
+});
+
+describe('a page of the club, as an absolute address on its own host', () => {
+  const O = 'https://www.lakeshorelynx.ca';
+  it('keeps the club\'s own pages and drops every other club\'s', () => {
+    assert.equal(clubOwnUrl(O, S, '/lakeshore-lynx'), `${O}/`);
+    assert.equal(clubOwnUrl(O, S, '/lakeshore-lynx/teams/13u-aa'), `${O}/teams/13u-aa`);
+    assert.equal(clubOwnUrl(O, S, '/lakeshore-lynx/spring-classic'), `${O}/spring-classic`);
+    assert.equal(clubOwnUrl(O, S, '/milton-bats/teams'), null);
+    assert.equal(clubOwnUrl(O, S, '/lakeshore-lynx-extra'), null);
+  });
+});
+
 describe('a link, spelled in the address the visitor is on', () => {
   const ours = { slug: S, ownHost: false };
   const own = { slug: S, ownHost: true };
@@ -48,5 +69,15 @@ describe('a link, spelled in the address the visitor is on', () => {
     assert.equal(orgHref(ours, '/'), '/lakeshore-lynx');
     assert.equal(orgHref(own, '/'), '/');
     assert.equal(orgHref(own, '/teams/13u-aa/tryouts'), '/teams/13u-aa/tryouts');
+  });
+});
+
+describe('a page that lives only on FieldLogicHQ', () => {
+  const O = 'https://www.fieldlogichq.ca';
+  it("is a plain path on our hosts and an absolute address on a club's own address", () => {
+    assert.equal(wwwHref({ slug: S, ownHost: false }, O, '/auth/login?next=%2Flakeshore-lynx'), '/auth/login?next=%2Flakeshore-lynx');
+    assert.equal(wwwHref(null, O, '/coaches/join'), '/coaches/join');
+    assert.equal(wwwHref({ slug: S, ownHost: true }, O, '/auth/login?next=%2Flakeshore-lynx%2Fteams'), 'https://www.fieldlogichq.ca/auth/login?next=%2Flakeshore-lynx%2Fteams');
+    assert.equal(wwwHref({ slug: S, ownHost: true }, `${O}/`, '/coaches'), 'https://www.fieldlogichq.ca/coaches');
   });
 });

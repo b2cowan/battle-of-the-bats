@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { cache } from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -5,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { getArchiveById } from '@/lib/db';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import kit from '@/components/public/ClubKit.module.css';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
@@ -21,7 +23,7 @@ export async function generateMetadata({
   return clubPageMetadata(orgSlug, async club => {
     const archive = await getArchive(archiveId);
     return archive && archive.orgId === club.id ? archive.tournamentName : null;
-  });
+  }, { path: `/archives/${archiveId}` });
 }
 
 // Compute standings from a frozen snapshot — no live DB queries
@@ -81,6 +83,7 @@ export default async function ArchiveDetailPage({
   params: Promise<{ orgSlug: string; archiveId: string }>;
 }) {
   const { orgSlug, archiveId } = await params;
+  await forwardToOwnAddress(orgSlug, `/archives/${archiveId}`);
   // The one rule (Club Tier Stage 4a, lib/public-club-access.ts); a refusal throws out of the Promise.all.
   const [org, archive] = await Promise.all([
     requirePublicClubPage(orgSlug, 'archives'),
@@ -102,6 +105,7 @@ export default async function ArchiveDetailPage({
   }
 
   const sealedDate = formatDate(sealedAt);
+  const href = await orgLinks(orgSlug);
 
   return (
     // The pages' own column (`.container`): the club's bar takes the same edge, so the heading sits under its logo.
@@ -109,7 +113,7 @@ export default async function ArchiveDetailPage({
       <div style={{ maxWidth: '1000px' }}>
 
         {/* Back link */}
-        <Link href={`/${orgSlug}/archives`} className={kit.back} style={{ marginBottom: 0 }}>
+        <Link href={href('/archives')} className={kit.back} style={{ marginBottom: 0 }}>
           ← Past tournaments
         </Link>
 

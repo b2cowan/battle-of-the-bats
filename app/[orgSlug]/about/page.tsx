@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
@@ -16,7 +17,7 @@ export const dynamic = 'force-dynamic';
 /** "About the club · Riverbend Girls Softball". */
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
   const { orgSlug } = await params;
-  return clubPageMetadata(orgSlug, () => 'About the club');
+  return clubPageMetadata(orgSlug, () => 'About the club', { path: '/about' });
 }
 
 /**
@@ -33,6 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
  */
 export default async function ClubAboutPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
+  await forwardToOwnAddress(orgSlug, '/about');
   // The one rule (Club Tier Stage 4a): the switch on, the club not cancelled, the plan carrying the public site.
   const org = await requirePublicClubPage(orgSlug, 'about');
   const content = await getClubSiteContent(org.id);

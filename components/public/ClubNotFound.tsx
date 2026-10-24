@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { clubNotFoundFace } from '@/lib/club-not-found-face';
 import { usePublicClub } from './PublicClubContext';
 import RootNotFound from '@/app/not-found';
@@ -28,6 +28,7 @@ import kit from './ClubKit.module.css';
 export default function ClubNotFound() {
   const pathname = usePublicPathname() ?? '';
   const club = usePublicClub();
+  const href = useOrgHref(club?.slug);
   const face = clubNotFoundFace(pathname, club);
 
   if (face.face === 'platform' || !club) return <RootNotFound />;
@@ -60,8 +61,8 @@ export default function ClubNotFound() {
       <div className={styles.body}>
         <h1 className={styles.title}>We couldn’t find that page</h1>
         <p className={styles.text}>{text}</p>
-        {seeTeams && <Link href={`/${club.slug}/teams`} className={`${kit.btn} ${kit.btnPrimary} ${styles.wide}`}>See all teams</Link>}
-        <Link href={`/${club.slug}`} className="btn btn-outline">{club.name} home</Link>
+        {seeTeams && <Link href={href('/teams')} className={`${kit.btn} ${kit.btnPrimary} ${styles.wide}`}>See all teams</Link>}
+        <Link href={href()} className="btn btn-outline">{club.name} home</Link>
       </div>
     </div>
   );

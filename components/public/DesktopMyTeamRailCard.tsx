@@ -16,13 +16,16 @@ import { isGameLive, gameStartMs, isGameUpcoming, DEFAULT_GAME_DURATION_MINUTES 
 import { tournamentToday } from '@/lib/timezone';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { formatTime } from '@/lib/utils';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import styles from './DesktopMyTeamRailCard.module.css';
 
-export default function DesktopMyTeamRailCard() {
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
+function DesktopMyTeamRailCard() {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
+  const href = useOrgHref(orgSlug);
   const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug);
 
   const [teams, setTeams] = useState<PublicTeam[]>([]);
@@ -67,7 +70,7 @@ export default function DesktopMyTeamRailCard() {
   const liveScore = liveGame
     ? `${(liveGame.awayTeamId === team.id ? liveGame.awayScore : liveGame.homeScore) ?? 0}-${(liveGame.awayTeamId === team.id ? liveGame.homeScore : liveGame.awayScore) ?? 0}`
     : null;
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  const scheduleHref = href(`/${tournamentSlug}/schedule`);
 
   return (
     <div className={styles.card}>
@@ -100,3 +103,6 @@ export default function DesktopMyTeamRailCard() {
     </div>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(DesktopMyTeamRailCard);

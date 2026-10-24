@@ -13,7 +13,8 @@ import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { syncAccountFollowsToDevice } from '@/lib/follow';
 
-export default function AccountFollowSync({ orgSlug, tournamentSlug }: {
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
+function AccountFollowSync({ orgSlug, tournamentSlug }: {
   orgSlug: string;
   tournamentSlug: string;
 }) {
@@ -31,3 +32,6 @@ export default function AccountFollowSync({ orgSlug, tournamentSlug }: {
 
   return null;
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(AccountFollowSync);

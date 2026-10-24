@@ -28,6 +28,7 @@ import { fireConsumerEvent } from '@/lib/consumer-events-client';
 import SharePageButton from '@/components/public/SharePageButton';
 import styles from './FollowTournamentStrip.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
@@ -39,7 +40,7 @@ interface Props {
 // One global dismissal key (plan §6): the sign-in nudge shows at most once per device until cleared.
 const NUDGE_DISMISS_KEY = 'fl_follow_tourn_nudge_dismissed';
 
-export default function FollowTournamentStrip({ orgSlug, tournamentSlug, tournamentName, shareUrl }: Props) {
+function FollowTournamentStrip({ orgSlug, tournamentSlug, tournamentName, shareUrl }: Props) {
   const { following: deviceFollowing, follow, unfollow } = useFollowedTournament(orgSlug, tournamentSlug);
   const [accountFollowing, setAccountFollowing] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
@@ -145,3 +146,6 @@ export default function FollowTournamentStrip({ orgSlug, tournamentSlug, tournam
     </div>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(FollowTournamentStrip);

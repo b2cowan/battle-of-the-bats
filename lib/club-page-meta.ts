@@ -7,6 +7,11 @@ import { clubPageTitle } from './club-site';
 import { homeCard, shareCardPath } from './club-share';
 import { hasModuleEntitlement } from './module-entitlements';
 import { isPublicClubSiteOpen } from './public-club-access';
+import { clubHosts } from './club-host';
+import { stripClubPrefix } from './club-base';
+import { usesOwnAddress } from './club-domain';
+import { isOwnHost } from './own-hosts';
+import { requestHost } from './request-host';
 import type { Organization } from './types';
 
 /**
@@ -55,6 +60,11 @@ export interface ClubPageMeta {
 export async function clubPageMetadata(
   orgSlug: string,
   pageName: (club: Organization) => Promise<string | ClubPageMeta | null | undefined> | string | ClubPageMeta | null | undefined,
+  opts: {
+    /** The page's own path WITHOUT the club's name: `'/teams'`, `'/teams/13u-aa'`, `''` for the club's home. Given, a club
+     *  whose own web address is handed out names that address as the page's canonical one (Club Tier Stage 4e). */
+    path?: string;
+  } = {},
 ): Promise<Metadata> {
   const club = await getClubBySlug(orgSlug);
   if (!club) return {};
@@ -73,13 +83,26 @@ export async function clubPageMetadata(
       tagline: hasModuleEntitlement(club, 'module_public_site') ? (await getClubSiteContent(club.id))?.tagline ?? null : null,
     }).alt,
   };
+  // The club's own web address (Club Tier Stage 4e). Two things differ from today, and only when it is in play:
+  //  - the preview card's address is spelled for the host the visitor is on (`/opengraph-image`, not `/{club}/opengraph-image`),
+  //    so a link scraper does not spend a redirect on the picture;
+  //  - while the club's own address is handed out, THAT address is the page's canonical one, on both hosts: search engines
+  //    move to it, and the old address (which forwards signed-out visitors there) is not listed as a second copy.
+  const onOwnHost = !isOwnHost(await requestHost());
+  const cardUrl = onOwnHost ? stripClubPrefix(card.path, orgSlug) : card.path;
+  const own = opts.path === undefined ? null : await clubHosts.forSlug(orgSlug);
+  const canonical = own && own !== 'unavailable' && usesOwnAddress(own.status)
+    ? `https://${own.host}${opts.path || '/'}`
+    : null;
   return {
     title: { absolute: title },
     ...(description ? { description } : {}),
+    ...(canonical ? { alternates: { canonical } } : {}),
     openGraph: {
       title,
       ...(description ? { description } : {}),
-      images: [{ url: card.path, width: 1200, height: 630, alt: card.alt }],
+      ...(canonical ? { url: canonical } : {}),
+      images: [{ url: cardUrl, width: 1200, height: 630, alt: card.alt }],
     },
   };
 }

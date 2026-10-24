@@ -3,7 +3,7 @@ import { Fragment, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail, Eye, Check, Lock } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useOrgHref, usePublicPathname, useWwwHref } from '@/lib/use-public-pathname';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { getRegistrationState } from '@/lib/registration-state';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
@@ -254,6 +254,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const pathname       = usePublicPathname();
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
+  const orgHref        = useOrgHref(orgSlug);
+  // The coaches portal and password reset exist only on FieldLogicHQ: on a club's own web address these are absolute (Club Tier 4e).
+  const www            = useWwwHref();
 
   const [divisions, setDivisions]   = useState<Division[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -838,7 +841,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       // triggers the first-run onboarding banner (most coaches don't know the portal exists yet).
       // Preview (admin) has no real session/record → keep the inert success card.
       if (result.id && !isPreview) {
-        router.push(`/coaches/tournaments/${result.id}?welcome=1`);
+        const portal = www(`/coaches/tournaments/${result.id}?welcome=1`);
+        if (portal.startsWith('/')) router.push(portal);
+        else window.location.assign(portal);
         return;
       }
       setConfirmation({ id: result.id, status, joinHref: '/coaches/tournaments' });
@@ -887,16 +892,16 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   // Success-screen momentum ticker — only when the event hasn't started yet.
   const firstGameTarget = tournament?.startDate ? `${tournament.startDate}T09:00:00` : null;
   const showCountdown = firstGameTarget != null && Date.parse(firstGameTarget) > mountedAtMs;
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
-  const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
+  const homeHref = orgHref(`/${tournamentSlug}`);
+  const scheduleHref = orgHref(`/${tournamentSlug}/schedule`);
+  const rulesHref = orgHref(`/${tournamentSlug}/rules`);
   const showSchedulePage = Boolean(tournament && isPublicPageEnabled(tournament, 'schedule'));
   const showStandingsPage = Boolean(tournament && isPublicPageEnabled(tournament, 'standings'));
   const showRulesPage = Boolean(tournament && isPublicPageEnabled(tournament, 'rules'));
-  const standingsHref = `/${orgSlug}/${tournamentSlug}/standings`;
+  const standingsHref = orgHref(`/${tournamentSlug}/standings`);
   // Forgot password comes back to this registration (the reset carries the page; see
   // `registrationReturnPath`). The email Step 1 asked for is filled in there too.
-  const forgotHref = `/auth/forgot-password?email=${encodeURIComponent(form.email)}&next=${encodeURIComponent(pathname ?? homeHref)}`;
+  const forgotHref = www(`/auth/forgot-password?email=${encodeURIComponent(form.email)}&next=${encodeURIComponent(pathname ?? homeHref)}`);
 
   /** You · Team · Review. A NEW coach answers team and person together, so their marker stays on "You". */
   function stepClass(target: 'you' | 'team' | 'review') {
@@ -1555,7 +1560,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                 </div>
 
                 <div className={styles.successActions}>
-                  <Link href={confirmation.joinHref} className="btn btn-primary">
+                  <Link href={www(confirmation.joinHref)} className="btn btn-primary">
                     {signedInCoachEmail ? 'Open Coaches Portal' : 'Create Coaches Portal Account'}
                   </Link>
                   {showSchedulePage && <Link href={scheduleHref} className="btn btn-outline">Follow the Schedule</Link>}

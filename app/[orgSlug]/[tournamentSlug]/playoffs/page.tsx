@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Trophy, ChevronRight, Crown, Flame, Shield, Swords, Calendar, MapPin } from 'lucide-react';
@@ -21,6 +22,7 @@ import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/components/public/PlayoffPicture.module.css';
 // Canonical soft LIVE chip — same classes the schedule + game-detail pages use.
 import liveStyles from '@/app/[orgSlug]/schedule/schedule.module.css';
+import { orgLinks } from '@/lib/org-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,12 +46,14 @@ export default async function PlayoffsPage({
   params: Promise<{ orgSlug: string; tournamentSlug: string }>;
 }) {
   const { orgSlug, tournamentSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/playoffs`);
   const org = await getOrganizationBySlug(orgSlug);
   if (!org || org.subscriptionStatus === 'canceled') notFound();
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) notFound();
 
-  const publicBaseEarly = `/${orgSlug}/${tournamentSlug}`;
+  const orgHref = await orgLinks(orgSlug);
+  const publicBaseEarly = orgHref(`/${tournamentSlug}`);
   // The Playoff Picture is a seeding view, so it inherits the Standings page's visibility — an
   // organizer who HID Standings must not have the seeding leak through this URL. But a bracket-only
   // event has Standings force-hidden by format rather than by choice, and there the bracket is the
@@ -98,7 +102,7 @@ export default async function PlayoffsPage({
     g => resolveGameVenueLabel(g, venues),
   );
 
-  const publicBase = `/${orgSlug}/${tournamentSlug}`;
+  const publicBase = orgHref(`/${tournamentSlug}`);
   const showStandings = isPublicPageEnabled(tournament, 'standings');
   const showSchedule = isPublicPageEnabled(tournament, 'schedule');
 

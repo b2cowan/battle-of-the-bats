@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Trophy, Minus, Plus, Maximize } from 'lucide-react';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import { createClient } from '@/lib/supabase-browser';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
@@ -502,6 +503,7 @@ interface LogicSyncBracketProps {
 }
 
 export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, requireFinalization = true, venues = EMPTY_VENUES, orgSlug, tournamentSlug }: LogicSyncBracketProps) {
+  const orgHref = useOrgHref(orgSlug);
   // stable client ref — createClient() from @supabase/ssr creates a new instance on every
   // render, so calling it at component body level and including it in useEffect deps causes
   // infinite re-subscription loops. useRef ensures one instance per component mount.
@@ -991,7 +993,7 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
             // slugs are known, the wrapper is a native SVG <a> linking to the public
             // game-detail page (keyboard-focusable + accessible); the reveal class
             // and stagger var ride the same element so the two compose.
-            const linkHref = canLink ? `/${orgSlug}/${tournamentSlug}/schedule/${node.id}` : null;
+            const linkHref = canLink ? orgHref(`/${tournamentSlug}/schedule/${node.id}`) : null;
             const cls = [linkHref ? styles.clickableNode : '', d != null ? styles.revealNode : '']
               .filter(Boolean).join(' ') || undefined;
             const style = d != null ? ({ ['--d']: `${d}ms` } as React.CSSProperties) : undefined;

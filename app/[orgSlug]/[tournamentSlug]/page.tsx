@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
 import TournamentHomeContent from '@/components/public/TournamentHomeContent';
 
@@ -9,6 +10,7 @@ export default async function TournamentHomePage({
   params: Promise<{ orgSlug: string; tournamentSlug: string }>;
 }) {
   const { orgSlug, tournamentSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/${tournamentSlug}`);
   const org = await getOrganizationBySlug(orgSlug);
   if (!org || org.subscriptionStatus === 'canceled') return null;
 

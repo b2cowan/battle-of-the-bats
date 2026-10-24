@@ -17,6 +17,8 @@ import SandboxChrome from '@/components/sandbox/SandboxChrome';
 import { PublicClubProvider } from '@/components/public/PublicClubContext';
 import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { getCoachStartHref } from '@/lib/start-menu';
+import { bareHost, isOwnHost } from '@/lib/own-hosts';
+import { requestHost } from '@/lib/request-host';
 
 // Pre-load all font options at module level (next/font requirement).
 // Each uses a unique CSS variable so they don't conflict with the root layout fonts.
@@ -66,10 +68,15 @@ export async function generateMetadata({
   const demoRobots = getDemoOrgBySlug(orgSlug)
     ? { robots: { index: false, follow: false, nocache: true } }
     : {};
+  // On a club's own web address (Club Tier Stage 4e) every relative address in the metadata (a preview card, say) resolves
+  // against THAT host, not www's (the root layout's metadataBase). The Host header is the one the edge verified.
+  const host = await requestHost();
+  const clubBase = isOwnHost(host) ? {} : { metadataBase: new URL(`https://${bareHost(host)}`) };
   // (An `getActiveTournamentByOrg` call sat here with its result unused — a per-request query on
   // EVERY route under /{orgSlug} that fed nothing. Removed while making this layout's Stage F
   // lookups cheap; the metadata below never referenced it.)
   return {
+    ...clubBase,
     // The club's own pages set an ABSOLUTE "page · club" title (lib/club-page-meta.ts); this template is what
     // tournament pages, which title themselves with a bare name, still read — unchanged by the club's frame.
     title: {
@@ -107,7 +114,7 @@ export default async function OrgLayout({
   // and a Server Component has no pathname here — proxy.ts intentionally doesn't run on public org
   // routes, which is what keeps an anonymous page free of session work). Read by the one function the
   // editor's preview shares (lib/club-frame-data.ts): the site content once, the tabs, the live notice.
-  const frameClub = await loadClubFrame(org, orgSlug);
+  const frameClub = await loadClubFrame(org, orgSlug, { ownHost: !isOwnHost(await requestHost()) });
 
   // ── The sandbox hat ────────────────────────────────────────────────────────────
   // Mounted HERE because this one layout wraps both halves of the product for an org — the public

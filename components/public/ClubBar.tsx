@@ -19,7 +19,7 @@
  * an anonymous visitor carries no one's doors (the anonymous-public invariant).
  */
 import Link from 'next/link';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useClubBase, useOrgHref, usePublicPathname, useWwwHref } from '@/lib/use-public-pathname';
 import { User } from 'lucide-react';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useRoleSummary } from '@/lib/use-role-summary';
@@ -40,6 +40,9 @@ import styles from './ClubFrame.module.css';
  *  editing owner's own Account or staff door. */
 export default function ClubBar({ club, preview = false }: { club: ClubFrameClub; preview?: boolean }) {
   const realPath = usePublicPathname() ?? '';
+  const href = useOrgHref(club.slug);
+  const www = useWwwHref();
+  const onOwnHost = useClubBase()?.ownHost === true;
   const pathname = preview ? `/${club.slug}` : realPath;
   const signedIn = useClientSignedIn(!preview) && !preview;
   const roles = useRoleSummary(signedIn);
@@ -50,7 +53,7 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
     // data-club-chrome: the club refusal steps this bar aside (components/public/ClubNotFound.module.css).
     <header className={styles.bar} data-club-bar="" data-club-chrome="" {...siteEdit('look')}>
       {/* The way home from any depth. Named "{club} home": the visible name is in it, so voice control still finds it. */}
-      <Link href={`/${club.slug}`} className={styles.identity} aria-label={`${club.name} home`}>
+      <Link href={href()} className={styles.identity} aria-label={`${club.name} home`}>
         {club.logoUrl ? (
           <img src={club.logoUrl} alt="" className={styles.logo} />
         ) : (
@@ -80,7 +83,9 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
             </AccountMenu>
           )
         ) : (
-          <Link href={signInHrefFor(pathname)} className={styles.word}>Sign in</Link>
+          // On a club's own address sign-in lives on FieldLogicHQ (host-only cookies), and returns the visitor to this same page there.
+          // pathname is the club-named path, which is exactly the page's address on fieldlogichq.ca.
+          <Link href={www(onOwnHost ? `/auth/login?next=${encodeURIComponent(pathname)}` : signInHrefFor(pathname))} className={styles.word}>Sign in</Link>
         )}
         {door && <FlipPill resolution={door} variant="inline" compact className={flipStyles.clubLook} />}
       </div>

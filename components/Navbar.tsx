@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { User } from 'lucide-react';
 import { useOrgNav } from './OrgNavContext';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
@@ -54,6 +54,7 @@ export default function Navbar() {
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
+  const orgHref           = useOrgHref(orgSlug);
   const { logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentHasBracket, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
@@ -260,7 +261,9 @@ export default function Navbar() {
      as `/{org}/null/teams` besides. Found by the R1 guard, 2026-08-01: SSR and hydrated markup now
      name the same destinations. */
   const eventSlug = tournamentSlug ?? urlTournamentSlug;
-  const homeHref = `/${orgSlug}/${eventSlug}`;
+  // Links are spelled for the address the visitor is on (a club's own web address has no club name in it); the active-tab
+  // test below still reads the club-named path.
+  const homeHref = orgHref(`/${eventSlug}`);
   const today = tournamentToday();
   const phase = phaseOf(tournamentStartDate, tournamentEndDate, tournamentStatus, today, tournamentFinished);
   const dateRange = fmtRange(tournamentStartDate, tournamentEndDate);
@@ -300,10 +303,11 @@ export default function Navbar() {
           {visibleTournamentTabs(tournamentHiddenPages, tournamentHasBracket).map(l => {
             const href = `/${orgSlug}/${eventSlug}/${l.key}`;
             const isActive = pathname.startsWith(href);
+            const linkHref = orgHref(`/${eventSlug}/${l.key}`);
             return (
               <Link
                 key={l.key}
-                href={href}
+                href={linkHref}
                 className={`${styles.link} ${isActive ? styles.active : ''}`}
               >
                 {l.label}
@@ -323,7 +327,7 @@ export default function Navbar() {
             the tier/active-count condition into orgHomeHref; null keeps today's inert text).
             Same text, same look — just tappable. */}
         {showEyebrow && (orgHomeHref ? (
-          <Link href={orgHomeHref} className={`${styles.ehOrg} ${styles.ehOrgLink}`}>{orgName}</Link>
+          <Link href={orgHref()} className={`${styles.ehOrg} ${styles.ehOrgLink}`}>{orgName}</Link>
         ) : (
           <span className={styles.ehOrg}>{orgName}</span>
         ))}

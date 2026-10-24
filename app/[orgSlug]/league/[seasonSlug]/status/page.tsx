@@ -1,8 +1,10 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import StatusLookupForm from './StatusLookupForm';
 import column from '../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
@@ -11,8 +13,8 @@ export const dynamic = 'force-dynamic';
 
 // The tab names the page, not the season: a family's lookup page, like the bar's own "Sign in".
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
-  const { orgSlug } = await params;
-  return clubPageMetadata(orgSlug, () => 'Registration status');
+  const { orgSlug, seasonSlug } = await params;
+  return clubPageMetadata(orgSlug, () => 'Registration status', { path: `/league/${seasonSlug}/status` });
 }
 
 export default async function RegistrationStatusPage({
@@ -21,6 +23,8 @@ export default async function RegistrationStatusPage({
   params: Promise<{ orgSlug: string; seasonSlug: string }>;
 }) {
   const { orgSlug, seasonSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/league/${seasonSlug}/status`);
+  const href = await orgLinks(orgSlug);
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
@@ -40,7 +44,7 @@ export default async function RegistrationStatusPage({
   return (
     <div>
       <div className={`container ${column.column}`} style={innerStyle}>
-        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
+        <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← Back to {season.name}
         </Link>
 

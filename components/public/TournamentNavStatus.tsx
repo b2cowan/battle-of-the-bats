@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { CalendarClock, CircleCheck } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { tournamentToday } from '@/lib/timezone';
@@ -28,6 +29,7 @@ export default function TournamentNavStatus() {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
+  const href = useOrgHref(orgSlug);
   const { tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentFinished } = useOrgNav();
 
   const today = tournamentToday();
@@ -67,7 +69,7 @@ export default function TournamentNavStatus() {
   if (phase === 'none' || !orgSlug || !tournamentSlug) return null;
 
   const dateRange = fmtRange(tournamentStartDate, tournamentEndDate);
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  const scheduleHref = href(`/${tournamentSlug}/schedule`);
 
   if (phase === 'pre') {
     const days = daysUntil(tournamentStartDate, today);

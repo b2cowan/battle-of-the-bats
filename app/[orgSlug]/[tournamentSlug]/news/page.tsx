@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { cookies } from 'next/headers';
 import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, resolveTournamentContactEmail } from '@/lib/db';
 import { notFound } from 'next/navigation';
@@ -15,6 +16,7 @@ export default async function NewsPage({
 }) {
   const { orgSlug, tournamentSlug } = await params;
   const { view } = await searchParams;
+  await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/news${view ? `?view=${encodeURIComponent(view)}` : ''}`);
 
   const cookieStore = await cookies();
   const prefName = cookieStore.get(`fl_agpref_${orgSlug}`)?.value ?? null;

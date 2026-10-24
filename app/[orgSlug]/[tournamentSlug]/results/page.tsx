@@ -1,4 +1,6 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { redirect } from 'next/navigation';
+import { orgLinks } from '@/lib/org-links';
 
 export default async function TournamentResultsRedirect({
   params,
@@ -6,5 +8,6 @@ export default async function TournamentResultsRedirect({
   params: Promise<{ orgSlug: string; tournamentSlug: string }>;
 }) {
   const { orgSlug, tournamentSlug } = await params;
-  redirect(`/${orgSlug}/${tournamentSlug}/standings`);
+  await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/results`);
+  redirect((await orgLinks(orgSlug))(`/${tournamentSlug}/standings`));
 }

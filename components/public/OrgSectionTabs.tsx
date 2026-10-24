@@ -1,3 +1,4 @@
+'use client';
 /**
  * components/public/OrgSectionTabs.tsx — a club's section tabs (Nav Unification Stage F; in the club's own bar since
  * Club Tier Stage 4b-1, End state 1 of the Stage 4 drawings).
@@ -11,6 +12,7 @@
  * club but inside none of these sections, and the page's own title says where they are.
  */
 import Link from 'next/link';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import type { OrgSection } from '@/lib/org-public-sections';
 import styles from './OrgSectionTabs.module.css';
 
@@ -21,6 +23,7 @@ export default function OrgSectionTabs({ sections, orgSlug, activeKey, className
   activeKey: string | null;
   className?: string;
 }) {
+  const href = useOrgHref(orgSlug);
   return (
     // data-club-chrome: the club refusal steps this row aside (components/public/ClubNotFound.module.css).
     <nav className={`${styles.tabs} ${className ?? ''}`} aria-label="Sections" data-club-chrome="">
@@ -29,7 +32,7 @@ export default function OrgSectionTabs({ sections, orgSlug, activeKey, className
         return (
           <Link
             key={key || 'home'}
-            href={key ? `/${orgSlug}/${key}` : `/${orgSlug}`}
+            href={key ? href(`/${key}`) : href()}
             className={`${styles.tab} ${active ? styles.active : ''}`}
             aria-current={active ? 'page' : undefined}
           >

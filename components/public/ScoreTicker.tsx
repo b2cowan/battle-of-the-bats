@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { X, ChevronRight } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useOrgNav } from '@/components/OrgNavContext';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { formatTime } from '@/lib/utils';
@@ -34,6 +35,7 @@ export default function ScoreTicker() {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
+  const orgHref = useOrgHref(orgSlug);
   const { tournamentStartDate, tournamentEndDate, tournamentStatus } = useOrgNav();
 
   const today = tournamentToday();
@@ -146,7 +148,7 @@ export default function ScoreTicker() {
       unresolvedSlot(g.awayTeamId) && unresolvedSlot(g.homeTeamId);
     return {
       id: g.id,
-      href: `/${orgSlug}/${tournamentSlug}/schedule/${g.id}`,
+      href: orgHref(`/${tournamentSlug}/schedule/${g.id}`),
       away: teamShort(g.awayTeamId, g.awayPlaceholder, teams),
       home: teamShort(g.homeTeamId, g.homePlaceholder, teams),
       awayScore: g.awayScore,

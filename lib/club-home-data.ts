@@ -22,10 +22,16 @@ import { homeTryoutsRowSub, isListedTryout, openNowTryouts, sharedSeasonYear, tr
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { getRegistrationState } from '@/lib/registration-state';
 import { getClubSiteContent } from '@/lib/club-page-meta';
+import { orgHref } from '@/lib/club-base';
 import type { ClubSiteHomeProps } from '@/components/public/ClubSiteHome';
 import type { Organization } from '@/lib/types';
 
-export async function loadClubHome(org: Organization, orgSlug: string): Promise<ClubSiteHomeProps> {
+/**
+ * `base` (Stage 4e): `{ ownHost: true }` on a club's own web address, so every link below is spelled for the address the
+ * visitor is on (`/league`, not `/lakeshore-lynx/league`). Left out = our host, the old spelling.
+ */
+export async function loadClubHome(org: Organization, orgSlug: string, base?: { ownHost: boolean }): Promise<ClubSiteHomeProps> {
+  const href = (path: string) => orgHref({ slug: orgSlug, ownHost: !!base?.ownHost }, path);
   // F1/F3: the Follow button shows only when the org passes the SAME eligibility gate a follow write validates against.
   const showFollow = isFollowableOrg(org);
   const withTeams = clubTeamsAddress(org) === 'teams-page';
@@ -47,7 +53,7 @@ export async function loadClubHome(org: Organization, orgSlug: string): Promise<
   const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
   const runningSeason = runningLeagueSeason(publicLeagueSeasons);
   const league = publicLeagueSeasons.length === 0 ? null : {
-    href: `/${orgSlug}/league`,
+    href: href('/league'),
     title: runningSeason?.name ?? 'House league',
     // Words through /marketing 2026-10-20: "open" is said once, by Open now, so this line says what the door gives.
     sub: !runningSeason ? 'Past seasons and results'
@@ -61,13 +67,13 @@ export async function loadClubHome(org: Organization, orgSlug: string): Promise<
   const tryoutPick = openNowTryouts(clubTryouts.teams);
   const tryoutRows = tryoutPick.kind === 'team' ? [{
     key: `tryout-${tryoutPick.team.season.id}`,
-    href: `/${orgSlug}/teams/${tryoutPick.team.slug}/tryouts`,
+    href: href(`/teams/${tryoutPick.team.slug}/tryouts`),
     title: `${tryoutPick.team.name} tryouts`,
     sub: tryoutDaysLine(tryoutPick.team.standing.upcoming) ?? tryoutSeasonMeta(tryoutPick.team.season),
     deadline: null,
   }] : tryoutPick.kind === 'season' ? [{
     key: 'tryouts',
-    href: `/${orgSlug}/tryouts`,
+    href: href('/tryouts'),
     // The year the Tryouts page's title names — from the same listed teams, so the row and the page it opens agree.
     title: tryoutsPageTitle(sharedSeasonYear(clubTryouts.teams.filter(t => isListedTryout(t.standing, today)).map(t => ({ seasonYear: t.season.year })))),
     sub: homeTryoutsRowSub(tryoutPick.teams.length, clubTeamBands(tryoutPick.teams, clubTryouts.groups).map(b => ({
@@ -86,7 +92,7 @@ export async function loadClubHome(org: Organization, orgSlug: string): Promise<
       const deadline = closes && closes >= today ? closes : null;
       return {
         key: `league-${s.id}`,
-        href: `/${orgSlug}/league/${s.slug}`,
+        href: href(`/league/${s.slug}`),
         title: s.name,
         sub: [
           deadline ? `Sign up by ${day(deadline)}` : null,
@@ -116,7 +122,7 @@ export async function loadClubHome(org: Organization, orgSlug: string): Promise<
     const status = tournamentHomeStatus(t, today, registrationOpen);
     return {
       id: t.id,
-      href: `/${orgSlug}/${t.slug}`,
+      href: href(`/${t.slug}`),
       name: t.name,
       dates: t.startDate ? formatEventDateRange(t.startDate, t.endDate, !t.startDate.startsWith(thisYear)) : null,
       status,
@@ -132,7 +138,7 @@ export async function loadClubHome(org: Organization, orgSlug: string): Promise<
     league,
     tournaments,
     about: siteContent?.description?.trim() || null,
-    aboutPageHref: clubAboutPageShows(siteContent) ? `/${orgSlug}/about` : null,
+    aboutPageHref: clubAboutPageShows(siteContent) ? href('/about') : null,
     // Only the sponsors a family may see now: the filter is HERE (a page's loader), never in the shared read the editor uses.
     sponsors: sponsorsShowing(siteContent?.sponsors),
     showFollow,

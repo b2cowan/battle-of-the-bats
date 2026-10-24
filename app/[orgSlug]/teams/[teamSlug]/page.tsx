@@ -1,12 +1,13 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
-import { getPublicTeamSchedule, publicTeamFeedPath } from '@/lib/public-team-schedule';
+import { getPublicTeamSchedule } from '@/lib/public-team-schedule';
 import { teamCalendarName } from '@/lib/export/team-feed-words';
 import kit from '@/components/public/ClubKit.module.css';
 import { liveSeasonOf, publicTryoutSeasonOf } from '@/lib/season-live';
-import { publicTryoutHref } from '@/lib/public-tryout';
+import { orgLinks } from '@/lib/org-links';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { publicClubRefusal } from '@/lib/public-club-access';
 import { clubPageMetadata, getClubSiteContent, getClubTeam, getClubTeamSeasons } from '@/lib/club-page-meta';
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
       description: firstSentence(team.description) ?? TEAM_DESCRIPTION_FALLBACK,
       card: { path: shareCardPath.team(orgSlug, team.slug), alt: teamCard({ clubName: club.name, teamName: team.name, seasonYear: null }).alt },
     };
-  });
+  }, { path: `/teams/${teamSlug}` });
 }
 
 export default async function TeamPublicPage({
@@ -51,6 +52,7 @@ export default async function TeamPublicPage({
   params: Promise<{ orgSlug: string; teamSlug: string }>;
 }) {
   const { orgSlug, teamSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/teams/${teamSlug}`);
 
   // An old tournament-team link (`/{org}/teams/{team id}`, printed before tournament teams moved under the event) still
   // forwards while a tournament runs, like the shortcut addresses (Ask 9) — BEFORE the club rule, because tournament
@@ -59,6 +61,7 @@ export default async function TeamPublicPage({
 
   // The one rule (Club Tier Stage 4a, lib/public-club-access.ts).
   const org = await requirePublicClubPage(orgSlug, 'teams');
+  const href = await orgLinks(orgSlug);
 
   // An unknown team is the club's "not found" with a way home; it used to go silently to the club home (S4-07).
   const team = await getClubTeam(org.id, teamSlug);
@@ -119,7 +122,7 @@ export default async function TeamPublicPage({
           {openYear.year ? `Tryouts for the ${openYear.year} season` : `Tryouts for the ${openYear.name}`}
         </h2>
         {daysLine && <p className={kit.sub}>{daysLine}</p>}
-        <Link href={publicTryoutHref(orgSlug, team.slug)} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnFull}`}>
+        <Link href={href(`/teams/${team.slug}/tryouts`)} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnFull}`}>
           Tryout details and sign-up
         </Link>
       </div>
@@ -144,7 +147,7 @@ export default async function TeamPublicPage({
           <RepTeamPublicSchedule
             view={publicSchedule}
             // Club Tier 6d (B3, Ask 3): the feed is this page's own address with /calendar on the end — no secret.
-            subscribe={{ feedPath: publicTeamFeedPath(orgSlug, team.slug), calendarName: teamCalendarName(team.name, org.name) }}
+            subscribe={{ feedPath: href(`/teams/${team.slug}/calendar`), calendarName: teamCalendarName(team.name, org.name) }}
           />
         )}
       </div>

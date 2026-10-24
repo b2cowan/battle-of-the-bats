@@ -1,7 +1,9 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import TryoutLandingView from '@/components/rep-teams/TryoutLandingView';
-import { resolvePublicTryout, publicTryoutHref, publicTryoutRegisterHref } from '@/lib/public-tryout';
+import { resolvePublicTryout } from '@/lib/public-tryout';
+import { orgLinks } from '@/lib/org-links';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import { teamTryoutPageName } from '../tryout-metadata';
 import { tournamentToday } from '@/lib/timezone';
@@ -10,8 +12,8 @@ export const dynamic = 'force-dynamic';
 
 /** The tab names the page (Club Tier Stage 4b-1): the team’s tryouts. */
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; teamSlug: string; yearId: string }> }): Promise<Metadata> {
-  const { orgSlug, teamSlug } = await params;
-  return clubPageMetadata(orgSlug, teamTryoutPageName(teamSlug, false));
+  const { orgSlug, teamSlug, yearId } = await params;
+  return clubPageMetadata(orgSlug, teamTryoutPageName(teamSlug, false), { path: `/teams/${teamSlug}/tryouts/${yearId}` });
 }
 
 /**
@@ -26,16 +28,19 @@ export default async function TryoutLandingPage({
   params: Promise<{ orgSlug: string; teamSlug: string; yearId: string }>;
 }) {
   const { orgSlug, teamSlug, yearId } = await params;
+  await forwardToOwnAddress(orgSlug, `/teams/${teamSlug}/tryouts/${yearId}`);
   const resolved = await resolvePublicTryout(orgSlug, teamSlug);
   if (!resolved) notFound();
+  const href = await orgLinks(orgSlug);
   const { team, seasons, live, contactEmail } = resolved;
   if (!seasons.some(s => s.id === yearId)) notFound();
-  if (live?.id === yearId) redirect(publicTryoutHref(orgSlug, teamSlug));
+  if (live?.id === yearId) redirect(href(`/teams/${teamSlug}/tryouts`));
   return (
     // A season that is not the live one has nothing to sign up for: the closed page, with the contact and a way on.
     <TryoutLandingView
       orgSlug={orgSlug}
       teamSlug={teamSlug}
+      teamHref={href(`/teams/${teamSlug}`)}
       team={{ name: team.name, sport: team.sport }}
       state="closed"
       season={null}
@@ -43,7 +48,7 @@ export default async function TryoutLandingPage({
       lastDay={null}
       today={tournamentToday()}
       contactEmail={contactEmail}
-      registerHref={publicTryoutRegisterHref(orgSlug, teamSlug)}
+      registerHref={href(`/teams/${teamSlug}/tryouts/register`)}
     />
   );
 }

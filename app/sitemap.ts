@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { getClubPageSitemapEntries, getDirectorySitemapEntries, getOrgSitemapEntries } from '@/lib/directory';
 import { isDemoOrgSlug } from '@/lib/demo-org';
-import { isOwnHost } from '@/lib/own-hosts';
+import { bareHost, isOwnHost } from '@/lib/own-hosts';
+import { clubHosts } from '@/lib/club-host';
+import { clubOwnUrl } from '@/lib/club-base';
 import { requestHost } from '@/lib/request-host';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
@@ -51,10 +53,26 @@ async function safeEntries<T extends { href: string }>(
   }
 }
 
+/** A club's own host: its home, its Teams page, its teams, open tryouts and the pages of its tournaments, as `https://{host}/…`. */
+async function clubOwnSitemap(host: string): Promise<MetadataRoute.Sitemap> {
+  const club = await clubHosts.lookup(host);
+  if (!club || club === 'unavailable') return [];
+  const origin = `https://${host}`;
+  const own = (href: string) => clubOwnUrl(origin, club.slug, href);
+  const [tournamentEntries, orgEntries, clubPageEntries] = await Promise.all([
+    safeEntries(getDirectorySitemapEntries(), e => ({ url: own(e.href) ?? '', lastModified: e.lastModified ? new Date(e.lastModified) : undefined, changeFrequency: 'daily', priority: 0.6 })),
+    safeEntries(getOrgSitemapEntries(), e => ({ url: own(e.href) ?? '', changeFrequency: 'weekly', priority: 0.8 })),
+    safeEntries(getClubPageSitemapEntries(), e => ({ url: own(e.href) ?? '', changeFrequency: 'weekly', priority: 0.5 })),
+  ]);
+  // Only this club's pages (the scans cover every club; a row with no address on this host is dropped).
+  return [...orgEntries, ...clubPageEntries, ...tournamentEntries].filter(e => e.url !== '');
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // A club's own web address (Club Tier 4e) is not ours: it must never list FieldLogicHQ's marketing pages or other
-  // clubs' pages under its name. Its own pages arrive with the host-to-club lookup (Part 4); until then it lists none.
-  if (!isOwnHost(await requestHost())) return [];
+  // clubs' pages under its name. It lists ITS OWN pages, spelled for its own host, and nothing else.
+  const host = await requestHost();
+  if (!isOwnHost(host)) return clubOwnSitemap(bareHost(host));
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_PATHS.map(s => ({
     url: `${SITE_URL}${s.path}`,

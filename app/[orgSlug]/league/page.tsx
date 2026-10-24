@@ -1,9 +1,11 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getLeagueSeasons } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import type { LeagueSeason } from '@/lib/types';
 import column from './league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
@@ -12,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
   const { orgSlug } = await params;
-  return clubPageMetadata(orgSlug, () => 'House league');
+  return clubPageMetadata(orgSlug, () => 'House league', { path: '/league' });
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -34,6 +36,8 @@ export default async function LeagueIndexPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = await params;
+  await forwardToOwnAddress(orgSlug, '/league');
+  const orgHref = await orgLinks(orgSlug);
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
@@ -67,7 +71,7 @@ export default async function LeagueIndexPage({
         {featured && (
           <div style={{ marginBottom: '2.5rem' }}>
             <div className={kit.band}>Current season</div>
-            <FeaturedSeasonCard season={featured} orgSlug={orgSlug} />
+            <FeaturedSeasonCard season={featured} orgHref={orgHref} />
           </div>
         )}
 
@@ -77,7 +81,7 @@ export default async function LeagueIndexPage({
             <div className={kit.band}>Past seasons</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {past.map(s => (
-                <PastSeasonRow key={s.id} season={s} orgSlug={orgSlug} />
+                <PastSeasonRow key={s.id} season={s} orgHref={orgHref} />
               ))}
             </div>
           </div>
@@ -87,8 +91,8 @@ export default async function LeagueIndexPage({
   );
 }
 
-function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug: string }) {
-  const href = `/${orgSlug}/league/${season.slug}`;
+function FeaturedSeasonCard({ season, orgHref }: { season: LeagueSeason; orgHref: (path?: string) => string }) {
+  const href = orgHref(`/league/${season.slug}`);
   const canRegister = season.status === 'registration_open';
 
   return (
@@ -108,7 +112,7 @@ function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug
 
       <div className={kit.btnRow}>
         {canRegister ? (
-          <Link href={`/${orgSlug}/league/${season.slug}/register`} className={`${kit.btn} ${kit.btnPrimary}`}>
+          <Link href={orgHref(`/league/${season.slug}/register`)} className={`${kit.btn} ${kit.btnPrimary}`}>
             Register
           </Link>
         ) : null}
@@ -116,7 +120,7 @@ function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug
           View season
         </Link>
         {season.status === 'active' && (
-          <Link href={`/${orgSlug}/league/${season.slug}/standings`} className={`${kit.btn} ${kit.btnSecondary}`}>
+          <Link href={orgHref(`/league/${season.slug}/standings`)} className={`${kit.btn} ${kit.btnSecondary}`}>
             Standings
           </Link>
         )}
@@ -125,9 +129,9 @@ function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug
   );
 }
 
-function PastSeasonRow({ season, orgSlug }: { season: LeagueSeason; orgSlug: string }) {
+function PastSeasonRow({ season, orgHref }: { season: LeagueSeason; orgHref: (path?: string) => string }) {
   const year = formatYear(season.seasonStartDate ?? season.registrationOpenAt);
-  const href = `/${orgSlug}/league/${season.slug}`;
+  const href = orgHref(`/league/${season.slug}`);
 
   return (
     <div

@@ -26,7 +26,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
@@ -48,6 +48,9 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
+  const orgHref = useOrgHref(orgSlug);
+  // Paths stay club-named for the active-tab match; the link is spelled for the visitor's address (the preview's basePath is not).
+  const spell = (p: string) => (basePath ? p : orgHref(p.slice(orgSlug.length + 1)));
   const { tournamentHiddenPages, tournamentHasBracket } = useOrgNav();
   const resolvedHidden = hiddenPages ?? tournamentHiddenPages;
   // Preview links stay inside `/preview/…`, which has no bracket route — so no Playoffs tab there.
@@ -83,7 +86,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
       <div className={styles.scroller} ref={scrollerRef}>
         <div className={styles.track}>
           <Link
-            href={homeHref}
+            href={spell(homeHref)}
             ref={overviewActive ? activeRef : undefined}
             className={`${styles.tab} ${overviewActive ? styles.active : ''}`}
             aria-current={overviewActive ? 'page' : undefined}
@@ -97,7 +100,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
             return (
               <Link
                 key={key}
-                href={href}
+                href={spell(href)}
                 ref={active ? activeRef : undefined}
                 className={`${styles.tab} ${active ? styles.active : ''}`}
                 aria-current={active ? 'page' : undefined}

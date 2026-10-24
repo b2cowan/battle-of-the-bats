@@ -19,12 +19,13 @@ import { getSession } from '@/lib/auth';
 import { fireConsumerEvent } from '@/lib/consumer-events-client';
 import styles from './FollowOrgButton.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 interface Props {
   orgSlug: string;
   orgName: string;
 }
 
-export default function FollowOrgButton({ orgSlug, orgName }: Props) {
+function FollowOrgButton({ orgSlug, orgName }: Props) {
   const { following: deviceFollowing, follow, unfollow } = useFollowedOrg(orgSlug);
   const [accountFollowing, setAccountFollowing] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
@@ -79,3 +80,6 @@ export default function FollowOrgButton({ orgSlug, orgName }: Props) {
     </button>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(FollowOrgButton);

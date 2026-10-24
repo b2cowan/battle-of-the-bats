@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Star, Clock, Calendar, Trophy, CalendarPlus } from 'lucide-react';
 import type { Game, PublicTeam, Division, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import { useFollowedTeam } from '@/lib/follow';
 import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
@@ -22,6 +23,7 @@ import FollowTeamPicker from '@/components/public/FollowTeamPicker';
 import UnfollowConfirmSheet from '@/components/public/UnfollowConfirmSheet';
 import homeStyles from '@/app/[orgSlug]/Home.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 export interface MyCardStandingRow {
   teamId: string;
   teamName: string;
@@ -70,7 +72,7 @@ function formatCountdown(ms: number): string {
   return `${Math.max(mins, 1)}m`;
 }
 
-export default function MyTournamentCard({
+function MyTournamentCard({
   orgSlug,
   tournamentSlug,
   tournamentName,
@@ -83,6 +85,7 @@ export default function MyTournamentCard({
   fanAlertsEnabled = false,
   isCompleted = false,
 }: Props) {
+  const href = useOrgHref(orgSlug);
   const { followedTeamId, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [confirmUnfollow, setConfirmUnfollow] = useState(false);
@@ -270,7 +273,7 @@ export default function MyTournamentCard({
         <Link href={scheduleHref} className="btn btn-ghost btn-sm">
           <Calendar size={14} /> Schedule
         </Link>
-        <Link href={`/${orgSlug}/${tournamentSlug}/teams/${team.id}`} className="btn btn-ghost btn-sm">
+        <Link href={href(`/${tournamentSlug}/teams/${team.id}`)} className="btn btn-ghost btn-sm">
           <Trophy size={14} /> Profile
         </Link>
       </div>
@@ -284,3 +287,6 @@ export default function MyTournamentCard({
     </div>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(MyTournamentCard);

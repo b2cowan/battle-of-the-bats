@@ -27,7 +27,7 @@ describe('1 · the home (End state 1, Ask 3A)', () => {
     assert.doesNotMatch(code, /Upcoming events/);
     assert.match(code, /TOURNAMENT_STATUS_WORD\[/, 'the one set of status words');
     // The home's one loader, shared with the editor's preview since the Public site builder (2026-10-21).
-    assert.match(readCode(`${ORG}/page.tsx`), /loadClubHome\(org, orgSlug\)/);
+    assert.match(readCode(`${ORG}/page.tsx`), /loadClubHome\(org, orgSlug(, \{ ownHost: [^}]+ \})?\)/);
     assert.match(readCode('lib/club-home-data.ts'), /tournamentHomeStatus\(t, today, registrationOpen\)/, 'true to its dates');
   });
   it('the description lives in About the club, and the hero\'s repeated contact is gone (the footer carries it)', () => {

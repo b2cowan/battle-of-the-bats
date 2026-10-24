@@ -7,6 +7,7 @@ import { seasonPhrase } from './season-phrase';
 import { bornYearsOf } from './born-years';
 import { hasModuleEntitlement } from './module-entitlements';
 import { tournamentToday } from './timezone';
+import { orgHref } from './club-base';
 import type { Organization } from './types';
 
 /**
@@ -77,7 +78,8 @@ export interface ClubLeagueDivisions {
  * the Teams page lists divisions only under a Born in pick, and a division with no years says nothing about an age, so
  * it would be the same noise under every pick. Null when the club runs no house league or none is running.
  */
-export async function readClubLeagueDivisions(org: Organization, orgSlug: string): Promise<ClubLeagueDivisions | null> {
+/** `base` (Stage 4e): `{ ownHost: true }` on a club's own web address, so the season's link reads `/league/...`. Left out = our host. */
+export async function readClubLeagueDivisions(org: Organization, orgSlug: string, ownBase?: { ownHost: boolean }): Promise<ClubLeagueDivisions | null> {
   if (!hasModuleEntitlement(org, 'module_house_league')) return null;
   const seasons = (await getLeagueSeasons(org.id)).filter(s => s.status !== 'draft');
   const season = runningLeagueSeason(seasons);
@@ -86,7 +88,7 @@ export async function readClubLeagueDivisions(org: Organization, orgSlug: string
     .map((d): ClubListedDivision => ({ id: d.id, name: d.name, born: bornFactsOf(bornYearsOf({ born_from_year: d.bornFromYear, born_to_year: d.bornToYear }), org.birthdayCutoffs, season.sport) }))
     .filter(d => hasBornYears(d.born));
   if (divisions.length === 0) return null;
-  const base = `/${orgSlug}/league/${season.slug}`;
+  const base = orgHref({ slug: orgSlug, ownHost: !!ownBase?.ownHost }, `/league/${season.slug}`);
   return {
     href: season.status === 'registration_open' ? `${base}/register` : base,
     seasonWords: seasonPhrase(season.name),

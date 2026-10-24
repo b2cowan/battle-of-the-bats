@@ -18,6 +18,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
+import { useOrgHref } from '@/lib/use-public-pathname';
 
 interface Props {
   orgSlug: string;
@@ -100,6 +101,7 @@ function TeamCard({
   onFollow: (team: PublicTeam) => void;
   onUnfollow: (team: PublicTeam) => void;
 }) {
+  const orgHref = useOrgHref(orgSlug);
   // Shared qualifier split (D3 convention, same helper as standings/seeding) —
   // the trailing "(…)" leaves the name and becomes the quiet second line below.
   const { base: name, qualifier } = splitTeamQualifier(team.name);
@@ -172,7 +174,7 @@ function TeamCard({
           Follow button sits above it (z-index) so it stays independently clickable. */}
       {!isPreview && (
         <Link
-          href={`/${orgSlug}/${tournamentSlug}/teams/${team.id}`}
+          href={orgHref(`/${tournamentSlug}/teams/${team.id}`)}
           prefetch={false}
           className={styles.cardLink}
           aria-label={`View ${name} team page`}
@@ -251,6 +253,7 @@ function TeamCard({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
+  const orgHref = useOrgHref(orgSlug);
   const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
   // True once fetched (or immediately with initialData) — gates the empty state so it
@@ -359,9 +362,9 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   // followed team) — matches MyTeamDock's own gate so we don't leave dead space
   // at the bottom for everyone else (J6-041 review).
   const dockActive = isTournamentInProgress(selectedTournament) && !!followedTeamId;
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const registerHref = `/${orgSlug}/${tournamentSlug}/register`;
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  const homeHref = orgHref(`/${tournamentSlug}`);
+  const registerHref = orgHref(`/${tournamentSlug}/register`);
+  const scheduleHref = orgHref(`/${tournamentSlug}/schedule`);
   const canRegister = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'register'));
   const showSchedulePage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'schedule'));
 

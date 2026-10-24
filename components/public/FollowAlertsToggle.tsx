@@ -25,6 +25,7 @@ import { useFanAlertPrefs, saveFanAlertPref } from '@/lib/fan-alert-prefs-client
 import { syncFollowToAccount } from '@/lib/follow';
 import styles from './FollowAlertsToggle.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
@@ -45,7 +46,7 @@ interface Props {
   labelClassName?: string;
 }
 
-export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, variant = 'default', className, labelClassName }: Props) {
+function FollowAlertsToggle({ orgSlug, tournamentSlug, team, variant = 'default', className, labelClassName }: Props) {
   const pill = variant === 'pill';
   const iconSize = pill ? 12 : 14;
   const pathname = usePublicPathname();
@@ -212,3 +213,6 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
     </>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(FollowAlertsToggle);

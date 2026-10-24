@@ -3,6 +3,7 @@ import type { Division, Resource, RuleSection } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import { RuleIcon } from '@/lib/rule-icons';
+import { orgLinks } from '@/lib/org-links';
 import styles from '@/app/[orgSlug]/rules/rules.module.css';
 
 /** Stable deep-link anchor for a rules section (e.g. "Mercy Rule" → "rule-mercy-rule"). */
@@ -31,7 +32,7 @@ type RulesContentProps = {
  * (app/[orgSlug]/[tournamentSlug]/rules) and the admin tournament preview, so the
  * two render identically. Pure/presentational — callers fetch the data.
  */
-export default function RulesContent({
+export default async function RulesContent({
   orgSlug,
   tournamentSlug,
   pageEnabled,
@@ -44,6 +45,7 @@ export default function RulesContent({
   rulesLayout,
   resourcesLayout,
 }: RulesContentProps) {
+  const href = await orgLinks(orgSlug);
   if (!pageEnabled) {
     return (
       <div className="page-content">
@@ -107,8 +109,8 @@ export default function RulesContent({
                   divisions={divisions}
                   activeName={prefName}
                   isFiltering={isFiltering}
-                  viewAllHref={`/${orgSlug}/${tournamentSlug}/rules?view=all`}
-                  backHref={`/${orgSlug}/${tournamentSlug}/rules`}
+                  viewAllHref={href(`/${tournamentSlug}/rules?view=all`)}
+                  backHref={href(`/${tournamentSlug}/rules`)}
                 />
               )}
 

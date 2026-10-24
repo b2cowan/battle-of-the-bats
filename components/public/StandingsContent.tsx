@@ -19,6 +19,7 @@ import { isGameLive, isGameUpcoming, gameStartMs, DEFAULT_GAME_DURATION_MINUTES 
 import { tournamentToday } from '@/lib/timezone';
 import MyTeamCard, { type MyTeamCardStatus } from '@/components/public/MyTeamCard';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
+import { useOrgHref } from '@/lib/use-public-pathname';
 
 type StandingResult = {
   teamId: string;
@@ -74,6 +75,7 @@ const STAT_LEGEND: { abbr: string; label: string; vis?: 'mobile' | 'desktop' }[]
 ];
 
 export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
+  const orgHref = useOrgHref(orgSlug);
   const [divisions, setDivisions]           = useState<Division[]>(() => initialData?.divisions ?? []);
   const [games, setGames]                   = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]                   = useState<PublicTeam[]>(() => initialData?.teams ?? []);
@@ -181,10 +183,10 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     : [];
   const pools = currentGroup?.pools || [];
 
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
-  const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
-  const teamProfileBaseHref = `/${orgSlug}/${tournamentSlug}/teams`;
+  const homeHref = orgHref(`/${tournamentSlug}`);
+  const scheduleHref = orgHref(`/${tournamentSlug}/schedule`);
+  const teamsHref = orgHref(`/${tournamentSlug}/teams`);
+  const teamProfileBaseHref = orgHref(`/${tournamentSlug}/teams`);
   const showSchedulePage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'schedule'));
   const showTeamsPage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'teams'));
   const isCompletedTournament = selectedTournament?.status === 'completed';

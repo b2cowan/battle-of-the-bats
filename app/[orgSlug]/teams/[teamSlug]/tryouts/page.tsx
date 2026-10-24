@@ -1,7 +1,9 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import TryoutLandingView from '@/components/rep-teams/TryoutLandingView';
-import { resolvePublicTryout, publicTryoutRegisterHref } from '@/lib/public-tryout';
+import { resolvePublicTryout } from '@/lib/public-tryout';
+import { orgLinks } from '@/lib/org-links';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import { readTeamTryout } from '@/lib/club-tryouts';
 import { bornFactsOf } from '@/lib/club-born-public';
@@ -15,7 +17,7 @@ export const dynamic = 'force-dynamic';
 /** The tab names the page (Club Tier Stage 4b-1): the team’s tryouts — with its description and preview card (4b-2b). */
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; teamSlug: string }> }): Promise<Metadata> {
   const { orgSlug, teamSlug } = await params;
-  return clubPageMetadata(orgSlug, teamTryoutPageMeta(orgSlug, teamSlug));
+  return clubPageMetadata(orgSlug, teamTryoutPageMeta(orgSlug, teamSlug), { path: `/teams/${teamSlug}/tryouts` });
 }
 
 /**
@@ -30,8 +32,10 @@ export default async function TeamTryoutsPage({
   params: Promise<{ orgSlug: string; teamSlug: string }>;
 }) {
   const { orgSlug, teamSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/teams/${teamSlug}/tryouts`);
   const resolved = await resolvePublicTryout(orgSlug, teamSlug);
   if (!resolved) notFound();
+  const href = await orgLinks(orgSlug);
   const { org, team, seasons, contactEmail } = resolved;
   const today = tournamentToday();
   // The head coach's own address (Club Tier 4c-2 Part B, Ask 3): THIS page only — never the metadata, the preview card,
@@ -47,6 +51,7 @@ export default async function TeamTryoutsPage({
     <TryoutLandingView
       orgSlug={orgSlug}
       teamSlug={teamSlug}
+      teamHref={href(`/teams/${teamSlug}`)}
       team={{ name: team.name, sport: team.sport }}
       state={standing.state}
       season={season ? { year: season.year ?? null, name: season.name, tryoutDescription: season.tryoutDescription } : null}
@@ -56,7 +61,7 @@ export default async function TeamTryoutsPage({
       today={today}
       contactEmail={contactEmail}
       coachContact={coachContact}
-      registerHref={publicTryoutRegisterHref(orgSlug, teamSlug)}
+      registerHref={href(`/teams/${teamSlug}/tryouts/register`)}
     />
   );
 }

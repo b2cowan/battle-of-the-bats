@@ -59,7 +59,7 @@ describe('the club notice', () => {
   it('shows under the bar on every club page, and takes itself down when it ends', () => {
     assert.match(read('components/public/ClubFrame.tsx'), /\{club\.notice && <ClubNoticeBanner notice=\{club\.notice\} \/>\}/);
     // The frame's one loader (shared with the editor's preview since the Public site builder, 2026-10-21).
-    assert.match(read('app/[orgSlug]/layout.tsx'), /loadClubFrame\(org, orgSlug\)/);
+    assert.match(read('app/[orgSlug]/layout.tsx'), /loadClubFrame\(org, orgSlug(, \{ ownHost: [^}]+ \})?\)/);
     assert.match(read('lib/club-frame-data.ts'), /getLiveClubNotice\(org\.id, nowIso\)/);
     assert.match(read('components/public/ClubNoticeBanner.tsx'), /setTimeout\(\(\) => setEnded\(true\), left\)/);
   });

@@ -13,7 +13,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { Star, ChevronUp } from 'lucide-react';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -31,6 +31,7 @@ import UnfollowConfirmSheet from '@/components/public/UnfollowConfirmSheet';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 import styles from './MyTeamDock.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
@@ -51,7 +52,8 @@ function formatCountdown(ms: number): string {
   return `${Math.max(mins, 1)}m`;
 }
 
-export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = false }: Props) {
+function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = false }: Props) {
+  const href = useOrgHref(orgSlug);
   const { followedTeamId, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
   const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
@@ -205,7 +207,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
   // viewer's device zone (and so it never goes stale at the UTC day boundary).
   const nextStartMs = nextGame ? gameStartMs(nextGame) : null;
   const countdownMs = nextStartMs != null ? nextStartMs - nowMs : null;
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  const scheduleHref = href(`/${tournamentSlug}/schedule`);
   // Resolve the venue LIVE (a venue/facility rename propagates immediately) instead
   // of the denormalized game.location snapshot the dock used to show.
   const venueLabel = resolveGameVenueLabel(game, venues);
@@ -279,7 +281,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
               wrapClassName={styles.expandShare}
               menuPlacement="up"
               menuAlign="left"
-              gameHref={`/${orgSlug}/${tournamentSlug}/schedule/${shareGame.id}`}
+              gameHref={href(`/${tournamentSlug}/schedule/${shareGame.id}`)}
               tournamentName={tournamentName}
               awayName={shareAwayName}
               homeName={shareHomeName}
@@ -346,3 +348,6 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
     </div>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(MyTeamDock);

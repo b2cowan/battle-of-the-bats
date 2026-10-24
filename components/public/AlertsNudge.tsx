@@ -23,6 +23,7 @@ import { readFollowedTeam, type FollowedTeam } from '@/lib/follow';
 import { useFanAlertPrefs } from '@/lib/fan-alert-prefs-client';
 import styles from './AlertsNudge.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
@@ -34,7 +35,7 @@ function nudgeKey(orgSlug: string, tournamentSlug: string) {
   return `fl_fan_alerts_nudge_${orgSlug}_${tournamentSlug}`;
 }
 
-export default function AlertsNudge({ orgSlug, tournamentSlug, enabled }: Props) {
+function AlertsNudge({ orgSlug, tournamentSlug, enabled }: Props) {
   const prefs = useFanAlertPrefs();
   const [team, setTeam] = useState<FollowedTeam | null>(null);
   const [visible, setVisible] = useState(false);
@@ -133,3 +134,6 @@ export default function AlertsNudge({ orgSlug, tournamentSlug, enabled }: Props)
     </div>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(AlertsNudge);

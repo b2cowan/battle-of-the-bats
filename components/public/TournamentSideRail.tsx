@@ -17,7 +17,7 @@
  */
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useOrgHref, usePublicPathname } from '@/lib/use-public-pathname';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
@@ -47,6 +47,10 @@ export default function TournamentSideRail({
   const ctx = useOrgNav();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
+  const orgHref = useOrgHref(orgSlug);
+  // `homeHref` and the tab paths stay in the club-named form (they are compared with the club-named pathname); what a link
+  // SAYS is spelled for the address the visitor is on. The preview's basePath is not the club's public address: unchanged.
+  const spell = (p: string) => (basePath ? p : orgHref(p.slice(orgSlug.length + 1)));
 
   // Public usage: no props → derive everything from route params + context (unchanged).
   // Preview usage: an explicit basePath (and branding props) is passed.
@@ -85,7 +89,7 @@ export default function TournamentSideRail({
       <div className={styles.railHeader}>
         {!basePath && ctx.orgName && ctx.orgName !== resolvedHeading && (
           ctx.orgHomeHref ? (
-            <Link href={ctx.orgHomeHref} className={styles.railCrumb}>{ctx.orgName} ›</Link>
+            <Link href={orgHref()} className={styles.railCrumb}>{ctx.orgName} ›</Link>
           ) : (
             <span className={styles.railCrumb}>{ctx.orgName}</span>
           )
@@ -97,7 +101,7 @@ export default function TournamentSideRail({
       </div>
       <nav className={styles.nav}>
         <Link
-          href={homeHref}
+          href={spell(homeHref)}
           className={`${styles.item} ${pathname === homeHref ? styles.active : ''}`}
           aria-current={pathname === homeHref ? 'page' : undefined}
         >
@@ -112,7 +116,7 @@ export default function TournamentSideRail({
           return (
             <Link
               key={key}
-              href={href}
+              href={spell(href)}
               className={`${styles.item} ${isActive ? styles.active : ''}`}
               aria-current={isActive ? 'page' : undefined}
             >

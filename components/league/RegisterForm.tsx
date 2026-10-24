@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import { possessive, registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
 import formKit from '@/components/public/ClubForm.module.css';
@@ -57,6 +58,7 @@ export default function RegisterForm({
   registrationFee,
   divisions,
 }: Props) {
+  const orgHref = useOrgHref(orgSlug);
   const singleDivision = divisions.length === 1;
 
   const [form, setForm] = useState<FormState>({
@@ -198,7 +200,7 @@ export default function RegisterForm({
           Reference: <span className={formKit.refCode}>{registrationReference(success.id)}</span>
         </div>
         <p className={styles.successStatusLink}>
-          <a href={`/${orgSlug}/league/${seasonSlug}/status`}>
+          <a href={orgHref(`/league/${seasonSlug}/status`)}>
             Check registration status later →
           </a>
         </p>

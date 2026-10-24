@@ -10,6 +10,7 @@ import type { PublicTeam } from '@/lib/types';
 import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
 import styles from './TeamFollowStar.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
@@ -19,7 +20,7 @@ interface Props {
   className?: string;
 }
 
-export default function TeamFollowStar({ orgSlug, tournamentSlug, team, size = 15, className }: Props) {
+function TeamFollowStar({ orgSlug, tournamentSlug, team, size = 15, className }: Props) {
   const { followedTeamId, follow } = useFollowedTeam(orgSlug, tournamentSlug);
   // N2: a signed-in fan's ACCOUNT follows count too — her own team never shows "Follow".
   const accountIds = useAccountFollowedTeamIds(orgSlug, tournamentSlug);
@@ -43,3 +44,6 @@ export default function TeamFollowStar({ orgSlug, tournamentSlug, team, size = 1
     </button>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(TeamFollowStar);

@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Trophy, ChevronRight, Crown } from 'lucide-react';
@@ -17,6 +18,7 @@ import { formatPoolName } from '@/lib/utils';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/components/public/ChampionsRecap.module.css';
+import { orgLinks } from '@/lib/org-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,12 +28,14 @@ export default async function ChampionsPage({
   params: Promise<{ orgSlug: string; tournamentSlug: string }>;
 }) {
   const { orgSlug, tournamentSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/champions`);
   const org = await getOrganizationBySlug(orgSlug);
   if (!org || org.subscriptionStatus === 'canceled') notFound();
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) notFound();
 
-  const publicBase = `/${orgSlug}/${tournamentSlug}`;
+  const orgHref = await orgLinks(orgSlug);
+  const publicBase = orgHref(`/${tournamentSlug}`);
 
   // The Champions recap shows final results + closing standings, so it inherits the
   // Standings page's visibility — an organizer who hid Standings must not have the final

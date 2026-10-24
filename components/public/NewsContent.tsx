@@ -2,6 +2,7 @@ import { Megaphone, Star, Calendar } from 'lucide-react';
 import type { Announcement, Division } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
+import { orgLinks } from '@/lib/org-links';
 import styles from '@/app/[orgSlug]/news/news.module.css';
 
 type NewsContentProps = {
@@ -55,7 +56,7 @@ function AnnouncementCard({
  * (app/[orgSlug]/[tournamentSlug]/news) and the admin tournament preview, so the
  * two render identically. Pure/presentational — callers fetch the data.
  */
-export default function NewsContent({
+export default async function NewsContent({
   orgSlug,
   tournamentSlug,
   pageEnabled,
@@ -65,6 +66,7 @@ export default function NewsContent({
   view,
   contactEmail,
 }: NewsContentProps) {
+  const href = await orgLinks(orgSlug);
   if (!pageEnabled) {
     return (
       <div className="page-content">
@@ -112,8 +114,8 @@ export default function NewsContent({
               divisions={divisions}
               activeName={prefName}
               isFiltering={isFiltering}
-              viewAllHref={`/${orgSlug}/${tournamentSlug}/news?view=all`}
-              backHref={`/${orgSlug}/${tournamentSlug}/news`}
+              viewAllHref={href(`/${tournamentSlug}/news?view=all`)}
+              backHref={href(`/${tournamentSlug}/news`)}
             />
           )}
 
@@ -129,12 +131,12 @@ export default function NewsContent({
               }
               contactEmail={contactEmail}
               actions={isFiltering
-                ? [{ href: `/${orgSlug}/${tournamentSlug}/news?view=all`, label: 'View All News', variant: 'ghost' as const }]
+                ? [{ href: href(`/${tournamentSlug}/news?view=all`), label: 'View All News', variant: 'ghost' as const }]
                 : [
                     // Not a dead end — route fans to the surfaces that do have content
                     // (same Home-empty-state pattern, same ghost weight).
-                    { href: `/${orgSlug}/${tournamentSlug}/schedule`, label: 'View Schedule', variant: 'ghost' as const },
-                    { href: `/${orgSlug}/${tournamentSlug}/standings`, label: 'View Standings', variant: 'ghost' as const },
+                    { href: href(`/${tournamentSlug}/schedule`), label: 'View Schedule', variant: 'ghost' as const },
+                    { href: href(`/${tournamentSlug}/standings`), label: 'View Standings', variant: 'ghost' as const },
                   ]}
             />
           ) : (

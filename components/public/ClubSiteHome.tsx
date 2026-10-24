@@ -3,6 +3,7 @@ import Link from 'next/link';
 import FollowOrgButton from './FollowOrgButton';
 import { ClubSponsorStrip } from './ClubSponsors';
 import { siteEdit } from '@/lib/site-edit-marks';
+import { orgLinks } from '@/lib/org-links';
 import type { SiteSponsor } from '@/lib/types';
 import kit from './ClubKit.module.css';
 import styles from './ClubSiteHome.module.css';
@@ -75,7 +76,9 @@ export interface ClubSiteHomeProps {
   carries: SectionCarries;
 }
 
-export default function ClubSiteHome(p: ClubSiteHomeProps) {
+export default async function ClubSiteHome(p: ClubSiteHomeProps) {
+  // The team tiles are spelled here (the loader's other links arrive in the props, spelled by the same address rule).
+  const href = await orgLinks(p.orgSlug);
   const teamCount = p.teamBands.reduce((n, b) => n + b.teams.length, 0);
   const sections = clubHomeSectionsFor({
     openNow: p.openNow.length,
@@ -112,7 +115,7 @@ export default function ClubSiteHome(p: ClubSiteHomeProps) {
           <div key={i} className={`${styles.tiles} ${teamGridOneColumn(band.teams.map(t => t.name)) ? styles.one : ''}`}>
             {band.name && <div className={styles.tileBand}>{band.name}</div>}
             {band.teams.map(t => (
-              <Link key={t.slug} href={`/${p.orgSlug}/teams/${t.slug}`} className={styles.tile}>
+              <Link key={t.slug} href={href(`/teams/${t.slug}`)} className={styles.tile}>
                 {t.name}
                 {t.tryoutsOpen && <span className={`${kit.chip} ${kit.chipOk}`}>Tryouts open</span>}
               </Link>

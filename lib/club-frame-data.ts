@@ -8,6 +8,7 @@
  * point (A2: the owner and admins see their offline site) — and it alone may: it sits behind the editor's own rule.
  */
 import { clubFace, clubSocials } from '@/lib/club-site';
+import { orgHref } from '@/lib/club-base';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { getLiveClubNotice } from '@/lib/db';
 import { noticeSmallLine } from '@/lib/club-notice';
@@ -19,7 +20,8 @@ import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import type { ClubFrameClub } from '@/components/public/ClubFrame';
 import type { Organization } from '@/lib/types';
 
-export async function loadClubFrame(org: Organization, orgSlug: string): Promise<ClubFrameClub> {
+/** `base` (Stage 4e): `{ ownHost: true }` on a club's own web address, so the About link reads `/about`. Left out = our host. */
+export async function loadClubFrame(org: Organization, orgSlug: string, base?: { ownHost: boolean }): Promise<ClubFrameClub> {
   const clubSiteOn = isPublicClubSiteOpen(org) && hasModuleEntitlement(org, 'module_public_site');
   // The club's site content (tagline, contact, social links) feeds both the tabs and the bar and footer: one read.
   const siteContentRead = clubSiteOn ? getClubSiteContent(org.id) : Promise.resolve(null);
@@ -47,6 +49,6 @@ export async function loadClubFrame(org: Organization, orgSlug: string): Promise
       smallLine: noticeSmallLine(liveNotice, nowIso),
       endsAt: liveNotice.endsAt,
     } : null,
-    aboutHref: clubAboutPageShows(siteContent) ? `/${orgSlug}/about` : null,
+    aboutHref: clubAboutPageShows(siteContent) ? orgHref({ slug: orgSlug, ownHost: !!base?.ownHost }, '/about') : null,
   };
 }

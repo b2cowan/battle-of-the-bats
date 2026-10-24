@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import { Fragment } from 'react';
 import Link from 'next/link';
@@ -19,6 +20,7 @@ import {
   tryoutsRowSub,
 } from '@/lib/tryout-season';
 import { tournamentToday } from '@/lib/timezone';
+import { orgLinks } from '@/lib/org-links';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from '@/components/public/TryoutPage.module.css';
 import BornInPill from '@/components/public/BornInPill';
@@ -45,7 +47,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
     return listed.length > 0
       ? { name: tryoutsPageTitle(year), description: tryoutsPageDescription(year) }
       : { name: tryoutsPageTitle(null) };
-  });
+  }, { path: '/tryouts' });
 }
 
 /**
@@ -69,6 +71,8 @@ export default async function ClubTryoutsPage({
   searchParams: Promise<{ born?: string | string[] }>;
 }) {
   const { orgSlug } = await params;
+  const born = (await searchParams).born;
+  await forwardToOwnAddress(orgSlug, `/tryouts${typeof born === 'string' ? `?born=${encodeURIComponent(born)}` : ''}`);
   // A club whose plan does not carry rep teams has no tryouts to list: the club's "not found" (inside its site when the
   // site is open, the neutral refusal when it is not).
   // The one rule (Club Tier Stage 4a) first, then the plan's page.
@@ -99,7 +103,8 @@ export default async function ClubTryoutsPage({
   const kept = withBorn.filter(t => keepsBornYear(t.born, pick));
   const bands = clubTeamBands(kept, groups);
   const sub = pick == null ? tryoutsPageSub(year, bands.map(b => b.name)) : bornPlacesSentence(kept.length, pick);
-  const href = (slug: string) => `/${orgSlug}/teams/${slug}/tryouts`;
+  const orgHref = await orgLinks(orgSlug);
+  const href = (slug: string) => orgHref(`/teams/${slug}/tryouts`);
 
   return (
     <div className={`${styles.page} ${styles.wide}`}>
@@ -108,7 +113,7 @@ export default async function ClubTryoutsPage({
         {sub && <p className={kit.sub}>{sub}</p>}
       </div>
 
-      {menu.length > 0 && <BornInPill path={`/${orgSlug}/tryouts`} years={menu} picked={pick} />}
+      {menu.length > 0 && <BornInPill path={orgHref('/tryouts')} years={menu} picked={pick} />}
 
       {kept.length > 0 && <div className={kit.list}>
         {bands.map((band, i) => (

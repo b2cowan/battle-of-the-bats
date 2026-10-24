@@ -8,7 +8,7 @@
  * A component that reads the address to decide what to draw uses this, never `usePathname` from next/navigation (a test pins it).
  */
 import { useParams, usePathname } from 'next/navigation';
-import { clubBaseFor, internalPath, orgHref, type ClubBase } from './club-base';
+import { clubBaseFor, internalPath, orgHref, wwwHref, type ClubBase } from './club-base';
 
 export function usePublicPathname(): string {
   const pathname = usePathname();
@@ -35,4 +35,16 @@ export function useOrgHref(fallbackSlug?: string): (path?: string) => string {
     const b: ClubBase | null = base ?? (fallbackSlug ? { slug: fallbackSlug, ownHost: false } : null);
     return b ? orgHref(b, path) : path || '/';
   };
+}
+
+/** The site's own address, inlined at build (the same variable the server uses for the canonical address). */
+const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+
+/**
+ * `www('/auth/login')` -> that path on our own hosts, `https://www.fieldlogichq.ca/auth/login` on a club's own address: sign-in,
+ * the coaches portal and password reset exist only on FieldLogicHQ (lib/club-base.ts wwwHref).
+ */
+export function useWwwHref(): (path: string) => string {
+  const base = useClubBase();
+  return path => wwwHref(base, APP_ORIGIN, path);
 }

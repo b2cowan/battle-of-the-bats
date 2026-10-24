@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import { bornPickHref } from '@/lib/club-born-public';
+import { useClubBase } from '@/lib/use-public-pathname';
 import kit from './ClubKit.module.css';
 
 /**
@@ -21,6 +22,9 @@ const ANY = 'any';
 
 export default function BornInPill({ path, years, picked }: { path: string; years: readonly number[]; picked: number | null }) {
   const router = useRouter();
+  // `path` arrives club-named (`/lakeshore-lynx/teams`); on a club's own web address the pick moves THAT address (`/teams`).
+  const base = useClubBase();
+  const here = base?.ownHost && (path === `/${base.slug}` || path.startsWith(`/${base.slug}/`)) ? path.slice(base.slug.length + 1) || '/' : path;
   return (
     <div className={kit.pickRow}>
       <SingleSelectDropdown
@@ -28,7 +32,7 @@ export default function BornInPill({ path, years, picked }: { path: string; year
         options={[{ id: ANY, label: 'Any year', faceLabel: 'any year' }, ...years.map(y => ({ id: String(y), label: String(y) }))]}
         value={picked == null ? ANY : String(picked)}
         labelSuffix=":"
-        onChange={id => router.replace(bornPickHref(path, id === ANY ? null : Number(id)), { scroll: false })}
+        onChange={id => router.replace(bornPickHref(here, id === ANY ? null : Number(id)), { scroll: false })}
       />
     </div>
   );

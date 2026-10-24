@@ -67,6 +67,8 @@ describe('the public page\'s button reads the one question', () => {
     const page = readCode('app/[orgSlug]/teams/[teamSlug]/page.tsx');
     // Stage 4b-2a wraps the schedule in the desk layout's column; it still renders only from the one answer.
     assert.match(page, /\{publicSchedule && \([\s\S]{0,80}?<RepTeamPublicSchedule\s+view=\{publicSchedule\}/);
-    assert.match(page, /subscribe=\{\{ feedPath: publicTeamFeedPath\(orgSlug, team\.slug\)/);
+    // The feed is the page's own address with /calendar on the end, spelled for the address the visitor is on (Club Tier 4e:
+    // `href` is orgLinks, so a club's own host gets `/teams/{team}/calendar` and ours `/{club}/teams/{team}/calendar`).
+    assert.match(page, /subscribe=\{\{ feedPath: href\(`\/teams\/\$\{team\.slug\}\/calendar`\)/);
   });
 });

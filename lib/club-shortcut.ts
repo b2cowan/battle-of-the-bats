@@ -1,6 +1,7 @@
 import 'server-only';
 import { notFound, redirect } from 'next/navigation';
 import { getOrganizationBySlug, getActiveTournamentByOrg } from './db';
+import { orgLinks } from './org-links';
 
 /**
  * THE SHORTCUT ADDRESSES (Club Tier Stage 4a; Ask 9 ruled 2026-10-19) — `/{org}/teams`, `/news`, `/results`, `/rules`,
@@ -32,5 +33,6 @@ export async function forwardClubShortcut(orgSlug: string, shortcut: ClubShortcu
 export async function forwardToRunningTournament(orgSlug: string, path: string): Promise<void> {
   const org = await getOrganizationBySlug(orgSlug);
   const active = org ? await getActiveTournamentByOrg(org.id) : null;
-  if (active?.slug) redirect(`/${orgSlug}/${active.slug}/${path}`);
+  // Spelled for the address the visitor is on (a club's own address has no club name in its paths).
+  if (active?.slug) redirect((await orgLinks(orgSlug))(`/${active.slug}/${path}`));
 }

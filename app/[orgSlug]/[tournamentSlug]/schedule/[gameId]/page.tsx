@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -16,6 +17,7 @@ import RollingNumber from '@/components/public/RollingNumber';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
 import TeamFollowStar from '@/components/public/TeamFollowStar';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
+import { orgLinks } from '@/lib/org-links';
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -198,10 +200,12 @@ export default async function PublicGameDetailsPage({
   params: GameDetailParams;
 }) {
   const { orgSlug, tournamentSlug, gameId } = await params;
+  await forwardToOwnAddress(orgSlug, `/${tournamentSlug}/schedule/${gameId}`);
   const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule');
   if (!data) notFound();
 
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
+  const orgHref = await orgLinks(orgSlug);
+  const homeHref = orgHref(`/${tournamentSlug}`);
   const scheduleHref = `${homeHref}/schedule`;
 
   if (!data.pageEnabled || !data.tournament) {
@@ -321,7 +325,7 @@ export default async function PublicGameDetailsPage({
                       dateLabel={formatFullDate(game.date)}
                       venueLabel={venue?.venueLabel ?? null}
                       gameType={gameType}
-                      gameHref={`/${orgSlug}/${tournamentSlug}/schedule/${gameId}`}
+                      gameHref={orgHref(`/${tournamentSlug}/schedule/${gameId}`)}
                       menuAlign="right"
                       menuPlacement="down"
                     />

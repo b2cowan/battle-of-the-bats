@@ -1,3 +1,4 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -8,6 +9,7 @@ import {
 } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import { ORG_TIME_ZONE, addCalendarDays, formatInOrgZone, orgWeekKey } from '@/lib/timezone';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
 import column from '../../league-column.module.css';
@@ -21,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
     return season && season.status !== 'draft' ? `${season.name} schedule` : null;
-  });
+  }, { path: `/league/${seasonSlug}/schedule` });
 }
 
 function formatDateTime(iso: string | null): { date: string; time: string } | null {
@@ -61,6 +63,8 @@ export default async function PublicSchedulePage({
 }) {
   const { orgSlug, seasonSlug } = await params;
   const { d: divisionIdParam } = await searchParams;
+  await forwardToOwnAddress(orgSlug, `/league/${seasonSlug}/schedule${divisionIdParam ? `?d=${encodeURIComponent(divisionIdParam)}` : ''}`);
+  const href = await orgLinks(orgSlug);
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
@@ -101,7 +105,7 @@ export default async function PublicSchedulePage({
       {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
       <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
         {/* Back */}
-        <Link href={`/${orgSlug}/league/${seasonSlug}`} className={kit.back}>
+        <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
         </Link>
 
@@ -119,7 +123,7 @@ export default async function PublicSchedulePage({
               return (
                 <Link
                   key={d.id}
-                  href={`/${orgSlug}/league/${seasonSlug}/schedule?d=${d.id}`}
+                  href={href(`/league/${seasonSlug}/schedule`) + `?d=${d.id}`}
                   className={`${column.tab}${isActive ? ` ${column.tabActive}` : ''}`}
                 >
                   {d.name}

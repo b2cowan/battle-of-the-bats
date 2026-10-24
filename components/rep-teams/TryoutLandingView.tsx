@@ -30,7 +30,7 @@ import { possessive } from '@/lib/utils';
  * in every state (a second "See the team" at the foot went to the same page and was removed, owner 2026-10-21).
  */
 export default function TryoutLandingView({
-  orgSlug, teamSlug, team, state, season, born = null, upcoming, lastDay, today, contactEmail, coachContact = null, registerHref,
+  orgSlug, teamSlug, team, state, season, born = null, upcoming, lastDay, today, contactEmail, coachContact = null, registerHref, teamHref: teamHrefProp,
   preview = false,
 }: {
   orgSlug: string;
@@ -54,10 +54,12 @@ export default function TryoutLandingView({
    */
   coachContact?: { email: string; name: string | null } | null;
   registerHref: string;
+  /** The team page's link spelled for the address the visitor is on (a club's own address has no club name in a path); default: ours. */
+  teamHref?: string;
   /** The admin's "How families see it" box (the tryout blurb): the same page minus its way back, which is the page's own. */
   preview?: boolean;
 }) {
-  const teamHref = `/${orgSlug}/teams/${teamSlug}`;
+  const teamHref = teamHrefProp ?? `/${orgSlug}/teams/${teamSlug}`;
   // The closed frame names no season (there is nothing to sign up for); the others say which season the tryouts are for.
   const meta = season && state !== 'closed' ? tryoutSeasonMeta(season, born) : null;
   // "From the club" reads while sign-ups are open and while they are not open yet; finished and closed pages hide it (D24).

@@ -2,6 +2,7 @@ import 'server-only';
 import { isFamilyLayerEnabled, isPubliclyVisible } from './family-access';
 import { getFamilyTeamView, type FamilyTeamView } from './family-view';
 import { isOrgBillingSuspended } from './org-billing-access';
+import { orgHref } from './club-base';
 import type { Organization, RepTeam } from './types';
 
 /**
@@ -36,7 +37,10 @@ export async function getPublicTeamSchedule(params: {
   return getFamilyTeamView({ repTeamId: team.id, requireVisibility: 'public_link' });
 }
 
-/** The public feed's address: the team page's own, with /calendar on the end — no secret, nothing to reset (Ask 3). */
-export function publicTeamFeedPath(orgSlug: string, teamSlug: string): string {
-  return `/${orgSlug}/teams/${teamSlug}/calendar`;
+/**
+ * The public feed's address: the team page's own, with /calendar on the end — no secret, nothing to reset (Ask 3).
+ * `base` (Stage 4e): `{ ownHost: true }` on a club's own web address (`/teams/u11/calendar`); left out = our host.
+ */
+export function publicTeamFeedPath(orgSlug: string, teamSlug: string, base?: { ownHost: boolean }): string {
+  return orgHref({ slug: orgSlug, ownHost: !!base?.ownHost }, `/teams/${teamSlug}/calendar`);
 }

@@ -1,14 +1,16 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getArchivesByOrg } from '@/lib/db';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from './archives.module.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
   const { orgSlug } = await params;
-  return clubPageMetadata(orgSlug, () => 'Past tournaments');
+  return clubPageMetadata(orgSlug, () => 'Past tournaments', { path: '/archives' });
 }
 
 // The whole row is the link, so each cell's link fills it and stays a 44px tap target on a phone.
@@ -27,8 +29,10 @@ export default async function ArchivesPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = await params;
+  await forwardToOwnAddress(orgSlug, '/archives');
   // The one rule (Club Tier Stage 4a, lib/public-club-access.ts).
   const org = await requirePublicClubPage(orgSlug, 'archives');
+  const href = await orgLinks(orgSlug);
 
   const archives = await getArchivesByOrg(org.id);
 
@@ -69,7 +73,7 @@ export default async function ArchivesPage({
               const where = [a.season, a.division].filter(Boolean);
               return (
                 <li key={a.id} className={styles.stackRow}>
-                  <Link href={`/${orgSlug}/archives/${a.id}`} className={styles.stackLink}>
+                  <Link href={href(`/archives/${a.id}`)} className={styles.stackLink}>
                     <span className={styles.stackName}>{a.tournamentName}</span>
                     {where.length > 0 && <span className={styles.stackLine}>{where.join(' · ')}</span>}
                     {a.winnerTeamName && (
@@ -105,32 +109,32 @@ export default async function ArchivesPage({
                 {archives.map(a => (
                   <tr key={a.id} style={{ borderBottom: '1px solid var(--club-line)' }}>
                     <td style={{ color: 'var(--club-soft)' }}>
-                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
+                      <Link href={href(`/archives/${a.id}`)} style={cellLink}>
                         {a.season}
                       </Link>
                     </td>
                     <td style={{ color: 'var(--club-text)' }}>
-                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
+                      <Link href={href(`/archives/${a.id}`)} style={cellLink}>
                         {a.tournamentName}
                       </Link>
                     </td>
                     <td style={{ color: 'var(--club-soft)' }}>
-                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
+                      <Link href={href(`/archives/${a.id}`)} style={cellLink}>
                         {a.division ?? '—'}
                       </Link>
                     </td>
                     <td style={{ color: 'var(--club-text)', fontWeight: 700 }}>
-                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
+                      <Link href={href(`/archives/${a.id}`)} style={cellLink}>
                         {a.winnerTeamName ?? '—'}
                       </Link>
                     </td>
                     <td style={{ textAlign: 'right', color: 'var(--club-soft)' }}>
-                      <Link href={`/${orgSlug}/archives/${a.id}`} style={cellLink}>
+                      <Link href={href(`/archives/${a.id}`)} style={cellLink}>
                         {a.totalTeams ?? '—'}
                       </Link>
                     </td>
                     <td style={{ textAlign: 'right', color: 'var(--club-soft)' }}>
-                      <Link href={`/${orgSlug}/archives/${a.id}`} style={{ ...cellLink, paddingRight: 0 }}>
+                      <Link href={href(`/archives/${a.id}`)} style={{ ...cellLink, paddingRight: 0 }}>
                         {a.totalGames ?? '—'}
                       </Link>
                     </td>

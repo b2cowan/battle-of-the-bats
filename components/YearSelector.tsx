@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { Tournament } from '@/lib/types';
+import { useOrgHref } from '@/lib/use-public-pathname';
 import styles from './YearSelector.module.css';
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 const SEASON_PICKER_ENABLED = false;
 
 export default function YearSelector({ tournaments, orgSlug, currentTournamentSlug, currentPage }: Props) {
+  const orgHref = useOrgHref(orgSlug);
   if (!SEASON_PICKER_ENABLED) return null;
   if (tournaments.length <= 1) return null;
 
@@ -27,7 +29,7 @@ export default function YearSelector({ tournaments, orgSlug, currentTournamentSl
         {tournaments.map(t => (
           <Link
             key={t.id}
-            href={`/${orgSlug}/${t.slug}/${currentPage}`}
+            href={orgHref(`/${t.slug}/${currentPage}`)}
             className={`${styles.tab} ${t.slug === currentTournamentSlug ? styles.active : ''}`}
             id={`year-tab-${t.year}`}
           >

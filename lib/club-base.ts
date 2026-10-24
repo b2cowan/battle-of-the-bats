@@ -46,3 +46,24 @@ export function orgHref(base: ClubBase, path: string = ''): string {
   if (base.ownHost) return clean || '/';
   return `/${base.slug}${clean}`;
 }
+
+/** `/lakeshore-lynx/teams/opengraph-image` -> `/teams/opengraph-image`: a path as the club's own address spells it (no club name). */
+export function stripClubPrefix(path: string, slug: string): string {
+  if (path === `/${slug}`) return '/';
+  return path.startsWith(`/${slug}/`) ? path.slice(slug.length + 1) : path;
+}
+
+/** A page of the club (`/lakeshore-lynx/teams`) as an absolute address on the club's own host; null when the path is not the club's. */
+export function clubOwnUrl(origin: string, slug: string, href: string): string | null {
+  if (href === `/${slug}`) return `${origin}/`;
+  return href.startsWith(`/${slug}/`) ? `${origin}${href.slice(slug.length + 1)}` : null;
+}
+
+/**
+ * A page that lives only on FieldLogicHQ (sign-in, the coaches portal, a password reset) as the visitor must reach it: a plain
+ * path on our own hosts, an absolute address on a club's own host, where those paths do not exist (the proxy answers 404) and
+ * cookies are host-only, so signing in has to happen on FieldLogicHQ. `appOrigin` is the site's own address.
+ */
+export function wwwHref(base: ClubBase | null, appOrigin: string, path: string): string {
+  return base?.ownHost ? `${appOrigin.replace(/\/$/, '')}${path}` : path;
+}

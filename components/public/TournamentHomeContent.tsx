@@ -27,6 +27,7 @@ import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
 import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { orgLinks } from '@/lib/org-links';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -71,7 +72,10 @@ export default async function TournamentHomeContent({
   // on any plan hides the same blocks — the switch the nav and the other pages already honoured.
   const inviteOnly = runsInviteOnlyEvents(org.planId);
   const registerOn = !inviteOnly && isPublicPageEnabled(tournament, 'register');
-  const publicBase = `/${orgSlug}/${tournamentSlug}`;
+  // The public pages are spelled for the address the visitor is on (a club's own web address has no club name in it); the
+  // admin preview below is always on our host.
+  const href = await orgLinks(orgSlug);
+  const publicBase = href(`/${tournamentSlug}`);
   const adminTournamentBase = `/${orgSlug}/admin/tournaments`;
   const previewBase = `${adminTournamentBase}/preview/${tournamentSlug}`;
   const usePreviewLinks = isPreview;

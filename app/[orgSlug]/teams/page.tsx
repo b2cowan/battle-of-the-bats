@@ -1,9 +1,12 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import type { Metadata } from 'next';
 import { Fragment } from 'react';
 import Link from 'next/link';
 import { clubTeamsAddress, isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { forwardClubShortcut } from '@/lib/club-shortcut';
+import { orgLinks } from '@/lib/org-links';
+import { stripClubPrefix } from '@/lib/club-base';
 import { clubPageMetadata, getClubBySlug } from '@/lib/club-page-meta';
 import { readClubLeagueDivisions, readClubTeams } from '@/lib/club-public-teams';
 import { bornPickOf, bornPlacesSentence, joinSub, keepsBornYear } from '@/lib/club-born-public';
@@ -19,7 +22,7 @@ export const dynamic = 'force-dynamic';
  *  still the shortcut forwards before anything renders, so its title is never seen. */
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
   const { orgSlug } = await params;
-  return clubPageMetadata(orgSlug, () => 'Teams');
+  return clubPageMetadata(orgSlug, () => 'Teams', { path: '/teams' });
 }
 
 /**
@@ -46,6 +49,8 @@ export default async function ClubTeamsPage({
   searchParams: Promise<{ born?: string | string[] }>;
 }) {
   const { orgSlug } = await params;
+  const born = (await searchParams).born;
+  await forwardToOwnAddress(orgSlug, `/teams${typeof born === 'string' ? `?born=${encodeURIComponent(born)}` : ''}`);
 
   // Wherever there is no Teams page to show, the address stays the old shortcut — printed tournament links and QR codes
   // carry `/{org}/teams` — forwarding into the running tournament, else the club's "not found" (Ask 9A): an org whose plan
@@ -65,7 +70,10 @@ export default async function ClubTeamsPage({
   ]);
   // A club that lists no team has no Teams tab and no list to show — never "0 teams".
   if (count === 0) return forwardClubShortcut(orgSlug, 'teams');
-  const href = (slug: string) => `/${orgSlug}/teams/${slug}`;
+  const orgHref = await orgLinks(orgSlug);
+  const href = (slug: string) => orgHref(`/teams/${slug}`);
+  // The league links are spelled by lib/club-public-teams.ts with the club's name in front; put them in the address the visitor is on.
+  const leagueHref = league ? orgHref(stripClubPrefix(league.href, orgSlug)) : null;
 
   // Born in: the menu offers every year a team or a house-league division names; no year, no pill. A pick narrows the
   // teams (a team with no years always stays) and adds the divisions for that year, under their own band.
@@ -94,7 +102,7 @@ export default async function ClubTeamsPage({
         <p className={kit.sub}>{pick == null ? pluralize(count, 'team') : bornPlacesSentence(places, pick)}</p>
       </div>
 
-      {menu.length > 0 && <BornInPill path={`/${orgSlug}/teams`} years={menu} picked={pick} />}
+      {menu.length > 0 && <BornInPill path={orgHref('/teams')} years={menu} picked={pick} />}
 
       {places > 0 && <>
       {/* Phone: the table standard's phone form — one frame, the whole row the door, the chevron last. */}
@@ -117,7 +125,7 @@ export default async function ClubTeamsPage({
           <>
             <div className={kit.listBand}>House league</div>
             {divisionRows.map(r => (
-              <Link key={r.key} href={league.href} className={kit.row}>
+              <Link key={r.key} href={leagueHref ?? league.href} className={kit.row}>
                 <span className={kit.rowMain}>
                   <span className={kit.rowName}>{r.name}</span>
                   {r.sub && <span className={kit.rowSub}>{r.sub}</span>}
@@ -159,7 +167,7 @@ export default async function ClubTeamsPage({
               {divisionRows.map(r => (
                 <tr key={r.key} className={styles.teamRow}>
                   <td>
-                    <Link href={league.href} className={styles.teamLink}>{r.name}</Link>
+                    <Link href={leagueHref ?? league.href} className={styles.teamLink}>{r.name}</Link>
                     {r.sub && <span className={kit.rowSub}>{r.sub}</span>}
                   </td>
                   <td><span aria-hidden="true" className={styles.none}>—</span></td>

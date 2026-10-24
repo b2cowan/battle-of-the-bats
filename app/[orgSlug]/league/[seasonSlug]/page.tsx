@@ -1,9 +1,11 @@
+import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
+import { orgLinks } from '@/lib/org-links';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LeagueDivision } from '@/lib/types';
 import { bornFactsOf } from '@/lib/club-born-public';
@@ -18,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
     return season && season.status !== 'draft' ? season.name : null;
-  });
+  }, { path: `/league/${seasonSlug}` });
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -51,6 +53,8 @@ export default async function LeagueSeasonPage({
   params: Promise<{ orgSlug: string; seasonSlug: string }>;
 }) {
   const { orgSlug, seasonSlug } = await params;
+  await forwardToOwnAddress(orgSlug, `/league/${seasonSlug}`);
+  const href = await orgLinks(orgSlug);
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
@@ -199,7 +203,7 @@ export default async function LeagueSeasonPage({
         {registrationOpen ? (
           <div>
             <Link
-              href={`/${orgSlug}/league/${seasonSlug}/register`}
+              href={href(`/league/${seasonSlug}/register`)}
               className={`${kit.btn} ${kit.btnPrimary}`}
             >
               Register now
@@ -231,13 +235,13 @@ export default async function LeagueSeasonPage({
             {(season.status === 'active' || finished) && (
               <div className={kit.btnRow}>
                 <Link
-                  href={`/${orgSlug}/league/${seasonSlug}/standings`}
+                  href={href(`/league/${seasonSlug}/standings`)}
                   className={`${kit.btn} ${finished ? kit.btnPrimary : kit.btnSecondary}`}
                 >
                   {finished ? 'Final standings →' : 'Standings →'}
                 </Link>
                 <Link
-                  href={`/${orgSlug}/league/${seasonSlug}/schedule`}
+                  href={href(`/league/${seasonSlug}/schedule`)}
                   className={`${kit.btn} ${kit.btnSecondary}`}
                 >
                   Schedule

@@ -13,6 +13,7 @@ import {
 } from './tournament-acquisition';
 import styles from './tournament-growth.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 type TournamentAcquisitionBannerProps = {
   orgSlug: string;
   tournamentSlug: string;
@@ -31,7 +32,7 @@ type BannerVariant = 'coach' | 'organizer';
 //      anonymous returning visitor sees both pitches over time.
 const VARIANT_ROTOR_KEY = 'flhq-acq-banner-variant';
 
-export default function TournamentAcquisitionBanner({
+function TournamentAcquisitionBanner({
   orgSlug,
   tournamentSlug,
   tournamentName,
@@ -150,3 +151,6 @@ export default function TournamentAcquisitionBanner({
     </aside>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(TournamentAcquisitionBanner);

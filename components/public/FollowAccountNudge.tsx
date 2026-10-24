@@ -17,6 +17,7 @@ import BottomSheet from '@/components/admin/BottomSheet';
 import PasswordInput from '@/components/auth/PasswordInput';
 import styles from './FollowAccountNudge.module.css';
 
+import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
@@ -44,7 +45,7 @@ function returnPath(): string {
   }
 }
 
-export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
+function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const [team, setTeam] = useState<FollowedTeam | null>(null);
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState('');
@@ -214,3 +215,6 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
     </BottomSheet>
   );
 }
+
+// A club's own web address has no signed-in visitors (host-only cookies): this piece is absent there (Club Tier Stage 4e).
+export default hideOnClubOwnHost(FollowAccountNudge);
