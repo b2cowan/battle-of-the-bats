@@ -38,6 +38,26 @@ was not).
 - **Raised by the owner with the rulings:** bulk-adding seasons per age group ("U13, U15, U17, U10 opened at the same
   time") — answered in the 9b round (see §6a).
 
+## 0b · Owner rulings 2026-10-24, round 2 ("I agree with your recommendations")
+
+All 15 round-2 asks ruled as recommended (§6a). 9a and 9b are fully ruled.
+- **Q19** one season, age groups as divisions, added several at once by "Add age groups"; the club picks birth years.
+- **Q12b** one composer: the Families window, opened from the season already set to it; division/team/status/"Selected"
+  audiences added in 9d; the old Notifications page and Message registrants window retire; the season keeps its own sent
+  history. **Q12c** automatic notices never count toward a cap; each season has its own 3 typed sends a day; club-wide sends
+  keep the club's 3.
+- **S2·b** the dates run the form; the convenor can close early or reopen until a new date.
+- **9b·1** required before Open registration: age groups, prices, dates, and how-to-pay whenever a price is above $0; the
+  waiver is optional. **9b·2** one early-bird date per season, an early amount per division. **9b·4** a birth year no
+  division fits: the form says so and shows the club's contact; nothing is registered. **9b·5** each child's outcome shown
+  before Submit; no all-or-nothing. **9b·7** bulk Approve, Waitlist, Mark received, Move division, Email; Decline and Withdraw
+  one at a time; partial results said plainly. **9b·8** "owing" turns amber after a number of days the club sets (starts at
+  14). **9b·9** how-to-pay text required whenever a price is above $0, one per season, copied forward; a free season says
+  "Free". **9b·10** the Money band is Owed · Received (net of refunds) · Still owing, refunds listed below. **9b·11** a
+  season's budget sits in the fiscal year its sign-ups open; the treasurer can split it. **9b·12** "Accepted" on every family
+  screen and email; staff keep the Approve button. **9b·13** two divisions for one age group: the family picks, seeing each
+  division's note and room.
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);
