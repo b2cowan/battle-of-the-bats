@@ -9,6 +9,7 @@ import type { OrgPlan } from '@/lib/types';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import OrgDetailClient from './OrgDetailClient';
 import { holdsSlot } from '@/lib/tournament-slot';
+import { clubDomainStore } from '@/lib/club-domain-store';
 import styles from './orgDetail.module.css';
 
 type OverrideRow = {
@@ -335,7 +336,7 @@ export default async function OrgDetailPage({
   // Defensive area guard — `organizations` is currently visible to every platform role
   // (the layout already enforces the platform-admin session), so this is a no-op today. It
   // also yields the auth context used for the permission props below.
-  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes, teamMoves] = await Promise.all([
+  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes, teamMoves, ownAddressRow] = await Promise.all([
     requirePlatformAreaView('organizations'),
     getOrgDetail(id),
     getMembers(id),
@@ -344,6 +345,8 @@ export default async function OrgDetailPage({
     getRecentAuditEvents(id),
     getInternalNotes(id),
     getTeamMoves(id),
+    // A club's own web address (Club Tier Stage 4e). Never blocks this page: a table that is not there yet reads as none.
+    clubDomainStore.getByOrg(id).catch(() => null),
   ]);
 
   if (!org) notFound();
@@ -602,6 +605,7 @@ export default async function OrgDetailPage({
         internalNotes={internalNotes}
         overrides={overrides}
         members={members}
+        ownAddress={ownAddressRow ? { address: ownAddressRow.full_name, status: ownAddressRow.status } : null}
         tournaments={tournaments}
         auditEvents={auditEvents}
         auditHref={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`}

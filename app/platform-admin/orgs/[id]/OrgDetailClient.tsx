@@ -5,6 +5,7 @@ import styles from './orgDetail.module.css';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince, fmtDaysLeft } from '@/lib/format-date';
 import { holdsSlot } from '@/lib/tournament-slot';
+import OwnAddressSection from './OwnAddressSection';
 
 // Platform-admin styles set the console's monospace font per-element, so an unstyled checkbox/radio
 // <label> falls back to the browser default (wrong font AND larger size). Reuse this on every
@@ -133,6 +134,8 @@ interface Props {
   internalNotes: InternalNote[];
   overrides: Override[];
   members: Member[];
+  /** The club's own web address (Club Tier Stage 4e), or null when it has none. */
+  ownAddress: { address: string; status: string } | null;
   tournaments: Tournament[];
   auditEvents: AuditEvent[];
   auditHref: string;
@@ -252,6 +255,7 @@ export default function OrgDetailClient({
   internalNotes,
   overrides: initialOverrides,
   members,
+  ownAddress,
   tournaments,
   auditEvents,
   auditHref,
@@ -1102,6 +1106,10 @@ export default function OrgDetailClient({
                   <p className={styles.savedIndicator}>Ownership transferred to {transferOwnerDone}</p>
                 )}
               </section>
+            )}
+
+            {canManageSupport && ownAddress && (
+              <OwnAddressSection orgId={orgId} address={ownAddress.address} status={ownAddress.status} />
             )}
 
             {!canManageSupport && (

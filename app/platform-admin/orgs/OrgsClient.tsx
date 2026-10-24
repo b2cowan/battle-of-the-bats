@@ -39,6 +39,8 @@ interface OrgRow {
   expiringSoonOverride: boolean;
   trialEndingSoon: boolean;
   emptyOrg: boolean;
+  /** The club's own web address, so support can find who holds one (Club Tier Stage 4e). */
+  ownAddress: string | null;
 }
 
 interface Props {
@@ -110,7 +112,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
   const filteredOrgs = orgs.filter(o => {
     if (search) {
       const q = search.toLowerCase();
-      if (!o.name.toLowerCase().includes(q) && !o.slug.toLowerCase().includes(q)) return false;
+      if (!o.name.toLowerCase().includes(q) && !o.slug.toLowerCase().includes(q) && !(o.ownAddress ?? '').includes(q)) return false;
     }
     if (planFilter         && o.planId             !== planFilter)   return false;
     if (statusFilter       && o.subscriptionStatus !== statusFilter) return false;
@@ -249,7 +251,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
           <input
             type="search"
             className={styles.filterInput}
-            placeholder="Search name or slug..."
+            placeholder="Search name, slug or web address..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />

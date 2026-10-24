@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import OrgsClient from './OrgsClient';
+import { clubDomainStore } from '@/lib/club-domain-store';
 
 /**
  * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
@@ -61,6 +62,9 @@ async function getOrgs() {
       .in('org_id', orgIds)
       .is('deleted_at', null)
     : { data: [] };
+  // Who holds which own web address (Club Tier Stage 4e), so support can search an address to find its club. A table that is not
+  // there yet reads as none.
+  const ownAddresses = new Map((await clubDomainStore.listAll().catch(() => [])).map(r => [r.org_id, r.full_name]));
   const noteCounts = new Map<string, number>();
   for (const row of noteRows ?? []) {
     const orgId = row.org_id as string;
@@ -153,6 +157,7 @@ async function getOrgs() {
       trialEndingSoon:    status === 'trialing' && Boolean(currentPeriodEnd) && (currentPeriodEnd as string) <= trialWindowEnd,
       // Empty = no content of any kind AND at most the single owner as a member.
       emptyOrg:           !orgsWithContent.has(id) && (memberCounts.get(id) ?? 0) <= 1,
+      ownAddress:         ownAddresses.get(id) ?? null,
     };
   });
 }

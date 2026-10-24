@@ -130,6 +130,52 @@ describe('connecting an address', () => {
     assert.deepEqual(await connectClubDomain(other, { ...ME, raw: 'other.ca', mode: 'www' }), { ok: false, reason: 'already_connected' });
   });
 
+  describe('a hold that never went live gives way (owner ruling 2026-10-24)', () => {
+    const held = (patch: Partial<DomainRow>): DomainRow => ({
+      id: 'id-x', org_id: 'org-9', full_name: 'www.lynx.ca', domain: 'lynx.ca', prefix: 'www', status: 'waiting', host_status: null,
+      host_branch: 'dev', record1_name: '_a', record1_value: '_b.acm-validations.aws', record2_name: 'www', record2_value: 'sites.fieldlogichq.ca',
+      record2_host_target: null, last_checked_at: null, last_check: null, waiting_since: NOW.toISOString(), connected_at: null,
+      needs_attention_since: null, not_working_since: null, padlock_expires_at: null, live_email_sent_at: null, padlock_email_sent_at: null,
+      padlock_reminder_sent_at: null, gave_up_email_sent_at: null, not_working_email_sent_at: null, created_by_user_id: null,
+      created_at: NOW.toISOString(), ...patch,
+    });
+    const ask = (d: ServiceDeps) => connectClubDomain(d, { ...ME, raw: 'www.lynx.ca', mode: 'www' });
+
+    it('hands a gave-up name to the next club, releasing the old association first', async () => {
+      const { d, rows, calls } = deps({ rows: [held({ status: 'not_connected' })] });
+      const r = await ask(d);
+      assert.ok(r.ok);
+      assert.deepEqual(calls, ['remove lynx.ca', 'create www.lynx.ca']);
+      assert.equal(rows.has('org-9'), false);
+      assert.equal(rows.get('org-1')!.full_name, 'www.lynx.ca');
+    });
+
+    it('hands over a waiting name only once its two days are up, even before the status check has marked it', async () => {
+      const young = deps({ rows: [held({ waiting_since: new Date(NOW.getTime() - WAITING_GIVE_UP_MS + 60_000).toISOString() })] });
+      assert.deepEqual(await ask(young.d), { ok: false, reason: 'taken' });
+      assert.deepEqual(young.calls, []);
+      const old = deps({ rows: [held({ waiting_since: new Date(NOW.getTime() - WAITING_GIVE_UP_MS).toISOString() })] });
+      assert.ok((await ask(old.d)).ok);
+    });
+
+    it('never takes a name that has been live, whatever state it is in now', async () => {
+      for (const status of ['connected', 'needs_attention', 'not_working'] as const) {
+        const live = deps({ rows: [held({ status, connected_at: NOW.toISOString() })] });
+        assert.deepEqual(await ask(live.d), { ok: false, reason: 'taken' });
+        assert.deepEqual(live.calls, []);
+      }
+      // Even a row whose status says it gave up keeps its name if it was ever live.
+      const was = deps({ rows: [held({ status: 'not_connected', connected_at: NOW.toISOString() })] });
+      assert.deepEqual(await ask(was.d), { ok: false, reason: 'taken' });
+    });
+
+    it('leaves the hold alone when the host cannot be told', async () => {
+      const { d, rows } = deps({ rows: [held({ status: 'not_connected' })], hostOver: { remove: async () => { throw new Error('host down'); } } });
+      assert.deepEqual(await ask(d), { ok: false, reason: 'failed' });
+      assert.equal(rows.has('org-9'), true);
+    });
+  });
+
   it('maps the host\'s refusals, and leaves nothing behind', async () => {
     const limit = deps({ hostOver: { create: async () => { throw Object.assign(new Error('x'), { name: 'LimitExceededException' }); } } });
     assert.deepEqual(await connectClubDomain(limit.d, { ...ME, raw: 'lynx.ca', mode: 'www' }), { ok: false, reason: 'limit' });

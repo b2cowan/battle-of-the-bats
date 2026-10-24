@@ -106,6 +106,18 @@ export interface ServiceDeps {
 
 // ── Connect ───────────────────────────────────────────────────────────────────────────────────────
 
+/**
+ * ⚖ Owner ruling 2026-10-24: a name is held only by a connection that is doing something. A hold that gave up
+ * (`not_connected`), or a waiting one past its two days that the status check has not yet marked, never went live and can be
+ * claimed by the next club that asks for the name. A connection that has EVER been live (`connected_at`) is never claimable:
+ * the only ways out of that are Stop or platform admin's Release.
+ */
+export function isClaimableHold(row: DomainRow, now: Date): boolean {
+  if (row.connected_at) return false;
+  if (row.status === 'not_connected') return true;
+  return row.status === 'waiting' && now.getTime() - new Date(row.waiting_since).getTime() >= WAITING_GIVE_UP_MS;
+}
+
 export type ConnectRefusal =
   | AddressRefusal
   | 'demo' // the demo club
@@ -129,8 +141,13 @@ export async function connectClubDomain(
     if (await deps.isDemoOrg(input.orgId)) return { ok: false, reason: 'demo' };
 
     if (await deps.store.getByOrg(input.orgId)) return { ok: false, reason: 'already_connected' };
-    if ((await deps.store.getByFullName(fullName)) || (await deps.store.getByDomain(domain))) {
-      return { ok: false, reason: 'taken' };
+    const holder = (await deps.store.getByFullName(fullName)) ?? (await deps.store.getByDomain(domain));
+    if (holder) {
+      if (!isClaimableHold(holder, deps.now())) return { ok: false, reason: 'taken' };
+      // A hold that never went live (a typo, or someone who does not control the name) gives way to the next club: the host
+      // first, then the row, the same order as Stop. If the host cannot be told, the hold stays and this attempt fails.
+      await deps.host.remove(holder.domain);
+      await deps.store.remove(holder.org_id);
     }
 
     let records;
