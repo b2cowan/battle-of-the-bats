@@ -21,6 +21,7 @@ import { Callout } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { WEB_ADDRESS_WORDS as W } from '@/lib/web-address-words';
 import { cleanSlugInput, isSlug } from '@/lib/slug';
+import { useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import styles from './settings-access.module.css';
 
 export default function WebAddressWindow({ orgName, current, eventSlug, onClose }: {
@@ -32,6 +33,11 @@ export default function WebAddressWindow({ orgName, current, eventSlug, onClose 
   onClose: () => void;
 }) {
   const router = useRouter();
+  // The club's own web address while one is handed out (Club Tier 4e): the words then say its links keep working.
+  const publicOrigin = useClubPublicOrigin(current);
+  const ownAddress = publicOrigin && typeof window !== 'undefined' && publicOrigin !== window.location.origin
+    ? publicOrigin.replace(/^https?:\/\//, '')
+    : null;
   const [value, setValue] = useState(current);
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -104,7 +110,7 @@ export default function WebAddressWindow({ orgName, current, eventSlug, onClose 
           <p className={styles.addressPreview}>
             fieldlogichq.ca/<b>{next || '…'}</b>{eventSlug ? `/${eventSlug}` : ''}
           </p>
-          <p className={ck.hint}>{W.hint}</p>
+          <p className={ck.hint}>{ownAddress ? W.hintOwn(ownAddress) : W.hint}</p>
           {value.length > 0 && !valid && <p className={styles.addressBad}>{W.invalid}</p>}
           {error && <p className={styles.addressBad} role="alert">{error}</p>}
         </div>
@@ -126,7 +132,7 @@ export default function WebAddressWindow({ orgName, current, eventSlug, onClose 
             </>
           )}
         >
-          <p>{W.askBody(current, next)}</p>
+          <p>{ownAddress ? W.askBodyOwn(current, next, ownAddress) : W.askBody(current, next)}</p>
         </KitDialog>
       )}
     </>

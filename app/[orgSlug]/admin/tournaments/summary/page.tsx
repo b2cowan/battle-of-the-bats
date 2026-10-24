@@ -45,6 +45,7 @@ import { useAbsentArea } from '@/components/admin/tournament/useAbsentArea';
 import { AFTER_EVENT_LOCK_PLAN, FINISH_WORDS, SHARE_WORDS, SUMMARY_WORDS, hasMoney, winLossRecord } from '@/lib/after-event-words';
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import type { EventRecap } from '@/lib/event-recap';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import styles from './summary.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -198,7 +199,12 @@ function PrintedSummary({ club, data }: { club: string; data: SummaryData }) {
   const W = SUMMARY_WORDS;
   const C = W.printColumns;
   const dates = formatEventDateRange(tournament.startDate, tournament.endDate, true, { longMonth: true });
-  const link = publicHome && typeof window !== 'undefined' ? `${window.location.host}${publicHome}` : null;
+  // The tournament's address on paper: the club's own web address when it has one handed out (Club Tier 4e), else this host.
+  const orgSlug = useOrg().currentOrg?.slug ?? '';
+  const publicOrigin = useClubPublicOrigin(orgSlug);
+  const link = publicHome && tournament.slug && orgSlug && publicOrigin
+    ? publicHref(publicOrigin, orgSlug, `/${tournament.slug}`).replace(/^https?:\/\//, '')
+    : null;
   return (
     <PrintedPage
       name="summary"

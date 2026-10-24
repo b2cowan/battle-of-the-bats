@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
 import { shareLink } from '@/lib/share-card';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import styles from './ShareScoreButton.module.css';
 
 type Props = {
@@ -25,15 +26,24 @@ type Props = {
   /** Class for the label span so callers can hide it responsively (icon-only
    *  mobile) without reaching into this component's markup blindly. */
   labelClassName?: string;
+  /**
+   * Club Tier 4e: set ONLY by a screen that hands a club's public page to someone from the coaches portal or the admin (the
+   * coach welcome banner). `url` is then `/{club}/…` and the link is spelled for the club's own web address when it has one.
+   * The public pages leave it off: they run on the visitor's own address already, so `origin + url` is right there.
+   */
+  club?: string;
 };
 
-export default function SharePageButton({ url, title, text, label = 'Share', className, compact = false, labelClassName }: Props) {
+export default function SharePageButton({ url, title, text, label = 'Share', className, compact = false, labelClassName, club }: Props) {
   const [state, setState] = useState<'idle' | 'busy' | 'shared' | 'copied'>('idle');
+  const clubOrigin = useClubPublicOrigin(club);
 
   async function handle() {
     if (state === 'busy') return;
     setState('busy');
-    const full = `${window.location.origin}${url}`;
+    const full = club && url.startsWith(`/${club}`)
+      ? publicHref(clubOrigin, club, url.slice(club.length + 1))
+      : `${window.location.origin}${url}`;
     const result = await shareLink(full, title, text);
     setState(result === 'idle' ? 'idle' : result);
     if (result !== 'idle') window.setTimeout(() => setState('idle'), 2200);

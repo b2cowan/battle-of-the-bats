@@ -42,6 +42,7 @@ import TournamentCreationPreview, {
   type PreviewTournamentTheme,
 } from './TournamentCreationPreview';
 import { PRESETS, isThemePresetKey } from '@/lib/themes';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { hasOrgVenueLibrary, hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { INVITE_BOARD_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
@@ -261,6 +262,8 @@ export default function TournamentSetupWizard({
 }: TournamentSetupWizardProps) {
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  // The "Public link" hint: the club's own web address in front of the tournament's part while one is handed out (Club Tier 4e).
+  const publicOrigin = useClubPublicOrigin(orgSlug);
   const reuseTitleId = useId();
   const kind = facilityKindForSport(sport);
   const libraryPlan = Boolean(previewOrg && hasOrgVenueLibrary(previewOrg.planId));
@@ -988,7 +991,6 @@ export default function TournamentSetupWizard({
   // ── The three steps and the review ───────────────────────────────────────────────────────────────────
   const at = step === 'review' ? CREATE_STEPS.length : CREATE_STEPS.indexOf(step) + 1;
   const identity = step === 'review' ? W.reviewLine : W.stepLine(at, W.stepLabel[step]);
-  const host = typeof window !== 'undefined' ? window.location.host : '';
   /** A flagged division's mistake while it stands (its red line), and the division a phone's window is open on. */
   const mistakeOf = (id: string) => (flagged.has(id) ? divisionMistakeFor(divisions, id) : null);
   const editing = divisionWindow ? divisions.find(r => r.id === divisionWindow.id) ?? null : null;
@@ -1044,7 +1046,7 @@ export default function TournamentSetupWizard({
           <span className={ck.label}>{W.publicLink}<span className={repKit.req} aria-hidden>*</span></span>
           <input id="new-t-link" className={ck.input} value={form.slug} maxLength={80}
             onChange={e => { touch(); setSlugEdited(true); setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') })); }} />
-          <span className={`${ck.hint} ${styles.address}`}>{host ? `${host}/${orgSlug ?? ''}/${form.slug}` : `/${orgSlug ?? ''}/${form.slug}`}</span>
+          <span className={`${ck.hint} ${styles.address}`}>{publicOrigin ? publicHref(publicOrigin, orgSlug ?? '', `/${form.slug}`).replace(/^https?:\/\//, '') : `/${orgSlug ?? ''}/${form.slug}`}</span>
           {usedSuggestion && !slugEdited && !slugHolder && <span className={ck.hint}>{W.linkKept}</span>}
         </label>
       </>

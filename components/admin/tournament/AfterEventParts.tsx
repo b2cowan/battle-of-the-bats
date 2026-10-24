@@ -23,6 +23,8 @@ import { ClubRow, ClubRowList, ClubSection, NoticePill } from '@/components/admi
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { BOARD_WORDS, FINISH_WORDS, NEXT_YEAR_WORDS, SHARE_WORDS, SUMMARY_WORDS, hasMoney } from '@/lib/after-event-words';
 import type { EventRecap } from '@/lib/event-recap';
+import { useOrg } from '@/lib/org-context';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import styles from './AfterEventParts.module.css';
 
 /** The drawing's standings mark (a podium): lucide has none. */
@@ -41,12 +43,19 @@ function PodiumMark() {
  */
 export function ShareAction({ recap, onCopied }: { recap: EventRecap; onCopied?: () => void }) {
   const [notice, setNotice] = useState<{ key: number; message: string } | null>(null);
+  const { currentOrg } = useOrg();
+  const orgSlug = currentOrg?.slug ?? '';
+  const publicOrigin = useClubPublicOrigin(orgSlug);
   if (!recap.shareLink || !recap.sharePath) return null;
   const words = SHARE_WORDS[recap.shareLink];
   const path = recap.sharePath;
+  // The recap names the page as `/{club}/{tournament}/…`; handed out at the club's own web address when it has one (Club Tier 4e).
+  const href = orgSlug && path.startsWith(`/${orgSlug}/`)
+    ? publicHref(publicOrigin, orgSlug, path.slice(orgSlug.length + 1))
+    : `${publicOrigin}${path}`;
   async function copy() {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}${path}`);
+      await navigator.clipboard.writeText(href);
       setNotice({ key: Date.now(), message: words.copied });
       onCopied?.();
     } catch {

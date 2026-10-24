@@ -77,6 +77,7 @@ export default function CoachWelcomeBanner({
         <div className={styles.shareRow}>
           <SharePageButton
             url={shareHref}
+            club={shareHref.split('/')[1]}
             title={tournamentName ?? 'Tournament'}
             text={`${teamName} is ${isWaitlist ? 'on the waitlist for' : 'registered for'} ${tournamentName ?? 'the tournament'}!`}
             label="We're in! Share it"

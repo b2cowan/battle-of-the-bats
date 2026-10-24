@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import ClubSiteOffNotice from '@/components/coaches/ClubSiteOffNotice';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -61,9 +62,11 @@ export default function CoachPublicPageDoor({
   onSaveName: (show: boolean) => Promise<void>;
 }) {
   const { copied, copy } = useCopyToClipboard();
-  // The Settings page renders this only after its client read lands, so the window is always there.
-  const origin = typeof window === 'undefined' ? '' : window.location.origin;
-  const url = `${origin}${path}`;
+  // `path` is `/{club}/teams/{team}`. The page is handed out at the club's own web address when it has one (Club Tier 4e),
+  // else at the address this page is on. The Settings page renders this only after its client read lands, so the window is there.
+  const orgSlug = path.split('/')[1] ?? '';
+  const origin = useClubPublicOrigin(orgSlug);
+  const url = origin ? publicHref(origin, orgSlug, path.slice(orgSlug.length + 1)) : path;
 
   // The switch shows the SAVED value (the page re-reads the server's answer on a failure); while a save is open it shows
   // what the coach asked for.
@@ -104,7 +107,7 @@ export default function CoachPublicPageDoor({
           </button>
           <span className={shared.srOnly} aria-live="polite">{copied ? 'Copied' : ''}</span>
           {!siteOff && (
-            <a href={path} target="_blank" rel="noopener noreferrer" className={`${shared.btnSecondary} ${styles.door}`}>
+            <a href={origin ? url : path} target="_blank" rel="noopener noreferrer" className={`${shared.btnSecondary} ${styles.door}`}>
               <ExternalLink size={16} aria-hidden />
               Open
             </a>

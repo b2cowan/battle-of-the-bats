@@ -7,6 +7,7 @@ import type { ClubDomainStatus, RecordSighting } from './club-domain';
 import { usesOwnAddress } from './club-domain';
 import type { DomainView } from './club-domain-service';
 import { OWN_ADDRESS_WORDS as W } from './own-address-screen-words';
+import { possessive } from './utils';
 
 export type ChipTone = 'good' | 'warn' | 'bad' | 'info' | 'neutral';
 export interface RowChip { tone: ChipTone; label: string }
@@ -87,7 +88,7 @@ export function registrarMessage(opts: { clubName: string; ownerName: string | n
   const { clubName, ownerName, view, helpLink } = opts;
   const lines = [
     `Hi, could you add two records to ${view.domain} where it is registered?`,
-    `${clubName}'s website is moving to ${view.fullName}.`,
+    `${possessive(clubName).replace(/’/g, "'")} website is moving to ${view.fullName}.`,
     '',
     '1. Type CNAME',
     `   Name  ${view.records.padlock.name}`,

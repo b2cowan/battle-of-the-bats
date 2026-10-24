@@ -6,6 +6,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachRow } from '@/components/coaches/CoachRowList';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { shareLink } from '@/lib/share-card';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 
 /**
  * The client halves of the coach's tournament page (Club Tier Stage 7d, drawing 7) — the record
@@ -41,10 +42,14 @@ export function CoachTournamentRecordHeader({
 /** "Share this tournament" as a row in From the organizer — the native share sheet, else a copied link. */
 export function CoachShareRow({ url, title, text }: { url: string; title: string; text: string }) {
   const [state, setState] = useState<'idle' | 'busy' | 'shared' | 'copied'>('idle');
+  // `url` is the tournament's public page, `/{club}/{tournament}`: handed out at the club's own web address when it has one
+  // (Club Tier 4e), else at the address the coach is on.
+  const club = url.split('/')[1] ?? '';
+  const origin = useClubPublicOrigin(club);
   async function share() {
     if (state === 'busy') return;
     setState('busy');
-    const result = await shareLink(`${window.location.origin}${url}`, title, text);
+    const result = await shareLink(publicHref(origin, club, url.slice(club.length + 1)), title, text);
     setState(result === 'idle' ? 'idle' : result);
     if (result !== 'idle') window.setTimeout(() => setState('idle'), 2200);
   }

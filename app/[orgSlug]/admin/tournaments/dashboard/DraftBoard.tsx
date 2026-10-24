@@ -31,6 +31,7 @@ import {
 } from '@/lib/tournament-board-words';
 import { statusConfirm } from '@/lib/tournament-status-words';
 import { tournamentToday } from '@/lib/timezone';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { BoardDoor } from './GameDayBoard';
 import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
 import { LOCK_WORDS } from '@/lib/invite-only-words';
@@ -79,6 +80,7 @@ export default function DraftBoard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const publicOrigin = useClubPublicOrigin(orgSlug);
 
   const sport = setup?.sport ?? null;
   const settingsHref = (section: string) => `${base}/settings/event?section=${section}`;
@@ -119,7 +121,8 @@ export default function DraftBoard({
     finiteSlots,
     openDivisions: setup?.openDivisions ?? null,
   });
-  const publicLink = typeof window === 'undefined' ? '' : `${window.location.origin}/${orgSlug}/${tournament.slug}`;
+  // The club's own web address while one is handed out (Club Tier 4e), else the address this page is on.
+  const publicLink = publicOrigin ? publicHref(publicOrigin, orgSlug, `/${tournament.slug}`) : '';
 
   const row = (r: Row) => (
     <ClubRow

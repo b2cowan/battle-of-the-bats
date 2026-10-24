@@ -39,6 +39,16 @@ export const WEB_ADDRESS_WORDS = {
   publicUrlTournament: 'Change it in Settings & access.',
   /** League and Club: the organization's Settings, where the address lives on those plans. */
   publicUrlClub: 'Change it in your organization’s Settings.',
+  /**
+   * While the club's own web address is handed out (Club Tier 4e, copy §9): Event settings' Public URL says the first part is
+   * that address, and the place to change it is the Public site page. `address` has no protocol: `www.lakeshorelynx.ca`.
+   */
+  publicUrlLeadOwn: (address: string) => `The first part, ${address}, is your own address, shared by every tournament.`,
+  publicUrlOwn: 'Change it on the Public site page.',
+  /** The tournament Web address window, while the club's own address is handed out: its hint and its asking window's body. */
+  hintOwn: (own: string) => `The last part of your FieldLogicHQ address. Links to ${own} keep working if you change it.`,
+  askBodyOwn: (from: string, to: string, own: string) =>
+    `Every link that uses fieldlogichq.ca/${from} stops working as soon as you change it. Links to ${own} keep working. Nothing redirects to fieldlogichq.ca/${to}.`,
   /** The club's Settings: the field's warning once it is changed (its field and hint are unchanged). */
   clubWarning: 'Changing your web address immediately breaks every existing link to your organization — your schedule, standings, registration form, team pages, and any links sent to coaches in past emails or posted publicly.',
   /** The club's Settings field hint (Club Tier 4e): unchanged until the club has its own web address handed out. */

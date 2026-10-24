@@ -44,6 +44,7 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { publicTryoutHref } from '@/lib/public-tryout-links';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
 import { previousBlurbOf } from '@/lib/program-year-patch';
 import { bornFactsOf } from '@/lib/club-born-public';
@@ -93,6 +94,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
   const { orgSlug, teamId } = use(params);
   const { currentOrg, userRole, loading: orgLoading } = useOrg();
   const canWrite = userRole === 'owner' || userRole === 'admin';
+  const publicOrigin = useClubPublicOrigin(orgSlug);
   const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
   const teamBase = `/${orgSlug}/admin/rep-teams/teams/${teamId}`;
 
@@ -245,7 +247,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
 
   function copyLink() {
     if (!team) return;
-    void navigator.clipboard.writeText(`${window.location.origin}${publicTryoutHref(orgSlug, team.slug)}`).then(() => {
+    void navigator.clipboard.writeText(publicHref(publicOrigin, orgSlug, `/teams/${team.slug}/tryouts`)).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     });

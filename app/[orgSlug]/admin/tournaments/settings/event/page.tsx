@@ -47,6 +47,7 @@ import { STATUS_WORD, statusSentence } from '@/lib/tournament-status-words';
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { EVENT_SETTINGS_WORDS as W } from '@/lib/event-settings-words';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
+import { useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { getWebAddressHref, isTournamentTier } from '@/lib/billing-urls';
 import { cleanSlugInput, isSlug } from '@/lib/slug';
 import { boardMoney } from '@/lib/tournament-board-words';
@@ -107,6 +108,11 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 export default function TournamentEventSettingsPage() {
   const { currentTournament, loading: tournamentLoading, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole, canOpen } = useOrg();
+  // The club's own web address while one is handed out (Club Tier 4e); null on fieldlogichq.ca.
+  const publicOrigin = useClubPublicOrigin(currentOrg?.slug);
+  const ownAddress = publicOrigin && typeof window !== 'undefined' && publicOrigin !== window.location.origin
+    ? publicOrigin.replace(/^https?:\/\//, '')
+    : null;
   usePageTitle('Event settings');
 
   // Tournament identity
@@ -1040,14 +1046,16 @@ export default function TournamentEventSettingsPage() {
                   placeholder="e.g. spring-invitational-2026"
                 />
                 <p className={es.url}>
-                  fieldlogichq.ca/{currentOrg?.slug}/<b>{tournamentSlug || '…'}</b>
+                  {ownAddress ? `${ownAddress}/` : `fieldlogichq.ca/${currentOrg?.slug}/`}<b>{tournamentSlug || '…'}</b>
                 </p>
                 {slugStatus === 'checking' && <p className={ck.hint}>Checking availability…</p>}
                 {slugStatus === 'available' && <p className={es.good}>✓ Available</p>}
                 {slugStatus === 'taken' && <p className={es.bad}>✗ That URL is already taken</p>}
                 {slugStatus === 'invalid' && <p className={es.bad}>Lowercase letters, numbers, and hyphens only</p>}
                 <p className={ck.hint}>
-                  {WA.publicUrlLead(currentOrg?.slug ?? '')} <Link href={webAddressHref} className={es.inlineLink}>{webAddressLine}</Link>
+                  {ownAddress
+                    ? <>{WA.publicUrlLeadOwn(ownAddress)} <Link href={`/${currentOrg?.slug ?? 'admin'}/admin/public-site`} className={es.inlineLink}>{WA.publicUrlOwn}</Link></>
+                    : <>{WA.publicUrlLead(currentOrg?.slug ?? '')} <Link href={webAddressHref} className={es.inlineLink}>{webAddressLine}</Link></>}
                 </p>
               </div>
               {slugHasChanged && (

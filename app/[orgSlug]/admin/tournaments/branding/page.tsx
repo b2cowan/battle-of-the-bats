@@ -37,6 +37,7 @@ import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { LOCK_WORDS } from '@/lib/invite-only-words';
 import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { hasCapability } from '@/lib/roles';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import { PUBLIC_SITE_WORDS as W, appIconSummary, parseHex, themeSummary } from '@/lib/tournament-settings-words';
 import styles from './branding.module.css';
 import pageCss from './site.module.css';
@@ -164,6 +165,7 @@ export default function TournamentBrandingPage() {
   const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Public site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
+  const publicOrigin = useClubPublicOrigin(currentOrg?.slug);
 
   const tournamentId = currentTournament?.id;
   const advanced = currentOrg?.planId ? hasPlanFeature(currentOrg.planId, 'advanced_tournament_branding') : false;
@@ -346,7 +348,9 @@ export default function TournamentBrandingPage() {
   const status = currentTournament?.status;
   const slug = currentTournament?.slug;
   const livePath = `/${currentOrg?.slug ?? ''}/${slug ?? ''}`;
-  const host = typeof window === 'undefined' ? '' : window.location.host;
+  // The site's address as the public reads it: the club's own web address when one is handed out (Club Tier 4e), else this host.
+  const liveUrl = publicOrigin && currentOrg?.slug && slug ? publicHref(publicOrigin, currentOrg.slug, `/${slug}`) : livePath;
+  const liveAddress = liveUrl.replace(/^https?:\/\//, '');
   const door = !slug || !currentOrg?.slug ? null : (
     <div className={pageCss.door}>
       {status === 'draft' || status === 'archived' ? (
@@ -354,8 +358,8 @@ export default function TournamentBrandingPage() {
           eyebrow={status === 'draft' ? W.previewEyebrow : W.offlineEyebrow} title={W.door}
           line={status === 'draft' ? W.previewLine : W.offlineLine} />
       ) : (
-        <BoardDoor href={livePath} newTab eyebrow={W.onlineEyebrow} title={W.door}
-          line={<>{W.onlineLine}<span className={pageCss.address}> · {host}{livePath}</span></>} />
+        <BoardDoor href={liveUrl} newTab eyebrow={W.onlineEyebrow} title={W.door}
+          line={<>{W.onlineLine}<span className={pageCss.address}> · {liveAddress}</span></>} />
       )}
     </div>
   );

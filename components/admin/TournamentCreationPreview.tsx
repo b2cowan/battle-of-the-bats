@@ -22,6 +22,7 @@ import type { Organization } from '@/lib/types';
 import { resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
 import { PRESETS } from '@/lib/themes';
 import { tournamentToday } from '@/lib/timezone';
+import { publicHref, useClubPublicOrigin } from '@/lib/use-club-public-origin';
 import {
   formatHeroDateRange,
   heroCountdownText,
@@ -94,6 +95,8 @@ export default function TournamentCreationPreview({
   // hydration mismatch. useSyncExternalStore renders the server snapshot, then swaps after
   // hydration, which is exactly the sanctioned shape for this.
   const host = useSyncExternalStore(subscribeToNothing, readHost, readHostOnServer);
+  const mounted = useSyncExternalStore(subscribeToNothing, () => true, () => false);
+  const publicOrigin = useClubPublicOrigin(org.slug);
   // An invite-only event's public page takes no registrations and counts teams, not spots (the free tournament tier, R6):
   // the preview shows the page the event will actually publish.
   const inviteOnly = runsInviteOnlyEvents(org.planId);
@@ -122,7 +125,11 @@ export default function TournamentCreationPreview({
 
   const dayCount = tournamentDayCount(startDate, endDate);
   const trimmedName = name.trim();
-  const publicPath = `${host}/${org.slug}/${slug.trim() || '…'}`;
+  // The club's own web address when one is handed out (Club Tier 4e), else this host. Only after hydration: both
+  // sides print the server snapshot until then.
+  const publicPath = mounted && publicOrigin
+    ? publicHref(publicOrigin, org.slug, `/${slug.trim() || '…'}`).replace(/^https?:\/\//, '')
+    : `${host}/${org.slug}/${slug.trim() || '…'}`;
 
   return (
     <div className={styles.pane}>
