@@ -303,6 +303,10 @@
       "prod": "held",
       "note": "Owner selected separate AWS Aurora DSQL/S3 storage in us-east-2 on 2026-10-23; this Supabase migration was applied only to product dev before that decision and is not the production bookkeeping path. Do not apply 354 to product prod. The routes now use AWS; see docs/projects/active/BOOKKEEPING_AWS_RESOURCES.md. Later remove the unused empty product-dev table/bucket with a coordinated new migration and snapshot/dictionary refresh. CLEANED UP 2026-10-24 by mig 356 (dev table, guard function and empty bucket removed)."
     },
+    "357_the_club_address_status_check_is_scheduled.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 4e Part 6: schedules the pg_cron job 'club-domains-tick' (every 15 minutes, */15 * * * *) that calls POST /api/platform-admin/club-domains-tick through app_cron_http_tick. WATCHED AUTOMATION: the owner's yes was given for DEV only on 2026-10-24; the production job needs its own yes at the Club release. No table, column or function change, so check:migrations cannot see it. Apply on prod only AFTER the 4e code is serving on production (the route must exist) AND the app's CLUB_DOMAINS_AWS_ACCESS_KEY_ID / CLUB_DOMAINS_AWS_SECRET_ACCESS_KEY are in the production Amplify branch environment (they are absent from the app and both branch environments as of 2026-10-24). Verify on prod after applying: SELECT schedule FROM cron.job WHERE jobname = 'club-domains-tick' -> '*/15 * * * *'."
+    },
     "356_drop_the_unused_proprietor_expense_table.sql": {
       "prod": "held",
       "note": "Removes the unused dev-only proprietor expense table and guard function left by mig 354 (the owner chose AWS storage instead; 354 was never applied to prod). Applied to DEV 2026-10-24; the empty dev bucket proprietor-receipts was deleted through the Storage API. Every statement is IF EXISTS, so applying it to prod would do nothing, and prod needs nothing from it. Cleared 2 of the 3 new dev security-advisor findings (the function warning and the table notice)."
