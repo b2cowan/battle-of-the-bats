@@ -1,0 +1,1155 @@
+<title>House League 9b Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+<style>
+/* 9b round additions */
+.ghostx{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1.5px dashed #8a7b5a;border-radius:8px;color:#6b5d3f;font:600 13px/1 'Inter',sans-serif;background:transparent;letter-spacing:.01em}
+.doc .ghostx{border-color:var(--ask);color:var(--ask)}
+.ak .ghostx{border-color:var(--amber);color:var(--amber)}
+.pub .ghostx{border-color:#8a7b5a;color:#6b5d3f}
+.ghostx.sm{min-height:24px;padding:0 8px;font-size:11px;margin-top:4px}
+.ak .chipk{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);font:600 14px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .chipk.on{background:var(--olive-soft);border-color:var(--olive);color:var(--ink)}
+.ak .chipk.dash{border-style:dashed}
+.ak .chipk.had{border-style:dotted;color:var(--dim);background:transparent}
+.ak .sb .it i{border:0;background:currentColor;opacity:.28;width:14px;height:14px;border-radius:4px}
+.ak .tb .ic{display:grid;place-items:center;font:700 11px/1 'Inter';color:var(--soft)}
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);min-width:72px}
+.ak .fld.s{min-width:64px}
+.ak .fld.wide{flex:1;min-width:0;display:flex}
+.ak .fld.empty{color:var(--amber);border-color:var(--amber);border-style:dashed}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .frow{display:flex;align-items:center;gap:12px}
+.ak .fl2{width:110px;flex:none;font:600 13px/1.3 'Inter';color:var(--soft)}
+.ak .menu{border:1px solid var(--line2);border-radius:10px;background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.12);margin:-4px 0 4px 122px;overflow:hidden}
+.ak .menu .mi{display:flex;justify-content:space-between;gap:10px;padding:0 12px;min-height:44px;align-items:center;font:500 14px/1.2 'Inter';border-top:1px solid var(--line)}
+.ak .menu .mi:first-child{border-top:0}
+.ak .menu .mi.on{background:var(--olive-soft);font-weight:650}
+.ak .dim,.ak .d2{color:var(--dim);font-size:12.5px}
+.ak .facts2{padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 20px;font-size:14px;align-items:baseline}
+.ak .facts2>span:nth-child(odd){color:var(--dim)}
+.ak .facts2.edit{align-items:center}
+.ak .ck{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line2);font:700 14px/1 'Inter';color:var(--dim);flex:none}
+.ak .ck.ok{background:var(--green-soft);border-color:transparent;color:var(--green)}
+.ak .ck.opt{border-style:dashed}
+.ak .btn.ic.on{background:var(--olive);border-color:var(--olive);color:var(--card)}
+.ak .tbar{display:flex;gap:8px;align-items:center}
+.ak .pill2{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;background:var(--olive-soft);font:600 14px/1 'Inter'}
+.ak .bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--paper)}
+.ak .bulk .btn{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ak.dk .bulk{background:var(--olive-soft);color:var(--ink)}
+.ak.dk .bulk .btn{color:var(--ink);border-color:var(--line2)}
+.ak .bulk .sp{flex:1}
+.ak .bulk .lnk{color:inherit;text-decoration:underline}
+.ak .cbx{display:inline-grid;place-items:center;width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;font:700 12px/1 'Inter';color:var(--card)}
+.ak .cbx.on{background:var(--olive);border-color:var(--olive)}
+.ak .owe{font-weight:650;color:var(--ink)}
+.ak .owe.late{color:var(--amber)}
+.ak .paid{font-weight:650;color:var(--green)}
+.ak table.kt td .btn{min-height:36px;font-size:13.5px}
+.ak .sheet{background:var(--card);border-radius:16px 16px 0 0;padding:8px 0 14px}
+.ak .sheet .sh-h{padding:12px 18px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--line)}
+.ak .sheet .sh-i{min-height:56px;padding:8px 18px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--line)}
+.ak .sheet .sh-i b{font:600 15px/1.3 'Inter'}
+.ak .sheet .sh-i span{font-size:12.5px;color:var(--dim)}
+.ak .radios{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px}
+.ak .rad{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line);min-height:44px}
+.ak .rad:first-child{border-top:0}
+.ak .rad .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:2px;position:relative}
+.ak .rad.on .dot{border-color:var(--olive)}
+.ak .rad.on .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--olive)}
+.ak .rad b{display:block;font:600 14px/1.35 'Inter';color:var(--ink)}
+.ak .rad .s2{display:block;font-size:12.5px;color:var(--dim)}
+.ak .rad .sub2{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.pub .pk{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#666;display:flex;justify-content:space-between}
+.pub .pdel{text-transform:none;letter-spacing:0;font:600 13px/1 'Inter';color:#1F3A8A}
+.pub .pcard{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.pub .pf{display:flex;flex-direction:column;gap:4px}
+.pub .pf label{font:600 13px/1.3 'Inter';color:#333}
+.pub .pin2{display:flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid rgba(0,0,0,.2);border-radius:8px;font:15px/1 'Inter'}
+.pub .pfit{background:#E6F0E2;color:#24481d;border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.4}
+.pub .pfit.wait{background:#FBEFD9;color:#6b4100}
+.pub .plink{font:600 14px/1 'Inter';color:#1F3A8A;min-height:44px;display:flex;align-items:center}
+.pub .padd{min-height:48px;display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(31,58,138,.5);border-radius:10px;font:600 15px/1 'Inter';color:#1F3A8A}
+.pub .pchk{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;min-height:44px}
+.pub .pchk .box{width:22px;height:22px;flex:none;border:1.5px solid #555;border-radius:5px;display:grid;place-items:center;font:700 13px/1 'Inter';color:#fff;margin-top:1px}
+.pub .pchk .box.on{background:#1F3A8A;border-color:#1F3A8A}
+.pub .ptot{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.pub .dim2{color:#666;font-size:13px}
+.pub .pbtn{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:10px;background:#1F3A8A;color:#fff;font:700 16px/1 'Inter'}
+.pub .ptop{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px}
+.pub .prow{display:flex;gap:12px;font-size:14px}
+.pub .prow>span:first-child{width:80px;flex:none;color:#666}
+.pub .phow{background:#F5F4F0;border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.pub .mkx{font:700 10px/1 'IBM Plex Mono',monospace;border:1.5px solid #8A5A00;color:#8A5A00;border-radius:4px;padding:2px 4px;margin-left:4px}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:520px}
+.mail .mh{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:14px}
+.mail .mb{padding:14px 16px;font-size:14px;line-height:1.55}
+.ak .panel,.ak .dlg .db{overflow-x:auto}
+.ak .dlg,.ak .panel{min-width:0;max-width:100%}
+.ak.win{max-width:100%}
+.spec>.col{max-width:100%}
+h4.sub-h{font-size:15px;margin:22px 0 6px}
+</style>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · house league · round 2 · 2026-10-24</p>
+<h1>9b drawn: sign-up and money, ready for payments</h1>
+<p class="lede">The second drawing round. It opens with your two questions from the rulings: opening several age groups at once, and whether the portal needs two ways to email families. Then it draws 9b-1 (sign-up) and 9b-2 (money) as their end state, built so online payment (12b) drops into slots you've already seen.</p>
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li>Each surface has the capture (before) and the drawing (after). Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button>, plus a stage tag such as <button class="mk s" data-note="The stage that delivers this part.">9b-1</button>. A dashed <span class="ghostx">Pay now</span> is a <b>ghost</b>: the slot 12b fills, shown now so it never reshapes the screen later.</li>
+    <li>Green chips name the finding they fix; red flags open it. Both open an explanation when clicked.</li>
+    <li>Everything you ruled is drawn as ruled. Your rulings are listed under "Ruled, and how it's drawn" on the asks tab. The new asks are only what this round raises, plus S2·b, which was still open.</li>
+    <li>Desk drawings fit your screen; "Show at true size" shows them at 1440. Open this page on a phone to judge the phone drawings.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">Drawn on the same dev fixture as round 1 (Dev League Org, League plan; the Statement is shown on the dev club, Club plan). 2027 is the season getting ready; 2026 is the season with money on it. Figures come from the fixture, except where a drawing shows a price this round introduces (early bird), which is marked as an example.</p>
+</div>
+<p class="muted" style="font-size:13.5px">Round 1: <a href="https://claude.ai/artifact/UtrYHLaqbkfQQC2kBbGEQ7">the deep dive (walk, ladder, 9a)</a>.</p>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="qs" aria-selected="true">Your two questions</button>
+  <button role="tab" data-pane="b1" aria-selected="false">9b-1 Sign-up</button>
+  <button role="tab" data-pane="b2" aria-selected="false">9b-2 Money</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<!-- ======================= YOUR TWO QUESTIONS ======================= -->
+<section class="pane" id="qs" data-pane="qs">
+
+<h2 style="margin-top:16px">1 · Opening several age groups at once</h2>
+<div class="verdict push"><h3>My read: yes to "several at once", but as age groups inside one season, not as several seasons</h3>
+<ul>
+  <li><b>You're right about the job.</b> Clubs open U8 to U17 on the same day, with the same dates, waiver and rules. Today that's one "Add division" window at a time, and the age band can't be edited afterwards.</li>
+  <li><b>The difference between age groups is exactly what a division holds:</b> its birth years, its size and, from 9b-1, its own price. Everything else they share is the season.</li>
+  <li><b>Separate seasons per age group would cost what you've already ruled in.</b>
+    <ul>
+      <li>A family with a U10 and a U13 couldn't register both in one sign-up (Q5 says they can), and would pay twice.</li>
+      <li>The convenor would have four Money pages, four sets of status changes and four rows on the club home.</li>
+      <li>Families › Email would have four seasons to pick from.</li>
+    </ul></li>
+  <li><b>So I'd make "Add age groups" the bulk tool.</b> One window adds every age group at once: tap the chips you run, give each its birth years, size and price, and press Add. The club picks the birth years, as you ruled in 4c-2 (FieldLogicHQ never guesses them from "U13"). From next year, "Start next season" (9f) copies them all with the years moved up one.</li>
+  <li><b>When an age group really runs its own calendar</b> (U17 in spring only), it is a different season. That case is a copy, not a bulk create, and 9f's "Start next season" covers it.</li>
+</ul></div>
+
+<h3>Today</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><div class="shot"><div class="sc" style="max-height:440px"><img src="{{IMG:season27-desk-warm}}" alt="Today's season page: one Add division at a time"></div><div class="bar"><span>Season page: "Add division", one at a time · 1440</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+
+<h3>A · One season, add age groups in one go (recommended)</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">AFTER · desk window</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:720px">
+    <div class="dh"><h4>Add age groups to Dev House League 2027</h4><span class="xx">×</span></div>
+    <div class="db">
+      <p>Tap the groups you run, or type your own name. Each becomes a division with its own birth years, size and price.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <span class="chipk on">U8 ✓</span><span class="chipk">U9</span><span class="chipk had">U10 · 2 already</span><span class="chipk">U11</span><span class="chipk had">U12 · already</span><span class="chipk on">U14 ✓</span><span class="chipk">U16</span><span class="chipk">U18</span><span class="chipk dash">+ Type a name</span>
+      </div>
+      <table class="kt" style="margin-top:4px"><thead><tr><th>Division</th><th>Born in</th><th>Players</th><th>Price</th><th></th></tr></thead><tbody>
+        <tr><td><b>U8</b></td><td><span class="fld">2019</span> – <span class="fld">2020</span></td><td><span class="fld s">12</span></td><td><span class="fld s">$165</span></td><td><span class="btn ic" aria-label="Remove U8" style="border-color:transparent;background:none">×</span></td></tr>
+                <tr><td><b>U14</b></td><td><span class="fld empty">Pick</span> – <span class="fld empty">Pick</span></td><td><span class="fld s">16</span></td><td><span class="fld s">$175</span></td><td><span class="btn ic" aria-label="Remove U14" style="border-color:transparent;background:none">×</span></td></tr>
+      </tbody></table>
+      <p class="hint">Birthdays count from Sep 1 for softball, the club's cut-off. The years are yours to pick; each must be filled before Add, and a gap or overlap with another group is pointed out. To run two divisions for one age group (U10 A and B), add the group twice.</p>
+    </div>
+    <div class="df"><span class="s">2 new divisions · U14 still needs its birth years</span><span class="btn">Cancel</span><span class="btn pri" style="opacity:.5">Add 2 divisions</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: one window adds several divisions at once, the tournament wizard's chip pattern brought to house league. Groups the season already has are marked "already"; tapping one again adds a second division for that age (U10 A and B). Birth years start blank and the club picks them (4c-2 ruling: no guess from a label). Size and price start from the season defaults and can be changed per row. The disabled Add says why in the foot sentence.">NEW · Add age groups</button><button class="mk s" data-note="9b-1: lands with the season Setup (S1·a ruled: Create asks name, sport and dates; the rest lives on the season page).">9b-1</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · phone, full-screen window</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw">
+    <div class="fh"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Add age groups</div>
+    <div class="fb" style="gap:12px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="chipk on">U8 ✓</span><span class="chipk">U9</span><span class="chipk had">U10 · 2</span><span class="chipk">U11</span><span class="chipk had">U12</span><span class="chipk on">U14 ✓</span><span class="chipk">U16</span><span class="chipk dash">+ Name</span></div>
+      <div class="panel"><div class="rows">
+        <div class="r"><div class="m"><b>U8</b><div class="d">Born 2019–2020 · 12 players · $165</div></div><span class="btn ic" aria-label="Edit U8"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div>
+                <div class="r"><div class="m"><b>U14</b><div class="d" style="color:var(--amber)">Pick the birth years</div></div><span class="btn ic" aria-label="Edit U14"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div>
+      </div></div>
+    </div>
+    <div class="ff"><span class="s">2 new · U14 still needs its birth years</span><div class="bb"><span class="btn">Cancel</span><span class="btn pri" style="opacity:.5">Add 2</span></div></div>
+  </div></div></div></div>
+</div>
+
+<h3>B · Several seasons created at once (drawn so you can compare)</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px">
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:640px">
+    <div class="dh"><h4>Create several seasons</h4><span class="xx">×</span></div>
+    <div class="db">
+      <p>Same sport, dates, waiver and price for each; one division in each.</p>
+      <table class="kt"><thead><tr><th>Season name</th><th>Born in</th><th>Players</th></tr></thead><tbody>
+        <tr><td>U10 Summer 2027</td><td>2017 – 2018</td><td>12</td></tr>
+        <tr><td>U13 Summer 2027</td><td>2014 – 2015</td><td>16</td></tr>
+        <tr><td>U15 Summer 2027</td><td>2012 – 2013</td><td>16</td></tr>
+        <tr><td>U17 Summer 2027</td><td>2010 – 2011</td><td>16</td></tr>
+      </tbody></table>
+          </div>
+    <div class="df"><span class="s">Creates 4 seasons</span><span class="btn">Cancel</span><span class="btn pri">Create 4 seasons</span></div>
+  </div></div>
+  <p class="cap">What it costs: four sign-up forms, four Money pages, four status changes each time, and a family with a U10 and a U13 registering twice and paying twice.</p></div>
+</div>
+
+<h2>2 · Two ways to email families in one portal</h2>
+<div class="verdict push"><h3>My read: it isn't necessary, and today it's actually three. Make it one: Families' Email families</h3>
+<ul>
+  <li><b>What exists:</b>
+    <ul>
+      <li>the season's "Notifications" page;</li>
+      <li>a "Message registrants" window on the season's Registrations screen, which sends through that same page's machinery;</li>
+      <li><b>Families › Email families</b>, the club's composer built in Stage 7c.</li>
+    </ul>
+    Only the Families one sends one email per household, counts toward the club's three sends a day, and lands in the club's Emails log. The house-league ones send once per child, bypass the club's cap, and keep their own history that Families never sees <button class="fl" data-f="F20" data-here="The house-league composer and its Registrations twin.">F20</button>.</li>
+  <li><b>The club already ruled the principle</b> (10-11, "one club send"): one send window, one log shape. The fold-in was deferred, not rejected. Stage 7c left it out of scope, and chat ruling E6 kept email tools as they were while chat was paused.</li>
+  <li><b>Families › Email can already pick "one house-league season".</b> It's missing three things:
+    <ul>
+      <li>a division, a team, or "to review / waitlist" inside a season;</li>
+      <li>a season whose registration has closed but play hasn't started;</li>
+      <li>a door from the season itself.</li>
+    </ul></li>
+  <li><b>Proposal:</b> the season's "Email families" row (ruled in 9a) and a Registrations "Email" action both open <b>the Families window, already set to this season</b>. The audience list gains division, team and status. The old Notifications page and the Message registrants window retire, and their sent history shows in Families › Emails. One composer, one cap, one log, with two doors into it.</li>
+  <li><b>Why this isn't the chat project's job:</b> E2's "one Messages screen" merges chat and email. This merges two email windows into the one that already exists. It doesn't pre-empt E2, and it removes a sender that bypasses the club's cap.</li>
+</ul></div>
+<h3>Today</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:notif-desk-warm}}" alt="House-league Notifications page"></div><div class="bar"><span>House league › Notifications · its own sender and log</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 520px"><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:fam-emails-desk-warm}}" alt="Families Emails tab"></div><div class="bar"><span>Families › Emails · the club's log, which never sees house-league sends</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<h3>A · One composer, opened from the season (recommended)</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">AFTER · desk window, opened from the season's "Email families"</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:640px">
+    <div class="dh"><h4>Email families</h4><span class="xx">×</span></div>
+    <div class="db">
+      <div class="frow"><span class="fl2">To</span><span class="fld wide">Dev House League 2026 · Division A <span class="chev" style="margin-left:auto"></span></span></div>
+      <div class="menu"><div class="mi">Everyone in Dev House League 2026 <span class="dim">15 families</span></div><div class="mi on">Division A <span class="dim">9 families</span></div><div class="mi">Division B <span class="dim">4 families</span></div><div class="mi">A team… <span class="dim">Cardinals, Jays, Orioles…</span></div><div class="mi">To review <span class="dim">1 family</span></div><div class="mi">Waitlist <span class="dim">1 family</span></div></div>
+      <div class="frow"><span class="fl2">Subject</span><span class="fld wide">Diamond 1 is closed Saturday</span></div>
+      <div class="frow" style="align-items:flex-start"><span class="fl2">Message</span><span class="fld wide" style="min-height:72px;align-items:flex-start">Saturday's games move to Diamond 2…</span></div>
+      <p class="hint">One email per household: a guardian with two children gets one. Replies come to you.</p>
+    </div>
+    <div class="df"><span class="s">Counts toward this season's 3 sends a day · 2 left · schedule notices don't count</span><span class="btn">Cancel</span><span class="btn pri">Send to 9 families</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: the existing Families › Email families window (Stage 7c), unchanged in shape. It opens already set to the season you came from.">RESTYLED · the Families window</button><button class="mk new" data-note="NEW audiences inside a season: a division, a team, To review, Waitlist. Today a season is one audience that mixes active, pending and waitlisted families, and only open or running seasons are offered.">NEW · season audiences</button><button class="mk s" data-note="9a: the season's 'Email families' row opens this window (the season audience already exists). 9d: the extra audiences, retiring the old page and window, and showing their history in Families › Emails.">9a door · 9d audiences</button></div></div>
+</div>
+<p class="cap">Who can open it follows Q17: the registrar can email families. Families › Email needs Families access; the season door takes its permission from house league, so a registrar without Families access still reaches it, and the season's own sent history shows under it, the same log filtered to the season. The audience is built from the season's registrations, one email per guardian email address, so a child added by hand is never dropped. Selecting rows on Registrations and pressing Email opens it with "Selected (2)" as the audience. Service messages (approval, waitlist, decline, schedule changes) go to every family; the new consent box only governs club news. <b>The cap is the one real cost of folding in</b>: the club allows 3 sends a day across everything, which would stop six age groups each getting a rainout email. That is Q12c.</p>
+</section>
+
+
+<!-- ======================= 9b-1 SIGN-UP ======================= -->
+<section class="pane" id="b1" data-pane="b1" hidden>
+<h2 style="margin-top:16px">9b-1 · Sign-up, payments-ready</h2>
+<p>Create a season with three questions, set it up on its own page, open it, and let families sign up several children on one form. Money starts here: the price is fixed on each registration the moment the family signs up (Q2), and the family pays once accepted (Q1). Nothing in 9b-1 takes a card; that's 12b.</p>
+
+<!-- 1 · CREATE -->
+<h3 id="c1">1 · Create season asks three things</h3>
+<div class="chips"><button class="fl fix" data-f="F07" data-here="No slug, no free-text Division, no dead switch.">fixes F07</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">BEFORE · 1440</p><div class="shot"><div class="sc" style="max-height:460px"><img src="{{IMG:index-new-desk-warm}}" alt="Today's Create season window"></div><div class="bar"><span>Create season · 12 fields and 3 switches</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 440px"><p class="sp-cap">AFTER · desk window</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg">
+    <div class="dh"><h4>Create a house-league season</h4><span class="xx">×</span></div>
+    <div class="db">
+      <div class="frow"><span class="fl2">Name</span><span class="fld wide">Summer 2027</span></div>
+      <div class="frow"><span class="fl2">Sport</span><span class="fld wide">Softball <span class="chev" style="margin-left:auto"></span></span></div>
+      <div class="frow"><span class="fl2">Season dates</span><span class="fld">May 31, 2027</span> – <span class="fld">Aug 30, 2027</span></div>
+      <p class="hint">Next, on the season's page: age groups, prices, the form's dates and waiver. Its web address is made from the name.</p>
+    </div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn pri">Create season</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: Create asks only what a season needs to exist (S1·a, ruled). The slug is made from the name; the free-text 'Division' (the U10 chip) is gone; the three switches move to the season's Registration block; the dead fee switch is removed (S1·b, ruled in 9a).">RESTYLED</button></div></div>
+</div>
+
+<!-- 2 · SEASON SETUP -->
+<h3 id="c2">2 · The season's page is its setup</h3>
+<div class="chips"><button class="fl fix" data-f="F07" data-here="Age bands editable; price per division.">fixes F07</button><button class="fl fix" data-f="F08" data-here="The dates run the form (if S2·b).">fixes F08</button><button class="fl fix" data-f="F09" data-here="Email consent and payment instructions live on the Registration block.">fixes F09</button></div>
+<p class="sp-cap">BEFORE · 2027 today, 1440</p>
+<div class="shot" style="max-width:1000px"><div class="sc" style="max-height:460px"><img src="{{IMG:season27-desk-warm}}" alt="Today's 2027 season page"></div><div class="bar"><span>Season page · 2027</span><button type="button" class="op">Full size</button></div></div>
+<p class="sp-cap" style="margin-top:14px">AFTER · 2027, drawn as it would read today if the dates run the form (S2·b)</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>
+      <span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk">
+        <span class="it sub">Seasons</span>
+        <span class="grp" style="padding-left:14px">Season</span>
+        <span class="sw" style="margin-left:14px">Dev House League 2027<span class="chev"></span></span>
+        <span class="it sub on">Overview</span><span class="it sub">Registrations</span><span class="it sub">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub">Money</span><span class="it sub">Email families</span>
+      </div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league · season</div><h1>Dev House League 2027</h1><p class="sub">May 31 – Aug 30, 2027 · Softball</p></div><span class="pill"><span class="dot"></span>Registration closed Aug 1</span><span class="sp"></span><span class="btn">View public page</span></div>
+      <div class="band">
+        <div><div class="k">Players</div><div class="v">5</div><div class="h">of 38 spots</div></div>
+        <div><div class="k">To review</div><div class="v">0</div><div class="h">Registrations</div></div>
+        <div><div class="k">Waitlist</div><div class="v">0</div><div class="h">—</div></div>
+        <div><div class="k">Owed</div><div class="v">$825</div><div class="h">5 players, prices fixed at sign-up</div></div>
+        <div><div class="k">Still owing</div><div class="v am">$660</div><div class="h">4 of 5 players</div></div>
+      </div>
+      <div class="panel">
+        <div class="hd"><h2>Divisions</h2><span class="btn">+ Add age groups</span><button class="mk new" data-note="NEW: the bulk tool from 'Your two questions' (Q19). One window adds several divisions.">NEW</button></div>
+        <table class="kt"><thead><tr><th>Division</th><th>Born in</th><th>Players</th><th>Price</th><th>Early bird</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><b>U10 Division A</b></td><td>2017–2018</td><td><span class="meter"><i style="width:42%"></i></span>5 / 12</td><td>$165</td><td>$145 until Jun 30</td><td style="text-align:right"><span class="btn ic" aria-label="Edit U10 Division A"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></td></tr>
+          <tr><td><b>U10 Division B</b></td><td>2017–2018</td><td><span class="meter"><i style="width:0%"></i></span>0 / 10</td><td>$165</td><td>$145 until Jun 30</td><td style="text-align:right"><span class="btn ic" aria-label="Edit U10 Division B"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></td></tr>
+          <tr><td><b>U12 Division</b></td><td>2015–2016</td><td><span class="meter"><i style="width:0%"></i></span>0 / 16</td><td>$175</td><td>$155 until Jun 30</td><td style="text-align:right"><span class="btn ic" aria-label="Edit U12 Division"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></td></tr>
+        </tbody></table>
+        <p class="hint" style="padding:0 16px 12px">Early bird amounts and the U12 price are examples; the fixture has one season fee of $165. A price change applies to new sign-ups only: each registration keeps the price it signed up at.</p>
+      </div>
+      <div class="panel">
+        <div class="hd"><h2>Registration</h2><span class="btn ic" aria-label="Edit registration settings"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div>
+        <div class="facts2">
+          <span>Dates</span><span><b>Jun 1 – Aug 1, 2026</b> · the form opened and closed on these dates <button class="mk s" data-note="If S2·b is 'the dates run it': the form opens and closes itself, and the season's state follows. The convenor can still close early or reopen (Reopen until a new date), and the season page says which.">S2·b</button> · <a class="lnk">Reopen until…</a></span>
+          <span>Early bird</span><span>Until Jun 30, 2026, the club's time zone <button class="mk new" data-note="NEW: one early-bird date for the season; each division has its own early amount. A family's price is decided by their sign-up date (Q2).">NEW</button></span>
+          <span>Waiver</span><span>On · "I acknowledge that softball involves risk…"</span>
+          <span>Email consent</span><span>Asked on the form, unticked, beside the waiver <button class="mk new" data-note="NEW: CASL consent captured at sign-up and recorded the same way the waiver is. Service emails about this registration don't need it; club news and future seasons do.">NEW</button></span>
+          <span>How to pay</span><span>"e-Transfer to treasurer@devleague.ca within 14 days of acceptance, with your child's name in the message." <button class="mk new" data-note="NEW: the club's own payment instructions, shown on the approval email and the status page until 12b brings Pay now. Today families get nothing but 'payable separately'.">NEW</button></span>
+          <span>New registrations</span><span>Approved while a division has room · the waitlist moves up on its own</span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div></div>
+<p class="cap">"Owed" assumes the 5 signed up after the early-bird date. The fixture's 2027 season has a close date of Aug 1, 2026 that the form ignores today. Drawn with S2·b's recommendation, it reads "Registration closed Aug 1" and offers "Reopen until…". "Owed" uses 5 × $165, the price each family signed up at; one has paid.</p>
+
+<h4 class="sub-h">A just-created season (0 players) leads with its checklist (9a·4, ruled)</h4>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px">
+  <div class="ak" style="padding:18px;border-radius:12px"><div class="panel">
+    <div class="hd"><h2>Before families can sign up</h2></div>
+    <div class="rows">
+      <div class="r"><span class="ck ok">✓</span><div class="m"><b>Age groups</b><div class="d">3 divisions, each with birth years and a size</div></div></div>
+      <div class="r"><span class="ck ok">✓</span><div class="m"><b>Prices</b><div class="d">$165 – $175 · early bird until Jun 30</div></div></div>
+      <div class="r"><span class="ck">○</span><div class="m"><b>Registration dates</b><div class="d">When the form opens and closes</div></div><span class="btn">Set dates</span></div>
+      <div class="r"><span class="ck opt">–</span><div class="m"><b>Waiver and how to pay</b><div class="d">Optional · families see "the club will tell you how to pay"</div></div></div>
+    </div>
+    <div class="fold" style="border-top:1px solid var(--line)"><b style="font-weight:500;color:var(--soft);font-size:14px">Set the dates to open registration. "Open registration" appears here once they're set.</b></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the getting-ready checklist (9a·4, ruled), with the 9b-1 items. Open registration is absent until the required items are done (9b·1 asks which), then appears and asks in a window like every status change. With dates set, the season reads "Opens Jun 1", on the public page too.">NEW · checklist</button></div></div>
+</div>
+
+<!-- 3 · DIVISION RECORD -->
+<h3 id="c3">3 · A division reads first, edits whole</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 640px">
+  <div class="ak" style="padding:18px;border-radius:12px"><div class="panel">
+    <div class="hd"><h2>U10 Division A</h2><span class="btn ic on" aria-label="Done"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span></div>
+    <div class="facts2 edit">
+      <span>Name</span><span><span class="fld wide">U10 Division A</span></span>
+      <span>Born in</span><span><span class="fld">2017</span> – <span class="fld">2018</span> <span class="hint" style="margin-left:8px">birthdays count from Sep 1 · changing the years never moves a registered child; it warns how many no longer fit</span></span>
+      <span>Players</span><span><span class="fld s">12</span> <span class="hint">5 signed up; a lower number never removes anyone</span></span>
+      <span>Price</span><span><span class="fld s">$165</span> <span class="hint">the season's price unless you change it</span></span>
+      <span>Early bird</span><span><span class="fld s">$145</span> <span class="hint">until Jun 30 (the season's early-bird date)</span></span>
+    </div>
+    <div class="rare" style="padding:8px 16px 14px">Remove this division appears here while no one has signed up for it.</div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: the pencil flips the whole division into its form and every field autosaves (edit autosaves). Birth years become editable; today they can only be set when the division is created (F07).">RESTYLED</button><button class="mk new" data-note="NEW: price and early-bird price per division, through the one price rule the tournament already uses (a division's own fee, else the event's). Payments contract lines 1 and 2.">NEW · price per division</button></div></div>
+</div>
+
+<!-- 4 · THE FORM -->
+<h3 id="c4">4 · The family's form: several children, one guardian, one consent</h3>
+<div class="chips"><button class="fl fix" data-f="F09" data-here="Add another child; date of birth picks the division; CASL; price shown.">fixes F09</button><button class="fl fix" data-f="F10" data-here="The spot is taken atomically when the form is sent.">fixes F10</button></div>
+<div class="spec">
+  <div class="col"><p class="sp-cap">BEFORE · 390</p><div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-register-phone-warm}}" alt="Today's sign-up form on a phone"></div><div class="bar"><span>One child per form · 2,297 px</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">AFTER · 390</p>
+  <div class="ph"><div class="pub">
+    <div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div>
+    <div class="in" style="padding:16px;gap:12px">
+      <div><div class="pk">Dev House League 2027 · May 31 – Aug 30</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Sign up</h3></div>
+      <div class="pcard">
+        <div class="pk">Child 1</div>
+        <div class="pf"><label>First and last name</label><span class="pin2">Henry Kim</span></div>
+        <div class="pf"><label>Date of birth</label><span class="pin2">Mar 3, 2017</span></div>
+        <div class="pfit">U10 Division A · born 2017–2018 · 7 spots left · <b>$165</b></div>
+        <div class="plink">Jersey and position preferences, notes</div>
+      </div>
+      <div class="pcard">
+        <div class="pk">Child 2 <span class="pdel">Remove</span></div>
+        <div class="pf"><label>First and last name</label><span class="pin2">Ava Kim</span></div>
+        <div class="pf"><label>Date of birth</label><span class="pin2">Apr 12, 2015</span></div>
+        <div class="pfit wait">U12 Division is full · Ava joins the waitlist (position 1) · pays nothing unless a spot opens</div><div class="dim2" style="font-size:12px">Example of a full division; the fixture's U12 has room.</div>
+      </div>
+      <div class="padd">+ Add another child</div>
+      <div class="pcard">
+        <div class="pk">Parent or guardian</div>
+        <div class="pf"><label>Name</label><span class="pin2">Grace Kim</span></div>
+        <div class="pf"><label>Email</label><span class="pin2">grace.kim@example.ca</span></div>
+        <div class="pf"><label>Phone</label><span class="pin2">905-555-0142</span></div>
+      </div>
+      <label class="pchk"><span class="box on">✓</span>I have read and agree to the waiver.</label>
+      <label class="pchk"><span class="box"></span>Dev League Org may email me about future seasons and club news. You can unsubscribe at any time.</label>
+      <div class="ptot"><div><b>$165</b> due now: Henry has a spot. Payable separately to Dev League Org. <span class="dim2">Ava: $0 while waitlisted.</span></div><div class="dim2">Early bird ($145) ended Jun 30. How to pay is on the next screen and in your email.</div></div>
+      <span class="pbtn">Sign up 2 children</span>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: Add another child repeats the child block under one guardian (Q5, ruled). Each child is its own registration, tied by one sign-up reference: that's what 'two registrations, one payment' needs at 12b's checkout.">NEW · several children</button><button class="mk new" data-note="NEW: date of birth is required when the season has age bands, and picks the division. When two divisions share a band (U10 A and B), the family chooses; a full one shows as full, and if every fitting division is full the child joins the waitlist of the one chosen. A child whose year fits no division sees the club's contact, not a form error (9b·4).">NEW · birth date picks the division</button><button class="mk new" data-note="NEW: the outcome is shown BEFORE the family presses Sign up. One child in, one waitlisted is said plainly, and the total counts only the children who will be accepted (the UX review's partial-outcome point).">NEW · outcome before Submit</button><button class="mk new" data-note="NEW: CASL consent, unticked by default, beside the waiver and recorded the same way (contract line 10). Service emails about this registration don't need it.">NEW · CASL</button><button class="mk s" data-note="Ghost: the slot 12b turns into Pay now (accepted children) on the confirmation screen. Until then the form keeps 'payable separately' (contract line 14) and says the club will email how to pay; the club's own text arrives with acceptance.">12b ghost</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · the moment after Sign up, 390</p>
+  <div class="ph"><div class="pub">
+    <div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div>
+    <div class="in" style="padding:16px;gap:12px">
+      <div><div class="pk">Dev House League 2027</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">You're signed up</h3><div class="dim2" style="margin-top:4px">Your reference: <b>7C2A91F0</b> (one for this sign-up)</div></div>
+      <div class="pcard">
+        <div class="ptop"><b>Henry Kim</b><span class="tag g">Accepted</span></div>
+        <div class="prow"><span>Division</span><span>U10 Division A · $165</span></div>
+      </div>
+      <div class="pcard">
+        <div class="ptop"><b>Ava Kim</b><span class="tag" style="background:#FBEFD9;color:#6b4100">Waitlist · 1st</span></div>
+        <div class="prow"><span>Division</span><span>U12 Division · nothing to pay unless a spot opens</span></div>
+      </div>
+      <div class="pcard"><div class="ptop"><b>To pay now</b><b style="color:#8a4b00">$165</b></div><div class="phow">How to pay: e-Transfer to treasurer@devleague.ca within 14 days, with your child's name in the message.</div><span class="ghostx">Pay now · 12b</span></div>
+      <div class="dim2">We've emailed this to grace.kim@example.ca. Keep your reference to check your status.</div>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the confirmation after Sign up. With auto-approve, a child is accepted at once, so this is where money is first due (Q1), and where 12b's Pay now goes: the form itself never changes. On a review-first season the same screen says 'received, nothing to pay until the club accepts', and the email matches.">NEW · confirmation</button><button class="mk s" data-note="Ghost: one pay block per sign-up (contract line 9). In 12b it becomes Pay now for the accepted children.">12b ghost</button></div>
+  <p class="cap">The reference is illustrative. Henry and Ava in 2026 (status page) were two separate sign-ups, so they have two references there.</p></div>
+  <div class="col" style="flex:1 1 360px"><p class="sp-cap">THE DESK</p>
+  <p class="cap" style="margin-top:0">On a desk the form is the same single column, centered, 640 px wide, with the season facts (dates, prices by division, early bird) in a side column. Nothing new to rule there, so it isn't drawn twice.</p>
+  <p class="cap"><b>What the server does</b> (no screen): the spot is taken atomically, so two families can't both get the last one; the same child can't be signed up twice in a season; waitlist positions can't collide; a sign-up from the form sends a staff notice that lands in Needs attention <button class="fl" data-f="F23" data-here="Today only an add-by-hand notifies staff.">F23</button>.</p></div>
+</div>
+
+<!-- 5 · STATUS PAGE -->
+<h3 id="c5">5 · The family's status page</h3>
+<div class="chips"><button class="fl fix" data-f="F23" data-here="The status page shows money and, from 9c, the team.">fixes F23</button></div>
+<div class="spec">
+  <div class="col"><p class="sp-cap">BEFORE · 390</p><div class="shot ph-shot"><div class="sc"><img src="{{IMG:status-found-phone-warm}}" alt="Today's status lookup on a phone"></div><div class="bar"><span>Status only</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">AFTER · 390</p>
+  <div class="ph"><div class="pub">
+    <div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div>
+    <div class="in" style="padding:16px;gap:12px">
+      <div><div class="pk">Dev House League 2026</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Your registration</h3></div>
+      <div class="pcard">
+        <div class="ptop"><b>Henry Kim</b><span class="tag g">Accepted</span></div>
+        <div class="prow"><span>Division</span><span>Division B</span></div>
+        <div class="prow"><span>Team</span><span class="dim2">Announced when the club publishes teams <span class="mkx">9c</span></span></div>
+        <div class="prow"><span>Fee</span><span><b>$150 · paid Oct 24</b></span></div>
+        <div class="prow"><span>Reference</span><span>49924432</span></div>
+      </div>
+      <div class="pcard">
+        <div class="ptop"><b>Ava Kim</b><span class="tag g">Accepted</span></div>
+        <div class="prow"><span>Division</span><span>Division B</span></div>
+        <div class="prow"><span>Reference</span><span>3D61E863</span></div>
+        <div class="prow"><span>Fee</span><span><b style="color:#8a4b00">$150 to pay</b></span></div>
+        </div>
+      <div class="pcard"><div class="ptop"><b>To pay</b><b style="color:#8a4b00">$150</b></div><div class="dim2">Ava Kim · Division B. Henry is paid.</div><div class="phow">How to pay: e-Transfer to treasurer@devleague.ca within 14 days of acceptance, with your child's name in the message.</div><span class="ghostx">Pay now · 12b</span></div>
+      <div class="plink" style="text-align:center">Ask to withdraw a child</div>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: each child shows their fee from the price fixed at sign-up. One pay block per sign-up sits under the children (two registrations, one payment: contract line 9), with the club's own instructions; its ghost becomes Pay now in 12b.">NEW · the fee</button><button class="mk s" data-note="9c: the team appears once the convenor presses Publish teams.">9c · team</button><button class="mk s" data-note="9b-2: Ask to withdraw sends the convenor a Needs attention item and flags the row; the convenor ends the registration (and answers the money question). In 12b, a pay link for an ended registration opens a 'no longer payable' page.">9b-2 · ask to withdraw</button></div></div>
+</div>
+
+<!-- 6 · EMAILS -->
+<h3 id="c6">6 · The emails say what's owed and how to pay</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 420px"><p class="sp-cap">TODAY</p>
+  <div class="mail"><div class="mh"><b>Registration approved — Dev House League 2026</b></div><div class="mb">Great news! Henry's registration for Dev House League 2026 has been approved.<br><br>Player: Henry Kim · Division: Division B · Reference: 49924432<br><br>Watch for further updates.</div></div>
+  <p class="cap">No house-league email mentions the fee. The pending one says "No payment is required until your registration is approved", and then the approval never says what to pay.</p></div>
+  <div class="col" style="flex:1 1 420px"><p class="sp-cap">AFTER</p>
+  <div class="mail"><div class="mh"><b>Ava is in — Dev House League 2026</b></div><div class="mb">Ava's registration is accepted.<br><br><b>Ava Kim</b> · Division B · $150<br><br><b>To pay: $150.</b> e-Transfer to treasurer@devleague.ca within 14 days, with Ava's name in the message.<br><span class="ghostx" style="margin-top:8px">Pay now · 12b</span><br><br>Check your registration any time: devleague.ca/league/2026/status · reference 3D61E863</div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: one email per sign-up, listing each child accepted in it and their price (fixed at sign-up), the total, and the club's instructions. A sign-up with two children accepted together lists both and one total. The waitlist-promotion email carries the same block for the promoted child (Q4, ruled). The ghost becomes Pay now in 12b.">NEW</button></div></div>
+</div>
+</section>
+
+
+<!-- ======================= 9b-2 MONEY ======================= -->
+<section class="pane" id="b2" data-pane="b2" hidden>
+<h2 style="margin-top:16px">9b-2 · Money, honest</h2>
+<p>The price fixed on each registration drives every figure. Money comes in through the one writer that exists today, "mark received", and 12b's card payment will land in the same place. Ending a registration that has money on it asks what happened to the money, and a refund is recorded as money going out. Drawn on the 2026 season: 14 players at $150, 10 paid. Ethan Brown paid $150 and was declined; he is drawn with his refund recorded (Q6, ruled).</p>
+
+<!-- 1 · REGISTRATIONS -->
+<h3 id="m1">1 · Registrations, with the money on every row</h3>
+<div class="chips"><button class="fl fix" data-f="F13" data-here="Withdraw, Move division, bulk, Paid / Owing.">fixes F13</button><button class="fl fix" data-f="F10" data-here="Approve respects the division's room.">fixes F10 (approve)</button><button class="fl fix" data-f="F06" data-here="Registrations on the kit.">fixes F06 (registrations)</button></div>
+<p class="sp-cap">BEFORE · 1440</p>
+<div class="shot" style="max-width:1000px"><div class="sc" style="max-height:380px"><img src="{{IMG:regs-ended-desk-warm}}" alt="Today's registrations, ended tab"></div><div class="bar"><span>Registrations · Declined / withdrawn · Ethan's payment is gone</span><button type="button" class="op">Full size</button></div></div>
+<p class="sp-cap" style="margin-top:14px">AFTER · Active tab, two rows selected, 1440</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span><span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk"><span class="it sub">Seasons</span><span class="grp" style="padding-left:14px">Season</span><span class="sw" style="margin-left:14px">Dev House League 2026<span class="chev"></span></span>
+        <span class="it sub">Overview</span><span class="it sub on">Registrations <span class="amb" style="margin-left:auto">1</span></span><span class="it sub">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub">Money</span><span class="it sub">Email families</span></div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+    </div>
+    <div class="mn"><div class="pg" style="width:1060px">
+      <div class="ph1"><div><div class="ey">House league · Dev House League 2026</div><h1>Registrations</h1></div><span class="sp"></span><span class="btn pri">+ Add registration</span></div>
+      <div class="tbar"><span class="pill2">All divisions <span class="chev"></span></span><span class="btn" style="flex:1;justify-content:flex-start;color:var(--dim);gap:8px"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>Search players or parents</span><span class="btn"><svg class="ico" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v5l-4 2v-7z"/></svg>Filter · Owing</span><span class="btn">Tools <svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+      <div class="utabs"><span>To review <span class="amb">1</span></span><span class="on">Active <span class="c">14</span></span><span>Waitlist <span class="c">1</span></span><span>Ended <span class="c">3</span></span></div>
+      <div class="menu" style="margin:-8px 0 0 auto;width:260px"><div class="mi">Export<span class="dim">Excel, CSV</span></div><div class="mi">Email these families</div></div>
+      <div class="bulk"><b>2 selected</b><span class="btn">Mark received</span><span class="btn">Move division</span><span class="btn">Email</span><span class="sp"></span><span class="lnk">Clear</span></div>
+      <div class="panel">
+        <table class="kt"><thead><tr><th style="width:36px"></th><th>Player</th><th>Division · team</th><th>Guardian</th><th>Fee</th><th style="width:150px"></th></tr></thead><tbody>
+          <tr><td><span class="cbx on">✓</span></td><td><b>Ava Kim</b><div class="d2">Signed up Oct 24</div></td><td>Division B · not placed</td><td>Grace Kim<div class="d2">henry.kim@dev.local</div></td><td><span class="owe">$150 owing</span><div class="d2">accepted today</div></td><td style="text-align:right"><span class="btn">Mark received</span><span class="btn ic" aria-label="More for Ava Kim" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+          <tr><td><span class="cbx on">✓</span></td><td><b>Zoe Leblanc</b><div class="d2">Promoted from the waitlist Oct 24</div></td><td>Division A · not placed</td><td>zoe.leblanc@dev.local</td><td><span class="owe">$150 owing</span><div class="d2">accepted today</div></td><td style="text-align:right"><span class="btn">Mark received</span><span class="btn ic" aria-label="More for Zoe Leblanc" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+          <tr><td><span class="cbx"></span></td><td><b>Sofia Rossi</b><div class="d2">Signed up Apr 12</div></td><td>Division A · Cardinals</td><td>sofia.rossi@dev.local</td><td><span class="owe late">$150 owing · 195 days</span><div class="d2">since accepted, Apr 12</div></td><td style="text-align:right"><span class="btn">Mark received</span><span class="btn ic" aria-label="More for Sofia Rossi" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+          <tr><td><span class="cbx"></span></td><td><b>Henry Kim</b><div class="d2">Signed up Apr 12</div></td><td>Division B · Tigers</td><td>Grace Kim<div class="d2">henry.kim@dev.local</div></td><td><span class="paid">$150 received</span><div class="d2">Oct 24 · by hand</div></td><td style="text-align:right"><span class="btn ic" aria-label="More for Henry Kim" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+        </tbody></table>
+        <p class="hint" style="padding:8px 16px 12px">… 10 more. The fee shown is the price fixed on each registration when the family signed up.</p>
+      </div>
+    </div></div>
+  </div>
+</div></div>
+<div class="chips"><button class="mk new" data-note="NEW: the Fee column: owing, received (date and how), or refunded, read through one rule for paid / owing / refunded (contract line 6). There is no 'payment pending' status: the status stays pending / active / waitlisted / declined / withdrawn.">NEW · fee per row</button><button class="mk new" data-note="NEW: 'owing · 195 days' after acceptance (Q3, ruled: the spot holds and the convenor decides). The number turns amber after the club's chosen number of days (9b·8).">NEW · unpaid days</button><button class="mk new" data-note="NEW: select rows to Mark received, Move division or Email together. Decline and Withdraw stay one at a time, because each asks about that family's money (9b·7).">NEW · bulk</button><button class="mk res" data-note="RESTYLED: one toolbar (scope pill · Search · Owing filter · Tools); Export and the old 'Message registrants' move behind Tools, where Email opens the Families window set to this season (Q12b). Tabs are the product's underline tabs with counts.">RESTYLED · toolbar</button></div>
+<p class="cap">Team names on Henry's and Sofia's rows are the fixture's; the "195 days" counts from acceptance (Q1, Q3); the fixture has no acceptance date, so Sofia's sign-up date (auto-approved) stands in. The product will need to record when a registration was accepted.</p>
+
+<!-- 2 · PHONE MENU -->
+<h3 id="m2">2 · A row's actions on a phone</h3>
+<div class="spec">
+  <div class="col"><p class="sp-cap">AFTER · the list, two selected, 390</p>
+  <div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column;min-height:700px">
+    <div class="pbar"><span class="btn ic" aria-label="Back to seasons"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>House league<span class="sp"></span></div>
+    <div class="ptabs" style="padding-top:10px"><span>Overview</span><span class="on">Registrations <span class="amb" style="margin-left:6px">1</span></span><span>Teams</span><span>Schedule</span><span>Money</span></div>
+    <div class="pin" style="flex:1">
+      <div class="utabs"><span>To review <span class="amb">1</span></span><span class="on">Active <span class="c">14</span></span><span>Waitlist <span class="c">1</span></span><span>Ended <span class="c">3</span></span></div>
+      <div class="panel"><div class="rows">
+        <div class="r"><span class="cbx on">✓</span><div class="m"><b>Ava Kim</b><div class="d">Division B · <span class="owe">$150 owing</span> · accepted today</div></div><span class="btn ic" aria-label="More for Ava Kim"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div class="r"><span class="cbx on">✓</span><div class="m"><b>Zoe Leblanc</b><div class="d">Division A · <span class="owe">$150 owing</span> · accepted today</div></div><span class="btn ic" aria-label="More for Zoe Leblanc"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div class="r"><span class="cbx"></span><div class="m"><b>Sofia Rossi</b><div class="d">Division A · Cardinals · <span class="owe late">$150 owing · 195 days</span></div></div><span class="btn ic" aria-label="More for Sofia Rossi"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div class="r"><span class="cbx"></span><div class="m"><b>Henry Kim</b><div class="d">Division B · Tigers · <span class="paid">$150 received</span></div></div><span class="btn ic" aria-label="More for Henry Kim"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+      </div></div>
+    </div>
+    <div class="bulk" style="border-radius:0;padding:10px 12px"><b>2 selected</b><span class="sp"></span><span class="btn">Mark received</span><span class="btn ic" aria-label="More for the selected" style="color:inherit"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: on a phone each row carries the money (owing, days since acceptance in amber when late, received). A long press or the box selects; the bulk bar docks at the foot in place of the phone bar while rows are selected, with its most common action in words and the rest behind ⋯.">NEW · phone list</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · the ⋯ on Ava Kim's row, 390</p>
+  <div class="ph"><div class="ak ph-in" style="background:var(--dimbg);min-height:640px;display:flex;flex-direction:column;justify-content:flex-end">
+    <div class="sheet">
+      <div class="sh-h"><b>Ava Kim</b><span class="d2">Division B · $150 owing</span></div>
+      <div class="sh-i"><b>Mark received</b><span>$150, today, how it was paid</span></div>
+      <div class="sh-i"><b>Move to another division</b><span>Asks whether to change the price</span></div>
+      <div class="sh-i"><b>Correct the price</b><span>With a reason</span></div>
+      <div class="sh-i"><b>Release the spot</b><span>The waitlist moves up · asks first and emails the family</span></div>
+      <div class="sh-i"><b>Withdraw</b><span>Asks what happened to any money</span></div>
+      <div class="sh-i"><b>Email this family</b></div>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the row's secondary actions in one sheet. 'Release the spot' (Q3) frees an unpaid child's place for the waitlist; 'Move to another division' re-checks room and asks about the price; Withdraw now exists (the server already supports it).">NEW</button></div></div>
+</div>
+
+<!-- 3 · END A REGISTRATION -->
+<h3 id="m3">3 · Ending a registration that has money on it</h3>
+<div class="chips"><button class="fl fix" data-f="F12" data-here="The payment stays in the books; a refund is recorded as money out.">fixes F12</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px"><p class="sp-cap">AFTER · desk window</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:520px">
+    <div class="dh"><h4>Decline Ethan Brown?</h4><span class="xx">×</span></div>
+    <div class="db">
+      <p>Ethan's family paid <b>$150</b> on Oct 24 (by hand). What happens to it?</p>
+      <div class="radios">
+        <div class="rad on"><span class="dot"></span><div><b>Refunded</b><span class="s2">Records $150 going back to the family</span><div class="sub2"><span class="fld">Oct 24, 2026</span><span class="fld">e-Transfer <span class="chev" style="margin-left:6px"></span></span></div></div></div>
+        <div class="rad"><span class="dot"></span><div><b>Kept by the club</b><span class="s2">A reason is required, e.g. "withdrew after the refund date"</span></div></div>
+      </div>
+      <div class="frow" style="align-items:flex-start"><span class="fl2">Note to the family</span><span class="fld wide" style="min-height:52px;align-items:flex-start">Division A is full this season…</span></div>
+      <p class="hint">They're emailed that the registration was declined and that $150 was refunded by e-Transfer on Oct 24. The treasurer sees the refund on Money.</p>
+    </div>
+    <div class="df"><span class="s">The $150 stays in the season's book with the refund beside it.</span><span class="btn">Cancel</span><span class="btn pri">Decline and email</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: every ending (decline, withdraw, release the spot after a payment) goes through one window that asks about the money when there is any (Q6, ruled: ask each time). A refund is a line going out, never the payment disappearing (contract line 8). In 12b, a card payment is refunded to the card first from this same window.">NEW</button><button class="mk unc" data-note="Kept: a change that tells families is held until the convenor confirms, and the button names it ('Decline and email').">UNCHANGED · held until ✓</button></div></div>
+  <div class="col" style="flex:1 1 380px"><p class="sp-cap">AFTER · correct one registration's price</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:440px">
+    <div class="dh"><h4>Correct Maya Singh's price</h4><span class="xx">×</span></div>
+    <div class="db">
+      <div class="frow"><span class="fl2">Signed up at</span><span>$150 · regular price, May 10</span></div>
+      <div class="frow"><span class="fl2">New price</span><span class="fld s">$120</span></div>
+      <div class="frow" style="align-items:flex-start"><span class="fl2">Reason *</span><span class="fld wide">Coach's child, club discount agreed by the board</span></div>
+      <p class="hint">Maya hasn't paid. On a paid registration this window also asks how the $30 difference is settled: refunded, or still owing.</p>
+    </div>
+    <div class="df"><span class="s">Shown on her row and in the Money page's history.</span><span class="btn">Cancel</span><span class="btn pri">Save price</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the convenor can correct one registration's price with a reason (Q2, ruled). This is a correction, not a discount scheme: there is no household or sibling pricing (owner 2026-10-19).">NEW</button></div></div>
+</div>
+
+<!-- 4 · MONEY PAGE -->
+<h3 id="m4">4 · The season's Money page</h3>
+<div class="chips"><button class="fl fix" data-f="F14" data-here="Still owing is real.">fixes F14</button><button class="fl fix" data-f="F11" data-here="Every figure from the prices fixed at sign-up.">fixes F11</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 1440</p><div class="shot"><div class="sc" style="max-height:360px"><img src="{{IMG:ledger-desk-warm}}" alt="Today's season Ledger"></div><div class="bar"><span>Ledger · Outstanding $0.00</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<p class="sp-cap" style="margin-top:14px">AFTER · 1440</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic"></span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span><span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk"><span class="it sub">Seasons</span><span class="grp" style="padding-left:14px">Season</span><span class="sw" style="margin-left:14px">Dev House League 2026<span class="chev"></span></span>
+        <span class="it sub">Overview</span><span class="it sub">Registrations <span class="amb" style="margin-left:auto">1</span></span><span class="it sub">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub on">Money</span><span class="it sub">Email families</span></div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league · Dev House League 2026</div><h1>Money</h1></div><span class="sp"></span><span class="btn">Export</span></div>
+      <div class="band">
+        <div><div class="k">Owed</div><div class="v">$2,100</div><div class="h">14 players</div></div>
+        <div><div class="k">Received</div><div class="v">$1,500</div><div class="h">10 players · after $150 refunded</div></div>
+        <div><div class="k">Still owing</div><div class="v am">$600</div><div class="h">4 players</div></div>
+      </div>
+      <div class="tbar"><div class="utabs" style="border:0;flex:1"><span class="on">Every line <span class="c">12</span></span><span>Still owing <span class="c">4</span></span><span>Refunds <span class="c">1</span></span></div></div>
+      <div class="panel"><table class="kt"><thead><tr><th>Date</th><th>Player</th><th>What</th><th>How</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+        <tr><td>Oct 24</td><td><b>Ethan Brown</b></td><td>Refund · declined, Division A full</td><td>e-Transfer</td><td style="text-align:right;color:var(--red)">−$150</td></tr>
+        <tr><td>Oct 24</td><td><b>Ethan Brown</b></td><td>Registration fee · regular price</td><td>By hand</td><td style="text-align:right">$150</td></tr>
+        <tr><td>Oct 24</td><td><b>Henry Kim</b></td><td>Registration fee · regular price</td><td>By hand</td><td style="text-align:right">$150</td></tr>
+        <tr><td colspan="5" class="d2" style="padding:10px 16px">… 9 earlier payments</td></tr>
+      </tbody></table></div>
+      <p class="hint">Fees file on the club's Budget vs. Actual as House league registration fees › 2026 season (Club plan). On League Plus, this page is the book.</p>
+    </div></div>
+  </div>
+</div></div>
+<div class="chips"><button class="mk res" data-note="RESTYLED: one joined band (the money rule) instead of three cards. Owed comes from the prices fixed on each active registration; Received is net of refunds (the Statement's figure); Still owing is Owed minus Received. Refunds are listed below, never hidden. Today 'Outstanding' counted pending entries and always read $0.00 (F14).">RESTYLED · one band</button><button class="mk new" data-note="NEW: a refund is its own line going out, beside the payment it returns. Nothing is erased (Q6, contract line 8).">NEW · refunds</button><button class="mk unc" data-note="Kept: nobody types money onto this page. It is written only by marking a payment received or recording a refund (and, in 12b, by a card payment). Contract line 7: one writer.">UNCHANGED · one writer</button></div>
+<p class="cap">Figures: 14 active players at $150 = $2,100 owed; 10 have paid ($1,500); Ethan's $150 was received and refunded, so it nets to $0 and shows in the lines. In the fixture, 9 of those 10 payments were ticked before today's fee writer existed, so the live page would need them backfilled; the plan notes it.</p>
+
+<!-- 5 · STATEMENT -->
+<h3 id="m5">5 · Budget vs. Actual: one fees row, seasons under it (Club)</h3>
+<div class="chips"><button class="fl fix" data-f="F15" data-here="House-league fees reach Total revenue.">fixes F15</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · the dev club, 1440</p><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:bva-desk-warm}}" alt="Today's Budget vs. Actual statement"></div><div class="bar"><span>Revenue: From the teams, Not filed · no house league</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">AFTER · the revenue band</p>
+  <div class="ak" style="padding:16px;border-radius:12px"><div class="panel"><table class="kt">
+    <thead><tr><th>Category / line item</th><th style="text-align:right">Budgeted</th><th style="text-align:right">Actual</th><th style="text-align:right">Variance</th></tr></thead><tbody>
+    <tr><td colspan="4" class="ey" style="padding-top:12px">Revenue</td></tr>
+    <tr><td><b>⌄ House league registration fees</b> <button class="mk new" data-note="NEW: one row (Q10, ruled) with the seasons under it, filed by source so a card payment in 12b lands where a cash one does. Its budget is the sum of each division's size × its price; editable. A fee files in the fiscal year it was received. The family's processing fee in 12b never appears here: the club's revenue is the fee.">NEW</button></td><td style="text-align:right">$10,330.00</td><td style="text-align:right">$1,665.00</td><td style="text-align:right;color:var(--red)">−$8,665.00</td></tr>
+    <tr><td style="padding-left:34px">2026 season</td><td style="text-align:right">$3,900.00</td><td style="text-align:right">$1,500.00</td><td style="text-align:right;color:var(--red)">−$2,400.00</td></tr>
+    <tr><td style="padding-left:34px">2027 season</td><td style="text-align:right">$6,430.00</td><td style="text-align:right">$165.00</td><td style="text-align:right;color:var(--red)">−$6,265.00</td></tr>
+    <tr><td><b>› From the teams</b></td><td style="text-align:right">$3,000.00</td><td style="text-align:right">$0.00</td><td style="text-align:right;color:var(--red)">−$3,000.00</td></tr>
+    <tr><td><b>› Not filed</b></td><td style="text-align:right">—</td><td style="text-align:right">$13,000.75</td><td style="text-align:right;color:var(--green)">+$13,000.75</td></tr>
+    <tr><td><b>Total revenue</b></td><td style="text-align:right"><b>$13,330.00</b></td><td style="text-align:right"><b>$14,665.75</b></td><td style="text-align:right;color:var(--green)"><b>+$1,335.75</b></td></tr>
+  </tbody></table></div></div>
+  <p class="cap">An example: Dev League's two seasons placed on the dev club's statement (a League-plan club has no statement). Budgets: 2026 = 12 × $150 + 14 × $150; 2027 = 12 × $165 + 10 × $165 + 16 × $175. Actual 2026 is net of Ethan's refund. Walk 7a step 7.6 changes to expect this row.</p></div>
+</div>
+
+<!-- 6 · FAMILY RECORD -->
+<h3 id="m6">6 · The family's record reads the same money</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 1440</p><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:family-desk-warm}}" alt="Today's family record"></div><div class="bar"><span>Grace Kim · dues from today's season fee</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · the children table</p>
+  <div class="ak" style="padding:16px;border-radius:12px"><div class="panel"><table class="kt">
+    <thead><tr><th>Child</th><th>Team or season</th><th style="text-align:right">Dues</th><th style="text-align:right">Paid</th><th style="text-align:right">Balance</th></tr></thead><tbody>
+    <tr><td><b>Ava Kim</b></td><td>Dev House League 2026 · Division B<div class="d2">price fixed at sign-up, Oct 24</div></td><td style="text-align:right">$150.00</td><td style="text-align:right">$0.00</td><td style="text-align:right;color:var(--amber)">$150.00<div><span class="ghostx sm" style="white-space:nowrap">Pay link · 12b</span></div></td></tr>
+    <tr><td><b>Henry Kim</b></td><td>Dev House League 2026 · Division B<div class="d2">price fixed at sign-up, Apr 12</div></td><td style="text-align:right">$150.00</td><td style="text-align:right">$150.00</td><td style="text-align:right">$0.00</td></tr>
+  </tbody></table></div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: dues come from the price fixed on each registration, not the season's current fee, so editing the season price no longer rewrites this family's balance (F11). Record a payment keeps writing through the same fee writer as the Registrations screen (contract line 7).">RESTYLED · fixed prices</button><button class="mk s" data-note="Ghost: where 12b shows 'Pay link sent' or 'Paid online, reference …'.">12b ghost</button></div>
+  <p class="cap">One thing to fix on the way: a child added by hand (Ava) is not linked to the family's record, so the record joins her by email only. 9b-1 links a hand-added child to the guardian's person, as the form does.</p></div>
+</div>
+
+<!-- CONTRACT -->
+<div class="card"><h3>The payments contract, line by line in these drawings</h3>
+<div class="tw"><table class="t stick"><thead><tr><th style="white-space:nowrap;width:52px">#</th><th>Line</th><th>Where it's drawn</th></tr></thead><tbody>
+  <tr><td>1–2</td><td>Price per division, early bird, one rule</td><td>9b-1 §2 divisions table, §3 the division's record</td></tr>
+  <tr><td>3</td><td>Dates run the form</td><td>9b-1 §2 Registration block (S2·b, still to rule)</td></tr>
+  <tr><td>4</td><td>Price fixed on the registration</td><td>9b-1 §4 form total; 9b-2 §1 Fee column, §3 correct price, §6 family record</td></tr>
+  <tr><td>5</td><td>Capacity can't overfill</td><td>9b-1 §4 (the server), 9b-2 §1 approve respects room</td></tr>
+  <tr><td>6</td><td>Paid is its own fact, one rule</td><td>9b-2 §1 Fee column (no "payment pending" status)</td></tr>
+  <tr><td>7</td><td>One writer for money</td><td>9b-2 §1 Mark received, §4 Money page, §6 Record a payment</td></tr>
+  <tr><td>8</td><td>Honest endings, refunds as money out</td><td>9b-2 §3 end-a-registration window, §4 refund line</td></tr>
+  <tr><td>9</td><td>Several children, one sign-up reference</td><td>9b-1 §4 form, §6 one email per sign-up</td></tr>
+  <tr><td>10</td><td>CASL beside the waiver</td><td>9b-1 §2 Registration block, §4 form</td></tr>
+  <tr><td>11</td><td>Payer = the guardian, no family account</td><td>9b-1 §4 form; 9b-2 §6 (hand-added children linked too)</td></tr>
+  <tr><td>12</td><td>Statement by source; the club's revenue is the fee</td><td>9b-2 §5</td></tr>
+  <tr><td>13</td><td>Stable pay-link spots</td><td>Ghosts: 9b-1 §4 form, §5 status page, §6 email; 9b-2 §6 family record</td></tr>
+  <tr><td>14</td><td>"Payable separately" stays until 12b</td><td>Kept on the form (9b-1 §4). The club's own "How to pay" text appears after acceptance, on the email and the status page; 12b turns both into Pay now</td></tr>
+</tbody></table></div></div>
+</section>
+
+
+<!-- ======================= ASKS ======================= -->
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:16px">Asks &amp; paste-back</h2>
+
+<div class="card"><h3>Ruled, and how it's drawn</h3>
+<ul>
+  <li><b>Q1 pay when accepted:</b> the form's total counts only children who'll be accepted (9b-1 §4); a waitlisted child owes $0.</li>
+  <li><b>Q2 price fixed at sign-up, correctable:</b> Fee column, the Correct price window, the family record (9b-2 §1, §3, §6).</li>
+  <li><b>Q3 the spot holds:</b> "owing · N days" plus Release the spot (9b-2 §1, §2).</li>
+  <li><b>Q4 pay spot on promotion:</b> the approval and promotion emails carry it (9b-1 §6).</li>
+  <li><b>Q5 several children:</b> the form (9b-1 §4).</li>
+  <li><b>Q6 ask each time:</b> the end-a-registration window (9b-2 §3).</li>
+  <li><b>Q10 one fees row:</b> the Statement (9b-2 §5).</li>
+  <li><b>Q15 Money is the book on League Plus:</b> the Money page (9b-2 §4).</li>
+  <li><b>S1·a Create asks three things:</b> 9b-1 §1, with the setup on the season's page (§2).</li>
+</ul></div>
+
+<div class="card"><h3>What the /ux and /design reviews changed before you saw this (2026-10-24)</h3>
+<ul>
+  <li><b>Flows (/ux):</b>
+    <ul>
+      <li>A confirmation screen after Sign up holds 12b's Pay now, so the form never reshapes.</li>
+      <li>One pay block per sign-up on the status page.</li>
+      <li>How to pay is required whenever a price is above $0.</li>
+      <li>"Owing" counts from acceptance.</li>
+      <li>A correction on a paid registration settles the difference.</li>
+      <li>The refund email says what was sent.</li>
+      <li>The registrar keeps their season's sent history on the season.</li>
+      <li>The composer's cap became an ask (Q12c), as did the fiscal year a season's budget sits in (9b·11).</li>
+    </ul></li>
+  <li><b>Drawings (/design):</b>
+    <ul>
+      <li>"Accepted" is the one family word (9b·12).</li>
+      <li>The Kim family's figures were made consistent; one reference per sign-up.</li>
+      <li>The Money band reads Owed · Received (net) · Still owing, so it adds up and matches the Statement (9b·10 re-recommended).</li>
+      <li>"Add age groups" marks groups the season already has.</li>
+      <li>The checklist's Open registration is absent until it can be pressed.</li>
+      <li>A division's record ends with the Remove door.</li>
+      <li>The toolbar's Tools menu and the amber waiting count are drawn, and the phone list is drawn.</li>
+      <li>Two divisions for one age group became an ask (9b·13).</li>
+    </ul></li>
+</ul></div>
+
+<div class="ask" data-ask="Q19"><h3><span class="no">Q19</span>Opening several age groups at once</h3>
+  <p class="rides">Your question. Drawn on the first tab. Rides on it: Q5 (siblings in different age groups in one sign-up), the Money page and Statement rows per season, and 9f's copy forward.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q19" value="A: one season, age groups as divisions, added several at once ('Add age groups')">A: one season with each age group as a division, added several at once with "Add age groups". The club picks each group's birth years.</label>
+    <label><input type="checkbox" name="Q19" value="B: create several seasons at once, one per age group">B: create several seasons at once, one per age group.</label>
+    <label><input type="checkbox" name="Q19" value="Both A and B">Both.</label>
+  </div><textarea aria-label="Notes for Q19" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="Q12b"><h3><span class="no">Q12b</span>One way to email families, or two</h3>
+  <p class="rides">Your note on Q12. Drawn on the first tab. Rides on it: the club's three-sends-a-day cap, one sent log, and whether house league keeps its own sender. The season's "Email families" row (ruled) stays either way; this decides what it opens.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q12b" value="One composer: the Families window, opened from the season already set to it; season audiences added; the old page and window retire">One composer: the Families window, opened from the season already set to it. Division, team and status audiences are added (9d); the old Notifications page and Message registrants window retire, and their history shows in Families › Emails.</label>
+    <label><input type="checkbox" name="Q12b" value="Keep a house-league composer, moved onto the club's sender, cap and log">Keep a separate house-league composer, but send it through the club's sender, cap and log.</label>
+  </div><textarea aria-label="Notes for Q12b" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="Q12c"><h3><span class="no">Q12c</span>If house league emails through the Families window: what counts toward the cap?</h3>
+  <p class="rides">Today the club allows 3 sends a day across all of Families. House league's own composer has no cap at all. Folded in as-is, a club with six age groups could not send each a rainout notice on the same day.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="Q12c" value="Automatic notices never count; each season has its own 3 a day for typed messages; club-wide sends keep the club's 3">Automatic notices (approval, waitlist, decline, schedule changes held until ✓) never count. Each season has its own 3 typed messages a day; club-wide sends keep the club's 3.</label>
+    <label><input type="checkbox" name="Q12c" value="One club-wide cap, raised">One club-wide cap for everything, raised to fit.</label>
+  </div><textarea aria-label="Notes for Q12c" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B11"><h3><span class="no">9b·11</span>Which fiscal year carries a season's budget?</h3>
+  <p class="rides">Fees file in the fiscal year they're received (Q10, ruled). The budget needs a year too, or the variances mislead: a 2027 season taking sign-ups in 2026 has its money arrive in 2026.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B11" value="The year its sign-ups open (where its money arrives); the convenor can split it">The fiscal year its sign-ups open, where most of its money arrives. The treasurer can split it across two years.</label>
+    <label><input type="checkbox" name="B11" value="The year the season is played">The fiscal year the season is played.</label>
+  </div><textarea aria-label="Notes for 9b·11" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="S2b"><h3><span class="no">S2·b</span>Do the open and close dates run the form? (still open from round 1)</h3>
+  <p class="rides">Drawn as "dates run it" in 9b-1 §2. Early bird means nothing while the dates are decoration (contract line 3).</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="S2b" value="Dates run it; convenor can close early or reopen until a new date">The dates run it. The convenor can still close early, or reopen until a new date, and the season page says which.</label>
+    <label><input type="checkbox" name="S2b" value="Status runs it; remind the convenor when the dates pass">The status keeps running it; the convenor is reminded when the close date passes.</label>
+  </div><textarea aria-label="Notes for S2·b" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B12"><h3><span class="no">9b·12</span>One word for "the club said yes"</h3>
+  <p class="rides">Today families read "Confirmed" on the status page and "approved" in the email, and staff press "Approve". Drawn as "Accepted" on every family screen.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B12" value="Accepted for families everywhere; staff keep the Approve button">"Accepted" on every family screen and email; staff keep the "Approve" button, which makes a registration accepted.</label>
+    <label><input type="checkbox" name="B12" value="Approved everywhere, families and staff">"Approved" everywhere, families and staff.</label>
+  </div><textarea aria-label="Notes for 9b·12" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B13"><h3><span class="no">9b·13</span>Two divisions for the same age group (U10 A and B)</h3>
+  <p class="rides">The birth date narrows it to U10; something has to choose A or B.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B13" value="The family picks, seeing each division's note (e.g. Tuesday nights) and room; full ones shown full">The family picks, seeing each division's note (for example "Tuesday nights") and its room; a full one shows as full.</label>
+    <label><input type="checkbox" name="B13" value="Filled in order: the first with room">Filled in order: the first division with room, so the convenor balances them later.</label>
+  </div><textarea aria-label="Notes for 9b·13" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B1"><h3><span class="no">9b·1</span>What must be done before Open registration?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B1" value="Required: age groups, prices, dates, and how-to-pay when any price is above $0. Waiver optional">Required: age groups (birth years and size), prices, dates, and how to pay whenever a price is above $0. The waiver is optional.</label>
+    <label><input type="checkbox" name="B1" value="All five required">All five required.</label>
+  </div><textarea aria-label="Notes for 9b·1" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B2"><h3><span class="no">9b·2</span>Early bird: one date, or a date per division?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B2" value="One early-bird date per season; an early amount per division">One early-bird date for the season; each division has its own early amount.</label>
+    <label><input type="checkbox" name="B2" value="A date and an amount per division">A date and an amount per division.</label>
+  </div><textarea aria-label="Notes for 9b·2" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B4"><h3><span class="no">9b·4</span>A child whose birth year fits no division</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B4" value="The form says no division fits and shows the club's contact; no registration">The form says no division fits that birth year and shows the club's contact. Nothing is registered.</label>
+    <label><input type="checkbox" name="B4" value="Registers as 'needs a division' for the convenor to place">The child registers as "needs a division", and the convenor places them.</label>
+  </div><textarea aria-label="Notes for 9b·4" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B5"><h3><span class="no">9b·5</span>Two children, one of them waitlisted</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B5" value="Show each child's outcome before Submit; family can remove a child; no all-or-nothing">Show each child's outcome before Submit; the family can remove a child. No all-or-nothing option.</label>
+    <label><input type="checkbox" name="B5" value="Offer 'only if both get in'">Also offer "only if every child gets a spot".</label>
+  </div><textarea aria-label="Notes for 9b·5" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B7"><h3><span class="no">9b·7</span>What can be done to several registrations at once?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B7" value="Approve, Waitlist, Mark received, Move division, Email; decline and withdraw one at a time; partial results said plainly">Approve, Waitlist, Mark received, Move division and Email. Decline and Withdraw stay one at a time, because each asks about that family's money. A partial result is said plainly ("3 approved; 2 stay in review: division full").</label>
+    <label><input type="checkbox" name="B7" value="Also bulk decline / withdraw, asking once for all">Also decline or withdraw in bulk, asking the money question once for all.</label>
+  </div><textarea aria-label="Notes for 9b·7" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B8"><h3><span class="no">9b·8</span>When does "owing" turn amber?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B8" value="The club sets the days on the Registration block (starts at 14)">After a number of days the club sets on the Registration block, starting at 14.</label>
+    <label><input type="checkbox" name="B8" value="Fixed at 14 days">Always after 14 days.</label>
+  </div><textarea aria-label="Notes for 9b·8" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B9"><h3><span class="no">9b·9</span>The club's own "How to pay" text, until 12b</h3>
+  <p class="rides">No house-league email says the fee or how to pay today. The text is shown after acceptance; the form keeps "payable separately" (contract line 14).</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B9" value="Required when a price is above $0; one text per season, copied forward">Required whenever a price is above $0; one text per season, copied forward by Start next season. A free season says "Free" and asks nothing.</label>
+    <label><input type="checkbox" name="B9" value="Required when a price is above $0; a club-wide default, editable per season">Required whenever a price is above $0; a club-wide default, editable per season.</label>
+  </div><textarea aria-label="Notes for 9b·9" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="B10"><h3><span class="no">9b·10</span>Refunds on the Money band</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="B10" value="Owed · Received (net of refunds) · Still owing; refunds listed below">Owed · Received (net of refunds) · Still owing, adding up at a glance and matching the Statement. Refunds are listed in the lines below.</label>
+    <label><input type="checkbox" name="B10" value="Owed · Received · Refunded · Still owing (refunds their own figure)">Owed · Received · Refunded · Still owing, with refunds as their own figure.</label>
+  </div><textarea aria-label="Notes for 9b·10" placeholder="Notes"></textarea></div>
+
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste">
+  <div class="row"><button type="button" class="btn-d pri" id="build">Build the summary</button><button type="button" class="btn-d" id="copy">Copy</button><span class="muted" id="copied" style="font-size:13px"></span></div>
+  <label for="out" class="eyebrow">Paste this back</label>
+  <textarea id="out" readonly></textarea>
+</div>
+</section>
+</div>
+
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ F01:{t:'A club admin can open every house-league screen and save nothing', today:'D8 gave the admin role the house-league capability, so every screen opens. All 16 server routes that save anything then check for "owner" or "league admin" by name, so every save is refused. The email composer refuses the admin even reading the send history.', fix:'One gate every route reads, matched to D8, plus the registrar and treasurer rows in Q17. A control a person can\'t use is absent.', st:'9a'},
+ F02:{t:'The season\'s home and its money page aren\'t in the navigation; the phone has none of a season\'s pages', today:'The rail\'s season block lists Registrations, Teams & draft, Schedule, Standings and Notifications. The season overview shows only as "Seasons" staying lit, and the Ledger is reachable only from a division card. The rail\'s season switcher never appears: it expects a different shape of season list than the server sends. On a phone there is no season block at all.', fix:'Season block: switcher, Overview, Registrations, Teams & draft, Schedule, Standings, Money, Email families. On a phone, a season header and tab strip on every season page.', st:'9a'},
+ F03:{t:'Seasons are ordered by when they were created, and there are no Past seasons', today:'The home shows 2025 (finished), 2027 (sign-ups), 2026 (running) as equal cards. The Past seasons link 404\'d and was removed.', fix:'Running now, Getting ready, and a closed Past seasons shelf.', st:'9a'},
+ F04:{t:'Two live seasons: the public side shows one, and it can be the wrong one', today:'The league index and the club home pick the newest-created live season. Here the 2027 sign-ups hide the 2026 season being played, so its schedule and standings have no link from the club home.', fix:'Every live season shows, labelled "Playing now" or "Registration open".', st:'9a'},
+ F05:{t:'Season status changes are one click', today:'Mark complete, Close registration, Complete season and the season-page Archive happen on one click. Only Archive on the seasons grid asks.', fix:'One next step as a rare door at the end of the season page, asking in a window that says what changes for families.', st:'9a'},
+ F06:{t:'The last area in the old look', today:'Nine house-league files are on the old-look gate and the stylesheet is on the strict colour-debt list. Measured: tabs 34 px, Approve 24 px, the fee tick 15×15, Week/List 26 px, "← All seasons" 16 px.', fix:'Each stage moves the screens it rebuilds onto the kit and takes them off the gate.', st:'9a–9e'},
+ F07:{t:'Create season asks the wrong things, and a switch does nothing', today:'Create season asks for a URL slug and a free-text "Division" label (the "U10" chip); divisions and caps come later. The fee is "display-only". "Auto-generate fee entries" is stored and never read. A division\'s age band can\'t be edited after it is created.', fix:'Create asks name, sport and dates; a Setup page holds the rest, edited in place; the dead switch goes.', st:'9a (switch) · 9b-1'},
+ F08:{t:'Registration dates are decoration', today:'The form opens and closes only on the status the convenor flips. The 2027 page says "Registration open" and "Registration closes August 1, 2026" on the same screen on October 24, and still takes sign-ups.', fix:'The dates run the form; the convenor can still close early or reopen (S2·b).', st:'9b-1'},
+ F09:{t:'The sign-up form: one child, no consent to email, age not used', today:'One child per form. A waiver box, but no CASL consent. Date of birth is optional and doesn\'t steer the division. "Payable separately" says no how, where or by when. 2,297 px long on a phone.', fix:'Add a child (Q5), CASL beside the waiver, date of birth picks the division, the price per division, a ghost pay spot.', st:'9b-1'},
+ F10:{t:'Capacity can overfill', today:'The public form counts active players and then writes the row, so two sign-ups at once can both take the last spot. Waitlist position is count + 1 with no constraint. Approve and add-by-hand never check capacity. Nothing stops the same child being registered twice.', fix:'Take the spot atomically; constrain waitlist positions; approve respects capacity.', st:'9b-1'},
+ F11:{t:'The fee is read live, so editing it rewrites what families owe', today:'The paid tick posts the season\'s fee as it is at that moment, and the family record\'s balance reads the current fee too. Change $150 to $175 mid-season and every balance moves.', fix:'Freeze the price on each registration, recording which price applied (Q2).', st:'9b-2'},
+ F12:{t:'Declining or withdrawing a paid registration erases the money', today:'Ethan Brown paid $150 (marked received) and was declined. His line is now VOID, his paid flag cleared, and nothing records that the club owes him $150. Withdraw is the same, and emails no one.', fix:'One "end this registration" window that asks what happened to the money and records a refund as money out (Q6).', st:'9b-2'},
+ F13:{t:'Registrations: missing actions, and none at all on a phone', today:'No Withdraw button, no bulk actions, no Paid / Owing filter; notes only in the export. On a phone the table is 851 px inside 358 px, and Status, Fee paid and the actions start at 644 px with no hint that it scrolls.', fix:'Rows that carry their own actions (primary in words, the rest behind ⋯), Withdraw, bulk approve, a Paid / Owing filter.', st:'9b-2'},
+ F14:{t:'The season book says $0.00 outstanding', today:'Expected $2,100.00 (14 × $150), Collected $150.00, Outstanding $0.00. Outstanding counts "pending entries", which no longer exist since fees post on the tick, so it reads zero for every season. The three figures are separate cards.', fix:'One band (owed, received, still owing, refunds) from the frozen prices. For a League Plus club this page is the whole book.', st:'9b-2'},
+ F15:{t:'House-league fees reach no Statement', today:'The season book is not a club book, so Budget vs. Actual leaves out the club\'s largest revenue line. A League Plus club has no accounting at all.', fix:'File fees on the Statement (Q10); the season Money page is the book on League Plus (Q15). Walk 7a step 7.6 changes.', st:'9b-2'},
+ F16:{t:'Teams: no ratings, and coaches are typed names', today:'The draft is a pick order and Randomize ignores skill. A coach is free text with no account, so a house-league coach who signs in lands on "No team assignments yet". No volunteers.', fix:'A light rating feeding a balanced draft (Q8); light coach accounts (Q7); volunteers as their own project (Q9).', st:'9c'},
+ F17:{t:'The schedule generator is thin', today:'One division, one start date and one game time per run; no weekdays, dates off, slots, game length or byes; a round lands on one date and time; one venue for every game; saving is a plain insert, and then it warns about clashes it created.', fix:'Rebuilt around the season\'s weekdays, slots, length and dates off, for several divisions, checking itself before it saves (Q11).', st:'9d'},
+ F18:{t:'The admin schedule is off the calendar recipe', today:'"Week of June 1, 2026"; a chip on every scheduled game; one narrow column at desk; opens on the first week; a reader gets a greyed form; practices can be cancelled but not moved.', fix:'C1–C12; practices on the club scheduler (11b).', st:'9d'},
+ F19:{t:'The public schedule is dishonest', today:'No place on any game; a cancelled game disappears; a postponed game reads as on (C6-04); "Week of Jun 1 – Jun 7"; opens on the first week; no time-zone line.', fix:'The place, Cancelled struck through, Postponed in words, opens on this week, "Times in Eastern time." once.', st:'9d'},
+ F20:{t:'Families are told almost nothing', today:'No notice on a schedule, practice, placement or rainout change. The season email sends one at a time, once per child, with no cap, counts a delivery failure as "no email on file", and shows a green "0 delivered" for an empty audience.', fix:'Change notices held until ✓; the season email through the club\'s batched sender.', st:'9d'},
+ F21:{t:'Standings ignore the sport', today:'Win 2, tie 1, runs as the tiebreak, hard-coded. The sport pack already defines points per win and draw and what standings sort by.', fix:'Standings read the sport pack.', st:'9e'},
+ F22:{t:'A finished season shows the live tools', today:'A completed season offers Edit, Add division and "Add your first division". There is no copy forward, and a returning family re-types everything.', fix:'A finished season reads as a record (Q16); Start next season copies it; returning families get a pre-filled form.', st:'9a (Q16) · 9f'},
+ F23:{t:'Loose ends around sign-up', today:'A sign-up from the public form notifies no one on staff (only add-by-hand does). Registration emails are fire-and-forget. The status lookup never shows the team.', fix:'A Needs attention item for each new sign-up; the status page shows the team and, in 12b, the pay spot.', st:'9b-1'},
+ F24:{t:'The permit isn\'t reachable from the schedule', today:'The Venue field picks from the venue library and checks permits quietly, but the only link out is a hint to the venue library. The generator applies one venue to every game.', fix:'Venue and permit links from the game window; the generator spreads games across fields.', st:'9d'}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Stage',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED':'Later stage';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+  var o=e.target.closest('.shot .op'); if(o){ var s=o.closest('.shot'); s.classList.toggle('open'); o.textContent=s.classList.contains('open')?'Fold':'Full size'; }
+}, true);
+// tabs
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9b-tab',p)}catch(e){}
+  if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+// theme for specimens
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+// asks: persist
+var KEY='hl9b-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(($('.tabs [data-pane='+pane+']')||{}).textContent||pane)+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['House league · Stage 9 · 9b round · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+// desk drawings: scaled to fit, or true size
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size (1440 wide). Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+tabs.forEach(function(t){ t.addEventListener('click',function(){ setTimeout(fitAll,0) }) });
+// restore
+var p0='qs', t0='warm'; try{ p0=localStorage.getItem('hl9b-tab')||'qs'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>

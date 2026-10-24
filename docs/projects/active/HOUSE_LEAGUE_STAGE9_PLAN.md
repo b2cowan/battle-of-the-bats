@@ -138,7 +138,42 @@ Plus club has no Statement (Q15).
 - **/design** (drawings): fit-to-width with a true-size button; 44 px phone floor; symbol-alone secondary actions; the amber pill inside tabs fixed; underline status tabs; outline icons; a full-screen phone window for D; a phone frame and whole-row links for E; tags positioned so they don't shift figures; a registrar's view showing absent controls; the role table's "no access"; the empty Getting ready group dropped; "Registration" as the one word. Three owner calls added as asks 9a·5–9a·7. Recorded on the hub's Formatting check card, not in the design log.
 - The "before" captures were re-shot after one caught a dev-server restart mid-load.
 
-## 6 · Asks (open; the hub carries recommendations and checkboxes)
+## 6a · Round 2: 9b drawn, and the owner's two questions (2026-10-24)
+
+Drawings: https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT (source `docs/projects/active/HOUSE_LEAGUE_STAGE9B_DRAWINGS.html`;
+built by `.probe/hl/build9b.mjs` from `.probe/hl/src9b/` + round 1's kit CSS and script). /ux and /design run and applied
+before publish; their changes are listed on the page's asks tab.
+
+- **Several age groups at once (owner's question) → Q19.** Recommended: one season with each age group as a division, added
+  several at once by "Add age groups" (the tournament wizard's chip pattern; groups the season already has are marked; the
+  club picks birth years per the 4c-2 ruling — no guess from "U13"). Separate seasons per age group would break Q5 (one
+  sign-up for siblings in different age groups), and multiply Money pages, status changes and public rows. An age group on
+  its own calendar is a different season, copied by 9f's Start next season. Verified: generator, standings, teams and draft
+  are already per division.
+- **Two ways to email families (owner's note on Q12) → Q12b + Q12c.** There are three: the season's Notifications page, the
+  Registrations "Message registrants" window (same send path), and Families › Email families (Stage 7c, `lib/families-email.ts`
+  batched, one per household, `CLUB_EMAIL_CAP` = 3 club-wide/day, Families › Emails log). Recommended: one composer, the
+  Families window, opened from the season already set to it; division/team/status/"Selected" audiences added in 9d; the old
+  page and window retire; the season shows its own sent history (the registrar has no Families access:
+  `lib/roles.ts:73-75`). Cap (Q12c): automatic notices never count; each season gets its own 3 typed sends a day. Rulings
+  cited: design_decisions "one club send" (10-11, deferred not rejected), E6 (chat pause), 7c "not in scope".
+- **New asks:** Q19 · Q12b · Q12c · S2·b (still open) · 9b·1 required before Open registration · 9b·2 early-bird date ·
+  9b·4 a birth year no division fits · 9b·5 two children, one waitlisted · 9b·7 bulk actions · 9b·8 owing turns amber ·
+  9b·9 how-to-pay text (required when a price > $0) · 9b·10 Money band (re-recommended: Owed · Received net · Still owing) ·
+  9b·11 which fiscal year carries a season's budget · 9b·12 "Accepted" as the family word · 9b·13 two divisions for one age.
+- **Build notes the reviews surfaced (not asks):**
+  - Q17's "treasurer reads Money" needs the Money page opened to `module_accounting`; the treasurer has no house-league
+    capability (`lib/roles.ts:76-79`).
+  - "Owing N days" counts from acceptance, which nothing records today; 9b-2 adds an accepted-at fact.
+  - A correction or a division move on a paid registration must settle the difference (refund or still owing), because the
+    fee writer is a paid/unpaid tick today.
+  - A refund after a fiscal year closes files in the year it is paid out.
+  - A hand-added child is not linked to the guardian's person (Ava Kim, `person_id` null); 9b-1 links it.
+  - 12b needs a "no longer payable" page for pay links on ended registrations.
+  - The fixture's 9 pre-writer paid ticks need backfilling into the season book before the Money page is honest on it.
+  - The form keeps "payable separately" (contract line 14); the club's own how-to-pay text appears after acceptance.
+
+## 6 · Asks (round 1, ruled in §0 except S2·b)
 
 Payments boundary: Q1 when a family pays · Q2 when the price is frozen (and early bird's date) · Q3 does an accepted unpaid
 registration hold its spot · Q4 pay-later link on promotion · Q5 several children in one sign-up · Q6 refund on ending ·
@@ -166,3 +201,5 @@ the org home's empty-tournaments hero for a league-only club.
 ## 9 · Status log
 
 - 2026-10-24 — deep dive walked (12 stations, desk + phone), ladder proposed, 9a drawn, /ux and /design applied; published https://claude.ai/artifact/UtrYHLaqbkfQQC2kBbGEQ7; Club index row s9 → in-progress (log 2026-10-24-01); 24 asks open.
+- 2026-10-24 — owner ruled 26 of 27 (§0), committed fa1528058; round 2 (9b + the two questions) drawn, /ux and /design
+  applied, published https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT; 15 asks open.
