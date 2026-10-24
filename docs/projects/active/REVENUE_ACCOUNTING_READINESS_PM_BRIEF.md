@@ -1,78 +1,82 @@
-# Revenue and accounting readiness — PM brief
+# Canadian revenue launch — PM brief
 
-> **Created:** 2026-10-21 · **Priority:** P0 for paid launch readiness
-> **Detailed plan:** [REVENUE_ACCOUNTING_READINESS_PLAN.md](REVENUE_ACCOUNTING_READINESS_PLAN.md)
-> **Interactive review:** [REVENUE_ACCOUNTING_REVIEW.html](REVENUE_ACCOUNTING_REVIEW.html)
-> **Stage:** Project defined; implementation and live-account verification follow the roadmap.
+> **Updated:** 2026-10-23 · **Stage:** Discovery underway; nationwide CAD launch scope confirmed.
+> **Review:** [project index](REVENUE_ACCOUNTING_REVIEW.html#index) · [detailed plan](REVENUE_ACCOUNTING_READINESS_PLAN.md)
+> **Focused review:** [Canada rollout worksheet and questions](REVENUE_ACCOUNTING_CANADA_ROLLOUT.md)
 
 ## Outcome
 
-FieldLogicHQ can sell to customers across Canada and the United States with clear prices, correct currencies and applicable taxes, while the Ontario proprietor receives reliable books, reconciled deposits and timely tax-filing information. The process is designed to minimize monthly manual work and support a future corporation without losing history.
+Launch a straightforward Canadian business model: existing eligible software subscriptions and tournament/house-league registration payments, charged in CAD and available throughout Canada. A club referred from Ontario to BC or Quebec should encounter the same signup and eligible purchase experience.
 
-## What customers will experience
+The owner is pre-revenue, has no artificial release deadline, and wants the national experience ready before launch rather than restricting provinces to avoid incomplete configuration.
 
-- Canadian subscription buyers see and pay CAD; U.S. subscription buyers see and pay USD. The owner has chosen **stable prices in each currency**, with actual USD amounts still to decide.
-- The advertised billing period, Checkout total, invoice, portal and renewal agree. Government taxes and mandatory fees are presented according to reviewed rules; no surprise fee appears only at the last step.
-- Organization billing belongs to its authorized billing admins. A coach buying personally and a future family/fan purchaser manage their own subscriptions and do not expose personal billing details to unrelated organization staff.
-- For registration payments, the organizer and event currency are clear. A visiting U.S. family can still pay a Canadian event in CAD. Registration currency is not silently changed to match the payer's country.
-- Organizers get a breakdown they can reconcile: registrations, taxes, fees, refunds and payouts. The existing manual/offline payment option remains part of the experience.
+## Decisions confirmed
 
-## What the business will gain
+- All of Canada is in scope, including Quebec, BC and the territories. No province-by-province release or referral waitlists.
+- Subscriptions AND registration payments are launch requirements. Subscription Gate A and registration Gate B are separately verified, but both must be ready for this launch.
+- CAD-only prices and charges. U.S. paid software customers, USD pricing/banking, premium family/fan subscriptions and corporation execution are deferred.
+- Reuse the existing plan catalog, pricing commitments and eligibility. Preserve existing Founding Season promises and payment tier rules.
+- Keep banking/bookkeeping practical: one suitable CAD platform payout arrangement, organizer-owned payout accounts, straightforward records and a focused Canadian tax/terms review.
+- Existing Connect direct-charge and family-pays directions remain. Exact fee supply/tax/refund responsibilities need confirmation before implementation.
 
-- One governed CAD/USD catalog and billing policy across marketing and every subscription lifecycle.
-- A reviewed tax-treatment register for each supported product and location, with registration thresholds, filing owners and evidence.
-- Separate tracking of subscription revenue, platform fees, organizer proceeds, collected taxes, processor costs and exchange differences.
-- Automated ingestion, receipts, reconciliation and exception alerts where supported, with a named person for remaining reviews and filings.
-- An accounting-system recommendation based on a practical CAD/USD/Stripe reconciliation proof before purchase.
-- A future incorporation runbook that preserves entity ownership, subscriptions, historic invoices and refund obligations.
+## What customers see
 
-## Scope and delivery order
+Canadian account creation remains available under existing product rules. Normal onboarding collects the real contracting customer's location; IP address, language or the residence of a coach/family is not a province admission test.
 
-1. **Discovery and decisions:** verify current live configuration, commission the accountant's tax/fee analysis, confirm Stripe capabilities, propose USD prices and compare accounting options.
-2. **Shared foundation:** catalog, billing identities, tax evidence, accounting integration and threshold reporting.
-3. **Gate A — organization/coach subscriptions:** Canada/U.S. marketing and all subscription paths ready together.
-4. **Gate B — tournament/house-league transactions:** direct-charge Connect payments, fees, registration taxes, refunds and payouts, coordinated with Club Stage 12 and its existing counsel dependency.
-5. **Gate C — future personal family/fan subscriptions:** consumer billing and household ownership ready before the product is sold.
-6. **Operations and Gate D:** repeatable month-end close and a separately scheduled corporation transition.
+A buyer sees an eligible CAD subscription, its billing period and applicable taxes before paying. An organizer completes supported Stripe-hosted identity/bank onboarding, then uses the registration flow with clear prices, fees, taxes, receipts and refund rules.
 
-The owner has confirmed **separate readiness gates**. Subscription work need not wait for the registration-payment build, and planning for family/fan billing does not launch a premium family product.
+Location is collected to charge correctly, not to create geographic waitlists. Canadian participants can pay Canadian events across provincial borders. Free access still needs appropriate privacy/terms handling.
 
-## Provisional timing for review
+## What needs to be done properly
 
-At five focused engineering days per week with one implementer, allow approximately **6–9 weeks to organization/coach subscription readiness**, including a 2–4-week discovery/external-response allowance. Facilitated registrations add approximately **4–7 focused engineering weeks** in a sequential build and retain their counsel, Stripe and wider Club release dependencies. Future family/fan billing is approximately **1–2 focused weeks after product definition**, excluding premium product features. Incorporation is a separate business transition with no target date set.
+One federal regime and one currency simplify the model, but BC PST, Saskatchewan PST, Manitoba RST and Quebec QST need a focused review. Subscriptions, organizer registrations and FieldLogicHQ's fee are distinct supplies. Quebec also needs an applicable language/contract/privacy check.
 
-These are planning estimates added 2026-10-21, not agreed dates. External registration/advisor delays can exceed the allowance; Phase 0 establishes the resourced schedule. The first complete operating month and close provide additional proof after launch.
+Complete the 13-province/territory worksheet, actual required registrations, fee/remittance funding, Canadian Connect capabilities and end-to-end checks before paid launch. Do not register everywhere unnecessarily or interpret zero tax from missing configuration as compliance.
 
-## Decisions already made
+Registration payments retain the real work: onboarding, account-aware events, partial/offline payments, fee tax, refunds, disputes, payouts and reconciliation. The existing relevant legal/provider dependencies remain.
 
-- Canadian and U.S. subscription customers are in scope.
-- Stable, separately set CAD/USD prices.
-- Compare accounting systems before choosing one.
-- Separate payment-model readiness gates.
-- Existing plan/pricing canon, direct-charge payment direction, family-pays transaction default and paid-tier eligibility remain the starting decisions. No new price or fee rate is approved by this plan.
+## Implementation stages
 
-## Questions to resolve first
+1. **Phase 0:** focused Canadian decisions, tax/terms worksheet, CAD payout arrangement, fee model and simple bookkeeping process.
+2. **Phase 1:** CAD catalog checks, customer location/tax handling, financial source records and recovery.
+   **Bookkeeping dependency (former Phase 1B):** the owner stopped and archived the custom project on 2026-10-23 after B2.5. Its B3 import/reconciliation and B4 controls/close are incomplete; A+B still requires this accounting proof, and no replacement delivery path is assigned.
+3. **Phase 2:** nationwide subscription lifecycle, marketing, invoices/help, owner QA and Gate A.
+4. **Phase 3:** Canadian registration payments coordinated with Club Stage 12, organizer/platform financial proof and Gate B.
+5. **Phase 4:** future family/fan product; deferred.
+6. **Phase 5:** first full operating month/close and margin review; corporation preparation/execution and advanced accounting automation remain later work.
 
-- What exact USD prices preserve customer value and margin?
-- Which accounting system/connector handles the accountant's workflow, CAD/USD, taxes, platform fees and refunds at an acceptable recurring cost?
-- What tax registrations and effective dates are required at launch, and who owns ongoing filing/remittance?
-- When a family pays a transaction fee, who legally supplies that service to whom? That answer controls tax and invoice design.
-- Does the chosen Canadian Stripe Connect configuration support U.S. organizers, the intended fees, currencies and payment methods?
-- Who pays processing/FX costs, handles losses and funds refunds after organizer payout?
+The index distinguishes current launch stages from deferred expansion stages. Deferred items stay visible and unticked; they are not accidental launch prerequisites.
 
-The detailed plan contains the full 25-item decision register, implementation tasks, validation matrix, primary-source references and gate evidence.
+## Timing
 
-## Risks that change the plan
+There is no committed release date. Existing preliminary phase allowances total approximately 39–64 focused engineering days for discovery, shared foundation, subscriptions and registration payments if sequential—about 8–13 full engineering weeks. External tax-registration/advisor/Stripe lead time and wider product-release dependencies are additional. Re-estimate after the Canadian review and design; the owner prioritizes readiness over speed.
 
-Current code assumes CAD, and inspected Checkout routes do not enable automatic tax or require billing addresses. Existing planning assumes a narrower Canada/CAD payment model and includes historical promotional dates. These need explicit implementation review.
+The first complete monthly close supplies operating proof after launch. Future U.S., family/fan and corporation work receives its own scope and timing.
 
-Stripe's threshold monitoring excludes platform application fees and home-country obligations; it cannot be the only early-warning system. Mandatory service-fee disclosure and marketplace-tax responsibility also require review of the actual transaction structure. Tax-engine availability alone does not establish legal compliance.
+The former 1–3-day software setup allowance is retired. The owner stopped and archived the custom bookkeeping project after B2.5; B3/B4 remain incomplete. The A+B accounting dependency remains unmet until a replacement owner and delivery path are chosen.
+
+## Progress and next work
+
+The repository and live/sandbox Stripe configuration inventories are complete, with dated evidence. Both active catalogs are CAD-only; live Tax settings have no configured registrations; sandbox tax setup and price tax behaviour differ from live. These facts do not establish legal compliance or payment readiness.
+
+The original professional question packages are preserved. The Canada-only rollout brief supersedes their international engagement scope. Accountant selection and a suitable CAD banking arrangement remain open; a full international finance team or custom general ledger is not the goal.
+
+Phase 0 preparation now includes a supplier/money-flow map, focused professional requests, CAD banking and bookkeeping comparisons, 52 pending tax-response rows, six synthetic reconciliation examples and a draft first build sequence. The artifact's **Phase 0 review** tab presents this package. The examples expose an organizer shortfall from a wrong fee-payer configuration and the cash needed for refunds; they are not approved pricing or tax outcomes.
+
+Owner decision: a custom private bookkeeping tool was started in parallel and then stopped/archived on 2026-10-23 after B2.5. The [closure record](../archive/BOOKKEEPING_CLOSURE_RECORD.md) documents the delivered expense/reporting scope and the incomplete revenue import and B4 gates. No replacement bookkeeping delivery path has been selected; its A+B accounting prerequisite remains open.
+
+Banking clarification: the owner reports free unlimited CIBC personal chequing and all incoming revenue through Stripe. CIBC's Canadian published terms expressly require a business account even for sole proprietorships. This bank condition is distinct from Stripe accepting a proprietor's own name and from recommending separate records. Stripe remains the sales source; expenses paid outside Stripe still need receipts and bookkeeping. The Phase 0 packet links the exact terms; no universal requirement for a business-branded product at every bank is asserted.
+
+Owner facts updated October 23: no other self-employed business revenue; current personal bank is CIBC; alternatives are welcome if worthwhile. Compare familiar-bank convenience against CIBC Basic's per-use pricing and RBC/BMO electronic allowances. GST/HST has not been applied for; the owner intends to apply within a week and request May 1, 2026. This is not an approved effective date: it falls outside CRA's usual voluntary 30-day backdate window. Confirm the date and review earlier purchases separately before assuming credits or configuring collection. The current owner-facts stage is complete; registration approval remains separate.
+
+Next in this stream: confirm the accepted GST/HST date, obtain focused advisor/Stripe conclusions, select a permitted payout arrangement and settle the fee/refund riders. The former bookkeeping project is stopped and archived; this stream must assign a replacement owner and path for the still-required A+B accounting proof. Preparation ticks are separate from implementation and professional answers; revenue Phase 0 remains open.
 
 ## Success criteria
 
-- California/USD and Quebec/CAD examples work from price display through renewal and bank/accounting reconciliation; all intended subscription jurisdictions have reviewed treatment.
-- Every charged amount has an understandable price/fee/tax breakdown, and each no-tax result has a reason.
-- No duplicate subscriptions, postings or tax transactions after event retries or recovery.
-- Finance can reconcile every payout and tax control balance and complete a monthly close without reconstructing transactions manually.
-- Every filing, remittance and exception has an accountable owner; automation gaps are visible.
-- The first full close proves the process for the launched tracks before the project is considered complete.
+- Ontario-to-BC referrals and Quebec club signup/purchase work without provincial waitlists.
+- Every subscription and registration has the correct CAD price, seller, tax outcome and supporting records.
+- The custom tool's expense-only scope passed B2.5 before the owner stopped the project; shared import proof, backup/recovery and accountant close remain unfulfilled launch dependencies.
+- Retries and recovery do not duplicate charges, registrations, tax transactions or financial postings.
+- Organizer and FieldLogicHQ records reconcile through fees, taxes, refunds and payouts.
+- Required filings/remittance and month-end review have named practical owners.
+- Every completion tick has a date and evidence; research, professional response, implementation, QA and launch are distinct.

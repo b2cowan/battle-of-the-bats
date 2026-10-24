@@ -1275,7 +1275,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > **Lakeshore fixture:** birth years on every live team except 10U Development; blurbs on 15U AAA (birth years) and 13U AAA (a past
 > year, 2025); written by script, on dev.
 >
-> **🔨 Stage 4d BUILT 2026-10-23 (the club’s sponsors; uncommitted, the owner says when).** A fourth list on the Public site editor’s lists row (renamed **Contacts, documents and sponsors**): name (required), logo, link, last day (a whole day, inclusive, in the club’s zone); up to twenty; no tiers, no reordering. Families see a **Sponsors strip at the foot of the home page** (the home only, never the shared frame) and a **Sponsors section last on the About page**; a sponsor past its last day leaves both by itself and stays in the editor marked **Ended** (quiet grey pill, row dimmed), so renewing is one edit. A sponsor alone never opens the About page; sponsors never count toward “N of 4 ready”. The logo is **opened and re-saved on upload** (own route, owner/admin, random name in the club’s `sponsors` folder; a mislabelled file, a pixel bomb or an SVG never gets in); a stored logo address must be one the club’s own upload wrote. **Migration 353 (the `sponsors` column, cap 20) is on DEV only; apply 343 then 353 before the Club release.** Drawings https://claude.ai/artifact/CAKV9xcGQoW4zudF5TvGcE (owner: all recommendations); words `CLUB_TIER_STAGE4D_COPY.md`; passes `/marketing`, `/design`, `/simplify`, `/review` (four lenses, high-risk), `/docs`. **Walk = Owner QA Ledger §366,** https://claude.ai/artifact/R67agccQP1Vw5VqcKmEFz4 (source `CLUB_TIER_STAGE4D_WALK.html`), result owed. Owed: the fixture rebuild before the walk, a dev-server restart, `check:layout --changed`, and the 4e build.
+> **✅ Stage 4d COMMITTED `29bc543d4` 2026-10-23, walk §366 PASSED 30/30 2026-10-23 (the club’s sponsors).** A logo-fit fix found on the walk (the editor box cropped a tall logo) is not yet committed; see §366. A fourth list on the Public site editor’s lists row (renamed **Contacts, documents and sponsors**): name (required), logo, link, last day (a whole day, inclusive, in the club’s zone); up to twenty; no tiers, no reordering. Families see a **Sponsors strip at the foot of the home page** (the home only, never the shared frame) and a **Sponsors section last on the About page**; a sponsor past its last day leaves both by itself and stays in the editor marked **Ended** (quiet grey pill, row dimmed), so renewing is one edit. A sponsor alone never opens the About page; sponsors never count toward “N of 4 ready”. The logo is **opened and re-saved on upload** (own route, owner/admin, random name in the club’s `sponsors` folder; a mislabelled file, a pixel bomb or an SVG never gets in); a stored logo address must be one the club’s own upload wrote. **Migration 353 (the `sponsors` column, cap 20) is on DEV only; apply 343 then 353 before the Club release.** Drawings https://claude.ai/artifact/CAKV9xcGQoW4zudF5TvGcE (owner: all recommendations); words `CLUB_TIER_STAGE4D_COPY.md`; passes `/marketing`, `/design`, `/simplify`, `/review` (four lenses, high-risk), `/docs`. **Walk = Owner QA Ledger §366,** https://claude.ai/artifact/R67agccQP1Vw5VqcKmEFz4 (source `CLUB_TIER_STAGE4D_WALK.html`), ✅ PASSED 30/30. Owed: commit the logo-fit fix, `check:layout --changed`, and the 4e build.
 >
 > **🔨 4c-2 Part B BUILT 2026-10-22, COMMITTED `5b9635f99`.** The coach's side: Team settings opens for every coach; Sharing gains
 > "Your team's public page" (address, Copy link, Open, the games-only sentence, the site-off notice inside it) and each coach's own
@@ -1287,7 +1287,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > Passes: `/simplify`, `/review` (five lenses, high-risk; the confirmed findings fixed, among them an address that could revive on a
 > re-add), `/marketing` (F7, H7, H9b, E16b, E21b, E22), `/design`, `/docs`. Fixture `--part-b-coaches` (add-only) on Lakeshore.
 > **Walk B = Owner QA Ledger §362,** https://claude.ai/artifact/9nA8ggC3RChiK8UobGpZSd (source
-> `docs/projects/active/CLUB_TIER_STAGE4C2_PART_B_WALK.html`), result owed.
+> `docs/projects/active/CLUB_TIER_STAGE4C2_PART_B_WALK.html`), **✅ PASSED 52/52 (owner, 2026-10-23).**
 >
 > **⚖ Owner rulings 2026-10-22, Part B:** F7 = "Your name and role only."; the H7 nudge sits under the hint; **every coach can open
 > Team settings** (a plain assistant could not reach their own name switch; the drawings never covered it); **removal turns the name
@@ -1325,6 +1325,31 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > charge; the AWS limit is not a blocker (owner). **📝 4e drawing prompt written 2026-10-23:** `CLUB_TIER_STAGE4E_DRAWING_PROMPT.md`
 > (a new chat; its first ask is where the door lives — the ruling says Settings, but the public-site controls moved into the Public
 > site page on 2026-10-21). Then the build prompt.
+> **🎨 4e DRAWN 2026-10-23, SEVEN ASKS OPEN, nothing built** — https://claude.ai/artifact/QiwFeccoRW5XmAnPwfDuVa (source
+> `CLUB_TIER_STAGE4E_DRAWINGS.html`, generated; /ux and /design run, the review's fixes applied and listed on the page). Frames
+> a–h at desk (the rows column's true 440 px) and phone: the door, typing (five refusals, one quiet fix), the two records with
+> Copy and "Copy both as a message", waiting (Not seen yet / Found / Points elsewhere, Check now as our own lookup), connected,
+> the dated padlock warning, three failures (gave up, held by another service, record 2 removed), stop (a question window with
+> the two-year padlock sentence); plus the share census (11 admin/coach screens hand out the address; the staff kit, evaluator,
+> chat and coach feed stay on FieldLogicHQ) and the public bar on the club's address. **Asks:** 1 where (rec: its own *Web
+> address* row on Public site above Visibility, which loses its address line); 2 who (rec: owner connects and stops, admins read
+> and copy the records); 3 forwarding (rec: advice + three registrar links + a check of the bare name); 4 names other than www
+> (rec: any name, www first — the www ruling did not consider a club keeping its own site at www); 5 the name clash (rec: one row
+> called Web address holding both, the new one "your own address" in sentences; Settings' field keeps its name); 6 who is
+> emailed (rec: the owner at four moments); **7 a conflict between rulings 4 and 5** (rec: forward everyone except signed-in
+> visitors, or families lose Follow, alerts and My team on that club's pages and tournaments). Found for the build: stop
+> forwarding while the club's address is broken; BuilderRow needs a chip slot. The build prompt waits for the paste-back.
+> **⚖ Owner, on the drawing 2026-10-23:** the address field starts with **`www.` already written and unable to be deleted**
+> (drawn as the tournament Web address window's fixed-prefix shape; the club types only the rest; the bare-name refusal is gone).
+> Under the www-only ruling this only stops input that isn't allowed; ask 4 is unchanged (if it goes "any name", the field
+> gains a quiet "Use a name other than www" link to swap the prefix).
+> **⚖ ALL SEVEN ASKS RULED 2026-10-23, as recommended** (owner: "I agree with your recommendations"): 1 its own Web address row
+> on Public site above Visibility; 2 owner connects and stops, admins read, copy the records and press Check now; 3 advice +
+> three registrar links + a bare-name check; 4 any name under the club's domain, `www.` fixed with a "Use a name other than www"
+> link; 5 one row called Web address holds both, the Settings field keeps its name; 6 the owner emailed at four moments; 7
+> forward everyone except signed-in visitors. **📝 4e build prompt written 2026-10-23:** `CLUB_TIER_STAGE4E_BUILD_PROMPT.md`
+> (a new chat; owner steps and two five-minute proofs first, words through /marketing, then seven parts, the status check in its
+> own commit).
 > **Security fix found on the way (owner "fix it now", 2026-10-19):** every response now sends frame-ancestors 'self',
 > X-Frame-Options SAMEORIGIN and HSTS (this host only); production sent none, leaving admin and coach screens open to
 > clickjacking. Guard: tests/unit/security-headers.test.ts. Committed `7b28c175` 2026-10-19 (local, not pushed); verified on dev.
@@ -2421,6 +2446,14 @@ boxes taking the Opponent Picker (F13); an arrival after the start flagged under
 Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No.
 
 ### Stage 7 — Tournaments inside a club + one door to every family
+> **✅ STAGE 7 CLOSED 2026-10-22 (owner).** All four parts are built and owner-walked: 7a tournament money (§354 ✅, all seven parts), 7b Add our teams
+> (§358 ✅ 28/28), 7c Email families (§359 ✅ 40/40) and 7d the coach's Tournaments (§361 ✅ 35/35). Closed on the owner's instruction. The items below
+> travel with it as follow-ups; none holds the stage, and none is recorded as done.
+> - **7c:** `/review`, `/docs` and `/marketing` are not recorded as run (`CLUB_TIER_STAGE7C_NEXT_STEPS_PROMPT.md` is the prompt, and it is stale: 7c is committed). Also open: the house-league season email onto the batched sender, and widening Families' "this season" to a registration-closed season.
+> - **7d:** the three head-coach-rule questions and the six `/design` points put to the owner (see the 7d close-out log); the roster-submit rule's browser check; the `/marketing` rewording of "Only the head coach can change who coaches at this event."
+> - **7b:** the coaches-portal "Add my team" window still offers Paid/Unpaid; the bulk Mark paid email path was not traced for our team.
+> - **7a:** walk §354 Part 5 passed 9 of 11 and the paste did not say which two items were left unticked.
+> - **Production:** migrations 342, 346, 347 and 348 (this stage) are on dev only, in `MANUAL_PROD_STEPS.json`, to be applied in order before the code ships.
 > **⚖ RULED 2026-10-20 (owner): all 13 asks as recommended (option A each), round 1.** Design-log entry written; build prompts
 > `CLUB_TIER_STAGE7A_BUILD_PROMPT.md` (first); the 7b / 7c / 7d prompts are written after 7a commits and walks; each part gets
 > its own walk (Ask 13). **Stage 12c's wait on Ask 1 is over:** an online tournament payment goes through 7a's one fee write. Nothing
@@ -2614,7 +2647,7 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 - [x] **7a · tournament money:** a paid visiting team writes into its tournament book (`tournament_fee_receipt`), including deposit then balance, correction and undo; two teams may share one transfer line. A club rep-linked team reads Our team / No fee and writes no fee. The Accounting setting creates the tournament's category and Entry fees word before payment; the book opens with the first fee. Existing paid figures form a baseline and are not backfilled. The house league's paid fee now uses the same atomic fee-line primitive; its book joins the Statement in Stage 9. The club Statement and By activity include the tournament through its filed word. A paid withdrawn visitor keeps its receipt for a separate typed refund. A link cannot be added to a visitor with an active receipt or removed from a paid own team until payment is undone. All six house-fee defect tests, atomicity and arithmetic checks passed on DEV. The old hub banner was already fixed (G01); G03 remains for 7b.
 - [x] **Message every family** (G02) — **built as 7c, Email families, on Families** (not the hub; Ask 6): every family, some rep teams or a house-league season, each family once, through the family-email choke point with suppression, a preview count, a send log (the Emails tab) and a club cap of three a day. Built 2026-10-22, walk §359 owed. It does not reuse the house-league sender (a sequential loop); the house league moving onto the new batched sender is the follow-up.
 - [x] **By activity on the club's Budget vs. Actual** (from 3b, Ask 5): the coach's third report shape is reused for a hosted tournament's revenue and costs filed under its category.
-- [ ] **The coach portal's Tournaments** — **BUILT as 7d 2026-10-22, walk §361 owed** (see "7d BUILT" above). (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.** *From Stage 6c (ruled 2026-10-10):* the record's dates and times read the device's clock (`CoachLiveSchedule`, `formatGameDateLabel`) — the recipe's own clock and words (C8, C10); "LIVE" follows its own rule (a submitted score, today) instead of the shared game-status rule (C6-09); "vs / @" on its rows and "vs / at" in its change banner — one.
+- [x] **The coach portal's Tournaments** — **BUILT as 7d 2026-10-22, walk §361 ✅ PASSED 35/35 2026-10-22** (see "7d BUILT" above). (the coach Schedule deep dive's stage 3, merged 2026-10-09 — see Stage 6c): the list and the record at 390 and 1440 (the card runs off a 390 screen, D-3; the record is 2,139px with 11 of 17 controls under 44 and no help door); titled by the tournament with the team as its meta; the head-coach editor to autosave or to Settings; a "Games on your Schedule" row and a "← Tournament" back; the 600/901 breakpoints onto 640/768/900. **The record is shared with the free portal through flag props — every change lands on both.** Drawn with this stage, after the tournament redesign's Stage 2 (teams). **Does not hold the release.** *From Stage 6c (ruled 2026-10-10):* the record's dates and times read the device's clock (`CoachLiveSchedule`, `formatGameDateLabel`) — the recipe's own clock and words (C8, C10); "LIVE" follows its own rule (a submitted score, today) instead of the shared game-status rule (C6-09); "vs / @" on its rows and "vs / at" in its change banner — one.
 **QA walk §J.** **Migrations:** ~~`org_announcements` (+ send log) if the broadcast is recorded~~ — superseded by Ask 7 (2026-10-22): mig 347's `family_email_sends` + `family_email_claim`, the Emails tab's record.
 
 ### Stage 8 — Release readiness

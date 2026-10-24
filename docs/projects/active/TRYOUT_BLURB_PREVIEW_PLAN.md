@@ -11,8 +11,9 @@ the page really stands in (open · not open yet · closed; a finished tryout rea
 
 ## Rulings (the drawing's five asks)
 1. Title block + From the club + Sign up button only (no tryout days, no contact line).
-2. Right of the box, only when the row has room for the box and a 360 px preview (container query at 900 px on the
-   row, not the window). Narrower and on a phone: not drawn, nothing moves.
+2. Right of the box, only when the row has room for the box and the preview (container query at 840 px on the
+   row, not the window). Drawn at 80 % of a phone's 360 px (288 px of room) after the owner found full size too big
+   (2026-10-22). Narrower and on a phone: not drawn, nothing moves.
 3. Updates as the club types, before the autosave.
 4. Follows the page's real state; when families would not see the words, one amber sentence says so.
 5. Named "How families see it", with "Updates as you type" beside it. Nothing in it can be pressed.

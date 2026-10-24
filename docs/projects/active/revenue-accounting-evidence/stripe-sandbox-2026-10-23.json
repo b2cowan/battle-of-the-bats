@@ -1,0 +1,321 @@
+{
+  "observedOn": "2026-10-23",
+  "environment": "sandbox",
+  "source": "Stripe retrieve/list APIs",
+  "apiVersion": "2026-04-22.dahlia",
+  "limitations": [
+    "Configuration snapshot, not a tax opinion or production-environment variable audit.",
+    "No customers, payment history, tax IDs, bank details or customer-level subscription records requested.",
+    "A setting being configured does not prove app flows use it or registrations are legally sufficient."
+  ],
+  "sections": {
+    "account": {
+      "country": "CA",
+      "businessType": "individual",
+      "defaultCurrency": "cad",
+      "chargesEnabled": true,
+      "payoutsEnabled": true,
+      "detailsSubmitted": true,
+      "feePayer": null,
+      "paymentLossResponsibility": null
+    },
+    "prices": {
+      "complete": true,
+      "count": 14,
+      "items": [
+        {
+          "priceId": "price_1TlXTjFuSuNtbvsQscmwLIlg",
+          "currency": "cad",
+          "unitAmount": 379000,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_Ul3Y477Fem1usf",
+          "productName": "FieldLogicHQ - Club · Association",
+          "productTaxCode": "txcd_10000000",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 379000,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TlXROFuSuNtbvsQAdRTcgia",
+          "currency": "cad",
+          "unitAmount": 37900,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_Ul3Y477Fem1usf",
+          "productName": "FieldLogicHQ - Club · Association",
+          "productTaxCode": "txcd_10000000",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 37900,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TlXGjFuSuNtbvsQINrpqL6E",
+          "currency": "cad",
+          "unitAmount": 21900,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UY3yl9jHejFHdw",
+          "productName": "FieldLogicHQ — Club",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 21900,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TlXGjFuSuNtbvsQvs0cDSY0",
+          "currency": "cad",
+          "unitAmount": 219000,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_UY3yl9jHejFHdw",
+          "productName": "FieldLogicHQ — Club",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 219000,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TZwzrFuSuNtbvsQcvQgq3Km",
+          "currency": "cad",
+          "unitAmount": 29000,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_UZ596v2W6z11YH",
+          "productName": "Team Add-on (Org-billed)",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 29000,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TZwzcFuSuNtbvsQPQ6Y5gvq",
+          "currency": "cad",
+          "unitAmount": 2900,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UZ596v2W6z11YH",
+          "productName": "Team Add-on (Org-billed)",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 2900,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TZwwCFuSuNtbvsQiZh8WNQo",
+          "currency": "cad",
+          "unitAmount": 29000,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_UZ11SDniB5ux08",
+          "productName": "FieldLogicHQ - Team",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 29000,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TZt0dFuSuNtbvsQetcFhSlc",
+          "currency": "cad",
+          "unitAmount": 19000,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_UY43wkWYZeMaz2",
+          "productName": "Club Extra Rep Team",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 19000,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TZt0BFuSuNtbvsQFMDSOPZd",
+          "currency": "cad",
+          "unitAmount": 1900,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UY43wkWYZeMaz2",
+          "productName": "Club Extra Rep Team",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 1900,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TZszdFuSuNtbvsQUmB6S4GF",
+          "currency": "cad",
+          "unitAmount": 2900,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UZ11SDniB5ux08",
+          "productName": "FieldLogicHQ - Team",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 2900,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TYxwJFuSuNtbvsQVxbvhcRY",
+          "currency": "cad",
+          "unitAmount": 89000,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UY3wgPQ7rzm9cB",
+          "productName": "FieldLogicHQ — League",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 89000,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TYxp5FuSuNtbvsQpLCHR4bl",
+          "currency": "cad",
+          "unitAmount": 8900,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UY3wgPQ7rzm9cB",
+          "productName": "FieldLogicHQ — League",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 8900,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TYxnQFuSuNtbvsQmMYPc7n7",
+          "currency": "cad",
+          "unitAmount": 39000,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_UY3uMh6xY5GUgQ",
+          "productName": "FieldLogicHQ — Tournament Plus",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 39000,
+              "taxBehavior": "exclusive"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TYxmiFuSuNtbvsQYgBjkDv0",
+          "currency": "cad",
+          "unitAmount": 3900,
+          "taxBehavior": "exclusive",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UY3uMh6xY5GUgQ",
+          "productName": "FieldLogicHQ — Tournament Plus",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 3900,
+              "taxBehavior": "exclusive"
+            }
+          }
+        }
+      ]
+    },
+    "taxSettings": {
+      "status": "pending",
+      "defaultTaxCode": null,
+      "defaultTaxBehavior": null,
+      "originCountry": null,
+      "missingFields": [
+        "head_office"
+      ]
+    },
+    "taxRegistrations": {
+      "complete": true,
+      "count": 0,
+      "items": []
+    },
+    "webhooks": {
+      "complete": true,
+      "items": [
+        {
+          "destination": "https://dev.fieldlogichq.ca/api/billing/webhook",
+          "status": "enabled",
+          "apiVersion": "2026-04-22.dahlia",
+          "enabledEvents": [
+            "checkout.session.completed",
+            "customer.subscription.created",
+            "customer.subscription.deleted",
+            "customer.subscription.updated",
+            "customer.subscription.trial_will_end",
+            "invoice.payment_action_required",
+            "invoice.payment_failed",
+            "invoice.payment_succeeded"
+          ]
+        }
+      ]
+    },
+    "portal": {
+      "complete": true,
+      "items": [
+        {
+          "active": true,
+          "isDefault": true,
+          "subscriptionUpdateEnabled": false,
+          "subscriptionCancelEnabled": false,
+          "invoiceHistoryEnabled": true,
+          "customerUpdateEnabled": true,
+          "customerAllowedUpdates": [
+            "name",
+            "email",
+            "address",
+            "phone"
+          ]
+        }
+      ]
+    }
+  },
+  "errors": []
+}

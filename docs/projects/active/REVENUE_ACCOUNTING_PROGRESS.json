@@ -1,0 +1,890 @@
+{
+    "schemaVersion":  3,
+    "project":  "revenue-accounting-readiness",
+    "updatedOn":  "2026-10-23",
+    "currentFocus":  "Revenue Phase 0 continues on Canadian tax/Stripe/banking decisions. The owner stopped and archived the custom bookkeeping project on 2026-10-23 after B2.5; B3/B4 remain incomplete and the A+B accounting dependency is unmet pending a replacement owner and delivery path.",
+    "ownerFacts":  [
+                       "Stable CAD/USD subscription prices and separate readiness gates confirmed 2026-10-21.",
+                       "Accountant selection included at the owner\u0027s request on 2026-10-23.",
+                       "Owner reported no separate business bank account on 2026-10-23.",
+                       "Owner confirmed on 2026-10-23: launch throughout Canada with CAD subscriptions and registration payments; no staged provinces/referral waitlists and no artificial release deadline.",
+                       "Owner confirmed 2026-10-23: no other self-employed business revenue; GST/HST not yet applied for, intends to apply within a week and requests May 1, 2026 (first business expense). Requested date is not CRA-approved.",
+                       "Owner confirmed 2026-10-23: personal banking is with CIBC and is open to another business provider if worthwhile.",
+                       "Owner reported 2026-10-23: existing CIBC personal chequing is free with unlimited transactions; expects business income through Stripe and prefers avoiding an unnecessary new account.",
+                       "Owner requested 2026-10-23: a place for Stripe revenue, business expenses with saved receipts, useful reports and accountant-ready records at tax time. Included as Phase 1B in this project.",
+                       "Owner confirmed 2026-10-23: fewer than 50 business receipts accumulated since May 1; fewer than ten new business expenses per month expected.",
+                       "Owner decided 2026-10-23: build a small custom private bookkeeping tool and run it as a separate parallel project; earlier Wave/QuickBooks selection strategy superseded."
+                   ],
+    "phases":  [
+                   {
+                       "id":  "0",
+                       "title":  "Discovery and decisions",
+                       "stages":  [
+                                      {
+                                          "id":  "0.1",
+                                          "title":  "Project charter, PM brief and initial web review",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-21",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Project plan",
+                                                               "path":  "REVENUE_ACCOUNTING_READINESS_PLAN.md"
+                                                           }
+                                                       ],
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.2",
+                                          "title":  "Phase/stage index and evidence-backed completion tracking",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Progress register",
+                                                               "path":  "REVENUE_ACCOUNTING_PROGRESS.json"
+                                                           },
+                                                           {
+                                                               "label":  "Review artifact",
+                                                               "path":  "REVENUE_ACCOUNTING_REVIEW.html#index"
+                                                           }
+                                                       ],
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.3",
+                                          "title":  "Repository billing, currency and tax gap audit",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Repository findings",
+                                                               "path":  "REVENUE_ACCOUNTING_DISCOVERY.md#3-repository-audit"
+                                                           }
+                                                       ],
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.4",
+                                          "title":  "Read-only live and sandbox Stripe configuration inventory",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Live evidence",
+                                                               "path":  "revenue-accounting-evidence/stripe-live-2026-10-23.json"
+                                                           },
+                                                           {
+                                                               "label":  "Sandbox evidence",
+                                                               "path":  "revenue-accounting-evidence/stripe-sandbox-2026-10-23.json"
+                                                           }
+                                                       ],
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.5",
+                                          "title":  "Confirm current GST/HST facts and other proprietor taxable activities",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "owner":  "Owner + accountant",
+                                          "note":  "Owner-reported current facts confirmed: no other self-employed business revenue, no GST/HST application yet, intended application within a week and requested May 1 expense date. Actual accepted registration date/conclusions remain stages 0.12 and 1.3.",
+                                          "scope":  "launch",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Owner facts and effective-date review",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md#3-verified-facts-directions-and-unresolved-items"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "0.6",
+                                          "title":  "Prepare focused Canadian accountant/tax briefing",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canadian review brief",
+                                                               "path":  "REVENUE_ACCOUNTING_CANADA_ROLLOUT.md#5-focused-accountant--legal--stripe-package"
+                                                           },
+                                                           {
+                                                               "label":  "Focused current engagement and decisions",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md#8-focused-professional-requests--drafts-only"
+                                                           }
+                                                       ],
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.7",
+                                          "title":  "Prepare Canadian Connect capability questions",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Current Canadian provider questions",
+                                                               "path":  "REVENUE_ACCOUNTING_CANADA_ROLLOUT.md#5-focused-accountant--legal--stripe-package"
+                                                           },
+                                                           {
+                                                               "label":  "Current Stripe configuration questions",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md#8-focused-professional-requests--drafts-only"
+                                                           }
+                                                       ],
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.8",
+                                          "title":  "Arrange focused Canadian tax/terms advice and practical finance ownership",
+                                          "status":  "needs_input",
+                                          "kind":  "work",
+                                          "owner":  "Owner",
+                                          "note":  "Canadian supplies, registration payments and relevant terms only; no U.S. professional engagement is required for launch.",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.9",
+                                          "title":  "Confirm suitable CAD payout/banking and refund funding",
+                                          "status":  "needs_input",
+                                          "kind":  "work",
+                                          "owner":  "Owner + accountant + Stripe",
+                                          "note":  "Owner reports free unlimited CIBC personal chequing and Stripe-only business receipts. CIBC Canadian terms expressly prohibit personal account business use, including sole proprietorships. Stripe proprietor-name eligibility is separate. Choose a permitted CAD payout arrangement; funding and reconciliation still open.",
+                                          "scope":  "launch",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "CIBC personal-account restriction versus Stripe and accounting requirements",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md#5-minimal-cad-banking-recommendation"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "0.10",
+                                          "title":  "Agree source-data and accountant handoff for the accounting path",
+                                          "status":  "in_progress",
+                                          "kind":  "work",
+                                          "owner":  "Engineering + accountant",
+                                          "note":  "The former custom project stopped and was archived after B2.5. Source IDs and seller/tax/fee/refund/payout mapping remain unaccepted; choose a replacement owner and path for the A+B accounting proof.",
+                                          "scope":  "launch",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Prepared comparison and example proof; selection/real results open",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md"
+                                                           },
+                                                           {
+                                                               "label":  "Current bookkeeping requirements and shortlist",
+                                                               "path":  "../archive/REVENUE_ACCOUNTING_BOOKKEEPING_PLAN.md"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "0.11",
+                                          "title":  "Confirm existing CAD offer, fee economics and operating budget",
+                                          "status":  "in_progress",
+                                          "kind":  "work",
+                                          "owner":  "Owner + finance",
+                                          "note":  "Canonical rates/commitments preserved; older economics table drift identified. Actual configuration, tax/cost margin, commercial riders and budget remain open.",
+                                          "scope":  "launch",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Prepared comparison and example proof; selection/real results open",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "0.12",
+                                          "title":  "Receive Canadian tax/fee/terms and Connect capability determinations",
+                                          "status":  "needs_input",
+                                          "kind":  "work",
+                                          "owner":  "Accountant + counsel + Stripe",
+                                          "note":  "Complete all 13 provincial/territorial rows for actual supplies; no staged province rollout. Research is separate from determinations.",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.13",
+                                          "title":  "Lock Canadian subscriptions-plus-registrations build and schedule",
+                                          "status":  "planned",
+                                          "kind":  "gate",
+                                          "owner":  "Owner + engineering",
+                                          "note":  "First build sequence drafted; actual decisions and resourced schedule still open. Both A+B required.",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "0.14",
+                                          "title":  "Record nationwide CAD subscriptions AND registrations launch scope",
+                                          "scope":  "launch",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Owner scope and launch gates",
+                                                               "path":  "REVENUE_ACCOUNTING_READINESS_PLAN.md"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "0.15",
+                                          "title":  "Prepare Canadian rollout worksheet and low-friction signup approach",
+                                          "scope":  "launch",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "13-jurisdiction research and signup design",
+                                                               "path":  "REVENUE_ACCOUNTING_CANADA_ROLLOUT.md"
+                                                           }
+                                                       ],
+                                          "note":  "Preparation complete; tax/legal determinations and runtime implementation remain open."
+                                      },
+                                      {
+                                          "id":  "0.16",
+                                          "title":  "Prepare supplier, tax/fee and money-flow responsibility map",
+                                          "scope":  "launch",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Prepared deliverable",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md#2-supplier-collector-and-responsibility-map"
+                                                           }
+                                                       ],
+                                          "note":  "Preparation only; actual selections, professional conclusions and implementation remain separate."
+                                      },
+                                      {
+                                          "id":  "0.17",
+                                          "title":  "Prepare and verify synthetic financial reconciliation examples",
+                                          "scope":  "launch",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Prepared deliverable",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_FIXTURES.csv"
+                                                           }
+                                                       ],
+                                          "note":  "Preparation only; actual selections, professional conclusions and implementation remain separate."
+                                      },
+                                      {
+                                          "id":  "0.18",
+                                          "title":  "Compare practical CAD banking and bookkeeping approaches",
+                                          "scope":  "launch",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Prepared deliverable",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md#5-minimal-cad-banking-recommendation"
+                                                           }
+                                                       ],
+                                          "note":  "Preparation only; actual selections, professional conclusions and implementation remain separate."
+                                      },
+                                      {
+                                          "id":  "0.19",
+                                          "title":  "Prepare decision-based first build handoff and response worksheets",
+                                          "scope":  "launch",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Prepared deliverable",
+                                                               "path":  "REVENUE_ACCOUNTING_PHASE0_REVIEW.md#9-first-implementation-package--draft-sequence"
+                                                           }
+                                                       ],
+                                          "note":  "Preparation only; actual selections, professional conclusions and implementation remain separate."
+                                      },
+                                      {
+                                          "id":  "0.20",
+                                          "title":  "Scope our own bookkeeping, receipts, reporting and accountant handoff",
+                                          "scope":  "launch",
+                                          "status":  "done",
+                                          "kind":  "work",
+                                          "completedOn":  "2026-10-23",
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Own bookkeeping workstream and acceptance criteria",
+                                                               "path":  "../archive/REVENUE_ACCOUNTING_BOOKKEEPING_PLAN.md"
+                                                           },
+                                                           {
+                                                               "label":  "Bookkeeping PM brief",
+                                                               "path":  "../archive/REVENUE_ACCOUNTING_BOOKKEEPING_PM_BRIEF.md"
+                                                           }
+                                                       ],
+                                          "note":  "Scope work and the custom-build decision were completed before the owner stopped and archived that project on 2026-10-23. The archived tracker records partial delivery; the B3/B4 accounting gates remain open."
+                                      }
+                                  ],
+                       "tag":  "Current launch: discovery",
+                       "effort":  "3-5 focused engineering days",
+                       "elapsed":  "External reviews/registrations tracked separately",
+                       "items":  [
+                                     "Confirm Canada-wide subscriptions AND registration scope.",
+                                     "Complete the focused 13-jurisdiction supply/registration review.",
+                                     "Resolve Canadian fee, terms and Connect responsibilities.",
+                                     "Confirm CAD banking, existing offers and simple bookkeeping."
+                                 ],
+                       "dependency":  "Owner, Canadian tax/terms advice, actual registrations and Stripe capability responses.",
+                       "exit":  "A reviewable Canadian model and resourced A+B build; no province waitlists or U.S. prerequisites.",
+                       "open":  true
+                   },
+                   {
+                       "id":  "1",
+                       "title":  "Canadian CAD financial foundation",
+                       "stages":  [
+                                      {
+                                          "id":  "1.1",
+                                          "title":  "Canadian customer-location, CAD quote and billing-party design",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "1.2",
+                                          "title":  "Validate existing CAD catalog and explicit price tax behaviour",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "1.3",
+                                          "title":  "Canadian tax/location evidence and actual required registrations",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering + accountant",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "1.4",
+                                          "title":  "Reliable source records, exports and recovery without a second GL",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering + bookkeeper",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "1.5",
+                                          "title":  "Agree source-data and accountant handoff for the accounting path",
+                                          "status":  "planned",
+                                          "kind":  "gate",
+                                          "owner":  "Engineering + finance",
+                                          "scope":  "launch",
+                                          "note":  "The former custom project stopped and was archived after B2.5. Revenue source semantics remain unaccepted; assign a replacement accounting path and establish the reviewed handoff before A+B."
+                                      },
+                                      {
+                                          "id":  "1.6",
+                                          "title":  "Linked: custom bookkeeping design and source handoff",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "work",
+                                          "owner":  "Owner + accountant + engineering",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B0.3, B0.4, B0.5 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B0.3",
+                                                                                 "B0.4",
+                                                                                 "B0.5"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "1.7",
+                                          "title":  "Linked: private expense/receipt core",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + accountant + engineering",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B1.1, B1.2, B1.3, B1.4, B1.5 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B1.1",
+                                                                                 "B1.2",
+                                                                                 "B1.3",
+                                                                                 "B1.4",
+                                                                                 "B1.5"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "1.8",
+                                          "title":  "Bookkeeping: Backfill business expenses and attached receipts from May 1",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + accountant + engineering",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B2.4 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B2.4"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "1.9",
+                                          "title":  "Bookkeeping: Prove subscription Stripe import and payout reconciliation",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + accountant + engineering",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B3.1, B3.2 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B3.1",
+                                                                                 "B3.2"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "1.10",
+                                          "title":  "Bookkeeping: Prove Connect platform-fee, tax, cost and refund bookkeeping",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + accountant + engineering",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B3.3, B3.4 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B3.3",
+                                                                                 "B3.4"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "1.11",
+                                          "title":  "Bookkeeping: Produce reports and accountant-ready transaction/receipt package",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + accountant + engineering",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B2.1, B2.2, B4.2 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B2.1",
+                                                                                 "B2.2",
+                                                                                 "B4.2"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "1.12",
+                                          "title":  "Bookkeeping: Verify receipt backup, controls and owner walkthrough",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + bookkeeper",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B1.5, B2.4, B4.1 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B1.5",
+                                                                                 "B2.4",
+                                                                                 "B4.1"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      },
+                                      {
+                                          "id":  "1.13",
+                                          "title":  "Bookkeeping: Gate: own bookkeeping workflow ready for A+B launch",
+                                          "scope":  "external",
+                                          "status":  "external",
+                                          "kind":  "gate",
+                                          "owner":  "Owner + accountant + engineering",
+                                          "workstream":  "1B",
+                                          "note":  "Owner stopped and archived the linked bookkeeping project on 2026-10-23 before completion. Archived stages B3.5 preserve their last recorded status; this historical row is excluded from revenue delivery counts. The accounting dependency remains unmet and required for A+B.",
+                                          "linkedProject":  {
+                                                                "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                                                                "stageIds":  [
+                                                                                 "B3.5"
+                                                                             ]
+                                                            },
+                                          "evidence":  [
+                                                           {
+                                                               "label":  "Canonical bookkeeping stage tracker",
+                                                               "path":  "../archive/BOOKKEEPING_REVIEW.html#index"
+                                                           }
+                                                       ]
+                                      }
+                                  ],
+                       "tag":  "Current launch: shared foundation",
+                       "effort":  "8-12 engineering days; custom bookkeeping estimated separately",
+                       "elapsed":  "Former parallel bookkeeping project stopped/archived incomplete; replacement accounting delivery is unassigned",
+                       "items":  [
+                                     "Validate the existing CAD catalog and tax behaviour.",
+                                     "Collect real customer location without IP/province admission blocks.",
+                                     "Configure actual required tax registrations and reliable source records.",
+                                     "Prove exports, deduplication/recovery and simple bookkeeping.",
+                                     "Supply reviewed accounting handoff and evidence for the owner-selected path; no replacement path is assigned."
+                                 ],
+                       "dependency":  "Canadian supply/location conclusions, effective registrations and a permitted CAD payout arrangement. The former bookkeeping project is archived incomplete; accepted imports still need an owner and delivery path.",
+                       "exit":  "Canadian/CAD payment-source foundation ready; A+B still requires an accepted accounting handoff."
+                   },
+                   {
+                       "id":  "2",
+                       "title":  "Nationwide Canadian subscriptions",
+                       "stages":  [
+                                      {
+                                          "id":  "2.1",
+                                          "title":  "Canada-wide CAD organization/coach checkout and normal signup",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "2.2",
+                                          "title":  "Renewals, saved cards, future choices and plan moves",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "2.3",
+                                          "title":  "Marketing, pricing, invoices, emails and help consistency",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Product + marketing",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "2.4",
+                                          "title":  "Money, tax, failure and replay verification",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering + finance",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "2.5",
+                                          "title":  "Owner browser walkthrough and support readiness",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Owner",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "2.6",
+                                          "title":  "Gate A: Canadian subscription evidence; launch also requires Gate B",
+                                          "status":  "planned",
+                                          "kind":  "gate",
+                                          "owner":  "Owner + finance + engineering",
+                                          "scope":  "launch",
+                                          "note":  "Requires the accepted accounting handoff historically tracked as bookkeeping B3.5; the linked project stopped before satisfying it, so this remains unmet alongside other launch dependencies."
+                                      },
+                                      {
+                                          "id":  "2.7",
+                                          "title":  "Future U.S./USD software market and currency expansion",
+                                          "scope":  "expansion",
+                                          "status":  "deferred",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + product + advisors",
+                                          "note":  "Retain future stable USD price direction; no U.S. or USD setup is required for Canadian launch."
+                                      }
+                                  ],
+                       "tag":  "Current launch: Gate A",
+                       "effort":  "8-12 focused engineering days",
+                       "elapsed":  "A is a milestone; public launch also requires B",
+                       "items":  [
+                                     "Nationwide Canadian organization/coach subscription checkout.",
+                                     "Renewals, trials/comps, saved cards and plan moves preserve promises.",
+                                     "CAD marketing, invoices, help and mandatory-fee clarity agree.",
+                                     "Money/tax/recovery verification and owner walkthrough."
+                                 ],
+                       "dependency":  "Shared foundation and Canadian terms/registration readiness; US/USD stages remain deferred.",
+                       "exit":  "Gate A evidence completed across intended Canadian geography, ready to combine with Gate B."
+                   },
+                   {
+                       "id":  "3",
+                       "title":  "Canada-wide registration payments",
+                       "stages":  [
+                                      {
+                                          "id":  "3.1",
+                                          "title":  "Canadian fee supply, legal posture and provider capability confirmation",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Accountant + counsel + Stripe",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "3.2",
+                                          "title":  "Club Stage 12a: account and event foundation",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "3.3",
+                                          "title":  "Club Stage 12b: house-league payment integration",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "3.4",
+                                          "title":  "Club Stage 12c: tournament payment integration",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "3.5",
+                                          "title":  "Registration tax, fee tax, documents and remittance funding",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering + finance",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "3.6",
+                                          "title":  "Stage 12d: refunds, disputes, restrictions and recovery",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering + finance",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "3.7",
+                                          "title":  "Organizer/platform books, payouts and owner verification",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Finance + owner",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "3.8",
+                                          "title":  "Gate B: national registration-payment evidence and coordinated A+B launch",
+                                          "status":  "planned",
+                                          "kind":  "gate",
+                                          "owner":  "Owner + engineering + advisors",
+                                          "scope":  "launch",
+                                          "note":  "Requires the accepted accounting handoff historically tracked as bookkeeping B3.5; the linked project stopped before satisfying it, so this remains unmet alongside other launch dependencies."
+                                      }
+                                  ],
+                       "tag":  "Current launch: Gate B",
+                       "effort":  "20-35 focused engineering days",
+                       "elapsed":  "Coordinate with Club Stage 12; no fixed launch date",
+                       "items":  [
+                                     "Canadian organizer-owned Connect onboarding and direct charges.",
+                                     "House-league and tournament registration integration.",
+                                     "Registration tax, platform-fee tax, documents and remittance funding.",
+                                     "Partial/offline payments, refunds, disputes and payout reconciliation.",
+                                     "Owner verification and coordinated national A+B launch."
+                                 ],
+                       "dependency":  "Actual Canadian account capabilities, fee/legal/tax allocation, refund funding and wider product-release dependencies.",
+                       "exit":  "Both gates A and B proven before nationwide paid launch; no province-by-province rollout."
+                   },
+                   {
+                       "id":  "4",
+                       "title":  "Future family and fan subscriptions",
+                       "stages":  [
+                                      {
+                                          "id":  "4.1",
+                                          "title":  "Define adult purchaser, household ownership and benefits",
+                                          "status":  "deferred",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + product",
+                                          "scope":  "expansion",
+                                          "note":  "Future personal product, outside current Canadian launch."
+                                      },
+                                      {
+                                          "id":  "4.2",
+                                          "title":  "Personal CAD/USD product and consumer billing rules",
+                                          "status":  "deferred",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering + advisors",
+                                          "scope":  "expansion",
+                                          "note":  "Future personal product, outside current Canadian launch."
+                                      },
+                                      {
+                                          "id":  "4.3",
+                                          "title":  "Entitlement overlap, cancellation and reconciliation checks",
+                                          "status":  "deferred",
+                                          "kind":  "stub",
+                                          "owner":  "Engineering + finance",
+                                          "scope":  "expansion",
+                                          "note":  "Future personal product, outside current Canadian launch."
+                                      },
+                                      {
+                                          "id":  "4.4",
+                                          "title":  "Gate C: personal subscription readiness",
+                                          "status":  "deferred",
+                                          "kind":  "gate",
+                                          "owner":  "Owner + product + advisors",
+                                          "scope":  "expansion",
+                                          "note":  "Future personal product, outside current Canadian launch."
+                                      }
+                                  ],
+                       "tag":  "Deferred expansion",
+                       "effort":  "Not scheduled for launch",
+                       "elapsed":  "Future personal product",
+                       "items":  [
+                                     "Define premium family/fan benefits and adult household ownership.",
+                                     "Scope its product, consumer billing and entitlements separately."
+                                 ],
+                       "dependency":  "A future product decision after the current Canadian launch.",
+                       "exit":  "No current-launch prerequisite; stages remain deferred and unticked."
+                   },
+                   {
+                       "id":  "5",
+                       "title":  "Operations and incorporation preparation",
+                       "stages":  [
+                                      {
+                                          "id":  "5.1",
+                                          "title":  "First full month: reconciliation and financial close",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Bookkeeper + accountant",
+                                          "scope":  "launch",
+                                          "note":  "Perform after the first operating month and retain shared evidence; the former bookkeeping B4.3 close was not completed."
+                                      },
+                                      {
+                                          "id":  "5.2",
+                                          "title":  "Prove filing/remittance ownership and exception handling",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Finance",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "5.3",
+                                          "title":  "Review real margin, provider cost and owner time",
+                                          "status":  "planned",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + finance",
+                                          "scope":  "launch"
+                                      },
+                                      {
+                                          "id":  "5.4",
+                                          "title":  "Prepare Gate D corporation migration runbook and future handoff",
+                                          "status":  "deferred",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + accountant + Stripe",
+                                          "note":  "Future entity transition; no corporation setup is required for the sole-proprietor launch.",
+                                          "scope":  "expansion"
+                                      },
+                                      {
+                                          "id":  "5.5",
+                                          "title":  "Advanced accounting connector/automation if volume justifies it",
+                                          "scope":  "expansion",
+                                          "status":  "deferred",
+                                          "kind":  "stub",
+                                          "owner":  "Owner + finance",
+                                          "note":  "Simple accurate Canadian bookkeeping is sufficient initially; source records and reconciliation are still required."
+                                      }
+                                  ],
+                       "tag":  "Current operations; future entity work deferred",
+                       "effort":  "First full month and recurring review",
+                       "elapsed":  "Corporation execution has its own future scope",
+                       "items":  [
+                                     "Close the first full operating month and reconcile organizer/platform money.",
+                                     "Prove filing/remittance owners and exception handling.",
+                                     "Review actual margin, cost and owner effort.",
+                                     "Defer corporation execution and advanced accounting automation."
+                                 ],
+                       "dependency":  "Launched revenue streams and actual operating records.",
+                       "exit":  "Repeatable Canadian finance operations; future expansion is not counted as unfinished launch work."
+                   }
+               ],
+    "scope":  {
+                  "market":  "All Canadian provinces and territories",
+                  "currency":  "CAD",
+                  "subscriptions":  true,
+                  "registrationPayments":  true,
+                  "provinceWaitlists":  false,
+                  "requiresGates":  [
+                                        "A",
+                                        "B"
+                                    ],
+                  "deferred":  [
+                                   "U.S. paid software and USD",
+                                   "Premium family/fan subscriptions",
+                                   "Corporation execution",
+                                   "Unnecessary custom accounting automation"
+                               ],
+                  "ownBookkeeping":  true
+              },
+    "deferredDecisionIds":  [
+                                "D03",
+                                "D04",
+                                "D19",
+                                "D21",
+                                "D25"
+                            ],
+    "linkedProjects":  [
+                           {
+                               "project":  "fieldlogichq-internal-bookkeeping",
+                               "progress":  "../archive/BOOKKEEPING_PROGRESS.json",
+                               "review":  "../archive/BOOKKEEPING_REVIEW.html#index",
+                               "plan":  "../archive/REVENUE_ACCOUNTING_BOOKKEEPING_PLAN.md",
+                               "status":  "stopped_by_owner",
+                               "closedOn":  "2026-10-23",
+                               "remainingDependency":  "B3.5 accounting acceptance and B4 readiness remain incomplete; A+B is gated until a replacement owner and delivery path are assigned."
+                           }
+                       ]
+}

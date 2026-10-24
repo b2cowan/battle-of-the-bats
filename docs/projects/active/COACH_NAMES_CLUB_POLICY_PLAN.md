@@ -37,7 +37,7 @@ Role words: head coach, assistant coach, and manager / treasurer / helper (all f
 the shelf. 5. The club's route and the Public site row. 6. The coach's row. 7. The notice. 8. The tryout line (after A7).
 9. Help via `/docs`. 10. Walk, as its own Artifact, each step naming its role.
 
-**Status (2026-10-23):** steps 1-10 BUILT on `dev`, UNCOMMITTED; A7 ruled yes. Migration 352 applied to DEV only. Words settled in `COACH_NAMES_CLUB_POLICY_COPY.md`. Walk §363: https://claude.ai/artifact/FGyYGQgPs7P6ty15JJdfCK (Part E needs an admin and a team manager the rep-only fixture lacks: smallest addition proposed, not seeded). `/review`, `/simplify`, commit and prod apply of 352 owed.
+**Status (2026-10-23):** steps 1-10 BUILT on `dev`, committed `509119985`; A7 ruled yes. Migration 352 applied to DEV only. Words settled in `COACH_NAMES_CLUB_POLICY_COPY.md`. Walk §363 ✅ PASSED 40/40 (owner, 2026-10-23): https://claude.ai/artifact/FGyYGQgPs7P6ty15JJdfCK. Prod apply of 352 owed before the code ships.
 
 ## Out of scope
 

@@ -1,0 +1,236 @@
+<title>Joined FL, Gap Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&family=IBM+Plex+Sans:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house review document (cool grey chrome, Plex) holding three specimens side by side in every place.
+   Specimens use fixed product values (paper, ink, olive) and never follow this page's theme. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --info:#1D4A6E; --ask:#8A5A00;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --info:#8FC2E7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --info:#8FC2E7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 120px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em}
+.doc p,.doc li{max-width:78ch}
+.lede{font-size:17px}
+.muted{color:var(--muted)}
+.tight{margin:4px 0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+@media (max-width:600px){.top-in{padding:10px 16px}}
+.top-in h1{font-size:19px;margin:0}
+.top-in .st{font-size:13px;color:var(--muted)}
+.top-in nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.top-in nav a{font:600 13px/1 var(--f-doc);color:var(--ink);text-decoration:none;padding:0 10px;min-height:44px;display:inline-flex;align-items:center;border-radius:8px}
+.top-in nav a:hover{background:var(--surface)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:16px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict h3{margin:0 0 6px}
+/* the three-up: every place is drawn once per version, same size, same order */
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:10px 0}
+@media (max-width:1000px){.trio{grid-template-columns:1fr}}
+.trio>div{min-width:0}
+.vlab{display:flex;gap:8px;align-items:center;font:700 12px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px}
+.vlab.j{color:var(--muted)} .vlab.n{color:var(--info)} .vlab.s{color:var(--fix)}
+.vlab i{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;font-family:var(--f-doc)}
+.place{border-top:1px solid var(--line);margin-top:34px;padding-top:12px}
+.place h3{margin:0 0 4px;font-size:18px}
+.place h3 .no{font:600 12px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.place .sub{margin:0 0 8px;font-size:14px;color:var(--muted)}
+.box{border-radius:12px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%}
+.cap{font-size:13px;color:var(--muted);margin:6px 0 0}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.row figure{margin:0;display:flex;flex-direction:column;gap:5px;align-items:center;font:600 11px/1.25 var(--f-mono);color:var(--muted);text-align:center}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
+.hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}
+@media (max-width:1000px){.hero{grid-template-columns:1fr}}
+.hero .card{display:flex;flex-direction:column;gap:14px}
+.hero .big{background:#57651E;border-radius:14px;display:grid;place-items:center;aspect-ratio:16/10;max-width:100%}
+.hero .big svg{width:46%;height:auto}
+.hero .lock{background:#F8F4ED;border-radius:10px;padding:16px 18px}
+.chg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.chg .card h4{margin:0 0 4px;font-size:15px}
+/* specimens */
+.sp{--pp:#F8F4ED;--pi:#241E15;--po:#57651E;
+  background:var(--pp);color:var(--pi);font:400 15px/1.5 'Inter',system-ui,sans-serif}
+.sp.dk{--pp:#0A0A0A;--pi:#F1F5F9;--po:#D9F99D}
+.sp *{box-sizing:border-box}
+.lockrow{display:flex;flex-direction:column;gap:0}
+.lockrow>div{padding:16px 18px;display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
+.wm{display:inline-flex;align-items:center;gap:.42em;white-space:nowrap;line-height:1;color:var(--pi,#241E15)}
+.wm svg{flex:none;height:1.3em;width:1.3em}
+.wm .nm{font-family:'Inter',sans-serif;font-weight:700;letter-spacing:-.018em}
+.wm .hq{font-weight:500;color:var(--po,#57651E);letter-spacing:-.01em}
+.wm.dk .hq{color:#F1F5F9;opacity:.78}
+.chrome{width:100%;max-width:430px;padding:8px 8px 0;font:12px/1 'Segoe UI',system-ui,sans-serif}
+.chrome.l{background:#DEE1E6;color:#1F1F1F} .chrome.d{background:#1F2023;color:#E3E3E3}
+.chrome .tabsrow{display:flex;gap:2px;align-items:flex-end}
+.chrome .tb{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px 8px 0 0;width:150px;flex:none;white-space:nowrap;overflow:hidden}
+.chrome.l .tb.on{background:#fff} .chrome.d .tb.on{background:#35363A}
+.chrome .tb canvas{width:16px;height:16px;flex:none}
+.chrome .dot{width:16px;height:16px;border-radius:50%;flex:none}
+.chrome .addr{height:30px;margin:0 -8px;display:flex;align-items:center;padding:0 12px}
+.chrome.l .addr{background:#fff} .chrome.d .addr{background:#35363A}
+.chrome .addr i{flex:1;height:22px;border-radius:11px;font-style:normal;display:flex;align-items:center;padding:0 12px;opacity:.75}
+.chrome.l .addr i{background:#F1F3F4} .chrome.d .addr i{background:#28292C}
+.home{box-sizing:border-box;width:100%;max-width:390px;background:#4F5D57;padding:22px 14px;border-radius:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 6px;justify-items:center}
+.home .app{display:flex;flex-direction:column;align-items:center;gap:6px;font:500 11px/1.2 -apple-system,'Segoe UI',sans-serif;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);max-width:76px;text-align:center}
+.home .app span{max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home .ph{width:58px;height:58px;border-radius:13px}
+.home .ic{width:58px;height:58px;overflow:hidden;line-height:0}
+.home .ic.ios{border-radius:13px} .home .ic.circle{border-radius:50%}
+.crop{width:104px;height:104px;position:relative;overflow:hidden;line-height:0}
+.crop svg{width:100%;height:100%}
+.crop.circle{border-radius:50%} .crop.ios{border-radius:22.4%}
+.crop.safe::after{content:"";position:absolute;inset:10%;border:2px dashed #E0475C;border-radius:50%}
+.shade{box-sizing:border-box;width:100%;max-width:380px;background:#202124;color:#E8EAED;border-radius:16px;padding:10px 12px 14px;font:13px/1.35 'Segoe UI',Roboto,system-ui,sans-serif}
+.shade .sb{display:flex;align-items:center;gap:8px;height:24px;font-size:12.5px;padding:0 6px}
+.shade .sb .r{margin-left:auto;opacity:.8}
+.shade .nt{background:#303134;border-radius:14px;padding:12px 14px;margin-top:8px}
+.shade .nt .h{display:flex;align-items:center;gap:8px;font-size:12px;color:#BDC1C6}
+.shade .nt b{display:block;margin:6px 0 2px;font-size:14px;color:#fff}
+.shade .nt .row2{display:flex;gap:10px;align-items:center}
+.shade .nt .row2>div{min-width:0}
+.shade .nt .lg{margin-left:auto;width:36px;height:36px;border-radius:50%;overflow:hidden;line-height:0;flex:none}
+.shirt{width:150px;height:130px;border-radius:18px 18px 10px 10px;position:relative;display:grid;place-items:start center;padding-top:30px;line-height:0}
+.shirt::before{content:"";position:absolute;top:0;left:50%;width:46px;height:16px;border-radius:0 0 24px 24px;transform:translateX(-50%);background:rgba(0,0,0,.18)}
+.shirt svg{margin-left:50px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--info);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:6px}
+.ask .why{font-size:13.5px;color:var(--muted);margin:0}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:8px 10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 12px/1.5 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:56px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical;margin-top:6px}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);margin-top:20px}
+.paste .hd{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.paste textarea{min-height:130px;font:12.5px/1.45 var(--f-mono);background:var(--surface-2)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:44px;padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<header class="top"><div class="top-in">
+  <h1>Joined FL, gap options</h1><span class="st">The joined mark, with its F and L kept apart · drawn 2026-10-23 · asks open</span>
+  <nav aria-label="Sections"><a href="#places">In every place</a><a href="#asks">Asks</a></nav>
+</div></header>
+
+<main class="doc">
+  <h2>One question: should the F and the L touch?</h2>
+  <p class="lede">Today the F's middle arm runs straight into the L, so the two initials are one shape. This page draws three answers on the same olive tile, at the sizes the mark is actually used. The corners, the stroke weight, the colours and the placements are the same in all three. Only the gap between the F and the L changes. Nothing is built.</p>
+  <div class="hero" id="hero"></div>
+  <div class="verdict"><h3>What the drawings showed me</h3>
+    <p class="tight">I suggested the middle option before drawing any of this. Having drawn it, I would adjust that. The small gap is a clear improvement at large sizes, but it softens at 24 pixels, which is the notification badge. The fully separated version is the only one that still reads as an F beside an L at 16 and 24 pixels. It is also the widest, and it gives up the single-block silhouette. If you want the one-block look, choose the small gap and accept a soft notch at small sizes. If the small sizes matter most, choose separated. I would not keep the touching version: at 24 pixels it is a block with a hole in it.</p></div>
+
+  <h2 id="change">What changes, and nothing else</h2>
+  <div class="chg">
+    <div class="card"><h4>Joined, as it is</h4><p class="tight">The arm of the F ends inside the stem of the L. This is the refined mark from the previous drawing, unchanged.</p></div>
+    <div class="card"><h4>Small gap</h4><p class="tight">The F's arm is shortened by a little and stops short of the L. The gap is 3 parts in 64, about one pixel on a 20 pixel icon. The overall block is the same size as Joined.</p></div>
+    <div class="card"><h4>Separated</h4><p class="tight">The arm keeps its full length and the L moves right by 6, so the two letters are clearly apart. The mark is about 15% wider. At 16 pixels the gap is one pixel, because no smaller gap can be drawn.</p></div>
+  </div>
+
+  <h2 id="places">In every place, side by side</h2>
+  <p>Left to right: Joined, Small gap, Separated. The 16, 24 and 29 pixel pictures are rendered at that size and then enlarged, so you see real pixels.</p>
+  <div id="places-body"></div>
+
+  <h2 id="asks">Asks</h2>
+  <p>One checkbox per option, with a recommendation on each. Your ticks and notes build the paste-back block.</p>
+  <div id="asks-body"></div>
+  <div class="paste"><div class="hd"><b>Paste-back</b><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-d" id="pb-select" type="button">Select all</button><button class="btn-d pri" id="pb-copy" type="button">Copy</button></span></div>
+    <label for="pb-out" class="muted" style="display:block;margin-top:6px;font-size:13px">Paste this into the chat. It updates as you tick.</label>
+    <textarea id="pb-out" readonly></textarea></div>
+</main>
+
+<script>
+/* ════════ THE THREE MARKS (64-unit grid; the 16 px cuts sit on the 4-unit pixel grid) ════════ */
+// F with a middle arm of length a; L with its stem's left edge at x. Same corner radii as the refined mark.
+const F=a=>`M22 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H${20+a}a2 2 0 0 1 2 2V36a2 2 0 0 1-2 2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V22a10 10 0 0 1 10-10Z`;
+const L=x=>`M${x+3} 28H${x+7}a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H${x+19}a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H${x+3}a3 3 0 0 1-3-3V31a3 3 0 0 1 3-3Z`;
+const F16=a=>`M20 12H44a4 4 0 0 1 4 4V20a4 4 0 0 1-4 4H20V28H${20+a}V40H20V52H12V20a8 8 0 0 1 8-8Z`;
+const L16=x=>`M${x} 28H${x+8}a4 4 0 0 1 4 4V40H${x+20}a4 4 0 0 1 4 4V48a4 4 0 0 1-4 4H${x}Z`;
+const P={
+  j:'M22 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V22a10 10 0 0 1 10-10Z',
+  j16:'M20 12H44a4 4 0 0 1 4 4V20a4 4 0 0 1-4 4H20V28H36a4 4 0 0 1 4 4V40H48a4 4 0 0 1 4 4V48a4 4 0 0 1-4 4H28V40H20V52H12V20a8 8 0 0 1 8-8Z',
+  n:F(5)+L(30),  n16:F16(4)+L16(28),
+  s:F(8)+L(36),  s16:F16(8)+L16(32)
+};
+// the separated mark is wider, so it is recentred (x shift) in its tile
+const V={
+  j:{name:'Joined, as it is',cls:'j',main:'j',small:'j16',tx:0,txs:0},
+  n:{name:'Small gap',cls:'n',main:'n',small:'n16',tx:0,txs:0},
+  s:{name:'Separated',cls:'s',main:'s',small:'s16',tx:-3,txs:-4}
+};
+const OL='#57651E',PA='#F8F4ED';
+const svg=(inner,size,label,vb='0 0 64 64')=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${size}" height="${size}" ${label?`role="img" aria-label="${label}"`:'aria-hidden="true"'}>${inner}</svg>`;
+const glyph=(v,fill,small=false)=>`<path d="${P[small?V[v].small:V[v].main]}" transform="translate(${small?V[v].txs:V[v].tx} 0)" fill="${fill}"/>`;
+const tile=(v,size,small=false)=>svg(`<rect width="64" height="64" rx="12" fill="${OL}"/>${glyph(v,PA,small)}`,size,`${V[v].name} tile`);
+const square=(v,size)=>svg(`<rect width="64" height="64" fill="${OL}"/>${glyph(v,PA)}`,size,`${V[v].name} app icon`);
+const mask=(v,size)=>svg(`<rect width="64" height="64" fill="${OL}"/><g transform="translate(32 32) scale(.84) translate(-32 -32)">${glyph(v,PA)}</g>`,size,`${V[v].name} maskable icon`);
+const VB='6 6 52 52';
+const sil=(v,size,color='#fff',small=false)=>svg(glyph(v,color,small),size,`${V[v].name} one colour`,VB);
+const pageMark=(v,color)=>svg(glyph(v,color),0,'',VB).replace(' width="0" height="0"','');
+function wm(v,{size=17,dk=false}={}){
+  return `<span class="wm${dk?' dk':''}" style="font-size:${size}px" role="img" aria-label="FieldLogicHQ">${pageMark(v,dk?'#F1F5F9':OL)}<span class="nm">FieldLogic<span class="hq">HQ</span></span></span>`;
+}
+/* real pixels: render to an N-pixel canvas, then enlarge without smoothing */
+const queue=[];
+function px(s,n,scale,bg){const id='c'+Math.random().toString(36).slice(2,9);queue.push({id,s,n,bg});return `<canvas class="px" id="${id}" width="${n}" height="${n}" style="width:${n*scale}px;height:${n*scale}px" aria-label="Rendered at ${n} pixels"></canvas>`;}
+function flush(){while(queue.length){const {id,s,n,bg}=queue.shift();const c=document.getElementById(id);if(!c)continue;const x=c.getContext('2d');const im=new Image();im.onload=()=>{if(bg){x.fillStyle=bg;x.fillRect(0,0,n,n);}x.drawImage(im,0,0,n,n);};im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.replace(/width="\d+" height="\d+"/,`width="${n}" height="${n}"`));}}
+
+/* ════════ HERO ════════ */
+document.getElementById('hero').innerHTML=['j','n','s'].map(v=>`<div class="card"><p class="vlab ${V[v].cls}">${V[v].name}</p>
+  <div class="big">${svg(glyph(v,PA),200,`${V[v].name}, large`,VB)}</div>
+  <div class="lock sp">${wm(v,{size:26})}</div></div>`).join('');
+
+/* ════════ EVERY PLACE ════════ */
+const three=f=>`<div class="trio">${['j','n','s'].map(v=>`<div><p class="vlab ${V[v].cls}">${V[v].name}</p>${f(v)}</div>`).join('')}</div>`;
+const chrome=(v,mode)=>`<div class="box"><div class="chrome ${mode}"><div class="tabsrow"><div class="tb on">${px(tile(v,16,true),16,1)}<span>Pricing · FieldLogicHQ</span></div><div class="tb"><span class="dot" style="background:#4A7DE0"></span><span>Inbox</span></div></div><div class="addr"><i>fieldlogichq.ca/pricing</i></div></div></div>`;
+const PLACES=[
+ ['Large: 180 and 60 pixels','The app icon on a sign-in screen, and as it sits in a settings list.',v=>`<div class="row"><figure>${tile(v,180)}180</figure><figure>${tile(v,60)}60</figure></div>`],
+ ['Small, in real pixels: 29 and 16','Each is drawn at its true size, then the same pixels enlarged. The 16 pixel one is the browser-tab cut, so it has its own pixel grid.',v=>`<div class="row"><figure>${px(tile(v,29),29,1,'#E8EBEE')}29 ×1</figure><figure>${px(tile(v,29),29,4,'#E8EBEE')}29 ×4</figure><figure>${px(tile(v,16,true),16,1,'#E8EBEE')}16 ×1</figure><figure>${px(tile(v,16,true),16,5,'#E8EBEE')}16 ×5</figure></div>`],
+ ['The browser tab','Light and dark browser chrome, at true size.',v=>`<div style="display:grid;gap:8px">${chrome(v,'l')}${chrome(v,'d')}</div>`],
+ ['The phone home screen','An iPhone square on the top row, an Android circle below it, among other apps at true size. Then the crops.',v=>{
+   const n=['#C9CFCB','#4A7DE0','#E8453C','#F2B630','#1F8A4C','#7A4FD0'];
+   return `<div class="home"><div class="app"><div class="ph" style="background:${n[0]}"></div><span>Calendar</span></div><div class="app"><div class="ic ios">${square(v,58)}</div><span>FieldLogicHQ</span></div><div class="app"><div class="ph" style="background:${n[1]}"></div><span>Mail</span></div><div class="app"><div class="ph" style="background:${n[2]}"></div><span>Photos</span></div>
+   <div class="app"><div class="ph" style="background:${n[3]}"></div><span>Notes</span></div><div class="app"><div class="ph" style="background:${n[4]}"></div><span>Maps</span></div><div class="app"><div class="ic circle">${mask(v,58)}</div><span>FieldLogicHQ</span></div><div class="app"><div class="ph" style="background:${n[5]}"></div><span>Weather</span></div></div>
+   <div class="row" style="margin-top:12px"><figure><div class="crop ios">${square(v,104)}</div>iPhone</figure><figure><div class="crop safe">${mask(v,104)}</div>Safe zone</figure><figure><div class="crop circle">${mask(v,104)}</div>Circle</figure></div>`;}],
+ ['The notification','The status-bar badge is a white shape the phone tints, 24 pixels tall. This is the smallest place a single-colour mark appears.',v=>`<div class="shade"><div class="sb">${px(sil(v,16,'#fff',true),16,1)}<span>9:41</span><span class="r">82%</span></div>
+   <div class="nt"><div class="h">${px(sil(v,16,'#BDC1C6',true),16,1)}<span>FieldLogicHQ · now</span></div><div class="row2"><div><b>U13 game moved to 6:30 p.m. Saturday</b><span>Tap to see the schedule.</span></div><span class="lg">${square(v,36)}</span></div></div></div>
+   <div class="row" style="margin-top:10px"><figure><span style="background:#202124;padding:8px;border-radius:8px;line-height:0;display:inline-block">${px(sil(v,24,'#fff'),24,1)}</span>24 ×1</figure><figure><span style="background:#202124;padding:8px;border-radius:8px;line-height:0;display:inline-block">${px(sil(v,24,'#fff'),24,4)}</span>24 ×4</figure></div>`],
+ ['The name beside the mark','The lockup on warm paper and in Dark, at three sizes. The mark is one colour here.',v=>`<div class="box"><div class="lockrow sp"><div>${wm(v,{size:24})}${wm(v,{size:17})}${wm(v,{size:14})}</div></div><div class="lockrow sp dk"><div>${wm(v,{size:24,dk:true})}${wm(v,{size:17,dk:true})}${wm(v,{size:14,dk:true})}</div></div></div>`],
+ ['Stitched on a chest','One colour at 30 pixels. A gap thinner than a thread fills in, so this is the place to judge the small gap.',v=>`<div class="row" style="align-items:center"><span class="shirt" style="background:#2E3A33" role="img" aria-label="${V[v].name} stitched on a dark shirt">${sil(v,30,'#F8F4ED')}</span><span class="shirt" style="background:#ECE6DA" role="img" aria-label="${V[v].name} stitched on a light shirt">${sil(v,30,OL)}</span></div>`]
+];
+document.getElementById('places-body').innerHTML=PLACES.map((p,i)=>`<section class="place" id="p${i+1}"><h3><span class="no">${i+1}</span>${p[0]}</h3><p class="sub">${p[1]}</p>${three(p[2])}</section>`).join('');
+
+/* ════════ ASKS ════════ */
+const ASKS=[
+ {id:'ask-1',q:'Should the F and the L touch?',why:'The same corners, weight and colours. Only the gap differs. See the verdict at the top for my reasoning.',opts:[['Separated: the clearest at small sizes, a wider mark, no single-block silhouette',1],['Small gap: one block, a soft notch at 24 pixels and below'],['Joined, as it is'],['None yet: change something else (say what in the notes)']]},
+ {id:'ask-2',q:'If one of the gap versions: does the browser-tab cut keep its gap?',why:'At 16 pixels the gap is exactly one pixel, the smallest that can be drawn. The alternative keeps the earlier joined 16 pixel cut and uses the gap only from 24 pixels up.',opts:[['Keep the gap at 16 pixels, so one drawing rule holds at every size',1],['Use the joined cut at 16 pixels only']]},
+ {id:'ask-3',q:'Do the same carried-forward rules from the previous drawing still stand?',why:'Email as text, no lime in the page mark, one release with the marketing restyle, the new mark replacing ">" in the strips, a What’s-new line, the typewriter rules, and a name search before anything is printed. Nothing here changes them.',opts:[['Yes, unchanged',1],['Change a line (say which in the notes)']]}
+];
+document.getElementById('asks-body').innerHTML=ASKS.map((a,i)=>`<div class="ask" id="${a.id}"><h3><span class="no">Ask ${i+1}</span>${a.q}</h3><p class="why">${a.why}</p><div class="opts">${a.opts.map((o,j)=>`<label class="${o[1]?'rec':''}" for="${a.id}-o${j}"><input type="checkbox" id="${a.id}-o${j}" data-ask="${i}" data-opt="${j}">${String.fromCharCode(65+j)} · ${o[0]}</label>`).join('')}</div><label for="${a.id}-n" class="muted" style="font-size:13px">Notes on ask ${i+1}</label><textarea id="${a.id}-n" placeholder="Anything to add"></textarea></div>`).join('');
+function paste(){const L=['Joined FL gap options - answers'];ASKS.forEach((a,i)=>{const p=[...document.querySelectorAll(`input[data-ask="${i}"]:checked`)].map(x=>String.fromCharCode(65+ +x.dataset.opt));const n=document.getElementById(a.id+'-n').value.trim();L.push(`Ask ${i+1}: ${p.length?p.join(', '):'-'}${n?'  | notes: '+n.replace(/\s+/g,' '):''}`);});document.getElementById('pb-out').value=L.join('\n');}
+document.getElementById('asks-body').addEventListener('input',paste);document.getElementById('asks-body').addEventListener('change',paste);paste();
+document.getElementById('pb-select').addEventListener('click',()=>{const t=document.getElementById('pb-out');t.focus();t.select();});
+document.getElementById('pb-copy').addEventListener('click',async e=>{const t=document.getElementById('pb-out');try{await navigator.clipboard.writeText(t.value);e.target.textContent='Copied';setTimeout(()=>e.target.textContent='Copy',1600);}catch(err){t.focus();t.select();}});
+flush(); (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{flush();});
+</script>

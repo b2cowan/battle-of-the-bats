@@ -1,0 +1,7 @@
+case_id,scenario,currency,synthetic,customer_charge_cents,customer_refund_cents,registration_after_refund_cents,organizer_tax_after_refund_cents,platform_revenue_after_refund_cents,platform_tax_after_refund_cents,processor_cost_cents,processor_payer,organizer_net_cents,platform_net_cents,organizer_expected_cents,organizer_bank_paid_cents,organizer_payout_pending_cents,expected_result
+F01,subscription_same_period,CAD,true,11000,0,0,0,10000,1000,300,platform,0,10700,0,0,0,pass
+F02,registration_platform_pays_cost,CAD,true,11550,0,10000,1000,500,50,300,platform,11000,250,11000,11000,0,pass
+F03,registration_full_refund_fee_and_tax_returned_cost_retained,CAD,true,11550,11550,0,0,0,0,300,platform,0,-300,0,0,0,pass
+F04,registration_half_refund_fee_and_tax_halved_cost_retained,CAD,true,11550,5775,5000,500,250,25,300,platform,5500,-25,5500,5500,0,pass
+F05,wrong_payer_organizer_shortfall,CAD,true,11550,0,10000,1000,500,50,300,organizer,10700,550,11000,10700,0,expected_configuration_failure
+F06,registration_payout_pending,CAD,true,11550,0,10000,1000,500,50,300,platform,11000,250,11000,0,11000,pass

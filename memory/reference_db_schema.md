@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-23 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-24 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-23
+# DB Schema Reference — 2026-10-24
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -516,7 +516,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, type NOT NULL, value, ex
 - Indexes: idx_org_overrides_org, idx_org_overrides_org_active
 
 ### org_public_site_content
-id (uuid), org_id (uuid) → organizations.id NOT NULL, tagline, description, contact_email, social_instagram, social_facebook, social_x, social_website, show_upcoming_tournaments (boolean), show_archives_link (boolean), created_at, updated_at, home_section_order, home_sections_hidden, contacts (jsonb), documents (jsonb), questions (jsonb)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, tagline, description, contact_email, social_instagram, social_facebook, social_x, social_website, show_upcoming_tournaments (boolean), show_archives_link (boolean), created_at, updated_at, home_section_order, home_sections_hidden, contacts (jsonb), documents (jsonb), questions (jsonb), sponsors (jsonb)
 - Indexes: org_public_site_content_org_id_key
 
 ### organization_members
@@ -524,7 +524,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb)
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -776,6 +776,10 @@ rail NOT NULL, subject NOT NULL, window_started_at, attempts (integer)
 ### observability_cron_heartbeat
 job_name NOT NULL, last_run_at, rows_folded (bigint), rows_purged (bigint), status, error_detail
 
+### org_custom_domains
+id (uuid), org_id (uuid) → organizations.id NOT NULL, full_name NOT NULL, domain NOT NULL, prefix NOT NULL, status, host_status, host_branch, record1_name NOT NULL, record1_value NOT NULL, record2_name NOT NULL, record2_value NOT NULL, record2_host_target, last_checked_at, last_check (jsonb), waiting_since, connected_at, needs_attention_since, not_working_since, padlock_expires_at, live_email_sent_at, padlock_email_sent_at, padlock_reminder_sent_at, gave_up_email_sent_at, not_working_email_sent_at, created_by_user_id (uuid), created_at, updated_at
+- Indexes: org_custom_domains_domain_uidx, org_custom_domains_full_name_uidx, org_custom_domains_org_uidx, org_custom_domains_status_idx
+
 ### org_fiscal_year_reopenings
 id (uuid), fiscal_year_id (uuid) → org_fiscal_years.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, reopened_at, reopened_by (uuid), reason NOT NULL, was_closed_at NOT NULL, was_closed_by (uuid), was_closing_balance (numeric) NOT NULL, was_closing_snapshot (jsonb)
 - Indexes: org_fiscal_year_reopenings_by_idx, org_fiscal_year_reopenings_org_idx, org_fiscal_year_reopenings_was_by_idx, org_fiscal_year_reopenings_year_idx
@@ -884,7 +888,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **214 tables** across 10 modules.
+Total: **215 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -895,4 +899,4 @@ Total: **214 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 66 tables
+- Other: 67 tables

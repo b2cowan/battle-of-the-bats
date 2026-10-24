@@ -3,7 +3,11 @@
 > **Written 2026-10-23** at the close of the walk session. **Paste this into a new chat on `dev`.** It is a small **build**:
 > one behaviour, shipped **on its own, ahead of S1** (owner, 2026-10-23: "agreed"). The plan is `PUBLIC_FACE_WARM_PLAN.md`
 > ("Round 1 rulings", the follow-up row to Ask 5); the walk page is https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft.
-> **Model:** Sonnet can build this. Run `/review` before committing.
+> **Model: Sonnet, effort high.** Run `/review` before committing.
+> **Runs in parallel** with S1 (`PUBLIC_FACE_WARM_S1_BUILD_PROMPT.md`, the identity doc and a build check) and W
+> (`PUBLIC_FACE_WARM_W_DRAWING_PROMPT.md`, a drawing session). Neither touches the theme or sign-out, but the working
+> tree is shared, Club Tier has a build in flight, and S1 adds a line to the type ladder's comment in `app/globals.css`.
+> If you must edit that file, re-read it just before editing and stage explicit paths only.
 
 ## The ruling (owner, 2026-10-23, recorded as ruled; build exactly this)
 

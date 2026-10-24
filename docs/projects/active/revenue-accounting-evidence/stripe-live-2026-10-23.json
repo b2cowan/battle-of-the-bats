@@ -1,0 +1,318 @@
+{
+  "observedOn": "2026-10-23",
+  "environment": "live",
+  "source": "Stripe retrieve/list APIs",
+  "apiVersion": "2026-04-22.dahlia",
+  "limitations": [
+    "Configuration snapshot, not a tax opinion or production-environment variable audit.",
+    "No customers, payment history, tax IDs, bank details or customer-level subscription records requested.",
+    "A setting being configured does not prove app flows use it or registrations are legally sufficient."
+  ],
+  "sections": {
+    "account": {
+      "country": "CA",
+      "businessType": "individual",
+      "defaultCurrency": "cad",
+      "chargesEnabled": true,
+      "payoutsEnabled": true,
+      "detailsSubmitted": true,
+      "feePayer": null,
+      "paymentLossResponsibility": null
+    },
+    "prices": {
+      "complete": true,
+      "count": 14,
+      "items": [
+        {
+          "priceId": "price_1TlXPsCM7adId42DdwgOM9As",
+          "currency": "cad",
+          "unitAmount": 379000,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_Ul3WEwa5BOhrEc",
+          "productName": "FieldLogicHQ - Club · Association",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 379000,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TlXOyCM7adId42D8zH2P5O3",
+          "currency": "cad",
+          "unitAmount": 37900,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_Ul3WEwa5BOhrEc",
+          "productName": "FieldLogicHQ - Club · Association",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 37900,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TlXJpCM7adId42DiVq9qfFz",
+          "currency": "cad",
+          "unitAmount": 219000,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_Ucw8cgAY1JFs3d",
+          "productName": "FieldLogicHQ - Club",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 219000,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TlXJSCM7adId42DOL9H8XFH",
+          "currency": "cad",
+          "unitAmount": 21900,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_Ucw8cgAY1JFs3d",
+          "productName": "FieldLogicHQ - Club",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 21900,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgI0CM7adId42D4ty24bOU",
+          "currency": "cad",
+          "unitAmount": 19000,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_UcwAZeDrSRJVfV",
+          "productName": "FieldLogicHQ - Additional Rep Team",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 19000,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgHnCM7adId42D09Ft2CQJ",
+          "currency": "cad",
+          "unitAmount": 1900,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_UcwAZeDrSRJVfV",
+          "productName": "FieldLogicHQ - Additional Rep Team",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 1900,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgHQCM7adId42DoTW5b3LF",
+          "currency": "cad",
+          "unitAmount": 29000,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_Ucw9ahRfFruUWF",
+          "productName": "FieldLogicHQ - Coaches Portal Org Add-on",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 29000,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgHCCM7adId42DxlDZmwhY",
+          "currency": "cad",
+          "unitAmount": 2900,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_Ucw9ahRfFruUWF",
+          "productName": "FieldLogicHQ - Coaches Portal Org Add-on",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 2900,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgFlCM7adId42DImof0MyQ",
+          "currency": "cad",
+          "unitAmount": 89000,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_Ucw7bopFpYAUp6",
+          "productName": "FieldLogicHQ - League Plus",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 89000,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgFUCM7adId42DVnoNcVIw",
+          "currency": "cad",
+          "unitAmount": 8900,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_Ucw7bopFpYAUp6",
+          "productName": "FieldLogicHQ - League Plus",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 8900,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgFACM7adId42DBt2dZ1l0",
+          "currency": "cad",
+          "unitAmount": 39000,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_Ucw7mHmkJyqOeF",
+          "productName": "FieldLogicHQ - Tournament Plus",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 39000,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgEuCM7adId42DLlTeAYCH",
+          "currency": "cad",
+          "unitAmount": 3900,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_Ucw7mHmkJyqOeF",
+          "productName": "FieldLogicHQ - Tournament Plus",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 3900,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgEMCM7adId42DGpmX9UDp",
+          "currency": "cad",
+          "unitAmount": 29000,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "year",
+          "intervalCount": 1,
+          "productId": "prod_Ucw6K6LIIsLkQ8",
+          "productName": "FieldLogicHQ - Coaches Portal Premium",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 29000,
+              "taxBehavior": "unspecified"
+            }
+          }
+        },
+        {
+          "priceId": "price_1TdgDqCM7adId42DYg6lcN7d",
+          "currency": "cad",
+          "unitAmount": 2900,
+          "taxBehavior": "unspecified",
+          "recurringInterval": "month",
+          "intervalCount": 1,
+          "productId": "prod_Ucw6K6LIIsLkQ8",
+          "productName": "FieldLogicHQ - Coaches Portal Premium",
+          "productTaxCode": "txcd_10103001",
+          "currencyOptions": {
+            "cad": {
+              "unitAmount": 2900,
+              "taxBehavior": "unspecified"
+            }
+          }
+        }
+      ]
+    },
+    "taxSettings": {
+      "status": "active",
+      "defaultTaxCode": "txcd_10103001",
+      "defaultTaxBehavior": "inferred_by_currency",
+      "originCountry": "CA",
+      "missingFields": []
+    },
+    "taxRegistrations": {
+      "complete": true,
+      "count": 0,
+      "items": []
+    },
+    "webhooks": {
+      "complete": true,
+      "items": [
+        {
+          "destination": "https://www.fieldlogichq.ca/api/billing/webhook",
+          "status": "enabled",
+          "apiVersion": "2026-04-22.dahlia",
+          "enabledEvents": [
+            "checkout.session.completed",
+            "customer.subscription.created",
+            "customer.subscription.deleted",
+            "customer.subscription.updated",
+            "customer.subscription.trial_will_end",
+            "invoice.payment_failed",
+            "invoice.payment_succeeded"
+          ]
+        }
+      ]
+    },
+    "portal": {
+      "complete": true,
+      "items": [
+        {
+          "active": true,
+          "isDefault": true,
+          "subscriptionUpdateEnabled": false,
+          "subscriptionCancelEnabled": false,
+          "invoiceHistoryEnabled": true,
+          "customerUpdateEnabled": true,
+          "customerAllowedUpdates": [
+            "name",
+            "address",
+            "phone",
+            "tax_id"
+          ]
+        }
+      ]
+    }
+  },
+  "errors": []
+}
