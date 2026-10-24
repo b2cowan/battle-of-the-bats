@@ -123,6 +123,31 @@ would `miltongirlssoftball.ca` with prefix `www`. It does **not** test the apex,
 (AWS: up to 48 h, usually minutes); the apex; the ceiling (§5). The first real club connection is the place to time the
 third-party path — or a second proof on a domain held elsewhere, if the owner wants it before the build.
 
+### The safeguard proof: PASSED (2026-10-23, build session, owner ran it on `b2cowan.com`)
+
+Question: does Amplify serve and keep verifying a club whose `www` record points at **our own name** (`sites.fieldlogichq.ca`,
+a CNAME to the app's CloudFront target) instead of at Amplify's own target?
+
+| Step | Result |
+|---|---|
+| `sites.fieldlogichq.ca` CNAME → `d20q9j9hp0ol2g.cloudfront.net` created in our zone | accepted |
+| `b2cowan.com`, prefix `club` → branch `dev` attached | `CREATING`, then `AVAILABLE`, `verified: true` |
+| `club.b2cowan.com` repointed (by hand) to `sites.fieldlogichq.ca` | `nslookup`: club → sites → CloudFront; `HTTP/1.1 200` under strict TLS, HSTS two years |
+| About 10 minutes later | `domainStatus` still `AVAILABLE`, `subDomains[0].verified` still `true`, page still 200 |
+
+**Consequence:** record 2 is `sites.fieldlogichq.ca` (the code's default; `CLUB_DOMAINS_SITE_TARGET` overrides). `sites.fieldlogichq.ca`
+stays in our zone permanently; it is now part of the product and must never be deleted while any club is connected.
+Also learned: (1) Amplify's own target for a club's `www` is a **different distribution** per domain
+(`d1z2fjv8silkl7.cloudfront.net`, not the app's `d20q9j9hp0ol2g…`), and both serve, so the app accepts either as record 2 "Found";
+(2) the real strings: `certificateVerificationDNSRecord` = `"_525aac…b2cowan.com. CNAME _c24…zxstmrtdtf.acm-validations.aws."`,
+a subdomain `dnsRecord` = `"club CNAME d1z2fjv8silkl7.cloudfront.net"` (`"club CNAME <pending>"` for the first seconds);
+(3) deleting the association **left the hand-edited `club` record behind** (Amplify only removes a record it wrote and still
+holds), which does not matter for a club (its zone is its own) and was cleaned by hand here;
+(4) **not settled:** whether Amplify re-verifies a domain on some longer schedule. Part 6's daily check reads the domain's
+status from Amplify for every connected club, so a drop out of `AVAILABLE` is told to the owner. The apex proof was dropped (owner
+agreed 2026-10-23): with the zone in the same account Amplify writes the bare name's records itself, so it cannot be tested
+faithfully here; the "club says it uses ALIAS" control is brought to the owner drawn before it is built.
+
 ## 5 · What was created in AWS (and removed)
 
 | What | When (UTC) | State at the end |
