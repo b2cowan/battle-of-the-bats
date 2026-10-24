@@ -17,7 +17,11 @@
 .modal {
   width: min(760px, 100%);
   max-height: min(88vh, 820px);
-  overflow: auto;
+  /* The window clips; only .body scrolls. The window itself used to be the scroller, so its bar ran the full
+     height and poked out past the rounded top-right corner (owner, 2026-10-23). The header stays put. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--home-line-strong);
   border-radius: var(--home-radius);
   background: var(--home-card);
@@ -26,7 +30,14 @@
   box-shadow: var(--home-shadow);
 }
 
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .header {
+  flex: none;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;

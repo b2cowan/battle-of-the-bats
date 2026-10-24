@@ -38,20 +38,22 @@ export default function TryoutBlurbPreview({ state, text, teamName, sport, seaso
         <span className={styles.live}>Updates as you type</span>
       </div>
       <div className={`${frameStyles.tokens} ${styles.frame}`} data-club-face={face} inert aria-hidden="true">
-        <TryoutLandingView
-          preview
-          orgSlug=""
-          teamSlug=""
-          team={{ name: teamName, sport }}
-          state={state}
-          season={{ year: season.year, name: season.name, tryoutDescription: text }}
-          born={born}
-          upcoming={[]}
-          lastDay={null}
-          today=""
-          contactEmail={null}
-          registerHref="#"
-        />
+        <div className={styles.scaled}>
+          <TryoutLandingView
+            preview
+            orgSlug=""
+            teamSlug=""
+            team={{ name: teamName, sport }}
+            state={state}
+            season={{ year: season.year, name: season.name, tryoutDescription: text }}
+            born={born}
+            upcoming={[]}
+            lastDay={null}
+            today=""
+            contactEmail={null}
+            registerHref="#"
+          />
+        </div>
       </div>
       {note && <p className={`${styles.note}${note.warn ? ` ${styles.noteWarn}` : ''}`}>{note.words}</p>}
     </div>

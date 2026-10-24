@@ -250,6 +250,8 @@
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 .stripIcon:hover { color: var(--fl-text); border-color: var(--border); }
+/* The consumer top bar's Account door while the visitor is on an Account page (the tab that said so left the row). */
+.stripIconActive { color: var(--primary-light); }
 /* Worn WITH .topBadge (the desktop unread pill owns the badge look in one place);
    this only repositions it onto the icon's corner and tightens it one step. */
 .stripBadge {
@@ -465,6 +467,9 @@
 .topbarWarm .topLink { color: var(--home-dim); }
 .topbarWarm .topLink:hover { color: var(--home-ink); }
 .topbarWarm .topLink.active { color: var(--home-olive); }
+.topbarWarm .stripIcon { color: var(--home-dim); }
+.topbarWarm .stripIcon:hover { color: var(--home-ink); border-color: var(--home-line-strong); }
+.topbarWarm .stripIconActive { color: var(--home-olive); }
 .topbarWarm .utilLink { color: var(--home-dim); }
 .topbarWarm .utilLink:hover { color: var(--home-ink); }
 .topbarWarm .utilCta { color: var(--home-ink); border-color: var(--home-line-strong); }

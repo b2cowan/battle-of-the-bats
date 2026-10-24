@@ -53,6 +53,10 @@ export const ONLY_HEAD_COACH_SETS = 'Only a head coach can set the tryout addres
 export const NO_COACH_ADDRESS = 'No coach address is set on this page.';
 /** E22 — the club's window showed an address the head coach has since changed. */
 export const COACH_CHANGED_IT = 'The head coach changed the address since this page opened. Check it and try again.';
+/** The club's Undo after "Use the club's address": too late (a head coach set one, or the moment has passed). */
+export const CANT_PUT_BACK = 'That address can’t be put back now. The head coach can set it again.';
+/** The Undo lasts this long after the club's reset; the notice that offers it is gone sooner. */
+export const CLUB_RESET_UNDO_MS = 10 * 60 * 1000;
 /** H7 — accepted, with the nudge; shown UNDER the hint (owner ruling 2026-10-22), quiet, never red. */
 export const TRYOUT_ROLE_ADDRESS_NUDGE =
   'A role address such as tryouts@ keeps working when a volunteer changes. You can use this one if you prefer.';

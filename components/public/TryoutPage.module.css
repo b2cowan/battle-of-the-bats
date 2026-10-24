@@ -19,6 +19,9 @@
   .wide { padding: 28px 24px 40px; }
 }
 
+/* The admin's "How families see it" picture of this page: the page's 32 px foot is a scroll's breathing room, not a picture's. */
+.pagePreview { padding-bottom: 16px; }
+
 .head {
   display: flex;
   flex-direction: column;
@@ -97,22 +100,21 @@
   font: 400 1rem/1.5 var(--club-text-face);
   color: var(--club-soft);
 }
+/* Words on the left, Copy on the right, centred across BOTH lines (the label and the address). Copy never sits under a
+   line of words, so the label can run to any length without ending on the button's corner. */
 .contact {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
   padding: 12px 16px 14px;
   border-top: 1px solid var(--club-line);
   font: 400 1rem/1.5 var(--club-text-face);
   color: var(--club-soft);
 }
-.mailRow {
-  /* The address keeps its 44 px tap height; this pulls it back under its label, 6 px as drawn. */
-  margin-top: -8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.contact > span { grid-column: 1; }
+/* The row dissolves into its parent's grid: the address takes the left column under the label, Copy the right column. */
+.mailRow { display: contents; }
 /* The address: its own line, and it only breaks when it cannot fit at all — never at a hyphen (design log 2026-10-20). */
 .address {
   /* A fingertip's height, like the footer's address (the tap floor). */
@@ -120,6 +122,9 @@
   align-items: center;
   min-height: 44px;
   min-width: 0;
+  grid-column: 1;
+  /* 44 px to tap, but its words sit close under the label (6 px as drawn). */
+  margin-top: -8px;
   font: 600 1rem/1.3 var(--club-text-face);
   color: var(--club-text);
   text-decoration: none;
@@ -130,7 +135,7 @@
    are padded 16 px) — labelled at a desk, its symbol alone on a phone (the house rule for a secondary action, design log
    2026-10-20; owner 2026-10-21). It never wraps under the address: a long address breaks inside its own space instead,
    so Copy is never stranded alone on a line. The word holds "Copied"'s width so the button does not jump when it flips. */
-.mailRow .copy { gap: 0.5rem; flex: none; margin-left: auto; }
+.mailRow .copy { gap: 0.5rem; flex: none; margin-left: auto; grid-column: 2; grid-row: 1 / span 2; }
 .copy > svg { flex: none; }
 .copyLabel { display: inline-block; min-width: 3.4em; text-align: left; }
 @media (max-width: 640px) {
@@ -164,9 +169,11 @@
 /* The OPEN tryout page's questions line (Club Tier Stage 4c-2 Part B, Ask 3 / D3): who to ask over the address, with
    Copy built like the status card's — the same mailRow, so the two line up the same way under the days. */
 .qline {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
   font: 400 1rem/1.35 var(--club-text-face);
   color: var(--club-soft);
 }
+.qline > span { grid-column: 1; }

@@ -276,7 +276,12 @@ export default function ConsumerNav({
   // Shared top-bar content — the wordmark, the visible tab links, and the organizer
   // utility cluster (consumer/coach variants only since WI-4 — the tournament strip
   // builds its own state-based content below).
-  const topLinks = visibleTabs.map(({ href, label }) => {
+  // On a computer, Account is not a tab: it is the same person icon + in-place menu every other bar wears,
+  // at the right, just left of the operator door (owner 2026-10-23, reversing the 2026-10-16 "tabs stay links"
+  // carve-out for the top bar only). The phone bottom bar keeps Account as a tab — it has to say "you are
+  // here" — so `visibleTabs` (and `tabItems`) are untouched.
+  const accountInMenu = signedIn && !inSandbox;
+  const topLinks = visibleTabs.filter(t => !(accountInMenu && t.href === '/account')).map(({ href, label }) => {
     const active = isActive(href);
     const badge = badges[href];
     return (
@@ -344,6 +349,18 @@ export default function ConsumerNav({
             {/* The ratified CTA, a persona menu (WI-2) — the ACTION door, all four paths named. */}
             <StartMenu coachHref={startMenu?.coachHref} showLeague={startMenu?.showLeague} />
           </>
+        )}
+        {/* The account door: person icon, menu in place, LEFT of the operator door — the order the admin and
+            coach bars use (bell, person, Workspaces). Lit while the visitor is on an Account page, since the
+            tab that used to say so has left this row. Sign out stays on the page for the browsable tabs; on
+            Account and Chat (signed-in only) it goes to the sign-in page, like the portals. */}
+        {accountInMenu && (
+          <AccountMenu
+            className={`${styles.stripIcon} ${isActive('/account') ? styles.stripIconActive : ''}`}
+            warm={warmRoute}
+            showTheme
+            signOutTo={isActive('/account') || isActive('/chat') ? 'sign-in' : 'here'}
+          />
         )}
         {operatorDoor?.kind === 'workspaces' && (
           <WorkspacesPill workspaces={operatorDoor.workspaces} className={styles.utilCoach} warm={warmRoute} />

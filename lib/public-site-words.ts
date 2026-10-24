@@ -44,6 +44,10 @@ export const PUBLIC_SITE_WORDS = {
     [c ? `${c} ${c === 1 ? 'contact' : 'contacts'}` : null, d ? `${d} ${d === 1 ? 'document' : 'documents'}` : null, q ? `${q} ${q === 1 ? 'question' : 'questions'}` : null,
       s ? `${s} ${s === 1 ? 'sponsor' : 'sponsors'}` : null, s && ended ? `${ended} ended` : null]
       .filter(Boolean).join(' · ') || 'Optional · none yet',
+  // The Contacts, documents and sponsors row opens to four folded lines (owner, 2026-10-23, option 1): the line under a
+  // list's title says what is inside, so a closed list never reads as empty. Sponsors say how many families see and how many ended.
+  listPeekSponsors: (showing: number, ended: number) => ended ? `${showing} showing · ${ended} ended` : `${showing} showing`,
+  listPeekNone: 'None yet',
   // `noun` is the directory's name in the switch's own label (club, league or organization), so the two read alike.
   visibilitySummary: (on: boolean, listed: boolean, noun = 'club') => on ? (listed ? `Online · listed in the ${noun} directory` : `Online · not in the ${noun} directory`) : 'Offline',
   lookSummaryBanner: 'banner photo',

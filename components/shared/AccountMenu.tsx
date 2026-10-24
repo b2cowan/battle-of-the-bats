@@ -21,8 +21,9 @@
  * way") — the tournament strip, an org's public identity row and the marketing bar mount this
  * same menu, never a link to /account. Theme stays off on all three (organizer colors / an
  * always-dark marketing bar), and the host's own trigger content rides in as `children`. The
- * Account TABS (consumer top row, phone bottom bars) stay links: a tab is a location marker,
- * and a tab that pops a menu can no longer say "you are here".
+ * PHONE bottom bars keep Account as a tab (a link): a tab is a location marker, and a tab that
+ * pops a menu can no longer say "you are here". The consumer shell's desktop top bar does NOT —
+ * since 2026-10-23 its Account is this menu, at the right (the person icon lights on /account).
  *
  * Sign out lands on the sign-in page inside a portal (owner-ruled: a coach signing out
  * mid-errand is on a shared machine or switching accounts — fastest way back in; matches what

@@ -81,7 +81,7 @@ export default function TryoutLandingView({
   };
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page}${preview ? ` ${styles.pagePreview}` : ''}`}>
       {/* The way back to the team stays: the tab row has no entry for one team (design log 2026-10-20). */}
       {!preview && (
         <Link href={teamHref} className={`${kit.back} ${styles.back}`} aria-label={`Back to ${team.name}`}>

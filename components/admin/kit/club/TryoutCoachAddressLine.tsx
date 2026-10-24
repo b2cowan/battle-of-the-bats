@@ -21,7 +21,7 @@ export default function TryoutCoachAddressLine({ api, teamName, canWrite, onDone
   teamName: string;
   canWrite: boolean;
   /** The page's notice (E21): good after the reset, bad when it failed. */
-  onDone: (tone: 'good' | 'bad', text: string) => void;
+  onDone: (tone: 'good' | 'bad', text: string, action?: { label: string; run: () => void }) => void;
 }) {
   const [view, setView] = useState<View | null>(null);
   const [asking, setAsking] = useState(false);
@@ -56,9 +56,15 @@ export default function TryoutCoachAddressLine({ api, teamName, canWrite, onDone
         return;
       }
       if (!res.ok) throw new Error();
+      const j = await res.json().catch(() => ({})) as { undo?: unknown };
+      const undo = j.undo;
       setView(v => (v ? { ...v, email: null, setByName: null } : v));
       setAsking(false);
-      onDone('good', club ? `Tryout questions now go to ${club}.` : 'This tryout page now shows no questions address.');
+      onDone(
+        'good',
+        club ? `Tryout questions now go to ${club}.` : 'This tryout page now shows no questions address.',
+        undo ? { label: 'Undo', run: () => void putBack(undo) } : undefined,
+      );
     } catch {
       onDone('bad', 'Couldn’t change the address. Try again.');
     } finally {
@@ -66,7 +72,25 @@ export default function TryoutCoachAddressLine({ api, teamName, canWrite, onDone
     }
   }
 
-  const button = club ? 'Use the club’s address' : 'Remove this address';
+  /** The notice's Undo: the coach's address comes back as it was, and the card reappears. */
+  async function putBack(undo: unknown) {
+    try {
+      const res = await fetch(api, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ undo }),
+      });
+      if (res.ok) {
+        setReadNo(n => n + 1);
+        onDone('good', `${who}’s address is back on this tryout page.`);
+        return;
+      }
+      const j = await res.json().catch(() => ({}));
+      onDone('bad', typeof j.error === 'string' ? j.error : 'Couldn’t put the address back. Try again.');
+    } catch {
+      onDone('bad', 'Couldn’t put the address back. Try again.');
+    }
+  }
+
+  const button = club ?'Use the club’s address' : 'Remove this address';
   return (
     <>
       {/* The drawn card (the house callout: olive edge, its one action at the right, under the words on a phone). */}

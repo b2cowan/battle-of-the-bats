@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getOrgMemberDisplayNames, resolveCoachUserIdentities } from './db';
 import { getTeamStaffMembershipById, type TeamStaffMembership } from './coach-membership';
-import { liveTryoutContactEmail, publicPersonName } from './tryout-contact-rules';
+import { liveTryoutContactEmail, publicPersonName, checkTryoutContactEmail, CLUB_RESET_UNDO_MS } from './tryout-contact-rules';
 import { DEFAULT_COACH_NAMES_POLICY, seatNameListing, type CoachNamesPolicy } from './coach-names-policy';
 
 /**
@@ -123,10 +123,17 @@ export async function resetTryoutContactByClub(
   teamId: string,
   resetBy: string,
   expectedEmail: string,
-): Promise<'reset' | 'none' | 'changed'> {
+): Promise<'none' | 'changed' | ClubResetUndo> {
   const { email, setter } = await readLive(orgId, teamId);
   if (!email || !setter) return 'none';
   if (email !== expectedEmail) return 'changed';
+  const { data: before, error: beforeError } = await supabaseAdmin
+    .from('rep_team_tryout_contacts')
+    .select('set_at')
+    .eq('org_id', orgId)
+    .eq('team_id', teamId)
+    .maybeSingle<{ set_at: string | null }>();
+  if (beforeError) throw beforeError;
   const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin
     .from('rep_team_tryout_contacts')
@@ -138,5 +145,56 @@ export async function resetTryoutContactByClub(
     .select('team_id')
     .maybeSingle();
   if (error) throw error;
-  return data ? 'reset' : 'changed';
+  if (!data) return 'changed';
+  return { email, membershipId: setter.id, setAt: before?.set_at ?? now, resetAt: now };
+}
+
+/** What the club's reset removed, handed back to the club's page so its Undo can put it back. */
+export interface ClubResetUndo { email: string; membershipId: string; setAt: string; resetAt: string }
+
+/**
+ * The club's Undo, right after "Use the club's address": puts the coach's address back exactly as it was, under the same
+ * head coach. ⚠ The page hands back what the reset removed, so nothing it says is trusted on its own: the row must still
+ * hold THIS reset (same moment, same person, no address since — a head coach who set one again is never overwritten),
+ * it must be recent, and the setter must still be an active head coach of this team (the address's one live rule).
+ * Refuses otherwise ('gone'); never throws for a stale Undo.
+ */
+export async function restoreTryoutContactByClub(
+  orgId: string,
+  teamId: string,
+  userId: string,
+  undo: ClubResetUndo,
+): Promise<'restored' | 'gone'> {
+  const checked = checkTryoutContactEmail(undo.email);
+  if (!checked.ok) return 'gone';
+  const resetMs = Date.parse(undo.resetAt);
+  if (!Number.isFinite(resetMs) || Date.now() - resetMs > CLUB_RESET_UNDO_MS || Number.isNaN(Date.parse(undo.setAt))) return 'gone';
+  const setter = await getTeamStaffMembershipById(undo.membershipId);
+  if (!liveTryoutContactEmail({ email: checked.value, setByMembershipId: undo.membershipId }, setter, teamId)) return 'gone';
+  const { data: row, error: readError } = await supabaseAdmin
+    .from('rep_team_tryout_contacts')
+    .select('email, reset_at, reset_by')
+    .eq('org_id', orgId)
+    .eq('team_id', teamId)
+    .maybeSingle<{ email: string | null; reset_at: string | null; reset_by: string | null }>();
+  if (readError) throw readError;
+  if (!row || row.email || !row.reset_at || row.reset_by !== userId || Date.parse(row.reset_at) !== resetMs) return 'gone';
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tryout_contacts')
+    .update({
+      email: checked.value,
+      set_by_membership_id: undo.membershipId,
+      set_at: undo.setAt,
+      reset_at: null,
+      reset_by: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('org_id', orgId)
+    .eq('team_id', teamId)
+    .is('email', null)
+    .eq('reset_at', row.reset_at)
+    .select('team_id')
+    .maybeSingle();
+  if (error) throw error;
+  return data ? 'restored' : 'gone';
 }

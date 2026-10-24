@@ -1081,6 +1081,16 @@ html:has([data-warm-base="marketing"]) body,
 html:not([data-user-theme="dark"]):has([data-warm-base="pref"]) body,
 html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #F8F4ED; }
 
+/* The PAGE scrollbar lives on <html>, outside every warm wrapper, so the --home-* ink its thumb reads (see
+   "Scrollbar" below) is not in scope there and fell back to translucent white — white on cream, an invisible
+   handle (owner, 2026-10-23, the marketing home). A page that paints the cream gives <html> the same two warm
+   tokens the thumb asks for. Marketing only: the coach and sign-up warm pages follow the user's setting, and
+   their own wrappers already carry the tokens for the scrollers inside them. */
+html:has([data-warm-base="marketing"]) {
+  --home-line-strong: rgba(70, 55, 30, 0.20);
+  --home-line-rgb: 70, 55, 30;
+}
+
 /* ─── Coaches Portal under an explicit DARK preference (Nav Unification Stage G) ────────────
    The block above defines the --home-* palette ONLY under html[data-user-theme="warm"]. Under an
    explicit Dark choice it never applies, so every --home-* custom property was UNDEFINED inside

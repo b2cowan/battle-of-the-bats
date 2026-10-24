@@ -3,7 +3,6 @@ import { usePublicPathname } from '@/lib/use-public-pathname';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
 import { isConsumerShellPath, isWarmJourneyPath, isOrgOperatorShellPath } from '@/lib/consumer-routes';
 import Navbar from './Navbar';
-import FoundingSeasonOfferBar from './marketing/FoundingSeasonOfferBar';
 
 export default function SiteChrome() {
   const pathname = usePublicPathname();
@@ -37,12 +36,8 @@ export default function SiteChrome() {
     // top bar + bottom nav — the marketing Navbar would double up.
     isConsumerShellPath(pathname)
   ) return null;
-  // The Founding Season offer bar decides for itself whether this is a marketing path and whether
-  // the signup window is open; everywhere else it renders nothing and publishes no geometry.
-  return (
-    <>
-      <FoundingSeasonOfferBar />
-      <Navbar />
-    </>
-  );
+  // The Founding Season strip above the bar is no longer mounted (owner, 2026-10-23: "a little
+  // excessive"). The offer still lives on the pricing page; the bar and page padding that offset
+  // by --offer-bar-h resolve to 0 when nothing publishes it.
+  return <Navbar />;
 }

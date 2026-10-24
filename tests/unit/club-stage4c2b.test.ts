@@ -137,6 +137,24 @@ describe('the membership writes clear it (Ask 1, twice over)', () => {
     assert.match(clear, /\.eq\('set_by_membership_id', membershipId\)/);
     assert.doesNotMatch(clear, /reset_at|reset_by/);
   });
+  it('the club\'s Undo only puts back the reset it made, never over a coach\'s newer address', () => {
+    const lib = readFileSync('lib/coach-tryout-contact.ts', 'utf8');
+    const undo = lib.slice(lib.indexOf('export async function restoreTryoutContactByClub'));
+    // The row must still hold THIS reset: no address, this person, this moment — checked on the read AND on the write.
+    assert.match(undo, /row\.email \|\| !row\.reset_at \|\| row\.reset_by !== userId \|\| Date\.parse\(row\.reset_at\) !== resetMs/);
+    assert.match(undo, /\.is\('email', null\)/);
+    assert.match(undo, /\.eq\('reset_at', row\.reset_at\)/);
+    // Recent, a real address, and the setter still an active head coach of this team (the one live rule).
+    assert.match(undo, /CLUB_RESET_UNDO_MS/);
+    assert.match(undo, /checkTryoutContactEmail\(undo\.email\)/);
+    assert.match(undo, /liveTryoutContactEmail\(/);
+    // It clears the club's note again: the coach's row goes back to "on your tryout page".
+    assert.match(undo, /reset_at: null,\s*reset_by: null/);
+    // Same write gate as the reset.
+    const route = readFileSync('app/api/admin/rep-teams/teams/[teamId]/tryout-contact/route.ts', 'utf8');
+    const post = route.slice(route.indexOf('export const POST'));
+    assert.match(post, /resolveClubTeam\(req, teamId, \{ write: true \}\)/);
+  });
   it('the public read never falls back to the account email for a name', () => {
     const lib = readFileSync('lib/coach-tryout-contact.ts', 'utf8');
     const pub = lib.slice(lib.indexOf('export async function getPublicTryoutContact'), lib.indexOf('export async function setTryoutContact'));

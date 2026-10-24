@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { requireFamiliesAccess } from '@/lib/families-auth';
 import { loadHouseholdReach, loadMessageWindow } from '@/lib/families-read';
 import { sendFamilyEmail } from '@/lib/family-email';
+import { clubEmailFacts } from '@/lib/club-email-context';
+import { familyReplyPlan } from '@/lib/email-club-identity';
+import { senderName } from '@/lib/families-coach-ask';
 import { FAMILY_MESSAGE_REASON, FAMILY_MESSAGE_WORDS as W } from '@/lib/families-words';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writeOrgAudit } from '@/lib/org-audit';
@@ -31,7 +34,10 @@ export const GET = withObservability(async (req: Request,
   const { personId } = await params;
   const read = await loadMessageWindow(ctx.org.id, personId);
   if (!read) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json({ ...read, orgName: ctx.org.name, reason: FAMILY_MESSAGE_REASON });
+  // The club's face and the reply line the email will carry (S3b): the window's sample draws its band and foot from them.
+  const [club, sender] = await Promise.all([clubEmailFacts(ctx.org), senderName(ctx).catch(() => null)]);
+  const reply = familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail: ctx.user.email, senderName: sender });
+  return NextResponse.json({ ...read, orgName: ctx.org.name, reason: FAMILY_MESSAGE_REASON, club, replyLine: reply.line });
 }, { route: '/api/admin/families/[personId]/message' });
 
 export const POST = withObservability(async (req: Request,
@@ -75,6 +81,9 @@ export const POST = withObservability(async (req: Request,
   const { suppressed } = reach;
   // A transport that throws (the network dropped) is that guardian's refused send — never a 500 that keeps the claim
   // and invites a second press that mails the others twice (/review 2026-10-17).
+  // The club's face and where a reply goes (S3b): read once for the household, not once per address.
+  const [club, sender] = await Promise.all([clubEmailFacts(ctx.org), senderName(ctx).catch(() => null)]);
+  const reply = familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail: ctx.user.email, senderName: sender });
   const results = await Promise.all(to.map(address =>
     sendFamilyEmail({
       orgId: ctx.org.id,
@@ -86,6 +95,8 @@ export const POST = withObservability(async (req: Request,
         title: rawSubject,
         body: rawMessage,
         reason: FAMILY_MESSAGE_REASON,
+        club,
+        replyLine: reply.line,
       },
       suppressed,
       // Ask 9: replies go to the person who wrote it.

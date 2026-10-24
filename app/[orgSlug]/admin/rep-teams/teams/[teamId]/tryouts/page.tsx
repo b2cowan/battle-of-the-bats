@@ -394,7 +394,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
             api={`/api/admin/rep-teams/teams/${teamId}/tryout-contact?${q}`}
             teamName={team.name}
             canWrite={canWrite}
-            onDone={(tone, text) => setNotice({ tone, text })}
+            onDone={(tone, text, action) => setNotice({ tone, text, action })}
           />
         </ClubSection>
       ) : (

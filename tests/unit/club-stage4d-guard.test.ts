@@ -165,6 +165,15 @@ describe('sponsors are not a section, not "ready", and not a reason for the Abou
     assert.ok(editor.indexOf("{listPart('questions')}") < editor.indexOf("{listPart('sponsors')}"));
     assert.equal(W.lists, 'Contacts, documents and sponsors');
   });
+  it('the four lists are folded lines, one open at a time, each saying what is inside (owner 2026-10-23, option 1)', () => {
+    const editor = code(EDITOR);
+    assert.match(editor, /useState<ListKind \| null>\(null\)/, 'the row opens with every list folded');
+    assert.match(editor, /setOpenList\(isOpen \? null : kind\)/, 'opening another list closes the first');
+    assert.match(editor, /aria-expanded=\{isOpen\}/);
+    assert.match(editor, /W\.listPeekSponsors\(/);
+    assert.equal(W.listPeekSponsors(3, 1), '3 showing · 1 ended');
+    assert.equal(W.listPeekSponsors(3, 0), '3 showing');
+  });
   it('the public footer door keeps its own words', () => {
     assert.match(read('components/public/ClubFooter.tsx'), />Contacts and documents<\/Link>/);
   });

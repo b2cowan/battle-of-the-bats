@@ -23,7 +23,7 @@
  * change saves itself with the floating pill (A6) except a notice, which waits for Post notice.
  */
 import { useCallback, useMemo, useRef, useState, useSyncExternalStore, useEffect, type ReactNode } from 'react';
-import { Check, Copy, Eye, ExternalLink, Globe } from 'lucide-react';
+import { Check, ChevronDown, Copy, Eye, ExternalLink, Globe } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { isClubPlan, hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -193,6 +193,8 @@ export default function PublicSitePage() {
   const lookQ = useSaveQueue();
   const [told, setTold] = useState<string | null>(null);
   const [openRecord, setOpenRecord] = useState<{ kind: ListKind; id: string | 'new' } | null>(null);
+  // The Contacts, documents and sponsors row opens to four folded lines; one list is open at a time (owner, 2026-10-23).
+  const [openList, setOpenList] = useState<ListKind | null>(null);
   // The one open row ('unset' until the club opens or closes one: then the first part not ready, if any).
   const [openRow, setOpenRow] = useState<RowKey | null | 'unset'>('unset');
   // Which row starts open is decided ONCE, on the first draw (the first part not ready, on a set-up). Never again from
@@ -546,26 +548,43 @@ export default function PublicSitePage() {
     // Read as plain rows: a list's words (title, caption) are keyed by its own field names.
     const items = (content?.[kind] ?? []) as unknown as (Record<string, string> & { id: string })[];
     const { words: w, title, caption, row } = LISTS[kind];
+    const isOpen = openList === kind;
+    // The line under the title: the first names in the list, or for sponsors how many families see and how many ended.
+    const peek = items.length === 0 ? W.listPeekNone
+      : kind === 'sponsors' ? W.listPeekSponsors(sponsorFacts.total - sponsorFacts.ended, sponsorFacts.ended)
+      : items.map(i => title(i)).join(' · ');
     return (
-      <div className={styles.listPart} id={kind}>
-        <h3 className={styles.lookPartTitle}>{w.title}</h3>
-        <p className={styles.lead}>{w.lead}</p>
-        {items.length > 0 && (
-          <ClubRowList inset label={w.title}>
-            {items.map(i => (
-              <ClubRow key={i.id} as="button" aria-haspopup="dialog" chevron onClick={() => setOpenRecord({ kind, id: i.id })}
-                title={title(i)} caption={caption(i, today)} {...row?.(i, today)} />
-            ))}
-          </ClubRowList>
-        )}
-        {/* The foot: Add, or — at the list's cap — why not. */}
-        {canWrite && (
-          <div className={styles.listFoot}>
-            {items.length < LIST_MAX[kind]
-              ? <button type="button" className="btn btn-outline btn-data" onClick={() => setOpenRecord({ kind, id: 'new' })} aria-haspopup="dialog">{w.add}</button>
-              : <p className={styles.listFull}>{W.listFull(LIST_MAX[kind], kind)}</p>}
-          </div>
-        )}
+      <div className={styles.disItem} id={kind}>
+        <h3 className={styles.disHeading}>
+          <button type="button" className={styles.disHead} aria-expanded={isOpen} aria-controls={`${kind}-list`} onClick={() => setOpenList(isOpen ? null : kind)}>
+            <span className={styles.disText}>
+              <span className={styles.disTitle}>{w.title}</span>
+              <span className={styles.disPeek}>{peek}</span>
+            </span>
+            <span className={styles.disCount}>{items.length}</span>
+            <ChevronDown size={18} className={styles.disChevron} aria-hidden />
+          </button>
+        </h3>
+        {/* Stays mounted while folded, like the rows around it. */}
+        <div id={`${kind}-list`} className={styles.disBody} hidden={!isOpen}>
+          <p className={styles.lead}>{w.lead}</p>
+          {items.length > 0 && (
+            <ClubRowList inset label={w.title}>
+              {items.map(i => (
+                <ClubRow key={i.id} as="button" aria-haspopup="dialog" chevron onClick={() => setOpenRecord({ kind, id: i.id })}
+                  title={title(i)} caption={caption(i, today)} {...row?.(i, today)} />
+              ))}
+            </ClubRowList>
+          )}
+          {/* The foot: Add, or — at the list's cap — why not. */}
+          {canWrite && (
+            <div className={styles.listFoot}>
+              {items.length < LIST_MAX[kind]
+                ? <button type="button" className="btn btn-outline btn-data" onClick={() => setOpenRecord({ kind, id: 'new' })} aria-haspopup="dialog">{w.add}</button>
+                : <p className={styles.listFull}>{W.listFull(LIST_MAX[kind], kind)}</p>}
+            </div>
+          )}
+        </div>
       </div>
     );
   };

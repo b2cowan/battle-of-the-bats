@@ -1,7 +1,7 @@
 /* "How families see it" — the tryout blurb's preview (drawn 2026-10-22, TRYOUT_BLURB_PREVIEW_MOCKUP.html; ruled the same day).
 
-   It sits to the right of the box, only when the box's own row is wide enough for the box and a phone-width page side by
-   side. The row — not the window — decides, so a collapsed sidebar or a narrower card is read correctly. Below that, and on
+   It sits to the right of the box, only when the box's own row is wide enough for the box and the picture side by side.
+   The picture is the phone-width page (360 px) drawn at 80 % (owner 2026-10-22: "too big" at full size) — 288 px of room. The row — not the window — decides, so a collapsed sidebar or a narrower card is read correctly. Below that, and on
    a phone, the preview is not drawn at all (display: none), and the box's own "when families read this" sentence stays. */
 
 /* A container query styles what is INSIDE the container, never the container itself: the host is the container, the row
@@ -13,9 +13,12 @@
 }
 .pv { display: none; }
 
-@container (min-width: 900px) {
+@container (min-width: 840px) {
   .row {
-    grid-template-columns: minmax(0, 1fr) 360px;
+    /* The box keeps its reading width (BornYears.module.css `.blurbBox`, 40rem) and the picture sits beside it, not at the
+       card's far edge: the pair is read together, the empty room is to the right of both. */
+    grid-template-columns: minmax(0, 40rem) 288px;
+    justify-content: start;
     column-gap: 2rem;
     align-items: start;
   }
@@ -41,7 +44,7 @@
 /* The page at a phone's width, on the club's own ground, inside a hairline. The club's tokens come from the frame's
    `.tokens` scope (no page frame); nothing in it can be pressed or tabbed to. */
 .frame {
-  width: 360px;
+  width: 288px;
   max-width: 100%;
   border: 1px solid var(--home-line);
   border-radius: 8px;
@@ -50,6 +53,9 @@
   user-select: none;
   cursor: default;
 }
+
+/* The page is laid out at a phone's 360 px and drawn at 80 %: `zoom` shrinks the room it takes (a transform would not). */
+.scaled { zoom: 0.8; width: 360px; }
 
 .note { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
 .noteWarn { color: var(--warning); }

@@ -1245,7 +1245,7 @@ const orgHelp: HelpPageContent = {
           title: 'Contacts, documents and questions for your About page',
           content: (
             <>
-              <p>The <strong>Contacts, documents and sponsors</strong> row holds four lists. Three of them fill your club&rsquo;s <strong>About</strong> page, and the fourth, sponsors, has its own topic below. Each entry opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
+              <p>The <strong>Contacts, documents and sponsors</strong> row holds four lists. Three of them fill your club&rsquo;s <strong>About</strong> page, and the fourth, sponsors, has its own topic below. The row opens to four folded lines. Each says what is inside, with a count on the right. Tap a line to open its list, and tapping another closes the first. Each entry opens a small window; <strong>Add</strong> sits at the foot of each list.</p>
               <ul>
                 <li><strong>Who to contact</strong> (up to twelve): a role, such as Registration, and its email address. When an address looks personal, the window suggests a role address like registrar@, which keeps working when a volunteer changes. It never refuses yours.</li>
                 <li><strong>Documents and policies</strong> (up to thirty): a heading, a title and a link to a document you already publish. Families see them under your headings, such as Codes of conduct or Safety, and each opens in a new tab. Your site shows your documents; it never says your club is compliant.</li>

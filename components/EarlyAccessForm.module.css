@@ -83,7 +83,29 @@
 .consent input {
   flex: none;
   margin-top: 0.15rem;
-  accent-color: var(--home-olive);
+}
+
+/* The platform checkbox (app/globals.css) is drawn for the dark surfaces: a pale-lime edge, tint and tick. On this
+   white form that is lime on white — a ticked box was nearly invisible (owner, 2026-10-23). `appearance: none` means
+   `accent-color` never reached it, so the three states are drawn here in the warm palette: a firm olive edge, and a
+   solid olive fill with a white tick once chosen. */
+.choice input[type='checkbox'],
+.consent input[type='checkbox'] {
+  border-color: rgba(var(--home-line-rgb), 0.5);
+  background: var(--white-fixed);
+}
+.choice input[type='checkbox']:checked,
+.consent input[type='checkbox']:checked {
+  border-color: var(--home-olive);
+  background: var(--home-olive);
+}
+.choice input[type='checkbox']::before,
+.consent input[type='checkbox']::before {
+  border-color: var(--white-fixed);
+}
+.choice input[type='checkbox']:focus-visible,
+.consent input[type='checkbox']:focus-visible {
+  outline-color: var(--home-olive);
 }
 
 .submit {

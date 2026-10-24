@@ -76,9 +76,9 @@ const STATUS_LABEL: Record<string, string> = {
 /** One sentence per setting, stating what it DOES rather than restating its name. Each names
  *  the consequence a coach can actually observe: the family schedule, the public team page. */
 const VISIBILITY_HELP: Record<ScheduleVisibility, string> = {
-  staff: 'Games and practices stay inside your coaching staff. Connected families see a quiet “not available” message until you switch back.',
-  families: 'The families you have connected see the full schedule.',
-  public_link: 'Everything Families gets, and your team’s public page shows your games and tournaments to anyone who visits it. Practices and team events stay with families.',
+  staff: 'Only your coaching staff can see games and practices. Connected families see a quiet “not available” message until you switch back.',
+  families: 'Your coaching staff and connected families can see games and practices. The public sees nothing.',
+  public_link: 'Connected families see games and practices. Anyone who visits your team’s public page sees games and tournaments only — practices and team events are never public.',
 };
 
 export default function TeamSettingsPage({
@@ -962,7 +962,7 @@ export default function TeamSettingsPage({
                   <div className={styles.settingRowMain}>
                     <span className={styles.settingRowLabel}>Schedule visibility</span>
                     <span className={styles.settingRowDesc}>
-                      Who can see games and practices. {VISIBILITY_HELP[visibilityRow.value]}
+                      {VISIBILITY_HELP[visibilityRow.value]}
                     </span>
                   </div>
                   <div className={`${styles.settingRowCtl} ${styles.settingRowCtlWide}`}>

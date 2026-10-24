@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { resolveClubTeam } from '@/lib/club-team-route';
-import { readTryoutContact, resetTryoutContactByClub } from '@/lib/coach-tryout-contact';
-import { NO_COACH_ADDRESS, COACH_CHANGED_IT } from '@/lib/tryout-contact-rules';
+import {
+  readTryoutContact, resetTryoutContactByClub, restoreTryoutContactByClub, type ClubResetUndo,
+} from '@/lib/coach-tryout-contact';
+import { NO_COACH_ADDRESS, COACH_CHANGED_IT, CANT_PUT_BACK } from '@/lib/tryout-contact-rules';
 import { withObservability } from '@/lib/observability';
 import { getOrgPublicSiteContent } from '@/lib/db';
 
@@ -40,5 +42,23 @@ export const DELETE = withObservability(async (req: Request, { params }: Ctx) =>
   const done = await resetTryoutContactByClub(r.ctx.org.id, r.team.id, r.ctx.user.id, expected);
   if (done === 'none') return NextResponse.json({ error: NO_COACH_ADDRESS }, { status: 409 });
   if (done === 'changed') return NextResponse.json({ error: COACH_CHANGED_IT }, { status: 409 });
-  return NextResponse.json({ email: null, setByName: null });
+  // `undo` is what the page sends back to POST if the club changes its mind (the page's Undo).
+  return NextResponse.json({ email: null, setByName: null, undo: done });
+}, { route: '/api/admin/rep-teams/teams/[teamId]/tryout-contact' });
+
+/** The club's Undo: puts the coach's address back right after "Use the club's address". Same gate as the reset. */
+export const POST = withObservability(async (req: Request, { params }: Ctx) => {
+  const { teamId } = await params;
+  const r = await resolveClubTeam(req, teamId, { write: true });
+  if ('error' in r) return r.error;
+  const body = await req.json().catch(() => null) as { undo?: Partial<ClubResetUndo> } | null;
+  const u = body?.undo;
+  if (!u || typeof u.email !== 'string' || typeof u.membershipId !== 'string' || typeof u.setAt !== 'string' || typeof u.resetAt !== 'string') {
+    return NextResponse.json({ error: CANT_PUT_BACK }, { status: 409 });
+  }
+  const done = await restoreTryoutContactByClub(r.ctx.org.id, r.team.id, r.ctx.user.id, {
+    email: u.email, membershipId: u.membershipId, setAt: u.setAt, resetAt: u.resetAt,
+  });
+  if (done === 'gone') return NextResponse.json({ error: CANT_PUT_BACK }, { status: 409 });
+  return NextResponse.json({ restored: true });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/tryout-contact' });

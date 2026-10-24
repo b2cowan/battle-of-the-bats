@@ -311,6 +311,9 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
 .noticeBad svg { color: var(--home-live); }
 .noticeGood svg { color: var(--home-olive); }
 .noticeBody { flex: 1; min-width: 0; }
+@media (max-width: 768px) {
+  .noticeBody button.link { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); cursor: pointer; }
+}
 
 /* ── An identity chip beside a name ("You", "Invited") — the kit's chip, neutral ── */
 .chip {

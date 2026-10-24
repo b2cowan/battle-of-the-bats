@@ -69,10 +69,12 @@ export default function EarlyAccessModalTrigger({
               </button>
             </div>
 
-            <EarlyAccessForm
-              initialPlanInterest={initialPlanInterest}
-              initialFeaturesInterested={initialFeaturesInterested}
-            />
+            <div className={styles.body}>
+              <EarlyAccessForm
+                initialPlanInterest={initialPlanInterest}
+                initialFeaturesInterested={initialFeaturesInterested}
+              />
+            </div>
           </div>
         </div>
       )}
