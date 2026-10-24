@@ -1129,7 +1129,7 @@ const orgHelp: HelpPageContent = {
         'from your logo', 'your own colours', 'main colour', 'accent colour', 'type', 'classic serif clean', 'banner photo',
         'computer phone preview', 'offline preview', 'site builder',
         'sponsors', 'sponsor', 'sponsor logo', 'thank you', 'sponsor strip', 'last day', 'ended sponsor', 'contacts documents and sponsors',
-        'public site editor', 'public site', 'site editor', 'home page sections', 'reorder sections', 'hide a section',
+        'public site editor', 'public site', 'site editor', 'own address', 'own domain', 'custom domain', 'web address row', 'home page sections', 'reorder sections', 'hide a section',
         'show a section', 'section order', 'tagline', 'about the club', 'families questions go to', 'contact email',
         'social links', 'instagram', 'facebook', 'website link', 'saved as', 'that isn’t a web address', 'look', 'colours',
         'who to contact', 'contacts', 'role address', 'registrar', 'documents and policies', 'code of conduct', 'policies',
@@ -1192,7 +1192,8 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p>The owner sees the <strong>Public site</strong> switch and <strong>Listed in the club directory</strong>. Taking the site offline asks first (<em>Take your club&rsquo;s public site offline?</em>, with your club&rsquo;s name) and says what families will see. Your tournament pages stay up either way.</p>
-              <p>The <strong>Web address</strong> reads as text, with <strong>Change it in Settings</strong>. An admin sees the same facts as text, with <em>The owner turns the site on and off and changes its address.</em></p>
+              <p>An admin sees the switch and the listing as text, with <em>The owner turns the site on and off and changes its address.</em></p>
+              <p>The <strong>Web address</strong> row above Visibility shows your <code>fieldlogichq.ca</code> address and lets the owner connect the club&rsquo;s own address, like <code>www.yourclub.ca</code>: you add two records where you bought it, and the row shows when it is live. An admin can see every state and press <strong>Check now</strong>. The steps, for you or whoever looks after your address, are in <a href="/help/own-address" target="_blank" rel="noopener noreferrer">Use your club&rsquo;s own address</a>.</p>
             </>
           ),
         },

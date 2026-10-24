@@ -64,7 +64,7 @@ export const OWN_ADDRESS_WORDS = {
     `Set it to forward to https://${full}, where you bought it. It is usually called Forwarding or Redirect, and it is free at most places.`,
   forwardHowTo: 'How to:',
   forwardPlaces: ['GoDaddy', 'Namecheap', 'Hover', 'Other places'] as readonly string[],
-  forwardAlias: 'If the place offers an ALIAS or ANAME record, the help article shows that route instead.',
+  forwardAlias: 'If the place offers an ALIAS or ANAME record, the help article says why to forward instead.',
   emailUnaffected: (bare: string) => `Your email at ${bare} is not affected. Change nothing else there.`,
   // Checking
   checkingTitle: 'Checking for your records',

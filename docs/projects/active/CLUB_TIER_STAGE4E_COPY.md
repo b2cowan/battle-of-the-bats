@@ -169,7 +169,7 @@ After a press the button reads **Copied** for two seconds, then returns.
 - Title: **And {bare} on its own?**
 - Body: **Set it to forward to `https://{address}`, where you bought it. It is usually called Forwarding or Redirect, and it is free at most places.**
 - Links line: **How to:** GoDaddy · Namecheap · Hover · Other places
-- Hint: **If the place offers an ALIAS or ANAME record, the help article shows that route instead.**
+- Hint: **If the place offers an ALIAS or ANAME record, the help article says why to forward instead.** *(Changed 2026-10-24 by the close-out: an ALIAS or ANAME route for the plain name is not built and would show a certificate warning, so the article says to forward; `/marketing` to re-read.)*
 
 **Reassurance**
 - **Your email at {bare} is not affected. Change nothing else there.**
