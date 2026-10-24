@@ -45,6 +45,12 @@ export interface DomainRow {
   needs_attention_since: string | null;
   not_working_since: string | null;
   padlock_expires_at: string | null;
+  // Which of the owner emails have gone for this stretch (cleared when the stretch ends), so none repeats.
+  live_email_sent_at: string | null;
+  padlock_email_sent_at: string | null;
+  padlock_reminder_sent_at: string | null;
+  gave_up_email_sent_at: string | null;
+  not_working_email_sent_at: string | null;
   created_by_user_id: string | null;
   created_at: string;
 }
@@ -54,6 +60,10 @@ export interface LastCheck {
   record1: RecordSighting;
   record2: RecordSighting;
   bare_forwards: boolean | null;
+  // The status job's own clocks (Part 6): when record 2 was last looked at, the first of two misses in a row, and the daily look.
+  record2_checked_at?: string | null;
+  record2_first_miss_at?: string | null;
+  daily_at?: string | null;
 }
 
 export type NewDomainRow = Pick<
@@ -66,6 +76,8 @@ export interface DomainStore {
   getByOrg(orgId: string): Promise<DomainRow | null>;
   getByFullName(fullName: string): Promise<DomainRow | null>;
   getByDomain(domain: string): Promise<DomainRow | null>;
+  /** Every connection (the status job walks them; the table is a few hundred rows at the very most). */
+  listAll(): Promise<DomainRow[]>;
   /** Throws `{ code: '23505' }` when the name or the club already has a row (a race past our own check). */
   insert(row: NewDomainRow): Promise<DomainRow>;
   update(orgId: string, patch: Partial<DomainRow>): Promise<DomainRow>;
@@ -216,6 +228,7 @@ export async function retryClubDomain(deps: ServiceDeps, orgId: string): Promise
       waiting_since: deps.now().toISOString(),
       last_checked_at: null,
       last_check: null,
+      gave_up_email_sent_at: null, // a new stretch: if checking gives up again, the owner is told again
     });
     return { ok: true, row: updated };
   } catch {

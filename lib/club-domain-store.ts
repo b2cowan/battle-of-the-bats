@@ -14,6 +14,12 @@ export const clubDomainStore: DomainStore = {
   getByFullName: (fullName) => one(supabaseAdmin.from('org_custom_domains').select('*').eq('full_name', fullName).maybeSingle()),
   getByDomain: (domain) => one(supabaseAdmin.from('org_custom_domains').select('*').eq('domain', domain).maybeSingle()),
 
+  async listAll() {
+    const { data, error } = await supabaseAdmin.from('org_custom_domains').select('*');
+    if (error) throw error;
+    return (data ?? []) as DomainRow[];
+  },
+
   async insert(row: NewDomainRow) {
     const created = await one(supabaseAdmin.from('org_custom_domains').insert(row).select('*').single());
     return created as DomainRow;

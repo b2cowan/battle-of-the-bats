@@ -26,6 +26,7 @@ function fakeStore(initial: DomainRow[] = []) {
   const rows = new Map<string, DomainRow>(initial.map((r) => [r.org_id, r]));
   const store: DomainStore = {
     async getByOrg(orgId) { return rows.get(orgId) ?? null; },
+    async listAll() { return [...rows.values()]; },
     async getByFullName(n) { return [...rows.values()].find((r) => r.full_name === n) ?? null; },
     async getByDomain(d) { return [...rows.values()].find((r) => r.domain === d) ?? null; },
     async insert(row: NewDomainRow) {
@@ -33,7 +34,7 @@ function fakeStore(initial: DomainRow[] = []) {
       const created: DomainRow = {
         ...row, id: 'id-' + rows.size, status: 'waiting', last_checked_at: null, last_check: null,
         waiting_since: NOW.toISOString(), connected_at: null, needs_attention_since: null, not_working_since: null,
-        padlock_expires_at: null, created_at: NOW.toISOString(),
+        padlock_expires_at: null, live_email_sent_at: null, padlock_email_sent_at: null, padlock_reminder_sent_at: null, gave_up_email_sent_at: null, not_working_email_sent_at: null, created_at: NOW.toISOString(),
       };
       rows.set(row.org_id, created);
       return created;
