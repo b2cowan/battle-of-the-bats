@@ -8,7 +8,7 @@ import {
   retentionDeadline,
 } from '@/lib/billing-retention';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
-import { isPastDueTransition, isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
+import { isPastDueTransition, isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
 import {
   provisionTeamWorkspaceFromCheckoutMetadata,
   syncTeamWorkspaceSubscription,
@@ -21,6 +21,7 @@ import {
 import { NEXT_SEASON_CHOICE_KIND, classifyNextSeasonSubscription } from '@/lib/next-season-choice';
 import { PLAN_RANK } from '@/lib/plan-features';
 import { applyPlanChangeSideEffects } from '@/lib/plan-move';
+import { isInAppUpMove } from '@/lib/plan-growth';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
@@ -366,7 +367,7 @@ export const POST = withObservability(async (req: Request) => {
         const currentPeriodEnd = toIso(sub.items?.data?.[0]?.current_period_end);
         const { data: currentOrg } = await supabaseAdmin
           .from('organizations')
-          .select('id, plan_id, subscription_status')
+          .select('id, plan_id, subscription_status, stripe_subscription_id')
           .eq('stripe_customer_id', customerId)
           .maybeSingle();
         const { data: updatedOrg } = await supabaseAdmin
@@ -384,6 +385,28 @@ export const POST = withObservability(async (req: Request) => {
           .maybeSingle();
 
         if (updatedOrg) {
+          const previousPlan = currentOrg?.plan_id as OrgPlan | undefined;
+          const previousStatus = currentOrg?.subscription_status as string | null | undefined;
+
+          // The growth half of the Billing events card: a first subscription, or a paying org moving up.
+          // Written FIRST, before the side effects below: if one of them throws, Stripe retries this event,
+          // and the retry finds the org already updated, so the move would never be classified again.
+          // A subscription starts once, so its start is keyed on the subscription, not on this event: two
+          // different events for one new subscription (created + updated, or a late stale one) count once.
+          await writeGrowthEvent({
+            source: 'stripe',
+            sourceEventId: event.id,
+            startSourceEventId: sub.id,
+            orgId: updatedOrg.id,
+            previousPlanId: previousPlan ?? null,
+            previousStatus,
+            previousSubscriptionId: currentOrg?.stripe_subscription_id ?? null,
+            planId: planKey,
+            status: sub.status,
+            ignoreUpgrade: isInAppUpMove(sub.metadata, planKey),
+            metadata: { stripeSubscriptionId: sub.id, priceId, billingCycle },
+          });
+
           const restoreResult = await restoreRetainedDowngradeTournaments(updatedOrg.id, cfg.tournamentLimit);
 
           // Club Tier Stage 1b — what only the webhook sees change the plan (a scheduled down-move
@@ -408,8 +431,6 @@ export const POST = withObservability(async (req: Request) => {
             await cancelScheduledEmail(updatedOrg.id, 'tournament_plus_upsell');
           }
 
-          const previousPlan = currentOrg?.plan_id as OrgPlan | undefined;
-          const previousStatus = currentOrg?.subscription_status as string | null | undefined;
           if (previousPlan && PLAN_RANK[planKey] < PLAN_RANK[previousPlan]) {
             await writePlatformEvent({
               eventType: 'plan_downgraded',
@@ -719,7 +740,7 @@ export const POST = withObservability(async (req: Request) => {
       const currentPeriodEnd = toIso(invoice.period_end);
       const { data: currentOrg } = await supabaseAdmin
         .from('organizations')
-        .select('id, plan_id, subscription_status')
+        .select('id, plan_id, subscription_status, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
       await supabaseAdmin
@@ -729,6 +750,26 @@ export const POST = withObservability(async (req: Request) => {
           ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
         })
         .eq('stripe_customer_id', customerId);
+
+      // This handler can flip a first subscription from `incomplete` to `active` before the subscription's
+      // own update arrives, which would then see "already active" and never count the start. Count it here
+      // too — keyed on the subscription, so whichever event gets there first counts it once. Only once the
+      // subscription is on the org row; before that the subscription event itself counts it.
+      if (currentOrg?.stripe_subscription_id) {
+        await writeGrowthEvent({
+          source: 'stripe',
+          sourceEventId: event.id,
+          startSourceEventId: currentOrg.stripe_subscription_id,
+          orgId: currentOrg.id,
+          previousPlanId: currentOrg.plan_id,
+          previousStatus: currentOrg.subscription_status,
+          previousSubscriptionId: currentOrg.stripe_subscription_id,
+          planId: currentOrg.plan_id,
+          status: 'active',
+          ignoreUpgrade: true,
+          metadata: { stripeCustomerId: customerId, invoiceId: invoice.id },
+        });
+      }
 
       // A failed payment's notice leaves Needs attention for everyone once billing is good again.
       if (currentOrg) await clearSettled({ orgIds: [currentOrg.id], kinds: ['payment_failed'] });

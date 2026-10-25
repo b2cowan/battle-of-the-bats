@@ -10,7 +10,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
+import { isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { welcomeBackHtml, tournamentPlusWelcomeHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
@@ -160,6 +160,19 @@ export const POST = withObservability(async (req: Request) => {
     if (planKey !== 'tournament') {
       await cancelScheduledEmail(auth.org.id, 'tournament_plus_upsell');
     }
+
+    await writeGrowthEvent({
+      source: 'mock',
+      orgId: auth.org.id,
+      actorUserId: auth.user.id,
+      actorEmail: auth.user.email,
+      previousPlanId: auth.org.planId,
+      previousStatus: auth.org.subscriptionStatus,
+      previousSubscriptionId: auth.org.stripeSubscriptionId ?? null,
+      planId: planKey,
+      status: 'trialing',
+      metadata: { billingCycle },
+    });
 
     if (isRecoveryTransition(auth.org.subscriptionStatus, 'trialing')) {
       await writePlatformEvent({

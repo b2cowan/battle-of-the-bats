@@ -4,6 +4,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { PLAN_CONFIG, normalizeBillingCycle, type BillingCycle } from './plan-config';
 import { getStripePriceId } from './stripe-prices';
 import { foundingCompAppliesToPlan, revokeFoundingSeasonComp } from './founding-season';
+import { writeGrowthEvent } from './platform-events';
+import { MOVE_METADATA_KEY } from './plan-growth';
 import type { OrgPlan } from './types';
 
 /**
@@ -86,7 +88,6 @@ export type MovePreview =
 export type ScheduledMove = { toPlan: OrgPlan; effectiveAt: string | null; scheduleId: string };
 
 const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due']);
-const MOVE_METADATA_KEY = 'flhq_plan_move';
 
 type LiveSub = { sub: Stripe.Subscription; item: Stripe.SubscriptionItem; billingCycle: BillingCycle };
 
@@ -287,6 +288,21 @@ export async function applyMove(
         proration_behavior: 'always_invoice',
         proration_date: prorationDate,
         metadata,
+      });
+
+      // The growth half of the Billing events card, written as soon as Stripe has moved: the webhook skips
+      // its own upgrade event for this move (it carries our marker), so this is the only record of it and
+      // must not wait on the database steps below. Throw-proof, so it can never undo a move Stripe made.
+      await writeGrowthEvent({
+        source: 'app',
+        sourceEventId: `${live.sub.id}:move_up:${toPlan}:${prorationDate}`,
+        orgId: org.id,
+        previousPlanId: org.planId,
+        previousStatus: org.subscriptionStatus ?? null,
+        previousSubscriptionId: org.stripeSubscriptionId ?? null,
+        planId: toPlan,
+        status: org.subscriptionStatus ?? null,
+        metadata: { stripeSubscriptionId: live.sub.id, billingCycle: live.billingCycle, actor: opts.actor },
       });
 
       // The webhook will write the same plan from the new price; writing it here too means the

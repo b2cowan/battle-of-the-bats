@@ -215,11 +215,15 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .select('event_type, occurred_at')
       .in('event_type', [
         'subscription_canceled', 'plan_downgraded', 'subscription_past_due', 'subscription_recovered',
+        'subscription_started', 'plan_upgraded',
         // Free League Starter (§13) — activation + cap-wall funnel surfaced in the growth tab.
         'free_floor_created', 'existing_user_floor_added', 'league_season_created',
         'league_schedule_generated', 'league_public_page_shared', 'scope_wall_hit', 'upgrade_intent_clicked',
       ])
       .gte('occurred_at', eventWindowStart)
+      // Newest first: if the high-volume funnel events ever pass the cap, the oldest of the 90 days drop,
+      // not the 7- and 30-day counts the billing rows lean on.
+      .order('occurred_at', { ascending: false })
       .limit(5000),
   ]);
 
@@ -396,6 +400,16 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       moduleCounts,
     },
     lifecycle: {
+      newSubscriptions: {
+        days7: countEvents('subscription_started', sevenDaysAgo),
+        days30: countEvents('subscription_started', thirtyDaysAgo),
+        days90: countEvents('subscription_started', ninetyDaysAgo),
+      },
+      upgrades: {
+        days7: countEvents('plan_upgraded', sevenDaysAgo),
+        days30: countEvents('plan_upgraded', thirtyDaysAgo),
+        days90: countEvents('plan_upgraded', ninetyDaysAgo),
+      },
       cancellations: {
         days7: countEvents('subscription_canceled', sevenDaysAgo),
         days30: countEvents('subscription_canceled', thirtyDaysAgo),

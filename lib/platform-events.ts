@@ -1,6 +1,11 @@
 import { supabaseAdmin } from './supabase-admin';
+import { classifyGrowthMove, isRecoveryTransition, type PlanMoveInput } from './plan-growth';
 
 export type PlatformEventType =
+  // The growth half of the Business numbers "Billing events" card. Free text, no CHECK, no migration.
+  // Recorded from the day they shipped — earlier history is not reconstructed.
+  | 'subscription_started'
+  | 'plan_upgraded'
   | 'plan_downgraded'
   | 'subscription_canceled'
   | 'subscription_past_due'
@@ -117,9 +122,38 @@ export async function writePlatformEvent(input: PlatformEventInput): Promise<voi
   }
 }
 
-export function isRecoveryTransition(previousStatus?: string | null, nextStatus?: string | null) {
-  return (previousStatus === 'past_due' || previousStatus === 'canceled') &&
-    (nextStatus === 'active' || nextStatus === 'trialing');
+// The decisions live in plan-growth (pure, testable without the database); callers keep importing from here.
+export { isRecoveryTransition, classifyGrowthMove };
+
+/** Writes the growth event a plan change earns, if it earns one. Throw-proof like `writePlatformEvent`. */
+export async function writeGrowthEvent(
+  input: PlanMoveInput
+    & Omit<PlatformEventInput, 'eventType' | 'previousPlanId' | 'planId' | 'previousSubscriptionStatus' | 'subscriptionStatus'>
+    & {
+      ignoreUpgrade?: boolean;
+      /** Dedupe a START on this (the subscription id) instead of `sourceEventId`: one subscription starts once. */
+      startSourceEventId?: string | null;
+    },
+): Promise<void> {
+  const eventType = classifyGrowthMove(input);
+  if (!eventType || (eventType === 'plan_upgraded' && input.ignoreUpgrade)) return;
+  const key = eventType === 'subscription_started' && input.startSourceEventId
+    ? input.startSourceEventId
+    : input.sourceEventId;
+  await writePlatformEvent({
+    eventType,
+    source: input.source,
+    sourceEventId: key ? `${key}:${eventType}` : null,
+    orgId: input.orgId,
+    actorUserId: input.actorUserId,
+    actorEmail: input.actorEmail,
+    previousPlanId: input.previousPlanId ?? null,
+    planId: input.planId,
+    previousSubscriptionStatus: input.previousStatus ?? null,
+    subscriptionStatus: input.status ?? null,
+    metadata: input.metadata,
+    occurredAt: input.occurredAt,
+  });
 }
 
 export function isPastDueTransition(previousStatus?: string | null, nextStatus?: string | null) {

@@ -664,6 +664,22 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
     });
   }
 
+  // The growth half of the Billing events card: a brand-new Premium Coaches Portal is a new subscription.
+  // Here and not in the provisioner, which the Founding Season comp and the mock paths use too.
+  // Only a subscription that is paying or in its trial: `incomplete` (a card still being authenticated)
+  // provisions the workspace but has not paid anyone yet.
+  if (params.subscriptionStatus === 'active' || params.subscriptionStatus === 'trialing') await writePlatformEvent({
+    eventType: 'subscription_started',
+    source: params.eventSource,
+    sourceEventId: params.sourceEventId ? `${params.sourceEventId}:subscription_started` : null,
+    orgId: result.org.id,
+    actorUserId: parsed.ownerUserId,
+    actorEmail: parsed.ownerEmail,
+    planId: 'team',
+    subscriptionStatus: mapStripeStatusToOrgStatus(params.subscriptionStatus),
+    metadata: { scope: 'coaches_portal', teamWorkspaceId: result.teamWorkspaceId, billingCycle: params.billingCycle ?? parsed.billingCycle },
+  });
+
   // Premium Coaches Portal welcome — best-effort, fires once here (the FIRST webhook event to
   // provision wins; the second finds the workspace already exists and returns early above). Never
   // block provisioning or the webhook 200 on an email failure.

@@ -1,7 +1,7 @@
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { isBillingMockEnabled } from '@/lib/billing-mock';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { isPastDueTransition, isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
+import { isPastDueTransition, isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import { PLAN_RANK } from '@/lib/plan-features';
@@ -56,6 +56,18 @@ export const POST = withObservability(async (req: Request) => {
       subscriptionStatus: normalizedStatus,
     });
   }
+
+  await writeGrowthEvent({
+    source: 'mock',
+    orgId: auth.org.id,
+    actorUserId: auth.user.id,
+    actorEmail: auth.user.email,
+    previousPlanId: previousPlan,
+    previousStatus,
+    previousSubscriptionId: auth.org.stripeSubscriptionId ?? null,
+    planId: plan,
+    status: normalizedStatus,
+  });
 
   if (isPastDueTransition(previousStatus, normalizedStatus)) {
     await writePlatformEvent({

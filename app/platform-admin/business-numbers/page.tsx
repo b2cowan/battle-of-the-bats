@@ -154,6 +154,14 @@ export default async function BusinessNumbersPage() {
                 <div className={styles.lifecycleHeader}>7d</div>
                 <div className={styles.lifecycleHeader}>30d</div>
                 <div className={styles.lifecycleHeader}>90d</div>
+                <div className={styles.lifecycleLabel}>New subscriptions</div>
+                <div>{stats.lifecycle.newSubscriptions.days7}</div>
+                <div>{stats.lifecycle.newSubscriptions.days30}</div>
+                <div>{stats.lifecycle.newSubscriptions.days90}</div>
+                <div className={styles.lifecycleLabel}>Upgrades</div>
+                <div>{stats.lifecycle.upgrades.days7}</div>
+                <div>{stats.lifecycle.upgrades.days30}</div>
+                <div>{stats.lifecycle.upgrades.days90}</div>
                 <div className={styles.lifecycleLabel}>Cancellations</div>
                 <div>{stats.lifecycle.cancellations.days7}</div>
                 <div>{stats.lifecycle.cancellations.days30}</div>
@@ -313,8 +321,10 @@ export default async function BusinessNumbersPage() {
                 <AlertCircle size={16} />
               </div>
               <p className={styles.panelCopy}>
-                Cancellation, downgrade, and recovery counts come from saved billing events. Historical trend charts are
-                still future work because they need daily metric snapshots.
+                Billing event counts come from saved events. New subscriptions and upgrades are recorded only from the day
+                they started being saved, so their 30 and 90 day counts fill in over time. A comeback after a cancellation
+                counts as a recovery, never a new subscription, and a free comp that starts paying counts as new.
+                Historical trend charts are still future work because they need daily metric snapshots.
               </p>
               <p className={styles.panelCopy}>
                 Latest daily snapshot: {latestSnapshot ? `${latestSnapshot.snapshot_date} (${latestSnapshot.source})` : 'none recorded yet'}.
