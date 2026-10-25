@@ -963,7 +963,6 @@ export interface LeagueSeason {
   name: string;
   slug: string;
   sport: string;
-  division: string | null;
   status: LeagueSeasonStatus;
   description: string | null;
   registrationFee: number | null;

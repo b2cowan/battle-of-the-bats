@@ -111,7 +111,6 @@ export const PATCH = withObservability(async (req: Request,
   if (typeof body.name         === 'string') patch.name         = body.name.trim() || undefined;
   if (typeof body.slug         === 'string') patch.slug         = body.slug.trim().toLowerCase() || undefined;
   if (typeof body.sport        === 'string') patch.sport        = body.sport;
-  if ('division'               in body)      patch.division     = body.division ?? null;
   if ('description'            in body)      patch.description  = body.description ?? null;
   if ('registrationFee'        in body) {
     const fee = body.registrationFee;

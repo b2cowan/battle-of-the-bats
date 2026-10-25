@@ -86,12 +86,14 @@ export default function HouseLeagueHome() {
   const row = (s: LeagueSeasonSummary) => {
     const facts = { ...s.season, sport: sportLabel(s.season.sport), ...s };
     const note = seasonNoteLine({ ...facts, registrationFee: s.season.registrationFee }, canRun);
+    // Only a running season's pill says something its group does not: a getting-ready or past season would repeat the header.
+    const pill = seasonGroup(s.season) === 'running' ? <> <SeasonStatePill season={s.season} /></> : null;
     return (
       <ClubRow
         key={s.season.id}
         as="link"
         href={`${base}/seasons/${s.season.id}`}
-        title={<span className={styles.rowTitle}>{s.season.name} <SeasonStatePill season={s.season} /></span>}
+        title={<span className={styles.rowTitle}>{s.season.name}{pill}</span>}
         caption={
           <>
             <span>{seasonFactsLine(facts)}</span>

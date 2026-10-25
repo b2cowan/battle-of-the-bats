@@ -62,7 +62,6 @@ export async function POST(request: Request) {
         name: 'Dev House League 2026', // spelling-ok: a dev season's own name (data), not the program's
         slug: SEASON_SLUG,
         sport: 'softball',
-        division: 'U10',
         status: 'active',
         registration_fee: 150,
         auto_generate_fees: false,

@@ -96,11 +96,8 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
         key: `league-${s.id}`,
         href: href(`/league/${s.slug}`),
         title: s.name,
-        sub: [
-          deadline ? `Sign up by ${day(deadline)}` : null,
-          // The fee as the season's own page writes it.
-          s.registrationFee != null ? `$${s.registrationFee.toFixed(2)}` : null,
-        ].filter(Boolean).join(' · ') || null,
+        // The deadline only — the fee is not a selling point, and it lives on the season's own page. No deadline: no line.
+        sub: deadline ? `Sign up by ${day(deadline)}` : null,
         deadline,
       };
     }),

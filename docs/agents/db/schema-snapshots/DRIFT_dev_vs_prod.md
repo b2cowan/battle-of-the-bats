@@ -2,12 +2,12 @@
 
 **Generated:** 2026-10-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 357 divergence(s)** across dev/prod.
+**⚠️ 358 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 12 | 0 | — |
-| Columns | 191 | 0 | 0 |
+| Columns | 191 | 1 | 0 |
 | Indexes | 48 | 0 | 2 |
 | Constraints | 50 | 0 | — |
 | RLS / CHECK | 54 | 0 | 0 (RLS state) |
@@ -224,8 +224,8 @@ _none_
 - `tournament_team_payments.tournament_id`
 - `tournament_team_payments.updated_at`
 
-### Only in PROD (0)
-_none_
+### Only in PROD (1)
+- `league_seasons.division`
 
 ### Type/nullability/default changed (0)
 _none_

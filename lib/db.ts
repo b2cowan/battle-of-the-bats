@@ -2262,7 +2262,6 @@ export interface LeagueSeasonInput {
   name: string;
   slug: string;
   sport?: string;
-  division?: string | null;
   description?: string | null;
   registrationFee?: number | null;
   autoGenerateFees?: boolean;
@@ -2334,7 +2333,6 @@ function mapLeagueSeason(row: any): LeagueSeason {
     name:                      row.name,
     slug:                      row.slug,
     sport:                     row.sport,
-    division:                  row.division ?? null,
     status:                    row.status,
     description:               row.description ?? null,
     registrationFee:           row.registration_fee != null ? Number(row.registration_fee) : null,
@@ -2467,7 +2465,6 @@ export async function updateLeagueSeason(
   if (input.name                      !== undefined) patch.name                        = input.name;
   if (input.slug                      !== undefined) patch.slug                        = input.slug;
   if (input.sport                     !== undefined) patch.sport                       = input.sport;
-  if (input.division                  !== undefined) patch.division                   = input.division;
   if (input.description               !== undefined) patch.description                 = input.description;
   if (input.registrationFee           !== undefined) patch.registration_fee            = input.registrationFee;
   if (input.autoGenerateFees          !== undefined) patch.auto_generate_fees          = input.autoGenerateFees;

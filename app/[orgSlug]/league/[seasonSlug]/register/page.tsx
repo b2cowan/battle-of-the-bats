@@ -66,9 +66,6 @@ export default async function RegisterPage({
         <div style={{ marginBottom: '2rem' }}>
           <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
           <h1 className={kit.title}>Register — {season.name}</h1>
-          {season.division && (
-            <div className={kit.sub}>Division: {season.division}</div>
-          )}
         </div>
 
         {/* Closed state */}

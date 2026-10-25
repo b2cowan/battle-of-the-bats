@@ -57,13 +57,13 @@ export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
   // A block open for editing closes the moment its season can no longer be edited (finished, or the access changed).
   const [editOpen, setEditing] = useState(false);
   const editing = editOpen && canEdit;
-  const [draft, setDraft] = useState({ name: '', division: '', description: '', seasonStartDate: '', seasonEndDate: '' });
+  const [draft, setDraft] = useState({ name: '', description: '', seasonStartDate: '', seasonEndDate: '' });
   const q = useSeasonSave(season.id, orgSlug, onSaved);
   const held = editing && !draft.name.trim() ? 'Give the season a name to save it.' : null;
 
   const start = () => {
     setDraft({
-      name: season.name, division: season.division ?? '', description: season.description ?? '',
+      name: season.name, description: season.description ?? '',
       seasonStartDate: season.seasonStartDate ?? '', seasonEndDate: season.seasonEndDate ?? '',
     });
     setEditing(true);
@@ -79,7 +79,6 @@ export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
         <dl className={s.facts}>
           <Fact label="Name">{season.name}</Fact>
           <Fact label="Dates">{seasonDates(season) ?? 'Not set'}</Fact>
-          {season.division && <Fact label="Division">{season.division}</Fact>}
           <Fact label="Description">{season.description || 'None'}</Fact>
         </dl>
       ) : (
@@ -104,12 +103,6 @@ export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
                 onBlur={() => draft.seasonEndDate !== (season.seasonEndDate ?? '') && commit({ seasonEndDate: draft.seasonEndDate || null })} />
             </label>
           </div>
-          <label className={ck.field}>
-            <span className={ck.label}>Division</span>
-            <input className={ck.input} value={draft.division} maxLength={30} placeholder="e.g. U11, Adult"
-              onChange={e => setDraft(d => ({ ...d, division: e.target.value }))}
-              onBlur={() => draft.division.trim() !== (season.division ?? '') && commit({ division: draft.division.trim() || null })} />
-          </label>
           <label className={ck.field}>
             <span className={ck.label}>Description</span>
             <textarea className={ck.textarea} rows={3} value={draft.description}

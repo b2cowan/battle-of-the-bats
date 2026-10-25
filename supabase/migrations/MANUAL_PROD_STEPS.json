@@ -318,6 +318,10 @@
     "359_an_online_payment_changes_only_through_its_landing.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 12a review fix M4: two guard TRIGGERS (online_payments_guard, online_payment_refunds_guard, BEFORE INSERT OR UPDATE) and a REPLACED online_payment_land_failed that opens the write flag. No table or column change, so check:migrations cannot see it: verify on prod by md5 of the three function bodies and the two triggers, as for 338. Needs 358 first. Applied to DEV 2026-10-25. Apply with 358 at the release that ships Stage 12a."
+    },
+    "360_a_season_no_longer_carries_a_free_text_division.sql": {
+      "prod": "held",
+      "note": "Drops the free-text league_seasons.division label (the real divisions are league_divisions); the owner asked for it removed on 2026-10-25. A dropped column is invisible to check:migrations. Prod HAS the column. Apply on prod only AFTER the promote that carries the code that stops reading and writing it (old code inserting a season with a division key would fail once it is gone), and delete nothing by hand first: the owner said club data is dev-only, but check prod for any season with a non-empty division before dropping. Applied to DEV on the day the code changed."
     }
   }
 }

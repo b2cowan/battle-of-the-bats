@@ -73,7 +73,6 @@ export const POST = withObservability(async (req: Request) => {
       name,
       slug,
       sport:                        typeof body.sport === 'string' && body.sport ? body.sport : DEFAULT_SPORT,
-      division:                    typeof body.division === 'string' && body.division ? body.division : null,
       description:                  typeof body.description === 'string' && body.description ? body.description : null,
       // A fee is 0 or more dollars; anything else is no fee (the field's min is only a hint).
       registration_fee:             typeof body.registrationFee === 'number' && Number.isFinite(body.registrationFee) && body.registrationFee >= 0 ? body.registrationFee : null,

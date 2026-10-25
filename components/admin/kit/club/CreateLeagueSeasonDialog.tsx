@@ -12,12 +12,12 @@ import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
  * (S1·b: stored by the route, read by nothing).
  */
 type Form = {
-  name: string; slug: string; sport: string; division: string; description: string;
+  name: string; slug: string; sport: string; description: string;
   seasonStartDate: string; seasonEndDate: string; registrationOpenAt: string; registrationCloseAt: string;
   registrationFee: string; waiverText: string; autoApproveUnderCapacity: boolean; autoPromoteWaitlist: boolean;
 };
 const BLANK: Form = {
-  name: '', slug: '', sport: DEFAULT_SPORT, division: '', description: '', seasonStartDate: '', seasonEndDate: '',
+  name: '', slug: '', sport: DEFAULT_SPORT, description: '', seasonStartDate: '', seasonEndDate: '',
   registrationOpenAt: '', registrationCloseAt: '', registrationFee: '', waiverText: '',
   autoApproveUnderCapacity: false, autoPromoteWaitlist: false,
 };
@@ -52,7 +52,6 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
           name: form.name.trim(),
           slug: form.slug.trim(),
           sport: form.sport || DEFAULT_SPORT,
-          division: form.division.trim() || null,
           description: form.description.trim() || null,
           seasonStartDate: form.seasonStartDate || null,
           seasonEndDate: form.seasonEndDate || null,
@@ -126,10 +125,6 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
           <select className={ck.select} value={form.sport} onChange={e => set('sport', e.target.value)}>
             {OFFERED_SPORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
-        </label>
-        <label className={ck.field}>
-          <span className={ck.label}>Division</span>
-          <input className={ck.input} value={form.division} maxLength={30} placeholder="e.g. U11, U13, Adult" onChange={e => set('division', e.target.value)} />
         </label>
         <label className={ck.field}>
           <span className={ck.label}>Season start</span>

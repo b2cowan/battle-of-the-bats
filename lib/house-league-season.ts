@@ -105,7 +105,7 @@ export function seasonState(season: Dated, today: string = tournamentToday()): {
 }
 
 /** True when a running season is past its last day and not yet completed (the home's "complete it" line). */
-function isPastItsEnd(season: Dated, today: string): boolean {
+export function isPastItsEnd(season: Dated, today: string = tournamentToday()): boolean {
   return season.status === 'active' && phase(season, today).kind === 'ended';
 }
 

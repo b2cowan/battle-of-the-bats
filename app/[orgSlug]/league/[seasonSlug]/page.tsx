@@ -92,9 +92,6 @@ export default async function LeagueSeasonPage({
             <span className={`${kit.chip} ${registrationOpen ? kit.chipOk : kit.chipNeutral}`}>
               {STATUS_LABEL[season.status] ?? season.status}
             </span>
-            {season.division && (
-              <span className={`${kit.chip} ${kit.chipNeutral}`}>{season.division}</span>
-            )}
           </div>
           <h1 className={kit.title}>{season.name}</h1>
           {season.description && (

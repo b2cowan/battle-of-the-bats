@@ -32,7 +32,7 @@ import s from '@/components/admin/kit/club/league/LeagueSeason.module.css';
 import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { isFreeFloorLeague, type LeagueCapKind } from '@/lib/free-floor';
 import { fireLeagueEvent } from '@/lib/league-events-client';
-import { seasonChecklist, seasonDates } from '@/lib/house-league-season';
+import { isPastItsEnd, seasonChecklist, seasonDates } from '@/lib/house-league-season';
 import { DELETE_DOOR, movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
 import { JAN_1, bornLine, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
@@ -154,7 +154,9 @@ export default function SeasonOverviewPage() {
       {moves.includes('close') ? 'Close registration' : 'Reopen registration'}
     </button>
   ) : undefined;
-  const rare = canMove ? (['complete', 'archive', 'reopen'] as const).filter(m => moves.includes(m)) : [];
+  const pastItsEnd = canMove && moves.includes('complete') && isPastItsEnd(season);
+  // Once Complete has its own Next step card above, the door at the end of the page would only repeat it.
+  const rare = canMove ? (['complete', 'archive', 'reopen'] as const).filter(m => moves.includes(m) && !(m === 'complete' && pastItsEnd)) : [];
 
   return (
     <div className={repKit.page}>
@@ -193,6 +195,16 @@ export default function SeasonOverviewPage() {
         </ClubSection>
       )}
 
+      {/* A season past its last day: completing it IS the next step, so it sits up here with the others, not down in the rare door. */}
+      {pastItsEnd && (
+        <ClubSection
+          title="Next step"
+          actions={<button type="button" className="btn btn-lime" onClick={() => setMove('complete')}>Complete the season</button>}
+        >
+          <p className={s.emptyLine}>{rareDoor('complete', season).sentence} Complete it when the games are done. It moves to Past seasons, and nobody is emailed.</p>
+        </ClubSection>
+      )}
+
       {season.status !== 'draft' && (
         <div className={s.band} role="group" aria-label="This season">
           <div className={s.tile}>
@@ -216,6 +228,10 @@ export default function SeasonOverviewPage() {
           </div>
         </div>
       )}
+
+      {/* The season, then how it takes registrations, then the divisions inside it — the order a coach sets it up. */}
+      <SeasonBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} />
+      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} />
 
       <ClubSection
         title="Divisions"
@@ -272,9 +288,6 @@ export default function SeasonOverviewPage() {
           </div>
         )}
       </ClubSection>
-
-      <SeasonBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} />
-      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} />
 
       {/* The rare doors end the body (a sentence and a link that asks), never a pinned row. */}
       {rare.map(m => {

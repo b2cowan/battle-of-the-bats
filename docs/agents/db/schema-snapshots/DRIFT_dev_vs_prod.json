@@ -1,9 +1,9 @@
 {
   "generated": "2026-10-25",
-  "total": 357,
+  "total": 358,
   "counts": {
     "tables": 12,
-    "columns": 191,
+    "columns": 192,
     "indexes": 50,
     "constraints": 50,
     "rls": 54
@@ -987,6 +987,10 @@
     },
     {
       "key": "column:only-dev:tournament_team_payments.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:league_seasons.division",
       "sig": ""
     },
     {

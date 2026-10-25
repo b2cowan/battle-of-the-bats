@@ -6967,15 +6967,6 @@
   },
   {
     "table_name": "league_seasons",
-    "column_name": "division",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "league_seasons",
     "column_name": "status",
     "data_type": "text",
     "udt_name": "text",
