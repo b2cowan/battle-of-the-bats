@@ -948,13 +948,14 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-payment-status',
           question: 'Where do payment statuses come from?',
-          answerText: 'Payment status is calculated from the tournament or division fee schedule and the payments recorded for each accepted team. On the Teams page an accepted team reads Paid or Owes and the amount. Its record\'s Payment block says, for example, "Owes $200 · paid $100 of $300", then lists Received (each payment with the day it arrived) and Still due (the deposit and the balance, each with a Record button). Mark paid records the rest of the fee, dated today. On Tournament Plus, the Payments line above the list totals the division: what is in, what is left to collect, and what is past due. On a Club plan (or with Accounting), each payment you record also writes one dated income line into the tournament’s own book in Accounting, filed under the Filed under name from Event settings and dated the day the money arrived. Changing a payment voids its line and posts a corrected one; removing a payment voids its line, with who and when, and a voided line never comes back. Money recorded before payments were dated shows as one undated Earlier payment per team and is not added to the book. The registrations export has a Last payment date column. Your club\'s own team reads Our team and No fee on every plan, and is left out of the Payments line, payment reminders, the check-in list of who still owes, and the export\'s amount due. The free Tournament plan tracks no fees or payments, so it has no Payment column, Payment block or Mark paid.',
+          answerText: 'Payment status is calculated from the tournament or division fee schedule and the payments recorded for each accepted team. On the Teams page an accepted team reads Paid or Owes and the amount. Its record\'s Payment block says, for example, "Owes $200 · paid $100 of $300", then lists Received (each payment with the day it arrived) and Still due (the deposit and the balance, each with a Record button). Mark paid records the rest of the fee, dated today. On Tournament Plus, the Payments line above the list totals the division: what is in, what is left to collect, and what is past due. On a Club plan (or with Accounting), each payment you record also writes one dated income line into the tournament’s own book in Accounting, filed under the Filed under name from Event settings and dated the day the money arrived. Changing a payment voids its line and posts a corrected one; removing a payment voids its line, with who and when, and a voided line never comes back. Money recorded before payments were dated shows as one undated Earlier payment per team and is not added to the book. The registrations export has a Last payment date column. Your club\'s own team reads Our team and No fee on every plan, and is left out of the Payments line, payment reminders, the check-in list of who still owes, and the export\'s amount due. The free Tournament plan tracks no fees or payments, so it has no Payment column, Payment block or Mark paid. Where the organization takes payments online (Tournament Plus and above), a team that pays by card appears under Received as Online, card with its receipt number, with no pencil; its payment reaches the team record and the tournament book by itself. See Let teams pay online by card.',
           keywords: ['payment status', 'ledger line', 'accounting entry', 'filed under', 'our team', 'deposit', 'paid', 'owes', 'past due', 'mark paid', 'deposit paid', 'total paid', 'paid figure', 'to collect', 'all collected', 'received', 'still due', 'earlier payment', 'payment date', 'last payment date'],
           answer: (
             <>
               <p>Payment status is calculated from the tournament or division fee schedule and the payments recorded for each accepted team. On the <strong>Teams</strong> page an accepted team reads <strong>Paid</strong> or <strong>Owes</strong> and the amount.</p>
               <p>Its record&rsquo;s <strong>Payment</strong> block states the facts &mdash; for example &ldquo;Owes $200 &middot; paid $100 of $300&rdquo; &mdash; then lists <strong>Received</strong> (each payment with the day it arrived) and <strong>Still due</strong> (the deposit and the balance, each with a <strong>Record</strong> button). <strong>Mark paid</strong> records the rest of the fee, dated today. On <strong>Tournament Plus</strong>, the <strong>Payments</strong> line above the list totals the division: what is in, what is left to collect, and what is past due.</p>
               <p>On a <strong>Club</strong> plan (or with Accounting), each payment you record also writes one dated income line into the tournament&rsquo;s own book in <strong>Accounting</strong>, filed under the <strong>Filed under</strong> name from Event settings and dated the day the money arrived. Changing a payment <em>voids</em> its line and posts a corrected one; removing a payment voids its line, with who and when, and a voided line never comes back. Money recorded before payments were dated shows as one undated <strong>Earlier payment</strong> per team and is not added to the book. The registrations export has a <strong>Last payment date</strong> column. Your club&rsquo;s own team reads <strong>Our team</strong> and <strong>No fee</strong> on every plan, and is left out of the <strong>Payments</strong> line, payment reminders, the check-in list of who still owes, and the export&rsquo;s amount due.</p>
+              <p>A team that pays by card (Tournament Plus and above) appears under <strong>Received</strong> as <em>Online, card</em> with its receipt number and no pencil, and its payment reaches the team&rsquo;s record and the tournament&rsquo;s book by itself. See <a href="#online-payments">Let teams pay online by card</a>.</p>
               <p>The free Tournament plan tracks no fees or payments, so it has no Payment column, Payment block or <strong>Mark paid</strong>.</p>
             </>
           ),
@@ -969,6 +970,212 @@ const tournamentsHelp: HelpPageContent = {
               <p>When a team joins or is moved to the waitlist, it gets the next place in its division&rsquo;s queue &mdash; the <strong>Waitlist</strong> band lists teams in that order (#1, #2&hellip;).</p>
               <p>When a spot opens, a waitlisted team&rsquo;s row offers <strong>Promote</strong> on <strong>Tournament Plus</strong>, and the rest of the queue closes the gap. On the Tournament plan, the team&rsquo;s record shows <strong>Promote from the waitlist</strong> as a Tournament Plus line instead. An accepted team without a spot sits under <strong>Accepted &mdash; needs a spot</strong>, and offers <strong>Place</strong> when a spot opens.</p>
               <p>The waitlist is a Tournament Plus feature: the free Tournament plan has no waitlist and no spots.</p>
+            </>
+          ),
+        },
+      ],
+    },
+
+    {
+      id: 'online-payments',
+      group: 'Teams & Registration',
+      heading: 'Let teams pay online by card',
+      summary: 'Connect your Stripe account in Payouts, choose who pays the processing fee, and teams pay their deposit or full entry by card once you accept them.',
+      keywords: ['online payments', 'pay online', 'pay by card', 'card payments', 'credit card', 'payouts', 'payouts card', 'stripe', 'set up payouts', 'connect stripe', 'processing fee', 'who pays the fee', 'pay now', 'pay the balance', 'pay link', 'email the pay link', 'refund to the card', 'refund', 'receipt', 'test mode', 'disconnect payouts', 'online payment', 'needs attention', 'payment processing', 'refund policy', 'how to pay'],
+      searchText: 'online payments tournament teams pay by card credit card debit stripe express account connect payouts card settings payouts settings and access payouts tile tournament plus league club owner only treasurer before you set up payouts what it costs who pays it teams pay it the club pays it where the money goes terms agree continue to stripe not set up setting up taking payments needs attention disconnected open stripe fix in stripe continue setup set up payouts again test mode no real money moves disconnect payouts processing fee the processing fee shown on your payouts card refund policy sentence link beside pay how to pay text pay now acceptance email pay the balance payment reminder review step pay page deposit pay in full entry fee saving receipt paid thank you receipt email confirming your payment payment not finished email the pay link pay link sent view the payment online card receipt number refund to the card full refund only who is ending this the organizer is ending it the team asked to leave include the processing fee note to the team refund and email refunded to card record a refund made another way refund didnt reach the card payment processing refunds tournament book own shelf treasurer status line accounting overview teams page payments line quiet line let them pay online an online payment isnt in the teams record not available free tournament plan premium coaches portal',
+      links: [
+        { label: 'Teams', href: '../tournaments/registrations' },
+        { label: 'Settings & access', href: '../tournaments/settings' },
+      ],
+      content: (
+        <>
+          <p>With online payments on, an accepted team pays its deposit or full entry fee by card on a secure payment page, and the money goes straight to your bank account through Stripe. This is part of <strong>Tournament Plus</strong> and above; the free Tournament plan and the Premium Coaches Portal don&rsquo;t include it.</p>
+          <p>Teams pay once you accept them, from a link in the acceptance email, a payment reminder, or an email you send yourself. Each payment lands in the team&rsquo;s record by itself. Pick a question below.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'online-payments-setup',
+          title: 'Payouts: setting up online payments',
+          content: (
+            <>
+              <p><strong>Payouts</strong> is where the owner connects the organization&rsquo;s own Stripe account. Only the <strong>owner</strong> can connect, change or disconnect it. A treasurer can see its state; everyone else is pointed to the owner.</p>
+              <HelpDefs>
+                <HelpDef term="League and Club plans">Open <strong>Settings &rsaquo; Payouts</strong>. The Payouts card sits after <strong>Your public site</strong> and before <strong>Delete organization</strong>.</HelpDef>
+                <HelpDef term="Tournament Plus">Open <strong>Settings &amp; access</strong> and choose the <strong>Payouts</strong> tile at the end of the hub. It opens the same card on its own page, and its line under the name tells you the state (for example <em>Let teams pay online by card</em>).</HelpDef>
+              </HelpDefs>
+              <p>Before Stripe asks for anything, <strong>Set up payouts</strong> opens <strong>Before you set up payouts</strong>. It is where you learn what online payments cost and decide how they work:</p>
+              <HelpDefs>
+                <HelpDef term="What it costs">The processing fee on each card payment, printed from FieldLogicHQ&rsquo;s current rate, with one worked line for an example fee. The same rate shows on your Payouts card as <em>Processing fee: &hellip; per card payment</em>.</HelpDef>
+                <HelpDef term="Who pays it">Choose <strong>Teams pay it</strong> or <strong>The club pays it</strong>. You can change this later on the Payouts card. See <em>Who pays the processing fee</em>.</HelpDef>
+                <HelpDef term="Where the money goes">Straight to your bank account through Stripe. FieldLogicHQ never holds it.</HelpDef>
+                <HelpDef term="Refunds">You set your own refund policy, and refunds come out of your Stripe balance.</HelpDef>
+              </HelpDefs>
+              <p>Tick <strong>I agree to the FieldLogicHQ payments terms</strong> (<strong>Read the terms</strong> shows them), then press <strong>Continue to Stripe</strong>. Continue stays off until the box is ticked. Stripe asks for your legal name, a signing officer and your bank account on its own pages, then sends you back.</p>
+              <HelpNote variant="info" title="Don&rsquo;t see Payouts?">Online payments are offered on Tournament Plus and above, and only once FieldLogicHQ has switched them on for your organization. Where they aren&rsquo;t offered, the Payouts card and tile aren&rsquo;t shown at all, and teams keep paying you the way they do today.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-states',
+          title: 'The five states of the Payouts card',
+          content: (
+            <>
+              <p>The pill beside <strong>Payouts</strong> names the state, and the card&rsquo;s one button is the next step.</p>
+              <HelpDefs>
+                <HelpDef term="Not set up"><em>Let teams pay online.</em> Button: <strong>Set up payouts</strong>, which opens <em>Before you set up payouts</em>.</HelpDef>
+                <HelpDef term="Setting up"><em>Stripe needs a few more details.</em> You started and didn&rsquo;t finish. Teams keep seeing your <strong>How to pay</strong> text until setup is done. Button: <strong>Continue setup</strong>.</HelpDef>
+                <HelpDef term="Taking payments"><em>Teams can pay online.</em> Receipts go out in your organization&rsquo;s name. Button: <strong>Open Stripe</strong>, which opens your Stripe dashboard (your payouts, balance and bank account live there).</HelpDef>
+                <HelpDef term="Needs attention"><em>Online payments are paused.</em> Stripe needs something more from you, with a date when Stripe gave one. While Stripe has payments paused, teams see your <strong>How to pay</strong> text instead of <strong>Pay now</strong>. Nothing already paid is affected. Button: <strong>Fix in Stripe</strong>.</HelpDef>
+                <HelpDef term="Disconnected"><em>Online payments are off.</em> It names the day and who disconnected. Button: <strong>Set up payouts again</strong>, which starts at <em>Before you set up payouts</em> again.</HelpDef>
+              </HelpDefs>
+              <p>While the card is taking payments, setting up or needing attention, the owner also sees a <strong>pencil</strong>. It flips the card&rsquo;s record, <strong>Processing fee</strong> and <strong>Refund policy</strong>, from reading to editing; the check mark flips it back. Changes save by themselves.</p>
+              <p><strong>Refund policy</strong> is one or two sentences you write. Teams see it as a <strong>Refund policy</strong> link beside the pay button. Leave it blank and teams see no link.</p>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-test-disconnect',
+          title: 'Test mode and Disconnect',
+          content: (
+            <>
+              <p>While payouts are in <strong>test mode</strong>, the card carries a <strong>Test mode</strong> chip and says <em>No real money moves while payouts are in test mode</em>. Nothing is charged. A test payment says so everywhere it appears:</p>
+              <ul>
+                <li>the team&rsquo;s pay page reads <em>Test payment: no money moves</em>, and its receipt <em>Test payment &middot; no money moved</em>;</li>
+                <li>the payment row in the team&rsquo;s record is tagged <em>Test, no money moved</em>;</li>
+                <li>receipt and refund email subjects start with <em>[Test]</em>.</li>
+              </ul>
+              <p><strong>Disconnect payouts</strong> is the last line at the end of the card, shown while payouts are setting up, taking payments or needing attention. The window <strong>Disconnect payouts?</strong> tells you what happens before you confirm:</p>
+              <ul>
+                <li>Teams stop seeing <strong>Pay now</strong> right away, and pay links already emailed show your <strong>How to pay</strong> text instead.</li>
+                <li>It says how many teams still owe money; they can pay you another way.</li>
+                <li>Payments already made stay in your books and in each team&rsquo;s record. Refunds of them are then made in Stripe, because <strong>Refund to the card</strong> is no longer offered.</li>
+              </ul>
+              <p>To turn online payments back on, use <strong>Set up payouts again</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-fee',
+          title: 'Who pays the processing fee',
+          content: (
+            <>
+              <p>Every card payment has a processing fee, shown on your Payouts card as the processing fee per card payment. You choose who pays it. It is one setting for your whole organization, and the default is <strong>Teams pay it</strong>.</p>
+              <HelpDefs>
+                <HelpDef term="Teams pay it">The fee is added to what the team pays. The pay button shows the full amount, with a line under it, <em>includes a $X processing fee</em>. You receive the full entry fee.</HelpDef>
+                <HelpDef term="The club pays it">The team pays the entry fee alone, and the pay button shows exactly that. The fee comes out of each payment, so you receive the entry fee less the fee.</HelpDef>
+              </HelpDefs>
+              <p>Set it first in <strong>Before you set up payouts</strong>. To change it, the owner presses the pencil on the Payouts card and picks the other choice under <strong>Who pays the processing fee</strong>. A change applies to payments started from then on; anything already paid stays as it was.</p>
+              <p><strong>Where it shows in your books.</strong> When the club pays the fee, each payment adds a <strong>Payment processing</strong> cost to the tournament&rsquo;s own book in Accounting, on the tournament&rsquo;s own shelf, dated the day the payment was made. The entry fee itself still counts in full as income, so the fee reads as a cost and never as less revenue. When teams pay the fee, it isn&rsquo;t your cost and nothing is added, unless you give it back in a refund.</p>
+              <p>The same shelf takes <strong>Refunds</strong> as money out. The tournament&rsquo;s net is its revenue less refunds less payment processing.</p>
+              <HelpNote variant="tip" title="Pay in full saves the team money">While teams pay the fee, the pay page shows how much less in processing fees paying in full costs than paying the deposit and the balance separately, because the deposit and the balance are two payments.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-team-pays',
+          title: 'What a team sees when it pays online',
+          content: (
+            <>
+              <p>When the organization is taking payments, a team pays after it is accepted. These three places change only then; where the organization isn&rsquo;t taking payments, each reads exactly as it did before, with no Pay button:</p>
+              <HelpDefs>
+                <HelpDef term="Review step">On the registration form&rsquo;s last step, the box is titled <strong>Payment</strong> and says <em>Once the organizer accepts your team, we&rsquo;ll email you a link to pay online by card. You can also pay the organizer directly</em>. If you show <strong>How to pay</strong> on the form, it says <em>You can also pay another way</em> and prints your text.</HelpDef>
+                <HelpDef term="Acceptance email">A <strong>Pay now</strong> button above the registration dashboard button, with <em>Pay online by card, or pay another way below</em>. Your <strong>How to pay</strong> text sits under <strong>Other ways to pay</strong>.</HelpDef>
+                <HelpDef term="Payment reminder">A <strong>Pay the balance</strong> button when the team has already paid something, and <strong>Pay now</strong> when it hasn&rsquo;t. The footer asks a team that paid another way to tell you, so you can update its record.</HelpDef>
+              </HelpDefs>
+              <p>Each link opens that team&rsquo;s own pay page, under your tournament&rsquo;s address and in its colours. It shows the team and division, then:</p>
+              <ol>
+                <li>If the fee schedule has a deposit, <strong>Pay the deposit</strong> is picked for the team (with the balance and its date underneath); <strong>Pay in full</strong> is the other choice. With no deposit it reads <strong>Pay the entry fee</strong>; after a deposit, <strong>Pay the balance</strong>.</li>
+                <li>The team checks <strong>Email for the receipt</strong>, then presses <strong>Pay $X by card</strong>. The button always shows the amount.</li>
+                <li>Stripe&rsquo;s secure payment page opens for the card. The team never types card details on your site.</li>
+                <li>Back on the pay page, <strong>Confirming your payment</strong> waits for the payment to land, usually a few seconds. It says <strong>Paid, thank you</strong> only once the team&rsquo;s record has it, and the team is told not to pay again.</li>
+                <li>The receipt shows the amount, the card, the day and a receipt number. A receipt email goes out in your organization&rsquo;s name, with <strong>Pay the balance</strong> if a deposit left a balance. The pay link shows the receipt any time it is opened.</li>
+              </ol>
+              <p>A team that leaves Stripe&rsquo;s page reads <strong>Payment not finished</strong> and <em>Nothing was charged</em>, with the pay options again. A link for a team that hasn&rsquo;t been accepted, has withdrawn or is paid in full says so in plain words, and a link that doesn&rsquo;t work tells the team to ask you for a new one.</p>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-pay-link-record',
+          title: 'Emailing the pay link, and the payment in the team’s record',
+          content: (
+            <>
+              <p>You can send a team its pay link yourself, and every card payment is kept in the team’s record.</p>
+              <p>To send a team a link yourself, open the team&rsquo;s record. Under <strong>Payment</strong>, press the <strong>&hellip;</strong> on the last <strong>Still due</strong> row and choose <strong>Email the pay link</strong>. It goes to the team&rsquo;s email, and the record then reads <em>Pay link sent</em> with the day. The choice stays, so you can send it again. It&rsquo;s there only while the team can pay online: accepted, with something owing, and a team email on file. Whoever runs tournaments and the treasurer can send it.</p>
+              <p>A card payment appears under <strong>Received</strong> as <em>Online, card &middot; receipt N</em>, and counts toward what the team has paid. It has no pencil, because the amount and day are the bank&rsquo;s. Its <strong>&hellip;</strong> menu has <strong>View the payment</strong>, a read-only window with the day, the card, the entry fee, the processing fee (and whether the team or the club paid it), the total, and who it came from.</p>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-refunds',
+          title: 'Refunding a card payment',
+          content: (
+            <>
+              <p>Refunds to the card are <strong>full refunds only</strong>. Whoever runs tournaments, and the treasurer, can make them.</p>
+              <ol>
+                <li>Open the team&rsquo;s record. Under <strong>Received</strong>, press the <strong>&hellip;</strong> on the online payment and choose <strong>Refund to the card</strong>.</li>
+                <li>The window, titled for the team (for example <em>Refund Thunder&rsquo;s payment?</em>), says what the team paid and the card it goes back to. It arrives in 5 to 10 business days.</li>
+                <li>If the team paid the processing fee, answer <strong>Who is ending this?</strong> and decide the fee box (below).</li>
+                <li>Add a <strong>Note to the team</strong> if you like. It goes in the refund email.</li>
+                <li>Press <strong>Refund and email</strong>. Nothing moves until you do.</li>
+              </ol>
+              <HelpDefs>
+                <HelpDef term="The organizer is ending it">The box <strong>Include the processing fee</strong> starts ticked, so the team gets back the whole amount it paid.</HelpDef>
+                <HelpDef term="The team asked to leave">The box starts unticked, so the team gets back the entry fee. You can tick it.</HelpDef>
+                <HelpDef term="The club paid the fee">The team paid the entry fee alone, so there is no question and no box. The entry fee goes back.</HelpDef>
+              </HelpDefs>
+              <p>FieldLogicHQ&rsquo;s processing fee is never refunded, so a processing fee you give back comes from the club. The window says so, and it shows in your books as <strong>Payment processing</strong>.</p>
+              <p><strong>What changes afterward.</strong> The team gets a refund email in your organization&rsquo;s name (with your note and, if the team paid the fee, a line saying whether it was included). The payment stays in the team&rsquo;s record, tagged <em>Refunded to card</em> with the day, and no longer counts toward what the team has paid, so the team shows as owing again. The tournament&rsquo;s book keeps the original receipt and adds the refund as its own money-out line, <strong>Refunds</strong>. A refund doesn&rsquo;t change the team&rsquo;s place in the tournament; accept, withdraw or decline it separately.</p>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-refund-trouble',
+          title: 'When a refund doesn’t reach the card',
+          content: (
+            <>
+              <p>A refund can be slow, or the bank can send it back.</p>
+              <p>While Stripe works on it, the row reads <em>Refunding to card&hellip;</em>. If the bank returns it, for example because the card was closed, the row is flagged <strong>Refund didn&rsquo;t reach the card</strong> and a Needs attention item is raised. Send the team the money another way, then choose <strong>Record a refund made another way</strong> from the row&rsquo;s <strong>&hellip;</strong> and press <strong>Record the refund</strong>. The team&rsquo;s record and the books then match. A full refund you make in the Stripe dashboard lands in the record by itself.</p>
+              <HelpNote variant="warning" title="After you disconnect">Once payouts are disconnected, <strong>Refund to the card</strong> isn&rsquo;t offered. Refund in Stripe instead. A full refund made there is recorded here for you; a part refund raises a Needs attention item to record by hand.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-treasurer',
+          title: 'The treasurer’s view and Needs attention',
+          content: (
+            <>
+              <p>The treasurer doesn&rsquo;t open Payouts. A one-line status shows them where online payments stand:</p>
+              <ul>
+                <li>On a League or Club plan it is on the <strong>Accounting</strong> Overview, under the year line.</li>
+                <li>On Tournament Plus, where there is no Accounting page, it is on the <strong>Teams</strong> page, above the payments line.</li>
+              </ul>
+              <HelpDefs>
+                <HelpDef term="Taking payments"><em>Online payments go to the club&rsquo;s bank account.</em></HelpDef>
+                <HelpDef term="Needs attention">An amber pill: <em>Online payments are paused: Stripe needs something from the owner</em>, with a date when there is one, and where the owner fixes it (<strong>Settings &rsaquo; Payouts</strong>, or <strong>Settings &amp; access &rsaquo; Payouts</strong> on Tournament Plus).</HelpDef>
+                <HelpDef term="Online payments are off"><em>The owner disconnected payouts on</em> the day. Teams see the organizer&rsquo;s payment instructions.</HelpDef>
+              </HelpDefs>
+              <p>While payouts are not set up or still being set up there is nothing to tell the treasurer, so no line shows. The owner sees a quiet line instead while payouts are not set up: <em>Teams pay you directly, outside FieldLogicHQ. Let them pay online</em>, which opens the card. Roles that can&rsquo;t connect payouts and aren&rsquo;t the treasurer see neither.</p>
+              <p><strong>Needs attention items.</strong> Three can appear, and each clears itself when the cause is settled. You never dismiss one.</p>
+              <HelpDefs>
+                <HelpDef term="Stripe needs something to keep online payments on">Goes to the owner and the treasurer. The owner presses <strong>Fix in Stripe</strong> on the Payouts card; the treasurer is told where. It clears when Stripe says payments are on again, or when payouts are disconnected.</HelpDef>
+                <HelpDef term="An online payment isn&rsquo;t in the team&rsquo;s record">Goes to whoever runs tournaments and the treasurer. A team paid by card but the payment couldn&rsquo;t be added to its record (or was part-refunded in Stripe). Refund it to the card from the team&rsquo;s record or in Stripe, or record the change by hand. It clears when the payment is in the record or has been refunded.</HelpDef>
+                <HelpDef term="A refund didn&rsquo;t reach the card">Goes to the same people. It says the amount and card, and that the money was returned. Send the team the money another way, then use <strong>Record a refund made another way</strong>. It clears once the payment shows as refunded.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-online-payments-who-sees',
+          question: 'Why can’t I see Payouts, or why can’t a team pay by card?',
+          answerText: 'Online payments are part of Tournament Plus and above, not the free Tournament plan or the Premium Coaches Portal, and they must be switched on for your organization. Only the owner connects Payouts, in Settings > Payouts on League and Club plans or Settings and access > Payouts on Tournament Plus. A team can pay only after it is accepted, and only while Payouts is Taking payments. While Payouts is Not set up, Setting up, Needs attention with payments paused, or Disconnected, teams see your How to pay text instead of Pay now.',
+          keywords: ['payouts missing', 'no pay now', 'team cannot pay', 'pay button missing', 'no payouts card', 'online payments not showing', 'how to pay text', 'only owner'],
+          answer: (
+            <>
+              <p>Online payments are part of <strong>Tournament Plus</strong> and above, not the free Tournament plan or the Premium Coaches Portal, and they must be switched on for your organization. Only the <strong>owner</strong> connects Payouts.</p>
+              <p>A team can pay only after it is accepted, and only while Payouts reads <strong>Taking payments</strong>. In any other state, teams see your <strong>How to pay</strong> text instead of <strong>Pay now</strong>.</p>
             </>
           ),
         },

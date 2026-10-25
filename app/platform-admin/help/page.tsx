@@ -9,8 +9,8 @@ export default function PlatformAdminHelpPage() {
         ? 'Customer-facing guide for tournament setup, schedules, results, registrations, and day-of operations.'
         : 'Customer-facing guide for tournament setup, schedules, results, registrations, coach chat, and day-of operations.',
       href: '/platform-admin/help/tournaments',
-      topicCount: CHAT_PAUSED ? 25 : 26, // the chat article is hidden while chat is paused
-      keywords: ['customer', 'tournament', 'schedule', 'scores', 'results', 'registrations', ...(CHAT_PAUSED ? [] : ['chat', 'coach chat'])],
+      topicCount: CHAT_PAUSED ? 26 : 27, // the chat article is hidden while chat is paused
+      keywords: ['customer', 'tournament', 'schedule', 'scores', 'results', 'registrations', 'online payments', 'payouts', ...(CHAT_PAUSED ? [] : ['chat', 'coach chat'])],
     },
     {
       title: 'House league',
@@ -135,6 +135,7 @@ export default function PlatformAdminHelpPage() {
       steps: [
         { label: 'Open team registration', href: '/platform-admin/help/tournaments#recipe-open-tournament-registration' },
         { label: 'Review team registrations', href: '/platform-admin/help/tournaments#recipe-review-tournament-teams' },
+        { label: 'Let teams pay online by card', href: '/platform-admin/help/tournaments#online-payments' },
         { label: 'Build and adjust the schedule', href: '/platform-admin/help/tournaments#recipe-build-tournament-schedule' },
         { label: 'Enter and finalize scores', href: '/platform-admin/help/tournaments#recipe-finalize-tournament-scores' },
         { label: 'Fan following and score alerts', href: '/platform-admin/help/tournaments#public-site-preview' },

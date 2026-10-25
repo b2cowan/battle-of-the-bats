@@ -36,8 +36,8 @@ export default function AdminHelpHubPage() {
         ? 'Create tournaments, manage the lifecycle, build schedules, hand scoring and check-in to volunteers, enter scores, and seal final results.'
         : 'Create tournaments, manage the lifecycle, build schedules, hand scoring and check-in to volunteers, enter scores, chat with coaches, and seal final results.',
       href:  `${helpBase}/tournaments`,
-      topicCount: CHAT_PAUSED ? 25 : 26, // the chat article is hidden while chat is paused
-      keywords: ['create tournament', 'schedule', 'scorekeeper', 'volunteer', 'staff kit', 'check-in', 'scores', 'results', 'archive', 'teams', ...(CHAT_PAUSED ? [] : ['chat', 'coach chat'])],
+      topicCount: CHAT_PAUSED ? 26 : 27, // the chat article is hidden while chat is paused
+      keywords: ['create tournament', 'schedule', 'scorekeeper', 'volunteer', 'staff kit', 'check-in', 'scores', 'results', 'archive', 'teams', 'online payments', 'payouts', 'pay by card', 'refund', ...(CHAT_PAUSED ? [] : ['chat', 'coach chat'])],
     },
     ...(canHouseLeague ? [
       {
@@ -129,6 +129,7 @@ export default function AdminHelpHubPage() {
       steps: [
         { label: 'Open team registration', href: `${helpBase}/tournaments#recipe-open-tournament-registration` },
         { label: 'Review team registrations', href: `${helpBase}/tournaments#recipe-review-tournament-teams` },
+        { label: 'Let teams pay online by card', href: `${helpBase}/tournaments#online-payments` },
         { label: 'Build and adjust the schedule', href: `${helpBase}/tournaments#recipe-build-tournament-schedule` },
         { label: 'Hand scoring and check-in to volunteers', href: `${helpBase}/tournaments#scores-and-results` },
         { label: 'Review and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
