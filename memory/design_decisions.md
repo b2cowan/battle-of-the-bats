@@ -38,6 +38,19 @@ Also accepted with the drawings (no separate box): the menu by job (Customers, H
 **Rationale:** the browser's calendar was the one control every form opened that spoke the operating system's language (its font, its blue links, a Sunday-first week, "yyyy-mm-dd").
 **Applies to:** global — `components/shared/DateInput.tsx` and its siblings; plan `docs/projects/active/THEMED_DATE_PICKER_PLAN.md`.
 
+### 2026-10-25 — A CLUB'S TOURNAMENTS ARE ONE TAB, CURRENT AND PAST; PAST TOURNAMENTS IS A SUB-OPTION OF TOURNAMENTS (owner, Club Tier Stage 4f, all 7 asks as recommended + one change to Ask 3 — drawings https://claude.ai/artifact/1nytYV7uYwY56eg6iM7h6K)
+
+**Decision (as ruled):**
+- One **Tournaments** tab in the club's top row holds current, upcoming and past tournaments. The separate Past tournaments tab retires. This **amends the 2026-10-19 Stage 4 "Names" line**: the tab and the page are "Tournaments", and "Past tournaments" survives as the page's past heading and the editor's sub-option.
+- The home's Tournaments section is unchanged (every current and upcoming tournament plus 30 days finished, no cap, no "All tournaments" link).
+- The editor's Tournaments switch covers the home section, the tab and the page. **Past tournaments is a sub-option under Tournaments, available only while Tournaments is on** (owner's change: no club wants old tournaments shown while current ones are hidden). While Tournaments is off, the sub-option is absent, not greyed; it returns with its last setting.
+- A finished tournament nobody archived is listed under Past tournaments, before the archived ones.
+- The phone tab row scrolls the current tab into view.
+- The page is at `/tournaments`; the old Past tournaments address forwards to its past part; an archived tournament's page lights the Tournaments tab and drops "← Past tournaments".
+- The tab sits where the editor's Tournaments row sits.
+
+**Rationale:** measured in the club's real type, six tabs do not fit a phone (a full club's row already overruns in tryout season) or a desk window below about 1,075 px, where the row clips with no scrollbar. One tab keeps the row at five, and a club that has hosted keeps the tab all year. Every club tab already shows only while it has content, so a seasonal tab was never the risk; room was.
+**Applies to:** the club's public top row, the Tournaments page, the Public site editor's Home page list, archive pages.
 
 ### 2026-10-24 — SUPPORT CONSOLE STAGE 1, FIVE ASKS RULED AS RECOMMENDED (owner, paste-back on https://claude.ai/artifact/7DWPUBp9cDp26a2P359zLW)
 

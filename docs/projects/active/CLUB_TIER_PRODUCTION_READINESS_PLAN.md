@@ -1406,7 +1406,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > the words' yes; Part 1 the page, tab, row and fixes; Part 2 the editor's sub-option; no migration expected). Note for the
 > build: the club's page list exists twice (`consumer-routes` and `club-host`, the own-address copy) — both need `tournaments`.
 > **🔨 4f BUILT 2026-10-25 (Parts 1 and 2, the build prompt run), committed `f818df35e` (after /simplify + /review) + help
-> `de4bebb7a`; walk §374 https://claude.ai/artifact/QqB3H2Z88QSvkJxTgCLgJn, result owed.** Part 0: production holds no tournament slugged "tournaments" and no site settings at all (its
+> `de4bebb7a`; walk §374 https://claude.ai/artifact/QqB3H2Z88QSvkJxTgCLgJn ✅ PASSED 32/32 2026-10-25 (owner); G2 passed with no replacement wording, so "← Tournaments" is the owner's yes.** Part 0: production holds no tournament slugged "tournaments" and no site settings at all (its
 > `org_public_site_content` has 0 rows and still the pre-343 columns), so no club loses the old pairing; the owner said yes to
 > the words as written; no migration. **⚖ Owner 2026-10-25, a call the prompt got wrong:** "archived" is two things in the
 > code — a STATUS (the admin's Archive, or billing taking a tournament over a cap; it takes the public site down) and a SEAL
@@ -3051,6 +3051,20 @@ unwritten departures.
 - [ ] **The club, first and longest:** does the club sidebar still read as one object at its full length (Rep teams, House
   league, Families, Public site, Accounting, Calendar, Schedules, bookings, payments)? Its order, its groups, the Overview's job,
   and whether N10's one phone bar still holds with every program on.
+- [ ] **A phone's in-page navigation that is NOT portal standard — evaluate its options (owner 2026-10-25, not ruled):** the house-league
+  season page on a phone (Stage 9a frame C, `SeasonPhoneFrame`) draws its own second navigation above the page: a "Season" header (name,
+  state pill, switch button) and a sideways-scrolling strip of pills (Overview · Registrations · Teams & divisions · …). Nothing else in the
+  product navigates that way — the Coaches Portal ruled "no season dial, no second nav" (a coach's season is not switched inside a page), the
+  tournament bar follows the phase, and the club phone bar is N10's one bar. What the owner's screenshot shows on a finished season: the
+  season name is **cut short** ("Dev House League 2…") and then **repeated in full** by the page's own title right below; the **Finished**
+  state shows **three times** (header pill, title chip, the locked-page line); the strip **runs off the screen edge** ("Teams & d…"), so
+  the later pages are hidden until you scroll; and the header + strip + lock line push the page's real content down the screen. Stage 13
+  walks this page *and every page like it* (any screen that carries its own header-plus-tabs in place of the bar/More sheet: Families'
+  tabs, the Accounting tabs, a program's pages) — **evaluate the options, do not just restyle it**: (a) keep it as a written exception that
+  names what earns it (a season has ~7 pages and the phone bar can't hold them); (b) fold the season's pages into the More sheet under
+  House league, as N7 already does for every other program's pages, and keep only a slim season name + switch on the page; (c) one shared
+  "page with tabs" pattern for every club page that has tabs, so there is one look and one scroll behaviour; (d) the portal's own pattern if
+  it has one that fits. Whatever is chosen, the season name and its state each appear once.
 - [ ] **Inventory question (owner 2026-10-22, not ruled): does the Club notice belong under a "Communications" home rather than the Public site editor?** The club sidebar has no Communications place today (the Coaches Portal's "Communication" group and tournament admin do), so the question is whether the club gets one: the notice, the family broadcast (Stage 7), anything else that talks to families. Detail and counter-weight: `PUBLIC_SITE_BUILDER_PLAN.md` §7.
 - [ ] **The standard, extended:** new rules for the crossings and for parity go into `NAV_STANDARD.md`; every departure found is
   either fixed or written into its exceptions with the reason that earns it. **The default is the same everywhere; an exception
