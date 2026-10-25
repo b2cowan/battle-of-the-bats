@@ -133,7 +133,7 @@ textarea { width: 100%; min-height: 70px; font: inherit; color: var(--ink); back
   <h2>What this run is for</h2>
   <p>Everything built for a club's own address has so far been proven with fakes. This run proves it against the real thing: a real domain you own (<code>b2cowan.com</code>), real DNS in your AWS account, and the real host (Amplify) serving the club on it.</p>
   <p><b>It passes when</b> the club's pages answer on <code>club.b2cowan.com</code> with a padlock, the old address forwards to it for signed-out visitors, the row warns when you remove a record and clears itself when you put it back, and <b>Stop</b> puts everything back the way it was.</p>
-  <p class="note"><b>Not in this run:</b> a design review of the screens, the words, or 390-pixel phone layouts (those are the two follow-up walks), and the plain-name forwarding at a registrar (this test name is not <code>www</code>, and Route 53 cannot forward).</p>
+  <p class="note"><b>Not in this run:</b> a design review of the screens, the words, or 390-pixel phone layouts (those are the two follow-up walks), the plain-name forwarding at a registrar (this test name is not <code>www</code>, and Route 53 cannot forward), and a club adding its two records by hand: here the host writes them itself because the zone is in our own AWS account.</p>
 </section>
 
 <section class="panel">
@@ -158,6 +158,7 @@ textarea { width: 100%; min-height: 70px; font: inherit; color: var(--ink); back
     </div>
   </div>
   <div class="flag"><b>Why this club, not Dev Club Org:</b> UAT Rep Club has the Public site switched on, 11 teams and a live tournament, so the "pages on the new address" steps have something to show. The account's email is a test address, so nobody receives the owner emails; <b>Claude confirms each email from the records instead</b> (marked Claude below).</div>
+  <div class="flag"><b>Two permissions were needed first (found by the first attempt):</b> the connection key could not list DNS zones, so the host refused every connection; I added that read-only permission (it stays, and is a production step too). And because this zone is in our own AWS account, the host wanted to write to it, so I added a write permission for that one zone only, <b>temporary</b>, removed at the end (step I5).</div>
   <p class="note">Steps are labelled <span class="who you">You</span> do it, <span class="who claude">Claude</span> does it or checks it (tell me when you reach it), <span class="who wait">Wait</span> nothing to do.</p>
 </section>
 
@@ -200,29 +201,27 @@ var PARTS = [
    { id: "B4", who: "you", do: "Press <b>Next</b>.",
      see: "<i>Loading your two records…</i> for about ten seconds, then two cards: <b>1 · Padlock check</b> and <b>2 · Your site</b>. The row's chip reads <b>Waiting</b> and its closed summary reads <code>club.b2cowan.com</code>. Record 2's name is <code>club</code> and its value is <code>sites.fieldlogichq.ca</code>. Record 1 has a name starting with an underscore and a value ending in <code>acm-validations.aws</code>." },
    { id: "B5", who: "you", do: "Write down record 1's <b>Name</b> and <b>Value</b> in the notes box below. Note each card's chip.",
-     see: "Record 1 may already read <b>Found</b> (the leftover padlock record). Record 2 reads <b>Not seen yet</b>. <b>No</b> forwarding box appears (it is only for www), and the line about email not being affected is there." },
+     see: "Record 1 may already read <b>Found</b> (the leftover padlock record). Record 2 reads <b>Not seen yet</b> or, because the host writes it into your zone, may already read <b>Found</b>. <b>No</b> forwarding box appears (it is only for www), and the line about email not being affected is there." },
    { id: "B6", who: "you", do: "Press <b>Copy both as a message</b> and paste it into any note.",
      see: "The button reads <b>Message copied</b>. The text opens <i>Hi, could you add two records to b2cowan.com where it is registered?</i>, lists both records, ends with <i>How-to: fieldlogichq.ca/help/own-address</i>, and has <b>no</b> paragraph about forwarding the plain name." },
    { id: "B7", who: "you", do: "In a private window open <a href=\"https://dev.fieldlogichq.ca/help/own-address\" target=\"_blank\" rel=\"noopener\">the how-to page</a>. Press the topic <b>Forward the plain name to www</b>, then its GoDaddy, Namecheap and Hover topics.",
      see: "A public page (no sign-in) titled <i>Use your club's own address</i>. Each registrar topic opens alone with numbered steps. A topic called <i>If your place offers an ALIAS or ANAME record</i> says to forward instead." }
   ]},
-{ id: "C", title: "Add the records", sub: "In Route 53, then Check now.",
-  intro: "Because the zone is in your own AWS account, the host may add records by itself. That is worth knowing, so look before you add.",
+{ id: "C", title: "The records", sub: "In this run the host writes them itself, then you check.",
+  intro: "b2cowan.com's DNS is in our own AWS account, so the host adds the records to the zone by itself (a real club adds them by hand; the how-to page in B7 covers that). This run does not test a club adding records by hand.",
   steps: [
-   { id: "C1", who: "you", do: "Refresh the Route 53 zone. Did any new <code>club</code> or padlock record appear on its own? Say which in the notes.",
-     see: "Either nothing new (you add them yourself), or the host added one or both. Both are fine; I need to know which." },
-   { id: "C2", who: "you", do: "If the padlock record from the row is not in the zone, create it: <b>Create record</b>, name = record 1's Name (the part before <code>.b2cowan.com</code>), type <b>CNAME</b>, value = record 1's Value, TTL 300.",
-     see: "The record is saved. (If the leftover record already matches, there is nothing to add: tick this step and say so.)" },
-   { id: "C3", who: "you", do: "Create record 2: name <code>club</code>, type <b>CNAME</b>, value <code>sites.fieldlogichq.ca</code>, TTL 300.",
-     see: "The record is saved: <code>club.b2cowan.com</code> CNAME <code>sites.fieldlogichq.ca</code>." },
-   { id: "C4", who: "you", do: "Back on the row press <b>Check now</b>.",
-     see: "The button fades to <b>Checking…</b>, then both cards read <b>Found</b> and the foot reads <i>Last checked</i> with a time. The row still says <b>Waiting</b>: Check now never says the site is live. (If a card still says <b>Not seen yet</b>, wait two minutes and press it again.)" }
+   { id: "C1", who: "you", do: "Refresh the Route 53 zone for <code>b2cowan.com</code> and look for new records. Tell me what appeared in the notes.",
+     see: "A <code>club</code> CNAME pointing at a <code>….cloudfront.net</code> name (written by the host), and the padlock CNAME starting <code>_525a…</code> (already there). Within a minute or so; refresh again if not yet." },
+   { id: "C2", who: "you", do: "On the row press <b>Check now</b>.",
+     see: "The button fades to <b>Checking…</b>, then both cards read <b>Found</b> and the foot reads <i>Last checked</i> with a time. The row still says <b>Waiting</b>: Check now never says the site is live. (If a card still says <b>Not seen yet</b>, wait a minute and press again.)" },
+   { id: "C3", who: "you", do: "In Route 53 <b>edit</b> the <code>club</code> record so its value is <code>sites.fieldlogichq.ca</code> (the value a real club is handed). Then press <b>Check now</b> again.",
+     see: "Record 2's card still reads <b>Found</b>: the row accepts both our name and the host's own. Tell me if the host put the old value back by itself later." }
   ]},
 { id: "D", title: "It goes live", sub: "The 15-minute check does this by itself.",
   intro: "The host has to issue the padlock first, so allow up to an hour. Do not press anything; refresh the row now and then.",
   steps: [
    { id: "D1", who: "wait", do: "Wait for the 15-minute check. Refresh the Public site page every few minutes.",
-     see: "Within about 15 to 60 minutes the <b>Waiting</b> chip goes. Open, the row shows <b>Families find your site at</b> <code>club.b2cowan.com</code> with a <b>Connected</b> chip, <b>The old address</b> <code>fieldlogichq.ca/uat-rep-club</code> <b>forwards here</b>, and <b>Padlock</b> <i>Renews by itself before</i> a date. If it is still Waiting after 90 minutes, stop and tell me." },
+     see: "Within about 15 to 60 minutes the <b>Waiting</b> chip goes (the host only needs the records, which it wrote itself). Open, the row shows <b>Families find your site at</b> <code>club.b2cowan.com</code> with a <b>Connected</b> chip, <b>The old address</b> <code>fieldlogichq.ca/uat-rep-club</code> <b>forwards here</b>, and <b>Padlock</b> <i>Renews by itself before</i> a date. If it is still Waiting after 90 minutes, stop and tell me." },
    { id: "D2", who: "claude", do: "Tell me the row says Connected. I check the records for the \"club.b2cowan.com is live\" email.",
      see: "A \"live\" email is recorded as sent for this club (and the check's audit row shows one email). The owner account's address is a test address, so nobody has a copy; I confirm it from the records and report here." },
    { id: "D3", who: "you", do: "Look at the page header of Public site.",
@@ -259,7 +258,7 @@ var PARTS = [
 { id: "G", title: "Take the padlock record away", sub: "The row warns, then clears by itself.",
   intro: "The padlock record is checked once a day, so I will nudge that clock for you. Your part is the record.",
   steps: [
-   { id: "G1", who: "you", do: "In Route 53 note record 1's exact name and value, then <b>delete</b> it. Tell me when it is gone.",
+   { id: "G1", who: "you", do: "In Route 53 note record 1's exact name and value, then <b>delete</b> it. Tell me when it is gone, and whether the host put it back by itself within a few minutes (it may; that is worth knowing).",
      see: "The record is gone from the zone. The club's address still works for now (the padlock does not fail until its renewal date)." },
    { id: "G2", who: "claude", do: "I nudge the daily check so it runs on the next 15-minute wake. Wait about 15 to 30 minutes, then refresh Public site.",
      see: "An amber <b>Needs attention</b> chip. The open row says <i>The padlock check record is gone.</i> with the date it needs to be back by, record 1's card reads <b>Missing</b>, and the foot says <i>We check every day.</i> The club's address still serves." },
@@ -273,7 +272,7 @@ var PARTS = [
 { id: "H", title: "Take the site record away", sub: "Recommended. A bigger failure, in red.",
   intro: "This breaks the live address on purpose for up to about an hour and a quarter. Record 2 is checked every hour, and a miss is confirmed on the next wake before anyone is told.",
   steps: [
-   { id: "H1", who: "you", do: "In Route 53 <b>delete</b> the <code>club</code> record (record 2). Tell me.",
+   { id: "H1", who: "you", do: "In Route 53 <b>delete</b> the <code>club</code> record (record 2). Tell me, and whether the host put it back by itself.",
      see: "<code>club.b2cowan.com</code> stops reaching the site. (Optional check: reload it in a private window and note what you get.)",
      opt: true },
    { id: "H2", who: "claude", do: "I nudge the hourly check. Wait up to about an hour, then refresh Public site.",
@@ -295,10 +294,10 @@ var PARTS = [
      see: "The row returns to its starting state: no chip, summary <code>fieldlogichq.ca/uat-rep-club</code>, and a notice that fades: <i>Your site is back at fieldlogichq.ca/uat-rep-club. You can delete the two records where you bought b2cowan.com.</i>" },
    { id: "I3", who: "you", do: "In a private window open <code>https://dev.fieldlogichq.ca/uat-rep-club/teams</code>, and the page header on Public site.",
      see: "No forward any more: it stays on the dev site address. <b>Families see it at</b> shows the FieldLogicHQ address again." },
-   { id: "I4", who: "you", do: "Delete the <code>club</code> record from Route 53. Leave the original <code>_…</code> padlock record and the others alone. (If the host or you added a second padlock record, delete only that one.)",
+   { id: "I4", who: "you", do: "Refresh Route 53. Stop should have taken the host's records away. If a <code>club</code> record is still there, delete it. Leave the original <code>_…</code> padlock record and the others alone.",
      see: "The zone is back to its original six records." },
-   { id: "I5", who: "claude", do: "Tell me you are done. I confirm the host no longer holds <code>b2cowan.com</code> and that no row remains for the club.",
-     see: "No domain connection on the app for <code>b2cowan.com</code>, no row for UAT Rep Club, and the zone matches its original records." }
+   { id: "I5", who: "claude", do: "Tell me you are done. I confirm the host no longer holds <code>b2cowan.com</code>, that no row remains for the club, and I <b>remove the temporary permission</b> that let the host write to your <code>b2cowan.com</code> zone.",
+     see: "No domain connection on the app for <code>b2cowan.com</code>, no row for UAT Rep Club, the zone matches its original records, and the connection key's policy is back to just the two statements (manage one app's domains, list DNS zones)." }
   ]}
 ];
 
