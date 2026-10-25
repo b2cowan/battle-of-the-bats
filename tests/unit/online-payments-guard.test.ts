@@ -11,12 +11,14 @@ import { filesUnder, readCode } from './_source-code.ts';
  * no route can write a payment cache, a payment row or a book line of its own. Every door that opens a payment, connects
  * an account or refunds reads the launch switch (`lib/online-payments-switch.ts`).
  *
- * ⚠ The Connect webhook is the ONE door exempt from the switch: money Stripe already took must still land and a refund
- * already asked for must still record, even if the switch is turned off in between.
+ * ⚠ The two Connect webhooks are the ONLY doors exempt from the switch: money Stripe already took must still land, a
+ * refund already asked for must still record, and an account Stripe closed must stop taking payments, even if the switch
+ * is turned off in between. Payments arrive on one (v1 snapshot events), the account's own changes on the other (v2 thin
+ * events, plan §0d).
  */
 
 const LANDING = 'lib/online-payment-landing.ts';
-const WEBHOOK = 'app/api/payments/connect-webhook/route.ts';
+const WEBHOOKS = ['app/api/payments/connect-webhook/route.ts', 'app/api/payments/connect-account-events/route.ts'];
 const MIG = 'supabase/migrations/358_a_club_takes_payments_online.sql';
 const LAND_RPCS = ['online_payment_land', 'online_payment_land_failed', 'online_payment_refund_open', 'online_payment_refund_land', 'online_payment_refund_failed'];
 
@@ -93,13 +95,13 @@ describe('the landing is the only way an online payment reaches a team’s recor
 });
 
 describe('every online-payments door reads the launch switch', () => {
-  it('a route that talks to Stripe Connect or the landing asks onlinePaymentsOn() first — except the webhook', () => {
+  it('a route that talks to Stripe Connect or the landing asks onlinePaymentsOn() first — except the two webhooks', () => {
     const doors = [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx')].filter(f => {
       const code = readCode(f);
       return /from ['"]@\/lib\/(stripe-connect|online-payment-landing)['"]|from ['"](\.\.\/)+lib\/(stripe-connect|online-payment-landing)['"]/.test(code);
     });
     for (const f of doors) {
-      if (f === WEBHOOK) continue;
+      if (WEBHOOKS.includes(f)) continue;
       assert.match(readCode(f), /onlinePaymentsOn\(/, `${f} opens an online-payments door without reading the switch`);
     }
   });
@@ -109,7 +111,27 @@ describe('every online-payments door reads the launch switch', () => {
       if (f === 'lib/stripe-connect.ts') continue;
       const code = readCode(f);
       assert.doesNotMatch(code, /stripeAccount:\s/, `${f} calls Stripe on a connected account directly`);
-      assert.doesNotMatch(code, /\.accountLinks\.create|\.accounts\.create\(/, `${f} creates Connect objects directly`);
+      assert.doesNotMatch(code, /\.accountLinks\.create|\.accounts\.(create|createLoginLink)\(/, `${f} creates Connect objects directly`);
+      // Accounts v2 (plan §0d): the accounts, their links, event destinations and thin events.
+      assert.doesNotMatch(code, /\bv2\.core\.(accounts|accountLinks|eventDestinations)\b/, `${f} calls Stripe's v2 accounts directly`);
+      assert.doesNotMatch(code, /\.parseEventNotification(Async)?\(/, `${f} reads a thin Connect event directly`);
     }
+  });
+
+  it('only account creation uses the preview API version; every other Connect call stays on the pinned one', () => {
+    const code = readCode('lib/stripe-connect.ts');
+    assert.equal((code.match(/apiVersion: CONNECT_ACCOUNT_API_VERSION/g) ?? []).length, 1);
+    const create = /export async function createClubAccount[\s\S]*?\n}\n/.exec(code)?.[0] ?? '';
+    assert.match(create, /apiVersion: CONNECT_ACCOUNT_API_VERSION/, 'the preview version belongs to account creation');
+    // The v2 onboarding link: on the pinned version `configurations` is required (probe 2026-10-25).
+    assert.match(code, /configurations: \['merchant'\]/);
+  });
+
+  it('the four account rulings are in the one creation call (plan §0c, §0d)', () => {
+    const create = /export async function createClubAccount[\s\S]*?\n}\n/.exec(readCode('lib/stripe-connect.ts'))?.[0] ?? '';
+    assert.match(create, /dashboard: 'express'/);
+    assert.match(create, /fees_collector: 'application'/);
+    assert.match(create, /losses_collector: 'stripe'/);
+    assert.match(create, /idempotencyKey: `club-account:\$\{args\.orgId\}`/);
   });
 });

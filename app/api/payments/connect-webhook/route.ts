@@ -3,15 +3,16 @@ import type Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureError } from '@/lib/observability';
 import { connectWebhookSecret, constructConnectEvent } from '@/lib/stripe-connect';
-import { applyRefundEvent, expireCheckoutSession, landCheckoutSession, syncPayoutsAccount } from '@/lib/online-payment-landing';
+import { applyRefundEvent, expireCheckoutSession, landCheckoutSession } from '@/lib/online-payment-landing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * THE CONNECT WEBHOOK (Club Tier Stage 12a) — events on clubs' own connected accounts, with its own signing secret
- * (`STRIPE_CONNECT_WEBHOOK_SECRET`), never the billing webhook's. It is the source of truth for "Paid": the receipt page
- * never shows Paid on the redirect alone.
+ * THE CONNECT PAYMENTS WEBHOOK (Club Tier Stage 12a) — v1 snapshot events on clubs' own connected accounts (checkout and
+ * refunds), with its own signing secret (`STRIPE_CONNECT_WEBHOOK_SECRET`), never the billing webhook's. It is the source
+ * of truth for "Paid": the receipt page never shows Paid on the redirect alone. The ACCOUNT's own changes arrive as v2
+ * thin events on the account webhook (`/api/payments/connect-account-events`, plan §0d), not here.
  *
  * ⚠ Deliberately NOT behind the launch switch (`tests/unit/online-payments-guard.test.ts` names it the one exception):
  * money Stripe already took must land, and a refund already asked for must record, even if the switch goes off between.
@@ -46,18 +47,6 @@ export const POST = withObservability(async (req: Request) => {
 
   try {
     switch (event.type) {
-      case 'account.updated': {
-        const row = await syncPayoutsAccount(account);
-        if (row) await supabaseAdmin.from('stripe_connect_events').update({ org_id: row.org_id }).eq('id', event.id);
-        break;
-      }
-      case 'account.application.deauthorized': {
-        // The club closed its account in Stripe: it takes no more payments, exactly as a Disconnect (A1).
-        const now = new Date().toISOString();
-        await supabaseAdmin.from('org_payment_accounts').update({ disconnected_at: now, updated_at: now })
-          .eq('stripe_account_id', account).is('disconnected_at', null);
-        break;
-      }
       case 'checkout.session.completed':
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;

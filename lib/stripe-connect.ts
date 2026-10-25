@@ -4,19 +4,25 @@ import { getStripe } from './stripe';
 
 /**
  * Every Stripe Connect call online payments make (Club Tier Stage 12). One module, so no route talks to Stripe directly
- * and the account shape ruled on 2026-10-25 (plan §0c) lives in one place.
+ * and the account shape ruled on 2026-10-25 (plan §0c, §0d) lives in one place.
  *
- * The account (ruled 2026-07-28 + 2026-10-25):
- *   - the club's OWN connected account; charges are DIRECT charges on it, so FieldLogicHQ never holds the money;
- *   - the Express Dashboard for the club (`controller.stripe_dashboard.type = 'express'`), Stripe collecting what it
- *     needs (`requirement_collection = 'stripe'`);
- *   - Stripe covers losses (`losses.payments = 'stripe'`) — with the Express Dashboard that is a public preview, so the
- *     account is created on the preview API version below; every other call stays on the repo's pinned version;
- *   - FieldLogicHQ pays Stripe's processing fee (`fees.payer = 'application'`, Stripe's "you handle pricing"), so the
+ * The account (ruled 2026-07-28 + 2026-10-25), on Stripe's Accounts v2 (owner 2026-10-25, plan §0d — Stripe refuses v1
+ * account creation for new platforms, and the "Accounts v1 support" toggle stays OFF):
+ *   - the club's OWN connected account, a merchant; charges are DIRECT charges on it, so FieldLogicHQ never holds the
+ *     money;
+ *   - the Express Dashboard for the club (`dashboard: 'express'`), Stripe collecting what it needs (derived on v2:
+ *     `requirements_collector` comes back `stripe`);
+ *   - Stripe covers losses (`losses_collector: 'stripe'`) — with the Express Dashboard that is a public preview, so the
+ *     account is CREATED on the preview API version below;
+ *   - FieldLogicHQ pays Stripe's processing fee (`fees_collector: 'application'`, Stripe's "you handle pricing"), so the
  *     application fee is the whole all-in fee.
- * Stripe's legacy `type: 'express'` is NOT used: Stripe discourages direct charges on it.
+ * ⚠ The preview version is for account creation ONLY. Every other call stays on the repo's pinned version
+ * (`lib/stripe.ts`): the two disagree on the onboarding link's body (probe 2026-10-25, plan §0d).
  */
 export const CONNECT_ACCOUNT_API_VERSION = '2026-09-30.preview';
+
+/** What a v2 account read includes: the rule reads the merchant capability, the country and the requirements. */
+const ACCOUNT_INCLUDE: Stripe.V2.Core.AccountRetrieveParams['include'] = ['configuration.merchant', 'identity', 'requirements'];
 
 /** The connected account to act on, as Stripe's request option. */
 function on(accountId: string): Stripe.RequestOptions {
@@ -27,39 +33,46 @@ export async function createClubAccount(args: {
   orgId: string;
   email: string | null;
   businessName: string;
-}): Promise<Stripe.Account> {
-  return getStripe().accounts.create(
+}): Promise<Stripe.V2.Core.Account> {
+  return getStripe().v2.core.accounts.create(
     {
-      country: 'CA',
-      email: args.email ?? undefined,
-      business_profile: { name: args.businessName },
-      controller: {
-        stripe_dashboard: { type: 'express' },
-        fees: { payer: 'application' },
-        losses: { payments: 'stripe' },
-        requirement_collection: 'stripe',
+      contact_email: args.email ?? undefined,
+      display_name: args.businessName,
+      identity: { country: 'ca' },
+      dashboard: 'express',
+      defaults: {
+        currency: 'cad',
+        responsibilities: { fees_collector: 'application', losses_collector: 'stripe' },
       },
-      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+      configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
       metadata: { org_id: args.orgId },
     },
     { apiVersion: CONNECT_ACCOUNT_API_VERSION, idempotencyKey: `club-account:${args.orgId}` },
   );
 }
 
-/** Stripe's own onboarding, single use; the return URL never says whether it finished, so the caller re-reads. */
+/**
+ * Stripe's own onboarding, single use; the return URL never says whether it finished, so the caller re-reads. Collects
+ * what Stripe will eventually need as well as what is due now, so the club fills the form once.
+ */
 export async function onboardingLink(accountId: string, refreshUrl: string, returnUrl: string): Promise<string> {
-  const link = await getStripe().accountLinks.create({
+  const link = await getStripe().v2.core.accountLinks.create({
     account: accountId,
-    type: 'account_onboarding',
-    refresh_url: refreshUrl,
-    return_url: returnUrl,
-    collection_options: { fields: 'eventually_due' },
+    use_case: {
+      type: 'account_onboarding',
+      account_onboarding: {
+        configurations: ['merchant'],
+        refresh_url: refreshUrl,
+        return_url: returnUrl,
+        collection_options: { fields: 'eventually_due' },
+      },
+    },
   });
   return link.url;
 }
 
-export async function retrieveAccount(accountId: string): Promise<Stripe.Account> {
-  return getStripe().accounts.retrieve(accountId);
+export async function retrieveAccount(accountId: string): Promise<Stripe.V2.Core.Account> {
+  return getStripe().v2.core.accounts.retrieve(accountId, { include: ACCOUNT_INCLUDE });
 }
 
 /** "Open Stripe": a single-use sign-in to the club's Express Dashboard. */
@@ -143,11 +156,24 @@ export async function refundToCard(args: {
   );
 }
 
-/** The Connect webhook's signature check — its own secret, never the billing webhook's. */
+/**
+ * The two Connect webhooks, each with its own signing secret — never the billing webhook's (plan §0d):
+ *   - the PAYMENTS webhook: v1 snapshot events from clubs' connected accounts (checkout, refunds);
+ *   - the ACCOUNT webhook: v2 thin events from FieldLogicHQ's own account about the clubs' v2 accounts.
+ */
 export function connectWebhookSecret(): string | null {
   return process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim() || null;
 }
 
 export function constructConnectEvent(rawBody: string, signature: string, secret: string): Stripe.Event {
   return getStripe().webhooks.constructEvent(rawBody, signature, secret);
+}
+
+export function connectAccountWebhookSecret(): string | null {
+  return process.env.STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET?.trim() || null;
+}
+
+/** A thin event carries no account data: the caller fetches the account (`retrieveAccount`), so order never matters. */
+export function parseAccountEvent(rawBody: string, signature: string, secret: string): Stripe.V2.Core.EventNotification {
+  return getStripe().parseEventNotification(rawBody, signature, secret);
 }

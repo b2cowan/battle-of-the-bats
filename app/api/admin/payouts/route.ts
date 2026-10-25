@@ -8,7 +8,7 @@ import { onlinePaymentsOn, stripeKeyIsTest, ONLINE_PAYMENTS_OFF_ERROR } from '@/
 import { canConnectPayouts, canSeePayouts } from '@/lib/online-payment-access';
 import { factsFromRow, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from '@/lib/online-payment-account';
 import { ONLINE_FEE_PAYERS, onlineFee, type OnlineFeePayer } from '@/lib/online-payment-fee';
-import { createClubAccount, dashboardLink, onboardingLink } from '@/lib/stripe-connect';
+import { createClubAccount, dashboardLink, onboardingLink, retrieveAccount } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 import { PAYMENTS_TERMS_VERSION } from '@/lib/online-payment-words';
 
@@ -84,8 +84,6 @@ export const GET = withObservability(async (req: Request) => {
     refundPolicy: facts?.refundPolicy ?? '',
     requirementsDue: facts?.requirementsDue.length ?? 0,
     deadline: facts?.requirementsDeadline ?? null,
-    chargesEnabled: facts?.chargesEnabled ?? false,
-    detailsSubmitted: row?.details_submitted ?? false,
     connectedAt: row?.connected_at ?? null,
     disconnectedAt: row?.disconnected_at ?? null,
     disconnectedBy: row?.disconnected_at ? await nameOf(row.disconnected_by) : null,
@@ -139,19 +137,23 @@ export const POST = withObservability(async (req: Request) => {
         const acct = await createClubAccount({ orgId: ctx.org.id, email: ctx.user.email ?? null, businessName: ctx.org.name });
         accountId = acct.id;
         const { error } = await supabaseAdmin.from('org_payment_accounts').upsert({
-          org_id: ctx.org.id, stripe_account_id: acct.id, livemode: !stripeKeyIsTest(), country: acct.country ?? null,
+          org_id: ctx.org.id, stripe_account_id: acct.id, livemode: !stripeKeyIsTest(),
           fee_payer: feePayer, connected_by: ctx.user.id, connected_at: now, ...terms,
         }, { onConflict: 'org_id', ignoreDuplicates: true });
         if (error) throw error;
       } else {
-        // Reconnecting reuses the club's account (a Stripe-covered account is never deleted).
+        // Reconnecting reuses the club's account (a Stripe-covered account is never deleted) — unless Stripe has closed
+        // it. Checked BEFORE the row changes: clearing the disconnect first would let a pay page open on a dead account.
+        if ((await retrieveAccount(accountId)).closed) {
+          return NextResponse.json({ error: 'Stripe has closed this club’s payouts account, so it can’t be reconnected. Contact FieldLogicHQ support to set up a new one.' }, { status: 409 });
+        }
         await supabaseAdmin.from('org_payment_accounts').update({
           disconnected_at: null, disconnected_by: null, fee_payer: feePayer, connected_by: ctx.user.id, connected_at: now, updated_at: now, ...terms,
         }).eq('org_id', ctx.org.id);
       }
       await audit(ctx.org.id, ctx.user.id, 'payouts_connected', { stripeAccountId: accountId, feePayer, termsVersion: PAYMENTS_TERMS_VERSION });
       const synced = await syncPayoutsAccount(accountId);
-      if (synced?.details_submitted && synced.charges_enabled) return NextResponse.json({ url: null });
+      if (payoutsState(factsFromRow(synced)) === 'taking_payments') return NextResponse.json({ url: null });
       return NextResponse.json({ url: await onboardingLink(accountId, back(true), back(false)) });
     }
     case 'continue': {
@@ -159,7 +161,8 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ url: await onboardingLink(row.stripe_account_id, back(true), back(false)) });
     }
     case 'dashboard': {
-      if (!row?.details_submitted) return NextResponse.json({ error: 'Finish setting up payouts first.' }, { status: 409 });
+      // Stripe refuses a dashboard sign-in until its sign-up is finished; an account taking card payments has finished it.
+      if (!row?.onboarding_finished_at && row?.card_payments_status !== 'active') return NextResponse.json({ error: 'Finish setting up payouts first.' }, { status: 409 });
       return NextResponse.json({ url: await dashboardLink(row.stripe_account_id) });
     }
     case 'disconnect': {

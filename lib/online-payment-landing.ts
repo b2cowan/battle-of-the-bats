@@ -76,21 +76,37 @@ async function raiseOnce(p: {
 // ── The account ─────────────────────────────────────────────────────────────────────────────────
 
 /**
- * Re-read a club's account from Stripe (never trusting an event's payload: events arrive out of order) and store the
- * facts. Raises "Stripe needs something" when the card turns to needs attention, and lets it clear itself otherwise.
+ * Re-read a club's account from Stripe (never trusting an event: v2 account events are thin, and events arrive out of
+ * order) and store the facts. Stamps Stripe's sign-up as finished the first time it is seen finished — set once and kept,
+ * so a later demand from Stripe reads "needs attention", never "setting up" again — and takes a closed account as a
+ * Disconnect (A1). Raises "Stripe needs something" when the card turns to needs attention, and lets it clear itself
+ * otherwise.
  */
 export async function syncPayoutsAccount(stripeAccountId: string): Promise<PayoutsAccountRow | null> {
   const acct = await retrieveAccount(stripeAccountId);
-  const facts = factsFromStripe(acct);
+  const { columns, onboardingFinished, closed } = factsFromStripe(acct);
+  const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin
     .from('org_payment_accounts')
-    .update({ ...facts, country: acct.country ?? null, stripe_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .update({ ...columns, stripe_synced_at: now, updated_at: now })
     .eq('stripe_account_id', stripeAccountId)
     .select(PAYOUTS_ACCOUNT_COLUMNS)
     .maybeSingle();
   if (error) throw error;
-  const row = data as PayoutsAccountRow | null;
+  let row = data as PayoutsAccountRow | null;
   if (!row) return null; // an account we do not hold (deleted club, another platform's test): acknowledged, ignored
+  for (const [column, due] of [['onboarding_finished_at', onboardingFinished], ['disconnected_at', closed]] as const) {
+    if (!due || row[column]) continue;
+    const { data: stamped, error: stampError } = await supabaseAdmin
+      .from('org_payment_accounts')
+      .update({ [column]: now })
+      .eq('stripe_account_id', stripeAccountId)
+      .is(column, null)
+      .select(PAYOUTS_ACCOUNT_COLUMNS)
+      .maybeSingle();
+    if (stampError) throw stampError;
+    if (stamped) row = stamped as PayoutsAccountRow;
+  }
   const org = await orgById(row.org_id);
   if (org && payoutsState(factsFromRow(row)) === 'needs_attention') {
     const deadline = row.requirements_deadline ? W.byDeadline(row.requirements_deadline) : '';
@@ -98,7 +114,7 @@ export async function syncPayoutsAccount(stripeAccountId: string): Promise<Payou
       org, userIds: await payoutsPeople(org), eventType: 'payouts_need_attention',
       subjectKey: 'stripeAccountId', subjectId: stripeAccountId,
       title: W.stripeNeedsTitle,
-      body: row.charges_enabled ? W.stripeNeedsBodyStillOn(deadline) : W.stripeNeedsBodyPaused,
+      body: row.card_payments_status === 'active' ? W.stripeNeedsBodyStillOn(deadline) : W.stripeNeedsBodyPaused,
       link: payoutsHref(org),
     });
   }

@@ -1,24 +1,33 @@
 /**
  * A club's payouts account, as the Payouts card reads it (Club Tier Stage 12a, drawn 12a §1). Pure: no database, no
- * Stripe — the facts come from `org_payment_accounts`, which the return from Stripe's onboarding and the
- * `account.updated` webhook keep current. ONE rule turns them into the card's five states, and every surface (the card,
- * the treasurer's line, the quiet line, the pay block, Needs attention) reads it rather than its own reading of the flags.
+ * Stripe — the facts come from `org_payment_accounts`, which the return from Stripe's onboarding and the account-events
+ * webhook keep current. ONE rule turns them into the card's five states, and every surface (the card, the treasurer's
+ * line, the quiet line, the pay block, Needs attention) reads it rather than its own reading of the facts.
+ *
+ * The facts are Stripe's Accounts v2 (owner 2026-10-25, plan §0d; mig 364): the merchant configuration's card_payments
+ * capability, the requirement entries still waiting on the club, and when Stripe's sign-up was first seen finished.
  */
 import type { OnlineFeePayer } from './online-payment-fee';
 
 export type PayoutsState = 'not_set_up' | 'setting_up' | 'taking_payments' | 'needs_attention' | 'disconnected';
 
+/** Stripe v2's card_payments capability status. */
+export type CardPaymentsStatus = 'active' | 'pending' | 'restricted' | 'unsupported';
+const CARD_PAYMENTS_STATUSES: readonly CardPaymentsStatus[] = ['active', 'pending', 'restricted', 'unsupported'];
+
 /** The stored facts (a row of `org_payment_accounts`, camelCased). `null` = the club never started. */
 export interface PayoutsAccountFacts {
   stripeAccountId: string;
   livemode: boolean;
-  chargesEnabled: boolean;
-  payoutsEnabled: boolean;
-  detailsSubmitted: boolean;
-  /** Stripe's currently_due ∪ past_due: what it still needs. */
+  /** `null` until the first sync. */
+  cardPayments: CardPaymentsStatus | null;
+  /** The capability's first status-detail code; `null` while active. */
+  cardPaymentsReason: string | null;
+  /** When Stripe's sign-up was first seen finished — set once, kept (v1's `details_submitted`). */
+  onboardingFinishedAt: string | null;
+  /** What Stripe is waiting on the club for, due now or past due (the entries' descriptions). */
   requirementsDue: string[];
-  disabledReason: string | null;
-  /** Stripe's current_deadline for what is due, ISO. */
+  /** When what is due becomes past due, ISO. */
   requirementsDeadline: string | null;
   feePayer: OnlineFeePayer;
   refundPolicy: string | null;
@@ -27,30 +36,34 @@ export interface PayoutsAccountFacts {
 
 /**
  * Stripe is still working through what it was given — the club has nothing to do but wait. No reason at all right after
- * onboarding (charges not yet on, nothing due) is the same wait, never "needs attention" (review 2026-10-25, M3).
+ * onboarding (not yet active, nothing due) is the same wait, never "needs attention" (review 2026-10-25, M3).
  */
-function waitingOnStripe(reason: string | null): boolean {
-  return !reason || reason === 'requirements.pending_verification' || reason === 'under_review';
+function waitingOnStripe(a: PayoutsAccountFacts): boolean {
+  if (a.cardPayments === 'pending') return true;
+  if (a.cardPayments === 'unsupported') return false; // Stripe will not turn it on by itself: the club must act
+
+  const reason = a.cardPaymentsReason;
+  return !reason || reason === 'requirements_pending_verification' || reason === 'determining_status';
 }
 
 /**
  * The card's state. "Needs attention" means the club has something to DO: Stripe lists something due, or has turned
- * payments off for a reason that is not a wait. Payouts held while payments work is Stripe's matter, not a state.
+ * card payments off for a reason that is not a wait. Payouts held while payments work is Stripe's matter, not a state.
  */
 export function payoutsState(a: PayoutsAccountFacts | null): PayoutsState {
   if (!a) return 'not_set_up';
   if (a.disconnectedAt) return 'disconnected';
-  if (a.chargesEnabled) return a.requirementsDue.length > 0 ? 'needs_attention' : 'taking_payments';
-  if (!a.detailsSubmitted) return 'setting_up';
-  return a.requirementsDue.length === 0 && waitingOnStripe(a.disabledReason) ? 'setting_up' : 'needs_attention';
+  if (a.cardPayments === 'active') return a.requirementsDue.length > 0 ? 'needs_attention' : 'taking_payments';
+  if (!a.onboardingFinishedAt) return 'setting_up';
+  return a.requirementsDue.length === 0 && waitingOnStripe(a) ? 'setting_up' : 'needs_attention';
 }
 
 /**
- * Whether a pay page may open now. Stripe's own flag decides, never the card's word: an account with a deadline still
- * takes payments until the deadline passes. A disconnected club takes none (A1: Disconnect stops new payments).
+ * Whether a pay page may open now. Stripe's own capability decides, never the card's word: an account with a deadline
+ * still takes payments until the deadline passes. A disconnected club takes none (A1: Disconnect stops new payments).
  */
 export function takesPayments(a: PayoutsAccountFacts | null): boolean {
-  return !!a && !a.disconnectedAt && a.chargesEnabled;
+  return !!a && !a.disconnectedAt && a.cardPayments === 'active';
 }
 
 /** The Needs attention item is up exactly while the card says "needs attention"; it clears itself when that ends. */
@@ -60,17 +73,16 @@ export function payoutsNeedAttention(a: PayoutsAccountFacts | null): boolean {
 
 /** The columns every reader of the account selects, and their mapping back to the facts the rule takes. */
 export const PAYOUTS_ACCOUNT_COLUMNS =
-  'org_id, stripe_account_id, livemode, charges_enabled, payouts_enabled, details_submitted, requirements_due, disabled_reason, requirements_deadline, fee_payer, refund_policy, disconnected_at';
+  'org_id, stripe_account_id, livemode, card_payments_status, card_payments_reason, onboarding_finished_at, requirements_due, requirements_deadline, fee_payer, refund_policy, disconnected_at';
 
 export interface PayoutsAccountRow {
   org_id: string;
   stripe_account_id: string;
   livemode: boolean;
-  charges_enabled: boolean;
-  payouts_enabled: boolean;
-  details_submitted: boolean;
+  card_payments_status: CardPaymentsStatus | null;
+  card_payments_reason: string | null;
+  onboarding_finished_at: string | null;
   requirements_due: string[] | null;
-  disabled_reason: string | null;
   requirements_deadline: string | null;
   fee_payer: OnlineFeePayer;
   refund_policy: string | null;
@@ -82,11 +94,10 @@ export function factsFromRow(r: PayoutsAccountRow | null | undefined): PayoutsAc
   return {
     stripeAccountId: r.stripe_account_id,
     livemode: r.livemode,
-    chargesEnabled: r.charges_enabled,
-    payoutsEnabled: r.payouts_enabled,
-    detailsSubmitted: r.details_submitted,
+    cardPayments: r.card_payments_status,
+    cardPaymentsReason: r.card_payments_reason,
+    onboardingFinishedAt: r.onboarding_finished_at,
     requirementsDue: r.requirements_due ?? [],
-    disabledReason: r.disabled_reason,
     requirementsDeadline: r.requirements_deadline,
     feePayer: r.fee_payer,
     refundPolicy: r.refund_policy,
@@ -94,31 +105,71 @@ export function factsFromRow(r: PayoutsAccountRow | null | undefined): PayoutsAc
   };
 }
 
-/** Stripe's account object → the stored facts. Kept beside the rule so a new Stripe field is read in one place. */
+/**
+ * Stripe's v2 account object, the part the rule reads (retrieved with `include: configuration.merchant, identity,
+ * requirements`). A structural subset of the SDK's `Stripe.V2.Core.Account`, so a test can build one by hand. Kept beside
+ * the rule so a new Stripe field is read in one place.
+ */
 export interface StripeAccountLike {
   id: string;
-  charges_enabled?: boolean;
-  payouts_enabled?: boolean;
-  details_submitted?: boolean;
+  closed?: boolean;
+  identity?: { country?: string | null } | null;
+  configuration?: {
+    merchant?: {
+      capabilities?: {
+        card_payments?: { status: string; status_details?: { code: string }[] | null } | null;
+      } | null;
+    } | null;
+  } | null;
   requirements?: {
-    currently_due?: string[] | null;
-    past_due?: string[] | null;
-    disabled_reason?: string | null;
-    current_deadline?: number | null;
+    entries?: {
+      awaiting_action_from: string;
+      description: string;
+      errors?: { code: string }[] | null;
+      minimum_deadline: { status: string };
+      requested_reasons?: { code: string }[] | null;
+    }[] | null;
+    summary?: { minimum_deadline?: { status: string; time?: string | null } | null } | null;
   } | null;
 }
 
+/**
+ * Stripe's v2 account → the stored columns, plus two facts the sync acts on rather than stores as they come:
+ * `onboardingFinished` (stamped once into `onboarding_finished_at`) and `closed` (a Disconnect, A1).
+ *
+ * Sign-up is unfinished while Stripe still lists ANYTHING it asks for at sign-up (`routine_onboarding`, at any deadline —
+ * the link collects eventually-due items too) that the club has not given it. An entry with an error against it is
+ * something the club gave and Stripe refused — that is "needs attention", not an unfinished form. Erring strict is
+ * deliberate (review 2026-10-25): a stamp written too early is permanent and would raise "Stripe needs something"
+ * mid-sign-up, while a stamp written late only keeps the card on "Setting up", whose button is the same.
+ *
+ * A part of the account that did not come back on the read writes nothing: one short read must never switch an
+ * account's payments off, or empty what Stripe is waiting for. Neither part read → never called finished.
+ */
 export function factsFromStripe(acct: StripeAccountLike) {
-  const due = new Set([...(acct.requirements?.currently_due ?? []), ...(acct.requirements?.past_due ?? [])]);
-  const deadline = acct.requirements?.current_deadline;
+  const card = acct.configuration?.merchant?.capabilities?.card_payments ?? null;
+  const status = card && (CARD_PAYMENTS_STATUSES as readonly string[]).includes(card.status) ? card.status as CardPaymentsStatus : null;
+  const requirements = acct.requirements ?? null;
+  const fromClub = (requirements?.entries ?? []).filter(e => e.awaiting_action_from === 'user');
+  const dueNow = fromClub.filter(e => e.minimum_deadline.status === 'currently_due' || e.minimum_deadline.status === 'past_due');
+  const signUpOpen = fromClub.some(e =>
+    (e.requested_reasons ?? []).some(r => r.code === 'routine_onboarding') && !(e.errors ?? []).length);
+  const deadline = requirements?.summary?.minimum_deadline;
   return {
-    stripe_account_id: acct.id,
-    charges_enabled: !!acct.charges_enabled,
-    payouts_enabled: !!acct.payouts_enabled,
-    details_submitted: !!acct.details_submitted,
-    requirements_due: [...due].sort(),
-    disabled_reason: acct.requirements?.disabled_reason ?? null,
-    requirements_deadline: deadline ? new Date(deadline * 1000).toISOString() : null,
+    columns: {
+      stripe_account_id: acct.id,
+      ...(acct.identity?.country ? { country: acct.identity.country.toUpperCase() } : {}),
+      ...(card ? {
+        card_payments_status: status,
+        card_payments_reason: status === 'active' ? null : card.status_details?.[0]?.code ?? null,
+      } : {}),
+      ...(requirements ? {
+        requirements_due: [...new Set(dueNow.map(e => e.description))].sort(),
+        requirements_deadline: deadline?.status === 'currently_due' && deadline.time ? new Date(deadline.time).toISOString() : null,
+      } : {}),
+    },
+    onboardingFinished: status !== null && requirements !== null && !signUpOpen,
+    closed: acct.closed === true,
   };
 }
 

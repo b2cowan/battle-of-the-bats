@@ -33,8 +33,6 @@ export type PayoutsView = {
   refundPolicy: string;
   requirementsDue: number;
   deadline: string | null;
-  chargesEnabled: boolean;
-  detailsSubmitted: boolean;
   connectedAt: string | null;
   disconnectedAt: string | null;
   disconnectedBy: string | null;
