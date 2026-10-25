@@ -1,0 +1,1290 @@
+<title>Support Console Stage 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a 920 reading column for the words and asks; each drawing breaks out to a true-size 1440 frame inside its own
+   horizontal scroller. The document chrome is cool stone; the frames wear FieldLogicHQ's real warm (or dark) tokens. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #9c321d; --red-soft: #f6e2dc;
+  --tag: #1d4f8a; --tag-soft: #dde8f5;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 21px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 4px; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.lede { display: grid; gap: 12px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 10px; margin-block: 18px 26px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bar a.jump { font: 600 13px/1 var(--font-body); padding: 9px 11px; min-height: 36px; display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.bar .sw { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.bar .sw button { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border: 0; background: var(--card); color: var(--ink); cursor: pointer; }
+.bar .sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+.screen { display: grid; gap: 14px; margin-bottom: 46px; scroll-margin-top: 80px; }
+.screen-head { display: grid; gap: 6px; }
+.screen-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); letter-spacing: .08em; }
+.ba { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.before { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+@media (max-width: 640px) { .before { grid-template-columns: minmax(0, 1fr); } }
+.before button.shot { padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; cursor: zoom-in; background: #0a0a0a; max-height: 170px; display: block; width: 100%; }
+.before img { display: block; width: 100%; height: auto; }
+.lbl { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.scroller { overflow-x: auto; margin-inline: calc(50% - 50vw + 16px); padding-inline: max(16px, calc(50vw - 736px)); padding-block: 4px 10px; }
+.scroller > .fx { width: 1440px; }
+.scroller > .fx.win { width: 600px; }
+.scroller > .fx.wide-note { width: 1440px; }
+.hint { font-size: 12.5px; color: var(--dim); }
+button.tag { font: 700 11px/1 var(--font-data); letter-spacing: .04em; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--tag); background: var(--tag-soft); color: var(--tag); cursor: pointer; white-space: nowrap; }
+.tagrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* asks */
+.ask { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.ask .q { font-weight: 700; }
+.ask .rec { font-size: 14px; color: var(--soft); }
+.ask .rec b { color: var(--ink); }
+.ask .opts { display: grid; gap: 4px; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+.ask input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+.ask textarea { width: 100%; min-height: 56px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table.doc { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.doc th { text-align: left; font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.doc td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.doc tr:last-child td { border-bottom: 0; }
+.paste { display: grid; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.paste textarea { width: 100%; min-height: 220px; font: 13px/1.5 var(--font-data); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 32px)); padding: 18px 18px 14px; }
+dialog::backdrop { background: rgba(20, 24, 18, .45); }
+dialog .foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+dialog button.close { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+dialog.zoom { max-width: calc(100vw - 32px); width: 1200px; padding: 10px; }
+dialog.zoom .z { max-height: 80vh; overflow: auto; } dialog.zoom img { width: 100%; display: block; }
+
+/* ═════ The product frames — FieldLogicHQ warm tokens, dark on the switch. Type stays on the ladder: 10 · 11 · 12 · 14 · 16 · 20 · 24 ═════ */
+.fx { --p: #F8F4ED; --c: #FFFFFF; --ln: rgba(70,55,30,.12); --ln2: rgba(70,55,30,.20); --fill: rgba(70,55,30,.05); --fieldbg: #F8F4ED;
+  --i: #241E15; --i2: #4A4235; --i3: #615A54; --ol: #57651E; --ols: rgba(87,101,30,.10); --lime: #D9F99D; --limei: #241E15; --tabon: #57651E;
+  --am: #835006; --rd: #B03A22; --gr: #34662A; --scrim: rgba(36,30,21,.34);
+  background: var(--p); color: var(--i); font: 14px/1.45 var(--font-body); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; }
+.fx.dark { --p: #0A0A0A; --c: #111827; --ln: rgba(255,255,255,.08); --ln2: rgba(255,255,255,.14); --fill: rgba(255,255,255,.03); --fieldbg: rgba(255,255,255,.05);
+  --i: #F1F5F9; --i2: rgba(255,255,255,.70); --i3: rgba(255,255,255,.50); --ol: #D9F99D; --ols: rgba(30,58,138,.18); --lime: #D9F99D; --limei: #0A0A0A; --tabon: #F1F5F9;
+  --am: #F59E0B; --rd: #EF4444; --gr: #22C55E; --scrim: rgba(13,17,26,.55); }
+.fx * { box-sizing: border-box; }
+.fx svg.ic { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.strip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.strip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 700 16px/1 var(--font-body); }
+.strip .lock .mk { width: 20px; height: 20px; border-radius: 5px; background: var(--ol); }
+.strip .lock em { font-style: normal; color: var(--ol); }
+.strip .mid { display: flex; align-items: center; gap: 16px; padding-left: 20px; }
+.strip .portal { font: 600 14px/1 var(--font-body); color: var(--i2); }
+.strip .find { margin: 0 auto; width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.strip .find .k { margin-left: auto; font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; }
+.strip .find.typed { color: var(--i); border-color: var(--ol); }
+.strip .end { display: flex; align-items: center; gap: 6px; padding-right: 16px; }
+.strip .end .b { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.strip .end .b svg.ic { width: 18px; height: 18px; }
+.strip .end .av { width: 30px; height: 30px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 12px/1 var(--font-body); }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 840px; }
+.side { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0 16px; display: flex; flex-direction: column; }
+.grp { display: grid; }
+.gl { display: flex; align-items: center; gap: 8px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); padding: 12px 20px 6px; }
+.gl .cv { margin-left: auto; opacity: .55; display: inline-flex; }
+.gl.folded .cv { transform: rotate(-90deg); }
+.it { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 20px; color: var(--i2); font-size: 14px; }
+.it.on { background: var(--ols); color: var(--ol); font-weight: 600; }
+.it .pill { margin-left: auto; }
+.side .foot { margin-top: auto; border-top: 1px solid var(--ln); padding-top: 8px; }
+.main { padding: 28px 40px 48px; min-width: 0; }
+.page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+.ph { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; }
+.ph .back { color: var(--i2); font-weight: 600; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; margin-left: -8px; }
+.ph .rule { width: 1px; align-self: stretch; margin: 2px 0; background: var(--ln2); }
+.ph h1 { font: 700 20px/1.3 var(--font-body); margin: 0; letter-spacing: 0; color: var(--i); }
+.ph .end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ph .help { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.ph .help svg.ic { width: 18px; height: 18px; }
+.ph .quiet { font-size: 12px; color: var(--i3); }
+.chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; border: 1px solid var(--ln2); background: var(--ols); color: var(--i2); white-space: nowrap; }
+.chip.ok { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: color-mix(in srgb, var(--ol) 25%, transparent); }
+.chip.warn { color: var(--am); background: color-mix(in srgb, var(--am) 8%, transparent); border-color: color-mix(in srgb, var(--am) 30%, transparent); }
+.chip.bad { color: var(--rd); background: color-mix(in srgb, var(--rd) 8%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font: 700 10px/1 var(--font-data); color: var(--am); background: color-mix(in srgb, var(--am) 11%, transparent); border: 1px solid color-mix(in srgb, var(--am) 32%, transparent); }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; font: 600 14px/1 var(--font-body); border: 1px solid var(--ln2); background: var(--c); color: var(--i); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: var(--lime); color: var(--limei); }
+.btn.door { border: 0; background: none; color: var(--ol); padding: 0 4px; }
+.band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.band > div { padding: 14px 16px; border-right: 1px solid var(--ln); min-width: 0; display: grid; gap: 4px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.band .v { font: 700 24px/1.1 var(--font-body); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.band .v.warn { color: var(--am); }
+.band .s { font-size: 12px; color: var(--i3); }
+.sec { font: 700 16px/1.3 var(--font-body); margin: 0 0 -8px; }
+.card { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.tb { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--ln); }
+.tb .count { font-size: 14px; color: var(--i2); }
+.tb .gap { flex: 1; }
+.tb .note { font-size: 12px; color: var(--i3); }
+.view { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ol); background: var(--ols); color: var(--ol); font: 600 14px/1 var(--font-body); }
+.view .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.fpill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--ln2); color: var(--i2); font: 600 12px/1 var(--font-body); background: var(--c); }
+.search { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; width: 256px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+table.t td { padding: 7px 14px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-variant-numeric: tabular-nums; }
+table.t tr.cmf td { padding: 11px 14px; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t .r { text-align: right; }
+table.t .nm { color: var(--i); font-weight: 600; text-decoration: underline; text-decoration-color: var(--ln2); text-underline-offset: 3px; }
+table.t .sub { display: block; font-size: 12px; color: var(--i3); font-weight: 400; }
+table.t .cv { width: 40px; text-align: right; color: var(--ol); }
+table.t .ts { color: var(--i2); white-space: nowrap; }
+table.t .none { color: var(--i3); }
+.code { font: 400 12px/1.3 var(--font-data); }
+table.t tr.band-row td { background: color-mix(in srgb, var(--ol) 10%, transparent); font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); padding: 8px 14px; }
+.flagline { display: block; font-size: 12px; color: var(--am); font-weight: 600; margin-top: 2px; }
+.callout { display: flex; gap: 10px; align-items: flex-start; background: var(--c); border: 1px solid var(--ln); border-left: 3px solid var(--ol); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i2); }
+.callout svg.ic { width: 16px; height: 16px; color: var(--ol); margin-top: 2px; }
+.callout.warn { border-left-color: var(--am); } .callout.warn svg.ic { color: var(--am); }
+.callout .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.subnav { display: flex; gap: 4px; border-bottom: 1px solid var(--ln); }
+.subnav span { padding: 10px 14px; font-weight: 600; font-size: 14px; color: var(--i2); border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 6px; align-items: baseline; }
+.subnav span.on { color: var(--tabon); border-bottom-color: var(--ol); }
+.subnav .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.ex { position: absolute; right: 14px; bottom: 10px; font: 700 10px/1 var(--font-data); color: var(--i3); letter-spacing: .06em; text-transform: uppercase; }
+/* a window (the kit window: tinted edge, no shadow) */
+.win { background: var(--scrim); padding: 28px; }
+.dlg { background: var(--c); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--ol) 30%, transparent); }
+.dlg .dh { display: flex; align-items: center; padding: 18px 24px 6px; }
+.dlg .dh h2 { font: 700 16px/1.3 var(--font-body); margin: 0; }
+.dlg .dh .x { margin-left: auto; width: 44px; height: 44px; margin-right: -12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: var(--i2); }
+.dlg .db { padding: 10px 24px 16px; display: grid; gap: 14px; }
+.lines { display: grid; grid-template-columns: 140px 1fr; gap: 8px 14px; font-size: 14px; }
+.lines dt { color: var(--i3); } .lines dd { margin: 0; }
+.fld { display: grid; gap: 6px; }
+.fld .fl { font-size: 12px; font-weight: 650; color: var(--i2); }
+.fld .fl .req { color: inherit; margin-left: 2px; }
+.inp { height: 36px; border: 1px solid var(--ln2); border-radius: 6px; padding: 0 10px; display: flex; align-items: center; color: var(--i); background: var(--fieldbg); font-size: 14px; }
+.inp.area { height: 80px; align-items: flex-start; padding-top: 8px; }
+.inp .chev { margin-left: auto; color: var(--i3); display: inline-flex; }
+.radio { display: grid; gap: 2px; border: 1px solid var(--ln2); border-radius: 8px; padding: 10px 12px; }
+.radio.on { border-color: var(--ol); background: var(--ols); }
+.radio b { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.radio b::before { content: ""; width: 14px; height: 14px; border-radius: 999px; border: 2px solid var(--ln2); }
+.radio.on b::before { border: 4px solid var(--ol); }
+.radio span { font-size: 12px; color: var(--i3); padding-left: 22px; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick span { height: 34px; display: inline-flex; align-items: center; padding: 0 12px; font-size: 14px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i2); }
+.quick span.on { border-color: var(--ol); color: var(--ol); background: var(--ols); }
+.df { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-top: 1px solid var(--ln); }
+.df .sent { font-size: 14px; color: var(--i2); flex: 1; }
+.df .bts { display: flex; gap: 8px; }
+/* the Find panel, under the strip */
+.fpanel { position: absolute; left: 50%; transform: translateX(-30px); top: 50px; width: 520px; background: var(--c); border: 1px solid var(--ln2); border-radius: 10px; z-index: 4; }
+.fpanel .fh { padding: 10px 14px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); border-top: 1px solid var(--ln); }
+.fpanel .fh:first-child { border-top: 0; }
+.fpanel .fr { display: flex; align-items: center; gap: 10px; padding: 8px 14px; }
+.fpanel .fr.on { background: var(--ols); }
+.fpanel .fr b { font-weight: 600; } .fpanel .fr .sub { font-size: 12px; color: var(--i3); }
+.fpanel .fr .cv { margin-left: auto; color: var(--ol); }
+.fpanel .ft { padding: 9px 14px; border-top: 1px solid var(--ln); font-size: 12px; color: var(--i3); }
+/* ═════ Stage 1 additions ═════ */
+.fx .fold { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--am); z-index: 3; pointer-events: none; }
+.fx .fold span { position: absolute; right: 12px; top: -9px; background: var(--p); color: var(--am); font: 700 10px/1 var(--font-data); padding: 0 6px; letter-spacing: .06em; text-transform: uppercase; }
+.fx .app.auto { min-height: 0; }
+.band.c6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.band.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.band.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.band .v.sm { font-size: 20px; }
+.chk { width: 16px; height: 16px; border: 1.5px solid var(--ln2); border-radius: 4px; display: inline-block; vertical-align: middle; background: var(--fieldbg); }
+.chk.on { background: var(--ol); border-color: var(--ol); box-shadow: inset 0 0 0 2px var(--c); }
+.cols2 { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; }
+.tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tools .gap { flex: 1; }
+.chkl { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--i2); }
+.sel { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px 0 12px; border: 1px solid var(--ln2); border-radius: 8px; background: var(--fieldbg); color: var(--i); font-size: 14px; white-space: nowrap; }
+.sel .chev { color: var(--i3); display: inline-flex; }
+.sel.w { width: 100%; height: 36px; border-radius: 6px; justify-content: space-between; }
+.acct { position: absolute; right: 12px; top: 50px; width: 288px; background: var(--c); border: 1px solid var(--ln2); border-radius: 12px; padding: 8px; z-index: 6; display: grid; gap: 2px; }
+.acct .id { display: flex; gap: 10px; padding: 10px; align-items: center; }
+.acct .id .av { width: 32px; height: 32px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 var(--font-body); }
+.acct .cap { font: 700 10px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); }
+.acct .val { font-size: 14px; color: var(--i); }
+.acct .ap { padding: 6px 10px 10px; display: grid; gap: 6px; }
+.acct .seg { display: flex; gap: 4px; border: 1px solid var(--ln2); border-radius: 8px; padding: 3px; }
+.acct .seg span { flex: 1; height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 6px; color: var(--i2); }
+.acct .seg span.on { background: var(--ols); color: var(--ol); }
+.acct .r { display: flex; gap: 10px; height: 36px; align-items: center; padding: 0 10px; border-radius: 8px; color: var(--i2); font-size: 14px; }
+.acct .r.out { color: var(--rd); }
+.acct .r.ghost { opacity: .45; text-decoration: line-through; }
+.acct .sep { height: 1px; background: var(--ln); margin: 4px 0; }
+.rails { display: flex; gap: 28px; padding: 24px; align-items: flex-start; background: var(--p); }
+.rails .col { display: grid; gap: 8px; }
+.rails .col .side { height: 1060px; border: 1px solid var(--ln); border-radius: 8px; width: 240px; }
+.rails .col .side.slim { width: 64px; }
+.side.slim .it { padding: 0; justify-content: center; }
+.side.slim .it .eye { display: none; }
+.rails .col .lbl2 { max-width: 240px; }
+.nw { white-space: nowrap; }
+/* the kit eyebrow: 11 px, .09em, in the typewriter face with the chips (admin lettering ruling 2026-10-19); D3 covers cell content */
+.fx .lbl2, .fx .band .k, .fx .aq .gl2, .fx .tile5 .k, .fx .acct .cap { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; }
+.fx .cap12 { font-size: 12px; line-height: 1.4; color: var(--i3); margin: 0; max-width: none; }
+.fx .inp, .fx .sel.w { height: 34px; }
+.fx .nm0 { color: var(--i); font-weight: 600; }
+.fx .lk { display: inline-flex; align-items: center; gap: .45em; line-height: 1; }
+.fx .lk .mk2 { width: 1.1em; height: 1.1em; fill: var(--ol); flex: none; }
+.fx .lk .nm2 { font-weight: 700; color: var(--i); }
+.fx .lk .hq { font-weight: 600; color: var(--ol); }
+.fx .lk.big .hq { font-weight: 500; }
+.fx.dark .lk .mk2 { fill: var(--i); }
+.fx.dark .lk .hq { color: var(--i2); }
+.fx .strip .lock { padding-left: 20px; font: 16px/1 var(--font-body); }
+.fx .tile5 .v, .fx .band .v { font-variant-numeric: tabular-nums; }
+.fx .band .v.quiet { font-size: 14px; font-weight: 400; color: var(--i3); letter-spacing: 0; }
+.fx .band .v.txt { font-size: 14px; font-weight: 600; letter-spacing: 0; word-break: break-all; }
+.fx .subnav .n { font: 600 12px/1 var(--font-body); }
+.phone .drawer .side .it { height: 44px; font-size: 16px; padding: 0 16px; }
+.phone .drawer .side .it svg.ic { width: 17px; height: 17px; }
+.phone .drawer .side .gl { padding: 14px 16px 6px; }
+.phone .cardrow { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.phone .cardrow .top { display: flex; align-items: center; gap: 8px; }
+.phone .cardrow .top .nm { flex: 1; }
+.phone .cardrow .meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--i3); flex-wrap: wrap; }
+.phone .six { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.phone .six > div { padding: 10px 12px; border-right: 1px solid var(--ln); border-bottom: 1px solid var(--ln); display: grid; gap: 2px; }
+.phone .six > div:nth-child(3n) { border-right: 0; } .phone .six > div:nth-child(n+4) { border-bottom: 0; }
+.phone .six .k { font: 700 10px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.phone .six .v { font: 700 20px/1.1 var(--font-body); }
+.tb.tools { gap: 8px; flex-wrap: nowrap; }
+.side.slim .it .t, .side.slim .gl, .side.slim .it .pill { display: none; }
+.side.slim .grp + .grp { border-top: 1px solid var(--ln); margin-top: 6px; padding-top: 6px; }
+.side .it .eye { margin-left: auto; opacity: .6; display: inline-flex; }
+.side .it .eye svg.ic { width: 12px; height: 12px; }
+.side .gl.cur { color: var(--i2); }
+.lbl2 { font: 700 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--i3); }
+.chart { width: 100%; height: 220px; display: block; }
+.bars { display: grid; gap: 10px; padding: 14px 16px; }
+.bars .b { display: grid; gap: 4px; font-size: 12px; }
+.bars .b .h { display: flex; justify-content: space-between; color: var(--i2); }
+.bars .b .tr { height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; }
+.bars .b .tr i { display: block; height: 100%; background: var(--ol); border-radius: 999px; }
+.pad { padding: 14px 16px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.tabsl { display: flex; gap: 4px; }
+.sign { display: grid; place-items: center; min-height: 720px; background: var(--p); }
+.sign .card2 { width: 400px; background: var(--c); border: 1px solid var(--ln); border-radius: 12px; padding: 32px 40px 36px; display: grid; gap: 18px; }
+.sign .lock2 { display: flex; align-items: center; justify-content: center; font: 20px/1 var(--font-body); }
+.sign h1 { font: 700 20px/1.3 var(--font-body); text-align: center; margin: 0; }
+.sign .sub { text-align: center; font-size: 12px; color: var(--i3); }
+.sign .btn.full { width: 100%; justify-content: center; height: 42px; }
+.sign .lr { display: flex; justify-content: space-between; align-items: baseline; }
+.sign .lr .door { color: var(--ol); font-size: 12px; font-weight: 600; }
+.phones { display: flex; gap: 28px; padding: 24px; background: var(--p); align-items: flex-start; }
+.phone { width: 390px; height: 720px; border: 1px solid var(--ln2); border-radius: 18px; overflow: hidden; position: relative; background: var(--p); }
+.phone .pstrip { height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; background: var(--c); border-bottom: 1px solid var(--ln); }
+.phone .pstrip .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.phone .pstrip .mb svg.ic { width: 20px; height: 20px; }
+.phone .pstrip .grow { flex: 1; font: 700 16px/1 var(--font-body); }
+.phone .pstrip .grow em { font-style: normal; color: var(--ol); }
+.phone .pbody { padding: 16px; display: grid; gap: 14px; }
+.phone .sc { overflow-x: auto; border: 1px solid var(--ln); border-radius: 8px; background: var(--c); }
+.phone .sc table { min-width: 560px; }
+.phone .scrim { position: absolute; inset: 0; background: var(--scrim); }
+.phone .drawer { position: absolute; left: 0; top: 0; bottom: 0; width: 290px; background: var(--c); border-right: 1px solid var(--ln); display: flex; flex-direction: column; overflow: hidden; }
+.phone .drawer .dh { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 16px; border-bottom: 1px solid var(--ln); font: 700 16px/1 var(--font-body); }
+.phone .drawer .dh em { font-style: normal; color: var(--ol); }
+.phone .drawer .dh .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); font-size: 20px; }
+.phone .drawer .side { border: 0; flex: 1; overflow: hidden; }
+.tags-inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.box.find { border-left: 3px solid var(--amber); }
+.box h3 { margin: 0; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.stepn { font: 700 16px/1.3 var(--font-body); color: var(--ol); margin-right: 8px; font-variant-numeric: tabular-nums; }
+.ph .sub { font-size: 12px; color: var(--i3); }
+.tile5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.tile5 > div { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; }
+.tile5 .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.tile5 .v { font: 700 24px/1.1 var(--font-body); }
+.aq { display: grid; gap: 10px; padding: 14px 16px; }
+.aq .g { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.aq .gl2 { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); width: 100%; }
+.aq .q { display: inline-flex; gap: 8px; align-items: baseline; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; font-size: 12px; color: var(--i2); }
+.aq .q b { font: 700 14px/1 var(--font-body); color: var(--i); }
+.aq .q.hot { border-color: color-mix(in srgb, var(--am) 40%, transparent); background: color-mix(in srgb, var(--am) 8%, transparent); }
+.aq .q.hot b { color: var(--am); }
+.ta { height: 88px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--fieldbg); padding: 8px 10px; color: var(--i3); font-size: 14px; }
+/* ═════ Stage 2 additions ═════ */
+/* the strip as Stage 1 built it: lockup, a hairline, the portal name in small capitals, the account glyph */
+.fx .strip .mid { padding-left: 0; gap: 0; }
+.fx .strip .portal2 { font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i2); padding-left: 14px; border-left: 1px solid var(--ln2); height: 18px; display: inline-flex; align-items: center; white-space: nowrap; }
+.fx .strip .acc { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.fx .strip .acc svg.ic { width: 18px; height: 18px; }
+.fx .strip .find { width: 440px; }
+.fx .strip .find.focus { border-color: var(--ol); box-shadow: 0 0 0 3px var(--ols); color: var(--i3); }
+.fx .strip .find .caret { width: 1px; height: 16px; background: var(--i); margin-left: -6px; }
+.fx .strip.withfind { grid-template-columns: 240px minmax(0, 1fr) 440px minmax(0, 1fr) auto; }
+.fx .strip.withfind .mid { grid-column: 2; }
+.fx .strip.withfind .fslot { grid-column: 3; }
+.fx .strip.withfind .end { grid-column: 5; }
+/* Find panel: hangs from the box, same width plus 80 */
+.fx .fpanel { left: auto; transform: none; width: 520px; top: 48px; }
+.fx .fpanel .fr { min-height: 44px; }
+.fx .fpanel .fr .ic2 { width: 28px; height: 28px; border-radius: 6px; background: var(--fill); color: var(--i2); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.fx .fpanel .fr .ic2 svg.ic { width: 15px; height: 15px; }
+.fx .fpanel .fr .tx { display: grid; gap: 1px; min-width: 0; }
+.fx .fpanel .fr .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx .fpanel .fr.kid { padding-left: 52px; min-height: 34px; }
+.fx .fpanel .fr.kid .tx { font-size: 12px; color: var(--i2); }
+.fx .fpanel .fr.kid .tx b { font-weight: 600; color: var(--i); }
+.fx .fpanel .fr .kbd, .fx .kbd { font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; color: var(--i3); }
+.fx .fpanel .msg { padding: 14px; display: grid; gap: 6px; font-size: 14px; color: var(--i2); }
+.fx .fpanel .msg b { color: var(--i); }
+.fx .fpanel .more { padding: 8px 14px 10px; font-size: 12px; color: var(--i3); display: flex; gap: 10px; align-items: center; }
+.fx .fpanel .more .door { margin-left: auto; color: var(--ol); font-weight: 600; }
+.fx .fpanel .hint2 { display: grid; gap: 4px; padding: 4px 14px 12px; font-size: 12px; color: var(--i2); }
+.fx .fpanel .hint2 .code { color: var(--i); }
+.fx .panels { display: grid; grid-template-columns: repeat(2, 520px); gap: 28px 40px; padding: 28px 40px 36px; justify-content: center; background: var(--p); }
+.fx .panels .pcol { display: grid; gap: 10px; align-content: start; }
+.fx .panels .fpanel { position: static; }
+.fx .panels .fbox { width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.fx .panels .fbox.typed { color: var(--i); border-color: var(--ol); box-shadow: 0 0 0 3px var(--ols); }
+.fx .panels .fbox .kbd { margin-left: auto; }
+.fx .stlbl { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.fx .dim { opacity: .4; }
+/* Today */
+.fx .health { display: flex; gap: 10px; align-items: center; background: var(--c); border: 1px solid var(--ln); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--i2); }
+.fx .health .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--gr); flex: none; }
+.fx .health b { color: var(--i); }
+.fx .health .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.fx .health .later { font-size: 12px; color: var(--i3); }
+.fx table.t tr.clear td { color: var(--i3); font-size: 12px; padding: 6px 14px 10px; }
+.fx table.t tr.quiet td { color: var(--i3); }
+.fx .numbers { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: 14px; color: var(--i2); padding: 2px 2px; }
+.fx .numbers b { color: var(--i); font-variant-numeric: tabular-nums; }
+.fx .numbers .door { margin-left: auto; color: var(--ol); font-weight: 600; }
+/* the record */
+.fx .ph .meta { flex-basis: 100%; font-size: 12px; color: var(--i3); display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.fx .ph .meta .code { color: var(--i2); }
+.fx .pencil { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ln2); border-radius: 8px; color: var(--i2); background: var(--c); }
+.fx .pencil svg.ic { width: 15px; height: 15px; }
+.fx .pb { color: var(--ol); font-weight: 600; font-size: 12px; white-space: nowrap; }
+.fx .pbdone { display: block; font-size: 12px; color: var(--i3); margin-top: 2px; }
+.fx .why0 { color: var(--i3); font-style: normal; }
+.fx .tline { font-size: 12px; color: var(--i3); padding: 10px 16px; border-top: 1px solid var(--ln); }
+.fx .lbox { border: 1px dashed var(--ln2); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; color: var(--i2); font-size: 14px; background: var(--c); }
+.fx .lbox .stg { font: 700 10px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--am); }
+.fx .lbox ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.fx .lbox.s2 .stg { color: var(--ol); }
+.fx .tabcols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; padding: 24px 40px 32px; background: var(--p); }
+.fx .rare { display: flex; gap: 22px; flex-wrap: wrap; padding: 2px 2px; }
+.fx .rare span { color: var(--ol); font-weight: 600; font-size: 14px; }
+.fx .rare span.red { color: var(--rd); }
+.fx .rows2 { display: grid; gap: 0; }
+.fx .kv { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--ln); align-items: baseline; font-size: 14px; }
+.fx .kv:last-child { border-bottom: 0; }
+.fx .kv .k2 { color: var(--i3); }
+.fx .secrow { display: flex; align-items: center; gap: 10px; }
+.fx .secrow .sec { margin: 0; }
+.fx .secrow .end2 { margin-left: auto; }
+.fx .wins { display: flex; gap: 28px; padding: 28px; background: var(--scrim); align-items: flex-start; }
+.fx .wins .dlg { width: 560px; flex: none; }
+.fx .dlg .db .sentence { font-size: 14px; color: var(--i); background: var(--fill); border-radius: 8px; padding: 12px 14px; }
+.fx .chkrow { display: flex; gap: 10px; align-items: center; font-size: 14px; min-height: 30px; }
+.fx .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fx .subnav { align-items: flex-end; }
+.fx .subnav span { align-items: center; }
+.fx .subnav span { height: 42px; padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
+.fx .side .it .eye { margin-left: auto; }
+.fx .side .it .eye + .pill { margin-left: 8px; }
+.fx .btn.red { background: var(--rd); border-color: var(--rd); color: #fff; }
+.fx .pencil.on { color: var(--ol); border-color: var(--ol); }
+.fx table.t td.who { white-space: nowrap; }
+.fx .plist { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.fx .plist .pr { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--ln); min-height: 52px; }
+.fx .plist .pr:last-child { border-bottom: 0; }
+.fx .plist .pr .tx { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.fx .plist .pr .tx b { font-weight: 600; }
+.fx .plist .pr .tx span { font-size: 12px; color: var(--i3); }
+.fx .plist .pr .cv { color: var(--ol); }
+.fx .health .dot.n { background: var(--i3); }
+/* the document */
+.wrap .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 720px) { .wrap .split { grid-template-columns: minmax(0, 1fr); } }
+.k-new, .k-res, .k-unc, .k-lat, .k-out { display: inline-block; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; padding: 2px 6px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.k-new { color: var(--olive); background: var(--olive-soft); border-color: var(--olive); }
+.k-res { color: var(--tag); background: var(--tag-soft); border-color: var(--tag); }
+.k-unc { color: var(--dim); border-color: var(--line); }
+.k-lat { color: var(--amber); background: var(--amber-soft); border-color: var(--amber); }
+.k-out { color: var(--red); background: var(--red-soft); border-color: var(--red); }
+table.doc td .code2 { font: 500 12.5px/1.4 var(--font-data); }
+.box.sec2 { border-left: 3px solid var(--tag); }
+.ok-y { color: var(--olive); font-weight: 700; } .ok-n { color: var(--red); font-weight: 700; } .ok-l { color: var(--amber); font-weight: 700; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-clubs" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5c3 0 5 1.8 5 4.5"/></symbol>
+  <symbol id="i-free" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4"/><rect x="5" y="12" width="14" height="9"/><path d="M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1c2-4 6-4 6-1s-6 1-6 1"/></symbol>
+  <symbol id="i-retention" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
+  <symbol id="i-status" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+  <symbol id="i-errors" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16.5v.01"/></symbol>
+  <symbol id="i-feedback" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-leads" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></symbol>
+  <symbol id="i-campaigns" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+  <symbol id="i-decks" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></symbol>
+  <symbol id="i-plans" viewBox="0 0 24 24"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-approval" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-bulk" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></symbol>
+  <symbol id="i-templates" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-staff" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-audit" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-sent" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17v.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M4 17l6-6-6-6M12 19h8"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"/><path d="M16 14h.01"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bellc" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="lede">
+  <p class="eyebrow">Support console, stage 2 · find, the menu by job, Today, the customer record · drawn 2026-10-25</p>
+  <h1>Support Console Stage 2</h1>
+  <p>Stage 2 changes the front half of every support job: <b>find the customer, then read what has happened to them.</b> Every drawing is at true size (1440 pixels wide, a desk screen). On a narrower window it scrolls sideways inside its own box. <b>Before</b> is a capture from today's dev server, in the Stage 1 look you walked on Oct 25. <b>After</b> is drawn on that same shell, with the product's real warm and dark colours. Blue tags say what changes and why, and each one opens when you click it. The <b>Warm / Dark</b> switch at the top flips every drawing. Your eleven questions sit beside the drawing each one decides, and every question carries my recommendation.</p>
+  <p>Anything marked <b>example</b> is invented for the drawing. Anything marked <b>Stage 3, 4 or 5</b> is not part of this stage and is not drawn as if it were built.</p>
+</header>
+
+<section class="screen" id="staff" style="margin-top:22px">
+  <div class="screen-head"><span class="n">WHAT STAFF WILL SEE</span><h2>Five changes, in plain words</h2></div>
+  <div class="box">
+    <ul>
+      <li><b>Find, on every page.</b> One box in the top strip, opened with <b>/</b>. Type an email, part of a name, a club's name or web name, an owner's email, or a Stripe customer or subscription number. Clubs, people and Stripe matches come back in one grouped list. A person shows their clubs underneath. It searches every account, not the first 1,000.</li>
+      <li><b>The menu by job.</b> Customers, Health, Growth, Product and Records, then your private Bookkeeping where it is today. Each role sees the same menu with the parts it cannot open taken out, and the eye marks what it can only read.</li>
+      <li><b>Today replaces Overview.</b> The front door is the list of what is waiting on us, grouped by job, with a one-line health check at the top. The business numbers stay, quiet and below, one door away.</li>
+      <li><b>The customer record reads first.</b> It opens on the club's <b>Story</b>, one dated list of what happened, who did it and why. Edit forms move behind a pencil, every live change confirms in one sentence and asks why, and a plan, limit or section change can be <b>put back</b> from the Story. A person gets a record too, which is new.</li>
+      <li><b>One rulebook.</b> The menu, the pages and the server agree on who may do what. Today the menu thinks nobody edits a club, so the read-only marker never shows there, even for a read-only account.</li>
+    </ul>
+    <p class="hint"><b>Deliberately not in Stage 2:</b> Stripe's charges and refunds on the Money tab and the reason column in the audit log (Stage 3). Free time as one idea, with Founding Season folded in (Stage 4). The Status page, the health line's build and database checks, and the sent-email log (Stage 5).</p>
+  </div>
+</section>
+
+<section class="screen" id="found">
+  <div class="screen-head"><span class="n">BEFORE THE DRAWINGS</span><h2>Seven things the code showed that the drawings prompt did not say</h2><p>I checked every lead in the prompt against the code. Four of them change what can honestly be drawn.</p></div>
+  <div class="box find">
+    <ul>
+      <li><b>The sign-in service cannot search.</b> Its only way to list accounts is one page of up to 1,000 at a time, with no email or name filter. That is why Customer users stops at 1,000. A real server-side Find needs a small, read-only lookup over the sign-in records inside the database. <b>That is a database change</b>, reviewed as a security change below. It needs no change to sign-in and none to the gate every request passes through. Name search is possible through the same lookup.</li>
+      <li><b>Charge numbers for our own subscriptions are kept nowhere.</b> We store a club's Stripe <i>customer</i> and <i>subscription</i> numbers, and the payment numbers of families paying a club online. A charge on a club's own subscription exists only in Stripe. So Stage 2's Find can match customer and subscription numbers and a family's payment, but not a subscription charge. That arrives when Stage 3 reads Stripe. <b>Question 10.</b></li>
+      <li><b>A customer's own purchase is not recorded.</b> We record a downgrade, a cancellation, a missed payment and a recovery. A first purchase or an upgrade the customer makes leaves no record on our side. A Story built today would show "downgraded" but never "upgraded". <b>Question 4</b> says how the drawing handles that.</li>
+      <li><b>Account emails are not logged</b> (password resets, invitations, receipts), so "I never got the email" cannot be answered from the Story until Stage 5. Campaign emails are logged, and they appear.</li>
+      <li><b>The two rulebooks disagree in more places than Organizations.</b> Organizations is the visible one: the menu's table lists no editors, while support, billing and product edit a club through the older table. Two more: the staff list can be read through the server by any console account, though the menu shows it only to a super admin, and two orphaned plan settings routes are readable by everyone. The full table is under <a href="#rule">One rulebook</a>.</li>
+      <li><b>The 1,000 cap is in four places, not one.</b> Customer users, the Organizations list (its owners' last sign-in), Overview's "owner inactive" count, and the Founding Season desk all read the same first page of 1,000 accounts. Stage 2's lookup ends all four.</li>
+      <li><b>Today's queues are nearly all real already.</b> Overview's Action queue computes eleven counts today. Two from the end state are new but come from data we keep (new errors, new feedback). One is invented before Stage 4: "Free time ending". Until then the honest queue is <b>Overrides ending</b>, which already exists. <b>Question 5.</b></li>
+    </ul>
+    <p class="hint">Also checked: a person has no record page today. Their actions live in a menu on each row of Customer users. A tournament has no record page either; it is a row in the club's People &amp; tournaments tab. Read only and Growth already see the club record with every edit control hidden, never shown and then refused. The one exception is the section switches, which show disabled.</p>
+  </div>
+</section>
+
+<div class="bar" role="navigation" aria-label="Drawings">
+  <a class="jump" href="#a">A · Menu</a><a class="jump" href="#rule">Rulebook</a><a class="jump" href="#b">B · Today</a><a class="jump" href="#c">C · Find</a><a class="jump" href="#sec">Find security</a><a class="jump" href="#d">D · Record</a><a class="jump" href="#e">E · Boundary</a><a class="jump" href="#fmt">Formatting</a><a class="jump" href="#paste">Paste-back</a>
+  <span class="sw" role="group" aria-label="Frames theme"><button type="button" id="sw-warm" aria-pressed="true">Warm</button><button type="button" id="sw-dark" aria-pressed="false">Dark</button></span>
+</div>
+
+<!-- ═══════════ A · THE MENU BY JOB ═══════════ -->
+<section class="screen" id="a">
+  <div class="screen-head"><span class="n">DRAWING A</span><h2>The menu by job</h2>
+  <p>Today's 19 entries keep their pages. They move into five groups named for the work: <b>Customers</b>, <b>Health</b>, <b>Growth</b>, <b>Product</b>, <b>Records</b>. Today sits alone at the top, as Overview does now. Dev tools keeps its own group, which exists only on dev. Bookkeeping's private group stays last and unchanged. A renamed entry renames its page title in the same change, so a screen never has two names.</p></div>
+  <div class="tbl"><table class="doc"><thead><tr><th>Today's group</th><th>Today's entry</th><th>New group</th><th>New name</th></tr></thead><tbody>
+    <tr><td>Command center</td><td>Overview</td><td>(top, alone)</td><td><b>Today</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Customers</td><td>Organizations</td><td>Customers</td><td><b>Clubs &amp; portals</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Customers</td><td>Customer users</td><td>Customers</td><td><b>People</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Billing &amp; product</td><td>Founding season</td><td>Customers</td><td>Founding season <span class="k-lat">STAGE 4 FOLDS IT INTO FREE TIME</span></td></tr>
+    <tr><td>Customers</td><td>Retention</td><td>Customers</td><td>Retention</td></tr>
+    <tr><td>Support &amp; diagnostics</td><td>Observability</td><td>Health</td><td><b>Errors</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Support &amp; diagnostics</td><td>Feedback</td><td>Health</td><td>Feedback</td></tr>
+    <tr><td>Growth</td><td>Early access</td><td>Growth</td><td><b>Leads</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Growth</td><td>Email campaigns</td><td>Growth</td><td><b>Campaigns</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Growth</td><td>Pitch deck studio</td><td>Growth</td><td><b>Pitch decks</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Billing &amp; product</td><td>Plans &amp; pricing</td><td>Product</td><td>Plans &amp; pricing</td></tr>
+    <tr><td>Billing &amp; product</td><td>Approval queue</td><td>Product</td><td>Approval queue</td></tr>
+    <tr><td>Billing &amp; product</td><td>Bulk operations</td><td>Product</td><td><b>Bulk changes</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Billing &amp; product</td><td>Email templates</td><td>Product</td><td>Email templates</td></tr>
+    <tr><td>Billing &amp; product</td><td>Export registry</td><td>Product</td><td>Export registry</td></tr>
+    <tr><td>Governance</td><td>Platform users</td><td>Records</td><td><b>Staff</b> <span class="k-res">RENAMED</span></td></tr>
+    <tr><td>Governance</td><td>Audit log</td><td>Records</td><td>Audit log</td></tr>
+    <tr><td>System</td><td>Dev tools (dev only)</td><td>System (dev only)</td><td>Dev tools <span class="k-unc">UNCHANGED</span></td></tr>
+    <tr><td>Private finance</td><td>Bookkeeping</td><td>Private finance</td><td>Bookkeeping <span class="k-unc">UNCHANGED</span></td></tr>
+    <tr><td colspan="4" class="hint">Help and Collapse stay at the menu's foot, as Stage 1 built them. Later stages add Free time (4), Status and Sent email (5), and Club web addresses (6) to these groups. None is drawn here.</td></tr>
+  </tbody></table></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The groups are named for the work a support person came to do, not for the data behind it. Founding Season moves to Customers because it is a list of customers on a free season; Stage 4 turns it into Free time. Bulk operations moves to Product with the other catalogue and plan tools; it is a billing and product tool and both roles keep it.">S2 · MOVED · groups by job</button>
+    <button class="tag" data-n="Nine entries are renamed, and each page title is renamed with its entry, so the menu and the page never disagree. The words are question 7. The renames are words only: no page changes what it does in Stage 2 except Today, People and Clubs &amp; portals.">S2 · RENAMED · nine names</button>
+    <button class="tag" data-n="The eye is Stage 1's marker, unchanged in look. What changes is that it now tells the truth: it reads the one rulebook, so Growth and Read only finally see it on Clubs &amp; portals and People. Today it never shows on Organizations for anyone, because the menu's table says nobody edits a club.">S2 · FIXED · the Read marker</button>
+    <button class="tag" data-n="Bookkeeping's group, its title Private finance, its place at the end and who sees it (the owner's email allowlist, not a role) do not change. Its inside belongs to the Bookkeeping plan.">UNCHANGED · Bookkeeping</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="rails">
+      <div class="col"><span class="lbl2">Super admin · every group open</span><aside class="side" data-role="super" data-active="today" data-open="all" data-extras="1"></aside></div>
+      <div class="col"><span class="lbl2">Support</span><aside class="side" data-role="support" data-active="today" data-open="all"></aside></div>
+      <div class="col"><span class="lbl2">Billing</span><aside class="side" data-role="billing" data-active="today" data-open="all"></aside></div>
+      <div class="col"><span class="lbl2">Growth</span><aside class="side" data-role="growth" data-active="today" data-open="all"></aside></div>
+      <div class="col"><span class="lbl2">Read only</span><aside class="side" data-role="read_only" data-active="today" data-open="all"></aside></div>
+    </div>
+    <span class="ex">Every group open to read it · counts example</span>
+  </div></div>
+  <p class="hint">Product is not drawn: it sees Today, Clubs &amp; portals, People (read), Founding season, Errors, Feedback, Growth's three entries, all five Product entries and the Audit log. On a real screen only the group you are in stays open, as Stage 1 built it. The amber counts are the queue counts from Today, shown beside the entry that clears them.</p>
+
+  <div class="ask" data-q="A1"><div class="q">Question 1 · M3: does Billing keep Support's account powers?</div>
+    <p class="rec">Today the Billing role carries every Support power: notes, a club's name and web name, its owner and web address, and every action on a person (password reset, confirm email, sign out everywhere, ban, change email). That is how the older rulebook was written. It is not a decision anyone has recorded. The rulebook rewrite below is the moment to settle it, because it writes each power down once.</p>
+    <p class="rec"><b>Recommended: Billing loses them</b>, as the plan recommends. Billing's job is plans, limits and subscriptions. Banning a person or moving a club's owner is a support job with its own risk. If one person holds both jobs, give them both roles' work through Super admin, or ask for a two-role account in Stage 8. <b>What changes if you tick it:</b> a Billing account sees People with the eye, and the club record's notes and name controls disappear for them. Feedback triage is a separate ruling from Jun 14 and stays with Billing.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Billing loses Support's account powers (recommended)"> Billing loses Support's account powers (recommended)</label>
+      <label><input type="checkbox" data-o="Billing keeps them, as today"> Billing keeps them, as today</label>
+    </div><textarea aria-label="Notes on question 1" placeholder="Who does billing and who does support today?"></textarea></div>
+</section>
+
+<!-- ═══════════ ONE RULEBOOK ═══════════ -->
+<section class="screen" id="rule">
+  <div class="screen-head"><span class="n">ONE RULEBOOK</span><h2>Who may do what, written once</h2>
+  <p>Today two tables decide. The menu reads one, which works by page. Most of the server reads the other, which works by power. They were written at different times and drift. Stage 2 writes the rules down once, <b>by power</b>, and the menu, the pages and the server all read that one list. A page shows the eye when its role holds none of the powers that page uses. This table is what the build prompt will hold the code to. ● may · ○ may read · blank cannot open.</p></div>
+  <div class="tbl"><table class="doc"><thead><tr><th>Power</th><th>Super admin</th><th>Support</th><th>Billing</th><th>Product</th><th>Growth</th><th>Read only</th></tr></thead><tbody>
+    <tr><td>Open Today, Clubs &amp; portals, People, the Audit log; use Find</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td></tr>
+    <tr><td>Email the owner from a record (opens your own mail)</td><td>●</td><td>●</td><td>●</td><td></td><td></td><td></td></tr>
+    <tr><td>A club's notes, name, web name, owner and web address</td><td>●</td><td>●</td><td>● <span class="k-lat">M3</span></td><td>○</td><td>○</td><td>○</td></tr>
+    <tr><td>Act on a person: reset link, confirm email, sign out everywhere, ban, change email or name, notes</td><td>●</td><td>●</td><td>● <span class="k-lat">M3</span></td><td>○</td><td>○</td><td>○</td></tr>
+    <tr><td>A club's plan, limits, overrides; cancel its subscription</td><td>●</td><td>○</td><td>●</td><td>○</td><td>○</td><td>○</td></tr>
+    <tr><td>A club's section access</td><td>●</td><td>○</td><td>○</td><td>●</td><td>○</td><td>○</td></tr>
+    <tr><td>Delete a club or a person</td><td>●</td><td>○</td><td>○</td><td>○</td><td>○</td><td>○</td></tr>
+    <tr><td>Bulk changes: plan and status / sections</td><td>●</td><td></td><td>● plan and status</td><td>● sections</td><td></td><td></td></tr>
+    <tr><td>Retention: extend and process</td><td>●</td><td>○</td><td>●</td><td></td><td></td><td></td></tr>
+    <tr><td>Errors: triage</td><td>●</td><td>○</td><td></td><td>●</td><td></td><td></td></tr>
+    <tr><td>Feedback: triage and escalate</td><td>●</td><td>●</td><td>●</td><td>●</td><td></td><td></td></tr>
+    <tr><td>Plans &amp; pricing, Approval queue, Email templates</td><td>●</td><td></td><td>○ (not templates)</td><td>●</td><td></td><td></td></tr>
+    <tr><td>Founding season, Export registry (read-only desks, no writes exist)</td><td>○</td><td>Export only</td><td>○</td><td>○</td><td></td><td></td></tr>
+    <tr><td>Leads, Campaigns, Pitch decks</td><td>●</td><td></td><td></td><td>●</td><td>●</td><td></td></tr>
+    <tr><td>Staff and roles</td><td>●</td><td></td><td></td><td></td><td></td><td></td></tr>
+  </tbody></table></div>
+  <div class="box">
+    <h3>Three server gaps the rewrite closes</h3>
+    <ul>
+      <li>The staff list's server route answers any console account; the menu shows Staff to a super admin only. It will answer a super admin only.</li>
+      <li>Two orphaned plan settings routes (plan config and plan gating) answer any console account. Nothing calls them. Stage 2 deletes them rather than guard them.</li>
+      <li>The rules for the club page's controls (hidden, shown, or the eye) come from the one list, so a page cannot show a control its role's server call would refuse. A build check fails if a console route reads a role without going through the list.</li>
+    </ul>
+    <p class="hint">Unchanged on purpose: who sees each page today. Every role keeps the same pages it has now. The only visible change is the eye appearing where it was missing, and, if you tick M3, Billing losing Support's powers.</p>
+  </div>
+</section>
+
+<!-- ═══════════ B · TODAY ═══════════ -->
+<section class="screen" id="b">
+  <div class="screen-head"><span class="n">DRAWING B</span><h2>Today, the front door</h2>
+  <p>Today opens on <b>what is waiting on us this week</b>, as one table grouped by job. Each row is a queue, why its items wait, and the count in the amber pill. A row opens the list that clears it. A queue with nothing waiting folds into a quiet "clear" line under its group, and a group with nothing waiting is one quiet line. Above it, one line says whether the product is up, drawn with only what we can read today. The business numbers stay, but quiet and below, and the tabs of plan mix, growth and usage move one door away.</p></div>
+  <div class="before"><button class="shot" data-src="cap-s2/home.jpg" aria-label="Overview today at full size"><img src="cap-s2/home.jpg" alt="Overview today: five figure tiles, the Action queue as boxes, then plan mix and billing tabs"></button><div><div class="lbl">Before · Overview, Stage 1 look</div><p>Five figure tiles first, then the Action queue as eleven boxes in four groups, zeros included, then four tabs of plan mix, status by plan and billing events. The page is 1,551 pixels tall. It has nothing for errors or feedback. What waits is there, but it is the second thing you read, beside eight zeros.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Overview's Action queue becomes the page. Every row except two is a count Overview already computes: owner inactive, missing owner, retention, past due, trials ending, overrides ending, new leads, campaigns past due and due soon, the approval queue. The two new rows read data we already keep: error groups first seen since your last visit, and feedback marked new. No row is invented.">S2 · NEW · the waiting list</button>
+    <button class="tag" data-n="The health line is drawn with only what the console can read today: the product's own errors in the last 24 hours, as a plain count with a grey dot and no verdict, because a green all-clear would vouch for builds and databases we do not check. Stage 5 reads those and turns this line into the door to Status. Until then the line says they are not checked here yet.">S5 FILLS · the health line</button>
+    <button class="tag" data-n="The five figure tiles become one quiet line of totals under the list. Plan mix, status by plan, billing events, growth and usage keep every figure; they move to their own page, Business numbers, behind the door at the end of that line. Nothing is deleted.">S2 · MOVED · the numbers</button>
+    <button class="tag" data-n="Overrides ending is today's name for what Stage 4 calls Free time ending. Drawing Free time ending now would describe a grant that does not exist yet. Stage 4 renames the row when it builds the thing.">LATER · free time ending (S4)</button>
+    <button class="tag" data-n="Each role sees only the queues whose list it can open, the same rule as the menu. A queue the role can read but not clear still shows, with the list opening read-only. Growth sees Customers and Growth; Read only sees Customers only, read.">S2 · roles trim it</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app">
+      <aside class="side" data-role="super" data-active="today" data-open="none"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Today</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="health"><span class="dot n"></span><span><b>6 errors</b> in the last 24 hours.</span><span class="later">Builds and the databases are not checked here yet.</span><span class="go">Errors ›</span></div>
+        <h2 class="sec">Waiting on us</h2>
+        <div class="card">
+          <div class="tb"><span class="count">30 waiting in 7 queues</span><span class="gap"></span><span class="note">Since your last visit on Oct 24 at 11:18 a.m.</span></div>
+          <table class="t">
+            <thead><tr><th style="width:240px">Queue</th><th>Why it waits</th><th class="r" style="width:110px">Waiting</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr class="band-row"><td colspan="4">Customers · 17 waiting</td></tr>
+              <tr class="cmf"><td><span class="nm">Owner inactive</span></td><td>The owner has not signed in for 30 days</td><td class="r"><span class="pill">9</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">Retention</span></td><td>A cancelled club whose kept data runs out within 30 days</td><td class="r"><span class="pill">7</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">Missing owner</span></td><td>A club with nobody as its owner</td><td class="r"><span class="pill">1</span></td><td class="cv">›</td></tr>
+              <tr class="clear"><td colspan="4">Clear: past due, trials ending in 14 days, overrides ending in 14 days</td></tr>
+              <tr class="band-row"><td colspan="4">Health · 7 waiting</td></tr>
+              <tr class="cmf"><td><span class="nm">New errors</span></td><td>An error first seen since your last visit (example)</td><td class="r"><span class="pill">4</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">New feedback</span></td><td>A message from inside the product nobody has triaged (example)</td><td class="r"><span class="pill">3</span></td><td class="cv">›</td></tr>
+              <tr class="band-row"><td colspan="4">Growth · 6 waiting</td></tr>
+              <tr class="cmf"><td><span class="nm">Campaigns past due</span></td><td>A planned campaign whose send date has passed</td><td class="r"><span class="pill">5</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">Campaigns due soon</span></td><td>Due in the next 7 days</td><td class="r"><span class="pill">1</span></td><td class="cv">›</td></tr>
+              <tr class="clear"><td colspan="4">Clear: new leads</td></tr>
+              <tr class="band-row"><td colspan="4">Product · nothing waiting in the approval queue</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="numbers"><span><b>28</b> clubs and portals</span><span><b>97</b> people</span><span><b>35</b> tournaments</span><span><b>313</b> teams</span><span>about <b>$2,740</b> a month at list price</span><span class="door">Business numbers: plan mix, billing, growth and usage ›</span></div>
+      </div></main>
+    </div>
+    <span class="ex">Dev counts real · health line and Health rows example</span>
+  </div></div>
+
+  <div class="scroller"><div class="fx" data-frame style="width:auto;border:0;background:transparent">
+    <div class="phones">
+      <div class="phone"><div class="pstrip"><span class="mb"><svg class="ic"><use href="#i-menu"/></svg></span><span class="grow" data-lockup></span><span class="mb"><svg class="ic"><use href="#i-search"/></svg></span><span class="mb"><svg class="ic"><use href="#i-user"/></svg></span></div>
+        <div class="pbody"><div class="ph"><h1>Today</h1></div>
+          <div class="health" style="flex-wrap:wrap"><span class="dot n"></span><span><b>6 errors</b> in 24 hours.</span><span class="go">Errors ›</span></div>
+          <span class="stlbl">Customers · 17 waiting</span>
+          <div class="plist"><div class="pr"><div class="tx"><b>Owner inactive</b><span>No sign-in for 30 days</span></div><span class="pill">9</span><span class="cv">›</span></div><div class="pr"><div class="tx"><b>Retention</b><span>Kept data runs out within 30 days</span></div><span class="pill">7</span><span class="cv">›</span></div><div class="pr"><div class="tx"><b>Missing owner</b><span>Nobody is the owner</span></div><span class="pill">1</span><span class="cv">›</span></div></div>
+          <span class="stlbl">Health · 7 waiting</span>
+          <div class="plist"><div class="pr"><div class="tx"><b>New errors</b><span>First seen since your last visit</span></div><span class="pill">4</span><span class="cv">›</span></div><div class="pr"><div class="tx"><b>New feedback</b><span>Not triaged yet</span></div><span class="pill">3</span><span class="cv">›</span></div></div>
+        </div></div>
+      <div class="phone" style="height:auto;min-height:0;padding-bottom:16px"><div class="pbody">
+        <span class="lbl2">Reading the phone</span>
+        <p class="cap12" style="font-size:14px;color:var(--i2)">Today is readable on a phone, as you ruled for Today and Status (Q4). The table becomes one framed list per group, a hairline between rows, as every phone list does. Each card opens the same list, which stays a desk screen: it will show, but it is not designed for a phone.</p>
+        <p class="cap12" style="font-size:14px;color:var(--i2)">The strip keeps the menu button, the mark, Find as its glyph alone (it opens the same panel at full width) and the account glyph. The business numbers line comes last, below the queues.</p>
+      </div></div>
+    </div>
+    <span class="ex">390 px · Today only</span>
+  </div></div>
+
+  <div class="ask" data-q="A5"><div class="q">Question 5 · Today's queues: which are real now, and do invented ones wait for their stage?</div>
+    <p class="rec">Of the end state's eight, six are computed today, two (new errors, new feedback) are new but read data we keep, and one is invented: Free time ending cannot exist before Stage 4. Overview also carries four the end state left out: past due, trials ending, overrides ending and new leads.</p>
+    <p class="rec"><b>Recommended: every queue that exists today, plus the two new ones; nothing invented.</b> Overrides ending stands in for Free time ending until Stage 4 builds it. Zero rows fold into the quiet clear line, so the four extra queues cost no space on a quiet day. Past due since your last visit stays inside the Past due row as its reason.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Every real queue plus new errors and new feedback; nothing invented (recommended)"> Every real queue plus new errors and new feedback; nothing invented (recommended)</label>
+      <label><input type="checkbox" data-o="Only the end state's eight, with Overrides ending standing in"> Only the end state's eight, with Overrides ending standing in</label>
+      <label><input type="checkbox" data-o="Leave errors and feedback for Stage 5"> Leave errors and feedback for Stage 5</label>
+    </div><textarea aria-label="Notes on question 5" placeholder="A queue you want added, dropped or renamed"></textarea></div>
+</section>
+
+<!-- ═══════════ C · FIND ═══════════ -->
+<section class="screen" id="c">
+  <div class="screen-head"><span class="n">DRAWING C</span><h2>Find, from anywhere</h2>
+  <p>Press <b>/</b> anywhere, or click the box in the middle of the strip. Type two characters or more. Results come back from the server in three groups: <b>Clubs</b>, <b>People</b> and <b>Stripe</b>. Each group shows up to 8, best match first. A person shows the clubs they belong to underneath, each its own row, so an email leads to its club in one step. <b>↑ ↓</b> move, <b>Enter</b> opens, <b>Esc</b> closes and returns you where you were. A result only ever opens a record your role can read.</p></div>
+  <div class="before"><button class="shot" data-src="cap-s2/customer-users.jpg" aria-label="Customer users today at full size"><img src="cap-s2/customer-users.jpg" alt="Customer users today: a search box above a long list of accounts"></button><div><div class="lbl">Before · two separate searches</div><p>Customer users matches email, name, account number and club, but only within the first 1,000 accounts, and does not say so. Organizations matches a club's name, web name and own web address in the browser, and not the owner's email. Nothing matches a Stripe number. Neither is reachable from another page.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="New. The box fills the empty middle Stage 1 left in the strip for it. It searches on the server, every account and every club, with no 1,000 cap. It is a new way to read customer data, so it is drawn and reviewed as a security change: see Find security below.">S2 · NEW · Find</button>
+    <button class="tag" data-n="People match on email and name, clubs on name, web name, own web address and owner email, Stripe on a whole customer or subscription number and a family's payment number. Clubs and people match anywhere in the word; a Stripe number must be pasted whole, because a partial number is a way to walk the list.">S2 · what it matches</button>
+    <button class="tag" data-n="A person's clubs show under the person, one row each with the role they hold. Enter on the person opens the person record; Enter on a club row opens that club. This is the email-to-club step in walk task 4.">S2 · a person's clubs beneath</button>
+    <button class="tag" data-n="Card digits are not a search key, and the panel says so. Stripe does not let us search by the last four, and we keep them only for a handful of Founding Season saves. Ask for the email on the receipt instead. Stage 3's Money tab shows the last four once the customer is found.">Card digits: never searched</button>
+    <button class="tag" data-n="Staff accounts are left out of People, as Customer users does today.">UNCHANGED · staff are not customers</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="height:620px">
+    <div class="strip" data-strip data-find="lynx"></div>
+    <div class="app dim" style="min-height:572px">
+      <aside class="side" data-role="super" data-active="today" data-open="none"></aside>
+      <main class="main"><div class="page"><div class="ph"><h1>Today</h1></div><div class="card" style="height:420px"></div></div></main>
+    </div>
+    <div class="fpanel" style="left:555px">
+      <div class="fh">Clubs · 2</div>
+      <div class="fr on"><span class="ic2"><svg class="ic"><use href="#i-clubs"/></svg></span><div class="tx"><b>UAT Lakeshore Lynx</b><span class="sub">Club · Active · <span class="code">uat-rep-only</span> · owner uat-rep-only-owner@uat-rep-club.local</span></div><span class="cv">›</span></div>
+      <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-clubs"/></svg></span><div class="tx"><b>Lynx U13</b><span class="sub">Premium Coaches Portal · Trialing · example</span></div><span class="cv">›</span></div>
+      <div class="fh">People · 1</div>
+      <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-user"/></svg></span><div class="tx"><b>Dana Lynx</b><span class="sub">dana.lynx@example.ca · last signed in Oct 22 · example</span></div><span class="cv">›</span></div>
+      <div class="fr kid"><div class="tx"><span><b>UAT Lakeshore Lynx</b> · owner</span></div><span class="cv">›</span></div>
+      <div class="fr kid"><div class="tx"><span><b>Lynx U13</b> · head coach</span></div><span class="cv">›</span></div>
+      <div class="ft"><span class="kbd">↑</span> <span class="kbd">↓</span> to move · <span class="kbd">Enter</span> to open · <span class="kbd">Esc</span> to close · Card digits are not searched</div>
+    </div>
+    <span class="ex">One club real · the rest example</span>
+  </div></div>
+
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="panels">
+      <div class="pcol"><span class="stlbl">1 · At rest, in the strip</span>
+        <div class="fbox"><svg class="ic"><use href="#i-search"/></svg>Find a club, person or Stripe number<span class="kbd">/</span></div>
+        <p class="cap12">The placeholder names the three things it finds. The / key hint sits at the end. For a role that does not search Stripe numbers it reads "Find a club or person".</p>
+      </div>
+      <div class="pcol"><span class="stlbl">2 · Open, nothing typed yet</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span class="caret"></span></div>
+        <div class="fpanel">
+          <div class="fh">Recent</div>
+          <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-clubs"/></svg></span><div class="tx"><b>UAT Lakeshore Lynx</b><span class="sub">Club · opened 10 minutes ago</span></div><span class="cv">›</span></div>
+          <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-user"/></svg></span><div class="tx"><b>free-owner@dev.local</b><span class="sub">Person · opened yesterday</span></div><span class="cv">›</span></div>
+          <div class="fh">You can type</div>
+          <div class="hint2"><span>An email, or part of a name</span><span>A club's name, web name or owner's email</span><span>A Stripe customer or subscription number, <span class="code">cus_…</span> or <span class="code">sub_…</span></span><span>A family's payment number, <span class="code">pi_…</span> or <span class="code">ch_…</span></span></div>
+          <div class="ft">Card digits are not searched. Ask for the email on the receipt instead.</div>
+        </div>
+        <p class="cap12">Recent is the last five records you opened, kept in this browser only and cleared when you sign out.</p>
+      </div>
+      <div class="pcol"><span class="stlbl">3 · A Stripe number</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)" class="code">cus_QF3kR8mZ2vXb1L</span><span class="caret"></span></div>
+        <div class="fpanel">
+          <div class="fh">Stripe · 1</div>
+          <div class="fr on"><span class="ic2"><svg class="ic"><use href="#i-card"/></svg></span><div class="tx"><b>Riverdale Ridge Baseball</b><span class="sub">Stripe customer <span class="code">cus_QF3kR8mZ2vXb1L</span> · Club · example</span></div><span class="cv">›</span></div>
+          <div class="ft">Enter opens the club. Its Money tab holds the Stripe numbers.</div>
+        </div>
+      </div>
+      <div class="pcol"><span class="stlbl">4 · A subscription charge number (not kept until Stage 3)</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)" class="code">ch_3PfQ2kL8mZ</span><span class="caret"></span></div>
+        <div class="fpanel"><div class="msg"><b>No family payment has this number.</b><span>Charges on a club's own subscription are kept in Stripe only, so Find cannot match them yet. Search the customer number (<span class="code">cus_…</span>) or the email on the receipt.</span></div></div>
+        <p class="cap12">Question 10 decides whether Stage 2 goes further.</p>
+      </div>
+      <div class="pcol"><span class="stlbl">5 · Nothing found</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)">lynks</span><span class="caret"></span></div>
+        <div class="fpanel"><div class="msg"><b>Nothing matches “lynks”.</b><span>Find looks at emails, names, clubs, web names, owners and Stripe numbers. Check the spelling, or try part of the email.</span></div></div>
+      </div>
+      <div class="pcol"><span class="stlbl">6 · Too many</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)">uat</span><span class="caret"></span></div>
+        <div class="fpanel">
+          <div class="fh">Clubs · 8 of 14</div>
+          <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-clubs"/></svg></span><div class="tx"><b>UAT Calendar Club</b><span class="sub">Club · Active · <span class="code">uat-calendar-club</span></span></div><span class="cv">›</span></div>
+          <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-clubs"/></svg></span><div class="tx"><b>UAT Club Org</b><span class="sub">Club · Active · <span class="code">uat-club-org</span></span></div><span class="cv">›</span></div>
+          <div class="more">6 more not listed<span class="door">All 14 in Clubs &amp; portals ›</span></div>
+          <div class="fh">People · 8 of 41</div>
+          <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-user"/></svg></span><div class="tx"><b>uat-admin@uat.local</b><span class="sub">2 clubs · last signed in Oct 25</span></div><span class="cv">›</span></div>
+          <div class="more">33 more not listed<span class="door">All 41 in People ›</span></div>
+        </div>
+        <p class="cap12">Drawn short: two of each group's eight rows.</p>
+      </div>
+      <div class="pcol"><span class="stlbl">7 · A role that may not read a group (drawn for Read only, if question 2 trims)</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)">lynx</span><span class="caret"></span></div>
+        <div class="fpanel">
+          <div class="fh">Clubs · 2</div>
+          <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-clubs"/></svg></span><div class="tx"><b>UAT Lakeshore Lynx</b><span class="sub">Club · Active · <span class="code">uat-rep-only</span></span></div><span class="cv">›</span></div>
+          <div class="fr"><span class="ic2"><svg class="ic"><use href="#i-clubs"/></svg></span><div class="tx"><b>Lynx U13</b><span class="sub">Premium Coaches Portal · Trialing · example</span></div><span class="cv">›</span></div>
+          <div class="ft">Searching clubs and people. Your role does not search Stripe numbers.</div>
+        </div>
+        <p class="cap12">A group the role may not read is absent: no heading, no count, no greyed rows. The foot names what was searched, so an empty answer is never mistaken for "nothing exists". The server leaves those rows out of its answer; the screen is not what hides them.</p>
+      </div>
+      <div class="pcol"><span class="stlbl">8 · A narrow window</span>
+        <div class="phone" style="height:300px;width:390px">
+          <div class="pstrip"><span class="mb"><svg class="ic"><use href="#i-back"/></svg></span><span class="grow" style="font:400 14px/1 var(--font-body)"><span class="fbox typed" style="width:100%;height:36px"><span style="color:var(--i)">lynx</span><span class="caret"></span></span></span></div>
+          <div class="fpanel" style="width:100%;border-radius:0;border-left:0;border-right:0">
+            <div class="fh">Clubs · 2</div>
+            <div class="fr on"><div class="tx"><b>UAT Lakeshore Lynx</b><span class="sub">Club · Active</span></div><span class="cv">›</span></div>
+            <div class="fr"><div class="tx"><b>Lynx U13</b><span class="sub">Premium Coaches Portal</span></div><span class="cv">›</span></div>
+          </div>
+        </div>
+        <p class="cap12">Below 900 pixels the box becomes its glyph in the strip. Tapping it turns the strip into the box, with a back arrow, and the panel takes the full width. Between 900 and 1,200 the box narrows to 280 pixels.</p>
+      </div>
+    </div>
+    <span class="ex">Eight states, true size · rows marked example invented</span>
+  </div></div>
+
+  <div class="ask" data-q="A2"><div class="q">Question 2 · Find's reach: does everyone search everything, or only what their role may read?</div>
+    <p class="rec">Today every console role can open every club and every person, read only included, so "only what your role reads" and "everything" give the same clubs and people. They differ on <b>Stripe numbers</b>, which point at money.</p>
+    <p class="rec"><b>Recommended: Find follows the rulebook.</b> You find what your menu lets you open, decided on the server. Every role finds clubs and people. Stripe numbers are searched by Super admin, Billing and Support, the roles that answer a billing question. A group your role cannot read is absent, and the panel's foot says what was searched (state 7). This also means that if a later stage narrows who reads people, Find narrows with it, with no second rule to remember.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Find follows the rulebook; Stripe numbers for Super admin, Billing, Support (recommended)"> Find follows the rulebook; Stripe numbers for Super admin, Billing and Support (recommended)</label>
+      <label><input type="checkbox" data-o="Every console role searches everything"> Every console role searches everything</label>
+      <label><input type="checkbox" data-o="Growth and Read only get no Find at all"> Growth and Read only get no Find at all</label>
+    </div><textarea aria-label="Notes on question 2" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="A10"><div class="q">Question 10 · A charge number in Find: wait for Stage 3, or ask Stripe live now?</div>
+    <p class="rec">The prompt promised charge numbers. We keep none for subscriptions. Two honest ways: (a) Stage 2 matches what we keep, and a charge number gets the sentence in state 4 until Stage 3 reads Stripe; (b) Stage 2 asks Stripe live when a whole <span class="code2">ch_</span> or <span class="code2">pi_</span> number is pasted, which is the first Stripe read in the console and pulls part of Stage 3 forward.</p>
+    <p class="rec"><b>Recommended: (a), wait for Stage 3.</b> A double billing (your task 1) ends on the Money tab anyway, and Stage 3 builds the Stripe read once, with its own review. Before customers pay at volume, a pasted charge number is rare, and the customer number on the same receipt finds the club today.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Charge numbers wait for Stage 3; state 4's sentence until then (recommended)"> Charge numbers wait for Stage 3; state 4's sentence until then (recommended)</label>
+      <label><input type="checkbox" data-o="Ask Stripe live for a pasted charge number in Stage 2"> Ask Stripe live for a pasted charge number in Stage 2</label>
+    </div><textarea aria-label="Notes on question 10" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ FIND SECURITY ═══════════ -->
+<section class="screen" id="sec">
+  <div class="screen-head"><span class="n">FIND SECURITY</span><h2>Find is a new way to read customer data</h2>
+  <p>So it is drawn and reviewed as a security change before any code. This is the design's answer to six questions, then a threat list from an adversarial pass over the design itself.</p></div>
+  <div class="tbl"><table class="doc"><tbody>
+    <tr><td style="width:200px"><b>Who may call it</b></td><td>A signed-in console account, checked on the server as the call's first step against the one rulebook, before any search runs. A customer account, a signed-out visitor and a disabled staff account get a refusal and no rows. Your role is read fresh on every call, so a role taken away takes effect on the next search.</td></tr>
+    <tr><td><b>What each role sees</b></td><td>What the rulebook lets it open (question 2). The server builds the answer per role. A group the role may not read is never in the answer at all, not filtered out by the screen.</td></tr>
+    <tr><td><b>What is logged</b></td><td>Question 3. Today nothing records a staff member reading a customer: the console's visit trail keeps the page address only, never what was typed.</td></tr>
+    <tr><td><b>Rate limiting</b></td><td>A limit per staff member, counted by account and not by network address (about one search a second, with a short burst). Honestly, it is a speed bump: our hosting runs many copies of the server and each counts on its own. The real bounds are the two-character minimum, the 8-row cap and the trail of records opened.</td></tr>
+    <tr><td><b>Server-side</b></td><td>Yes. The browser sends the words in the body of the call, never in the address, and gets back at most 8 rows a group, never cached. It never downloads a list to filter, which is what Customer users does today with 1,000 accounts.</td></tr>
+    <tr><td><b>Sign-in and the request gate</b></td><td><b>No change to either.</b> One <b>database</b> change: a narrow lookup over the sign-in records. By default a new database function can be called by anyone holding the public key, so the change must take that right away from signed-out and signed-in customers alike and give it to the server only, and a test proves it with the public key. It returns the account number, email, name, last sign-in and created date, and nothing else.</td></tr>
+    <tr><td><b>Found on the way</b></td><td><b>The console's staff check never asks whether an email was confirmed.</b> It trusts the email on the session. If our sign-in service lets someone sign in before confirming, an account created with a staff email that has never signed up would pass as staff. That setting lives in the hosted sign-in service, not the code, so I could not confirm the risk is real. It predates Find, but Find makes it worth more. The build adds "a staff account must have a confirmed email" to the one rulebook, after checking every current staff account is confirmed. Also: the owner's own built-in super admin emails cannot be switched off from Staff, only from the hosting settings.</td></tr>
+  </tbody></table></div>
+  <div class="box sec2">
+    <h3>Threat list (the review's security lens, run over the design)</h3>
+    <div class="tbl" style="border:0"><table class="doc"><thead><tr><th>#</th><th>Threat</th><th>The design's answer</th></tr></thead><tbody data-fill="threats"></tbody></table></div>
+  </div>
+  <div class="ask" data-q="A3"><div class="q">Question 3 · Does Find leave a trace?</div>
+    <p class="rec">A staff search reads personal data: names and emails appear in the panel. Today no read by staff leaves a trace anywhere, in Find's absence or otherwise.</p>
+    <p class="rec"><b>Recommended: record every record opened, not the words typed.</b> One quiet line per opened club or person: who, when, which record, and whether Find opened it. The trail is kept 90 days, read by Super admin in the Audit log under a "Records opened" filter, and never shown on the customer's Story. The security review moved me off keeping the words: they are usually the same email or name again, so storing them for 90 days makes the trail a second store of personal data for little gain. Recording every search as you type would be mostly noise. Opening a record is the read that matters, and it is what you would want to know after a complaint.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Record each record opened, not the words, 90 days (recommended)"> Record each record opened, not the words, 90 days (recommended)</label>
+      <label><input type="checkbox" data-o="Also keep the words that found it"> Also keep the words that found it</label>
+      <label><input type="checkbox" data-o="Record every search as well"> Record every search as well</label>
+      <label><input type="checkbox" data-o="No trace"> No trace</label>
+    </div><textarea aria-label="Notes on question 3" placeholder="How long to keep it, who reads it"></textarea></div>
+</section>
+
+<!-- ═══════════ D · THE CUSTOMER RECORD ═══════════ -->
+<section class="screen" id="d">
+  <div class="screen-head"><span class="n">DRAWING D</span><h2>The customer record reads first</h2>
+  <p>A club's record opens on its <b>Story</b>: one dated list, newest first, of what happened, who did it and why. Above it, the title carries the plan and state chips once, a caption gives the owner, the web name and the date created, and one band holds the four figures every task asks first. Four tabs replace five: <b>Story · Money · Access · People &amp; tournaments</b>. The Primary actions box and the Account context box go, because they repeated the band. Nothing is edited until you press the one pencil in the title row, which turns the whole record into its form, and every change confirms in one sentence and asks why before it happens.</p></div>
+  <div class="before"><button class="shot" data-src="cap-s2/org-detail.jpg" aria-label="The club record today at full size"><img src="cap-s2/org-detail.jpg" alt="The club record today: band, primary actions, account context, five tabs opening on notes and an identity form"></button><div><div class="lbl">Before · the club record, Stage 1 look</div><p>1,940 pixels tall. A seven-figure band, then Primary actions, then Account context repeating the band, then five tabs that open on Support: a notes box, the name and web name form, ownership, and a delete zone at the foot. What has happened to the club is the last tab, eight rows long, and reasons hide inside it.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The page is rebuilt to read first. The header keeps Stage 1's standard title with the back link, and gains the owner and web name as a caption. The band holds four figures. Email the owner and Add a note are the two everyday actions, white buttons at the end of the title row. There is no lime on this page: nothing on it is the one main action.">S2 · RESTYLED · the record</button>
+    <button class="tag" data-n="The Story reads what we already keep: staff changes from the audit log, overrides, notes, the customer's own downgrades and cancellations, missed payments and recoveries, campaign emails, team moves, members joining and leaving, feedback. The table under the drawing lists every entry type with the stage that brings it.">S2 · NEW · the Story</button>
+    <button class="tag" data-n="Who is a staff email, the customer's email, or The product for anything automatic. Why shows the reason. Every change made through the console from Stage 2 on asks for one and keeps it. Older section changes and override ends never kept one, so they say Not recorded in grey. Stage 3 gives the reason its own place in the audit log.">S2 · who and why</button>
+    <button class="tag" data-n="Put it back sits on the rows question 2 of the kickoff allowed it on: plan, limit, section, and an override that is still running. It opens the same confirm window, asks why, writes a new Story entry, and marks the old one put back. It never shows on anything that reached Stripe or an inbox: a cancelled subscription, a campaign email, a downgrade the customer made in Stripe.">S2 · Put it back</button>
+    <button class="tag" data-n="Filters: a Type dropdown (staff changes, billing, notes, emails, people, feedback) and a search over the Story's words. Notes stay in the Story as entries, and Add a note opens a small window instead of a box on the page.">S2 · filters</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="super" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Lakeshore Lynx</h1><span class="chip">Club</span><span class="chip ok">Active</span><div class="end"><span class="pencil" aria-hidden="true"><svg class="ic"><use href="#i-pencil"/></svg></span><span class="btn"><svg class="ic"><use href="#i-mail"/></svg>Email the owner</span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta"><span>Owner uat-rep-only-owner@uat-rep-club.local</span><span>·</span><span class="code">uat-rep-only</span><span>·</span><span>Created Oct 23, 2026</span></div></div>
+        <div class="band"><div><span class="k">Members</span><span class="v">1</span><span class="s">owner signed in Oct 24</span></div><div><span class="k">Teams</span><span class="v">9 of 15</span><span class="s">on the Club plan</span></div><div><span class="k">Tournaments</span><span class="v">0</span><span class="s">no limit on Club</span></div><div><span class="k">Renews</span><span class="v quiet">Not set</span><span class="s">no Stripe subscription</span></div></div>
+        <div class="subnav"><span class="on">Story <span class="n">10</span></span><span>Money</span><span>Access</span><span>People &amp; tournaments <span class="n">1</span></span></div>
+        <div class="card">
+          <div class="tb tools"><span class="count">10 entries, newest first</span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search the story</span><span class="sel">All types <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <table class="t">
+            <thead><tr><th style="width:150px">When</th><th>What happened</th><th style="width:290px">Who</th><th style="width:230px">Why</th><th style="width:110px"></th></tr></thead>
+            <tbody>
+              <tr class="cmf"><td class="ts">Oct 25, 9:40 a.m.</td><td><span class="nm0">Plan changed: Tournament Plus → Club</span><span class="sub">Team limit set to 15</span></td><td class="who">support@fieldlogichq.ca</td><td>Moved to Club for the spring house league</td><td class="r"><span class="pb"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-undo"/></svg> Put it back</span></td></tr>
+              <tr class="cmf"><td class="ts">Oct 24, 3:24 p.m.</td><td><span class="nm0">Put back: Rep teams on again</span><span class="sub">Undoes the 3:20 p.m. entry</span></td><td class="who">owner@fieldlogichq.ca</td><td>Turned off on the wrong club</td><td class="r"><span class="pb"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-undo"/></svg> Put it back</span></td></tr>
+              <tr class="cmf"><td class="ts">Oct 24, 3:20 p.m.</td><td><span class="nm0">Section turned off: Rep teams</span><span class="pbdone">Put back at 3:24 p.m.</span></td><td class="who">owner@fieldlogichq.ca</td><td><span class="why0">Not recorded</span></td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 24, 3:02 p.m.</td><td><span class="nm0">Section turned on: House league</span></td><td class="who">owner@fieldlogichq.ca</td><td><span class="why0">Not recorded</span></td><td class="r"><span class="pb"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-undo"/></svg> Put it back</span></td></tr>
+              <tr class="cmf"><td class="ts">Oct 24, 2:55 p.m.</td><td><span class="nm0">Note</span><span class="sub">Called the owner. They run house league in the spring and want it on before then.</span></td><td class="who">owner@fieldlogichq.ca</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 24, 10:05 a.m.</td><td><span class="nm0">Campaign email sent: Spring house league is open</span><span class="sub">Sent to the owner</span></td><td class="who">The product</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 23, 4:48 p.m.</td><td><span class="nm0">Invited coach@uat-rep-club.local</span><span class="sub">As a coach · not accepted yet</span></td><td class="who">uat-rep-only-owner@uat-rep-club.local</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 23, 4:30 p.m.</td><td><span class="nm0">Feedback sent: “Where do I add a second age group?”</span><span class="sub">Triaged by support</span></td><td class="who">uat-rep-only-owner@uat-rep-club.local</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 23, 2:17 p.m.</td><td><span class="nm0">Web name changed: <span class="code nw">uat-lynx</span> → <span class="code nw">uat-rep-only</span></span></td><td class="who">support@fieldlogichq.ca</td><td>Owner asked to match their other sites</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 23, 2:02 p.m.</td><td><span class="nm0">Club created on the Tournament Plus plan</span></td><td class="who">uat-rep-only-owner@uat-rep-club.local</td><td class="none">—</td><td></td></tr>
+            </tbody>
+          </table>
+          <div class="tline">Not in the Story yet: Stripe's charges and refunds, purchases the customer makes in Stripe, and account emails such as password resets.</div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Club, owner, dates and figures real · Story entries example</span>
+  </div></div>
+
+  <div class="tbl"><table class="doc"><thead><tr><th>Story entry</th><th>Kept today?</th><th>Who</th><th>Why</th><th>Put it back</th></tr></thead><tbody>
+    <tr><td>Plan or limit changed by staff (one club or bulk)</td><td><span class="ok-y">Yes</span></td><td>Staff email</td><td><span class="ok-y">Yes</span></td><td><span class="ok-y">Yes</span></td></tr>
+    <tr><td>Section turned on or off by staff</td><td><span class="ok-y">Yes</span></td><td>Staff email</td><td>From Stage 2 on; older entries say Not recorded</td><td><span class="ok-y">Yes</span></td></tr>
+    <tr><td>Override applied / ended by staff</td><td><span class="ok-y">Yes</span></td><td>Staff email</td><td>Applied: <span class="ok-y">yes</span> · ended: from Stage 2 on</td><td>While running: <span class="ok-y">end it now</span></td></tr>
+    <tr><td>Name, web name, owner or web address changed by staff</td><td><span class="ok-y">Yes</span></td><td>Staff email</td><td><span class="ok-y">Yes</span></td><td><span class="ok-n">No</span> (not in your Put it back list)</td></tr>
+    <tr><td>Note added, edited, deleted</td><td><span class="ok-y">Yes</span></td><td>Staff email</td><td>The note is the why</td><td><span class="ok-n">No</span></td></tr>
+    <tr><td>Subscription cancelled by staff</td><td><span class="ok-y">Yes</span></td><td>Staff email</td><td>From Stage 2 on</td><td><span class="ok-n">Never</span>, it reached Stripe</td></tr>
+    <tr><td>Customer downgraded, cancelled, missed a payment, recovered</td><td><span class="ok-y">Yes</span></td><td>The customer / Stripe</td><td>—</td><td><span class="ok-n">Never</span></td></tr>
+    <tr><td>Customer bought or upgraded a plan</td><td><span class="ok-n">No</span> <span class="ok-l">Stage 3</span></td><td colspan="3">Recorded nowhere today. Stage 3 reads it from Stripe, with history back to the first day.</td></tr>
+    <tr><td>Campaign email sent</td><td><span class="ok-y">Yes</span></td><td class="who">The product</td><td>—</td><td><span class="ok-n">Never</span>, it reached an inbox</td></tr>
+    <tr><td>Member invited, joined, role changed, removed</td><td><span class="ok-y">Yes</span> (the club's own record)</td><td>The club member who did it</td><td>—</td><td><span class="ok-n">No</span></td></tr>
+    <tr><td>Team moved in or out of the club</td><td><span class="ok-y">Yes</span></td><td>The coach or admin</td><td>—</td><td><span class="ok-n">No</span></td></tr>
+    <tr><td>Feedback sent from the club</td><td><span class="ok-y">Yes</span></td><td>The sender</td><td>—</td><td><span class="ok-n">No</span></td></tr>
+    <tr><td>Retention extended</td><td><span class="ok-y">Yes</span></td><td>Staff email</td><td><span class="ok-y">Yes</span></td><td><span class="ok-n">No</span></td></tr>
+    <tr><td>Club created</td><td><span class="ok-y">Yes</span></td><td>The first owner</td><td>—</td><td>—</td></tr>
+    <tr><td>Stripe charges, refunds, invoices</td><td><span class="ok-l">Stage 3</span></td><td colspan="3">Stripe is not read anywhere in the console today.</td></tr>
+    <tr><td>Free time granted or ending</td><td><span class="ok-l">Stage 4</span></td><td colspan="3">Overrides stand in until then.</td></tr>
+    <tr><td>Account emails (password reset, invitations, receipts)</td><td><span class="ok-l">Stage 5</span></td><td colspan="3">Sent but never logged today.</td></tr>
+    <tr><td>Errors this club hit</td><td><span class="ok-l">Stage 5</span></td><td colspan="3">Kept per error, but noisy; Stage 5 links them from Errors instead.</td></tr>
+  </tbody></table></div>
+
+  <div class="ask" data-q="A4"><div class="q">Question 4 · The Story's first version: ship what is kept today, or hold it until it is whole?</div>
+    <p class="rec">Thirteen of the eighteen entry types are kept today. Missing: Stripe charges and the customer's own purchases (Stage 3), free time (Stage 4), account emails and the errors a club hit (Stage 5). The worst gap is purchases: a Story that can say "downgraded" but never "bought".</p>
+    <p class="rec"><b>Recommended: ship it now, with the quiet line under the table naming what is not in it yet</b> (drawn above). Holding it until Stage 5 means the record opens on forms for three more stages, or on a blank, and the record reading first is the point of this stage. I would not patch the purchase gap in the payment code now: Stage 3 reads Stripe and brings every purchase back to the first day, where a patch would only record from now on, in the billing code, for a gap Stage 3 closes properly.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Ship the Story now with the line naming what is missing (recommended)"> Ship the Story now with the line naming what is missing (recommended)</label>
+      <label><input type="checkbox" data-o="Also start recording customer purchases now, in the payment code"> Also start recording customer purchases now, in the payment code</label>
+      <label><input type="checkbox" data-o="Hold the Story until it is whole"> Hold the Story until it is whole</label>
+    </div><textarea aria-label="Notes on question 4" placeholder="Notes"></textarea></div>
+
+  <h3 style="margin-top:8px">The pencil, the confirm window, and Put it back</h3>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The product's standard (your ruling of Oct 1): one pencil in the record's head turns the whole record into its form, and a check mark in the same spot turns it back. Here the form is the club's name, web name, plan, limits and sections, showing only the fields your role may change; everything else reads. The tabs step aside while you edit.">S2 · NEW · one pencil, the whole record</button>
+    <button class="tag" data-n="The one place the console departs from the standard, said out loud: the standard autosaves, and a live change to a customer cannot. The check mark opens one confirm window that says every change in one sentence and asks why (R3, R4), the same kind of exception as the schedule's 'a change that tells families asks'. Each changed field becomes its own Story entry, with the shared reason, so each can be put back on its own.">S2 · the check mark confirms</button>
+    <button class="tag" data-n="Actions are not edits, so they stay doors in both modes, as the standard says: Add a note and Email the owner at the end of the title row; Make owner on each member row; Cancel the subscription and Delete the club as rare doors at the end of the Access tab, each its own window.">S2 · actions stay doors</button>
+    <button class="tag" data-n="Cancel the subscription is red, not lime: the console's confirm rule (2026-06-26) keeps red for what cannot be undone from the screen. Put it back and Save changes are lime, the window's one main action.">S2 · red for what cannot be undone</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="height:700px">
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app" style="min-height:0">
+      <aside class="side" data-role="super" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Lakeshore Lynx</h1><span class="chip">Club</span><span class="chip ok">Active</span><div class="end"><span class="pencil on" aria-hidden="true"><svg class="ic"><use href="#i-tick"/></svg></span><span class="btn"><svg class="ic"><use href="#i-mail"/></svg>Email the owner</span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta"><span>Editing. Nothing changes until you press the check mark and confirm.</span></div></div>
+        <div class="card pad" style="display:grid;gap:14px">
+          <div class="grid2"><div class="fld"><span class="fl">Name<span class="req">*</span></span><span class="inp">UAT Lakeshore Lynx</span></div><div class="fld"><span class="fl">Web name<span class="req">*</span></span><span class="inp code">uat-rep-only</span></div></div>
+          <div class="grid2"><div class="fld"><span class="fl">Plan</span><span class="sel w">Club<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div><div class="grid2"><div class="fld"><span class="fl">Tournament limit</span><span class="inp">No limit</span></div><div class="fld"><span class="fl">Team limit</span><span class="inp" style="border-color:var(--ol)">18</span></div></div></div>
+          <div class="fld"><span class="fl">Sections</span><div style="display:flex;gap:22px;flex-wrap:wrap"><span class="chkrow"><span class="chk on"></span>Tournaments</span><span class="chkrow"><span class="chk on"></span>House league</span><span class="chkrow"><span class="chk on"></span>Rep teams</span><span class="chkrow"><span class="chk"></span>Accounting</span><span class="chkrow"><span class="chk on"></span>Public site</span></div></div>
+          <p class="cap12">Two changes held: team limit 15 → 18, Accounting off. A Billing account sees plan and limits as fields and the rest as reading; a Product account sees only Sections as fields.</p>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">The record while editing · values example</span>
+  </div></div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins">
+      <div class="dlg"><div class="dh"><h2>Save changes to UAT Lakeshore Lynx</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="sentence">UAT Lakeshore Lynx stays on <b>Club</b>. Its team limit goes from <b>15 to 18</b> now, and <b>Accounting turns off</b>. The owner is not emailed.</div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area">Three more teams for the spring draft</span></div>
+        </div>
+        <div class="df"><span class="sent">Two Story entries, each can be put back.</span><div class="bts"><span class="btn">Keep editing</span><span class="btn lime">Save changes</span></div></div></div>
+      <div class="dlg"><div class="dh"><h2>Put back the plan for UAT Lakeshore Lynx</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="sentence">UAT Lakeshore Lynx goes back from <b>Club</b> to <b>Tournament Plus</b>, as it was before Oct 25 at 9:40 a.m. Its team limit of 15 goes with it.</div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area" style="color:var(--i3)">Why are you putting this back?</span></div>
+        </div>
+        <div class="df"><span class="sent">Writes a new entry in the Story.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Put it back</span></div></div></div>
+    </div>
+    <div class="wins" style="padding-top:0">
+      <div class="dlg"><div class="dh"><h2>Cancel the subscription for Riverdale Ridge Baseball</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="sentence">Stripe stops charging Riverdale Ridge Baseball. <b>This cannot be put back</b>: the owner would have to buy again.</div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area" style="color:var(--i3)">Why are you cancelling?</span></div>
+        </div>
+        <div class="df"><span class="sent">Reaches Stripe. Never offered as Put it back.</span><div class="bts"><span class="btn">Keep it</span><span class="btn red">Cancel the subscription</span></div></div></div>
+    </div>
+    <span class="ex">Windows at true size · the second club example</span>
+  </div></div>
+
+  <div class="ask" data-q="A6"><div class="q">Question 6 · The record's edit door</div>
+    <p class="rec">Your standard (Oct 1): a record opens to read, and one pencil in its head turns the <i>whole</i> record into its form; a pencil per section was tried and rejected the same day. The console needs one thing the standard's autosave cannot give: a live change to a customer confirms in one sentence and asks why (R3, R4).</p>
+    <p class="rec"><b>Recommended: the standard, with the console's confirm.</b> One pencil. The record's facts become fields, only those your role may change. The check mark opens one confirm window that lists every change and asks one reason. Each change becomes its own Story entry, so each can be put back alone. Actions stay doors in both modes. <b>I first drew one pencil per tab; the design pass showed that is the shape you rejected on Oct 1, so I withdrew it.</b> The cost of the standard here: one reason covers a mixed change (a name and a limit together), which is rare in support work.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="One pencil for the whole record; the check mark confirms in one sentence and asks why (recommended)"> One pencil for the whole record; the check mark confirms in one sentence and asks why (recommended)</label>
+      <label><input type="checkbox" data-o="A pencil per tab"> A pencil per tab</label>
+      <label><input type="checkbox" data-o="A door per section, as today"> A door per section, as today</label>
+    </div><textarea aria-label="Notes on question 6" placeholder="Notes"></textarea></div>
+
+  <h3 style="margin-top:8px">The tabs, as frames</h3>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="tabcols">
+      <div class="lbox"><span class="stg">Money · Stage 3 fills it</span><b>What Stage 2 shows</b><ul><li>The plan, its state and when it renews or ends</li><li>The Stripe customer and subscription numbers, in the code face, each with an <i>Open in Stripe</i> door</li><li>One line: "Charges, refunds and invoices arrive with Stage 3"</li></ul><b>What Stage 3 adds</b><ul><li>Stripe's charges beside ours, duplicates labelled, the refund window, the card's last four</li></ul></div>
+      <div class="lbox s2"><span class="stg">Access · Stage 2 fills it</span><b>Reads; the title's pencil edits it</b><ul><li>Plan and limits</li><li>Sections on and off</li><li>Overrides, running and past (Stage 4 turns these into Free time)</li><li>The club's own web address</li></ul><b>Rare doors at the end</b><ul><li>Cancel the subscription (red)</li><li>Delete the club (super admin, red)</li></ul></div>
+      <div class="lbox s2"><span class="stg">People &amp; tournaments · Stage 2 fills it</span><b>Moves here as it is today</b><ul><li>Members: name, email, role, last sign-in, each opening the person record; Make owner on a row</li><li>Tournaments: name, state, dates</li><li>Teams brought in by a coach</li></ul><b>Not built</b><ul><li>A tournament record. A tournament stays a row; its club is its record.</li></ul></div>
+    </div>
+    <span class="ex">Frames only · what each tab holds and which stage fills it</span>
+  </div></div>
+
+  <h3 style="margin-top:8px">The same record, for a role that can only read it (R6)</h3>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Rule R6. Read only and Growth see the same record, with the same toolbar, search and filter, and with no pencil, no Put it back, no rare doors, no Add a note and no Email the owner (the rulebook gives emailing a customer to Super admin, Support and Billing). No banner explains it: the menu's eye already said this page is read-only for this role. Today the section switches show disabled; they go.">S2 · R6 · read-only record</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="height:560px">
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app" style="min-height:0">
+      <aside class="side" data-role="read_only" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Lakeshore Lynx</h1><span class="chip">Club</span><span class="chip ok">Active</span><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta"><span>Owner uat-rep-only-owner@uat-rep-club.local</span><span>·</span><span class="code">uat-rep-only</span><span>·</span><span>Created Oct 23, 2026</span></div></div>
+        <div class="band"><div><span class="k">Members</span><span class="v">1</span><span class="s">owner signed in Oct 24</span></div><div><span class="k">Teams</span><span class="v">9 of 15</span><span class="s">on the Club plan</span></div><div><span class="k">Tournaments</span><span class="v">0</span><span class="s">no limit on Club</span></div><div><span class="k">Renews</span><span class="v quiet">Not set</span><span class="s">no Stripe subscription</span></div></div>
+        <div class="subnav"><span class="on">Story <span class="n">10</span></span><span>Money</span><span>Access</span><span>People &amp; tournaments <span class="n">1</span></span></div>
+        <div class="card"><div class="tb tools"><span class="count">10 entries, newest first</span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search the story</span><span class="sel">All types <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div><table class="t"><thead><tr><th style="width:150px">When</th><th>What happened</th><th style="width:290px">Who</th><th style="width:250px">Why</th></tr></thead><tbody>
+          <tr class="cmf"><td class="ts">Oct 25, 9:40 a.m.</td><td><span class="nm0">Plan changed: Tournament Plus → Club</span></td><td class="who">support@fieldlogichq.ca</td><td>Moved to Club for the spring house league</td></tr>
+          <tr class="cmf"><td class="ts">Oct 24, 3:02 p.m.</td><td><span class="nm0">Section turned on: House league</span></td><td class="who">owner@fieldlogichq.ca</td><td><span class="why0">Not recorded</span></td></tr>
+          <tr class="cmf"><td class="ts">Oct 24, 2:55 p.m.</td><td><span class="nm0">Note</span><span class="sub">Called the owner. They run house league in the spring and want it on before then.</span></td><td class="who">owner@fieldlogichq.ca</td><td class="none">—</td></tr>
+        </tbody></table><div class="tline">Drawn with 3 of the 10 entries.</div></div>
+      </div></main>
+    </div>
+    <span class="ex">Read only · Story entries example</span>
+  </div></div>
+
+  <h3 style="margin-top:8px">A person's record (new)</h3>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="New. A person has no record today; their actions sit in a menu on each row of Customer users. Find needs somewhere for a person to open, and walk task 7 (can't sign in) is read here. The same shape as a club, smaller: three tabs, Story, Clubs and Account.">S2 · NEW · the person record</button>
+    <button class="tag" data-n="The person's Story reads what we keep: the account created, staff actions on it (reset link made, email confirmed, signed out everywhere, banned, changed), staff notes, club invitations and joins. Sign-in history is not kept: only the last sign-in, which the band shows. Password reset emails sent arrive with Stage 5.">S2 · the person's Story</button>
+    <button class="tag" data-n="The everyday action is Send a reset link, a white button, because it is what can't sign in usually ends in. It goes to an inbox, so its window says it cannot be taken back. The rare doors (sign out everywhere, ban, delete) end the Account tab, as the club's end its Access tab, each its own window with a reason. Name and email change through the one pencil on the title, which edits the whole record.">S2 · actions</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="height:640px">
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app" style="min-height:0">
+      <aside class="side" data-role="super" data-active="people" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>People</span><span class="rule"></span><h1>uat-rep-only-owner@uat-rep-club.local</h1><span class="chip ok">Email confirmed</span><div class="end"><span class="pencil" aria-hidden="true"><svg class="ic"><use href="#i-pencil"/></svg></span><span class="btn">Send a reset link</span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta"><span>No name given</span><span>·</span><span>Signs in with email and password</span></div></div>
+        <div class="band c3"><div><span class="k">Clubs</span><span class="v">1</span><span class="s">owner of UAT Lakeshore Lynx</span></div><div><span class="k">Last signed in</span><span class="v sm">Oct 24, 2026</span><span class="s">at 6:12 p.m.</span></div><div><span class="k">Account created</span><span class="v sm">Oct 23, 2026</span><span class="s">at 2:01 p.m.</span></div></div>
+        <div class="subnav"><span class="on">Story <span class="n">4</span></span><span>Clubs <span class="n">1</span></span><span>Account</span></div>
+        <div class="card"><table class="t"><thead><tr><th style="width:150px">When</th><th>What happened</th><th style="width:290px">Who</th><th style="width:250px">Why</th></tr></thead><tbody>
+          <tr class="cmf"><td class="ts">Oct 24, 6:05 p.m.</td><td><span class="nm0">Reset link made</span><span class="sub">The email itself is not logged yet</span></td><td class="who">support@fieldlogichq.ca</td><td><span class="why0">Not recorded</span></td></tr>
+          <tr class="cmf"><td class="ts">Oct 24, 6:01 p.m.</td><td><span class="nm0">Note</span><span class="sub">Says the reset email never arrived. Checked spam with them.</span></td><td class="who">support@fieldlogichq.ca</td><td class="none">—</td></tr>
+          <tr class="cmf"><td class="ts">Oct 23, 2:02 p.m.</td><td><span class="nm0">Became owner of UAT Lakeshore Lynx</span></td><td class="who">The product</td><td class="none">—</td></tr>
+          <tr class="cmf"><td class="ts">Oct 23, 2:01 p.m.</td><td><span class="nm0">Account created</span></td><td class="who">uat-rep-only-owner@uat-rep-club.local</td><td class="none">—</td></tr>
+        </tbody></table></div>
+        <p class="cap12">The Account tab holds email, name, how they sign in and whether the email is confirmed, read first, and ends with the rare doors: Sign out everywhere, Ban this person, and Delete this person (super admin, red).</p>
+      </div></main>
+    </div>
+    <span class="ex">Person, dates real · Story entries example</span>
+  </div></div>
+
+  <div class="ask" data-q="A8"><div class="q">Question 8 · The old Organizations and Customer users pages: lists that stay, or only Find?</div>
+    <p class="rec">Find answers "this customer". A list answers "every past-due club" or "everyone who signed up this week", which Find does not.</p>
+    <p class="rec"><b>Recommended: both stay as lists under their menu entries, renamed Clubs &amp; portals and People, and People gets the person record.</b> People becomes a server-paged list with no 1,000 cap, each row opening the person record instead of a menu of actions. Clubs &amp; portals keeps its filters and loses its hidden cap. Find opens the same records the lists open, so there is one record per customer and two ways in.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Both lists stay, renamed; People rows open the new person record (recommended)"> Both lists stay, renamed; People rows open the new person record (recommended)</label>
+      <label><input type="checkbox" data-o="The lists go; Find is the only way in"> The lists go; Find is the only way in</label>
+      <label><input type="checkbox" data-o="No person record; People keeps its row menu"> No person record; People keeps its row menu</label>
+    </div><textarea aria-label="Notes on question 8" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E · THE BOUNDARY ═══════════ -->
+<section class="screen" id="e">
+  <div class="screen-head"><span class="n">DRAWING E</span><h2>The boundary: what Stage 2 delivers, and what it does not</h2>
+  <p>Every part on these drawings, marked once. <span class="k-new">NEW</span> is built in Stage 2. <span class="k-res">RESTYLED</span> exists and is rebuilt or renamed. <span class="k-unc">UNCHANGED</span> is left as Stage 1 built it. <span class="k-lat">LATER</span> is drawn only as a frame or a sentence, never as if it were built.</p></div>
+  <div class="tbl"><table class="doc"><thead><tr><th>Part</th><th>Mark</th><th>Note</th></tr></thead><tbody>
+    <tr><td>Find: the box, the panel, the keyboard, Recent</td><td><span class="k-new">NEW</span></td><td>Clubs, people, Stripe customer and subscription numbers, family payment numbers</td></tr>
+    <tr><td>The read-only lookup over sign-in records</td><td><span class="k-new">NEW</span></td><td>A database change; ends the 1,000 cap in four places</td></tr>
+    <tr><td>The trail of records opened</td><td><span class="k-new">NEW</span></td><td>If question 3 says so</td></tr>
+    <tr><td>A staff account must have a confirmed email</td><td><span class="k-new">NEW</span></td><td>Found by the security review; part of the one rulebook</td></tr>
+    <tr><td>One rulebook by power; the eye that tells the truth</td><td><span class="k-new">NEW</span></td><td>Closes three server gaps; M3 is question 1</td></tr>
+    <tr><td>The menu's five groups and nine names</td><td><span class="k-res">RESTYLED</span></td><td>Same pages; question 7 for the words</td></tr>
+    <tr><td>Today: the waiting list and its groups</td><td><span class="k-new">NEW</span></td><td>Reads Overview's counts plus new errors and new feedback</td></tr>
+    <tr><td>Today on a phone</td><td><span class="k-new">NEW</span></td><td>Readable, not designed for work (Q4)</td></tr>
+    <tr><td>Business numbers page</td><td><span class="k-res">RESTYLED</span></td><td>Overview's tabs, moved, every figure kept</td></tr>
+    <tr><td>The health line: errors in 24 hours</td><td><span class="k-new">NEW</span></td><td>Only what we read today</td></tr>
+    <tr><td>The health line: builds, databases, hosting</td><td><span class="k-lat">LATER · S5</span></td><td>Status page; the morning check is still your open Q6</td></tr>
+    <tr><td>The club record: header, band, four tabs, Story</td><td><span class="k-res">RESTYLED</span> + <span class="k-new">NEW</span></td><td>Story is new; the rest is today's content rearranged</td></tr>
+    <tr><td>One pencil for the whole record, the confirm window; Put it back</td><td><span class="k-new">NEW</span></td><td>Plan, limit, section, a running override</td></tr>
+    <tr><td>The person record</td><td><span class="k-new">NEW</span></td><td>Today's row actions, moved onto a record</td></tr>
+    <tr><td>Access and People &amp; tournaments tabs</td><td><span class="k-res">RESTYLED</span></td><td>Today's controls, read first</td></tr>
+    <tr><td>Money tab: plan, renewal, the Stripe numbers</td><td><span class="k-res">RESTYLED</span></td><td>What we keep today, as a record</td></tr>
+    <tr><td>Money tab: Stripe charges, refunds, last four</td><td><span class="k-lat">LATER · S3</span></td><td>Frame and a sentence only</td></tr>
+    <tr><td>A reason on every change made from Stage 2 on</td><td><span class="k-new">NEW</span></td><td>Kept the way plan changes keep theirs today; older entries say Not recorded</td></tr>
+    <tr><td>The reason in its own column of the audit log</td><td><span class="k-lat">LATER · S3</span></td><td>A database change, as the plan has it</td></tr>
+    <tr><td>Customer purchases in the Story</td><td><span class="k-lat">LATER · S3</span></td><td>Unless question 4 says otherwise</td></tr>
+    <tr><td>A charge number in Find</td><td><span class="k-lat">LATER · S3</span></td><td>Unless question 10 says otherwise</td></tr>
+    <tr><td>Free time, Founding Season folded in, "Free time ending"</td><td><span class="k-lat">LATER · S4</span></td><td>Overrides and Overrides ending stand in</td></tr>
+    <tr><td>Account emails in the Story; Sent email</td><td><span class="k-lat">LATER · S5</span></td><td>Not logged today</td></tr>
+    <tr><td>Errors, Feedback, Leads and the other renamed pages' insides</td><td><span class="k-unc">UNCHANGED</span></td><td>Renamed only; their insides are Stages 5 and 7</td></tr>
+    <tr><td>The shell, type, buttons, Help, Collapse, the account menu</td><td><span class="k-unc">UNCHANGED</span></td><td>Stage 1, walked Oct 25</td></tr>
+    <tr><td>Bookkeeping</td><td><span class="k-unc">UNCHANGED</span></td><td>Its own plan</td></tr>
+  </tbody></table></div>
+
+  <div class="ask" data-q="A7"><div class="q">Question 7 · The names: they are your words to approve</div>
+    <p class="rec"><b>Recommended: as drawn.</b> <b>Today</b> (the front door), <b>Story</b> (a record's dated list), <b>Put it back</b> (undo from the Story), <b>People</b> (customer accounts, not staff), <b>Clubs &amp; portals</b> (every customer account: clubs, tournament hosts and coaches portals), <b>Errors</b>, <b>Leads</b>, <b>Campaigns</b>, <b>Pitch decks</b>, <b>Bulk changes</b>, <b>Staff</b>. Each page title takes its menu word. One I am least sure of: "Clubs &amp; portals" also holds tournament-only hosts, which are neither. "Customers" would cover all three, but it is already the group's name.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="All names as drawn (recommended)"> All names as drawn (recommended)</label>
+      <label><input type="checkbox" data-o="Keep Organizations instead of Clubs & portals"> Keep "Organizations" instead of "Clubs &amp; portals"</label>
+      <label><input type="checkbox" data-o="Rename only Today, People, Story, Put it back; leave the other pages' names until their stages"> Rename only Today, People, Story and Put it back; the other pages keep their names until their stages</label>
+    </div><textarea aria-label="Notes on question 7" placeholder="A name you would change"></textarea></div>
+  <div class="ask" data-q="A9"><div class="q">Question 9 · Still open from the kickoff (none of these blocks Stage 2)</div>
+    <p class="rec"><b>Q5's rest:</b> the observability and feedback screens in, "shown versus enforced" as a rule, the price guard to /billing. Recommended: yes to all three. <b>Q6:</b> Status shows the morning check's result, a change to shared automation made only on your word. Recommended: yes, decided at Stage 5. <b>The production timed-grant switch:</b> it gates Stage 4. Recommended: check it before Stage 4's drawings. It is a two-minute look in the hosting console's build settings.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Q5 rest: all three in (recommended)"> Q5's rest: all three in (recommended)</label>
+      <label><input type="checkbox" data-o="Q6: Status shows the morning check, decided at Stage 5 (recommended)"> Q6: Status shows the morning check, decided at Stage 5 (recommended)</label>
+      <label><input type="checkbox" data-o="I will check the production timed-grant switch before Stage 4 (recommended)"> I will check the production timed-grant switch before Stage 4 (recommended)</label>
+    </div><textarea aria-label="Notes on question 9" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ FORMATTING CHECK ═══════════ -->
+<section class="screen" id="fmt">
+  <div class="screen-head"><span class="n">FORMATTING CHECK</span><h2>The written rules, checked against the drawings</h2></div>
+  <div class="tbl"><table class="doc"><thead><tr><th>Rule</th><th>In these drawings</th></tr></thead><tbody>
+    <tr><td>Type ladder 10 · 11 · 12 · 14 · 16 · 20 · 24</td><td>Page titles 20, section headings and window titles 16, body 14, captions 12, table heads 12 in the display face, figures 24 (20 for a date), chips and eyebrows 10 and 11.</td></tr>
+    <tr><td>Frame 1200, centred</td><td>Today, the club record and the person record are table pages at 1200.</td></tr>
+    <tr><td>One lime per screen</td><td>Today and the records have none. Each window has one: Save changes, Put it back. Cancel the subscription is red, by the console's confirm rule of 2026-06-26.</td></tr>
+    <tr><td>D1 heading above its card</td><td>"Waiting on us" sits above its card. The record's tabs sit above the Story's card.</td></tr>
+    <tr><td>D2 button tiers</td><td>White for Email the owner, Add a note, Send a reset link. Olive text for doors: Errors ›, Business numbers ›, Put it back, the rare doors. Red text for Delete only.</td></tr>
+    <tr><td>D3 faces</td><td>Times and names in the body face. Web names and Stripe numbers in the data face.</td></tr>
+    <tr><td>D5 choices</td><td>The plan and the Story's type filter are dropdowns. Sections are checkboxes.</td></tr>
+    <tr><td>A waiting count is the amber pill</td><td>Every queue count and every menu count.</td></tr>
+    <tr><td>A window's foot: sentence left, buttons right</td><td>All three windows.</td></tr>
+    <tr><td>Mark required, not optional</td><td>Why carries the star; nothing is marked optional.</td></tr>
+    <tr><td>A rare door ends the body</td><td>Access's two doors and the person's three end their tab's body (Access, Account), never a pinned foot row.</td></tr>
+    <tr><td>A record reads first, edits whole (Oct 1)</td><td>One pencil in the title row turns the whole record into its form. The check mark confirms instead of autosaving, the console's named exception.</td></tr>
+    <tr><td>Times read 9:40 a.m.</td><td>Every time on the drawings.</td></tr>
+    <tr><td>A title carries no count</td><td>Counts sit in the toolbar ("30 waiting in 7 queues", "9 entries, newest first") and on tabs.</td></tr>
+  </tbody></table></div>
+  <div class="box" id="design-pass"><h3>The design pass</h3><p>The design pass read every frame in Warm and Dark against the navigation and table standards and the design log. It found eleven fixes and six places where rules meet. Everything below is applied to the drawings above, except the one ask at the end.</p>
+    <ul>
+      <li><b>Question 6 changed.</b> I first recommended a pencil per tab. Your Oct 1 standard is one pencil for the whole record, and a pencil per section was tried and rejected that day. Redrawn on the standard, with the console's confirm-and-reason as its one named exception.</li>
+      <li><b>Cancel the subscription is red</b>, by the console's confirm rule (2026-06-26): red for what cannot be undone from the screen. Lime stays for Save changes and Put it back.</li>
+      <li><b>The phone's Today</b> is one framed list per group, not separate cards (the phone list rule, F-41).</li>
+      <li><b>Today's icon</b> is a tray, not the house, which the icon dictionary keeps for Home. The tray joins the dictionary when built.</li>
+      <li><b>The health line</b> has a grey dot and a plain count. A green dot and "no unusual errors" would vouch for builds and databases nothing checks yet.</li>
+      <li><b>No stage numbers in screen words.</b> Staff do not know stages. Missing reasons say "Not recorded"; missing kinds of entry are named without a stage.</li>
+      <li><b>Story entries</b> are plain bold, not links, because they open nothing. Emails no longer break in the middle. "Delivered" became "Sent", since delivery is the sent-email log's job (Stage 5).</li>
+      <li><b>Every change made from Stage 2 on keeps its reason</b>, the way plan changes already do, so the edit window's required Why is never thrown away. Stage 3 still gives the reason its own column.</li>
+      <li><b>The read-only record</b> keeps its toolbar, search and filter (a reader needs search most) and loses Email the owner, which the rulebook now gives to Super admin, Support and Billing.</li>
+      <li><b>The person record</b> gained an Account tab, so its rare doors do not vanish when you look at Clubs, matching the club's Access tab.</li>
+      <li><b>Small ones:</b> the menu's eye and count sit in fixed places; a group with nothing waiting is one line; Find's "too many" state drops its extra note and keeps the door; the box says "Find a club or person" to a role that does not search Stripe numbers.</li>
+    </ul>
+    <p class="hint">Checked and fine: a total in a group band's words ("Customers · 17 waiting") is allowed by the table standard. Put it back has its own unheaded last column and is absent, not greyed, where it cannot apply. No later stage is drawn as built: Money, free time, Status and the sent-email log appear only as frames or sentences.</p></div>
+  <div class="ask" data-q="A11"><div class="q">Question 11 · A count on a folded menu group</div>
+    <p class="rec">When a group is folded, its amber counts fold away with it: Today says 17 wait in Customers, but a folded Customers heading shows nothing. No written rule decides this.</p>
+    <p class="rec"><b>Recommended: the folded heading carries one amber pill, the sum of its rows, and loses it when opened.</b> The eye stays on its row beside any count, because they answer different questions: can I change this, and is anything waiting.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="A folded group shows the sum of its counts (recommended)"> A folded group shows the sum of its counts (recommended)</label>
+      <label><input type="checkbox" data-o="No count on a folded heading"> No count on a folded heading</label>
+    </div><textarea aria-label="Notes on question 11" placeholder="Notes"></textarea></div>
+</section>
+
+<section class="screen" id="paste">
+  <div class="screen-head"><span class="n">PASTE-BACK</span><h2>Your answers, ready to paste into the chat</h2><p>Tick and type above. Your answers stay in this browser only. Copy them here when you are done.</p></div>
+  <div class="paste"><button class="btn-doc" type="button" id="make">Copy my answers</button><textarea id="out" aria-label="Your answers" readonly></textarea></div>
+</section>
+</div>
+
+<dialog id="note" aria-labelledby="note-h"><h3 id="note-h">Detail</h3><p id="note-b"></p><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<dialog id="zoom" class="zoom" aria-label="Capture at full size"><div class="z"><img id="zoom-img" alt=""></div><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<script>
+/* core: the menu per role from one rulebook, the strip with Find, the threat list; the theme switch; tags; captures. */
+(function () {
+  var LOCK = '<span class="lk" style="font-size:16px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span>';
+  /* entry: [key, label, icon, area, waiting count (example)] */
+  var MENU = [
+    { g: "", items: [["today", "Today", "inbox", "overview"]] },
+    { g: "Customers", items: [["clubs", "Clubs & portals", "clubs", "clubs"], ["people", "People", "people", "people"], ["founding", "Founding season", "spark", "founding"], ["retention", "Retention", "retention", "retention", 7]] },
+    { g: "Health", items: [["errors", "Errors", "errors", "errors", 4], ["feedback", "Feedback", "feedback", "feedback", 3]] },
+    { g: "Growth", items: [["leads", "Leads", "leads", "leads"], ["campaigns", "Campaigns", "campaigns", "growth", 6], ["decks", "Pitch decks", "decks", "growth"]] },
+    { g: "Product", items: [["plans", "Plans & pricing", "plans", "plans"], ["approval", "Approval queue", "approval", "plans"], ["bulk", "Bulk changes", "bulk", "bulk"], ["templates", "Email templates", "templates", "templates"], ["export", "Export registry", "export", "export"]] },
+    { g: "Records", items: [["staff", "Staff", "staff", "staff"], ["audit", "Audit log", "audit", "audit"]] },
+    { g: "System", extra: true, items: [["dev", "Dev tools", "terminal", "staff"]] },
+    { g: "Private finance", owner: true, items: [["book", "Bookkeeping", "wallet", "book"]] }
+  ];
+  /* the one rulebook, as drawn on the page: who opens each area, who holds a power in it (super admin holds every power).
+     An area with no writers at all (Today, Founding, Export, Audit) never shows the eye. */
+  var VIEW = {
+    overview: "*", clubs: "*", people: "*", audit: "*",
+    founding: "billing product", retention: "billing support", errors: "product support", feedback: "product support billing",
+    leads: "product growth", growth: "product growth", plans: "product billing", bulk: "billing product", templates: "product",
+    export: "product billing support", staff: "", book: ""
+  };
+  var WRITE = {
+    clubs: "support billing product", people: "support billing", retention: "billing", errors: "product", feedback: "product support billing",
+    leads: "product growth", growth: "product growth", plans: "product", bulk: "billing product", templates: "product", staff: ""
+  };
+  function has(list, role) { return list === "*" || (" " + list + " ").indexOf(" " + role + " ") >= 0; }
+  function canView(role, area) { return role === "super" || has(VIEW[area] || "", role); }
+  function isRead(role, area) { return role !== "super" && area in WRITE && WRITE[area] !== "" && !has(WRITE[area], role); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  function ic(id) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+  document.querySelectorAll("aside.side").forEach(function (side) {
+    var role = side.getAttribute("data-role") || "super";
+    var active = side.getAttribute("data-active"), open = side.getAttribute("data-open") || "";
+    var extras = side.getAttribute("data-extras"), h = "";
+    MENU.forEach(function (grp) {
+      if (grp.extra && !extras) return;
+      if (grp.owner && role !== "super") return;
+      var items = grp.items.filter(function (it) { return grp.owner || canView(role, it[3]); });
+      if (!items.length) return;
+      var hasActive = items.some(function (it) { return it[0] === active; });
+      var isOpen = !grp.g || open === "all" || open === grp.g || (hasActive && open !== "none");
+      h += '<div class="grp">';
+      if (grp.g) h += '<div class="gl' + (isOpen ? "" : " folded") + (hasActive ? " cur" : "") + '">' + esc(grp.g) + '<span class="cv">' + ic("down") + "</span></div>";
+      if (isOpen) items.forEach(function (it) {
+        var ro = isRead(role, it[3]);
+        h += '<div class="it' + (it[0] === active ? " on" : "") + '">' + ic(it[2]) + '<span class="t">' + esc(it[1]) + "</span>" + (ro ? '<span class="eye" title="Read only">' + ic("eye") + "</span>" : "") + (it[4] ? '<span class="pill">' + it[4] + "</span>" : "") + "</div>";
+      });
+      h += "</div>";
+    });
+    h += '<div class="foot"><div class="it">' + ic("help") + '<span class="t">Help</span></div><div class="it">' + ic("collapse") + '<span class="t">Collapse sidebar</span></div></div>';
+    side.innerHTML = h;
+  });
+  document.querySelectorAll("[data-strip]").forEach(function (st) {
+    var q = st.getAttribute("data-find");
+    st.className = "strip withfind";
+    var box = q ? '<span class="find typed focus">' + ic("search") + '<span style="color:var(--i)">' + esc(q) + '</span><span class="caret"></span></span>'
+                : '<span class="find">' + ic("search") + 'Find a club, person or Stripe number<span class="k">/</span></span>';
+    st.innerHTML = '<span class="lock">' + LOCK + '</span><div class="mid"><span class="portal2">Support console</span></div><div class="fslot">' + box + '</div><span></span><div class="end"><span class="acc">' + ic("user") + "</span></div>";
+  });
+  document.querySelectorAll("[data-lockup]").forEach(function (n) { n.innerHTML = LOCK; });
+
+  var THREATS = [
+    ["Someone without a console account calls Find directly", "The server runs the same staff check as every console route before it reads anything. A customer session, a signed-out caller and a disabled staff account get a refusal and no rows."],
+    ["A role reads more through Find than through the menu", "The answer is built per role from the one rulebook on the server. Rows and counts for a group the role may not read are never in the answer (state 7). A build check keeps Find on the same list as the menu."],
+    ["The new database lookup is reached from a browser", "A new function is callable by the public key by default. The change takes the right away from everyone but the server, schema-qualifies what it reads, and a test calls it with the public key and expects a refusal. It returns five columns: no phone, no sign-in tokens, no stored settings."],
+    ["A script walks the whole customer list through Find", "Two characters or more, 8 rows per group enforced in the database, the trail of records opened, and a per-staff limit that is only a speed bump on our hosting. A partial Stripe number never matches, so the Stripe group cannot be walked."],
+    ["The search words carry a trick (wildcards, quotes, a very long string)", "The words are passed as a value, never stitched into a query. The database treats its own wildcard characters as plain letters, and anything over 120 characters is refused."],
+    ["The search words end up in logs", "The words travel in the body, never the address: the error catcher keeps the page address including anything after a question mark, so an address would leak them. A database error can echo what was typed, so every error on this path is replaced with one fixed sentence before anything records it. A build check fails if the words reach a log line."],
+    ["A staff account appears in People", "Staff are left out, as Customer users does today."],
+    ["Recent shows the last person's lookups on a shared computer", "Recent lives in this browser only and is cleared at sign-out. It never leaves the browser."],
+    ["A hidden group leaks through a count or a slower answer", "Counts are given only for groups the role reads. The role check runs before any search, and a test proves a hidden group's search is never started."],
+    ["Card digits make Find a card lookup", "Card digits are not a search key, and nothing new is stored."],
+    ["An email's presence is a signal (does this person have an account, when did they last sign in)", "Only roles that may read People get the People group. Staff accounts and the demo clubs are left out of every group. Banned accounts show, marked Banned."],
+    ["A response is cached and shown to the next person", "Every answer is marked never to be stored, and the search is never an address that a cache could keep."],
+    ["A record opened from Find shows controls the role cannot use", "The record reads the same rulebook (R6): no pencil, no Put it back, no rare doors for a role without the power. The server refuses the change regardless."],
+    ["The trail itself becomes a store of personal data", "It records which record was opened, by whom and when, and not the words typed: the words are usually the same email or name again. Only Super admin reads it, in the Audit log, for 90 days."]
+  ];
+  var tb = document.querySelector('[data-fill="threats"]');
+  if (tb) tb.innerHTML = THREATS.map(function (t, i) { return "<tr><td>T" + (i + 1) + "</td><td>" + esc(t[0]) + "</td><td>" + esc(t[1]) + "</td></tr>"; }).join("");
+
+  var frames = document.querySelectorAll("[data-frame]");
+  function theme(dark) {
+    frames.forEach(function (f) { f.classList.toggle("dark", dark); });
+    document.getElementById("sw-warm").setAttribute("aria-pressed", dark ? "false" : "true");
+    document.getElementById("sw-dark").setAttribute("aria-pressed", dark ? "true" : "false");
+    try { localStorage.setItem("pas2-frames", dark ? "dark" : "warm"); } catch (e) {}
+  }
+  document.getElementById("sw-warm").addEventListener("click", function () { theme(false); });
+  document.getElementById("sw-dark").addEventListener("click", function () { theme(true); });
+  try { if (localStorage.getItem("pas2-frames") === "dark") theme(true); } catch (e) {}
+  var note = document.getElementById("note"), zoom = document.getElementById("zoom");
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button.tag");
+    if (t) { document.getElementById("note-h").textContent = t.textContent; document.getElementById("note-b").textContent = t.getAttribute("data-n"); note.showModal(); return; }
+    var s = e.target.closest("button.shot");
+    if (s) { var i = document.getElementById("zoom-img"); i.src = s.getAttribute("data-src"); i.alt = s.getAttribute("aria-label"); zoom.showModal(); return; }
+    if (e.target.closest("button.close")) { var d = e.target.closest("dialog"); if (d) d.close(); }
+  });
+  [note, zoom].forEach(function (d) { d.addEventListener("click", function (e) { if (e.target === d) d.close(); }); });
+})();
+</script>
+<script>
+/* answers: checkboxes + notes kept in this browser, and the paste-back */
+(function () {
+  var KEY = "pas2-answers-v1", state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var asks = Array.prototype.slice.call(document.querySelectorAll(".ask")).sort(function (a, b) {
+    return parseInt(a.getAttribute("data-q").slice(1), 10) - parseInt(b.getAttribute("data-q").slice(1), 10);
+  });
+  asks.forEach(function (a) {
+    var q = a.getAttribute("data-q"), s = state[q] || { o: [], n: "" };
+    a.querySelectorAll('input[type="checkbox"]').forEach(function (c) {
+      c.checked = s.o.indexOf(c.getAttribute("data-o")) >= 0;
+      c.addEventListener("change", function () {
+        var cur = state[q] || { o: [], n: "" }, v = c.getAttribute("data-o");
+        cur.o = cur.o.filter(function (x) { return x !== v; }); if (c.checked) cur.o.push(v);
+        state[q] = cur; save();
+      });
+    });
+    var ta = a.querySelector("textarea");
+    if (ta) { ta.value = s.n || ""; ta.addEventListener("input", function () { var cur = state[q] || { o: [], n: "" }; cur.n = ta.value; state[q] = cur; save(); }); }
+  });
+  document.getElementById("make").addEventListener("click", function () {
+    var lines = ["Support console stage 2 drawings: my answers"];
+    asks.forEach(function (a) {
+      var title = a.querySelector(".q").textContent;
+      var picked = []; a.querySelectorAll('input[type="checkbox"]').forEach(function (c) { if (c.checked) picked.push(c.getAttribute("data-o")); });
+      var n = (a.querySelector("textarea") || {}).value || "";
+      lines.push("", title, picked.length ? "  Picked: " + picked.join(" | ") : "  Picked: (nothing)");
+      if (n.trim()) lines.push("  Notes: " + n.trim());
+    });
+    var out = document.getElementById("out"); out.value = lines.join("\n");
+    var done = function () { document.getElementById("make").textContent = "Copied"; setTimeout(function () { document.getElementById("make").textContent = "Copy my answers"; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

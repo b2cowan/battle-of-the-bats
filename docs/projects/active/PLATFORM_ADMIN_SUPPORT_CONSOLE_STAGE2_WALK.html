@@ -1,0 +1,242 @@
+<title>Support Console Stage 2 Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: find any customer from one box and read what happened to them; each role sees only what it may.
+   Checkable walk with a paste-back; the Stage 1 walk's look, so it reads the same. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 2 · owner walk · 2026-10-25 · ledger §377</p>
+  <h1>Support Console Stage 2 Walk</h1>
+  <p>One question: <b>can you find any customer from one box and read what happened to them, with each role seeing only what it may?</b> Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat. The build is on the dev server only.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in first</h2>
+  <p>Open <code>http://localhost:3000/platform-admin/login</code>. Walk sections 1 to 8 as a <b>super admin</b>, then section 9 once with each of the other four. They are the seeded dev staff accounts and share the one dev password you already use for them.</p>
+  <div class="roles">
+    <div class="role"><b>Super admin</b><span>your own account, or uat-platform@fieldlogichq.ca</span></div>
+    <div class="role"><b>Support</b><span>support@dev.local</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local</span></div>
+    <div class="role"><b>Growth</b><span>growth@dev.local</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local</span></div>
+  </div>
+  <p class="hint">⚠ Sections 5 and 6 change a club. Use a dev club nobody's tests rely on, never <code>UAT Lakeshore Lynx</code> or another <code>uat-</code> club. Do not confirm Cancel the subscription or Delete on a club that matters: open the window, read it, press Keep it. The drawings this walk checks against: <a href="https://claude.ai/artifact/Ub7fXLh29SC34Zp4oqKUx1">Support Console Stage 2</a>.</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = [
+    ["find", "Find, from anywhere", "the box in the middle of the strip · any page", "Super admin", [
+      "Press / anywhere outside a field: the box opens with Recent (the last records you opened) and \"You can type\". Click the box and the same panel opens.",
+      "Type lynx: Clubs and People come back grouped, best match first, each group at most 8. A club shows its plan, state, web name and owner; a person shows their email and last sign-in, with their clubs beneath, one row each with their role.",
+      "↑ and ↓ move the highlight, Enter opens the highlighted record, Esc closes the panel and puts you back where you were. Clicking outside closes it too.",
+      "One letter asks nothing. lynks says Nothing matches “lynks”. Typing %% or _ matches nothing: they are plain letters.",
+      "Copy a club's Stripe customer number from its Money tab and paste it whole: a Stripe group finds that club, and Enter opens its Money tab. Half the number finds nothing.",
+      "Paste a made-up charge number such as ch_3PfQ2kL8mZ: the panel says no family payment has it and that charges on a club's own subscription are kept in Stripe only.",
+      "Type uat: Clubs reads \"8 of N\" with \"N more not listed\" and a door, All N in Clubs & portals. The door opens the list already searched for uat, and the address bar shows no uat in it. The same for People.",
+      "Sign out, sign back in: Recent is empty."
+    ]],
+    ["menu", "The menu by job", "the left menu", "Super admin", [
+      "Today sits alone at the top with a tray icon. Then Customers, Health, Growth, Product, Records, then System and Private finance. Help and Collapse are still at the foot.",
+      "The nine new names, each with its page title matching: Today, Clubs & portals, People, Errors, Leads, Campaigns, Pitch decks, Bulk changes, Staff. Founding season now sits under Customers. Every page still does what it did.",
+      "A folded group shows one amber number, the sum of what waits inside it, and the number goes when you open the group. Inside, each entry shows its own amber number, and the numbers add up to Today's group totals.",
+      "As super admin no entry shows the eye."
+    ]],
+    ["today", "Today and Business numbers", "/platform-admin", "Super admin", [
+      "Today opens on a grey-dot health line: N errors in the last 24 hours, \"Builds and the databases are not checked here yet.\", and Errors › at the right.",
+      "Waiting on us: one table grouped Customers · Health · Growth · Product, each band with its total; every row a queue, why it waits, an amber count, and a row that opens the list that clears it.",
+      "Queues with nothing waiting fold into a quiet \"Clear: …\" line under their group; a group with nothing waiting is one quiet band line.",
+      "Under the table, one line of totals (clubs and portals, people, tournaments, teams, about $ a month at list price) and the door Business numbers: plan mix, billing, growth and usage ›.",
+      "Business numbers has Overview's four tabs with every figure it had (Subscription, Growth, Usage, Metric notes) and a way back to Today. It is not in the menu."
+    ]],
+    ["record", "A club's record reads first (task 5)", "Clubs & portals › any club", "Super admin", [
+      "The head: ‹ Clubs & portals, the club's name, plan and state chips, then the pencil, Email the owner and Add a note at the right. Under it one caption: Owner … · web name · Created ….",
+      "One joined band of four figures: Members (with the owner's last sign-in), Teams of the limit (a Club) or Tournaments first (other plans), and Renews.",
+      "Four tabs, opening on Story: Story · Money · Access · People & tournaments. No Primary actions box and no Account context box.",
+      "The Story is one dated list, newest first: When · What happened · Who · Why. What happened is plain bold text, not a link. Older changes that never kept a reason say Not recorded in grey.",
+      "The Story's search and its All types dropdown narrow it. A quiet line under it names what is not in it yet (Stripe's charges and refunds, purchases in Stripe, account emails).",
+      "Money: plan, state, renews or ends, the Stripe customer and subscription numbers in the code face, each with Open in Stripe, and one line saying charges, refunds and invoices are not shown here yet.",
+      "Access: plan and limits, sections, overrides running (and past, behind a Show link), the own web address. Cancel the subscription and Delete the club end the tab in red, with no pinned row.",
+      "People & tournaments: members (each opens the person record), Make owner on a member's row, tournaments, and teams brought in."
+    ]],
+    ["pencil", "One pencil, the confirm window, Put it back (task 6)", "a dev club you may change", "Super admin", [
+      "Press the pencil: the band and tabs step aside, the caption says nothing changes until you press the check mark, and Name, Web name, Plan, the limits and Sections become fields. A changed field gets an olive border.",
+      "Change the team limit and switch one section, then press the check mark: one window, Save changes to …, says every change in one sentence, asks Why (required, the button waits for it), and its foot says how many Story entries it writes.",
+      "Keep editing returns to the form with your changes; Save changes saves them. Each change becomes its own Story entry with your reason.",
+      "The plan entry and the section entry each carry Put it back. Press it on the section: a window says what goes back, asks why, and Put it back writes a new entry (\"Put back: … again\"); the old entry now reads Put back at … instead of the door.",
+      "Put it back never shows on a cancellation, a campaign email, a downgrade the customer made, a name or web-name change, or a note.",
+      "Add an override from Access (a section, ending on a date), then find it on the Story: it carries Put it back while it runs. Putting it back ends it now."
+    ]],
+    ["doors", "Actions stay doors", "the same club", "Super admin", [
+      "Add a note opens a small window; the note lands on the Story.",
+      "Email the owner opens your own mail to the owner's address.",
+      "Make owner (People & tournaments) opens a window that says the current owners become admins and asks why. Cancel unless you mean it.",
+      "Cancel the subscription opens a red window: Stripe stops charging, this cannot be put back, the tournaments archived and kept, an optional email to the owner, Why. Press Keep it.",
+      "Delete the club wants the web name typed and a reason; it refuses while a subscription runs. Press Keep it."
+    ]],
+    ["people", "People and a person's record (tasks 4 and 7)", "/platform-admin/customer-users", "Super admin", [
+      "People shows every customer account (the count is no longer stuck at 1,000 or fewer), pages through them, and its search finds an email, a name, or a club's name. The address bar never shows the search.",
+      "The Everyone · Active · Unconfirmed · Banned dropdown filters. Export still downloads the page on screen. A row opens the person's record; there is no Actions menu on the rows any more.",
+      "The person's record: ‹ People, the email as title, a chip (Email confirmed, Email not confirmed or Banned), the pencil, Send a reset link and Add a note. Caption: their name (or No name given) · Signs in with email and password.",
+      "Band: Clubs, Last signed in (with the time), Account created. Tabs: Story · Clubs · Account.",
+      "Send a reset link opens a window that says it reaches an inbox and cannot be taken back, and asks why. Send it to a test account: the Story shows Reset link made with your reason.",
+      "Account: email, name, how they sign in, confirmed or not (Confirm the email when not). Sign out everywhere, Ban this person (red) and Delete this person (red, super admin) end the tab; each window asks why, and Delete wants the email typed.",
+      "The pencil edits name and email together; the check mark opens a window that says what changes and asks why."
+    ]],
+    ["trail", "The trail of records opened", "/platform-admin/audit", "Super admin", [
+      "The Audit log's All actions dropdown has Records opened. It lists who opened which club or person record and when, and whether Find opened it. It never shows what was typed.",
+      "Opening the same record twice within a few minutes is one row, not two. Records opened appears on no club's or person's Story."
+    ]],
+    ["roles", "Each role sees only what it may", "sign in as each", "Support · Billing · Growth · Read only", [
+      "Support: the eye sits on Retention and Errors only. Support sees the pencil on a club (name and web name as fields, the rest reading), Add a note, Email the owner, and every person action. Find searches Stripe numbers.",
+      "Billing: the eye sits on People, Plans & pricing and the Approval queue. On a club the pencil shows Plan and the limits as fields and the name and sections as reading; there is no Add a note. On a person there is no pencil and no action, but Feedback still lets Billing triage.",
+      "Growth: the eye sits on Clubs & portals and People. A club and a person read with no pencil, no Put it back, no rare doors, no Add a note and no Email the owner, and no banner explains it. Find's box reads \"Find a club or person\" and its foot says the role does not search Stripe numbers.",
+      "Read only: the same as Growth, and the menu shows only Today, Customers (Clubs & portals, People) and Records (Audit log).",
+      "Today shows each role only the queues whose list it can open (Growth: Customers and Growth; Read only: Customers). The health line shows only to roles that can open Errors.",
+      "Nothing a role could not do before is now possible, and Billing can no longer rename a club, move its owner, add a note or act on a person (your ruling)."
+    ]],
+    ["phone", "A narrow window", "about 390 px wide", "Super admin", [
+      "Today: each group is one framed list with a hairline between rows, the group's total above it, and the totals line last.",
+      "The strip keeps the menu button, the mark, Find as its glyph alone and the account glyph. Tapping the glyph turns the strip into the box with a back arrow, and the results fill the width.",
+      "No screen scrolls sideways (the records and lists are desk screens: they show, but are not designed for a phone)."
+    ]],
+    ["tasks", "The kickoff's tasks, again", "tasks 4 to 12 from the kickoff walk", "Super admin", [
+      "Task 4 · find a person from an email, not knowing their club: one box, any page, past 1,000 accounts, and the email leads to its club in one step.",
+      "Task 5 · a club's whole subscription story on one screen: the Story, with who and why. Stripe's own history waits for Stage 3 and the page says so.",
+      "Task 6 · change a plan mid-season: one pencil, one sentence, one reason, and Put it back. Stripe is still changed by hand (Stage 3).",
+      "Task 7 · a customer who can't sign in: the person record shows confirmed or not, banned or not, the last sign-in, and every action is on the record with its reason. Whether a reset email arrived waits for Stage 5.",
+      "Task 8 · a club's own web address: Access shows the address and its state, and Support can release it from there. A list of every club's address is Stage 6.",
+      "Tasks 9 to 12 (reply to feedback, a marketing resource, \"I never got the email\", setting up a club at launch) are later stages. Only the names moved: Feedback, Pitch decks, Campaigns, Leads. Tick when you agree nothing else changed for them."
+    ]]
+  ];
+  var CALLS = [
+    ["Menu counts sit beside the page that clears them: Clubs & portals carries owner inactive, missing owner, past due, trials ending and overrides ending, Leads carries new leads, the Approval queue its own count. The drawings showed Clubs & portals bare; this is the only way a folded Customers group adds up to Today's total."],
+    ["The Money tab says \"Charges, refunds and invoices are not shown here yet.\" The drawing's line named Stage 3, which the design pass ruled out of screen words."],
+    ["Every action on a person (reset link, confirm email, sign out everywhere, ban, lift a ban, name or email, delete) asks for a reason and keeps it. A reset link now goes to the account's own email, read by its number, never to an email the request carries."],
+    ["Confirm the email is a door on the person's Account tab, shown only while the email is unconfirmed. The drawings listed the power but drew no control."],
+    ["Put it back is offered on the newest plan entry only (an older one would jump over the changes after it), on the newest entry for each section, and on an override while it runs. A put-back is itself a plan or section entry, so it can be put back too."],
+    ["The person's Story has no search or type filter, as drawn (they have few entries)."],
+    ["\"Campaigns due soon\" says \"Due in the next 30 days\": that is the real window the Campaigns page uses. The drawing said 7."],
+    ["Add an override stays a door on the Access tab (the drawings' Access frame did not list it). Without it Billing could no longer grant a timed section or a comp."],
+    ["The health line shows only to roles that can open Errors (Super admin, Support, Product)."],
+    ["Overview's first-sign-in welcome note is gone with Overview; it named the old menu."],
+    ["\"Since your last visit\" still means your last page view in the console, as Overview counted it. For someone active all day, New errors will often read zero. Changing it to \"since your last session\" is a small follow-up if you want it."],
+    ["Deleting a person now checks the typed email on the server, and the People search also finds a person through their club's name (as Customer users did)."],
+    ["For a plan that is not a Club, the record's band reads Members · Tournaments · Overrides · Renews."]
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem('pas2-walk') || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem('pas2-walk', JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(' (')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">W' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) { h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span>' + esc(t) + '</span></label>'; });
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + esc(c[0]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function progress() {
+    var done = document.querySelectorAll('.sec input[type=checkbox]:checked').length - document.querySelectorAll('#rule input:checked').length;
+    document.getElementById('prog').textContent = done + ' of ' + total + ' ticked';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 2 walk (§377): my results'];
+    S.forEach(function (s, i) {
+      var miss = [], ok = 0;
+      s[4].forEach(function (t, k) { if (state[s[0] + '.' + k]) ok++; else miss.push(k + 1); });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'W' + (i + 1) + ' ' + s[1] + ': ' + ok + '/' + s[4].length + ' ticked' + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0]); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

@@ -1,9 +1,24 @@
 # Platform admin, reorganized for the support team's jobs — PM brief
 
-Plan: `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` · Status: **Stage 1 (the warm foundation) built 2026-10-24 on dev; the owner's
-walk is owed** (https://claude.ai/artifact/DnTBX4BCZnTdyqK3fP4JyF). Kickoff walked and end state drawn the same day; the seven
-questions, ask F1 and design rulings D1–D5 are ruled; Stage 2 (Find, the menu by job, Today, the customer record) is next. Runs in
-parallel with Club Tier (owner, 2026-10-24).
+Plan: `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` · Status: **Stage 1 (the warm foundation) built 2026-10-24 and walked by the owner
+2026-10-25** (45 of 45). **Stage 2 drawn and ruled 2026-10-25** (all eleven questions as recommended,
+https://claude.ai/artifact/Ub7fXLh29SC34Zp4oqKUx1). **Stage 2 built 2026-10-25 on dev**; the owner's walk is next
+(https://claude.ai/artifact/GqozHVh1Bg2FLqSKEM78Xs, ledger §377), and its one database change goes to production with the release.
+Runs in parallel with Club Tier (owner, 2026-10-24).
+
+**Success for Stage 2 (to check in the walk):** a support person finds any customer from one box in a few keystrokes; a club's
+record answers "what happened, who, why" without opening five tabs; a live change always says what it does and keeps its reason;
+a mistaken plan, limit or section change is undone from the Story; and each role sees, and can do, only what the rulebook gives it.
+
+**What Stage 2 means for the support team (as ruled).** Billing staff stop carrying support's account powers (renaming a club,
+moving its owner, banning a person); they keep plans, subscriptions and feedback. Every job starts the same way: press / anywhere, type an
+email, a name, a club or a Stripe customer number, and open the record. Every account is searched, not the first 1,000. The front
+door becomes Today, the list of what is waiting on us grouped by job. A club's record opens on its Story (what happened, who, why)
+instead of edit forms, and a person gets a record of their own. Changes go through one pencil and a confirm window that asks why, and
+a plan, limit or section change can be put back. The menu is grouped by job, and every role sees the same menu trimmed to what it may
+open, with an honest read-only marker. **Deliberately later:** Stripe charges and refunds (Stage 3), free time (Stage 4), the Status
+page and the sent-email log (Stage 5). **Success looks like:** walk tasks 4 to 12 (find by email, the subscription story, a plan
+change, can't sign in) start from one box and end on one record, with no trip to a second search.
 
 **What Stage 1 means for the support team.** The console now looks and behaves like the rest of FieldLogicHQ: warm by default and
 dark on the same setting everyone else uses, the product's top strip (name, "Support console", account menu with Appearance and Sign

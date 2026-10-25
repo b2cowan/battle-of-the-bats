@@ -18,6 +18,26 @@ the portal is called **Support console**; **Help opens in place** from the menu 
 and `showAccount={false}` (staff get Appearance and Sign out only); **Overview and the club record got a colour-only pass**; **the sign-in
 is always warm** (the 2026-10-23 signed-out rule overrode the build prompt's "follows the setting"). Not built, by design: a per-screen `?`
 glyph (the console has no per-screen help drawer), the bell, Find. Bookkeeping got the shell only (its inside is the Bookkeeping plan's).
+**Stage 1 walked 2026-10-25** (ledger §371, 45 of 45). **Stage 2 DRAWN 2026-10-25**
+(from `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE2_DRAWINGS_PROMPT.md`): drawings https://claude.ai/artifact/Ub7fXLh29SC34Zp4oqKUx1
+(source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE2_DRAWINGS.html`, captures `.probe/pasc/cap-s2/`), after a design pass and a
+security review of Find's design. **Owner ruled all 11 asks as recommended 2026-10-25** (see "Owner rulings 2026-10-25"); **Stage 2 build prompt written 2026-10-25:** `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE2_BUILD_PROMPT.md`.
+**Stage 2 BUILT 2026-10-25 on dev** (walk https://claude.ai/artifact/GqozHVh1Bg2FLqSKEM78Xs, ledger §377; commits named in §377 once the owner OKs them). Migration 365 (the sign-in lookup + `platform_record_opens`) applied to dev 2026-10-25, prod pending as a release step. The gate found nothing beyond A1 that changes who opens or does what; every staff account on dev and prod is confirmed. What the build added to the drawings, all put to the owner as the walk's 13 calls: the menu counts sit beside the page that clears them (so a folded Customers group adds up to Today's), a reason on every person action, Confirm the email on the Account tab, Add an override kept on Access, the Money tab worded without a stage number, "due in the next 30 days" (the real window). Found on the way: the reset-link route mailed whatever email the request carried (now the account's own), a person delete took its email in the address (now the body, checked on the server), and the clubs list's unbounded read would have stopped at the database's default cap (now paged).
+Leads re-verified against the code before drawing; what changed the drawings:
+- The sign-in service's admin API cannot search (page/perPage only), so server-side Find needs a read-only SECURITY
+  DEFINER lookup over `auth.users`: **a migration** (execute revoked from PUBLIC, anon and authenticated; service role
+  only; tested with the anon key). No sign-in or `proxy.ts` change.
+- Subscription charge ids are stored nowhere (only `online_payments` keeps family `pi_`/`ch_`), so Find matches whole
+  `cus_`/`sub_`/family `pi_`/`ch_` only; a subscription charge waits for S3 unless ask 10 says otherwise.
+- `platform_events` records no customer purchase or upgrade (only downgrade, cancel, past due, recovered), so the Story
+  shows "bought" from S3's Stripe read.
+- The 1,000-account cap is in four places (Customer users, the orgs list's owner sign-ins, Overview's owner-inactive
+  count, the Founding Season desk).
+- Beyond Organizations, the rulebooks also disagree on the staff list API (any session) and the orphaned plan-config /
+  plan-gating GETs (any session).
+- The console's staff check (`getPlatformAdminContext`) never checks that the session's email is confirmed; whether the
+  hosted sign-in allows unconfirmed sign-in was not verified. The drawings carry "a staff account must have a confirmed
+  email" as a Stage 2 guard.
 **Project index:** https://claude.ai/artifact/TLP8d5Zec4xVkTSYrQU8tp (source `PLATFORM_ADMIN_SUPPORT_CONSOLE_INDEX.html`,
 db-backed: news is a data write, never a republish).
 **Kickoff artifacts:**
@@ -134,7 +154,7 @@ belongs to the bookkeeping session.
 | Stage | Covers | Shared changes / owner steps |
 |---|---|---|
 | S1 Warm foundation — **BUILT 2026-10-24, walk §371 owed** | Kit, Warm / Dark, `NAV_STANDARD` in full, the 1200 frame, type ladder, words. No job changes | F1 + D1–D5. Shared: `admin-kit-switch-guard` must allow the platform shell. `NAV_STANDARD.md` drops its platform line. K-10 and the "operator shells stay dark" log line retired. Console CSS written as plain rules, so the old-look gate stays at 0 |
-| S2 Find, menu, Today, record | Global Find (server-side, no 1,000 cap), menu by job, one rulebook (matrix = APIs), Today, a record with Story | Find is a new read surface: drawn and reviewed as a security change. No proxy change |
+| S2 Find, menu, Today, record — **BUILT 2026-10-25 on dev, walk §377 owed** (drawings Ub7fXLh29SC34Zp4oqKUx1, walk GqozHVh1Bg2FLqSKEM78Xs) | Global Find (server-side, no 1,000 cap), menu by job, one rulebook (matrix = APIs), Today, a record with Story; a person record (new) | Find is a new read surface: drawn and reviewed as a security change. No proxy change. One migration: the read-only lookup over sign-in records |
 | S3 Money | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change, M6 | Migration (audit reason). Adversarial review on the refund write |
 | S4 Free time | `plan_tier` grant (read-time revert, no cron), one window, Founding as a grant group, customer billing page shows "Free until", `comp_period` retired, server-side past-expiry check | Owner checks `ENTITLEMENT_GRANTS_ENABLED` on prod first. /billing for the customer pages |
 | S5 Health | Status (reads on open), Errors restyled with a person link, Feedback reply, Sent email log + delivery callback | Read-only AWS + Supabase keys on prod (owner step). Q6: the stack-health summary, a shared automation change, own commit, only on the owner's word |
@@ -168,9 +188,26 @@ Open TODO lines:
     result line reports them. A guard test in `club-stage1-server-guard.test.ts` fails if either route repeats a step.
   - *The production grant-switch check and passing the Bookkeeping error on were not ticked: open.*
 
-**Open, to ask again:** M3 · the rest of Q5 · the morning check on Status (Q6) · the prod `ENTITLEMENT_GRANTS_ENABLED`
-check (it gates S4) · the Bookkeeping page items for that session. The dev ReferenceError is one. The other: its
+**Open, to ask again:** M3, the rest of Q5 and Q6 were ruled 2026-10-25 (below). Still open: the prod
+`ENTITLEMENT_GRANTS_ENABLED` check (the owner does it before S4) · the Bookkeeping page items for that session. The dev ReferenceError is one. The other: its
 `bookkeeping.module.css` mints three off-ladder table sizes (.58rem, .61rem), which fail `table-recipe-guard.test.ts`.
+
+## Owner rulings 2026-10-25 (Stage 2 drawings; "I agree with all of your recommendations")
+
+All eleven asks as recommended; the full wording is in `memory/design_decisions.md` 2026-10-25 "SUPPORT CONSOLE STAGE 2".
+- **A1 (M3, now closed):** Billing loses Support's account powers; Billing keeps feedback triage (F3).
+- **A2:** Find follows the one rulebook; Stripe numbers for Super admin, Billing, Support.
+- **A3:** a trail of records opened, not the words, 90 days, Super admin reads it.
+- **A4:** the Story ships now with a "not in it yet" line; purchases come with S3.
+- **A5:** every real queue plus new errors and new feedback; nothing invented.
+- **A6:** one pencil for the whole record; the check mark confirms in one sentence and asks why.
+- **A7:** the names as drawn. **A8:** both lists stay; People rows open a new person record.
+- **A9:** Q5's rest all in (observability and feedback screens, shown-versus-enforced as a rule, H8 to /billing); Q6
+  Status shows the morning check, decided at S5; the owner checks the prod timed-grant switch before S4.
+- **A10:** charge numbers in Find wait for S3. **A11:** a folded menu group shows the sum of its counts.
+
+**Still open:** the prod `ENTITLEMENT_GRANTS_ENABLED` check (the owner's, before S4); the Bookkeeping page items for
+that session (unchanged from 2026-10-24).
 
 ## Questions as asked (kept for the reasons behind each recommendation)
 

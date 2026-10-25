@@ -7,6 +7,24 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-25 — SUPPORT CONSOLE STAGE 2, ELEVEN ASKS RULED AS RECOMMENDED (owner, "I agree with all of your recommendations", drawings https://claude.ai/artifact/Ub7fXLh29SC34Zp4oqKUx1)
+
+**Decision (as ruled):**
+- **A1 (M3):** Billing loses Support's account powers (a club's notes, name, web name, owner and web address; every action on a person). Billing keeps plans, limits, overrides, cancelling, retention, bulk plan and status, and feedback triage (the 2026-06-14 F3 ruling).
+- **A2:** Find follows the one rulebook, decided on the server: every role finds clubs and people; Stripe numbers are searched by Super admin, Billing and Support. A group a role may not read is absent, and the panel's foot names what was searched.
+- **A3:** Find leaves a trace of each record opened (who, when, which record, whether Find opened it), not the words typed, kept 90 days, read by Super admin in the Audit log, never on the customer's Story.
+- **A4:** The Story ships now with what is kept today, and one quiet line names what is not in it yet. Customer purchases are not patched into the payment code; Stage 3's Stripe read brings them.
+- **A5:** Today shows every queue that exists today plus new errors and new feedback; nothing invented. Overrides ending stands in for Free time ending until Stage 4.
+- **A6:** One pencil for the whole record (the 2026-10-01 standard); the check mark opens one confirm window that says every change in one sentence and asks why, instead of autosaving: the console's named exception. Each change is its own Story entry, so each can be put back alone. Actions stay doors.
+- **A7:** The names as drawn: Today, Story, Put it back, People, Clubs & portals, Errors, Leads, Campaigns, Pitch decks, Bulk changes, Staff. Each page title takes its menu word.
+- **A8:** Clubs & portals and People stay as lists under their menu entries; People rows open a new person record.
+- **A9:** Kickoff leftovers: Q5's rest all in (observability and feedback screens, shown-versus-enforced as a rule, the price guard to /billing); Q6, Status shows the morning check, decided at Stage 5; the owner checks the production timed-grant switch before Stage 4.
+- **A10:** A subscription charge number in Find waits for Stage 3.
+- **A11:** A folded menu group shows one amber pill, the sum of its rows' counts, and loses it when opened.
+Also accepted with the drawings (no separate box): the menu by job (Customers, Health, Growth, Product, Records; Founding season under Customers); the rulebook by power with the staff list API closed to non-super-admins and the orphaned plan-config / plan-gating routes deleted; Cancel the subscription confirms in red; a staff account must have a confirmed email; Email the owner belongs to Super admin, Support and Billing; Today's icon is a tray (the house stays Home's).
+**Rationale:** each choice keeps the console on rules it already has (one rulebook, the record standard, the amber waiting count) and draws nothing a later stage has not built.
+**Applies to:** the support console only. Plan: `docs/projects/active/PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE2_BUILD_PROMPT.md`.
+
 ### 2026-10-25 — A DATE OR TIME FIELD OPENS OUR CALENDAR / TIME LIST ON A DESK, THE DEVICE'S OWN PICKER ON TOUCH (owner, "I agree with your recommendations" — all four asks on the drawing https://claude.ai/artifact/Rvo2a36tonsHRyEeeWf4Cp)
 
 **Decision (as ruled):**
