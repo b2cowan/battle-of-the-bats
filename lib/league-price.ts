@@ -51,6 +51,22 @@ export function leaguePrice(division: PricedDivision, season: PricedSeason, sign
   };
 }
 
+/** A price a convenor typed, as the routes accept it: dollars, 0 or more, at most two decimals. undefined = not sent. */
+export function priceFromBody(v: unknown): { value: number | null } | { error: string } | undefined {
+  if (v === undefined) return undefined;
+  if (v === null || v === '') return { value: null };
+  const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
+  if (!Number.isFinite(n) || n < 0) return { error: 'Enter $0 or more.' };
+  if (n > 100000) return { error: 'A price can’t be more than $100,000.' };
+  if (Math.abs(n * 100 - Math.round(n * 100)) > 1e-6) return { error: 'Enter dollars and cents, like 165 or 165.50.' };
+  return { value: Math.round(n * 100) / 100 };
+}
+
+/** The early amount can't be more than the price it discounts (copy §4 `record.err.early`). */
+export function earlyPriceRefusal(price: number | null, earlyPrice: number | null): string | null {
+  return price != null && earlyPrice != null && earlyPrice > price ? 'The early-bird amount can’t be more than the price.' : null;
+}
+
 /** What one registration owes: the amount recorded at sign-up, else the season's price (a row from before mig 361). */
 export function registrationOwes(
   reg: { feeAmount: number | null },
@@ -62,7 +78,7 @@ export function registrationOwes(
 /** Every price a season's divisions charge (for the checklist and the Overview's "$165 – $175"). Null when any division
  *  has no price at all (neither its own nor the season's). */
 export function seasonPriceRange(
-  divisions: PricedDivision[],
+  divisions: readonly PricedDivision[],
   season: Pick<PricedSeason, 'registrationFee'>,
 ): { low: number; high: number } | null {
   if (divisions.length === 0) return null;
@@ -73,7 +89,7 @@ export function seasonPriceRange(
 }
 
 /** Is any price in the season above $0? (9b·9: then how-to-pay is required before Open registration.) */
-export function seasonCharges(divisions: PricedDivision[], season: Pick<PricedSeason, 'registrationFee'>): boolean {
+export function seasonCharges(divisions: readonly PricedDivision[], season: Pick<PricedSeason, 'registrationFee'>): boolean {
   if (divisions.length === 0) return (season.registrationFee ?? 0) > 0;
   return divisions.some(d => ((d.price ?? season.registrationFee) ?? 0) > 0);
 }

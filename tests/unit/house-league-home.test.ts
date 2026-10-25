@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
-import { seasonChecklist, seasonDates, seasonFactsLine, seasonNoteLine, type SeasonFacts } from '../../lib/house-league-season.ts';
+import {
+  checklistFoot, openRegistrationRefusal, seasonChecklist, seasonDates, seasonFactsLine, seasonNoteLine, type ChecklistDivision, type SeasonFacts,
+} from '../../lib/house-league-season.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -47,22 +49,50 @@ describe('1 · the row’s words (copy §1)', () => {
     assert.equal(seasonNoteLine({ ...open, registrationCloseAt: '2026-08-01' }, true, TODAY), 'Registration was set to close Aug 1, 2026');
     assert.equal(seasonNoteLine({ ...open, registrationCloseAt: '2026-12-01' }, true, TODAY), 'Registration closes Dec 1, 2026');
   });
-  it('a draft season counts what is left of its checklist', () => {
+  it('a draft season counts what is left of its checklist (counted where the divisions are read)', () => {
     const draft = { ...base, status: 'draft', registrationFee: null, spotCount: null };
-    assert.equal(seasonNoteLine(draft, true, TODAY), '2 things to do before registration can open');
-    assert.equal(seasonNoteLine({ ...draft, registrationFee: 0, spotCount: 26 }, true, TODAY), 'Ready to open registration');
+    assert.equal(seasonNoteLine({ ...draft, checklistLeft: 2 }, true, TODAY), '2 things to do before registration can open');
+    assert.equal(seasonNoteLine({ ...draft, checklistLeft: 0 }, true, TODAY), 'Ready to open registration');
   });
 });
 
-describe('1b · the checklist before Open registration (9a·4, copy §3)', () => {
-  it('three steps: divisions with sizes, the dates, the fee (0 is free)', () => {
-    const steps = seasonChecklist({ seasonStartDate: null, seasonEndDate: null, divisionCount: 1, spotCount: null, registrationFee: null });
-    assert.deepEqual(steps.map(s => [s.key, s.done]), [['divisions', false], ['dates', false], ['fee', false]]);
-    assert.equal(steps[0].line, 'Add a division, and give each one its number of spots');
-    const done = seasonChecklist({ seasonStartDate: '2027-05-31', seasonEndDate: '2027-08-30', divisionCount: 1, spotCount: 14, registrationFee: 0 });
-    assert.ok(done.every(s => s.done));
-    assert.deepEqual(done.map(s => s.line), ['1 division · 14 spots', 'May 31 – Aug 30, 2027', 'Free']);
-    assert.match(seasonChecklist({ ...{ seasonStartDate: null, seasonEndDate: null, divisionCount: 0, spotCount: null }, registrationFee: 165 })[2].line, /^\$165\.00 per player$/);
+describe('1b · the checklist before Open registration (9b-1 copy §6; owner 9b·1)', () => {
+  const season = {
+    registrationFee: null, registrationOpenAt: null, registrationCloseAt: null, earlyBirdUntil: null, howToPay: null, waiverText: null,
+  };
+  const div = (over: Partial<ChecklistDivision> = {}): ChecklistDivision =>
+    ({ capacity: 12, bornFromYear: 2017, bornToYear: 2018, price: 165, earlyPrice: null, ...over });
+  const ready = { ...season, registrationOpenAt: '2027-06-01T09:00:00Z', registrationCloseAt: '2027-08-01T17:00:00Z', howToPay: 'e-Transfer to the treasurer' };
+
+  it('five lines: age groups, prices, dates, how to pay (when a price is above $0), the waiver (optional)', () => {
+    const steps = seasonChecklist(season, []);
+    assert.deepEqual(steps.map(st => [st.key, st.done]), [['ageGroups', false], ['prices', false], ['dates', false], ['waiver', false]]);
+    assert.equal(steps[0].line, 'Add your age groups, each with birth years and a size');
+    assert.deepEqual(seasonChecklist(season, [div()]).map(st => st.key), ['ageGroups', 'prices', 'dates', 'pay', 'waiver']);
+  });
+  it('a division without birth years or a size keeps age groups open', () => {
+    assert.equal(seasonChecklist(season, [div(), div({ bornFromYear: null, bornToYear: null })])[0].line, '1 division still needs birth years or a size');
+    assert.equal(seasonChecklist(season, [div(), div()])[0].line, '2 divisions, each with birth years and a size');
+  });
+  it('prices read as a range, Free at 0, with the early-bird tail only when the season has its date', () => {
+    const two = [div({ price: 165, earlyPrice: 145 }), div({ price: 175 })];
+    assert.equal(seasonChecklist(season, two)[1].line, '$165 – $175');
+    assert.match(seasonChecklist({ ...season, earlyBirdUntil: '2027-06-30' }, two)[1].line, /^\$165 – \$175 · early bird through Jun 30/);
+    assert.equal(seasonChecklist(season, [div({ price: 0 })])[1].line, 'Free');
+    assert.equal(seasonChecklist(season, [div({ price: null })])[1].done, false);
+  });
+  it('a free season asks nothing about paying (9b·9)', () => {
+    assert.ok(!seasonChecklist(ready, [div({ price: 0 })]).some(st => st.key === 'pay'));
+  });
+  it('the foot names the one thing left, or counts', () => {
+    assert.equal(checklistFoot(seasonChecklist({ ...ready, registrationOpenAt: null }, [div()])), 'Set the dates to open registration.');
+    assert.equal(checklistFoot(seasonChecklist(season, [div()])), 'Finish 2 more steps to open registration.');
+    assert.equal(checklistFoot(seasonChecklist(ready, [div()])), null, 'the waiver never blocks');
+  });
+  it('the server refuses Open registration with the same list', () => {
+    assert.equal(openRegistrationRefusal(ready, [div()]), null);
+    assert.equal(openRegistrationRefusal({ ...ready, howToPay: null }, [div()]), 'Add how to pay before you open registration. At least one division has a price.');
+    assert.equal(openRegistrationRefusal(season, []), 'Registration can’t open yet. Still to do: age groups, prices and registration dates.');
   });
 });
 

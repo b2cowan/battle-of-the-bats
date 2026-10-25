@@ -7,7 +7,9 @@
  *   one next step — a getting-ready season leads with its checklist and "Open registration" (absent until the three steps
  *     are done); a closed one with "Start season"; Close / Reopen registration sit on the Registration block;
  *   the figures band — Players · To review · Waitlist · Teams, one joined band (the money figure is 9b-2's, not built);
- *   Divisions — a table on the kit (Add, and a pencil per row, open today's window; prices are 9b-1's);
+ *   Divisions — Born in · Players · Price · Early bird; "+ Add age groups" asks in its window, a division's pencil flips
+ *     its whole record in place (9b-1, Part 2; the checklist's five lines are lib/house-league-season.ts seasonChecklist,
+ *     the same function the server refuses Open registration with);
  *   Season and Registration — each reads first and edits whole;
  *   the rare door — Complete (and on a finished season Archive / Reopen) ends the body, a sentence and a link. A shell that
  *   has not opened registration and has nothing real attached ends with "Delete the season…" instead (owner 2026-10-25).
@@ -17,7 +19,7 @@
  */
 import { useCallback, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Check, ExternalLink, Pencil, Plus } from 'lucide-react';
+import { Check, ExternalLink, Minus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
@@ -26,15 +28,17 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import SeasonStatePill from '@/components/admin/kit/club/SeasonStatePill';
 import SeasonStatusWindow from '@/components/admin/kit/club/league/SeasonStatusWindow';
 import DeleteSeasonWindow from '@/components/admin/kit/club/league/DeleteSeasonWindow';
-import DivisionWindow, { type SeasonDivision } from '@/components/admin/kit/club/league/DivisionWindow';
+import DivisionsBlock, { type SeasonDivision } from '@/components/admin/kit/club/league/DivisionsBlock';
+import AddAgeGroupsWindow from '@/components/admin/kit/club/league/AddAgeGroupsWindow';
 import { RegistrationBlock, SeasonBlock } from '@/components/admin/kit/club/league/SeasonRecordBlocks';
 import s from '@/components/admin/kit/club/league/LeagueSeason.module.css';
 import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { isFreeFloorLeague, type LeagueCapKind } from '@/lib/free-floor';
 import { fireLeagueEvent } from '@/lib/league-events-client';
-import { isPastItsEnd, seasonChecklist, seasonDates } from '@/lib/house-league-season';
+import { checklistFoot, checklistLeft, isPastItsEnd, seasonChecklist, seasonDates } from '@/lib/house-league-season';
+import { seasonCharges } from '@/lib/league-price';
 import { DELETE_DOOR, movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
-import { JAN_1, bornLine, type Cutoff } from '@/lib/born-years';
+import { JAN_1, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
 import { pluralize } from '@/lib/utils';
 import type { LeagueSeason } from '@/lib/types';
@@ -65,7 +69,8 @@ export default function SeasonOverviewPage() {
   const [failed, setFailed] = useState<'missing' | 'error' | null>(null);
   const [move, setMove] = useState<StatusMove | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [divisionOpen, setDivisionOpen] = useState<SeasonDivision | 'new' | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [openRegistration, setOpenRegistration] = useState(0);
   const [capHit, setCapHit] = useState<LeagueCapKind | null>(null);
 
   const access = useHouseLeagueAccess(detail?.season ?? null);
@@ -134,7 +139,19 @@ export default function SeasonOverviewPage() {
   const dates = seasonDates(season);
   const spotCount = divisions.length > 0 && divisions.every(d => d.capacity != null && d.capacity > 0)
     ? divisions.reduce((n, d) => n + (d.capacity ?? 0), 0) : null;
-  const steps = seasonChecklist({ ...season, divisionCount: divisions.length, spotCount });
+  const steps = seasonChecklist(season, divisions);
+  const foot = checklistFoot(steps);
+  const charges = seasonCharges(divisions, season);
+  // The checklist's "Set dates" / "Add instructions" open the Registration block where the answer is typed.
+  const editRegistration = () => {
+    setOpenRegistration(n => n + 1);
+    document.getElementById('registration-block')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const stepDoor: Record<string, { label: string; onClick: () => void } | undefined> = {
+    ageGroups: { label: 'Add age groups', onClick: () => setAdding(true) },
+    dates: { label: 'Set dates', onClick: editRegistration },
+    pay: { label: 'Add instructions', onClick: editRegistration },
+  };
   const moves = movesFrom(season.status);
   const facts = {
     seasonName: season.name,
@@ -170,20 +187,32 @@ export default function SeasonOverviewPage() {
       {season.status === 'draft' && (
         <ClubSection
           title="Before you open registration"
-          actions={canMove && steps.every(st => st.done)
+          actions={canMove && checklistLeft(steps).length === 0
             ? <button type="button" className="btn btn-lime" onClick={() => setMove('open')}>Open registration</button>
             : undefined}
         >
           <ul className={s.checklist}>
-            {steps.map(st => (
-              <li key={st.key} className={`${s.step}${st.done ? '' : ` ${s.stepOpen}`}`}>
-                <span className={`${s.tick}${st.done ? ` ${s.tickDone}` : ''}`} role="img" aria-label={st.done ? 'Done' : 'Not done'}>
-                  {st.done && <Check size={13} aria-hidden />}
-                </span>
-                <span>{st.line}</span>
-              </li>
-            ))}
+            {steps.map(st => {
+              const door = canRun && !st.done ? stepDoor[st.key] : undefined;
+              return (
+                <li key={st.key} className={`${s.step}${st.done ? '' : ` ${s.stepOpen}`}`}>
+                  <span
+                    className={`${s.tick}${st.done ? ` ${s.tickDone}` : ''}${!st.done && st.optional ? ` ${s.tickOptional}` : ''}`}
+                    role="img"
+                    aria-label={st.done ? 'Done' : st.optional ? 'Optional' : 'Not done'}
+                  >
+                    {st.done ? <Check size={13} aria-hidden /> : st.optional ? <Minus size={13} aria-hidden /> : null}
+                  </span>
+                  <span className={s.stepText}>
+                    <span className={s.stepTitle}>{st.title}</span>
+                    <span className={s.stepLine}>{st.line}</span>
+                  </span>
+                  {door && <button type="button" className="btn btn-outline" onClick={door.onClick}>{door.label}</button>}
+                </li>
+              );
+            })}
           </ul>
+          {foot && <p className={s.emptyLine}>{foot}</p>}
         </ClubSection>
       )}
       {season.status === 'registration_closed' && canMove && (
@@ -231,63 +260,17 @@ export default function SeasonOverviewPage() {
 
       {/* The season, then how it takes registrations, then the divisions inside it — the order a coach sets it up. */}
       <SeasonBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} />
-      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} />
+      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} charges={charges} openSignal={openRegistration} />
 
-      <ClubSection
-        title="Divisions"
-        actions={canRun ? (
-          <button type="button" className={`btn btn-outline ${ck.iconOnlyPhone}`} onClick={() => setDivisionOpen('new')} aria-label="Add division">
-            <Plus size={14} aria-hidden /><span className={ck.btnWord}>Add division</span>
-          </button>
-        ) : undefined}
-      >
-        {divisions.length === 0 ? (
-          <p className={s.emptyLine}>No divisions yet.</p>
-        ) : (
-          <div className={s.tableWrap}>
-            <table className={ck.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Division</th>
-                  <th scope="col">Ages</th>
-                  <th scope="col">Players</th>
-                  <th scope="col" className={ck.num}>Teams</th>
-                  {canRun && <th scope="col"><span className={repKit.srOnly}>Edit</span></th>}
-                </tr>
-              </thead>
-              <tbody>
-                {divisions.map(d => {
-                  const pct = d.capacity ? Math.min(100, Math.round((d.activeCount / d.capacity) * 100)) : 0;
-                  const full = d.capacity != null && d.activeCount >= d.capacity;
-                  // What families read beside the division (4c-2's one line), or a dash when it has no birth years.
-                  const ages = bornLine({ from: d.bornFromYear, to: d.bornToYear }, cutoff) ?? '—';
-                  return (
-                    <tr key={d.id}>
-                      <td data-label="Division"><span className={ck.cellTitle}>{d.name}</span></td>
-                      <td data-label="Ages">{ages}</td>
-                      <td data-label="Players">
-                        {d.capacity != null && (
-                          <span className={s.meter} aria-hidden><span className={`${s.meterFill}${full ? ` ${s.meterFull}` : ''}`} style={{ width: `${pct}%` }} /></span>
-                        )}
-                        {d.capacity != null ? `${d.activeCount} / ${d.capacity}` : pluralize(d.activeCount, 'player')}
-                        {d.waitlistCount > 0 && ` · ${d.waitlistCount} waitlisted`}
-                      </td>
-                      <td data-label="Teams" className={ck.num}>{d.teamCount}</td>
-                      {canRun && (
-                        <td className={ck.actions}>
-                          <button type="button" className={s.iconButton} onClick={() => setDivisionOpen(d)} aria-label={`Edit ${d.name}`}>
-                            <Pencil size={15} aria-hidden />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </ClubSection>
+      <DivisionsBlock
+        season={season}
+        divisions={divisions}
+        cutoff={cutoff}
+        canEdit={canRun}
+        orgSlug={orgSlug}
+        onChanged={changed}
+        onAdd={() => setAdding(true)}
+      />
 
       {/* The rare doors end the body (a sentence and a link that asks), never a pinned row. */}
       {rare.map(m => {
@@ -327,16 +310,20 @@ export default function SeasonOverviewPage() {
           onDone={() => { setMove(null); changed(); }}
         />
       )}
-      {divisionOpen && (
-        <DivisionWindow
+      {adding && canRun && (
+        <AddAgeGroupsWindow
           orgSlug={orgSlug}
           seasonId={season.id}
-          division={divisionOpen === 'new' ? null : divisionOpen}
-          cutoff={cutoff}
+          seasonName={season.name}
           sport={sport}
-          onClose={() => setDivisionOpen(null)}
-          onSaved={() => { setDivisionOpen(null); changed(); }}
-          onCapHit={kind => { setDivisionOpen(null); setCapHit(kind); }}
+          cutoff={cutoff}
+          existing={divisions.map(d => ({ name: d.name, born: { from: d.bornFromYear, to: d.bornToYear } }))}
+          // Size and price start from the season: the last division's size, the season's price or the last division's.
+          defaultSize={divisions.length ? divisions[divisions.length - 1].capacity : null}
+          defaultPrice={season.registrationFee ?? (divisions.length ? divisions[divisions.length - 1].price : null)}
+          onClose={() => setAdding(false)}
+          onAdded={() => { setAdding(false); changed(); }}
+          onCapHit={kind => { setAdding(false); setCapHit(kind); }}
         />
       )}
       {capHit && <LeagueCapUpgradeModal capHit={capHit} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}

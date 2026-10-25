@@ -195,6 +195,23 @@ export function bornColumns(years: BornYears): { born_from_year: number | null; 
   return { born_from_year: years.from, born_to_year: years.to };
 }
 
+/**
+ * Does a child born on `dob` (YYYY-MM-DD) fit these years under this cut-off? (Club Tier 9b-1: a date of birth picks the
+ * division.) The range runs from the FROM-date (the cut-off in `from`) to the TO-date (the day before the cut-off, dated in
+ * `to`), both inclusive; an empty side is no limit. A place with no years fits everyone. Compared as plain dates — a date of
+ * birth is a calendar day, never a moment, so nothing is re-zoned.
+ */
+export function bornFitsDate(years: BornYears, c: Cutoff, dob: string): boolean {
+  const day = dob.slice(0, 10);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  if (years.from != null && day < `${years.from}-${pad(c.m)}-${pad(c.d)}`) return false;
+  if (years.to != null) {
+    const end = dayBefore(c, years.to);
+    if (day > `${years.to}-${pad(end.m)}-${pad(end.d)}`) return false;
+  }
+  return true;
+}
+
 /** Born in: keeps a place whose range overlaps the picked calendar year. An open side matches every year beyond it; a place
  *  with no years, or one a cut-off made unshowable, is in every list. The from-date always falls in `from` and the
  *  to-date in `to`, so the overlap is on the years for every cut-off. */

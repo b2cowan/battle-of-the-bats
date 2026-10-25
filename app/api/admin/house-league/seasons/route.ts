@@ -7,6 +7,7 @@ import { houseLeagueSeasonCap, isFreeFloorLeague, leagueCapHit } from '@/lib/fre
 import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { DEFAULT_SPORT } from '@/lib/sports';
+import { seasonSlugFrom, seasonSlugRefusal } from '@/lib/house-league-season';
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -28,20 +29,14 @@ export const POST = withObservability(async (req: Request) => {
   const body = await req.json();
 
   const name = typeof body.name === 'string' ? body.name.trim() : '';
-  const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : '';
+  if (!name) return NextResponse.json({ error: 'Give the season a name.' }, { status: 400 });
+  if (name.length > 120) return NextResponse.json({ error: 'A season’s name is 120 characters or fewer.' }, { status: 400 });
 
-  if (!name || name.length > 120) {
-    return NextResponse.json(
-      { error: 'name is required and must be 120 characters or fewer' },
-      { status: 400 },
-    );
-  }
-  if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
-    return NextResponse.json(
-      { error: 'slug must contain only lowercase letters, numbers, and hyphens' },
-      { status: 400 },
-    );
-  }
+  // The web address is made from the name (S1·a, F07); a caller may still send its own. Reserved or empty is refused, and a
+  // name another season of this club already uses is refused by the unique (org, slug) below.
+  const slug = typeof body.slug === 'string' && body.slug.trim() ? body.slug.trim().toLowerCase() : seasonSlugFrom(name);
+  const slugRefused = seasonSlugRefusal(slug);
+  if (slugRefused) return NextResponse.json({ error: slugRefused }, { status: 400 });
 
   // Free-floor (League Starter) cap: one non-archived season (draft or in-progress both count;
   // archiving an old season frees the slot for a new one). Server-enforced because house-league
@@ -92,7 +87,7 @@ export const POST = withObservability(async (req: Request) => {
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'A season with this slug already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'You already have a season with this name. Give this one a different name.' }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

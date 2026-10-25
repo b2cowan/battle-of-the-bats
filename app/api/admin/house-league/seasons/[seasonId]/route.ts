@@ -13,6 +13,9 @@ import {
 import type { LeagueSeasonStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { cutoffFor } from '@/lib/born-years';
+import { openRegistrationRefusal } from '@/lib/house-league-season';
+import { registrationOwes, seasonCharges } from '@/lib/league-price';
+import { isCalendarDate } from '@/lib/timezone';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
 // has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
@@ -49,19 +52,21 @@ export const GET = withObservability(async (_req: Request,
   }
 
   const activeByDivision = new Map<string, number>();
+  const heldByDivision = new Map<string, number>();
   const waitlistByDivision = new Map<string, number>();
+  const bump = (m: Map<string, number>, id: string) => m.set(id, (m.get(id) ?? 0) + 1);
   for (const r of regs) {
     if (!r.divisionId) continue;
-    if (r.status === 'active') {
-      activeByDivision.set(r.divisionId, (activeByDivision.get(r.divisionId) ?? 0) + 1);
-    } else if (r.status === 'waitlisted') {
-      waitlistByDivision.set(r.divisionId, (waitlistByDivision.get(r.divisionId) ?? 0) + 1);
-    }
+    if (r.status === 'active') bump(activeByDivision, r.divisionId);
+    // A spot is held by an accepted or a received child (mig 362): the Players column counts both.
+    if (r.status === 'active' || r.status === 'pending_review') bump(heldByDivision, r.divisionId);
+    else if (r.status === 'waitlisted') bump(waitlistByDivision, r.divisionId);
   }
 
   const divisionsWithStats = divisions.map(d => ({
     ...d,
     activeCount:   activeByDivision.get(d.id)   ?? 0,
+    heldCount:     heldByDivision.get(d.id)     ?? 0,
     waitlistCount: waitlistByDivision.get(d.id) ?? 0,
     teamCount:     teamsByDivision.get(d.id)    ?? 0,
   }));
@@ -84,8 +89,7 @@ export const GET = withObservability(async (_req: Request,
       pendingReviewCount:      regs.filter(r => r.status === 'pending_review').length,
       // Stage 9a: the Teams figure's hint, and the status windows' "still owe fees" loose end (0 on a free season).
       unplacedCount:           regs.filter(r => r.status === 'active' && !r.teamId).length,
-      unpaidFeeCount:          (season.registrationFee ?? 0) > 0
-        ? regs.filter(r => r.status === 'active' && !r.registrationFeePaid).length : 0,
+      unpaidFeeCount:          regs.filter(r => r.status === 'active' && !r.registrationFeePaid && (registrationOwes(r, season) ?? 0) > 0).length,
     },
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });
@@ -127,6 +131,20 @@ export const PATCH = withObservability(async (req: Request,
   if ('seasonStartDate'        in body)      patch.seasonStartDate = body.seasonStartDate ?? null;
   if ('seasonEndDate'          in body)      patch.seasonEndDate   = body.seasonEndDate   ?? null;
   if ('waiverText'             in body)      patch.waiverText      = body.waiverText      ?? null;
+  // The season's one early-bird day (9b·2), the club's day as a plain date.
+  if ('earlyBirdUntil' in body) {
+    const v = body.earlyBirdUntil;
+    if (v != null && v !== '' && (typeof v !== 'string' || !isCalendarDate(v))) {
+      return NextResponse.json({ error: 'Pick the early-bird date from the calendar.' }, { status: 400 });
+    }
+    patch.earlyBirdUntil = v ? v : null;
+  }
+  // The club's own words on how to pay (9b·9).
+  if ('howToPay' in body) {
+    const v = typeof body.howToPay === 'string' ? body.howToPay.trim() : '';
+    if (v.length > 1000) return NextResponse.json({ error: 'How to pay is 1,000 characters or fewer.' }, { status: 400 });
+    patch.howToPay = v || null;
+  }
 
   // A status move is its own permission (it stays open on a finished season, to reopen or archive it); a field edit is a
   // season edit, refused once the season is finished (Q16). Decided on the fields this route writes, not the body's keys.
@@ -147,14 +165,12 @@ export const PATCH = withObservability(async (req: Request,
       );
     }
 
+    // Open registration only once the checklist is done (9b·1): enforced HERE, on the values this save leaves, with the
+    // same function the page reads, so the page can never offer what this refuses.
     if (season.status === 'draft' && newStatus === 'registration_open') {
       const divisions = await getDivisionsForSeason(seasonId);
-      if (divisions.length === 0) {
-        return NextResponse.json(
-          { error: 'Add at least one division before opening registration' },
-          { status: 422 },
-        );
-      }
+      const refusal = openRegistrationRefusal({ ...season, ...patch }, divisions);
+      if (refusal) return NextResponse.json({ error: refusal }, { status: 422 });
     }
 
     patch.status = newStatus;
@@ -162,6 +178,13 @@ export const PATCH = withObservability(async (req: Request,
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+  }
+
+  if ('howToPay' in patch && !patch.howToPay && (patch.status ?? season.status) === 'registration_open') {
+    const divisions = await getDivisionsForSeason(seasonId);
+    if (seasonCharges(divisions, { registrationFee: patch.registrationFee !== undefined ? patch.registrationFee : season.registrationFee })) {
+      return NextResponse.json({ error: 'Registration is open and a division has a price, so how to pay can’t be empty.' }, { status: 400 });
+    }
   }
 
   await updateLeagueSeason(seasonId, ctx!.org.id, patch);

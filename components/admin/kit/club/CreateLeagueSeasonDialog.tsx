@@ -3,30 +3,18 @@ import { useState } from 'react';
 import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
 import DateInput from '@/components/shared/DateInput';
-import DateTimeInput from '@/components/shared/DateTimeInput';
 import { repKit } from './RepKit';
 import type { LeagueCapKind } from '@/lib/free-floor';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 
 /**
- * Create a house-league season (Club Tier Stage 9a: the home on the kit). Create asks — an explicit Create, not autosave.
- * The fields are today's (what Create asks is S1·a, 9b-1's decision), minus the dead "Auto-generate fee entries" switch
- * (S1·b: stored by the route, read by nothing).
+ * Create a house-league season (Club Tier Stage 9b-1, Part 2; S1·a; drawing §1, words HOUSE_LEAGUE_STAGE9B1_COPY.md §1).
+ * Three answers — name, sport, dates — and an explicit Create (create asks). Everything else (age groups and prices, when
+ * the form opens and closes, the waiver, how families pay, how new registrations are taken) is set on the season's own
+ * page. Its web address is made from the name on the server (a name another season already uses is refused there).
  */
-type Form = {
-  name: string; slug: string; sport: string; description: string;
-  seasonStartDate: string; seasonEndDate: string; registrationOpenAt: string; registrationCloseAt: string;
-  registrationFee: string; waiverText: string; autoApproveUnderCapacity: boolean; autoPromoteWaitlist: boolean;
-};
-const BLANK: Form = {
-  name: '', slug: '', sport: DEFAULT_SPORT, description: '', seasonStartDate: '', seasonEndDate: '',
-  registrationOpenAt: '', registrationCloseAt: '', registrationFee: '', waiverText: '',
-  autoApproveUnderCapacity: false, autoPromoteWaitlist: false,
-};
-
-function slugify(s: string): string {
-  return s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-}
+type Form = { name: string; sport: string; seasonStartDate: string; seasonEndDate: string };
+const BLANK: Form = { name: '', sport: DEFAULT_SPORT, seasonStartDate: '', seasonEndDate: '' };
 
 export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, onCapHit }: {
   orgSlug: string;
@@ -35,15 +23,19 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
   onCapHit: (kind: LeagueCapKind) => void;
 }) {
   const [form, setForm] = useState<Form>(BLANK);
-  const [slugEdited, setSlugEdited] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
-  const ready = !!form.name.trim() && !!form.slug.trim();
+  const ready = !!form.name.trim();
   const dirty = JSON.stringify(form) !== JSON.stringify(BLANK);
 
   async function create() {
     if (!ready) return;
+    // A date range runs forward; the picker's minimum is only a hint, so a typed date is checked here.
+    if (form.seasonStartDate && form.seasonEndDate && form.seasonEndDate < form.seasonStartDate) {
+      setError('The last day can’t be before the first day.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -52,17 +44,9 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name.trim(),
-          slug: form.slug.trim(),
           sport: form.sport || DEFAULT_SPORT,
-          description: form.description.trim() || null,
           seasonStartDate: form.seasonStartDate || null,
           seasonEndDate: form.seasonEndDate || null,
-          registrationOpenAt: form.registrationOpenAt ? `${form.registrationOpenAt}:00Z` : null,
-          registrationCloseAt: form.registrationCloseAt ? `${form.registrationCloseAt}:00Z` : null,
-          registrationFee: form.registrationFee ? parseFloat(form.registrationFee) : null,
-          waiverText: form.waiverText.trim() || null,
-          autoApproveUnderCapacity: form.autoApproveUnderCapacity,
-          autoPromoteWaitlist: form.autoPromoteWaitlist,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -85,7 +69,7 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
     <KitDialog
       kind="form"
       size="medium"
-      title="Create season"
+      title="Create a house-league season"
       onClose={onClose}
       busy={busy}
       dirty={dirty}
@@ -100,71 +84,24 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
     >
       {error && <p className={repKit.formError} role="alert">{error}</p>}
       <label className={ck.field}>
-        <span className={ck.label}>Season name<span className={repKit.req} aria-hidden>*</span></span>
-        <input
-          className={ck.input}
-          value={form.name}
-          maxLength={120}
-          placeholder="e.g. U11 Summer 2025"
-          onChange={e => {
-            const name = e.target.value;
-            setForm(f => ({ ...f, name, slug: slugEdited ? f.slug : slugify(name) }));
-          }}
-        />
+        <span className={ck.label}>Name<span className={repKit.req} aria-hidden>*</span></span>
+        <input className={ck.input} value={form.name} maxLength={120} placeholder="Summer 2027" onChange={e => set('name', e.target.value)} />
       </label>
       <label className={ck.field}>
-        <span className={ck.label}>Slug<span className={repKit.req} aria-hidden>*</span></span>
-        <input
-          className={ck.input}
-          value={form.slug}
-          onChange={e => { setSlugEdited(true); set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); }}
-        />
-        <span className={ck.hint}>Used in public URLs. Lowercase letters, numbers, and hyphens only.</span>
+        <span className={ck.label}>Sport</span>
+        <select className={ck.select} value={form.sport} onChange={e => set('sport', e.target.value)}>
+          {OFFERED_SPORT_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
       </label>
-      <div className={repKit.fieldGrid}>
-        <label className={ck.field}>
-          <span className={ck.label}>Sport</span>
-          <select className={ck.select} value={form.sport} onChange={e => set('sport', e.target.value)}>
-            {OFFERED_SPORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
-        </label>
-        <label className={ck.field}>
-          <span className={ck.label}>Season start</span>
-          <DateInput className={ck.input} value={form.seasonStartDate} onChange={v => set('seasonStartDate', v)} />
-        </label>
-        <label className={ck.field}>
-          <span className={ck.label}>Season end</span>
-          <DateInput className={ck.input} value={form.seasonEndDate} min={form.seasonStartDate || undefined} rangeStart={form.seasonStartDate || undefined} onChange={v => set('seasonEndDate', v)} />
-        </label>
-        <label className={ck.field}>
-          <span className={ck.label}>Registration opens</span>
-          <DateTimeInput className={ck.input} value={form.registrationOpenAt} onChange={v => set('registrationOpenAt', v)} />
-        </label>
-        <label className={ck.field}>
-          <span className={ck.label}>Registration closes</span>
-          <DateTimeInput className={ck.input} value={form.registrationCloseAt} min={form.registrationOpenAt || undefined} onChange={v => set('registrationCloseAt', v)} />
-        </label>
+      <div className={ck.field}>
+        <span className={ck.label} id="create-season-dates">Season dates</span>
+        <div className={repKit.fieldGrid} role="group" aria-labelledby="create-season-dates">
+          <DateInput className={ck.input} value={form.seasonStartDate} aria-label="First day of the season" onChange={v => set('seasonStartDate', v)} />
+          <DateInput className={ck.input} value={form.seasonEndDate} aria-label="Last day of the season"
+            min={form.seasonStartDate || undefined} rangeStart={form.seasonStartDate || undefined} onChange={v => set('seasonEndDate', v)} />
+        </div>
       </div>
-      <label className={ck.field}>
-        <span className={ck.label}>Registration fee (CAD)</span>
-        <input className={ck.input} type="number" min="0" step="0.01" inputMode="decimal" value={form.registrationFee} placeholder="e.g. 150.00 (display-only; fees are not collected here)" onChange={e => set('registrationFee', e.target.value)} />
-      </label>
-      <label className={ck.field}>
-        <span className={ck.label}>Description</span>
-        <textarea className={ck.textarea} rows={3} value={form.description} placeholder="Optional description shown on the public registration page" onChange={e => set('description', e.target.value)} />
-      </label>
-      <label className={ck.field}>
-        <span className={ck.label}>Waiver text</span>
-        <textarea className={ck.textarea} rows={3} value={form.waiverText} placeholder="Optional waiver shown on the public registration form" onChange={e => set('waiverText', e.target.value)} />
-      </label>
-      <label className={repKit.carryRow}>
-        <input type="checkbox" checked={form.autoApproveUnderCapacity} onChange={e => set('autoApproveUnderCapacity', e.target.checked)} />
-        <span className={repKit.carryText}><b>Auto-approve registrations</b><span className={repKit.carryNote}>Automatically approve submissions while a division has open spots. New registrations go directly to Active status without manual review.</span></span>
-      </label>
-      <label className={repKit.carryRow}>
-        <input type="checkbox" checked={form.autoPromoteWaitlist} onChange={e => set('autoPromoteWaitlist', e.target.checked)} />
-        <span className={repKit.carryText}><b>Auto-promote from waitlist</b><span className={repKit.carryNote}>Automatically move the next waitlisted player to Active when a spot opens due to a withdrawal or decline.</span></span>
-      </label>
+      <p className={ck.hint}>Next, on the season’s page: age groups and prices, when the form opens and closes, the waiver and how families pay. Its web address is made from the name.</p>
     </KitDialog>
   );
 }

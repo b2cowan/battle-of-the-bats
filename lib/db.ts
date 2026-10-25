@@ -27,6 +27,7 @@ import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
 import { registrationOwes } from './league-price';
+import { checklistLeft, seasonChecklist } from './house-league-season';
 import { cleanSiteList } from './public-site-patch';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, ClubNotice, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
@@ -2544,9 +2545,13 @@ export async function getDivisionsForSeason(seasonId: string): Promise<LeagueDiv
 
 export async function updateDivision(
   divisionId: string,
-  input: Partial<{ name: string; capacity: number | null; sortOrder: number; bornFromYear: number | null; bornToYear: number | null }>
+  input: Partial<{ name: string; capacity: number | null; sortOrder: number; bornFromYear: number | null; bornToYear: number | null;
+    price: number | null; earlyPrice: number | null; note: string | null }>
 ): Promise<void> {
   const patch: Record<string, unknown> = {};
+  if (input.price      !== undefined) patch.price       = input.price;
+  if (input.earlyPrice !== undefined) patch.early_price = input.earlyPrice;
+  if (input.note       !== undefined) patch.note        = input.note;
   if (input.name      !== undefined) patch.name       = input.name;
   if (input.capacity  !== undefined) patch.capacity   = input.capacity;
   if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
@@ -2950,6 +2955,7 @@ export async function getLeagueSeasonSummary(season: LeagueSeason): Promise<Leag
     spotCount:               sized ? divisions.reduce((n, d) => n + (d.capacity ?? 0), 0) : null,
     // Each child owes the price recorded at sign-up, else the season's (Club Tier 9b-1, lib/league-price.ts).
     unpaidFeeCount:          regs.filter(r => r.status === 'active' && !r.registrationFeePaid && (registrationOwes(r, season) ?? 0) > 0).length,
+    checklistLeft:           checklistLeft(seasonChecklist(season, divisions)).length,
   };
 }
 

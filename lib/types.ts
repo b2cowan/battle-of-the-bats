@@ -1115,6 +1115,8 @@ export interface LeagueSeasonSummary {
   spotCount: number | null;
   /** Active registrations whose fee is above $0 and not marked received (the status windows' loose end; 0 on a free season). */
   unpaidFeeCount: number;
+  /** Required checklist steps still to do before Open registration (lib/house-league-season.ts seasonChecklist). */
+  checklistLeft: number;
 }
 
 // ── Rep Teams Module ──────────────────────────────────────────────────────────

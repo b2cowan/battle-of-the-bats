@@ -248,10 +248,12 @@ describe('who may send when birthdays count from — the OWNER alone (ruled 2026
 });
 
 describe('one recipe for the birth-year boxes and one server check for a stored pair', () => {
-  it('the division windows draw the shared BornYearsBoxes, not a second copy of the markup', () => {
-    const w = read('app/[orgSlug]/admin/house-league/seasons/[seasonId]/DivisionBornYears.tsx');
-    assert.match(w, /<BornYearsBoxes/);
-    assert.doesNotMatch(w, /<input/);
+  it('the division doors draw the shared BornYearsBoxes, not a second copy of the markup (9b-1: Add age groups and the record)', () => {
+    for (const f of ['components/admin/kit/club/league/AddAgeGroupsWindow.tsx', 'components/admin/kit/club/league/DivisionsBlock.tsx']) {
+      const w = read(f);
+      assert.match(w, /<BornYearsBoxes/, f);
+      assert.doesNotMatch(w, /placeholder="Year"|maxLength=\{4\}/, `${f} draws no year box of its own`);
+    }
   });
 
   it('the season PATCH and the division routes validate through checkBornBody, with the same words', async () => {
@@ -273,10 +275,10 @@ describe('one recipe for the birth-year boxes and one server check for a stored 
 });
 
 describe('the house-league division routes carry and check the pair', () => {
-  it('Add division checks, then inserts the two columns', () => {
+  it('Add division (one, or several at once from Add age groups) checks each, then inserts the two columns', () => {
     const route = read('app/api/admin/house-league/seasons/[seasonId]/divisions/route.ts');
-    assert.match(route, /checkBornBody\(body\.bornFromYear, body\.bornToYear/);
-    assert.match(route, /bornColumns\(born\.years\)/);
+    assert.match(route, /checkBornBody\(raw\.bornFromYear, raw\.bornToYear/);
+    assert.match(route, /bornColumns\(d\.born\)/);
   });
 
   it('Edit division changes the pair only when the window sent it', () => {

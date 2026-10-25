@@ -1,6 +1,7 @@
 import { formatStoredDate, tournamentToday } from './timezone';
 import { pluralize } from './utils';
 import { isFinishedLeagueSeason, type HouseLeagueAccess } from './house-league-access';
+import { seasonCharges, seasonPriceRange } from './league-price';
 import type { LeagueSeasonStatus } from './types';
 
 /**
@@ -183,6 +184,19 @@ export function registrationDay(v: string | null | undefined): string | null {
   return dayOf(v);
 }
 
+/**
+ * A season's web address, made from its name (S1·a, F07): /{club}/league/{address}. Lowercase letters, numbers and single
+ * hyphens. A name that makes no address (only symbols or emoji) is refused, never saved with an empty or odd address.
+ */
+export function seasonSlugFrom(name: string): string {
+  return name.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '').slice(0, 80).replace(/-$/, '');
+}
+/** Why an address can't be used (copy §1 `create.err.nameReserved`), or null. */
+export function seasonSlugRefusal(slug: string): string | null {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ? null : 'That name can’t be used. Try another.';
+}
+
 /** The season's fee as one line (copy §3): "$165.00 per player", "Free" at 0, or null when none is set. */
 export function feePerPlayerLine(fee: number | null): string | null {
   if (fee == null) return null;
@@ -207,6 +221,8 @@ export type SeasonFacts = Dated & {
   activeRegistrationCount: number;
   teamCount: number;
   spotCount: number | null;
+  /** Required checklist steps still to do (a draft season; computed by seasonChecklist where the divisions are read). */
+  checklistLeft?: number;
 };
 
 /** The one line of facts per row (copy §1): always dates · sport · divisions, then what the state counts. */
@@ -223,21 +239,116 @@ export function seasonFactsLine(f: SeasonFacts): string {
   return parts.join(' · ');
 }
 
-/** The checklist before Open registration (9a·4, copy §3): divisions with sizes, the season's dates, the fee. */
-export type ChecklistStep = { key: 'divisions' | 'dates' | 'fee'; done: boolean; line: string };
-export function seasonChecklist(
-  f: Pick<SeasonFacts, 'seasonStartDate' | 'seasonEndDate' | 'divisionCount' | 'spotCount'> & { registrationFee: number | null },
-): ChecklistStep[] {
-  const divisionsDone = f.divisionCount > 0 && f.spotCount != null;
-  const datesDone = !!f.seasonStartDate && !!f.seasonEndDate;
-  const fee = feePerPlayerLine(f.registrationFee);
-  return [
-    { key: 'divisions', done: divisionsDone, line: divisionsDone
-      ? `${pluralize(f.divisionCount, 'division')} · ${pluralize(f.spotCount!, 'spot')}`
-      : 'Add a division, and give each one its number of spots' },
-    { key: 'dates', done: datesDone, line: datesDone ? seasonDates(f)! : 'Set the first and last day of the season' },
-    { key: 'fee', done: fee != null, line: fee ?? 'Set the registration fee (enter 0 if it is free)' },
-  ];
+/** Dollars as a family and a convenor read them (9b-1 copy §0): "$165", "$165.50" only with cents, **Free** at 0. */
+export function dollarsLine(n: number): string {
+  if (n === 0) return 'Free';
+  return `$${n.toLocaleString('en-CA', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
+}
+
+/** What the checklist reads off one division. */
+export type ChecklistDivision = {
+  capacity: number | null;
+  bornFromYear: number | null;
+  bornToYear: number | null;
+  price: number | null;
+  earlyPrice: number | null;
+};
+/** What the checklist reads off the season. */
+export type ChecklistSeason = {
+  registrationFee: number | null;
+  registrationOpenAt: string | null;
+  registrationCloseAt: string | null;
+  earlyBirdUntil: string | null;
+  howToPay: string | null;
+  waiverText: string | null;
+};
+export type ChecklistKey = 'ageGroups' | 'prices' | 'dates' | 'pay' | 'waiver';
+export type ChecklistStep = { key: ChecklistKey; title: string; done: boolean; optional: boolean; line: string };
+
+/** A division is set up once it has birth years (either side) and a size. */
+const divisionReady = (d: ChecklistDivision) => (d.bornFromYear != null || d.bornToYear != null) && d.capacity != null && d.capacity > 0;
+
+/**
+ * The checklist before Open registration (9b-1 copy §6; owner 9b·1): age groups with birth years and a size · prices · the
+ * form's dates · how to pay (only when a price is above $0) · the waiver (optional, never blocks). The same function feeds
+ * the season page, the home's line and the server's refusal, so the page can never offer what the server refuses.
+ */
+export function seasonChecklist(season: ChecklistSeason, divisions: readonly ChecklistDivision[]): ChecklistStep[] {
+  const steps: ChecklistStep[] = [];
+  const unready = divisions.filter(d => !divisionReady(d)).length;
+  steps.push({
+    key: 'ageGroups', title: 'Age groups', optional: false, done: divisions.length > 0 && unready === 0,
+    line: divisions.length === 0 ? 'Add your age groups, each with birth years and a size'
+      : unready > 0 ? `${pluralize(unready, 'division')} still ${unready === 1 ? 'needs' : 'need'} birth years or a size`
+      : divisions.length === 1 ? '1 division, with birth years and a size'
+      : `${pluralize(divisions.length, 'division')}, each with birth years and a size`,
+  });
+
+  const range = seasonPriceRange(divisions, season);
+  const early = !!dayOf(season.earlyBirdUntil) && divisions.some(d => d.earlyPrice != null);
+  const priceLine = range == null ? null
+    : range.low === range.high ? dollarsLine(range.low)
+    : `${dollarsLine(range.low)} – ${dollarsLine(range.high)}`;
+  steps.push({
+    key: 'prices', title: 'Prices', optional: false, done: range != null,
+    line: priceLine == null ? 'Set a price for each age group. Enter 0 if it is free.'
+      : early ? `${priceLine} · early bird through ${formatStoredDate(dayOf(season.earlyBirdUntil)!)}` : priceLine,
+  });
+
+  const opens = registrationDay(season.registrationOpenAt), closes = registrationDay(season.registrationCloseAt);
+  steps.push({
+    key: 'dates', title: 'Registration dates', optional: false, done: !!opens && !!closes,
+    line: opens && closes ? `${formatStoredDate(opens)} – ${formatStoredDate(closes)}` : 'Set when the form opens and closes',
+  });
+
+  if (seasonCharges(divisions, season)) {
+    const pay = season.howToPay?.trim();
+    steps.push({
+      key: 'pay', title: 'How to pay', optional: false, done: !!pay,
+      line: pay ? (pay.length > 60 ? `${pay.slice(0, 60).trimEnd()}…` : pay) : 'Tell families how to pay. They see it once a child is accepted.',
+    });
+  }
+
+  const waiver = !!season.waiverText?.trim();
+  steps.push({
+    key: 'waiver', title: 'Waiver', optional: true, done: waiver,
+    line: waiver ? 'On. Families agree on the form.' : 'Optional. Families sign up without one.',
+  });
+  return steps;
+}
+
+/** The required steps still to do. */
+export function checklistLeft(steps: readonly ChecklistStep[]): ChecklistStep[] {
+  return steps.filter(st => !st.optional && !st.done);
+}
+
+const FOOT_ONE: Record<Exclude<ChecklistKey, 'waiver'>, string> = {
+  ageGroups: 'Add age groups to open registration.',
+  prices: 'Set the prices to open registration.',
+  dates: 'Set the dates to open registration.',
+  pay: 'Add how to pay to open registration.',
+};
+
+/** The checklist's foot line (copy §6), only while a required step is left; null once Open registration can show. */
+export function checklistFoot(steps: readonly ChecklistStep[]): string | null {
+  const left = checklistLeft(steps);
+  if (left.length === 0) return null;
+  if (left.length === 1) return FOOT_ONE[left[0].key as Exclude<ChecklistKey, 'waiver'>];
+  return `Finish ${left.length} more steps to open registration.`;
+}
+
+const LEFT_WORDS: Record<Exclude<ChecklistKey, 'waiver'>, string> = {
+  ageGroups: 'age groups', prices: 'prices', dates: 'registration dates', pay: 'how to pay',
+};
+
+/** The server's refusal to open registration (copy §12 `refuse.open.checklist`), or null when every required step is done. */
+export function openRegistrationRefusal(season: ChecklistSeason, divisions: readonly ChecklistDivision[]): string | null {
+  const left = checklistLeft(seasonChecklist(season, divisions));
+  if (left.length === 0) return null;
+  if (left.length === 1 && left[0].key === 'pay') return 'Add how to pay before you open registration. At least one division has a price.';
+  const words = left.map(st => LEFT_WORDS[st.key as Exclude<ChecklistKey, 'waiver'>]);
+  const list = words.length === 1 ? words[0] : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+  return `Registration can’t open yet. Still to do: ${list}.`;
 }
 
 /**
@@ -257,7 +368,7 @@ export function seasonNoteLine(
   }
   if (f.status === 'registration_closed') return canRun ? 'Registration is closed. Start the season from its page.' : 'Registration is closed.';
   if (f.status === 'draft') {
-    const left = seasonChecklist(f).filter(s => !s.done).length;
+    const left = f.checklistLeft ?? 0;
     return left ? `${pluralize(left, 'thing')} to do before registration can open` : 'Ready to open registration';
   }
   return null;

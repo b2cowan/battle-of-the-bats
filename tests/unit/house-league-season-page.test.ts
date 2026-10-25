@@ -99,9 +99,10 @@ describe('3 · the season’s page', () => {
     assert.match(lock, /registrations: 'This season is finished\. Registrations are locked, and you can still mark fees received\.'/);
     assert.doesNotMatch(page, /This season is finished/, 'the page grew its own copy of the line');
   });
-  it('a draft leads with its checklist; Open registration is absent until the three steps are done (9a·4)', () => {
+  it('a draft leads with its checklist; Open registration is absent until the required steps are done (9a·4, 9b·1)', () => {
     assert.match(page, /title="Before you open registration"/);
-    assert.match(page, /canMove && steps\.every\(st => st\.done\)\s*\? <button[^>]*onClick=\{\(\) => setMove\('open'\)\}>Open registration<\/button>/);
+    assert.match(page, /canMove && checklistLeft\(steps\)\.length === 0\s*\? <button[^>]*onClick=\{\(\) => setMove\('open'\)\}>Open registration<\/button>/);
+    assert.match(page, /const steps = seasonChecklist\(season, divisions\);/, 'the same checklist the server refuses Open registration with');
   });
   it('every status change opens the window; nothing on the page PATCHes a status itself', () => {
     assert.match(page, /<SeasonStatusWindow/);
@@ -111,7 +112,7 @@ describe('3 · the season’s page', () => {
     assert.match(win, /kind="form"/, 'a phone gets the full-screen window');
   });
   it('Complete, Archive and Reopen are rare doors ending the body; Close / Reopen registration sit on the Registration block', () => {
-    assert.match(page, /\(\['complete', 'archive', 'reopen'\] as const\)\.filter\(m => moves\.includes\(m\)\)/);
+    assert.match(page, /\(\['complete', 'archive', 'reopen'\] as const\)\.filter\(m => moves\.includes\(m\)/);
     assert.match(page, /<RegistrationBlock[^>]*door=\{regDoor\}/);
   });
   it('the figures band is one joined band of four, without today’s money figure (9b-2)', () => {
