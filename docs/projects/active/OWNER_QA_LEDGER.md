@@ -26452,3 +26452,33 @@ republished; tick positions unchanged).
 
 **Open for the owner (from the reviews, not fixed):** public sign-ups have no per-season cap beyond the per-email and per-IP throttles, and the per-IP one trusts a forwarded header; the duplicate rule (name + date of birth) tells a stranger who knows both that a child is registered, and lets them sign one up first; the email-consent and waiver rows record whatever email was typed, with no confirmation; the season's own price is no longer shown on the season page but is still what a division with no price of its own charges (onboarding sets it); the platform email editor has no entry for the new sign-up email, and a saved override of the staff Approve email would drop the new price and how-to-pay lines.
 <!-- /§375 -->
+
+## §376 · Club Tier · Stage 12a on Stripe Accounts v2 — **Set up payouts opens Stripe's sign-up (the first walk stopped there with a 500); the card reaches Taking payments with test data; a tournament team pays its $100.00 deposit by card ($105.00 with the fee), it lands as $100.00 paid, and a refund to the card puts it back**
+
+**Built:** 2026-10-25 from `CLUB_TIER_STAGE12A_V2_REWORK_PROMPT.md` (owner ruling: Accounts v2, the v1 toggle stays off; plan §0d "Built"). Migration 364 is applied to dev. Committed `8eae6bec6` (migration 364) + `235a3e9bd` (the code).
+
+**The walk:** [Payouts + card payment walk](CLUB_TIER_STAGE12A_WALK.html), published https://claude.ai/artifact/27KJ1Nc2vyT6zBviiDssCW 2026-10-25.
+- Six parts, 28 steps, on `uat-rep-club` (club owner, plus the treasurer for one step).
+- The parts: ready (two Stripe listen windows) · Set up payouts opens Stripe · Stripe's sign-up with test data, back to Taking payments · the treasurer's line · a team pays its deposit by card · refund to the card.
+- The team is **Walk Visitor 7b** (15U, UAT Rep Club Invitational 2026). It is accepted, nothing is paid, no email is on file, and it is not one of the club's own teams.
+- **Its writes, to read back before recording a pass:**
+  - an `org_payment_accounts` row for uat-rep-club, with `card_payments_status = active` and `onboarding_finished_at` set;
+  - `teams.email` on Walk Visitor 7b and its `pay_link_sent_at`;
+  - one `online_payments` row (base 10000, fee 500), landed, then refunded;
+  - one `online_payment_refunds` row;
+  - `stripe_connect_events` rows from both webhooks.
+
+**Run by the builder:** typecheck, focused lint and spelling are clean, and the 52 online-payments unit tests pass, including the v2 account shapes from the sandbox. Live checks:
+- the exact onboarding-link body on the pinned version;
+- a real `v2.core.account[requirements].updated` forwarded by the CLI, answered 200 and logged once;
+- the sandbox's event-destination shapes (`.probe/s12v2-shape.cjs`).
+
+`/review` (4 lenses) produced five fixes, listed in plan §0d.
+
+**Open:** `verify:changed` has 7 failing tests, none from this change.
+- Two are existing 12a code: the "Stripe needs something" notice reads the notifications table directly (the bell guard), and three pay files fail the fee-tracking census.
+- Five are other in-flight work.
+- Bank debit for 12c: Claude checks it in the sandbox after the walk.
+
+**Not covered:** the Payouts record (who pays, refund policy), Disconnect, Pay now from the team-accepted email, the tournament's books, the Tournament Plus page, help. These are for a second 12a walk.
+<!-- /§376 -->

@@ -1,6 +1,17 @@
 # Families pay online — Club Tier Stage 12 (PM brief)
 
 > Drawn 2026-10-24; every ask ruled as recommended 2026-10-25. Plan: `CLUB_TIER_STAGE12_PAYMENTS_PLAN.md`. Drawings: the Club Payments Drawings artifact.
+>
+> **2026-10-25 · switching to Stripe's current account setup.** The first test of 12a stopped at "Set up payouts".
+> Stripe no longer creates club accounts the way 12a was built, and it refuses that method for new platforms. The owner
+> chose to rebuild on Stripe's current method rather than switch the old one back on. A sandbox test confirmed that the
+> new method works for a Canadian club and keeps every decision as made: the simple Stripe dashboard, FieldLogicHQ
+> paying the processing fee, Stripe covering losses, and Stripe doing identity checks. Clubs and families see nothing
+> different. Only the behind-the-scenes connection changes. Rebuild brief: `CLUB_TIER_STAGE12A_V2_REWORK_PROMPT.md`.
+>
+> **2026-10-25 · rebuilt.** Set up payouts now opens Stripe's sign-up. The card's five states mean exactly what they
+> did. Stripe now sends news about a club's account on its own channel, so testing needs two Stripe listen windows
+> locally and two webhook destinations on staging (the setup guide has the lines). The 12a test walk is next.
 
 ## What this is
 

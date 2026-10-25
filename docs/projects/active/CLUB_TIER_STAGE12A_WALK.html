@@ -1,0 +1,239 @@
+<title>Payouts Card Payment Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12a · §376</span>
+    <h1>Set up payouts, then a team pays by card</h1>
+    <p class="sub">Written 2026-10-25, after the rebuild onto Stripe's current account system. One purpose: the owner connects the club to Stripe, which is where the first walk stopped. Then one tournament team pays its deposit by card and gets it back as a refund, end to end.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The first 12a walk stopped at <strong>Continue to Stripe</strong> with an error, because Stripe no longer creates club accounts the old way. The connection to Stripe was rebuilt (plan §0d). On screen nothing changed except that the button now works. This walk proves that, then runs the money once, all the way round.</p>
+    <p><strong>It passes when</strong> Continue to Stripe opens Stripe's sign-up without an error. Once you finish it with test data, the card reads <em>Taking payments</em> and never showed <em>Needs attention</em> on the way. Both listen windows show their events answered <code>[200]</code>. The team's deposit of $105.00 lands in its record as $100.00 paid, and the refund puts it back to nothing paid.</p>
+    <p><strong>Not in this walk:</strong> the record on the Payouts card (who pays the fee, the refund-policy sentence), Disconnect, a team paying from its team-accepted email, the tournament's books, the Tournament Plus home of the card (the same card on its own page), and help articles. These belong in a second 12a walk once this one passes. Bank debit is 12c: after your walk, Claude checks in the sandbox whether this club's account can turn bank debit on, and records it.</p>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as · keep this page private</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (the dev server, already restarted for this build)</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (dev only)</dd>
+      <dt>Treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · same password (part D only)</dd>
+      <dt>Club</dt><dd>UAT Rep Club (<code>/uat-rep-club</code>, Club plan, test mode). No payouts account yet.</dd>
+      <dt>Team</dt><dd><strong>Walk Visitor 7b</strong> (15U) in <strong>UAT Rep Club Invitational 2026</strong>: accepted, nothing paid, $100.00 deposit / $300.00 in full, no email on file (you add yours in E2). It was left by the 7b walk and is not one of the club's own teams.</dd>
+      <dt>Your inbox</dt><dd>The pay link, the receipt and the refund email go to the address you type in E2. Use one you can open.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Before you start: two Stripe listen windows</h2>
+    <p>Open two PowerShell windows and run one line in each. The Stripe CLI won't carry both kinds of event in one window. The CLI isn't on your PATH, so these use its full location.</p>
+    <p class="label">Window 1: payments and refunds</p>
+    <pre>C:\tools\stripe\stripe.exe listen --events-from @accounts --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed --forward-to localhost:3000/api/payments/connect-webhook</pre>
+    <p class="label">Window 2: the club's account</p>
+    <pre>C:\tools\stripe\stripe.exe listen --events-from "@self" --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre>
+    <p class="sub">Both print the same signing secret. Your local settings already hold it for both doors, so there's nothing to paste. If the CLI asks you to log in, run <code>C:\tools\stripe\stripe.exe login</code> once, or add <code>--api-key</code> with your test secret key.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'club-12a-v2-walk-v1';
+  var OWNER = 'Club owner, computer';
+  var PARTS = [
+    { id: 'A', title: 'Ready to walk', steps: [
+      { who: 'Computer', do: 'Start the two listen windows above.', see: 'Each says “Ready! … Your webhook signing secret is whsec_…”. The two secrets are the same.' },
+      { who: OWNER, do: 'Sign in as the club owner and open <code>/uat-rep-club/admin/org/settings</code>.', see: 'The club’s Settings page opens.' }
+    ] },
+    { id: 'B', title: 'Set up payouts opens Stripe (where the first walk stopped)', steps: [
+      { who: OWNER, do: 'Scroll to the Payouts card.', see: 'Pill “Not set up” and a “Test mode” chip. Title “Let teams pay online”. The line “No real money moves while payouts are in test mode.”, then “Processing fee: 3.5% + $1.50 per card payment.” Button “Set up payouts”.' },
+      { who: OWNER, do: 'Press Set up payouts.', see: 'The window “Before you set up payouts”: What it costs · Who pays it (“Teams pay it”, chosen, with “Added to what the team pays.”, and “The club pays it”) · Where the money goes · Refunds. The box reads “I agree to the FieldLogicHQ payments terms for UAT Rep Club.” “Continue to Stripe” can’t be pressed until it is ticked.' },
+      { who: OWNER, do: 'Keep “Teams pay it”, tick the box and press Continue to Stripe.', see: 'The button reads “Opening Stripe…”, then Stripe’s own sign-up page opens (connect.stripe.com, marked as a test). <strong>No error.</strong> This is the step that failed before.' }
+    ] },
+    { id: 'C', title: 'Stripe’s sign-up with test data, back to Taking payments', steps: [
+      { who: OWNER + ', on Stripe', do: 'Fill Stripe’s form with test data. Wherever Stripe offers a test shortcut (“Use test phone number”, “Use test code”, “Use test account”), take it. Otherwise: business type Individual · website <code>https://accessible.stripe.com</code> · date of birth 01/01/1901 · ID or SIN <code>000000000</code> · any Canadian address · bank transit <code>11000</code>, institution <code>000</code>, account <code>000123456789</code>. Submit at the end.', see: 'Stripe sends you back to the club’s Settings, on the Payouts card. No error page.' },
+      { who: OWNER, do: 'Read the card.', see: 'Pill “Taking payments”, title “Teams can pay online”, button “Open Stripe”. If it says “Setting up” (“Stripe needs a few more details”), Stripe may still be checking: wait a minute and reload. Note in the box how long it took. It must <strong>never</strong> show “Needs attention” (“Online payments are paused”) on the way.' },
+      { who: 'Listen window 2', do: 'Look at window 2.', see: 'One or more lines <code>v2.core.account[requirements].updated</code> or <code>v2.core.account[configuration.merchant].capability_status_updated</code>, each followed by <code>[200] POST …/api/payments/connect-account-events</code>. No <code>[400]</code> or <code>[500]</code>.' },
+      { who: OWNER, do: 'Open your notifications (the bell).', see: 'No “Stripe needs something to keep online payments on” item.' },
+      { who: OWNER, do: 'Press Open Stripe on the card.', see: 'Stripe’s Express dashboard for the club opens, in test mode. Close that tab.' }
+    ] },
+    { id: 'D', title: 'The treasurer sees it', steps: [
+      { who: 'Treasurer, computer', do: 'Sign out, sign in as the treasurer and open <code>/uat-rep-club/admin/accounting</code>.', see: 'The line “<strong>Taking payments</strong> · Online payments go to the club’s bank account.”' },
+      { who: OWNER, do: 'Sign out and sign back in as the club owner.', see: 'You’re back in as the owner.' }
+    ] },
+    { id: 'E', title: 'A team pays its deposit by card', steps: [
+      { who: OWNER, do: 'Open <code>/uat-rep-club/admin/tournaments/registrations</code> with <strong>UAT Rep Club Invitational 2026</strong> chosen in the tournament switcher. Open <strong>Walk Visitor 7b</strong>’s record (15U).', see: 'Its record opens. Nothing is paid yet.' },
+      { who: OWNER, do: 'Press the record’s pencil, put your own email address in Email, then press ✓.', see: 'The record shows your address.' },
+      { who: OWNER, do: 'In the Payment section, open the ⋯ beside what is still due and choose “Email the pay link”.', see: 'A toast “Pay link sent to <em>your address</em>.” The record now reads “Pay link sent <em>today’s date</em>”.' },
+      { who: 'Your inbox', do: 'Open the email “Pay for Walk Visitor 7b in UAT Rep Club Invitational 2026” and press Pay now.', see: 'The team’s pay page, in the tournament’s colours: “Walk Visitor 7b · 15U”, heading “To pay now”. Two choices:<ul><li>“Pay the deposit, $100.00” (chosen), with “The $200.00 balance is paid later.”</li><li>“Pay in full, $300.00”, with “$1.50 less in processing fees than paying the deposit and the balance separately.”</li></ul>“Email for the receipt” holds your address. Then “Test payment: no money moves.”, and the button “Pay $105.00 by card” with “includes a $5.00 processing fee”.' },
+      { who: 'Your inbox', do: 'Choose Pay in full, look at the button, then choose the deposit again.', see: 'In full, the button reads “Pay $312.00 by card” with “includes a $12.00 processing fee”. With the deposit it’s back to $105.00.' },
+      { who: 'Your inbox', do: 'Press “Pay $105.00 by card”. On Stripe’s page pay with card <code>4242 4242 4242 4242</code>, any future expiry date, any CVC and any postal code.', see: 'Stripe’s page shows $105.00 to UAT Rep Club, marked as a test. After you pay, it returns you to the pay page.' },
+      { who: 'Your inbox', do: 'Watch the pay page.', see: '“Confirming your payment” for a moment, then “Paid, thank you”, “$105.00 to UAT Rep Club”, a line with the card, the time and a receipt number, and the tag “Test payment · no money moved”.' },
+      { who: 'Listen window 1', do: 'Look at window 1.', see: '<code>checkout.session.completed</code>, followed by <code>[200] POST …/api/payments/connect-webhook</code>.' },
+      { who: 'Your inbox', do: 'Check your email.', see: 'A receipt “[Test] Receipt <em>number</em> from UAT Rep Club”, with the same receipt number as the pay page.' },
+      { who: OWNER, do: 'Reload Walk Visitor 7b’s record.', see: 'A payment row “Deposit · Online, card · receipt <em>number</em>” with “Test, no money moved”, and no pencil on that row. The team has paid <strong>$100.00</strong>, not $105.00: the processing fee is never the club’s money. $200.00 is still due.' }
+    ] },
+    { id: 'F', title: 'Refund it to the card', steps: [
+      { who: OWNER, do: 'On the online row, open its ⋯ (“More for this payment”) and choose “Refund to the card”.', see: 'A window “Refund Walk Visitor 7b’s payment?”. It says “Walk Visitor 7b paid $105.00 online on <em>today</em>: the $100.00 entry fee and a $5.00 processing fee.”, then “Refund to the card, <em>the card</em>” and “Arrives in 5 to 10 business days”. Below: “Who is ending this?” and a fee box.' },
+      { who: OWNER, do: 'Choose “The team asked to leave”, then “The organizer is ending it”, then “The team asked to leave” again.', see: 'Team asked to leave: the box “Include the $5.00 processing fee · $105.00 back” is <strong>off</strong>, with “$100.00 back. Off because the team asked to leave; you can include it.” Organizer ending it: the box turns <strong>on</strong>, with “On because the organizer is ending it. The $5.00 comes from the club and shows in your books as Payment processing.” End with the team asked to leave (box off).' },
+      { who: OWNER, do: 'Type “Walk test” in “Note to the team” and press “Refund and email”.', see: 'The button reads “Refunding…”, then a toast “Refunded $100.00 to the card. We emailed <em>your address</em>.” (or “The refund is on its way to the card.”). The row reads “Refunded to card, <em>today</em>” (it may read “Refunding to card…” first). The team has paid $0.00 again, and $300.00 is due.' },
+      { who: 'Listen window 1', do: 'Look at window 1.', see: '<code>refund.created</code> (and maybe <code>refund.updated</code>), each followed by <code>[200]</code>.' },
+      { who: 'Your inbox', do: 'Check your email.', see: 'The refund email for Walk Visitor 7b, carrying your note “Walk test”.' },
+      { who: OWNER, do: 'Leave payouts connected and close the listen windows.', see: 'Nothing to put back: 12b and 12c build on this connected club. Tell Claude the walk is done so it can check bank debit for 12c.' }
+    ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['Payouts + card payment walk §376 (Stage 12a on Accounts v2, 2026-10-25)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

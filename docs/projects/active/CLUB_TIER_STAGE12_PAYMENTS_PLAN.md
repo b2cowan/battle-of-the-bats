@@ -10,8 +10,10 @@
 
 ## 0 · State
 
-- **Drawn 2026-10-24. All 15 asks RULED 2026-10-25, every one as recommended** (§0b). Nothing built. No Stripe account
-  or key created.
+- **Drawn 2026-10-24. All 15 asks RULED 2026-10-25, every one as recommended** (§0b). 12a built on Accounts v1 and
+  committed `6f64e41cf`, `e87741f69`, `dc84cd49d` (+ help `c2c1eba12`). **Its account half was rebuilt on Accounts v2
+  on 2026-10-25 (§0d "Built"; migration 364 on dev)**, after the first walk stopped at Set up payouts because Stripe
+  refuses v1 account creation. The walk is owed again.
 - A14 logged by /strategy 2026-10-25 (BUSINESS_DECISIONS.md; the Facts doc rider closed). **12a build prompt written
   2026-10-25: `CLUB_TIER_STAGE12A_BUILD_PROMPT.md`.** The owner moved the tournament card flow into 12a so it can be walked
   end to end; 12c is now bank debit for both flows. 12b waits on 9b-2.
@@ -87,6 +89,116 @@ Asked because Stripe's current docs made a choice explicit that the 2026-07-28 d
 - Raised for `/strategy`, not ruled: Stripe collecting its fee from the club directly ("Stripe handles pricing") would
   drop the per-club monthly and per-payout Connect charges, but the club would absorb foreign and premium card
   surcharges, so it would no longer always net the exact fee.
+
+## 0d · Accounts v2 (owner, 2026-10-25, after the 12a walk hit Stripe's refusal)
+
+**What happened.** Set up payouts returned a 500 on the first walk. Stripe refused `POST /v1/accounts`: *"Stripe no
+longer recommends Accounts v1 for new Connect integrations. Create connected accounts with POST /v2/core/accounts
+instead … If your integration requires v1 account creation for a supported compatibility scenario, enable Accounts v1
+support in the Dashboard."* New platforms have v1 creation **off by default**. §0c had already recorded that Stripe
+"points to accounts with controller properties / Accounts v2", and the build chose v1 controller properties anyway —
+that was the miss, not a Stripe surprise.
+
+**Ruled (owner):** build the way Stripe wants it now — **Accounts v2**, not the "Accounts v1 support" toggle (a
+compatibility crutch with no stated end; leave it OFF). Nothing of 12a is on production and no club has connected, so
+the change costs nobody anything now and would cost real clubs later.
+
+**The four account rulings carry over unchanged, mapped to v2** (Stripe's own map,
+docs.stripe.com/connect/accounts-v2/connected-account-configuration#property-map):
+
+| Ruling | v1 (as built) | v2 |
+|---|---|---|
+| Express Dashboard | `controller.stripe_dashboard.type: express` | `dashboard: 'express'` (immutable) |
+| FieldLogicHQ pays the processing fee | `controller.fees.payer: application` | `defaults.responsibilities.fees_collector: 'application'` (immutable) |
+| Stripe covers losses (Managed Risk) | `controller.losses.payments: stripe` | `defaults.responsibilities.losses_collector: 'stripe'` (immutable) |
+| Stripe collects KYC | `controller.requirement_collection: stripe` | derived: `requirements_collector` = `stripe` (read-only) |
+
+- **Express + Stripe-covered losses is still Stripe's public preview** on v2 (docs.stripe.com/connect/risk-management/
+  connected-accounts-with-managed-risk): create the account on `2026-09-30.preview`. The GA version refuses this
+  combination. The fully-GA alternative is `dashboard: 'full'` — rejected for now: far heavier for a volunteer
+  treasurer, and the preview works (below).
+- **Fee semantics confirmed:** with `fees_collector: 'application'` the application fee must cover Stripe's processing
+  fee too (docs.stripe.com/connect/direct-charges-fee-payer-behavior). The all-in fee already does (§0c).
+
+**Sandbox probe, 2026-10-25** (`.probe/s12v2-probe.cjs`, `.probe/s12v2-link.cjs`; test key only; left one account,
+"Probe Club (S12 v2 test)"):
+- `v2.core.accounts.create` on `2026-09-30.preview` with `identity.country: 'ca'`, `defaults.currency: 'cad'`,
+  `dashboard: 'express'`, fees `application`, losses `stripe`, `configuration.merchant.capabilities.card_payments` →
+  **created**; `requirements_collector` came back `stripe`; card_payments `restricted / requirements_past_due` (expected
+  before onboarding). **Canada works on the preview.**
+- Requesting `acss_debit_payments` on that account → **accepted** (restricted pending onboarding). Whether it reaches
+  `active` after onboarding is checked in the 12a walk; it decides nothing for 12a, everything for 12c.
+- `v2.core.accountLinks.create` (account_onboarding): on the **preview** version the `configurations` field is
+  **unknown**; on the SDK's pinned `2026-04-22.dahlia` it is **required**. → **Use the preview version only for account
+  creation** (Stripe's instruction) and the pinned version for every other call.
+- `accounts.retrieve` (v2) on the pinned version reads the preview-created account fine.
+- `accounts.createLoginLink` (v1, the Express Dashboard door) refuses before onboarding is done — same as v1.
+- The installed `stripe@22.1.0` already has `v2.core.accounts`, `v2.core.accountLinks` and `v2.core.eventDestinations`.
+  **No SDK upgrade needed for this.**
+
+**What changes (the rework, one build session):**
+1. Account creation → `v2.core.accounts.create` as above (preview version, idempotency key kept).
+2. Onboarding → `v2.core.accountLinks.create` (pinned version, `configurations: ['merchant']`).
+3. "Takes payments" → `configuration.merchant.capabilities.card_payments.status === 'active'`, not `charges_enabled`
+   (the v2 object's own readiness field; Stripe's best-practices skill steers away from `charges_enabled` — reported by
+   the research pass, not independently checked). The five Payouts states re-derive from v2: capability status +
+   `status_details`, `requirements.summary.minimum_deadline` (status/time), and the requirements entries. The
+   hard-coded v1 reason strings go.
+4. Account events → v2 **thin** events on an **event destination** scoped to *Your account*:
+   `v2.core.account[requirements].updated`, `v2.core.account[configuration.merchant].capability_status_updated`,
+   `v2.core.account.closed` (replaces `account.application.deauthorized`). Fetch the account on receipt, as today.
+   Checkout and refund events stay **v1 snapshot events** on the existing *Connected accounts* endpoint — unchanged.
+   Two destinations means two signing secrets; local testing needs the CLI to forward both. (Names checked against
+   docs.stripe.com/api/v2/core/events/event-types on 2026-10-25. That list also carries thin `v1.checkout.session.*` /
+   `v1.refund.*` events — whether one thin destination could replace both is for the build session to test, not assume.)
+5. `org_payment_accounts`' v1 mirror columns → a new migration reshaping them for v2 facts; dictionary updated (and its
+   `payouts_enabled` drift fixed). Dev only so far — migrations 358/359 are prod-pending, so it can be a clean reshape.
+6. Tests: the five-states fixtures and the guard's v1 method regex.
+- **Unchanged:** Checkout Sessions on the connected account (`Stripe-Account` header + `application_fee_amount`),
+  refunds, the fee arithmetic, the `stripe_connect_events` log, the Express login link (still v1 by Stripe's design).
+
+**Deliberately NOT in this rework:** moving the repo from `2026-04-22.dahlia` to `2026-09-30.endive` (Stripe's newest
+major, which also touches SaaS billing). One major behind is normal and nothing is deprecated; it is its own task.
+
+**Built 2026-10-25** (rework prompt `CLUB_TIER_STAGE12A_V2_REWORK_PROMPT.md`; migration 364 applied to dev 2026-10-25;
+committed `8eae6bec6` (migration 364) + `235a3e9bd` (the code)). What the build decided, on evidence:
+- **v2 has no `details_submitted`**, and that flag was what told *Setting up* from *Needs attention*. Its successor is
+  `onboarding_finished_at`. The sync stamps it the first time the account shows nothing asked for **at sign-up**
+  (`requested_reasons: routine_onboarding`) that is due now, waiting on the club and without an error against it. It is
+  set once and kept, as v1's flag was, so a later demand reads *Needs attention*, never *Setting up* again. An answer
+  Stripe refused (an entry with an error) counts as *Needs attention*, not an unfinished form. Every state keeps its
+  drawn meaning, and the shapes were fixed against the probe account's live retrieve (`.probe/s12v2-shape.cjs`).
+- **The live shape before onboarding:** card_payments `restricted / requirements_past_due` and
+  `summary.minimum_deadline` `past_due` with no time. Seven user entries, all `routine_onboarding`. That shape reads
+  *Setting up* (unit test).
+- **Two destinations, chosen on evidence.** Stripe accepts ONE thin destination carrying both scopes (probe 3b), but the
+  pinned SDK (22.1.0) types thin notifications only for v2 accounts. Thin `v1.checkout.session.*` / `v1.refund.*` would
+  mean hand-parsed events and an extra Stripe read on every payment, which rewrites the reviewed money path to save one
+  secret. Stripe refuses v2 events on a snapshot destination (probe 3d). So: the account webhook is new
+  (`/api/payments/connect-account-events`, `STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET`), and checkout and refunds stay where
+  they were (the payments endpoint dropped its two v1 account cases).
+- **Locally that is two listen windows.** CLI 1.55.1 refuses snapshot and thin events in one listen. Both windows share
+  one signing secret. End to end checked 2026-10-25: a real `v2.core.account[requirements].updated` was forwarded, the app
+  answered 200, and it was logged processed once. Owner steps (local and staging) are in
+  `docs/agents/ops/stripe-setup-guide.md` § Online payments; **the earlier single-staging-webhook instructions are
+  withdrawn there.**
+- The exact onboarding-link body (`configurations: ['merchant']` + `collection_options: eventually_due`) was checked live
+  on the pinned version. Account creation sends the probe-proven body (no `include`); the country arrives with the first
+  sync.
+- **/review 2026-10-25 (4 lenses), five fixes:**
+  - The sign-up stamp is strict. A `routine_onboarding` entry at ANY deadline keeps sign-up open, and a read missing the
+    requirements never stamps. A stamp written early is permanent, while one written late only keeps "Setting up".
+  - A read missing a part writes nothing, so one short read can't switch payments off.
+  - `unsupported` is never a wait.
+  - Reconnecting an account Stripe has closed is refused with a plain message BEFORE the row changes. Clearing first
+    would have opened pay pages on a dead account.
+  - The closed event re-reads before stamping, and stamps on the signed event alone only if that read fails.
+  - Also done: "Open Stripe" is allowed whenever card payments are active, and 364 is declared in `MANUAL_PROD_STEPS.json`.
+  - Accepted as they stand: out-of-order concurrent syncs and the double-click on Set up payouts (both as they were
+    on v1), and the event log's unatomic dedupe (harmless; the dictionary's claim of `ON CONFLICT` + `FOR UPDATE` corrected).
+- **Owed — the walk:** Set up payouts → "Before you set up payouts" → Stripe's sign-up with test data → back on the card
+  → *Taking payments*; window 2 shows the account events; a tournament team pays by card; and record whether
+  `acss_debit_payments` reached `active` (for 12c).
 
 ## 1 · What it makes true
 

@@ -227,6 +227,73 @@ Your test products, prices, and customers remain untouched in Stripe. Your dev e
 
 ---
 
+## Online payments — Stripe Connect (Club Tier Stage 12a, test mode only)
+
+Clubs connect their **own** Stripe account (Accounts v2, owner ruling 2026-10-25 — plan
+`CLUB_TIER_STAGE12_PAYMENTS_PLAN.md` §0d). Stripe sends two kinds of news, and each has its own door and its own
+signing secret, separate from billing's:
+
+| What Stripe reports | Where it goes | Secret |
+|---|---|---|
+| A payment or a refund on a club's account (v1 snapshot events) | `/api/payments/connect-webhook` | `STRIPE_CONNECT_WEBHOOK_SECRET` |
+| A change to a club's account itself (v2 thin events) | `/api/payments/connect-account-events` | `STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET` |
+
+⚠ **Leave "Accounts v1 support" OFF** in the Stripe dashboard (owner ruling). The product creates v2 accounts.
+
+> **Withdrawn (2026-10-25):** the earlier instructions for a **single** staging Connect webhook (with `account.updated`
+> and `account.application.deauthorized`). Those events no longer drive anything. Use the two destinations below.
+
+### Local — two listen windows
+
+The Stripe CLI refuses to send both kinds to one listen ("cannot forward both snapshot and thin events to the same
+destination"), so run **two** windows beside the dev server (and beside your billing listen, if it is running). On this
+PC the CLI is not on the PATH; it lives at
+`C:\Users\b2cow\AppData\Local\Microsoft\WinGet\Packages\Stripe.StripeCli_Microsoft.Winget.Source_8wekyb3d8bbwe\stripe.exe`
+(or `C:\tools\stripe\stripe.exe`). Both are version 1.55.1. Keep the quotes around each `--events` list and around `'@accounts'` / `'@self'` (PowerShell drops an unquoted `@word` entirely):
+PowerShell splits an unquoted comma list into separate words, and the CLI then refuses with "`stripe listen`
+does not take any positional arguments".
+
+Window 1 — payments and refunds on the clubs' accounts:
+
+```
+stripe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook
+```
+
+Window 2 — the clubs' accounts themselves:
+
+```
+stripe listen --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events
+```
+
+Both windows print the **same** signing secret (`stripe listen --print-secret` shows it). Locally, both
+`STRIPE_CONNECT_WEBHOOK_SECRET` and `STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET` in `.env.local` hold that one value. Restart the
+dev server after changing either one. Checked 2026-10-25: window 2 forwarded a real `v2.core.account[requirements].updated`
+from the sandbox and the app answered `[200]`.
+
+### Staging — two event destinations
+
+In the Stripe dashboard (test mode) → **Workbench → Webhooks → Create an event destination** (older dashboards:
+Developers → Webhooks), create two. The form first asks where events come from (**Connected accounts** or
+**Your account**), then the payload style:
+
+1. **Connected accounts**, payload **Snapshot**, API version **2026-04-22.dahlia**. Events:
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`,
+   `refund.created`, `refund.updated`, `refund.failed`. Endpoint: `https://<staging address>/api/payments/connect-webhook`.
+   Copy its signing secret into Amplify's `STRIPE_CONNECT_WEBHOOK_SECRET`.
+2. **Your account**, payload **Thin**. Events: `v2.core.account[requirements].updated`,
+   `v2.core.account[configuration.merchant].capability_status_updated`, `v2.core.account.closed`. Endpoint:
+   `https://<staging address>/api/payments/connect-account-events`. Copy its signing secret into Amplify's
+   `STRIPE_CONNECT_ACCOUNT_WEBHOOK_SECRET`.
+
+Then redeploy. The build copies both secrets in (`amplify.yml`). Production keeps online payments switched off, so it
+needs neither yet.
+
+Why two and not one thin destination (probe 2026-10-25): Stripe accepts one thin destination carrying both, but the
+payments half would then need hand-parsed events and an extra Stripe read on every payment. That would rewrite the money
+path to save one secret.
+
+---
+
 ## Environment Reference
 
 | Environment | STRIPE_SECRET_KEY | Behaviour |
