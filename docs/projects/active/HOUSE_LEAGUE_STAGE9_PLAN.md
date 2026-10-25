@@ -86,6 +86,11 @@ All 15 round-2 asks ruled as recommended (§6a). 9a and 9b are fully ruled.
 - **An existing division edits as drawn** (§3 of the drawing): the pencil flips the whole record in place, every field
   autosaves, "Remove this division" only while nobody is in it. Add age groups is the create door and asks. This replaces
   the 9a walk's accepted call "a division still saves when you press Save in its window".
+  **⚖ Revised by the owner 2026-10-25, on first sight in the walk (§375 C):** the record opens in a **window**, not in
+  the table. A row that opens a FORM opens a window (the table standard; a short read is what folds in place), and the
+  table stays whole behind it. The whole row is the door; the window is the kit's record window (reads first, the head's
+  pencil ↔ ✓ flips it whole, autosaves, Previous · Next through the divisions, full screen on a phone), and "Remove this
+  division" ends its body, red, asking first, only while nobody is in it. Autosave and Add age groups are unchanged.
 - **Order of work:** the price foundation and the race-proof sign-up first; the themed date picker commits before setup,
   dates and the form (it did, `a8342ff0a`, before Part 2 started).
 - **On a review-first season a received child holds a spot**: once accepted and received children fill the size, the next

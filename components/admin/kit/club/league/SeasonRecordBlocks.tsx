@@ -61,7 +61,12 @@ export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
   const editing = editOpen && canEdit;
   const [draft, setDraft] = useState({ name: '', description: '', seasonStartDate: '', seasonEndDate: '' });
   const q = useSeasonSave(season.id, orgSlug, onSaved);
-  const held = editing && !draft.name.trim() ? 'Give the season a name to save it.' : null;
+  // A season can't end before it starts: the date that makes it so is held, said, and not sent.
+  const datesBackwards = !!draft.seasonStartDate && !!draft.seasonEndDate && draft.seasonEndDate < draft.seasonStartDate;
+  const held = !editing ? null
+    : !draft.name.trim() ? 'Give the season a name to save it.'
+    : datesBackwards ? 'The season can’t end before it starts. Change a date to save it.'
+    : null;
 
   const start = () => {
     setDraft({
@@ -70,7 +75,20 @@ export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
     });
     setEditing(true);
   };
-  const commit = (patch: Patch) => { if (!('name' in patch) || String(patch.name).trim()) void q.save(patch); };
+  const commit = (patch: Patch) => {
+    if ('name' in patch && !String(patch.name).trim()) return;
+    const out = { ...patch };
+    if ('seasonStartDate' in out || 'seasonEndDate' in out) {
+      // A date refused for putting the pair backward stays typed in its box. It goes out with the date that fixes the pair,
+      // or the form would read "saved" while the first date was never sent.
+      if (!('seasonStartDate' in out) && draft.seasonStartDate !== (season.seasonStartDate ?? '')) out.seasonStartDate = draft.seasonStartDate || null;
+      if (!('seasonEndDate' in out) && draft.seasonEndDate !== (season.seasonEndDate ?? '')) out.seasonEndDate = draft.seasonEndDate || null;
+    }
+    const from = 'seasonStartDate' in out ? out.seasonStartDate : draft.seasonStartDate;
+    const to = 'seasonEndDate' in out ? out.seasonEndDate : draft.seasonEndDate;
+    if (from && to && String(to) < String(from)) return;
+    void q.save(out);
+  };
 
   return (
     <ClubSection

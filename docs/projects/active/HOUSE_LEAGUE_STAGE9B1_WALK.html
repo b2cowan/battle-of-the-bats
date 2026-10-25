@@ -73,7 +73,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 
   <section class="card">
     <h2>What this walk is for</h2>
-    <p>Drawn on <a href="https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT">the 9b drawings</a>, tab "9b-1 Sign-up"; words in HOUSE_LEAGUE_STAGE9B1_COPY.md. Your four rulings from the build session apply: a child's price is recorded when they sign up; a division's pencil opens its whole record and saves as you go; a child waiting for review holds a spot; the date picker went first.</p>
+    <p>Drawn on <a href="https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT">the 9b drawings</a>, tab "9b-1 Sign-up"; words in HOUSE_LEAGUE_STAGE9B1_COPY.md. Your four rulings from the build session apply: a child's price is recorded when they sign up; a division opens in its own window, reads first, and its pencil edits the whole record, saving as you go (changed 10-25 from opening in place in the table); a child waiting for review holds a spot; the date picker went first.</p>
     <p><strong>It passes when</strong> a season can be set up and opened only once its checklist is done, its dates open and close the form (and the page says whether the date or you closed it), a family sees each child's outcome first and gets one email and one reference, nobody can take the same spot twice or jump the waitlist, and the club gets one notice per sign-up.</p>
     <p><strong>Not in this walk:</strong> the Registrations screen (rebuilt in 9b-2; its old buttons still work), correcting a price, withdrawals and refunds, the Owed / Still owing figures, teams on the status page, online payment, help articles (/docs runs with this build: check them last if they are in).</p>
   </section>
@@ -114,15 +114,17 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: O, do: 'On the season’s page, press + Add age groups (also on the checklist line).', see: 'Chips U6 to U18 and "+ Type a name". The foot says "Tap the age groups you run."' },
       { who: O, do: 'Tap U8, U10 and U12.', see: 'Three rows, birth years blank. The foot reads "3 new divisions · 3 still need their birth years" and Add is faded.' },
       { who: O, do: 'Give U8 2019–2020, U10 2017–2018, U12 2014–2015.', see: 'An amber line: "No division takes children born in 2016. A child born then won’t fit any division." Nothing blocks.' },
-      { who: O, do: 'Change U12 to 2015–2016. Players: U8 12, <strong>U10 1</strong>, U12 12. Prices: 165, 165, 175. Press "Add 3 divisions".', see: 'The gap line is gone. The Divisions table shows Division · Born in · Players · Price · Early bird, with "0 / 1" for U10, and the hint "A price change applies to new sign-ups only…".' },
+      { who: O, do: 'Change U12 to 2015–2016. Players it holds: U8 12, <strong>U10 1</strong>, U12 12. Prices: 165, 165, 175. Press "Add 3 divisions".', see: 'The gap line is gone. The Divisions table shows Division · Born in · Players · Price · Early bird, with "0 of 1" for U10, and the hint "A price change applies to new sign-ups only…".' },
       { who: O, do: 'Press + Add age groups again and tap U10.', see: 'The chip reads "U10 · already" and the new row is named <strong>U10 B</strong>. Give it 2017–2018, 12 players, 165. No overlap warning (same years on purpose). Press "Add 1 division".' },
       { who: P, do: 'Open the season’s page on a phone (or 390 px) and open + Add age groups.', see: 'The window fills the screen with a back arrow; chips and rows fit with no sideways scroll. Close it without adding.' }
     ]},
-    { id: 'C', title: 'A division reads first and edits whole', steps: [
-      { who: O, do: 'Press the pencil on U10.', see: 'The whole row turns into its record in place: Name, Players, Born in, Price, Early bird, Note for families, and "Remove this division…" at the foot (nobody is in it).' },
-      { who: O, do: 'Note for families: <em>Tuesday nights</em>. Tab out.', see: '"Saved" shows briefly and fades. Early bird’s hint says "Set the early-bird date under Registration first."' },
-      { who: O, do: 'Early bird: 145. Press ✓. Open U10 B and give it the note <em>Thursday nights</em>, ✓.', see: 'U10’s Early bird cell reads "$145, needs a date" in amber. Notes show under each name.' },
-      { who: O, do: 'Open U10 and clear its name, then tab out.', see: 'The name is held with "Give the division a name." and ✓ does nothing until you type it back. Type U10 back.' }
+    { id: 'C', title: 'A division opens in its window, reads first and edits whole', steps: [
+      { who: O, do: 'Click anywhere on U10’s row.', see: 'A window opens over the page, the season’s name above <strong>U10</strong>, and it <strong>reads</strong>: Born in, Players it holds (with "0 children signed up"), Price, Early bird, Note for families. Previous · Next at the foot, with where U10 sits. "Remove this division" in red ends the body (nobody is in it). The table stays whole behind the window.' },
+      { who: O, do: 'Press the pencil in the window’s head.', see: 'The whole window turns into its form: Name, Players it holds, Born in, Price, Early bird, Note for families. A ✓ takes the pencil’s exact spot.' },
+      { who: O, do: 'Note for families: <em>Tuesday nights</em>. Pause.', see: '"Saved" shows briefly in the window’s bottom-right corner and fades. Early bird’s hint says "Set the early-bird date under Registration first."' },
+      { who: O, do: 'Early bird: 145. Press ✓. Press Next until U10 B, press its pencil, give it the note <em>Thursday nights</em>, ✓, and close the window.', see: 'Next opens U10 B <strong>reading</strong>, not in its form. Back on the table, U10’s Early bird cell reads "$145, needs a date" in amber, and the notes show under each name.' },
+      { who: O, do: 'Open U10, press the pencil and clear its name.', see: 'The window’s save word holds with "Give the division a name." and ✓ does nothing until you type it back. Type U10 back and press ✓.' },
+      { who: P, do: 'On a phone (or 390 px), tap a division’s row.', see: 'The window fills the screen with a back arrow, and the phone’s Back closes it to the table.' }
     ]},
     { id: 'D', title: 'The Registration block and the checklist', steps: [
       { who: O, do: 'Read the Registration block.', see: 'Rows: Registration dates (Not set, with Set dates) · Early bird · Waiver (None) · Email consent ("Asked on the form, unticked, beside the waiver.") · How to pay (amber "Required before registration can open.") · New registrations · Waitlist. No fee row.' },
@@ -157,7 +159,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: F, do: 'Sign up Henry Walk again, born 2017-04-12, same email.', see: 'Refused: "Henry Walk is already signed up for this season. Use your reference to check their status."' },
       { who: O, do: 'Open the season’s Registrations and Approve Ava (waitlisted).', see: 'Refused: "U10 is full. Add to the waitlist instead." Nothing changes.' },
       { who: O, do: 'Decline Henry.', see: 'Ava moves up to the spot on her own (the waitlist switch is on). Your inbox gets "A spot opened: Ava is accepted — Walk Summer 2027" with Ava’s price ($145) and your how-to-pay words.' },
-      { who: O, do: 'Set U12’s Players to 1. In two private windows, sign up a different child born 2015 in each (different names and emails), and press Sign up in both at the same moment.', see: 'One window says "You’re signed up" (Accepted), the other "You’re on the waitlist" (Waitlist · 1st). The U12 row reads "1 / 1". Never two Accepted.' }
+      { who: O, do: 'Set U12’s Players it holds to 1. In two private windows, sign up a different child born 2015 in each (different names and emails), and press Sign up in both at the same moment.', see: 'One window says "You’re signed up" (Accepted), the other "You’re on the waitlist" (Waitlist · 1st). The U12 row reads "1 of 1". Never two Accepted.' }
     ]},
     { id: 'J', title: 'The dates run the form', steps: [
       { who: O, do: 'On the Registration block press Close registration and confirm.', see: 'The window says "The sign-up form closes now, whatever the close date says." The dates row reads "You closed registration on Oct 25." with "The close date was Nov 30."' },
@@ -169,10 +171,10 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     { id: 'K', title: 'A free, review-first season', steps: [
       { who: O, do: 'Create <em>Walk Free 2027</em>. Add age groups: tap U8, 2019–2020, 12 players, price 0. Set the form dates. Leave "Approve new registrations…" OFF.', see: 'The checklist has no How to pay line (the prices line reads "Free"), and Open registration appears once the dates are set. The Registration block says "Not needed: this season is free." and "Held for your review. A child waiting for review holds a spot."' },
       { who: F, do: 'Open registration, then sign up one child born 2019 on its form.', see: 'The total reads "Free. There is nothing to pay." The confirmation says "We’ve received your sign-up", the child tagged Received, and nothing about paying.' },
-      { who: O, do: 'Set the division’s Players to 1, then sign up a second child as a family.', see: 'Before Sign up the form says the division is full and the child joins the waitlist: the received child holds the spot.' }
+      { who: O, do: 'Set the division’s Players it holds to 1, then sign up a second child as a family.', see: 'Before Sign up the form says the division is full and the child joins the waitlist: the received child holds the spot.' }
     ]},
     { id: 'L', title: 'Who can do what', steps: [
-      { who: R, do: 'Sign in as the registrar and open Walk Summer 2027.', see: 'The page reads: no pencils on the Divisions or the Registration block, no + Add age groups, no Open or Close door. The checklist (on Walk Free 2027 before it opened) shows lines without doors.' },
+      { who: R, do: 'Sign in as the registrar and open Walk Summer 2027.', see: 'The page reads: a division opens to read with no pencil, no pencil on the Registration block, no + Add age groups, no Open or Close door. The checklist (on Walk Free 2027 before it opened) shows lines without doors.' },
       { who: R, do: 'Open Needs attention.', see: 'The sign-up notices are there for the registrar too.' }
     ]},
     { id: 'M', title: 'The season’s money still adds up', steps: [

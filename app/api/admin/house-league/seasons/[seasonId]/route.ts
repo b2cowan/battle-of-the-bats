@@ -148,6 +148,25 @@ export const PATCH = withObservability(async (req: Request,
     patch.howToPay = v || null;
   }
 
+  // A date range runs forward (owner, 2026-10-25): judged on the values the season would hold after this save, so moving
+  // only one end of an existing range is checked against the other end it already has. ⚠ Judged ONLY when this save touches
+  // one of the range's two dates: a season saved backward before this rule must still be able to open registration, start,
+  // or change its description, rather than be locked out of every other change until a date is fixed.
+  const after = <K extends keyof typeof patch>(key: K, current: string | null | undefined) =>
+    (key in patch ? patch[key] : current) as string | null | undefined;
+  if ('seasonStartDate' in patch || 'seasonEndDate' in patch) {
+    const from = after('seasonStartDate', season.seasonStartDate), to = after('seasonEndDate', season.seasonEndDate);
+    if (from && to && to < from) {
+      return NextResponse.json({ error: 'The season can’t end before it starts.' }, { status: 400 });
+    }
+  }
+  if ('registrationOpenAt' in patch || 'registrationCloseAt' in patch) {
+    const opens = after('registrationOpenAt', season.registrationOpenAt), closes = after('registrationCloseAt', season.registrationCloseAt);
+    if (opens && closes && Date.parse(closes) < Date.parse(opens)) {
+      return NextResponse.json({ error: 'Registration can’t close before it opens.' }, { status: 400 });
+    }
+  }
+
   // A status move is its own permission (it stays open on a finished season, to reopen or archive it); a field edit is a
   // season edit, refused once the season is finished (Q16). Decided on the fields this route writes, not the body's keys.
   if (Object.keys(patch).length > 0) {

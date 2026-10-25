@@ -36,7 +36,7 @@ names in detail rows.
 | A child who has a spot | **Accepted** | Approved (the button is **Approve**; 9b·12) | family copy: "Approved", "Confirmed" |
 | A child waiting for the club's review | **Received** | To review | "Pending", "Pending review" on a family screen |
 | A child waiting for room | **Waitlist** / "on the waitlist" | Waitlist | "Waitlisted" as a tag |
-| Room in a division | **spots** ("7 spots left") | Players ("5 / 12") | "seats", "places" |
+| Room in a division | **spots** ("7 spots left") | Players ("5 of 12"); the field is **Players it holds** | "seats", "places" |
 | What the family owes | **To pay** | Owed | "due now", "balance" |
 | The code that finds a sign-up | **reference** | reference | "reference code", "confirmation number", "#" |
 | The club's payment words | **How to pay** | How to pay | "payment instructions" |
@@ -94,14 +94,14 @@ today); no "required" string is written.
 | `divisions.add` | + Add age groups | Desk. Phone: the + symbol alone, 44 px, `aria-label` "Add age groups". |
 | `divisions.col.division` | Division | |
 | `divisions.col.born` | Born in | |
-| `divisions.col.players` | Players | Staff word for room. Cell: "5 / 12". |
+| `divisions.col.players` | Players | Staff word for room. Cell: "5 of 12", as a tournament division's Teams column. |
 | `divisions.col.price` | Price | |
 | `divisions.col.early` | Early bird | |
 | `divisions.col.edit.aria` | Edit {division} | The pencil. |
 | `divisions.cell.born` | 2017–2018 | A single year reads "2017". En dash, no spaces. |
 | `divisions.cell.born.empty` | Not set | Amber. A draft division saved without years. |
-| `divisions.cell.players` | 5 / 12 | `{taken} / {size}`. Taken = accepted plus received. |
-| `divisions.cell.players.noSize` | 5 / — | Size not yet set. |
+| `divisions.cell.players` | 5 of 12 | `{taken} of {size}` (owner 2026-10-25: the tournament form, not a slash). Taken = accepted plus received. |
+| `divisions.cell.players.noSize` | 5 of — | Size not yet set. |
 | `divisions.meter.aria` | 5 of 12 spots taken | |
 | `divisions.cell.price` | $165 | **Free** when 0. |
 | `divisions.cell.price.empty` | Not set | Amber. |
@@ -112,7 +112,7 @@ today); no "required" string is written.
 | `divisions.hint` | A price change applies to new sign-ups only: each registration keeps the price it signed up at. | Drawn, kept. It sits under the table at every width. |
 | `divisions.empty.title` | No age groups yet | |
 | `divisions.empty.body` | Add the age groups you run. Each becomes a division with its own birth years, size and price. | Mirrors the Add age groups intro. |
-| `divisions.empty.cta` | Add age groups | The same door as the header button. |
+| `divisions.empty.cta` | Add age groups | The only door while the list is empty: the header button shows once there is a division, never beside this one (owner 2026-10-25). |
 
 The drawing's second sentence under the table ("Early bird amounts and the U12 price are examples; the fixture has one season
 fee of $165.") is a drawing note, not product copy, and is not written.
@@ -137,7 +137,7 @@ the foot's left (`footerStart`), then Cancel, then the primary.
 | `add.chip.type.add` | Add | same | |
 | `add.col.division` | Division | (row title) | |
 | `add.col.born` | Born in | | |
-| `add.col.players` | Players | | |
+| `add.col.players` | Players it holds | | The field names what it counts, as a tournament division's "Teams it holds" (owner 2026-10-25). Every column carries the required star; a blank birth-year box wears NO amber outline: the foot counts what is missing (owner 2026-10-25). |
 | `add.col.price` | Price | | |
 | `add.born.placeholder` | Pick | | A dropdown of years; blank on purpose (the 4c-2 ruling: the club picks, we never guess from "U13"). |
 | `add.born.to.aria` | Last birth year for {group} | | And `add.born.from.aria`: "First birth year for {group}". |
@@ -156,7 +156,10 @@ Three short hints replace the drawn paragraph (one idea each; the old one carrie
 |---|---|
 | `add.hint.cutoff` | Birthdays count from {Sep 1} for {sport}, the club’s cut-off. (Absent when the club has no cut-off set.) |
 | `add.hint.years` | The birth years are yours to pick. We don’t guess them from the name. |
-| `add.hint.twice` | To run two divisions for one age group, such as U10 A and U10 B, tap its chip again. |
+| `add.hint.twice` | To run two divisions for one age group, such as U10 and U10 B, tap the + on its row. (12U style: 12U and 12U B.) Reworked 2026-10-25 from the owner’s drawing ADD_AGE_GROUPS_CHIPS_MOCKUP.html: a ticked chip now takes its row off; the + on the row adds the second division. |
+| `add.style` | U12 | 12U (a two-word switch beside the intro; renames untouched rows) | same | Drawn 2026-10-25. |
+| `add.chip.more` | More ages / Fewer ages (opens U7 U9 U11 U13 U15 U17; stays open while one is ticked) | same | Drawn 2026-10-25. |
+| `add.row.more` | Add another U10 (the + on a row; tooltip and name for assistive tech) | same | Drawn 2026-10-25. |
 
 ### 3.3 Warnings (amber, one sentence each, never blocking)
 
@@ -188,8 +191,11 @@ are one or two; three or more are counted.
 
 ## 4. Division record (reads first, edits whole)
 
-Pencil flips the whole record to its form; every field autosaves; the check flips it back. "Saved" is the transient word (it
-fades; only an error persists).
+The row opens the division's record window (owner, 2026-10-25; it first shipped opening in place in the table). It reads
+first: Born in, Players it holds, Price, Early bird, Note for families. The head's pencil flips the whole record to its form;
+every field autosaves; the check flips it back. "Saved" is the transient word in the window's corner (it fades; only an
+error persists). The window's eyebrow is the season's name; "Remove this division" (no ellipsis: it is the kit's red
+record door) ends the body while nobody is in it.
 
 | Key | String | Notes |
 |---|---|---|
@@ -201,7 +207,7 @@ fades; only an error persists).
 | `record.born.label` | Born in | Two year dropdowns. |
 | `record.born.hint` | Birthdays count from {Sep 1}. Changing the years never moves a child who is already registered. | Drawn hint, split into two plain sentences. |
 | `record.born.warn` | {n} registered child no longer fits these years. They stay where they are. / {n} registered children no longer fit these years. They stay where they are. | The "n no longer fit" warning. Amber, under the field, appears after the change autosaves. Counts accepted, received and waitlisted. Warns, never blocks. |
-| `record.players.label` | Players | The size. |
+| `record.players.label` | Players it holds | The size. As `add.col.players`. |
 | `record.players.hint` | {n} signed up. A lower number never removes anyone. | |
 | `record.price.label` | Price | |
 | `record.price.hint` | The season’s price unless you change it. | Drawn. |

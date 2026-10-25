@@ -316,7 +316,7 @@ export default function RegisterForm({
                 <input type="checkbox" id="waiverAccepted" checked={waiver} onChange={e => { setWaiver(e.target.checked); clear('waiverAccepted'); }} />
                 <label htmlFor="waiverAccepted">I have read and agree to the waiver.</label>
               </div>
-              {errors.waiverAccepted && <p className={formKit.errorMsg} style={{ marginTop: '0.5rem' }}>{errors.waiverAccepted}</p>}
+              {errors.waiverAccepted && <p className={`${formKit.errorMsg} ${styles.checkError}`}>{errors.waiverAccepted}</p>}
             </>
           )}
           {askEmailConsent && (

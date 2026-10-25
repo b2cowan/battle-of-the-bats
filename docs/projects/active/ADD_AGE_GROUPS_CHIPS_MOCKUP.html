@@ -1,0 +1,356 @@
+<title>Age Groups Window</title>
+<style>
+  /* Layout: a reading column of captions; each specimen is a fixed-size product frame that never reflows (scrolls sideways on a narrow screen). */
+  :root {
+    --bg: #ECEAE6; --fg: #1F1D1A; --muted: #5E5A53; --rule: #D3CFC7; --chip: #FFFFFF; --accent: #3D4F12; --tag-new: #1F5A2E; --tag-new-bg: #DCEFD9; --tag-re: #6B4105; --tag-re-bg: #F6E7C8; --tag-same: #4A4741; --tag-same-bg: #DEDBD4;
+    --scrim: #A9A59C;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #15171A; --fg: #E9E7E2; --muted: #A5A19A; --rule: #2E3136; --chip: #1F2227; --accent: #C8DA7A; --tag-new: #A9DDB4; --tag-new-bg: #1D3524; --tag-re: #F0CE8C; --tag-re-bg: #3B2E12; --tag-same: #C9C6BF; --tag-same-bg: #2B2E33;
+    --scrim: #3A3D42; color-scheme: dark; } }
+  :root[data-theme="dark"] {
+    --bg: #15171A; --fg: #E9E7E2; --muted: #A5A19A; --rule: #2E3136; --chip: #1F2227; --accent: #C8DA7A; --tag-new: #A9DDB4; --tag-new-bg: #1D3524; --tag-re: #F0CE8C; --tag-re-bg: #3B2E12; --tag-same: #C9C6BF; --tag-same-bg: #2B2E33;
+    --scrim: #3A3D42; color-scheme: dark; }
+  body { background: var(--bg); color: var(--fg); font-family: Inter, system-ui, "Segoe UI", sans-serif; line-height: 1.5; padding-inline: 16px; padding-block: 32px 64px; }
+  .doc { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 28px; line-height: 1.15; margin: 0 0 8px; text-wrap: balance; }
+  h2 { font-size: 19px; margin: 44px 0 4px; text-wrap: balance; }
+  p { margin: 0 0 12px; max-width: 68ch; }
+  .lede { font-size: 16px; color: var(--muted); }
+  .muted { color: var(--muted); }
+  ul.plain { margin: 8px 0 0; padding-left: 1.1rem; max-width: 72ch; display: flex; flex-direction: column; gap: 6px; }
+  .cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 22px 0 8px; }
+  .cap b { font-size: 15px; }
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; }
+  .tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+  .tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+  .tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+  .stat { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .scroller { overflow-x: auto; padding-bottom: 6px; }
+
+  /* ---- Product frames: always the warm portal, whatever the page theme ---- */
+  .stage { background: var(--scrim); padding: 17px 24px; width: 840px; height: 690px; box-sizing: border-box; }
+  .stage.ph { width: 390px; height: 780px; padding: 0; }
+  .fr {
+    --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --dim: #615A54;
+    --line: rgba(70,55,30,.12); --line2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --warn: #6B4105;
+    background: var(--card); color: var(--ink); font-family: Inter, system-ui, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.4;
+    height: 100%; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-sizing: border-box;
+    color-scheme: light;
+  }
+  .stage.ph .fr { border-radius: 0; }
+  .fr * { box-sizing: border-box; }
+  .fr button { font: inherit; color: inherit; cursor: pointer; }
+  .fr .head { display: flex; justify-content: space-between; align-items: flex-start; padding: 22px 24px 8px; flex: none; }
+  .fr .head h3 { margin: 0; font-size: 18px; font-weight: 700; }
+  .fr .x { width: 36px; height: 36px; border: none; background: none; color: var(--ink2); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+  .fr .body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 24px 16px; position: relative; }
+  .fr .lead { margin: 0 0 12px; color: var(--ink2); max-width: none; }
+  .fr .season { margin: 0 0 6px; font-weight: 700; }
+  .fr .chips { display: flex; flex-wrap: wrap; gap: 6.4px; margin: 4px 0 12px; }
+  .fr .chip { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 14px; border: 1px solid var(--line2); border-radius: 999px; background: var(--card); color: var(--ink2); }
+  .fr .chip[aria-pressed="true"] { border-color: var(--olive); background: var(--olive-soft); color: var(--olive); font-weight: 650; }
+  .fr .chips.odd { margin-top: -4px; }
+  .fr .chip.more { border-style: dashed; color: var(--dim); }
+  .fr .chip.more .chev { display: inline-flex; transition: transform .12s; }
+  .fr .chip.more .chev.up { transform: rotate(180deg); }
+  .fr .leadrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+  .fr .leadrow .lead { flex: 1 1 360px; }
+  .fr .seg { display: inline-flex; flex: none; border: 1px solid var(--line2); border-radius: 8px; overflow: hidden; background: var(--card); }
+  .fr .seg button { min-height: 34px; padding: 0 14px; border: none; background: none; color: var(--ink2); font-weight: 500; }
+  .fr .seg button + button { border-left: 1px solid var(--line2); }
+  .fr .seg button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); font-weight: 650; }
+  .fr.p .seg button { min-height: 44px; }
+  .fr .chip:focus-visible, .fr .ib:focus-visible, .fr .seg button:focus-visible { outline: 2px solid var(--olive); outline-offset: -2px; }
+  .fr .chip:focus-visible, .fr .ib:focus-visible { outline-offset: 2px; }
+  .fr .chip svg { flex: none; }
+  .fr .rows { display: flex; flex-direction: column; }
+  .fr .in { width: 100%; min-height: 36px; height: 36px; padding: 0 10px; background: var(--paper); border: 1px solid var(--line2); border-radius: 6px; font: inherit; color: var(--ink); min-width: 0; }
+  .fr .in:focus { outline: none; border-color: var(--olive); }
+  .fr .in::placeholder { color: var(--dim); opacity: .8; }
+  .fr .born { display: flex; align-items: center; gap: 6px; }
+  .fr .born span { color: var(--dim); }
+  .fr .lab { font-size: 13px; font-weight: 650; color: var(--ink); }
+  .fr .amber { display: block; color: var(--warn); font-size: 12px; }
+  .fr .ib { width: 36px; height: 36px; border: none; background: none; color: var(--ink2); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; position: relative; flex: none; }
+  .fr .ib:hover { background: var(--olive-soft); }
+  .fr .ib[data-tip]:hover::after, .fr .ib[data-tip]:focus-visible::after { content: attr(data-tip); position: absolute; right: calc(100% + 4px); top: 50%; transform: translateY(-50%); white-space: nowrap; background: var(--ink); color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 6px; z-index: 5; pointer-events: none; }
+  .fr .hints { margin: 10px 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--dim); max-width: none; }
+  .fr .foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--line); background: var(--card); }
+  .fr .foot .sentence { font-size: 14px; }
+  .fr .foot .btns { display: flex; gap: 8px; }
+  .fr .btn { min-height: 34px; padding: 0 16px; border-radius: 8px; font-weight: 650; border: 1px solid var(--line2); background: var(--card); }
+  .fr .btn.lime { background: #C9EC4A; border-color: #C9EC4A; color: #26300A; }
+  .fr .btn.lime[disabled] { opacity: .5; cursor: default; }
+
+  /* BEFORE: the row as it is built today */
+  .fr.b .rows { gap: 9.6px; }
+  .fr.b .row { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1.8fr) minmax(0,.7fr) minmax(0,.8fr) auto; gap: 0 9.6px; align-items: start; padding: 9.6px 0; border-top: 1px solid var(--line); }
+  .fr.b .field { display: flex; flex-direction: column; gap: 4.8px; margin: 0 0 14.4px; }
+  .fr.b .row > .acts { margin-top: 22px; }
+  .fr.b .ib { width: 44px; height: 44px; }
+
+  /* AFTER: column names once, one line per division */
+  .fr.a .hdr { position: sticky; top: 0; z-index: 3; background: var(--card); }
+  .fr.a .hdr, .fr.a .row { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1.8fr) minmax(0,.7fr) minmax(0,.8fr) 76px; gap: 0 9.6px; align-items: center; }
+  .fr.a .hdr { padding: 6px 0 4px; }
+  .fr.a .hdr .lab { font-size: 12px; font-weight: 600; color: var(--dim); }
+  .fr.a .row { padding: 7px 0; border-top: 1px solid var(--line); }
+  .fr.a .acts { display: flex; justify-content: flex-end; gap: 4px; }
+  .fr.a .in.blank { border-color: #B07A1F; }
+
+  /* PHONE: same stacked row as today, spacing tightened */
+  .fr.p .head { padding: 16px 16px 4px; }
+  .fr.p .body { padding: 0 16px 12px; }
+  .fr.p .x { width: 44px; height: 44px; }
+  .fr.p .foot { padding: 10px 16px; }
+  .fr.p .foot .sentence { font-size: 13px; flex: 1; min-width: 0; }
+  .fr.p .btn { min-height: 44px; padding: 0 14px; }
+  .fr.p .chip { min-height: 44px; }
+  .fr.p .in { height: 44px; min-height: 44px; }
+  .fr.p .rows { gap: 0; }
+  .fr.p .row { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,.7fr) minmax(0,.8fr); gap: 4px 8px; padding: 8px 0; border-top: 1px solid var(--line); align-items: end; }
+  .fr.p .field { display: flex; flex-direction: column; gap: 3px; margin: 0; }
+  .fr.p .lab { font-size: 12px; }
+  .fr.p .in.yr { padding: 0 6px; }
+  .fr.p .row > .nm { grid-column: 1 / 3; }
+  .fr.p .row > .acts { grid-column: 3; display: flex; gap: 0; }
+  .fr.p .ib { width: 44px; height: 44px; }
+  .fr.p .acts { min-width: 44px; justify-content: flex-end; }
+</style>
+
+<div class="doc">
+  <h1>Add age groups</h1>
+  <p class="lede">Two fixes to this window: tapping a ticked chip takes it back off, and the rows are tight enough to see the whole list. Every window below is live, so tap the chips and the + and × buttons to try them.</p>
+  <p class="muted">Drawn at true size. Keep your browser at 100% zoom, and open this page on your phone to feel the 44px taps.</p>
+
+  <h2>1 · The whole window, before and after</h2>
+  <p class="muted">Both windows start from the same eight divisions (U10 and U12 each run twice) and the same window height. Today’s window has no name style switch and no odd ages, so it is unchanged there.</p>
+
+  <div class="cap"><b>Today</b><span class="tag same">UNCHANGED</span><span class="stat" data-stat="b"></span></div>
+  <div class="scroller"><div class="stage"><div class="fr b" id="fb"></div></div></div>
+  <p class="muted" style="margin-top:8px">Tap a ticked chip here and it adds another row, which is what surprised you.</p>
+
+  <div class="cap"><b>Proposed</b><span class="tag re">RESTYLED</span><span class="tag new">NEW</span><span class="stat" data-stat="a"></span></div>
+  <div class="scroller"><div class="stage"><div class="fr a" id="fa"></div></div></div>
+
+  <ul class="plain">
+    <li><b>A ticked chip takes itself off.</b> Tap U8 and its row goes. A chip that reads “U10 ×2” takes off the newest of the two. <span class="tag new">NEW</span></li>
+    <li><b>Two divisions for one age group use the + on its row.</b> Tapping + on U10 adds “U10 B” right under it. Only the last row of each age group shows the +. <span class="tag new">NEW</span></li>
+    <li><b>Column names appear once</b> at the top and stay put while the list scrolls, instead of being repeated on every row. <span class="tag re">RESTYLED</span></li>
+    <li><b>The “Pick the birth years” line under every row is gone.</b> The foot already says how many still need them. A blank year box gets an amber outline until it is filled in. <span class="tag re">RESTYLED</span></li>
+    <li><b>Row buttons are 36px on a computer</b>, in line with the fields, and stay 44px on a phone. <span class="tag re">RESTYLED</span></li>
+    <li><b>The age-group chips are 34px tall on a computer</b> (the same height as the Cancel and Add buttons and the club’s other suggestion pills), and stay 44px on a phone. <span class="tag re">RESTYLED</span></li>
+    <li><b>A name style switch, U12 | 12U,</b> sits beside the opening sentence. Choosing 12U relabels the chips and renames every row you haven’t typed over; a name you typed yourself is never touched. <span class="tag new">NEW</span></li>
+    <li><b>A “More ages” chip</b> opens a second line with the odd ages (7, 9, 11, 13, 15, 17). It closes again with “Fewer ages”, unless an odd age is ticked, in which case it stays open so nothing hides a ticked chip. <span class="tag new">NEW</span></li>
+    <li><b>Unchanged:</b> “Type a name” (for Open, Mixed and anything that isn’t an age), the size and price columns, the foot sentence and the Add button.</li>
+  </ul>
+
+  <h2>2 · On a phone</h2>
+  <p class="muted">The same changes, and this is where the rows were tallest. Each division drops from three lines to two: name and its buttons, then birth years, players and price side by side. The labels stay, since a phone has no room for a header row.</p>
+  <div class="cap"><b>Proposed, phone</b><span class="tag re">RESTYLED</span><span class="tag new">NEW</span><span class="stat" data-stat="p"></span></div>
+  <div class="scroller"><div class="stage ph"><div class="fr p" id="fp"></div></div></div>
+
+  <h2>3 · Calls I made that you haven’t ruled on</h2>
+  <p class="muted">Both windows are drawn in the warm look. The build uses the portal’s colour tokens throughout, so Dark follows without a separate drawing; I would check it in the browser once built.</p>
+  <ul class="plain">
+    <li><b>Ticked chips versus “+ U8” suggestion buttons.</b> The owner ruling of 2026-10-12 for New tournament’s divisions says common choices are suggestions that leave the list once used, never rows to tick. This window already wears ticks, and your tap-again surprise comes from that. I drew the toggle because it matches what you expected here. The other consistent answer is the suggestion pattern: no ticks, a used chip disappears, and the row’s × brings it back.</li>
+    <li><b>Where the name style is remembered.</b> The switch here resets on every load, because this page can’t save anything. In the product I recommend it is remembered for the whole club, so a laptop and a phone agree. The alternative is this device only, which needs nothing extra stored but makes each person set it once.</li>
+    <li><b>The + sits on every age group’s last row.</b> The alternative is one quiet link at the end of the list (“Need two divisions for one age group? Add another”), which keeps the rows cleaner but is harder to find.</li>
+    <li><b>Tapping a ticked chip removes its row even if you have filled it in.</b> The alternative is that the chip only removes a row you haven’t touched, which protects typing but makes a tap sometimes do nothing.</li>
+    <li><b>A blank birth-year box shows an amber outline</b> instead of the per-row sentence. The alternative is no marker at all and relying on the foot.</li>
+  </ul>
+</div>
+
+<script>
+(function () {
+  var EVEN = [6, 8, 10, 12, 14, 16, 18];
+  var ODD = [7, 9, 11, 13, 15, 17];
+  var CHECK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  var PLUS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  var XI = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  var CHEV = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  var seq = 0;
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+  function make(el, mode, statKey) {
+    var before = mode === 'b';
+    var phone = mode === 'p';
+    var proposed = !before;
+    var style = 'pre';          // 'pre' = U12, 'suf' = 12U
+    var more = false;           // the odd-age line is open
+    var rows = [];
+
+    function lab(age) { return style === 'pre' ? 'U' + age : age + 'U'; }
+    function nameOf(r) { return r.custom != null ? r.custom : lab(r.age) + (r.sfx ? ' ' + r.sfx : ''); }
+    function mk(age) {
+      var used = rows.filter(function (x) { return x.age === age; }).map(function (x) { return x.sfx; });
+      var sfx = '';
+      if (used.indexOf('') >= 0) {
+        var letters = 'BCDEFGH';
+        for (var i = 0; i < letters.length; i++) { if (used.indexOf(letters[i]) < 0) { sfx = letters[i]; break; } }
+      }
+      return { id: 'r' + (++seq), age: age, sfx: sfx, custom: null, from: '', to: '', cap: '', price: '' };
+    }
+    [8, 10, 10, 12, 12, 14, 16, 18].forEach(function (a) { rows.push(mk(a)); });
+
+    el.innerHTML =
+      '<div class="head"><h3>' + (phone ? 'Add age groups' : 'Add age groups to Walk Summer 2027') + '</h3><button type="button" class="x" aria-label="Close">' + XI + '</button></div>' +
+      '<div class="body"><p class="season" ' + (phone ? '' : 'hidden') + '>Walk Summer 2027</p>' +
+      '<div class="leadrow"><p class="lead">Tap the groups you run, or type your own name. Each becomes a division with its own birth years, size and price.</p>' +
+      (proposed ? '<div class="seg" role="group" aria-label="Name style"><button type="button" data-style="pre">U12</button><button type="button" data-style="suf">12U</button></div>' : '') +
+      '</div><div class="chips"></div><div class="chips odd" hidden></div><div class="rowsWrap"></div><ul class="hints"></ul></div>' +
+      '<div class="foot"><span class="sentence"></span><span class="btns"><button type="button" class="btn">Cancel</button><button type="button" class="btn lime"></button></span></div>';
+
+    var chipsEl = el.querySelector('.chips'), oddEl = el.querySelector('.chips.odd'), wrap = el.querySelector('.rowsWrap'), hints = el.querySelector('.hints');
+    var sentence = el.querySelector('.sentence'), addBtn = el.querySelector('.btn.lime'), body = el.querySelector('.body');
+
+    function countOf(age) { return rows.filter(function (r) { return r.age === age; }).length; }
+    function blank(r) { return !r.from.trim() && !r.to.trim(); }
+    function missing() { return rows.filter(blank).length; }
+    function oddTicked() { return rows.some(function (r) { return ODD.indexOf(r.age) >= 0; }); }
+
+    function chipHtml(age) {
+      var n = countOf(age);
+      var label = lab(age) + (n > 1 && !before ? ' ×' + n : '');
+      return '<button type="button" class="chip" data-g="' + age + '" aria-pressed="' + (n > 0) + '">' + label + (n > 0 ? CHECK : '') + '</button>';
+    }
+
+    function renderChips() {
+      var showOdd = proposed && (more || oddTicked());
+      var h = EVEN.map(chipHtml).join('');
+      h += '<button type="button" class="chip" data-type>' + PLUS + (phone ? 'Name' : 'Type a name') + '</button>';
+      if (proposed) {
+        h += '<button type="button" class="chip more" data-more aria-expanded="' + showOdd + '">' + (showOdd ? 'Fewer ages' : 'More ages') + '<span class="chev' + (showOdd ? ' up' : '') + '">' + CHEV + '</span></button>';
+      }
+      chipsEl.innerHTML = h;
+      oddEl.hidden = !showOdd;
+      oddEl.innerHTML = showOdd ? ODD.map(chipHtml).join('') : '';
+      el.querySelectorAll('.seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-style') === style)); });
+    }
+
+    function rowHtml(r, i) {
+      var name = nameOf(r);
+      var lastOfGroup = rows.map(function (x) { return x.age; }).lastIndexOf(r.age) === i;
+      var bl = blank(r);
+      var years = '<div class="born"><input class="in yr" data-f="from" placeholder="Year" inputmode="numeric" maxlength="4" value="' + esc(r.from) + '"><span>–</span><input class="in yr" data-f="to" placeholder="Year" inputmode="numeric" maxlength="4" value="' + esc(r.to) + '"></div>';
+      var plus = '<button type="button" class="ib" data-act="more" data-tip="Add another ' + esc(lab(r.age)) + '" aria-label="Add another ' + esc(lab(r.age)) + '">' + PLUS + '</button>';
+      var rem = '<button type="button" class="ib" data-act="rm" aria-label="Remove ' + esc(name) + '">' + XI + '</button>';
+      if (before) {
+        return '<div class="row" data-id="' + r.id + '">' +
+          '<label class="field"><span class="lab">Division</span><input class="in" data-f="name" value="' + esc(name) + '"></label>' +
+          '<div class="field"><span class="lab">Born in</span>' + years + '<span class="amber" ' + (bl ? '' : 'hidden') + '>Pick the birth years</span></div>' +
+          '<label class="field"><span class="lab">Players</span><input class="in" data-f="cap" value="' + esc(r.cap) + '"></label>' +
+          '<label class="field"><span class="lab">Price</span><input class="in" data-f="price" value="' + esc(r.price) + '"></label>' +
+          '<div class="acts">' + rem + '</div></div>';
+      }
+      if (phone) {
+        return '<div class="row" data-id="' + r.id + '">' +
+          '<label class="field nm"><span class="lab">Division</span><input class="in" data-f="name" value="' + esc(name) + '"></label>' +
+          '<div class="acts">' + (lastOfGroup ? plus : '') + rem + '</div>' +
+          '<div class="field bn"><span class="lab">Born in</span>' + years + '</div>' +
+          '<label class="field"><span class="lab">Players</span><input class="in" data-f="cap" value="' + esc(r.cap) + '"></label>' +
+          '<label class="field"><span class="lab">Price</span><input class="in" data-f="price" value="' + esc(r.price) + '"></label></div>';
+      }
+      return '<div class="row" data-id="' + r.id + '">' +
+        '<input class="in" data-f="name" aria-label="Division" value="' + esc(name) + '">' + years +
+        '<input class="in" data-f="cap" aria-label="Players" value="' + esc(r.cap) + '">' +
+        '<input class="in" data-f="price" aria-label="Price" value="' + esc(r.price) + '">' +
+        '<div class="acts">' + (lastOfGroup ? plus : '') + rem + '</div></div>';
+    }
+
+    function renderRows() {
+      var head = (mode === 'a') ? '<div class="hdr"><span class="lab">Division</span><span class="lab">Born in</span><span class="lab">Players</span><span class="lab">Price</span><span></span></div>' : '';
+      wrap.innerHTML = rows.length ? head + '<div class="rows">' + rows.map(rowHtml).join('') + '</div>' : '';
+      if (mode === 'a') markBlank();
+    }
+
+    function markBlank() {
+      wrap.querySelectorAll('.row').forEach(function (rowEl) {
+        var r = rows.filter(function (x) { return x.id === rowEl.getAttribute('data-id'); })[0];
+        if (!r) return;
+        rowEl.querySelectorAll('.yr').forEach(function (inp) { inp.classList.toggle('blank', !r[inp.getAttribute('data-f')].trim()); });
+      });
+    }
+
+    function renderHints() {
+      var hs = ['The birth years are yours to pick. We don’t guess them from the name.'];
+      hs.push(before ? 'To run two divisions for one age group, such as U10 A and U10 B, tap its chip again.'
+                     : 'To run two divisions for one age group, such as ' + lab(10) + ' and ' + lab(10) + ' B, tap the + on its row.');
+      hints.innerHTML = hs.map(function (t) { return '<li>' + t + '</li>'; }).join('');
+    }
+
+    function renderFoot() {
+      var n = rows.length, m = missing();
+      var s = n === 0 ? 'Tap the age groups you run.' : phone
+        ? n + ' new' + (m ? ' · ' + m + ' still need birth years' : '')
+        : (n === 1 ? '1 new division' : n + ' new divisions') + (m ? ' · ' + m + ' still need their birth years' : '');
+      sentence.textContent = s;
+      addBtn.textContent = n === 1 ? 'Add 1 division' : 'Add ' + n + ' divisions';
+      if (phone) addBtn.textContent = 'Add ' + n;
+      addBtn.disabled = !(n > 0 && m === 0);
+    }
+
+    function measure() {
+      var rs = wrap.querySelectorAll('.row');
+      var stat = document.querySelector('[data-stat="' + statKey + '"]');
+      if (!stat) return;
+      if (!rs.length) { stat.textContent = ''; return; }
+      var br = body.getBoundingClientRect();
+      var vis = 0;
+      rs.forEach(function (r) { if (r.getBoundingClientRect().bottom <= br.bottom + 1) vis++; });
+      var h = Math.round(rs[0].getBoundingClientRect().height + (before ? 9.6 : 0));
+      stat.textContent = vis + ' of ' + rs.length + ' divisions visible without scrolling · about ' + h + 'px per division';
+    }
+
+    function renderAll() { renderChips(); renderRows(); renderHints(); renderFoot(); measure(); }
+
+    el.addEventListener('click', function (e) {
+      var sg = e.target.closest('.seg button');
+      if (sg) { style = sg.getAttribute('data-style'); renderAll(); return; }
+      var mo = e.target.closest('[data-more]');
+      if (mo) { if (!(more && oddTicked())) { more = !(more || oddTicked()); } renderAll(); return; }
+      var chip = e.target.closest('.chip');
+      if (chip && chip.hasAttribute('data-g')) {
+        var g = parseInt(chip.getAttribute('data-g'), 10);
+        if (before || countOf(g) === 0) {
+          rows.push(mk(g));
+        } else {
+          for (var i = rows.length - 1; i >= 0; i--) { if (rows[i].age === g) { rows.splice(i, 1); break; } }
+        }
+        renderAll();
+        return;
+      }
+      var b = e.target.closest('[data-act]');
+      if (!b) return;
+      var id = b.closest('.row').getAttribute('data-id');
+      var idx = rows.map(function (r) { return r.id; }).indexOf(id);
+      if (b.getAttribute('data-act') === 'rm') { rows.splice(idx, 1); }
+      else { rows.splice(idx + 1, 0, mk(rows[idx].age)); }
+      renderAll();
+    });
+    el.addEventListener('input', function (e) {
+      var inp = e.target.closest('[data-f]');
+      if (!inp) return;
+      var id = inp.closest('.row').getAttribute('data-id');
+      var r = rows.filter(function (x) { return x.id === id; })[0];
+      if (!r) return;
+      var f = inp.getAttribute('data-f');
+      if (f === 'name') { r.custom = inp.value; return; }
+      r[f] = (f === 'from' || f === 'to') ? inp.value.replace(/\D/g, '').slice(0, 4) : inp.value;
+      if (f === 'from' || f === 'to') { inp.value = r[f]; }
+      if (before) { var am = inp.closest('.row').querySelector('.amber'); if (am) am.hidden = !blank(r); }
+      if (mode === 'a') markBlank();
+      renderFoot();
+    });
+    renderAll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+    window.addEventListener('resize', measure);
+  }
+
+  make(document.getElementById('fb'), 'b', 'b');
+  make(document.getElementById('fa'), 'a', 'a');
+  make(document.getElementById('fp'), 'p', 'p');
+})();
+</script>

@@ -105,39 +105,86 @@ td .amberText { display: inline; font-size: inherit; }
 .emptyTitle { margin: 0; font-weight: 650; color: var(--text-primary); }
 .emptyBlock .emptyLine { padding: 0; }
 
-/* A division's record, open in place of its row: the whole record flips (reads first, edits whole). */
-.recordRow > td { padding: 0 !important; background: var(--home-card, var(--card-bg)); }
-.record { padding: 0.5rem 1.1rem 1rem; border-top: 2px solid var(--home-olive); display: flex; flex-direction: column; gap: 0.75rem; }
-.recordHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.recordTitle { font-weight: 700; color: var(--text-primary); }
-.record .rareDoor { margin: 0.25rem 0 0; }
+/* A division's row is the door to its record window (the whole row; the name is the keyboard's button). */
+.rowOpens { cursor: pointer; }
+.rowOpens:hover > td { background: var(--home-olive-soft); }
+/* The record window's door ends its body (the venue's recordEnd). */
+.recordEnd { margin-top: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.5rem; }
 
-/* ── Add age groups: the chips, the rows, the hints ── */
+/* ── Add age groups: the name style, the chips, the rows, the hints ──
+   A suggestion pill is 34px at a desk and the floor on touch (the club scheduler's day pill); a row is ONE line at a desk
+   with its column names once, pinned, above the list; a phone keeps its labels and two lines. */
+.leadRow { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.leadRow > p { flex: 1 1 22rem; }
+/* The name style switch: two words, one chosen (the chosen look is the chip's). */
+.seg { display: inline-flex; flex: none; border: 1px solid var(--home-line-strong, var(--home-line)); border-radius: 8px; overflow: hidden; background: var(--card-bg); }
+.seg button {
+  min-height: var(--admin-control-h, 34px); padding: 0 0.9rem; border: none; background: none;
+  color: var(--text-secondary); font: inherit; font-size: var(--type-body); cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--home-line-strong, var(--home-line)); }
+.seg button[aria-pressed='true'] { background: var(--home-olive-soft); color: var(--home-olive); font-weight: 650; }
+.seg button:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
 .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.25rem 0 0.75rem; }
+.chips + .chips { margin-top: -0.35rem; }
 .chip {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  min-height: var(--tap-min, 44px); padding: 0 0.85rem;
+  min-height: var(--admin-control-h, 34px); padding: 0 0.85rem;
   border: 1px solid var(--home-line-strong, var(--home-line)); border-radius: 999px;
   background: var(--card-bg); color: var(--text-secondary);
   font: inherit; font-size: var(--type-body); cursor: pointer;
 }
 .chip[aria-pressed='true'] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); font-weight: 650; }
 .chip:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.chipMore { border-style: dashed; color: var(--text-tertiary); }
 .chipHad { font-weight: 400; color: var(--text-tertiary); }
 .chipType { display: inline-flex; align-items: center; gap: 0.4rem; }
 .chipType input { width: 11rem; }
-.groupRows { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.75rem; }
-.groupRow {
-  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr) minmax(0, 0.7fr) minmax(0, 0.8fr) auto;
-  gap: 0 0.6rem; align-items: start; padding: 0.6rem 0; border-top: 1px solid var(--home-line);
+
+.groupRows { --cols: minmax(0, 1.1fr) minmax(0, 1.7fr) minmax(0, 0.65fr) minmax(0, 0.75fr) minmax(0, 0.75fr) 4.75rem; display: flex; flex-direction: column; margin-bottom: 0.75rem; }
+.groupHead {
+  position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: var(--cols); gap: 0 0.6rem;
+  padding: 0.35rem 0 0.25rem; background: var(--home-card, var(--card-bg));
+  font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary);
 }
-.groupRow > .iconButton { margin-top: 1.4rem; }
+.groupRow { display: grid; grid-template-columns: var(--cols); gap: 0 0.6rem; align-items: start; padding: 0.45rem 0; border-top: 1px solid var(--home-line); }
+.groupRow > .cell { margin: 0; position: relative; }
+/* The birth-year pair stays on the row's one line down to a narrow window; a focused box clears the pinned head above. */
+.groupRow > .bornCell input { width: 5rem; min-width: 0; }
+.groupRow input { scroll-margin-top: 2.5rem; }
+/* The word over a box: heard on a desk (the pinned heads say it), seen on a phone. */
+.groupRow .rowLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.rowActs { display: flex; justify-content: flex-end; gap: 0.15rem; }
+.rowIcon {
+  width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: none; color: var(--text-secondary); cursor: pointer; border-radius: 8px;
+}
+.rowIcon:hover { background: var(--home-olive-soft); }
+.rowIcon:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .hints { margin: 0.5rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 768px) {
+  .chip, .seg button { min-height: var(--tap-min, 44px); }
+  .rowIcon { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  /* Two 44px buttons and their gap need the wider column, or the + rides over the box beside it. */
+  .groupRows { --cols: minmax(0, 1.1fr) minmax(0, 1.7fr) minmax(0, 0.65fr) minmax(0, 0.75fr) minmax(0, 0.75fr) 5.75rem; }
+}
 @media (max-width: 640px) {
-  .groupRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.4rem 0.6rem; }
-  .groupRow > :nth-child(1) { grid-column: 1 / 3; }
-  .groupRow > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
-  .groupRow > .iconButton { grid-column: 3; grid-row: 1; margin-top: 1.2rem; }
+  .groupHead { display: none; }
+  .groupRow { grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr) minmax(5.75rem, 0.8fr); gap: 0.25rem 0.5rem; align-items: end; padding: 0.5rem 0; }
+  .groupRow > :nth-child(1) { grid-column: 1 / 3; grid-row: 1; }
+  .groupRow > :nth-child(2) { grid-column: 1; grid-row: 2; }
+  .groupRow > :nth-child(3) { grid-column: 2; grid-row: 2; }
+  .groupRow > :nth-child(4) { grid-column: 3; grid-row: 2; }
+  /* The early-bird amount sits under the price it discounts, on a third line of its own. */
+  .groupRow > :nth-child(5) { grid-column: 3; grid-row: 3; }
+  .groupRow > .rowActs { grid-column: 3; grid-row: 1; }
+  /* The second line aligns to its top, so a held reason under the years does not push size and price down. */
+  .groupRow > :nth-child(2), .groupRow > :nth-child(3), .groupRow > :nth-child(4), .groupRow > :nth-child(5) { align-self: start; }
+  .groupRow .rowLabel { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; font-size: var(--type-support); }
+  /* The birth-year pair shares one line with size and price: narrower boxes that do not wrap (a cut-off off January 1 puts
+     its dates beside them and may still need the second line, which the pair's own wrap allows). */
+  .groupRow > .bornCell input { width: 3.6rem; min-width: 0; padding-inline: 0.4rem; }
+  .groupRow > .bornCell [role='group'] > span { gap: 0.25rem; }
 }
 
 /* The checklist's lines (9b-1): title over its line, a door at the end of a line not done, a dash for the optional one. */

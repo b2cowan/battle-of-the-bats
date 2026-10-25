@@ -61,6 +61,18 @@ export const POST = withObservability(async (req: Request) => {
     }
   }
 
+  // A date range runs forward, here as on the season page (owner, 2026-10-25): the forms check it, and so does a direct request.
+  const seasonStart = typeof body.seasonStartDate === 'string' ? body.seasonStartDate : '';
+  const seasonEnd = typeof body.seasonEndDate === 'string' ? body.seasonEndDate : '';
+  if (seasonStart && seasonEnd && seasonEnd < seasonStart) {
+    return NextResponse.json({ error: 'The season can’t end before it starts.' }, { status: 400 });
+  }
+  const regOpens = typeof body.registrationOpenAt === 'string' ? Date.parse(body.registrationOpenAt) : NaN;
+  const regCloses = typeof body.registrationCloseAt === 'string' ? Date.parse(body.registrationCloseAt) : NaN;
+  if (regCloses < regOpens) {
+    return NextResponse.json({ error: 'Registration can’t close before it opens.' }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('league_seasons')
     .insert({

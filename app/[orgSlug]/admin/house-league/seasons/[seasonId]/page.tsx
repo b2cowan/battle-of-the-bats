@@ -322,6 +322,7 @@ export default function SeasonOverviewPage() {
           seasonName={season.name}
           sport={sport}
           cutoff={cutoff}
+          hasEarlyDate={!!season.earlyBirdUntil}
           existing={divisions.map(d => ({ name: d.name, born: { from: d.bornFromYear, to: d.bornToYear } }))}
           // Size and price start from the season: the last division's size, the season's price or the last division's.
           defaultSize={divisions.length ? divisions[divisions.length - 1].capacity : null}

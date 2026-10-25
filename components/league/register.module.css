@@ -45,11 +45,13 @@
 }
 
 .divisionOptionName {
+  display: block;
   font: 600 1rem var(--club-text-face);
   color: var(--club-text);
 }
 
 .divisionCapacity {
+  display: block;
   font-size: 0.875rem;
   color: var(--club-soft);
   margin-top: 0.1rem;
@@ -99,6 +101,15 @@
 }
 .checkRow input[type='checkbox']:focus-visible {
   outline: 2px solid var(--club-ink);
+}
+/* Two consent rows are two separate questions: air between them. */
+.checkRow + .checkRow,
+.checkError + .checkRow {
+  margin-top: 1rem;
+}
+/* The 44px tap row leaves slack under its box; pull the error up so it reads as that checkbox's own message. */
+p.checkError {
+  margin: -0.25rem 0 0;
 }
 .checkRow label {
   font: 400 0.875rem/1.45 var(--club-text-face);

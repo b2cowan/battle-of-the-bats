@@ -32,9 +32,10 @@ export function BornYearsBoxes({ from, to, onFrom, onTo, cutoff, held, described
   classes?: BornYearsClasses;
 }) {
   const affixes = boxAffixes(cutoff);
+  const edge = held ? ` ${styles.boxHeld}` : '';
   const boxClass = classes
-    ? `${classes.box ?? ''}${affixes && classes.boxAffixed ? ` ${classes.boxAffixed}` : ''}${held ? ` ${styles.boxHeld}` : ''}`
-    : `${ck.input} ${affixes ? styles.boxAffixed : styles.box}${held ? ` ${styles.boxHeld}` : ''}`;
+    ? `${classes.box ?? ''}${affixes && classes.boxAffixed ? ` ${classes.boxAffixed}` : ''}${edge}`
+    : `${ck.input} ${affixes ? styles.boxAffixed : styles.box}${edge}`;
   const affixClass = classes?.affix ?? styles.affix;
   const dashClass = classes?.dash ?? styles.dash;
   return (

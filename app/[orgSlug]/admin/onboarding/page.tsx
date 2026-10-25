@@ -84,7 +84,6 @@ type LeagueSeasonForm = {
   name: string;
   slug: string;
   sport: string;
-  division: string;
   description: string;
   seasonStartDate: string;
   seasonEndDate: string;
@@ -114,7 +113,6 @@ function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
     name: defaultName,
     slug: generateSlug(defaultName),
     sport: DEFAULT_SPORT,
-    division: '',
     description: '',
     seasonStartDate: '',
     seasonEndDate: '',
@@ -723,7 +721,6 @@ function OnboardingPageLegacy() {
       name,
       slug,
       sport: leagueSeasonForm.sport || DEFAULT_SPORT,
-      division: leagueSeasonForm.division.trim() || null,
       description: leagueSeasonForm.description.trim() || null,
       seasonStartDate: leagueSeasonForm.seasonStartDate || null,
       seasonEndDate: leagueSeasonForm.seasonEndDate || null,

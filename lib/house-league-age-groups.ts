@@ -5,10 +5,43 @@ import { checkBornYears, type BornYears, type Cutoff } from './born-years';
  * client-safe; tested in tests/unit/house-league-age-groups.test.ts.
  */
 
-/** One row in the window, as typed. */
-export type AgeGroupRow = { key: string; group: string; name: string; from: string; to: string; capacity: string; price: string };
+/**
+ * One row in the window, as typed. `age` is set when the row came from a tap on an age chip (the chip finds its rows by it,
+ * whatever the name style says) and `typed` once the person has edited the name, after which a style switch leaves it alone.
+ */
+export type AgeGroupRow = { key: string; group: string; name: string; from: string; to: string; capacity: string; price: string; earlyPrice?: string; age?: number; typed?: boolean };
 
 const norm = (v: string) => v.trim().toLowerCase();
+
+/** The two ways a league writes an age group: "U12" (prefix) and "12U" (suffix). */
+export type NameStyle = 'pre' | 'suf';
+
+/** The quick-pick ages: the even ones lead, the odd ones sit behind "More ages". */
+export const EVEN_AGES = [6, 8, 10, 12, 14, 16, 18] as const;
+export const ODD_AGES = [7, 9, 11, 13, 15, 17] as const;
+export const isOddAge = (age: number) => (ODD_AGES as readonly number[]).includes(age);
+
+export const ageLabel = (age: number, style: NameStyle) => (style === 'pre' ? `U${age}` : `${age}U`);
+
+/** "U12", "12U", "u12 B", "12U B" → the age, the style it is written in and the letter after it ("" for none). */
+export function parseAgeName(name: string): { age: number; style: NameStyle; letter: string } | null {
+  const m = name.trim().match(/^(?:U\s?(\d{1,2})|(\d{1,2})\s?U)(?:\s+([A-Za-z]))?$/i);
+  if (!m) return null;
+  return { age: parseInt(m[1] ?? m[2], 10), style: m[1] != null ? 'pre' : 'suf', letter: (m[3] ?? '').toUpperCase() };
+}
+
+/** A name written in the other style, same age and same letter ("U12 B" → "12U B"); a name that isn't an age is left alone. */
+export function restyleName(name: string, style: NameStyle): string {
+  const p = parseAgeName(name);
+  return p ? `${ageLabel(p.age, style)}${p.letter ? ` ${p.letter}` : ''}` : name;
+}
+
+/** The style a season's divisions already use: suffix only when every age-named division is written 12U. Null = none to read. */
+export function detectNameStyle(names: readonly string[]): NameStyle | null {
+  const seen = names.map(parseAgeName).filter((p): p is NonNullable<typeof p> => p != null);
+  if (seen.length === 0) return null;
+  return seen.every(p => p.style === 'suf') ? 'suf' : 'pre';
+}
 
 /**
  * The name a newly tapped group gets. The first U10 is "U10"; tapping it again when the season (or the window) already
@@ -48,7 +81,7 @@ function who(names: string[]): { label: string; many: boolean; counted: boolean 
  * size, then price (a name left blank or used twice before all of them). `missing` null = ready to add.
  */
 export function ageGroupsFoot(rows: readonly AgeGroupRow[], cutoff: Cutoff, thisYear: number, taken: readonly string[] = []):
-  { missing: 'nothing' | 'name' | 'years' | 'size' | 'price' | null; desk: string; phone: string } {
+  { missing: 'nothing' | 'name' | 'years' | 'size' | 'price' | 'early' | null; desk: string; phone: string } {
   if (rows.length === 0) return { missing: 'nothing', desk: 'Tap the age groups you run.', phone: 'Tap the groups you run.' };
   const n = rows.length;
   const deskHead = n === 1 ? '1 new division' : `${n} new divisions`;
@@ -82,6 +115,19 @@ export function ageGroupsFoot(rows: readonly AgeGroupRow[], cutoff: Cutoff, this
       const w = who(left);
       const tail = `${w.label} still ${w.many ? 'need' : 'needs'} ${word}`;
       return { missing, desk: `${deskHead} · ${tail}`, phone: `${phoneHead} · ${tail}` };
+    }
+  }
+  // The early-bird amount is the one optional column: blank is fine, but one typed must be money and no more than the price.
+  const typedEarly = rows.filter(r => (r.earlyPrice ?? '').trim() !== '');
+  for (const [test, problem] of [
+    [(r: AgeGroupRow) => !isMoney(r.earlyPrice!.trim()), 'an early-bird amount that isn’t dollars and cents'],
+    [(r: AgeGroupRow) => Number(r.earlyPrice) > Number(r.price), 'an early-bird amount above the price'],
+  ] as const) {
+    const bad = typedEarly.filter(test).map(label);
+    if (bad.length) {
+      const w = who(bad);
+      const tail = `${w.label} ${w.many ? 'have' : 'has'} ${problem}`;
+      return { missing: 'early', desk: `${deskHead} · ${tail}`, phone: `${phoneHead} · ${tail}` };
     }
   }
   return { missing: null, desk: deskHead, phone: phoneHead };
