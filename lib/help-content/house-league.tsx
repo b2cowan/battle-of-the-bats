@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
+import { HelpDefs, HelpDef, HelpSteps } from '@/components/help/HelpBlocks';
 
 const houseLeagueHelp: HelpPageContent = {
   title: 'House league',
@@ -12,19 +13,19 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Understanding the season lifecycle',
       summary: 'A season is Getting ready, Registration open, Registration closed, Playing now, then Finished. You move it yourself, and every change asks first.',
-      keywords: ['season lifecycle', 'status', 'draft', 'getting ready', 'registration open', 'registration closed', 'playing now', 'finished', 'start season', 'complete season', 'archive season', 'reopen season'],
-      searchText: 'season lifecycle status draft getting ready registration open registration closed active playing now starts ended finished completed archived start season activate season complete the season archive the season reopen the season reopen registration close registration open registration transition advance manually every change asks window what changes families not emailed warns never blocks',
+      keywords: ['season lifecycle', 'status', 'draft', 'getting ready', 'registration open', 'registration closed', 'playing now', 'finished', 'start season', 'complete season', 'archive season', 'reopen season', 'close registration', 'reopen registration', 'reopen until', 'closed by date'],
+      searchText: 'opens closed aug 1 you closed registration reopen until the dates run the form season lifecycle status draft getting ready registration open registration closed active playing now starts ended finished completed archived start season activate season complete the season archive the season reopen the season reopen registration close registration open registration transition advance manually every change asks window what changes families not emailed warns never blocks',
       content: (
         <>
           <p>A pill beside the season&apos;s name says what is happening. The pill reads:</p>
           <ul>
             <li><strong>Getting ready</strong> — setup. Nothing is visible to families yet, and the season has no public page.</li>
-            <li><strong>Registration open</strong> — the sign-up form is live. Families can register for any division.</li>
-            <li><strong>Registration closed</strong> — the form no longer takes new sign-ups. Use this phase to review registrations, build teams and prepare the schedule.</li>
+            <li><strong>Registration open</strong> — the sign-up form is live. Families can register for any division. If you gave the form an open date that is still ahead, the pill reads <strong>Opens</strong> and the date until then.</li>
+            <li><strong>Registration closed</strong> — the form no longer takes new sign-ups, either because you closed it or because its close date passed (then the pill reads <strong>Closed</strong> and the date). Use this phase to review registrations, build teams and prepare the schedule.</li>
             <li><strong>Playing now</strong> — you started the season and it is inside its dates. Before its first day the pill reads <strong>Starts</strong> and the date. Once its last day has passed it turns amber and reads <strong>Ended</strong> and the date, until you complete it.</li>
             <li><strong>Finished</strong> — the season is completed or archived. It reads in place, locked (see <em>Closing out a season</em>).</li>
           </ul>
-          <p>You move a season along yourself; nothing advances on its own, and the season&apos;s dates don&apos;t open or close the form. <strong>Open registration</strong> and <strong>Start season</strong> are the next-step buttons at the top of the season&apos;s page. <strong>Close registration</strong> and <strong>Reopen registration</strong> sit on the Registration block. <strong>Complete the season</strong>, <strong>Archive the season</strong> and <strong>Reopen the season</strong> are links at the very end of the page.</p>
+          <p>You move a season along yourself, with one exception: once registration is open, the registration dates run the form. It waits for the open date, and it closes by itself after the close date (see <em>How to open, pause, or close registration</em>). <strong>Open registration</strong> and <strong>Start season</strong> are the next-step buttons at the top of the season&apos;s page. <strong>Close registration</strong> and <strong>Reopen until&hellip;</strong> sit on the Registration block. <strong>Complete the season</strong>, <strong>Archive the season</strong> and <strong>Reopen the season</strong> are links at the very end of the page.</p>
           <p>Every change asks first, in a window that says what changes for families. It warns, but never blocks, when registrations are waiting for review, families are on the waitlist, or players still owe fees. A status change never emails families.</p>
         </>
       ),
@@ -91,27 +92,110 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'create-season',
       group: 'Getting started',
       heading: 'Creating and configuring a season',
-      summary: 'Create the season, then set its divisions, dates and fee on its own page.',
-      keywords: ['create season', 'season setup', 'divisions', 'capacity', 'spots', 'automation', 'registration fee', 'waiver', 'birth years', 'birth year', 'born', 'age', 'cut-off', 'birthday', 'add division', 'edit division', 'delete division', 'pencil', 'edit season', 'edit registration', 'delete season', 'delete a season', 'remove season', 'made by mistake', 'test season'],
-      searchText: 'delete season delete the season remove a season made by mistake test season shell not yet open nothing attached archive instead create season setup name slug sport division registration opens closes fee waiver automation auto approve waitlist accounting divisions capacity spots public url add division edit division delete this division birth years born 2014–2015 families see born beside this division empty box no limit on that side birthdays count from age group season block registration block pencil tick saves as you go checklist before you open registration',
+      summary: 'Creating a season asks three things: name, sport and dates. Age groups, prices, registration dates, the waiver and how families pay are set on the season’s own page.',
+      keywords: ['create season', 'season setup', 'age groups', 'add age groups', 'divisions', 'capacity', 'spots', 'price', 'prices', 'early bird', 'early-bird date', 'how to pay', 'how families pay', 'note for families', 'registration fee', 'waiver', 'email consent', 'new registrations', 'hold for review', 'birth years', 'birth year', 'born', 'age', 'cut-off', 'birthday', 'add division', 'edit division', 'remove division', 'delete division', 'pencil', 'edit season', 'edit registration', 'delete season', 'delete a season', 'remove season', 'made by mistake', 'test season'],
+      searchText: 'create season name sport dates three questions web address made from the name season page add age groups U6 U18 chips type a name each becomes a division born in birth years the club picks size players price free early bird early amount early-bird date one date per season through last day second division U10 A U10 B tap again gap overlap warning partial overlap identical years no warning cut-off birthdays count from settings edit division pencil whole record autosave saves as you go tick note for families fits two divisions changing birth years never moves a registered child no longer fit lowering players never removes anyone remove this division only while nobody is in it accepted received waitlisted price recorded when they sign up never changes price change applies to new sign-ups only registration block registration dates form opens form closes waiver text email consent line asked on the form unticked how families pay required when any price is above $0 shown once a child is accepted and in their email new registrations approve while a division has room hold for review a child waiting for review holds a spot waitlist moves up on its own when a spot frees checklist before you open registration delete season delete the season remove a season made by mistake test season shell not yet open nothing attached archive instead fee received accounting books',
       content: (
         <>
-          <p>From the House league page, click <strong>Create season</strong>. The window asks for the season basics (name, URL slug and sport) and lets you set the season&apos;s dates, the registration dates, a <strong>registration fee</strong>, <strong>waiver text</strong> and the two automation switches right away. The slug appears in public URLs. Creating it opens the season&apos;s own page.</p>
-          <p>That page is where you finish setting up. A season that is still getting ready leads with a <strong>Before you open registration</strong> checklist (see <em>How to launch a house league season</em>). Below it come the <strong>Season</strong> and <strong>Registration</strong> blocks, then <strong>Divisions</strong>, a table with <strong>Add division</strong> and a pencil on each row. Each division (for example &ldquo;U11&rdquo;) has its own registrations, teams, schedule and standings. Give each its number of spots, and a full division starts a waitlist. (The free League plan includes one division.)</p>
-          <p>The <strong>Season</strong> block (name, dates, description) and the <strong>Registration</strong> block (registration dates, fee, waiver, and how new registrations are taken) read first. A season can&apos;t end before it starts, and registration can&apos;t close before it opens; the page tells you and holds the change until a date is fixed. Click the pencil in a block&apos;s heading to edit it; the tick in the same spot goes back to reading. A change saves as you go. <strong>Auto-approve under capacity</strong> approves a registration while its division has room, and <strong>Auto-promote from waitlist</strong> moves the next player up when a spot opens.</p>
-          <p>In <strong>Add division</strong> and <strong>Edit division</strong>, <strong>Birth years</strong> has two year boxes. Families read them beside the division on your public House league page as <strong>Born 2014&ndash;2015</strong>. An empty box means no limit on that side, and with both empty families see no birth years for the division. A year that isn&apos;t four digits, is in the future or is the wrong way round is held, with the reason under the boxes, until it&apos;s fixed. A line there says when your sport&apos;s birthdays count from; the owner sets that in <strong>Settings</strong>. At the end of the Edit window, <strong>Delete this division</strong> asks first; a division that has registrations can&apos;t be deleted.</p>
-          <p>Fees reach your accounting books only when a registration&apos;s fee is marked received, not when you approve it (see <em>Money and Email families</em>). There is no switch for it.</p>
-          <p><strong>Made a season by mistake?</strong> A season that is still <strong>Getting ready</strong> can be deleted: at the very end of its page, click <strong>Delete the season&hellip;</strong>. The window says what goes with it (its divisions and setup) and asks first. Deleting frees the season&apos;s web address, so you can use it again. The link is there only while nothing real is attached: once you open registration, or a family, a team, a game, an email or an entry on the season&apos;s Money page is attached, it isn&apos;t offered, and the season ends by being <strong>archived</strong> instead (see <em>Closing out a season</em>).</p>
+          <p>Creating a season asks three things: its <strong>name</strong>, its <strong>sport</strong> and its <strong>season dates</strong>. Everything else is set on the season&apos;s own page, which opens as soon as you create it.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'create-season-create',
+          title: 'Create a season',
+          content: (
+            <>
+              <HelpSteps>
+                <li>On the House league page, click <strong>Create season</strong>.</li>
+                <li>Type a <strong>Name</strong>, such as <em>Summer 2027</em>, and pick the <strong>Sport</strong>.</li>
+                <li>Set the <strong>Season dates</strong>, the first and last day of play. A season can&apos;t end before it starts.</li>
+                <li>Click <strong>Create season</strong>. The season starts as <strong>Getting ready</strong>, on its own page.</li>
+              </HelpSteps>
+              <p>The season&apos;s web address is made from its name, so there is no address to type. A name another of your seasons already uses, or one that can&apos;t make an address, is refused with a line saying so; give it a different name.</p>
+            </>
+          ),
+        },
+        {
+          id: 'create-season-age-groups',
+          title: 'Add age groups',
+          content: (
+            <>
+              <p>Age groups are the season&apos;s divisions. On the season&apos;s page, <strong>Add age groups</strong> (in the Divisions block) opens a window where you tap the groups you run, from <strong>U6</strong> to <strong>U18</strong>, or type your own name with <strong>Type a name</strong>. Each becomes a division with its own birth years, size and price.</p>
+              <ul>
+                <li><strong>Born in</strong> — you pick the first and last birth year for each group. They start blank on purpose: the product never guesses them from a name like U13.</li>
+                <li><strong>Players</strong> and <strong>Price</strong> — start from the season&apos;s values and can be changed per group. Enter 0 for a free group.</li>
+                <li><strong>A second division for one age group</strong> — tap its chip again to add U10 B beside U10 A.</li>
+                <li><strong>Gaps and overlaps</strong> — an amber line points out a birth year no division takes, or two groups whose years partly overlap. It never blocks. Two groups with exactly the same years raise no warning, because that is how two divisions for one age group are set up.</li>
+              </ul>
+              <p>The button at the foot reads <strong>Add 3 divisions</strong> and names the first thing still missing, such as a group that needs its birth years. A line in the window says when the club&apos;s birthdays count from; the owner sets that in <strong>Settings</strong>. The free League plan includes one division.</p>
+            </>
+          ),
+        },
+        {
+          id: 'create-season-division',
+          title: 'Edit a division',
+          content: (
+            <>
+              <p>A division reads first, in a table with <strong>Born in</strong>, <strong>Players</strong>, <strong>Price</strong> and <strong>Early bird</strong>. Click the pencil on its row to open its whole record in place, and the tick to go back to reading. Every change saves as you go.</p>
+              <ul>
+                <li><strong>Name</strong>, <strong>Born in</strong>, <strong>Players</strong> (its size), <strong>Price</strong> and <strong>Early bird</strong> are fields on the record.</li>
+                <li><strong>Note for families</strong> — a short line, such as <em>Tuesday nights</em>. Families see it on the sign-up form only when a child fits two divisions, to help them choose.</li>
+                <li><strong>Changing birth years never moves a child who is already registered.</strong> The record says how many registered children no longer fit the new years; they stay where they are.</li>
+                <li><strong>Lowering Players</strong> never removes anyone.</li>
+                <li><strong>Remove this division&hellip;</strong> ends the record, and is there only while nobody is in it (accepted, received or on the waitlist). It asks first, and you can add the division again later.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'create-season-prices',
+          title: 'Prices and early bird',
+          content: (
+            <>
+              <p>Each division has its own <strong>Price</strong> (0 reads <strong>Free</strong>) and, if you like, its own early-bird amount. The early-bird <em>date</em> is one date for the whole season, set in the <strong>Registration</strong> block, and it is the last day the early amount applies: a child who signs up on or before it pays the early amount.</p>
+              <ul>
+                <li>An early amount can&apos;t be more than the price. An early amount with no season early-bird date does nothing, and the division says it needs a date.</li>
+                <li><strong>A child&apos;s price is recorded when they sign up.</strong> Editing prices later changes new sign-ups only; each registration keeps the price it signed up at.</li>
+                <li>Fees reach your accounting books only when a registration&apos;s fee is marked received, not when you approve it (see <em>Money and Email families</em>).</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'create-season-registration',
+          title: 'The Registration block',
+          content: (
+            <>
+              <p>The <strong>Registration</strong> block reads first. Click the pencil in its heading to edit it and the tick to go back; changes save as you go. A season&apos;s form can&apos;t close before it opens, and the page holds that change until the dates are fixed.</p>
+              <HelpDefs>
+                <HelpDef term="Registration dates">When the form opens and closes. Once registration is open, the dates run the form.</HelpDef>
+                <HelpDef term="Early-bird date">The last day each division&apos;s early amount applies.</HelpDef>
+                <HelpDef term="Waiver">Text families tick a box to agree to. Leave it empty if you don&apos;t need one.</HelpDef>
+                <HelpDef term="Email consent">A line the sign-up form always asks, unticked, beside the waiver: whether the club may email about future seasons and club news. Emails about the sign-up itself are sent either way.</HelpDef>
+                <HelpDef term="How families pay">Your own words, such as an e-Transfer address and a deadline. Families see them once a child is accepted, and in their email. It is required when any division has a price above $0, and can&apos;t be emptied while registration is open and a division charges. A free season doesn&apos;t need it.</HelpDef>
+                <HelpDef term="New registrations">Either approved while a division has room, with a full division starting a waitlist, or held for your review. A child waiting for review holds a spot, so once accepted and waiting children fill a division, the next child goes to the waitlist.</HelpDef>
+                <HelpDef term="Waitlist">Moves up on its own when a spot frees, or you move it up yourself.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'create-season-delete',
+          title: 'Delete a season made by mistake',
+          content: (
+            <p>A season that is still <strong>Getting ready</strong> can be deleted: at the very end of its page, click <strong>Delete the season&hellip;</strong>. The window says what goes with it (its divisions and setup) and asks first. Deleting frees the season&apos;s web address, so you can use it again. The link is there only while nothing real is attached: once you open registration, or a family, a team, a game, an email or an entry on the season&apos;s Money page is attached, it isn&apos;t offered, and the season ends by being <strong>archived</strong> instead (see <em>Closing out a season</em>).</p>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-launch-season',
       group: 'How-to recipes',
       heading: 'How to launch a house league season',
-      summary: 'Create the season, finish its three-step checklist, and open registration.',
-      keywords: ['launch season', 'season setup', 'registration open', 'divisions', 'capacity', 'spots', 'checklist', 'before you open registration', 'open registration button'],
-      searchText: 'launch season create season setup divisions spots capacity dates fee free checklist before you open registration open registration button appears public form automation auto approve waitlist schedule teams view public page',
+      summary: 'Create the season, finish the checklist (age groups, prices, registration dates and how to pay), and open registration.',
+      keywords: ['launch season', 'season setup', 'registration open', 'age groups', 'prices', 'how to pay', 'divisions', 'capacity', 'spots', 'checklist', 'before you open registration', 'open registration button'],
+      searchText: 'launch season create season setup age groups divisions spots capacity prices birth years registration dates how to pay how families pay waiver optional free checklist before you open registration open registration button appears public form new registrations approve hold for review schedule teams view public page',
       links: [
         { label: 'House league', href: '../house-league' },
       ],
@@ -119,24 +203,24 @@ const houseLeagueHelp: HelpPageContent = {
         <>
           <p>Use this checklist when starting a new recreational season.</p>
           <ol>
-            <li>Click <strong>Create season</strong> on the House league page. The season starts as <strong>Getting ready</strong>, on its own page.</li>
-            <li>Work through <strong>Before you open registration</strong>. Each line shows a tick when it is done: <strong>Add a division, and give each one its number of spots</strong>; <strong>Set the first and last day of the season</strong>; <strong>Set the registration fee</strong> (enter 0 if it is free).</li>
-            <li>Check the <strong>Registration</strong> block: the waiver, and whether new registrations are approved while a division has room or wait for your review.</li>
-            <li>When all three lines are done, <strong>Open registration</strong> appears beside the checklist. Click it and read the window, then confirm. It does not email families.</li>
+            <li>Click <strong>Create season</strong> on the House league page, give it a name, sport and dates. The season starts as <strong>Getting ready</strong>, on its own page.</li>
+            <li>Work through <strong>Before you open registration</strong>. Each line shows a tick when it is done: <strong>Age groups</strong> (each with birth years and a size); <strong>Prices</strong> (a price for each age group, 0 if it is free); <strong>Registration dates</strong> (when the form opens and closes); <strong>How to pay</strong>; and <strong>Waiver</strong>, which is optional.</li>
+            <li>Check the <strong>Registration</strong> block: the early-bird date, the waiver, and whether new registrations are approved while a division has room or held for your review.</li>
+            <li>When the required lines are done, <strong>Open registration</strong> appears beside the checklist. Click it and read the window, then confirm. It does not email families.</li>
             <li>Click <strong>View public page</strong> and share its link from your website, email list or social media once the form is live.</li>
           </ol>
-          <p>The button isn&apos;t there until the three steps are done, so a season can&apos;t open half-built. Changing divisions or spots after families start registering can make the review queue harder to manage.</p>
+          <p>The button isn&apos;t there until the required lines are done, so a season can&apos;t open half-built. <strong>How to pay</strong> appears on the checklist only when some price is above $0, and a free season skips it. A line that isn&apos;t done has a door to the place that fixes it, and the line under the checklist says what is still missing. Changing divisions or spots after families start registering can make the review queue harder to manage.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-house-league-before-opening',
           question: 'What should be done before I open house league registration?',
-          answerText: 'Finish the three-step checklist on the season page: at least one division with its number of spots, the season’s first and last day, and a registration fee (0 if it is free). Open registration appears once all three are done.',
-          keywords: ['open registration', 'launch checklist', 'division capacity', 'open registration missing', 'no open registration button'],
+          answerText: 'Finish the checklist on the season page: add age groups with birth years and a size, set a price for each (0 if it is free), set when the form opens and closes, and add how families pay when any price is above $0. The waiver is optional. Open registration appears once the required lines are done.',
+          keywords: ['open registration', 'launch checklist', 'division capacity', 'open registration missing', 'no open registration button', 'age groups', 'how to pay', 'prices', 'registration dates'],
           popular: true,
           answer: (
-            <p>Finish the three lines under <strong>Before you open registration</strong> on the season&apos;s page: a division with its number of spots, the season&apos;s first and last day, and a registration fee (0 if it&apos;s free). <strong>Open registration</strong> appears once all three are done.</p>
+            <p>Finish the lines under <strong>Before you open registration</strong> on the season&apos;s page: <strong>Age groups</strong> with birth years and a size, a <strong>Price</strong> for each (0 if it&apos;s free), the <strong>Registration dates</strong>, and <strong>How to pay</strong> when any price is above $0. The waiver is optional. <strong>Open registration</strong> appears once the required lines are done.</p>
           ),
         },
       ],
@@ -145,24 +229,35 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'recipe-open-close-registration',
       group: 'How-to recipes',
       heading: 'How to open, pause, or close registration',
-      summary: 'Control whether families can submit new house league registrations, and start the season when you are ready.',
-      keywords: ['open registration', 'close registration', 'reopen registration', 'pause registration', 'start season', 'public form', 'season status'],
-      searchText: 'open registration close registration reopen registration pause public form season status registration open closed getting ready start season activate season waitlist capacity registration block window what changes families not emailed warns waiting registrations',
+      summary: 'Open registration, let the dates run the form, close it early, reopen it until a new date, and start the season when you are ready.',
+      keywords: ['open registration', 'close registration', 'close registration early', 'reopen registration', 'reopen until', 'pause registration', 'new close date', 'registration dates', 'opens', 'closed', 'you closed registration', 'start season', 'public form', 'season status'],
+      searchText: 'open registration close registration close early reopen registration reopen until new close date pause public form season status registration open closed getting ready the dates run the form opens jun 1 closed aug 1 closes by itself close date passed you closed registration on form opens form closes start season activate season waitlist keeps its place capacity registration block window what changes families not emailed warns waiting registrations',
       links: [
         { label: 'House league', href: '../house-league' },
       ],
       content: (
         <>
-          <p>Registration availability follows the season&apos;s state. Every change asks in a window that says what changes for families.</p>
+          <p>Registration follows the season&apos;s state and its registration dates together, and the Registration block always says whether the date or you closed it. Every change you make asks first, in a window that says what changes for families.</p>
           <ol>
-            <li>Open the season&apos;s page. When the checklist is done, click <strong>Open registration</strong> to put the form live.</li>
-            <li>To stop new sign-ups, click <strong>Close registration</strong> on the <strong>Registration</strong> block. The window warns, but doesn&apos;t block, if registrations are waiting for review or families are on the waitlist. Families already on the waitlist keep their place, and you can still approve, waitlist and add registrations by hand.</li>
-            <li>To take sign-ups again, click <strong>Reopen registration</strong> on the same block. It is offered while the season is <strong>Registration closed</strong>, not once the season is under way; add late players by hand.</li>
+            <li>Open the season&apos;s page. When the checklist is done, click <strong>Open registration</strong> to put the form live. If the form&apos;s open date is still ahead, the page says <strong>Opens</strong> and the date, and families can sign up from that day.</li>
+            <li>To stop new sign-ups now, click <strong>Close registration</strong> on the <strong>Registration</strong> block. The window warns, but doesn&apos;t block, if registrations are waiting for review or families are on the waitlist. Families already on the waitlist keep their place, and you can still approve, waitlist and add registrations by hand. The block then reads <strong>You closed registration on</strong> the day you did.</li>
+            <li>To take sign-ups again, click <strong>Reopen until&hellip;</strong> on the same block and pick a new close date. The form opens again now and runs to the end of that day. Families are not emailed. It is offered until the season is under way; add late players by hand after that.</li>
             <li>When teams and the schedule are ready, click <strong>Start season</strong> at the top of the page. Teams and the schedule can still change while it is running.</li>
           </ol>
-          <p>If you need a short pause, closing registration is safer than deleting divisions or lowering spots. The form follows the state you set, not the registration dates: a close date that has passed does not close it for you.</p>
+          <p><strong>The close date closes the form by itself.</strong> Once the date passes, the block reads <strong>Closed</strong> and the date, for example <em>Closed Aug 1</em>, and the form takes no more sign-ups. You don&apos;t have to press anything: you can go straight to <strong>Start season</strong>, or choose <strong>Reopen until&hellip;</strong> to take late sign-ups. The season&apos;s public page shows the same state to families.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-house-league-registration-closed-itself',
+          question: 'Registration closed and I did not press anything. Why?',
+          answerText: 'The registration close date passed, so the form closed by itself. The Registration block reads Closed with the date, for example Closed Aug 1. To take late sign-ups, click Reopen until and pick a new close date. To carry on, click Start season. When you close registration yourself, the block reads You closed registration on the day you did.',
+          keywords: ['registration closed itself', 'closed automatically', 'close date passed', 'closed aug 1', 'reopen until', 'reopen registration', 'late sign-ups', 'form closed'],
+          answer: (
+            <p>The registration <strong>close date</strong> passed, so the form closed by itself. The Registration block reads <strong>Closed</strong> and the date. To take late sign-ups, click <strong>Reopen until&hellip;</strong> and pick a new close date; to carry on, click <strong>Start season</strong>. When you close registration yourself, the block reads <strong>You closed registration on</strong> the day you did.</p>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-build-teams',
@@ -254,24 +349,88 @@ const houseLeagueHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'family-signup',
+      group: 'Running the season',
+      heading: 'What families see when they sign up',
+      summary: 'Families sign up one child or several in one go, see each child’s outcome before they send, get one reference and one email, and check their status with their email and reference.',
+      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'status page', 'check your registration', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird'],
+      searchText: 'family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page check your registration email and reference find everything parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received',
+      content: (
+        <>
+          <p>This is what a family sees on your season&apos;s sign-up form, after it and in their email. Knowing it helps when a parent phones to ask what a screen meant.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'family-signup-form',
+          title: 'Signing up one child or several',
+          content: (
+            <>
+              <p>One form signs up one child or several. <strong>+ Add another child</strong> adds a block for each, up to eight at once, and a family signs up again for more. Each child&apos;s <strong>date of birth</strong> finds their division from the birth years you set, under your club&apos;s cut-off, so the family doesn&apos;t choose.</p>
+              <ul>
+                <li><strong>Each child&apos;s outcome shows before Sign up.</strong> A line under the child says the division, how many spots are left and the price, with the early-bird price applied or a note that it ended. A full division says the child joins the waitlist and pays nothing unless a spot opens.</li>
+                <li><strong>A spot one child takes counts against the next</strong> child in the same sign-up. A child never jumps an existing waitlist: if the division has a waitlist, the child joins it.</li>
+                <li><strong>Two divisions for one age group</strong> — the family picks, seeing each division&apos;s <strong>Note for families</strong> and how much room it has.</li>
+                <li><strong>A season that doesn&apos;t sort by age</strong> shows a Division list instead, with the spots left in each.</li>
+                <li>The waiver, if you set one, and the unticked email-consent line sit before the button. The button reads <strong>Sign up 2 children</strong> when there are several.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'family-signup-nofit',
+          title: 'A child no division fits',
+          content: (
+            <p>When no division takes a child&apos;s birth year, the form says so in a card with your club&apos;s contact details, and that child is left out: nothing is signed up for them. The other children in the same sign-up still go through. If you want that child in, add an age group or change a division&apos;s birth years first.</p>
+          ),
+        },
+        {
+          id: 'family-signup-after',
+          title: 'The reference, the email and the status page',
+          content: (
+            <>
+              <p>One sign-up gets one <strong>reference</strong>, shown on the confirmation and in the one email the family receives. The email lists every child with their division, outcome and price, the total to pay, and, once a child is accepted, your <strong>How families pay</strong> words. The form doesn&apos;t take payment; families pay you the way you describe.</p>
+              <ul>
+                <li><strong>Accepted</strong> — the child has a spot. This is what you set by clicking Approve, or what an automatic season does while a division has room.</li>
+                <li><strong>Received</strong> — the child is waiting for your review. Nothing is due yet. This is Pending review on your side.</li>
+                <li><strong>Waitlist</strong>, with their place, such as <em>Waitlist &middot; 1st</em>.</li>
+              </ul>
+              <p>On the season&apos;s <strong>Check your registration</strong> page, a family enters their parent or guardian email and their reference to find every child in the sign-up, with each child&apos;s status, division, fee and how to pay. Both the email and the reference are needed.</p>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-house-league-family-lost-reference',
+          question: 'A family lost their reference. How do they check their registration?',
+          answerText: 'The reference is in the confirmation email, which lists every child in the sign-up. They enter that reference and the parent or guardian email they signed up with on the season’s Check your registration page. If they cannot find the email, ask them to check spam, or find the registration by name or parent email on the Registrations page.',
+          keywords: ['lost reference', 'reference', 'check registration', 'status page', 'confirmation email', 'sign up status', 'find sign-up'],
+          answer: (
+            <p>The reference is in their confirmation email. They enter it with the parent or guardian email they signed up with on the season&apos;s <strong>Check your registration</strong> page. If they can&apos;t find the email, ask them to check their spam folder, or search by player name or parent email on the Registrations page.</p>
+          ),
+        },
+      ],
+    },
+    {
       id: 'registrations',
       group: 'Running the season',
       heading: 'Managing registrations day to day',
       summary: 'Review the queue, approve/waitlist/decline (each emails the family), track fee status, add players by hand, and email families.',
-      keywords: ['registrations', 'approve', 'waitlist', 'decline', 'fee paid', 'fee received', 'email families', 'withdrawn', 'add registration', 'registrar'],
-      searchText: 'manage registrations pending review active waitlist declined withdrawn approve decline confirm email guardian fee paid checkbox fee received email families email blast add registration by hand walk-in tabs league registrar finished season locked registrations locked',
+      keywords: ['registrations', 'approve', 'waitlist', 'decline', 'fee paid', 'fee received', 'email families', 'withdrawn', 'add registration', 'registrar', 'division full', 'add to the waitlist instead', 'needs attention', 'sign-up', 'reference'],
+      searchText: 'division is full add to the waitlist instead approve refused hand-add refused moving a child into a full division nobody jumps the waitlist a child waiting for review holds a spot one needs attention notice per sign-up several children one reference accepted received manage registrations pending review active waitlist declined withdrawn approve decline confirm email guardian fee paid checkbox fee received email families email blast add registration by hand walk-in tabs league registrar finished season locked registrations locked',
       links: [
         { label: 'Registrations guide', href: '../help/registrations' },
       ],
       content: (
         <>
-          <p>Registrations arrive via the public form while a season is in <strong>Registration open</strong>. Each lands in <strong>Pending review</strong> unless the season approves automatically while a division has room. On the Registrations page, the tabs (Pending review, Active, Waitlist, Declined / withdrawn) and the search box help you work a large list. The owner, club admin, league admin and league registrar all work this page.</p>
+          <p>Registrations arrive via the public form while a season is in <strong>Registration open</strong>. Each lands in <strong>Pending review</strong> unless the season approves automatically while a division has room. A child waiting for review holds a spot. Several children signed up together arrive as separate rows sharing one reference, with one <strong>Needs attention</strong> notice for the whole sign-up. On the Registrations page, the tabs (Pending review, Active, Waitlist, Declined / withdrawn) and the search box help you work a large list. The owner, club admin, league admin and league registrar all work this page.</p>
           <ul>
-            <li><strong>Approve</strong> — moves the player to Active and emails the family. They&apos;re eligible for team assignment.</li>
-            <li><strong>Waitlist</strong> — holds the registration in queue and emails the family their position. If auto-promote is on, the next waitlisted player advances when a spot opens.</li>
+            <li><strong>Approve</strong> — moves the player to Active and emails the family, who read it as <strong>Accepted</strong>. They&apos;re eligible for team assignment. A full division refuses Approve with <em>Add to the waitlist instead</em>.</li>
+            <li><strong>Waitlist</strong> — holds the registration in queue and emails the family their position. If the waitlist moves up on its own, the next waitlisted player advances when a spot opens. A new sign-up never jumps the waitlist, which moves up only when a spot frees.</li>
             <li><strong>Decline</strong> — asks you to confirm, then emails a decline notice to the family.</li>
           </ul>
-          <p>Each row has a <strong>Fee paid</strong> toggle so you can track payment alongside status. Ticking it marks the fee received and records it as one income line in the season&apos;s accounting book; unticking it voids that line, and declining or withdrawing a registration whose fee was paid voids it too. Approving a registration does not create a fee line. <strong>Add registration</strong> enters a player by hand, outside the public form (walk-ins or carry-overs). <strong>Email families</strong> emails a group: everyone active, or filtered by division, team, or status.</p>
+          <p>Each row has a <strong>Fee paid</strong> toggle so you can track payment alongside status. Ticking it marks the fee received and records it as one income line in the season&apos;s accounting book; unticking it voids that line, and declining or withdrawing a registration whose fee was paid voids it too. Approving a registration does not create a fee line. <strong>Add registration</strong> enters a player by hand, outside the public form (walk-ins or carry-overs); a full division refuses it the same way, as it does moving a child in. <strong>Email families</strong> emails a group: everyone active, or filtered by division, team, or status.</p>
           <p>Once a season is finished, its registrations are locked: Approve, Waitlist, Decline, withdraw and <strong>Add registration</strong> are gone. The <strong>Fee paid</strong> toggle and <strong>Email families</strong> stay.</p>
           <p>For the full registration workflow, see the <a href="../help/registrations">Registrations guide</a>.</p>
         </>
@@ -306,12 +465,12 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Running the season',
       heading: 'Sharing the public season page',
       summary: 'Once a season leaves Getting ready it gets a public page, and your club’s pages list every live season.',
-      keywords: ['public page', 'public url', 'share', 'registration link', 'running now', 'playing now', 'final standings', 'past seasons'],
+      keywords: ['public page', 'public url', 'share', 'registration link', 'opens', 'closed', 'price range', 'early bird', 'running now', 'playing now', 'final standings', 'past seasons'],
       searchText: 'public season page url share registration link schedule standings view public page getting ready no public page league page running now registration open registration closed starts playing now final standings past seasons club home open now every live season',
       content: (
         <>
           <p>A season has no public page while it&apos;s <strong>Getting ready</strong>. Once you open registration, a <strong>View public page</strong> button appears at the top of the season&apos;s page. That page is where families register and, later, follow the schedule and standings; share its link directly.</p>
-          <p>Your club&apos;s house league page lists <strong>every</strong> live season under <strong>Running now</strong>, newest first, each labelled by what is happening: <strong>Registration open</strong>, <strong>Registration closed</strong>, <strong>Starts</strong> and its first day, <strong>Playing now</strong>, or <strong>Final standings</strong> once the season&apos;s dates have passed but it isn&apos;t completed yet. Each row has its own links (<strong>Register</strong>, <strong>Schedule</strong>, <strong>Standings</strong>, <strong>Season page</strong>). Finished seasons sit below under <strong>Past seasons</strong>. Your club&apos;s home page lists every live season too, and a season that is taking registrations also shows under <strong>Open now</strong>.</p>
+          <p>Your club&apos;s house league page lists <strong>every</strong> live season under <strong>Running now</strong>, newest first, each labelled by what is happening: <strong>Opens</strong> and its date, <strong>Registration open</strong>, <strong>Closed</strong> and its date (when the close date has passed) or <strong>Registration closed</strong> (when you closed it), <strong>Starts</strong> and its first day, <strong>Playing now</strong>, or <strong>Final standings</strong> once the season&apos;s dates have passed but it isn&apos;t completed yet. Each row has its own links (<strong>Register</strong>, <strong>Schedule</strong>, <strong>Standings</strong>, <strong>Season page</strong>). Finished seasons sit below under <strong>Past seasons</strong>. The season&apos;s own page shows families the price range, the early-bird day and each division&apos;s note for families, and never says who closed registration. Your club&apos;s home page lists every live season too, and a season that is taking registrations also shows under <strong>Open now</strong>.</p>
         </>
       ),
     },

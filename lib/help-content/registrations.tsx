@@ -10,15 +10,15 @@ const registrationsHelp: HelpPageContent = {
       group: 'How registrations work',
       heading: 'What each registration status means',
       summary: 'Pending review, Active, Waitlisted, Declined, and Withdrawn — what each one does.',
-      keywords: ['status', 'pending review', 'active', 'waitlisted', 'declined', 'withdrawn'],
-      searchText: 'registration status pending review active waitlisted declined withdrawn capacity queue position decline email approved',
+      keywords: ['status', 'pending review', 'active', 'waitlisted', 'declined', 'withdrawn', 'accepted', 'received', 'what families see'],
+      searchText: 'accepted received holds a spot family word registration status pending review active waitlisted declined withdrawn capacity queue position decline email approved',
       content: (
         <>
           <p>Every registration sits in one of five states:</p>
           <ul>
-            <li><strong>Pending review</strong> — the family submitted the form but no one has acted on it yet. This is the default unless auto-approve is enabled.</li>
-            <li><strong>Active</strong> — approved. The player is eligible for team assignment and counts against the division capacity.</li>
-            <li><strong>Waitlisted</strong> — the division is full or you placed the player on the waitlist manually. The player holds a numbered position. If auto-promote is on, the next waitlisted player advances to Active automatically when a spot opens.</li>
+            <li><strong>Pending review</strong> — the family submitted the form but no one has acted on it yet. This is the default unless the season approves new registrations while a division has room. A child in Pending review holds a spot, and families read this state as <strong>Received</strong>.</li>
+            <li><strong>Active</strong> — approved; families read it as <strong>Accepted</strong>. The player is eligible for team assignment and counts against the division capacity.</li>
+            <li><strong>Waitlisted</strong> — the division is full or you placed the player on the waitlist manually. The player holds a numbered position, and a new sign-up never jumps it: while a division has a waitlist, a new child joins the queue even if a spot looks free. If the season moves the waitlist up on its own, the next waitlisted player advances to Active automatically when a spot opens.</li>
             <li><strong>Declined</strong> — you declined the registration; a decline email goes to the family. The player does not count against capacity.</li>
             <li><strong>Withdrawn</strong> — the registration was cancelled after approval. It&apos;s kept for your records but the player is no longer active.</li>
           </ul>
@@ -31,8 +31,8 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to work the daily registration review queue',
       summary: 'Review pending players, confirm details, and keep the queue from backing up.',
-      keywords: ['daily review', 'pending registrations', 'approve', 'decline', 'fee paid', 'review queue'],
-      searchText: 'daily review queue pending registrations approve waitlist decline fee paid payment search player name parent email status tabs duplicate confirm',
+      keywords: ['daily review', 'pending registrations', 'approve', 'decline', 'fee paid', 'review queue', 'division full', 'add to the waitlist instead'],
+      searchText: 'division is full add to the waitlist instead one needs attention notice per sign-up several children one reference daily review queue pending registrations approve waitlist decline fee paid payment search player name parent email status tabs duplicate confirm',
       content: (
         <>
           <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the status tabs (Pending review, Active, Waitlist, Declined / withdrawn) plus the search box are how you move through it.</p>
@@ -40,7 +40,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Open <strong>Registrations</strong> and start on the <strong>Pending review</strong> tab.</li>
             <li>Use the <strong>search box</strong> (player name or parent email) to find a specific family or spot duplicates.</li>
             <li>Check each row&apos;s player, guardian contact, and division before acting.</li>
-            <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row.</li>
+            <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row. If the division is full, Approve is refused with <em>Add to the waitlist instead</em>.</li>
             <li>Use the <strong>Fee paid</strong> toggle to track payment separately from status. Approving never creates a fee line; ticking Fee paid writes it into the season&apos;s accounting book.</li>
           </ol>
           <p>During peak registration, clear the pending list at least once a day so families know where they stand and the waitlist order stays clean.</p>
@@ -68,7 +68,7 @@ const registrationsHelp: HelpPageContent = {
       searchText: 'promote waitlisted player waitlist position queue capacity spot opens active registration auto promote manual promote notification email email families sent log notifications log',
       content: (
         <>
-          <p>Promote from the waitlist when a division has room and you&apos;re ready to offer the spot.</p>
+          <p>Promote from the waitlist when a division has room and you&apos;re ready to offer the spot. Promotion happens only when a spot frees, and a new sign-up never jumps the queue.</p>
           <ol>
             <li>Open the <strong>Waitlist</strong> tab.</li>
             <li>Start with position #1 unless your organization has a documented exception.</li>
@@ -96,7 +96,7 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to add a manual registration',
       summary: 'Enter a player who registered outside the public form.',
-      keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player', 'registration night'],
+      keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player', 'registration night', 'division full', 'add to the waitlist instead'],
       searchText: 'manual registration add registration by hand walk-in carry-over player public form offline division status active pending waitlisted guardian fee paid registration night in person table one laptop too many attempts league registrar can add finished season locked no add registration',
       content: (
         <>
@@ -109,7 +109,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Mark the fee paid if payment has already been received.</li>
             <li>Save and confirm the player appears in the expected status tab.</li>
           </ol>
-          <p>Manual entries should still follow your division capacity and waitlist policy. If the division is full, add the player as waitlisted unless your board has approved an exception. A manual entry creates no fee line on its own; marking its fee paid writes one income line into the season&apos;s accounting book. Add registration isn&apos;t offered once the season is finished; the season&apos;s registrations are locked then.</p>
+          <p>A full division refuses a hand-added registration with <em>Add to the waitlist instead</em>, and moving a child into a full division is refused too, so a manual entry can&apos;t take a spot that isn&apos;t there. Add the player as waitlisted, or free a spot first. A manual entry creates no fee line on its own; marking its fee paid writes one income line into the season&apos;s accounting book. Add registration isn&apos;t offered once the season is finished; the season&apos;s registrations are locked then.</p>
         </>
       ),
       faqs: [
