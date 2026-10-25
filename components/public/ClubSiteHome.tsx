@@ -1,6 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import FollowOrgButton from './FollowOrgButton';
+import LeagueSeasonRows, { type PublicLeagueSeason } from './LeagueSeasonRows';
 import { ClubSponsorStrip } from './ClubSponsors';
 import { siteEdit } from '@/lib/site-edit-marks';
 import { orgLinks } from '@/lib/org-links';
@@ -63,7 +64,8 @@ export interface ClubSiteHomeProps {
   bannerUrl: string | null;
   openNow: OpenNowRow[];
   teamBands: TeamBand<HomeTeam>[];
-  league: { href: string; title: string; sub: string } | null;
+  /** House league: every live season as a row (Stage 9a, Q14); with none live, the one row to the league page. */
+  league: { href: string; title: string; sub: string; seasons: PublicLeagueSeason[]; today: string } | null;
   tournaments: HomeTournament[];
   about: string | null;
   /** The About page, when it says more than the about text (a contact, a document or a question). */
@@ -129,14 +131,18 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
   const league = sections.includes('league') && p.league && (
     <section className={kit.section} aria-labelledby="house-league" {...siteEdit('home')}>
       <h2 id="house-league" className={kit.sectionTitle}>House league</h2>
-      <div className={kit.list}>
-        <Link href={p.league.href} className={kit.row}>
-          <span className={kit.rowMain}>
-            <span className={kit.rowName}>{p.league.title}</span>
-            <span className={kit.rowSub}>{p.league.sub}</span>
-          </span>
-        </Link>
-      </div>
+      {p.league.seasons.length > 0 ? (
+        <LeagueSeasonRows seasons={p.league.seasons} today={p.league.today} label="House league seasons" />
+      ) : (
+        <div className={kit.list}>
+          <Link href={p.league.href} className={kit.row}>
+            <span className={kit.rowMain}>
+              <span className={kit.rowName}>{p.league.title}</span>
+              <span className={kit.rowSub}>{p.league.sub}</span>
+            </span>
+          </Link>
+        </div>
+      )}
     </section>
   );
 

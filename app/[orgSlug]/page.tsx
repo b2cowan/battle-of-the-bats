@@ -13,6 +13,9 @@ import { orgLinks } from '@/lib/org-links';
 import { loadClubHome } from '@/lib/club-home-data';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
 import ClubSiteHome from '@/components/public/ClubSiteHome';
+import LeagueSeasonRows from '@/components/public/LeagueSeasonRows';
+import { liveLeagueSeasons } from '@/lib/house-league-season';
+import { tournamentToday } from '@/lib/timezone';
 import styles from './Home.module.css';
 import club from './ClubHome.module.css';
 import kit from '@/components/public/ClubKit.module.css';
@@ -118,8 +121,33 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   ]) : [[], []];
 
   const defaultPublicSeasons  = defaultLeagueSeasons.filter(s => s.status !== 'draft');
-  const defaultActiveSeason   = defaultPublicSeasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status));
   const defaultShowLeague     = defaultPublicSeasons.length > 0;
+  // EVERY live season is a row (Club Tier Stage 9a, Q14) — the same rows as the league page and the site home. Before it
+  // this home named only the newest (F04), in its own words ("Season in progress — …").
+  const defaultLiveSeasons    = liveLeagueSeasons(defaultPublicSeasons).map(s => ({
+    id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate, seasonEndDate: s.seasonEndDate,
+    href: href(`/league/${s.slug}`),
+  }));
+  const leagueSection = defaultShowLeague && (
+    <section className="section">
+      <div className="container">
+        <div className={`section-header ${club.sectionHeader}`}>
+          <h2 className={club.sectionTitle}>House league</h2>
+        </div>
+        {defaultLiveSeasons.length > 0 ? (
+          <LeagueSeasonRows seasons={defaultLiveSeasons} today={tournamentToday()} label="House league seasons" />
+        ) : (
+          <Link href={href('/league')} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
+            <div>
+              <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>House league</div>
+              <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>View seasons and results</div>
+            </div>
+            <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
+          </Link>
+        )}
+      </div>
+    </section>
+  );
   const defaultShowTryouts    = defaultOpenTryouts.length > 0;
 
   const heroBanner = org?.heroBannerUrl ?? null;
@@ -157,32 +185,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </div>
         </section>
 
-        {defaultShowLeague && (
-          <section className="section">
-            <div className="container">
-              <div className={`section-header ${club.sectionHeader}`}>
-                <h2 className={club.sectionTitle}>House league</h2>
-              </div>
-              <Link href={href('/league')} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
-                <div>
-                  <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
-                    {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
-                  </div>
-                  <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>
-                    {defaultActiveSeason
-                      ? defaultActiveSeason.status === 'registration_open'
-                        ? 'Registration is open — sign up now'
-                        : defaultActiveSeason.status === 'active'
-                          ? 'Season in progress — view standings and schedule'
-                          : 'Registration closed — season starting soon'
-                      : 'View seasons and results'}
-                  </div>
-                </div>
-                <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
-              </Link>
-            </div>
-          </section>
-        )}
+        {leagueSection}
 
         {defaultShowTryouts && <OpenTryoutsSection href={href} tryouts={defaultOpenTryouts} />}
       </div>
@@ -235,32 +238,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         </div>
       </section>
 
-      {defaultShowLeague && (
-        <section className="section">
-          <div className="container">
-            <div className={`section-header ${club.sectionHeader}`}>
-              <h2 className={club.sectionTitle}>House league</h2>
-            </div>
-            <Link href={href('/league')} className={`card ${styles.archivesCta} ${club.archivesCta}`}>
-              <div>
-                <div className={`${styles.archivesCtaTitle} ${club.archivesCtaTitle}`}>
-                  {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
-                </div>
-                <div className={`${styles.archivesCtaSub} ${club.archivesCtaSub}`}>
-                  {defaultActiveSeason
-                    ? defaultActiveSeason.status === 'registration_open'
-                      ? 'Registration is open — sign up now'
-                      : defaultActiveSeason.status === 'active'
-                        ? 'Season in progress — view standings and schedule'
-                        : 'Registration closed — season starting soon'
-                    : 'View seasons and results'}
-                </div>
-              </div>
-              <ChevronRight size={18} className={`${styles.archivesCtaChevron} ${club.archivesCtaChevron}`} />
-            </Link>
-          </div>
-        </section>
-      )}
+      {leagueSection}
 
       {defaultShowTryouts && <OpenTryoutsSection href={href} tryouts={defaultOpenTryouts} />}
     </div>

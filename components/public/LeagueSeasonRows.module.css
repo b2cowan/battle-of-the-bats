@@ -1,0 +1,46 @@
+/* Every live house-league season on the public side, one row each (Club Tier Stage 9a, Part 5; Q14, frame E). The club
+   site keeps its own look: these read the club palette (ClubFrame.module.css) only. */
+
+.list { display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+
+/* A row is one door to the season page (its name stretches over the card); its own links sit above that door. */
+.row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+}
+.row:focus-within { border-color: var(--club-soft); }
+.top { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; flex-wrap: wrap; }
+.name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 650 1rem/1.3 var(--club-text-face);
+  color: var(--club-text);
+  text-decoration: none;
+}
+/* The name's link covers the whole card: the row is its door. */
+.name::after { content: ''; position: absolute; inset: 0; border-radius: 8px; }
+.name:focus-visible { outline: none; }
+.row:has(.name:focus-visible) { outline: 2px solid var(--club-text); outline-offset: 2px; }
+.chevron { flex: none; color: var(--club-dim); }
+
+.links { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 0 1.25rem; }
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 600 0.875rem var(--club-text-face);
+  color: var(--club-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.linkPrimary { font-weight: 700; }
+
+@media (max-width: 640px) {
+  .top { flex-wrap: wrap; }
+}

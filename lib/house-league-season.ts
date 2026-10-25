@@ -117,6 +117,45 @@ export function orderSeasons<T extends Dated & { createdAt?: string | null }>(se
   return [...seasons.filter(s => !finished(s)).sort(newestFirst), ...seasons.filter(finished).sort(newestFirst)];
 }
 
+// ── The public side (Q14, frame E; copy §8) ──────────────────────────────────────────────────────
+
+/** Every season the public side lists as live — taking sign-ups, closed for sign-ups, or under way — newest first. */
+export function liveLeagueSeasons<T extends Dated & { createdAt?: string | null }>(seasons: readonly T[]): T[] {
+  return orderSeasons(seasons.filter(s => seasonGroup(s) === 'running'));
+}
+
+/**
+ * What a family reads beside a live season (copy §8): Registration open · Registration closed · Starts {date} · Playing now
+ * · Final standings (a season past its last day the club has not completed yet). A finished season has no tag (its shelf
+ * is the label). The admin's "Ended {date}" is the club's working word; families read "Final standings".
+ */
+export function publicSeasonState(season: Dated, today: string = tournamentToday()): { label: string; tone: 'ok' | 'neutral' } | null {
+  if (season.status === 'registration_open') return { label: 'Registration open', tone: 'neutral' };
+  if (season.status === 'registration_closed') return { label: 'Registration closed', tone: 'neutral' };
+  if (season.status !== 'active') return null;
+  const start = season.seasonStartDate?.slice(0, 10) ?? null;
+  const end = season.seasonEndDate?.slice(0, 10) ?? null;
+  if (start && today < start) return { label: `Starts ${dayLabel(start, today)}`, tone: 'neutral' };
+  if (end && today > end) return { label: 'Final standings', tone: 'ok' };
+  return { label: 'Playing now', tone: 'ok' };
+}
+
+export type PublicSeasonLink = { label: string; href: string; primary?: boolean };
+
+/**
+ * One public row's links (copy §8), beside the row's own door to the season page: Register (and the season page) while it
+ * takes sign-ups; the season page while sign-ups are closed; Schedule and Standings once it is under way or done.
+ * `seasonHref` is the season's public page; its sub-pages hang off it.
+ */
+export function publicSeasonLinks(season: Pick<Dated, 'status'>, seasonHref: string): PublicSeasonLink[] {
+  if (season.status === 'registration_open') {
+    return [{ label: 'Register', href: `${seasonHref}/register`, primary: true }, { label: 'Season page', href: seasonHref }];
+  }
+  if (season.status === 'registration_closed') return [{ label: 'Season page', href: seasonHref }];
+  const both = [{ label: 'Schedule', href: `${seasonHref}/schedule` }, { label: 'Standings', href: `${seasonHref}/standings` }];
+  return season.status === 'active' ? both : [...both, { label: 'Season page', href: seasonHref }];
+}
+
 /** The amber count's spoken label on Registrations (copy §7). */
 export function toReviewLabel(n: number): string {
   return `${n} ${n === 1 ? 'registration' : 'registrations'} to review`;

@@ -11,7 +11,8 @@ import { getTournamentsByOrg, getLeagueSeasons, getDivisions, getTeams } from '@
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { clubTeamsAddress } from '@/lib/public-club-access';
-import { clubHomeTournaments, clubTeamBands, orderOpenNow, runningLeagueSeason, tournamentHomeStatus } from '@/lib/club-site-home';
+import { clubHomeTournaments, clubTeamBands, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
+import { liveLeagueSeasons } from '@/lib/house-league-season';
 import { isSectionShown } from '@/lib/club-site-sections';
 import { siteSectionCarries } from '@/lib/public-site-editor-facts';
 import { clubAboutPageShows } from '@/lib/club-about';
@@ -49,17 +50,18 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
   const thisYear = today.slice(0, 4);
   const day = (value: string) => formatStoredDate(value, { withYear: !value.startsWith(thisYear) });
 
-  // House league: a draft season is not public; the section's door is the league page.
+  // House league: a draft season is not public. EVERY live season is a row (Club Tier Stage 9a, Q14; before it the home
+  // named only the newest, F04), labelled by what is happening; with none live, the one row is the door to the league page.
   const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
-  const runningSeason = runningLeagueSeason(publicLeagueSeasons);
   const league = publicLeagueSeasons.length === 0 ? null : {
     href: href('/league'),
-    title: runningSeason?.name ?? 'House league',
-    // Words through /marketing 2026-10-20: "open" is said once, by Open now, so this line says what the door gives.
-    sub: !runningSeason ? 'Past seasons and results'
-      : runningSeason.status === 'active' ? 'Schedule and standings'
-      : runningSeason.seasonStartDate ? `Schedule and standings from ${day(runningSeason.seasonStartDate)}`
-      : 'Schedule and standings when the season starts',
+    title: 'House league',
+    sub: 'Past seasons and results',
+    seasons: liveLeagueSeasons(publicLeagueSeasons).map(s => ({
+      id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate, seasonEndDate: s.seasonEndDate,
+      href: href(`/league/${s.slug}`),
+    })),
+    today,
   };
 
   // Open now's tryouts (Stage 4b-2b, Ask 14 round 2): more than one team open or not open yet → ONE row, the door to the
