@@ -338,6 +338,10 @@
     "365_support_console_lookup_and_records_opened.sql": {
       "prod": "pending",
       "note": "Support console Stage 2. Functions (invisible to check:migrations): platform_people_search, platform_find_people, platform_people_by_ids, platform_find_clubs — SECURITY DEFINER over auth.users, execute revoked from PUBLIC/anon/authenticated, service_role only. Plus the visible table platform_record_opens (the trail of records opened). The Stage 2 console code CALLS these, so apply to prod BEFORE that promote, or Find, People, Today and the clubs list 500. After applying, verify with the anon key that every function returns 42501 (.probe/pasc/s2-anon-rpc.mjs pattern). Applied to DEV 2026-10-25."
+    },
+    "367_find_names_the_owner_you_searched.sql": {
+      "prod": "pending",
+      "note": "Support console Stage 2 review fix. Function only (invisible to check:migrations): platform_find_clubs replaced with the same signature and grants — the matched owner is the exact email when there is one, so a searched owner address ranks its club first. Requires 365; apply with 365 at the promote that ships the Stage 2 console. Verify on prod with the anon key: platform_find_clubs returns 42501. Applied to DEV 2026-10-25."
     }
   }
 }
