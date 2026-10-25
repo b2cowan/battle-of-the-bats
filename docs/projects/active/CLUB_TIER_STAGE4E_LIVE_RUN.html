@@ -141,7 +141,7 @@ textarea { width: 100%; min-height: 70px; font: inherit; color: var(--ink); back
   <div class="cols">
     <div>
       <dl class="kv">
-        <dt>Site</dt><dd><a href="https://dev.d3ld0l2bgmmlga.amplifyapp.com/uat-rep-club/admin/public-site" target="_blank" rel="noopener">dev.d3ld0l2bgmmlga.amplifyapp.com</a></dd>
+        <dt>Site</dt><dd><a href="https://dev.fieldlogichq.ca/uat-rep-club/admin/public-site" target="_blank" rel="noopener">dev.fieldlogichq.ca</a></dd>
         <dt>Club</dt><dd>UAT Rep Club <code>uat-rep-club</code></dd>
         <dt>Account</dt><dd><code>uat-club-owner@uat-rep-club.local</code></dd>
         <dt>Password</dt><dd><code>UATPassword2026!</code></dd>
@@ -150,7 +150,7 @@ textarea { width: 100%; min-height: 70px; font: inherit; color: var(--ink); back
     </div>
     <div>
       <ul class="tight">
-        <li><b>Use the deployed dev site, not localhost.</b> The club's address is answered by the deployed site.</li>
+        <li><b>Use the deployed dev site (<code>dev.fieldlogichq.ca</code>), not localhost,</b> and stay on that one address all the way through: a sign-in on one address is not shared with another. It is the address the dev site uses in its own emails and <b>Sign in</b> links.</li>
         <li><b>A private window</b> (signed out) is needed for the visitor checks.</li>
         <li><b>AWS console</b> &rsaquo; Route 53 &rsaquo; Hosted zones &rsaquo; <code>b2cowan.com</code>.</li>
         <li>Test name: <code>club.b2cowan.com</code>.</li>
@@ -203,7 +203,7 @@ var PARTS = [
      see: "Record 1 may already read <b>Found</b> (the leftover padlock record). Record 2 reads <b>Not seen yet</b>. <b>No</b> forwarding box appears (it is only for www), and the line about email not being affected is there." },
    { id: "B6", who: "you", do: "Press <b>Copy both as a message</b> and paste it into any note.",
      see: "The button reads <b>Message copied</b>. The text opens <i>Hi, could you add two records to b2cowan.com where it is registered?</i>, lists both records, ends with <i>How-to: fieldlogichq.ca/help/own-address</i>, and has <b>no</b> paragraph about forwarding the plain name." },
-   { id: "B7", who: "you", do: "In a private window open <a href=\"https://dev.d3ld0l2bgmmlga.amplifyapp.com/help/own-address\" target=\"_blank\" rel=\"noopener\">the how-to page</a>. Press the topic <b>Forward the plain name to www</b>, then its GoDaddy, Namecheap and Hover topics.",
+   { id: "B7", who: "you", do: "In a private window open <a href=\"https://dev.fieldlogichq.ca/help/own-address\" target=\"_blank\" rel=\"noopener\">the how-to page</a>. Press the topic <b>Forward the plain name to www</b>, then its GoDaddy, Namecheap and Hover topics.",
      see: "A public page (no sign-in) titled <i>Use your club's own address</i>. Each registrar topic opens alone with numbered steps. A topic called <i>If your place offers an ALIAS or ANAME record</i> says to forward instead." }
   ]},
 { id: "C", title: "Add the records", sub: "In Route 53, then Check now.",
@@ -238,7 +238,7 @@ var PARTS = [
    { id: "E3", who: "you", do: "Open <code>https://club.b2cowan.com/uat-rep-club-invitational-2026</code>.",
      see: "The tournament page (UAT Rep Club Invitational), on the club's address." },
    { id: "E4", who: "you", do: "Press <b>Sign in</b> in the bar.",
-     see: "You land on the dev site's (FieldLogicHQ's) sign-in, not on the club's address. After signing in you come back to the same page, on the dev site address, with the account pieces present." },
+     see: "You land on <code>dev.fieldlogichq.ca</code>'s sign-in, not on the club's address. After signing in you come back to the same page on <code>dev.fieldlogichq.ca</code>, with the account pieces present." },
    { id: "E5", who: "you", do: "In the private window try <code>https://club.b2cowan.com/admin</code>, then <code>https://club.b2cowan.com/platform-admin</code>.",
      see: "Both say <i>Not found</i>. No sign-in page, no admin screen: those do not exist on a club's address." },
    { id: "E6", who: "you", do: "Open <code>https://club.b2cowan.com/robots.txt</code> and <code>https://club.b2cowan.com/sitemap.xml</code>.",
@@ -247,7 +247,7 @@ var PARTS = [
 { id: "F", title: "The old address forwards", sub: "Signed out forwards, signed in stays.",
   intro: "The FieldLogicHQ copy of the club's pages sends signed-out visitors to the club's own address, so old posters keep working.",
   steps: [
-   { id: "F1", who: "you", do: "In a <b>private window</b> (signed out) open <code>https://dev.d3ld0l2bgmmlga.amplifyapp.com/uat-rep-club/teams</code>.",
+   { id: "F1", who: "you", do: "In a <b>private window</b> (signed out) open <code>https://dev.fieldlogichq.ca/uat-rep-club/teams</code>.",
      see: "You end up at <code>https://club.b2cowan.com/teams</code> (the address in the bar changes)." },
    { id: "F2", who: "you", do: "In your <b>normal window, signed in</b> as the club owner, open the same address.",
      see: "You stay on the dev site address. No forward, and the team pages carry their usual signed-in pieces." },
@@ -293,7 +293,7 @@ var PARTS = [
      see: "A question window titled <i>Stop using club.b2cowan.com?</i> with no ×, saying the site goes back to <code>fieldlogichq.ca/uat-rep-club</code> at once and about the two-year padlock rule. Buttons: <b>Keep it</b> and <b>Stop using it</b>." },
    { id: "I2", who: "you", do: "Press <b>Stop using it</b>.",
      see: "The row returns to its starting state: no chip, summary <code>fieldlogichq.ca/uat-rep-club</code>, and a notice that fades: <i>Your site is back at fieldlogichq.ca/uat-rep-club. You can delete the two records where you bought b2cowan.com.</i>" },
-   { id: "I3", who: "you", do: "In a private window open <code>https://dev.d3ld0l2bgmmlga.amplifyapp.com/uat-rep-club/teams</code>, and the page header on Public site.",
+   { id: "I3", who: "you", do: "In a private window open <code>https://dev.fieldlogichq.ca/uat-rep-club/teams</code>, and the page header on Public site.",
      see: "No forward any more: it stays on the dev site address. <b>Families see it at</b> shows the FieldLogicHQ address again." },
    { id: "I4", who: "you", do: "Delete the <code>club</code> record from Route 53. Leave the original <code>_…</code> padlock record and the others alone. (If the host or you added a second padlock record, delete only that one.)",
      see: "The zone is back to its original six records." },
