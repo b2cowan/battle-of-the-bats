@@ -54,17 +54,17 @@ describe('1 · what is happening in a season (the pill, copy §2)', () => {
 });
 
 describe('1b · the season’s pages (9a·2) and who sees them (frame F)', () => {
-  const labels = (a: { read: boolean; readMoney: boolean; readEmail: boolean }) => seasonPagesFor(a).map(p => p.label);
+  const labels = (a: { read: boolean; readMoney: boolean; email: boolean }) => seasonPagesFor(a).map(p => p.label);
   it('the rail order is the drawn order, Money and Email families by their ruled names', () => {
     assert.deepEqual(SEASON_PAGES.map(p => p.label),
       ['Overview', 'Registrations', 'Teams & draft', 'Schedule', 'Standings', 'Money', 'Email families']);
   });
   it('the convenor and the registrar see every page; a reader without email does not see Email families', () => {
-    assert.equal(labels({ read: true, readMoney: true, readEmail: true }).length, 7);
-    assert.ok(!labels({ read: true, readMoney: true, readEmail: false }).includes('Email families'));
+    assert.equal(labels({ read: true, readMoney: true, email: true }).length, 7);
+    assert.ok(!labels({ read: true, readMoney: true, email: false }).includes('Email families'));
   });
   it('the treasurer sees Money alone', () => {
-    assert.deepEqual(labels({ read: false, readMoney: true, readEmail: false }), ['Money']);
+    assert.deepEqual(labels({ read: false, readMoney: true, email: false }), ['Money']);
   });
   it('a path names its page, and the old Ledger path reads as Money', () => {
     const s = '/club/admin/house-league/seasons/abc';
@@ -80,8 +80,8 @@ describe('1b · the season’s pages (9a·2) and who sees them (frame F)', () =>
 describe('2 · the frame is wired', () => {
   it('the season list reads the route’s summaries (F02: the switcher never rendered)', () => {
     const hook = readCode('components/admin/kit/useHouseLeagueSeasons.ts');
-    assert.match(hook, /const s = sum\?\.season;/);
-    assert.match(hook, /orderSeasons\(rows\)/);
+    assert.match(hook, /\(d\.seasons \?\? \[\]\)\.map\(\(\{ season: s, pendingReviewCount \}\)/, 'reads the summaries’ season');
+    assert.match(hook, /useSyncExternalStore\(/, 'one shared list per page, not one request per reader');
     const rail = readCode('components/admin/kit/AdminKitRail.tsx');
     assert.match(rail, /from '\.\/useHouseLeagueSeasons'/);
     assert.doesNotMatch(rail, /function useHouseLeagueSeasons/, 'the rail grew its own season fetch again');

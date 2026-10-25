@@ -7,6 +7,7 @@ import BottomSheet from '@/components/admin/BottomSheet';
 import { useHouseLeagueAccess, useHouseLeagueSeasons } from '../useHouseLeagueSeasons';
 import { seasonGroup, seasonPageHref, seasonPagesFor, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
 import SeasonStatePill from './SeasonStatePill';
+import { RepChip } from './RepKit';
 import styles from './SeasonPhoneFrame.module.css';
 
 /**
@@ -86,7 +87,7 @@ export default function SeasonPhoneFrame() {
                 onClick={() => setSwitching(false)}
               >
                 <span className={styles.optionName}>{s.name}</span>
-                {seasonGroup(s) === 'past' && <span className={styles.finished}>Finished</span>}
+                {seasonGroup(s) === 'past' && <RepChip tone="neutral">Finished</RepChip>}
               </Link>
             </li>
           ))}

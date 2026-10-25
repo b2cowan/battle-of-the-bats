@@ -14,7 +14,7 @@ export const GET = withObservability(async (_req: Request,
   const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   // The sent log lists families' messages: read by the people who email them, not by every reader of the season.
-  const err = houseLeagueRefusal(ctx, 'readEmail');
+  const err = houseLeagueRefusal(ctx, 'email');
   if (err) return err;
 
   const { seasonId } = await params;

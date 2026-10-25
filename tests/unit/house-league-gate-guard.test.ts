@@ -124,10 +124,10 @@ const access = (role: OrgRole, org: EntitlementOrg = CLUB, season?: { status: st
 
 const pick = (a: HouseLeagueAccess) => ({
   read: a.read, readMoney: a.readMoney, run: a.run, changeStatus: a.changeStatus,
-  register: a.register, takeFees: a.takeFees, email: a.email, readEmail: a.readEmail,
+  register: a.register, takeFees: a.takeFees, email: a.email,
 });
-const ALL = { read: true, readMoney: true, run: true, changeStatus: true, register: true, takeFees: true, email: true, readEmail: true };
-const NONE = { read: false, readMoney: false, run: false, changeStatus: false, register: false, takeFees: false, email: false, readEmail: false };
+const ALL = { read: true, readMoney: true, run: true, changeStatus: true, register: true, takeFees: true, email: true };
+const NONE = { read: false, readMoney: false, run: false, changeStatus: false, register: false, takeFees: false, email: false };
 
 describe('3 · who can do what (frame F, Q17)', () => {
   for (const role of ['owner', 'admin', 'league_admin'] as const) {
@@ -179,7 +179,7 @@ describe('3b · a finished season reads in place, locked, Money and Email famili
   }
   it('the registrar still takes fees and emails families on a finished season; registrations are locked', () => {
     assert.deepEqual(pick(access('league_registrar', CLUB, DONE)),
-      { ...NONE, read: true, readMoney: true, takeFees: true, email: true, readEmail: true });
+      { ...NONE, read: true, readMoney: true, takeFees: true, email: true });
   });
   it('the treasurer still reads Money on a finished season', () => {
     assert.equal(access('treasurer', CLUB, DONE).readMoney, true);

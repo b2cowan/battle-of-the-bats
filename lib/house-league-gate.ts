@@ -10,11 +10,11 @@ import type { LeagueSeasonStatus } from './types';
  */
 
 /** Said when the person could do this on a live season, but this season is finished (Q16). */
-export const FINISHED_SEASON_REFUSAL = 'This season is finished. Reopen it to change it.';
+const FINISHED_SEASON_REFUSAL = 'This season is finished. Reopen it to change it.';
 
 /**
  * null when the member may take this action (on this season, if given); otherwise the response to send. A null ctx is
- * the signed-out case, so a route can call this straight after `getAuthContextWithRole`.
+ * the signed-out case, so a route can call this straight after `getAuthContextWithRole`. A finished season answers 423.
  */
 export function houseLeagueRefusal(
   ctx: AuthContextWithRole | null,
@@ -22,10 +22,12 @@ export function houseLeagueRefusal(
   season?: { status: LeagueSeasonStatus | string } | null,
 ): Response | null {
   if (!ctx) return unauthorized();
-  if (houseLeagueAccess(ctx, ctx.org, season)[action]) return null;
-  // Allowed on a live season, refused because this one is finished: say so, so the screen can say why.
-  if (season && houseLeagueAccess(ctx, ctx.org, null)[action]) {
-    return NextResponse.json({ error: FINISHED_SEASON_REFUSAL, finished: true }, { status: 409 });
+  const access = houseLeagueAccess(ctx, ctx.org, season);
+  if (access[action]) return null;
+  // Allowed on a live season, refused because this one is finished: 423 Locked (never 409, which these routes keep for a
+  // real conflict such as a booking clash), so a screen can say why without telling two refusals apart.
+  if (access.finished && houseLeagueAccess(ctx, ctx.org, null)[action]) {
+    return NextResponse.json({ error: FINISHED_SEASON_REFUSAL, finished: true }, { status: 423 });
   }
   return forbidden();
 }

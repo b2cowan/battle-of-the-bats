@@ -4,7 +4,7 @@ import { Check, Pencil } from 'lucide-react';
 import ck from '../ClubKit.module.css';
 import { ClubSection, SavePill, repKit } from '../RepKit';
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
-import { seasonDates } from '@/lib/house-league-season';
+import { feePerPlayerLine, registrationDay, seasonDates } from '@/lib/house-league-season';
 import { formatStoredDate } from '@/lib/timezone';
 import type { LeagueSeason } from '@/lib/types';
 import s from './LeagueSeason.module.css';
@@ -37,7 +37,7 @@ function useSeasonSave(seasonId: string, orgSlug: string, onSaved: () => void) {
 /** The head's one button: pencil while reading, ✓ in its exact spot while editing. */
 function EditToggle({ editing, onClick, what }: { editing: boolean; onClick: () => void; what: string }) {
   return (
-    <button type="button" className={s.editToggle} onClick={onClick} aria-label={editing ? `Done editing ${what}` : `Edit ${what}`} aria-pressed={editing}>
+    <button type="button" className={s.iconButton} onClick={onClick} aria-label={editing ? `Done editing ${what}` : `Edit ${what}`} aria-pressed={editing}>
       {editing ? <Check size={16} aria-hidden /> : <Pencil size={15} aria-hidden />}
     </button>
   );
@@ -133,16 +133,9 @@ function intakeLine(season: LeagueSeason): string {
 function regDates(season: LeagueSeason): string {
   const o = season.registrationOpenAt, c = season.registrationCloseAt;
   if (!o && !c) return 'Not set';
-  // Stored as typed with a Z on the end (the house-league forms), so the date part is the day the club typed.
-  const parts = [o ? formatStoredDate(o.slice(0, 10), { withYear: !c }) : null, c ? formatStoredDate(c.slice(0, 10), { withYear: true }) : null].filter(Boolean);
+  const parts = [o ? formatStoredDate(registrationDay(o)!, { withYear: !c }) : null, c ? formatStoredDate(registrationDay(c)!, { withYear: true }) : null].filter(Boolean);
   const where = season.status === 'registration_open' ? 'open' : season.status === 'draft' ? 'not open yet' : 'closed';
   return `${parts.join(' – ')} · ${where}`;
-}
-
-function feeLine(fee: number | null): string {
-  if (fee == null) return 'Not set';
-  if (fee === 0) return 'Free';
-  return `${fee.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })} per player`;
 }
 
 export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door }: {
@@ -178,7 +171,7 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door }: {
       {!editing ? (
         <dl className={s.facts}>
           <Fact label="Dates">{regDates(season)}</Fact>
-          <Fact label="Fee">{feeLine(season.registrationFee)}</Fact>
+          <Fact label="Fee">{feePerPlayerLine(season.registrationFee) ?? 'Not set'}</Fact>
           <Fact label="Waiver">{waiver ? `On · “${waiver.length > 60 ? `${waiver.slice(0, 60).trimEnd()}…` : waiver}”` : 'Off'}</Fact>
           <Fact label="New registrations">{intakeLine(season)}</Fact>
         </dl>

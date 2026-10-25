@@ -5,11 +5,12 @@ import { seasonGroup, seasonPageAt, type SeasonPageKey } from '@/lib/house-leagu
 import s from './LeagueSeason.module.css';
 
 /** What each page of a finished season says, once (copy §5). Email families says nothing: it stays open (owner 2026-10-24). */
+const LOCKED = 'This season is finished, so this page is locked. Money stays open for late fees.';
 const LOCK_LINE: Partial<Record<SeasonPageKey, string>> = {
-  overview: 'This season is finished, so this page is locked. Money stays open for late fees.',
-  teams: 'This season is finished, so this page is locked. Money stays open for late fees.',
-  schedule: 'This season is finished, so this page is locked. Money stays open for late fees.',
-  standings: 'This season is finished, so this page is locked. Money stays open for late fees.',
+  overview: LOCKED,
+  teams: LOCKED,
+  schedule: LOCKED,
+  standings: LOCKED,
   registrations: 'This season is finished. Registrations are locked, and you can still mark fees received.',
   money: 'This season is finished. You can still mark fees received.',
 };

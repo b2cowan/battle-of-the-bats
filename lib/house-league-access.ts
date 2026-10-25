@@ -14,7 +14,7 @@ import type { LeagueSeasonStatus, OrgRole } from './types';
  * The matrix (frame F, ruled Q17):
  *   · Seasons, divisions, teams, schedule — owner, club admin and league admin edit; everyone else who opens house league reads.
  *   · Registrations (approve, decline, withdraw, notes, add by hand), fees received and refunds — the above plus the registrar.
- *   · Email families — the same people as registrations. Nobody else reads the sent log either (it lists families' email).
+ *   · Email families — the same people as registrations, and only they read the sent log (it lists families' email).
  *   · Money — read by everyone who opens house league, AND by whoever holds the club's Accounting (the treasurer), on an org
  *     that carries house league. Nobody "edits" Money: it is written only by marking a fee received or recording a refund.
  *   · Status changes (open, close, reopen, complete, archive) — the people who edit the season.
@@ -57,10 +57,8 @@ export interface HouseLeagueAccess {
   register: boolean;
   /** Mark a fee received (or not) and record a refund. Stays open on a finished season. */
   takeFees: boolean;
-  /** Email the season's families. Stays open on a finished season. */
+  /** Email the season's families and read what was sent. Stays open on a finished season. */
   email: boolean;
-  /** Read the season's sent-email log. */
-  readEmail: boolean;
   /** The season is completed or archived. */
   finished: boolean;
 }
@@ -90,12 +88,11 @@ export function houseLeagueAccess(
     register: desk && !finished,
     takeFees: desk,
     email: desk,
-    readEmail: desk,
     finished,
   };
 }
 
-/** One action, for a route: `if (!canHouseLeague(ctx, ctx.org, 'run', season)) return forbidden();`. */
+/** One action as a yes/no (the fee write's `canMarkLeagueFeePaid`). A route refuses through `houseLeagueRefusal` instead. */
 export function canHouseLeague(
   member: MemberAccessInput,
   org: EntitlementOrg,

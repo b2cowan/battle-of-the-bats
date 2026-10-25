@@ -57,24 +57,9 @@
 
 /* ── Divisions: a table on the kit, the players as a meter and words ── */
 .tableWrap { overflow-x: auto; }
-/* A column heading for a screen reader only (the edit pencils' column). */
-.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .meter { display: inline-block; vertical-align: middle; width: 4.5rem; height: 6px; margin-right: 0.5rem; border-radius: 999px; background: var(--home-line); overflow: hidden; }
 .meterFill { display: block; height: 100%; background: var(--home-olive); }
 .meterFull { background: var(--badge-warning-ink); }
-.rowEdit {
-  width: var(--tap-min, 44px);
-  height: var(--tap-min, 44px);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 8px;
-}
-.rowEdit:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .emptyLine { margin: 0; padding: 0.25rem 1.1rem 1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* ── A record block's read view and its head's one button ── */
@@ -85,7 +70,8 @@
   .facts { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
   .factValue { margin-bottom: 0.5rem; }
 }
-.editToggle {
+/* The 44 px symbol-only button (the phone secondary-action rule): a division row's pencil, a block's pencil ↔ ✓. */
+.iconButton {
   width: var(--tap-min, 44px);
   height: var(--tap-min, 44px);
   display: inline-flex;
@@ -97,25 +83,11 @@
   cursor: pointer;
   border-radius: 8px;
 }
-.editToggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.iconButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 
 /* ── The rare door: a sentence and a link, ending the body (never a pinned foot row) ── */
 .rareDoor { margin: 1.25rem 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
 .rareDoor + .rareDoor { margin-top: 0.4rem; }
-.doorLink {
-  border: none;
-  background: none;
-  padding: 0;
-  font: inherit;
-  color: var(--home-olive);
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-@media (max-width: 900px) {
-  .doorLink { min-height: var(--tap-min, 44px); }
-}
 
 /* ── The status window's body ── */
 .windowName { margin: 0 0 0.4rem; font-weight: 700; color: var(--text-primary); }

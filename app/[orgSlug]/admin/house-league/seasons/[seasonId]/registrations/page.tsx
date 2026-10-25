@@ -17,7 +17,7 @@ import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_BUTTON, KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueSeasonStatus, LeagueTeam } from '@/lib/types';
-import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import LoadingState from '@/components/shared/LoadingState';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -182,10 +182,11 @@ export default function RegistrationsPage() {
   const [season,      setSeason]      = useState<SeasonInfo | null>(null);
   // Who may (the one house-league gate, Stage 9a, Q17): the club admin and the registrar work this desk; a finished season
   // locks the registrations and keeps the fee tick (Q16). A control a person can't use is absent.
-  const access         = useHouseLeagueAccess(season);
-  const canManageRegs  = !!season && !!access?.register;
-  const canTakeFees    = !!season && !!access?.takeFees;
-  const canEmail       = !!season && !!access?.email;
+  const access         = useHouseLeagueAccess();
+  const seasonAccess   = useSeasonAccess(season);
+  const canManageRegs  = !!seasonAccess?.register;
+  const canTakeFees    = !!seasonAccess?.takeFees;
+  const canEmail       = !!seasonAccess?.email;
   const [divisions,   setDivisions]   = useState<LeagueDivision[]>([]);
   const [regs,        setRegs]        = useState<LeagueRegistration[]>([]);
   const [fetching,    setFetching]    = useState(true);

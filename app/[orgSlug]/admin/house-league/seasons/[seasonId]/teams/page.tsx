@@ -15,7 +15,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useOrg } from '@/lib/org-context';
 import { houseLeagueTeamCap } from '@/lib/free-floor';
 import { LeagueUpgradeCta } from '@/components/admin/LeagueCapUpgrade';
-import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import {
@@ -530,10 +530,9 @@ export default function TeamsPage() {
 
   // Who may (the one house-league gate, Stage 9a, Q16/Q17): the people who run the league, on a live season; everyone
   // else who opens house league reads. A control a person can't use is absent.
-  const access = useHouseLeagueAccess(season);
-  const canManage = !!season && !!access?.run;
+  const canManage = !!useSeasonAccess(season)?.run;
 
-  const hasAccess = !!access?.read;
+  const hasAccess = !!useHouseLeagueAccess()?.read;
 
   // Derived state
   const selectedDiv = divisions.find(d => d.id === selectedDivId);

@@ -1,75 +1,73 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useOrg } from '@/lib/org-context';
 import { houseLeagueAccess, type HouseLeagueAccess } from '@/lib/house-league-access';
 import { orderSeasons } from '@/lib/house-league-season';
-import type { LeagueSeasonStatus } from '@/lib/types';
+import type { LeagueSeason, LeagueSeasonSummary } from '@/lib/types';
 
-/** One season as the season frame (rail block, phone header and strip) lists it. */
-export type FrameSeason = {
-  id: string;
-  name: string;
-  status: LeagueSeasonStatus;
-  seasonStartDate: string | null;
-  seasonEndDate: string | null;
-  createdAt: string | null;
+/** One season as the season frame (rail block, phone header and strip, lock line) lists it. */
+export type FrameSeason = Pick<LeagueSeason, 'id' | 'name' | 'status' | 'seasonStartDate' | 'seasonEndDate' | 'createdAt'> & {
   /** Registrations waiting for review: the amber count on Registrations. */
   pendingReviewCount: number;
 };
 
-const CHANGED = 'house-league-seasons-changed';
+/**
+ * THE CLUB'S HOUSE-LEAGUE SEASONS, READ ONCE PER PAGE (Club Tier Stage 9a). The rail, the phone frame and the lock line all
+ * read this list; it lives in one module-level store per org, so a season page makes ONE request (not one per reader), and a
+ * burst of changes (`announceSeasonsChanged` after each autosave or review) folds into one re-read. The list is the seasons
+ * route's SUMMARIES — `{ season, pendingReviewCount, … }` — which is what F02 got wrong: the rail read `id`/`name` off the
+ * summary itself, found none, and the switcher never rendered.
+ */
+type Store = { slug: string; seasons: FrameSeason[]; inflight: boolean; again: boolean };
+const EMPTY: FrameSeason[] = [];
+let store: Store | null = null;
+const listeners = new Set<() => void>();
+let debounce: ReturnType<typeof setTimeout> | null = null;
 
-/** Tell the season frame a season changed (a status move, a rename, a review), so its list and counts re-read. */
-export function announceSeasonsChanged() {
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHANGED));
+function emit() { listeners.forEach(l => l()); }
+
+async function read(slug: string) {
+  if (!store || store.slug !== slug) store = { slug, seasons: EMPTY, inflight: false, again: false };
+  if (store.inflight) { store.again = true; return; }
+  store.inflight = true;
+  try {
+    const res = await fetch(`/api/admin/house-league/seasons?orgSlug=${encodeURIComponent(slug)}`);
+    const d = res.ok ? (await res.json()) as { seasons?: LeagueSeasonSummary[] } : null;
+    // A late answer for an org you have since left must not overwrite this one's list.
+    if (store?.slug !== slug || !d) return;
+    store.seasons = orderSeasons((d.seasons ?? []).map(({ season: s, pendingReviewCount }) => ({
+      id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate ?? null,
+      seasonEndDate: s.seasonEndDate ?? null, createdAt: s.createdAt, pendingReviewCount,
+    })));
+    emit();
+  } catch { /* the frame keeps what it had */ } finally {
+    if (store?.slug === slug) {
+      store.inflight = false;
+      if (store.again) { store.again = false; void read(slug); }
+    }
+  }
 }
 
-/**
- * The club's house-league seasons, in the switcher's order (live first, then Finished). Read from the seasons route's
- * SUMMARIES — `{ season, pendingReviewCount, … }` — which is what F02 got wrong: the rail read `id`/`name` off the summary
- * itself, found none, and the switcher never rendered. Only fetched while `enabled` (inside a season).
- */
+/** Tell the season frame a season changed (a status move, a rename, a review), so its list and counts re-read — once. */
+export function announceSeasonsChanged() {
+  if (!store) return;
+  const slug = store.slug;
+  if (debounce) clearTimeout(debounce);
+  debounce = setTimeout(() => { debounce = null; void read(slug); }, 150);
+}
+
+function subscribe(l: () => void) { listeners.add(l); return () => { listeners.delete(l); }; }
+
+/** The club's house-league seasons in the switcher's order (live first, then Finished). Only read while `enabled`. */
 export function useHouseLeagueSeasons(enabled: boolean): FrameSeason[] {
   const { currentOrg } = useOrg();
   const slug = enabled ? currentOrg?.slug : undefined;
-  const [seasons, setSeasons] = useState<FrameSeason[]>([]);
-  const [tick, setTick] = useState(0);
   useEffect(() => {
-    if (!slug) return;
-    const bump = () => setTick(t => t + 1);
-    window.addEventListener(CHANGED, bump);
-    return () => window.removeEventListener(CHANGED, bump);
+    // The first reader for this org reads it; every later reader shares that answer.
+    if (slug && (!store || store.slug !== slug)) void read(slug);
   }, [slug]);
-  useEffect(() => {
-    if (!slug) return;
-    // A late answer for the org you just left must not overwrite this one's list.
-    let stale = false;
-    fetch(`/api/admin/house-league/seasons?orgSlug=${encodeURIComponent(slug)}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (stale) return;
-        const list: unknown[] = Array.isArray(d?.seasons) ? d.seasons : [];
-        const rows: FrameSeason[] = [];
-        for (const item of list) {
-          const sum = item as { season?: Record<string, unknown>; pendingReviewCount?: unknown } | null;
-          const s = sum?.season;
-          if (!s || typeof s.id !== 'string' || typeof s.name !== 'string') continue;
-          rows.push({
-            id: s.id,
-            name: s.name,
-            status: s.status as LeagueSeasonStatus,
-            seasonStartDate: (s.seasonStartDate as string | null) ?? null,
-            seasonEndDate: (s.seasonEndDate as string | null) ?? null,
-            createdAt: (s.createdAt as string | null) ?? null,
-            pendingReviewCount: typeof sum?.pendingReviewCount === 'number' ? sum.pendingReviewCount : 0,
-          });
-        }
-        setSeasons(orderSeasons(rows));
-      })
-      .catch(() => {});
-    return () => { stale = true; };
-  }, [slug, tick]);
-  return seasons;
+  const seasons = useSyncExternalStore(subscribe, () => store?.seasons ?? EMPTY, () => EMPTY);
+  return slug && store?.slug === slug ? seasons : EMPTY;
 }
 
 /** The one house-league gate's answer for the signed-in member (and a season, when given): what to render. */
@@ -77,4 +75,14 @@ export function useHouseLeagueAccess(season?: { status: string } | null): HouseL
   const { currentOrg, userRole, userCapabilities } = useOrg();
   if (!currentOrg || !userRole) return null;
   return houseLeagueAccess({ role: userRole, capabilities: userCapabilities ?? null }, currentOrg, season);
+}
+
+/**
+ * The gate's answer for a page that works ON ONE SEASON: null until that season has loaded, so nothing writable paints
+ * before the page knows whether the season is finished (Q16). Use this, not `useHouseLeagueAccess(season)`, wherever the
+ * page's controls depend on the season.
+ */
+export function useSeasonAccess(season: { status: string } | null | undefined): HouseLeagueAccess | null {
+  const access = useHouseLeagueAccess(season);
+  return season ? access : null;
 }

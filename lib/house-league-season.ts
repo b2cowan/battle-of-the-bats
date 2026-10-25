@@ -1,5 +1,6 @@
 import { formatStoredDate, tournamentToday } from './timezone';
-import type { HouseLeagueAccess } from './house-league-access';
+import { pluralize } from './utils';
+import { isFinishedLeagueSeason, type HouseLeagueAccess } from './house-league-access';
 import type { LeagueSeasonStatus } from './types';
 
 /**
@@ -33,10 +34,10 @@ export const SEASON_PAGES: readonly { key: SeasonPageKey; segment: string; label
 ];
 
 /** The pages this person can open (frame F): a treasurer's is Money alone; Email families needs the people who send it. */
-export function seasonPagesFor(access: Pick<HouseLeagueAccess, 'read' | 'readMoney' | 'readEmail'>) {
+export function seasonPagesFor(access: Pick<HouseLeagueAccess, 'read' | 'readMoney' | 'email'>) {
   return SEASON_PAGES.filter(p => {
     if (p.key === 'money') return access.readMoney;
-    if (p.key === 'notifications') return access.read && access.readEmail;
+    if (p.key === 'notifications') return access.email;
     return access.read;
   });
 }
@@ -70,6 +71,19 @@ type Dated = {
 };
 
 const dayLabel = (value: string, today: string) => formatStoredDate(value, { withYear: !value.startsWith(today.slice(0, 4)) });
+/** A stored date's day (date-only, or a timestamp's first ten characters). */
+const dayOf = (v?: string | null) => v?.slice(0, 10) ?? null;
+
+/**
+ * Where an under-way season stands against the club's today: before its first day, after its last (the end day itself is
+ * still playing), or playing. No start date counts as started, no end date as not yet ended.
+ */
+function phase(season: Dated, today: string): { kind: 'upcoming'; start: string } | { kind: 'ended'; end: string } | { kind: 'playing' } {
+  const start = dayOf(season.seasonStartDate), end = dayOf(season.seasonEndDate);
+  if (start && today < start) return { kind: 'upcoming', start };
+  if (end && today > end) return { kind: 'ended', end };
+  return { kind: 'playing' };
+}
 
 /**
  * The pill (copy §2): status decides, and on a running season the club's today against its dates picks the word. Whole
@@ -84,23 +98,21 @@ export function seasonState(season: Dated, today: string = tournamentToday()): {
     case 'archived': return { label: 'Finished', tone: 'neutral' };
     default: break;
   }
-  const start = season.seasonStartDate?.slice(0, 10) ?? null;
-  const end = season.seasonEndDate?.slice(0, 10) ?? null;
-  if (start && today < start) return { label: `Starts ${dayLabel(start, today)}`, tone: 'neutral' };
-  if (end && today > end) return { label: `Ended ${dayLabel(end, today)}`, tone: 'amber' };
+  const p = phase(season, today);
+  if (p.kind === 'upcoming') return { label: `Starts ${dayLabel(p.start, today)}`, tone: 'neutral' };
+  if (p.kind === 'ended') return { label: `Ended ${dayLabel(p.end, today)}`, tone: 'amber' };
   return { label: 'Playing now', tone: 'green' };
 }
 
 /** True when a running season is past its last day and not yet completed (the home's "complete it" line). */
-export function isPastItsEnd(season: Dated, today: string = tournamentToday()): boolean {
-  const end = season.seasonEndDate?.slice(0, 10) ?? null;
-  return season.status === 'active' && !!end && today > end;
+function isPastItsEnd(season: Dated, today: string): boolean {
+  return season.status === 'active' && phase(season, today).kind === 'ended';
 }
 
 /** The home's group (9a·1): status alone, never the date. */
 export function seasonGroup(season: Pick<Dated, 'status'>): SeasonGroup {
   if (season.status === 'draft') return 'ready';
-  if (season.status === 'completed' || season.status === 'archived') return 'past';
+  if (isFinishedLeagueSeason(season)) return 'past';
   return 'running';
 }
 
@@ -133,10 +145,9 @@ export function publicSeasonState(season: Dated, today: string = tournamentToday
   if (season.status === 'registration_open') return { label: 'Registration open', tone: 'neutral' };
   if (season.status === 'registration_closed') return { label: 'Registration closed', tone: 'neutral' };
   if (season.status !== 'active') return null;
-  const start = season.seasonStartDate?.slice(0, 10) ?? null;
-  const end = season.seasonEndDate?.slice(0, 10) ?? null;
-  if (start && today < start) return { label: `Starts ${dayLabel(start, today)}`, tone: 'neutral' };
-  if (end && today > end) return { label: 'Final standings', tone: 'ok' };
+  const p = phase(season, today);
+  if (p.kind === 'upcoming') return { label: `Starts ${dayLabel(p.start, today)}`, tone: 'neutral' };
+  if (p.kind === 'ended') return { label: 'Final standings', tone: 'ok' };
   return { label: 'Playing now', tone: 'ok' };
 }
 
@@ -158,17 +169,29 @@ export function publicSeasonLinks(season: Pick<Dated, 'status'>, seasonHref: str
 
 /** The amber count's spoken label on Registrations (copy §7). */
 export function toReviewLabel(n: number): string {
-  return `${n} ${n === 1 ? 'registration' : 'registrations'} to review`;
+  return `${pluralize(n, 'registration')} to review`;
 }
 
 // ── The home's lines and the checklist (copy §1, §3) ───────────────────────────────────────────
 
-const many = (n: number, one: string, more: string) => `${n} ${n === 1 ? one : more}`;
+/**
+ * The day a stored registration open/close time names. The house-league forms store the time as typed with a Z on the end,
+ * so the first ten characters ARE the club's day — never re-zone it (an early-morning close would move to the day before).
+ * lib/club-home-data.ts and the status windows read it through here.
+ */
+export function registrationDay(v: string | null | undefined): string | null {
+  return dayOf(v);
+}
+
+/** The season's fee as one line (copy §3): "$165.00 per player", "Free" at 0, or null when none is set. */
+export function feePerPlayerLine(fee: number | null): string | null {
+  if (fee == null) return null;
+  return fee === 0 ? 'Free' : `${fee.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })} per player`;
+}
 
 /** "May 31 – Aug 30, 2026" (the year once, on the last day; both when they differ), or null with no dates. */
 export function seasonDates(season: Pick<Dated, 'seasonStartDate' | 'seasonEndDate'>): string | null {
-  const start = season.seasonStartDate?.slice(0, 10) ?? null;
-  const end = season.seasonEndDate?.slice(0, 10) ?? null;
+  const start = dayOf(season.seasonStartDate), end = dayOf(season.seasonEndDate);
   if (!start && !end) return null;
   if (start && end) {
     const sameYear = start.slice(0, 4) === end.slice(0, 4);
@@ -188,15 +211,15 @@ export type SeasonFacts = Dated & {
 
 /** The one line of facts per row (copy §1): always dates · sport · divisions, then what the state counts. */
 export function seasonFactsLine(f: SeasonFacts): string {
-  const parts = [seasonDates(f) ?? 'Dates not set', f.sport, many(f.divisionCount, 'division', 'divisions')];
+  const parts = [seasonDates(f) ?? 'Dates not set', f.sport, pluralize(f.divisionCount, 'division')];
   if (f.status === 'draft') return parts.join(' · ');
   if (f.status === 'registration_open') {
     parts.push(f.spotCount != null
-      ? `${f.activeRegistrationCount} of ${many(f.spotCount, 'spot', 'spots')} taken`
-      : many(f.activeRegistrationCount, 'player', 'players'));
+      ? `${f.activeRegistrationCount} of ${pluralize(f.spotCount, 'spot')} taken`
+      : pluralize(f.activeRegistrationCount, 'player'));
     return parts.join(' · ');
   }
-  parts.push(many(f.activeRegistrationCount, 'player', 'players'), many(f.teamCount, 'team', 'teams'));
+  parts.push(pluralize(f.activeRegistrationCount, 'player'), pluralize(f.teamCount, 'team'));
   return parts.join(' · ');
 }
 
@@ -207,16 +230,13 @@ export function seasonChecklist(
 ): ChecklistStep[] {
   const divisionsDone = f.divisionCount > 0 && f.spotCount != null;
   const datesDone = !!f.seasonStartDate && !!f.seasonEndDate;
-  const feeDone = f.registrationFee != null;
-  const fee = f.registrationFee ?? 0;
+  const fee = feePerPlayerLine(f.registrationFee);
   return [
     { key: 'divisions', done: divisionsDone, line: divisionsDone
-      ? `${many(f.divisionCount, 'division', 'divisions')} · ${many(f.spotCount!, 'spot', 'spots')}`
+      ? `${pluralize(f.divisionCount, 'division')} · ${pluralize(f.spotCount!, 'spot')}`
       : 'Add a division, and give each one its number of spots' },
     { key: 'dates', done: datesDone, line: datesDone ? seasonDates(f)! : 'Set the first and last day of the season' },
-    { key: 'fee', done: feeDone, line: feeDone
-      ? (fee === 0 ? 'Free' : `${fee.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })} per player`)
-      : 'Set the registration fee (enter 0 if it is free)' },
+    { key: 'fee', done: fee != null, line: fee ?? 'Set the registration fee (enter 0 if it is free)' },
   ];
 }
 
@@ -231,16 +251,14 @@ export function seasonNoteLine(
 ): string | null {
   if (isPastItsEnd(f, today)) return canRun ? 'Past its end date: complete it from the season page' : 'Past its end date';
   if (f.status === 'registration_open' && f.registrationCloseAt) {
-    // Stored as typed with a Z on the end (the house-league forms; lib/club-home-data.ts reads it the same way), so the
-    // date part is the day the club typed — never re-zoned, which would move an early-morning close to the day before.
-    const closeDay = f.registrationCloseAt.slice(0, 10);
+    const closeDay = registrationDay(f.registrationCloseAt)!;
     const close = formatStoredDate(closeDay, { withYear: true });
     return closeDay >= today ? `Registration closes ${close}` : `Registration was set to close ${close}`;
   }
   if (f.status === 'registration_closed') return canRun ? 'Registration is closed. Start the season from its page.' : 'Registration is closed.';
   if (f.status === 'draft') {
     const left = seasonChecklist(f).filter(s => !s.done).length;
-    return left ? `${many(left, 'thing', 'things')} to do before registration can open` : 'Ready to open registration';
+    return left ? `${pluralize(left, 'thing')} to do before registration can open` : 'Ready to open registration';
   }
   return null;
 }

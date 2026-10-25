@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, formatInOrgZone, orgWeekKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
-import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -889,9 +889,8 @@ export default function SchedulePage() {
 
   // Who may (the one house-league gate, Stage 9a, Q16/Q17): the people who run the league, on a live season; everyone
   // else who opens house league reads. A control a person can't use is absent.
-  const access = useHouseLeagueAccess(season);
-  const canManage = !!season && !!access?.run;
-  const hasAccess = !!access?.read;
+  const canManage = !!useSeasonAccess(season)?.run;
+  const hasAccess = !!useHouseLeagueAccess()?.read;
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -1100,8 +1099,7 @@ export default function SchedulePage() {
     if (!res.ok) {
       const data = await res.json();
       showError(
-        // A finished season's refusal is a 409 too (Stage 9a): only a booking clash is "already booked".
-        res.status === 409 && !data.finished ? `That ${noun.toLowerCase()} is already booked` : 'Could not save game',
+        res.status === 409 ? `That ${noun.toLowerCase()} is already booked` : 'Could not save game',
         data.error ?? 'Unknown error',
       );
       return;
@@ -1186,7 +1184,7 @@ export default function SchedulePage() {
     if (!res.ok) {
       const data = await res.json();
       showError(
-        res.status === 409 && !data.finished ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice',
+        res.status === 409 ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice',
         data.error ?? 'Unknown error',
       );
       return;

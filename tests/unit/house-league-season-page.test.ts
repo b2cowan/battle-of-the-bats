@@ -93,7 +93,7 @@ describe('3 · the season’s page', () => {
     assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/layout.tsx'), /<SeasonLockLine \/>/);
     const lock = readCode('components/admin/kit/club/league/SeasonLockLine.tsx');
     for (const page of ['overview', 'teams', 'schedule', 'standings', 'registrations', 'money']) {
-      assert.match(lock, new RegExp(`\\b${page}: '`), `${page} has no lock line`);
+      assert.match(lock, new RegExp(`\\b${page}: `), `${page} has no lock line`);
     }
     assert.doesNotMatch(lock, /notifications:/, 'Email families stays open: no lock line (owner 2026-10-24)');
     assert.match(lock, /registrations: 'This season is finished\. Registrations are locked, and you can still mark fees received\.'/);

@@ -118,14 +118,3 @@
 }
 .optionOn { font-weight: 700; }
 .optionName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.finished {
-  flex-shrink: 0;
-  font-size: var(--type-token);
-  font-family: var(--font-data); /* type-ok: chip */
-  text-transform: uppercase; /* type-ok: chip */
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 999px;
-  padding: 0.1rem 0.45rem;
-}

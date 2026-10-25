@@ -34,6 +34,7 @@ import { seasonChecklist, seasonDates } from '@/lib/house-league-season';
 import { movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
 import { JAN_1, bornLine, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
+import { pluralize } from '@/lib/utils';
 import type { LeagueSeason } from '@/lib/types';
 
 interface SeasonDetail {
@@ -48,8 +49,6 @@ interface SeasonDetail {
     unpaidFeeCount: number;
   };
 }
-
-const many = (n: number, one: string, more: string) => `${n} ${n === 1 ? one : more}`;
 
 export default function SeasonOverviewPage() {
   const { currentOrg, loading: orgLoading } = useOrg();
@@ -193,7 +192,7 @@ export default function SeasonOverviewPage() {
           <div className={s.tile}>
             <span className={s.tileLabel}>Players</span>
             <span className={s.tileValue}>{summary.activeRegistrationCount}</span>
-            {spotCount != null && <span className={s.tileHint}>of {many(spotCount, 'spot', 'spots')}</span>}
+            {spotCount != null && <span className={s.tileHint}>of {pluralize(spotCount, 'spot')}</span>}
           </div>
           <div className={s.tile}>
             <span className={s.tileLabel}>To review</span>
@@ -207,7 +206,7 @@ export default function SeasonOverviewPage() {
           <div className={s.tile}>
             <span className={s.tileLabel}>Teams</span>
             <span className={s.tileValue}>{teams}</span>
-            {summary.unplacedCount > 0 && <span className={s.tileHint}>{many(summary.unplacedCount, 'player', 'players')} unplaced</span>}
+            {summary.unplacedCount > 0 && <span className={s.tileHint}>{pluralize(summary.unplacedCount, 'player')} unplaced</span>}
           </div>
         </div>
       )}
@@ -231,7 +230,7 @@ export default function SeasonOverviewPage() {
                   <th scope="col">Ages</th>
                   <th scope="col">Players</th>
                   <th scope="col" className={ck.num}>Teams</th>
-                  {canRun && <th scope="col"><span className={s.srOnly}>Edit</span></th>}
+                  {canRun && <th scope="col"><span className={repKit.srOnly}>Edit</span></th>}
                 </tr>
               </thead>
               <tbody>
@@ -248,13 +247,13 @@ export default function SeasonOverviewPage() {
                         {d.capacity != null && (
                           <span className={s.meter} aria-hidden><span className={`${s.meterFill}${full ? ` ${s.meterFull}` : ''}`} style={{ width: `${pct}%` }} /></span>
                         )}
-                        {d.capacity != null ? `${d.activeCount} / ${d.capacity}` : many(d.activeCount, 'player', 'players')}
+                        {d.capacity != null ? `${d.activeCount} / ${d.capacity}` : pluralize(d.activeCount, 'player')}
                         {d.waitlistCount > 0 && ` · ${d.waitlistCount} waitlisted`}
                       </td>
                       <td data-label="Teams" className={ck.num}>{d.teamCount}</td>
                       {canRun && (
                         <td className={ck.actions}>
-                          <button type="button" className={s.rowEdit} onClick={() => setDivisionOpen(d)} aria-label={`Edit ${d.name}`}>
+                          <button type="button" className={s.iconButton} onClick={() => setDivisionOpen(d)} aria-label={`Edit ${d.name}`}>
                             <Pencil size={15} aria-hidden />
                           </button>
                         </td>
@@ -277,7 +276,7 @@ export default function SeasonOverviewPage() {
         return (
           <p key={m} className={s.rareDoor}>
             {door.sentence}{' '}
-            <button type="button" className={s.doorLink} onClick={() => setMove(m)}>{door.link}</button>
+            <button type="button" className={repKit.inlineLink} onClick={() => setMove(m)}>{door.link}</button>
           </p>
         );
       })}
