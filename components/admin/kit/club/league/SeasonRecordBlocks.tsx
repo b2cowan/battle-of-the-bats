@@ -54,7 +54,9 @@ const stamp = (v: string) => (v ? `${v}:00Z` : null);
 export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
   season: LeagueSeason; canEdit: boolean; orgSlug: string; onSaved: () => void;
 }) {
-  const [editing, setEditing] = useState(false);
+  // A block open for editing closes the moment its season can no longer be edited (finished, or the access changed).
+  const [editOpen, setEditing] = useState(false);
+  const editing = editOpen && canEdit;
   const [draft, setDraft] = useState({ name: '', division: '', description: '', seasonStartDate: '', seasonEndDate: '' });
   const q = useSeasonSave(season.id, orgSlug, onSaved);
   const held = editing && !draft.name.trim() ? 'Give the season a name to save it.' : null;
@@ -92,12 +94,14 @@ export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
             <label className={ck.field}>
               <span className={ck.label}>Season start</span>
               <input className={ck.input} type="date" value={draft.seasonStartDate}
-                onChange={e => { setDraft(d => ({ ...d, seasonStartDate: e.target.value })); commit({ seasonStartDate: e.target.value || null }); }} />
+                onChange={e => setDraft(d => ({ ...d, seasonStartDate: e.target.value }))}
+                onBlur={() => draft.seasonStartDate !== (season.seasonStartDate ?? '') && commit({ seasonStartDate: draft.seasonStartDate || null })} />
             </label>
             <label className={ck.field}>
               <span className={ck.label}>Season end</span>
               <input className={ck.input} type="date" value={draft.seasonEndDate}
-                onChange={e => { setDraft(d => ({ ...d, seasonEndDate: e.target.value })); commit({ seasonEndDate: e.target.value || null }); }} />
+                onChange={e => setDraft(d => ({ ...d, seasonEndDate: e.target.value }))}
+                onBlur={() => draft.seasonEndDate !== (season.seasonEndDate ?? '') && commit({ seasonEndDate: draft.seasonEndDate || null })} />
             </label>
           </div>
           <label className={ck.field}>
@@ -129,7 +133,8 @@ function intakeLine(season: LeagueSeason): string {
 function regDates(season: LeagueSeason): string {
   const o = season.registrationOpenAt, c = season.registrationCloseAt;
   if (!o && !c) return 'Not set';
-  const parts = [o ? formatStoredDate(o, { withYear: !c }) : null, c ? formatStoredDate(c, { withYear: true }) : null].filter(Boolean);
+  // Stored as typed with a Z on the end (the house-league forms), so the date part is the day the club typed.
+  const parts = [o ? formatStoredDate(o.slice(0, 10), { withYear: !c }) : null, c ? formatStoredDate(c.slice(0, 10), { withYear: true }) : null].filter(Boolean);
   const where = season.status === 'registration_open' ? 'open' : season.status === 'draft' ? 'not open yet' : 'closed';
   return `${parts.join(' – ')} · ${where}`;
 }
@@ -145,7 +150,9 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door }: {
   /** Close registration / Reopen registration, when the season offers one (9a·4: it sits on this block). */
   door?: ReactNode;
 }) {
-  const [editing, setEditing] = useState(false);
+  // A block open for editing closes the moment its season can no longer be edited (finished, or the access changed).
+  const [editOpen, setEditing] = useState(false);
+  const editing = editOpen && canEdit;
   const [draft, setDraft] = useState({ registrationOpenAt: '', registrationCloseAt: '', registrationFee: '', waiverText: '' });
   const q = useSeasonSave(season.id, orgSlug, onSaved);
   const start = () => {

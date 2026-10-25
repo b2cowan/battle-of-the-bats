@@ -76,8 +76,10 @@ export function looseEndSentence(parts: string[]): string | null {
   return `${body}.`;
 }
 
-const dayOf = (v: string) => (v.length > 10 ? tournamentToday(new Date(v)) : v.slice(0, 10));
-const label = (v: string) => formatStoredDate(v, { withYear: true });
+// A season's dates are date-only; its registration times are stored as typed with a Z on the end. Either way the first ten
+// characters are the club's day (never re-zoned: an early-morning close would move to the day before).
+const dayOf = (v: string) => v.slice(0, 10);
+const label = (v: string) => formatStoredDate(v.slice(0, 10), { withYear: true });
 
 export function moveWords(move: StatusMove, f: MoveFacts, today: string = tournamentToday()): MoveWords {
   const name = f.seasonName;

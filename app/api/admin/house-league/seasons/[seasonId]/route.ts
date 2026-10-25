@@ -104,7 +104,13 @@ export const PATCH = withObservability(async (req: Request,
   if (typeof body.sport        === 'string') patch.sport        = body.sport;
   if ('division'               in body)      patch.division     = body.division ?? null;
   if ('description'            in body)      patch.description  = body.description ?? null;
-  if ('registrationFee'        in body)      patch.registrationFee = body.registrationFee ?? null;
+  if ('registrationFee'        in body) {
+    const fee = body.registrationFee;
+    if (fee != null && (typeof fee !== 'number' || !Number.isFinite(fee) || fee < 0)) {
+      return NextResponse.json({ error: 'The registration fee is a number of dollars, 0 or more.' }, { status: 400 });
+    }
+    patch.registrationFee = fee ?? null;
+  }
   // ⚰ autoGenerateFees is no longer written (Club Tier Stage 9a, S1·b): read by nothing; a body carrying it is ignored.
   if ('autoApproveUnderCapacity' in body)    patch.autoApproveUnderCapacity = Boolean(body.autoApproveUnderCapacity);
   if ('autoPromoteWaitlist'    in body)      patch.autoPromoteWaitlist = Boolean(body.autoPromoteWaitlist);

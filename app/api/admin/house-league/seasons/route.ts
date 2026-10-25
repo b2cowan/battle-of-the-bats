@@ -75,7 +75,8 @@ export const POST = withObservability(async (req: Request) => {
       sport:                        typeof body.sport === 'string' && body.sport ? body.sport : DEFAULT_SPORT,
       division:                    typeof body.division === 'string' && body.division ? body.division : null,
       description:                  typeof body.description === 'string' && body.description ? body.description : null,
-      registration_fee:             typeof body.registrationFee === 'number' ? body.registrationFee : null,
+      // A fee is 0 or more dollars; anything else is no fee (the field's min is only a hint).
+      registration_fee:             typeof body.registrationFee === 'number' && Number.isFinite(body.registrationFee) && body.registrationFee >= 0 ? body.registrationFee : null,
       // ⚰ auto_generate_fees is no longer written (Club Tier Stage 9a, S1·b): stored, read by nothing — a fee reaches the
       // season's book only when it is marked received (lib/league-fee-paid.ts). The column keeps its default; its DROP
       // goes last in a release (prod release history), not here.

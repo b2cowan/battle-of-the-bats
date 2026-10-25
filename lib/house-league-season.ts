@@ -231,9 +231,10 @@ export function seasonNoteLine(
 ): string | null {
   if (isPastItsEnd(f, today)) return canRun ? 'Past its end date: complete it from the season page' : 'Past its end date';
   if (f.status === 'registration_open' && f.registrationCloseAt) {
-    const close = formatStoredDate(f.registrationCloseAt, { withYear: true });
-    // A timestamp: its day is the club's day (the zone), never the UTC date's first ten characters.
-    const closeDay = f.registrationCloseAt.length > 10 ? tournamentToday(new Date(f.registrationCloseAt)) : f.registrationCloseAt;
+    // Stored as typed with a Z on the end (the house-league forms; lib/club-home-data.ts reads it the same way), so the
+    // date part is the day the club typed — never re-zoned, which would move an early-morning close to the day before.
+    const closeDay = f.registrationCloseAt.slice(0, 10);
+    const close = formatStoredDate(closeDay, { withYear: true });
     return closeDay >= today ? `Registration closes ${close}` : `Registration was set to close ${close}`;
   }
   if (f.status === 'registration_closed') return canRun ? 'Registration is closed. Start the season from its page.' : 'Registration is closed.';

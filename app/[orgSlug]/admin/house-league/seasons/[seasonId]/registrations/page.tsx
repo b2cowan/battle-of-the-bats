@@ -17,7 +17,7 @@ import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_BUTTON, KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueSeasonStatus, LeagueTeam } from '@/lib/types';
-import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import LoadingState from '@/components/shared/LoadingState';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -183,9 +183,9 @@ export default function RegistrationsPage() {
   // Who may (the one house-league gate, Stage 9a, Q17): the club admin and the registrar work this desk; a finished season
   // locks the registrations and keeps the fee tick (Q16). A control a person can't use is absent.
   const access         = useHouseLeagueAccess(season);
-  const canManageRegs  = !!access?.register;
-  const canTakeFees    = !!access?.takeFees;
-  const canEmail       = !!access?.email;
+  const canManageRegs  = !!season && !!access?.register;
+  const canTakeFees    = !!season && !!access?.takeFees;
+  const canEmail       = !!season && !!access?.email;
   const [divisions,   setDivisions]   = useState<LeagueDivision[]>([]);
   const [regs,        setRegs]        = useState<LeagueRegistration[]>([]);
   const [fetching,    setFetching]    = useState(true);
@@ -343,6 +343,8 @@ export default function RegistrationsPage() {
         return next;
       });
 
+      // The season frame's amber count (rail, strip, phone) counts registrations to review: re-read it.
+      announceSeasonsChanged();
       const label = REG_STATUS_LABEL[status];
       showFeedback('success', `Registration ${label.toLowerCase()}.${data.promoted ? ` ${data.promoted.playerFirstName} ${data.promoted.playerLastName} promoted from waitlist.` : ''}`);
     } catch (e: any) {
@@ -396,6 +398,7 @@ export default function RegistrationsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to add registration');
       setRegs(prev => [data, ...prev]);
+      announceSeasonsChanged();
       setAddOpen(false);
       setAddForm(BLANK_FORM);
       showFeedback('success', `${addForm.playerFirstName} ${addForm.playerLastName} added.`);
@@ -622,6 +625,15 @@ export default function RegistrationsPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
+  // Someone who can't open house league (a treasurer reaches Money alone, Q17) reads the one no-access line, not empty tabs.
+  if (access && !access.read) {
+    return (
+      <div className={styles.accessDenied}>
+        <p>You don&apos;t have access to this page.</p>
+      </div>
+    );
+  }
+
   if (fetching) {
     return <LoadingState label="Loading registrations…" />;
   }
@@ -840,14 +852,19 @@ export default function RegistrationsPage() {
 
                   {/* Fee Paid */}
                   <td style={{ padding: '0.65rem 0.75rem', textAlign: 'center' }}>
-                    <input
-                      type="checkbox"
-                      checked={reg.registrationFeePaid}
-                      onChange={() => canTakeFees && toggleFeePaid(reg)}
-                      disabled={!canTakeFees}
-                      style={{ cursor: canTakeFees ? 'pointer' : 'default', width: 15, height: 15 }}
-                      title={reg.registrationFeePaid ? 'Fee paid' : 'Fee not yet paid'}
-                    />
+                    {/* A control a person can't use is absent (Stage 9a): someone who can't take fees reads the fact. */}
+                    {canTakeFees ? (
+                      <input
+                        type="checkbox"
+                        checked={reg.registrationFeePaid}
+                        onChange={() => toggleFeePaid(reg)}
+                        style={{ cursor: 'pointer', width: 15, height: 15 }}
+                        title={reg.registrationFeePaid ? 'Fee paid' : 'Fee not yet paid'}
+                        aria-label={`Fee paid, ${reg.playerFirstName} ${reg.playerLastName}`}
+                      />
+                    ) : (
+                      <span>{reg.registrationFeePaid ? 'Paid' : '—'}</span>
+                    )}
                   </td>
 
                   {/* Actions */}

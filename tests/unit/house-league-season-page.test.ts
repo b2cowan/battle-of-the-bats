@@ -89,8 +89,15 @@ describe('3 · the season’s page', () => {
     assert.match(page, /const canMove = !!access\?\.changeStatus;/);
     assert.doesNotMatch(page, /userRole|hasCapability|'league_admin'/);
   });
-  it('a finished season says it once, quietly', () => {
-    assert.match(page, /access\?\.finished && \(\s*<p className=\{s\.lockLine\}>This season is finished, so this page is locked\. Money stays open for late fees\.<\/p>/);
+  it('a finished season says it once, quietly, on every page — from the season layout, never a page’s own copy', () => {
+    assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/layout.tsx'), /<SeasonLockLine \/>/);
+    const lock = readCode('components/admin/kit/club/league/SeasonLockLine.tsx');
+    for (const page of ['overview', 'teams', 'schedule', 'standings', 'registrations', 'money']) {
+      assert.match(lock, new RegExp(`\\b${page}: '`), `${page} has no lock line`);
+    }
+    assert.doesNotMatch(lock, /notifications:/, 'Email families stays open: no lock line (owner 2026-10-24)');
+    assert.match(lock, /registrations: 'This season is finished\. Registrations are locked, and you can still mark fees received\.'/);
+    assert.doesNotMatch(page, /This season is finished/, 'the page grew its own copy of the line');
   });
   it('a draft leads with its checklist; Open registration is absent until the three steps are done (9a·4)', () => {
     assert.match(page, /title="Before you open registration"/);

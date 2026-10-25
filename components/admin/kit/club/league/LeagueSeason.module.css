@@ -1,8 +1,9 @@
 /* A house-league season's page on the kit (Club Tier Stage 9a, Part 4; frame B, C's registrar view, D). */
 
-/* One of two at any width: the status window's desk / phone title, and the season's name leading a phone window's body. */
+/* One of two at any width: the status window's desk / phone title, and the season's name leading a phone window's body.
+   640, the width at which KitDialog's form takes the full screen — so the phone title rides exactly the phone window. */
 .phoneOnly { display: none; }
-@media (max-width: 900px) {
+@media (max-width: 640px) {
   .deskOnly { display: none; }
   .phoneOnly { display: inline; }
   p.phoneOnly { display: block; }

@@ -430,6 +430,7 @@ Argued from the code (each cited line read directly unless marked as a helper le
 | Group empty state absent | "No season is running right now." for the first group only | The page needs an anchor when nothing is live. |
 | Drawn getting-ready tip ("a division, a price, dates") | Three exact lines with done states | The build prompt's fields; "price" is the fee. |
 | Seven windows | Start the season added | The status line has a step the drawings skipped (gap 2). |
+| Start the season's lead "The season moves to Running now." (§4.4) | Built as **"The season starts."** (9a build, 2026-10-24) | A closed season is already under Running now on the home (§1 groups by status: open, closed and active are all Running now), so "moves to Running now" would say something that does not happen. |
 | "Message registrants" window (unmentioned) | Entry labelled "Email families" in 9a | Same ruling reason as the row. Recommended, not asked. |
 
 ## 11. Genuine owner asks (only the ones the code forces)

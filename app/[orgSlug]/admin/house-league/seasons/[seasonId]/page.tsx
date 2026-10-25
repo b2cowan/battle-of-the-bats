@@ -159,10 +159,6 @@ export default function SeasonOverviewPage() {
         <SeasonStatePill season={season} />
       </p>
 
-      {access?.finished && (
-        <p className={s.lockLine}>This season is finished, so this page is locked. Money stays open for late fees.</p>
-      )}
-
       {/* The next step: a getting-ready season's checklist, with Open registration once it is done (9a·4). */}
       {season.status === 'draft' && (
         <ClubSection

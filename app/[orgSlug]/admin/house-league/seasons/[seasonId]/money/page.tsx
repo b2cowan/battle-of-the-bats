@@ -10,6 +10,7 @@ import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { AccountingEntry, AccountingLedger, LedgerSummary } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
+import { LoadFailed } from '@/components/admin/kit/club/RepKit';
 
 interface AnnotatedEntry extends AccountingEntry {
   playerFirstName: string | null;
@@ -58,10 +59,12 @@ export default function MoneyPage() {
   const [season,  setSeason]  = useState<SeasonInfo | null>(null);
   const [data,    setData]    = useState<LedgerData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [failed,  setFailed]  = useState(false);
 
   const load = useCallback(async () => {
     if (!canView) return;
     setLoading(true);
+    setFailed(false);
     try {
       const [seasonRes, ledgerRes] = await Promise.all([
         fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`),
@@ -71,6 +74,9 @@ export default function MoneyPage() {
       if (!ledgerRes.ok) throw new Error(ld.error ?? 'Failed to load the season’s money');
       setSeason(sd.season ? { id: sd.season.id, name: sd.season.name } : { id: seasonId, name: ld.ledger?.name ?? '' });
       setData(ld);
+    } catch {
+      // A failed read is said, never drawn as a calm $0.00 (the money kit's rule).
+      setFailed(true);
     } finally {
       setLoading(false);
     }
@@ -94,6 +100,14 @@ export default function MoneyPage() {
     );
   }
 
+  if (failed || !data) {
+    return (
+      <div className={styles.page}>
+        <LoadFailed title="We couldn’t load the season’s money." onRetry={() => void load()} />
+      </div>
+    );
+  }
+
   const collected   = data?.summary.postedIncome   ?? 0;
   const outstanding = data?.summary.pendingIncome  ?? 0;
   const expected    = data?.expectedTotal          ?? 0;
@@ -104,7 +118,8 @@ export default function MoneyPage() {
       {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
           eyebrow (still a link to House league) and the way up to the season (F3). */}
       <AdminPageHeader
-        crumbs={[{ href: `/${orgSlug}/admin/house-league`, label: 'House league' }]}
+        // The way up only for people who can open house league (a treasurer reads Money alone, Q17).
+        crumbs={access?.read ? [{ href: `/${orgSlug}/admin/house-league`, label: 'House league' }] : undefined}
         title="Money"
         backTo={season?.name && access?.read ?{ href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
       />
@@ -141,7 +156,7 @@ export default function MoneyPage() {
           color: 'var(--white-35)',
           fontSize: '0.9rem',
         }, KIT_SURFACE.empty)}>
-          No fee entries yet. Entries are created automatically when registrations are approved (if auto-generate fees is enabled).
+          No fees received yet. A fee is entered here when it is marked received on Registrations.
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>

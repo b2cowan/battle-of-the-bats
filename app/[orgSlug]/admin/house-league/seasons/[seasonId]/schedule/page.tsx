@@ -890,7 +890,7 @@ export default function SchedulePage() {
   // Who may (the one house-league gate, Stage 9a, Q16/Q17): the people who run the league, on a live season; everyone
   // else who opens house league reads. A control a person can't use is absent.
   const access = useHouseLeagueAccess(season);
-  const canManage = !!access?.run;
+  const canManage = !!season && !!access?.run;
   const hasAccess = !!access?.read;
 
   // ── Load data ──────────────────────────────────────────────────────────────
@@ -1295,7 +1295,7 @@ export default function SchedulePage() {
       <div className={styles.accessDenied}>
         <Calendar size={32} />
         <h2>Access restricted</h2>
-        <p>You don&apos;t have access to the House league module.</p>
+        <p>You don&apos;t have access to this page.</p>
       </div>
     );
   }

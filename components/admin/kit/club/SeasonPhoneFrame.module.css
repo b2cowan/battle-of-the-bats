@@ -54,6 +54,7 @@
 
 /* The season's pages: 44 px pills in one row that scrolls sideways (never wraps, never pushes the screen wide). */
 .strip {
+  position: relative;
   display: flex;
   gap: 0.4rem;
   overflow-x: auto;

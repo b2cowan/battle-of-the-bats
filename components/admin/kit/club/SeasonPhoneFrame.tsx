@@ -38,7 +38,7 @@ export default function SeasonPhoneFrame() {
     const on = strip?.querySelector<HTMLElement>('[aria-current="page"]');
     if (!strip || !on) return;
     strip.scrollLeft = on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2;
-  }, [at, pages.length]);
+  }, [at, pages.length, season?.id]);
 
   if (!season || !access) return null;
 
