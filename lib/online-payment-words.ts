@@ -265,6 +265,8 @@ export const PAY_WORDS = {
     couldntOpen: 'We couldn’t open the secure payment page. Nothing was charged. Try again.',
     switchOff: 'Online payments aren’t available yet.',
     tooSmall: 'This amount is too small to pay online. Pay the organizer another way.',
+    // Derived (review 2026-10-25, M2): Stripe took a payment the organizer still has to settle; never a second payment.
+    unrecorded: (team: string) => `A payment for ${team} is still being recorded by the organizer. Check back later before paying again.`,
   },
 } as const;
 

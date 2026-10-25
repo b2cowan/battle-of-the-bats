@@ -241,6 +241,9 @@ export async function refundOnlinePayment(p: {
       metadata: { online_payment_id: p.onlinePaymentId, refund_id: id },
     });
   } catch (e) {
+    // A refusal is a failure; a lost connection is not — Stripe may have the refund, and its event will settle it.
+    const type = (e as { type?: string } | null)?.type;
+    if (type === 'StripeConnectionError' || type === 'StripeAPIError') return { state: 'pending', refundId: id };
     await refundFailed(id, null, e instanceof Error ? e.message : 'Stripe refused the refund', p.onlinePaymentId);
     return { state: 'failed', refundId: id };
   }
@@ -272,9 +275,13 @@ export async function applyRefundEvent(stripeAccountId: string, refund: Stripe.R
     .select('id, org_id, status, total_amount, stripe_account_id, description, tournament_id')
     .eq('stripe_payment_intent_id', intent).maybeSingle();
   if (!op || op.stripe_account_id !== stripeAccountId) return;
+  // Ours carries our refund's id in its metadata (set when we asked Stripe), or Stripe's id once recorded. A refund made
+  // in the club's own Stripe dashboard has neither and is never taken for one of ours.
+  const ourId = typeof refund.metadata?.refund_id === 'string' ? refund.metadata.refund_id : null;
   const { data: ours } = await supabaseAdmin.from('online_payment_refunds')
     .select('id, status').eq('online_payment_id', op.id as string)
-    .or(`stripe_refund_id.eq.${refund.id},status.eq.pending`).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    .or(ourId ? `id.eq.${ourId},stripe_refund_id.eq.${refund.id}` : `stripe_refund_id.eq.${refund.id}`)
+    .limit(1).maybeSingle();
   if (ours) {
     if (ours.status === 'pending') {
       await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id }).eq('id', ours.id as string).is('stripe_refund_id', null);

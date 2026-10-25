@@ -53,6 +53,7 @@ export function loadPayouts(orgSlug: string): Promise<PayoutsView | null> {
 }
 
 async function post(orgSlug: string, body: Record<string, unknown>): Promise<{ url?: string | null; error?: string }> {
+  // org-slug-ok: sent in the body
   const res = await fetch('/api/admin/payouts', {
     method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgSlug, ...body }),
   });
@@ -186,6 +187,7 @@ function PayoutsRecord({ orgSlug, view, editing, onSaved }: {
     setSaving(true);
     setError(null);
     try {
+      // org-slug-ok: sent in the body
       const res = await fetch('/api/admin/payouts', {
         method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgSlug, ...change }),
       });

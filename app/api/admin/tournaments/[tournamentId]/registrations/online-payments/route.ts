@@ -54,6 +54,12 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     if (op.status === 'refunded') return json({ error: 'This payment was already refunded.' }, 409);
     const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('disconnected_at').eq('org_id', ctx.org.id).maybeSingle();
     if (body.action === 'refund' && (!acct || acct.disconnected_at)) return json({ error: 'Payouts are disconnected: refund this payment in Stripe.' }, 409);
+    if (body.action === 'refund_another_way') {
+      // Only after a refund to the card came back (review 2026-10-25, M3): otherwise Stripe still holds the money.
+      const { data: last } = await supabaseAdmin.from('online_payment_refunds').select('status')
+        .eq('online_payment_id', body.onlinePaymentId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (last?.status !== 'failed') return json({ error: 'Refund it to the card first. Record a refund made another way only when that refund came back.' }, 409);
+    }
     const reason = body.reason === 'organizer_ended' || body.reason === 'team_left' ? body.reason : null;
     const note = typeof body.note === 'string' ? body.note.trim().slice(0, 1000) || null : null;
     const args = { onlinePaymentId: body.onlinePaymentId, feeIncluded: body.feeIncluded === true, reason, note, actorId: ctx.user.id } as const;

@@ -46,10 +46,16 @@ export const POST = withObservability(async (req: Request) => {
 
   try {
     switch (event.type) {
-      case 'account.updated':
-      case 'account.application.deauthorized': {
-        const row = await syncPayoutsAccount(account).catch(() => null);
+      case 'account.updated': {
+        const row = await syncPayoutsAccount(account);
         if (row) await supabaseAdmin.from('stripe_connect_events').update({ org_id: row.org_id }).eq('id', event.id);
+        break;
+      }
+      case 'account.application.deauthorized': {
+        // The club closed its account in Stripe: it takes no more payments, exactly as a Disconnect (A1).
+        const now = new Date().toISOString();
+        await supabaseAdmin.from('org_payment_accounts').update({ disconnected_at: now, updated_at: now })
+          .eq('stripe_account_id', account).is('disconnected_at', null);
         break;
       }
       case 'checkout.session.completed':
@@ -66,11 +72,6 @@ export const POST = withObservability(async (req: Request) => {
       case 'refund.updated':
       case 'refund.failed': {
         await applyRefundEvent(account, event.data.object as Stripe.Refund);
-        break;
-      }
-      case 'charge.refunded': {
-        const charge = event.data.object as Stripe.Charge;
-        for (const r of charge.refunds?.data ?? []) await applyRefundEvent(account, r);
         break;
       }
       default:

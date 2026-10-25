@@ -20,7 +20,11 @@ import { RepChip } from './RepKit';
 import ck from './ClubKit.module.css';
 import pc from './PayoutsCard.module.css';
 
-export default function PayoutsStatusLine({ orgSlug, planId, home }: { orgSlug: string; planId: string; home: PayoutsHome }) {
+export default function PayoutsStatusLine({ orgSlug, planId, home, treasurerLine = true }: {
+  orgSlug: string; planId: string; home: PayoutsHome;
+  /** False where the treasurer's line has another home (a League or Club's Teams page: it lives on Accounting). */
+  treasurerLine?: boolean;
+}) {
   const [view, setView] = useState<PayoutsView | null>(null);
   useEffect(() => {
     if (!orgSlug) return;
@@ -40,6 +44,7 @@ export default function PayoutsStatusLine({ orgSlug, planId, home }: { orgSlug: 
     );
   }
 
+  if (!treasurerLine) return null;
   if (view.state === 'taking_payments') {
     return (
       <p className={`${ck.hint} ${pc.statusLine}`}>

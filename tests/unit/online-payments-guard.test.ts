@@ -62,6 +62,17 @@ describe('the landing is the only way an online payment reaches a team’s recor
     }
   });
 
+  it('the database refuses a hand write to an online payment or a refund (mig 359, review M4)', () => {
+    const sql = readCode('supabase/migrations/359_an_online_payment_changes_only_through_its_landing.sql');
+    assert.match(sql, /CREATE TRIGGER online_payments_guard BEFORE INSERT OR UPDATE ON public\.online_payments/);
+    assert.match(sql, /CREATE TRIGGER online_payment_refunds_guard BEFORE INSERT OR UPDATE ON public\.online_payment_refunds/);
+    assert.doesNotMatch(sql, /BEFORE[^;]*DELETE ON public\.online_payment/, 'never on DELETE: organizations cascade');
+    // The one function that marks a payment paid without landing it opens and closes the flag too.
+    const failed = /FUNCTION public\.online_payment_land_failed\([\s\S]*?\nEND \$\$;/.exec(sql)?.[0] ?? '';
+    assert.match(failed, /'flhq\.online_payment_write', 'on'/);
+    assert.match(failed, /'flhq\.online_payment_write', 'off'/);
+  });
+
   it('no app code writes an online-payment book line or marks an online payment paid itself', () => {
     for (const f of appCode()) {
       if (f === LANDING) continue;

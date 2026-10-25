@@ -45,10 +45,12 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
     .eq('id', team.tournament_id as string)
     .maybeSingle();
   if (!t) return null;
-  const [{ data: orgRow }, { data: div }, { data: acct }] = await Promise.all([
+  const [{ data: orgRow }, { data: div }, { data: acct }, { count: unrecorded }] = await Promise.all([
     supabaseAdmin.from('organizations').select('slug').eq('id', t.org_id as string).maybeSingle(),
     supabaseAdmin.from('divisions').select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date').eq('id', team.division_id as string).maybeSingle(),
     supabaseAdmin.from('org_payment_accounts').select(PAYOUTS_ACCOUNT_COLUMNS).eq('org_id', t.org_id as string).maybeSingle(),
+    // A payment Stripe took that couldn't land (review 2026-10-25, M2): the record says owing, the money is taken.
+    supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('team_id', teamId).eq('status', 'paid').is('landed_at', null),
   ]);
   const org = orgRow?.slug ? await getOrganizationBySlugForServer(orgRow.slug as string) : null;
   if (!org) return null;
@@ -67,6 +69,7 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
   else if (!tournamentTracksPayments(t.settings)) refusal = 'not_tracked';
   else if (team.status !== 'accepted') refusal = 'not_accepted';
   else if (t.status === 'completed' || t.status === 'archived') refusal = 'tournament_over';
+  else if ((unrecorded ?? 0) > 0) refusal = 'unrecorded_payment';
   else if (await isOurTournamentTeam(org.id, teamId)) refusal = 'our_team';
   else if (!options) refusal = 'nothing_owed';
 

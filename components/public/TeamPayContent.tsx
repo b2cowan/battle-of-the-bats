@@ -39,6 +39,8 @@ export default function TeamPayContent({ token, view, returnedSession, left }: {
       const res = await fetch(`/api/pay/team/${token}/status?session=${encodeURIComponent(returnedSession)}`, { cache: 'no-store' }).catch(() => null);
       const data = res?.ok ? await res.json().catch(() => null) : null;
       if (stop) return;
+      // A session this link doesn't know: stop waiting and show the page as it stands.
+      if (res?.status === 404) { window.location.replace(window.location.pathname); return; }
       if (data?.state === 'paid') {
         // The record has it: re-read the page from the server so the receipt is the stored one.
         window.location.replace(window.location.pathname);

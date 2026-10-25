@@ -314,6 +314,10 @@
     "358_a_club_takes_payments_online.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 12a (online payments; CLUB_TIER_STAGE12_PAYMENTS_PLAN.md §0c, schema review CLUB_TIER_STAGE12A_SCHEMA_REVIEW.md). Four NEW tables (org_payment_accounts, online_payments, online_payment_refunds, stripe_connect_events) and a sequence; tournament_team_payments gains online_payment_id, method online_card, status refunded, and the guard trigger tournament_team_payments_online_guard; teams.pay_link_sent_at; nine service-role-only functions (club_tournament_out_word, online_payment_post_out, online_payment_land, _land_failed, _refund_open, _refund_land, _refund_failed, the trigger function). Rebuilds BOTH Needs-attention partial indexes with three new kinds (payouts_need_attention, online_payment_not_recorded, card_refund_failed) — index predicates and function bodies are invisible to check:migrations, so verify by md5 against dev as for 338. Applied to DEV 2026-10-25. Production: apply only at the release that ships Stage 12a, and the feature stays switched OFF in production until counsel signs off (lib/online-payments-switch.ts)."
+    },
+    "359_an_online_payment_changes_only_through_its_landing.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 12a review fix M4: two guard TRIGGERS (online_payments_guard, online_payment_refunds_guard, BEFORE INSERT OR UPDATE) and a REPLACED online_payment_land_failed that opens the write flag. No table or column change, so check:migrations cannot see it: verify on prod by md5 of the three function bodies and the two triggers, as for 338. Needs 358 first. Applied to DEV 2026-10-25. Apply with 358 at the release that ships Stage 12a."
     }
   }
 }

@@ -2003,7 +2003,8 @@ export default function UnifiedTeamsPage() {
 
       {/* ── Payouts (Club Tier Stage 12a): a tournament-only club's treasurer line, the owner's quiet line (A1, A6) ── */}
       {currentOrg && currentTournament && listMode === 'normal' && !cleanInvite && paymentToolsAvailable && (
-        <PayoutsStatusLine orgSlug={currentOrg.slug} planId={currentOrg.planId} home={isTournamentTier(currentOrg.planId) ? 'tournament' : 'club'} />
+        <PayoutsStatusLine orgSlug={currentOrg.slug} planId={currentOrg.planId} home={isTournamentTier(currentOrg.planId) ? 'tournament' : 'club'}
+          treasurerLine={isTournamentTier(currentOrg.planId)} />
       )}
 
       {/* ── Payments, one slim line (owner 2026-10-21) — this division's money; absent where there is none to say ── */}
