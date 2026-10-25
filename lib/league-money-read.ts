@@ -48,6 +48,30 @@ export async function loadSeasonMoneyLines(orgId: string, seasonId: string): Pro
   return group((data ?? []) as Record<string, unknown>[]);
 }
 
+/** What each of an org's house-league registrations has received (posted in − posted out), in cents — for readers that
+ *  show a balance without the lines (the Families book). Read from the org's own season books, paged. */
+export async function loadOrgLeagueReceivedCents(orgId: string): Promise<Map<string, number>> {
+  const { data: books, error: bookError } = await supabaseAdmin.from('accounting_ledgers').select('id')
+    .eq('org_id', orgId).eq('entity_type', 'league_season');
+  if (bookError) throw bookError;
+  const out = new Map<string, number>();
+  const ids = (books ?? []).map(b => b.id as string);
+  if (ids.length === 0) return out;
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabaseAdmin.from('accounting_entries').select('id, source_entity_id, entry_type, amount')
+      .in('ledger_id', ids).eq('source_module', 'league_registration').eq('status', 'posted')
+      .in('entry_type', ['income', 'expense']).order('id').range(from, from + PAGE - 1);
+    if (error) throw error;
+    for (const r of data ?? []) {
+      const c = Math.round(Number(r.amount) * 100) * (r.entry_type === 'income' ? 1 : -1);
+      out.set(r.source_entity_id as string, (out.get(r.source_entity_id as string) ?? 0) + c);
+    }
+    if (!data || data.length < PAGE) break;
+  }
+  return out;
+}
+
 /** The lines of some registrations (any seasons), by registration. */
 export async function loadRegistrationMoneyLines(regIds: readonly string[]): Promise<Map<string, LeagueMoneyLine[]>> {
   if (regIds.length === 0) return new Map();

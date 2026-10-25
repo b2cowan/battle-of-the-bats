@@ -46,13 +46,13 @@ export type LeagueMoneyMove =
   /** Money out, its own line. `amount` omitted = everything received. */
   | { kind: 'refund'; day: string; method: string | null; reason: string | null; amount?: number | null }
   /** The latest payment was marked by mistake. */
-  | { kind: 'undo' }
+  | { kind: 'undo'; entryId?: string | null }
   /** A correction. `day`/`method` date the refund when the new price is below what was received. */
   | { kind: 'price'; price: number; reason: string; day?: string | null; method?: string | null };
 
 export type LeagueMoneyRefusal =
   | 'ended' | 'not_accepted' | 'already_received' | 'amount' | 'over' | 'nothing_received' | 'refunded'
-  | 'same' | 'reason' | 'money' | 'date' | 'future' | 'method' | 'before_payment';
+  | 'same' | 'reason' | 'money' | 'date' | 'future' | 'method' | 'before_payment' | 'changed';
 
 export type LeagueMoneyResult =
   | { entryId: string | null }
@@ -73,7 +73,7 @@ async function latestPaymentDay(regId: string): Promise<string | null> {
   const { data, error } = await supabaseAdmin.from('accounting_entries').select('entry_date')
     .eq('source_module', 'league_registration').eq('source_entity_id', regId)
     .eq('status', 'posted').eq('entry_type', 'income')
-    .order('entry_date', { ascending: false }).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
   return (data?.entry_date as string | undefined) ?? null;
 }
@@ -104,7 +104,7 @@ export async function writeLeagueMoney(
       p_amount: move.kind === 'price' ? move.price : move.kind === 'undo' ? null : move.amount ?? null,
       p_day: day, p_method: method,
       p_reason: move.kind === 'refund' || move.kind === 'price' ? move.reason : move.kind === 'receive' ? move.note ?? null : null,
-      p_actor: ctx.user.id,
+      p_actor: ctx.user.id, p_entry: move.kind === 'undo' ? move.entryId ?? null : null,
     });
     if (error) throw error;
     const row = (Array.isArray(data) ? data[0] : data) as { entry: string | null; refusal: string | null } | null;

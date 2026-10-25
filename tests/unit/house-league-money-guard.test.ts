@@ -19,11 +19,13 @@ const CODE = [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...file
   .filter(f => !f.endsWith('.test.ts'));
 /** Dev-only seeders write fixtures through the same database function (no signed-in member to pass the write). */
 const DEV_TOOLS = new Set(['app/api/dev/seed/house-league/route.ts']);
-const MIG = readSource('supabase/migrations/368_house_league_money_honest.sql').replace(/--.*$/gm, '');
+// The latest definition of each function wins (mig 369 replaced three of 368's after /review).
+const MIG = ['368_house_league_money_honest.sql', '369_house_league_money_review_fixes.sql']
+  .map(f => readSource(`supabase/migrations/${f}`)).join('\n').replace(/--.*$/gm, '');
 
 const body = (fn: string) => {
-  const at = MIG.indexOf(`FUNCTION public.${fn}(`);
-  assert.ok(at >= 0, `${fn} is gone from mig 368`);
+  const at = MIG.lastIndexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  assert.ok(at >= 0, `${fn} is gone from migs 368-369`);
   const rest = MIG.slice(at);
   return rest.slice(0, rest.indexOf('END $$;'));
 };
@@ -81,13 +83,13 @@ describe('2 · the book is honest (mig 368)', () => {
   });
   it('only an accepted child owes; a paid child keeps their price on a move', () => {
     assert.match(body('club_league_money'), /IF v_reg\.status <> 'active' THEN RETURN QUERY SELECT NULL::uuid, 'not_accepted'::text/);
-    assert.match(body('league_registration_move_division'), /IF league_reg_received\(p_registration\) > 0 THEN\s*v_kept := true;/);
+    assert.match(body('league_registration_move_division'), /IF league_reg_received\(p_registration\) > 0 THEN\s*v_kept := v_price IS DISTINCT FROM v_old;/);
   });
   it('a correction needs a reason and settles a lower paid price as a refund', () => {
     const money = body('club_league_money');
-    const price = money.slice(money.indexOf('IF p_amount = v_fee THEN'));
+    const price = money.slice(money.indexOf('IF v_price = v_fee THEN'));
     assert.match(price, /IF v_reason IS NULL THEN RETURN QUERY SELECT NULL::uuid, 'reason'::text/);
-    assert.match(price, /IF v_got > p_amount THEN[\s\S]*'registration_refund'/);
+    assert.match(price, /IF v_got > v_price THEN[\s\S]*'registration_refund'/);
     assert.match(price, /INSERT INTO league_registration_price_changes/);
   });
   it('accepted-at is set by a trigger on every door, never invented for an old row', () => {

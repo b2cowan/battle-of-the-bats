@@ -97,7 +97,7 @@ export async function placeLeagueRegistration(input: PlaceInput): Promise<{ plac
 
 /** Staff move a child between Received, Accepted and Waitlist; `changed` is decided under the lock (one email per real
  *  change). With `promote`, a child who held a spot going to the waitlist frees it for the first child waiting. Declining
- *  and withdrawing end a registration through `voidLeagueRegistrationFee` (lib/league-fee-paid.ts), the same lock. */
+ *  and withdrawing end a registration through `endLeagueRegistration` (lib/league-fee-paid.ts), the same lock. */
 export async function moveLeagueRegistration(
   orgId: string, seasonId: string, regId: string,
   to: 'active' | 'pending_review' | 'waitlisted', notes: string | null, promote: boolean,

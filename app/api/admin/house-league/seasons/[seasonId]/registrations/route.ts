@@ -76,6 +76,11 @@ function mapRegistration(row: any) {
     signupRef:           row.signup_ref ?? null,
     signupPosition:      row.signup_position ?? null,
     feeAmount:           row.fee_amount != null ? Number(row.fee_amount) : null,
+    acceptedAt:          row.accepted_at ?? null,
+    endedAt:             row.ended_at ?? null,
+    spotReleased:        row.spot_released ?? false,
+    endMoney:            row.end_money ?? null,
+    endMoneyReason:      row.end_money_reason ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };

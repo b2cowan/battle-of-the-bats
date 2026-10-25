@@ -145,7 +145,7 @@ function readMoneyMove(raw: unknown): LeagueMoneyMove | null {
   const m = (raw ?? {}) as Record<string, unknown>;
   const method = m.method == null || m.method === '' ? null : String(m.method);
   if (m.kind === 'receive' && typeof m.day === 'string') return { kind: 'receive', day: m.day, method };
-  if (m.kind === 'undo') return { kind: 'undo' };
+  if (m.kind === 'undo') return { kind: 'undo', entryId: typeof m.entryId === 'string' ? m.entryId : null };
   if (m.kind === 'price') {
     const price = priceFromBody(m.price);
     if (!price || 'error' in price || price.value == null) return null;
@@ -180,6 +180,7 @@ function moneyRefusal(
     already_received: [409, (registrationOwes(reg, season) ?? 0) > 0 ? MONEY_REFUSAL.alreadyReceived(name) : MONEY_REFUSAL.free(name)],
     amount: [400, MONEY_REFUSAL.amount],
     over: [409, MONEY_REFUSAL.changed],
+    changed: [409, MONEY_REFUSAL.changed],
     nothing_received: [409, MONEY_REFUSAL.nothingToUndo(name)],
     refunded: [409, MONEY_REFUSAL.refundedUndo],
     same: [400, MONEY_REFUSAL.priceSame],
@@ -231,7 +232,8 @@ export const PATCH = withObservability(async (req: Request,
   // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c Part A; rebuilt 9b-2 — lib/league-fee-paid.ts):
   // received (a day and how), undo, a corrected price. The fiscal year's lock and the line live there. It stays open on a
   // finished season (Q16). `feePaid` is the old tick's shape (true = the whole balance received today; false = undo).
-  if ('money' in body || 'feePaid' in body) {
+  // An ending's money answer rides with its status (below); only a status-less body is a money press.
+  if (('money' in body || 'feePaid' in body) && !('status' in body)) {
     if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
     const move: LeagueMoneyMove | null = 'money' in body
       ? readMoneyMove(body.money)

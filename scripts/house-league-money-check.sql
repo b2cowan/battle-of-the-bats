@@ -150,5 +150,34 @@ BEGIN
   IF league_reg_received(v_p) <> 0 OR (SELECT registration_fee_paid FROM league_registrations WHERE id = v_p) THEN
     RAISE EXCEPTION 'FAIL T12: the old untick left money'; END IF;
 
+  -- T13 · (mig 369) Undo names its payment: a second press, or a stale window, is refused rather than voiding the next one.
+  PERFORM 1 FROM club_league_money(v_org, v_season, v_p, 'receive', NULL, v_day, 'cash', NULL, NULL);
+  SELECT e.id INTO v_entry FROM accounting_entries e WHERE e.source_entity_id = v_p AND e.status = 'posted' AND e.entry_type = 'income';
+  SELECT m.refusal INTO v_refusal FROM club_league_money(v_org, v_season, v_p, 'undo', NULL, NULL, NULL, NULL, NULL, gen_random_uuid()) m;
+  IF v_refusal IS DISTINCT FROM 'changed' OR league_reg_received(v_p) <> 150 THEN
+    RAISE EXCEPTION 'FAIL T13: an Undo naming another payment voided this one (%)', v_refusal; END IF;
+  SELECT m.refusal INTO v_refusal FROM club_league_money(v_org, v_season, v_p, 'undo', NULL, NULL, NULL, NULL, NULL, v_entry) m;
+  IF v_refusal IS NOT NULL OR league_reg_received(v_p) <> 0 THEN RAISE EXCEPTION 'FAIL T13: the named Undo failed (%)', v_refusal; END IF;
+  SELECT m.refusal INTO v_refusal FROM club_league_money(v_org, v_season, v_p, 'undo', NULL, NULL, NULL, NULL, NULL, v_entry) m;
+  IF v_refusal IS DISTINCT FROM 'nothing_received' THEN RAISE EXCEPTION 'FAIL T13: a second Undo press was not refused (%)', v_refusal; END IF;
+
+  -- T14 · (mig 369) Undo is refused on an ended registration; a kept fee stays kept.
+  SELECT m.refusal INTO v_refusal FROM club_league_money(v_org, v_season, v_a, 'undo', NULL, NULL, NULL, NULL, NULL) m;
+  IF v_refusal IS DISTINCT FROM 'ended' OR league_reg_received(v_a) <> 90 THEN RAISE EXCEPTION 'FAIL T14: Undo voided a kept fee (%)', v_refusal; END IF;
+
+  -- T15 · (mig 369) a lowered paid price with no day is a refusal, not an error; a refund ending with no day too.
+  PERFORM 1 FROM club_league_money(v_org, v_season, v_p, 'receive', NULL, v_day, 'cash', NULL, NULL);
+  SELECT m.refusal INTO v_refusal FROM club_league_money(v_org, v_season, v_p, 'price', 100, NULL, NULL, 'discount', NULL) m;
+  IF v_refusal IS DISTINCT FROM 'date' THEN RAISE EXCEPTION 'FAIL T15: a lowered price with no day was not refused (%)', v_refusal; END IF;
+  SELECT c.refusal INTO v_refusal FROM league_registration_close(v_org, v_season, v_p, 'withdrawn', NULL, NULL, false, false, 'refunded', NULL, NULL, 'cash') c;
+  IF v_refusal IS DISTINCT FROM 'date' OR (SELECT status FROM league_registrations WHERE id = v_p) <> 'active' THEN
+    RAISE EXCEPTION 'FAIL T15: a refund ending with no day was not refused (%)', v_refusal; END IF;
+
+  -- T16 · (mig 369) a revived registration no longer carries how it ended.
+  UPDATE league_registrations SET status = 'active' WHERE id = v_a;
+  IF (SELECT end_money FROM league_registrations WHERE id = v_a) IS NOT NULL
+     OR (SELECT ended_at FROM league_registrations WHERE id = v_a) IS NOT NULL THEN
+    RAISE EXCEPTION 'FAIL T16: a revived registration kept its ending'; END IF;
+
   RAISE EXCEPTION 'HOUSE_LEAGUE_MONEY_PASSED';
 END $hlmoney$;

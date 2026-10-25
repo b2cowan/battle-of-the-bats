@@ -34,7 +34,7 @@ import { FAMILY_COACH_ASK_WORDS, FAMILY_HANDOFF_COACH_WORDS as CW, FAMILY_PAYMEN
  * and an income line in the TEAM's ledger), so no club door may record one: this file never imports
  * `recordRepDuesPayment` and never writes `rep_dues_payments` / `rep_dues_credits` — the stage guard fails the build if
  * any `app/api/admin/**` or this file does. The family record's window records the club's OWN money (a house-league
- * fee, through `setLeagueFeePaid`, the Registrations tick's one write) and HANDS each rep line to the team's head coach:
+ * fee, through `writeLeagueMoney`, the Registrations Mark received's one write) and HANDS each rep line to the team's head coach:
  * a `family_payment_handoffs` row (mig 338), delivered the way Ask the coaches reaches coaches (colleague mail that
  * replies to the sender, a "Your club" bell — never `sendFamilyEmail`: nothing in 5c reaches a family). The coach's own
  * Record money writes the payment, carrying the hand-off's id (`claimHandoffForPayment` below).
@@ -95,9 +95,10 @@ export async function paymentPlan(ctx: AuthContextWithRole, page: FamilyPagePayl
   for (const l of owing) {
     const m = l.money;
     if (!m) {
-      // `owing` admitted it: an unpaid house-league fee (a fee is paid whole or not, so what is owed IS the fee).
+      // `owing` admitted it: an accepted house-league child with a balance. What the window places is that balance — the
+      // whole fee, or what is left after a price rise (9b-2: the book can hold part of a fee).
       lines.push({
-        kind: 'league', key: l.key, childName: l.childName, where: l.where, feeCents: l.league!.feeCents!,
+        kind: 'league', key: l.key, childName: l.childName, where: l.where, feeCents: l.league!.balanceCents,
         regId: l.leagueReg!.id, seasonId: l.leagueReg!.seasonId, reason: feeAllowed ? null : W.reasonNoFeePermission,
       });
       continue;

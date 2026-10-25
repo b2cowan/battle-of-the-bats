@@ -114,7 +114,7 @@ describe('3 · the coach’s save resolves a hand-off, and refuses the wrong one
   });
   it('two presses on one fee make one fee line (the registration is locked in SQL)', () => {
     const lib = readCode('lib/league-fee-paid.ts');
-    const sql = readCode('supabase/migrations/368_house_league_money_honest.sql');
+    const sql = readCode('supabase/migrations/369_house_league_money_review_fixes.sql');
     const money = sql.slice(sql.indexOf('FUNCTION public.club_league_money('));
     assert.match(lib, /\.rpc\('club_league_money'/);
     // The registration row is held, and a second press finds nothing left owing (proved on the database by

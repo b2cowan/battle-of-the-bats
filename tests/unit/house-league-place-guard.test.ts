@@ -100,10 +100,12 @@ describe('the database functions hold the season lock and count received childre
     });
   }
   // 9b-2 (mig 368): the ending with its money answer, the old ending's new body and the priced move, the same way.
-  const MIG368 = readSource('supabase/migrations/368_house_league_money_honest.sql').replace(/--.*$/gm, '');
+  // The latest definition wins (mig 369 replaced the close and the priced move after /review).
+  const MIG368 = ['368_house_league_money_honest.sql', '369_house_league_money_review_fixes.sql']
+    .map(f => readSource(`supabase/migrations/${f}`)).join('\n').replace(/--.*$/gm, '');
   for (const fn of ['league_registration_close', 'league_registration_end', 'league_registration_move_division']) {
-    it(`${fn} (mig 368) takes the season row lock first`, () => {
-      const body = MIG368.slice(MIG368.indexOf(`FUNCTION public.${fn}(`));
+    it(`${fn} (mig 368/369) takes the season row lock first`, () => {
+      const body = MIG368.slice(MIG368.lastIndexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`));
       const end = body.indexOf('END $$;');
       const lockAt = body.search(/FROM league_seasons[^;]*FOR NO KEY UPDATE/);
       const firstWrite = body.search(/\b(INSERT INTO|UPDATE) league_registrations|league_waitlist_promote_locked\(|club_league_money\(|league_registration_change_division\(/);

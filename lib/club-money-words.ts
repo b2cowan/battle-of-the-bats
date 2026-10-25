@@ -111,6 +111,8 @@ const CATEGORY_WORD: Record<string, string> = {
   [CLUB_LOOP_CATEGORY.toClub]: TEAM_SUPPORT_WORD,
   [CLUB_LOOP_CATEGORY.fromClub]: TEAM_SUPPORT_WORD,
   registration_fee: 'Registration fees',
+  // A house-league refund (Club Tier 9b-2, mig 368): its own line out beside the payment it returns.
+  registration_refund: 'Registration refunds',
 };
 
 /** A line's category, in words. A club's own free-text category reads as typed. */

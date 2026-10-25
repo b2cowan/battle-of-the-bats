@@ -1055,7 +1055,7 @@ function noteAndMoney(note: string | null, money: EndedMoneyLine | null): string
   const out: string[] = [];
   if (note && note.trim()) out.push(`<p>${escapeEmailHtml(note.trim()).replace(/\n/g, '<br>')}</p>`);
   if (money?.answer === 'refunded') {
-    out.push(`<p>We refunded the ${dollarsLine(money.amount)} you paid on ${formatStoredDate(money.day)}${methodInBrackets(money.method)}.</p>`);
+    out.push(`<p>We refunded the ${dollarsLine(money.amount)} you paid on ${formatStoredDate(money.day)}${escapeEmailHtml(methodInBrackets(money.method))}.</p>`);
   } else if (money?.answer === 'kept') {
     out.push(`<p>The club is keeping the ${dollarsLine(money.amount)} you paid. The reason: ${escapeEmailHtml(money.reason)}.</p>`);
   }

@@ -14,6 +14,7 @@ import { proposeDuplicates, unionFind, type DuplicateChildIn, type DuplicatePers
 import { isCurrentLeagueSeason, isCurrentRepYear, isLiveRegStatus, type AudiencePerson } from './families-audience';
 import { listsByPerson } from './families-lists';
 import { registrationOwes } from './league-price';
+import { loadOrgLeagueReceivedCents } from './league-money-read';
 
 /**
  * lib/families-read.ts — server-side assembly for the Families area (P2 chunks C–E; Club Tier Stage 5a).
@@ -204,17 +205,19 @@ export type { DuplicateProposal, DuplicateSide } from './families-duplicates';
 const toCents = (n: unknown): number => Math.round(Number(n ?? 0) * 100);
 
 /** A house-league registration's fee in the Dues · Paid · Balance columns (owner 2026-10-18, §329 W3: the record's
- *  table reads one way for every child, and its band counts what the "Owes money" list counts). The registration records
- *  paid / not paid, never a part payment — so Paid is all of the fee or none of it. The fee is the price recorded when the
- *  child signed up, else the season's (Club Tier 9b-1, lib/league-price.ts). Null figures when neither is set (nothing is
- *  owed on it). */
+ *  table reads one way for every child, and its band counts what the "Owes money" list counts). The fee is the price
+ *  FIXED on the registration, else the season's (Club Tier 9b-1, lib/league-price.ts). Paid is what the season's book has
+ *  received for it (Club Tier 9b-2: posted in − posted out, so a part payment after a price rise, or a refund, reads true —
+ *  `receivedCents` from `loadOrgLeagueReceivedCents`); only an ACCEPTED child owes (Q1), so a child in review or on the
+ *  waitlist has no balance yet. Null figures when no price is set (nothing is owed on it). */
 export interface LeagueFeeLine { feeCents: number | null; paidCents: number; balanceCents: number }
 export function leagueFeeLine(r: any): LeagueFeeLine {
   const fee = leagueRegOwes(r);
   if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0 };
   const feeCents = toCents(fee);
-  const paidCents = r.registration_fee_paid === true ? feeCents : 0;
-  return { feeCents, paidCents, balanceCents: feeCents - paidCents };
+  const paidCents = typeof r.__receivedCents === 'number' ? r.__receivedCents : r.registration_fee_paid === true ? feeCents : 0;
+  const owes = r.status === undefined || r.status === 'active';
+  return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0 };
 }
 
 /** What a raw league_registrations row (with its league_seasons join) owes, in dollars: the one rule. */
@@ -264,6 +267,9 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
     unless(opts.forDuplicates, () => orgRows<any>('rep_player_continuity_links', 'id, current_roster_id, current_registration_id, prior_roster_id, prior_registration_id', orgId,
       q => q.eq('status', 'confirmed'))),
   ]);
+  // What the season books have received for each registration (9b-2): the fee line reads it, never the paid flag alone.
+  const received = opts.forDuplicates ? new Map<string, number>() : await loadOrgLeagueReceivedCents(orgId);
+  for (const r of leagueRegs) r.__receivedCents = received.get(r.id) ?? 0;
   const byKey = <T>(rows: T[], key: (r: T) => string | null | undefined) => {
     const m = new Map<string, T[]>();
     for (const r of rows) { const k = key(r); if (!k) continue; const l = m.get(k); if (l) l.push(r); else m.set(k, [r]); }
