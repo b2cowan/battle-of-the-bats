@@ -64,12 +64,12 @@ describe('budget_items references — the list of what points at a word', () => 
       + 'which reads exactly like "nothing is filed against this".');
   });
 
-  test('only the hosted tournament setting protects its item with NO ACTION', () => {
+  test('only the hosted tournament setting and the house-league season word protect their item with NO ACTION', () => {
     /* If a future foreign key arrives as RESTRICT or CASCADE the guards are not wrong, but the
        reasoning around them is, and every comment saying "the delete does not fail" stops being
        true. Fail here so the change is deliberate rather than discovered. */
     const surprising = incoming
-      .filter(r => r.delete_rule !== (r.table_name === 'tournament_fee_book_settings' ? 'NO ACTION' : 'SET NULL'))
+      .filter(r => r.delete_rule !== (['tournament_fee_book_settings', 'league_season_fee_words'].includes(r.table_name) ? 'NO ACTION' : 'SET NULL'))
       .map(r => `${r.table_name}.${r.column_name} is ON DELETE ${r.delete_rule}`);
 
     assert.deepEqual(surprising, [],

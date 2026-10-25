@@ -1,11 +1,11 @@
 {
   "generated": "2026-10-25",
-  "total": 423,
+  "total": 438,
   "counts": {
-    "tables": 14,
-    "columns": 227,
-    "indexes": 60,
-    "constraints": 57,
+    "tables": 15,
+    "columns": 232,
+    "indexes": 64,
+    "constraints": 62,
     "rls": 65
   },
   "items": [
@@ -435,6 +435,26 @@
     },
     {
       "key": "column:only-dev:league_registrations.withdraw_requested_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_fee_words.category_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_fee_words.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_fee_words.item_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_fee_words.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_fee_words.season_id",
       "sig": ""
     },
     {
@@ -1214,6 +1234,26 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_season_fee_words.league_season_fee_words_category_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_fee_words.league_season_fee_words_item_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_fee_words.league_season_fee_words_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_fee_words.league_season_fee_words_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_fee_words.league_season_fee_words_season_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_cost_entry_fk",
       "sig": ""
     },
@@ -1458,6 +1498,22 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_season_fee_words_category_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_fee_words_item_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_fee_words_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_fee_words_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:notifications_one_open_online_payments_notice",
       "sig": ""
     },
@@ -1651,6 +1707,10 @@
     },
     {
       "key": "table:only-dev:league_registration_price_changes",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_season_fee_words",
       "sig": ""
     },
     {

@@ -2580,6 +2580,56 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_season_fee_words",
+    "constraint_name": "league_season_fee_words_category_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "category_id",
+    "foreign_table": "budget_categories",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "constraint_name": "league_season_fee_words_item_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "item_id",
+    "foreign_table": "budget_items",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "constraint_name": "league_season_fee_words_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "constraint_name": "league_season_fee_words_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "season_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "constraint_name": "league_season_fee_words_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "league_seasons",
     "constraint_name": "league_seasons_org_id_fkey",
     "constraint_type": "FOREIGN KEY",

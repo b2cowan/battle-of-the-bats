@@ -45,7 +45,7 @@ import { CLUB_SENT_WAITING_WORD, HELD_BY_THE_TEAM_WORD, OUTSIDE_YOUR_GROUPS_WORD
 import { formatStoredDate } from './timezone';
 import {
   allocationYear, bandCollected, clubBillFigures, clubCashOnHand, clubMovement, clubYearOf, clubYearSpan,
-  closingBalance, countsAsActual, headroom, isClubBook, lineAllocated, netForYear, notAllocated, offPlan,
+  closingBalance, countsAsActual, headroom, isClubBook, isFeeRefund, lineAllocated, netForYear, notAllocated, offPlan,
   otherBooksMovement, owedByTheTeams, planned, spent, sumMoney, teamsCashTotal, teamsWithMoneyLate, teamsWithRequestWaiting,
   waitingOnYou, clubInstallmentDue, requestWaitsOnClub,
   type ClubBookMovementFacts, type ClubInstallmentFacts, type CountAndAmount, type TeamCashHeld,
@@ -667,12 +667,16 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
       ? { ...filed.filing, itemId: `${EARLIER_BILLS_PREFIX}${earlier.key}`, itemName: lastYearsBillsWord(earlier.name) }
       : filed.filing;
     if (earlier) plannedInByItem.set(f.itemId!, earlier.name);
-    const direction = clubMovement(l) as 'in' | 'out';
+    // A house-league refund nets its season's fees row (9b-2: "Actual is net of the refund"): money in, negative — the
+    // same rule as the band's Collected (`isFeeRefund`), so the Statement, the band and Months can never disagree.
+    const refund = isFeeRefund(l);
+    const direction = refund ? 'in' : clubMovement(l) as 'in' | 'out';
+    const amount = refund ? -l.amount : l.amount;
     if (source) lineSources[l.id] = source;
     lineBooks[l.id] = { ledgerId: l.ledgerId, bookName: l.bookName };
-    spend.push({ id: l.id, description: l.description, ...eventOf(f), itemName: f.itemName, amount: l.amount, paidDate: l.entryDate, direction });
-    (direction === 'in' ? actualIn : actualOut).push({ ...eventOf(f), date: l.entryDate, amount: l.amount });
-    pushDetail('actual', f, l.entryDate, { id: l.id, description: l.description, amount: l.amount, note: source?.teamName ?? l.bookName });
+    spend.push({ id: l.id, description: l.description, ...eventOf(f), itemName: f.itemName, amount, paidDate: l.entryDate, direction });
+    (direction === 'in' ? actualIn : actualOut).push({ ...eventOf(f), date: l.entryDate, amount });
+    pushDetail('actual', f, l.entryDate, { id: l.id, description: l.description, amount, note: source?.teamName ?? l.bookName });
   }
   const report = rollupMoneyReport({ lines: [...planRollupLines(lines), ...fromTheTeamsPlanLines(drawnFrom(lines, allocations))], spend });
   const markEarlier = (s: ReportSection): ReportSection => (plannedInByItem.size === 0 ? s : {

@@ -113,6 +113,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at, signup_ref, signup_position, fee_amount (numeric), accepted_at, ended_at, spot_released (boolean), end_money, end_money_reason, withdraw_requested_at, withdraw_request_note
 - Indexes: league_registrations_division_idx, league_registrations_guardian_idx, league_registrations_org_id_idx, league_registrations_person_id_idx, league_registrations_season_idx, league_registrations_signup_ref_idx, league_registrations_status_idx, league_registrations_team_id_idx
 
+### league_season_fee_words
+season_id (uuid) → league_seasons.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, category_id (uuid) → budget_categories.id NOT NULL, item_id (uuid) → budget_items.id NOT NULL, created_at
+- Indexes: league_season_fee_words_category_idx, league_season_fee_words_item_uniq, league_season_fee_words_org_idx
+
 ### league_seasons
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days
 - Indexes: league_seasons_org_id_slug_key
@@ -912,10 +916,10 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **221 tables** across 10 modules.
+Total: **222 tables** across 10 modules.
 
 - Tournament: 17 tables
-- League: 9 tables
+- League: 10 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables

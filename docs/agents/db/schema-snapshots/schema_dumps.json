@@ -7139,6 +7139,51 @@
         "column_default": null
       },
       {
+        "table_name": "league_season_fee_words",
+        "pos": 1,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_fee_words",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_fee_words",
+        "pos": 3,
+        "column_name": "category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_fee_words",
+        "pos": 4,
+        "column_name": "item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_fee_words",
+        "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "league_seasons",
         "pos": 1,
         "column_name": "id",
@@ -25409,6 +25454,34 @@
         "constraint_name": "league_registrations_team_id_fkey"
       },
       {
+        "table_name": "league_season_fee_words",
+        "column_name": "category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "league_season_fee_words_category_id_fkey"
+      },
+      {
+        "table_name": "league_season_fee_words",
+        "column_name": "item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "league_season_fee_words_item_id_fkey"
+      },
+      {
+        "table_name": "league_season_fee_words",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_season_fee_words_org_id_fkey"
+      },
+      {
+        "table_name": "league_season_fee_words",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_season_fee_words_season_id_fkey"
+      },
+      {
         "table_name": "league_seasons",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -30544,6 +30617,26 @@
         "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
       },
       {
+        "tablename": "league_season_fee_words",
+        "indexname": "league_season_fee_words_category_idx",
+        "indexdef": "CREATE INDEX league_season_fee_words_category_idx ON public.league_season_fee_words USING btree (category_id)"
+      },
+      {
+        "tablename": "league_season_fee_words",
+        "indexname": "league_season_fee_words_item_uniq",
+        "indexdef": "CREATE UNIQUE INDEX league_season_fee_words_item_uniq ON public.league_season_fee_words USING btree (item_id)"
+      },
+      {
+        "tablename": "league_season_fee_words",
+        "indexname": "league_season_fee_words_org_idx",
+        "indexdef": "CREATE INDEX league_season_fee_words_org_idx ON public.league_season_fee_words USING btree (org_id)"
+      },
+      {
+        "tablename": "league_season_fee_words",
+        "indexname": "league_season_fee_words_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_season_fee_words_pkey ON public.league_season_fee_words USING btree (season_id)"
+      },
+      {
         "tablename": "league_seasons",
         "indexname": "league_seasons_org_id_slug_key",
         "indexdef": "CREATE UNIQUE INDEX league_seasons_org_id_slug_key ON public.league_seasons USING btree (org_id, slug)"
@@ -35128,6 +35221,12 @@
       {
         "kind": "RLS",
         "table_name": "league_registrations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_season_fee_words",
         "detail": "ENABLED",
         "check_clause": null
       },

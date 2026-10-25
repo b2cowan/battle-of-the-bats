@@ -1395,6 +1395,26 @@
     "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
   },
   {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_category_idx",
+    "indexdef": "CREATE INDEX league_season_fee_words_category_idx ON public.league_season_fee_words USING btree (category_id)"
+  },
+  {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_item_uniq",
+    "indexdef": "CREATE UNIQUE INDEX league_season_fee_words_item_uniq ON public.league_season_fee_words USING btree (item_id)"
+  },
+  {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_org_idx",
+    "indexdef": "CREATE INDEX league_season_fee_words_org_idx ON public.league_season_fee_words USING btree (org_id)"
+  },
+  {
+    "tablename": "league_season_fee_words",
+    "indexname": "league_season_fee_words_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_season_fee_words_pkey ON public.league_season_fee_words USING btree (season_id)"
+  },
+  {
     "tablename": "league_seasons",
     "indexname": "league_seasons_org_id_slug_key",
     "indexdef": "CREATE UNIQUE INDEX league_seasons_org_id_slug_key ON public.league_seasons USING btree (org_id, slug)"

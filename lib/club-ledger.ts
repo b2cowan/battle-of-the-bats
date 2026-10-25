@@ -102,9 +102,9 @@ export const lineCategoryWord = (l: Pick<LineFacts, 'category'>) => categoryWord
  *     the teams › On request"; a request paid to a team → the standard club-only word "Team support ›
  *     Paid to teams on request" (mig 317's fixed ids);
  *   · a typed line files under its word (category AND item — a word is both), else "Not filed";
- *   · a transfer between two books the club owns, and a house-league fee, are filed nowhere (null) — the
- *     first moves nothing in total, the second waits for Stage 9; a transfer to a TEAM's book made by
- *     hand before 3a refused them is money out with no word: "Not filed".
+ *   · a house-league fee or refund files by its source under its season's word (Club Tier 9b-2, mig 371);
+ *   · a transfer between two books the club owns is filed nowhere (null) — it moves nothing in total; a
+ *     transfer to a TEAM's book made by hand before 3a refused them is money out with no word: "Not filed".
  * ══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /** The standard word a request paid to a team files under (mig 317's fixed ids). Never change them. */
@@ -154,7 +154,14 @@ export function fileLine(l: FilingFacts, allocationOf?: () => { id: string; desc
   const type = lineType(l);
   if (type === 'team_allocations') return allocationFiling(allocationOf?.() ?? null);
   if (type === 'team_support') return isMoneyIn(l) ? ON_REQUEST_FILING : TEAM_SUPPORT_FILING;
-  if (type === 'house_league_fees') return null;
+  // A house-league fee or refund files under its season's word (Club Tier 9b-2, mig 371: the club's one "House league
+  // registration fees" category, an item per season, stamped on the line as it is written). A line with no word is a fee
+  // from before mig 371 that the backfill could not reach: filed nowhere, as before.
+  if (type === 'house_league_fees') {
+    return l.budgetItemId && l.budgetCategoryId
+      ? { categoryId: l.budgetCategoryId, categoryName: l.budgetCategoryName ?? NOT_FILED_WORD, itemId: l.budgetItemId, itemName: l.budgetItemName, byItsSource: true }
+      : null;
+  }
   if (type === 'transfer') return l.partnerKind && isClubOwnedBook(l.partnerKind) ? null : NOT_FILED_FILING;
   if (l.budgetItemId && l.budgetCategoryId) {
     return {
@@ -185,7 +192,7 @@ export function ledgerFiling(l: FilingFacts, bookKind: LedgerKind, allocationOf?
   const filing = fileLine(l, allocationOf);
   return {
     filing,
-    category: lineType(l) === 'house_league_fees' ? lineCategoryWord(l) : filing?.categoryName ?? null,
+    category: lineType(l) === 'house_league_fees' && !filing ? lineCategoryWord(l) : filing?.categoryName ?? null,
     item: filing && filing.categoryId !== NOT_FILED_ID ? filing.itemName : null,
   };
 }

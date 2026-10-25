@@ -7137,6 +7137,51 @@
     "ordinal_position": 35
   },
   {
+    "table_name": "league_season_fee_words",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "column_name": "category_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "column_name": "item_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "league_season_fee_words",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
+  },
+  {
     "table_name": "league_seasons",
     "column_name": "id",
     "data_type": "uuid",

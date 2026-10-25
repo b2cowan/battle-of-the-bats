@@ -161,11 +161,23 @@ describe('what counts: posted on the Club books, a transfer between the club\'s 
     const r = report({ bookLines: [own, toTeam] });
     assert.equal(r.band.spent.amount, 250);
   });
-  it('a hosted tournament joins the Statement in Stage 7a; house league waits for Stage 9', () => {
+  it('a hosted tournament joins the Statement in Stage 7a; a house-league season in Stage 9b-2, its refunds netting the fees', () => {
     const r = report({ bookLines: [line({ amount: 1440, entryType: 'income', bookKind: 'tournament', ledgerId: 'harvest', bookName: 'Harvest' })] });
     assert.equal(r.band.collected.amount, 1440);
-    const house = report({ bookLines: [line({ amount: 100, entryType: 'income', bookKind: 'league_season', ledgerId: 'spring', bookName: 'Spring' })] });
-    assert.equal(house.band.collected.amount, 0);
+    // Mig 371: a house-league line carries its season's word; a refund is its own line out that NETS the fees row.
+    const word = { budgetCategoryId: 'hl-fees', budgetCategoryName: 'House league registration fees', budgetItemId: 'hl-2026', budgetItemName: 'Dev House League 2026' };
+    const house = report({ bookLines: [
+      line({ amount: 150, entryType: 'income', bookKind: 'league_season', ledgerId: 'spring', bookName: 'Spring', sourceModule: 'league_registration', ...word }),
+      line({ amount: 150, entryType: 'income', bookKind: 'league_season', ledgerId: 'spring', bookName: 'Spring', sourceModule: 'league_registration', ...word }),
+      line({ amount: 150, entryType: 'expense', bookKind: 'league_season', ledgerId: 'spring', bookName: 'Spring', sourceModule: 'league_registration', ...word }),
+    ] });
+    assert.equal(house.band.collected.amount, 150, 'two fees in, one refunded: Collected is net');
+    assert.equal(house.band.spent.amount, 0, 'a fee refund is never spending');
+    const fees = house.statement.revenue.categories.find(c => c.categoryId === 'hl-fees');
+    assert.equal(fees?.actual, 150);
+    assert.equal(fees?.items.find(i => i.itemId === 'hl-2026')?.actual, 150);
+    assert.ok(!house.statement.expenses.categories.some(c => c.categoryId === 'hl-fees'), 'the refund is no expense row');
+    assert.equal(house.statement.revenue.actual, house.band.collected.amount);
   });
 });
 
@@ -317,8 +329,10 @@ describe('Months (Ask 5): every column opens + nets = closes; Cash closes this m
       { amount: 70, entryType: 'expense' as const, status: 'posted' as const, bookKind: 'org', partnerKind: null },
       { amount: 90, entryType: 'transfer_in' as const, status: 'posted' as const, bookKind: 'tournament', partnerKind: 'org' },
     ];
+    // Since Stage 9b-2 a house-league season's book is a Club book too (its fees file on the Statement), so every book the
+    // club owns is one: the other books' row reads nothing, even pending.
     assert.deepEqual(otherBooksMovement(lines2, 'actual'), { moneyIn: 0, moneyOut: 0 });
-    assert.deepEqual(otherBooksMovement(lines2, 'scheduled'), { moneyIn: 50, moneyOut: 0 });
+    assert.deepEqual(otherBooksMovement(lines2, 'scheduled'), { moneyIn: 0, moneyOut: 0 });
   });
 });
 

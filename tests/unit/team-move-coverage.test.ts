@@ -98,6 +98,7 @@ const STAYS: Record<string, string> = {
   league_practices: 'house league',
   league_registrations: 'house league',
   league_registration_price_changes: 'house league (a registration’s price history, mig 368)',
+  league_season_fee_words: 'house league (a season’s budget word, mig 371)',
   league_email_log: 'house league',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',

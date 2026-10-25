@@ -19,6 +19,7 @@ import { isCalendarDate } from '@/lib/timezone';
 import { clubWallClock, registrationState } from '@/lib/league-registration-state';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { seasonMoney } from '@/lib/league-money';
+import { seedLeagueSeasonBudget } from '@/lib/house-league-budget';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
 // has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
@@ -238,6 +239,12 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   await updateLeagueSeason(seasonId, ctx!.org.id, patch);
+  // Registration opened: the season's starting budget on the club's plan (Club Tier 9b-2, 9b·11 — each division's size ×
+  // its price, in the fiscal year sign-ups open; mig 371). Once, never over the treasurer's own line; a closed year or a
+  // season with no sized division plans nothing. Never fails the open itself.
+  if (patch.status === 'registration_open' && season.status === 'draft') {
+    await seedLeagueSeasonBudget(seasonId);
+  }
   const updated = await getLeagueSeasonById(seasonId, ctx!.org.id);
   return NextResponse.json(updated);
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });

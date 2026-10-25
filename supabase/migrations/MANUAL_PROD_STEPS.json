@@ -354,6 +354,10 @@
     "370_a_family_asks_to_withdraw_a_child.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 9b-2 Part 6. Visible: league_registrations.withdraw_requested_at / withdraw_request_note (+ CHECK). INVISIBLE to check:migrations: replaces the accepted-at trigger function (a revival clears the ask) and REBUILDS the two Needs-attention partial indexes (notifications_user_needs_attention_idx / notifications_org_needs_attention_idx) with the new kind house_league_withdraw_request — 16 kinds. Requires 368 + 369 first; apply with them at the 9b-2 promote. Verify on prod: both indexes' predicates list house_league_withdraw_request. Applied to DEV 2026-10-25."
+    },
+    "371_house_league_fees_file_on_the_statement.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 9b-2 Part 5. Visible: table league_season_fee_words. INVISIBLE to check:migrations: functions club_league_fee_word, club_league_fee_budget_seed, accounting_entries_league_fee_word + its BEFORE INSERT trigger on accounting_entries (house-league lines only), and a backfill DO block (stamps existing house-league lines with their season's word — a relabel the closed-year lock exempts — and plans a starting budget for every season past opening; prod has no house-league clubs, so it should touch nothing). Requires 368-370 first; apply with them at the 9b-2 promote. The 9b-2 code reads house-league books as Club books (lib/club-money-figures.ts isClubBook), so without 371 their unstamped fees read as Not filed. Verify on prod: the trigger exists on accounting_entries; execute on the three functions revoked from anon/authenticated. Applied to DEV 2026-10-25; scripts/house-league-money-check.sql 18/18, check:club-money-atomicity and check-club-money-arithmetic passed."
     }
   }
 }

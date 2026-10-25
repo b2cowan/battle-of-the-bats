@@ -633,10 +633,21 @@ export function isClubOwnedBook(kind: string): kind is ClubBookKind {
 
 /**
  * The Club books: the General ledger and any book the club opened by name. Actual, Spent, Off-plan
- * and the band's Collected read these; a tournament joins now, while the house league waits for Stage 9.
+ * and the band's Collected read these; a tournament joined at Stage 7a, each house-league season's own book at Stage
+ * 9b-2 (its fees file under "House league registration fees", mig 371).
  */
 export function isClubBook(kind: string): boolean {
-  return kind === 'org' || kind === 'tournament';
+  return kind === 'org' || kind === 'tournament' || kind === 'league_season';
+}
+
+/**
+ * A HOUSE-LEAGUE REFUND (Club Tier 9b-2, owner Q6/Q10): its own line out, beside the fee it returns — and on the club's
+ * books it NETS the fees row ("Actual is net of the refund"), never spending. One predicate, read by the band
+ * (`bandCollected`, `spent`), the Statement and Months (lib/club-budget-report.ts) and Against last year, so the four can
+ * never file a refund two ways.
+ */
+export function isFeeRefund(l: { entryType: string; sourceModule?: string | null }): boolean {
+  return l.sourceModule === 'league_registration' && l.entryType === 'expense';
 }
 
 // ── The year rule (Club Tier Stage 3c: the FISCAL year — lib/club-fiscal-year.ts) ───────────────
@@ -764,9 +775,10 @@ export function countsAsActual(l: ClubBookMovementFacts & { bookKind: string }):
  * club's own books is not spending. A tournament's and the house league's books keep their own
  * money until Stages 7 and 9 decide how it joins the budget.
  */
-export function spent(lines: readonly (ClubBookMovementFacts & { bookKind: string })[]): number {
+export function spent(lines: readonly (ClubBookMovementFacts & { bookKind: string; sourceModule?: string | null })[]): number {
   let c = 0;
-  for (const l of lines) if (countsAsActual(l) && clubMovement(l) === 'out') c += cents(l.amount);
+  // A house-league refund nets the fees it returns (Collected), never spending (`isFeeRefund`).
+  for (const l of lines) if (countsAsActual(l) && clubMovement(l) === 'out' && !isFeeRefund(l)) c += cents(l.amount);
   return dollars(c);
 }
 
@@ -776,9 +788,13 @@ export function spent(lines: readonly (ClubBookMovementFacts & { bookKind: strin
  * what the club has received against allocations — is `clubBillFigures(...).collected`; two scopes,
  * two functions, by Ask 2.)
  */
-export function bandCollected(lines: readonly (ClubBookMovementFacts & { bookKind: string })[]): number {
+export function bandCollected(lines: readonly (ClubBookMovementFacts & { bookKind: string; sourceModule?: string | null })[]): number {
   let c = 0;
-  for (const l of lines) if (countsAsActual(l) && clubMovement(l) === 'in') c += cents(l.amount);
+  for (const l of lines) {
+    if (!countsAsActual(l)) continue;
+    if (clubMovement(l) === 'in') c += cents(l.amount);
+    else if (isFeeRefund(l)) c -= cents(l.amount);   // net of house-league refunds (9b-2)
+  }
   return dollars(c);
 }
 

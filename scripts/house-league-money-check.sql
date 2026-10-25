@@ -179,5 +179,25 @@ BEGIN
      OR (SELECT ended_at FROM league_registrations WHERE id = v_a) IS NOT NULL THEN
     RAISE EXCEPTION 'FAIL T16: a revived registration kept its ending'; END IF;
 
+  -- T17 · (mig 371) every house-league line carries its season's word — the fee in and the refund out — and the club has
+  -- ONE "House league registration fees" category for every season.
+  IF EXISTS (SELECT 1 FROM accounting_entries e JOIN accounting_ledgers l ON l.id = e.ledger_id
+              WHERE l.entity_type = 'league_season' AND l.entity_id = v_season AND e.source_module = 'league_registration'
+                AND (e.budget_item_id IS DISTINCT FROM (SELECT w.item_id FROM league_season_fee_words w WHERE w.season_id = v_season)
+                  OR e.budget_category_id IS NULL)) THEN
+    RAISE EXCEPTION 'FAIL T17: a house-league line is not filed under its season''s word'; END IF;
+  PERFORM 1 FROM club_league_fee_word(v_free);
+  IF (SELECT count(DISTINCT w.category_id) FROM league_season_fee_words w WHERE w.org_id = v_org) <> 1
+     OR (SELECT count(*) FROM league_season_fee_words w WHERE w.org_id = v_org) <> 2 THEN
+    RAISE EXCEPTION 'FAIL T17: the club has more than one fees category, or a season has no word'; END IF;
+
+  -- T18 · (mig 371) the starting budget: Σ size × price over sized divisions (A 2 × 150, B 10 × 150), once.
+  UPDATE league_seasons SET registration_open_at = '2026-03-01 12:00+00' WHERE id = v_season;
+  IF (club_league_fee_budget_seed(v_season)->>'ok')::boolean IS NOT TRUE
+     OR (SELECT b.total_amount FROM org_budget_lines b JOIN league_season_fee_words w ON w.item_id = b.item_id WHERE w.season_id = v_season) <> 1800 THEN
+    RAISE EXCEPTION 'FAIL T18: the starting budget is not size × price'; END IF;
+  IF club_league_fee_budget_seed(v_season)->>'code' IS DISTINCT FROM 'already_planned' THEN
+    RAISE EXCEPTION 'FAIL T18: the starting budget was planned twice'; END IF;
+
   RAISE EXCEPTION 'HOUSE_LEAGUE_MONEY_PASSED';
 END $hlmoney$;

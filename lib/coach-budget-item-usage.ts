@@ -135,6 +135,9 @@ export const BUDGET_ITEM_REFERENCES: readonly BudgetItemReference[] = [
   /* Stage 7a's hosted-event word is a durable setting. Its NO ACTION foreign key
      keeps a fee category from disappearing while the tournament still uses it. */
   { table: 'tournament_fee_book_settings', column: 'item_id', categoryColumn: 'category_id', label: 'hosted tournament settings' },
+  /* Club Tier 9b-2's house-league season word (mig 371), the same durable setting with the same NO ACTION key: a
+     season's fees row can't lose its word while the season files under it. */
+  { table: 'league_season_fee_words', column: 'item_id', categoryColumn: 'category_id', label: 'house league season settings' },
 ] as const;
 
 /** How many records of each kind point at these words — the count every guard and the fold need. */
