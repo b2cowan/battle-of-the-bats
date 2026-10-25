@@ -1,5 +1,6 @@
 'use client';
 import { useId, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { Check } from 'lucide-react';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
@@ -279,7 +280,7 @@ export default function RecordObservationDialog({
             {!fixed && (
               <label className={styles.field}>
                 <span className={styles.label}>Observed on</span>
-                <input className={styles.input} type="date" value={observedOn} onChange={e => setObservedOn(e.target.value)} required />
+                <DateInput className={styles.input} value={observedOn} onChange={v => setObservedOn(v)} required />
               </label>
             )}
             {asRows ? (

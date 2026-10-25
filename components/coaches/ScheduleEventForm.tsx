@@ -1,5 +1,7 @@
 'use client';
 import { useMemo, useState, type ReactNode } from 'react';
+import DateInput from '@/components/shared/DateInput';
+import TimeInput from '@/components/shared/TimeInput';
 import { AlertTriangle, Clock, Undo2, X } from 'lucide-react';
 import { EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
@@ -1024,11 +1026,11 @@ export default function ScheduleEventForm({
                 <div className={styles.formSectionGrid}>
                   <div className={styles.field}>
                     <label className={styles.label}>Start date *</label>
-                    <input className={styles.input} type="date" value={form.startsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
+                    <DateInput className={styles.input} value={form.startsAt.slice(0, 10)} onChange={v => setForm(f => ({ ...f, startsAt: v ? `${v}T00:00` : '' }))} />
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label}>End date</label>
-                    <input className={styles.input} type="date" value={form.endsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
+                    <DateInput className={styles.input} value={form.endsAt.slice(0, 10)} onChange={v => setForm(f => ({ ...f, endsAt: v ? `${v}T00:00` : '' }))} />
                   </div>
                 </div>
               ) : recurringSeries ? (
@@ -1042,12 +1044,12 @@ export default function ScheduleEventForm({
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Start time *</label>
-                      <input className={styles.input} type="time" value={form.startTime} onChange={e => setWhen({ startTime: e.target.value })} />
+                      <TimeInput className={styles.input} value={form.startTime} onChange={v => setWhen({ startTime: v })} />
                     </div>
                     <div className={styles.field}>
                       {/* A practice needs an end (stage 1, D9) — every occurrence carries this one. */}
                       <label className={styles.label}>End time{form.eventType === 'practice' ? ' *' : ''}</label>
-                      <input className={styles.input} type="time" value={form.endTime} onChange={e => setWhen({ endTime: e.target.value })} />
+                      <TimeInput className={styles.input} value={form.endTime} onChange={v => setWhen({ endTime: v })} />
                       {/* Say why Save is grey, both ways — a bare asterisk is not a reason. */}
                       {practiceEndMissing && (
                         <p className={styles.formHint} role="alert">A practice needs an end time.</p>
@@ -1058,11 +1060,11 @@ export default function ScheduleEventForm({
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>First date *</label>
-                      <input className={styles.input} type="date" value={form.startDate} onChange={e => setWhen({ startDate: e.target.value })} />
+                      <DateInput className={styles.input} value={form.startDate} onChange={v => setWhen({ startDate: v })} />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Last date *</label>
-                      <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
+                      <DateInput className={styles.input} value={form.endDate} onChange={v => setForm(f => ({ ...f, endDate: v }))} />
                     </div>
                   </div>
                   <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
@@ -1079,17 +1081,17 @@ export default function ScheduleEventForm({
                     {!seriesEdit && (
                       <div className={styles.field}>
                         <label className={styles.label}>Date *</label>
-                        <input className={styles.input} type="date" value={form.startDate} onChange={e => setWhen({ startDate: e.target.value })} />
+                        <DateInput className={styles.input} value={form.startDate} onChange={v => setWhen({ startDate: v })} />
                       </div>
                     )}
                     <div className={styles.field}>
                       <label className={styles.label}>Start time *</label>
-                      <input className={styles.input} type="time" value={form.startTime} onChange={e => setWhen({ startTime: e.target.value })} />
+                      <TimeInput className={styles.input} value={form.startTime} onChange={v => setWhen({ startTime: v })} />
                     </div>
                     <div className={styles.field}>
                       {/* A practice needs an end (stage 1, D9) — the plan is built against it. */}
                       <label className={styles.label}>End time{form.eventType === 'practice' ? ' *' : ''}</label>
-                      <input className={styles.input} type="time" value={form.endTime} onChange={e => setWhen({ endTime: e.target.value })} />
+                      <TimeInput className={styles.input} value={form.endTime} onChange={v => setWhen({ endTime: v })} />
                       {/* Say why Save is grey, both ways — a bare asterisk is not a reason. */}
                       {practiceEndMissing && (
                         <p className={styles.formHint} role="alert">A practice needs an end time.</p>

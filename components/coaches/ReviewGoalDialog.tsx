@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
 import { GOAL_STATUS_LABELS, nextReviewSuggestion, reviewGapWords } from '@/lib/development-goal-history';
@@ -86,7 +87,7 @@ export default function ReviewGoalDialog({
             </label>
             <label className={styles.field}>
               <span className={styles.label}>Reviewed on</span>
-              <input className={styles.input} type="date" value={reviewedOn} onChange={e => setReviewedOn(e.target.value)} required />
+              <DateInput className={styles.input} value={reviewedOn} onChange={v => setReviewedOn(v)} required />
             </label>
             <label className={`${styles.field} ${styles.formGridFull}`}>
               <span className={styles.label}>How it’s going</span>
@@ -95,7 +96,7 @@ export default function ReviewGoalDialog({
             </label>
             <label className={styles.field}>
               <span className={styles.label}>Next review</span>
-              <input className={styles.input} type="date" value={nextReviewOn} onChange={e => setNextReviewOn(e.target.value)} />
+              <DateInput className={styles.input} value={nextReviewOn} onChange={v => setNextReviewOn(v)} />
               {suggested && !nextReviewOn && (
                 <span className={styles.formHint}>
                   <button type="button" className={styles.linkBtnAccent} onClick={() => setNextReviewOn(suggested)}>

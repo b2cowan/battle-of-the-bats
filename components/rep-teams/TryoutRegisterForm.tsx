@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { CheckCircle } from 'lucide-react';
 import { possessive, registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
@@ -79,11 +80,13 @@ export default function TryoutRegisterForm({
     });
   }
 
+  function setValue(field: keyof FormState, value: string) {
+    setForm(prev => ({ ...prev, [field]: value }));
+    clearFieldError(field);
+  }
+
   function set(field: keyof FormState) {
-    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setForm(prev => ({ ...prev, [field]: e.target.value }));
-      clearFieldError(field);
-    };
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setValue(field, e.target.value);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -205,11 +208,10 @@ export default function TryoutRegisterForm({
             <label className={formKit.label}>
               Date of birth <span className={formKit.required}>*</span>
             </label>
-            <input
+            <DateInput
               className={`${formKit.input}${errors.playerDateOfBirth ? ` ${formKit.inputError}` : ''}`}
-              type="date"
               value={form.playerDateOfBirth}
-              onChange={set('playerDateOfBirth')}
+              onChange={v => setValue('playerDateOfBirth', v)}
             />
             {errors.playerDateOfBirth && <p className={formKit.errorMsg}>{errors.playerDateOfBirth}</p>}
           </div>

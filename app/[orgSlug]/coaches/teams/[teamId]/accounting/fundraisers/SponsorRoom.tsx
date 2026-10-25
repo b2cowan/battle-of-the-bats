@@ -52,6 +52,7 @@ import { fmt } from '@/lib/coach-money-summary';
 import { TagChips } from './TagChips';
 import type { Fundraiser, RoomRecord, SponsorArrival } from './types';
 import { possessive } from '@/lib/utils';
+import DateInput from '@/components/shared/DateInput';
 
 const METHODS = Object.keys(DUES_PAYMENT_METHOD_LABEL) as DuesPaymentMethod[];
 
@@ -649,12 +650,12 @@ export function ArrivalQuestion({
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="arrival-date">Date received *</label>
-            <input
+            <DateInput
               id="arrival-date"
               className={styles.input}
-              type="date" max={moneyMovedMaxDate()}
+              max={moneyMovedMaxDate()}
               value={date}
-              onChange={e => setDate(e.target.value)}
+              onChange={v => setDate(v)}
             />
           </div>
           <div className={styles.field}>
@@ -840,7 +841,7 @@ export function EditSponsorshipSheet({
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Expected by</label>
-            <input className={styles.input} type="date" value={expected} onChange={e => setExpected(e.target.value)} />
+            <DateInput className={styles.input} value={expected} onChange={v => setExpected(v)} />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Tags</label>

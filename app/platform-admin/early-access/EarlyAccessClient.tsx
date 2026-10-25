@@ -16,6 +16,7 @@ import { fmtAbsoluteDate } from '@/lib/format-date';
 import kit from '../console.module.css';
 import styles from './early-access.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import DateInput from '@/components/shared/DateInput';
 
 type Lead = {
   id: string;
@@ -454,22 +455,23 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
             </select>
             {dateRangePreset === 'custom' && (
               <>
-                <input
-                  type="date"
+                <DateInput
                   className={kit.field}
+                  inline
                   aria-label="From date"
                   value={filters.dateFrom}
                   max={filters.dateTo || undefined}
-                  onChange={event => updateFilter('dateFrom', event.target.value)}
+                  onChange={v => updateFilter('dateFrom', v)}
                   title="From date"
                 />
-                <input
-                  type="date"
+                <DateInput
                   className={kit.field}
+                  inline
                   aria-label="To date"
                   value={filters.dateTo}
                   min={filters.dateFrom || undefined}
-                  onChange={event => updateFilter('dateTo', event.target.value)}
+                  rangeStart={filters.dateFrom || undefined}
+                  onChange={v => updateFilter('dateTo', v)}
                   title="To date"
                 />
               </>
@@ -691,11 +693,10 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
 
               <label className={kit.fieldGroup}>
                 <span className={kit.label}>Follow-up due</span>
-                <input
-                  type="date"
+                <DateInput
                   className={`${kit.field} ${kit.wide} ${styles.dimDisabled}`}
                   value={draftFollowUpDueAt}
-                  onChange={event => setDraftFollowUpDueAt(event.target.value)}
+                  onChange={v => setDraftFollowUpDueAt(v)}
                   disabled={!canManageGrowth}
                 />
               </label>

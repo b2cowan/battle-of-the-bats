@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import TimeInput from '@/components/shared/TimeInput';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatTime } from '@/lib/utils';
 import { ARRIVAL_PRESET_MINUTES, arrivalClockFor, arrivalPresetOf, arrivalPresetLabel } from '@/lib/coach-arrival';
@@ -75,12 +76,11 @@ export default function ArrivalSelect({
           <option value="custom">A specific time…</option>
         </select>
         {showCustom && (
-          <input
+          <TimeInput
             className={styles.input}
-            type="time"
             aria-label="Arrival time"
             value={value}
-            onChange={e => onChange(e.target.value)}
+            onChange={v => onChange(v)}
             disabled={disabled}
           />
         )}

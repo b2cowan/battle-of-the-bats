@@ -22,6 +22,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
+import DateInput from '@/components/shared/DateInput';
 import { RecordDelete, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -476,11 +477,11 @@ export default function DivisionRecord({
               <label className={ck.field}><span className={ck.label}>{W.totalFee}</span>
                 <input className={ck.input} type="number" min="0" step="0.01" inputMode="decimal" value={form.totalFeeAmount} onChange={e => set({ totalFeeAmount: e.target.value })} /></label>
               <label className={ck.field}><span className={ck.label}>{W.totalDue}</span>
-                <input className={ck.input} type="date" value={form.totalFeeDueDate} onChange={e => set({ totalFeeDueDate: e.target.value })} /></label>
+                <DateInput className={ck.input} value={form.totalFeeDueDate} onChange={v => set({ totalFeeDueDate: v })} /></label>
               <label className={ck.field}><span className={ck.label}>{W.depositAmount}</span>
                 <input className={ck.input} type="number" min="0" step="0.01" inputMode="decimal" value={form.depositAmount} onChange={e => set({ depositAmount: e.target.value })} /></label>
               <label className={ck.field}><span className={ck.label}>{W.depositDue}</span>
-                <input className={ck.input} type="date" value={form.depositDueDate} onChange={e => set({ depositDueDate: e.target.value })} /></label>
+                <DateInput className={ck.input} value={form.depositDueDate} onChange={v => set({ depositDueDate: v })} /></label>
             </div>
           )}
         </div>

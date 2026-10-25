@@ -55,6 +55,7 @@ import {
   type MoveResult,
 } from './MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
 
 /** The book a window acts on. */
 export interface BookRef {
@@ -161,9 +162,9 @@ function ClosedDayField({ id, label, value, onChange, refusal }: {
   return (
     <label className={ck.field} htmlFor={id}>
       <span className={ck.label}>{label}<span className={repKit.req} aria-hidden>*</span></span>
-      <input id={id} type="date" className={`${ck.input}${refusal ? ` ${cr.held}` : ''}`} value={value}
+      <DateInput id={id} className={`${ck.input}${refusal ? ` ${cr.held}` : ''}`} value={value}
         aria-invalid={refusal ? true : undefined} aria-describedby={refusal ? `${id}-closed` : undefined}
-        onChange={e => onChange(e.target.value)} />
+        onChange={v => onChange(v)} />
       {refusal && (
         <span className={fy.refuse} id={`${id}-closed`} role="alert">
           <AlertCircle size={14} aria-hidden className={fy.refuseIcon} /><span>{refusal}</span>

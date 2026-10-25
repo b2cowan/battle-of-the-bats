@@ -1375,7 +1375,8 @@
    unconditionally (fine on the kit's own Dark variant), but on Warm cream that paints the OS
    control dark-on-light. `select`/`input[type=date|datetime-local]` already get a global
    `color-scheme: light` fix under warm+coach-kit (app/globals.css); this closes the same gap for
-   `.formInput` on `type="time"`, which that global list doesn't cover. */
+   `.formInput` on `type="time"`, which that global list doesn't cover. (A desk now draws its own time field,
+   components/shared/TimeInput; the native one remains on touch devices, so the rule stays.) */
 :global(html[data-user-theme="warm"] [data-admin-kit]) .formInput,
 :global(html[data-user-theme="warm"] [data-admin-kit]) .formSelect {
   color-scheme: light;

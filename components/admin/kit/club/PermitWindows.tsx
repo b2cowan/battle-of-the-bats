@@ -62,6 +62,8 @@ import own from './Permits.module.css';
 import vl from './VenueLibrary.module.css';
 import fy from './money/FiscalYear.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
+import TimeInput from '@/components/shared/TimeInput';
 
 let nextKey = 0;
 const newKey = (p: string) => `${p}-${++nextKey}`;
@@ -294,11 +296,11 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
       <div className={own.pair}>
         <label className={ck.field} htmlFor={`${idPrefix}-from`}>
           <span className={ck.label}>From<span className={repKit.req} aria-hidden>*</span></span>
-          <input id={`${idPrefix}-from`} type="date" className={ck.input} value={draft.startsOn} onChange={e => set({ startsOn: e.target.value })} />
+          <DateInput id={`${idPrefix}-from`} className={ck.input} value={draft.startsOn} onChange={v => set({ startsOn: v })} />
         </label>
         <label className={ck.field} htmlFor={`${idPrefix}-to`}>
           <span className={ck.label}>To<span className={repKit.req} aria-hidden>*</span></span>
-          <input id={`${idPrefix}-to`} type="date" className={ck.input} value={draft.endsOn} min={draft.startsOn || undefined} onChange={e => set({ endsOn: e.target.value })} />
+          <DateInput id={`${idPrefix}-to`} className={ck.input} value={draft.endsOn} min={draft.startsOn || undefined} rangeStart={draft.startsOn || undefined} onChange={v => set({ endsOn: v })} />
         </label>
       </div>
 
@@ -327,11 +329,11 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
                 placeholder="Choose the days" />
               <label className={ck.field} htmlFor={`${idPrefix}-b${i}-from`}>
                 <span className={ck.label}>From<span className={repKit.req} aria-hidden>*</span></span>
-                <input id={`${idPrefix}-b${i}-from`} type="time" step={300} className={ck.input} value={b.startTime} onChange={e => setBlock(b.key, { startTime: e.target.value })} />
+                <TimeInput id={`${idPrefix}-b${i}-from`} step={300} className={ck.input} value={b.startTime} onChange={v => setBlock(b.key, { startTime: v })} />
               </label>
               <label className={ck.field} htmlFor={`${idPrefix}-b${i}-until`}>
                 <span className={ck.label}>Until<span className={repKit.req} aria-hidden>*</span></span>
-                <input id={`${idPrefix}-b${i}-until`} type="time" step={300} className={ck.input} value={b.endTime} onChange={e => setBlock(b.key, { endTime: e.target.value })} />
+                <TimeInput id={`${idPrefix}-b${i}-until`} step={300} className={ck.input} value={b.endTime} onChange={v => setBlock(b.key, { endTime: v })} />
               </label>
               <button type="button" className={own.blockRemove} aria-label={`Remove block ${i + 1}`}
                 onClick={() => set({ blocks: draft.blocks.filter(x => x.key !== b.key) })}>
@@ -345,8 +347,8 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
         <div key={o.key} className={own.offRow}>
           <label className={ck.field} htmlFor={`${idPrefix}-off${i}`}>
             <span className={ck.label}>Date off</span>
-            <input id={`${idPrefix}-off${i}`} type="date" className={ck.input} value={o.day} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
-              onChange={e => set({ datesOff: draft.datesOff.map(x => (x.key === o.key ? { ...x, day: e.target.value } : x)) })} />
+            <DateInput id={`${idPrefix}-off${i}`} className={ck.input} value={o.day} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
+              onChange={v => set({ datesOff: draft.datesOff.map(x => (x.key === o.key ? { ...x, day: v } : x)) })} />
           </label>
           <label className={ck.field} htmlFor={`${idPrefix}-offn${i}`}>
             <span className={ck.label}>Why (optional)</span>

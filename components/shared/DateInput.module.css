@@ -1,0 +1,221 @@
+/*
+ * THE DATE AND TIME FIELDS — one look for DateInput, TimeInput and DateTimeInput (owner ruling 2026-10-25, drawing
+ * https://claude.ai/artifact/Rvo2a36tonsHRyEeeWf4Cp, plan docs/projects/active/THEMED_DATE_PICKER_PLAN.md).
+ * The BOX is the host's (it passes its own input class, so a kit field stays 36px and a coach room's 44px); what lives
+ * here is the icon inside it and the panel that opens. Tokens carry their portal fallbacks, so the admin kit, the warm
+ * coach portal, the dark one and the platform admin all paint it without a rule of their own.
+ */
+.wrap {
+  --dp-card: var(--home-card, var(--bg-card));
+  --dp-line: var(--home-line, var(--border-2));
+  --dp-line-strong: var(--home-line-strong, var(--border));
+  --dp-accent: var(--home-olive, var(--logic-lime));
+  /* Built from the accent's own rgb where the portal has no soft tint (the club site maps lime to the club's ink). */
+  --dp-accent-soft: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.1));
+  --dp-range: rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.14);
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+/* An inline field is a native date field's width (a toolbar's From and To), unless the host's `style` says otherwise. */
+.wrap[data-inline] { display: inline-block; vertical-align: middle; width: 10.5rem; }
+
+/* Room for the icon: beats a host's one-class input rule (`.input`), whatever its load order. */
+.wrap > input.text { padding-right: 2.1rem; }
+/* A field that fills its line fills it, wrapper and box alike — as the bare input did with its host's `width: 100%`, in a
+   column or a flex row (where it shares the row as a 100% item does). An `inline` field sizes to its box instead. */
+.wrap:not([data-inline]) { width: 100%; }
+.wrap > input.text { width: 100%; box-sizing: border-box; }
+.wrap > input.text::placeholder { color: var(--text-tertiary); opacity: 1; }
+.wrap > input.text[aria-invalid='true'] { border-color: var(--danger, var(--home-line-strong)); }
+
+.icon {
+  position: absolute;
+  top: 50%;
+  right: 0.3rem;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.icon:hover { background: var(--dp-accent-soft); color: var(--text-secondary); }
+.icon:disabled { opacity: 0.5; cursor: not-allowed; background: none; }
+
+/* A date beside its time (DateTimeInput): two boxes, one row. */
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.5rem; min-width: 0; }
+
+/* ── The panel: hangs over its window (the §80 field-menu rule; placed by useFieldMenu) ─────────────────────── */
+.panel {
+  position: fixed;
+  z-index: 500;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--dp-card);
+  border: 1px solid var(--dp-line-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  font-size: var(--type-body, 14px);
+  text-align: left;
+}
+.calendar { padding: 0.6rem 0.75rem 0.35rem; user-select: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .panel { animation: dpIn 120ms ease-out; }
+  @keyframes dpIn { from { opacity: 0; } to { opacity: 1; } }
+}
+
+.head { display: flex; align-items: center; justify-content: space-between; height: 36px; margin-bottom: 0.25rem; }
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 32px;
+  margin-left: -0.5rem;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body, 14px);
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.title svg { color: var(--text-tertiary); }
+.nav { display: flex; gap: 2px; }
+.navBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.title:hover, .navBtn:hover { background: var(--dp-accent-soft); }
+
+.grid { display: grid; grid-template-columns: repeat(7, 36px); row-gap: 2px; }
+.weekday {
+  display: grid;
+  place-items: center;
+  height: 26px;
+  font-size: var(--type-support, 12px);
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+.day {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body, 14px);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.day:hover { background: var(--dp-accent-soft); }
+/* Outside the month: the tertiary ink at full strength (a faded one failed 4.5:1 in both themes, /design). */
+.day[data-out] { color: var(--text-tertiary); }
+/* ONE today mark: the olive edge (calendar recipe C7). */
+.day[data-today] { box-shadow: inset 0 0 0 2px var(--dp-accent); font-weight: 600; }
+.day[data-range] { background: var(--dp-range); border-radius: 0; }
+.day[data-anchor] { background: var(--dp-range); border-radius: 6px 0 0 6px; font-weight: 650; }
+/* The picked day: the field menu's chosen mark, solid olive (lime in dark, by the token) — owner Ask 2. */
+.day[aria-pressed='true'],
+.day[aria-pressed='true']:hover { background: var(--dp-accent); color: var(--dp-card); font-weight: 650; border-radius: 6px; }
+.day[aria-pressed='true'][data-today] { box-shadow: inset 0 0 0 2px var(--dp-accent), inset 0 0 0 4px var(--dp-card); }
+/* Outside min/max: the one disabled face (0.5). aria-disabled, so the keyboard can still stand on it. */
+.day[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; background: none; }
+
+.months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 0.25rem 0 0.15rem; }
+.month {
+  height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body, 14px);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.month:hover { background: var(--dp-accent-soft); }
+.month[data-current] { box-shadow: inset 0 0 0 2px var(--dp-accent); }
+.month[aria-pressed='true'] { background: var(--dp-accent); color: var(--dp-card); font-weight: 650; }
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--dp-line);
+}
+.link {
+  height: 32px;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body, 14px);
+  font-weight: 600;
+  color: var(--dp-accent);
+  cursor: pointer;
+}
+.link[data-quiet] { color: var(--text-tertiary); }
+.link:hover { background: var(--dp-accent-soft); }
+.link:disabled { opacity: 0.5; cursor: not-allowed; background: none; }
+
+.title:focus-visible, .navBtn:focus-visible, .link:focus-visible, .month:focus-visible, .icon:focus-visible {
+  outline: 2px solid var(--dp-accent);
+  outline-offset: 2px;
+}
+.day:focus-visible { outline: 2px solid var(--dp-accent); outline-offset: 1px; z-index: 1; }
+
+/* ── The time list: the field menu (Permits `.pickMenu` / `.pickOption`) ─────────────────────────────────────── */
+.list { padding: 0.3rem 0; }
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body, 14px);
+  text-align: left;
+  padding: 0.35rem 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.option[data-active] { background: var(--dp-accent-soft); }
+.tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--dp-line-strong);
+  border-radius: 4px;
+  color: var(--dp-card);
+}
+.option[aria-selected='true'] .tick { background: var(--dp-accent); border-color: var(--dp-accent); }

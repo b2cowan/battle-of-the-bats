@@ -1,5 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { parseDevelopmentAddress, returnLabel } from '@/lib/development-address';
@@ -748,9 +749,9 @@ export default function PlayerDetailPage({
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="pdob">Date of birth</label>
-            <input id="pdob" className={styles.input} type="date"
+            <DateInput id="pdob" className={styles.input}
               value={form.playerDateOfBirth}
-              onChange={e => edit(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
+              onChange={v => edit(f => ({ ...f, playerDateOfBirth: v }))} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="pnum">Jersey #</label>

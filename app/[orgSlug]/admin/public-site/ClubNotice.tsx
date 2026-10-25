@@ -21,6 +21,8 @@ import { tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import type { ClubNotice } from '@/lib/types';
 import styles from './public-site.module.css';
+import DateInput from '@/components/shared/DateInput';
+import TimeInput from '@/components/shared/TimeInput';
 
 type EndsKind = NoticeEnds['kind'];
 
@@ -186,11 +188,11 @@ function NoticeWindow({ showing, query, onClose, onPosted }: {
         <div className={styles.endsPick}>
           <label className={ck.field} htmlFor="notice-date">
             <span className={ck.label}>{W.endsDate}</span>
-            <input id="notice-date" type="date" className={ck.input} value={date} min={today} onChange={e => { setDate(e.target.value); setError(null); }} />
+            <DateInput id="notice-date" className={ck.input} value={date} min={today} onChange={v => { setDate(v); setError(null); }} />
           </label>
           <label className={ck.field} htmlFor="notice-time">
             <span className={ck.label}>{W.endsTime}</span>
-            <input id="notice-time" type="time" className={ck.input} value={time} onChange={e => { setTime(e.target.value); setError(null); }} />
+            <TimeInput id="notice-time" className={ck.input} value={time} onChange={v => { setTime(v); setError(null); }} />
           </label>
         </div>
       )}

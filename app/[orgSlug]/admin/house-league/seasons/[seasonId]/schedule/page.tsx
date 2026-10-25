@@ -28,6 +28,8 @@ import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inlin
 import styles from '../../../house-league.module.css';
 import type { ClubVenueOption, LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
+import TimeInput from '@/components/shared/TimeInput';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -420,15 +422,15 @@ function GameModal({
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Date</label>
-            <input type="date" className={styles.input} value={form.scheduledDate} onChange={e => set('scheduledDate', e.target.value)} disabled={!canManage} />
+            <DateInput className={styles.input} value={form.scheduledDate} onChange={v => set('scheduledDate', v)} disabled={!canManage} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Time</label>
-            <input type="time" className={styles.input} value={form.scheduledTime} onChange={e => set('scheduledTime', e.target.value)} disabled={!canManage} />
+            <TimeInput className={styles.input} value={form.scheduledTime} onChange={v => set('scheduledTime', v)} disabled={!canManage} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>End time <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
-            <input type="time" className={styles.input} value={form.endTime} onChange={e => set('endTime', e.target.value)} disabled={!canManage} />
+            <TimeInput className={styles.input} value={form.endTime} onChange={v => set('endTime', v)} disabled={!canManage} />
           </div>
         </div>
 
@@ -562,11 +564,11 @@ function GenerateModal({
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label className={styles.label}>First game date</label>
-            <input type="date" className={styles.input} value={config.startDate} onChange={e => setCfg('startDate', e.target.value)} />
+            <DateInput className={styles.input} value={config.startDate} onChange={v => setCfg('startDate', v)} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Default game time</label>
-            <input type="time" className={styles.input} value={config.gameTime} onChange={e => setCfg('gameTime', e.target.value)} />
+            <TimeInput className={styles.input} value={config.gameTime} onChange={v => setCfg('gameTime', v)} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Rounds per week</label>
@@ -722,7 +724,7 @@ function PracticeModal({
           {!form.recurring ? (
             <div className={styles.field}>
               <label className={styles.label}>Date</label>
-              <input type="date" className={styles.input} value={form.scheduledDate} onChange={e => set('scheduledDate', e.target.value)} />
+              <DateInput className={styles.input} value={form.scheduledDate} onChange={v => set('scheduledDate', v)} />
             </div>
           ) : (
             <>
@@ -734,21 +736,21 @@ function PracticeModal({
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>From date</label>
-                <input type="date" className={styles.input} value={form.startDate} onChange={e => set('startDate', e.target.value)} />
+                <DateInput className={styles.input} value={form.startDate} onChange={v => set('startDate', v)} />
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>To date</label>
-                <input type="date" className={styles.input} value={form.endDate} onChange={e => set('endDate', e.target.value)} />
+                <DateInput className={styles.input} value={form.endDate} onChange={v => set('endDate', v)} />
               </div>
             </>
           )}
           <div className={styles.field}>
             <label className={styles.label}>Start time</label>
-            <input type="time" className={styles.input} value={form.startTime} onChange={e => set('startTime', e.target.value)} />
+            <TimeInput className={styles.input} value={form.startTime} onChange={v => set('startTime', v)} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>End time</label>
-            <input type="time" className={styles.input} value={form.endTime} onChange={e => set('endTime', e.target.value)} />
+            <TimeInput className={styles.input} value={form.endTime} onChange={v => set('endTime', v)} />
           </div>
         </div>
 

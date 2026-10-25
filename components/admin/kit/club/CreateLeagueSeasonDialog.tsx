@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
+import DateInput from '@/components/shared/DateInput';
+import DateTimeInput from '@/components/shared/DateTimeInput';
 import { repKit } from './RepKit';
 import type { LeagueCapKind } from '@/lib/free-floor';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
@@ -128,19 +130,19 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
         </label>
         <label className={ck.field}>
           <span className={ck.label}>Season start</span>
-          <input className={ck.input} type="date" value={form.seasonStartDate} onChange={e => set('seasonStartDate', e.target.value)} />
+          <DateInput className={ck.input} value={form.seasonStartDate} onChange={v => set('seasonStartDate', v)} />
         </label>
         <label className={ck.field}>
           <span className={ck.label}>Season end</span>
-          <input className={ck.input} type="date" value={form.seasonEndDate} onChange={e => set('seasonEndDate', e.target.value)} />
+          <DateInput className={ck.input} value={form.seasonEndDate} min={form.seasonStartDate || undefined} rangeStart={form.seasonStartDate || undefined} onChange={v => set('seasonEndDate', v)} />
         </label>
         <label className={ck.field}>
           <span className={ck.label}>Registration opens</span>
-          <input className={ck.input} type="datetime-local" value={form.registrationOpenAt} onChange={e => set('registrationOpenAt', e.target.value)} />
+          <DateTimeInput className={ck.input} value={form.registrationOpenAt} onChange={v => set('registrationOpenAt', v)} />
         </label>
         <label className={ck.field}>
           <span className={ck.label}>Registration closes</span>
-          <input className={ck.input} type="datetime-local" value={form.registrationCloseAt} onChange={e => set('registrationCloseAt', e.target.value)} />
+          <DateTimeInput className={ck.input} value={form.registrationCloseAt} min={form.registrationOpenAt || undefined} onChange={v => set('registrationCloseAt', v)} />
         </label>
       </div>
       <label className={ck.field}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { useRouter } from 'next/navigation';
 import { Check, ShieldCheck, Users, Lock } from 'lucide-react';
 import LoadingState from '@/components/shared/LoadingState';
@@ -335,11 +336,13 @@ export default function TournamentRosterSubmit({ teamId }: { teamId: string }) {
                     />
                   )}
                   {r.requireDob && (
-                    <input
+                    <DateInput
                       className={styles.fieldInput}
-                      type="date"
+                      // The field's wrapper is the row's flex item now: it shares the row with the jersey box as the
+                      // bare input's `flex: 1` did.
+                      style={{ flex: 1 }}
                       value={s.dob}
-                      onChange={e => setOne(m.id, { dob: e.target.value, ...(e.target.value !== s.dob ? { dobConsent: false } : {}) })}
+                      onChange={v => setOne(m.id, { dob: v, ...(v !== s.dob ? { dobConsent: false } : {}) })}
                       aria-label={`Date of birth for ${m.name}`}
                     />
                   )}

@@ -57,6 +57,7 @@ import { stillToCome } from '@/lib/sponsor-arrivals';
 import { fmt } from '@/lib/coach-money-summary';
 import { writeFailure } from '@/lib/coach-sandbox-refusal';
 import { pluralize } from '@/lib/utils';
+import DateInput from '@/components/shared/DateInput';
 import type { DriveEntryRow, Fundraiser, RoomRecord, SponsorArrival } from './types';
 import { DriveRoomBody, DriveEntryQuestion, DriveStatusChip, EditDriveSheet, driveFacts } from './DriveRoom';
 import {
@@ -1098,11 +1099,11 @@ export function FundraisersPanel({
             <div className={styles.field} />
             <div className={styles.field}>
               <label className={styles.label}>Start date</label>
-              <input className={styles.input} type="date" value={formStart} onChange={e => setFormStart(e.target.value)} />
+              <DateInput className={styles.input} value={formStart} onChange={v => setFormStart(v)} />
             </div>
             <div className={styles.field}>
               <label className={styles.label}>End date</label>
-              <input className={styles.input} type="date" value={formEnd} onChange={e => setFormEnd(e.target.value)} />
+              <DateInput className={styles.input} value={formEnd} onChange={v => setFormEnd(v)} />
             </div>
             {/* ⚠ TAGS ARE ON THE RECORD, AND ONLY ON THE RECORD (owner ruling 2026-08-15): the
                 money-in half of the money-tag report — the SAME vocabulary an expense uses. */}

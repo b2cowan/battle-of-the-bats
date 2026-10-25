@@ -19,6 +19,7 @@ import { cap } from '../chips';
 import styles from './plans-pricing.module.css';
 import { pluralize } from '@/lib/utils';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime } from '@/lib/format-date';
+import DateInput from '@/components/shared/DateInput';
 
 type Tab = 'plans' | 'catalog';
 type PriceEnvironmentTab = 'live' | 'sandbox';
@@ -1961,20 +1962,18 @@ export default function PlansPricingClient({
                     </label>
                     <label className={kit.fieldGroup}>
                       <span className={kit.label}>Starts</span>
-                      <input
+                      <DateInput
                         className={kit.field}
-                        type="date"
                         value={campaignDraft.starts_at}
-                        onChange={event => setCampaignDraft(draft => ({ ...draft, starts_at: event.target.value }))}
+                        onChange={v => setCampaignDraft(draft => ({ ...draft, starts_at: v }))}
                       />
                     </label>
                     <label className={kit.fieldGroup}>
                       <span className={kit.label}>Ends</span>
-                      <input
+                      <DateInput
                         className={kit.field}
-                        type="date"
                         value={campaignDraft.ends_at}
-                        onChange={event => setCampaignDraft(draft => ({ ...draft, ends_at: event.target.value }))}
+                        onChange={v => setCampaignDraft(draft => ({ ...draft, ends_at: v }))}
                       />
                     </label>
                     <label className={kit.fieldGroup}>
@@ -2465,11 +2464,10 @@ export default function PlansPricingClient({
                       </label>
                       <label className={kit.fieldGroup}>
                         <span className={kit.label}>Effective date</span>
-                        <input
+                        <DateInput
                           className={kit.field}
-                          type="date"
                           value={featureDraftEffectiveAt}
-                          onChange={event => setFeatureDraftEffectiveAt(event.target.value)}
+                          onChange={v => setFeatureDraftEffectiveAt(v)}
                         />
                       </label>
                       <label className={`${kit.fieldGroup} ${styles.wide}`}>

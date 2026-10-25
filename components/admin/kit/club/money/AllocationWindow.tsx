@@ -45,6 +45,7 @@ import { Fragment, useCallback, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
+import DateInput from '@/components/shared/DateInput';
 import { repKit, useDeferredLoad } from '../RepKit';
 import FormTable, { type FormTableGroup, type FormTableRow } from '@/components/shared/FormTable';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -408,8 +409,8 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
         {mine && rows.map((r, i) => (
           <Fragment key={i}>
             <span className={moneyKit.ownNum} aria-hidden>#{i + 1}</span>
-            <input type="date" className={ck.input} value={r.dueDate} aria-label={W.ownDateLabel(t.name, i + 1)}
-              onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, dueDate: e.target.value } : x)))} />
+            <DateInput className={ck.input} value={r.dueDate} aria-label={W.ownDateLabel(t.name, i + 1)}
+              onChange={v => setRows(rows.map((x, k) => (k === i ? { ...x, dueDate: v } : x)))} />
             <input className={`${ck.input} ${moneyKit.amountInput}`} inputMode="decimal" value={r.amount} placeholder="$0.00"
               aria-label={W.ownAmountLabel(t.name, i + 1)}
               onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, amount: e.target.value } : x)))} />
@@ -556,8 +557,9 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
               {[2, 3, 4, 5, 6, 8, 10].map(n => <option key={n} value={n}>{W.payInstallments(n)}</option>)}
             </select>
             {dates.map((d, i) => (
-              <input key={i} type="date" className={ck.input} value={d} aria-label={payments === 1 ? W.dueOn : `${W.dueOn}, payment ${i + 1}`}
-                onChange={e => setDates(ds => ds.map((x, k) => (k === i ? e.target.value : x)))} />
+              // The row's `.payBy > input` basis now lands on the field's wrapper, which is the flex item.
+              <DateInput key={i} className={ck.input} style={{ flex: '1 1 9rem' }} value={d} aria-label={payments === 1 ? W.dueOn : `${W.dueOn}, payment ${i + 1}`}
+                onChange={v => setDates(ds => ds.map((x, k) => (k === i ? v : x)))} />
             ))}
           </div>
         </div>

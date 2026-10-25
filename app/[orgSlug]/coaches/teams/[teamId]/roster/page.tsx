@@ -1,5 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Users, Plus, GripVertical, AlertTriangle, ClipboardPaste, HelpCircle, Upload } from 'lucide-react';
@@ -1076,9 +1077,9 @@ export default function RosterPage({
             >
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-dob">Date of birth</label>
-                <input id="add-dob" className={styles.input} type="date"
+                <DateInput id="add-dob" className={styles.input}
                   value={addForm.playerDateOfBirth}
-                  onChange={e => setAddForm(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
+                  onChange={v => setAddForm(f => ({ ...f, playerDateOfBirth: v }))} />
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-notes">Notes</label>

@@ -203,8 +203,10 @@
   transition: width 0.25s ease;
 }
 
+/* `backwards`, not `both`: a fill that keeps the final transform makes the slide the containing block of everything
+   `position: fixed` inside it, so a date field's calendar hung from the slide instead of its field (/review 2026-10-25). */
 .workflowSlide {
-  animation: workflowSlideIn 0.24s ease both;
+  animation: workflowSlideIn 0.24s ease backwards;
 }
 
 @keyframes workflowSlideIn {

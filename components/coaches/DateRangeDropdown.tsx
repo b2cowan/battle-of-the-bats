@@ -1,5 +1,6 @@
 'use client';
 import { useMemo } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { ChevronDown } from 'lucide-react';
 import {
   DATE_RANGE_PRESETS, resolveDateRangePreset,
@@ -112,30 +113,27 @@ export default function DateRangeDropdown({
       <div className={styles.multiSelectDivider} />
       <div className={styles.dateRangeCustom} data-active={selection === 'custom' || undefined}>
         <div className={styles.dateRangeCustomLabel}>Custom range</div>
-        {/* ⚠ `min`/`max` only STYLE the native widget — they block neither a typed nor even a
-            picked inverted pair (/review). Editing one end past the other drags the other end
-            along, so "to before from" is unrepresentable and the book can never silently empty
-            itself behind a stray starting-balance line. */}
+        {/* ⚠ No `min`/`max` on either end: editing one end past the other DRAGS the other end along, so
+            "to before from" is unrepresentable and the book can never silently empty itself behind a
+            stray starting-balance line. The shared calendar refuses a day outside min/max, which would
+            have made the drag unreachable from the calendar (/review 2026-10-25). */}
         <div className={styles.dateRangeCustomRow}>
-          <input
-            type="date"
+          <DateInput
             className={styles.dateRangeInput}
+            style={{ flex: 1 }}
             value={from}
-            max={to}
-            onChange={ev => {
-              const v = ev.target.value;
+            onChange={v => {
               if (v) onChange({ selection: 'custom', from: v, to: v > to ? v : to });
             }}
             aria-label="From date"
           />
           <span className={styles.dateRangeCustomSep} aria-hidden>–</span>
-          <input
-            type="date"
+          <DateInput
             className={styles.dateRangeInput}
+            style={{ flex: 1 }}
             value={to}
-            min={from}
-            onChange={ev => {
-              const v = ev.target.value;
+            rangeStart={from}
+            onChange={v => {
               if (v) onChange({ selection: 'custom', from: v < from ? v : from, to: v });
             }}
             aria-label="To date"

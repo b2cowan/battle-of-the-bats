@@ -22,6 +22,7 @@ import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { checkListRow, type ListKind } from '@/lib/public-site-patch';
 import { pastYearHint } from '@/lib/past-year-hint';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
+import DateInput from '@/components/shared/DateInput';
 
 export interface ListField {
   key: string;
@@ -192,9 +193,11 @@ export default function SiteListRecord({ item, list, canWrite, thisYear, onSave,
         {f.kind === 'textarea' ? (
           <textarea id={id} className={ck.textarea} rows={4} value={value} maxLength={f.maxLength} placeholder={f.placeholder}
             onChange={e => set(f.key, e.target.value)} />
+        ) : f.kind === 'date' ? (
+          <DateInput id={id} className={ck.input} value={value} placeholder={f.placeholder} onChange={v => set(f.key, v)} />
         ) : (
           <input id={id} className={ck.input} value={value} maxLength={f.maxLength} placeholder={f.placeholder} list={listId}
-            type={f.kind === 'email' ? 'email' : f.kind === 'link' ? 'url' : f.kind === 'date' ? 'date' : 'text'} inputMode={f.kind === 'link' ? 'url' : undefined}
+            type={f.kind === 'email' ? 'email' : f.kind === 'link' ? 'url' : 'text'} inputMode={f.kind === 'link' ? 'url' : undefined}
             onChange={e => set(f.key, e.target.value)} />
         )}
         {listId && <datalist id={listId}>{f.suggestions!.map(s => <option key={s} value={s} />)}</datalist>}

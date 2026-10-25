@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import DateTimeInput from '@/components/shared/DateTimeInput';
 import Link from 'next/link';
 import { ChevronRight, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
@@ -401,23 +402,21 @@ function EventForm({
 
       <label className={styles.fieldLabel}>
         Starts *{' '}
-        <input
+        <DateTimeInput
           className={styles.input}
-          type="datetime-local"
           value={form.startsLocal}
-          onChange={e => handleStartChange(e.target.value)}
+          onChange={v => handleStartChange(v)}
           aria-label="Start date and time"
         />
       </label>
 
       <label className={styles.fieldLabel}>
         Ends{' '}
-        <input
+        <DateTimeInput
           className={styles.input}
-          type="datetime-local"
           value={form.endsLocal}
           min={form.startsLocal || undefined}
-          onChange={e => handleEndChange(e.target.value)}
+          onChange={v => handleEndChange(v)}
           aria-label="End date and time"
         />
       </label>

@@ -71,6 +71,7 @@ import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { fmt } from '@/lib/coach-money-summary';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import DateInput from '@/components/shared/DateInput';
 /* The hub's one wire (money centralization P2). This panel's Record doors cannot reach the money
    form's own functions — the form lives in a sibling panel — so they ask the hub, which is the
    same channel its header button uses. Null when this panel is rendered outside the hub. */
@@ -4088,12 +4089,11 @@ export function PlayerDuesPanel({
                           </div>
                           <div>
                             <label className={styles.label}>Date received *</label>
-                            <input
+                            <DateInput
                               className={styles.input}
-                              type="date"
                               max={tournamentToday()}
                               value={payForm.receivedDate}
-                              onChange={e => setPayForm(f => ({ ...f, receivedDate: e.target.value }))}
+                              onChange={v => setPayForm(f => ({ ...f, receivedDate: v }))}
                             />
                           </div>
                         </div>
@@ -4754,12 +4754,11 @@ export function PlayerDuesPanel({
               </div>
               <div>
                 <label className={styles.label} htmlFor="credit-date">Date *</label>
-                <input
+                <DateInput
                   id="credit-date"
                   className={styles.input}
-                  type="date"
                   value={creditForm.creditDate}
-                  onChange={e => setCreditForm(f => ({ ...f, creditDate: e.target.value }))}
+                  onChange={v => setCreditForm(f => ({ ...f, creditDate: v }))}
                 />
               </div>
             </div>
@@ -5149,13 +5148,12 @@ function ScheduleForm({
             </label>
             <label className={`${budgetStyles.periodFieldLabel} ${budgetStyles.periodFieldDate}`}>
               <span className={budgetStyles.periodFieldLabelText}>Due date</span>
-              <input
+              <DateInput
                 className={styles.input}
-                type="date"
                 aria-label={`Due date for installment ${row.installmentNumber}`}
                 value={row.dueDate}
-                onChange={e => {
-                  const updated = installmentRows.map((r, i) => i === idx ? { ...r, dueDate: e.target.value } : r);
+                onChange={v => {
+                  const updated = installmentRows.map((r, i) => i === idx ? { ...r, dueDate: v } : r);
                   setInstallmentRows(updated);
                 }}
               />

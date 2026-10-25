@@ -78,6 +78,13 @@
 
 /* The browser draws the only calendar button on this field (we removed ours — two calendar icons
    on one control is one icon explaining the other). Give it a gloved-thumb target. */
+/* On a desk the field is our typeable box (a block span holding the box and its calendar button): it takes the
+   control's width the way the bare input did. The two rules below style the NATIVE date field a phone still gets. */
+.dateControl > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .dateControl input[type='date']::-webkit-calendar-picker-indicator {
   padding: 0.4rem;
   margin-right: -0.35rem;

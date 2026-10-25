@@ -42,6 +42,7 @@ import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPick
 import { TagChips } from './TagChips';
 import type { DriveEntryRow, Fundraiser, RoomRecord } from './types';
 import { possessive } from '@/lib/utils';
+import DateInput from '@/components/shared/DateInput';
 
 /** A drive's state chip — the same on its row and in its room's header, so the two never disagree. */
 export function DriveStatusChip({ active }: { active: boolean }) {
@@ -598,12 +599,12 @@ export function DriveEntryQuestion({
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="drive-entry-date">Date received *</label>
-            <input
+            <DateInput
               id="drive-entry-date"
               className={styles.input}
-              type="date" max={moneyMovedMaxDate()}
+              max={moneyMovedMaxDate()}
               value={date}
-              onChange={e => setDate(e.target.value)}
+              onChange={v => setDate(v)}
             />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -763,11 +764,11 @@ export function EditDriveSheet({
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Start date</label>
-            <input className={styles.input} type="date" value={start} onChange={e => setStart(e.target.value)} />
+            <DateInput className={styles.input} value={start} onChange={v => setStart(v)} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>End date</label>
-            <input className={styles.input} type="date" value={end} onChange={e => setEnd(e.target.value)} />
+            <DateInput className={styles.input} value={end} onChange={v => setEnd(v)} />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Tags</label>

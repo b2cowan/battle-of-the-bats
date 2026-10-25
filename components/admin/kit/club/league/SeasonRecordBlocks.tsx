@@ -2,6 +2,8 @@
 import { useState, type ReactNode } from 'react';
 import { Check, Pencil } from 'lucide-react';
 import ck from '../ClubKit.module.css';
+import DateInput from '@/components/shared/DateInput';
+import DateTimeInput from '@/components/shared/DateTimeInput';
 import { ClubSection, SavePill, repKit } from '../RepKit';
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import { feePerPlayerLine, registrationDay, seasonDates } from '@/lib/house-league-season';
@@ -92,14 +94,14 @@ export function SeasonBlock({ season, canEdit, orgSlug, onSaved }: {
           <div className={repKit.fieldGrid}>
             <label className={ck.field}>
               <span className={ck.label}>Season start</span>
-              <input className={ck.input} type="date" value={draft.seasonStartDate}
-                onChange={e => setDraft(d => ({ ...d, seasonStartDate: e.target.value }))}
+              <DateInput className={ck.input} value={draft.seasonStartDate}
+                onChange={v => setDraft(d => ({ ...d, seasonStartDate: v }))}
                 onBlur={() => draft.seasonStartDate !== (season.seasonStartDate ?? '') && commit({ seasonStartDate: draft.seasonStartDate || null })} />
             </label>
             <label className={ck.field}>
               <span className={ck.label}>Season end</span>
-              <input className={ck.input} type="date" value={draft.seasonEndDate}
-                onChange={e => setDraft(d => ({ ...d, seasonEndDate: e.target.value }))}
+              <DateInput className={ck.input} value={draft.seasonEndDate} min={draft.seasonStartDate || undefined} rangeStart={draft.seasonStartDate || undefined}
+                onChange={v => setDraft(d => ({ ...d, seasonEndDate: v }))}
                 onBlur={() => draft.seasonEndDate !== (season.seasonEndDate ?? '') && commit({ seasonEndDate: draft.seasonEndDate || null })} />
             </label>
           </div>
@@ -173,14 +175,14 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door }: {
           <div className={repKit.fieldGrid}>
             <label className={ck.field}>
               <span className={ck.label}>Registration opens</span>
-              <input className={ck.input} type="datetime-local" value={draft.registrationOpenAt}
-                onChange={e => setDraft(d => ({ ...d, registrationOpenAt: e.target.value }))}
+              <DateTimeInput className={ck.input} value={draft.registrationOpenAt}
+                onChange={v => setDraft(d => ({ ...d, registrationOpenAt: v }))}
                 onBlur={() => draft.registrationOpenAt !== local(season.registrationOpenAt) && commit({ registrationOpenAt: stamp(draft.registrationOpenAt) })} />
             </label>
             <label className={ck.field}>
               <span className={ck.label}>Registration closes</span>
-              <input className={ck.input} type="datetime-local" value={draft.registrationCloseAt}
-                onChange={e => setDraft(d => ({ ...d, registrationCloseAt: e.target.value }))}
+              <DateTimeInput className={ck.input} value={draft.registrationCloseAt} min={draft.registrationOpenAt || undefined}
+                onChange={v => setDraft(d => ({ ...d, registrationCloseAt: v }))}
                 onBlur={() => draft.registrationCloseAt !== local(season.registrationCloseAt) && commit({ registrationCloseAt: stamp(draft.registrationCloseAt) })} />
             </label>
           </div>

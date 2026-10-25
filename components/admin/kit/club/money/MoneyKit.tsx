@@ -20,6 +20,7 @@ import type { ClubBillChip } from '@/lib/club-money-figures';
 import { daysLateWords } from '@/lib/club-money-words';
 import { RepChip, repKit } from '../RepKit';
 import ck from '../ClubKit.module.css';
+import DateInput from '@/components/shared/DateInput';
 import frame from '../../AdminKitFrame.module.css';
 import styles from './Money.module.css';
 
@@ -224,7 +225,7 @@ export function DayField({ id, label, value, onChange, max }: {
   return (
     <label className={ck.field} htmlFor={id}>
       <span className={ck.label}>{label}<span className={repKit.req} aria-hidden>*</span></span>
-      <input id={id} type="date" className={ck.input} value={value} max={max} onChange={e => onChange(e.target.value)} />
+      <DateInput id={id} className={ck.input} value={value} max={max} onChange={v => onChange(v)} />
     </label>
   );
 }

@@ -37,6 +37,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Copy, Plus } from 'lucide-react';
 import type { Tournament, TournamentFormat } from '@/lib/types';
 import TournamentStyleCards from './TournamentStyleCards';
+import DateInput from '@/components/shared/DateInput';
 import TournamentCreationPreview, {
   type PreviewOrg,
   type PreviewTournamentTheme,
@@ -950,13 +951,13 @@ export default function TournamentSetupWizard({
             </label>
             <label className={ck.field} htmlFor="reuse-start">
               <span className={ck.label}>{W.startDate}<span className={repKit.req} aria-hidden>*</span></span>
-              <input id="reuse-start" className={ck.input} type="date" value={cloneForm.startDate} min={todayValue()}
-                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => { const next = endDateFollowingStart({ end: f.endDate, endPicked: f.endPicked }, v, END_AFTER_START_DAYS); return { ...f, startDate: v, endDate: next.end, endPicked: next.endPicked }; }); }} />
+              <DateInput id="reuse-start" className={ck.input} value={cloneForm.startDate} min={todayValue()}
+                onChange={v => { ctouch(); setCloneForm(f => { const next = endDateFollowingStart({ end: f.endDate, endPicked: f.endPicked }, v, END_AFTER_START_DAYS); return { ...f, startDate: v, endDate: next.end, endPicked: next.endPicked }; }); }} />
             </label>
             <label className={ck.field} htmlFor="reuse-end">
               <span className={ck.label}>{W.endDate}<span className={repKit.req} aria-hidden>*</span></span>
-              <input id="reuse-end" className={ck.input} type="date" value={cloneForm.endDate} min={cloneForm.startDate || todayValue()} disabled={!cloneForm.startDate}
-                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => ({ ...f, endDate: v, endPicked: v !== '' })); }} />
+              <DateInput id="reuse-end" className={ck.input} value={cloneForm.endDate} min={cloneForm.startDate || todayValue()} rangeStart={cloneForm.startDate || undefined} disabled={!cloneForm.startDate}
+                onChange={v => { ctouch(); setCloneForm(f => ({ ...f, endDate: v, endPicked: v !== '' })); }} />
             </label>
           </div>
           <p className={ck.hint}>{REUSE_WORDS.dateHint}</p>
@@ -1028,12 +1029,12 @@ export default function TournamentSetupWizard({
         <div className={styles.grid2}>
           <label className={ck.field} htmlFor="new-t-start">
             <span className={ck.label}>{W.startDate}<span className={repKit.req} aria-hidden>*</span></span>
-            <input id="new-t-start" className={ck.input} type="date" value={form.startDate} min={todayValue()} onChange={e => setStartDate(e.target.value)} />
+            <DateInput id="new-t-start" className={ck.input} value={form.startDate} min={todayValue()} onChange={v => setStartDate(v)} />
           </label>
           <label className={ck.field} htmlFor="new-t-end">
             <span className={ck.label}>{W.endDate}<span className={repKit.req} aria-hidden>*</span></span>
-            <input id="new-t-end" className={ck.input} type="date" value={form.endDate} min={form.startDate || todayValue()} disabled={!form.startDate}
-              onChange={e => { touch(); const v = e.target.value; setForm(f => ({ ...f, endDate: v, endPicked: v !== '' })); }} />
+            <DateInput id="new-t-end" className={ck.input} value={form.endDate} min={form.startDate || todayValue()} rangeStart={form.startDate || undefined} disabled={!form.startDate}
+              onChange={v => { touch(); setForm(f => ({ ...f, endDate: v, endPicked: v !== '' })); }} />
             {/* Stored as typed, never clamped to the start: a year typed into this field passes through "0002…" and
                 "0020…", and a clamp rewrote each one to the start mid-typing. Next says an End before the start is wrong. */}
           </label>

@@ -1,5 +1,6 @@
 'use client';
 import { useId, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
 import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
@@ -140,7 +141,7 @@ export default function RecordResultSheet({
               {editing ? (
                 <span className={styles.input} aria-readonly>{recordedOn}</span>
               ) : (
-                <input className={styles.input} type="date" value={recordedOn} onChange={e => setRecordedOn(e.target.value)} required />
+                <DateInput className={styles.input} value={recordedOn} onChange={v => setRecordedOn(v)} required />
               )}
             </label>
             <div className={`${styles.field} ${styles.formGridFull}`}>

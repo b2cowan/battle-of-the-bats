@@ -21,6 +21,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { useParams } from 'next/navigation';
 import { AlertCircle, Info, MapPin, RefreshCw, Search, SlidersHorizontal, Trophy } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
@@ -802,13 +803,10 @@ export default function ScorekeeperPage() {
       {/* The date stays visible at every width — it is the one piece of state a volunteer must be
           able to confirm at a glance before they trust the board in front of them. */}
       <section className={styles.dateRow} aria-label="Day">
-        {/* No calendar glyph of our own: the browser's date input draws its own picker button, and
-            two calendar icons on one field is one icon explaining the other. The native one is
-            also the one that actually opens the picker — ours was decoration taking width the
-            date itself needs. */}
+        {/* No calendar glyph of our own: DateInput draws the one calendar button on a desk and the phone's
+            own date field draws its own, so there is never a second icon beside either. */}
         <label className={styles.dateControl}>
-          <input
-            type="date"
+          <DateInput
             value={date}
             aria-label="Day to score"
             /**
@@ -817,7 +815,7 @@ export default function ScorekeeperPage() {
              * therefore means "back to today" — the field visibly refills, so the volunteer sees
              * what their press did rather than staring at `yyyy-mm-dd` over a stale list.
              */
-            onChange={event => setDate(event.target.value || todayString())}
+            onChange={v => setDate(v || todayString())}
           />
         </label>
         <button type="button" className={`btn btn-outline ${styles.dayButton}`} onClick={() => setDate(todayString())}>

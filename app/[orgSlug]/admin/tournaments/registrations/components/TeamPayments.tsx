@@ -19,6 +19,7 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import { TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, money, receiptLabel } from '@/lib/online-payment-words';
 import { PaymentViewWindow, RefundWindow } from './OnlinePaymentWindows';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
+import DateInput from '@/components/shared/DateInput';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { TEAM_PAYMENT_WORDS as W } from '@/lib/registration-words';
@@ -226,8 +227,8 @@ export default function TeamPayments(props: Props) {
       </div>
       <div className={ck.field}>
         <label className={ck.label} htmlFor={`${uid}-${prefix}-date`}>{W.paidOn}<span className={ck.required} aria-hidden>*</span></label>
-        <input id={`${uid}-${prefix}-date`} className={ck.input} type="date" max={today} aria-required="true"
-          value={d.paidOn} onChange={e => set({ ...d, paidOn: e.target.value })} />
+        <DateInput id={`${uid}-${prefix}-date`} className={ck.input} max={today} aria-required="true"
+          value={d.paidOn} onChange={v => set({ ...d, paidOn: v })} />
       </div>
       <div className={`${ck.field} ${styles.payHowField}`}>
         <label className={ck.label} htmlFor={`${uid}-${prefix}-how`}>{W.how}</label>

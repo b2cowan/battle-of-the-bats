@@ -21,6 +21,7 @@ import type { ScheduleDraftSlot } from '@/lib/schedule-generator';
 import { GENERATOR_WORDS as GW } from '@/lib/schedule-words';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { formatTime } from '@/lib/utils';
+import TimeInput from '@/components/shared/TimeInput';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import gen from './Generator.module.css';
 
@@ -215,11 +216,11 @@ export function WhenSection({
               </label>
               <label className={ck.field}>
                 <span className={ck.label}>{GW.fields.from}</span>
-                <input className={ck.input} type="time" value={slot.startTime} onChange={e => onUpdate(idx, { startTime: e.target.value })} />
+                <TimeInput className={ck.input} value={slot.startTime} onChange={v => onUpdate(idx, { startTime: v })} />
               </label>
               <label className={ck.field}>
                 <span className={ck.label}>{GW.fields.until}</span>
-                <input className={ck.input} type="time" value={slot.endTime} onChange={e => onUpdate(idx, { endTime: e.target.value })} />
+                <TimeInput className={ck.input} value={slot.endTime} onChange={v => onUpdate(idx, { endTime: v })} />
               </label>
               <button type="button" className={gen.remove} onClick={() => onRemove(idx)} disabled={dateSlots.length === 1}
                 aria-label={GW.fields.removeDay(slot.date ? formatShortWeekdayDate(slot.date) : GW.fields.day)}>

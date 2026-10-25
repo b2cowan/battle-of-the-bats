@@ -1,0 +1,610 @@
+<title>Themed Date Picker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a cool-grey drafting sheet (the document) holding true-size product specimens (the app) — so the specimens read as exhibits, not page. */
+:root {
+  --doc-bg: #E9ECF0;
+  --doc-surface: #F6F7F9;
+  --doc-ink: #1A1E24;
+  --doc-muted: #59616E;
+  --doc-line: #D3D8DF;
+  --tag-new-bg: #DCEFE4; --tag-new-ink: #1D5C3D;
+  --tag-re-bg: #DDE7F6;  --tag-re-ink: #1F477F;
+  --tag-un-bg: #E3E5E8;  --tag-un-ink: #4A515C;
+  --tag-ask-bg: #F8E7C6; --tag-ask-ink: #7A4B05;
+  --measure: #8A4FB8;
+  --f-doc: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --f-app: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #121519; --doc-surface: #1A1E24; --doc-ink: #E5E8EC; --doc-muted: #9AA3AF; --doc-line: #2B3139;
+  --tag-new-bg: #183A2A; --tag-new-ink: #9FDDB9; --tag-re-bg: #1B2C47; --tag-re-ink: #A9C6F2;
+  --tag-un-bg: #262B32; --tag-un-ink: #B5BCC6; --tag-ask-bg: #43320F; --tag-ask-ink: #F3CD84;
+  --measure: #C79BEA; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --doc-bg: #121519; --doc-surface: #1A1E24; --doc-ink: #E5E8EC; --doc-muted: #9AA3AF; --doc-line: #2B3139;
+  --tag-new-bg: #183A2A; --tag-new-ink: #9FDDB9; --tag-re-bg: #1B2C47; --tag-re-ink: #A9C6F2;
+  --tag-un-bg: #262B32; --tag-un-ink: #B5BCC6; --tag-ask-bg: #43320F; --tag-ask-ink: #F3CD84;
+  --measure: #C79BEA; color-scheme: dark;
+}
+
+/* The product's own tokens, verbatim from the app. Each specimen carries its theme, whatever the reader's theme is. */
+.warm {
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink2: #4A4235; --p-ink3: #615A54;
+  --p-line: rgba(70,55,30,0.12); --p-line-strong: rgba(70,55,30,0.20); --p-wash: rgba(70,55,30,0.08);
+  --p-accent: #57651E; --p-accent-soft: rgba(87,101,30,0.10);
+  --p-sel-bg: #57651E; --p-sel-ink: #FFFFFF; --p-range: rgba(87,101,30,0.14);
+  --p-btn-bg: #D9F99D; --p-btn-ink: #241E15; --p-focus: #57651E;
+  --p-field: #F8F4ED; --p-scrim: rgba(36,30,21,0.34);
+  --p-shadow: 0 2px 6px rgba(70,55,30,0.06), 0 14px 36px rgba(70,55,30,0.14);
+  --p-win-line: rgba(87,101,30,0.30);
+}
+.dark {
+  --p-paper: #0A0A0A; --p-card: #111827; --p-ink: rgba(255,255,255,0.9); --p-ink2: rgba(255,255,255,0.7); --p-ink3: #94A3B8;
+  --p-line: rgba(255,255,255,0.08); --p-line-strong: rgba(30,58,138,0.25); --p-wash: rgba(255,255,255,0.05);
+  --p-accent: #D9F99D; --p-accent-soft: rgba(30,58,138,0.18);
+  --p-sel-bg: #D9F99D; --p-sel-ink: #111827; --p-range: rgba(217,249,157,0.12);
+  --p-btn-bg: #D9F99D; --p-btn-ink: #0A0A0A; --p-focus: #D9F99D;
+  --p-field: rgba(255,255,255,0.05); --p-scrim: rgba(13,17,26,0.55);
+  --p-shadow: 0 8px 48px rgba(0,0,0,0.6);
+  --p-win-line: rgba(30,58,138,0.30);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--doc-bg); color: var(--doc-ink); font-family: var(--f-doc); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1260px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: flex; flex-direction: column; gap: 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 21px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--doc-muted); font-size: 16px; }
+.head { display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 13px; color: var(--doc-muted); }
+.tag { display: inline-block; font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; vertical-align: 1px; }
+.t-new { background: var(--tag-new-bg); color: var(--tag-new-ink); }
+.t-re  { background: var(--tag-re-bg);  color: var(--tag-re-ink); }
+.t-un  { background: var(--tag-un-bg);  color: var(--tag-un-ink); }
+.t-ask { background: var(--tag-ask-bg); color: var(--tag-ask-ink); }
+section { display: flex; flex-direction: column; gap: 18px; }
+.sec-head { display: flex; flex-direction: column; gap: 6px; }
+.sec-head p { color: var(--doc-muted); }
+.scroller { overflow-x: auto; padding-bottom: 6px; }
+.pair { display: flex; gap: 28px; align-items: flex-start; width: max-content; }
+.exhibit { display: flex; flex-direction: column; gap: 10px; flex: 0 0 auto; }
+.cap { display: flex; gap: 8px; align-items: baseline; font-size: 14px; font-weight: 600; }
+.cap-note { font-size: 13px; color: var(--doc-muted); max-width: 560px; }
+.measure { font-family: var(--f-mono); font-size: 12px; color: var(--measure); }
+.measures { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.note-card { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.note-card ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.grid2 > * { min-width: 0; }
+table.scale { border-collapse: collapse; width: 100%; font-size: 14px; }
+.scale th, .scale td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.scale th { font-size: 12px; font-family: var(--f-mono); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-muted); }
+.scale td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.asks { display: flex; flex-direction: column; gap: 12px; counter-reset: ask; }
+.ask { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 10px; padding: 16px 20px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; }
+.ask-n { font-family: var(--f-mono); font-size: 13px; color: var(--tag-ask-ink); background: var(--tag-ask-bg); border-radius: 4px; padding: 1px 7px; height: fit-content; }
+.ask-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ask-body p { color: var(--doc-muted); font-size: 14px; }
+.rec { color: var(--doc-ink) !important; }
+
+/* ---------- Product frame (true size) ---------- */
+.frame { position: relative; width: 600px; padding: 28px 40px 150px; border-radius: 10px; background: var(--p-paper); border: 1px solid var(--doc-line); font-family: var(--f-app); color: var(--p-ink); font-size: 14px; line-height: 1.5; }
+.frame::before { content: ""; position: absolute; inset: 0; border-radius: 10px; background: var(--p-scrim); }
+.win { position: relative; width: 520px; background: var(--p-card); border: 1px solid var(--p-win-line); border-radius: 12px; }
+.win-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px 6px; }
+.win-head h4 { margin: 0; font-size: 18px; font-weight: 700; color: var(--p-ink); }
+.win-x { width: 32px; height: 32px; display: grid; place-items: center; font-size: 20px; line-height: 1; color: var(--p-ink3); background: none; border: 0; border-radius: 6px; margin-right: -6px; }
+.win-x:hover { background: var(--p-accent-soft); }
+.win-body { padding: 12px 24px 8px; }
+.win-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 24px 18px; border-top: 1px solid var(--p-line); }
+.btn { font: inherit; font-size: 14px; font-weight: 600; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--p-line-strong); background: var(--p-card); color: var(--p-ink); }
+.btn-primary { background: var(--p-btn-bg); color: var(--p-btn-ink); border-color: transparent; }
+.field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.9rem; position: relative; }
+.label { font-size: 12px; font-weight: 650; color: var(--p-ink2); }
+.req { color: var(--p-ink3); font-weight: 600; }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.input { height: 36px; padding: 0 0.65rem; background: var(--p-field); border: 1px solid var(--p-line-strong); border-radius: 6px; color: var(--p-ink); font: inherit; font-size: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; }
+.input.text { display: block; line-height: 34px; }
+.input .ph { color: var(--p-ink3); }
+.textarea { height: 64px; padding: 0.5rem 0.65rem; background: var(--p-field); border: 1px solid var(--p-line-strong); border-radius: 6px; color: var(--p-ink3); font-size: 14px; }
+button.input { cursor: pointer; }
+button.input:focus-visible, button.input[aria-expanded="true"] { outline: none; border-color: var(--p-accent); }
+.input svg { flex: 0 0 auto; color: var(--p-ink3); }
+.dt { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* Native field, as Chrome draws it today */
+.native-input { font-family: "Segoe UI", system-ui, sans-serif; letter-spacing: 0.01em; }
+.native-input .nat-ico { width: 15px; height: 15px; }
+
+/* ---------- Our calendar ---------- */
+.cal { width: 278px; padding: 10px 12px 6px; background: var(--p-card); border: 1px solid var(--p-line-strong); border-radius: 8px; box-shadow: var(--p-shadow); font-family: var(--f-app); color: var(--p-ink); font-size: 14px; user-select: none; }
+.pop { position: absolute; top: calc(100% + 4px); left: 0; z-index: 5; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; height: 36px; margin-bottom: 4px; }
+.cal-title { font: inherit; font-weight: 700; font-size: 14px; color: var(--p-ink); background: none; border: 0; border-radius: 6px; height: 32px; padding: 0 8px; margin-left: -8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.cal-title:hover, .cal-nav button:hover { background: var(--p-accent-soft); }
+.cal-title:focus-visible, .cal-nav button:focus-visible, .cal-link:focus-visible, .mon:focus-visible, .win-x:focus-visible, .btn:focus-visible { outline: 2px solid var(--p-focus); outline-offset: 2px; }
+.cal-title svg { color: var(--p-ink3); }
+.cal-nav { display: flex; gap: 2px; }
+.cal-nav button { width: 32px; height: 32px; border: 0; border-radius: 6px; background: none; color: var(--p-ink2); display: grid; place-items: center; cursor: pointer; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 36px); justify-content: space-between; row-gap: 2px; }
+.cal-wd { height: 26px; display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--p-ink3); }
+.day { position: relative; width: 36px; height: 36px; border: 0; border-radius: 6px; background: none; color: var(--p-ink); font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer; }
+.day:hover { background: var(--p-accent-soft); }
+.day:focus-visible { outline: 2px solid var(--p-focus); outline-offset: 1px; z-index: 1; }
+.day.out { color: var(--p-ink3); }
+.day.today { box-shadow: inset 0 0 0 2px var(--p-accent); font-weight: 600; }
+.day.in-range { background: var(--p-range); border-radius: 0; }
+.day.sel, .day.sel:hover { background: var(--p-sel-bg); color: var(--p-sel-ink); font-weight: 650; opacity: 1; }
+.day.sel.today { box-shadow: inset 0 0 0 2px var(--p-sel-bg), inset 0 0 0 4px var(--p-card); }
+.day.anchor { background: var(--p-range); border-radius: 6px 0 0 6px; font-weight: 650; }
+.day[disabled] { color: var(--p-ink3); opacity: 0.5; cursor: not-allowed; background: none; }
+.cal-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--p-line); margin-top: 8px; padding-top: 4px; }
+.cal-link { font: inherit; font-size: 14px; font-weight: 600; background: none; border: 0; border-radius: 6px; height: 32px; padding: 0 8px; color: var(--p-accent); cursor: pointer; }
+.warm .cal-link { color: var(--p-accent); }
+.cal-link.quiet { color: var(--p-ink3); }
+.cal-link:hover { background: var(--p-accent-soft); }
+.cal-link[disabled] { opacity: 0.5; cursor: not-allowed; background: none; }
+.tmenu { width: 220px; max-height: 232px; overflow: hidden; padding: 0.3rem 0; background: var(--p-card); border: 1px solid var(--p-line-strong); border-radius: 8px; box-shadow: var(--p-shadow); font-family: var(--f-app); }
+.topt { display: flex; align-items: center; gap: 0.55rem; min-height: 36px; padding: 0.35rem 0.75rem; font-size: 14px; color: var(--p-ink); font-variant-numeric: tabular-nums; }
+.topt.hov { background: var(--p-accent-soft); }
+.ttick { width: 1rem; height: 1rem; border-radius: 4px; border: 1px solid var(--p-line-strong); display: inline-grid; place-items: center; }
+.ttick.on { background: var(--p-sel-bg); border-color: var(--p-sel-bg); color: var(--p-sel-ink); }
+.months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px 0 2px; }
+.mon { height: 44px; border: 0; border-radius: 6px; background: none; font: inherit; font-size: 14px; color: var(--p-ink); cursor: pointer; }
+.mon:hover { background: var(--p-accent-soft); }
+.mon.sel { background: var(--p-sel-bg); color: var(--p-sel-ink); font-weight: 650; }
+.mon.cur { box-shadow: inset 0 0 0 1.5px var(--p-accent); }
+
+/* ---------- Chrome's calendar, redrawn from the screenshot ---------- */
+.ncal { width: 272px; background: #FFFFFF; color: #1F1F1F; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 4px 14px rgba(0,0,0,0.18); padding: 12px 10px 8px; font-family: "Segoe UI", system-ui, sans-serif; font-size: 14px; }
+.ncal-head { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 10px; font-weight: 700; }
+.ncal-arrows { display: flex; gap: 18px; font-size: 18px; font-weight: 400; color: #333; }
+.ncal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; text-align: center; }
+.ncal-grid span { height: 32px; line-height: 32px; }
+.ncal-grid .w { font-weight: 400; color: #1F1F1F; }
+.ncal-grid .o { color: #767676; }
+.ncal-grid .s { background: #5F5F5F; color: #FFFFFF; font-weight: 700; outline: 2px solid #1F1F1F; outline-offset: -2px; border-radius: 2px; }
+.ncal-foot { display: flex; justify-content: space-between; padding: 10px 8px 2px; color: #0B6BCB; }
+
+.standalone { display: flex; flex-direction: column; gap: 12px; padding: 24px; border-radius: 10px; background: var(--p-paper); border: 1px solid var(--doc-line); width: 336px; font-family: var(--f-app); }
+.readout { font-size: 13px; color: var(--p-ink2); font-family: var(--f-app); min-height: 40px; }
+.readout b { color: var(--p-ink); font-weight: 650; }
+.readout code { font-family: var(--f-mono); font-size: 12px; color: var(--p-ink3); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pop { animation: pop-in 120ms ease-out; }
+  @keyframes pop-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+}
+@media (max-width: 640px) {
+  .wrap { padding-inline: 16px; }
+  h1 { font-size: 25px; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <div class="eyebrow">Mockup · Round 1 · Oct 25, 2026</div>
+    <h1>A date picker in the app's own look</h1>
+    <p class="lede">Every date field in the product opens the browser's own calendar today. This sheet shows what an in-house calendar would look like on desktop, drawn at true size with the app's real colours, type and spacing. Phones keep their native picker. The calendars in sections 1 and 2 work, so you can click, page through months and use the keyboard.</p>
+    <div class="legend">
+      <span><span class="tag t-new">NEW</span> doesn't exist today</span>
+      <span><span class="tag t-re">RESTYLED</span> same job, new face</span>
+      <span><span class="tag t-un">UNCHANGED</span> stays as it is</span>
+      <span><span class="tag t-ask">ASK</span> your call, see the end</span>
+    </div>
+  </header>
+
+  <!-- 1 · Whole screen -->
+  <section>
+    <div class="sec-head">
+      <h2>1 · The New season window, before and after</h2>
+      <p>One real window from the club admin, warm theme, at 100% size. Both show the Season start calendar open. On a laptop, view this at 100% browser zoom.</p>
+    </div>
+    <div class="scroller">
+      <div class="pair">
+
+        <div class="exhibit">
+          <div class="cap"><span>Today</span><span class="tag t-un">BROWSER</span></div>
+          <div class="frame warm">
+            <div class="win">
+              <div class="win-head"><h4>New season</h4><button class="win-x" aria-label="Close" tabindex="-1">×</button></div>
+              <div class="win-body">
+                <div class="field"><span class="label">Season name <span class="req">*</span></span><div class="input text">Winter 2026–27</div></div>
+                <div class="fgrid">
+                  <div class="field">
+                    <span class="label">Season start</span>
+                    <div class="input native-input"><span>2026-10-31</span>
+                      <svg class="nat-ico" viewBox="0 0 16 16" fill="none" stroke="#1F1F1F" stroke-width="1.3" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
+                    </div>
+                    <div class="pop" style="animation:none">
+                      <div class="ncal" aria-hidden="true">
+                        <div class="ncal-head"><span>October, 2026 ▾</span><span class="ncal-arrows"><span>↑</span><span>↓</span></span></div>
+                        <div class="ncal-grid" id="native-grid"></div>
+                        <div class="ncal-foot"><span>Clear</span><span>Today</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <span class="label">Season end</span>
+                    <div class="input native-input"><span class="ph">yyyy-mm-dd</span>
+                      <svg class="nat-ico" viewBox="0 0 16 16" fill="none" stroke="#1F1F1F" stroke-width="1.3" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="fgrid">
+                  <div class="field"><span class="label">Registration opens</span><div class="input native-input"><span>2026-09-01, 08:00 a.m.</span><svg class="nat-ico" viewBox="0 0 16 16" fill="none" stroke="#1F1F1F" stroke-width="1.3" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg></div></div>
+                  <div class="field"><span class="label">Registration closes</span><div class="input native-input"><span class="ph">yyyy-mm-dd, --:-- --</span><svg class="nat-ico" viewBox="0 0 16 16" fill="none" stroke="#1F1F1F" stroke-width="1.3" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg></div></div>
+                </div>
+                <div class="field"><span class="label">Description</span><div class="textarea">What families should know about this season</div></div>
+              </div>
+              <div class="win-foot"><button class="btn" tabindex="-1">Cancel</button><button class="btn btn-primary" tabindex="-1">Create season</button></div>
+            </div>
+          </div>
+          <p class="cap-note">The calendar is the operating system's: its own font, square corners, a grey selected day, blue links and a Sunday-first week. Empty fields read "yyyy-mm-dd", and the date-and-time fields add "--:-- --".</p>
+        </div>
+
+        <div class="exhibit">
+          <div class="cap"><span>After</span><span class="tag t-re">RESTYLED</span><span class="tag t-new">NEW CALENDAR</span></div>
+          <div class="frame warm" id="after-frame">
+            <div class="win">
+              <div class="win-head"><h4>New season</h4><button class="win-x" aria-label="Close" tabindex="-1">×</button></div>
+              <div class="win-body">
+                <div class="field"><span class="label">Season name <span class="req">*</span></span><div class="input text">Winter 2026–27</div></div>
+                <div class="fgrid">
+                  <div class="field" data-picker="start">
+                    <span class="label" id="lbl-start">Season start</span>
+                    <button class="input" aria-haspopup="dialog" aria-labelledby="lbl-start" id="f-start"></button>
+                  </div>
+                  <div class="field" data-picker="end">
+                    <span class="label" id="lbl-end">Season end</span>
+                    <button class="input" aria-haspopup="dialog" aria-labelledby="lbl-end" id="f-end"></button>
+                  </div>
+                </div>
+                <div class="field"><span class="label">Registration opens</span>
+                  <div class="dt"><div class="input"><span>Sep 1, 2026</span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg></div><div class="input"><span>8:00 a.m.</span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg></div></div>
+                </div>
+                <div class="field"><span class="label">Registration closes</span>
+                  <div class="dt"><div class="input"><span>Sep 30, 2026</span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg></div><div class="input"><span>11:59 p.m.</span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg></div></div>
+                </div>
+                <div class="field"><span class="label">Description</span><div class="textarea">What families should know about this season</div></div>
+              </div>
+              <div class="win-foot"><button class="btn" tabindex="-1">Cancel</button><button class="btn btn-primary" tabindex="-1">Create season</button></div>
+            </div>
+          </div>
+          <div class="measures"><span class="measure">field 36px, unchanged</span><span class="measure">day 36 × 36px</span><span class="measure">calendar 278px wide</span><span class="measure">corners 8px, same shadow as the field menus</span></div>
+          <p class="cap-note">Dates read the way the rest of the app writes them ("Oct 31, 2026"). The calendar uses the app's type, starts the week on Monday like every other calendar in the app, and marks the picked day the way the field menus mark a choice: solid olive. Today gets the olive edge it has everywhere else. Click either season field to try it. Season end shades the range from the start and won't let you pick a day before it.</p>
+          <p class="cap-note">Each registration field splits into a date box and a time box, in house style ("11:59 p.m."). That costs one more row: a long date like "Sep 30, 2026" won't fit beside a time in half the window. <span class="tag t-ask">ASK 4</span></p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · Both themes -->
+  <section>
+    <div class="sec-head">
+      <h2>2 · The calendar itself, in both portal themes</h2>
+      <p>The same component in warm and dark. Under each calendar is the date it would save, as a plain calendar date with no time zone. That is what stops "picked the 31st, saved the 30th".</p>
+    </div>
+    <div class="scroller">
+      <div class="pair">
+        <div class="exhibit">
+          <div class="cap"><span>Warm</span><span class="tag t-new">NEW</span></div>
+          <div class="standalone warm"><div id="cal-warm"></div><div class="readout" id="read-warm"></div></div>
+        </div>
+        <div class="exhibit">
+          <div class="cap"><span>Dark</span><span class="tag t-new">NEW</span></div>
+          <div class="standalone dark"><div id="cal-dark"></div><div class="readout" id="read-dark"></div></div>
+        </div>
+        <div class="exhibit" style="width:320px">
+          <div class="cap"><span>Try it</span></div>
+          <div class="note-card">
+            <ul>
+              <li><b>Click the month name</b> to jump by month and year. This matters for a player's birthdate, which today means paging back a hundred months.</li>
+              <li><b>Arrow keys</b> move a day or a week. <b>Page Up / Page Down</b> change the month. <b>Enter</b> picks the day and <b>Esc</b> closes.</li>
+              <li><b>Typing still works.</b> In the real field you can type "2026-10-31" or "Oct 31 2026", and the app reads it when you leave the field.</li>
+              <li><b>Today</b> jumps to and picks today, and fades when today is outside the allowed dates. <b>Clear</b> empties the field. It only appears on optional dates, so a required date has no Clear at all.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · Range + selected face -->
+  <section>
+    <div class="sec-head">
+      <h2>3 · Choices to make</h2>
+      <p>The range and the picked day only change how it looks. The time list changes how much gets swept.</p>
+    </div>
+    <div class="scroller">
+      <div class="pair">
+        <div class="exhibit">
+          <div class="cap"><span>A paired end date shades its range</span><span class="tag t-ask">ASK 3</span></div>
+          <div class="standalone warm"><div id="cal-range"></div><div class="readout">Season starts <b>Sep 12</b>, ends <b>Oct 24, 2026</b>. Days before the start are greyed out.</div></div>
+          <p class="cap-note">Applies wherever two fields form a span: season dates, tournament dates, tryout windows, report filters.</p>
+        </div>
+        <div class="exhibit">
+          <div class="cap"><span>Picked day: solid olive</span><span class="tag t-ask">ASK 2 · RECOMMENDED</span></div>
+          <div class="standalone warm"><div id="cal-face-a"></div></div>
+          <p class="cap-note" style="max-width:336px">The same mark a field menu uses for the chosen option. It turns lime in the dark theme by itself.</p>
+        </div>
+        <div class="exhibit">
+          <div class="cap"><span>Picked day: lime fill</span><span class="tag t-ask">ASK 2 · ALTERNATIVE</span></div>
+          <div class="standalone warm" id="alt-face"><div id="cal-face-b"></div></div>
+          <p class="cap-note" style="max-width:336px">Brighter, but lime is kept for the one main button on a screen, and here it would sit just above "Create season". That needs an exception from you.</p>
+        </div>
+        <div class="exhibit">
+          <div class="cap"><span>The time list</span><span class="tag t-new">NEW</span><span class="tag t-ask">ASK 4</span></div>
+          <div class="standalone warm" style="width:268px">
+            <div class="tmenu" aria-hidden="true">
+              <div class="topt"><span class="ttick"></span>7:30 a.m.</div>
+              <div class="topt"><span class="ttick"></span>7:45 a.m.</div>
+              <div class="topt"><span class="ttick on"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 5.2 4.2 7.4 8 3"/></svg></span>8:00 a.m.</div>
+              <div class="topt hov"><span class="ttick"></span>8:15 a.m.</div>
+              <div class="topt"><span class="ttick"></span>8:30 a.m.</div>
+              <div class="topt"><span class="ttick"></span>8:45 a.m.</div>
+            </div>
+          </div>
+          <p class="cap-note" style="max-width:268px">What a time box opens: the field menu the app already has, in 15-minute steps, and you can still type any time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · Phones -->
+  <section>
+    <div class="sec-head">
+      <h2>4 · Phones and tablets <span class="tag t-un">UNCHANGED</span></h2>
+    </div>
+    <div class="note-card">
+      <p>Any touch screen, and any window 768px wide or narrower, keeps the device's own picker: the wheel on an iPhone, the calendar sheet on Android, the same on a tablet. People know these, they are built for a thumb, and they already follow the device's light or dark mode. That also means no 36px days on a tablet, below the 44px tap size the app keeps for touch.</p>
+    </div>
+  </section>
+
+  <!-- 5 · Scale -->
+  <section>
+    <div class="sec-head">
+      <h2>5 · What it takes</h2>
+      <p>Counted in the code today. The calendar gets built once and every field switches to it. The switch is routine work, but each screen still needs a look in the browser afterwards.</p>
+    </div>
+    <div class="note-card" style="padding:6px 8px">
+      <div class="scroller">
+        <table class="scale">
+          <thead><tr><th>Kind of field</th><th>Fields</th><th>Opens today</th><th>After</th></tr></thead>
+          <tbody>
+            <tr><td>Date</td><td class="num">105</td><td>Browser calendar</td><td>This calendar. These are the fields you see most: money, schedules, roster, tryouts, the club kit, tournament setup and platform admin.</td></tr>
+            <tr><td>Date and time</td><td class="num">11</td><td>Browser calendar and clock</td><td>Split into this calendar and a time box, as in the registration fields above <span class="tag t-ask">ASK 4</span></td></tr>
+            <tr><td>Time</td><td class="num">22</td><td>Browser clock list</td><td>The same time box, so the app writes every time one way <span class="tag t-ask">ASK 4</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="note-card">
+        <h3>Order of work</h3>
+        <ul>
+          <li>Build the one calendar and its field, and a check that stops anyone adding a browser date field again.</li>
+          <li>Switch fields over portal by portal: coaches, then the club admin, then tournaments, then platform admin. Each step is small enough for you to walk.</li>
+          <li>Update the help guides where a screenshot or wording mentions picking a date.</li>
+        </ul>
+      </div>
+      <div class="note-card">
+        <h3>Where the risk is</h3>
+        <ul>
+          <li><b>A date landing on the wrong day.</b> This is the classic bug with a hand-built calendar. The calendar only ever handles plain dates like the ones shown in section 2, and this is what the review checks first.</li>
+          <li><b>Keyboard and typing.</b> These have to be at least as good as the browser's, or regular users will notice it got worse.</li>
+          <li><b>Required fields and earliest/latest dates.</b> The browser checks these for us today, so the new field has to keep doing it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · Asks -->
+  <section>
+    <div class="sec-head"><h2>6 · Your calls</h2></div>
+    <div class="asks">
+      <div class="ask"><span class="ask-n">1</span><div class="ask-body"><h3>Is it worth it?</h3><p>That means 116 calendar fields across the product (138 counting times), plus a guard so the browser calendar doesn't creep back.</p><p class="rec">My view: yes, but only as one piece of work and not screen by screen. The house date style alone ("Oct 31, 2026" rather than "yyyy-mm-dd") fixes the one place a form still speaks the browser's language.</p></div></div>
+      <div class="ask"><span class="ask-n">2</span><div class="ask-body"><h3>How does the picked day look?</h3><p>Solid olive, the field menus' chosen mark, or the lime of the primary button.</p><p class="rec">Recommended: solid olive. Our own rules keep lime for the one main button on a screen. An olive ring is ruled out, because that is already how today looks on every calendar.</p></div></div>
+      <div class="ask"><span class="ask-n">3</span><div class="ask-body"><h3>Should a paired end date shade its range?</h3><p>It's a small extra, and it shows the length of the season at a glance.</p><p class="rec">Recommended: yes, and grey out days before the start.</p></div></div>
+      <div class="ask"><span class="ask-n">4</span><div class="ask-body"><h3>What about times?</h3><p>The 11 date-and-time fields sit in the same windows as plain dates. Left alone, one window would show our calendar next to the browser's clock. Themed times for only those 11 would also leave the other 22 time fields in the browser's format, so the app would write a time two ways.</p><p class="rec">Recommended: all or nothing. Either every time field gets the time box (33 fields, all drawn as above), or times stay native everywhere and only the calendar changes. I lean towards all 33, because a time is the other half of most of these windows.</p></div></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var SHORT = MONTHS.map(function (m) { return m.slice(0, 3); });
+  var WD = ["Mo","Tu","We","Th","Fr","Sa","Su"];
+  var NATIVE_WD = ["Su","Mo","Tu","We","Th","Fr","Sa"]; // Chrome's own, Sunday first
+  function dow(s) { var p = parts(s); return (new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay() + 6) % 7; } // Monday = 0
+  var TODAY = "2026-10-25"; // the mockup's "today", fixed so the sheet reads the same for everyone
+
+  // Plain calendar dates only, as "YYYY-MM-DD" strings. No time of day, no time zone.
+  function parts(iso) { var p = iso.split("-"); return { y: +p[0], m: +p[1] - 1, d: +p[2] }; }
+  function iso(y, m, d) { var t = new Date(Date.UTC(y, m, d)); return t.getUTCFullYear() + "-" + String(t.getUTCMonth() + 1).padStart(2, "0") + "-" + String(t.getUTCDate()).padStart(2, "0"); }
+  function addDays(s, n) { var p = parts(s); return iso(p.y, p.m, p.d + n); }
+  function addMonths(s, n) { var p = parts(s); var last = new Date(Date.UTC(p.y, p.m + n + 1, 0)).getUTCDate(); return iso(p.y, p.m + n, Math.min(p.d, last)); }
+  function fmt(s) { if (!s) return ""; var p = parts(s); return SHORT[p.m] + " " + p.d + ", " + p.y; }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  var CHEV_L = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>';
+  var CHEV_R = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
+  var CARET = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5 6 7.5l3-3"/></svg>';
+  var CAL_ICO = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>';
+
+  // opts: { value, min, rangeStart, onPick(iso|null), onClose(), autofocus }
+  function Calendar(host, opts) {
+    var st = { value: opts.value || null, focus: opts.value || TODAY, view: "days" };
+    var root = el("div", "cal");
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-label", "Choose a date");
+    host.appendChild(root);
+
+    function disabled(s) { return opts.min && s < opts.min; }
+    function render(focusAfter) {
+      root.innerHTML = "";
+      var fp = parts(st.focus);
+      var head = el("div", "cal-head");
+      var title = el("button", "cal-title");
+      title.type = "button";
+      title.innerHTML = (st.view === "days" ? MONTHS[fp.m] + " " + fp.y : String(fp.y)) + " " + CARET;
+      title.setAttribute("aria-label", st.view === "days" ? "Choose month and year" : "Back to days");
+      title.onclick = function () { st.view = st.view === "days" ? "months" : "days"; render(true); };
+      var nav = el("div", "cal-nav");
+      var prev = el("button"); prev.type = "button"; prev.innerHTML = CHEV_L;
+      var next = el("button"); next.type = "button"; next.innerHTML = CHEV_R;
+      prev.setAttribute("aria-label", st.view === "days" ? "Previous month" : "Previous year");
+      next.setAttribute("aria-label", st.view === "days" ? "Next month" : "Next year");
+      prev.onclick = function () { st.focus = addMonths(st.focus, st.view === "days" ? -1 : -12); render(); };
+      next.onclick = function () { st.focus = addMonths(st.focus, st.view === "days" ? 1 : 12); render(); };
+      nav.append(prev, next); head.append(title, nav); root.appendChild(head);
+
+      if (st.view === "months") {
+        var mg = el("div", "months");
+        var tp = parts(TODAY), vp = st.value ? parts(st.value) : null;
+        MONTHS.forEach(function (name, i) {
+          var b = el("button", "mon", SHORT[i]); b.type = "button";
+          if (vp && vp.y === fp.y && vp.m === i) b.classList.add("sel");
+          if (tp.y === fp.y && tp.m === i) b.classList.add("cur");
+          b.setAttribute("aria-label", name + " " + fp.y);
+          b.onclick = function () { st.focus = iso(fp.y, i, 1); st.view = "days"; render(true); };
+          mg.appendChild(b);
+        });
+        root.appendChild(mg);
+      } else {
+        var grid = el("div", "cal-grid"); grid.setAttribute("role", "grid");
+        WD.forEach(function (w) { var h = el("div", "cal-wd", w); h.setAttribute("aria-hidden", "true"); grid.appendChild(h); });
+        var first = iso(fp.y, fp.m, 1);
+        var lead = dow(first);
+        var start = addDays(first, -lead);
+        var lo = opts.rangeStart, hi = st.value;
+        for (var i = 0; i < 42; i++) {
+          var s = addDays(start, i), p = parts(s);
+          var b = el("button", "day", String(p.d)); b.type = "button"; b.dataset.d = s;
+          b.setAttribute("aria-label", fmt(s));
+          if (p.m !== fp.m) b.classList.add("out");
+          if (s === TODAY) b.classList.add("today");
+          if (lo && hi && s > lo && s < hi) b.classList.add("in-range");
+          if (lo && s === lo && s !== st.value) b.classList.add("anchor");
+          if (s === st.value) { b.classList.add("sel"); b.setAttribute("aria-selected", "true"); }
+          if (disabled(s)) b.disabled = true;
+          b.tabIndex = s === st.focus ? 0 : -1;
+          b.onclick = (function (d) { return function () { pick(d); }; })(s);
+          grid.appendChild(b);
+        }
+        root.appendChild(grid);
+      }
+      var foot = el("div", "cal-foot");
+      var t = el("button", "cal-link", "Today"); t.type = "button";
+      if (disabled(TODAY)) t.disabled = true;
+      t.onclick = function () { pick(TODAY); };
+      foot.appendChild(t);
+      if (!opts.required) { // a required date has no Clear: absent beats disabled
+        var c = el("button", "cal-link quiet", "Clear"); c.type = "button";
+        c.onclick = function () { st.value = null; if (opts.onPick) opts.onPick(null); render(); };
+        foot.appendChild(c);
+      }
+      root.appendChild(foot);
+      if (focusAfter) { var f = root.querySelector('.day[tabindex="0"]') || root.querySelector(".mon.sel, .mon"); if (f) f.focus(); }
+    }
+    function pick(s) { if (disabled(s)) return; st.value = s; st.focus = s; render(); if (opts.onPick) opts.onPick(s); }
+    root.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { if (opts.onClose) { e.preventDefault(); opts.onClose(); } return; }
+      if (st.view !== "days" || !e.target.classList.contains("day")) return;
+      var map = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+      var nf = null;
+      if (map[e.key] != null) nf = addDays(st.focus, map[e.key]);
+      else if (e.key === "PageUp") nf = addMonths(st.focus, -1);
+      else if (e.key === "PageDown") nf = addMonths(st.focus, 1);
+      else if (e.key === "Home") nf = addDays(st.focus, -dow(st.focus));
+      else if (e.key === "End") nf = addDays(st.focus, 6 - dow(st.focus));
+      else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(st.focus); return; }
+      if (nf) { e.preventDefault(); st.focus = nf; render(true); }
+    });
+    render(opts.autofocus);
+    return root;
+  }
+
+  // --- Chrome's grid, redrawn (October 2026) ---
+  (function () {
+    var g = document.getElementById("native-grid");
+    var html = NATIVE_WD.map(function (w) { return '<span class="w">' + w + "</span>"; }).join("");
+    var start = addDays("2026-10-01", -4);
+    for (var i = 0; i < 42; i++) {
+      var s = addDays(start, i), p = parts(s);
+      var cls = p.m !== 9 ? "o" : (s === "2026-10-31" ? "s" : "");
+      html += '<span class="' + cls + '">' + p.d + "</span>";
+    }
+    g.innerHTML = html;
+  })();
+
+  // --- The interactive "after" window ---
+  (function () {
+    var state = { start: "2026-10-31", end: null };
+    var fields = { start: document.getElementById("f-start"), end: document.getElementById("f-end") };
+    var open = null;
+    function paint() {
+      ["start", "end"].forEach(function (k) {
+        fields[k].innerHTML = (state[k] ? "<span>" + fmt(state[k]) + "</span>" : '<span class="ph">Choose a date</span>') + CAL_ICO;
+      });
+    }
+    function close(returnFocus) {
+      if (!open) return;
+      open.pop.remove(); fields[open.key].setAttribute("aria-expanded", "false");
+      if (returnFocus) fields[open.key].focus();
+      open = null;
+    }
+    function show(key, initial) {
+      close(false);
+      var pop = el("div", "pop");
+      fields[key].parentNode.appendChild(pop);
+      fields[key].setAttribute("aria-expanded", "true");
+      Calendar(pop, {
+        value: state[key],
+        min: key === "end" ? state.start : null,
+        rangeStart: key === "end" ? state.start : null,
+        autofocus: !initial,
+        onPick: function (s) { state[key] = s; if (key === "start" && state.end && s && state.end < s) state.end = null; paint(); if (s) close(true); },
+        onClose: function () { close(true); }
+      });
+      if (key === "end" && !state.end && state.start) { /* open on the start's month */ }
+      open = { key: key, pop: pop };
+    }
+    ["start", "end"].forEach(function (k) {
+      fields[k].addEventListener("click", function (e) { e.stopPropagation(); if (open && open.key === k) close(false); else show(k); });
+    });
+    document.addEventListener("click", function (e) { if (open && !open.pop.contains(e.target)) close(false); });
+    paint();
+    show("start", true); // complete at rest: open on Season start
+  })();
+
+  // --- Standalone specimens ---
+  function readout(id, s) {
+    var r = document.getElementById(id);
+    r.innerHTML = s ? "Picked <b>" + fmt(s) + "</b><br><code>saved as " + s + "</code>" : "Nothing picked <br><code>saved as empty</code>";
+  }
+  Calendar(document.getElementById("cal-warm"), { value: "2026-10-31", onPick: function (s) { readout("read-warm", s); } });
+  readout("read-warm", "2026-10-31");
+  Calendar(document.getElementById("cal-dark"), { value: "2026-10-31", onPick: function (s) { readout("read-dark", s); } });
+  readout("read-dark", "2026-10-31");
+  Calendar(document.getElementById("cal-range"), { value: "2026-10-24", min: "2026-09-12", rangeStart: "2026-09-12" });
+  Calendar(document.getElementById("cal-face-a"), { value: "2026-10-14" });
+  Calendar(document.getElementById("cal-face-b"), { value: "2026-10-14" });
+  // The alternative face: picked day in the primary button's lime.
+  var alt = document.createElement("style");
+  alt.textContent = "#alt-face { --p-sel-bg: #D9F99D; --p-sel-ink: #241E15; --p-range: rgba(217,249,157,0.45); }";
+  document.head.appendChild(alt);
+})();
+</script>

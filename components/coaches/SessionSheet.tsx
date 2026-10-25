@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { X } from 'lucide-react';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { snapshotEqual } from '@/components/coaches/useDiscardGuard';
@@ -210,7 +211,7 @@ export default function SessionSheet({
             ) : (
               <label className={styles.field}>
                 <span className={styles.srOnly}>Date</span>
-                <input className={styles.input} type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} />
+                <DateInput className={styles.input} value={sessionDate} onChange={v => setSessionDate(v)} />
               </label>
             )}
           </div>

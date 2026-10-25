@@ -36,6 +36,7 @@ import { parseInstallmentPlan } from '@/lib/expense-ledger';
 import InstallmentPlanEditor, { BLANK_PLAN_ROW, type PlanRow } from '../InstallmentPlanEditor';
 import InstallmentScopeSheet from '../InstallmentScopeSheet';
 import DateField from '../DateField';
+import DateInput from '@/components/shared/DateInput';
 import CommitmentView from '../CommitmentView';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { moneySectionHref } from '@/lib/coach-money-links';
@@ -4973,10 +4974,10 @@ function MoneyRecordsPanel({
             {/* ⚠ NO `max`. Every other date on this form is a day money moved and cannot be in the
                 future; this one is the whole point of the answer — when the money is expected. */}
             <label className={styles.label}>Expected by</label>
-            <input
-              className={styles.input} type="date"
+            <DateInput
+              className={styles.input}
               value={pledgeExpected}
-              onChange={e => setPledgeExpected(e.target.value)}
+              onChange={v => setPledgeExpected(v)}
             />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -5041,10 +5042,10 @@ function MoneyRecordsPanel({
           {convAmountField('Amount *')}
           <div className={styles.field}>
             <label className={styles.label}>Date received *</label>
-            <input
-              className={styles.input} type="date" max={moneyMovedMaxDate()}
+            <DateInput
+              className={styles.input} max={moneyMovedMaxDate()}
               value={form.receivedDate}
-              onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+              onChange={v => setForm(f => ({ ...f, receivedDate: v }))}
             />
           </div>
           {convMethodField('duesMethod')}
@@ -5211,10 +5212,10 @@ function MoneyRecordsPanel({
               stamps today — it converges in P2 with the rest of the doors. */}
           <div className={styles.field}>
             <label className={styles.label}>Date received *</label>
-            <input
-              className={styles.input} type="date" max={moneyMovedMaxDate()}
+            <DateInput
+              className={styles.input} max={moneyMovedMaxDate()}
               value={form.receivedDate}
-              onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+              onChange={v => setForm(f => ({ ...f, receivedDate: v }))}
             />
           </div>
           {convNoteField('Optional')}
@@ -5359,11 +5360,11 @@ function MoneyRecordsPanel({
             {convAmountField('Amount *')}
             <div className={styles.field}>
               <label className={styles.label}>Date received *</label>
-              <input
-                className={styles.input} type="date"
+              <DateInput
+                className={styles.input}
                 max={moneyMovedMaxDate()}
                 value={form.receivedDate}
-                onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+                onChange={v => setForm(f => ({ ...f, receivedDate: v }))}
               />
             </div>
             {/* No tags in this fold: an arrival against a standing sponsor sends method and note
@@ -5452,11 +5453,11 @@ function MoneyRecordsPanel({
             {/* ⚠ THE DAY THE MONEY ARRIVED (SP-2, 2026-08-28) — this branch posted income dated
                 by keyboard time for two releases; a backdated cheque now lands in its month. */}
             <label className={styles.label}>Date received *</label>
-            <input
-              className={styles.input} type="date"
+            <DateInput
+              className={styles.input}
               max={moneyMovedMaxDate()}
               value={form.receivedDate}
-              onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+              onChange={v => setForm(f => ({ ...f, receivedDate: v }))}
             />
           </div>
           {/* CREDIT FAMILIES — the shared plan editor (Q16; one component for all three doors
@@ -5624,10 +5625,10 @@ function MoneyRecordsPanel({
           )}
           <div className={styles.field}>
             <label className={styles.label}>Date paid *</label>
-            <input
-              className={styles.input} type="date" max={moneyMovedMaxDate()}
+            <DateInput
+              className={styles.input} max={moneyMovedMaxDate()}
               value={form.paidDate}
-              onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))}
+              onChange={v => setForm(f => ({ ...f, paidDate: v }))}
             />
           </div>
           {convMethodField('payoutMethod')}
@@ -8563,12 +8564,11 @@ function MoneyRecordsPanel({
                       The question this comment left open ("a question for the money-forms review")
                       was taken in P3's sweep; there is no marker left to reach for. */}
                   <label className={styles.label}>Date paid{formMode === 'add' ? ' *' : ''}</label>
-                  <input
+                  <DateInput
                     className={styles.input}
-                    type="date"
                     max={moneyMovedMaxDate()}
                     value={form.paidDate}
-                    onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))}
+                    onChange={v => setForm(f => ({ ...f, paidDate: v }))}
                   />
                   {/* ⚠ THE HINT DEPENDS ON WHO PAID (/review, 2026-08-16). "The day the family paid
                       it" is the out-of-pocket case: the server always creates such a cost paid, so
@@ -8625,12 +8625,11 @@ function MoneyRecordsPanel({
               {isMoneyInForm && (
                 <div className={styles.field}>
                   <label className={styles.label}>Date received *</label>
-                  <input
+                  <DateInput
                     className={styles.input}
-                    type="date"
                     max={moneyMovedMaxDate()}
                     value={form.receivedDate}
-                    onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+                    onChange={v => setForm(f => ({ ...f, receivedDate: v }))}
                   />
                 </div>
               )}

@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState, type ChangeEvent, type FormEvent } from
 import { businessCents, hasValidConversionEvidence, matchesReviewFilter, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
 import { previewBookkeepingSourceCsv, type BookkeepingSourcePreview } from '@/lib/bookkeeping-source-import';
 import { downloadCSVBlob } from '@/lib/export';
+import DateInput from '@/components/shared/DateInput';
 import styles from './bookkeeping.module.css';
 
 const SOURCES: Record<string, string> = {
@@ -207,7 +208,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
         <h2 id="expense-form-title">{editing ? `Correct ${editing.supplier}` : 'Add an expense'}</h2>
         <p className={styles.hint}>Amounts include purchase tax. Keep the original invoice amount when converting USD to CAD.</p>
         <form key={editing ? `${editing.expense_id}-${editing.revision}` : 'new'} onSubmit={save} className={styles.form}>
-          <label>Date paid or incurred<input name="expenseDate" type="date" required defaultValue={editing?.expense_date ?? ''} /></label>
+          <label>Date paid or incurred<DateInput name="expenseDate" required defaultValue={editing?.expense_date ?? ''} /></label>
           <label>Supplier<input name="supplier" required maxLength={160} defaultValue={editing?.supplier ?? ''} /></label>
           <label>Category<input name="category" list="bookkeeping-categories" required maxLength={80} defaultValue={editing?.category ?? ''} placeholder="Software, travel, equipment…" /></label>
           <datalist id="bookkeeping-categories">{categories.map(value => <option key={value} value={value} />)}</datalist>
@@ -244,8 +245,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
         <section className={styles.panel} aria-labelledby="report-title">
           <h2 id="report-title">Expense report</h2>
           <div className={styles.filters}>
-            <label>From<input type="date" value={from} onChange={event => setFrom(event.target.value)} /></label>
-            <label>To<input type="date" value={to} onChange={event => setTo(event.target.value)} /></label>
+            <label>From<DateInput value={from} onChange={setFrom} /></label>
+            <label>To<DateInput value={to} onChange={setTo} /></label>
             <label>Category<select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
             <label>Find<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
           <label>Review view<select value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD conversion evidence needed</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label>

@@ -9,6 +9,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
 import { SUBSCRIPTION_STATUS_LABELS, humanize } from '../chips';
 import styles from './bulk-operations.module.css';
+import DateInput from '@/components/shared/DateInput';
 
 type BulkActionType = 'subscription_status_override' | 'comp_period' | 'plan_change' | 'module_addon_enablement';
 type ModuleOperation = 'enable' | 'disable';
@@ -429,11 +430,10 @@ export default function BulkOperationsClient({
             {(actionType === 'subscription_status_override' || actionType === 'comp_period') && (
               <label className={kit.fieldGroup}>
                 <span className={kit.label}>{actionType === 'comp_period' ? 'Expires at' : 'Optional expiry'}</span>
-                <input
+                <DateInput
                   className={`${kit.field} ${kit.wide}`}
-                  type="date"
                   value={expiresAt}
-                  onChange={event => setExpiresAt(event.target.value)}
+                  onChange={v => setExpiresAt(v)}
                 />
               </label>
             )}

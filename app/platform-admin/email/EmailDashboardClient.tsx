@@ -11,6 +11,7 @@ import { LIVE_MARKETING_CAMPAIGNS } from '@/lib/marketing-email-defaults';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
 import styles from './email.module.css';
+import DateInput from '@/components/shared/DateInput';
 
 // ── Founding season email schedule ────────────────────────────────────────────
 // Built from the campaign registry (lib/marketing-email-defaults.ts), which is the one place a
@@ -753,12 +754,11 @@ export default function EmailDashboardClient({
               send — it appears in the &ldquo;upcoming&rdquo; and &ldquo;past due&rdquo; lists. It does{' '}
               <strong>not</strong> send automatically.
             </p>
-            <input
-              type="date"
+            <DateInput
               className={`${kit.field} ${styles.dateInput}`}
               aria-label="Planned send date"
               value={dateDraft}
-              onChange={e => setDateDraft(e.target.value)}
+              onChange={v => setDateDraft(v)}
               disabled={savingDate}
             />
             {dateError && <p className={styles.dateError}>{dateError}</p>}

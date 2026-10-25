@@ -13,6 +13,7 @@
  */
 import { useState } from 'react';
 import BottomSheet from '@/components/admin/BottomSheet';
+import TimeInput from '@/components/shared/TimeInput';
 import WhereField from '@/components/venue/WhereField';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -94,7 +95,7 @@ export default function MoveSheet({
           </label>
           <label className={ck.field}>
             <span className={ck.label}>{G.fields.start}</span>
-            <input className={ck.input} type="time" step={300} value={time} onChange={e => setTime(e.target.value)} />
+            <TimeInput className={ck.input} step={300} value={time} onChange={v => setTime(v)} />
           </label>
         </div>
         <WhereField

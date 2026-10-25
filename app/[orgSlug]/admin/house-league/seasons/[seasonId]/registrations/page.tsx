@@ -19,6 +19,7 @@ import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueSeasonStatus, LeagueTeam } from '@/lib/types';
 import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -944,7 +945,7 @@ export default function RegistrationsPage() {
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>Date of birth</label>
-                  <input className={styles.input} type="date" value={addForm.playerDateOfBirth} onChange={e => setAddForm(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
+                  <DateInput className={styles.input} value={addForm.playerDateOfBirth} onChange={v => setAddForm(f => ({ ...f, playerDateOfBirth: v }))} />
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>Jersey # pref</label>

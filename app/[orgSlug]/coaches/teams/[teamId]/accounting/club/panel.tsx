@@ -33,6 +33,7 @@ import { CLUB_MONEY_COLUMNS, clubMoneyRows } from '@/lib/coach-money-exports';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import ViewPills from '@/components/shared/ViewPills';
@@ -551,7 +552,7 @@ function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSen
         <div className={styles.formGrid}>
           <label className={styles.field} htmlFor="sent-on">
             <span className={styles.label}>Sent on<span aria-hidden> *</span></span>
-            <input id="sent-on" type="date" className={styles.input} value={sentOn} max={today} onChange={e => setSentOn(e.target.value)} />
+            <DateInput id="sent-on" className={styles.input} value={sentOn} max={today} onChange={v => setSentOn(v)} />
           </label>
           <label className={styles.field} htmlFor="sent-how">
             <span className={styles.label}>How</span>

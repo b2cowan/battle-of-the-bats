@@ -19,6 +19,7 @@ import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
 import { RepChip, repKit } from './RepKit';
 import { formatStoredDate } from '@/lib/timezone';
+import DateInput from '@/components/shared/DateInput';
 import { registrationReference } from '@/lib/utils';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -201,7 +202,9 @@ export function AddApplicantDialog({
   const field = (key: keyof AddForm, label: string, required = false, type = 'text', max = 60) => (
     <label className={ck.field}>
       <span className={ck.label}>{label}{required && <span className={repKit.req} aria-hidden>*</span>}</span>
-      <input className={ck.input} type={type} value={form[key]} maxLength={max} onChange={e => set({ [key]: e.target.value } as Partial<AddForm>)} />
+      {type === 'date'
+        ? <DateInput className={ck.input} value={form[key]} onChange={v => set({ [key]: v } as Partial<AddForm>)} />
+        : <input className={ck.input} type={type} value={form[key]} maxLength={max} onChange={e => set({ [key]: e.target.value } as Partial<AddForm>)} />}
     </label>
   );
 

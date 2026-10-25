@@ -26,6 +26,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Info } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
+import TimeInput from '@/components/shared/TimeInput';
 import { Callout, NoticePill, RecordDelete, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
 import { CheckChoice, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
@@ -528,7 +529,7 @@ export default function GameWindow({
         ))}
         {field(G.fields.start, (
           // F107: the start waits while it is being typed; leaving the box saves it as one move.
-          <input className={ck.input} type="time" value={form.time} onChange={e => set({ time: e.target.value })}
+          <TimeInput className={ck.input} value={form.time} onChange={v => set({ time: v })}
             onFocus={() => { typingStart.current = true; }}
             onBlur={() => { typingStart.current = false; touch(); }} />
         ))}

@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
@@ -247,8 +248,8 @@ export default function PlayerNotesTab({
                 <div className={styles.noteFormRow}>
                   <div className={styles.field} style={{ flex: '0 0 170px' }}>
                     <label className={styles.label} htmlFor="note-date">Date</label>
-                    <input id="note-date" className={styles.input} type="date" value={draft.notedOn}
-                      onChange={e => setDraft(d => ({ ...d, notedOn: e.target.value }))} />
+                    <DateInput id="note-date" className={styles.input} value={draft.notedOn}
+                      onChange={v => setDraft(d => ({ ...d, notedOn: v }))} />
                   </div>
                   <div className={styles.field} style={{ flex: '1 1 240px' }}>
                     <label className={styles.label} htmlFor="note-about">About</label>

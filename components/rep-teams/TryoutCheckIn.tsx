@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { Check, ChevronRight, Plus, Printer } from 'lucide-react';
 import { touched } from '@/components/coaches/useDiscardGuard';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
@@ -628,7 +629,7 @@ export default function TryoutCheckIn({
               <label className={styles.label} htmlFor="walkup-dob">Date of birth</label>
               {/* Not decoration: the printed check-in sheet's Age column is computed from
                   this, and confident returning-player matching needs it. */}
-              <input id="walkup-dob" className={styles.input} type="date" value={walkup.dob} onChange={e => setWalkup(w => ({ ...w, dob: e.target.value }))} />
+              <DateInput id="walkup-dob" className={styles.input} value={walkup.dob} onChange={v => setWalkup(w => ({ ...w, dob: v }))} />
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="walkup-last-season">Last season&apos;s team</label>

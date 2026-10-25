@@ -24,6 +24,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
+import DateInput from '@/components/shared/DateInput';
 import { RecordDelete, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
@@ -403,11 +404,11 @@ export default function TournamentRecord(props: TournamentRecordProps) {
               </label>
               <label className={ck.field}>
                 <span className={ck.label}>{W.startDate}</span>
-                <input className={ck.input} type="date" value={form.startDate} onChange={e => set({ startDate: e.target.value })} />
+                <DateInput className={ck.input} value={form.startDate} onChange={v => set({ startDate: v })} />
               </label>
               <label className={ck.field}>
                 <span className={ck.label}>{W.endDate}</span>
-                <input className={ck.input} type="date" value={form.endDate} min={form.startDate || undefined} onChange={e => set({ endDate: e.target.value })} />
+                <DateInput className={ck.input} value={form.endDate} min={form.startDate || undefined} rangeStart={form.startDate || undefined} onChange={v => set({ endDate: v })} />
               </label>
             </div>
           ) : (

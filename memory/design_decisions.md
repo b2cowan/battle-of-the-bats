@@ -7,6 +7,20 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-25 — A DATE OR TIME FIELD OPENS OUR CALENDAR / TIME LIST ON A DESK, THE DEVICE'S OWN PICKER ON TOUCH (owner, "I agree with your recommendations" — all four asks on the drawing https://claude.ai/artifact/Rvo2a36tonsHRyEeeWf4Cp)
+
+**Decision (as ruled):**
+- **Ask 1 — do it, as one unit of work:** every date, date-and-time and time field in the product (138 at the census) moves to the shared fields, and a build guard keeps the browser's own date/time control from coming back.
+- **Ask 2 — the picked day is SOLID OLIVE** (the field menu's chosen mark; lime in dark by the token). Not lime: lime is the one main action on a screen. Not an olive ring: that is today's mark on every calendar (C7).
+- **Ask 3 — a paired end date shades its range** from the start and greys out days before it.
+- **Ask 4 — times are all or nothing, and it is ALL:** the 22 time fields and the 11 date-and-time fields take the themed time box (a field-menu list in steps, typeable), so the product writes one clock ("8:00 a.m.") in every field. A date-and-time field becomes a date box and a time box.
+- **Carried from the drawing's /design pass (part of what the owner agreed):** Monday-first grid (C2); today = the olive edge (C7); out-of-month days in the tertiary ink at full strength; a blocked day wears the 0.5 disabled face; Clear is ABSENT on a required date; the empty field reads "Choose a date"; the field keeps its host's look (36px in the kit) and the calendar hangs over its window (the §80 field-menu rule).
+- **Touch keeps the device picker:** a coarse pointer, or any window ≤768px, renders the native control — built for a thumb, and no 36px days below the 44px touch floor.
+
+**Rationale:** the browser's calendar was the one control every form opened that spoke the operating system's language (its font, its blue links, a Sunday-first week, "yyyy-mm-dd").
+**Applies to:** global — `components/shared/DateInput.tsx` and its siblings; plan `docs/projects/active/THEMED_DATE_PICKER_PLAN.md`.
+
+
 ### 2026-10-24 — SUPPORT CONSOLE STAGE 1, FIVE ASKS RULED AS RECOMMENDED (owner, paste-back on https://claude.ai/artifact/7DWPUBp9cDp26a2P359zLW)
 
 **Decision (as ruled):**

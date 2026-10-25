@@ -9,6 +9,8 @@ import { Plus, Trash2, GripVertical, Trophy } from 'lucide-react';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import { descendantBracketCodes, displayRoundTitle } from '@/lib/playoff-bracket';
 import { teamColor } from '@/lib/team-color';
+import DateInput from '@/components/shared/DateInput';
+import TimeInput from '@/components/shared/TimeInput';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
 import styles from './BracketBuilder.module.css';
@@ -206,20 +208,21 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
         </div>
         <div className={styles.teamRow}>
           <label className={styles.teamLabel} htmlFor={`${matchup.id}-date`}>Date</label>
-          <input id={`${matchup.id}-date`} type="date" value={matchup.date} onChange={e => onUpdate({...matchup, date: e.target.value})} className={styles.dateInput} />
+          {/* flex: 1 on the field's box: the card row is a flex row, and the class's own flex: 1 sits on the input inside it. */}
+          <DateInput id={`${matchup.id}-date`} value={matchup.date} onChange={v => onUpdate({...matchup, date: v})} className={styles.dateInput} style={{ flex: 1 }} />
         </div>
         <div className={styles.teamRow}>
           <label className={styles.teamLabel} htmlFor={`${matchup.id}-time`}>Start</label>
           {/* Empty time field: seed top-of-the-hour on focus so the native picker doesn't open
               on the current minute (e.g. :48). Games start on the hour; the organizer still
               adjusts freely. Matches the coaches ScheduleEditor :00 default. */}
-          <input
+          <TimeInput
             id={`${matchup.id}-time`}
-            type="time"
             value={matchup.time}
             onFocus={() => { if (!matchup.time) onUpdate({ ...matchup, time: `${String(new Date().getHours()).padStart(2, '0')}:00` }); }}
-            onChange={e => onUpdate({...matchup, time: e.target.value})}
+            onChange={v => onUpdate({...matchup, time: v})}
             className={styles.timeInput}
+            style={{ flex: 1 }}
           />
         </div>
         <div className={styles.teamRow}>

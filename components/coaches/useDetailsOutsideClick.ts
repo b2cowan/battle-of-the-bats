@@ -36,7 +36,10 @@ export default function useDetailsOutsideClick(enabled = true) {
     if (!enabled) return;
     function onDocClick(ev: MouseEvent) {
       const el = ref.current;
-      if (el && el.open && !el.contains(ev.target as Node)) el.open = false;
+      // The click's PATH, not its target: React's own handler on the same document re-renders first, so a control that
+      // swaps itself out on click (a calendar day, its month view) is already detached when this runs, and `contains`
+      // would read a click inside the pill as outside it (/review, Themed Date Picker 2026-10-25).
+      if (el && el.open && !ev.composedPath().includes(el)) el.open = false;
     }
     document.addEventListener('click', onDocClick);
     return () => document.removeEventListener('click', onDocClick);

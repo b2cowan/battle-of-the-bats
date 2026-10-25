@@ -14862,16 +14862,15 @@ div.gdRow { cursor: default; }
   padding: 0.5rem 0 0.2rem;
 }
 .payAddRow input { width: 9rem; }
-/* ⚠⚠ THE DATE SLOT, AND IT EXISTS BECAUSE OF A CSS-MODULES BOUNDARY. `DateField` is `width: 100%`
-   of its parent — correct in the Budget Plan form, where it fills a column — so dropped into this
-   flex row it claimed the whole line, wrapped the amount and the buttons onto a second one, and
-   left its calendar button (absolutely positioned at the wrapper's right edge) stranded at the far
-   right of the page.
-   ⚠ IT CANNOT BE FIXED BY REACHING FOR THE CONTROL'S OWN CLASS. `.dateField` is hashed by the
-   BUDGET module; a `.payAddRow .dateField` written here would hash the second half against THIS
-   module and match nothing — a rule that looks right and is silently inert, which is the
-   cross-module trap. Constrain the PARENT instead: the control fills whatever it is given, so the
-   width belongs to the slot, and the button comes back beside the date it belongs to. */
+/* ⚠⚠ THE DATE SLOT, AND IT EXISTS BECAUSE OF A CSS-MODULES BOUNDARY. `DateField` (now a wrapper over
+   the shared DateInput) fills its parent's width — correct in the Budget Plan form, where it fills
+   a column — so dropped into this flex row it claimed the whole line and wrapped the amount and the
+   buttons onto a second one.
+   ⚠ IT CANNOT BE FIXED BY REACHING FOR THE CONTROL'S OWN CLASS. The control's classes are hashed by
+   other modules (budget, DateInput); a `.payAddRow` descendant rule written here would hash the
+   second half against THIS module and match nothing — a rule that looks right and is silently
+   inert, which is the cross-module trap. Constrain the PARENT instead: the control fills whatever
+   it is given, so the width belongs to the slot. */
 .payAddDate { display: inline-flex; width: 10.5rem; flex: none; }
 .payAddRow .errorText { flex-basis: 100%; margin: 0.15rem 0 0; }
 @media (max-width: 768px) {

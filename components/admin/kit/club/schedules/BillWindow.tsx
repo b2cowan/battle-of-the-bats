@@ -28,6 +28,7 @@ import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, closingRowLine, mon
 import { NO_GROUP, isStale, viewBillSlots, type ScheduleView } from '@/lib/club-schedule-view';
 import { Statement } from './ScheduleParts';
 import sch from './Schedules.module.css';
+import DateInput from '@/components/shared/DateInput';
 
 interface BillFromLine { id: string; description: string; categoryName: string; itemName: string | null; planned: number; allocated: number; left: number }
 
@@ -267,14 +268,14 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
               {PLANS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
             {plan !== 'dates' && (
-              <input type="date" className={ck.input} aria-label={W.billFirstDue} value={firstDue} onChange={e => setFirstDue(e.target.value)} />
+              <DateInput className={ck.input} aria-label={W.billFirstDue} value={firstDue} onChange={v => setFirstDue(v)} />
             )}
           </div>
           {plan === 'dates' && (
             <div className={sch.chips}>
               {dates.map((d, i) => (
-                <input key={i} type="date" className={ck.input} aria-label={`${W.billDates} ${i + 1}`} value={d}
-                  onChange={e => setDates(ds => ds.map((x, k) => (k === i ? e.target.value : x)))} />
+                <DateInput key={i} className={ck.input} aria-label={`${W.billDates} ${i + 1}`} value={d}
+                  onChange={v => setDates(ds => ds.map((x, k) => (k === i ? v : x)))} />
               ))}
               <button type="button" className={sch.door} onClick={() => setDates(ds => [...ds, ''])}>{W.billAddDate}</button>
             </div>

@@ -50,6 +50,9 @@ const ROLL: Record<string, [css: string, rule: string]> = {
   'components/admin/kit/club/PermitWindows.tsx': ['components/admin/kit/club/Permits.module.css', '.pickMenu'],
   'app/[orgSlug]/admin/tournaments/rules/RuleIconField.tsx': ['app/[orgSlug]/admin/tournaments/rules/rules.module.css', '.iconList'],
   'app/[orgSlug]/admin/tournaments/registrations/page.tsx': ['app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css', '.repLinkPopover'],
+  // The shared calendar and time list (Themed Date Picker, 2026-10-25): one panel rule for both.
+  'components/shared/DateInput.tsx': ['components/shared/DateInput.module.css', '.panel'],
+  'components/shared/TimeInput.tsx': ['components/shared/DateInput.module.css', '.panel'],
 };
 
 function sources(dir: string, out: string[] = []): string[] {
@@ -144,7 +147,8 @@ describe('a picker’s list hangs over its window (§80)', () => {
 
   it('the hook flips above the field, follows a scroll, and lets the list scroll itself', () => {
     const body = hooks.slice(hooks.indexOf('export function useFieldMenu('));
-    assert.match(body, /const up = below < Math\.min\(FIELD_MENU_MAX, above\);/, 'opens above when there is genuinely more room there');
+    assert.match(body, /const tallest = shape\?\.height \?\? FIELD_MENU_MAX;/, 'a list is as tall as the ceiling; only a panel that says its own height (the calendar) is taller');
+    assert.match(body, /const up = below < Math\.min\(tallest, above\);/, 'opens above when there is genuinely more room there');
     assert.match(body, /window\.visualViewport/, 'room is what a phone can SEE above its keyboard');
     assert.match(body, /addEventListener\('scroll', schedule, true\)/, 'a scroll re-places it — capture, so the window’s own body counts');
     assert.match(body, /menuRef\.current\?\.contains\(t\)\) return;/, 'the list’s own scroll is someone reading it');

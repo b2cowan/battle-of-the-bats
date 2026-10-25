@@ -63,6 +63,7 @@ import { formatEventDateRange } from '@/lib/timezone';
 import { PERMIT_WORDS } from '@/lib/permit-words';
 import type { LinePermitRow } from '@/lib/permit-server';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
 
 // ── When does this money move? The coach's three answers, the coach's words ─────────────────────
 
@@ -159,7 +160,7 @@ function WhenFields({ idBase, year, value, onChange, total, held }: {
             <div key={p.key} className={cr.periodRow}>
               <label className={ck.field} htmlFor={`${idBase}-pd-${p.key}`}>
                 <span className={ck.label}>Date</span>
-                <input id={`${idBase}-pd-${p.key}`} type="date" className={ck.input} value={p.date} onChange={e => setPeriod(p.key, { date: e.target.value })} />
+                <DateInput id={`${idBase}-pd-${p.key}`} className={ck.input} value={p.date} onChange={v => setPeriod(p.key, { date: v })} />
               </label>
               <label className={ck.field} htmlFor={`${idBase}-pl-${p.key}`}>
                 <span className={ck.label}>Name</span>

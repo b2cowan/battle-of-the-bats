@@ -35,6 +35,7 @@ import { Statement } from './ScheduleParts';
 import { EmailWordsSample, SendRow, SendRows, SendSample } from '../SendParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
 
 interface PreviewTeam {
   teamId: string; teamName: string; recipients: { userId: string; name: string | null; email: string; isHeadCoach: boolean }[];
@@ -179,7 +180,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
           {kind === 'review' && (
             <label className={ck.field} htmlFor="send-reply">
               <span className={ck.label}>{W.replyBy}</span>
-              <input id="send-reply" type="date" className={ck.input} value={replyBy} min={tournamentToday()} onChange={e => setReplyBy(e.target.value)} />
+              <DateInput id="send-reply" className={ck.input} value={replyBy} min={tournamentToday()} onChange={v => setReplyBy(v)} />
             </label>
           )}
           {shown.blockers.length > 0 && (

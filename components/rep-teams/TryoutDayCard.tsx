@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import DateTimeInput from '@/components/shared/DateTimeInput';
 import { Plus, ChevronRight, Globe } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { touched } from '@/components/coaches/useDiscardGuard';
@@ -415,12 +416,11 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
         </>}>
         <div className={styles.field}>
           <label className={styles.label}>Date &amp; start time</label>
-          <input
+          <DateTimeInput
             className={styles.input}
-            type="datetime-local"
             value={form.startsAt}
-            onChange={e => {
-              const next = e.target.value;
+            onChange={v => {
+              const next = v;
               setForm(f => {
                 // End FOLLOWS start, keeping the session length (calendar convention,
                 // owner 2026-08-17) — moving a 6–8pm session to 4pm makes it 4–6pm.
@@ -456,11 +456,10 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
 
         <div className={styles.field}>
           <label className={styles.label}>End time <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
-          <input
+          <DateTimeInput
             className={styles.input}
-            type="datetime-local"
             value={form.endsAt}
-            onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))}
+            onChange={v => setForm(f => ({ ...f, endsAt: v }))}
           />
         </div>
 

@@ -76,6 +76,8 @@ import type { DateOff, TimeBlock } from '@/lib/permit-time';
 import { Statement, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
+import TimeInput from '@/components/shared/TimeInput';
 
 // ── The inputs New schedule reads (`GET /api/admin/schedules?new=1`) ─────────────────────────────
 
@@ -574,11 +576,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       <div className={sch.pair}>
         <label className={ck.field} htmlFor="ns-start">
           <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
-          <input id="ns-start" type="date" className={ck.input} value={draft.startsOn} onChange={e => set({ startsOn: e.target.value })} />
+          <DateInput id="ns-start" className={ck.input} value={draft.startsOn} onChange={v => set({ startsOn: v })} />
         </label>
         <label className={ck.field} htmlFor="ns-end">
           <span className={ck.label}>{W.to}<span className={repKit.req} aria-hidden>*</span></span>
-          <input id="ns-end" type="date" className={ck.input} value={draft.endsOn} min={draft.startsOn || undefined} onChange={e => set({ endsOn: e.target.value })} />
+          <DateInput id="ns-end" className={ck.input} value={draft.endsOn} min={draft.startsOn || undefined} rangeStart={draft.startsOn || undefined} onChange={v => set({ endsOn: v })} />
         </label>
       </div>
       {draft.rows.map((r, i) => (
@@ -587,11 +589,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             onChange={ids => setRow(r.key, { weekdays: ids.map(Number).sort((a, b) => a - b) })} placeholder={W.chooseDays} />
           <label className={ck.field} htmlFor={`ns-rs-${i}`}>
             <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
-            <input id={`ns-rs-${i}`} type="time" step={300} className={ck.input} value={r.start} onChange={e => setRow(r.key, { start: e.target.value })} />
+            <TimeInput id={`ns-rs-${i}`} step={300} className={ck.input} value={r.start} onChange={v => setRow(r.key, { start: v })} />
           </label>
           <label className={ck.field} htmlFor={`ns-re-${i}`}>
             <span className={ck.label}>{W.until}<span className={repKit.req} aria-hidden>*</span></span>
-            <input id={`ns-re-${i}`} type="time" step={300} className={ck.input} value={r.end} onChange={e => setRow(r.key, { end: e.target.value })} />
+            <TimeInput id={`ns-re-${i}`} step={300} className={ck.input} value={r.end} onChange={v => setRow(r.key, { end: v })} />
           </label>
           <button type="button" className={sch.remove} aria-label={W.removeHours(i + 1)} disabled={draft.rows.length === 1}
             onClick={() => dropFrom('rows', r.key)}>
@@ -624,8 +626,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <div key={o.key} className={own.offRow}>
             <label className={ck.field} htmlFor={`ns-off-${i}`}>
               <span className={repKit.srOnly}>{W.datesOff} {i + 1}</span>
-              <input id={`ns-off-${i}`} type="date" className={ck.input} value={o.day} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
-                onChange={e => patchIn('datesOff', o.key, { day: e.target.value })} />
+              <DateInput id={`ns-off-${i}`} className={ck.input} value={o.day} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
+                onChange={v => patchIn('datesOff', o.key, { day: v })} />
             </label>
             <label className={ck.field} htmlFor={`ns-offn-${i}`}>
               <span className={repKit.srOnly}>{W.dateOffWhy}</span>
@@ -786,7 +788,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const clockSelect = (id: string, label: string, value: string, onChange: (v: string) => void) => (
     <label className={ck.field} htmlFor={id}>
       <span className={ck.label}>{label}</span>
-      <input id={id} type="time" step={300} className={ck.input} value={value} onChange={e => onChange(e.target.value)} />
+      <TimeInput id={id} step={300} className={ck.input} value={value} onChange={v => onChange(v)} />
     </label>
   );
   const whoSection = (
@@ -950,8 +952,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           {d.when === 'date' && (
             <label className={ck.field} htmlFor={id('date')}>
               <span className={ck.label}>{W.aDate}<span className={repKit.req} aria-hidden>*</span></span>
-              <input id={id('date')} type="date" className={ck.input} value={d.date} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
-                onChange={e => patchIn('daysOff', d.key, { date: e.target.value })} />
+              <DateInput id={id('date')} className={ck.input} value={d.date} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
+                onChange={v => patchIn('daysOff', d.key, { date: v })} />
             </label>
           )}
           <label className={ck.field} htmlFor={id('note')}>

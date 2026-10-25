@@ -851,54 +851,15 @@
 }
 .input:focus { outline: none; border-color: var(--blueprint-blue); }
 
-/* The browser draws the only calendar button on a date field (we add none of our own — two
-   calendar icons on one control is one icon explaining the other, the scorekeeper's precedent).
-   Chrome renders it faint by default, which on the warm portal's paper reads as decoration rather
-   than something pressable.
-   `color-scheme` is the other half, and the half opacity alone can't fix: without it the browser
-   draws a LIGHT-mode glyph and popup regardless of the portal's theme, so on the dark portal the
-   icon is a dark glyph on a dark field. Declared per theme so the picker that opens matches the
-   form it opened from. */
+/* On a desk the shared DateInput draws its own calendar; on a phone it is the device's own date
+   field, and it wears this class. `color-scheme` is what makes THAT picker and its glyph match the
+   portal's theme: without it the browser draws a LIGHT-mode glyph and popup regardless of theme, so
+   on the dark portal the icon is a dark glyph on a dark field. Declared per theme so the picker
+   that opens matches the form it opened from. */
 .input[type='date'] { color-scheme: dark; }
 :global(html[data-user-theme='warm'] [data-coach-warm-enabled]) .input[type='date'] {
   color-scheme: light;
 }
-
-/* We supply the calendar button (see DateField) instead of styling the browser's.
-   Chrome paints its indicator AS a masked background-colour, which is why three attempts to tame
-   it failed three different ways — opacity did nothing (never faded, just drawn pale), recolouring
-   it flattened Chrome's hover highlight into a grey square, and clearing that highlight erased the
-   glyph. It also came out green against this palette, and its own padding made the field TALLER
-   than the label and amount beside it.
-   Hiding it fixes the height by construction: the input goes back to being sized by its text. */
-.dateField {
-  position: relative;
-  display: flex;
-  width: 100%;
-}
-.dateField .input { padding-right: 2.15rem; }
-.dateField .input::-webkit-calendar-picker-indicator { display: none; }
-
-/* Ink, not accent. This is a control affordance belonging to the field's own chrome; an accent
-   here reads as decoration and competes with the real accents on the form. */
-.dateFieldBtn {
-  position: absolute;
-  right: 0.4rem;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color 0.12s;
-}
-.dateFieldBtn:hover { color: var(--text-primary); }
 
 /* ⚰ `.toggleLabel` WENT WITH THE "Split by period" CHECKBOX (owner ruling 2026-09-04). It styled
    the portal's only copy of a checkbox-beside-a-field, and splitting is now one of the three

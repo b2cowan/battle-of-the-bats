@@ -444,13 +444,16 @@ export function useFieldMenu(
   menuRef: RefObject<HTMLElement | null>,
   onLost: () => void,
   /** A list WIDER than its field (a panel off a small button): its own width, lined up with the field's `start` or
-   *  `end` edge and kept inside the screen. Absent = the list is exactly as wide as its field, as every caller was. */
-  shape?: { width: number; align?: 'start' | 'end' },
+   *  `end` edge and kept inside the screen. Absent = the list is exactly as wide as its field, as every caller was.
+   *  `height`: a PANEL's own height when it is taller than a list may be (the shared calendar, 2026-10-25) — it decides
+   *  the flip and replaces the list's 280px ceiling, so the panel is never cut to a scrolling sliver of a month. */
+  shape?: { width: number; align?: 'start' | 'end'; height?: number },
 ) {
   const onLostRef = useRef(onLost);
   useEffect(() => { onLostRef.current = onLost; }, [onLost]);
   const wideWidth = shape?.width;
   const wideAtEnd = shape?.align === 'end';
+  const tallest = shape?.height ?? FIELD_MENU_MAX;
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -474,25 +477,30 @@ export function useFieldMenu(
       const seenBottom = vv ? Math.min(layoutHeight, vv.offsetTop + vv.height) : layoutHeight;
       const below = seenBottom - r.bottom - FIELD_MENU_GAP - FIELD_MENU_MARGIN;
       const above = r.top - seenTop - FIELD_MENU_GAP - FIELD_MENU_MARGIN;
-      const up = below < Math.min(FIELD_MENU_MAX, above);
+      const up = below < Math.min(tallest, above);
       /* ⚠ The floor never lifts an UPWARD list past the top of what can be seen: a fixed list cannot be
          scrolled to, so its first rows would sit there out of reach (a landscape phone with its keyboard
          up). A downward list may run under the keys — its later rows still scroll up into view. */
       const floor = up ? Math.min(FIELD_MENU_MIN, Math.max(0, above)) : FIELD_MENU_MIN;
       const s = menu.style;
+      /* ⚠ Inside a CSS `zoom` (the bracket builder zooms its canvas) a fixed list's top/left/width are read in the
+         ZOOMED area's pixels, while every measure above is the screen's: divide them back (/review, Themed Date
+         Picker 2026-10-25). `currentCSSZoom` is the effective zoom; absent (older engines) it is 1. */
+      const z = (menu as HTMLElement & { currentCSSZoom?: number }).currentCSSZoom || 1;
+      const px = (n: number) => `${n / z}px`;
       if (wideWidth) {
         const layoutWidth = document.documentElement.clientWidth;
         const width = Math.min(wideWidth, layoutWidth - FIELD_MENU_MARGIN * 2);
         const edge = wideAtEnd ? r.right - width : r.left;
-        s.left = `${Math.max(FIELD_MENU_MARGIN, Math.min(edge, layoutWidth - width - FIELD_MENU_MARGIN))}px`;
-        s.width = `${width}px`;
+        s.left = px(Math.max(FIELD_MENU_MARGIN, Math.min(edge, layoutWidth - width - FIELD_MENU_MARGIN)));
+        s.width = px(width);
       } else {
-        s.left = `${r.left}px`;
-        s.width = `${r.width}px`;
+        s.left = px(r.left);
+        s.width = px(r.width);
       }
-      s.maxHeight = `${Math.max(floor, Math.min(FIELD_MENU_MAX, up ? above : below))}px`;
-      s.top = up ? '' : `${r.bottom + FIELD_MENU_GAP}px`;
-      s.bottom = up ? `${layoutHeight - r.top + FIELD_MENU_GAP}px` : '';
+      s.maxHeight = px(Math.max(floor, Math.min(tallest, up ? above : below)));
+      s.top = up ? '' : px(r.bottom + FIELD_MENU_GAP);
+      s.bottom = up ? px(layoutHeight - r.top + FIELD_MENU_GAP) : '';
     };
     const schedule = (e?: Event) => {
       const t = e?.target;
@@ -512,7 +520,7 @@ export function useFieldMenu(
       window.visualViewport?.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('scroll', schedule);
     };
-  }, [open, fieldRef, menuRef, wideWidth, wideAtEnd]);
+  }, [open, fieldRef, menuRef, wideWidth, wideAtEnd, tallest]);
 }
 
 /**

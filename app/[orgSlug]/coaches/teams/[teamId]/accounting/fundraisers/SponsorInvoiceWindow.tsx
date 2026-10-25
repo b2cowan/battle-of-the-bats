@@ -30,6 +30,7 @@ import {
   type InvoiceArrival, type SponsorInvoice, type SponsorPaymentDetails,
 } from '@/lib/coach-sponsor-invoice';
 import type { Fundraiser } from './types';
+import DateInput from '@/components/shared/DateInput';
 
 interface InvoiceRead {
   invoice: SponsorInvoice | null;
@@ -154,8 +155,10 @@ export function SponsorInvoiceWindow({
     () => !!draft && !!initial && (Object.keys(draft) as (keyof Draft)[]).some(k => draft[k] !== initial[k]),
     [draft, initial],
   );
-  const set = (k: keyof Draft) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setDraft(d => (d ? { ...d, [k]: e.target.value } : d));
+  /** One field's write. The shared date field hands over the picked STRING; a text box goes through `set`. */
+  const setDate = (k: keyof Draft) => (v: string) =>
+    setDraft(d => (d ? { ...d, [k]: v } : d));
+  const set = (k: keyof Draft) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDate(k)(e.target.value);
 
   async function download(e: React.FormEvent) {
     e.preventDefault();
@@ -278,11 +281,11 @@ export function SponsorInvoiceWindow({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="inv-issued">Issue date *</label>
-                <input id="inv-issued" className={styles.input} type="date" value={draft.issuedOn} onChange={set('issuedOn')} required />
+                <DateInput id="inv-issued" className={styles.input} value={draft.issuedOn} onChange={setDate('issuedOn')} required />
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="inv-due">Due date</label>
-                <input id="inv-due" className={styles.input} type="date" value={draft.dueOn} min={draft.issuedOn || undefined} onChange={set('dueOn')} />
+                <DateInput id="inv-due" className={styles.input} value={draft.dueOn} min={draft.issuedOn || undefined} rangeStart={draft.issuedOn || undefined} onChange={setDate('dueOn')} />
               </div>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="inv-desc">Description *</label>

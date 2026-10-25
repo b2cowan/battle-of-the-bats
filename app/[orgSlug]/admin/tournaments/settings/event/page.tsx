@@ -28,6 +28,7 @@ import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout, ClubRow, ClubRowList, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
+import DateInput from '@/components/shared/DateInput';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { SwitchFixedRow, SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
 import HelpButton from '@/components/help/HelpButton';
@@ -1001,13 +1002,11 @@ export default function TournamentEventSettingsPage() {
           <div className={es.two}>
             <label className={ck.field} htmlFor="event-start">
               <span className={ck.label}>Start date</span>
-              <input
+              <DateInput
                 id="event-start"
                 className={ck.input}
-                type="date"
                 value={startDate}
-                onChange={e => {
-                  const val = e.target.value;
+                onChange={val => {
                   setStartDate(val);
                   if (val && (!endDate || endDate < val)) {
                     const d = new Date(val + 'T12:00:00');
@@ -1019,13 +1018,13 @@ export default function TournamentEventSettingsPage() {
             </label>
             <label className={ck.field} htmlFor="event-end">
               <span className={ck.label}>End date</span>
-              <input
+              <DateInput
                 id="event-end"
                 className={ck.input}
-                type="date"
                 value={endDate}
                 min={startDate || undefined}
-                onChange={e => setEndDate(e.target.value)}
+                rangeStart={startDate || undefined}
+                onChange={v => setEndDate(v)}
               />
             </label>
           </div>
@@ -1270,7 +1269,7 @@ export default function TournamentEventSettingsPage() {
                 </label>
                 <label className={ck.field} htmlFor="fee-deposit-due">
                   <span className={ck.label}>Deposit due date</span>
-                  <input id="fee-deposit-due" className={ck.input} type="date" value={depositDueDate} onChange={e => setDepositDueDate(e.target.value)} />
+                  <DateInput id="fee-deposit-due" className={ck.input} value={depositDueDate} onChange={v => setDepositDueDate(v)} />
                 </label>
                 <label className={ck.field} htmlFor="fee-total">
                   <span className={ck.label}>Total fee ($)</span>
@@ -1278,7 +1277,7 @@ export default function TournamentEventSettingsPage() {
                 </label>
                 <label className={ck.field} htmlFor="fee-total-due">
                   <span className={ck.label}>Total fee due date</span>
-                  <input id="fee-total-due" className={ck.input} type="date" value={totalFeeDueDate} onChange={e => setTotalFeeDueDate(e.target.value)} />
+                  <DateInput id="fee-total-due" className={ck.input} value={totalFeeDueDate} onChange={v => setTotalFeeDueDate(v)} />
                 </label>
               </div>
             </>

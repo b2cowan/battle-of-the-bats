@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { CheckCircle } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrgHref } from '@/lib/use-public-pathname';
@@ -90,11 +91,13 @@ export default function RegisterForm({
     });
   }
 
+  function setValue(field: keyof FormState, value: string) {
+    setForm(prev => ({ ...prev, [field]: value }));
+    clearFieldError(field);
+  }
+
   function set(field: keyof FormState) {
-    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setForm(prev => ({ ...prev, [field]: e.target.value }));
-      clearFieldError(field);
-    };
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setValue(field, e.target.value);
   }
 
   function setDivision(id: string) {
@@ -322,11 +325,10 @@ export default function RegisterForm({
         <div className={formKit.fieldRow}>
           <div>
             <label className={formKit.label}>Date of birth</label>
-            <input
+            <DateInput
               className={formKit.input}
-              type="date"
               value={form.playerDateOfBirth}
-              onChange={set('playerDateOfBirth')}
+              onChange={v => setValue('playerDateOfBirth', v)}
             />
           </div>
           <div>

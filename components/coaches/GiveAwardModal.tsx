@@ -1,5 +1,6 @@
 'use client';
 import { useId, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { useAwardTypePicker } from '@/components/coaches/AwardTypePicker';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import type { RepTeamAwardType, RepPlayerAward } from '@/lib/types';
@@ -244,7 +245,7 @@ export default function GiveAwardModal({
                 </div>
                 <div className={styles.formSection}>
                   <h4 className={styles.formSectionTitle} id={`${ids}-date`}>Date<span aria-hidden> *</span></h4>
-                  <input type="date" className={styles.input} aria-labelledby={`${ids}-date`} value={occasionDay} max={today} required onChange={e => setOccasionDay(e.target.value)} />
+                  <DateInput className={styles.input} aria-labelledby={`${ids}-date`} value={occasionDay} max={today} required onChange={v => setOccasionDay(v)} />
                 </div>
               </div>
             )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import DateInput from '@/components/shared/DateInput';
 import { arrayMove } from '@dnd-kit/sortable';
 import { ChevronRight, Trash2, Plus, X, Check, ShieldCheck, Users } from 'lucide-react';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
@@ -380,11 +381,10 @@ function PlayerForm({
             Optional. Some tournaments need player ages for division eligibility — only add a date of
             birth if you need it.
           </p>
-          <input
+          <DateInput
             className={styles.input}
-            type="date"
             value={form.dateOfBirth}
-            onChange={e => set({ dateOfBirth: e.target.value })}
+            onChange={v => set({ dateOfBirth: v })}
             aria-label="Date of birth"
           />
           {dobConsentRequired && (

@@ -371,7 +371,7 @@ export function addCalendarMonths(date: string, months: number): string {
   const [y, m, d] = date.split('-').map(Number);
   if (!y || !m || !d) return date;
   const target = (m - 1) + months;
-  const ym = `${y + Math.floor(target / 12)}-${String((((target % 12) + 12) % 12) + 1).padStart(2, '0')}`;
+  const ym = `${String(y + Math.floor(target / 12)).padStart(4, '0')}-${String((((target % 12) + 12) % 12) + 1).padStart(2, '0')}`;
   const last = lastDayOfMonth(ym);
   return `${ym}-${String(Math.min(d, Number(last.slice(8)))).padStart(2, '0')}`;
 }
@@ -380,7 +380,10 @@ export function addCalendarMonths(date: string, months: number): string {
 export function lastDayOfMonth(value: string): string {
   const [y, m] = value.split('-').map(Number);
   if (!y || !m) return value;
-  return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+  // setUTCFullYear, not Date.UTC (the addCalendarDays lesson): a year under 100 is not 1900-something.
+  const last = new Date(0);
+  last.setUTCFullYear(y, m, 0);
+  return last.toISOString().slice(0, 10);
 }
 
 /**
@@ -400,8 +403,9 @@ export function addHoursToWallClock(local: string, hours: number): string {
 export function mondayOfDay(date: string): string {
   const [y, m, d] = date.split('-').map(Number);
   if (!y || !m || !d) return date;
-  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  return addCalendarDays(date, -((dow + 6) % 7));
+  const day = new Date(0);
+  day.setUTCFullYear(y, m - 1, d);
+  return addCalendarDays(date, -((day.getUTCDay() + 6) % 7));
 }
 
 /**
@@ -427,9 +431,9 @@ export function daysBetweenDateStrings(from: string, to: string): number {
   return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000);
 }
 
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 /** For the surfaces a FAMILY reads rather than a coach — the dues reminder email spells it out. */
-const LONG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+export const LONG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /** `"2026-05"` → `"May"` — the one formatter for a `YYYY-MM` bucket key (Insights P3's monthly
  *  attendance chart). Manual parse, same reason as `parseDateOnlyParts` below: a month key has no

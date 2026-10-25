@@ -7,6 +7,7 @@ import { humanize } from '../chips';
 import styles from './audit.module.css';
 import HelpCallout from '@/components/help/HelpCallout';
 import AuditExportClient from './AuditExportClient';
+import DateInput from '@/components/shared/DateInput';
 
 const PAGE_SIZE = 100;
 
@@ -209,19 +210,20 @@ export default async function AuditLogPage({
               aria-label="Search org or email"
               className={kit.search}
             />
-            <input
-              type="date"
+            <DateInput
               name="from"
               defaultValue={filters.from}
               className={kit.field}
+              inline
               title="From date"
               aria-label="From date"
             />
-            <input
-              type="date"
+            <DateInput
               name="to"
               defaultValue={filters.to}
               className={kit.field}
+              inline
+              rangeStart={filters.from || undefined}
               title="To date"
               aria-label="To date"
             />

@@ -25,6 +25,8 @@ import { parseStartBilling, parseStartPricing } from '@/lib/start-door';
 import PlanStep from './PlanStep';
 import styles from './onboarding.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import DateInput from '@/components/shared/DateInput';
+import DateTimeInput from '@/components/shared/DateTimeInput';
 
 /*
  * THE FIRST RUN (Tournament admin redesign Stage 5, E1 and A47 — ruled 2026-10-10). Plan selection is a standalone gate
@@ -1102,32 +1104,22 @@ function OnboardingPageLegacy() {
                 </select>
               </label>
               <label className={styles.fieldLabel}>
-                Division{' '}
-                <input
-                  className="form-input"
-                  value={leagueSeasonForm.division}
-                  onChange={e => setLeagueSeasonForm(form => ({ ...form, division: e.target.value }))}
-                  placeholder="U11, Adult, All ages"
-                />
-              </label>
-              <label className={styles.fieldLabel}>
                 Season starts{' '}
-                <input
+                <DateInput
                   className="form-input"
-                  type="date"
                   min={todayDate}
                   value={leagueSeasonForm.seasonStartDate}
-                  onChange={e => setLeagueSeasonForm(form => ({ ...form, seasonStartDate: e.target.value }))}
+                  onChange={v => setLeagueSeasonForm(form => ({ ...form, seasonStartDate: v }))}
                 />
               </label>
               <label className={styles.fieldLabel}>
                 Season ends{' '}
-                <input
+                <DateInput
                   className="form-input"
-                  type="date"
                   min={leagueSeasonForm.seasonStartDate || todayDate}
+                  rangeStart={leagueSeasonForm.seasonStartDate || undefined}
                   value={leagueSeasonForm.seasonEndDate}
-                  onChange={e => setLeagueSeasonForm(form => ({ ...form, seasonEndDate: e.target.value }))}
+                  onChange={v => setLeagueSeasonForm(form => ({ ...form, seasonEndDate: v }))}
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
@@ -1234,20 +1226,18 @@ function OnboardingPageLegacy() {
             <div className={styles.modalGridTwo}>
               <label className={styles.fieldLabel}>
                 Registration opens{' '}
-                <input
+                <DateTimeInput
                   className="form-input"
-                  type="datetime-local"
                   value={leagueSeasonForm.registrationOpenAt}
-                  onChange={e => setLeagueSeasonForm(form => ({ ...form, registrationOpenAt: e.target.value }))}
+                  onChange={v => setLeagueSeasonForm(form => ({ ...form, registrationOpenAt: v }))}
                 />
               </label>
               <label className={styles.fieldLabel}>
                 Registration closes{' '}
-                <input
+                <DateTimeInput
                   className="form-input"
-                  type="datetime-local"
                   value={leagueSeasonForm.registrationCloseAt}
-                  onChange={e => setLeagueSeasonForm(form => ({ ...form, registrationCloseAt: e.target.value }))}
+                  onChange={v => setLeagueSeasonForm(form => ({ ...form, registrationCloseAt: v }))}
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>

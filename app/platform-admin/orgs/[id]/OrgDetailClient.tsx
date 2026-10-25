@@ -8,6 +8,8 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince, fmtDaysLeft } from '@/lib/format-date';
 import { holdsSlot } from '@/lib/tournament-slot';
 import OwnAddressSection from './OwnAddressSection';
+import DateInput from '@/components/shared/DateInput';
+import TimeInput from '@/components/shared/TimeInput';
 
 // A checkbox <label> in this screen wears the kit's check look (12px, secondary ink); reuse this on every one.
 const CHECKBOX_LABEL_STYLE = {
@@ -1592,26 +1594,26 @@ export default function OrgDetailClient({
                 <div className={styles.formRow}>
                   <label className={styles.formLabel}>Expires (optional)</label>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
-                    <input
-                      type="date"
+                    <DateInput
                       className={styles.formInput}
                       style={{ flex: '1 1 auto' }}
                       value={formExpiryDate}
                       min={todayLocalDate()}
-                      onChange={e => {
-                        setFormExpiryDate(e.target.value);
+                      onChange={v => {
+                        setFormExpiryDate(v);
                         // Clearing the date disables (and should reset) the time, so a stale time
                         // can't be silently carried into a later submit.
-                        if (!e.target.value) setFormExpiryTime('');
+                        if (!v) setFormExpiryTime('');
                       }}
                       aria-label="Expiry date (optional)"
                     />
-                    <input
-                      type="time"
+                    <TimeInput
                       className={styles.formInput}
                       style={{ flex: '0 0 8rem' }}
+                      // 8rem holds "11:59 p.m." beside the clock icon, not "Choose a time".
+                      placeholder="Time"
                       value={formExpiryTime}
-                      onChange={e => setFormExpiryTime(e.target.value)}
+                      onChange={v => setFormExpiryTime(v)}
                       disabled={!formExpiryDate}
                       aria-label="Expiry time (optional)"
                     />
