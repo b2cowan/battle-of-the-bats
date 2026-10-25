@@ -3440,6 +3440,10 @@ export type NotificationEventType =
   // Club Tier Stage 5c (Families, Ask 26; mig 338) — a payment the club received for a rep child, handed to the head coach.
   | 'club_payment_handed_off'    // to the head coaches: Record it (their Record money, filled in) / Not received — Needs attention
   | 'club_payment_not_received'  // to the club person who sent it: the coach says it never reached the team
+  // Club Tier Stage 12a (mig 358) — online payments. TS-union only (no DB CHECK on event_type); all three Needs attention.
+  | 'payouts_need_attention'     // to the owner and the treasurer: Stripe needs something from the club
+  | 'online_payment_not_recorded' // to whoever runs tournaments + the treasurer: Stripe took a payment that couldn't be recorded
+  | 'card_refund_failed'         // to whoever refunded it + the treasurer: a refund couldn't reach the card
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
   | 'club_schedule_handed_back'  // a team handed a club practice back

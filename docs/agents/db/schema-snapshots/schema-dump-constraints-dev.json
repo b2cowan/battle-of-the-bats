@@ -2700,6 +2700,116 @@
     "update_rule": null
   },
   {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_cost_entry_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "processing_cost_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_created_by_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_entry_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "refund_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_payment_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_cost_entry_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "processing_cost_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_team_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_tournament_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "org_audit_log",
     "constraint_name": "org_audit_log_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3097,6 +3207,56 @@
     "foreign_table": "rep_teams",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "constraint_name": "org_payment_accounts_connected_by_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "connected_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "constraint_name": "org_payment_accounts_disconnected_by_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "disconnected_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "constraint_name": "org_payment_accounts_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "constraint_name": "org_payment_accounts_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "constraint_name": "org_payment_accounts_terms_by_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "terms_agreed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {
@@ -9300,6 +9460,16 @@
     "update_rule": null
   },
   {
+    "table_name": "stripe_connect_events",
+    "constraint_name": "stripe_connect_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "stripe_prices",
     "constraint_name": "stripe_prices_pkey",
     "constraint_type": "PRIMARY KEY",
@@ -10015,6 +10185,16 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "entry_id",
     "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_team_payments",
+    "constraint_name": "tournament_team_payments_online_payment_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
     "foreign_column": "id",
     "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"

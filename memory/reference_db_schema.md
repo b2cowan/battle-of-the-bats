@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-24 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-25 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-24
+# DB Schema Reference — 2026-10-25
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -60,7 +60,7 @@ id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, display_orde
 - Indexes: rules_tournament_id_idx
 
 ### teams
-id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer), coach_email, fee_book_baseline (numeric), fee_changed_by (uuid)
+id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer), coach_email, fee_book_baseline (numeric), fee_changed_by (uuid), pay_link_sent_at
 - Indexes: idx_teams_slot_id, teams_division_id_idx, teams_pool_id_idx, teams_tournament_id_idx
 
 ### tournament_archives
@@ -489,6 +489,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 
 ## Module: Stripe / Billing
 
+### stripe_connect_events
+id NOT NULL, type NOT NULL, account, livemode (boolean), org_id (uuid), received_at, processed_at, attempts (integer), error
+- Indexes: stripe_connect_events_received_idx, stripe_connect_events_unprocessed_idx
+
 ### stripe_prices
 id (uuid), plan_id NOT NULL, billing_cycle NOT NULL, environment NOT NULL, price_id, product_name, created_at, updated_at, last_change_note, updated_by_email
 - Indexes: stripe_prices_plan_id_billing_cycle_environment_key
@@ -776,6 +780,14 @@ rail NOT NULL, subject NOT NULL, window_started_at, attempts (integer)
 ### observability_cron_heartbeat
 job_name NOT NULL, last_run_at, rows_folded (bigint), rows_purged (bigint), status, error_detail
 
+### online_payment_refunds
+id (uuid), online_payment_id (uuid) → online_payments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL, fee_refunded (numeric), reason, note, origin, status, failure_reason, stripe_refund_id, refund_entry_id (uuid) → accounting_entries.id, processing_cost_entry_id (uuid) → accounting_entries.id, created_by (uuid), created_at, updated_at, succeeded_at
+- Indexes: online_payment_refunds_cost_entry_idx, online_payment_refunds_created_by_idx, online_payment_refunds_entry_idx, online_payment_refunds_one_full_refund, online_payment_refunds_org_idx, online_payment_refunds_payment_idx, online_payment_refunds_stripe_key
+
+### online_payments
+id (uuid), org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, flow NOT NULL, tournament_id (uuid) → tournaments.id, team_id (uuid) → teams.id, scope NOT NULL, description NOT NULL, payer_email, base_amount (numeric) NOT NULL, fee_amount (numeric) NOT NULL, total_amount (numeric) NOT NULL, fee_payer NOT NULL, fee_pct (numeric) NOT NULL, fee_flat (numeric) NOT NULL, currency, rail, status, livemode (boolean), stripe_checkout_session_id, stripe_payment_intent_id, stripe_charge_id, card_brand, card_last4, receipt_no (bigint), paid_on, paid_at, landed_at, land_error, processing_cost_entry_id (uuid) → accounting_entries.id, receipt_emailed_at, created_at, updated_at
+- Indexes: online_payments_cost_entry_idx, online_payments_intent_key, online_payments_one_open_per_team, online_payments_open_idx, online_payments_org_idx, online_payments_receipt_key, online_payments_session_key, online_payments_team_idx, online_payments_tournament_idx
+
 ### org_custom_domains
 id (uuid), org_id (uuid) → organizations.id NOT NULL, full_name NOT NULL, domain NOT NULL, prefix NOT NULL, status, host_status, host_branch, record1_name NOT NULL, record1_value NOT NULL, record2_name NOT NULL, record2_value NOT NULL, record2_host_target, last_checked_at, last_check (jsonb), waiting_since, connected_at, needs_attention_since, not_working_since, padlock_expires_at, live_email_sent_at, padlock_email_sent_at, padlock_reminder_sent_at, gave_up_email_sent_at, not_working_email_sent_at, created_by_user_id (uuid), created_at, updated_at
 - Indexes: org_custom_domains_domain_uidx, org_custom_domains_full_name_uidx, org_custom_domains_org_uidx, org_custom_domains_status_idx
@@ -787,6 +799,10 @@ id (uuid), fiscal_year_id (uuid) → org_fiscal_years.id NOT NULL, org_id (uuid)
 ### org_fiscal_years
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, first_day NOT NULL, last_day NOT NULL, closed_at, closed_by (uuid), closing_balance (numeric), closing_snapshot (jsonb), created_at, updated_at
 - Indexes: org_fiscal_years_closed_by_idx, org_fiscal_years_one_name, org_fiscal_years_one_start
+
+### org_payment_accounts
+org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, livemode (boolean), country, charges_enabled (boolean), payouts_enabled (boolean), details_submitted (boolean), requirements_due, disabled_reason, requirements_deadline, stripe_synced_at, fee_payer, refund_policy, terms_version, terms_agreed_by (uuid), terms_agreed_by_email, terms_agreed_at, connected_by (uuid), connected_at, disconnected_by (uuid), disconnected_at, created_at, updated_at
+- Indexes: org_payment_accounts_stripe_account_key
 
 ### org_people
 id (uuid), org_id (uuid) → organizations.id NOT NULL, email_normalized NOT NULL, first_name, last_name, phone, created_at, updated_at
@@ -872,8 +888,8 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 - Indexes: idx_tournament_roster_players_org, idx_tournament_roster_players_team, idx_tournament_roster_players_tournament, tournament_roster_players_source_player_id_idx
 
 ### tournament_team_payments
-id (uuid), team_id (uuid) → teams.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL, paid_on, label, method, entry_id (uuid) → accounting_entries.id, status, removed_at, removed_by (uuid), created_by (uuid), created_at, updated_at, ordinal (bigint) NOT NULL
-- Indexes: tournament_team_payments_entry_idx, tournament_team_payments_org_idx, tournament_team_payments_team_idx, tournament_team_payments_tournament_idx
+id (uuid), team_id (uuid) → teams.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL, paid_on, label, method, entry_id (uuid) → accounting_entries.id, status, removed_at, removed_by (uuid), created_by (uuid), created_at, updated_at, ordinal (bigint) NOT NULL, online_payment_id (uuid) → online_payments.id
+- Indexes: tournament_team_payments_entry_idx, tournament_team_payments_online_payment_key, tournament_team_payments_org_idx, tournament_team_payments_team_idx, tournament_team_payments_tournament_idx
 
 ### user_marketing_opt_outs
 user_id (uuid) NOT NULL, opted_out_at
@@ -888,15 +904,15 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **215 tables** across 10 modules.
+Total: **219 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
-- Stripe / Billing: 1 tables
+- Stripe / Billing: 2 tables
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 67 tables
+- Other: 70 tables

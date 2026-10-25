@@ -7427,6 +7427,456 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_refunds",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 2,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 4,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 5,
+        "column_name": "fee_refunded",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 7,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 8,
+        "column_name": "origin",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'app'::text"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 9,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 10,
+        "column_name": "failure_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 11,
+        "column_name": "stripe_refund_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 12,
+        "column_name": "refund_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 13,
+        "column_name": "processing_cost_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 14,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 17,
+        "column_name": "succeeded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 3,
+        "column_name": "stripe_account_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 4,
+        "column_name": "flow",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 5,
+        "column_name": "tournament_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 6,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 7,
+        "column_name": "scope",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 8,
+        "column_name": "description",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 9,
+        "column_name": "payer_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 10,
+        "column_name": "base_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 11,
+        "column_name": "fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 12,
+        "column_name": "total_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 13,
+        "column_name": "fee_payer",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 14,
+        "column_name": "fee_pct",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 15,
+        "column_name": "fee_flat",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 16,
+        "column_name": "currency",
+        "data_type": "character",
+        "udt_name": "bpchar",
+        "is_nullable": "NO",
+        "column_default": "'CAD'::bpchar"
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 17,
+        "column_name": "rail",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'card'::text"
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 18,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 19,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 20,
+        "column_name": "stripe_checkout_session_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 21,
+        "column_name": "stripe_payment_intent_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 22,
+        "column_name": "stripe_charge_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 23,
+        "column_name": "card_brand",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 24,
+        "column_name": "card_last4",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 25,
+        "column_name": "receipt_no",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 26,
+        "column_name": "paid_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 27,
+        "column_name": "paid_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 28,
+        "column_name": "landed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 29,
+        "column_name": "land_error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 30,
+        "column_name": "processing_cost_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 31,
+        "column_name": "receipt_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 32,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 33,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "org_audit_log",
         "pos": 1,
         "column_name": "id",
@@ -8442,6 +8892,213 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 2,
+        "column_name": "stripe_account_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 3,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 4,
+        "column_name": "country",
+        "data_type": "character",
+        "udt_name": "bpchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 5,
+        "column_name": "charges_enabled",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 6,
+        "column_name": "payouts_enabled",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 7,
+        "column_name": "details_submitted",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 8,
+        "column_name": "requirements_due",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 9,
+        "column_name": "disabled_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 10,
+        "column_name": "requirements_deadline",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 11,
+        "column_name": "stripe_synced_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 12,
+        "column_name": "fee_payer",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'family'::text"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 13,
+        "column_name": "refund_policy",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 14,
+        "column_name": "terms_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 15,
+        "column_name": "terms_agreed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 16,
+        "column_name": "terms_agreed_by_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 17,
+        "column_name": "terms_agreed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 18,
+        "column_name": "connected_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 19,
+        "column_name": "connected_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 20,
+        "column_name": "disconnected_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 21,
+        "column_name": "disconnected_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 22,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 23,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "org_people",
@@ -20918,6 +21575,87 @@
         "column_default": "now()"
       },
       {
+        "table_name": "stripe_connect_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 2,
+        "column_name": "type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 3,
+        "column_name": "account",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 4,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 6,
+        "column_name": "received_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 7,
+        "column_name": "processed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 8,
+        "column_name": "attempts",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "stripe_connect_events",
+        "pos": 9,
+        "column_name": "error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "stripe_prices",
         "pos": 1,
         "column_name": "id",
@@ -21746,6 +22484,15 @@
         "column_default": null
       },
       {
+        "table_name": "teams",
+        "pos": 29,
+        "column_name": "pay_link_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "tournament_archives",
         "pos": 1,
         "column_name": "id",
@@ -22472,6 +23219,15 @@
         "data_type": "bigint",
         "udt_name": "int8",
         "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 17,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -24361,6 +25117,69 @@
         "constraint_name": "notifications_user_id_fkey"
       },
       {
+        "table_name": "online_payment_refunds",
+        "column_name": "processing_cost_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_refunds_cost_entry_fk"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "online_payment_refunds_created_by_fk"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "column_name": "refund_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_refunds_entry_fk"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_refunds_org_fk"
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_refunds_payment_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "processing_cost_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_cost_entry_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_org_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "team_id",
+        "foreign_table": "teams",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_team_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_tournament_fk"
+      },
+      {
         "table_name": "org_audit_log",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -24513,6 +25332,34 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "org_payees_team_id_fkey"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "column_name": "connected_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_payment_accounts_connected_by_fk"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "column_name": "disconnected_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_payment_accounts_disconnected_by_fk"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_payment_accounts_org_fk"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "column_name": "terms_agreed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_payment_accounts_terms_by_fk"
       },
       {
         "table_name": "org_people",
@@ -27862,6 +28709,13 @@
       },
       {
         "table_name": "tournament_team_payments",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_payments_online_payment_fk"
+      },
+      {
+        "table_name": "tournament_team_payments",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -29366,7 +30220,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_org_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -29376,7 +30230,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_user_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -29387,6 +30241,96 @@
         "tablename": "observability_cron_heartbeat",
         "indexname": "observability_cron_heartbeat_pkey",
         "indexdef": "CREATE UNIQUE INDEX observability_cron_heartbeat_pkey ON public.observability_cron_heartbeat USING btree (job_name)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_cost_entry_idx",
+        "indexdef": "CREATE INDEX online_payment_refunds_cost_entry_idx ON public.online_payment_refunds USING btree (processing_cost_entry_id) WHERE (processing_cost_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_created_by_idx",
+        "indexdef": "CREATE INDEX online_payment_refunds_created_by_idx ON public.online_payment_refunds USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_entry_idx",
+        "indexdef": "CREATE INDEX online_payment_refunds_entry_idx ON public.online_payment_refunds USING btree (refund_entry_id) WHERE (refund_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_one_full_refund",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_one_full_refund ON public.online_payment_refunds USING btree (online_payment_id) WHERE (status = ANY (ARRAY['pending'::text, 'succeeded'::text]))"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_org_idx",
+        "indexdef": "CREATE INDEX online_payment_refunds_org_idx ON public.online_payment_refunds USING btree (org_id)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_payment_idx",
+        "indexdef": "CREATE INDEX online_payment_refunds_payment_idx ON public.online_payment_refunds USING btree (online_payment_id)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_pkey",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_pkey ON public.online_payment_refunds USING btree (id)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_stripe_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_key ON public.online_payment_refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_cost_entry_idx",
+        "indexdef": "CREATE INDEX online_payments_cost_entry_idx ON public.online_payments USING btree (processing_cost_entry_id) WHERE (processing_cost_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_intent_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_intent_key ON public.online_payments USING btree (stripe_payment_intent_id) WHERE (stripe_payment_intent_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_one_open_per_team",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_team ON public.online_payments USING btree (team_id) WHERE ((status = 'open'::text) AND (team_id IS NOT NULL))"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_open_idx",
+        "indexdef": "CREATE INDEX online_payments_open_idx ON public.online_payments USING btree (created_at) WHERE (status = 'open'::text)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_org_idx",
+        "indexdef": "CREATE INDEX online_payments_org_idx ON public.online_payments USING btree (org_id, created_at DESC)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_pkey ON public.online_payments USING btree (id)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_receipt_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_receipt_key ON public.online_payments USING btree (receipt_no) WHERE (receipt_no IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_session_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_session_key ON public.online_payments USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_team_idx",
+        "indexdef": "CREATE INDEX online_payments_team_idx ON public.online_payments USING btree (team_id) WHERE (team_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_tournament_idx",
+        "indexdef": "CREATE INDEX online_payments_tournament_idx ON public.online_payments USING btree (tournament_id) WHERE (tournament_id IS NOT NULL)"
       },
       {
         "tablename": "org_audit_log",
@@ -29602,6 +30546,16 @@
         "tablename": "org_payees",
         "indexname": "org_payees_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_payees_pkey ON public.org_payees USING btree (id)"
+      },
+      {
+        "tablename": "org_payment_accounts",
+        "indexname": "org_payment_accounts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_payment_accounts_pkey ON public.org_payment_accounts USING btree (org_id)"
+      },
+      {
+        "tablename": "org_payment_accounts",
+        "indexname": "org_payment_accounts_stripe_account_key",
+        "indexdef": "CREATE UNIQUE INDEX org_payment_accounts_stripe_account_key ON public.org_payment_accounts USING btree (stripe_account_id)"
       },
       {
         "tablename": "org_people",
@@ -32329,6 +33283,21 @@
         "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
       },
       {
+        "tablename": "stripe_connect_events",
+        "indexname": "stripe_connect_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX stripe_connect_events_pkey ON public.stripe_connect_events USING btree (id)"
+      },
+      {
+        "tablename": "stripe_connect_events",
+        "indexname": "stripe_connect_events_received_idx",
+        "indexdef": "CREATE INDEX stripe_connect_events_received_idx ON public.stripe_connect_events USING btree (received_at)"
+      },
+      {
+        "tablename": "stripe_connect_events",
+        "indexname": "stripe_connect_events_unprocessed_idx",
+        "indexdef": "CREATE INDEX stripe_connect_events_unprocessed_idx ON public.stripe_connect_events USING btree (received_at) WHERE (processed_at IS NULL)"
+      },
+      {
         "tablename": "stripe_prices",
         "indexname": "stripe_prices_pkey",
         "indexdef": "CREATE UNIQUE INDEX stripe_prices_pkey ON public.stripe_prices USING btree (id)"
@@ -32617,6 +33586,11 @@
         "tablename": "tournament_team_payments",
         "indexname": "tournament_team_payments_entry_idx",
         "indexdef": "CREATE INDEX tournament_team_payments_entry_idx ON public.tournament_team_payments USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "tournament_team_payments",
+        "indexname": "tournament_team_payments_online_payment_key",
+        "indexdef": "CREATE UNIQUE INDEX tournament_team_payments_online_payment_key ON public.tournament_team_payments USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
       },
       {
         "tablename": "tournament_team_payments",
@@ -33767,6 +34741,120 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "online_payment_refunds",
+        "detail": "online_payment_refunds_amount_chk",
+        "check_clause": "((amount > (0)::numeric) AND (fee_refunded >= (0)::numeric) AND (fee_refunded < amount))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_refunds",
+        "detail": "online_payment_refunds_note_chk",
+        "check_clause": "((note IS NULL) OR (char_length(note) <= 1000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_refunds",
+        "detail": "online_payment_refunds_origin_chk",
+        "check_clause": "(origin = ANY (ARRAY['app'::text, 'stripe_dashboard'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_refunds",
+        "detail": "online_payment_refunds_reason_chk",
+        "check_clause": "((reason IS NULL) OR (reason = ANY (ARRAY['organizer_ended'::text, 'team_left'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_refunds",
+        "detail": "online_payment_refunds_status_chk",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'succeeded'::text, 'failed'::text, 'canceled'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_refunds",
+        "detail": "online_payment_refunds_succeeded_chk",
+        "check_clause": "((status = 'succeeded'::text) = (succeeded_at IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "online_payment_refunds",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_arithmetic_chk",
+        "check_clause": "(((fee_payer = 'family'::text) AND (total_amount = (base_amount + fee_amount))) OR ((fee_payer = 'club'::text) AND (total_amount = base_amount)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_base_chk",
+        "check_clause": "((base_amount > (0)::numeric) AND (base_amount <= (1000000)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_currency_chk",
+        "check_clause": "(currency = 'CAD'::bpchar)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_fee_chk",
+        "check_clause": "(fee_amount >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_fee_payer_chk",
+        "check_clause": "(fee_payer = ANY (ARRAY['family'::text, 'club'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_flow_chk",
+        "check_clause": "(flow = 'tournament_team'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_paid_chk",
+        "check_clause": "((status <> ALL (ARRAY['paid'::text, 'refunded'::text])) OR ((paid_at IS NOT NULL) AND (stripe_payment_intent_id IS NOT NULL) AND (receipt_no IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_rail_chk",
+        "check_clause": "(rail = 'card'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_scope_chk",
+        "check_clause": "(scope = ANY (ARRAY['deposit'::text, 'balance'::text, 'full'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_status_chk",
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'paid'::text, 'expired'::text, 'refunded'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_total_chk",
+        "check_clause": "(total_amount > (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "online_payments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "org_audit_log",
         "detail": "ENABLED",
@@ -33907,6 +34995,30 @@
       {
         "kind": "RLS",
         "table_name": "org_payees",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_fee_payer_chk",
+        "check_clause": "(fee_payer = ANY (ARRAY['family'::text, 'club'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_refund_policy_chk",
+        "check_clause": "((refund_policy IS NULL) OR (char_length(refund_policy) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_terms_chk",
+        "check_clause": "(((terms_version IS NULL) AND (terms_agreed_at IS NULL) AND (terms_agreed_by_email IS NULL)) OR ((terms_version IS NOT NULL) AND (terms_agreed_at IS NOT NULL) AND (terms_agreed_by_email IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_payment_accounts",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -36179,6 +37291,12 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "stripe_connect_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "stripe_prices",
         "detail": "stripe_prices_billing_cycle_check",
@@ -36386,13 +37504,13 @@
         "kind": "CHECK",
         "table_name": "tournament_team_payments",
         "detail": "tournament_team_payments_method_chk",
-        "check_clause": "((method IS NULL) OR (method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text])))"
+        "check_clause": "((method IS NULL) OR (method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text, 'online_card'::text])))"
       },
       {
         "kind": "CHECK",
         "table_name": "tournament_team_payments",
         "detail": "tournament_team_payments_status_chk",
-        "check_clause": "(status = ANY (ARRAY['posted'::text, 'removed'::text]))"
+        "check_clause": "(status = ANY (ARRAY['posted'::text, 'removed'::text, 'refunded'::text]))"
       },
       {
         "kind": "RLS",

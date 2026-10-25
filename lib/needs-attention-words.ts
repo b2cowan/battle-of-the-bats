@@ -57,6 +57,14 @@ export const SETTLED_WORDS = {
   handOffNotReceivedThen: 'The club was told. Nothing was recorded.',
   handOffGone: 'The club’s record of this payment is gone.',
 
+  // Online payments (Club Tier Stage 12a — CLUB_TIER_STAGE12A_COPY.md §19)
+  payoutsBack: 'Online payments are back on',
+  payoutsDisconnected: 'Payouts were disconnected.',
+  onlinePaymentRecorded: 'It’s in the team’s record now.',
+  onlinePaymentRefunded: 'It was refunded to the card.',
+  onlinePaymentGone: 'The payment’s record is gone.',
+  refundRecorded: 'Refund recorded',
+
   // Requests holding a coach's payout (team_request_holding_payout)
   allSettled: (n: number) => (n === 1 ? 'The request is settled.' : n === 2 ? 'Both requests are settled.' : `All ${n} requests are settled.`),
 

@@ -872,6 +872,9 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 <!-- dict:col:teams.fee_book_baseline -->
 **`fee_book_baseline`** (numeric(12,2), NOT NULL, default 0; migration 342) — ⚠ **RETIRED by migration 345: no longer read or written.** It held the amount already marked received when Stage 7a began; that money is now an undated "Earlier payment" row in `tournament_team_payments`. The column stays for one release and is dropped later (DROP COLUMN last).
 
+<!-- dict:col:teams.pay_link_sent_at -->
+**`pay_link_sent_at`** (timestamptz, nullable; migration 358, Stage 12a) — when the organizer last sent this team its pay link ("Pay link sent"); a per-team "last sent" fact beside the payment cache. There is no token column: the pay link's token is derived (HMAC of the team id with a server secret), so nothing is stored or rotated per row.
+
 <!-- dict:col:teams.fee_changed_by -->
 **`fee_changed_by`** (FK → `auth.users.id` ON DELETE SET NULL) — actor carried through a payment update to its automatic fee receipt or void. The database trigger covers every writer of the team's paid figures, including imports and check-in.
 
@@ -7026,6 +7029,13 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 **Purpose (migration 345, 2026-10-21 — [TEAM_PAYMENTS_LIST_PLAN.md](../../projects/active/TEAM_PAYMENTS_LIST_PLAN.md)):** one row per payment a team made toward its tournament entry fee — the amount, the day it arrived, a label, how it arrived. **This is where a team's paid money lives**; `teams.total_paid` / `deposit_paid` / `payment_status` / `payment_collected_at` are a cache the database keeps from it. On a plan with Accounting (club plans or the accounting add-on, and an event not set to "free"), recording a payment also posts ONE ledger line dated `paid_on` (source `tournament_fee_receipt`, `source_entity_id` = the payment id, or the first payment of a shared transfer) and links it through `entry_id`; several rows may share one line (one transfer for several teams). Adding Accounting later posts nothing retroactively. Written only by the security-definer functions `tournament_team_payment_record`, `_pay_due` (Mark paid / Deposit paid: the rest, dated today, one locked step), `_change` (voids the line and posts a corrected one) and `_remove` (voids the line, never revived; who and when kept), and `club_tournament_shared_payment`; each refreshes the team's cache in the same transaction (`team_payments_refresh`). A date in a closed fiscal year is refused by the ledger lock (`year_closed`). **Status rule of the cache:** a team becomes `paid` when its sum reaches the fee and goes back to `pending` only when payments it was paid BY now fall short; a legacy team marked paid with too little recorded is left as marked until money completes it. `payment_collected_at` is the day the payment whose running total first reached the fee arrived (noon Toronto for an earlier day, so a check-in board shows a clock only for today). **A fee edit** (`deposit_amount`, `total_fee_amount`, `fee_schedule_mode` on `tournaments`, or the first two on `divisions`) refreshes the cached figures of the teams that have payments through `tournaments_fee_changed` / `divisions_fee_changed` — figures only, never a status. Lock order everywhere: tournament row → team rows (id order) → ledger line; the payment row is inserted last. Server-only RLS.
 
+**Online card payments (migration 358, Stage 12a, 2026-10-25) — gotchas:**
+1. **An online payment is a row here too**, written by `online_payment_land` (see `online_payments`) THROUGH `tournament_team_payment_record` with no method, then stamped `method = 'online_card'` and `online_payment_id`; the ledger line's `payment_method` is set to `'online_card'`. There is no second money writer.
+2. **`status = 'refunded'`**: after a full refund to the card (`online_payment_refund_land`) the row stays so the team's record can read "Refunded to card", but the **paid figure falls** — every cache reader (`team_payments_refresh`, the lists, the check-in undo) filters `status = 'posted'`. Code that lists a team's payments must read `posted` AND `refunded` to show it, or the row vanishes. A `refunded` row is never revived. The original receipt line stays posted; the refund is a separate money-out line (see `online_payment_refunds`). `_pay_due` re-derives "due" from posted rows, so Mark paid after a refund asks for the full amount again.
+3. **Guard trigger `tournament_team_payments_online_guard`** (BEFORE INSERT OR UPDATE, never DELETE — teams, tournaments and organizations cascade into this table; SECURITY INVOKER, EXECUTE revoked). Unless the transaction-local setting **`flhq.online_payment_write` = `'on'`**, it refuses: an INSERT carrying `online_payment_id`, `method = 'online_card'` or `status = 'refunded'`; an UPDATE that sets any of those on a row that lacked them (nobody forges an "Online, card" row by hand); and any change of `amount`, `paid_on`, `method`, `team_id`, `online_payment_id`, `entry_id` or `status` on a row that has `online_payment_id`. It keys on `online_payment_id`, not `method`, so the landing's own stamp (method NULL → `online_card`) is the one allowed transition. The flag is set by `online_payment_land` / `online_payment_refund_land` and **reset to `'off'` before each returns**, so a caller wrapping them in a larger transaction does not leave the door open. The routes pre-check and answer in words ("Refund this to the card instead"); the trigger is the backstop.
+4. **Lock order for the online functions:** tournament row (`club_tournament_fee_word`, only when the book is on) → team row → the `online_payments` row → the refund row → ledger lines. Never lock the online payment before its team.
+5. **Book filing.** `club_tournament_out_word(tournament, name)` (security-definer, service role) finds or adds a money-OUT word by name on the tournament's OWN shelf, creating the shelf if the event has none (it goes through `club_tournament_fee_word`, which takes the tournament lock). It is how the two spending words **"Refunds"** and **"Payment processing"** join an event's word list **the first time one is needed** (owner 2026-10-25: a tournament's refunds and processing costs file on its own shelf so its net stays true — not a club-wide category). A word of that name that is money IN is never reused for money out: the line then files under the shelf with no word (null item). `online_payment_post_out(tournament, word, day, description, amount, source_id, actor)` posts one `expense` line (`source_module = 'online_payment'`, `payment_method = 'online_card'`) under that word; only called when the tournament's book is on.
+
 <!-- dict:col:tournament_team_payments.id -->
 **`id`** (uuid PK).
 
@@ -7044,7 +7054,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`label`** (text, CHECK) — `Deposit` / `Balance` / `Entry fee` / `Payment` / `Imported payment` / `Earlier payment`. A label only NAMES a row (it comes from the Record button pressed); it never decides what is owed — the SUM does.
 
 <!-- dict:col:tournament_team_payments.method -->
-**`method`** (text, nullable, CHECK) — `etransfer` / `cash` / `cheque` / `card` / `other`; also copied to the ledger line's `payment_method`.
+**`method`** (text, nullable, CHECK `tournament_team_payments_method_chk`) — `etransfer` / `cash` / `cheque` / `card` / `other`; also copied to the ledger line's `payment_method`. **Migration 358 adds `online_card`** — a card payment taken through the club's connected Stripe account; set ONLY by the online landing (guard trigger, above). Distinct from the hand-recorded `card`: word them apart on screen ("Card" vs "Online, card").
 
 <!-- dict:col:tournament_team_payments.entry_id -->
 **`entry_id`** (FK → `accounting_entries.id`, nullable) — the ledger line this payment posted; null on a plan with no Accounting at the time it was recorded, and for an "Earlier payment".
@@ -7052,7 +7062,10 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:tournament_team_payments.status -->
 <!-- dict:col:tournament_team_payments.removed_at -->
 <!-- dict:col:tournament_team_payments.removed_by -->
-**`status` / `removed_at` / `removed_by`** (`posted` | `removed`; timestamptz; FK → `auth.users` ON DELETE SET NULL) — a payment is never hard-deleted: removing one voids its ledger line and keeps who and when.
+**`status` / `removed_at` / `removed_by`** (`posted` | `removed` | `refunded` — `refunded` added by migration 358, CHECK `tournament_team_payments_status_chk`; timestamptz; FK → `auth.users` ON DELETE SET NULL) — a payment is never hard-deleted: removing one voids its ledger line and keeps who and when. `refunded` = refunded to the card: the paid figure falls, the row stays and reads "Refunded to card" (gotcha 2 above); `removed_at`/`removed_by` stay NULL on it.
+
+<!-- dict:col:tournament_team_payments.online_payment_id -->
+**`online_payment_id`** (FK → `online_payments.id` ON DELETE RESTRICT, nullable; migration 358) — the online payment this row came from; NULL for every hand-recorded row. Partial UNIQUE index `tournament_team_payments_online_payment_key` (one row per online payment). The pointer lives on this destination row, not on `online_payments` (that would be an FK cycle); 12b's House league fee rows use the same pattern. Changed only by the guard trigger's rules.
 
 <!-- dict:col:tournament_team_payments.created_by -->
 <!-- dict:col:tournament_team_payments.created_at -->
@@ -7063,6 +7076,241 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`ordinal`** (identity bigint) — arrival order within a day.
 
 **Backfill (migration 345):** every posted receipt allocation became a payment (dated by its ledger line, linked to it), plus one undated "Earlier payment" per team for the rest of its figure; the migration halts if any team's rows would not add up to the figure it carried. Deposit-only teams' `total_paid` was rewritten from the rows (it now counts the deposit).
+
+## `org_payment_accounts`
+<!-- dict:table:org_payment_accounts -->
+
+**Purpose (migration 358, Stage 12a, 2026-10-25 — [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](../../projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) §0c, [schema review](../../projects/active/CLUB_TIER_STAGE12A_SCHEMA_REVIEW.md)):** the club's connected Stripe account — **one row per organization** (PK `org_id`). The club connects its OWN account: charges are direct charges on it, so FieldLogicHQ never holds the money; Stripe covers the club's unrecoverable losses, and the account shape (Express Dashboard, `fees.payer = application`, `losses.payments = stripe`) lives in one place, [lib/stripe-connect.ts](../../../lib/stripe-connect.ts). The row holds only the CURRENT state; connect, disconnect, fee-payer change and terms agreement are also written to `org_audit_log` because the fee-payer history decides what a payer was charged. RLS is on, every grant to `anon`/`authenticated` revoked: server-only (service role).
+
+**Gotchas (read first):**
+1. **Stripe's facts are cached, never typed.** `charges_enabled`, `payouts_enabled`, `details_submitted`, `requirements_due`, `disabled_reason`, `requirements_deadline`, `country` are re-read from Stripe on every `account.updated` (the handler re-fetches the account rather than trusting the payload, so event order does not matter). Nothing on the screen writes them by hand.
+2. **A live/test switch is a NEW account id**, not an edit: the row is replaced through one function. A payment keeps its own `livemode`.
+3. **Disconnect stops new pay pages and nothing more** — Stripe, not FieldLogicHQ, carries the account's losses, so FieldLogicHQ cannot pause or reject it. `disconnected_at` is the stamp; payments already taken keep working and keep the account id they were taken on.
+4. **The terms evidence is all there or not there** (`org_payment_accounts_terms_chk`): `terms_version`, `terms_agreed_at` and `terms_agreed_by_email` are all NULL or all set. The email is kept as text because `terms_agreed_by` is `ON DELETE SET NULL` — the evidence must outlive the user row.
+5. **`fee_payer` is the A14 switch** — see the column. It is one setting for the whole club.
+
+<!-- dict:col:org_payment_accounts.org_id -->
+**`org_id`** (uuid PK, FK → `organizations.id` ON DELETE CASCADE) — the club; one connected account per org.
+
+<!-- dict:col:org_payment_accounts.stripe_account_id -->
+**`stripe_account_id`** (text, NOT NULL, UNIQUE index `org_payment_accounts_stripe_account_key`) — Stripe's `acct_…`. The unique index serves the `account.updated` / Connect-event lookup (account → org). Deliberately NOT referenced by an FK from `online_payments`.
+
+<!-- dict:col:org_payment_accounts.livemode -->
+**`livemode`** (boolean, NOT NULL, default false) — whether this is a live-mode account. Stage 12a is test mode only.
+
+<!-- dict:col:org_payment_accounts.country -->
+**`country`** (char(2), nullable) — the account's country, read from Stripe, never typed.
+
+<!-- dict:col:org_payment_accounts.charges_enabled -->
+<!-- dict:col:org_payment_accounts.payouts_enabled -->
+<!-- dict:col:org_payment_accounts.details_submitted -->
+**`charges_enabled` / `payouts_enabled` / `details_submitted`** (boolean, NOT NULL, default false) — Stripe's own flags, copied on each sync. A pay page opens only when `charges_enabled`; `payouts_enabled` going false is what raises the `payouts_need_attention` Needs-attention row (it clears when the account is enabled again).
+
+<!-- dict:col:org_payment_accounts.requirements_due -->
+<!-- dict:col:org_payment_accounts.disabled_reason -->
+<!-- dict:col:org_payment_accounts.requirements_deadline -->
+**`requirements_due`** (text[], NOT NULL, default `{}`) / **`disabled_reason`** (text, nullable) / **`requirements_deadline`** (timestamptz, nullable) — what Stripe still needs from the club, why the account is disabled, and by when. Stripe's wording is turned into a plain sentence in code; the raw keys are stored.
+
+<!-- dict:col:org_payment_accounts.stripe_synced_at -->
+**`stripe_synced_at`** (timestamptz, nullable) — when the Stripe facts above were last re-read.
+
+<!-- dict:col:org_payment_accounts.fee_payer -->
+**`fee_payer`** (text, NOT NULL, default `'family'`, CHECK `family` | `club`) — **A14: who pays the processing fee.** `family` = the payer pays the base plus the fee (the club nets the full fee, the default); `club` = the payer pays the base alone and the fee is the club's cost, posted as a "Payment processing" money-out line on the tournament's shelf. Screen words name who actually pays ("Teams pay it" / "The club pays it"). Each `online_payments` row freezes the value in force when its Checkout opened, so a later change never rewrites a past payment.
+
+<!-- dict:col:org_payment_accounts.refund_policy -->
+**`refund_policy`** (text, nullable, CHECK ≤ 300 chars) — A9: the club's one-sentence refund policy, shown to the payer before paying.
+
+<!-- dict:col:org_payment_accounts.terms_version -->
+<!-- dict:col:org_payment_accounts.terms_agreed_by -->
+<!-- dict:col:org_payment_accounts.terms_agreed_by_email -->
+<!-- dict:col:org_payment_accounts.terms_agreed_at -->
+**`terms_version` / `terms_agreed_by` / `terms_agreed_by_email` / `terms_agreed_at`** (text; uuid FK → `auth.users.id` ON DELETE SET NULL; text; timestamptz — all nullable) — who agreed to the payments terms, which version, and when. All-or-none for the version, email and time (gotcha 4); `terms_agreed_by` may go NULL when the user is deleted while the email stays.
+
+<!-- dict:col:org_payment_accounts.connected_by -->
+<!-- dict:col:org_payment_accounts.connected_at -->
+<!-- dict:col:org_payment_accounts.disconnected_by -->
+<!-- dict:col:org_payment_accounts.disconnected_at -->
+**`connected_by` / `connected_at` / `disconnected_by` / `disconnected_at`** (uuid FK → `auth.users.id` ON DELETE SET NULL; timestamptz NOT NULL default now(); uuid FK → `auth.users.id` ON DELETE SET NULL; timestamptz nullable) — who connected and when; who disconnected and when (NULL = connected).
+
+<!-- dict:col:org_payment_accounts.created_at -->
+<!-- dict:col:org_payment_accounts.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — row stamps.
+
+## `online_payments`
+<!-- dict:table:online_payments -->
+
+**Purpose (migration 358, Stage 12a, 2026-10-25):** one row per Stripe Checkout a payer starts on a club's connected account — what it pays for, base / fee / total, the rate used, Stripe's ids, the receipt number and whether it LANDED in the club's own records. **Today (12a) it pays one tournament team's deposit, balance or full entry** (`flow = 'tournament_team'`); House league joins in 12b. The money is ONE online-payment record that lands through the tournament's own writer (`tournament_team_payment_record`, mig 345) — never a second money writer — so the team's paid figure, its payment rows and the tournament's book behave exactly as a hand-recorded payment does. RLS is on, grants to `anon`/`authenticated` revoked: server-only.
+
+**Gotchas (read first):**
+1. **`status`: `open` → `paid` → `refunded`, or `open` → `expired`.** `paid` means Stripe took the money — it does NOT mean the club's records were written; that is `landed_at`. The CHECK `online_payments_paid_chk` requires `paid_at`, `stripe_payment_intent_id` and `receipt_no` for `paid`/`refunded`.
+2. **`online_payment_land(...)` is the landing** (Stripe says paid → the tournament's own writer records it), security-definer, service-role only, idempotent (a landed payment answers `{already:true}`). It records the payment with NO method through `tournament_team_payment_record`, then stamps the team payment row `method = 'online_card'` and `online_payment_id`, and sets the posted ledger line's `payment_method = 'online_card'`. The day is the payment's day in Toronto, clamped to today and **moved to today when it sits inside a closed fiscal year** (`club_books_closed_through`, mig 318) — the real moment stays in `paid_at`; `paid_on` is the booked day. When `fee_payer = 'club'`, `fee_amount > 0` and the tournament's book is on, it also posts one "Payment processing" money-out line (`processing_cost_entry_id`).
+3. **A landing that throws must not lose the fact that Stripe took the money.** The caller catches and calls `online_payment_land_failed(...)`, which keeps the payment `paid`, numbered, with `land_error` set (≤ 500 chars) and `landed_at` NULL; the app raises an `online_payment_not_recorded` Needs-attention row. Typical causes: the team was linked as "our team" after the page opened, the team was deleted, a closed year.
+4. **Lock order (mig 345's, extended) — tournament row (`club_tournament_fee_word`, only when the book is on) → team row → THIS row → the refund row → ledger lines.** Never lock an online payment before its team: landing and refund would take the two locks in opposite orders.
+5. **One open Checkout per team** (`online_payments_one_open_per_team`, partial unique on `team_id WHERE status='open'`): a double press reuses it. The pay route must expire a stale open session first, or a missed expiry webhook blocks the team.
+6. **Who pays the fee decides the total** (`online_payments_arithmetic_chk`): `fee_payer = 'family'` → `total_amount = base_amount + fee_amount`; `fee_payer = 'club'` → `total_amount = base_amount`. `base_amount` is always what the team's paid figure rises by.
+7. **FieldLogicHQ's application fee is NEVER refunded** (owner ruling 2026-10-25, plan §0c): Stripe never returns its processing fee, so FieldLogicHQ keeps its whole fee on every refund. `fee_amount` is that all-in application fee (Stripe's processing fee is paid out of it; there is no separate application-fee column).
+8. **A deleted team or tournament does not erase the payment**: `team_id` / `tournament_id` are `ON DELETE SET NULL` and `description` is frozen text, so the receipt stays readable. `org_id` cascades. The delete routes should refuse a team with a paid online payment until it is refunded.
+9. **The stored rate is data, not a restated price**: `fee_pct` / `fee_flat` are the rate used for this payment (the pricing facts live in `docs/agents/strategy/PLAN_PRICING_FACTS.md`).
+10. **Only paid payments are numbered.** `receipt_no` is taken at landing from `online_payment_receipt_seq` (see the column).
+
+<!-- dict:col:online_payments.id -->
+**`id`** (uuid PK, default `gen_random_uuid()`) — also the `source_entity_id` of the "Payment processing" ledger line a club-pays payment posts (`accounting_entries.source_module = 'online_payment'`).
+
+<!-- dict:col:online_payments.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — the club taking the payment; the only tenant key. Indexed `(org_id, created_at DESC)`.
+
+<!-- dict:col:online_payments.stripe_account_id -->
+**`stripe_account_id`** (text, NOT NULL) — the connected account the Checkout was opened on. **Not an FK** to `org_payment_accounts`: the account row may be gone after a disconnect, and the payment keeps the id it was taken on.
+
+<!-- dict:col:online_payments.flow -->
+**`flow`** (text, NOT NULL, CHECK `tournament_team`) — what kind of thing is being paid. 12a: only a tournament team's entry. 12b widens the CHECK.
+
+<!-- dict:col:online_payments.tournament_id -->
+<!-- dict:col:online_payments.team_id -->
+**`tournament_id` / `team_id`** (FK → `tournaments.id` / `teams.id`, both ON DELETE SET NULL, nullable) — the event and the paying registration. NULL only after a delete (gotcha 8); the creating function validates them, there is deliberately no CHECK that ties `flow` to non-null ids (it would block the delete).
+
+<!-- dict:col:online_payments.scope -->
+**`scope`** (text, NOT NULL, CHECK `deposit` | `balance` | `full`) — what the payment covers; names the team payment row's label ("Deposit" / "Balance" / "Payment"). It never decides what is owed — the team's SUM of posted rows does.
+
+<!-- dict:col:online_payments.description -->
+**`description`** (text, NOT NULL) — the frozen line (event, team, what it paid) shown on the receipt, the Stripe line and the ledger lines, so they survive a deleted team.
+
+<!-- dict:col:online_payments.payer_email -->
+**`payer_email`** (text, nullable) — the email Checkout collected; the receipt goes here.
+
+<!-- dict:col:online_payments.base_amount -->
+<!-- dict:col:online_payments.fee_amount -->
+<!-- dict:col:online_payments.total_amount -->
+**`base_amount` / `fee_amount` / `total_amount`** (numeric(12,2) NOT NULL; CHECKs `base > 0 and <= 1000000`, `fee >= 0`, `total > 0`) — what the team's paid figure rises by; FieldLogicHQ's all-in fee (never refunded, gotcha 7); what the card is charged. Related by the arithmetic CHECK (gotcha 6).
+
+<!-- dict:col:online_payments.fee_payer -->
+**`fee_payer`** (text, NOT NULL, CHECK `family` | `club`) — A14, frozen from `org_payment_accounts.fee_payer` when the Checkout opened. Decides the total and whether the refund window offers the fee (only when the payer paid it).
+
+<!-- dict:col:online_payments.fee_pct -->
+<!-- dict:col:online_payments.fee_flat -->
+**`fee_pct` / `fee_flat`** (numeric(6,4) / numeric(12,2), NOT NULL) — the percentage and flat part of the rate this payment was priced at.
+
+<!-- dict:col:online_payments.currency -->
+**`currency`** (char(3), NOT NULL, default `'CAD'`, CHECK `= 'CAD'`) — ledgers are CAD-only; another currency is a deliberate, visible migration.
+
+<!-- dict:col:online_payments.rail -->
+**`rail`** (text, NOT NULL, default `'card'`, CHECK `card`) — 12a is card only; bank debit is a later stage.
+
+<!-- dict:col:online_payments.status -->
+**`status`** (text, NOT NULL, default `'open'`, CHECK `open` | `paid` | `expired` | `refunded`) — gotcha 1. Set to `refunded` by `online_payment_refund_land` (a full refund only in 12a).
+
+<!-- dict:col:online_payments.livemode -->
+**`livemode`** (boolean, NOT NULL, default false) — whether the charge was live mode; a payment keeps its own value across account switches.
+
+<!-- dict:col:online_payments.stripe_checkout_session_id -->
+<!-- dict:col:online_payments.stripe_payment_intent_id -->
+<!-- dict:col:online_payments.stripe_charge_id -->
+**`stripe_checkout_session_id` / `stripe_payment_intent_id` / `stripe_charge_id`** (text, nullable) — Stripe's ids. The session and intent each have a partial UNIQUE index (`WHERE … IS NOT NULL`); the intent and charge arrive with the paid event.
+
+<!-- dict:col:online_payments.card_brand -->
+<!-- dict:col:online_payments.card_last4 -->
+**`card_brand` / `card_last4`** (text, nullable) — shown on the receipt; filled at landing.
+
+<!-- dict:col:online_payments.receipt_no -->
+**`receipt_no`** (bigint, nullable, partial UNIQUE `online_payments_receipt_key`) — the receipt number, taken at landing from the sequence **`online_payment_receipt_seq`** (migration 358; starts at 1001; USAGE granted to the service role only), so only PAID payments are numbered and a payer never sees gaps from abandoned Checkouts or the platform's volume. The sequence is global across tenants; formatting is done in code. Set also by `online_payment_land_failed`, so a paid-but-not-recorded payment is numbered.
+
+<!-- dict:col:online_payments.paid_on -->
+<!-- dict:col:online_payments.paid_at -->
+**`paid_on`** (date, nullable) / **`paid_at`** (timestamptz, nullable) — the booked day (Toronto, clamped to today, moved to today inside a closed fiscal year — gotcha 2) and the real moment Stripe took the money.
+
+<!-- dict:col:online_payments.landed_at -->
+<!-- dict:col:online_payments.land_error -->
+**`landed_at`** (timestamptz, nullable) / **`land_error`** (text, nullable, ≤ 500) — `landed_at` set = a `tournament_team_payments` row now points at this payment (the cheap read of "landed"); `land_error` is why a landing could not complete (gotcha 3) and is cleared by a successful landing.
+
+<!-- dict:col:online_payments.processing_cost_entry_id -->
+**`processing_cost_entry_id`** (FK → `accounting_entries.id`, NO ACTION, nullable) — the "Payment processing" money-out line a club-pays (`fee_payer = 'club'`) payment posted; NULL when the family paid the fee or the tournament's book is off. Partial index on it.
+
+<!-- dict:col:online_payments.receipt_emailed_at -->
+**`receipt_emailed_at`** (timestamptz, nullable) — when the receipt email was sent.
+
+<!-- dict:col:online_payments.created_at -->
+<!-- dict:col:online_payments.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — row stamps. Partial index `(created_at) WHERE status='open'` serves the expiry sweep.
+
+## `online_payment_refunds`
+<!-- dict:table:online_payment_refunds -->
+
+**Purpose (migration 358, Stage 12a, 2026-10-25):** a refund of an online payment back to the card. 12a refunds in FULL only, so there is **one live refund per payment** (`online_payment_refunds_one_full_refund`, partial unique on `online_payment_id WHERE status IN ('pending','succeeded')`; ⚠ 12b's partial refunds drop this index by name). RLS is on: server-only.
+
+**Gotchas (read first):**
+1. **Three functions, one life-cycle.** `online_payment_refund_open(...)` inserts the refund as `pending` BEFORE Stripe is asked, so a second press or a second organizer meets the one-refund index ("already being refunded"); it refuses unless the payment is `paid`. `online_payment_refund_land(refund, stripe_refund)` (Stripe says it succeeded, idempotent) flips the team's payment row to `refunded`, posts the book lines, marks the refund `succeeded` and the payment `refunded`, then refreshes the team's cached paid figure (`team_payments_refresh`). `online_payment_refund_failed(...)` marks a `pending` refund `failed` with the reason — the payment stays `paid` and refundable again, and the app raises a `card_refund_failed` Needs-attention row ("refund another way").
+2. **The team's paid figure falls; the payment row stays.** Landing sets `tournament_team_payments.status = 'refunded'` (under the guard-trigger flag) — it is never `_remove`d or `_change`d (those void the receipt line). The tournament's book KEEPS the original receipt line and gains the refund as its own **money-out** line on the event's "Refunds" word (the Stage 7a rule for a paid team that leaves; `refund_entry_id`). It is an `expense`, never negative income (ledger `amount > 0`).
+3. **FieldLogicHQ's application fee is never refunded** (§0c). When the payer paid the fee (`fee_payer = 'family'`) the organizer may tick A2's box to give it back — then the CLUB pays it back out of its own balance, shown as a "Payment processing" cost line (`processing_cost_entry_id`). When the club paid the fee (A14) a refund returns the base only (the fee was already the club's cost) and `fee_refunded` is 0.
+4. **A refund can start in Stripe's own Express Dashboard** (`origin = 'stripe_dashboard'`): `charge.refunded` then arrives with no row of ours, and lands through the same function with `created_by` NULL.
+5. **Both ledger lines post only when the tournament's book is on**; otherwise the entry-id columns stay NULL and the facts live here.
+6. **Dated today (Toronto).** The refund lines are new lines dated today, so a closed fiscal year (mig 318) does not block refunding an old payment.
+
+<!-- dict:col:online_payment_refunds.id -->
+**`id`** (uuid PK) — also the `source_entity_id` of the refund and fee-refunded ledger lines (`source_module = 'online_payment'`).
+
+<!-- dict:col:online_payment_refunds.online_payment_id -->
+**`online_payment_id`** (FK → `online_payments.id` ON DELETE RESTRICT, NOT NULL) — the payment refunded; a refund record is never cascaded away with it.
+
+<!-- dict:col:online_payment_refunds.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — tenant key, indexed.
+
+<!-- dict:col:online_payment_refunds.amount -->
+<!-- dict:col:online_payment_refunds.fee_refunded -->
+**`amount`** (numeric(12,2), NOT NULL) / **`fee_refunded`** (numeric(12,2), NOT NULL, default 0) — what went back to the card (`base_amount` + the fee when included), and the part of it that is the processing fee the club pays back (0 when not included). CHECK `amount > 0 AND fee_refunded >= 0 AND fee_refunded < amount`. The "Refunds" line is `amount - fee_refunded`.
+
+<!-- dict:col:online_payment_refunds.reason -->
+<!-- dict:col:online_payment_refunds.note -->
+**`reason`** (text, nullable, CHECK `organizer_ended` | `team_left`) / **`note`** (text, nullable, ≤ 1000) — why, and the organizer's note. `reason` is recorded only when the payer paid the fee (the window asks only then); NULL otherwise.
+
+<!-- dict:col:online_payment_refunds.origin -->
+**`origin`** (text, NOT NULL, default `'app'`, CHECK `app` | `stripe_dashboard`) — gotcha 4.
+
+<!-- dict:col:online_payment_refunds.status -->
+<!-- dict:col:online_payment_refunds.failure_reason -->
+<!-- dict:col:online_payment_refunds.succeeded_at -->
+**`status`** (text, NOT NULL, default `'pending'`, CHECK `pending` | `succeeded` | `failed` | `canceled`) / **`failure_reason`** (text, nullable, ≤ 500) / **`succeeded_at`** (timestamptz) — `succeeded_at` is set exactly when `status = 'succeeded'` (CHECK). A `failed`/`canceled` refund frees the one-live-refund index.
+
+<!-- dict:col:online_payment_refunds.stripe_refund_id -->
+**`stripe_refund_id`** (text, nullable, partial UNIQUE) — Stripe's `re_…`; set when the refund lands or fails.
+
+<!-- dict:col:online_payment_refunds.refund_entry_id -->
+<!-- dict:col:online_payment_refunds.processing_cost_entry_id -->
+**`refund_entry_id` / `processing_cost_entry_id`** (FK → `accounting_entries.id`, NO ACTION, nullable) — the "Refunds" money-out line and the "Payment processing" line for the fee paid back. Lines are voided, never deleted, so no SET NULL is needed.
+
+<!-- dict:col:online_payment_refunds.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the organizer who pressed Refund; NULL for a dashboard refund or a deleted user.
+
+<!-- dict:col:online_payment_refunds.created_at -->
+<!-- dict:col:online_payment_refunds.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — row stamps.
+
+## `stripe_connect_events`
+<!-- dict:table:stripe_connect_events -->
+
+**Purpose (migration 358, Stage 12a, 2026-10-25):** every Stripe Connect webhook event once — a short-circuit for repeat deliveries and an audit trail. **It is NOT what makes handling correct**: two concurrent deliveries can both see `processed_at` null, so correctness lives in the landing functions' row locks (`online_payment_land`, `_refund_land` are idempotent). No payload is stored, so no personal data; keep ~90 days (index on `received_at` for pruning). Handler: `INSERT … ON CONFLICT DO NOTHING`, then `SELECT … FOR UPDATE`, skip if `processed_at` is set. On `account.updated` the handler re-fetches the account from Stripe rather than trusting the payload. Webhooks for an unknown account are acknowledged and ignored. RLS is on: server-only.
+
+<!-- dict:col:stripe_connect_events.id -->
+**`id`** (text PK) — Stripe's event id (`evt_…`).
+
+<!-- dict:col:stripe_connect_events.type -->
+**`type`** (text, NOT NULL) — the event type (e.g. `checkout.session.completed`, `account.updated`, `charge.refunded`).
+
+<!-- dict:col:stripe_connect_events.account -->
+**`account`** (text, nullable) — the connected account the event is about; no FK.
+
+<!-- dict:col:stripe_connect_events.livemode -->
+**`livemode`** (boolean, nullable) — the event's mode.
+
+<!-- dict:col:stripe_connect_events.org_id -->
+**`org_id`** (uuid, nullable, **no FK**) — the club, resolved from `account`; no FK because the log outlives the org.
+
+<!-- dict:col:stripe_connect_events.received_at -->
+<!-- dict:col:stripe_connect_events.processed_at -->
+**`received_at`** (timestamptz, NOT NULL, default now()) / **`processed_at`** (timestamptz, nullable) — first delivery; set when handled. Partial index `(received_at) WHERE processed_at IS NULL` finds the unhandled.
+
+<!-- dict:col:stripe_connect_events.attempts -->
+<!-- dict:col:stripe_connect_events.error -->
+**`attempts`** (integer, NOT NULL, default 1) / **`error`** (text, nullable) — delivery count and the last handler error.
 
 ## `tournament_fee_receipts`
 <!-- dict:table:tournament_fee_receipts -->
@@ -7173,13 +7421,13 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:accounting_entries.source_module -->
 <!-- dict:col:accounting_entries.source_entity_id -->
-**`source_module` / `source_entity_id`** (text / uuid, nullable) — cross-module provenance. House fees use `'league_registration'` + `league_registrations.id`; tournament fees use `'tournament_fee_receipt'` + the `tournament_team_payments.id` (the first payment's, for one transfer shared by several teams) from migration 345 — lines posted before it carry the retired `tournament_fee_receipts.id`; the club money loop uses its installment/request source values (gotcha 6). Logical ref, no FK. A sourced fee line is voided and replaced for corrections, never revived.
+**`source_module` / `source_entity_id`** (text / uuid, nullable) — cross-module provenance. House fees use `'league_registration'` + `league_registrations.id`; tournament fees use `'tournament_fee_receipt'` + the `tournament_team_payments.id` (the first payment's, for one transfer shared by several teams) from migration 345 — lines posted before it carry the retired `tournament_fee_receipts.id`; the club money loop uses its installment/request source values (gotcha 6). Logical ref, no FK. A sourced fee line is voided and replaced for corrections, never revived. **Migration 358 (Stage 12a, 2026-10-25) adds `'online_payment'`:** the money-OUT lines an online payment files on the tournament's own shelf — the "Payment processing" cost of a club-pays payment (`source_entity_id` = the `online_payments.id`), and, for a refund to the card, the "Refunds" line and the "Payment processing" line for a fee paid back (`source_entity_id` = the `online_payment_refunds.id`). All are `expense` lines dated today (Toronto) and posted only when the tournament's book is on. The incoming receipt itself keeps `'tournament_fee_receipt'`.
 
 <!-- dict:col:accounting_entries.created_by -->
 **`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap, ON DELETE NO ACTION) — who created the entry (or `p_created_by` from the RPC).
 
 <!-- dict:col:accounting_entries.payment_method -->
-**`payment_method`** (text, nullable) — free-text method (cheque/e-transfer), ≤100 chars (added mig 033).
+**`payment_method`** (text, nullable) — free-text method (cheque/e-transfer), ≤100 chars (added mig 033). **`'online_card'`** (migration 358) marks a line that came through the club's connected Stripe account — the receipt line stamped by `online_payment_land` and every `source_module = 'online_payment'` line; show it as the house word "Online, card", not the database value.
 
 <!-- dict:col:accounting_entries.payee_id -->
 <!-- dict:col:accounting_entries.payee_payer -->
@@ -8544,7 +8792,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`read_at`** (tstz, nullable) — NULL = unread; ISO timestamp = read. Set by the mark-read / mark-all-read POST ([route.ts:93](../../../app/api/notifications/route.ts#L93)) (no trigger); the insert never sets it, so new rows default unread. Unread-filter key for the list + badge count.
 
 <!-- dict:col:notifications.cleared_at -->
-**`cleared_at`** (tstz, nullable) — NULL = the recipient is still owed a decision on this one; ISO timestamp = they pressed **Clear** and are finished with it (mig 278). This is what pins an `'act'`-category event to the bell's **"Needs attention"** zone: the zone filters `cleared_at IS NULL AND category = 'act'`, in both the dropdown ([NotificationPanel.tsx](../../../components/notifications/NotificationPanel.tsx)) and the "See all" feed ([useNotificationFeed.ts](../../../components/notifications/useNotificationFeed.ts)). Written by the `clear` POST action ([route.ts](../../../app/api/notifications/route.ts)) — the reader's **Done**; there is no clear-all, by design — **and, since mig 332 (2026-10-16, "Needs attention clears itself"), by the platform**: [lib/needs-attention.ts](../../../lib/needs-attention.ts) clears a Needs-attention row for EVERY recipient once the record it asks about stops waiting (answered, declined, withdrawn, closed, paid …), stamping `read_at` too where null. Two moments: before every bell read and count (`clearSettledForReader`, the reader's own rows) and right after a settle step (`clearSettled`, every copy of that kind in the org). Partial indexes `notifications_user_needs_attention_idx` (user_id, event_type) and `notifications_org_needs_attention_idx` (org_id, event_type), both `WHERE cleared_at IS NULL`, serve those two reads. Mig 332 also cleared every uncleared row of the four retired kinds (score_disputed, coach_access_requested, roster_change_requested, tryout_offer_response — category `know` since). **⚠ NOT a second `read_at`.** `read_at` means the words were seen; `cleared_at` means the thing was handled. Before mig 278 the zone was built on `read_at IS NULL`, so opening a failed payment and fixing nothing dropped it out of the zone and took the count down with it — the heading asked "have you dealt with this?" and the data could only answer "have you looked at it?". Owner ruling D3 (2026-09-03) — *"Mark all read" must leave act rows alone* — depends on the two staying apart, and mark-all-read must never learn to write this column. Clearing **does** set `read_at` when it is still NULL (guarded, so an old row's first-seen stamp is never rewritten); the reverse never happens. **Deliberately NOT indexed** — no query filters on it. The API returns a page for (user_id, org_id) ordered by created_at and the zone split is done CLIENT-side, so a partial index on `cleared_at IS NULL` could never be chosen by the planner and would cost this write-hot table maintenance for zero reads (mig 278 says so in full). NULL on every non-`act` row and harmless there.
+**`cleared_at`** (tstz, nullable) — NULL = the recipient is still owed a decision on this one; ISO timestamp = they pressed **Clear** and are finished with it (mig 278). This is what pins an `'act'`-category event to the bell's **"Needs attention"** zone: the zone filters `cleared_at IS NULL AND category = 'act'`, in both the dropdown ([NotificationPanel.tsx](../../../components/notifications/NotificationPanel.tsx)) and the "See all" feed ([useNotificationFeed.ts](../../../components/notifications/useNotificationFeed.ts)). Written by the `clear` POST action ([route.ts](../../../app/api/notifications/route.ts)) — the reader's **Done**; there is no clear-all, by design — **and, since mig 332 (2026-10-16, "Needs attention clears itself"), by the platform**: [lib/needs-attention.ts](../../../lib/needs-attention.ts) clears a Needs-attention row for EVERY recipient once the record it asks about stops waiting (answered, declined, withdrawn, closed, paid …), stamping `read_at` too where null. Two moments: before every bell read and count (`clearSettledForReader`, the reader's own rows) and right after a settle step (`clearSettled`, every copy of that kind in the org). Partial indexes `notifications_user_needs_attention_idx` (user_id, event_type) and `notifications_org_needs_attention_idx` (org_id, event_type), both `WHERE cleared_at IS NULL AND event_type IN (…every Needs-attention kind…)`, serve those two reads. **Migration 358 (Stage 12a, 2026-10-25) rebuilt both** (the mig 338 precedent) to list three new kinds: `payouts_need_attention` (owner and treasurer: Stripe needs something from the club's connected account; clears when the account is enabled), `online_payment_not_recorded` (a paid online payment that could not land in the team's record — `online_payments.land_error`) and `card_refund_failed` (a refund that could not reach the card; refund another way). A new kind needs a resolver in `lib/needs-attention.ts` or it never clears. Mig 332 also cleared every uncleared row of the four retired kinds (score_disputed, coach_access_requested, roster_change_requested, tryout_offer_response — category `know` since). **⚠ NOT a second `read_at`.** `read_at` means the words were seen; `cleared_at` means the thing was handled. Before mig 278 the zone was built on `read_at IS NULL`, so opening a failed payment and fixing nothing dropped it out of the zone and took the count down with it — the heading asked "have you dealt with this?" and the data could only answer "have you looked at it?". Owner ruling D3 (2026-09-03) — *"Mark all read" must leave act rows alone* — depends on the two staying apart, and mark-all-read must never learn to write this column. Clearing **does** set `read_at` when it is still NULL (guarded, so an old row's first-seen stamp is never rewritten); the reverse never happens. **Deliberately NOT indexed** — no query filters on it. The API returns a page for (user_id, org_id) ordered by created_at and the zone split is done CLIENT-side, so a partial index on `cleared_at IS NULL` could never be chosen by the planner and would cost this write-hot table maintenance for zero reads (mig 278 says so in full). NULL on every non-`act` row and harmless there.
 
 <!-- dict:col:notifications.metadata -->
 **`metadata`** (jsonb, NN, default `{}`) — structured payload; surfaced onto `AppNotification.metadata`. **⚠ LOAD-BEARING for the Needs-attention kinds (2026-10-16):** it carries the id of the record each one is about, and [lib/needs-attention.ts](../../../lib/needs-attention.ts) reads it to decide whether the row still waits — `handBackId` (club_hand_back_asked / _unasked), `requestId` (team_request_filed), `requestIds[]` (team_request_holding_payout), `installmentId` (team_money_sent), `scheduleId`+`teamId` (club_schedule_review), `linkId` (team_move_requested), `inviteId` (assistant_coach_approval_requested), `registrationId` (team_coach_payment_reminder), `teamId`+`tournamentId` (team_no_show, from 2026-10-16; older rows have none and settle by the club's tournaments on their date). `payment_failed` needs none (its record is the org). A sender that drops its key leaves its rows waiting until Done. Its `->>key` is also how the doors' outcome route finds the reader's own notification (`doorOutcome`).

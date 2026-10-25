@@ -8,6 +8,41 @@
 
 ---
 
+### 2026-10-25 — Who pays the processing fee is the club's choice: families pay by default, a club may pay it itself
+**Status:** **Decided** (owner, 2026-10-25, Club Tier Stage 12 Ask A14, ruled as recommended in the drawing round at
+https://claude.ai/artifact/X7quYgnDpiWV9Dh76TYm57; the owner raised the question on 2026-10-24: *"is it too
+complicated to allow the club to choose where the fee comes off of?"*). Not built — Stage 12a builds it.
+**Decision:**
+1. **One club-wide choice on the Payouts card:** "Families pay it" (the default) or "The club pays it". It is not per
+   program or per event.
+2. **Families pay it:** unchanged from 2026-07-28. The fee is added to what the family pays and shown before paying; the
+   club nets the full fee.
+3. **The club pays it:** families pay the registration or entry fee alone, with no fee shown. The processing fee comes
+   out of each payment and appears in the club's books as a "Payment processing" cost (never a reduction of fee revenue).
+4. **Same rates either way** (`PLAN_PRICING_FACTS.md`); only who pays moves. FieldLogicHQ's take is unchanged.
+5. The club is told the rates and makes this choice in "Before you set up payouts", before Stripe's onboarding (which
+   never shows our fee). It can change it later; a change applies to payments started from then on.
+**Rationale:** Clubs differ: some price the fee into their registration and don't want a second number at checkout. It
+is cheap to build (one setting, a pay block without the fee, one cost line). It is also the ready fallback if counsel
+finds that a fee the family pays only when paying by card is a card surcharge under the card networks' Canadian rules
+(capped, notice and disclosure required, not allowed in Quebec). That question has been added to counsel's list; the
+2026-07-28 counsel memo did not ask it.
+**Affects:** `PLAN_PRICING_FACTS.md` facilitated-payments line (rider "org-absorb override" closed; "organizer always
+nets the full fee" now holds while families pay); Stage 12 plan (§0b A14, 12a). No price, name, band, SKU or feature key.
+**Handoff:**
+HANDOFF → `/plan` — ✅ in place: rides the Stage 12a build prompt (the setting, the "Before you set up payouts" window,
+the cost line).
+HANDOFF → `/billing` — none: the gate is unchanged (one key, every paid org plan); the rates are read from
+`lib/plan-config.ts` when 12a is built.
+HANDOFF → `/marketing` — none yet: no copy promises payment collection until it is built and counsel has signed off
+(2026-07-28 rule). When copy is written, it must not say "families always pay the fee" or "the club always nets the full
+fee".
+**Supersedes:** amends "2026-07-28 — Facilitated payments…" (family-pays becomes the default of a choice, not the only
+mode) and point 2's "the club nets the full fee" in "2026-10-19 — The Club release has NO date…" (true while families
+pay).
+
+---
+
 ### 2026-10-19 — The Club release has NO date and includes payments processing (house-league registration is a payments flow) and a club's own web address (Stage 4e)
 **Status:** **Decided** (owner, 2026-10-19, in the Club Tier Stage 4 session — *"I am not married to any specific dates but will release when the product is fully ready, and that includes payments processing. the release will depend on all of these being complete"*; and on the own address: *"yes include web address with your recommendation"*). **Which plans carry the own web address = Decided the same day** (owner picked "Every plan with a public site", 2026-10-19).
 **Decision:**
@@ -2125,7 +2160,7 @@ HANDOFF → `/plan` — none (already planned + ratified inside Batch 1).
 ---
 
 ### 2026-07-28 — Facilitated payments: the Q4 scoping questions are substantially PRE-ANSWERED by the owner-commissioned investigation; take-rate model resolved (margin-on-top, expressed as a market-band all-in rate); direct-charges architecture Proposed; tier attachment = OPEN owner ruling
-**Status:** ⚠ **Point 6 (sequencing) superseded 2026-10-19** ("The Club release has NO date and includes payments processing…"); everything else stands, and house-league registration is now a named flow. · Mixed, deliberately: **take-rate MODEL resolution = Decided** (it executes the 2026-06-22 entry's own mandatory handoff, and the evidence leaves only one viable reading); **tier attachment = Decided** (ratified by owner 2026-07-28 via decision prompt — "tournament plus, club and league"); **money-flow architecture = Decided** (direction ratified by owner 2026-07-28 in conversation — "we go with the direct model, we never hold the funds"; counsel sign-off remains the hard launch gate confirming the regulatory reading); **rate number + rails + who-pays = Decided** (Option B rail-differentiated launch anchor, ratified by owner 2026-07-28 in conversation — "I agree with option B, log it"); **risk posture (payout holds / reserves / ToS) = Proposed** (locks at build with counsel input). Owner accepted the investigation report and directed the follow-through 2026-07-28 in conversation ("go ahead").
+**Status:** ⚠ **Family-pays amended 2026-10-25** (now the default of a club-wide choice; the club may pay the fee — "2026-10-25 — Who pays the processing fee is the club's choice…"). ⚠ **Point 6 (sequencing) superseded 2026-10-19** ("The Club release has NO date and includes payments processing…"); everything else stands, and house-league registration is now a named flow. · Mixed, deliberately: **take-rate MODEL resolution = Decided** (it executes the 2026-06-22 entry's own mandatory handoff, and the evidence leaves only one viable reading); **tier attachment = Decided** (ratified by owner 2026-07-28 via decision prompt — "tournament plus, club and league"); **money-flow architecture = Decided** (direction ratified by owner 2026-07-28 in conversation — "we go with the direct model, we never hold the funds"; counsel sign-off remains the hard launch gate confirming the regulatory reading); **rate number + rails + who-pays = Decided** (Option B rail-differentiated launch anchor, ratified by owner 2026-07-28 in conversation — "I agree with option B, log it"); **risk posture (payout holds / reserves / ToS) = Proposed** (locks at build with counsel input). Owner accepted the investigation report and directed the follow-through 2026-07-28 in conversation ("go ahead").
 **Decision:**
 1. **Take-rate model (Decided — resolves the "~2.5% + $0.30" ambiguity flagged 2026-06-22):** FieldLogicHQ's take is a **margin layered into a market-band all-in rate charged on each transaction — NOT an all-in ~2.5%**, which is underwater on every card transaction (Stripe Canada base card cost confirmed live at 2.9% + $0.30 CAD). The verified market band for youth-sports registration processing (primary-source confirmed 2026-07-28): TeamSnap 3.25% + $1.50 · SportsEngine HQ 3.25% + $2.00 (atop a $69/mo sub) · Jersey Watch 3.5% + $1 · Tourney Machine 2.9% + $1 · RAMP "under 2%" org-absorbed (corroborated, not primary-confirmed). **Rate DECIDED (ratified 2026-07-28 — Option B, rail-differentiated launch anchor, recalibratable from real conversion/rail-mix data): cards 3.5% + $1.50 all-in · bank debit (ACSS/PAD) 2.5% + $1.00 all-in · family-pays default; the organizer always nets the full team fee.** The visible bank discount steers families to the profitable rail (on an $800 fee: card nets FieldLogicHQ ≈ $3.14, bank ≈ $14.00; a single-rate 3.25% + $1.50 anchor would net a structurally flat ≈ $1.20/txn on cards — full unit-economics table in the scoping plan §1). **Open riders on the number (implementation of it, not reopening it):** (a) fee displayed "+ GST/HST" vs tax-inclusive — accountant call with real margin stakes (tax-out-of-fee turns cards negative); (b) international-card (+0.8%) surcharge-or-absorb policy for US teams; (c) whether orgs may opt to absorb the fee (org-absorb override).
 2. **Rails (Decided with the rate):** cards via Stripe (2.9% + $0.30 cost) **plus Canadian pre-authorized debit (ACSS/PAD) at 1% + $0.40 capped at $5.00** — on a $1,000 team fee that is ~$5 of cost vs ~$29 by card, so steering large fees to PAD is the margin engine at an unchanged all-in rate (trade-off: ~5-business-day settlement).

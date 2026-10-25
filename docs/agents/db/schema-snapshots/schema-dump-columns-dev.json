@@ -7425,6 +7425,456 @@
     "ordinal_position": 6
   },
   {
+    "table_name": "online_payment_refunds",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "online_payment_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "fee_refunded",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "origin",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'app'::text",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'pending'::text",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "failure_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "stripe_refund_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "refund_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "processing_cost_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "succeeded_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_account_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "flow",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "scope",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "description",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "payer_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "base_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "fee_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "total_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "fee_payer",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "fee_pct",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "fee_flat",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "currency",
+    "data_type": "character",
+    "udt_name": "bpchar",
+    "is_nullable": "NO",
+    "column_default": "'CAD'::bpchar",
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "rail",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'card'::text",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'open'::text",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_checkout_session_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_payment_intent_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "stripe_charge_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "card_brand",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "card_last4",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "receipt_no",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "paid_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "paid_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "landed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "land_error",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "processing_cost_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "receipt_emailed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "online_payments",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 33
+  },
+  {
     "table_name": "org_audit_log",
     "column_name": "id",
     "data_type": "uuid",
@@ -8440,6 +8890,213 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 10
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "stripe_account_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "country",
+    "data_type": "character",
+    "udt_name": "bpchar",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "charges_enabled",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "payouts_enabled",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "details_submitted",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "requirements_due",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "NO",
+    "column_default": "'{}'::text[]",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "disabled_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "requirements_deadline",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "stripe_synced_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "fee_payer",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'family'::text",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "refund_policy",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "terms_version",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "terms_agreed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "terms_agreed_by_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "terms_agreed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "connected_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "connected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "disconnected_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "disconnected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 23
   },
   {
     "table_name": "org_people",
@@ -20916,6 +21573,87 @@
     "ordinal_position": 9
   },
   {
+    "table_name": "stripe_connect_events",
+    "column_name": "id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "account",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "received_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "processed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "attempts",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "stripe_connect_events",
+    "column_name": "error",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
     "table_name": "stripe_prices",
     "column_name": "id",
     "data_type": "uuid",
@@ -21744,6 +22482,15 @@
     "ordinal_position": 28
   },
   {
+    "table_name": "teams",
+    "column_name": "pay_link_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
     "table_name": "tournament_archives",
     "column_name": "id",
     "data_type": "uuid",
@@ -22471,6 +23218,15 @@
     "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 16
+  },
+  {
+    "table_name": "tournament_team_payments",
+    "column_name": "online_payment_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
   },
   {
     "table_name": "tournaments",

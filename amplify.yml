@@ -16,6 +16,13 @@ frontend:
         - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env.production
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
+        # Online payments (Club Tier Stage 12). The switch is OFF unless the console sets the literal 'true' — production
+        # does not, and a live key keeps it off regardless until counsel signs off (lib/online-payments-switch.ts). The
+        # Connect webhook has its own signing secret, separate from the billing webhook's. PAY_LINK_SECRET signs a team's
+        # pay link (at least 32 characters, its own per branch). Unset ⇒ every online-payments door stays shut.
+        - echo "ONLINE_PAYMENTS_ENABLED=$ONLINE_PAYMENTS_ENABLED" >> .env.production
+        - echo "STRIPE_CONNECT_WEBHOOK_SECRET=$STRIPE_CONNECT_WEBHOOK_SECRET" >> .env.production
+        - echo "PAY_LINK_SECRET=$PAY_LINK_SECRET" >> .env.production
         # Web Push (VAPID). Public key is inlined into the client bundle at build
         # time (browser subscribe needs it); private key + email are read by the
         # server at runtime to sign pushes. Without these, push silently no-ops.

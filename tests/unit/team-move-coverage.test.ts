@@ -51,6 +51,13 @@ const STAYS: Record<string, string> = {
   organization_billing_facts: 'the account’s billing record',
   billing_retained_records: 'the account’s data-retention lifecycle',
   billing_retention_intents: 'the account’s data-retention lifecycle',
+  // Online payments (Club Tier Stage 12a, mig 358): the account's OWN Stripe account and the money taken on it. A coach
+  // org is the Premium Coaches Portal, which online payments exclude (`online_payments` gate), so it holds none — and a
+  // payment belongs to the Stripe account it was taken on, never to a team.
+  org_payment_accounts: 'the account’s own Stripe connected account (online payments exclude the coach portal)',
+  online_payments: 'money taken on the account’s own Stripe account (online payments exclude the coach portal)',
+  online_payment_refunds: 'refunds on the account’s own Stripe account (online payments exclude the coach portal)',
+  stripe_connect_events: 'a log of Stripe’s events, kept for audit; its org_id is a plain label with no foreign key',
   team_entitlements: 'the old portal’s own plan — the move cancels it, and it stays as that portal’s record',
   org_public_site_content: 'the coach org’s own public-site page, not the team',
   org_site_notices: 'the club notice on an org’s own public site (Club Tier Stage 4c-1) — the org’s words, never a team’s',

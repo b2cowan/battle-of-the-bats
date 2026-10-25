@@ -64,6 +64,10 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   // Club Tier Stage 5c — a payment the club passed to a coach (mig 338). Words are /marketing's drafts.
   club_payment_handed_off:           'The club received a family’s payment',
   club_payment_not_received:         'A coach says a payment never arrived',
+  // Club Tier Stage 12a — online payments (mig 358). Words: CLUB_TIER_STAGE12A_COPY.md §19.
+  payouts_need_attention:            'Stripe needs something to keep online payments on',
+  online_payment_not_recorded:       'An online payment isn’t in the team’s record',
+  card_refund_failed:                'A refund didn’t reach the card',
   club_schedule_reply:               'A team replied to a schedule',
   club_schedule_handed_back:         'A team handed back club time',
   club_schedule_taken_back:          'A team took back club time',
@@ -129,6 +133,9 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_schedule_changes:             'Your club sent changes to your team’s slots on one of its schedules.',
   club_bill_arrived:                 'Your club billed your team for the time it got, with its payments on Money › Club.',
   club_guardians_asked:              'Your club asked you to add guardian emails for some of your players, on your Roster.',
+  payouts_need_attention:            'Stripe needs something more from the club to keep online payments on. The owner fixes it on the Payouts card.',
+  online_payment_not_recorded:       'A team paid by card, but the payment couldn’t be added to the team’s record. Refund it to the card.',
+  card_refund_failed:                'A refund to a team’s card was returned. Send the team the money another way, then record the refund.',
   club_payment_handed_off:           'Your club received a family’s dues payment for one of your players. Record it in the team’s book when the money reaches you.',
   club_payment_not_received:         'A head coach says a family’s payment you sent them never reached the team.',
   club_schedule_reply:               'A team answered a schedule you sent for review.',
@@ -408,6 +415,10 @@ export const NOTIFICATION_CATEGORY = {
   // Families' payment hand-off (Stage 5c, Ask 28): the coach's Record it / Not received waits; the answer is news.
   club_payment_handed_off:            'act',
   club_payment_not_received:          'know',
+  // Online payments (Stage 12a): each waits until Stripe or the club settles it.
+  payouts_need_attention:             'act',
+  online_payment_not_recorded:        'act',
+  card_refund_failed:                 'act',
   club_schedule_reply:                'know',
   club_schedule_handed_back:          'know',
   club_schedule_taken_back:           'know',

@@ -11,6 +11,7 @@ import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ourTeamIdsAmong } from './club-own-tournament-team';
 import { tournamentToday, utcToZonedInputs } from './timezone';
 import { SETTLED_WORDS as W } from './needs-attention-words';
+import { PAYOUTS_ACCOUNT_COLUMNS, factsFromRow, payoutsState, type PayoutsAccountRow } from './online-payment-account';
 import type { SettledNotice } from './types';
 
 /**
@@ -447,6 +448,56 @@ const paymentHandedOff: Resolver = async rows => {
   return out;
 };
 
+/** Stripe needs something from the club (Club Tier Stage 12a) — waits while the Payouts card says "needs attention";
+ *  clears itself when Stripe says the account is enabled again, or when the club disconnects. */
+const payoutsNeedAttention: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const accounts = new Map((await rowsIn<PayoutsAccountRow>('org_payment_accounts', PAYOUTS_ACCOUNT_COLUMNS, 'org_id', uniq(rows.map(r => r.org_id)))).map(a => [a.org_id, a]));
+  for (const r of rows) {
+    const state = payoutsState(factsFromRow(accounts.get(r.org_id)));
+    // Only Stripe saying payments work again settles it; "setting up" is still a wait (review 2026-10-25, M2).
+    if (state === 'taking_payments') out.set(r.id, said(W.payoutsBack));
+    else if (state === 'disconnected' || state === 'not_set_up') out.set(r.id, said(W.payoutsDisconnected));
+    else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
+type OnlineRow = { id: string; status: string; landed_at: string | null };
+const onlinePayments = (rows: NoticeRow[]) =>
+  rowsIn<OnlineRow>('online_payments', 'id, status, landed_at', 'id', uniq(rows.map(r => meta(r, 'onlinePaymentId'))));
+
+/** A paid online payment that could not land in the team's record (Stage 12a) — waits until it lands or is refunded. */
+const onlinePaymentNotRecorded: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const byId = new Map((await onlinePayments(rows)).map(p => [p.id, p]));
+  for (const r of rows) {
+    const id = meta(r, 'onlinePaymentId');
+    if (!id) continue; // names no payment: malformed, so never cleared on doubt
+    const p = byId.get(id);
+    if (!p) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+    else if (p.status === 'refunded') out.set(r.id, said(W.onlinePaymentRefunded));
+    else if (p.landed_at) out.set(r.id, said(W.onlinePaymentRecorded));
+    else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
+/** A refund that could not reach the card (Stage 12a) — waits until the payment is refunded (again, or another way). */
+const cardRefundFailed: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const byId = new Map((await onlinePayments(rows)).map(p => [p.id, p]));
+  for (const r of rows) {
+    const id = meta(r, 'onlinePaymentId');
+    if (!id) continue;
+    const p = byId.get(id);
+    if (!p) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+    else if (p.status === 'refunded') out.set(r.id, said(W.refundRecorded));
+    else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
 /** THE RULEBOOK — one entry per Needs-attention kind (`NeedsAttentionKind` makes it total). */
 export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   club_hand_back_asked: handBackAsked,
@@ -461,6 +512,9 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   payment_failed: paymentFailed,
   team_no_show: noShow,
   club_payment_handed_off: paymentHandedOff,
+  payouts_need_attention: payoutsNeedAttention,
+  online_payment_not_recorded: onlinePaymentNotRecorded,
+  card_refund_failed: cardRefundFailed,
 };
 
 const isNeedsAttention = (eventType: string): eventType is NeedsAttentionKind => (NEEDS_ATTENTION_KINDS as readonly string[]).includes(eventType);

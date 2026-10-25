@@ -68,6 +68,16 @@ export type PlanFeature =
    * ruling is that a single-team customer should never see a door they cannot use.
    */
   | 'club_shared_book'
+  // ── Online payments (Club Tier Stage 12a) ────────────────────────────────
+  /**
+   * The club takes payments online through its own Stripe account (the Payouts card, the pay pages, card refunds). Every
+   * paid org plan, Tournament Plus and above (Decided 2026-07-28, `BUSINESS_DECISIONS.md`; the Facts doc's
+   * facilitated-payments line). Separate from `payment_tracking`, which is the hand-kept fees and payments. The free
+   * Tournament plan and the Premium Coaches Portal (`team`, no grant) are excluded.
+   * ⚠ The plan is not the whole gate: the launch switch in `lib/online-payments-switch.ts` keeps it off in production
+   * until counsel signs off.
+   */
+  | 'online_payments'
   // ── The club scheduler (Club Tier Stage 11a) ─────────────────────────────
   /**
    * The club's schedules — handing the club's shared time (a dome's winter, pitching nights, house league's practice
@@ -127,6 +137,8 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   coach_peer_chat:                   'club',
   // ── Club Shared Book ─────────────────────────────────────────────────────
   club_shared_book:                  'club',
+  // ── Online payments ───────────────────────────────────────────────────────
+  online_payments:                   'tournament_plus',
   // ── The club scheduler ────────────────────────────────────────────────────
   club_scheduler:                    'league',
 };
@@ -196,6 +208,10 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       // surface renders an upsell for it. The case exists because both copy helpers forward
       // unknown features to each other and a missing one recurses forever.
       return 'Teams sharing their opponent scouting books with each other across the club is included with Club.';
+    case 'online_payments':
+      // Explicit case REQUIRED (the two copy helpers forward unknown features to each other). Reaches a customer only as a
+      // server refusal's fallback: the screens hide the door rather than lock it (A6).
+      return 'Taking payments online is included with Tournament Plus, League Plus, and Club.';
     case 'club_scheduler':
       // Explicit case REQUIRED (the two copy helpers forward unknown features to each other). ⚠ Never an upgrade lever:
       // League Plus and Club carry it alike, so no surface offers it as a reason to move between them.

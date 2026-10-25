@@ -28,9 +28,11 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    arrives in the club's name. Paying by e-Transfer is still offered underneath.
 3. **12b · House league.** Pay now appears on the sign-up confirmation, the status page, and the acceptance and
    waitlist emails. Convenors see "paid online" beside "paid by hand". Ending a registration refunds the card.
-4. **12c · Tournaments.** Once the organizer accepts a team, it pays its deposit or full entry from the acceptance
-   email, and pays the balance from the reminder email.
-5. **12d · Hardening.** Disputes, matching payouts to the bank, the tax display, and help articles.
+4. **Tournaments, built with 12a** (moved forward 2026-10-25 so 12a can be tried end to end). Once the organizer
+   accepts a team, it pays its deposit or full entry by card from the acceptance email, and pays the balance from the
+   reminder email.
+5. **12c · Bank debit,** for house league and tournaments at once.
+6. **12d · Hardening.** Disputes, matching payouts to the bank, the tax display, and help articles.
 
 ## Who sees what
 

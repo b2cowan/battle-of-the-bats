@@ -310,6 +310,10 @@
     "356_drop_the_unused_proprietor_expense_table.sql": {
       "prod": "held",
       "note": "Removes the unused dev-only proprietor expense table and guard function left by mig 354 (the owner chose AWS storage instead; 354 was never applied to prod). Applied to DEV 2026-10-24; the empty dev bucket proprietor-receipts was deleted through the Storage API. Every statement is IF EXISTS, so applying it to prod would do nothing, and prod needs nothing from it. Cleared 2 of the 3 new dev security-advisor findings (the function warning and the table notice)."
+    },
+    "358_a_club_takes_payments_online.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 12a (online payments; CLUB_TIER_STAGE12_PAYMENTS_PLAN.md §0c, schema review CLUB_TIER_STAGE12A_SCHEMA_REVIEW.md). Four NEW tables (org_payment_accounts, online_payments, online_payment_refunds, stripe_connect_events) and a sequence; tournament_team_payments gains online_payment_id, method online_card, status refunded, and the guard trigger tournament_team_payments_online_guard; teams.pay_link_sent_at; nine service-role-only functions (club_tournament_out_word, online_payment_post_out, online_payment_land, _land_failed, _refund_open, _refund_land, _refund_failed, the trigger function). Rebuilds BOTH Needs-attention partial indexes with three new kinds (payouts_need_attention, online_payment_not_recorded, card_refund_failed) — index predicates and function bodies are invisible to check:migrations, so verify by md5 against dev as for 338. Applied to DEV 2026-10-25. Production: apply only at the release that ships Stage 12a, and the feature stays switched OFF in production until counsel signs off (lib/online-payments-switch.ts)."
     }
   }
 }

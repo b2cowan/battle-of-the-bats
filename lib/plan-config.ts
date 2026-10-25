@@ -540,3 +540,26 @@ export function formatAnnualSavings(planKey: OrgPlan): string | null {
   return `Save $${commaSeparate(savings)} — 2 months free`;
 }
 
+
+// ── Online payments (Club Tier Stage 12) ────────────────────────────────────────────────────────────────────────────────
+/**
+ * The all-in processing fee on a payment a club takes online — the ONE code home of the rates. The canonical record is the
+ * facilitated-payments line in `docs/agents/strategy/PLAN_PRICING_FACTS.md` (Decided 2026-07-28); a unit test parses that
+ * line and fails the build when these drift from it. Never type a rate anywhere else — screens print it with
+ * `onlineFeeRateLabel()`, and the arithmetic is `onlineFee()` in `lib/online-payment-fee.ts`.
+ *
+ * Basis points and cents, so the arithmetic is exact: 350 bps = 3.5%. "All-in" means FieldLogicHQ pays Stripe's own
+ * processing fee out of it (plan §0c). The same rates apply whoever pays the fee (A14). `bankDebit` is Stage 12c's.
+ */
+export const ONLINE_PAYMENT_RATES = {
+  card:      { pctBps: 350, flatCents: 150 },
+  bankDebit: { pctBps: 250, flatCents: 100 },
+} as const;
+
+export type OnlinePaymentRail = keyof typeof ONLINE_PAYMENT_RATES;
+
+/** "3.5% + $1.50" — the rate as a customer reads it, printed from the constant above. */
+export function onlineFeeRateLabel(rail: OnlinePaymentRail): string {
+  const { pctBps, flatCents } = ONLINE_PAYMENT_RATES[rail];
+  return `${pctBps / 100}% + $${(flatCents / 100).toFixed(2)}`;
+}

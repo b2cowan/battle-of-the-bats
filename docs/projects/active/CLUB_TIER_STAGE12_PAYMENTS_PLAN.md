@@ -12,15 +12,18 @@
 
 - **Drawn 2026-10-24. All 15 asks RULED 2026-10-25, every one as recommended** (§0b). Nothing built. No Stripe account
   or key created.
-- Next: /strategy records A14 (it turns the 2026-07-28 family-pays decision from the only way into the default, and
-  closes the Facts doc's "org-absorb override" rider). Then a 12a build prompt. 12b waits on 9b-2.
+- A14 logged by /strategy 2026-10-25 (BUSINESS_DECISIONS.md; the Facts doc rider closed). **12a build prompt written
+  2026-10-25: `CLUB_TIER_STAGE12A_BUILD_PROMPT.md`.** The owner moved the tournament card flow into 12a so it can be walked
+  end to end; 12c is now bank debit for both flows. 12b waits on 9b-2.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
 - **A1** The owner connects and disconnects. The treasurer sees the Payouts state on the Money pages and gets the
   "needs attention" item. Nothing else in Settings opens for them.
 - **A2 = C** It depends on who ends it. When the club declines or cancels, the fee is included by default; when the
-  family asks to leave, it isn't. The convenor can change it each time.
+  family asks to leave, it isn't. The convenor can change it each time. ⚠ **Partly reversed 2026-10-25 (§0c):**
+  FieldLogicHQ keeps its fee on every refund, so a refund that includes the fee costs the club the whole fee, not the
+  processor's kept share. The box and its defaults stand.
 - **A3** No saved cards. Each payment is entered on Stripe's page, where the browser or Stripe's own wallet may fill it
   in.
 - **A4** "Processing" is a state of the payment. The child stays Accepted with the spot held. The money counts as
@@ -43,6 +46,47 @@
 
 Facts that changed with the rulings (re-read in the same unit of work): "the club nets the full fee" now holds only
 while families pay the fee (A14), so §1, §7 and the PM brief say so. A2 applies only while families pay the fee.
+
+## 0c · Rulings at the 12a build start (owner, 2026-10-25)
+
+Asked because Stripe's current docs made a choice explicit that the 2026-07-28 decision never ruled.
+- **Stripe, not FieldLogicHQ, covers a club's unrecoverable losses.**
+  - Stripe now discourages direct charges on its legacy `type=express` accounts and points to accounts with controller
+    properties / Accounts v2. On those, who covers a connected account's negative balance is chosen at creation.
+  - Stripe covering it alongside the Express Dashboard is a public preview (Stripe's risk-management page).
+  - Consequences: FieldLogicHQ can't pause or reject a club's account, so Disconnect stops new pay pages and nothing more,
+    as A1 already said. No reserve is held on the platform balance.
+  - Unchanged: **the fee model stays the 2026-07-28 one.** FieldLogicHQ pays Stripe's processing fee out of the all-in
+    rate (Stripe's "you handle pricing"; the scoping plan's unit economics). The application fee is therefore the whole
+    all-in fee, not "all-in minus the processor's cost". §3's line saying otherwise was a slip and is corrected there.
+- **After a full card refund the team's paid figure goes back down.** The payment row reads "Refunded to card" with its
+  date. The tournament book keeps the receipt and gets the refund as its own money-out line, the Stage 7a rule for a
+  paid team that leaves.
+- **The 12a UX summary was approved as written**, with these placements:
+  - on Tournament Plus, a Payouts tile at the end of the Settings & access hub (the hub is tiles, not cards), opening the
+    card on its own page;
+  - a tournament-only club has no Money page, so the treasurer's status line sits on the Teams page's payments line;
+  - card only, so the drawings' bank-debit buttons and "12c" labels are not built in 12a.
+- **Stripe in test mode only, approved.** No live key is used.
+- **FieldLogicHQ keeps its fee on every refund** (owner: "any time Stripe keeps their fee, we should keep ours as
+  well"). Stripe never returns its processing fee, so the application fee is never refunded.
+  - **This reverses part of A2.** Under A2 the processor's kept share was the club's only cost. Now a refund that
+    includes the fee costs the club the whole fee, shown as a "Payment processing" cost.
+  - **The A2 box stays, with its defaults** (on when the organizer ends it, off when the team asked to leave): ticked,
+    the club pays the team's fee back out of its own balance, and the window says so.
+  - **When the club paid the fee (A14),** a refund returns the base; the fee was already the club's cost when the
+    payment arrived, so the refund adds nothing.
+- **A refund and a "Payment processing" cost file on the tournament's own shelf.** Two spending words, "Refunds" and
+  "Payment processing", join that event's word list the first time one is needed. The event's net (By activity) stays
+  revenue less refunds less processing. Not the schema review's club-wide "Online payments" category. This adds to the
+  event word list owner-approved in `HOSTED_EVENT_FILING_SHELF_PLAN.md` §6 call 1.
+- **The who-pays choice names who actually pays.**
+  - Tournament Plus: "Teams pay it" / "The club pays it".
+  - League and Club: "Teams pay it" in 12a, then "Families and teams pay it" once house league joins in 12b.
+  - It is one setting either way. This refines A14's "Families pay it" label; the choice itself is unchanged.
+- Raised for `/strategy`, not ruled: Stripe collecting its fee from the club directly ("Stripe handles pricing") would
+  drop the per-club monthly and per-payout Connect charges, but the club would absorb foreign and premium card
+  surcharges, so it would no longer always net the exact fee.
 
 ## 1 · What it makes true
 
@@ -87,8 +131,8 @@ registration (house league) or from the payment's row (tournaments, A12), card f
   status page's paid state). Our receipt email goes out in the club's name with the club as reply-to; Stripe's receipt email
   is off.
 - **Fee:** rate × the base fee + the flat part, on the base (not grossed up), rounded to the cent. *Assumption for
-  /billing.* Read from `lib/plan-config.ts`. The application fee is the all-in fee minus the processor's cost; the exact split
-  is /billing's.
+  /billing.* Read from `lib/plan-config.ts`. The application fee is the whole all-in fee: FieldLogicHQ pays Stripe's
+  processing fee out of it (the 2026-07-28 model; corrected 2026-10-25, §0c).
 - **One online-payment record, no new writer.** The webhook (a separate Connect endpoint) marks the payment paid. A single
   landing function then calls the flow's own writer: house league → the 9b-2 fee writer (amount, date, method = online card
   or online bank, receipt); tournaments → `recordTeamPayment` with method `online`. A guard test lists the two landings.
@@ -118,9 +162,9 @@ registration (house league) or from the payment's row (tournaments, A12), card f
 
 | Stage | Covers | Migrations | Size |
 |---|---|---|---|
-| **12a** foundation | Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
+| **12a** foundation + the tournament card flow | **Proves itself on a tournament team paying by card (owner, 2026-10-25)**: the team pay page with deposit or full (A7), Pay in the acceptance email and the balance reminder, online rows and a full refund from the row (A12), landing through the tournament writer with a new online method value. Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
 | **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines | none beyond 12a once 9b-2 has the writer's amount/date/method | 5–7 d |
-| **12c** tournaments | team pay step, deposit or full (A7); Pay on the balance reminder; online rows + refund from the row (A12); bank debit for both flows (L2) | `online` in the tournament payment method values | 4–6 d |
+| **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25) | a way-of-paying value for bank debit | 3–5 d |
 | **12d** hardening | disputes and negative balance, paid twice, a payouts list for matching the bank, "+ GST/HST" rider, international cards, platform-admin oversight, offboarding with registrations still to pay, help, the terms | disputes, payouts | 10–15 d |
 
 The 12a–12c total of 16–22 days matches the scoping plan's first-build estimate (15–22). 12d matches its 10–15. Every
