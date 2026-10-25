@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireAnyPlatformPower, hasPlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_CONFIG, getEffectiveTournamentLimit } from '@/lib/plan-config';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 import { applyClubIdentity, applyClubSections } from '@/lib/club-record-changes';
 import { applyOperatorPlanChange, PlanUpdateError } from '@/lib/operator-plan-change';
@@ -21,8 +22,24 @@ type Body = {
   slug?: string;
   plan?: { planId: string; tournamentLimit: number; teamLimit?: number | null };
   sections?: string[];
+  /** The sections the screen showed when the pencil opened: a save from a stale screen is refused, never applied over a change made since. */
+  sectionsWas?: string[];
   reason?: string;
 };
+
+/**
+ * True when the club already has this plan and these limits — a retry after a part failed, or a save that changed
+ * nothing here. It writes nothing, so no empty Story entry takes the Put it back door from the real one.
+ */
+async function planAlreadyIs(orgId: string, p: NonNullable<Body['plan']>): Promise<boolean> {
+  const { data } = await supabaseAdmin.from('organizations').select('plan_id, tournament_limit, team_limit').eq('id', orgId)
+    .maybeSingle<{ plan_id: string; tournament_limit: number | null; team_limit: number | null }>();
+  if (!data || data.plan_id !== p.planId) return false;
+  const limit = (plan: string, n: number | null) => getEffectiveTournamentLimit(plan as OrgPlan, n);
+  if (limit(data.plan_id, data.tournament_limit) !== limit(p.planId, p.tournamentLimit)) return false;
+  const team = typeof p.teamLimit === 'number' && p.teamLimit > 0 ? Math.floor(p.teamLimit) : null;
+  return p.teamLimit === undefined || team === (data.team_limit ?? null);
+}
 
 export const PATCH = withObservability(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireAnyPlatformPower(['club_support', 'club_billing', 'club_sections']);
@@ -63,7 +80,7 @@ export const PATCH = withObservability(async (req: Request, { params }: { params
   }
 
   const warnings: string[] = [];
-  if (wantsPlan) {
+  if (wantsPlan && !(await planAlreadyIs(id, body.plan!))) {
     const p = body.plan!;
     try {
       const result = await applyOperatorPlanChange({
@@ -87,7 +104,13 @@ export const PATCH = withObservability(async (req: Request, { params }: { params
   }
 
   if (wantsSections) {
-    const r = await applyClubSections({ orgId: id, enabledAddons: body.sections!, reason, actorEmail: actor });
+    const r = await applyClubSections({
+      orgId: id,
+      enabledAddons: body.sections!,
+      ...(Array.isArray(body.sectionsWas) ? { expected: body.sectionsWas } : {}),
+      reason,
+      actorEmail: actor,
+    });
     if (!r.ok) return fail(r.status, r.error);
     saved.push('sections');
   }

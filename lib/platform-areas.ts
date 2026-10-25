@@ -12,7 +12,7 @@
 //     (`requirePlatformPower` / `requireAnyPlatformPower` / `requirePlatformAreaApi`);
 //   • AREAS say who may OPEN a page (`viewRoles`) and which powers that page uses (`powers`). "Write" an area = hold any
 //     power its page uses; the eye shows when a role can open a page but holds none of them.
-// `tests/unit/support-console-rulebook-guard.test.ts` fails the build if a console route reads a role any other way.
+// `tests/unit/support-console-stage2-guard.test.ts` fails the build if a console route reads a role any other way.
 // ⚠ Do not add a third table. A new action is a new power (or an existing one) here, and a route that checks it.
 //
 // super_admin holds every power and opens every area.

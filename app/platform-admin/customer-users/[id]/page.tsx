@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlatformPower, isPlatformAdminEmail, requirePlatformAreaView } from '@/lib/platform-auth';
 import { personAuthStatus, personById } from '@/lib/platform-people-lookup';
-import { buildPersonStory } from '@/lib/platform-story';
+import { buildPersonStory, type PersonMembership } from '@/lib/platform-story';
 import { recordOpened } from '@/lib/platform-record-opens';
-import { planLabel } from '@/lib/platform-metrics';
+import { planLabel } from '@/lib/platform-labels';
 import PersonRecord, { type PersonRecordProps } from './PersonRecord';
 
 /**
@@ -25,21 +25,25 @@ export default async function PersonRecordPage({ params, searchParams }: {
   const auth = await requirePlatformAreaView('customer_users');
   const { id } = await params;
   const { via } = await searchParams;
-  const person = await personById(id).catch(() => null);
+  // A failed read is an error, never "no such person" (a 404 would tell support the account does not exist).
+  const person = await personById(id);
   if (!person) notFound();
   if (auth.role !== 'super_admin' && await isPlatformAdminEmail(person.email)) notFound();
 
-  const [membersRes, story] = await Promise.all([
+  // The memberships are read once: the Clubs tab and the Story's joins both come from them. The trail row (A3) is
+  // written alongside, best effort.
+  const [membersRes] = await Promise.all([
     supabaseAdmin.from('organization_members')
-      .select('role, status, organizations(id, name, slug, plan_id, subscription_status)')
+      .select('role, status, invited_at, accepted_at, organizations(id, name, slug, plan_id, subscription_status)')
       .eq('user_id', id).limit(500),
-    buildPersonStory({ id: person.id, email: person.email, createdAt: person.createdAt }),
+    recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'person', recordId: id, viaFind: via === 'find' }),
   ]);
-  await recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'person', recordId: id, viaFind: via === 'find' });
+  const memberships = (membersRes.data ?? []) as unknown as Array<PersonMembership & {
+    status: string | null; organizations: { id: string; name: string; slug: string; plan_id: string | null; subscription_status: string | null } | null;
+  }>;
+  const story = await buildPersonStory({ id: person.id, email: person.email, createdAt: person.createdAt }, memberships);
 
-  const clubs = ((membersRes.data ?? []) as unknown as Array<{
-    role: string; status: string | null; organizations: { id: string; name: string; slug: string; plan_id: string | null; subscription_status: string | null } | null;
-  }>)
+  const clubs = memberships
     .filter(m => m.organizations)
     .map(m => ({
       id: m.organizations!.id,

@@ -25,7 +25,6 @@
 .headActions { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
 .caption { font-size: var(--type-support); color: var(--text-tertiary); margin: -0.6rem 0 0; overflow-wrap: anywhere; }
-.code { font-family: var(--font-data); font-size: var(--type-support); } /* type-ok: code */
 
 /* ── The Story ── */
 .story { width: 100%; }
@@ -36,7 +35,6 @@
 .what { font-weight: 600; color: var(--text-primary); }
 .whatSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); font-weight: 400; overflow-wrap: anywhere; }
 .putBackAt { display: block; font-size: var(--type-support); color: var(--text-tertiary); font-weight: 400; }
-.quiet { color: var(--text-tertiary); }
 /* "Not set" in the band: quiet, not a figure. */
 .quietValue { font-weight: 400; color: var(--text-tertiary); }
 .putDoor {

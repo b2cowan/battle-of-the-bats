@@ -13,7 +13,7 @@ import styles from '../observability.module.css';
 
 export const dynamic = 'force-dynamic';
 
-const BACK = { href: '/platform-admin/observability', label: 'Observability' };
+const BACK = { href: '/platform-admin/observability', label: 'Errors' };
 
 type RelatedFeedback = {
   id: string; type: string; status: string; title: string | null; body: string;

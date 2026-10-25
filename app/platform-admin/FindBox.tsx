@@ -16,7 +16,7 @@
  * takes the full width. Between 900 and 1,200 the box narrows to 280.
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, Building2, ChevronRight, CreditCard, Search, User } from 'lucide-react';
 import { readConsoleRecent, handListSearch, type RecentRecord } from '@/lib/console-recent';
 import { consoleAgo, consoleDay } from '@/lib/console-dates';
@@ -49,6 +49,15 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
   const trimmed = words.trim();
   const asking = trimmed.length >= FIND_MIN_CHARS;
 
+  // Another page (Back, a link in the menu) closes the panel — it never hangs open over a screen it was not opened on.
+  // Render-time, like the other "reset when a value changes" spots in the console (never setState in an effect).
+  const pathname = usePathname();
+  const [openedOn, setOpenedOn] = useState(pathname);
+  if (openedOn !== pathname) {
+    setOpenedOn(pathname);
+    if (open) setOpen(false);
+  }
+
   const openPanel = useCallback(() => {
     if (!open) {
       returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -68,12 +77,13 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
     }
   }, []);
 
-  // `/` opens Find from anywhere, unless the person is typing in a field.
+  // `/` opens Find from anywhere, unless the person is typing in a field or a window is open over the page.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]')) return;
       e.preventDefault();
       openPanel();
     };
@@ -358,7 +368,7 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
             type="text"
             inputMode="search"
             value={words}
-            onChange={e => { setWords(e.target.value); setFailed(null); setActive(0); }}
+            onChange={e => { if (!open) openPanel(); setWords(e.target.value); setFailed(null); setActive(0); }}
             onFocus={() => { if (!open) openPanel(); }}
             onKeyDown={onInputKey}
             placeholder={placeholder}

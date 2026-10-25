@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPower } from '@/lib/platform-auth';
-import { staffTargetRefusal } from '@/lib/platform-staff-guard';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { platformPasswordResetHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability, captureAndJson } from '@/lib/observability';
-import { personAuditValue, personForAction, readReason, reasonRequired } from '@/lib/platform-person-action';
+import { personActionContext, personAuditValue } from '@/lib/platform-person-action';
 
 /**
  * Send a person a password reset link (the person record's everyday action). It reaches an inbox, so its window says it
@@ -15,20 +13,12 @@ import { personAuditValue, personForAction, readReason, reasonRequired } from '@
  */
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPower('person_support');
-  if (auth.response) return auth.response;
-
   const { id } = await params;
-  const body = await req.json().catch(() => ({}));
-  const found = await personForAction(id);
-  if (found.response) return found.response;
-  const { person } = found;
+  // The one front door: the power, the account read by its number, the staff refusal, the reason.
+  const ctx = await personActionContext(req, id);
+  if (ctx.response) return ctx.response;
+  const { auth, person, reason } = ctx.action;
   const email = person.email;
-  // Support resets customers' passwords, never a staff account's (2026-10-16).
-  const staffRefused = await staffTargetRefusal(auth.role, { userId: id, emails: [email] });
-  if (staffRefused) return staffRefused;
-  const reason = readReason(body);
-  if (!reason) return reasonRequired();
 
   // SECURITY: build the reset destination from a trusted server-side constant, NOT the request
   // Origin header. This route emails the link to the CUSTOMER, but the request is made by a support

@@ -1,7 +1,7 @@
 /**
  * Find's "Recent" — the last five club or person records this browser opened (Support console Stage 2, drawings state 2;
- * threat T8). Browser storage ONLY: it never leaves the browser and is cleared at sign-out (the account menu's console
- * sign-out and the console's sign-in page both call `clearConsoleRecent`), so a shared computer does not show the last
+ * threat T8). Browser storage ONLY: it never leaves the browser and is cleared at sign-out (every sign-out goes through
+ * `signOut()` in lib/auth, and the console's sign-in page clears it too), so a shared computer does not show the last
  * person's lookups. Every read and write is wrapped: a private window or blocked storage just means no Recent.
  *
  * Also the hand-off from Find's "All N in …" doors to a list: the words go through session storage, never the address

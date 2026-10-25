@@ -10,39 +10,26 @@
  * body, never a pinned row).
  * ⚖ R6: a role without a power sees no control for it — absent, never disabled, and no banner.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Check, Mail, Pencil } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import DateInput from '@/components/shared/DateInput';
-import type { StoryEntry, StoryKind } from '@/lib/platform-story';
+import { filterStory, type StoryEntry, type StoryKind } from '@/lib/platform-story-view';
 import { consoleDate, consoleDay } from '@/lib/console-dates';
 import { rememberConsoleRecent } from '@/lib/console-recent';
-import { humanize } from '@/lib/platform-labels';
+import { cap, CLUB_SECTIONS, humanize, limitWords, overrideWhat, sectionLabel, STORY_KINDS } from '@/lib/platform-labels';
 import { possessive } from '@/lib/utils';
 import StoryTable from '../../StoryTable';
 import RecordWindow from '../../RecordWindow';
+import { errorOf, sendJson } from '../../console-fetch';
+import { roleLabel } from '@/lib/member-access';
 import { subscriptionStatusChip } from '../../chips';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 
-const STORY_KINDS: Array<{ key: StoryKind; label: string }> = [
-  { key: 'staff', label: 'Staff changes' },
-  { key: 'billing', label: 'Billing' },
-  { key: 'notes', label: 'Notes' },
-  { key: 'emails', label: 'Emails' },
-  { key: 'people', label: 'People' },
-  { key: 'feedback', label: 'Feedback' },
-];
 const NOT_IN_STORY = 'Not in the Story yet: Stripe’s charges and refunds, purchases the customer makes in Stripe, and account emails such as password resets.';
-
-const OVERRIDE_LABELS: Record<string, string> = {
-  subscription_status: 'Subscription status',
-  comp_period: 'Comp period',
-  module_addon: 'Feature access',
-  plan_tier: 'Plan tier',
-};
 
 type Tab = 'story' | 'money' | 'access' | 'people';
 const TABS: Array<{ key: Tab; label: string }> = [
@@ -51,6 +38,8 @@ const TABS: Array<{ key: Tab; label: string }> = [
   { key: 'access', label: 'Access' },
   { key: 'people', label: 'People & tournaments' },
 ];
+/** The old record's tab names, so a link written before Stage 2 (Retention's, the Founding desk's) opens the right tab. */
+const OLD_TABS: Record<string, Tab> = { billing: 'money', entitlements: 'access', support: 'access', activity: 'story' };
 
 export type ClubRecordProps = {
   org: {
@@ -74,7 +63,6 @@ export type ClubRecordProps = {
   teamMoves: Array<{ id: string; teamName: string; at: string; state: 'moved' | 'waiting_on_coach' | 'waiting_on_club' }>;
   story: { entries: StoryEntry[]; total: number };
   planOptions: Array<{ id: string; label: string; tournamentLimit: number; teamLimit: number }>;
-  sections: Array<{ key: string; label: string }>;
   can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean };
 };
 
@@ -89,20 +77,10 @@ type Window =
   | { kind: 'delete' }
   | null;
 
-function limitWords(n: number | null | undefined) {
-  return n == null || n >= 9999 ? 'No limit' : String(n);
-}
-
-async function send(url: string, method: string, body?: unknown): Promise<{ ok: boolean; data: Record<string, unknown> }> {
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  return { ok: res.ok, data };
-}
-const errorOf = (data: Record<string, unknown>, fallback: string) => (typeof data.error === 'string' ? data.error : fallback);
+/** A limit as it reads in a field or a fact: "No limit", or the number. */
+const limitText = (n: number | null | undefined) => cap(limitWords(n));
+/** How many Story entries the record's first page shows, and each "Show more" adds. */
+const STORY_PAGE = 50;
 
 export default function ClubRecord(props: ClubRecordProps) {
   const { org, can } = props;
@@ -110,7 +88,8 @@ export default function ClubRecord(props: ClubRecordProps) {
   const pathname = usePathname();
   const search = useSearchParams();
   const tabParam = search.get('tab');
-  const tab: Tab = TABS.some(t => t.key === tabParam) ? (tabParam as Tab) : 'story';
+  const asked = tabParam ? (OLD_TABS[tabParam] ?? tabParam) : null;
+  const tab: Tab = TABS.some(t => t.key === asked) ? (asked as Tab) : 'story';
   const canEdit = can.support || can.billing || can.sections;
 
   const [editing, setEditing] = useState(false);
@@ -135,8 +114,8 @@ export default function ClubRecord(props: ClubRecordProps) {
     planId: org.planId,
     tournamentLimit: org.tournamentLimit >= 9999 ? '' : String(org.tournamentLimit),
     teamLimit: org.storedTeamLimit && org.storedTeamLimit > 0 ? String(org.storedTeamLimit) : '',
-    sections: [...org.enabledAddons].filter(k => props.sections.some(s => s.key === k)).sort(),
-  }), [org, props.sections]);
+    sections: [...org.enabledAddons].filter(k => CLUB_SECTIONS.some(s => s.key === k)).sort(),
+  }), [org]);
   const [form, setForm] = useState(initial);
   const startEditing = () => { setForm(initial); setNotice(null); setEditing(true); };
 
@@ -148,11 +127,11 @@ export default function ClubRecord(props: ClubRecordProps) {
     plan: can.billing && form.planId !== initial.planId,
     tournamentLimit: can.billing && form.tournamentLimit.trim() !== initial.tournamentLimit,
     teamLimit: can.billing && targetIsClubBand && form.teamLimit.trim() !== initial.teamLimit,
-    sections: can.sections && form.sections.join(',') !== initial.sections.join(','),
   };
-  const sectionsOn = form.sections.filter(k => !initial.sections.includes(k));
-  const sectionsOff = initial.sections.filter(k => !form.sections.includes(k));
-  const anyChange = Object.values(changes).some(Boolean);
+  const sectionsOn = can.sections ? form.sections.filter(k => !initial.sections.includes(k)) : [];
+  const sectionsOff = can.sections ? initial.sections.filter(k => !form.sections.includes(k)) : [];
+  const sectionsChanged = sectionsOn.length + sectionsOff.length > 0;
+  const anyChange = Object.values(changes).some(Boolean) || sectionsChanged;
 
   const toggleEdit = () => {
     if (!editing) { startEditing(); return; }
@@ -160,22 +139,25 @@ export default function ClubRecord(props: ClubRecordProps) {
     setWin({ kind: 'save' });
   };
 
-  const sectionName = (key: string) => props.sections.find(s => s.key === key)?.label ?? humanize(key.replace(/^module_/, ''));
-
-  function saveSentence() {
-    const parts: string[] = [];
-    const planWords = changes.plan
-      ? `${org.name} moves from **${org.planLabel}** to **${plan?.label ?? form.planId}**.`
-      : `${org.name} stays on **${org.planLabel}**.`;
-    parts.push(planWords);
-    if (changes.name) parts.push(`Its name becomes **${form.name.trim()}**.`);
-    if (changes.slug) parts.push(`Its web name becomes **${form.slug.trim().toLowerCase()}**, and its addresses change with it.`);
-    if (changes.tournamentLimit) parts.push(`Its tournament limit goes from **${limitWords(org.tournamentLimit)}** to **${form.tournamentLimit.trim() ? form.tournamentLimit.trim() : 'no limit'}**.`);
-    if (changes.teamLimit) parts.push(`Its team limit goes from **${limitWords(org.teamLimit)}** to **${form.teamLimit.trim() || `the plan’s ${plan?.teamLimit ?? ''}`.trim()}** now.`);
-    if (sectionsOn.length) parts.push(`**${sectionsOn.map(sectionName).join(', ')}** turn${sectionsOn.length === 1 ? 's' : ''} on.`);
-    if (sectionsOff.length) parts.push(`**${sectionsOff.map(sectionName).join(', ')}** turn${sectionsOff.length === 1 ? 's' : ''} off.`);
-    parts.push('The owner is not emailed.');
-    return parts.join(' ');
+  /** Every held change in one sentence (R3), built as pieces so a club's name is never read as markup. */
+  function saveSentence(): ReactNode {
+    const b = (text: string) => <strong>{text}</strong>;
+    const { tournamentLimit: fromTournaments, teamLimit: fromTeams } = org;
+    const turns = (keys: string[], word: string) => <>{b(keys.map(sectionLabel).join(', '))} turn{keys.length === 1 ? 's' : ''} {word}. </>;
+    return (
+      <>
+        {changes.plan
+          ? <>{org.name} moves from {b(org.planLabel)} to {b(plan?.label ?? form.planId)}. </>
+          : <>{org.name} stays on {b(org.planLabel)}. </>}
+        {changes.name && <>Its name becomes {b(form.name.trim())}. </>}
+        {changes.slug && <>Its web name becomes {b(form.slug.trim().toLowerCase())}, and its addresses change with it. </>}
+        {changes.tournamentLimit && <>Its tournament limit goes from {b(limitWords(fromTournaments))} to {b(form.tournamentLimit.trim() || 'no limit')}. </>}
+        {changes.teamLimit && <>Its team limit goes from {b(limitWords(fromTeams))} to {b(form.teamLimit.trim() || `the plan’s ${plan?.teamLimit ?? ''}`.trim())} now. </>}
+        {sectionsOn.length > 0 && turns(sectionsOn, 'on')}
+        {sectionsOff.length > 0 && turns(sectionsOff, 'off')}
+        The owner is not emailed.
+      </>
+    );
   }
   const entryCount = (changes.name ? 1 : 0) + (changes.slug ? 1 : 0) + (changes.plan || changes.tournamentLimit || changes.teamLimit ? 1 : 0)
     + sectionsOn.length + sectionsOff.length;
@@ -192,9 +174,13 @@ export default function ClubRecord(props: ClubRecordProps) {
         ...(targetIsClubBand && changes.teamLimit ? { teamLimit: form.teamLimit.trim() ? Number(form.teamLimit) : null } : {}),
       };
     }
-    if (changes.sections) body.sections = form.sections;
-    const { ok, data } = await send(`/api/platform-admin/orgs/${org.id}/record`, 'PATCH', body);
-    if (!ok) return errorOf(data, 'The changes could not be saved.');
+    if (sectionsChanged) { body.sections = form.sections; body.sectionsWas = initial.sections; }
+    const { ok, data } = await sendJson(`/api/platform-admin/orgs/${org.id}/record`, 'PATCH', body);
+    if (!ok) {
+      // Some parts saved before one failed: bring the record up to date, so trying again sends only what is left.
+      if (Array.isArray(data.saved) && data.saved.length > 0) router.refresh();
+      return errorOf(data, 'The changes could not be saved.');
+    }
     const warnings = Array.isArray(data.warnings) ? (data.warnings as string[]) : [];
     setWin(null);
     setEditing(false);
@@ -203,31 +189,33 @@ export default function ClubRecord(props: ClubRecordProps) {
     return null;
   }
 
-  const bold = (text: string) => text.split('**').map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
-
-  // ── The Story (filters ask the server; the words ride in the body) ──
-  const [story, setStory] = useState(props.story);
+  // ── The Story: the first page from the server; the whole Story fetched ONCE when someone searches, filters or asks for
+  //    more, then filtered on screen (`filterStory`), so the words never leave the browser.
   const [storyWords, setStoryWords] = useState('');
   const [storyKind, setStoryKind] = useState<StoryKind | ''>('');
-  const firstStory = useRef(true);
-  // A refresh after a save brings a new first page: take it (the lastPath pattern — never setState in an effect).
+  const [storyShown, setStoryShown] = useState(STORY_PAGE);
+  const [fullStory, setFullStory] = useState<StoryEntry[] | null>(null);
+  // A refresh after a save brings a new Story: drop the fetched copy (the lastPath pattern — never setState in an effect).
   const [storySource, setStorySource] = useState(props.story);
   if (storySource !== props.story) {
     setStorySource(props.story);
-    setStory(props.story);
+    setFullStory(null);
   }
+  const wantsWhole = !!storyWords.trim() || !!storyKind || storyShown > STORY_PAGE;
   useEffect(() => {
-    if (firstStory.current) { firstStory.current = false; return; }
-    const timer = window.setTimeout(async () => {
-      const { ok, data } = await send(`/api/platform-admin/orgs/${org.id}/story`, 'POST', { kind: storyKind || null, q: storyWords, offset: 0 });
-      if (ok) setStory(data as unknown as ClubRecordProps['story']);
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [storyWords, storyKind, org.id]);
-  async function moreStory() {
-    const { ok, data } = await send(`/api/platform-admin/orgs/${org.id}/story`, 'POST', { kind: storyKind || null, q: storyWords, offset: story.entries.length });
-    if (ok) setStory(s => ({ entries: [...s.entries, ...((data.entries as StoryEntry[]) ?? [])], total: Number(data.total ?? s.total) }));
-  }
+    if (!wantsWhole || fullStory || props.story.entries.length >= props.story.total) return;
+    let live = true;
+    void sendJson(`/api/platform-admin/orgs/${org.id}/story`, 'GET').then(({ ok, data }) => {
+      if (!live) return;
+      if (ok && Array.isArray(data.entries)) setFullStory(data.entries as StoryEntry[]);
+      else setNotice('The rest of the Story could not be read, so this shows only its newest entries. Reload to try again.');
+    });
+    return () => { live = false; };
+  }, [wantsWhole, fullStory, props.story, org.id]);
+  const storySourceEntries = fullStory ?? props.story.entries;
+  const storyMatches = filterStory(storySourceEntries, { kind: storyKind || null, words: storyWords });
+  const storyTotal = fullStory || wantsWhole ? storyMatches.length : props.story.total;
+  const story = { entries: storyMatches.slice(0, storyShown), total: storyTotal };
 
   // ── The band: Members, then Teams (a club band) or Tournaments first, then Renews ──
   const membersCell = (
@@ -270,7 +258,18 @@ export default function ClubRecord(props: ClubRecordProps) {
     </div>
   );
 
-  const counts: Partial<Record<Tab, number>> = { story: story.total, people: props.members.length + props.tournaments.length };
+  /** A window's confirm that sends one call, then closes and refreshes; the server's sentence on a refusal. */
+  const act = (url: string, method: string, fallback: string, body: (reason: string) => unknown) => async (reason: string) => {
+    const { ok, data } = await sendJson(url, method, body(reason));
+    if (!ok) return errorOf(data, fallback);
+    const warnings = Array.isArray(data.warnings) ? (data.warnings as string[]) : [];
+    setWin(null);
+    setNotice(warnings.length ? `Done. ${warnings.join(' ')}` : null);
+    router.refresh();
+    return null;
+  };
+
+  const counts: Partial<Record<Tab, number>> = { story: props.story.total, people: props.members.length + props.tournaments.length };
 
   return (
     <div className={kit.page}>
@@ -304,10 +303,10 @@ export default function ClubRecord(props: ClubRecordProps) {
       <p className={styles.caption}>
         {editing
           ? 'Editing. Nothing changes until you press the check mark and confirm.'
-          : <>Owner {props.ownerEmail ?? 'none'} · <code className={styles.code}>{org.slug}</code> · Created {consoleDate(org.createdAt)}</>}
+          : <>Owner {props.ownerEmail ?? 'none'} · <code className={kit.code}>{org.slug}</code> · Created {consoleDate(org.createdAt)}</>}
       </p>
 
-      {notice && <div className={`${kit.notice} ${kit.noticeGood}`}>{notice}</div>}
+      {notice && <div className={kit.notice} role="status">{notice}</div>}
 
       {editing ? (
         <div className={`${kit.card} ${kit.cardPad}`}>
@@ -322,8 +321,8 @@ export default function ClubRecord(props: ClubRecordProps) {
               <label className={kit.fieldGroup}>
                 <span className={kit.label}>Web name{can.support && <span className={kit.req} aria-hidden>*</span>}</span>
                 {can.support
-                  ? <input className={`${kit.field} ${styles.code} ${changes.slug ? styles.changed : ''}`} value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase() }))} required />
-                  : <span className={`${styles.readValue} ${styles.code}`}>{org.slug}</span>}
+                  ? <input className={`${kit.field} ${kit.code} ${changes.slug ? styles.changed : ''}`} value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase() }))} required />
+                  : <span className={`${styles.readValue} ${kit.code}`}>{org.slug}</span>}
               </label>
             </div>
             <div className={styles.editGrid}>
@@ -348,7 +347,7 @@ export default function ClubRecord(props: ClubRecordProps) {
                   {can.billing
                     ? <input className={`${kit.field} ${changes.tournamentLimit ? styles.changed : ''}`} inputMode="numeric" placeholder="No limit" value={form.tournamentLimit}
                         onChange={e => setForm(f => ({ ...f, tournamentLimit: e.target.value.replace(/[^0-9]/g, '') }))} />
-                    : <span className={styles.readValue}>{limitWords(org.tournamentLimit)}</span>}
+                    : <span className={styles.readValue}>{limitText(org.tournamentLimit)}</span>}
                 </label>
                 {targetIsClubBand && (
                   <label className={kit.fieldGroup}>
@@ -356,7 +355,7 @@ export default function ClubRecord(props: ClubRecordProps) {
                     {can.billing
                       ? <input className={`${kit.field} ${changes.teamLimit ? styles.changed : ''}`} inputMode="numeric" placeholder={`The plan’s ${plan?.teamLimit ?? ''}`} value={form.teamLimit}
                           onChange={e => setForm(f => ({ ...f, teamLimit: e.target.value.replace(/[^0-9]/g, '') }))} />
-                      : <span className={styles.readValue}>{limitWords(org.teamLimit)}</span>}
+                      : <span className={styles.readValue}>{limitText(org.teamLimit)}</span>}
                   </label>
                 )}
               </div>
@@ -364,7 +363,7 @@ export default function ClubRecord(props: ClubRecordProps) {
             <div className={kit.fieldGroup}>
               <span className={kit.label}>Sections</span>
               <div className={styles.sections}>
-                {props.sections.map(s => {
+                {CLUB_SECTIONS.map(s => {
                   if (org.planSections.includes(s.key)) {
                     return <span key={s.key} className={styles.included}>{s.label}: in the plan</span>;
                   }
@@ -385,7 +384,7 @@ export default function ClubRecord(props: ClubRecordProps) {
             <p className={kit.caption}>
               {anyChange ? `Changes held: ${[
                 changes.name && 'name', changes.slug && 'web name', changes.plan && 'plan', changes.tournamentLimit && 'tournament limit',
-                changes.teamLimit && 'team limit', ...sectionsOn.map(k => `${sectionName(k)} on`), ...sectionsOff.map(k => `${sectionName(k)} off`),
+                changes.teamLimit && 'team limit', ...sectionsOn.map(k => `${sectionLabel(k)} on`), ...sectionsOff.map(k => `${sectionLabel(k)} off`),
               ].filter(Boolean).join(', ')}. Press the check mark to review them.` : 'Nothing changed yet. The check mark leaves without saving.'}
             </p>
           </div>
@@ -427,7 +426,7 @@ export default function ClubRecord(props: ClubRecordProps) {
                 emptyText={storyWords || storyKind ? 'Nothing in the Story matches.' : 'Nothing has happened here yet.'}
               />
               {story.entries.length < story.total && (
-                <div className={styles.more}><button type="button" className="btn btn-secondary btn-sm" onClick={() => void moreStory()}>Show more</button></div>
+                <div className={styles.more}><button type="button" className="btn btn-secondary btn-sm" onClick={() => setStoryShown(n => n + STORY_PAGE)}>Show more</button></div>
               )}
               <div className={styles.tline}>{NOT_IN_STORY}</div>
             </div>
@@ -446,16 +445,16 @@ export default function ClubRecord(props: ClubRecordProps) {
                   <div className={styles.fact}>
                     <span className={kit.bandLabel}>Stripe customer</span>
                     {org.stripeCustomerId
-                      ? <span className={styles.factLine}><code className={styles.code}>{org.stripeCustomerId}</code>
+                      ? <span className={styles.factLine}><code className={kit.code}>{org.stripeCustomerId}</code>
                           <a className={`${kit.door} ${kit.doorSm}`} href={`${props.stripeBase}/customers/${org.stripeCustomerId}`} target="_blank" rel="noreferrer">Open in Stripe</a></span>
-                      : <span className={`${styles.factValue} ${styles.quiet}`}>None</span>}
+                      : <span className={`${styles.factValue} ${kit.muted}`}>None</span>}
                   </div>
                   <div className={styles.fact}>
                     <span className={kit.bandLabel}>Stripe subscription</span>
                     {org.stripeSubscriptionId
-                      ? <span className={styles.factLine}><code className={styles.code}>{org.stripeSubscriptionId}</code>
+                      ? <span className={styles.factLine}><code className={kit.code}>{org.stripeSubscriptionId}</code>
                           <a className={`${kit.door} ${kit.doorSm}`} href={`${props.stripeBase}/subscriptions/${org.stripeSubscriptionId}`} target="_blank" rel="noreferrer">Open in Stripe</a></span>
-                      : <span className={`${styles.factValue} ${styles.quiet}`}>None</span>}
+                      : <span className={`${styles.factValue} ${kit.muted}`}>None</span>}
                   </div>
                 </div>
               </div>
@@ -465,7 +464,7 @@ export default function ClubRecord(props: ClubRecordProps) {
 
           {tab === 'access' && (
             <AccessTab {...props} onAddOverride={() => setWin({ kind: 'override' })} onRelease={() => setWin({ kind: 'release' })}
-              onCancel={() => setWin({ kind: 'cancel' })} onDelete={() => setWin({ kind: 'delete' })} sectionName={sectionName} />
+              onCancel={() => setWin({ kind: 'cancel' })} onDelete={() => setWin({ kind: 'delete' })} />
           )}
 
           {tab === 'people' && (
@@ -478,7 +477,7 @@ export default function ClubRecord(props: ClubRecordProps) {
       {win?.kind === 'save' && (
         <RecordWindow
           title={`Save changes to ${org.name}`}
-          sentence={bold(saveSentence())}
+          sentence={saveSentence()}
           footNote={`${entryCount} Story ${entryCount === 1 ? 'entry' : 'entries'}${allUndoable ? (entryCount === 1 ? ', which can be put back.' : ', each can be put back.') : '.'}`}
           cancelLabel="Keep editing"
           confirmLabel="Save changes"
@@ -493,13 +492,7 @@ export default function ClubRecord(props: ClubRecordProps) {
           whyPlaceholder="Why are you putting this back?"
           footNote="Writes a new entry in the Story."
           confirmLabel="Put it back"
-          onConfirm={async reason => {
-            const { ok, data } = await send(`/api/platform-admin/orgs/${org.id}/put-back`, 'POST', { key: win.entry.key, reason });
-            if (!ok) return errorOf(data, 'It could not be put back.');
-            setWin(null);
-            router.refresh();
-            return null;
-          }}
+          onConfirm={act(`/api/platform-admin/orgs/${org.id}/put-back`, 'POST', 'It could not be put back.', reason => ({ key: win.entry.key, reason }))}
           onClose={() => setWin(null)}
         />
       )}
@@ -509,13 +502,7 @@ export default function ClubRecord(props: ClubRecordProps) {
           title={`Make ${win.member.email} the owner`}
           sentence={<><strong>{win.member.email}</strong> becomes the owner of {org.name}. Every current owner becomes an admin.</>}
           confirmLabel="Make owner"
-          onConfirm={async reason => {
-            const { ok, data } = await send(`/api/platform-admin/orgs/${org.id}/transfer-ownership`, 'POST', { newOwnerUserId: win.member.userId, reason });
-            if (!ok) return errorOf(data, 'The owner could not be changed.');
-            setWin(null);
-            router.refresh();
-            return null;
-          }}
+          onConfirm={act(`/api/platform-admin/orgs/${org.id}/transfer-ownership`, 'POST', 'The owner could not be changed.', reason => ({ newOwnerUserId: win.member.userId, reason }))}
           onClose={() => setWin(null)}
         />
       )}
@@ -527,18 +514,12 @@ export default function ClubRecord(props: ClubRecordProps) {
           cancelLabel="Keep it"
           confirmLabel="Release the address"
           danger
-          onConfirm={async reason => {
-            const { ok, data } = await send(`/api/platform-admin/orgs/${org.id}/own-address`, 'POST', { reason });
-            if (!ok) return errorOf(data, 'The address could not be released.');
-            setWin(null);
-            router.refresh();
-            return null;
-          }}
+          onConfirm={act(`/api/platform-admin/orgs/${org.id}/own-address`, 'POST', 'The address could not be released.', reason => ({ reason }))}
           onClose={() => setWin(null)}
         />
       )}
       {win?.kind === 'override' && (
-        <OverrideWindow orgId={org.id} orgName={org.name} sections={props.sections} planSections={org.planSections}
+        <OverrideWindow orgId={org.id} orgName={org.name} planSections={org.planSections}
           onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'cancel' && (
@@ -555,17 +536,13 @@ export default function ClubRecord(props: ClubRecordProps) {
 
 // ── Access: plan and limits, sections, overrides, the own web address; the rare doors end it ─────────────────────────
 function AccessTab(props: ClubRecordProps & {
-  onAddOverride: () => void; onRelease: () => void; onCancel: () => void; onDelete: () => void; sectionName: (k: string) => string;
+  onAddOverride: () => void; onRelease: () => void; onCancel: () => void; onDelete: () => void;
 }) {
   const { org, can } = props;
   const [showPast, setShowPast] = useState(false);
   const running = props.overrides.filter(o => o.running);
   const past = props.overrides.filter(o => !o.running);
-  const overrideWhat = (o: ClubRecordProps['overrides'][number]) => {
-    const label = OVERRIDE_LABELS[o.type] ?? humanize(o.type);
-    if (o.type === 'module_addon') return `${label}: ${o.addons.map(props.sectionName).join(', ') || 'sections'}`;
-    return o.value ? `${label}: ${humanize(o.value)}` : label;
-  };
+  const what = (o: ClubRecordProps['overrides'][number]) => overrideWhat(o.type, o.value, o.addons);
   const canCancel = can.billing && org.status !== 'canceled' && (org.planId !== 'tournament' || !!org.stripeSubscriptionId);
   return (
     <div className={kit.page}>
@@ -574,10 +551,10 @@ function AccessTab(props: ClubRecordProps & {
         <div className={`${kit.card} ${kit.cardPad}`}>
           <div className={styles.facts}>
             <div className={styles.fact}><span className={kit.bandLabel}>Plan</span><span className={styles.factValue}>{org.planLabel}</span></div>
-            <div className={styles.fact}><span className={kit.bandLabel}>Tournament limit</span><span className={styles.factValue}>{limitWords(org.tournamentLimit)}</span></div>
+            <div className={styles.fact}><span className={kit.bandLabel}>Tournament limit</span><span className={styles.factValue}>{limitText(org.tournamentLimit)}</span></div>
             {org.isClubBand && (
               <div className={styles.fact}><span className={kit.bandLabel}>Team limit</span>
-                <span className={styles.factValue}>{limitWords(org.teamLimit)}{org.storedTeamLimit && org.storedTeamLimit > 0 ? ' (set for this club)' : ''}</span></div>
+                <span className={styles.factValue}>{limitText(org.teamLimit)}{org.storedTeamLimit && org.storedTeamLimit > 0 ? ' (set for this club)' : ''}</span></div>
             )}
           </div>
         </div>
@@ -587,7 +564,7 @@ function AccessTab(props: ClubRecordProps & {
         <h2 className={kit.sectionTitle}>Sections</h2>
         <div className={`${kit.card} ${kit.cardPad}`}>
           <div className={styles.facts}>
-            {props.sections.map(s => {
+            {CLUB_SECTIONS.map(s => {
               const inPlan = org.planSections.includes(s.key);
               const on = inPlan || org.enabledAddons.includes(s.key);
               return (
@@ -611,7 +588,7 @@ function AccessTab(props: ClubRecordProps & {
           <div className={styles.list}>
             {running.map(o => (
               <div key={o.id} className={styles.listRow}>
-                <span className={styles.listMain}>{overrideWhat(o)}
+                <span className={styles.listMain}>{what(o)}
                   <span className={styles.listSub}>{o.expiresAt ? `Until ${consoleDate(o.expiresAt)}` : 'No end date'} · {o.reason ?? 'No reason kept'} · by {o.createdBy ?? 'staff'}</span>
                 </span>
               </div>
@@ -626,7 +603,7 @@ function AccessTab(props: ClubRecordProps & {
                 <div className={styles.list}>
                   {past.map(o => (
                     <div key={o.id} className={styles.listRow}>
-                      <span className={styles.listMain}>{overrideWhat(o)}
+                      <span className={styles.listMain}>{what(o)}
                         <span className={styles.listSub}>{o.endedAt ? `Ended ${consoleDate(o.endedAt)}` : 'Not started yet'} · applied {consoleDate(o.createdAt)} by {o.createdBy ?? 'staff'}</span>
                       </span>
                     </div>
@@ -644,7 +621,7 @@ function AccessTab(props: ClubRecordProps & {
         <div className={`${kit.card} ${kit.cardPad}`}>
           {props.ownAddress ? (
             <div className={styles.factLine}>
-              <code className={styles.code}>{props.ownAddress.address}</code>
+              <code className={kit.code}>{props.ownAddress.address}</code>
               <span className={kit.chip}>{humanize(props.ownAddress.status)}</span>
               {can.support && <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={props.onRelease}>Release this address</button>}
             </div>
@@ -681,7 +658,7 @@ function PeopleTab(props: ClubRecordProps & { onMakeOwner: (m: ClubRecordProps['
                       <Link href={`/platform-admin/customer-users/${m.userId}`} className={kit.nameLink}>{m.name ?? m.email}</Link>
                       {m.name && <span className={kit.sub}>{m.email}</span>}
                     </td>
-                    <td>{humanize(m.role)}</td>
+                    <td>{roleLabel(m.role)}</td>
                     <td>{humanize(m.status)}</td>
                     <td className={kit.nowrap}>{m.lastSignInAt ? consoleDate(m.lastSignInAt) : <span className={kit.muted}>Never</span>}</td>
                     <td className={kit.num}>
@@ -754,7 +731,7 @@ function NoteWindow({ orgId, orgName, onDone, onClose }: { orgId: string; orgNam
       footNote="The note is its own why."
       confirmLabel="Add the note"
       onConfirm={async () => {
-        const { ok, data } = await send(`/api/platform-admin/orgs/${orgId}/notes`, 'POST', { body });
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/notes`, 'POST', { body });
         if (!ok) return errorOf(data, 'The note could not be added.');
         onDone();
         return null;
@@ -770,16 +747,16 @@ function NoteWindow({ orgId, orgName, onDone, onClose }: { orgId: string; orgNam
 }
 
 // ── Add an override ──────────────────────────────────────────────────────────────────────────────────────────────────
-function OverrideWindow({ orgId, orgName, sections, planSections, onDone, onClose }: {
-  orgId: string; orgName: string; sections: Array<{ key: string; label: string }>; planSections: string[]; onDone: () => void; onClose: () => void;
+function OverrideWindow({ orgId, orgName, planSections, onDone, onClose }: {
+  orgId: string; orgName: string; planSections: string[]; onDone: () => void; onClose: () => void;
 }) {
   const [type, setType] = useState<'module_addon' | 'subscription_status' | 'comp_period'>('module_addon');
   const [value, setValue] = useState('active');
   const [addons, setAddons] = useState<string[]>([]);
   const [ends, setEnds] = useState('');
-  const offered = sections.filter(s => !planSections.includes(s.key));
+  const offered = CLUB_SECTIONS.filter(s => !planSections.includes(s.key));
   const what = type === 'module_addon'
-    ? (addons.length ? `${addons.map(k => sections.find(s => s.key === k)?.label ?? k).join(', ')} turn${addons.length === 1 ? 's' : ''} on` : 'Pick the sections to turn on')
+    ? (addons.length ? `${addons.map(sectionLabel).join(', ')} turn${addons.length === 1 ? 's' : ''} on` : 'Pick the sections to turn on')
     : type === 'subscription_status' ? `The subscription reads as ${humanize(value).toLowerCase()}` : 'It is marked as comped (a billing tag; it gives no access)';
   return (
     <RecordWindow
@@ -793,7 +770,7 @@ function OverrideWindow({ orgId, orgName, sections, planSections, onDone, onClos
         if (type === 'subscription_status') body.value = value;
         if (type === 'module_addon') body.target = { addons };
         if (ends) body.expires_at = new Date(`${ends}T23:59:00`).toISOString();
-        const { ok, data } = await send(`/api/platform-admin/orgs/${orgId}/overrides`, 'POST', body);
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/overrides`, 'POST', body);
         if (!ok) return errorOf(data, 'The override could not be added.');
         onDone();
         return null;
@@ -847,7 +824,7 @@ function CancelWindow({ orgId, orgName, hasStripe, onDone, onClose }: {
   const [pre, setPre] = useState<{ activeTournamentCount?: number; retentionDays?: number; shutsDown?: string[] } | null>(null);
   const [notify, setNotify] = useState(false);
   useEffect(() => {
-    void send(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
+    void sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
   }, [orgId]);
   return (
     <RecordWindow
@@ -863,7 +840,7 @@ function CancelWindow({ orgId, orgName, hasStripe, onDone, onClose }: {
       confirmLabel="Cancel the subscription"
       danger
       onConfirm={async reason => {
-        const { ok, data } = await send(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'POST', { reason, notifyOwner: notify });
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'POST', { reason, notifyOwner: notify });
         if (!ok) return errorOf(data, 'The subscription could not be cancelled.');
         onDone(typeof data.stripeWarning === 'string' ? `Cancelled here. Stripe needs it cancelled by hand: ${data.stripeWarning}` : null);
         return null;
@@ -893,7 +870,7 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
   const [notify, setNotify] = useState(false);
   const [dropStripe, setDropStripe] = useState(false);
   useEffect(() => {
-    void send(`/api/platform-admin/orgs/${orgId}/delete`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
+    void sendJson(`/api/platform-admin/orgs/${orgId}/delete`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
   }, [orgId]);
   const blocked = !!pre?.hasActiveSubscription;
   return (
@@ -909,7 +886,7 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
       danger
       confirmBlocked={blocked || typed.trim().toLowerCase() !== orgSlug}
       onConfirm={async reason => {
-        const { ok, data } = await send(`/api/platform-admin/orgs/${orgId}/delete`, 'DELETE', { reason, confirmSlug: typed.trim().toLowerCase(), notifyOwner: notify, deleteStripeCustomer: dropStripe });
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/delete`, 'DELETE', { reason, confirmSlug: typed.trim().toLowerCase(), notifyOwner: notify, deleteStripeCustomer: dropStripe });
         if (!ok) return errorOf(data, 'The club could not be deleted.');
         onDone();
         return null;
@@ -917,8 +894,8 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
       onClose={onClose}
     >
       <label className={kit.fieldGroup}>
-        <span className={kit.label}>Type <code className={styles.code}>{orgSlug}</code> to confirm<span className={kit.req} aria-hidden>*</span></span>
-        <input className={`${kit.field} ${styles.code}`} value={typed} onChange={e => setTyped(e.target.value)} autoComplete="off" disabled={blocked} />
+        <span className={kit.label}>Type <code className={kit.code}>{orgSlug}</code> to confirm<span className={kit.req} aria-hidden>*</span></span>
+        <input className={`${kit.field} ${kit.code}`} value={typed} onChange={e => setTyped(e.target.value)} autoComplete="off" disabled={blocked} />
       </label>
       <label className={kit.check}>
         <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} disabled={blocked} />

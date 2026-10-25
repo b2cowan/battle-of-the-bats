@@ -158,7 +158,11 @@ export async function getFoundingSeasonDeskData(): Promise<FoundingDeskData> {
   }
   // The owners' email and last sign-in, read by account id (Support console Stage 2, migration 365). It was the first page
   // of 1,000 accounts, which an owner past that page fell off silently.
-  const authUserById = await peopleByIds([...ownerIdsByOrg.values()].flat());
+  // A failed read leaves the emails and sign-ins blank, as the old one-page read did, rather than failing the desk.
+  const authUserById = await peopleByIds([...ownerIdsByOrg.values()].flat()).catch((error: unknown) => {
+    console.warn('[founding-season-desk] owner sign-in read failed', error);
+    return new Map<string, { email: string | null; lastSignInAt: string | null }>();
+  });
 
   const rows: FoundingAccountRow[] = (orgsRes.data ?? []).map(org => {
     const orgId = org.id as string;

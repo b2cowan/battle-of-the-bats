@@ -23,6 +23,9 @@ import { tournamentToday } from './timezone';
 
 export type WaitingGroupKey = 'customers' | 'health' | 'growth' | 'product';
 
+/** Today's groups, in the drawn order. */
+export const WAITING_GROUPS: readonly WaitingGroupKey[] = ['customers', 'health', 'growth', 'product'];
+
 export const WAITING_GROUP_LABELS: Record<WaitingGroupKey, string> = {
   customers: 'Customers',
   health: 'Health',
@@ -67,10 +70,8 @@ const QUEUES: QueueDef[] = [
   { key: 'approval_queue', group: 'product', label: 'Approval queue', why: 'A catalogue change waiting for review or to go live', clearLabel: 'the approval queue', href: '/platform-admin/change-requests', entry: 'change_requests' },
 ];
 
-export const WAITING_QUEUE_KEYS = QUEUES.map(q => q.key);
-
 /** The queues a role sees (whose list it can open), in order. Pure. */
-export function queuesFor(role: PlatformRole): QueueDef[] {
+function queuesFor(role: PlatformRole): QueueDef[] {
   return QUEUES.filter(q => canViewPlatformArea(role, q.entry));
 }
 
@@ -103,25 +104,43 @@ async function headCount(q: PromiseLike<{ count: number | null }>): Promise<numb
   }
 }
 
-export type WaitingSnapshot = {
+type WaitingSnapshot = {
   queues: WaitingQueue[];
   stats: Awaited<ReturnType<typeof getCommandCenterStats>>;
-  /** Errors recorded in the last 24 hours — Today's health line. */
-  errors24h: number;
 };
+
+/**
+ * One snapshot per role and visit for 30 seconds, per server copy: Today and the menu's counts ask for the same thing in
+ * the same moment (the page renders, then its menu reads its counts), and a staff member moving between pages would
+ * otherwise recount everything each time. A queue is at most 30 seconds stale.
+ */
+const SNAPSHOT_FRESH_MS = 30_000;
+const snapshots = new Map<string, { at: number; value: Promise<WaitingSnapshot> }>();
 
 /**
  * Every queue this role sees, counted. `since` is the person's previous visit (new errors, past due since). A queue the
  * role does not see is never counted.
  */
-export async function getWaitingSnapshot(role: PlatformRole, since: string | null): Promise<WaitingSnapshot> {
+export function getWaitingSnapshot(role: PlatformRole, since: string | null): Promise<WaitingSnapshot> {
+  const key = `${role}|${since ?? ''}`;
+  const now = Date.now();
+  const hit = snapshots.get(key);
+  if (hit && now - hit.at < SNAPSHOT_FRESH_MS) return hit.value;
+  for (const [k, v] of snapshots) if (now - v.at >= SNAPSHOT_FRESH_MS) snapshots.delete(k);
+  const value = countWaiting(role, since);
+  snapshots.set(key, { at: now, value });
+  value.catch(() => snapshots.delete(key));
+  return value;
+}
+
+async function countWaiting(role: PlatformRole, since: string | null): Promise<WaitingSnapshot> {
   const visible = queuesFor(role);
   const wants = (key: string) => visible.some(q => q.key === key);
   const nowMs = Date.now();
   const dayAgo = new Date(nowMs - 86_400_000).toISOString(); // utc-intentional: an instant window
   const sinceIso = since ?? dayAgo;
 
-  const [stats, campaigns, approvals, newErrors, newFeedback, errors24h] = await Promise.all([
+  const [stats, campaigns, approvals, newErrors, newFeedback] = await Promise.all([
     getCommandCenterStats({ since }),
     wants('campaigns_past_due') || wants('campaigns_due_soon') ? campaignAlerts() : Promise.resolve({ pastDue: 0, dueSoon: 0 }),
     wants('approval_queue')
@@ -132,9 +151,6 @@ export async function getWaitingSnapshot(role: PlatformRole, since: string | nul
       : Promise.resolve(0),
     wants('new_feedback')
       ? headCount(supabaseAdmin.from('feedback_submissions').select('id', { count: 'exact', head: true }).eq('status', 'new'))
-      : Promise.resolve(0),
-    canViewPlatformArea(role, 'observability')
-      ? headCount(supabaseAdmin.from('error_events').select('id', { count: 'exact', head: true }).gte('occurred_at', dayAgo))
       : Promise.resolve(0),
   ]);
 
@@ -156,13 +172,18 @@ export async function getWaitingSnapshot(role: PlatformRole, since: string | nul
 
   return {
     stats,
-    errors24h,
     queues: visible.map(q => ({
       ...q,
       why: typeof q.why === 'function' ? q.why({ sinceVisit }) : q.why,
       count: counts[q.key] ?? 0,
     })),
   };
+}
+
+/** Errors recorded in the last 24 hours — Today's health line (Today alone shows it, so the menu never counts it). */
+export async function countErrorsLastDay(): Promise<number> {
+  const dayAgo = new Date(Date.now() - 86_400_000).toISOString(); // utc-intentional: an instant window
+  return headCount(supabaseAdmin.from('error_events').select('id', { count: 'exact', head: true }).gte('occurred_at', dayAgo));
 }
 
 /** The menu's counts: each entry's waiting total (the sum of the queues it clears). Pure. */

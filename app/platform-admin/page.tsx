@@ -3,10 +3,11 @@ import { ChevronRight } from 'lucide-react';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { canViewPlatformArea } from '@/lib/platform-areas';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
-import { getWaitingSnapshot, WAITING_GROUP_LABELS, type WaitingGroupKey, type WaitingQueue } from '@/lib/platform-waiting';
+import { countErrorsLastDay, getWaitingSnapshot, WAITING_GROUP_LABELS, WAITING_GROUPS, type WaitingQueue } from '@/lib/platform-waiting';
 import { consoleDay, consoleClock } from '@/lib/console-dates';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from './console.module.css';
+import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import styles from './today.module.css';
 
 /**
@@ -23,8 +24,6 @@ import styles from './today.module.css';
  */
 export const metadata = { title: 'Today — Support console' };
 
-const GROUP_ORDER: WaitingGroupKey[] = ['customers', 'health', 'growth', 'product'];
-
 function plural(n: number, one: string, many = `${one}s`) {
   return `${n} ${n === 1 ? one : many}`;
 }
@@ -32,9 +31,13 @@ function plural(n: number, one: string, many = `${one}s`) {
 export default async function TodayPage() {
   const auth = await requirePlatformAreaView('overview');
   const previous = auth.user.email ? await getPreviousPlatformAdminVisit(auth.user.email) : null;
-  const { queues, stats, errors24h } = await getWaitingSnapshot(auth.role, previous?.visited_at ?? null);
+  const seesErrors = canViewPlatformArea(auth.role, 'observability');
+  const [{ queues, stats }, errors24h] = await Promise.all([
+    getWaitingSnapshot(auth.role, previous?.visited_at ?? null),
+    seesErrors ? countErrorsLastDay() : Promise.resolve(0),
+  ]);
 
-  const groups = GROUP_ORDER
+  const groups = WAITING_GROUPS
     .map(key => {
       const all = queues.filter(q => q.group === key);
       const waiting = all.filter(q => q.count > 0);
@@ -44,7 +47,6 @@ export default async function TodayPage() {
     .filter(g => g.all.length > 0);
   const totalWaiting = groups.reduce((s, g) => s + g.total, 0);
   const queuesWaiting = groups.reduce((s, g) => s + g.waiting.length, 0);
-  const seesErrors = canViewPlatformArea(auth.role, 'observability');
 
   const nothingLine = (g: (typeof groups)[number]) =>
     g.all.length === 1 ? `nothing waiting in ${g.all[0].clearLabel}` : 'nothing waiting';
@@ -116,7 +118,7 @@ export default async function TodayPage() {
                         <strong>{q.label}</strong>
                         <span>{q.why}</span>
                       </span>
-                      <span className={kit.pill} aria-label={`${q.count} waiting`}>{q.count}</span>
+                      <span className={frame.count} aria-label={`${q.count} waiting`}>{q.count}</span>
                       <ChevronRight size={16} className={styles.pchev} aria-hidden />
                     </Link>
                   ))}
@@ -157,7 +159,7 @@ function GroupRows({ label, total, waiting, clear, nothing }: {
         <tr key={q.key} className={kit.comfortable}>
           <td className={styles.colQueue}><Link href={q.href} className={kit.nameLink}>{q.label}</Link></td>
           <td className={kit.muted}>{q.why}</td>
-          <td className={kit.num}><span className={kit.pill} aria-label={`${q.count} waiting`}>{q.count}</span></td>
+          <td className={kit.num}><span className={frame.count} aria-label={`${q.count} waiting`}>{q.count}</span></td>
           <td className={kit.rowDoor}>
             <Link href={q.href} className={kit.rowDoorLink} aria-label={`Open ${q.label}`} tabIndex={-1}>›</Link>
           </td>

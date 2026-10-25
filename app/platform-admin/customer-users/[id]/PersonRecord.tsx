@@ -12,10 +12,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Check, Pencil } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import type { StoryEntry } from '@/lib/platform-story';
+import type { StoryEntry } from '@/lib/platform-story-view';
 import { consoleClock, consoleDate } from '@/lib/console-dates';
 import { rememberConsoleRecent } from '@/lib/console-recent';
 import { humanize } from '@/lib/platform-labels';
+import { roleEmailLabel, roleLabel } from '@/lib/member-access';
+import { errorOf, sendJson } from '../../console-fetch';
+import { personStatusChip } from '../../chips';
 import StoryTable from '../../StoryTable';
 import RecordWindow from '../../RecordWindow';
 import kit from '../../console.module.css';
@@ -34,11 +37,10 @@ export type PersonRecordProps = {
 type Tab = 'story' | 'clubs' | 'account';
 type Window = 'save' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | null;
 
+/** One call; null when it went through, else the server's sentence. */
 async function post(url: string, method: string, body: unknown): Promise<string | null> {
-  const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  if (res.ok) return null;
-  const data = (await res.json().catch(() => ({}))) as { error?: string };
-  return data.error ?? 'That did not go through. Try again in a moment.';
+  const { ok, data } = await sendJson(url, method, body);
+  return ok ? null : errorOf(data, 'That did not go through. Try again in a moment.');
 }
 
 export default function PersonRecord({ person, clubs, story, can }: PersonRecordProps) {
@@ -63,11 +65,9 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
   };
 
   const owned = clubs.find(c => c.role === 'owner');
-  const chip = person.status === 'banned'
-    ? <span className={`${kit.chip} ${kit.chipBad}`}>Banned</span>
-    : person.emailConfirmed
-      ? <span className={`${kit.chip} ${kit.chipOk}`}>Email confirmed</span>
-      : <span className={`${kit.chip} ${kit.chipWarn}`}>Email not confirmed</span>;
+  // The People list's own colours (one rule, `personStatusChip`), in the record's words.
+  const chipWord = person.status === 'banned' ? 'Banned' : person.emailConfirmed ? 'Email confirmed' : 'Email not confirmed';
+  const chip = <span className={`${kit.chip} ${personStatusChip(person.status)}`}>{chipWord}</span>;
 
   return (
     <div className={kit.page}>
@@ -111,7 +111,7 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
             <div className={kit.bandCell}>
               <span className={kit.bandLabel}>Clubs</span>
               <span className={kit.bandValue}>{clubs.length}</span>
-              <span className={kit.bandNote}>{owned ? `owner of ${owned.name}` : clubs.length ? `${humanize(clubs[0].role).toLowerCase()} in ${clubs[0].name}` : 'in no club'}</span>
+              <span className={kit.bandNote}>{owned ? `owner of ${owned.name}` : clubs.length ? `${roleEmailLabel(clubs[0].role)} in ${clubs[0].name}` : 'in no club'}</span>
             </div>
             <div className={kit.bandCell}>
               <span className={kit.bandLabel}>Last signed in</span>
@@ -151,7 +151,7 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
                     {clubs.map(c => (
                       <tr key={c.id}>
                         <td><Link href={`/platform-admin/orgs/${c.id}`} className={kit.nameLink}>{c.name}</Link><span className={`${kit.sub} ${kit.code}`}>{c.slug}</span></td>
-                        <td>{humanize(c.role)}</td>
+                        <td>{roleLabel(c.role)}</td>
                         <td>{humanize(c.status)}</td>
                         <td>{c.planLabel}</td>
                       </tr>

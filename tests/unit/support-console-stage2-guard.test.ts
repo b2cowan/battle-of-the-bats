@@ -216,14 +216,15 @@ describe('5 · input: 2–120 characters, wildcards literal, Stripe whole only, 
     const sql = readSource(MIGRATION);
     assert.match(sql, /NOT EXISTS \(SELECT 1 FROM public\.platform_users pu WHERE lower\(pu\.email\) = lower\(u\.email::text\)\)/);
     const lookup = readCode('lib/platform-people-lookup.ts');
-    assert.match(lookup, /p_exclude_emails: staffExclusions\(\)/);
+    assert.match(lookup, /p_exclude_emails: getBootstrapAdminEmails\(\)/);
     assert.match(lookup, /p_exclude_slugs: \[\.\.\.DEMO_ORG_SLUGS\]/);
     assert.match(readCode('app/api/platform-admin/find/route.ts'), /isDemoOrgSlug\(org\.slug\)/);
   });
 });
 
 // ── 6 · One rulebook ─────────────────────────────────────────────────────────────────────────────────────────────────
-const GATES = /requirePlatformPower\(|requireAnyPlatformPower\(|requirePlatformAreaApi\(|requireBookkeepingApi\(|requireDevToolPlatformAdmin\(/;
+// `personActionContext` is the person actions' front door: it checks `person_support` first (guarded below).
+const GATES = /requirePlatformPower\(|requireAnyPlatformPower\(|requirePlatformAreaApi\(|requireBookkeepingApi\(|requireDevToolPlatformAdmin\(|personActionContext(<[^>]*>)?\(/;
 
 describe('6 · every console API resolves its role through the one powers list', () => {
   const routes = filesUnder('app/api/platform-admin', '.ts').filter(f => f.endsWith('route.ts'));
@@ -280,9 +281,11 @@ describe('7 · Billing lost Support\'s club and person powers (A1), and kept fee
       assert.match(readCode(`app/api/platform-admin/orgs/[id]/${f}/route.ts`), /requirePlatformPower\('club_support'\)/, f);
     }
     assert.match(readCode('app/api/platform-admin/orgs/[id]/notes/route.ts'), /export const POST[\s\S]*requirePlatformPower\('club_support'\)/);
-    for (const f of ['ban', 'confirm-email', 'reset', 'revoke-sessions', 'update', 'notes/[noteId]']) {
-      assert.match(readCode(`app/api/platform-admin/users/[id]/${f}/route.ts`), /requirePlatformPower\('person_support'\)/, f);
+    for (const f of ['ban', 'confirm-email', 'reset', 'revoke-sessions', 'update']) {
+      assert.match(readCode(`app/api/platform-admin/users/[id]/${f}/route.ts`), /personActionContext(<[^>]*>)?\(req, id/, f);
     }
+    assert.match(readCode('lib/platform-person-action.ts'), /const auth = await requirePlatformPower\('person_support'\);/);
+    assert.match(readCode('app/api/platform-admin/users/[id]/notes/[noteId]/route.ts'), /requirePlatformPower\('person_support'\)/);
   });
 
   it('feedback triage reads the feedback page\'s power, never a support power', () => {
@@ -377,21 +380,35 @@ describe('9 · the menu by job', () => {
 // ── 10 · Put it back ─────────────────────────────────────────────────────────────────────────────────────────────────
 describe('10 · Put it back only on plan/limit, section and running-override entries', () => {
   const story = readCode('lib/platform-story.ts');
+  const view = readCode('lib/platform-story-view.ts');
   it('the three kinds, and nothing else', () => {
-    assert.match(story, /export type PutBackKind = 'plan' \| 'section' \| 'override';/);
-    const offers = [...story.matchAll(/putBack = \{\s*kind: '(\w+)'/g)].map(m => m[1]);
+    const kinds = [...view.matchAll(/\| \{ kind: '(\w+)'/g)].map(m => m[1]);
+    assert.deepEqual(kinds.sort(), ['override', 'plan', 'section'], 'PutBack is a union of exactly these three');
+    const offers = [...story.matchAll(/markPutBack\(entry, [^;]*?\{\s*kind: '(\w+)'/g)].map(m => m[1]);
     assert.deepEqual([...new Set(offers)].sort(), ['override', 'plan', 'section']);
   });
   it('an override is offered only while running; a plan only on the newest plan entry still in force', () => {
-    assert.match(story, /else if \(running\) \{\s*entry\.putBack = \{\s*kind: 'override'/);
+    assert.match(story, /markPutBack\(entry, running \? \{\s*kind: 'override'/);
     assert.match(story, /r\.id === newestPlanId && org\.plan_id === toPlan/);
   });
-  it('the route acts only on an entry the Story itself offers, checked against that kind\'s power', () => {
+  it('nothing that reached Stripe is put back: no plan door with a Stripe subscription now or cut by the change, or a billing state the undo cannot restore', () => {
+    assert.match(story, /const stripeFree = !org\.stripe_subscription_id && !oldV\?\.stripe_subscription_id;/);
+    assert.match(story, /org\.plan_id === toPlan && stripeFree && billingSame/);
+  });
+  it('a section put back changes that one section, and never over a change made at the same moment', () => {
     const route = readCode('app/api/platform-admin/orgs/[id]/put-back/route.ts');
-    assert.match(route, /\(await buildClubStory\(id\)\)\.find\(e => e\.key === key\)/);
-    assert.match(route, /if \(!entry\?\.putBack\)/);
-    assert.match(route, /entry\.putBack\.kind === 'section' \? 'club_sections' : 'club_billing'/);
+    assert.match(route, /toggle: \{ section: target\.section, on: target\.on \}/);
+    const changes = readCode('lib/club-record-changes.ts');
+    assert.match(changes, /write\.eq\('enabled_addons', JSON\.stringify\(before\)\)/, 'the sections write is a compare-and-set');
+    assert.match(changes, /if \(!written \|\| written\.length === 0\) return stale;/);
+  });
+  it('the route applies the target the Story itself offers, checked against that kind\'s power', () => {
+    const route = readCode('app/api/platform-admin/orgs/[id]/put-back/route.ts');
+    assert.match(route, /\(await buildClubStory\(id\)\)\.find\(e => e\.key === key\)\?\.putBack/);
+    assert.match(route, /if \(!target\)/);
+    assert.match(route, /target\.kind === 'section' \? 'club_sections' : 'club_billing'/);
     assert.match(route, /applyOperatorPlanChange\(/, 'a plan goes back through the one plan-change rule');
+    assert.doesNotMatch(route, /from\('platform_audit_log'\)/, 'the route never works the undo out again from the audit log');
   });
 });
 

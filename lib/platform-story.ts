@@ -20,44 +20,14 @@
  */
 import { supabaseAdmin } from './supabase-admin';
 import { peopleByIds } from './platform-people-lookup';
-import { planLabel } from './platform-metrics';
-import { sectionLabel } from './club-record-changes';
 import { consoleClock, consoleDay } from './console-dates';
-import { humanize } from './platform-labels';
+import { aRole, humanize, limitWords, overrideWhat, planLabel, sectionLabel } from './platform-labels';
+import type { PutBack, StoryEntry } from './platform-story-view';
 import { possessive } from './utils';
 
-export type StoryKind = 'staff' | 'billing' | 'notes' | 'emails' | 'people' | 'feedback';
-
-export const STORY_KIND_LABELS: Record<StoryKind, string> = {
-  staff: 'Staff changes',
-  billing: 'Billing',
-  notes: 'Notes',
-  emails: 'Emails',
-  people: 'People',
-  feedback: 'Feedback',
-};
-
-export type PutBackKind = 'plan' | 'section' | 'override';
-
-export type StoryEntry = {
-  /** Stable key — also what a Put it back names (`audit:<id>`, `audit:<id>:<section>`, `override:<id>`, …). */
-  key: string;
-  at: string;
-  kind: StoryKind;
-  title: string;
-  /** A change between two codes (a web name), drawn in the data face after the title's words. */
-  codes?: [string, string];
-  sub?: string;
-  who: string;
-  /** The reason; null when a reason does not apply ("—"). */
-  why: string | null;
-  /** True for an older change that never kept its reason ("Not recorded"). */
-  whyNotRecorded?: boolean;
-  /** Offered only on plan/limit, section and running-override entries that can still be undone. */
-  putBack?: { kind: PutBackKind; sentence: string; title: string };
-  /** When this entry was put back (the door goes; the grey line says when). */
-  putBackAt?: string;
-};
+// The shape and the on-screen filter are plain (the record filters on screen); this module builds the entries.
+export type { PutBack, PutBackKind, StoryEntry, StoryKind } from './platform-story-view';
+export { filterStory } from './platform-story-view';
 
 const SOURCE_CAP = 500;
 const THE_PRODUCT = 'The product';
@@ -102,23 +72,29 @@ function when(iso: string): string {
 function planName(id: unknown): string {
   return typeof id === 'string' && id ? planLabel(id) : 'no plan';
 }
-function limitWords(n: unknown): string {
-  return typeof n === 'number' ? (n >= 9999 ? 'no limit' : String(n)) : 'no limit';
+function limitOf(v: unknown): string {
+  return limitWords(typeof v === 'number' ? v : null);
 }
 
-const OVERRIDE_LABELS: Record<string, string> = {
-  subscription_status: 'Subscription status',
-  comp_period: 'Comp period',
-  module_addon: 'Feature access',
-  plan_tier: 'Plan tier',
-};
-
 const PLAN_MAIN = new Set(['update_org_plan_and_limit', 'bulk_update_org_plan_and_limit']);
+/** A plan change's main entry (its per-field `update_plan` rows fold into it). */
+const isPlanEntry = (r: AuditRow) => PLAN_MAIN.has(r.action) && r.field === 'plan_and_limit';
+
+/** A bulk section change's list after it, from the list before it (the row keeps the one section it touched). */
+function afterBulkAddons(before: Set<string>, newValue: unknown): Set<string> {
+  const n = obj(newValue);
+  const after = new Set(before);
+  const k = str(n?.module_key);
+  if (k) { if (n?.module_operation === 'disable') after.delete(k); else after.add(k); }
+  return after;
+}
 
 /** The club's Story, newest first. */
 export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
   const [orgRes, auditRes, overridesRes, notesRes, eventsRes, orgAuditRes, membersRes, emailsRes, feedbackRes] = await Promise.all([
-    supabaseAdmin.from('organizations').select('id, name, plan_id, enabled_addons, created_at').eq('id', orgId).maybeSingle(),
+    supabaseAdmin.from('organizations')
+      .select('id, name, plan_id, enabled_addons, created_at, subscription_status, stripe_subscription_id, current_period_end')
+      .eq('id', orgId).maybeSingle(),
     supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, created_at')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_overrides').select('id, type, value, target, starts_at, expires_at, reason, created_by, created_at, revoked_at, revoked_by')
@@ -141,7 +117,10 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
     supabaseAdmin.from('feedback_submissions').select('id, user_email, submitter_name, type, title, body, status, triaged_by, created_at')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
   ]);
-  const org = orgRes.data as { id: string; name: string; plan_id: string | null; enabled_addons: string[] | null; created_at: string } | null;
+  const org = orgRes.data as {
+    id: string; name: string; plan_id: string | null; enabled_addons: string[] | null; created_at: string;
+    subscription_status: string | null; stripe_subscription_id: string | null; current_period_end: string | null;
+  } | null;
   if (!org) return [];
 
   const audit = (auditRes.data ?? []) as AuditRow[];
@@ -159,97 +138,115 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
   // What has been put back, and when (an undone entry is marked, never edited).
   const putBackAt = new Map<string, string>();
   for (const r of audit) { const ref = putBackOf(r.new_value); if (ref && !putBackAt.has(ref)) putBackAt.set(ref, r.created_at); }
+  /** An entry already undone says when; otherwise it carries the door the caller offers (or none). */
+  const markPutBack = (entry: StoryEntry, offer: PutBack | null) => {
+    const done = putBackAt.get(entry.key);
+    if (done) entry.putBackAt = done;
+    else if (offer) entry.putBack = offer;
+  };
+  /** "Undoes the 3:20 p.m. entry", for an entry that names the one it puts back. */
+  const undoesSub = (ref: string) => `Undoes the ${consoleClock(audit.find(a => ref === `audit:${a.id}` || ref.startsWith(`audit:${a.id}:`))?.created_at)} entry`;
 
   const entries: StoryEntry[] = [];
   const currentAddons = new Set(org.enabled_addons ?? []);
 
   // ── Staff changes (platform_audit_log) ─────────────────────────────────────────────────────────────────────────────
   // The newest plan entry is the only one Put it back can undo (an older one would jump over the changes after it).
-  const newestPlanId = audit.find(r => PLAN_MAIN.has(r.action) && r.field === 'plan_and_limit')?.id;
+  const newestPlanId = audit.find(isPlanEntry)?.id;
   const seenSection = new Set<string>();
   for (const r of audit) {
     const who = r.actor_email ?? 'Staff';
     const key = `audit:${r.id}`;
     const undoing = putBackOf(r.new_value);
-    if (PLAN_MAIN.has(r.action) && r.field === 'plan_and_limit') {
+    if (isPlanEntry(r)) {
       const oldV = obj(r.old_value);
       const newV = obj(r.new_value) ?? {};
-      // The per-field rows written by the same change (same person, within a few seconds) fold in as its sub-line.
+      // The per-field rows written by the same change fold in as its sub-line. The plan-change rule writes them just
+      // AFTER the change's own row, so they are the same person's rows in the few seconds after it — and of each field
+      // the earliest, which is this change's and not the next one's (`audit` is newest first).
       const t = Date.parse(r.created_at);
       const siblings = audit.filter(s => s.action === 'update_plan' && s.actor_email === r.actor_email
-        && Math.abs(Date.parse(s.created_at) - t) < 10_000);
-      const teamRow = siblings.filter(s => s.field === 'team_limit').at(-1);
+        && Date.parse(s.created_at) >= t && Date.parse(s.created_at) - t < 10_000);
+      const sibling = (field: string) => siblings.filter(s => s.field === field).at(-1);
+      const teamRow = sibling('team_limit');
       const subs: string[] = [];
-      if (teamRow) subs.push(teamRow.new_value == null ? 'Team limit back to the plan’s' : `Team limit set to ${limitWords(teamRow.new_value)}`);
-      const trial = obj(siblings.find(s => s.field === 'club_trial')?.new_value);
+      const trial = obj(sibling('club_trial')?.new_value);
       if (trial && typeof trial.days === 'number') subs.push(`A ${trial.days}-day trial started`);
-      const archived = obj(siblings.find(s => s.field === 'archived_over_cap_tournaments')?.new_value);
+      const archived = obj(sibling('archived_over_cap_tournaments')?.new_value);
       if (archived && typeof archived.count === 'number' && archived.count > 0) subs.push(`${archived.count} tournament${archived.count === 1 ? '' : 's'} archived over the limit`);
       if (r.action.startsWith('bulk_')) subs.push('From Bulk changes');
-      if (undoing) subs.unshift(`Undoes the ${consoleClock(audit.find(a => `audit:${a.id}` === undoing)?.created_at)} entry`);
 
       const fromPlan = oldV?.plan_id;
       const toPlan = newV.plan_id;
       const samePlan = fromPlan === toPlan;
+      // A save that changed only the team limit reads as that, not as "no limit → no limit".
+      const teamOnly = samePlan && !!teamRow && oldV?.tournament_limit === newV.tournament_limit;
+      if (teamRow && !teamOnly) subs.unshift(teamRow.new_value == null ? 'Team limit back to the plan’s' : `Team limit set to ${limitOf(teamRow.new_value)}`);
+      if (undoing) subs.unshift(undoesSub(undoing));
       const title = undoing
         ? `Put back: plan back to ${planName(toPlan)}`
-        : samePlan
-          ? `Tournament limit changed: ${limitWords(oldV?.tournament_limit)} → ${limitWords(newV.tournament_limit)}`
-          : `Plan changed: ${planName(fromPlan)} → ${planName(toPlan)}`;
+        : teamOnly
+          ? `Team limit changed: ${teamRow!.old_value == null ? 'the plan’s' : limitOf(teamRow!.old_value)} → ${teamRow!.new_value == null ? 'the plan’s' : limitOf(teamRow!.new_value)}`
+          : samePlan
+            ? `Tournament limit changed: ${limitOf(oldV?.tournament_limit)} → ${limitOf(newV.tournament_limit)}`
+            : `Plan changed: ${planName(fromPlan)} → ${planName(toPlan)}`;
       const entry: StoryEntry = { key, at: r.created_at, kind: 'staff', title, sub: subs.join(' · ') || undefined, who, ...whyFields(r.new_value, false) };
-      const done = putBackAt.get(key);
-      if (done) entry.putBackAt = done;
-      else if (oldV && r.id === newestPlanId && org.plan_id === toPlan && typeof oldV.plan_id === 'string') {
-        const teamBack = teamRow ? ` Its team limit goes back to ${teamRow.old_value == null ? 'the plan’s' : limitWords(teamRow.old_value)}.` : '';
-        entry.putBack = {
-          kind: 'plan',
-          title: `Put back the plan for ${org.name}`,
-          sentence: samePlan
-            ? `${possessive(org.name)} tournament limit goes back from ${limitWords(newV.tournament_limit)} to ${limitWords(oldV.tournament_limit)}, as it was before ${when(r.created_at)}.${teamBack}`
+      // ⚖ NOTHING THAT REACHED STRIPE IS PUT BACK (rule R5). The plan-change rule restores the plan and limits only, so the
+      // door is offered only where that puts the club back exactly: no live Stripe subscription now (a club that started
+      // paying since — Stripe moves the plan without a Story entry), none cut by this change (it cannot be re-attached),
+      // and — unless the club goes back to Tournament, which resets billing to free — the same billing state as before
+      // (a trial this change started, or one that ended since, would be left wrong).
+      const backToFree = oldV?.plan_id === 'tournament';
+      const billingSame = backToFree
+        || ((oldV?.subscription_status ?? null) === org.subscription_status
+          && (oldV?.current_period_end ?? null) === org.current_period_end);
+      const stripeFree = !org.stripe_subscription_id && !oldV?.stripe_subscription_id;
+      // Only the newest plan entry, still in force, that says what came before it.
+      const undoable = oldV && r.id === newestPlanId && org.plan_id === toPlan && stripeFree && billingSame
+        && typeof oldV.plan_id === 'string' && typeof oldV.tournament_limit === 'number';
+      const teamWas = teamRow ? (teamRow.old_value == null ? 'the plan’s' : limitOf(teamRow.old_value)) : '';
+      const teamBack = teamRow ? ` Its team limit goes back to ${teamWas}.` : '';
+      markPutBack(entry, undoable ? {
+        kind: 'plan',
+        title: `Put back the plan for ${org.name}`,
+        sentence: teamOnly
+          ? `${possessive(org.name)} team limit goes back to ${teamWas}, as it was before ${when(r.created_at)}.`
+          : samePlan
+            ? `${possessive(org.name)} tournament limit goes back from ${limitOf(newV.tournament_limit)} to ${limitOf(oldV.tournament_limit)}, as it was before ${when(r.created_at)}.${teamBack}`
             : `${org.name} goes back from ${planName(toPlan)} to ${planName(oldV.plan_id)}, as it was before ${when(r.created_at)}.${teamBack}`,
-        };
-      }
+        planId: oldV.plan_id as string,
+        tournamentLimit: oldV.tournament_limit as number,
+        // The same change's team-limit row says what the cap was; without one the cap is left alone.
+        ...(teamRow ? { teamLimit: typeof teamRow.old_value === 'number' ? teamRow.old_value : null } : {}),
+      } : null);
       entries.push(entry);
       continue;
     }
     if (r.action === 'update_addons' || r.action === 'bulk_update_addons') {
       const before = new Set(list(r.old_value));
-      const after = r.action === 'bulk_update_addons'
-        ? (() => {
-            const n = obj(r.new_value);
-            const s = new Set(before);
-            const k = str(n?.module_key);
-            if (k) { if (n?.module_operation === 'disable') s.delete(k); else s.add(k); }
-            return s;
-          })()
-        : new Set(list(r.new_value));
+      const after = r.action === 'bulk_update_addons' ? afterBulkAddons(before, r.new_value) : new Set(list(r.new_value));
       const changed = [...new Set([...before, ...after])].filter(k => before.has(k) !== after.has(k));
       for (const section of changed) {
         const on = after.has(section);
         const sKey = `${key}:${section}`;
         const label = sectionLabel(section);
-        const undoRef = undoing;
         const entry: StoryEntry = {
           key: sKey,
           at: r.created_at,
           kind: 'staff',
-          title: undoRef ? `Put back: ${label} ${on ? 'on' : 'off'} again` : `Section turned ${on ? 'on' : 'off'}: ${label}`,
-          sub: undoRef
-            ? `Undoes the ${consoleClock(audit.find(a => undoRef.startsWith(`audit:${a.id}`))?.created_at)} entry`
-            : r.action.startsWith('bulk_') ? 'From Bulk changes' : undefined,
+          title: undoing ? `Put back: ${label} ${on ? 'on' : 'off'} again` : `Section turned ${on ? 'on' : 'off'}: ${label}`,
+          sub: undoing ? undoesSub(undoing) : r.action.startsWith('bulk_') ? 'From Bulk changes' : undefined,
           who,
           ...whyFields(r.new_value, true),
         };
-        const done = putBackAt.get(sKey);
-        if (done) entry.putBackAt = done;
         // Only the newest entry for a section, and only while the club is still as that entry left it.
-        else if (!seenSection.has(section) && currentAddons.has(section) === on) {
-          entry.putBack = {
-            kind: 'section',
-            title: `Put back ${label} for ${org.name}`,
-            sentence: `${label} turns ${on ? 'off' : 'on'} again for ${org.name}, as it was before ${when(r.created_at)}.`,
-          };
-        }
+        markPutBack(entry, !seenSection.has(section) && currentAddons.has(section) === on ? {
+          kind: 'section',
+          title: `Put back ${label} for ${org.name}`,
+          sentence: `${label} turns ${on ? 'off' : 'on'} again for ${org.name}, as it was before ${when(r.created_at)}.`,
+          section,
+          on: !on,
+        } : null);
         seenSection.add(section);
         entries.push(entry);
       }
@@ -297,10 +294,7 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
     id: string; type: string; value: string | null; target: { addons?: string[] } | null; starts_at: string | null; expires_at: string | null;
     reason: string | null; created_by: string | null; created_at: string; revoked_at: string | null; revoked_by: string | null;
   }>) {
-    const label = OVERRIDE_LABELS[o.type] ?? humanize(o.type);
-    const what = o.type === 'module_addon'
-      ? `${label}: ${(o.target?.addons ?? []).map(sectionLabel).join(', ') || 'sections'}`
-      : o.value ? `${label}: ${humanize(o.value)}` : label;
+    const what = overrideWhat(o.type, o.value, o.target?.addons ?? []);
     const ends = o.expires_at ? `until ${consoleDay(o.expires_at)}` : 'no end date';
     const running = !o.revoked_at && (!o.starts_at || Date.parse(o.starts_at) <= nowMs) && (!o.expires_at || Date.parse(o.expires_at) > nowMs);
     const key = `override:${o.id}`;
@@ -308,15 +302,12 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
       key, at: o.created_at, kind: 'staff', title: `Override applied: ${what}`, sub: running ? `Running, ${ends}` : ends,
       who: o.created_by ?? 'Staff', why: o.reason ?? null, whyNotRecorded: !o.reason,
     };
-    const done = putBackAt.get(key);
-    if (done) entry.putBackAt = done;
-    else if (running) {
-      entry.putBack = {
-        kind: 'override',
-        title: `End the override for ${org.name}`,
-        sentence: `The ${what.toLowerCase()} override for ${org.name} ends now instead of ${o.expires_at ? `on ${consoleDay(o.expires_at)}` : 'running with no end date'}.`,
-      };
-    }
+    markPutBack(entry, running ? {
+      kind: 'override',
+      title: `End the override for ${org.name}`,
+      sentence: `The ${what.toLowerCase()} override for ${org.name} ends now instead of ${o.expires_at ? `on ${consoleDay(o.expires_at)}` : 'running with no end date'}.`,
+      overrideId: o.id,
+    } : null);
     entries.push(entry);
     if (o.revoked_at) {
       const revoke = revokeReasons.get(o.id);
@@ -384,7 +375,8 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
   }
 
   // ── Emails ───────────────────────────────────────────────────────────────────────────────────────────────────────
-  const ownerEmails = new Set(members.filter(m => m.role === 'owner').map(m => emailOf(m.user_id)).filter(Boolean));
+  const owners = members.filter(m => m.role === 'owner');
+  const ownerEmails = new Set(owners.map(m => emailOf(m.user_id)).filter(Boolean));
   for (const e of (emailsRes.data ?? []) as Array<{ id: string; subject: string | null; recipient_email: string | null; status: string; suppression_reason: string | null; sent_at: string | null; created_at: string }>) {
     const sent = e.status === 'sent' || e.status === 'queued';
     const to = e.recipient_email && ownerEmails.has(e.recipient_email.toLowerCase()) ? 'the owner' : e.recipient_email ?? 'the club';
@@ -408,30 +400,15 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
   }
 
   // ── Created ──────────────────────────────────────────────────────────────────────────────────────────────────────
-  const firstPlan = [...audit].reverse().find(r => PLAN_MAIN.has(r.action) && r.field === 'plan_and_limit');
+  const firstPlan = [...audit].reverse().find(isPlanEntry);
   const startPlan = obj(firstPlan?.old_value)?.plan_id ?? org.plan_id;
-  const firstOwner = members.filter(m => m.role === 'owner').sort((a, b) => (a.accepted_at ?? '').localeCompare(b.accepted_at ?? ''))[0];
+  const firstOwner = [...owners].sort((a, b) => (a.accepted_at ?? '').localeCompare(b.accepted_at ?? ''))[0];
   entries.push({
     key: `created:${org.id}`, at: org.created_at, kind: 'people',
     title: `Club created on the ${planName(startPlan)} plan`, who: emailOf(firstOwner?.user_id) ?? THE_PRODUCT, why: null,
   });
 
   return entries.sort((a, b) => b.at.localeCompare(a.at) || a.key.localeCompare(b.key));
-}
-
-function aRole(role: string | null): string {
-  const r = humanize(role).toLowerCase() || 'a member';
-  return /^[aeiou]/.test(r) ? `an ${r}` : `a ${r}`;
-}
-
-/** Narrow a Story by type and words (case-insensitive over what each row says). */
-export function filterStory(entries: StoryEntry[], opts: { kind?: StoryKind | null; words?: string }): StoryEntry[] {
-  const w = (opts.words ?? '').trim().toLowerCase();
-  return entries.filter(e => {
-    if (opts.kind && e.kind !== opts.kind) return false;
-    if (!w) return true;
-    return [e.title, e.codes?.join(' '), e.sub, e.who, e.why].some(s => s?.toLowerCase().includes(w));
-  });
 }
 
 // ── A person's Story ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -450,29 +427,34 @@ const PERSON_ACTIONS: Record<string, { title: string; sub?: string }> = {
  * the email or the id as a bare value, so both are matched), staff notes, club invitations, role changes and joins.
  * Sign-in history is not kept — only the last sign-in, which the band shows.
  */
-export async function buildPersonStory(person: { id: string; email: string; createdAt: string | null }): Promise<StoryEntry[]> {
+export type PersonMembership = {
+  role: string;
+  invited_at: string | null;
+  accepted_at: string | null;
+  organizations: { name: string } | null;
+};
+
+export async function buildPersonStory(
+  person: { id: string; email: string; createdAt: string | null },
+  memberships: readonly PersonMembership[],
+): Promise<StoryEntry[]> {
   const email = person.email.toLowerCase();
-  const [auditRes, notesRes, orgAuditRes, membersRes] = await Promise.all([
+  // From Stage 2 an entry names the account (`new_value.userId`); an older one holds the email or the id as a bare value.
+  const named = [`new_value->>userId.eq.${person.id}`]
+    .concat([person.id, email].flatMap(v => [`new_value.eq.${JSON.stringify(JSON.stringify(v))}`, `old_value.eq.${JSON.stringify(JSON.stringify(v))}`]));
+  const [auditRes, notesRes, orgAuditRes] = await Promise.all([
     supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, created_at')
-      .is('org_id', null).in('action', Object.keys(PERSON_ACTIONS))
-      .order('created_at', { ascending: false }).limit(2000),
+      .is('org_id', null).in('action', Object.keys(PERSON_ACTIONS)).or(named.join(','))
+      .order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('platform_user_notes').select('id, body, created_by_email, created_at')
       .eq('user_id', person.id).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_audit_log').select('id, org_id, actor_id, action, payload, created_at, organizations(name)')
       .eq('target_id', person.id).in('action', ['member_invited', 'member_removed', 'role_changed', 'member_suspended', 'member_reinstated'])
       .order('created_at', { ascending: false }).limit(SOURCE_CAP),
-    supabaseAdmin.from('organization_members').select('role, invited_at, accepted_at, organizations(name, created_at)')
-      .eq('user_id', person.id).limit(SOURCE_CAP),
   ]);
 
-  const mentions = (v: unknown) => {
-    if (typeof v === 'string') return v === person.id || v.toLowerCase() === email;
-    const o = obj(v);
-    return !!o && (o.userId === person.id || (typeof o.email === 'string' && o.email.toLowerCase() === email));
-  };
   const entries: StoryEntry[] = [];
   for (const r of (auditRes.data ?? []) as AuditRow[]) {
-    if (!mentions(r.new_value) && !mentions(r.old_value)) continue;
     const def = PERSON_ACTIONS[r.action];
     let sub = def.sub;
     if (r.action === 'update_user') {
@@ -499,7 +481,7 @@ export async function buildPersonStory(person: { id: string; email: string; crea
     const sub = r.action === 'member_invited' ? `As ${aRole(str(p.role))}` : r.action === 'role_changed' ? `${humanize(str(p.before))} → ${humanize(str(p.after))}` : undefined;
     entries.push({ key: `org:${r.id}`, at: r.created_at, kind: 'people', title, sub, who, why: null });
   }
-  for (const m of (membersRes.data ?? []) as unknown as Array<{ role: string; invited_at: string | null; accepted_at: string | null; organizations: { name: string; created_at: string } | null }>) {
+  for (const m of memberships) {
     if (!m.accepted_at || !m.organizations) continue;
     const owner = m.role === 'owner';
     entries.push({

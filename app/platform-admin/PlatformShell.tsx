@@ -23,7 +23,7 @@ import BrandLockup from '@/components/shared/BrandLockup';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { PLATFORM_PORTAL_LABEL } from '@/lib/workspace-labels';
 import type { PlatformRole } from '@/lib/platform-auth';
-import PlatformAdminNav, { PlatformNavBody } from './PlatformAdminNav';
+import PlatformAdminNav, { PlatformNavBody, useWaitingCounts } from './PlatformAdminNav';
 import FindBox from './FindBox';
 import { hasPlatformPower } from '@/lib/platform-areas';
 import stripStyles from '@/components/coaches/CoachTopStrip.module.css';
@@ -39,6 +39,8 @@ export default function PlatformShell({ role, canBookkeep, children }: {
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeMenu = () => setMenuOpen(false);
+  // One reader of the menu's waiting counts for both menus (the rail and the narrow-width panel).
+  const counts = useWaitingCounts();
   useDialogFloor(menuOpen, drawerRef, { onClose: closeMenu, opener: menuBtnRef });
 
   // The panel closes on any route change — persistent chrome, so Back / Forward would otherwise leave it over the new page
@@ -86,7 +88,7 @@ export default function PlatformShell({ role, canBookkeep, children }: {
           />
         </div>
       </header>
-      <PlatformAdminNav role={role} canBookkeep={canBookkeep} />
+      <PlatformAdminNav role={role} canBookkeep={canBookkeep} counts={counts} />
       {menuOpen && (
         <>
           <div className={styles.scrim} onClick={closeMenu} aria-hidden />
@@ -98,7 +100,7 @@ export default function PlatformShell({ role, canBookkeep, children }: {
               </button>
             </div>
             <nav className={styles.drawerScroll} aria-label="Support console navigation">
-              <PlatformNavBody role={role} canBookkeep={canBookkeep} variant="drawer" onNavigate={closeMenu} />
+              <PlatformNavBody role={role} canBookkeep={canBookkeep} counts={counts} variant="drawer" onNavigate={closeMenu} />
             </nav>
           </div>
         </>

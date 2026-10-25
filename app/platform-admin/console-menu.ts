@@ -1,7 +1,7 @@
 /**
  * The support console's menu — BY JOB, as data (Support console Stage 2, owner rulings Q1 + A7 + A11, 2026-10-25; drawings
  * Ub7fXLh29SC34Zp4oqKUx1, "The menu by job"). Pure, no JSX and no stylesheet, so the rail (`PlatformAdminNav.tsx`) draws
- * it and `tests/unit/support-console-menu-guard.test.ts` reads the same list.
+ * it and `tests/unit/support-console-stage2-guard.test.ts` reads the same list.
  *
  *   • Today alone at the top (a tray, not the house — the house is Home's in the icon dictionary);
  *   • five groups named for the work: Customers · Health · Growth · Product · Records; then System (dev only) and the
@@ -22,7 +22,7 @@ export type MenuItem = { href: string; label: string; icon: MenuIcon; area: Plat
 export type MenuGroup = { label: string; items: MenuItem[] };
 
 export const TODAY_ITEM: MenuItem = { href: '/platform-admin', label: 'Today', icon: 'today', area: 'overview' };
-export const DEV_TOOLS_ITEM: MenuItem = { href: '/platform-admin/dev-tools', label: 'Dev tools', icon: 'terminal', area: 'dev_tools' };
+const DEV_TOOLS_ITEM: MenuItem = { href: '/platform-admin/dev-tools', label: 'Dev tools', icon: 'terminal', area: 'dev_tools' };
 // Bookkeeping is the owner's, by email allowlist (`canAccessBookkeeping`), never a role: its area is a placeholder.
 export const BOOKKEEPING_ITEM: MenuItem = { href: '/platform-admin/bookkeeping', label: 'Bookkeeping', icon: 'wallet', area: 'overview' };
 

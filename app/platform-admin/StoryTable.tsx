@@ -10,7 +10,7 @@
  * Shared by the club and the person record, so both read the same way.
  */
 import { Undo2 } from 'lucide-react';
-import type { StoryEntry, PutBackKind } from '@/lib/platform-story';
+import type { StoryEntry, PutBackKind } from '@/lib/platform-story-view';
 import { consoleClock, consoleWhen } from '@/lib/console-dates';
 import kit from './console.module.css';
 import styles from './record.module.css';
@@ -45,7 +45,7 @@ export default function StoryTable({ entries, canPutBack, onPutBack, emptyText }
               <td>
                 <span className={styles.what}>
                   {e.title}
-                  {e.codes && <> <code className={styles.code}>{e.codes[0]}</code> → <code className={styles.code}>{e.codes[1]}</code></>}
+                  {e.codes && <> <code className={kit.code}>{e.codes[0]}</code> → <code className={kit.code}>{e.codes[1]}</code></>}
                 </span>
                 {e.putBackAt
                   ? <span className={styles.putBackAt}>Put back at {consoleClock(e.putBackAt)}</span>
@@ -53,7 +53,7 @@ export default function StoryTable({ entries, canPutBack, onPutBack, emptyText }
               </td>
               <td className={styles.colWho}>{e.who}</td>
               <td className={styles.colWhy}>
-                {e.why ?? <span className={styles.quiet}>{e.whyNotRecorded ? 'Not recorded' : '—'}</span>}
+                {e.why ?? <span className={kit.muted}>{e.whyNotRecorded ? 'Not recorded' : '—'}</span>}
               </td>
               {showColumn && (
                 <td className={styles.colPut}>

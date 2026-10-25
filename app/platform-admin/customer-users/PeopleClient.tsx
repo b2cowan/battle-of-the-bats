@@ -13,7 +13,8 @@ import { useRouter } from 'next/navigation';
 import ExportMenu from '@/components/admin/ExportMenu';
 import HelpCallout from '@/components/help/HelpCallout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { planLabel } from '@/lib/platform-labels';
+import { roleLabel } from '@/lib/member-access';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -21,7 +22,7 @@ import {
 import { takeListSearch } from '@/lib/console-recent';
 import { consoleDate } from '@/lib/console-dates';
 import kit from '../console.module.css';
-import { humanize } from '../chips';
+import { humanize, personStatusChip } from '../chips';
 import styles from './customer-users.module.css';
 import type { PeopleRow } from './people-rows';
 
@@ -34,13 +35,6 @@ const CUSTOMER_USERS_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Last Sign In', key: 'lastSignIn',  format: 'text' },
   { label: 'Organizations', key: 'orgs',       format: 'text' },
 ];
-
-function statusChip(status: string) {
-  if (status === 'active') return kit.chipOk;
-  if (status === 'banned' || status === 'suspended') return kit.chipBad;
-  if (status === 'unconfirmed' || status === 'invited') return kit.chipWarn;
-  return kit.chipQuiet;
-}
 
 type Props = { initialRows: PeopleRow[]; initialTotal: number; pageSize: number; showStaffDoor: boolean };
 
@@ -55,8 +49,11 @@ export default function PeopleClient({ initialRows, initialTotal, pageSize, show
   const [failed, setFailed] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const first = useRef(true);
+  // Only the newest read may land: an answer to older words that arrives late is dropped, never shown over the new one.
+  const latest = useRef(0);
 
   const read = useCallback(async (q: string, s: string, p: number) => {
+    const mine = ++latest.current;
     setLoading(true);
     try {
       const res = await fetch('/api/platform-admin/people', {
@@ -64,9 +61,10 @@ export default function PeopleClient({ initialRows, initialTotal, pageSize, show
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ q, status: s || null, page: p }),
         cache: 'no-store',
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok || !body) {
+      }).catch(() => null);
+      const body = res ? await res.json().catch(() => null) : null;
+      if (mine !== latest.current) return;
+      if (!res || !res.ok || !body) {
         setFailed(typeof body?.error === 'string' ? body.error : 'People could not be read just now. Try again in a moment.');
         return;
       }
@@ -74,7 +72,7 @@ export default function PeopleClient({ initialRows, initialTotal, pageSize, show
       setRows(body.rows);
       setTotal(body.total);
     } finally {
-      setLoading(false);
+      if (mine === latest.current) setLoading(false);
     }
   }, []);
 
@@ -85,17 +83,18 @@ export default function PeopleClient({ initialRows, initialTotal, pageSize, show
     if (handed) setWords(handed);
   }, []);
 
-  // A beat after the last keystroke (two characters or none), and on a filter or a page.
+  // A beat after the last keystroke (two characters or none), and on a filter or a page. One character is not a search
+  // yet: the list keeps the words it last searched, and a filter or a page still applies to those.
+  const typed = words.trim();
+  const query = typed.length === 1 ? applied : typed;
   useEffect(() => {
     if (first.current) { first.current = false; return; }
-    const q = words.trim();
-    if (q.length === 1) return;
     const timer = window.setTimeout(() => {
-      setApplied(q);
-      void read(q, status, page);
+      setApplied(query);
+      void read(query, status, page);
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [words, status, page, read]);
+  }, [query, status, page, read]);
 
   function exportRows() {
     return rows.map(row => ({
@@ -196,7 +195,7 @@ export default function PeopleClient({ initialRows, initialTotal, pageSize, show
                       )}
                     </td>
                     <td data-label="Sign-in">
-                      <span className={`${kit.chip} ${statusChip(row.authStatus)}`}>{humanize(row.authStatus)}</span>
+                      <span className={`${kit.chip} ${personStatusChip(row.authStatus)}`}>{humanize(row.authStatus)}</span>
                     </td>
                     <td className={kit.nowrap} data-label="Last signed in">
                       {row.lastSignIn ? consoleDate(row.lastSignIn) : <span className={kit.muted}>Never</span>}
@@ -207,9 +206,9 @@ export default function PeopleClient({ initialRows, initialTotal, pageSize, show
                         {row.memberships.map(m => (
                           <div key={`${row.userId}-${m.orgId}`} className={styles.membership}>
                             <Link href={`/platform-admin/orgs/${m.orgId}`} className={kit.nameLink} onClick={e => e.stopPropagation()}>{m.orgName}</Link>
-                            <span className={`${kit.chip} ${kit.chipQuiet}`}>{humanize(m.role)}</span>
-                            {m.status !== 'active' && <span className={`${kit.chip} ${statusChip(m.status)}`}>{humanize(m.status)}</span>}
-                            <span className={kit.muted}>{PLAN_CONFIG[m.planId as keyof typeof PLAN_CONFIG]?.label ?? m.planId}</span>
+                            <span className={`${kit.chip} ${kit.chipQuiet}`}>{roleLabel(m.role)}</span>
+                            {m.status !== 'active' && <span className={`${kit.chip} ${personStatusChip(m.status)}`}>{humanize(m.status)}</span>}
+                            <span className={kit.muted}>{planLabel(m.planId)}</span>
                           </div>
                         ))}
                       </div>

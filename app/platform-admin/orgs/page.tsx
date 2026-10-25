@@ -4,6 +4,7 @@ import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import OrgsClient from './OrgsClient';
 import { clubDomainStore } from '@/lib/club-domain-store';
 import { peopleByIds } from '@/lib/platform-people-lookup';
+import { fetchAll } from '@/lib/supabase-paging';
 
 /**
  * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
@@ -25,24 +26,22 @@ async function getFoundingSeasonOrgIds(): Promise<Set<string>> {
   return new Set((data ?? []).map(r => r.org_id as string));
 }
 
-const ORG_PAGE = 1000;
-
 /**
- * Every organization, read a page at a time (Support console Stage 2). The unbounded select this replaced stopped at the
- * database's default row cap without saying so — the same silent-cap bug the 1,000-account page was.
+ * Every organization, a page at a time through the shared paging rule (Support console Stage 2). The unbounded select
+ * this replaced stopped at the database's default row cap without saying so — the same silent-cap bug the 1,000-account
+ * page was.
  */
 async function readEveryOrganization(): Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }> {
-  const all: Array<Record<string, unknown>> = [];
-  for (let from = 0; ; from += ORG_PAGE) {
-    const { data, error } = await supabaseAdmin
+  try {
+    const data = await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin
       .from('organizations')
       .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, free_floor')
       .order('created_at', { ascending: false })
       .order('id')
-      .range(from, from + ORG_PAGE - 1);
-    if (error) return { data: null, error };
-    all.push(...(data ?? []));
-    if (!data || data.length < ORG_PAGE) return { data: all, error: null };
+      .range(from, to));
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
   }
 }
 
@@ -53,7 +52,7 @@ async function getOrgs() {
   const trialWindowEnd = new Date(Date.now() + 14 * 86_400_000).toISOString();
   const inactiveOwnerCutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-  const [orgsResult, foundingSeasonOrgIds, ownersResult, overridesResult] = await Promise.all([
+  const [orgsResult, foundingSeasonOrgIds, ownersResult, overridesResult, ownAddressRows] = await Promise.all([
     readEveryOrganization(),
     getFoundingSeasonOrgIds(),
     supabaseAdmin
@@ -67,6 +66,8 @@ async function getOrgs() {
       .is('revoked_at', null)
       .not('expires_at', 'is', null)
       .limit(5000),
+    // Who holds which own web address (Club Tier Stage 4e); a table that is not there yet reads as none.
+    clubDomainStore.listAll().catch(() => []),
   ]);
 
   const { data, error } = orgsResult;
@@ -82,7 +83,7 @@ async function getOrgs() {
     : { data: [] };
   // Who holds which own web address (Club Tier Stage 4e), so support can search an address to find its club. A table that is not
   // there yet reads as none.
-  const ownAddresses = new Map((await clubDomainStore.listAll().catch(() => [])).map(r => [r.org_id, r.full_name]));
+  const ownAddresses = new Map(ownAddressRows.map(r => [r.org_id, r.full_name]));
   const noteCounts = new Map<string, number>();
   for (const row of noteRows ?? []) {
     const orgId = row.org_id as string;

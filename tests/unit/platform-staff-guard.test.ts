@@ -33,23 +33,30 @@ describe('the guard', () => {
 });
 
 describe('each Customer users action checks before it acts', () => {
-  // Support console Stage 2: every action reads the person by account number (`personForAction`) and names that account's
-  // email — never an email the request carries. `update` also names the email it would set.
-  const cases: Array<[string, RegExp, string]> = [
-    ['update', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email, email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
-    ['ban', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
-    ['revoke-sessions', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email\] \}\)/, 'await fetch('],
-    ['confirm-email', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
-    ['reset', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[email\] \}\)/, 'supabaseAdmin.auth.admin.generateLink('],
+  // Support console Stage 2: every action goes through ONE front door (`personActionContext`), which reads the person by
+  // account number and refuses a staff account — or any email the action would set — before the route does anything.
+  it('the front door refuses a staff target, naming the account\'s own email and any email the action would set', () => {
+    const door = readCode('lib/platform-person-action.ts');
+    assert.match(door, /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[found\.person\.email, \.\.\.emailsFrom\(body\)\] \}\)/);
+    assert.ok(at(door, 'if (staffRefused) return') < at(door, 'return { action: { auth'), 'the refusal comes before the action is handed out');
+  });
+  const cases: Array<[string, string]> = [
+    ['update', 'supabaseAdmin.auth.admin.updateUserById('],
+    ['ban', 'supabaseAdmin.auth.admin.updateUserById('],
+    ['revoke-sessions', 'await fetch('],
+    ['confirm-email', 'supabaseAdmin.auth.admin.updateUserById('],
+    ['reset', 'supabaseAdmin.auth.admin.generateLink('],
   ];
-  for (const [name, call, act] of cases) {
+  for (const [name, act] of cases) {
     it(name, () => {
       const src = readCode(`${USERS}/${name}/route.ts`);
-      assert.match(src, call);
-      const check = at(src, 'if (staffRefused) return staffRefused;');
-      assert.ok(check < at(src, act), `${name} refuses before it acts`);
+      assert.match(src, /await personActionContext(<[^>]*>)?\(req, id/);
+      assert.ok(at(src, 'if (ctx.response) return ctx.response;') < at(src, act), `${name} goes through the front door before it acts`);
     });
   }
+  it('update names the new email to the staff refusal too', () => {
+    assert.match(readCode(`${USERS}/update/route.ts`), /personActionContext<[^>]*>\(req, id, body => \[cleanEmail\(body\.email\)\]\)/);
+  });
 
   it('every support-gated action on a user is in that list (notes are harmless; delete is super-admin only)', () => {
     const actions = readdirSync(USERS).filter(n => statSync(`${USERS}/${n}`).isDirectory());

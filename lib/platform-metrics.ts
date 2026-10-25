@@ -75,9 +75,8 @@ async function safeCount(name: string, query: PromiseLike<CountResult>) {
   return count ?? 0;
 }
 
-export function planLabel(planId: string) {
-  return PLAN_CONFIG[planId as OrgPlan]?.label ?? planId.replace(/_/g, ' ');
-}
+// One plan→label rule for the whole console, client-safe in lib/platform-labels.ts; re-exported for the screens that read it here.
+export { planLabel } from './platform-labels';
 
 export function statusLabel(status: string) {
   return status.replace(/_/g, ' ');
@@ -135,6 +134,16 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const retentionWindowEnd = daysAhead(30);
   const inactiveOwnerCutoff = thirtyDaysAgo;
 
+  // The owners, read once: the counts use them, and their sign-in facts chain straight off them (overlapping the counts).
+  const ownersRead = Promise.resolve(supabaseAdmin
+    .from('organization_members')
+    .select('organization_id, user_id, role, status')
+    .eq('role', 'owner')
+    .limit(5000));
+  const ownerSignIns = ownersRead
+    .then(res => peopleByIds(((res.data ?? []) as MemberRow[]).map(m => m.user_id)))
+    .catch(() => new Map<string, { lastSignInAt: string | null }>());
+
   const [
     orgsRes,
     membersRes,
@@ -162,14 +171,11 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .select('id, name, plan_id, subscription_status, current_period_end, created_at, enabled_addons, free_floor')
       .order('created_at', { ascending: false })
       .limit(5000),
-    supabaseAdmin
-      .from('organization_members')
-      .select('organization_id, user_id, role, status')
-      .eq('role', 'owner')
-      .limit(5000),
+    ownersRead,
     // Every customer account, counted in the database (Support console Stage 2, migration 365) — this was the length of
     // one 1,000-account page, so it stopped at 1,000 without saying so.
-    countPeople().catch(() => 0),
+    // A failed count reads 0 like every other count here (safeCount), and says so in the log.
+    countPeople().catch((error: unknown) => { console.warn('[platform-admin] people total metric failed', error); return 0; }),
     safeCount('tournaments total', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }))),
     safeCount('tournaments non-archived', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).neq('status', 'archived'))),
     safeCount('tournaments active', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
@@ -240,8 +246,8 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     row => row.expires_at && row.expires_at >= now && row.expires_at <= trialWindowEnd,
   ).length;
   // The owners' last sign-in, read by account id with no cap (it was the first 1,000 accounts, so an owner past the
-  // first page always read as inactive).
-  const authUserById = await peopleByIds(members.map(member => member.user_id)).catch(() => new Map<string, { lastSignInAt: string | null }>());
+  // first page always read as inactive). Started with the counts above, so it overlaps them.
+  const authUserById = await ownerSignIns;
 
   const byPlan = Object.fromEntries(PLAN_ORDER.map(plan => [plan, 0])) as Record<string, number>;
   const newOrgsByPlan = Object.fromEntries(PLAN_ORDER.map(plan => [plan, 0])) as Record<string, number>;

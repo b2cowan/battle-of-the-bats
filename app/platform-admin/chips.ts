@@ -11,6 +11,14 @@ export function subscriptionStatusChip(status: string): string {
   return kit.chipQuiet;
 }
 
+/** The kit chip tone for a person's sign-in status, or a membership's status (People and the person record read one rule). */
+export function personStatusChip(status: string): string {
+  if (status === 'active') return kit.chipOk;
+  if (status === 'banned' || status === 'suspended') return kit.chipBad;
+  if (status === 'unconfirmed' || status === 'invited') return kit.chipWarn;
+  return kit.chipQuiet;
+}
+
 /** The kit chip tone for an issue's severity. */
 export function severityChip(severity: string): string {
   if (severity === 'critical' || severity === 'error') return kit.chipBad;

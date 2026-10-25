@@ -1,5 +1,6 @@
 import { createClient } from './supabase-browser';
 import { getCurrentPushEndpoint, detachAccountPushOnSignOut } from './push-client';
+import { clearConsoleRecent } from './console-recent';
 
 const AUTH_TIMEOUT_MS = 15000;
 
@@ -51,6 +52,10 @@ export async function signIn(
 
 export async function signOut(): Promise<void> {
   const supabase = createClient();
+  // The support console's Find keeps the last records opened in this browser; whichever door a staff member signs out
+  // through, a shared computer must not show them to the next person (Support console Stage 2, threat T8). A no-op in a
+  // browser that never opened the console.
+  clearConsoleRecent();
   // WI-6: stop this device's ACCOUNT push BEFORE the session is destroyed — the unsubscribe API
   // authorizes the delete off the still-live session, so this can't ride the SIGNED_OUT event
   // (session's already gone there; that pattern fits follows, which are local). Best-effort +

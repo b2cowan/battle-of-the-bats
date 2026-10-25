@@ -10,19 +10,11 @@
  */
 import { supabaseAdmin } from './supabase-admin';
 import { writePlatformAuditLog } from './platform-audit';
+import { CLUB_SECTIONS } from './platform-labels';
 
-/** The sections a club can have switched on beyond its plan — the four add-on modules, in the drawn order. */
-export const CLUB_SECTIONS: ReadonlyArray<{ key: string; label: string }> = [
-  { key: 'module_house_league', label: 'House league' },
-  { key: 'module_rep_teams', label: 'Rep teams' },
-  { key: 'module_accounting', label: 'Accounting' },
-  { key: 'module_public_site', label: 'Public site' },
-];
+// The four add-on sections and their names live with the console's other words (client-safe), re-exported here.
+export { CLUB_SECTIONS, sectionLabel } from './platform-labels';
 const SECTION_KEYS = new Set(CLUB_SECTIONS.map(s => s.key));
-
-export function sectionLabel(key: string): string {
-  return CLUB_SECTIONS.find(s => s.key === key)?.label ?? key.replace(/^module_/, '').replace(/_/g, ' ');
-}
 
 export type ChangeResult = { ok: true } | { ok: false; status: number; error: string };
 
@@ -78,20 +70,26 @@ export async function applyClubIdentity(opts: {
   return { ok: true };
 }
 
+const sameSections = (a: string[], b: string[]) => a.length === b.length && a.every(k => b.includes(k));
+
 /**
- * A club's add-on sections, as the whole list. Keys outside the four are refused. The reason (and a Put it back's
- * `put_back_of`) is kept in `new_value` as `{ value, reason }` — older entries hold the bare list.
+ * A club's add-on sections: the whole list (`enabledAddons`), or one section turned on or off (`toggle`, Put it back).
+ * Keys outside the four are refused. The reason (and a Put it back's `put_back_of`) is kept in `new_value` as
+ * `{ value, reason }` — older entries hold the bare list.
+ *
+ * ⚖ NEVER OVER SOMEONE ELSE'S CHANGE. The list is written only if it is still the one just read (a compare-and-set), so
+ * two saves at the same moment cannot quietly undo each other; and a caller that knows what its screen showed passes
+ * `expected`, so a whole-list save from a stale screen is refused rather than reverting a change made since.
  */
 export async function applyClubSections(opts: {
   orgId: string;
-  enabledAddons: string[];
+  enabledAddons?: string[];
+  toggle?: { section: string; on: boolean };
+  expected?: string[];
   reason: string;
   actorEmail: string;
   extra?: Record<string, unknown>;
 }): Promise<ChangeResult> {
-  const next = [...new Set(opts.enabledAddons)];
-  if (next.some(key => !SECTION_KEYS.has(key))) return { ok: false, status: 400, error: 'That is not a section a club can have.' };
-
   const { data: current, error: readError } = await supabaseAdmin
     .from('organizations')
     .select('enabled_addons')
@@ -99,10 +97,28 @@ export async function applyClubSections(opts: {
     .single<{ enabled_addons: string[] | null }>();
   if (readError || !current) return { ok: false, status: 404, error: 'This club was not found.' };
   const before = current.enabled_addons ?? [];
-  if (before.length === next.length && before.every(k => next.includes(k))) return { ok: true };
+  const stale = { ok: false as const, status: 409, error: 'Someone else changed this club’s sections just now. Reload to see them, then try again.' };
+  if (opts.expected && !sameSections(opts.expected, before.filter(k => SECTION_KEYS.has(k)))) return stale;
 
-  const { error } = await supabaseAdmin.from('organizations').update({ enabled_addons: next }).eq('id', opts.orgId);
+  const notASection = { ok: false as const, status: 400, error: 'That is not a section a club can have.' };
+  let next: string[];
+  if (opts.toggle) {
+    if (!SECTION_KEYS.has(opts.toggle.section)) return notASection;
+    const set = new Set(before);
+    if (opts.toggle.on) set.add(opts.toggle.section); else set.delete(opts.toggle.section);
+    next = [...set];
+  } else {
+    next = [...new Set(opts.enabledAddons ?? [])];
+    if (next.some(key => !SECTION_KEYS.has(key))) return notASection;
+  }
+  if (sameSections(before, next)) return { ok: true };
+
+  let write = supabaseAdmin.from('organizations').update({ enabled_addons: next }).eq('id', opts.orgId);
+  // enabled_addons is jsonb: the filter is the exact list just read, as JSON (order included — it is the same list).
+  write = current.enabled_addons === null ? write.is('enabled_addons', null) : write.eq('enabled_addons', JSON.stringify(before));
+  const { data: written, error } = await write.select('id');
   if (error) return { ok: false, status: 500, error: 'The sections could not be saved.' };
+  if (!written || written.length === 0) return stale;
 
   await writePlatformAuditLog(opts.actorEmail, opts.orgId, 'update_addons', 'enabled_addons', before, {
     value: next, reason: opts.reason, ...opts.extra,

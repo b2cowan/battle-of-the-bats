@@ -132,7 +132,7 @@ export default async function FeedbackTriagePage({
       <div className={kit.callout}>
         <span>
           <strong>In-app feedback queue</strong>{' '}
-          {`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items, and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue); transitions are audit-logged with your email. Error group status changes (in Observability) require product access.'}`}
+          {`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items, and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue); transitions are audit-logged with your email. Error group status changes (in Errors) require product access.'}`}
         </span>
       </div>
 
@@ -207,7 +207,7 @@ export default async function FeedbackTriagePage({
                             View related issue →
                           </Link>
                         ) : row.type === 'bug' ? (
-                          <span className={`${kit.muted} ${styles.issueLink}`}>No linked error event — correlate manually by org + time in Observability.</span>
+                          <span className={`${kit.muted} ${styles.issueLink}`}>No linked error event — correlate manually by org + time in Errors.</span>
                         ) : null}
                       </details>
                     </td>

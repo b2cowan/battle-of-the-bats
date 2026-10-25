@@ -1,44 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPower } from '@/lib/platform-auth';
-import { staffTargetRefusal } from '@/lib/platform-staff-guard';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
-import { personAuditValue, personForAction, readReason, reasonRequired } from '@/lib/platform-person-action';
+import { personActionContext, personAuditValue } from '@/lib/platform-person-action';
+
+const cleanEmail = (v: unknown) => (typeof v === 'string' ? v.trim().toLowerCase() : undefined);
 
 /**
- * A person's name and/or email (the person record's one pencil; a reason is kept, Support console Stage 2). The audit
- * entry says what changed: `emailFrom`/`emailTo`, `nameFrom`/`nameTo`.
+ * A person's name and/or email (the person record's one pencil; through the one front door, Support console Stage 2). The
+ * new email is named to the staff refusal too. The audit entry says what changed: `emailFrom`/`emailTo`,
+ * `nameFrom`/`nameTo`.
  */
 export const PATCH = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPower('person_support');
-  if (auth.response) return auth.response;
-
   const { id } = await params;
-  const body = await req.json().catch(() => ({})) as { email?: string; displayName?: string; reason?: string };
-  const found = await personForAction(id);
-  if (found.response) return found.response;
-  const { person } = found;
-  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : undefined;
-  // Support acts on customers' accounts: not a staff account, and never to a staff email (2026-10-16).
-  const staffRefused = await staffTargetRefusal(auth.role, { userId: id, emails: [person.email, email] });
-  if (staffRefused) return staffRefused;
+  const ctx = await personActionContext<{ email?: string; displayName?: string }>(req, id, body => [cleanEmail(body.email)]);
+  if (ctx.response) return ctx.response;
+  const { auth, person, body, reason } = ctx.action;
 
+  const email = cleanEmail(body.email);
   const emailChanges = !!email && email !== person.email;
   const name = typeof body.displayName === 'string' ? body.displayName.trim() : undefined;
   const nameChanges = name !== undefined && name !== (person.displayName ?? '');
   if (!emailChanges && !nameChanges) return NextResponse.json({ error: 'Nothing changed.' }, { status: 400 });
   if (emailChanges && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email!)) return NextResponse.json({ error: 'That is not an email address.' }, { status: 400 });
-  const reason = readReason(body);
-  if (!reason) return reasonRequired();
 
   const updatePayload: Record<string, unknown> = {};
   if (emailChanges) {
     updatePayload.email = email;
     updatePayload.email_confirm = true;
   }
-  if (nameChanges) updatePayload.user_metadata = { display_name: name };
+  // Every name key: the lookup reads display_name, then full_name, then name, so writing one alone could leave the old
+  // name showing (a cleared name would come straight back from full_name).
+  if (nameChanges) updatePayload.user_metadata = { display_name: name, full_name: name, name };
 
   const { error } = await supabaseAdmin.auth.admin.updateUserById(id, updatePayload);
   if (error) {

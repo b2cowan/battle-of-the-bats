@@ -5,9 +5,9 @@ import { withObservability } from '@/lib/observability';
 import { captureError } from '@/lib/observability/capture';
 import { FixedWindowRateLimiter } from '@/lib/rate-limit';
 import { findClubs, findPeople, personAuthStatus } from '@/lib/platform-people-lookup';
-import { planLabel } from '@/lib/platform-metrics';
-import { subscriptionStatusLabel, humanize } from '@/lib/platform-labels';
-import { DEMO_ORG_SLUGS, isDemoOrgSlug } from '@/lib/demo-org';
+import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
+import { roleEmailLabel } from '@/lib/member-access';
+import { isDemoOrgSlug } from '@/lib/demo-org';
 import {
   checkFindWords,
   runFind,
@@ -39,6 +39,10 @@ import {
 const limiter = new FixedWindowRateLimiter(10_000, 15);
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
+const TOO_SHORT = 'Type two characters or more.';
+
+/** The organization columns a Stripe match reads, from any of its three sources. */
+type OrgCols = { id: string; name: string; slug: string; plan_id: string | null };
 
 function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: NO_STORE });
@@ -86,7 +90,7 @@ const readers: FindReaders = {
       const org = row.organizations;
       if (!org || isDemoOrgSlug(org.slug)) continue;
       const list = out.get(row.user_id) ?? [];
-      list.push({ id: org.id, name: org.name, role: humanize(row.role).toLowerCase() });
+      list.push({ id: org.id, name: org.name, role: roleEmailLabel(row.role) });
       out.set(row.user_id, list);
     }
     return out;
@@ -94,7 +98,8 @@ const readers: FindReaders = {
   async stripe(number, kind) {
     const rows: FindStripeRow[] = [];
     const seen = new Set<string>();
-    const add = (org: { id: string; name: string; slug: string; plan_id: string | null } | null, k: FindStripeKind) => {
+    // One gate for all three sources: a demo sandbox never shows, and a club found twice shows once.
+    const add = (org: OrgCols | null, k: FindStripeKind) => {
       if (!org || seen.has(org.id) || isDemoOrgSlug(org.slug)) return;
       seen.add(org.id);
       rows.push({ orgId: org.id, orgName: org.name, planLabel: planLabel(org.plan_id ?? 'tournament'), number, kind: k });
@@ -103,12 +108,12 @@ const readers: FindReaders = {
     if (kind === 'customer' || kind === 'subscription') {
       const column = kind === 'customer' ? 'stripe_customer_id' : 'stripe_subscription_id';
       const [orgs, workspaces] = await Promise.all([
-        supabaseAdmin.from('organizations').select(orgCols).eq(column, number).not('slug', 'in', `(${DEMO_ORG_SLUGS.join(',')})`).limit(8),
+        supabaseAdmin.from('organizations').select(orgCols).eq(column, number).limit(8),
         supabaseAdmin.from('team_workspaces').select(`workspace_org_id, organizations:workspace_org_id(${orgCols})`).eq(column, number).limit(8),
       ]);
       if (orgs.error || workspaces.error) throw new Error(FIND_FAILED);
-      for (const org of orgs.data ?? []) add(org as { id: string; name: string; slug: string; plan_id: string | null }, kind);
-      for (const w of (workspaces.data ?? []) as unknown as Array<{ organizations: { id: string; name: string; slug: string; plan_id: string | null } | null }>) {
+      for (const org of (orgs.data ?? []) as OrgCols[]) add(org, kind);
+      for (const w of (workspaces.data ?? []) as unknown as Array<{ organizations: OrgCols | null }>) {
         add(w.organizations, kind);
       }
     } else {
@@ -119,7 +124,7 @@ const readers: FindReaders = {
         .eq(column, number)
         .limit(8);
       if (error) throw new Error(FIND_FAILED);
-      for (const p of (data ?? []) as unknown as Array<{ organizations: { id: string; name: string; slug: string; plan_id: string | null } | null }>) {
+      for (const p of (data ?? []) as unknown as Array<{ organizations: OrgCols | null }>) {
         add(p.organizations, 'payment');
       }
     }
@@ -140,11 +145,11 @@ export const POST = withObservability(async (req: Request) => {
     try {
       body = await req.json();
     } catch {
-      return json({ error: 'Type two characters or more.' }, 400);
+      return json({ error: TOO_SHORT }, 400);
     }
     const verdict = checkFindWords((body as { q?: unknown } | null)?.q);
     if (!verdict.ok) {
-      return json({ error: verdict.reason === 'too_long' ? 'Find takes up to 120 characters.' : 'Type two characters or more.' }, 400);
+      return json({ error: verdict.reason === 'too_long' ? 'Find takes up to 120 characters.' : TOO_SHORT }, 400);
     }
     const answer = await runFind(auth.role, verdict.words, readers);
     return json(answer);

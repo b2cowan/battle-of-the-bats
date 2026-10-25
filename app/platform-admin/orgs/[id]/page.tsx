@@ -7,9 +7,7 @@ import { clubDomainStore } from '@/lib/club-domain-store';
 import { peopleByIds } from '@/lib/platform-people-lookup';
 import { buildClubStory } from '@/lib/platform-story';
 import { recordOpened } from '@/lib/platform-record-opens';
-import { planLabel } from '@/lib/platform-metrics';
-import { subscriptionStatusLabel } from '@/lib/platform-labels';
-import { CLUB_SECTIONS } from '@/lib/club-record-changes';
+import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { holdsSlot } from '@/lib/tournament-slot';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 
@@ -84,28 +82,30 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const { id } = await params;
   const { via } = await searchParams;
 
-  const { data: org } = await supabaseAdmin
-    .from('organizations')
-    .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind')
-    .eq('id', id)
-    .maybeSingle();
-  if (!org) notFound();
-
-  const [membersRes, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story] = await Promise.all([
-    supabaseAdmin.from('organization_members').select('user_id, role, status, accepted_at').eq('organization_id', id).limit(2000),
+  // Every read at once; the members' sign-in facts chain straight off the members read. Opening the record is the read
+  // that matters after a complaint (A3): its trail row is written alongside, best effort, never a gate.
+  const [orgRes, { memberRows, people }, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story] = await Promise.all([
+    supabaseAdmin
+      .from('organizations')
+      .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind')
+      .eq('id', id)
+      .maybeSingle(),
+    supabaseAdmin.from('organization_members').select('user_id, role, status, accepted_at').eq('organization_id', id).limit(2000)
+      .then(async res => {
+        const rows = (res.data ?? []) as Array<{ user_id: string; role: string; status: string | null; accepted_at: string | null }>;
+        return { memberRows: rows, people: await peopleByIds(rows.map(m => m.user_id)).catch(() => new Map()) };
+      }),
     supabaseAdmin.from('tournaments').select('id, name, status, start_date, end_date').eq('org_id', id).neq('status', 'archived').order('start_date', { ascending: false }),
     supabaseAdmin.from('rep_teams').select('id', { count: 'exact', head: true }).eq('org_id', id).eq('is_archived', false),
     supabaseAdmin.from('org_overrides').select('id, type, value, target, starts_at, expires_at, reason, created_by, created_at, revoked_at, revoked_by').eq('org_id', id).order('created_at', { ascending: false }),
     clubDomainStore.getByOrg(id).catch(() => null),
     getTeamMoves(id),
     buildClubStory(id),
+    recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'club', recordId: id, viaFind: via === 'find' }),
   ]);
+  const org = orgRes.data;
+  if (!org) notFound();
 
-  // Opening the record is the read that matters after a complaint (A3); best effort, never a gate.
-  await recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'club', recordId: id, viaFind: via === 'find' });
-
-  const memberRows = (membersRes.data ?? []) as Array<{ user_id: string; role: string; status: string | null; accepted_at: string | null }>;
-  const people = await peopleByIds(memberRows.map(m => m.user_id)).catch(() => new Map());
   const members = memberRows.map(m => {
     const p = people.get(m.user_id);
     return {
@@ -160,7 +160,6 @@ export default async function ClubRecordPage({ params, searchParams }: {
     teamMoves,
     story: { entries: story.slice(0, STORY_PAGE), total: story.length },
     planOptions: Object.entries(PLAN_CONFIG).map(([key, c]) => ({ id: key, label: c.label, tournamentLimit: c.tournamentLimit, teamLimit: c.teamLimit })),
-    sections: [...CLUB_SECTIONS],
     can: {
       support: hasPlatformPower(auth.role, 'club_support'),
       billing: hasPlatformPower(auth.role, 'club_billing'),

@@ -62,8 +62,11 @@ function pillText(count: number) {
 
 const COUNTS_FRESH_MS = 30_000;
 
-/** The waiting counts, read when the menu mounts and again on a move to another page (at most every 30 seconds). */
-function useWaitingCounts(): Partial<Record<PlatformArea, number>> {
+/**
+ * The waiting counts, read once by the frame (`PlatformShell`) and handed to the rail and the narrow-width panel, when the
+ * console mounts and again on a move to another page (at most every 30 seconds).
+ */
+export function useWaitingCounts(): Partial<Record<PlatformArea, number>> {
   const pathname = usePathname();
   const [counts, setCounts] = useState<Partial<Record<PlatformArea, number>>>({});
   const lastRead = useRef(0);
@@ -85,15 +88,15 @@ function useWaitingCounts(): Partial<Record<PlatformArea, number>> {
 }
 
 /** The groups and the foot — what the rail and the narrow-width panel both draw. */
-export function PlatformNavBody({ role, canBookkeep, variant, onNavigate }: {
+export function PlatformNavBody({ role, canBookkeep, counts, variant, onNavigate }: {
   role: PlatformRole;
   canBookkeep: boolean;
+  counts: Partial<Record<PlatformArea, number>>;
   variant: 'rail' | 'drawer';
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const groups = useMemo(() => visibleMenuGroups(role, canBookkeep, DEV_TOOLS_ON), [role, canBookkeep]);
-  const counts = useWaitingCounts();
   // A phone's rows are for thumbs (nav standard N1): 44px tall, 16px type, 17px icons.
   const drawer = variant === 'drawer';
   const rowCls = drawer ? ` ${styles.drawerRow}` : '';
@@ -182,12 +185,16 @@ export function PlatformNavBody({ role, canBookkeep, variant, onNavigate }: {
 }
 
 /** The desktop rail: the product's own, 240 wide or the strip's 64. Hidden below 900 (the panel takes over). */
-export default function PlatformAdminNav({ role, canBookkeep }: { role: PlatformRole; canBookkeep: boolean }) {
+export default function PlatformAdminNav({ role, canBookkeep, counts }: {
+  role: PlatformRole;
+  canBookkeep: boolean;
+  counts: Partial<Record<PlatformArea, number>>;
+}) {
   const railRef = useRef<HTMLElement>(null);
   return (
     <aside className={`${frame.rail} ${strip.stripLayer}`} ref={railRef}>
       <nav className={frame.railScroll} aria-label="Support console navigation">
-        <PlatformNavBody role={role} canBookkeep={canBookkeep} variant="rail" />
+        <PlatformNavBody role={role} canBookkeep={canBookkeep} counts={counts} variant="rail" />
       </nav>
       <SidebarStripTip scopeRef={railRef} />
     </aside>

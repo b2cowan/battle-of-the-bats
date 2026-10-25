@@ -1910,11 +1910,11 @@ export const SCREENS = [
   // house rules by being listed. The signed-in role is `platformAdmin` (tests/uat/.auth/platform-admin.json). The club record
   // (/platform-admin/orgs/<id>) is NOT listed: the fixture context carries no organization id for it; Stage 2 rebuilds it
   // and lists it then.
-  { id: 'platform-orgs',            session: 'platformAdmin', path: () => '/platform-admin/orgs',            ready: 'h1:has-text("Organizations")',
+  { id: 'platform-orgs',            session: 'platformAdmin', path: () => '/platform-admin/orgs',            ready: 'h1:has-text("Clubs & portals")',
     route: 'app/platform-admin/orgs/page' },
-  { id: 'platform-customer-users',  session: 'platformAdmin', path: () => '/platform-admin/customer-users',  ready: 'h1:has-text("Customer users")',
+  { id: 'platform-customer-users',  session: 'platformAdmin', path: () => '/platform-admin/customer-users',  ready: 'h1:has-text("People")',
     route: 'app/platform-admin/customer-users/page' },
-  { id: 'platform-observability',   session: 'platformAdmin', path: () => '/platform-admin/observability',   ready: 'h1:has-text("Observability")',
+  { id: 'platform-observability',   session: 'platformAdmin', path: () => '/platform-admin/observability',   ready: 'h1:has-text("Errors")',
     route: 'app/platform-admin/observability/page' },
   { id: 'platform-plans-pricing',   session: 'platformAdmin', path: () => '/platform-admin/plans-pricing',   ready: 'h1:has-text("Plans & pricing")',
     route: 'app/platform-admin/plans-pricing/page' },

@@ -7,7 +7,7 @@
  * read-only database functions instead, which search and page inside the database, with no cap.
  *
  * ⚠ SERVER ONLY. The functions are SECURITY DEFINER over `auth.users` and are callable by the service role alone (the
- * migration revokes them from PUBLIC, anon and authenticated; `tests/unit/support-console-lookup-guard.test.ts`). Never
+ * migration revokes them from PUBLIC, anon and authenticated; `tests/unit/support-console-stage2-guard.test.ts`). Never
  * import this from a client component, and never hand its rows to a page a customer can reach.
  *
  * Every person row carries exactly the listed columns — id, email, name, last sign-in, created, banned-until,
@@ -29,14 +29,12 @@ export type PlatformPerson = {
 
 export type PersonAuthStatus = 'active' | 'unconfirmed' | 'banned';
 
-export type FoundClub = {
+type FoundClub = {
   id: string;
   name: string;
   slug: string;
   planId: string | null;
   subscriptionStatus: string | null;
-  accountKind: string | null;
-  ownAddress: string | null;
   ownerEmail: string | null;
 };
 
@@ -51,8 +49,8 @@ type PersonRow = {
   total_count?: number | string | null;
 };
 
-/** The sign-in service's own refusal of the lookup, mapped to one fixed sentence by every caller that shows it. */
-export class PeopleLookupError extends Error {
+/** A refused lookup: one fixed sentence (never the database's own message, which can echo the words searched for). */
+class PeopleLookupError extends Error {
   constructor() {
     super('The sign-in records could not be read.');
     this.name = 'PeopleLookupError';
@@ -78,11 +76,8 @@ export function personAuthStatus(person: Pick<PlatformPerson, 'bannedUntil' | 'e
   return 'active';
 }
 
-function staffExclusions(): string[] {
-  return getBootstrapAdminEmails();
-}
-
-function totalOf(rows: PersonRow[]): number {
+/** The whole match's size, from a page's first row (0 for an empty page). */
+function totalOf(rows: Array<{ total_count?: number | string | null }>): number {
   return rows.length > 0 ? Number(rows[0].total_count ?? rows.length) : 0;
 }
 
@@ -100,7 +95,7 @@ export async function searchPeople(opts: {
   const { data, error } = await supabaseAdmin.rpc('platform_people_search', {
     p_query: opts.query,
     p_status: opts.status ?? null,
-    p_exclude_emails: staffExclusions(),
+    p_exclude_emails: getBootstrapAdminEmails(),
     p_clubs: opts.matchClubs ?? false,
     p_offset: opts.offset,
     p_limit: opts.limit,
@@ -124,7 +119,7 @@ export async function countPeople(): Promise<number> {
 export async function findPeople(query: string): Promise<{ rows: PlatformPerson[]; total: number }> {
   const { data, error } = await supabaseAdmin.rpc('platform_find_people', {
     p_query: query,
-    p_exclude_emails: staffExclusions(),
+    p_exclude_emails: getBootstrapAdminEmails(),
   });
   if (error) throw new PeopleLookupError();
   const rows = (data ?? []) as PersonRow[];
@@ -149,11 +144,9 @@ export async function findClubs(query: string): Promise<{ rows: FoundClub[]; tot
       slug: r.slug,
       planId: r.plan_id,
       subscriptionStatus: r.subscription_status,
-      accountKind: r.account_kind,
-      ownAddress: r.own_address,
       ownerEmail: r.owner_email,
     })),
-    total: rows.length > 0 ? Number(rows[0].total_count ?? rows.length) : 0,
+    total: totalOf(rows),
   };
 }
 
