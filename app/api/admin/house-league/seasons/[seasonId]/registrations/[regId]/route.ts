@@ -3,13 +3,8 @@ import { getAuthContextWithRole, forbidden } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { canMarkLeagueFeePaid, setLeagueFeePaid, voidLeagueRegistrationFee } from '@/lib/league-fee-paid';
 import { moveRefused } from '@/lib/club-money-route';
-import {
-  getLeagueSeasonById,
-  updateRegistrationStatus,
-  promoteFromWaitlist,
-  getWaitlistForDivision,
-  getLedgerEntries,
-} from '@/lib/db';
+import { getLeagueSeasonById } from '@/lib/db';
+import { changeLeagueDivision, moveLeagueRegistration } from '@/lib/league-registration-place';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import {
@@ -64,25 +59,47 @@ async function fetchReg(regId: string, seasonId: string) {
   return data ? mapRow(data) : null;
 }
 
-async function compactWaitlist(divisionId: string, afterPosition: number) {
-  const { data: remaining } = await supabaseAdmin
-    .from('league_registrations')
-    .select('id, waitlist_position')
-    .eq('division_id', divisionId)
-    .eq('status', 'waitlisted')
-    .gt('waitlist_position', afterPosition)
-    .order('waitlist_position', { ascending: true });
-
-  if (!remaining?.length) return;
-
-  await Promise.all(
-    remaining.map((r: any) =>
-      supabaseAdmin
-        .from('league_registrations')
-        .update({ waitlist_position: r.waitlist_position - 1, updated_at: new Date().toISOString() })
-        .eq('id', r.id),
-    ),
-  );
+/** The waitlist moved up (inside the same locked database step that freed the spot, mig 362): tell that family. */
+function emailPromoted(
+  org: Parameters<typeof systemMailFace>[0],
+  season: { name: string },
+  seasonId: string,
+  promotedId: string,
+): void {
+  void (async () => {
+    try {
+      const next = await fetchReg(promotedId, seasonId);
+      if (!next) return;
+      let divisionName = 'your division';
+      if (next.divisionId) {
+        const { data: div } = await supabaseAdmin.from('league_divisions').select('name').eq('id', next.divisionId).single();
+        if (div) divisionName = div.name;
+      }
+      const face = await systemMailFace(org);
+      await sendTransactionalEmail({
+        key: 'league_waitlist_promoted',
+        to: next.guardianEmail,
+        vars: {
+          guardianFirstName: next.guardianFirstName,
+          playerFirstName:   next.playerFirstName,
+          playerLastName:    next.playerLastName,
+          seasonName:        season.name,
+          divisionName,
+        },
+        defaultSubject: `You're off the waitlist — ${season.name}`,
+        defaultHtml: leagueWaitlistPromotedHtml({
+          playerFirstName:  next.playerFirstName,
+          playerLastName:   next.playerLastName,
+          guardianFirstName: next.guardianFirstName,
+          seasonName:       season.name,
+          divisionName,
+          registrationId:   next.id,
+          face,
+        }),
+        family: face ? { face, reason: `${next.playerFirstName} was registered for ${season.name}` } : undefined,
+      });
+    } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
+  })();
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -153,12 +170,31 @@ export const PATCH = withObservability(async (req: Request,
     if (body.teamId != null && !(await teamsInSeason(seasonId, [body.teamId]))) {
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if ('divisionId' in body) patch.division_id = body.divisionId ?? null;
-    if ('teamId'     in body) patch.team_id     = body.teamId     ?? null;
-    await supabaseAdmin.from('league_registrations').update(patch).eq('id', regId);
+    // A new division is a placement (Part 3, mig 362): a child holding a spot needs one there, a waitlisted child joins
+    // the end of the new line, and a spot freed in the old division goes to its first waiting child.
+    let promotedId: string | null = null;
+    if ('divisionId' in body) {
+      const moved = await changeLeagueDivision(ctx!.org.id, seasonId, regId, body.divisionId ?? null, season.autoPromoteWaitlist);
+      if ('refusal' in moved) {
+        if (moved.refusal === 'full') {
+          const { data: div } = await supabaseAdmin.from('league_divisions').select('name').eq('id', body.divisionId).single();
+          return NextResponse.json({ error: `${div?.name ?? 'That division'} is full. Add to the waitlist instead.`, code: 'division_full' }, { status: 409 });
+        }
+        if (moved.refusal === 'no_division') {
+          return NextResponse.json({ error: 'A waitlisted registration needs a division' }, { status: 422 });
+        }
+        return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+      }
+      promotedId = moved.promotedId;
+    }
+    if ('teamId' in body) {
+      await supabaseAdmin.from('league_registrations')
+        .update({ team_id: body.teamId ?? null, updated_at: new Date().toISOString() }).eq('id', regId);
+    }
+    if (promotedId) emailPromoted(ctx!.org, season, seasonId, promotedId);
     const updated = await fetchReg(regId, seasonId);
-    return NextResponse.json({ registration: updated });
+    const promoted = promotedId ? await fetchReg(promotedId, seasonId) : null;
+    return NextResponse.json(promoted ? { registration: updated, promoted } : { registration: updated });
   }
 
   // ── status change ────────────────────────────────────────────────────────────
@@ -205,91 +241,84 @@ export const PATCH = withObservability(async (req: Request,
     if (div) divisionName = div.name;
   }
 
-  // ── → active (approve / promote from waitlist) ────────────────────────────
-  if (newStatus === 'active') {
-    const oldWaitlistPos = reg.waitlistPosition;
-    await updateRegistrationStatus(regId, 'active', adminNotes);
-
-    // Compact waitlist if this was a waitlisted entry
-    if (reg.status === 'waitlisted' && divisionId && oldWaitlistPos !== null) {
-      await compactWaitlist(divisionId, oldWaitlistPos);
-    }
-
-    void (async () => {
-      try {
-        const face = await faceOnce();
-        await sendTransactionalEmail({
-          key: 'league_registration_approved',
-          to: reg.guardianEmail,
-          vars: {
-            guardianFirstName: reg.guardianFirstName,
-            playerFirstName:   reg.playerFirstName,
-            playerLastName:    reg.playerLastName,
-            seasonName:        season.name,
-            divisionName,
-          },
-          defaultSubject: `Registration approved — ${season.name}`,
-          defaultHtml: leagueAdminApprovedHtml({ ...emailBase, divisionName, face }),
-          family: familyOf(face, reg.playerFirstName),
-        });
-      } catch (e) { console.error('[email] leagueAdminApprovedHtml failed', e); }
-    })();
-
-    const updated = await fetchReg(regId, seasonId);
-    return NextResponse.json({ registration: updated });
-  }
-
-  // ── → waitlisted ──────────────────────────────────────────────────────────
-  if (newStatus === 'waitlisted') {
-    if (!divisionId) {
+  // ── → active / pending_review / waitlisted: one locked move (Part 3, mig 362) ───────────────────
+  // Accepting a waitlisted child needs a free spot; staff are refused, never silently over-fill.
+  if (newStatus === 'active' || newStatus === 'pending_review' || newStatus === 'waitlisted') {
+    if (newStatus === 'waitlisted' && !divisionId) {
       return NextResponse.json({ error: 'Cannot waitlist a registration with no division' }, { status: 422 });
     }
-    const { count } = await supabaseAdmin
-      .from('league_registrations')
-      .select('*', { count: 'exact', head: true })
-      .eq('division_id', divisionId)
-      .eq('status', 'waitlisted');
+    // With the season's auto-promote, a child who held a spot going to the waitlist frees it for the first child waiting.
+    const result = await moveLeagueRegistration(ctx!.org.id, seasonId, regId, newStatus, adminNotes ?? null, season.autoPromoteWaitlist);
+    if ('refusal' in result) {
+      if (result.refusal === 'full') {
+        return NextResponse.json({ error: `${divisionName} is full. Add to the waitlist instead.`, code: 'division_full' }, { status: 409 });
+      }
+      if (result.refusal === 'duplicate') {
+        return NextResponse.json({ error: `${reg.playerFirstName} ${reg.playerLastName} already has a registration this season.`, code: 'duplicate' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Cannot waitlist a registration with no division' }, { status: 422 });
+    }
+    // One email per real change, decided under the lock (a double-click on Accept sends one).
+    const changed = result.moved.changed;
+    if (result.moved.promotedId) emailPromoted(ctx!.org, season, seasonId, result.moved.promotedId);
 
-    const newPos = (count ?? 0) + 1;
-    await supabaseAdmin
-      .from('league_registrations')
-      .update({
-        status:           'waitlisted',
-        waitlist_position: newPos,
-        admin_notes:      adminNotes ?? reg.adminNotes,
-        updated_at:       new Date().toISOString(),
-      })
-      .eq('id', regId);
+    if (changed && newStatus === 'active') {
+      void (async () => {
+        try {
+          const face = await faceOnce();
+          await sendTransactionalEmail({
+            key: 'league_registration_approved',
+            to: reg.guardianEmail,
+            vars: {
+              guardianFirstName: reg.guardianFirstName,
+              playerFirstName:   reg.playerFirstName,
+              playerLastName:    reg.playerLastName,
+              seasonName:        season.name,
+              divisionName,
+            },
+            defaultSubject: `Registration approved — ${season.name}`,
+            defaultHtml: leagueAdminApprovedHtml({ ...emailBase, divisionName, face }),
+            family: familyOf(face, reg.playerFirstName),
+          });
+        } catch (e) { console.error('[email] leagueAdminApprovedHtml failed', e); }
+      })();
+    }
 
-    void (async () => {
-      try {
-        const face = await faceOnce();
-        await sendTransactionalEmail({
-          key: 'league_registration_waitlisted',
-          to: reg.guardianEmail,
-          vars: {
-            guardianFirstName: reg.guardianFirstName,
-            playerFirstName:   reg.playerFirstName,
-            playerLastName:    reg.playerLastName,
-            seasonName:        season.name,
-            divisionName,
-            waitlistPosition:  newPos,
-          },
-          defaultSubject: `Waitlist update — ${season.name}`,
-          defaultHtml: leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos, face }),
-          family: familyOf(face, reg.playerFirstName),
-        });
-      } catch (e) { console.error('[email] leagueAdminWaitlistedHtml failed', e); }
-    })();
+    if (changed && newStatus === 'waitlisted') {
+      const newPos = result.moved.waitlistPosition!;
+      void (async () => {
+        try {
+          const face = await faceOnce();
+          await sendTransactionalEmail({
+            key: 'league_registration_waitlisted',
+            to: reg.guardianEmail,
+            vars: {
+              guardianFirstName: reg.guardianFirstName,
+              playerFirstName:   reg.playerFirstName,
+              playerLastName:    reg.playerLastName,
+              seasonName:        season.name,
+              divisionName,
+              waitlistPosition:  newPos,
+            },
+            defaultSubject: `Waitlist update — ${season.name}`,
+            defaultHtml: leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos, face }),
+            family: familyOf(face, reg.playerFirstName),
+          });
+        } catch (e) { console.error('[email] leagueAdminWaitlistedHtml failed', e); }
+      })();
+    }
 
     const updated = await fetchReg(regId, seasonId);
-    return NextResponse.json({ registration: updated });
+    const promoted = result.moved.promotedId ? await fetchReg(result.moved.promotedId, seasonId) : null;
+    return NextResponse.json(promoted ? { registration: updated, promoted } : { registration: updated });
   }
 
   // ── → declined ────────────────────────────────────────────────────────────
   if (newStatus === 'declined') {
-    const feeRefusal = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'declined', adminNotes);
-    if (feeRefusal) return moveRefused(feeRefusal);
+    // One locked step: the fee line voided, the registration ended, its waitlist gap closed and — when it held a spot and
+    // the season auto-promotes — that spot given to the first child waiting (mig 362).
+    const ended = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'declined', adminNotes, season.autoPromoteWaitlist);
+    if ('refused' in ended) return moveRefused(ended.refused);
 
     void (async () => {
       try {
@@ -312,106 +341,19 @@ export const PATCH = withObservability(async (req: Request,
     })();
 
     const updated = await fetchReg(regId, seasonId);
-
-    // Auto-promote
-    if (season.autoPromoteWaitlist && divisionId) {
-      const waitlist = await getWaitlistForDivision(divisionId);
-      if (waitlist.length > 0) {
-        const next = waitlist[0];
-        const oldPos = next.waitlistPosition;
-        await promoteFromWaitlist(next.id);
-        if (oldPos !== null) await compactWaitlist(divisionId, oldPos);
-
-        const promotedDivisionName = divisionName;
-        void (async () => {
-          try {
-            const face = await faceOnce();
-            await sendTransactionalEmail({
-              key: 'league_waitlist_promoted',
-              to: next.guardianEmail,
-              vars: {
-                guardianFirstName: next.guardianFirstName,
-                playerFirstName:   next.playerFirstName,
-                playerLastName:    next.playerLastName,
-                seasonName:        season.name,
-                divisionName:      promotedDivisionName,
-              },
-              defaultSubject: `You're off the waitlist — ${season.name}`,
-              defaultHtml: leagueWaitlistPromotedHtml({
-                playerFirstName:  next.playerFirstName,
-                playerLastName:   next.playerLastName,
-                guardianFirstName: next.guardianFirstName,
-                seasonName:       season.name,
-                divisionName:     promotedDivisionName,
-                registrationId:   next.id,
-                face,
-              }),
-              family: familyOf(face, next.playerFirstName),
-            });
-          } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
-        })();
-
-        const promoted = await fetchReg(next.id, seasonId);
-        return NextResponse.json({ registration: updated, promoted });
-      }
-    }
-
-    return NextResponse.json({ registration: updated });
+    if (ended.promotedId) emailPromoted(ctx!.org, season, seasonId, ended.promotedId);
+    const promoted = ended.promotedId ? await fetchReg(ended.promotedId, seasonId) : null;
+    return NextResponse.json(promoted ? { registration: updated, promoted } : { registration: updated });
   }
 
-  // ── → withdrawn ───────────────────────────────────────────────────────────
+  // ── → withdrawn (no outbound email for a withdrawal) ──────────────────────
   if (newStatus === 'withdrawn') {
-    const feeRefusal = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'withdrawn', adminNotes);
-    if (feeRefusal) return moveRefused(feeRefusal);
+    const ended = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'withdrawn', adminNotes, season.autoPromoteWaitlist);
+    if ('refused' in ended) return moveRefused(ended.refused);
     const updated = await fetchReg(regId, seasonId);
-
-    // Auto-promote (same logic as declined, no outbound email for withdrawal)
-    if (season.autoPromoteWaitlist && divisionId) {
-      const waitlist = await getWaitlistForDivision(divisionId);
-      if (waitlist.length > 0) {
-        const next = waitlist[0];
-        const oldPos = next.waitlistPosition;
-        await promoteFromWaitlist(next.id);
-        if (oldPos !== null) await compactWaitlist(divisionId, oldPos);
-
-        void (async () => {
-          try {
-            const face = await faceOnce();
-            await sendTransactionalEmail({
-              key: 'league_waitlist_promoted',
-              to: next.guardianEmail,
-              vars: {
-                guardianFirstName: next.guardianFirstName,
-                playerFirstName:   next.playerFirstName,
-                playerLastName:    next.playerLastName,
-                seasonName:        season.name,
-                divisionName,
-              },
-              defaultSubject: `You're off the waitlist — ${season.name}`,
-              defaultHtml: leagueWaitlistPromotedHtml({
-                playerFirstName:  next.playerFirstName,
-                playerLastName:   next.playerLastName,
-                guardianFirstName: next.guardianFirstName,
-                seasonName:       season.name,
-                divisionName,
-                registrationId:   next.id,
-                face,
-              }),
-              family: familyOf(face, next.playerFirstName),
-            });
-          } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
-        })();
-
-        const promoted = await fetchReg(next.id, seasonId);
-        return NextResponse.json({ registration: updated, promoted });
-      }
-    }
-
-    return NextResponse.json({ registration: updated });
+    if (ended.promotedId) emailPromoted(ctx!.org, season, seasonId, ended.promotedId);
+    const promoted = ended.promotedId ? await fetchReg(ended.promotedId, seasonId) : null;
+    return NextResponse.json(promoted ? { registration: updated, promoted } : { registration: updated });
   }
-
-  // ── → pending_review ─────────────────────────────────────────────────────
-  await updateRegistrationStatus(regId, 'pending_review', adminNotes);
-  const updated = await fetchReg(regId, seasonId);
-  return NextResponse.json({ registration: updated });
+  return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations/[regId]' });

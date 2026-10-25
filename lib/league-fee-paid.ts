@@ -73,19 +73,23 @@ export async function setLeagueFeePaid(
   return null;
 }
 
-/** Ending a registration voids its fee and status in one database transaction. */
+/** Ending a registration voids its fee and ends it in one database transaction, which also closes its waitlist gap and,
+ *  with `promote` and a child who held a spot, gives that spot to the first child waiting (mig 362, Club Tier 9b-1 Part 3).
+ *  Returns the refusal (a closed fiscal year), or the child promoted. */
 export async function voidLeagueRegistrationFee(
   ctx: Pick<AuthContextWithRole, 'org' | 'user'>,
   seasonId: string,
   regId: string,
   status: 'declined' | 'withdrawn',
   notes: string | null,
-): Promise<Refused | null> {
-  const { error } = await supabaseAdmin.rpc('club_league_fee_end', {
+  promote = false,
+): Promise<{ refused: Refused } | { promotedId: string | null }> {
+  const { data, error } = await supabaseAdmin.rpc('league_registration_end', {
     p_org: ctx.org.id, p_season: seasonId, p_registration: regId,
-    p_status: status, p_notes: notes ?? null, p_actor: ctx.user.id,
+    p_status: status, p_notes: notes ?? null, p_actor: ctx.user.id, p_promote: promote,
   });
-  if (error && isClosedYearError(error)) return closedYearFromError(ctx.org.id, []);
+  if (error && isClosedYearError(error)) return { refused: await closedYearFromError(ctx.org.id, []) };
   if (error) throw error;
-  return null;
+  const row = (Array.isArray(data) ? data[0] : data) as { promoted: string | null } | null;
+  return { promotedId: row?.promoted ?? null };
 }

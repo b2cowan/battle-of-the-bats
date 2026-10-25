@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   getLeagueSeasonBySlug,
   getDivisionsForSeason,
-  createRegistration,
 } from '@/lib/db';
+import { placeLeagueRegistration } from '@/lib/league-registration-place';
+import { leaguePrice } from '@/lib/league-price';
+import { isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import {
   leagueRegistrationApprovedHtml,
@@ -82,6 +83,7 @@ export const POST = withObservability(async (req: Request,
 
   if (!playerFirstName)  errors.playerFirstName  = 'Player first name is required';
   if (!playerLastName)   errors.playerLastName   = 'Player last name is required';
+  if (playerDob && !isCalendarDate(playerDob)) errors.playerDateOfBirth = 'Enter a real date of birth';
   if (!guardianFirst)    errors.guardianFirstName = 'Guardian first name is required';
   if (!guardianLast)     errors.guardianLastName  = 'Guardian last name is required';
   if (!guardianEmail)    errors.guardianEmail     = 'Guardian email is required';
@@ -115,61 +117,51 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
-  // 5. Check capacity + determine registration status
-  const { count: activeCount } = await supabaseAdmin
-    .from('league_registrations')
-    .select('id', { count: 'exact', head: true })
-    .eq('division_id', division.id)
-    .eq('status', 'active');
-
-  const active = activeCount ?? 0;
-  const underCapacity = division.capacity == null || active < division.capacity;
-
-  let regStatus: 'active' | 'pending_review' | 'waitlisted';
-  let waitlistPosition: number | null = null;
-
-  if (underCapacity) {
-    regStatus = season.autoApproveUnderCapacity ? 'active' : 'pending_review';
-  } else {
-    regStatus = 'waitlisted';
-    const { count: wlCount } = await supabaseAdmin
-      .from('league_registrations')
-      .select('id', { count: 'exact', head: true })
-      .eq('division_id', division.id)
-      .eq('status', 'waitlisted');
-    waitlistPosition = (wlCount ?? 0) + 1;
-  }
-
   // Last gate before the write + mail, so a family retrying after a late refusal (a stale
   // division, a full season) has not spent any of its budget on an email that never went.
   const recipientThrottled = throttlePublicFormRecipient(guardianEmail!);
   if (recipientThrottled) return recipientThrottled;
 
-  // 6. Insert registration
+  // 5. Place the child: ONE locked database step counts the spots (accepted and received children hold one), decides
+  // accepted / received / waitlisted, takes the next waitlist place and refuses the same child twice (Part 3, mig 362).
+  // The price is the one rule on the club's day of sign-up (lib/league-price.ts), recorded on the registration.
   const waiverAcceptedAt = season.waiverText && waiverAccepted ? new Date().toISOString() : null;
-  const registration = await createRegistration({
-    seasonId:           season.id,
-    orgId:              org.id,
-    divisionId:         division.id,
-    playerFirstName:    playerFirstName!,
-    playerLastName:     playerLastName!,
-    playerDateOfBirth:  playerDob,
-    playerJerseyPref:   playerJersey,
-    playerPositionPref: playerPosition,
-    playerNotes:        playerNotes,
-    guardianFirstName:  guardianFirst!,
-    guardianLastName:   guardianLast!,
-    guardianEmail:      guardianEmail!,
-    guardianPhone:      guardianPhone,
-    status:             regStatus,
-    waitlistPosition,
-    source:             'public_form',
-    // Together these make createRegistration file the consent-ledger row (mig 252) —
-    // the route only decides WHETHER acceptance was witnessed; the mechanics live
-    // with the insert.
-    waiverAcceptedAt,
-    waiverText:         season.waiverText ?? null,
+  const result = await placeLeagueRegistration({
+    orgId:      org.id,
+    seasonId:   season.id,
+    divisionId: division.id,
+    want:       'auto',
+    feeAmount:  leaguePrice(division, season, tournamentToday())?.amount ?? null,
+    child: {
+      firstName:         playerFirstName!,
+      lastName:          playerLastName!,
+      dateOfBirth:       playerDob,
+      jerseyPref:        playerJersey,
+      positionPref:      playerPosition,
+      notes:             playerNotes,
+      guardianFirstName: guardianFirst!,
+      guardianLastName:  guardianLast!,
+      guardianEmail:     guardianEmail!,
+      guardianPhone:     guardianPhone,
+      source:            'public_form',
+      waiverAcceptedAt,
+    },
+    // With waiverAcceptedAt this files the consent-ledger row (mig 252): the route only decides WHETHER acceptance was
+    // witnessed; the mechanics live with the placement.
+    waiverText: season.waiverText ?? null,
   });
+  if ('refusal' in result) {
+    if (result.refusal === 'duplicate') {
+      return NextResponse.json(
+        { error: `${playerFirstName} ${playerLastName} is already signed up for this season. Use your reference to check their status.`, code: 'duplicate' },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: 'Please select a valid division' }, { status: 400 });
+  }
+  const registration = result.placed;
+  const regStatus = registration.status;
+  const waitlistPosition = registration.waitlistPosition;
 
   // 7. Send confirmation email (fire-and-forget — registration succeeds even if email fails)
   const emailParams = {

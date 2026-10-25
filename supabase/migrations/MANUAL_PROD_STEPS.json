@@ -326,6 +326,10 @@
     "361_house_league_prices_and_signups.sql": {
       "prod": "pending",
       "note": "Additive columns (visible to check:migrations) PLUS a replaced function: club_league_fee_set now posts the registration's recorded fee_amount, falling back to the season price (same signature, so prod's old code keeps working), and a data backfill of fee_amount from the season price. Apply to prod at or before the promote carrying Club Tier 9b-1 Part 1. Applied to DEV 2026-10-25."
+    },
+    "362_a_house_league_spot_is_taken_once.sql": {
+      "prod": "pending",
+      "note": "Functions only (invisible to check:migrations): league_registration_place / _move / _change_division / _end, league_waitlist_promote (+ helpers league_held_count, league_waitlist_close_gap, league_waitlist_promote_locked, league_name_key, league_is_duplicate); club_league_fee_end redefined with the same signature to run league_registration_end without promoting. The code carrying Club Tier 9b-1 Part 3 CALLS the new functions, so this MUST be applied to prod BEFORE that promote, or every house-league sign-up and staff status change 500s (the public demo too, after its reseed). Requires 361. Applied to DEV 2026-10-25; race-tested there with scripts/house-league-signup-race.mjs (16 checks)."
     }
   }
 }

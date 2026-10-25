@@ -2300,34 +2300,6 @@ export interface LeagueGameInput {
   notes?: string | null;
 }
 
-export interface PublicRegistrationInput {
-  seasonId: string;
-  // Denormalized tenant — NOT NULL since migration 251, and the insert fails without it.
-  // Both callers (public form, admin manual add) already hold the org in scope.
-  orgId: string;
-  divisionId: string | null;
-  playerFirstName: string;
-  playerLastName: string;
-  playerDateOfBirth?: string | null;
-  playerJerseyPref?: string | null;
-  playerPositionPref?: string | null;
-  playerNotes?: string | null;
-  guardianFirstName: string;
-  guardianLastName: string;
-  guardianEmail: string;
-  guardianPhone?: string | null;
-  status?: LeagueRegistrationStatus;
-  waitlistPosition?: number | null;
-  source?: 'public_form' | 'admin_manual';
-  // Moment the guardian accepted the season waiver on the public form (mig 252).
-  // Stays null for admin-manual rows: no guardian saw a waiver.
-  waiverAcceptedAt?: string | null;
-  // The season's waiver text AT ACCEPTANCE — pass it with waiverAcceptedAt and the
-  // consent-ledger row is filed automatically (see createRegistration). Only the
-  // caller can know acceptance was witnessed; the filing mechanics live in one place.
-  waiverText?: string | null;
-}
-
 // ─── Mappers ──────────────────────────────────────────────────────────────────
 
 function mapLeagueSeason(row: any): LeagueSeason {
@@ -2735,66 +2707,8 @@ export async function getRegistrationsForDivision(
   return (data ?? []).map(mapLeagueRegistration);
 }
 
-export async function createRegistration(input: PublicRegistrationInput): Promise<LeagueRegistration> {
-  const { data } = await supabaseAdmin
-    .from('league_registrations')
-    .insert({
-      season_id:            input.seasonId,
-      org_id:               input.orgId,
-      division_id:          input.divisionId ?? null,
-      player_first_name:    input.playerFirstName,
-      player_last_name:     input.playerLastName,
-      player_date_of_birth: input.playerDateOfBirth ?? null,
-      player_jersey_pref:   input.playerJerseyPref ?? null,
-      player_position_pref: input.playerPositionPref ?? null,
-      player_notes:         input.playerNotes ?? null,
-      guardian_first_name:  input.guardianFirstName,
-      guardian_last_name:   input.guardianLastName,
-      guardian_email:       normalizeGuardianEmailRequired(input.guardianEmail),
-      guardian_phone:       input.guardianPhone ?? null,
-      status:               input.status ?? 'pending_review',
-      waitlist_position:    input.waitlistPosition ?? null,
-      source:               input.source ?? 'public_form',
-      waiver_accepted_at:   input.waiverAcceptedAt ?? null,
-    })
-    .select()
-    .single();
-  const registration = mapLeagueRegistration(data!);
-
-  // A witnessed waiver acceptance files its consent-ledger row HERE, in the same
-  // seam as the insert — so a future caller (bulk import, partner API) cannot
-  // record acceptance and forget the compliance write. AWAITED, deliberately —
-  // unlike the confirmation email: this is compliance EVIDENCE, and a bare
-  // fire-and-forget can be torn down mid-flight on Amplify once the response
-  // is sent (the documented after()-drops gotcha). The helper swallows its own
-  // errors, so a failed ledger write logs loudly but never fails registration.
-  if (input.waiverAcceptedAt && input.waiverText) {
-    const { recordLeagueWaiverConsent } = await import('./org-people');
-    await recordLeagueWaiverConsent({
-      orgId: input.orgId,
-      guardianEmailNormalized: normalizeGuardianEmailRequired(input.guardianEmail),
-      registrationId: registration.id,
-      waiverText: input.waiverText,
-      acceptedAt: input.waiverAcceptedAt,
-    });
-  }
-  return registration;
-}
-
-export async function updateRegistrationStatus(
-  registrationId: string,
-  status: LeagueRegistrationStatus,
-  adminNotes?: string
-): Promise<void> {
-  const patch: Record<string, unknown> = {
-    status,
-    updated_at: new Date().toISOString(),
-  };
-  if (adminNotes !== undefined) patch.admin_notes = adminNotes;
-  // Clear waitlist_position when moving out of waitlist
-  if (status !== 'waitlisted') patch.waitlist_position = null;
-  await supabaseAdmin.from('league_registrations').update(patch).eq('id', registrationId);
-}
+// A child is placed, accepted, waitlisted or promoted ONLY through lib/league-registration-place.ts (one locked database
+// step, mig 362): the old blind insert, status flip and promote helpers were deleted with Club Tier 9b-1 Part 3.
 
 export async function assignRegistrationToTeam(registrationId: string, teamId: string): Promise<void> {
   await supabaseAdmin
@@ -2807,23 +2721,6 @@ export async function bulkAssignTeams(
   assignments: Array<{ registrationId: string; teamId: string }>
 ): Promise<void> {
   await Promise.all(assignments.map(a => assignRegistrationToTeam(a.registrationId, a.teamId)));
-}
-
-export async function getWaitlistForDivision(divisionId: string): Promise<LeagueRegistration[]> {
-  const { data } = await supabaseAdmin
-    .from('league_registrations')
-    .select('*')
-    .eq('division_id', divisionId)
-    .eq('status', 'waitlisted')
-    .order('waitlist_position', { ascending: true });
-  return (data ?? []).map(mapLeagueRegistration);
-}
-
-export async function promoteFromWaitlist(registrationId: string): Promise<void> {
-  await supabaseAdmin
-    .from('league_registrations')
-    .update({ status: 'active', waitlist_position: null, updated_at: new Date().toISOString() })
-    .eq('id', registrationId);
 }
 
 // ─── Game helpers ─────────────────────────────────────────────────────────────

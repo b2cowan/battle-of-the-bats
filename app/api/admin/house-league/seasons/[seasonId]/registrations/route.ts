@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { getLeagueSeasonById, createRegistration } from '@/lib/db';
+import { getLeagueSeasonById } from '@/lib/db';
+import { placeLeagueRegistration } from '@/lib/league-registration-place';
+import { leaguePrice } from '@/lib/league-price';
+import { isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { divisionInSeason } from '@/lib/league-season-scope';
 import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -42,8 +44,14 @@ export const GET = withObservability(async (req: Request,
   const { data, error } = await q;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Camel-case mapping (mirrors mapLeagueRegistration in lib/db.ts)
-  const registrations = (data ?? []).map((row: any) => ({
+  const registrations = (data ?? []).map(mapRegistration);
+
+  return NextResponse.json({ registrations });
+}, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
+
+// Camel-case mapping (mirrors mapLeagueRegistration in lib/db.ts)
+function mapRegistration(row: any) {
+  return {
     id:                  row.id,
     seasonId:            row.season_id,
     divisionId:          row.division_id ?? null,
@@ -65,12 +73,13 @@ export const GET = withObservability(async (req: Request,
     adminNotes:          row.admin_notes ?? null,
     source:              row.source,
     waiverAcceptedAt:    row.waiver_accepted_at ?? null,
+    signupRef:           row.signup_ref ?? null,
+    signupPosition:      row.signup_position ?? null,
+    feeAmount:           row.fee_amount != null ? Number(row.fee_amount) : null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
-  }));
-
-  return NextResponse.json({ registrations });
-}, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
+  };
+}
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -105,8 +114,15 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'divisionId is required for manual registrations' }, { status: 400 });
   }
   // Ownership: a registration filed under a foreign division would land in that org's draft pool.
-  if (!(await divisionInSeason(seasonId, divisionId))) {
+  const { data: division } = await supabaseAdmin
+    .from('league_divisions').select('id, name, price, early_price').eq('id', divisionId).eq('season_id', seasonId).maybeSingle();
+  if (!division) {
     return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  }
+
+  const playerDob = typeof body.playerDateOfBirth === 'string' && body.playerDateOfBirth.trim() ? body.playerDateOfBirth.trim() : null;
+  if (playerDob && !isCalendarDate(playerDob)) {
+    return NextResponse.json({ error: 'Enter a real date of birth' }, { status: 400 });
   }
 
   const statusRaw = typeof body.status === 'string' ? body.status : 'active';
@@ -115,23 +131,42 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
   }
 
-  const registration = await createRegistration({
-    seasonId,
+  // One locked placement (Part 3, mig 362): a full division refuses Accepted or Received, never over-fills; the same child
+  // twice is refused. The price is the one rule on the club's day (lib/league-price.ts), recorded on the registration.
+  const result = await placeLeagueRegistration({
     orgId: ctx!.org.id,
+    seasonId,
     divisionId,
-    playerFirstName,
-    playerLastName,
-    playerDateOfBirth:   typeof body.playerDateOfBirth  === 'string' ? body.playerDateOfBirth  : null,
-    playerJerseyPref:    typeof body.playerJerseyPref   === 'string' ? body.playerJerseyPref   : null,
-    playerPositionPref:  typeof body.playerPositionPref === 'string' ? body.playerPositionPref : null,
-    playerNotes:         typeof body.playerNotes        === 'string' ? body.playerNotes        : null,
-    guardianFirstName,
-    guardianLastName,
-    guardianEmail,
-    guardianPhone:       typeof body.guardianPhone      === 'string' ? body.guardianPhone      : null,
-    status:              statusRaw as LeagueRegistrationStatus,
-    source:              'admin_manual',
+    want: statusRaw as LeagueRegistrationStatus,
+    feeAmount: leaguePrice({
+      price: division.price != null ? Number(division.price) : null,
+      earlyPrice: division.early_price != null ? Number(division.early_price) : null,
+    }, season, tournamentToday())?.amount ?? null,
+    child: {
+      firstName: playerFirstName,
+      lastName: playerLastName,
+      dateOfBirth:  playerDob,
+      jerseyPref:   typeof body.playerJerseyPref   === 'string' ? body.playerJerseyPref   : null,
+      positionPref: typeof body.playerPositionPref === 'string' ? body.playerPositionPref : null,
+      notes:        typeof body.playerNotes        === 'string' ? body.playerNotes        : null,
+      guardianFirstName,
+      guardianLastName,
+      guardianEmail,
+      guardianPhone: typeof body.guardianPhone === 'string' ? body.guardianPhone : null,
+      source: 'admin_manual',
+    },
   });
+  if ('refusal' in result) {
+    if (result.refusal === 'full') {
+      return NextResponse.json({ error: `${division.name} is full. Add to the waitlist instead.`, code: 'division_full' }, { status: 409 });
+    }
+    if (result.refusal === 'duplicate') {
+      return NextResponse.json({ error: `${playerFirstName} ${playerLastName} already has a registration this season.`, code: 'duplicate' }, { status: 409 });
+    }
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  }
+  const { data: row } = await supabaseAdmin.from('league_registrations').select('*').eq('id', result.placed.id).single();
+  const registration = mapRegistration(row);
 
   // Notify org admins of new house league registration (fire-and-forget)
   notify({
