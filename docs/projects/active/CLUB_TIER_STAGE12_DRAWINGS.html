@@ -1,0 +1,998 @@
+<title>Club Payments Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+<style>
+/* 9b round additions */
+.ghostx{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1.5px dashed #8a7b5a;border-radius:8px;color:#6b5d3f;font:600 13px/1 'Inter',sans-serif;background:transparent;letter-spacing:.01em}
+.doc .ghostx{border-color:var(--ask);color:var(--ask)}
+.ak .ghostx{border-color:var(--amber);color:var(--amber)}
+.pub .ghostx{border-color:#8a7b5a;color:#6b5d3f}
+.ghostx.sm{min-height:24px;padding:0 8px;font-size:11px;margin-top:4px}
+.ak .chipk{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);font:600 14px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .chipk.on{background:var(--olive-soft);border-color:var(--olive);color:var(--ink)}
+.ak .chipk.dash{border-style:dashed}
+.ak .chipk.had{border-style:dotted;color:var(--dim);background:transparent}
+.ak .sb .it i{border:0;background:currentColor;opacity:.28;width:14px;height:14px;border-radius:4px}
+.ak .tb .ic{display:grid;place-items:center;font:700 11px/1 'Inter';color:var(--soft)}
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);min-width:72px}
+.ak .fld.s{min-width:64px}
+.ak .fld.wide{flex:1;min-width:0;display:flex}
+.ak .fld.empty{color:var(--amber);border-color:var(--amber);border-style:dashed}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .frow{display:flex;align-items:center;gap:12px}
+.ak .fl2{width:110px;flex:none;font:600 13px/1.3 'Inter';color:var(--soft)}
+.ak .menu{border:1px solid var(--line2);border-radius:10px;background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.12);margin:-4px 0 4px 122px;overflow:hidden}
+.ak .menu .mi{display:flex;justify-content:space-between;gap:10px;padding:0 12px;min-height:44px;align-items:center;font:500 14px/1.2 'Inter';border-top:1px solid var(--line)}
+.ak .menu .mi:first-child{border-top:0}
+.ak .menu .mi.on{background:var(--olive-soft);font-weight:650}
+.ak .dim,.ak .d2{color:var(--dim);font-size:12.5px}
+.ak .facts2{padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 20px;font-size:14px;align-items:baseline}
+.ak .facts2>span:nth-child(odd){color:var(--dim)}
+.ak .facts2.edit{align-items:center}
+.ak .ck{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line2);font:700 14px/1 'Inter';color:var(--dim);flex:none}
+.ak .ck.ok{background:var(--green-soft);border-color:transparent;color:var(--green)}
+.ak .ck.opt{border-style:dashed}
+.ak .btn.ic.on{background:var(--olive);border-color:var(--olive);color:var(--card)}
+.ak .tbar{display:flex;gap:8px;align-items:center}
+.ak .pill2{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;background:var(--olive-soft);font:600 14px/1 'Inter'}
+.ak .bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--paper)}
+.ak .bulk .btn{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ak.dk .bulk{background:var(--olive-soft);color:var(--ink)}
+.ak.dk .bulk .btn{color:var(--ink);border-color:var(--line2)}
+.ak .bulk .sp{flex:1}
+.ak .bulk .lnk{color:inherit;text-decoration:underline}
+.ak .cbx{display:inline-grid;place-items:center;width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;font:700 12px/1 'Inter';color:var(--card)}
+.ak .cbx.on{background:var(--olive);border-color:var(--olive)}
+.ak .owe{font-weight:650;color:var(--ink)}
+.ak .owe.late{color:var(--amber)}
+.ak .paid{font-weight:650;color:var(--green)}
+.ak table.kt td .btn{min-height:36px;font-size:13.5px}
+.ak .sheet{background:var(--card);border-radius:16px 16px 0 0;padding:8px 0 14px}
+.ak .sheet .sh-h{padding:12px 18px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--line)}
+.ak .sheet .sh-i{min-height:56px;padding:8px 18px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--line)}
+.ak .sheet .sh-i b{font:600 15px/1.3 'Inter'}
+.ak .sheet .sh-i span{font-size:12.5px;color:var(--dim)}
+.ak .radios{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px}
+.ak .rad{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line);min-height:44px}
+.ak .rad:first-child{border-top:0}
+.ak .rad .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:2px;position:relative}
+.ak .rad.on .dot{border-color:var(--olive)}
+.ak .rad.on .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--olive)}
+.ak .rad b{display:block;font:600 14px/1.35 'Inter';color:var(--ink)}
+.ak .rad .s2{display:block;font-size:12.5px;color:var(--dim)}
+.ak .rad .sub2{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.pub .pk{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#666;display:flex;justify-content:space-between}
+.pub .pdel{text-transform:none;letter-spacing:0;font:600 13px/1 'Inter';color:#1F3A8A}
+.pub .pcard{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.pub .pf{display:flex;flex-direction:column;gap:4px}
+.pub .pf label{font:600 13px/1.3 'Inter';color:#333}
+.pub .pin2{display:flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid rgba(0,0,0,.2);border-radius:8px;font:15px/1 'Inter'}
+.pub .pfit{background:#E6F0E2;color:#24481d;border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.4}
+.pub .pfit.wait{background:#FBEFD9;color:#6b4100}
+.pub .plink{font:600 14px/1 'Inter';color:#1F3A8A;min-height:44px;display:flex;align-items:center}
+.pub .padd{min-height:48px;display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(31,58,138,.5);border-radius:10px;font:600 15px/1 'Inter';color:#1F3A8A}
+.pub .pchk{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;min-height:44px}
+.pub .pchk .box{width:22px;height:22px;flex:none;border:1.5px solid #555;border-radius:5px;display:grid;place-items:center;font:700 13px/1 'Inter';color:#fff;margin-top:1px}
+.pub .pchk .box.on{background:#1F3A8A;border-color:#1F3A8A}
+.pub .ptot{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.pub .dim2{color:#666;font-size:13px}
+.pub .pbtn{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:10px;background:#1F3A8A;color:#fff;font:700 16px/1 'Inter'}
+.pub .ptop{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px}
+.pub .prow{display:flex;gap:12px;font-size:14px}
+.pub .prow>span:first-child{width:80px;flex:none;color:#666}
+.pub .phow{background:#F5F4F0;border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.pub .mkx{font:700 10px/1 'IBM Plex Mono',monospace;border:1.5px solid #8A5A00;color:#8A5A00;border-radius:4px;padding:2px 4px;margin-left:4px}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:520px}
+.mail .mh{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:14px}
+.mail .mb{padding:14px 16px;font-size:14px;line-height:1.55}
+.ak .panel,.ak .dlg .db{overflow-x:auto}
+.ak .dlg,.ak .panel{min-width:0;max-width:100%}
+.ak.win{max-width:100%}
+.spec>.col{max-width:100%}
+h4.sub-h{font-size:15px;margin:22px 0 6px}
+</style>
+
+
+<style>
+/* Stage 12 additions */
+.ak .dlg .df{flex-wrap:wrap}
+.cap{font-size:13px;line-height:1.5;color:var(--muted);max-width:82ch;margin:8px 0}
+.pub .pay{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.pub .pline{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-variant-numeric:tabular-nums}
+.pub .pline.t{font-weight:700;font-size:15px;border-top:1px solid rgba(0,0,0,.1);padding-top:8px}
+.pub .pbtn2{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48px;border-radius:10px;border:1.5px solid #1F3A8A;color:#1F3A8A;font:650 15px/1.2 'Inter';text-align:center;padding:6px 10px}
+.pub .pbtn2 small,.pub .pbtn small{font:500 12px/1.3 'Inter';opacity:.85}
+.pub .pbtn{flex-direction:column;gap:2px;padding:6px 10px;text-align:center}
+.pub .tag.am{background:#FBEFD9;color:#6b4100}
+.pub .tag.r{background:#F8E1DA;color:#8A2B16}
+.pub .tag.n{background:#ECEBE6;color:#555}
+.pub .pnote{font-size:12.5px;color:#666;line-height:1.45}
+.pub .okb{background:#E6F0E2;color:#24481d;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.pub .bad{background:#F8E1DA;color:#5e1d0e;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.strp{background:#F6F8FA;color:#30313D;font:14px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif;outline:2px dashed #8792A2;outline-offset:-8px;padding:22px 20px;display:flex;flex-direction:column;gap:12px;min-height:640px}
+.strp .lab{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#6A7383}
+.strp .f{background:#fff;border:1px solid #D5DBE1;border-radius:6px;min-height:44px;display:flex;align-items:center;padding:0 12px;color:#6A7383}
+.strp .b{background:#30313D;color:#fff;border-radius:6px;min-height:48px;display:flex;align-items:center;justify-content:center;font-weight:600}
+.strp .ln{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+.ak .st{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px}
+.ak .st.ok{color:var(--green);background:var(--green-soft)} .ak .st.am{color:var(--amber);background:var(--amber-soft)} .ak .st.r{color:var(--red);background:rgba(176,58,34,.1)} .ak .st.n{color:var(--soft);border:1px solid var(--line2)}
+.ak .st .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .door{display:flex;gap:14px;align-items:flex-start;padding:16px}
+.ak .door .m{flex:1;min-width:0} .ak .door b{font:650 15px/1.3 'Inter';display:block} .ak .door .d{font-size:13.5px;color:var(--soft);margin-top:3px}
+.ak .door .ib{width:36px;height:36px;border-radius:9px;background:var(--olive-soft);display:grid;place-items:center;color:var(--olive);flex:none}
+.ak .test{font:700 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--blue);background:var(--blue-soft);border-radius:4px;padding:4px 6px}
+.ak .proc{font-weight:650;color:var(--blue)}
+.ak .quiet{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13.5px;color:var(--soft);padding:2px}
+.ak .quiet a{color:var(--olive);font-weight:650;text-decoration:none}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:14px;margin:10px 0}
+.states>div{min-width:0}
+.ladder td:first-child{white-space:nowrap;font-weight:700}
+</style>
+<style>
+.trn{background:#0B0B10;color:#ECEAF3;font:15px/1.5 'Inter',system-ui,sans-serif;min-height:640px}
+.trn .th{padding:14px 16px;background:linear-gradient(#24112F,#0B0B10)}
+.trn .th .k{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#B9A9C9}
+.trn .th b{display:block;font:700 22px/1.15 'Barlow Condensed',sans-serif;margin:4px 0}
+.trn .in{padding:16px;display:flex;flex-direction:column;gap:12px}
+.trn .cd{background:#141420;border:1px solid #3A2350;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.trn .lb{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#9E95AE}
+.trn .bx{border:1px solid #2E2A3A;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.trn .ln{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums;font-size:14px}
+.trn .pb{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48px;border-radius:10px;background:#4A1A6E;color:#fff;font:700 15px/1.2 'Inter';text-align:center;padding:6px}
+.trn .pb2{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48px;border-radius:10px;border:1.5px solid #8C6BB0;color:#E3D6F2;font:650 15px/1.2 'Inter';text-align:center;padding:6px}
+.trn small{font:500 12px/1.3 'Inter';opacity:.85}
+.trn .nt{font-size:12.5px;color:#A9A2B8;line-height:1.45}
+.trn .rd{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;font-size:14px}
+.trn .rd+.rd{border-top:1px solid #2E2A3A}
+.trn .o{width:18px;height:18px;border-radius:50%;border:1.5px solid #8C6BB0;flex:none;margin-top:2px;position:relative}
+.trn .o.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#C9A6EE}
+.trn .am{background:#2A2112;border:1px solid #6B5021;color:#F2D29A;border-radius:10px;padding:10px 12px;font-size:14px}
+</style>
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 12 · families pay online · drawing round · 2026-10-24</p>
+<h1>Stage 12 drawn: payouts, one checkout, and the money in the books</h1>
+<p class="lede">The whole stage as its end state: the club connects its payout account (12a), families pay for house league (12b) and teams pay their entry (12c) through one checkout, and every payment lands in the club's books beside the ones marked by hand. Nothing here is built, and no live charge happens before counsel signs off.</p>
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="start" aria-selected="true">Start · census</button>
+  <button role="tab" data-pane="a" aria-selected="false">12a Payouts</button>
+  <button role="tab" data-pane="chk" aria-selected="false">Checkout</button>
+  <button role="tab" data-pane="b" aria-selected="false">12b House league</button>
+  <button role="tab" data-pane="c" aria-selected="false">12c Tournaments</button>
+  <button role="tab" data-pane="m" aria-selected="false">Books &amp; refunds</button>
+  <button role="tab" data-pane="back" aria-selected="false">Rules &amp; ladder</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<section class="pane" id="start" data-pane="start">
+<h2 style="margin-top:16px">What Stage 12 makes true, and what the census found</h2>
+<p>A club connects its own payout account once. From then on a family pays on their phone the moment their child is accepted, and a tournament team pays its entry when it registers. The money goes straight to the club, the payment appears in the club's books with nobody typing it, and marking a payment received by hand keeps working beside it. No live charge happens before counsel signs off.</p>
+
+<div class="verdict"><h3>Ruled 2026-10-25: all 15 asks, every one as recommended</h3><ul>
+  <li>The owner connects payouts; the treasurer sees the state and the alerts (A1). Tournament Plus connects on the tournament settings page (A8).</li>
+  <li>The club chooses who pays the processing fee, club-wide; families pay it by default (A14). A refund includes the fee by default when the club ends the registration, and not when the family asks to leave (A2).</li>
+  <li>No saved cards (A3). A bank debit is "Processing" until it clears, with the spot held; it shows on the Money band only while there is some (A4, A11). Card in 12a; bank debit in 12c for both flows (L2).</li>
+  <li>Families see Stage 9's screens until the club takes payments (A6); an optional refund-policy link sits beside Pay (A9).</li>
+  <li>A tournament offers deposit or full, deposit pre-selected (A7); its refunds start from the online payment (A12). Card refunds: whoever ends the registration or records a payment in that flow, plus the treasurer (A13). Partial refunds in 12b (L1). Rep-team dues are not in Stage 12 (A5).</li>
+</ul></div>
+<div class="verdict push"><h3>Where I disagree with the brief, before the drawings</h3><ul>
+  <li><b>"One writer for money" is not what the code has.</b> There are four writers today: house league's paid tick, the tournament's payment records, the coach's dues book, and the Families hand-off to a coach. Only the first two share anything. So the honest rule for Stage 12 is <b>one online-payment record, landing through each flow's own writer</b>. A card payment for house league goes through the same write as the convenor's mark received, and a tournament card payment goes through the same write as the tournament's record a payment. Drawn that way throughout. <button class="fl" data-f="P01">P01</button></li>
+  <li><b>House league's writer can't hold an online payment yet.</b> It is a whole-fee tick dated today, with no amount, no date and no "how" <button class="fl" data-f="P02">P02</button>. 9b-2 has to give it all three, or 12b has nowhere to put "Paid online, reference …". It is already in 9b-2's drawing (the How column). I'm flagging it so nobody builds 9b-2 as a tick again.</li>
+  <li><b>The Club plan says "the owner or treasurer connects", but the settings page is the owner's alone</b>, and a treasurer can't open it <button class="fl" data-f="P04">P04</button>. That makes the treasurer a real ask (A1), not a detail.</li>
+  <li><b>Tournament Plus can't reach the club's settings at all</b> <button class="fl" data-f="P05">P05</button>. It is a paid org plan, so online payments include it. Payouts needs a home on the tournament settings page too (A8), or Tournament Plus has the feature and no door.</li>
+  <li><b>"Partial refunds" can't wait for 12d.</b> Stage 9 ruled that correcting a paid price settles the difference, so 12b needs a partial refund to the card on day one (ladder ask L1).</li>
+  <li><b>A refund the club absorbs is a real cost in the club's book.</b> "The processing fee never in the club's book" holds for revenue. But if the club refunds a family's fee, the processor keeps its share, and that comes out of the club's balance. The refund ask (A2) shows where it lands.</li>
+  <li><b>The worry about a card hold expiring goes away.</b> The Club plan asked "pay at submit or on acceptance, given a card hold expires". The Stage 9 ruling (pay when accepted) means nothing is ever held: a family pays the moment they're accepted, or later from a link, so nothing expires.</li>
+</ul></div>
+
+<div class="card"><h3>How to read this</h3><ul>
+  <li>Each surface shows today (a capture) and the end state (drawn). Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button>, plus the stage that delivers it, such as <button class="mk s" data-note="The stage that delivers this part.">12b</button>. Red flags open a census finding; green chips name the finding they fix.</li>
+  <li><b>Every fee on this page is computed from the facilitated-payments line in the Facts doc</b> at build time: rate × the registration fee + the flat part, rounded to the cent. No rate is written on this page. If the Facts doc changes, the drawing changes. Fee on the fee itself, not grossed up, and rounding to the cent, are assumptions for /billing to confirm.</li>
+  <li>The house-league story continues Stage 9's drawings on the same fixture: the Kim family (Henry accepted in U10 Division A at $165, Ava waitlisted in U12) in 2027, and Ava owing $150 in 2026. Tournament figures are examples, marked where they appear.</li>
+  <li>Stage 9's ghost slots are filled where Stage 9 drew them. None has moved.</li>
+  <li>Desk drawings fit your screen; "Show at true size" shows them at 1440. Open this page on a phone to judge the phone drawings: the checkout is drawn at 390 first.</li>
+</ul></div>
+<p class="muted" style="font-size:13.5px">Stage 9's drawings, whose ghosts this fills: <a href="https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT">9b round 2</a>.</p>
+
+<h3>The census: where money is marked by hand today</h3>
+<div class="tw"><table class="t"><thead><tr><th>Where</th><th>What the person does</th><th>What it records</th><th>Who may</th><th>Stage 12 lands here</th></tr></thead><tbody>
+<tr><td><b>House league</b> · Registrations</td><td>Ticks "Fee paid" on a row</td><td>The season's current fee, dated today. No amount, date or how <button class="fl" data-f="P02">P02</button></td><td>Owner, club admin, league admin, registrar (club admin from 9a, Q17)</td><td>12b, after 9b-2 adds amount, date and how</td></tr>
+<tr><td><b>Tournaments</b> · a team's record</td><td>Mark paid, Deposit paid, or Record a payment (amount, date, how)</td><td>A dated payment, its how, and a line in the tournament's book</td><td>Whoever runs tournaments</td><td>12c: an online payment is one more dated payment</td></tr>
+<tr><td><b>Families</b> · Record a payment</td><td>Amount, date, how, split across children</td><td>House-league lines go through house league's tick, which drops the date and how <button class="fl" data-f="P03">P03</button>; rep lines are handed to the coach</td><td>Anyone with Families</td><td>Nothing new: it reads the same records</td></tr>
+<tr><td><b>Coaches portal</b> · dues</td><td>Record payment against a player's dues</td><td>A dated payment with how, in the team's book</td><td>A coach with money access</td><td>Not in Stage 12 unless A5 says so</td></tr>
+</tbody></table></div>
+<p class="cap">Four writers. Only house league and tournaments share a common step underneath <button class="fl" data-f="P01">P01</button>. What Stripe does today: the platform's own subscriptions and one webhook, and no Connect at all <button class="fl" data-f="P06">P06</button>. No plan gate exists for online payments yet <button class="fl" data-f="P07">P07</button>.</p>
+
+<h3>Today's screens the drawings change</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">BEFORE · club settings, 1440</p><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:settings-desk-warm}}" alt="Today's club settings page"></div><div class="bar"><span>Settings · organization details, birthday cutoff, public site, delete</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">BEFORE · house league registrations, 1440</p><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:regs-desk-warm}}" alt="Today's house-league registrations"></div><div class="bar"><span>Registrations · a bare Fee paid tick</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">BEFORE · a tournament team’s payments, 1440</p><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:rcc-edit-desk-warm}}" alt="Today's tournament team record with payments"></div><div class="bar"><span>Team record · Mark paid and the payments list</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">BEFORE · Families › Record a payment, 1440</p><div class="shot"><div class="sc" style="max-height:420px"><img src="{{IMG:fam-pay-desk-warm}}" alt="Today's Record a payment window in Families"></div><div class="bar"><span>Record a payment · date and how are dropped for house league</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+</section>
+
+<section class="pane" id="a" data-pane="a" hidden>
+<h2 style="margin-top:16px">12a · The club connects its payout account</h2>
+<p>One card on the settings page, in five states. Pressing Set up sends the owner to Stripe's own sign-up, which collects the club's legal details, a signing officer and the bank account, then comes back here. FieldLogicHQ never sees the bank details and never holds the money. Until the club is taking payments, every family-facing screen looks exactly as Stage 9 drew it, with the club's own "How to pay" text and no Pay button.</p>
+
+<h3 id="a1">1 · The Payouts card, every state</h3>
+<div class="chips"><button class="fl fix" data-f="P06" data-here="A Connect account per club; its own webhook.">fixes P06</button><button class="mk s" data-note="Built in 12a.">12a</button></div>
+<div class="states">
+  <div><p class="sp-cap">NOT SET UP</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st n"><span class="dot"></span>Not set up</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Let families and teams pay online</b><div class="d">Payments go straight to the club’s bank account through Stripe. Each payment has a processing fee of 3.5% + $1.50 by card or 2.5% + $1.00 by bank debit, and you choose who pays it. Takes about 10 minutes: the club’s legal name, a signing officer, and the bank account.</div></div><span class="btn pri">Set up payouts</span></div></div></div></div>
+  <div><p class="sp-cap">SETTING UP · came back before finishing</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st am"><span class="dot"></span>Setting up</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Stripe needs a few more details</b><div class="d">You started on Oct 24. Families keep seeing your "How to pay" text until setup is finished.</div></div><span class="btn pri">Continue setup</span></div></div></div></div>
+  <div><p class="sp-cap">TAKING PAYMENTS</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st ok"><span class="dot"></span>Taking payments</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Families and teams can pay online</b><div class="d">Payouts to the bank account ending 6612, two business days after a payment. Receipts go out in the name "Dev Club Org".</div></div><span class="btn">Open Stripe <svg class="ico" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></div></div></div></div>
+  <div><p class="sp-cap">NEEDS ATTENTION · Stripe restricted the account</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st r"><span class="dot"></span>Needs attention</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Online payments are paused</b><div class="d">Stripe needs an updated document for the signing officer by Nov 7. Until then families see your "How to pay" text instead of Pay now. Nothing already paid is affected.</div></div><span class="btn pri">Fix in Stripe <svg class="ico" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></div></div></div></div>
+  <div><p class="sp-cap">DISCONNECTED</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st n"><span class="dot"></span>Disconnected</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Online payments are off</b><div class="d">Disconnected Oct 30 by Gail Kowalski. Payments already made stay in your books; refunds of them are made in Stripe. Families see your "How to pay" text.</div></div><span class="btn">Set up payouts again</span></div></div></div></div>
+</div>
+<div class="chips"><button class="mk new" data-note="NEW: the Payouts door card. One sentence of state, one button. The details of payouts (schedule, bank account, statements) stay in Stripe, which the &quot;Open Stripe&quot; button opens signed in as the club. FieldLogicHQ draws no payout screens of its own in Stage 12 (a payouts list is 12d).">NEW · the Payouts card</button><button class="mk new" data-note="NEW: &quot;Needs attention&quot; also sends a Needs attention item to the owner (and the treasurer, if A1 says so) and clears itself when Stripe says the account is enabled again (the self-clearing rule).">NEW · needs attention clears itself</button></div>
+<h3 id="a1b">1b · Who pays the processing fee: the club decides (A14)</h3>
+<p>One setting on the Payouts card. Either the fee is added to what the family pays, or the club pays it out of each payment. Either way the family sees one amount and pays it.</p>
+<div class="spec"><div class="col" style="flex:1 1 440px"><p class="sp-cap">THE SETTING · reads first</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="hd"><h2>Payouts</h2><span class="st ok"><span class="dot"></span>Taking payments</span><span class="btn ic" aria-label="Edit payouts settings"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div>
+    <div class="facts2"><span>Processing fee</span><span>Families pay it: it’s added to what they pay<div class="d2">3.5% + $1.50 by card · 2.5% + $1.00 by bank debit, per payment</div></span><span>Refund policy</span><span>Fees are refunded in full until May 1, then half until the first game.</span><span>Payouts</span><span>Bank account ending 6612 · <a class="lnk">Open Stripe</a></span></div></div></div></div><div class="col" style="flex:1 1 440px"><p class="sp-cap">THE SETTING · the pencil flips the record</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="hd"><h2>Payouts</h2><span class="btn ic on" aria-label="Done"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span></div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px"><b style="font-size:14px">Who pays the processing fee</b><span class="hint">3.5% + $1.50 per card payment, 2.5% + $1.00 per bank debit.</span><div class="radios">
+      <div class="rad on"><span class="dot"></span><div><b>Families pay it</b><span class="s2">Added to what they pay, e.g. $165 becomes $172.28 by card. You receive $165.</span></div></div>
+      <div class="rad"><span class="dot"></span><div><b>The club pays it</b><span class="s2">Families pay $165. You receive $157.72 by card or $159.87 by bank debit; the fee shows as a cost in your books.</span></div></div></div>
+      <p class="hint">A change applies to payments started from now on. Anything already paid stays as it was.</p></div></div></div></div><div class="col" style="flex:1 1 240px"><div class="chips"><button class="mk new" data-note="NEW (A14): who pays the processing fee, chosen once by whoever connects payouts (A1). &quot;Edit autosaves&quot;: nothing tells families, so it saves as it changes. The refund policy sentence (A9) lives in the same record.">NEW · A14</button></div></div></div>
+<div class="spec"><div class="col"><p class="sp-cap">FAMILIES PAY IT · what the family sees</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="pay"><div class="ptop"><b>To pay now</b><b style="color:#8a4b00">$165.00</b></div>
+    <div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div>
+    <span class="pbtn">Pay $172.28 by card<small>includes a $7.28 processing fee</small></span>
+    <span class="pbtn2">Pay $170.13 by bank debit<small>includes a $5.13 fee · takes up to 5 business days</small></span>
+    <div class="pnote"><span style="color:#1F3A8A;font-weight:600">Refund policy</span></div>
+    <div class="phow"><b>Or pay another way:</b> e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</div></div></div></div></div></div><div class="col"><p class="sp-cap">THE CLUB PAYS IT · what the family sees</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="pay"><div class="ptop"><b>To pay now</b><b style="color:#8a4b00">$165.00</b></div>
+    <div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div>
+    <span class="pbtn">Pay $165.00 by card</span><span class="pbtn2">Pay $165.00 by bank debit<small>takes up to 5 business days</small></span>
+    <div class="pnote"><span style="color:#1F3A8A;font-weight:600">Refund policy</span></div>
+    <div class="phow"><b>Or pay another way:</b> e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</div></div></div></div></div></div><div class="col" style="flex:1 1 360px"><p class="sp-cap">THE CLUB PAYS IT · in the club’s book</p><div class="ak" style="padding:12px;border-radius:12px"><div class="panel"><table class="kt"><tbody>
+    <tr><td>Oct 24</td><td><b>Henry Kim</b><div class="d2">Registration fee · online, card</div></td><td style="text-align:right">$165.00</td></tr>
+    <tr><td>Oct 24</td><td><b>Henry Kim</b><div class="d2">Processing fee, paid by the club</div></td><td style="text-align:right;color:var(--red)">−$7.28</td></tr>
+  </tbody></table></div></div><p class="cap">The fee still counts as $165 received: the family paid it in full. The processing fee is a cost line that files under Payment processing on the Statement, so the books match the bank deposit.</p></div></div>
+<p class="cap">The processing-fee sentence under the buttons is gone in both versions (owner, 2026-10-24): the family needs the amount, not how the club’s share works. When families pay it, the fee still shows inside the card button before paying and on the receipt.</p>
+
+<h4 class="sub-h">Disconnecting is a rare door, and it asks (from /ux)</h4>
+<div class="spec"><div class="col" style="flex:1 1 430px"><p class="sp-cap">TAKING PAYMENTS · the card’s rare door</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st ok"><span class="dot"></span>Taking payments</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Families and teams can pay online</b><div class="d">Payouts to the bank account ending 6612, two business days after a payment. Receipts go out in the name "Dev Club Org".</div></div><span class="btn">Open Stripe <svg class="ico" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></div></div><div class="rare" style="padding:8px 4px 0"><a>Disconnect payouts</a></div></div></div><div class="col" style="flex:1 1 460px"><p class="sp-cap">The window</p><div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:460px">
+  <div class="dh"><h4>Disconnect payouts?</h4><span class="xx">×</span></div><div class="db"><p>Families and teams stop seeing Pay now right away and see your "How to pay" text instead.</p>
+    <ul><li><b>12 registrations</b> still owe money; they can pay you another way.</li><li><b>1 bank debit</b> is still clearing; it will finish.</li><li>Payments already made stay in your books. Refunds of them are made in Stripe.</li></ul></div><div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn dng">Disconnect</span></div></div></div></div><div class="col" style="flex:1 1 260px"><div class="chips"><button class="mk new" data-note="NEW (from /ux): the one destructive act in 12a. A rare door at the end of the card, asking in a window that says what changes for families and counts what is in flight. The owner only (A1).">NEW · /ux</button></div></div></div>
+<h4 class="sub-h">What the treasurer sees (A1, recommended)</h4>
+<div class="spec"><div class="col" style="flex:1 1 560px"><div class="ak" style="padding:14px;border-radius:12px"><div class="ey">Accounting · Overview</div><div class="quiet" style="margin-top:8px"><span class="st ok"><span class="dot"></span>Taking payments</span> Online payments go to the bank account ending 6612. <a>Open Stripe</a></div>
+  <div class="quiet" style="margin-top:10px"><span class="st r"><span class="dot"></span>Needs attention</span> Stripe needs an updated document by Nov 7. The owner fixes it in Settings › Payouts.</div></div></div><div class="col" style="flex:1 1 300px"><div class="chips"><button class="mk new" data-note="NEW (from /ux): under A1’s recommendation the treasurer has a status line, not a door: what state payouts are in, where the money goes, and who fixes it. &quot;Open Stripe&quot; signs in to the club’s Stripe dashboard (Stripe decides what a treasurer may do there).">NEW · /ux</button></div></div></div>
+<p class="cap">Bank account digits, the officer’s name and the dates are examples. While the platform is in test mode, the card carries a <span class="test" style="font:700 10.5px/1 'IBM Plex Mono',monospace;color:#1D4A8A;background:#E3ECF8;border-radius:4px;padding:3px 5px">TEST MODE</span> mark and every payment says "test, no money moved". Before counsel signs off, production shows no Payouts card at all: a platform switch, off.</p>
+
+<h3 id="a2">2 · Where the card lives: the whole settings page</h3>
+<div class="chips"><button class="fl" data-f="P04" data-here="The page is the owner’s alone today.">P04</button><button class="fl" data-f="P05" data-here="Tournament Plus is redirected away from this page.">P05</button></div>
+<div class="spec"><div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 1440</p><div class="shot"><div class="sc" style="max-height:520px"><img src="{{IMG:settings-desk-warm}}" alt="Today's club settings"></div><div class="bar"><span>Settings · today</span><button type="button" class="op">Full size</button></div></div></div></div>
+<p class="sp-cap">AFTER · 1440, the club is taking payments</p>
+<div class="dt-wrap"><div class="ak dt"><div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic">GK</span></div>
+  <div class="shell"><div class="sb"><span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span><span class="grp">Programs</span>
+    <span class="it"><i></i>Tournaments</span><span class="it"><i></i>House league</span><span class="it"><i></i>Rep teams</span>
+    <span class="grp">Club</span><span class="it"><i></i>Families</span><span class="it"><i></i>Accounting</span><span class="it"><i></i>Public site</span>
+    <span class="grp">Organization</span><span class="it"><i></i>Members</span><span class="it"><i></i>Audit log</span><span class="it"><i></i>Plan &amp; billing</span><span class="it on"><i></i>Settings</span><span class="it"><i></i>Venue library</span><span class="it"><i></i>PDF settings</span></div><div class="mn"><div class="pg" style="width:860px">
+  <div class="ph1"><div><div class="ey">Organization</div><h1>Settings</h1></div></div>
+  <div class="panel"><div class="hd"><h2>Organization details</h2></div>
+    <div class="facts2 edit"><span>Organization name *</span><span><span class="fld wide">Dev Club Org</span></span><span>Web address *</span><span><span class="fld wide">dev-club-org</span></span></div><div style="padding:0 16px 14px"><span class="btn">Save changes</span></div></div>
+  <div class="panel"><div class="hd"><h2>When birthdays count from</h2></div><div class="facts2"><span>Softball</span><span>4 rep teams, 1 house-league season · January 1</span></div></div>
+  <div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span><div class="m"><b>Your public site</b><div class="d">Its logo, colours, type, and whether it is online are set in Public site.</div></div><span class="btn">Open Public site</span></div></div>
+  <div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st ok"><span class="dot"></span>Taking payments</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Families and teams can pay online</b><div class="d">Payouts to the bank account ending 6612, two business days after a payment. Receipts go out in the name "Dev Club Org".</div></div><span class="btn">Open Stripe <svg class="ico" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></div></div>
+  <div class="panel" style="border-color:var(--red)"><div class="door"><div class="m"><b>Delete organization</b><div class="d">Permanently remove your organization and all its data. This can’t be undone.</div></div><span class="btn dng">Request account deletion…</span></div></div></div></div></div></div></div>
+<div class="chips"><button class="mk new" data-note="NEW: the Payouts card, after the public-site door and before Delete organization. It earns its place on the page because it changes what every family sees.">NEW · Payouts</button><button class="mk unc" data-note="Kept: every other card on the page, with today’s labels.">UNCHANGED</button></div>
+
+<h4 class="sub-h">The same card for a Tournament Plus organization (A8)</h4>
+<div class="spec"><div class="col" style="flex:1 1 520px"><div class="ak" style="padding:14px;border-radius:12px"><div class="ey" style="margin-bottom:8px">Tournaments · Settings</div><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st n"><span class="dot"></span>Not set up</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Let families and teams pay online</b><div class="d">Payments go straight to the club’s bank account through Stripe. Each payment has a processing fee of 3.5% + $1.50 by card or 2.5% + $1.00 by bank debit, and you choose who pays it. Takes about 10 minutes: the club’s legal name, a signing officer, and the bank account.</div></div><span class="btn pri">Set up payouts</span></div></div></div></div><div class="col" style="flex:1 1 380px"><p class="cap">A Tournament or Tournament Plus organization can’t open the club’s settings: it is sent to the tournament settings page instead. The same card sits there, at the end, above Subscription. On the free Tournament plan it is absent (online payments are a paid-plan feature).</p><div class="chips"><button class="mk new" data-note="NEW: one card, two homes (A8): club settings for League Plus and Club; tournament settings for Tournament Plus.">NEW · A8</button></div></div></div>
+
+<h3 id="a2b">2b · Before Stripe: what it costs, who pays it, and the terms</h3>
+<p>Stripe's sign-up shows Stripe's own terms. It says nothing about FieldLogicHQ's processing fee, so the club learns what the fee is and who pays it here, before Set up payouts hands over to Stripe.</p>
+<div class="spec"><div class="col" style="flex:1 1 560px"><div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:560px">
+  <div class="dh"><h4>Before you set up payouts</h4><span class="xx">×</span></div><div class="db">
+    <div class="facts2" style="padding:0;grid-template-columns:120px minmax(0,1fr)"><span>What it costs</span><span><b>3.5% + $1.50</b> per card payment<br><b>2.5% + $1.00</b> per bank debit<div class="d2">On a $165 fee: $7.28 by card, $5.13 by bank debit.</div></span>
+    <span>Who pays it</span><span><div class="radios"><div class="rad on"><span class="dot"></span><div><b>Families pay it</b><span class="s2">Added to what they pay. You receive the full fee.</span></div></div><div class="rad"><span class="dot"></span><div><b>The club pays it</b><span class="s2">Families pay the fee alone; the processing fee comes out of each payment.</span></div></div></div><div class="d2" style="margin-top:4px">You can change this later on the Payouts card.</div></span>
+    <span>Where the money goes</span><span>Straight to the club’s bank account through Stripe. FieldLogicHQ never holds it.</span>
+    <span>Refunds</span><span>The club sets its own refund policy, and refunds come out of the club’s Stripe balance.</span></div>
+    <label class="pchk" style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink)"><span class="cbx on">✓</span>I agree to the FieldLogicHQ payments terms for Dev Club Org. <a class="lnk">Read the terms</a></label></div><div class="df"><span class="s">Next, Stripe asks for the club’s legal details and bank account.</span><span class="btn">Cancel</span><span class="btn pri">Continue to Stripe</span></div></div></div></div><div class="col" style="flex:1 1 320px"><div class="chips"><button class="mk new" data-note="NEW: the one place the club is told the fee before connecting. The rates are printed from the plan settings (the same source as the fees), never typed into the screen. The A14 choice is made here, then kept on the Payouts card. The terms are counsel’s to write; agreeing is recorded with who and when. On a phone this is the full-screen form.">NEW · before Stripe</button></div><p class="cap">The rates shown are read from the pricing facts when this page is built, the same way every fee on this page is computed. With A14 "families always pay", the Who pays it row is absent and the cost row says families pay it.</p></div></div>
+
+<h3 id="a3">3 · The hand-off to Stripe and back, on a phone</h3>
+<div class="spec"><div class="col"><p class="sp-cap">1 · the owner presses Set up payouts</p><div class="ph"><div class="ak ph-in" style="min-height:640px;display:flex;flex-direction:column">
+    <div class="pbar"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Settings<span class="sp"></span></div>
+    <div class="pin"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st n"><span class="dot"></span>Not set up</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Let families and teams pay online</b><div class="d">Payments go straight to the club’s bank account through Stripe. Each payment has a processing fee of 3.5% + $1.50 by card or 2.5% + $1.00 by bank debit, and you choose who pays it. Takes about 10 minutes: the club’s legal name, a signing officer, and the bank account.</div><div style="margin-top:12px;display:flex"><span style="flex:1;justify-content:center;min-height:44px" class="btn pri">Set up payouts</span></div></div></div></div></div></div></div></div><div class="col"><p class="sp-cap">2 · Stripe’s own sign-up (not ours to draw)</p><div class="ph"><div class="strp"><span class="lab">Stripe · connect.stripe.com</span><b style="font-size:18px">Dev Club Org uses Stripe to get paid</b>
+    <span>Business type</span><span class="f">Non-profit organization</span><span>Legal name</span><span class="f">Dev Club Org</span><span>Signing officer</span><span class="f">Name, date of birth, address</span><span>Bank account for payouts</span><span class="f">Transit · institution · account</span><span class="b">Continue</span>
+    <span class="lab" style="margin-top:auto">Hosted by Stripe. FieldLogicHQ never sees the bank details.</span></div></div></div><div class="col"><p class="sp-cap">3 · back on the settings page</p><div class="ph"><div class="ak ph-in" style="min-height:640px;display:flex;flex-direction:column">
+    <div class="pbar"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Settings<span class="sp"></span></div>
+    <div class="pin"><div class="panel"><div class="door"><span class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/></svg></span><div class="m"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="display:inline">Payouts</b><span class="st ok"><span class="dot"></span>Taking payments</span></div>
+    <b style="font-weight:600;font-size:14px;margin-top:6px">Families and teams can pay online</b><div class="d">Payouts to the bank account ending 6612, two business days after a payment. Receipts go out in the name "Dev Club Org".</div><div style="margin-top:12px;display:flex"><span style="flex:1;justify-content:center;min-height:44px" class="btn">Open Stripe <svg class="ico" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></div></div></div></div><div class="panel" style="padding:12px 14px;font-size:13.5px;color:var(--soft)">Families now see Pay now when a child is accepted. Your "How to pay" text stays under it as the other way to pay.</div></div></div></div>
+    <div class="chips"><button class="mk new" data-note="NEW: on return, the card reads the account’s real state from Stripe (taking payments, or still setting up). A one-time sentence says what just changed for families; it does not come back.">NEW · on return</button></div></div></div>
+
+<h3 id="a4">4 · When the club isn't taking payments, nothing looks broken</h3>
+<div class="chips"><button class="mk unc" data-note="Kept: exactly Stage 9’s family screens. The pay block shows the club’s &quot;How to pay&quot; text. There is no greyed Pay button and no &quot;online payment unavailable&quot; line: absent beats disabled.">UNCHANGED · families</button><button class="mk new" data-note="NEW: one quiet line for the person who can connect (A1), on the house-league Money page and a tournament’s Money page. Absent for everyone else, and absent once connected.">NEW · one quiet line</button></div>
+<div class="spec"><div class="col"><p class="sp-cap">FAMILY · status page, club not connected (9b, unchanged)</p><div class="ph"><div class="pub"><div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div><div class="in" style="padding:16px;gap:12px"><div><div class="pk">Dev House League 2026</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Your registration</h3></div><div class="pcard"><div class="ptop"><b>Ava Kim</b><span class="tag g">Accepted</span></div><div class="prow"><span>Division</span><span>Division B</span></div><div class="prow"><span>Fee</span><span><b style="color:#8a4b00">$150.00 to pay</b></span></div></div><div class="pcard"><div class="ptop"><b>To pay now</b><b style="color:#8a4b00">$150.00</b></div><div class="phow">How to pay: e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</div></div></div></div></div></div><div class="col" style="flex:1 1 460px"><p class="sp-cap">OWNER · the season Money page, the one line</p><div class="ak" style="padding:14px;border-radius:12px"><div class="ph1"><div><div class="ey">House league · Dev House League 2026</div><h1 style="font-size:24px">Money</h1></div></div>
+    <div class="quiet" style="margin-top:8px">Families pay by e-Transfer or cash today. <a>Let them pay online</a> · Settings › Payouts</div>
+    <div class="band" style="margin-top:10px"><div><div class="k">Owed</div><div class="v">$2,100</div></div><div><div class="k">Received</div><div class="v">$1,500</div></div><div><div class="k">Still owing</div><div class="v am">$600</div></div></div></div><p class="cap">The registrar and the league admin see the page without the line: they can’t connect, so the line would only be a dead end.</p></div></div>
+</section>
+
+<section class="pane" id="chk" data-pane="chk" hidden>
+<h2 style="margin-top:16px">The checkout: one, shared by every flow</h2>
+<p>There is no separate checkout screen of ours. The pay block is one component, shown wherever Stage 9 put a ghost. Pressing Pay opens Stripe's own secure page, set up for exactly that amount and that way of paying, in the club's name. The family comes back to a receipt. House league and tournaments use the same block, the same Stripe page and the same receipt. Only the lines inside differ.</p>
+<div class="verdict"><h3>Why the family picks card or bank debit before Stripe's page</h3><ul>
+  <li>The fee differs by the way of paying. To show the fee <b>before</b> paying, the choice has to happen on our side, with each button carrying its own total. Stripe's page then shows one way of paying, with the fee as its own line.</li>
+  <li>Card is the primary button; bank debit is beside it with its wait in words. Both totals are on the buttons, so nobody is surprised on Stripe's page.</li>
+  <li>The club's own "How to pay" text stays underneath as the other way. Mark received keeps working, so a family who pays by e-Transfer is never pushed online.</li>
+</ul></div>
+
+<h3 id="k1">1 · The pay block, in all its states (390)</h3>
+<div class="chips"><button class="mk new" data-note="NEW: one pay block component for every family surface: the confirmation after Sign up, the status page, the emails’ landing, and a tournament team’s registration. Its states: owing, processing (bank debit), paid, failed, not taking payments (Stage 9’s text), and no longer payable.">NEW · one component</button><button class="mk s" data-note="Built in 12a; first used by 12b and 12c.">12a</button></div>
+<div class="spec">
+  <div class="col"><p class="sp-cap">OWING · Henry accepted, Ava waitlisted</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="pay"><div class="ptop"><b>To pay now</b><b style="color:#8a4b00">$165.00</b></div>
+    <div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div><div class="pline" style="color:#666"><span>Ava Kim · U12 · waitlisted</span><span>$0.00</span></div>
+    <span class="pbtn">Pay $172.28 by card<small>includes a $7.28 processing fee</small></span>
+    <span class="pbtn2">Pay $170.13 by bank debit<small>includes a $5.13 fee · takes up to 5 business days</small></span>
+    <div class="pnote"><span style="color:#1F3A8A;font-weight:600">Refund policy</span></div>
+    <div class="phow"><b>Or pay another way:</b> e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</div></div></div></div></div></div>
+  <div class="col"><p class="sp-cap">PROCESSING · paid by bank debit</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="pay"><div class="ptop"><b>Bank debit processing</b><b style="color:#6b4100">$170.13</b></div>
+    <div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div>
+    <div class="pnote">Started Oct 24. A bank debit takes up to 5 business days to clear. We’ll email you when it does. Henry’s spot is held.</div></div></div></div></div></div>
+  <div class="col"><p class="sp-cap">PAID</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="okb"><div class="ptop"><b>Paid</b><b>$172.28</b></div>
+    <div style="font-size:13.5px">Visa •••• 4242 · Oct 24 · receipt 1043-2291</div><span class="plink" style="min-height:36px">View receipt</span></div></div></div></div></div>
+  <div class="col"><p class="sp-cap">FAILED · the bank returned the debit</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="pay" style="border-color:#C9664F"><div class="ptop"><b>The bank debit didn’t go through</b><b style="color:#8A2B16">$165.00</b></div>
+    <div class="pnote">Your bank returned it on Oct 29. Nothing was taken. Henry’s spot is still held: pay again below.</div>
+    <span class="pbtn">Pay $172.28 by card<small>includes a $7.28 processing fee</small></span>
+    <span class="pbtn2">Try bank debit again · $170.13</span></div></div></div></div></div>
+  <div class="col"><p class="sp-cap">CONFIRMING · back from Stripe, before it confirms</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="pay"><div class="ptop"><b>Confirming your payment</b><b style="color:#333">$172.28</b></div>
+    <div class="pnote">Stripe has your payment; we’re waiting for it to confirm. This usually takes a few seconds and the page updates by itself. Don’t pay again.</div></div></div></div></div><div class="chips"><button class="mk new" data-note="NEW (from /ux): returning from Stripe never shows &quot;Paid&quot; on the strength of the redirect alone. The page waits for Stripe’s confirmation and updates by itself; the Pay buttons are gone meanwhile, so nobody pays twice.">NEW · /ux</button></div></div>
+  <div class="col"><p class="sp-cap">NOT FINISHED · the family left Stripe’s page</p><div class="ph"><div class="pub"><div class="in" style="padding:16px"><div class="bad" style="background:#F3F1EC;color:#333"><b>Payment not finished</b><span style="font-size:13.5px">You left Stripe’s page before paying. Nothing was charged.</span></div><div class="pay"><div class="ptop"><b>To pay now</b><b style="color:#8a4b00">$165.00</b></div>
+    <div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div>
+    <span class="pbtn">Pay $172.28 by card<small>includes a $7.28 processing fee</small></span>
+    <span class="pbtn2">Pay $170.13 by bank debit<small>includes a $5.13 fee · takes up to 5 business days</small></span>
+    
+    <div class="phow"><b>Or pay another way:</b> e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</div></div></div></div></div><div class="chips"><button class="mk new" data-note="NEW (from /ux): Back or Cancel on Stripe’s page returns to the same block with one line saying nothing was charged, shown once.">NEW · /ux</button></div></div>
+</div>
+<p class="cap">Pressing either Pay button turns it into "Opening the secure payment page…" and disables both, so a double tap opens one page. Until bank debit arrives (L2: recommended in 12c), the block has the card button only.</p>
+<p class="cap">What the family is told about the fee: its amount, three times. It is inside the card button before they pay, as its own "Processing fee" line on Stripe’s page, and on the receipt page and email. Nothing explains what the fee pays for or how the club’s share works (owner, 2026-10-24). If counsel rules the card fee a surcharge (A14), the rules may require one more line at this point; that is counsel’s to word.</p>
+<p class="cap">Computed from the Facts doc: on $165, a card fee of $7.28 (total $172.28) and a bank-debit fee of $5.13 (total $170.13). The waitlisted child is listed at $0.00 so the family sees why the total is one child’s. "Refund policy" opens the club’s own sentence (A9). The receipt number and card digits are examples.</p>
+
+<h3 id="k2">2 · The whole walk at 390: Pay, Stripe's page, the receipt</h3>
+<div class="spec"><div class="col"><p class="sp-cap">1 · the confirmation after Sign up (9b’s ghost, filled)</p><div class="ph"><div class="pub"><div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div><div class="in" style="padding:16px;gap:12px"><div><div class="pk">Dev House League 2027</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">You’re signed up</h3></div><div class="dim2">Your reference: <b>7C2A91F0</b></div>
+    <div class="pcard"><div class="ptop"><b>Henry Kim</b><span class="tag g">Accepted</span></div><div class="prow"><span>Division</span><span>U10 Division A · $165</span></div></div>
+    <div class="pcard"><div class="ptop"><b>Ava Kim</b><span class="tag am">Waitlist · 1st</span></div><div class="prow"><span>Division</span><span>U12 · nothing to pay unless a spot opens</span></div></div>
+    <div class="pay"><div class="ptop"><b>To pay now</b><b style="color:#8a4b00">$165.00</b></div>
+    <div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div>
+    <span class="pbtn">Pay $172.28 by card<small>includes a $7.28 processing fee</small></span>
+    <span class="pbtn2">Pay $170.13 by bank debit<small>includes a $5.13 fee · takes up to 5 business days</small></span>
+    <div class="pnote"><span style="color:#1F3A8A;font-weight:600">Refund policy</span></div>
+    <div class="phow"><b>Or pay another way:</b> e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</div></div></div></div></div><div class="chips"><button class="mk res" data-note="RESTYLED: Stage 9’s ghost &quot;Pay now · 12b&quot; becomes the pay block, in the same place. Nothing else on the screen moves.">RESTYLED · ghost filled</button></div></div><div class="col"><p class="sp-cap">2 · Stripe’s page, card (not ours to draw exactly)</p><div class="ph"><div class="strp"><span class="lab">Stripe Checkout · in the club’s name</span><b style="font-size:18px">Dev League Org</b>
+    <div class="ln"><span>House league registration · Henry Kim</span><span>$165.00</span></div><div class="ln"><span>Processing fee</span><span>$7.28</span></div><div class="ln" style="font-weight:700;border-top:1px solid #D5DBE1;padding-top:8px"><span>Total</span><span>$172.28</span></div>
+    <span>Email</span><span class="f">grace.kim@example.ca</span><span>Card</span><span class="f">1234 1234 1234 1234</span><span class="f">MM / YY · CVC</span><span class="b">Pay $172.28</span>
+    <span class="lab" style="margin-top:auto">The fee is its own line. The email is filled in from the sign-up.</span></div></div></div><div class="col"><p class="sp-cap">3 · back to our receipt</p><div class="ph"><div class="pub"><div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div><div class="in" style="padding:16px;gap:12px"><div><div class="pk">Dev House League 2027</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Paid, thank you</h3></div><div class="okb"><div class="ptop"><b>$172.28 to Dev League Org</b></div><div style="font-size:13.5px">Visa •••• 4242 · Oct 24, 2026, 8:14 p.m. · receipt 1043-2291</div></div>
+    <div class="pcard"><div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div><div class="pline"><span>Processing fee</span><span>$7.28</span></div><div class="pline t"><span>Paid</span><span>$172.28</span></div></div>
+    <div class="pcard"><div class="ptop"><b>Ava Kim</b><span class="tag am">Waitlist · 1st</span></div><div class="dim2">If a spot opens we’ll email you a link to pay for Ava.</div></div>
+    <div class="dim2">A receipt was emailed to grace.kim@example.ca. Your reference 7C2A91F0 shows this any time.</div></div></div></div><div class="chips"><button class="mk new" data-note="NEW: the receipt page is ours: the family lands back on the club’s site, not on Stripe. It is the status page’s paid state, so the link in the email and the reference both come back here.">NEW · receipt</button></div></div></div>
+
+<h3 id="k3">3 · The receipt email, in the club's name</h3>
+<div class="spec"><div class="col" style="flex:1 1 520px"><div class="mail"><div class="mh"><b>Receipt from Dev League Org</b><div class="muted" style="font-size:13px">From: Dev League Org &lt;receipts via FieldLogicHQ&gt; · Reply-to: the club’s contact</div></div><div class="mb">
+  Thanks, Grace. Dev League Org received your payment.<br><br>
+  <b>Henry Kim</b> · Dev House League 2027 · U10 Division A · $165.00<br>Processing fee · $7.28<br><b>Total paid · $172.28</b> · Visa •••• 4242 · Oct 24, 2026<br>Receipt 1043-2291 · your bank statement shows <span class="mo">DEV LEAGUE ORG</span><br><br>
+  Ava Kim is on the U12 waitlist (1st). There is nothing to pay for Ava unless a spot opens.<br><br>Questions about this payment or a refund go to Dev League Org: info@devleague.ca.</div></div></div><div class="col" style="flex:1 1 360px"><div class="chips"><button class="mk new" data-note="NEW: one receipt email per payment, sent by us in the club’s name, with the club as reply-to. The card statement shows the club, because the charge is the club’s own (a direct charge). Stripe’s own receipt email is switched off so the family gets one email, not two.">NEW · receipt email</button></div><p class="cap">No tax line is drawn: whether the fee shows "+ GST/HST" waits on the accountant (12d rider). The 9b approval email still goes out; this is the payment’s own email.</p></div></div>
+
+<h3 id="k4">4 · Bank debit, start to cleared (A4)</h3>
+<div class="spec"><div class="col"><p class="sp-cap">Stripe’s page, bank debit: the debit agreement</p><div class="ph"><div class="strp"><span class="lab">Stripe Checkout · pre-authorized debit</span><b style="font-size:18px">Dev League Org</b><div class="ln" style="font-weight:700"><span>Total</span><span>$170.13</span></div>
+    <span>Bank</span><span class="f">Choose your bank, or enter transit and account</span><span style="font-size:12.5px">I authorize Dev League Org to debit this account once for $170.13. (The Canadian debit agreement, written by Stripe.)</span><span class="b">Agree and pay</span></div></div></div><div class="col"><p class="sp-cap">Family · back on the status page, waiting</p><div class="ph"><div class="pub"><div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div><div class="in" style="padding:16px;gap:12px"><div><div class="pk">Dev House League 2027</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Your registration</h3></div><div class="pcard"><div class="ptop"><b>Henry Kim</b><span class="tag g">Accepted</span></div><div class="prow"><span>Fee</span><span><b style="color:#6b4100">$165.00 · bank debit processing</b></span></div></div><div class="pay"><div class="ptop"><b>Bank debit processing</b><b style="color:#6b4100">$170.13</b></div>
+    <div class="pline"><span>Henry Kim · U10 Division A</span><span>$165.00</span></div>
+    <div class="pnote">Started Oct 24. A bank debit takes up to 5 business days to clear. We’ll email you when it does. Henry’s spot is held.</div></div></div></div></div></div><div class="col" style="flex:1 1 360px"><p class="sp-cap">Convenor · the row while it clears</p><div class="ak" style="padding:12px;border-radius:12px"><div class="panel"><div class="rows"><div class="r"><div class="m"><b>Henry Kim</b><div class="d">U10 Division A · <span class="proc">$165 processing</span> · bank debit, started Oct 24</div></div><span class="btn ic" aria-label="More for Henry Kim" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div></div></div></div><p class="cap">Henry stays Accepted with his spot held. Processing is a fact about the payment, never a registration status (contract line 6). On the Money band, processing money is shown as its own figure only while there is some (A11). If the bank returns it, the family gets the failed state and an email, and the convenor gets a Needs attention item that clears itself when the family pays.</p></div></div>
+</section>
+
+<section class="pane" id="b" data-pane="b" hidden>
+<h2 style="margin-top:16px">12b · House league: every ghost filled</h2>
+<p>Stage 9 drew a dashed slot everywhere online payment goes. Each one becomes the pay block or a line about the payment, in the same place. The confirmation after Sign up is on the checkout tab; the rest are here. Drawn on the 2026 season ($150 a player): Ava pays by card, Zoe by bank debit, Henry was paid by hand.</p>
+
+<h3 id="b1">1 · The status page</h3>
+<div class="spec"><div class="col"><p class="sp-cap">BEFORE · 390, today</p><div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-status-phone-warm}}" alt="Today's status lookup on a phone"></div><div class="bar"><span>Status only</span><button type="button" class="op">Full size</button></div></div></div><div class="col"><p class="sp-cap">STAGE 9 · the ghost</p><div class="ph"><div class="pub"><div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div><div class="in" style="padding:16px;gap:12px"><div><div class="pk">Dev House League 2026</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Your registration</h3></div><div class="pcard"><div class="ptop"><b>Ava Kim</b><span class="tag g">Accepted</span></div><div class="prow"><span>Fee</span><span><b style="color:#8a4b00">$150.00 to pay</b></span></div></div>
+    <div class="pcard"><div class="ptop"><b>To pay</b><b style="color:#8a4b00">$150.00</b></div><div class="phow">How to pay: e-Transfer to treasurer@devleague.ca…</div><span class="ghostx">Pay now · 12b</span></div></div></div></div></div><div class="col"><p class="sp-cap">AFTER · 390, the club is taking payments</p><div class="ph"><div class="pub"><div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div><div class="in" style="padding:16px;gap:12px"><div><div class="pk">Dev House League 2026</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Your registration</h3></div><div class="pcard"><div class="ptop"><b>Henry Kim</b><span class="tag g">Accepted</span></div><div class="prow"><span>Division</span><span>Division B · Tigers</span></div><div class="prow"><span>Fee</span><span><b>$150.00 · paid Oct 24</b></span></div></div>
+    <div class="pcard"><div class="ptop"><b>Ava Kim</b><span class="tag g">Accepted</span></div><div class="prow"><span>Division</span><span>Division B</span></div><div class="prow"><span>Fee</span><span><b style="color:#8a4b00">$150.00 to pay</b></span></div></div>
+    <div class="pay"><div class="ptop"><b>To pay</b><b style="color:#8a4b00">$150.00</b></div>
+    <div class="pline"><span>Ava Kim · Division B</span><span>$150.00</span></div>
+    <span class="pbtn">Pay $156.75 by card<small>includes a $6.75 processing fee</small></span>
+    <span class="pbtn2">Pay $154.75 by bank debit<small>includes a $4.75 fee · takes up to 5 business days</small></span>
+    <div class="pnote"><span style="color:#1F3A8A;font-weight:600">Refund policy</span></div>
+    <div class="phow"><b>Or pay another way:</b> e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</div></div><div class="plink" style="justify-content:center">Ask to withdraw a child</div></div></div></div><div class="chips"><button class="mk res" data-note="RESTYLED: the ghost becomes the pay block, one per sign-up, under the children (contract line 9). Henry, paid by hand, reads &quot;paid Oct 24&quot; exactly as in Stage 9: the family never sees how a payment was recorded, only that it was.">RESTYLED · ghost filled</button></div></div></div>
+
+<h3 id="b2">2 · The approval email and the waitlist promotion carry Pay now</h3>
+<div class="spec"><div class="col" style="flex:1 1 440px"><p class="sp-cap">APPROVAL · Stage 9’s email with its ghost filled</p><div class="mail"><div class="mh"><b>Ava is in — Dev House League 2026</b></div><div class="mb">Ava’s registration is accepted.<br><br><b>Ava Kim</b> · Division B · $150.00<br><br><b>To pay: $150.00.</b><br><span class="pbtn" style="display:inline-flex;min-height:44px;padding:0 18px;border-radius:10px;background:#1F3A8A;color:#fff;font:700 15px/1 Inter;align-items:center;margin:8px 0">Pay now</span><br><span style="font-size:13px;color:#666">Card or bank debit; the processing fee is shown before you pay. Or e-Transfer to treasurer@devleague.ca within 14 days.</span><br><br>Check your registration any time: devleague.ca/league/2026/status · reference 3D61E863</div></div></div><div class="col" style="flex:1 1 440px"><p class="sp-cap">PROMOTION · a spot opened</p><div class="mail"><div class="mh"><b>A spot opened for Zoe — Dev House League 2026</b></div><div class="mb">Good news: a spot opened in Division A and Zoe has it.<br><br><b>Zoe Leblanc</b> · Division A · $150.00<br><br><b>To pay: $150.00.</b> Zoe’s spot is held for you.<br><span class="pbtn" style="display:inline-flex;min-height:44px;padding:0 18px;border-radius:10px;background:#1F3A8A;color:#fff;font:700 15px/1 Inter;align-items:center;margin:8px 0">Pay now</span><br><span style="font-size:13px;color:#666">Or e-Transfer to treasurer@devleague.ca within 14 days.</span></div></div></div><div class="col" style="flex:1 1 300px"><div class="chips"><button class="mk res" data-note="RESTYLED: the ghost becomes a Pay now button. An email can’t show the card-or-bank choice honestly, so the button opens the status page at the pay block, already signed in to that sign-up by a link that works only for it. The fee is shown there, before paying.">RESTYLED · Pay now</button><button class="mk unc" data-note="Kept: the club’s &quot;How to pay&quot; line stays under the button. Paying by e-Transfer is still a real choice.">UNCHANGED · other way</button></div><p class="cap">Nothing about the price or the 14 days is new: they are Stage 9’s. The link has no expiry date of its own: it opens the status page, which asks the server what is owed at that moment.</p></div></div>
+
+<h3 id="b3">3 · The convenor's rows: online beside by hand</h3>
+<div class="spec"><div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 1440, today</p><div class="shot"><div class="sc" style="max-height:300px"><img src="{{IMG:regs-desk-warm}}" alt="Today's registrations"></div><div class="bar"><span>Fee paid tick</span><button type="button" class="op">Full size</button></div></div></div></div>
+<p class="sp-cap">AFTER · Active tab, 1440</p>
+<div class="dt-wrap"><div class="ak dt"><div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic">GK</span></div>
+  <div class="shell"><div class="sb"><span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span><span class="grp">Programs</span>
+    <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span><div class="blk"><span class="it sub">Seasons</span><span class="grp" style="padding-left:14px">Season</span><span class="sw" style="margin-left:14px">Dev House League 2026<span class="chev"></span></span>
+  <span class="it sub">Overview</span><span class="it sub on">Registrations <span class="amb" style="margin-left:auto">1</span></span><span class="it sub">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub">Money</span><span class="it sub">Email families</span></div>
+    <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span></div><div class="mn"><div class="pg" style="width:1060px">
+  <div class="ph1"><div><div class="ey">House league · Dev House League 2026</div><h1>Registrations</h1></div><span class="sp"></span><span class="btn pri">+ Add registration</span></div>
+  <div class="tbar"><span class="pill2">All divisions <span class="chev"></span></span><span class="btn" style="flex:1;justify-content:flex-start;color:var(--dim)">Search players or parents</span><span class="btn">Filter · Owing</span><span class="btn">Tools <svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+  <div class="utabs"><span>To review <span class="amb">1</span></span><span class="on">Active <span class="c">14</span></span><span>Waitlist <span class="c">1</span></span><span>Ended <span class="c">3</span></span></div>
+  <div class="panel"><table class="kt"><thead><tr><th>Player</th><th>Division · team</th><th>Guardian</th><th>Fee</th><th style="width:170px"></th></tr></thead><tbody>
+    <tr><td><b>Ava Kim</b><div class="d2">Signed up Oct 24</div></td><td>Division B · not placed</td><td>Grace Kim</td><td><span class="paid">$150 received</span><div class="d2">Oct 24 · online, card</div></td><td style="text-align:right"><span class="btn ic" aria-label="More for Ava Kim" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+    <tr><td><b>Zoe Leblanc</b><div class="d2">Promoted Oct 24</div></td><td>Division A · not placed</td><td>zoe.leblanc@dev.local</td><td><span class="proc">$150 processing</span><div class="d2">bank debit, started Oct 24</div></td><td style="text-align:right"><span class="btn ic" aria-label="More for Zoe Leblanc" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+    <tr><td><b>Sofia Rossi</b><div class="d2">Signed up Apr 12</div></td><td>Division A · Cardinals</td><td>sofia.rossi@dev.local</td><td><span class="owe late">$150 owing · 195 days</span><div class="d2">pay link sent Oct 20</div></td><td style="text-align:right"><span class="btn">Mark received</span><span class="btn ic" aria-label="More for Sofia Rossi" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+    <tr><td><b>Henry Kim</b><div class="d2">Signed up Apr 12</div></td><td>Division B · Tigers</td><td>Grace Kim</td><td><span class="paid">$150 received</span><div class="d2">Oct 24 · by hand, e-Transfer</div></td><td style="text-align:right"><span class="btn ic" aria-label="More for Henry Kim" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+  </tbody></table><p class="hint" style="padding:8px 16px 12px">… 10 more.</p></div></div></div></div></div></div>
+<div class="chips"><button class="mk res" data-note="RESTYLED: Stage 9’s Fee column gains &quot;online, card&quot; or &quot;online, bank debit&quot; in the How line, and a processing state for a bank debit that hasn’t cleared. Mark received is absent on a row that is paid or processing: there is nothing to receive.">RESTYLED · Fee column</button><button class="mk new" data-note="NEW: &quot;pay link sent&quot; when the convenor emailed the pay link (the ⋯ menu, or Email in the bulk bar for Owing rows).">NEW · pay link sent</button><button class="mk unc" data-note="Kept: Mark received on an owing row, unchanged. It writes through the same writer an online payment lands in.">UNCHANGED · Mark received</button></div>
+<div class="spec"><div class="col"><p class="sp-cap">⋯ on Ava, paid online</p><div class="ph"><div class="ak ph-in" style="background:var(--dimbg);min-height:600px;display:flex;flex-direction:column;justify-content:flex-end"><div class="sheet">
+  <div class="sh-h"><b>Ava Kim</b><span class="d2">Division B · $150 received online</span></div><div class="sh-i"><b>View the payment</b><span>Visa •••• 4242 · Oct 24 · receipt 1043-2302</span></div><div class="sh-i"><b>Move to another division</b><span>Asks whether to change the price</span></div><div class="sh-i"><b>Correct the price</b><span>Settles any difference on the card</span></div><div class="sh-i"><b>Withdraw</b><span>Asks about the money: refund to the card first</span></div><div class="sh-i"><b>Email this family</b></div></div></div></div></div><div class="col"><p class="sp-cap">⋯ on Sofia, owing</p><div class="ph"><div class="ak ph-in" style="background:var(--dimbg);min-height:600px;display:flex;flex-direction:column;justify-content:flex-end"><div class="sheet">
+  <div class="sh-h"><b>Sofia Rossi</b><span class="d2">Division A · $150 owing · 195 days</span></div><div class="sh-i"><b>Mark received</b><span>$150, a date, how it was paid</span></div><div class="sh-i"><b>Email the pay link</b><span>Last sent Oct 20</span></div><div class="sh-i"><b>Correct the price</b><span>With a reason</span></div><div class="sh-i"><b>Release the spot</b><span>The waitlist moves up · asks first</span></div><div class="sh-i"><b>Withdraw</b></div><div class="sh-i"><b>Email this family</b></div></div></div></div></div><div class="col" style="flex:1 1 300px"><p class="cap">A row’s menu carries only what applies to that payment. "Refund" is not its own menu item: a refund always comes with ending the registration or correcting its price, the two windows Stage 9 already drew. That keeps one way in for money going back.</p><div class="chips"><button class="mk new" data-note="NEW: Email the pay link, on owing rows only. It sends the approval email’s pay block again; the 9d sender’s rules apply (it is a service email about this registration, so it needs no news consent).">NEW · Email the pay link</button></div></div></div>
+
+<h3 id="b4">4 · The family's record in Families</h3>
+<div class="spec"><div class="col" style="flex:1 1 480px"><p class="sp-cap">BEFORE · 1440</p><div class="shot"><div class="sc" style="max-height:300px"><img src="{{IMG:family-desk-warm}}" alt="Today's family record"></div><div class="bar"><span>Dues from today’s season fee</span><button type="button" class="op">Full size</button></div></div></div><div class="col" style="flex:1 1 560px"><p class="sp-cap">AFTER · the children table</p><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><table class="kt"><thead><tr><th>Child</th><th>Team or season</th><th style="text-align:right">Dues</th><th style="text-align:right">Paid</th><th style="text-align:right">Balance</th></tr></thead><tbody>
+    <tr><td><b>Ava Kim</b></td><td>Dev House League 2026 · Division B<div class="d2">Paid online Oct 24 · card · receipt 1043-2302</div></td><td style="text-align:right">$150.00</td><td style="text-align:right">$150.00</td><td style="text-align:right">$0.00</td></tr>
+    <tr><td><b>Henry Kim</b></td><td>Dev House League 2026 · Division B<div class="d2">Received by hand Oct 24 · e-Transfer</div></td><td style="text-align:right">$150.00</td><td style="text-align:right">$150.00</td><td style="text-align:right">$0.00</td></tr>
+  </tbody></table></div></div><div class="chips"><button class="mk res" data-note="RESTYLED: Stage 9’s ghost becomes the payment’s line under the child: &quot;Paid online … receipt …&quot; or &quot;Pay link sent Oct 20&quot; while owing. The processing fee is never shown as dues or paid: it is the family’s, not the club’s.">RESTYLED · ghost filled</button><button class="mk unc" data-note="Kept: Record a payment still writes through house league’s writer, and (from 9b-2) carries its date and how into it.">UNCHANGED · Record a payment</button></div></div></div>
+<div class="chips"><button class="fl" data-f="P03" data-here="The window collects a date and how for a house-league line, and drops both.">P03</button></div>
+
+<h3 id="b5">5 · A pay link for a registration that has ended</h3>
+<div class="spec"><div class="col"><p class="sp-cap">AFTER · 390</p><div class="ph"><div class="pub"><div class="nv" style="padding:0 16px"><span class="hdr" style="font-size:18px"><span class="mono">DL</span>Dev League Org</span><span class="si">Sign in</span></div><div class="in" style="padding:16px;gap:12px"><div><div class="pk">Dev House League 2027</div><h3 style="font:700 26px/1.1 'Barlow Condensed',sans-serif;margin:4px 0 0">Nothing to pay</h3></div><div class="pcard"><div class="ptop"><b>Owen Clarke</b><span class="tag n">Withdrawn</span></div><div class="dim2">This registration was withdrawn on Oct 20, so there is nothing to pay. If you think that’s a mistake, contact Dev League Org: info@devleague.ca.</div></div>
+    <div class="dim2">Reference 5B10E7A2</div></div></div></div></div><div class="col" style="flex:1 1 360px"><div class="chips"><button class="mk new" data-note="NEW: the status page’s &quot;no longer payable&quot; state. Reached from an old Pay now email or a stale tab. The server decides at the moment of paying: a link never takes money for an ended, declined or already-paid registration. If two tabs race, the second sees &quot;already paid&quot; and is not charged.">NEW · no longer payable</button></div><p class="cap">Owen Clarke is an example name. The same page reads "already paid" with the receipt when the registration is paid.</p></div></div>
+
+<h3 id="b6">6 · Correcting a price after a card payment</h3>
+<div class="spec"><div class="col"><p class="sp-cap">Lower: the difference goes back to the card</p><div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:470px">
+  <div class="dh"><h4>Correct Maya Singh’s price</h4><span class="xx">×</span></div><div class="db">
+    <div class="frow"><span class="fl2">Signed up at</span><span>$150.00 · paid online Oct 2, Visa •••• 0119</span></div>
+    <div class="frow"><span class="fl2">New price</span><span class="fld s">$120</span></div>
+    <div class="frow" style="align-items:flex-start"><span class="fl2">Reason *</span><span class="fld wide">Coach’s child, club discount agreed by the board</span></div>
+    <div class="radios"><div class="rad on"><span class="dot"></span><div><b>Refund $30.00 to the card</b><span class="s2">Arrives in 5 to 10 business days</span></div></div><div class="rad"><span class="dot"></span><div><b>Refunded another way</b><span class="s2">Record how and when</span></div></div></div>
+    <p class="hint">The $6.75 processing fee Maya’s family paid isn’t recalculated. They’re emailed the new price and the refund.</p></div><div class="df"><span class="s">The refund is a line going out on Money.</span><span class="btn">Cancel</span><span class="btn pri">Save and refund</span></div></div></div></div><div class="col"><p class="sp-cap">Higher: the family owes the difference</p><div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:470px">
+  <div class="dh"><h4>Correct Liam Ortiz’s price</h4><span class="xx">×</span></div><div class="db">
+    <div class="frow"><span class="fl2">Signed up at</span><span>$150.00 · paid online Oct 2</span></div>
+    <div class="frow"><span class="fl2">New price</span><span class="fld s">$175</span></div>
+    <div class="frow" style="align-items:flex-start"><span class="fl2">Reason *</span><span class="fld wide">Signed up for U12, plays U14</span></div>
+    <p class="hint">Liam’s family will owe $25.00 more. They’re emailed a pay link for $25.00 ($27.38 by card).</p></div><div class="df"><span class="s">Liam reads "$25 owing" on his row.</span><span class="btn">Cancel</span><span class="btn pri">Save and email</span></div></div></div></div><div class="col" style="flex:1 1 300px"><div class="chips"><button class="mk res" data-note="RESTYLED: Stage 9’s Correct the price window. On a card-paid registration the &quot;how is the difference settled&quot; question offers the card first. A higher price is a new amount owing, paid through the same pay block.">RESTYLED</button><button class="mk s" data-note="A partial refund to the card is needed here in 12b, not in 12d hardening (ladder ask L1).">12b · L1</button></div><p class="cap">Maya Singh and Liam Ortiz are examples: in Stage 9 Maya had not paid. A change that tells families waits for the button that names it ("Save and email").</p></div></div>
+</section>
+
+<section class="pane" id="c" data-pane="c" hidden>
+<h2 style="margin-top:16px">12c · A tournament team pays its entry</h2>
+<p>A team registers on the tournament's public page. A team is pending the organizer's review when it submits, so, as in house league, it pays <b>once it is accepted</b>, from the acceptance email or a later reminder, with the same pay block. The payment arrives in the team's record as one more dated payment beside the ones the organizer records by hand, and in the tournament's book. Drawn on the fixture's $300 entry with a $100 deposit, in the tournament's own theme.</p>
+<div class="verdict push"><h3>Corrected by the census: a team doesn't pay at Register</h3><ul>
+  <li>The kickoff and the Club plan put the pay step "at registration". Today's review step says <b>"Status after you submit: Pending organizer review"</b>. Charging a team before the organizer has said yes would mean refunding every team that isn't accepted, the processor keeping its share each time.</li>
+  <li>So the review step promises payment after acceptance, and the acceptance email carries Pay. That is the same rule Stage 9 ruled for house league (pay when accepted), so both flows read the same way.</li>
+</ul></div>
+
+<h3 id="c1">1 · The review step: the payment box says what will happen</h3>
+<div class="spec"><div class="col"><p class="sp-cap">BEFORE · 390, today</p><div class="shot ph-shot"><div class="sc"><img src="{{IMG:pub-team-register-review-phone-warm}}" alt="Today's review step, Pending organizer review, payment outside the platform"></div><div class="bar"><span>Review · "Payments are made directly to the organizer, outside the platform."</span><button type="button" class="op">Full size</button></div></div></div><div class="col"><p class="sp-cap">AFTER · 390, the club is taking payments</p><div class="ph"><div class="trn"><div class="th"><div class="k">UAT REP CLUB</div><b>UAT Rep Club Invitational 2026</b><div class="k">NOV 1–3, 2026</div></div><div class="in"><div class="lb" style="display:flex;gap:16px;overflow:hidden;white-space:nowrap;border-bottom:1px solid #2E2A3A;padding-bottom:10px">Overview<span>News</span><span>Schedule</span><span>Standings</span></div>
+    <div class="lb" style="display:flex;justify-content:center;gap:14px;color:#ECEAF3"><span>✓ You</span><span>✓ Team</span><span>③ Review</span></div><div class="cd"><b style="font:700 22px/1.15 'Barlow Condensed',sans-serif">Review Registration</b>
+    <div><div class="lb">Team</div>Sample Thunder</div><div><div class="lb">Division</div>15U</div>
+    <div class="am"><div class="lb" style="color:#D9B877">Status after you submit</div><b>Pending organizer review</b></div>
+    <div class="bx"><div class="lb">Payment</div><div class="ln"><span>Total fee</span><b>$300.00</b></div><div class="ln"><span>Deposit</span><b>$100.00</b></div>
+      <div class="nt">Once the organizer accepts your team, we’ll email you a link to pay online by card or bank debit. Or pay the organizer directly.</div></div>
+    <span class="pb2" style="min-height:44px">Edit Details</span><span class="pb">Submit Registration</span></div></div></div></div><div class="chips"><button class="mk unc" data-note="Kept: the tournament header, its tabs, the three-step stepper, the team rows and both buttons, as today (from /design: the first draft dropped them, which read as a redesign).">UNCHANGED · the rest</button><button class="mk res" data-note="RESTYLED: &quot;Payment handled by organizer … outside the platform&quot; becomes what will happen: pay online once accepted, or pay the organizer directly. When the club isn’t taking payments, today’s box stays word for word (absent beats disabled).">RESTYLED · payment box</button></div></div><div class="col" style="flex:1 1 280px"><p class="cap">The fixture tournament’s theme is the dark one; a tournament in the light theme draws the same box in its colours. Sample Thunder is the capture’s typed team.</p></div></div>
+
+<h3 id="c2">2 · Accepted: the email, then the team's pay page</h3>
+<div class="spec"><div class="col" style="flex:1 1 420px"><p class="sp-cap">The acceptance email</p><div class="mail"><div class="mh"><b>Sample Thunder is in — UAT Rep Club Invitational 2026</b></div><div class="mb">The organizer accepted Sample Thunder in 15U.<br><br><b>Entry fee $300.00</b> · deposit $100.00 due to hold your spot · balance due Oct 30.<br><span style="display:inline-flex;min-height:44px;padding:0 18px;border-radius:10px;background:#4A1A6E;color:#fff;font:700 15px/1 Inter;align-items:center;margin:8px 0">Pay now</span><br><span style="font-size:13px;color:#666">Or pay UAT Rep Club directly: cheque at check-in, or e-Transfer to tournaments@uatrepclub.ca.</span></div></div></div><div class="col"><p class="sp-cap">The team’s pay page, from the email · 390</p><div class="ph"><div class="trn"><div class="th"><div class="k">UAT REP CLUB</div><b>UAT Rep Club Invitational 2026</b><div class="k">NOV 1–3, 2026</div></div><div class="in"><div class="cd"><b style="font:700 22px/1.15 'Barlow Condensed',sans-serif">Sample Thunder · 15U</b><span class="nt">Accepted Oct 24 · reference T-4471</span>
+    <div class="bx" style="padding:0;gap:0"><div class="rd"><span class="o on"></span><span><b>Pay the deposit, $100.00</b><br><span class="nt">Holds your spot. The $200.00 balance is due Oct 30.</span></span></div>
+      <div class="rd"><span class="o"></span><span><b>Pay in full, $300.00</b><br><span class="nt">$1.50 less in fees than deposit plus balance</span></span></div></div>
+    <span class="pb">Pay $105.00 by card<small>includes a $5.00 processing fee</small></span>
+    <span class="pb2">Pay $103.50 by bank debit<small>includes a $3.50 fee · takes up to 5 business days</small></span>
+    <div class="nt"><span style="color:#C9A6EE;font-weight:600">Refund policy</span></div>
+    <div class="bx nt"><b style="color:#ECEAF3">Or pay another way:</b> cheque at check-in, or e-Transfer to tournaments@uatrepclub.ca.</div></div></div></div></div><div class="chips"><button class="mk new" data-note="NEW: the team’s pay page: the shared pay block in the tournament’s theme, with a deposit-or-full choice when the tournament has a deposit (A7). The buttons’ totals follow the choice. Reached from the acceptance email, the balance reminders, or the organizer’s &quot;Email the pay link&quot;; it is the receipt page afterwards, as in house league.">NEW · A7</button><button class="mk s" data-note="Built in 12c on 12a’s block.">12c</button></div></div><div class="col" style="flex:1 1 320px"><p class="cap">Fees computed from the Facts doc. A deposit and its balance are two payments, so the flat part of the fee is paid twice: paying in full costs $1.50 less, and the page says so rather than hiding it. The balance reminder the organizer already sends gains "Pay the balance". The registering coach also gets a free Coaches Portal: showing this pay block there is a later question, not drawn.</p><div class="mail" style="margin-top:10px"><div class="mh"><b>Balance due Oct 30 — UAT Rep Club Invitational 2026</b></div><div class="mb">Sample Thunder paid the $100.00 deposit on Oct 24. The $200.00 balance is due Oct 30.<br><span style="display:inline-flex;min-height:44px;padding:0 18px;border-radius:10px;background:#4A1A6E;color:#fff;font:700 15px/1 Inter;align-items:center;margin:8px 0">Pay the balance</span></div></div><div class="chips"><button class="mk res" data-note="RESTYLED: the existing balance reminder gains a Pay button for exactly what is still due.">RESTYLED · reminder</button></div></div></div>
+<p class="cap">Dates and the reference are examples.</p>
+
+<h3 id="c3">3 · The team's record: online beside by hand</h3>
+<div class="spec"><div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 1440, today (Bears U11)</p><div class="shot"><div class="sc" style="max-height:460px"><img src="{{IMG:rcc-edit-desk-warm}}" alt="Today's team record window, payment section"></div><div class="bar"><span>Owes $400 · paid $100 of $500 · Mark paid · Record</span><button type="button" class="op">Full size</button></div></div></div><div class="col" style="flex:1 1 600px"><p class="sp-cap">AFTER · the Payment section of the same window</p><div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:600px">
+  <div class="dh"><h4>Bears U11</h4><span class="xx">×</span></div><div class="db">
+    <div style="display:flex;gap:8px;align-items:center"><span class="pill live">Accepted</span><span class="d2">A Pool · U11</span></div>
+    <div class="ey" style="margin-top:6px">Payment</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="owe late">Owes $400 · paid $100 of $500 · past due</span><span class="sp" style="flex:1"></span><span class="btn">Mark paid · $400</span></div>
+    <div class="ey">Received</div>
+    <div class="panel"><table class="kt"><tbody>
+      <tr><td>Jun 2</td><td>Deposit<div class="d2">Online, card · receipt 2210-0045</div></td><td style="text-align:right">$100</td><td style="text-align:right;width:52px"><span class="btn ic" aria-label="More for the Jun 2 deposit" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></td></tr>
+    </tbody></table></div>
+    <div class="ey">Still due</div>
+    <div class="panel"><div class="rows"><div class="r" style="min-height:52px"><div class="m"><b>Balance $400 · due Jul 10</b><div class="d">Pay link sent Jul 11</div></div><span class="btn">Record</span><span class="btn ic" aria-label="More for the balance" style="border-color:transparent;background:none"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div></div></div>
+    <div class="rare" style="padding:2px"><a>+ Record a different amount</a></div></div><div class="df"><span class="s">3 of 6 in U11</span><span class="btn">‹ Previous</span><span class="btn">Next ›</span></div></div></div></div></div>
+<div class="chips"><button class="mk res" data-note="RESTYLED: the Received list Stage 7 built gains &quot;Online, card&quot; (or bank debit) and the receipt number. An online row has no pencil: its amount and date are the bank’s; its ⋯ offers View the payment and Refund to the card (A12).">RESTYLED · Received</button><button class="mk new" data-note="NEW: &quot;Email the pay link&quot; in the balance row’s ⋯, and &quot;Pay link sent&quot; under it once sent.">NEW · pay link</button><button class="mk unc" data-note="Kept: Mark paid, Record, &quot;+ Record a different amount&quot; and the pencil on hand-recorded payments, word for word.">UNCHANGED · by hand</button><button class="fl" data-f="P08" data-here="Withdrawing a paid team keeps its payments; a refund is typed separately.">P08</button></div>
+<p class="cap">In the fixture Bears U11’s $100 is an "Earlier payment" recorded by hand; it is drawn as an online deposit to show the row. The list’s Payment column ("Owes $400", "Paid") and the Payments line read the same records, so they need no change.</p>
+</section>
+
+<section class="pane" id="m" data-pane="m" hidden>
+<h2 style="margin-top:16px">In the club's books, a refund, and paying by hand beside online</h2>
+<p>An online payment lands as a line in the same book a cash one does, through the same write, labelled with how it was paid. Only the registration fee goes in: the family's processing fee is never the club's revenue. A refund starts in the window that ends a registration, and goes back to the card first.</p>
+
+<h3 id="m1">1 · The season's Money page, online beside by hand</h3>
+<div class="spec"><div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 1440, today’s Ledger</p><div class="shot"><div class="sc" style="max-height:300px"><img src="{{IMG:ledger-desk-warm}}" alt="Today's season Ledger"></div><div class="bar"><span>Ledger · Outstanding $0.00</span><button type="button" class="op">Full size</button></div></div></div></div>
+<p class="sp-cap">AFTER · 1440</p>
+<div class="dt-wrap"><div class="ak dt"><div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic">GK</span></div>
+  <div class="shell"><div class="sb"><span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span><span class="grp">Programs</span>
+    <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span><div class="blk"><span class="it sub">Seasons</span><span class="grp" style="padding-left:14px">Season</span><span class="sw" style="margin-left:14px">Dev House League 2026<span class="chev"></span></span>
+  <span class="it sub">Overview</span><span class="it sub">Registrations <span class="amb" style="margin-left:auto">1</span></span><span class="it sub">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub on">Money</span><span class="it sub">Email families</span></div>
+    <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span></div><div class="mn"><div class="pg" style="width:960px">
+  <div class="ph1"><div><div class="ey">House league · Dev House League 2026</div><h1>Money</h1></div><span class="sp"></span><span class="btn">Export</span></div>
+  <div class="band"><div><div class="k">Owed</div><div class="v">$2,100</div><div class="h">14 players</div></div><div><div class="k">Received</div><div class="v">$1,650</div><div class="h">11 players · after $150 refunded</div></div><div><div class="k">Processing</div><div class="v" style="color:var(--blue)">$150</div><div class="h">1 bank debit clearing</div></div><div><div class="k">Still owing</div><div class="v am">$300</div><div class="h">2 players</div></div></div>
+  <div class="tbar"><div class="utabs" style="border:0;flex:1"><span class="on">Every line <span class="c">15</span></span><span>Still owing <span class="c">2</span></span><span>Refunds <span class="c">1</span></span></div></div>
+  <div class="panel"><table class="kt"><thead><tr><th>Date</th><th>Player</th><th>What</th><th>How</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+    <tr><td>Oct 24</td><td><b>Zoe Leblanc</b></td><td>Registration fee · <span class="proc">processing</span></td><td>Online, bank debit</td><td style="text-align:right;color:var(--dim)">$150<div class="d2">not counted yet</div></td></tr>
+    <tr><td>Oct 24</td><td><b>Ava Kim</b></td><td>Registration fee · regular price</td><td>Online, card · 1043-2302</td><td style="text-align:right">$150</td></tr>
+    <tr><td>Oct 24</td><td><b>Ethan Brown</b></td><td>Refund to the card · declined, Division A full</td><td>Online, card</td><td style="text-align:right;color:var(--red)">−$150</td></tr>
+    <tr><td>Oct 24</td><td><b>Ethan Brown</b></td><td>Card fee kept by the processor on the refund <button class="mk s" data-note="Only if A2 is C (or A): the club refunded the family’s fee, and the processor keeps its share, which comes out of the club’s balance. It is a real cost, so it is a line, filed as an expense (not against the fees). Under B there is no such line.">A2</button></td><td>Online, card</td><td style="text-align:right;color:var(--red)">−$4.85</td></tr>
+    <tr><td>Oct 20</td><td><b>Ethan Brown</b></td><td>Registration fee · regular price</td><td>Online, card · 1043-2288</td><td style="text-align:right">$150</td></tr>
+    <tr><td>Oct 24</td><td><b>Henry Kim</b></td><td>Registration fee · regular price</td><td>By hand, e-Transfer</td><td style="text-align:right">$150</td></tr>
+    <tr><td colspan="5" class="d2" style="padding:10px 16px">… 8 earlier payments</td></tr>
+  </tbody></table></div></div></div></div></div></div>
+<div class="chips"><button class="mk res" data-note="RESTYLED: Stage 9’s band gains a Processing figure only while a bank debit is clearing (A11). Owed = Received + Processing + Still owing, so it still adds up at a glance. Processing money is not Received until it clears, and not Still owing, because the family has paid.">RESTYLED · band (A11)</button><button class="mk res" data-note="RESTYLED: How reads &quot;Online, card&quot; or &quot;Online, bank debit&quot; with the receipt, or &quot;By hand, e-Transfer&quot;. A processing line shows its amount in brackets, and counts in nothing until it clears.">RESTYLED · How</button><button class="mk unc" data-note="Kept: nobody types money onto this page. Online payments, Mark received and refunds are the only writers, and the online one lands in the same write as Mark received.">UNCHANGED · one writer per flow</button></div>
+<p class="cap">Figures: 14 active at $150 = $2,100 owed; 11 paid ($1,650, including Ava online); Zoe’s $150 is clearing; 2 still owe. Ethan paid by card and was declined; his payment and the refund both stay as lines. The processor’s share kept on his refund ($4.85) is computed from the scoping plan’s card cost on the $156.75 he paid; it is shown only to make the A2 choice concrete.</p>
+
+<h3 id="m2">2 · The Statement: nothing new on the revenue side</h3>
+<div class="spec"><div class="col" style="flex:1 1 560px"><div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><table class="kt"><thead><tr><th>Category / line item</th><th style="text-align:right">Budgeted</th><th style="text-align:right">Actual</th></tr></thead><tbody>
+    <tr><td colspan="3" class="ey" style="padding-top:12px">Revenue</td></tr>
+    <tr><td><b>⌄ House league registration fees</b></td><td style="text-align:right">$10,330.00</td><td style="text-align:right">$1,815.00</td></tr>
+    <tr><td style="padding-left:34px">2026 season</td><td style="text-align:right">$3,900.00</td><td style="text-align:right">$1,650.00</td></tr>
+    <tr><td style="padding-left:34px">2027 season</td><td style="text-align:right">$6,430.00</td><td style="text-align:right">$165.00</td></tr>
+    <tr><td colspan="3" class="ey" style="padding-top:12px">Expenses</td></tr>
+    <tr><td><b>Payment processing</b> <button class="mk new" data-note="NEW, only under A2 = A or C: the processor’s share kept on refunds the club made in full. Absent while there are none, and absent under B.">NEW · A2</button></td><td style="text-align:right">—</td><td style="text-align:right">$4.85</td></tr>
+  </tbody></table></div></div></div><div class="col" style="flex:1 1 360px"><div class="chips"><button class="mk unc" data-note="Kept: Stage 9’s one &quot;House league registration fees&quot; row with seasons under it, in the fiscal year received. An online fee files there exactly like a cash one. The family’s processing fee appears nowhere: the club’s revenue is the fee.">UNCHANGED · fees row</button></div><p class="cap">The 2026 Actual is Stage 9’s $1,500 plus Ava’s online payment. Zoe’s clearing debit is not in Actual. A refund files in the fiscal year it was paid out (Stage 9).</p></div></div>
+
+<h3 id="m3">3 · A refund, from the window that ends a registration</h3>
+<div class="spec"><div class="col"><p class="sp-cap">The club declines Ethan · card first, fee included (A2·C)</p><div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:540px">
+  <div class="dh"><h4>Decline Ethan Brown?</h4><span class="xx">×</span></div><div class="db">
+    <p>Ethan’s family paid <b>$156.75</b> online on Oct 20: the $150.00 fee and a $6.75 processing fee. What happens to it?</p>
+    <div class="radios">
+      <div class="rad on"><span class="dot"></span><div><b>Refund to the card, Visa •••• 7731</b><span class="s2">Arrives in 5 to 10 business days</span>
+        <div class="sub2"><span class="pchk" style="min-height:32px;font-size:13.5px;display:flex;gap:8px;align-items:center"><span class="cbx on">✓</span>Include the $6.75 processing fee · $156.75 back</span></div>
+        <span class="s2" style="margin-top:6px">On because the club is ending it. The processor keeps $4.85 of the fee; that comes from the club.</span></div></div>
+      <div class="rad"><span class="dot"></span><div><b>Kept by the club</b><span class="s2">A reason is required</span></div></div>
+    </div>
+    <div class="frow" style="align-items:flex-start"><span class="fl2">Note to the family</span><span class="fld wide" style="min-height:52px;align-items:flex-start">Division A is full this season…</span></div></div><div class="df"><span class="s">The fee and its refund both stay in the book.</span><span class="btn">Cancel</span><span class="btn pri">Decline, refund and email</span></div></div></div></div><div class="col"><p class="sp-cap">The family asked to withdraw · fee not included by default</p><div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:520px">
+  <div class="dh"><h4>Withdraw Maya Singh?</h4><span class="xx">×</span></div><div class="db">
+    <p>Maya’s family asked to withdraw on Oct 22. They paid <b>$156.75</b> online.</p>
+    <div class="radios"><div class="rad on"><span class="dot"></span><div><b>Refund to the card, Visa •••• 0119</b>
+      <div class="sub2"><span class="pchk" style="min-height:32px;font-size:13.5px;display:flex;gap:8px;align-items:center"><span class="cbx"></span>Include the $6.75 processing fee</span></div><span class="s2" style="margin-top:6px">$150.00 back. Off because the family asked to leave; you can include it.</span></div></div>
+      <div class="rad"><span class="dot"></span><div><b>Refund part of it</b><span class="s2">An amount up to $150.00, with a reason</span></div></div>
+      <div class="rad"><span class="dot"></span><div><b>Kept by the club</b><span class="s2">A reason is required, e.g. "after the refund date"</span></div></div></div></div><div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn pri">Withdraw, refund and email</span></div></div></div></div><div class="col" style="flex:1 1 340px"><p class="sp-cap">What the family receives</p><div class="mail"><div class="mh"><b>Refund from Dev League Org</b></div><div class="mb">Ethan’s registration for Dev House League 2026 was declined: Division A is full this season.<br><br><b>$156.75 refunded</b> to Visa •••• 7731 on Oct 24. It takes 5 to 10 business days to appear.<br><br>Questions: info@devleague.ca.</div></div><div class="chips"><button class="mk res" data-note="RESTYLED: Stage 9’s end-a-registration window. With a card payment, &quot;Refunded&quot; becomes &quot;Refund to the card&quot;, done by the button; a payment made by hand keeps Stage 9’s &quot;Refunded, record how&quot;. The fee checkbox’s default follows who ended it (A2·C); the convenor can change it.">RESTYLED · card first</button><button class="mk unc" data-note="Kept: Stage 9’s &quot;ask each time&quot;, and the button that names what it does to the family.">UNCHANGED · ask each time</button></div></div></div>
+<p class="cap">Ethan, Maya and the card digits are examples continuing Stage 9’s story. Partial refund ("Refund part of it") is the same partial refund the price correction needs (L1). If a card refund can’t reach the card (a closed account), the refund line reads "didn’t reach the card" and the convenor gets a Needs attention item to refund another way; it clears itself once that refund is recorded (from /ux).</p>
+
+<h3 id="m4">4 · Paying by hand beside online</h3>
+<div class="read"><div class="w"><h4>Unchanged</h4><ul><li>Mark received on an owing row, Record a payment in Families, and a tournament’s Mark paid and Record a payment all work exactly as before.</li><li>The club’s "How to pay" text stays under Pay now.</li></ul></div>
+<div class="c"><h4>New, and why</h4><ul><li>A row that is paid online has no Mark received and no pencil: the amount and date are the bank’s.</li><li>A hand-recorded payment can still be corrected or undone; an online one is undone only by refunding it.</li></ul></div>
+<div class="g"><h4>Paid twice</h4><ul><li>If a family pays online after the convenor marked them received (or two people pay one sign-up), the second payment still lands, and a Needs attention item says "paid twice" with Refund to the card one press away. It clears itself once refunded.</li></ul></div></div>
+</section>
+
+<section class="pane" id="back" data-pane="back" hidden>
+<h2 style="margin-top:16px">Standing back: the rules across every flow</h2>
+<div class="tw"><table class="t"><thead><tr><th>Rule</th><th>What it means on screen</th><th>Held by</th></tr></thead><tbody>
+<tr><td><b>One checkout</b></td><td>One pay block, Stripe's hosted page and one receipt (page and email), for house league and tournaments alike. Only the lines inside differ.</td><td>One shared component; a guard test that no flow builds its own Stripe session</td></tr>
+<tr><td><b>One record per online payment, no new writer</b></td><td>The payment lands through the writer of the flow it pays, the same write as Mark received (house league) or Record a payment (tournaments).</td><td>A guard test naming the two landings</td></tr>
+<tr><td><b>Paid is its own fact</b></td><td>Owing, processing, paid, failed, refunded: shown on the Fee column and the pay block, never as a registration status. A bank debit that is clearing keeps the child Accepted.</td><td>One rule that reads the payment state; Stage 9's contract line 6</td></tr>
+<tr><td><b>The fee is never the club's revenue</b></td><td>Only the registration or entry fee is booked as revenue. When the club pays the processing fee (A14), or refunds a family's fee (A2), that is a cost line under Payment processing, never a reduction of fees.</td><td>The landing writes the base amount only</td></tr>
+<tr><td><b>Absent when not taking payments</b></td><td>Families see Stage 9's "How to pay" text and no Pay button. One quiet line, only for whoever can connect.</td><td>The pay block reads the club's account state on every render</td></tr>
+<tr><td><b>The server decides at the moment of paying</b></td><td>No link expires and none can take money for an ended, declined or paid registration. A second tab sees "already paid".</td><td>The pay route re-reads what is owed before it opens Stripe's page</td></tr>
+<tr><td><b>Counsel's gate</b></td><td>Production has a switch, off: no Payouts card and no Pay button anywhere until counsel signs off. Dev and staging run in test mode, marked on the Payouts card and on every test receipt.</td><td>A platform switch; live keys never in dev</td></tr>
+<tr><td><b>A refund goes back the way the money came</b></td><td>Card first, from the window that ends the registration or corrects its price (house league), or from the payment's own row (tournaments).</td><td>Refunds only through those doors</td></tr>
+</tbody></table></div>
+
+<h2>The ladder</h2>
+<p>Ordered by what each step stands on. The effort comes from the scoping plan's model (the first build 15 to 22 days, hardening 10 to 15). 12b also needs Stage 9's 9b-2 built, because house league's writer must hold an amount, a date and how first <button class="fl" data-f="P02">P02</button>.</p>
+<div class="tw"><table class="t ladder"><thead><tr><th>Stage</th><th>Covers</th><th>Migrations</th><th>Size</th><th>Asks</th></tr></thead><tbody>
+<tr><td>12a · foundation</td><td>The Payouts card in five states, in both homes; Stripe's onboarding and return; the plan gate and the launch switch; the pay block; Stripe's page for card; the receipt page and email; the online-payment record; the separate webhook for connected accounts; a full refund to the card; test mode.</td><td>The club's connected account (one row per organization, its state and what Stripe still needs); online payments (amount, fee, total, how, state, receipts) and what each pays for; refunds; a log of Stripe's events so none is applied twice</td><td>7–9 days</td><td>A1, A3, A6, A8, A9, A13, A14</td></tr>
+<tr><td>12b · house league</td><td>Every Stage 9 ghost filled; Pay now in the approval and promotion emails; Email the pay link; "no longer payable"; the refund in the end-a-registration window; a partial refund for a price correction (L1); the family record's lines.</td><td>None beyond 12a, if 9b-2 has given the writer its amount, date and how</td><td>5–7 days</td><td>A2, A11, L1</td></tr>
+<tr><td>12c · tournaments</td><td>The team's pay step with deposit or full; Pay on the balance reminder; online rows in the payments list; refund from the row; bank debit, if L2 puts it here.</td><td>"Online" as a way a tournament payment was made</td><td>4–6 days</td><td>A4, A7, A12, L2</td></tr>
+<tr><td>12d · hardening</td><td>Disputes and a negative balance; the "paid twice" item; a payouts list for matching the bank; the "+ GST/HST" rider; the international-card policy; platform-admin oversight; disconnecting a club with registrations still to pay; help articles; the terms.</td><td>Disputes, payouts</td><td>10–15 days</td><td>A5 (if yes, a 12e)</td></tr>
+</tbody></table></div>
+<p class="cap">Every migration updates the data dictionary and refreshes both snapshots in the same unit of work. The plan file names the tables; this page names what they hold.</p>
+
+<h2>Owner steps that are not code</h2>
+<div class="card"><ul>
+  <li><b>The counsel session</b> (the memo is ready: RPAA, FINTRAC, the terms). No live charge before it. <b>One question to add to the memo:</b> is a processing fee that the family pays only when paying by card a card surcharge under the card networks’ Canadian rules (A14)? I found no record that it has been booked (TODO, the decisions log, the Club plan). If you booked it with another session, say so and I'll record it.</li>
+  <li><b>The accountant's GST/HST confirmation</b> for the "+ tax" display rider (12d).</li>
+  <li><b>The insurance broker's quote.</b></li>
+  <li><b>Turning on Connect for the platform's Stripe account, in test mode.</b> That is an external sign-up in your name, so I'll ask before doing anything with Stripe. 12a can't be tested without it.</li>
+</ul></div>
+
+<h2>What /ux and /design changed before you saw this</h2>
+<div class="card" id="reviews"><p class="muted"></p><ul>
+  <li><b>Flows (/ux):</b>
+    <ul>
+      <li>The pay block gained two states. <b>Confirming</b>: back from Stripe, never "Paid" on the redirect alone. <b>Not finished</b>: the family left Stripe's page and nothing was charged. Pressing Pay now disables both buttons ("Opening the secure payment page…"), so a double tap can't pay twice.</li>
+      <li>Disconnecting payouts became a rare door at the end of the card. It asks in a window that counts what is still owed and what is still clearing.</li>
+      <li>The treasurer's view under A1 is drawn: a status line on Accounting, not a door.</li>
+      <li>A card refund that can't reach the card raises a self-clearing Needs attention item to refund another way.</li>
+      <li>From the captures: a tournament team submits as "Pending organizer review", so it pays when accepted, from the acceptance email. 12c was redrawn on the fixture's $300 entry and $100 deposit, in the tournament's own theme.</li>
+    </ul></li>
+  <li><b>Drawings (/design):</b>
+    <ul>
+      <li>The settings page after-drawing now uses today's real cards and labels (name and web address, "When birthdays count from", "Open Public site", the red Delete organization card) and today's Organization menu.</li>
+      <li>On a phone the Payouts card's button moves below its text, full width. Beside the text it squeezed the sentence into a narrow column.</li>
+      <li>A bank debit still clearing no longer shows its amount in brackets, which a treasurer reads as negative. It shows "$150 · not counted yet".</li>
+      <li>The tournament review step keeps today's header, tabs and stepper. The first draft dropped them, so it read as a redesign.</li>
+      <li>The treasurer's status line wraps cleanly at narrow widths.</li>
+      <li>Checked and kept: the band stays one joined row of four; every window has its sentence on the left and buttons on the right; Disconnect is a rare door; there is no dead Pay button anywhere; times read "8:14 p.m."; possessives use the bare apostrophe; one spelling throughout. Bank debit stays a worded button on the family's phone: it is a choice beside card, not a secondary admin action, so the symbol-alone rule doesn't apply.</li>
+    </ul></li>
+</ul><p class="muted" style="margin:0">These are proposals until you rule the asks.</p></div>
+</section>
+
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:16px">Asks &amp; paste-back</h2>
+<div class="card"><h3>Ruled before this round, and drawn as ruled</h3><ul>
+  <li><b>Direct charges on the club's own account; the family pays the fee; the club nets the full fee; every paid org plan; counsel is the launch gate</b> (2026-07-28): 12a, the pay block, the Statement.</li>
+  <li><b>Mark received stays:</b> every row, the Families window and the tournament's Mark paid are unchanged.</li>
+  <li><b>No household money:</b> two children are two registrations and one payment; no saved credit, plan or discount.</li>
+  <li><b>Stage 9:</b> pay when accepted, the price fixed at sign-up and correctable, the spot held while owing, Pay now in the promotion email, several children under one reference, ending a paid registration asks each time, one fees row on the Statement, "Accepted", the Money band.</li>
+</ul></div>
+<div class="ask" data-ask="A1"><h3><span class="no">A1</span>Who may connect payouts?</h3>
+  <p class="rides"><b>Drawn:</b> 12a §1–§2. The Club plan says "owner or treasurer", but the settings page is the owner’s alone and a treasurer can’t open it (P04). Stripe’s sign-up asks for a signing officer’s identity and the bank account, so whoever connects is acting for the club legally.</p><div class="opts"><label class="rec"><input type="checkbox" name="A1" value="Owner connects; treasurer sees the state and gets the alerts">The owner connects and disconnects. The treasurer sees the Payouts state on the Money pages and gets the "needs attention" item. Nothing else in Settings opens for them.</label><label><input type="checkbox" name="A1" value="Owner or treasurer connects">Owner or treasurer. This needs a new rule letting a treasurer open one card on the settings page.</label><label><input type="checkbox" name="A1" value="Owner only, nobody else sees it">Owner only, and nobody else sees the state.</label></div>
+  <textarea aria-label="Notes for A1" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A2"><h3><span class="no">A2</span>Who carries the processing fee on a refund?</h3>
+  <p class="rides"><b>Drawn:</b> Books §3 (both windows), §1 and §2 (the cost line). The processor keeps its share of a refunded fee. On a $150 card payment the family paid $6.75 in fees. Whoever "returns" it pays the processor’s share. This only matters while families pay the fee (A14).</p><div class="opts"><label><input type="checkbox" name="A2" value="A: always refund the whole amount; platform returns its part, club bears the processor share">A: always refund the whole amount. The platform returns its own part; the club bears the processor’s share, as a cost line.</label><label><input type="checkbox" name="A2" value="B: never refund the fee; the family loses it">B: refund the registration fee only. The family loses the processing fee; the club’s book stays clean.</label><label class="rec"><input type="checkbox" name="A2" value="C: depends on who ends it: club ends = fee included (default); family asks = not included (default); convenor can change">C: it depends on who ends it. When the club declines or cancels, the fee is included by default; when the family asks to leave, it isn’t. The convenor can change it each time.</label></div>
+  <textarea aria-label="Notes for A2" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A3"><h3><span class="no">A3</span>Can a family save a card for a later payment?</h3>
+  <p class="rides"><b>Drawn:</b> not drawn: no screen changes either way. Saving a card means keeping a payer record across sign-ups, which is a family account in all but name (the contract says the payer is the guardian on the registration, with no family account). The card form on Stripe’s page already offers the browser’s and Stripe’s own saved details.</p><div class="opts"><label class="rec"><input type="checkbox" name="A3" value="No: every payment is entered on Stripe’s page; the browser or Stripe Link may fill it">No. Each payment is entered on Stripe’s page, where the browser or Stripe’s own wallet may fill it in.</label><label><input type="checkbox" name="A3" value="Yes: a "save for next time" box, kept against the guardian’s email">Yes: a "save for next time" box, kept against the guardian’s email.</label></div>
+  <textarea aria-label="Notes for A3" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A4"><h3><span class="no">A4</span>While a bank debit clears: what do the family and the convenor see?</h3>
+  <p class="rides"><b>Drawn:</b> Checkout §4, 12b §3, Books §1. A bank debit takes up to 5 business days and can be returned. Payment stays its own fact (contract line 6).</p><div class="opts"><label class="rec"><input type="checkbox" name="A4" value="Processing as a payment state: child stays Accepted, spot held; Received only once cleared; a return emails the family and raises a self-clearing Needs attention item">"Processing" as a state of the payment. The child stays Accepted with the spot held. The money counts as Received only once it clears. A returned debit emails the family a fresh Pay and gives the convenor a Needs attention item that clears itself.</label><label><input type="checkbox" name="A4" value="Counted as received at once; a return reverses it">Counted as received at once; a returned debit reverses it.</label></div>
+  <textarea aria-label="Notes for A4" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A5"><h3><span class="no">A5</span>A rep team’s dues paid online through a Club organization’s account</h3>
+  <p class="rides"><b>Drawn:</b> not drawn. Open since 2026-07-28; the standalone Coaches Portal stays excluded either way. Rep dues today are a coach’s book with schedules, credits and the Families hand-off: a third flow with its own writer (P01), not a small add-on.</p><div class="opts"><label class="rec"><input type="checkbox" name="A5" value="Not in Stage 12; decide after 12c with its own drawing round">Not in Stage 12. Decide after 12c, in its own drawing round, as a possible 12e.</label><label><input type="checkbox" name="A5" value="Yes, as 12e inside the Club release">Yes, as 12e, inside the Club release.</label></div>
+  <textarea aria-label="Notes for A5" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A6"><h3><span class="no">A6</span>What a family sees when the club isn’t taking payments</h3>
+  <p class="rides"><b>Drawn:</b> 12a §4. The plan’s lean was "absent, never a dead button".</p><div class="opts"><label class="rec"><input type="checkbox" name="A6" value="Stage 9 screens unchanged (How to pay text, no button); one quiet line only for whoever can connect">Stage 9’s screens unchanged: the club’s "How to pay" text, no button. One quiet line, "Let them pay online", only for whoever can connect.</label><label><input type="checkbox" name="A6" value="Also tell families "online payment isn’t available"">Also tell families "online payment isn’t available".</label></div>
+  <textarea aria-label="Notes for A6" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A7"><h3><span class="no">A7</span>A tournament deposit: deposit only, or full at once too?</h3>
+  <p class="rides"><b>Drawn:</b> 12c §2. Deposit and balance are two payments, so the flat part of the fee is paid twice.</p><div class="opts"><label class="rec"><input type="checkbox" name="A7" value="Offer both; deposit pre-selected; the saving of paying in full shown">Offer both, with the deposit pre-selected and the fee saving of paying in full shown.</label><label><input type="checkbox" name="A7" value="Deposit only online; the balance by any way">Only the deposit online; the balance online later, or any other way.</label><label><input type="checkbox" name="A7" value="The full entry only">The full entry only.</label></div>
+  <textarea aria-label="Notes for A7" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A8"><h3><span class="no">A8</span>Where Tournament Plus connects</h3>
+  <p class="rides"><b>Drawn:</b> 12a §2. Tournament Plus can’t open the club’s settings (P05).</p><div class="opts"><label class="rec"><input type="checkbox" name="A8" value="The same card at the end of the tournament settings page">The same Payouts card, at the end of the tournament settings page.</label><label><input type="checkbox" name="A8" value="Its own Payouts page in both portals">A Payouts page of its own, reached from both.</label></div>
+  <textarea aria-label="Notes for A8" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A9"><h3><span class="no">A9</span>The club’s refund policy beside Pay</h3>
+  <p class="rides"><b>Drawn:</b> Checkout §1, 12c §1 ("Refund policy"). The club is the merchant of record and sets its own refund policy (the counsel brief). Counsel may want it shown before payment.</p><div class="opts"><label class="rec"><input type="checkbox" name="A9" value="One optional sentence on the Payouts card, shown as a link beside Pay; absent when blank">One optional sentence written on the Payouts card, shown as a "Refund policy" link beside Pay. Absent when blank. Counsel may make it required.</label><label><input type="checkbox" name="A9" value="No refund policy text">No refund policy text.</label></div>
+  <textarea aria-label="Notes for A9" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A14"><h3><span class="no">A14</span>Who pays the processing fee: may the club choose?</h3>
+  <p class="rides"><b>Drawn:</b> 12a §1b. Your question (2026-10-24). It costs little to build: one setting, a pay block without the fee, and a cost line in the books. It changes the 2026-07-28 "families pay" decision from the only way to the default, so /strategy records it once you rule. It also matters for counsel: a fee added only when paying by card may count as a card surcharge under the card networks’ Canadian rules, which cap it, require notice and disclosure, and don’t allow it in Quebec. The counsel memo doesn’t ask this yet. If counsel says it is a surcharge, "the club pays it" is the ready fallback.</p><div class="opts"><label class="rec"><input type="checkbox" name="A14" value="Yes: one club-wide choice on the Payouts card, families pay by default">Yes: one club-wide choice on the Payouts card. "Families pay it" is the default.</label><label><input type="checkbox" name="A14" value="Yes, chosen per program (house league, tournaments) on the same card">Yes, chosen separately for house league and for tournaments, on the same card.</label><label><input type="checkbox" name="A14" value="No: families always pay, as decided 2026-07-28">No: families always pay, as decided on 2026-07-28.</label></div>
+  <textarea aria-label="Notes for A14" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A11"><h3><span class="no">A11</span>Bank debits still clearing, on the Money band</h3>
+  <p class="rides"><b>Drawn:</b> Books §1. Stage 9 ruled Owed · Received (net) · Still owing.</p><div class="opts"><label class="rec"><input type="checkbox" name="A11" value="A fourth figure, Processing, only while there is some">A fourth figure, "Processing", only while a debit is clearing, so the band still adds up.</label><label><input type="checkbox" name="A11" value="Keep three; clearing money counts as Still owing until it clears">Keep three figures; clearing money counts as Still owing until it clears.</label></div>
+  <textarea aria-label="Notes for A11" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A12"><h3><span class="no">A12</span>A tournament refund starts from the payment</h3>
+  <p class="rides"><b>Drawn:</b> 12c §2. A tournament has no "end a registration" window that asks about money (P08).</p><div class="opts"><label class="rec"><input type="checkbox" name="A12" value="Refund to the card from the online payment’s ⋯">Refund to the card from the online payment’s ⋯.</label><label><input type="checkbox" name="A12" value="Build a tournament ending window first">Build a tournament "withdraw a team" window that asks about the money first, like house league’s.</label></div>
+  <textarea aria-label="Notes for A12" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="A13"><h3><span class="no">A13</span>Who may refund to a card?</h3>
+  <p class="rides"><b>Drawn:</b> Books §3. A card refund sends the club’s money out of its Stripe balance. Today a registrar may decline and record a refund by hand.</p><div class="opts"><label class="rec"><input type="checkbox" name="A13" value="Whoever may end the registration or record the payment in that flow, plus the treasurer">Whoever may end the registration or record a payment in that flow (house league: owner, club admin, league admin, registrar; tournaments: whoever runs tournaments), plus the treasurer.</label><label><input type="checkbox" name="A13" value="Owner and treasurer only; others leave a refund to do">Owner and treasurer only. A registrar’s decline leaves "refund to do" for them.</label></div>
+  <textarea aria-label="Notes for A13" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="L1"><h3><span class="no">L1</span>Partial refunds move into 12b</h3>
+  <p class="rides"><b>Drawn:</b> 12b §6, Books §3. Stage 9 ruled that correcting a paid price settles the difference; the Club plan had partial refunds in 12d.</p><div class="opts"><label class="rec"><input type="checkbox" name="L1" value="Yes: partial refunds in 12b">Yes: partial refunds in 12b.</label><label><input type="checkbox" name="L1" value="No: keep them in 12d; until then a card-paid price can’t be lowered">No: keep them in 12d; until then a card-paid price can’t be lowered.</label></div>
+  <textarea aria-label="Notes for L1" placeholder="Notes"></textarea></div>
+<div class="ask" data-ask="L2"><h3><span class="no">L2</span>When bank debit arrives</h3>
+  <p class="rides"><b>Drawn:</b> Checkout §4. Card is simpler; bank debit adds a debit agreement, a clearing wait and returns. It is the cheaper way for the family, and it matters most on a tournament-sized amount.</p><div class="opts"><label class="rec"><input type="checkbox" name="L2" value="Card in 12a; bank debit in 12c, for both flows at once">Card in 12a. Bank debit in 12c, for house league and tournaments at once (one checkout).</label><label><input type="checkbox" name="L2" value="Both in 12a">Both in 12a.</label><label><input type="checkbox" name="L2" value="Bank debit in 12d">Bank debit in 12d.</label></div>
+  <textarea aria-label="Notes for L2" placeholder="Notes"></textarea></div>
+
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste">
+  <div class="row"><button type="button" class="btn-d pri" id="build">Build the summary</button><button type="button" class="btn-d" id="copy">Copy</button><span class="muted" id="copied" style="font-size:13px"></span></div>
+  <label for="out" class="eyebrow">Paste this back</label>
+  <textarea id="out" readonly></textarea>
+</div>
+</section>
+</div>
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {"P01":{"t":"Four money writers, not one","today":"House league ticks a fee paid through its own write. Tournaments record dated payments through another. The coaches portal records dues through a third. Families hands a rep payment to the coach through a fourth. Only the first two share a common step underneath, and each has its own guard test.","fix":"Stage 12 adds no writer. One online-payment record lands through the writer of the flow it pays: house league’s, or the tournament’s. A guard test names those landings, so a fifth writer fails the build.","st":"12a"},"P02":{"t":"House league’s writer records no amount, date or how","today":"The \"Fee paid\" tick posts the season’s current fee, dated today, with no payment method. There is nowhere to put \"paid online, receipt …\".","fix":"9b-2 gives the writer an amount, a date and how (Stage 9’s How column). 12b then lands \"Online, card\" with the receipt through it.","st":"9b-2 · 12b"},"P03":{"t":"Families drops the date and how for a house-league line","today":"Record a payment collects an amount, date and how, but the house-league line goes through the tick, which uses today and records no how. A rep line keeps both (on the hand-off).","fix":"Carried through once 9b-2 gives the writer a date and how.","st":"9b-2"},"P04":{"t":"Settings are the owner’s alone; the treasurer can’t open them","today":"The settings page shows \"Settings are the owner’s\" to everyone else, and the server refuses non-look changes from anyone but the owner. The Club plan says payouts are connected \"by the owner or treasurer, from the club’s settings\".","fix":"Ask A1 decides; the drawing recommends the owner connects and the treasurer sees the state and the alerts.","st":"12a"},"P05":{"t":"Tournament Plus can’t reach the club settings page","today":"Tournament and Tournament Plus organizations are sent away from the organization pages to the tournament settings page. Online payments are for every paid org plan, Tournament Plus included.","fix":"The same Payouts card on the tournament settings page (A8).","st":"12a"},"P06":{"t":"No Stripe Connect anywhere","today":"Stripe today is the platform’s own subscriptions: checkout for a plan, the billing portal, and one webhook for subscription and invoice events. No connected account, application fee or account link exists, and no column holds a club’s account.","fix":"A connected account per club, a separate webhook endpoint with its own signing secret for connected-account events, and test mode by key.","st":"12a"},"P07":{"t":"No plan gate for online payments; the plans disagree on the count","today":"No feature key exists. The Facts doc says \"gated at the three paid org tiers\" and lists Tournament Plus, League Plus and Club (with Club · Association); the Club plan says \"the four paid org tiers\".","fix":"One new key at Tournament Plus and above; /billing reconciles the wording in the Facts doc and the Club plan in the same unit of work.","st":"12a"},"P08":{"t":"A tournament refund is typed separately from withdrawing a team","today":"Withdrawing a paid team keeps its payments; a refund is recorded by hand on its own. There is no window that asks what happens to the money.","fix":"An online payment’s ⋯ offers Refund to the card (A12).","st":"12c"}};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Stage',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED':'Later stage';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+  var o=e.target.closest('.shot .op'); if(o){ var s=o.closest('.shot'); s.classList.toggle('open'); o.textContent=s.classList.contains('open')?'Fold':'Full size'; }
+}, true);
+// tabs
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('s12-tab',p)}catch(e){}
+  if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+// theme for specimens
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+// asks: persist
+var KEY='s12-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(($('.tabs [data-pane='+pane+']')||{}).textContent||pane)+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['Club Tier · Stage 12 · payments · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+// desk drawings: scaled to fit, or true size
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size (1440 wide). Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+tabs.forEach(function(t){ t.addEventListener('click',function(){ setTimeout(fitAll,0) }) });
+// restore
+var p0='start', t0='warm'; try{ p0=localStorage.getItem('s12-tab')||'start'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>
