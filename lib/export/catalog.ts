@@ -377,6 +377,24 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
       'Export season registrations with player info, guardian contacts, division, status, and preferences. The PDF prints a division-grouped register with counts — names, dates and fees only, no contact details.',
   },
   {
+    // Club Tier 9b-2 Part 4: the season's Money page is its book — every fee in, every refund out, every corrected price.
+    id: 'house-league-season-money',
+    label: 'House league Season Money',
+    module: 'house_league',
+    page: 'Season Money',
+    file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    minPlan: 'league',
+    moduleGate: 'league_exports',
+    audiences: ['org_admin'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: false,
+    serverSide: false,
+    helpSummary:
+      'Export the season’s book: every registration fee received, every refund, and every corrected price, with the date, the player and how it was paid.',
+  },
+  {
     // Catalog true-up 2026-08-02 (Tryout Insights Phase 1): this export shipped in Phase D1 but
     // the entry still claimed "not yet implemented" and pointed at a page that never existed.
     id: 'rep-teams-tryout-registrations',

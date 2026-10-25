@@ -119,6 +119,10 @@ All 15 round-2 asks ruled as recommended (§6a). 9a and 9b are fully ruled.
 - **The Statement half is walked on `uat-rep-club`** (Club plan). The dev league is League Plus: no Accounting, so its
   treasurer reads no Money, and its Money page is the book (Q15).
 - **9b·11's split is built as a per-season split** (today a budget line belongs to one fiscal year); it is the last part.
+- **The words' four open questions (copy §18), owner 2026-10-25, all as recommended:** the ending window's money question
+  starts with **nothing picked** (the primary is absent until Refunded or Kept is chosen); **Withdraw emails the family only
+  when money moved** (a refund, or a kept fee with its reason), silent otherwise; a refund line carries **no typed reason**
+  ("Refund · declined" etc.); a raised price **tells nobody** this stage (the window says so).
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 

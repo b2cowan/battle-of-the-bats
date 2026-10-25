@@ -1062,6 +1062,33 @@ function noteAndMoney(note: string | null, money: EndedMoneyLine | null): string
   return out.join('\n    ');
 }
 
+/** A withdrawal that moved money (Club Tier 9b-2, owner 2026-10-25, copy §18.2): sent only when a refund was recorded
+ *  or the club kept the fee — a withdrawal with no money stays silent, as before. */
+export function leagueRegistrationWithdrawnHtml(input: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  money: EndedMoneyLine;
+  contactEmail?: string;
+  face?: FamilyMailFace | null;
+}) {
+  const p = escapeEmailFields(input);
+  const club = input.face ? escapeEmailHtml(input.face.club.name) : null;
+  const contact = p.contactEmail ?? (input.face?.contact ? escapeEmailHtml(input.face.contact) : club ? null : ADMIN_EMAIL);
+  const contactLine = contact
+    ? `Please contact ${club ? `${club} at ` : ''}<a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a> for more information.`
+    : `Please contact ${club} for more information.`;
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration update</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p><strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been withdrawn.</p>
+    ${noteAndMoney(null, input.money)}
+    <p>${contactLine}</p>
+  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+}
+
 /** The club released an unpaid (or part-paid) spot (Club Tier 9b-2, copy §15.2). */
 export function leagueSpotReleasedHtml(input: {
   playerFirstName: string;

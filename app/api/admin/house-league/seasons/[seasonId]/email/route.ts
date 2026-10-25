@@ -43,19 +43,21 @@ export const POST = withObservability(async (req: Request,
   if (refused) return refused;
 
   const body = await req.json();
-  const { subject, message, scope, divisionId, teamId, status } = body as {
+  const { subject, message, scope, divisionId, teamId, status, registrationIds } = body as {
     subject: string;
     message: string;
-    scope: 'all' | 'division' | 'team' | 'status';
+    scope: 'all' | 'division' | 'team' | 'status' | 'selected';
     divisionId?: string;
     teamId?: string;
     status?: LeagueRegistrationStatus;
+    /** 'selected' (9b-2's bulk Email): the ticked registrations — only this season's are ever reached. */
+    registrationIds?: unknown;
   };
 
   if (!subject?.trim() || !message?.trim()) {
     return NextResponse.json({ error: 'subject and message are required' }, { status: 400 });
   }
-  if (!['all', 'division', 'team', 'status'].includes(scope)) {
+  if (!['all', 'division', 'team', 'status', 'selected'].includes(scope)) {
     return NextResponse.json({ error: 'Invalid scope' }, { status: 400 });
   }
 
@@ -78,6 +80,21 @@ export const POST = withObservability(async (req: Request,
       if (!status) return NextResponse.json({ error: 'status required for status scope' }, { status: 400 });
       targets = allRegs.filter(r => r.status === status);
       break;
+    case 'selected': {
+      // Read against THIS season's registrations, so an id from anywhere else simply matches nothing. Two children of
+      // one family are one email.
+      const ids = new Set(Array.isArray(registrationIds) ? registrationIds.filter((x): x is string => typeof x === 'string') : []);
+      if (ids.size === 0) return NextResponse.json({ error: 'registrationIds required for selected scope' }, { status: 400 });
+      const seen = new Set<string>();
+      targets = allRegs.filter(r => {
+        if (!ids.has(r.id)) return false;
+        const key = r.guardianEmail?.trim().toLowerCase();
+        if (key && seen.has(key)) return false;
+        if (key) seen.add(key);
+        return true;
+      });
+      break;
+    }
   }
 
   if (targets.length === 0) {
@@ -134,6 +151,7 @@ export const POST = withObservability(async (req: Request,
 
   const audienceLabel =
     scope === 'all'    ? 'All active registrants' :
+    scope === 'selected' ? `${targets.length === 1 ? '1 family' : `${targets.length} families`} picked on Registrations` :
     status === 'waitlisted'    ? 'Waitlist' :
     status === 'pending_review' ? 'Pending review' :
     scope;

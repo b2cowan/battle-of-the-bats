@@ -30,6 +30,7 @@ import { ADMIN_PAGE } from '../../lib/notification-view.ts';
 import { accountingTabs, kitOrgLinks, kitPrograms } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { BRING_IN_PAGE_TITLE } from '../../lib/team-move-words.ts';
+import { REGS_WORDS } from '../../lib/house-league-money-words.ts';
 
 const ROUTE = 'app/api/notifications/route.ts';
 const FEED = 'components/notifications/useNotificationFeed.ts';
@@ -194,8 +195,10 @@ describe('D4 · the admin button words are the admin\'s own page names', () => {
   });
 
   it('a house league\'s registrations page titles itself Registrations', () => {
-    const page = readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx');
-    assert.match(page, new RegExp(`title="${ADMIN_PAGE.leagueRegistrations}"`));
+    // The route is thin (Club Tier 9b-2 Part 3): it mounts the screen, which words its own title.
+    assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx'), /<RegistrationsScreen \/>/);
+    assert.equal(REGS_WORDS.title, ADMIN_PAGE.leagueRegistrations);
+    assert.match(readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx'), /title=\{REGS_WORDS\.title\}/);
   });
 
   it('the holding-up-the-payout notice opens its request when exactly one is held', () => {

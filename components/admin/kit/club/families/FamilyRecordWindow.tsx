@@ -48,6 +48,7 @@ import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatStoredDate } from '@/lib/timezone';
 import { joinWithAnd } from '@/lib/utils';
+import { FAMILY_LINE_WORDS } from '@/lib/house-league-money-words';
 import {
   FAMILY_FILE_WORDS as FW, FAMILY_MESSAGE_WORDS as MW, FAMILY_PAGE_WORDS as PW, FAMILY_PAYMENT_WORDS as PayW,
   FAMILY_RECORD_WORDS as W,
@@ -410,12 +411,28 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
             return (
               <tr key={l.key}>
                 <td><span className={fam.nameRow}><span className={fam.childName}>{l.childName}</span><HandoffChip state={chips[l.key]} /></span><LadderLines line={l} /></td>
-                <td className={l.current ? undefined : repKit.dim}>{whereOf(l)}</td>
+                <td className={l.current ? undefined : repKit.dim}>
+                  {whereOf(l)}
+                  {/* 9b-2 (copy §13): a house-league fee is the price fixed when the family signed up. */}
+                  {l.league?.feeCents != null && l.league.fixedOn && (
+                    <span className={fam.ladder}>{FAMILY_LINE_WORDS.fixed(formatStoredDate(l.league.fixedOn))}</span>
+                  )}
+                </td>
                 {f ? (
                   <>
                     <td className={repKit.num}>{cents(f.dues)}</td>
                     <td className={repKit.num}>{cents(f.paid)}</td>
-                    <td className={repKit.num}>{cents(f.balance)}</td>
+                    <td className={repKit.num}>
+                      {cents(f.balance)}
+                      {/* The pay link's place (Stage 12 fills it): greyed, a tooltip says how to record it by hand. */}
+                      {l.league && f.balance > 0 && (
+                        <span className={fam.ladder}>
+                          <button type="button" className="btn btn-outline" disabled title={FAMILY_LINE_WORDS.ghostTip} aria-label={`${FAMILY_LINE_WORDS.ghost}: ${FAMILY_LINE_WORDS.ghostTip}`}>
+                            {FAMILY_LINE_WORDS.ghost}
+                          </button>
+                        </span>
+                      )}
+                    </td>
                   </>
                 ) : (
                   <td className={`${repKit.num} ${repKit.dim}`} colSpan={3}>{!l.current ? '' : l.league ? W.noFee : W.noDues}</td>

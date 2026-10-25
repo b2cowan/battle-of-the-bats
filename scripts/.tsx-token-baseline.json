@@ -39,10 +39,6 @@
     "hex": 1,
     "rgba": 0
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx": {
-    "hex": 7,
-    "rgba": 4
-  },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "hex": 3,
     "rgba": 0

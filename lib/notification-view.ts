@@ -26,6 +26,7 @@ export const EVENT_ICONS: Record<string, string> = {
   team_no_show:                      '🚫',
   coach_access_requested:            '🔑',
   house_league_registration_new:     '📋',
+  house_league_withdraw_request:     '↩️',
   chat_message:                      '💬',
   chat_mention:                      '📣',
   tryout_offer_response:             '🤝',

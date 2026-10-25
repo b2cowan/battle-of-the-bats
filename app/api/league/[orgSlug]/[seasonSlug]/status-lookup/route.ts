@@ -6,6 +6,8 @@ import { withObservability } from '@/lib/observability';
 import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { registrationReference } from '@/lib/utils';
 import { registrationOwes } from '@/lib/league-price';
+import { loadRegistrationMoneyLines } from '@/lib/league-money-read';
+import { lastPayment, lastRefund, receivedOf } from '@/lib/league-money';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,12 +66,13 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
+  // 9b-2: an ended child is shown too (Declined / Withdrawn, with a refund or the fee the club kept), and the money is
+  // read from the season's book (a part payment after a price rise reads true), never from the paid flag alone.
   const { data } = await supabaseAdmin
     .from('league_registrations')
-    .select('id, status, player_first_name, player_last_name, division_id, waitlist_position, signup_ref, fee_amount, registration_fee_paid, fee_entry_id')
+    .select('id, status, player_first_name, player_last_name, division_id, waitlist_position, signup_ref, fee_amount, end_money, end_money_reason, withdraw_requested_at')
     .eq('season_id', season.id)
     .eq('guardian_email', email)
-    .not('status', 'in', '(declined,withdrawn)')
     .order('registered_at', { ascending: true });
 
   const rows = data ?? [];
@@ -84,30 +87,37 @@ export const POST = withObservability(async (req: Request,
 
   const divisions = await getDivisionsForSeason(season.id);
   const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
-  // The day each paid fee was received ("$150 · paid Oct 24").
-  const entryIds = named.map((r: any) => r.fee_entry_id).filter(Boolean);
-  const paidOn = new Map<string, string>();
-  if (entryIds.length) {
-    const { data: entries } = await supabaseAdmin.from('accounting_entries').select('id, entry_date').in('id', entryIds);
-    for (const e of entries ?? []) paidOn.set(e.id as string, String(e.entry_date));
-  }
+  // Each child's money, from the season's book: received (in − out), the last payment's day, and any refund.
+  const lines = await loadRegistrationMoneyLines(named.map((r: any) => String(r.id)));
 
   const registrations = named.map((r: any) => {
     const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
+    const mine = lines.get(String(r.id)) ?? [];
+    const received = receivedOf(mine);
+    const last = lastPayment(mine);
+    const refund = lastRefund(mine);
+    const ended = r.status === 'declined' || r.status === 'withdrawn';
     return {
       ref: r.signup_ref ?? registrationReference(String(r.id)),
+      // The child's own code: what "Ask to withdraw" names (shown only to a family that already holds the reference).
+      child: registrationReference(String(r.id)),
       status: r.status,
       playerFirstName: r.player_first_name,
       playerLastName: r.player_last_name,
       divisionName: divisionMap[r.division_id] ?? '—',
       waitlistPosition: r.waitlist_position ?? null,
       fee,
-      paid: r.registration_fee_paid === true,
-      paidOn: r.fee_entry_id ? paidOn.get(r.fee_entry_id) ?? null : null,
+      received,
+      paid: (fee ?? 0) > 0 && received >= (fee ?? 0),
+      owing: !ended && r.status === 'active' ? Math.max(0, Math.round(((fee ?? 0) - received) * 100) / 100) : 0,
+      paidOn: last?.day ?? null,
+      refund: refund ? { amount: mine.filter(l => l.status === 'posted' && l.dir === 'out').reduce((s, l) => s + l.amount, 0), day: refund.day, method: refund.method } : null,
+      kept: ended && r.end_money === 'kept' && received > 0 ? { amount: received, reason: r.end_money_reason ?? '' } : null,
+      withdrawRequestedAt: r.withdraw_requested_at ?? null,
     };
   });
   // The club's how-to-pay words reach the family only once a child is accepted and owes something (9b·9).
-  const owes = registrations.some(r => r.status === 'active' && !r.paid && (r.fee ?? 0) > 0);
+  const owes = registrations.some(r => r.status === 'active' && r.owing > 0);
 
   return NextResponse.json({
     registrations,

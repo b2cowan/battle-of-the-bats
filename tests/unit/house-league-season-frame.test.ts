@@ -15,6 +15,8 @@ import {
  */
 
 const TODAY = '2026-10-24';
+/** The season's Registrations: its route is thin (Club Tier 9b-2 Part 3); the screen asks the gate and titles the page. */
+const REGISTRATIONS_SCREEN = 'components/admin/kit/club/league/registrations/RegistrationsScreen.tsx';
 const at = (status: string, seasonStartDate: string | null = null, seasonEndDate: string | null = null) =>
   seasonState({ status, seasonStartDate, seasonEndDate }, TODAY);
 
@@ -104,12 +106,14 @@ describe('2 · the frame is wired', () => {
     assert.match(css, /\.switch \{[^}]*width: var\(--tap-min, 44px\);[^}]*height: var\(--tap-min, 44px\);[^}]*border: none;[^}]*background: none;/);
   });
   it('Money is the old Ledger, and the old path redirects', () => {
-    assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx'), /title="Money"/);
+    // 9b-2 rebuilt the page; its title is the words module's (MONEY_PAGE_WORDS.title).
+    assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx'), /title=\{W\.title\}/);
+    assert.match(readCode('lib/house-league-money-words.ts'), /MONEY_PAGE_WORDS = \{[\s\S]*?title: 'Money',/);
     assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx'), /redirect\(`\/\$\{orgSlug\}\/admin\/house-league\/seasons\/\$\{seasonId\}\/money`\)/);
   });
   it('Email families is the composer’s one name (Q12)', () => {
     assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx'), /title="Email families"/);
-    const regs = readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx');
+    const regs = readCode(REGISTRATIONS_SCREEN);
     assert.doesNotMatch(regs, /Message registrants/);
   });
   it('the season screens decide their controls through the gate, never a role list', () => {
@@ -118,7 +122,8 @@ describe('2 · the frame is wired', () => {
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx',
-      'app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx',
+      // Registrations is a thin route over its screen (Club Tier 9b-2 Part 3): the gate is asked in the screen.
+      REGISTRATIONS_SCREEN,
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx',

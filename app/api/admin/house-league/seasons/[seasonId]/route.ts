@@ -17,6 +17,8 @@ import { openRegistrationRefusal } from '@/lib/house-league-season';
 import { registrationOwes, seasonCharges } from '@/lib/league-price';
 import { isCalendarDate } from '@/lib/timezone';
 import { clubWallClock, registrationState } from '@/lib/league-registration-state';
+import { loadSeasonMoneyLines } from '@/lib/league-money-read';
+import { seasonMoney } from '@/lib/league-money';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
 // has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
@@ -42,10 +44,11 @@ export const GET = withObservability(async (_req: Request,
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
-  const [divisions, regs, teams] = await Promise.all([
+  const [divisions, regs, teams, moneyLines] = await Promise.all([
     getDivisionsForSeason(seasonId),
     getRegistrationsForSeason(seasonId),
     getTeamsForSeason(seasonId),
+    loadSeasonMoneyLines(ctx!.org.id, seasonId),
   ]);
 
   const teamsByDivision = new Map<string, number>();
@@ -93,6 +96,8 @@ export const GET = withObservability(async (_req: Request,
       unplacedCount:           regs.filter(r => r.status === 'active' && !r.teamId).length,
       unpaidFeeCount:          regs.filter(r => r.status === 'active' && !r.registrationFeePaid && (registrationOwes(r, season) ?? 0) > 0).length,
     },
+    // The Overview's Owed · Still owing tiles (9b-2): the same band the Money page reads, from the frozen prices and the book.
+    money: seasonMoney(regs, season, moneyLines),
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });
 
@@ -140,6 +145,14 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ error: 'Pick the early-bird date from the calendar.' }, { status: 400 });
     }
     patch.earlyBirdUntil = v ? v : null;
+  }
+  // "Owing" turns amber after this many days from acceptance (9b·8, 9b-2 copy reg.owing).
+  if ('owingAmberDays' in body) {
+    const n = body.owingAmberDays;
+    if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > 365) {
+      return NextResponse.json({ error: 'Enter a whole number of days, from 1 to 365.' }, { status: 400 });
+    }
+    patch.owingAmberDays = n;
   }
   // The club's own words on how to pay (9b·9).
   if ('howToPay' in body) {

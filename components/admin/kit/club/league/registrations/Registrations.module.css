@@ -1,0 +1,263 @@
+/* A house-league season's Registrations on the kit (Club Tier Stage 9b-2, Part 3; copy HOUSE_LEAGUE_STAGE9B2_COPY.md §1–§9;
+   drawings HOUSE_LEAGUE_STAGE9B_DRAWINGS.html b2 §1–§3). TOKENS ONLY. The table, the row list, the chips, the fields and the
+   window are the kit's (RepKit, ClubKit, KitDialog); this sheet draws only what is this screen's own: the Fee cell, the phone
+   row, the bulk bar, the ending window's choices and the record's sections. */
+
+/* ── The page: a phone with rows ticked leaves room under its list for the docked bar ── */
+.screen { min-width: 0; }
+@media (max-width: 640px) {
+  .screen[data-selecting] { padding-bottom: 5.5rem; }
+}
+
+/* ── A tab's quiet count (the amber waiting count is the rail's own, drawn by the tab row) ── */
+.tabCount { margin-left: 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* A partial batch result's second line */
+.resultSub { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-secondary); }
+
+/* ── The Fee cell: one primary line (a pill when received or late), a quiet sub-line, a corrected line ── */
+.fee { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0; }
+.feeNone { color: var(--text-tertiary); }
+.feePlain { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.feePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  font-size: var(--type-body);
+  font-weight: 650;
+  white-space: nowrap;
+}
+.feeGood { color: var(--badge-success-ink); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.28); }
+.feeWarn { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+.feeSub { font-size: var(--type-support); color: var(--text-tertiary); }
+.feeCorrected {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  text-align: left;
+  cursor: help;
+}
+.feeCorrected:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.feeTip { font-size: var(--type-support); color: var(--text-secondary); max-width: 28ch; overflow-wrap: anywhere; }
+
+/* ── The table's own cells ── */
+.tickCol { width: 2.75rem; }
+.noEmail { color: var(--badge-warning-ink); }
+.actionsCol { width: 1%; white-space: nowrap; text-align: right; }
+.actions { display: inline-flex; align-items: center; gap: 0.35rem; justify-content: flex-end; }
+/* The ⋯ is a quiet glyph: no border, no fill (a secondary action is its symbol alone). */
+.moreTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--admin-control-h);
+  min-height: var(--admin-control-h);
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.moreTrigger:hover,
+.moreTrigger[aria-expanded="true"] { background: var(--home-olive-soft); color: var(--text-primary); }
+.moreTrigger:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) {
+  .moreTrigger { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+}
+/* "… 14 more" */
+.moreRow {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.moreRow:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+@media (max-width: 768px) {
+  .moreRow { min-height: var(--tap-min, 44px); }
+}
+
+/* A refusal said beside the row, with its offer */
+.rowNote { display: block; margin-top: 0.25rem; font-size: var(--type-support); line-height: 1.4; color: var(--badge-warning-ink); }
+.rowNoteOffer {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ── The phone row: tick · the child · the ⋯, then the tab's one action under them ── */
+.pRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "tick main more" ". low low";
+  align-items: center;
+  column-gap: 0.25rem;
+  padding: 0 0.35rem 0 0.25rem;
+}
+.pRow:not(:has(.pTick)) { grid-template-areas: "main main more" "low low low"; padding-left: 0.85rem; }
+.pRow[data-selected] { background: var(--home-olive-soft); }
+.pTick {
+  grid-area: tick;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  min-height: var(--tap-min, 44px);
+  cursor: pointer;
+}
+.pMain {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.6rem 0.25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.pMain:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.pName { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; font-size: var(--type-body); font-weight: 650; overflow-wrap: anywhere; }
+.pDetail { font-size: var(--type-support); color: var(--text-secondary); overflow-wrap: anywhere; }
+.pSub { font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.pMore { grid-area: more; display: flex; align-items: center; }
+.pLow { grid-area: low; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; padding: 0 0.5rem 0.65rem 0.25rem; }
+.pRow:not(:has(.pTick)) .pLow { padding-left: 0.25rem; }
+
+/* ── The bulk bar: inline under the toolbar at a desk, docked in place of the phone bar on a phone ── */
+.bulkInline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--home-olive-soft);
+}
+.bulkCount { font-weight: 700; color: var(--text-primary); margin-right: 0.25rem; }
+.bulkSpacer { flex: 1 1 auto; }
+.bulkClear {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.bulkDock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* One layer above the phone bar it stands in for (the bar is 300; a window is 390 and up). */
+  z-index: 301;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--home-line-strong);
+  background: var(--card-bg);
+}
+.bulkDockCount { display: flex; flex-direction: column; align-items: flex-start; gap: 0.05rem; margin-right: auto; font-size: var(--type-body); color: var(--text-primary); }
+.bulkDockCount .bulkClear { min-height: 0; font-size: var(--type-support); }
+.bulkHelp { margin: 0.5rem 0.75rem 0.25rem; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+
+/* ── The ending, price and move windows ── */
+.endLead { margin: 0 0 0.9rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-primary); }
+.endWaitlist { margin-top: 0.4rem; }
+.choices { margin: 0 0 0.9rem; padding: 0; border: 0; }
+.choice { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.35rem 0; cursor: pointer; }
+.choice input { margin-top: 0.25rem; }
+.choice > span { display: flex; flex-direction: column; gap: 0.1rem; }
+.choiceName { font-weight: 600; color: var(--text-primary); }
+.choiceFields { margin: 0.25rem 0 0.5rem 1.6rem; }
+.moveWarn { margin: 0 0 0.9rem; font-size: var(--type-support); line-height: 1.45; color: var(--badge-warning-ink); }
+.formSection {
+  margin: 0.6rem 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: window section heading */
+  color: var(--text-secondary);
+}
+@media (max-width: 640px) {
+  .choice { min-height: var(--tap-min, 44px); align-items: center; }
+}
+
+/* ── The registration's record ── */
+.recordSection { margin: 0 0 1.25rem; }
+.recordHead {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: section heading */
+  color: var(--text-secondary);
+}
+.recordFee { margin: 0 0 0.5rem; }
+.history { list-style: none; margin: 0; padding: 0; }
+.historyRow {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.historyRow:last-child { border-bottom: 0; }
+.historyDay { color: var(--text-tertiary); font-size: var(--type-support); font-variant-numeric: tabular-nums; }
+.doList { list-style: none; margin: 0; padding: 0; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.doList > li { border-bottom: 1px solid var(--home-line); }
+.doList > li:last-child { border-bottom: 0; }
+.doRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.doRow:hover { background: var(--home-olive-soft); }
+.doRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.doName { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.doHint { font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 768px) {
+  .doRow { min-height: var(--tap-min, 44px); justify-content: center; }
+  .historyRow { grid-template-columns: 4.5rem minmax(0, 1fr); }
+}

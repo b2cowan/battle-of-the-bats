@@ -86,6 +86,10 @@ export const SETTLED_WORDS = {
   inviteDeclinedOrCancelled: 'It was declined or cancelled.',
   inviteExpired: 'It expired.',
 
+  // A family's ask to withdraw a house-league child (house_league_withdraw_request, Club Tier 9b-2)
+  withdrawDone: 'The registration has ended.',
+  withdrawGone: 'The registration is no longer on the season.',
+
   // A free coach's payment reminder (team_coach_payment_reminder)
   paidInFull: 'Paid in full.',
   noLongerEntered: 'The team is no longer in the tournament.',

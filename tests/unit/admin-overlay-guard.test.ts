@@ -76,7 +76,7 @@ const LAYERS: Record<string, { file: string; selector?: string; inline?: true }>
  * none. ⚠ Adding a file here is the decision — a FORM names its layer; a MENU says what it does instead of taking input.
  */
 const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
-  'app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx': { layers: ['houseLeague'] },
+  // (The season's Registrations left 2026-10-25, Club Tier 9b-2 Part 3: every window it opens is a KitDialog now.)
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx': { layers: ['houseLeague'] },
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx': { layers: ['houseLeague', 'houseLeagueDraft'] },
   'app/[orgSlug]/admin/onboarding/page.tsx': { notAForm: 'a FOCUSED flow: the admin shell draws no bar on onboarding (AdminChrome `isFocused`)' },

@@ -1055,6 +1055,9 @@ export interface LeagueRegistration {
   spotReleased: boolean;
   endMoney: 'refunded' | 'kept' | null;
   endMoneyReason: string | null;
+  /** The family asked, from the status page, to withdraw this child (mig 370); the note they wrote. */
+  withdrawRequestedAt: string | null;
+  withdrawRequestNote: string | null;
   registeredAt: string;
   updatedAt: string;
 }
@@ -3376,6 +3379,8 @@ export type NotificationEventType =
   | 'team_no_show'
   | 'coach_access_requested'
   | 'house_league_registration_new'
+  // A family asked to withdraw a child (Club Tier 9b-2, the status page): a Needs-attention kind, clears when it ends.
+  | 'house_league_withdraw_request'
   // Coach Chat (Project 1 — Tournament Chat). These default push ON (the chat-app model).
   | 'chat_message'
   // A targeted @mention — a DISTINCT, higher-priority event so it still reaches a coach who has muted

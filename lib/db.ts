@@ -2277,6 +2277,8 @@ export interface LeagueSeasonInput {
   earlyBirdUntil?: string | null;
   howToPay?: string | null;
   askEmailConsent?: boolean;
+  /** 9b·8: owing turns amber after this many days from acceptance (mig 368). */
+  owingAmberDays?: number;
 }
 
 export interface LeagueTeamInput {
@@ -2392,6 +2394,8 @@ function mapLeagueRegistration(row: any): LeagueRegistration {
     spotReleased:        row.spot_released ?? false,
     endMoney:            row.end_money ?? null,
     endMoneyReason:      row.end_money_reason ?? null,
+    withdrawRequestedAt: row.withdraw_requested_at ?? null,
+    withdrawRequestNote: row.withdraw_request_note ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };
@@ -2471,6 +2475,7 @@ export async function updateLeagueSeason(
   if (input.earlyBirdUntil            !== undefined) patch.early_bird_until            = input.earlyBirdUntil;
   if (input.howToPay                  !== undefined) patch.how_to_pay                  = input.howToPay;
   if (input.askEmailConsent           !== undefined) patch.ask_email_consent           = input.askEmailConsent;
+  if (input.owingAmberDays            !== undefined) patch.owing_amber_days            = input.owingAmberDays;
   if (input.registrationClosedAt      !== undefined) patch.registration_closed_at      = input.registrationClosedAt;
   if (input.status                    !== undefined) patch.status                      = input.status;
   await supabaseAdmin

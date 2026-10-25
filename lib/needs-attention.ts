@@ -341,6 +341,24 @@ const assistantApproval: Resolver = async rows => {
   return out;
 };
 
+/** A family asked to withdraw a house-league child (Club Tier 9b-2) — waits until the registration ends (declined or
+ *  withdrawn); a registration no longer there is settled too. Keeping the child is a decision the notice can't see: Done. */
+const withdrawRequest: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const ids = uniq(rows.map(r => meta(r, 'registrationId')));
+  if (!ids.length) return out;
+  const regs = await rowsIn<{ id: string; status: string; ended_at: string | null }>('league_registrations', 'id, status, ended_at', 'id', ids);
+  const byId = new Map(regs.map(g => [g.id, g]));
+  for (const r of rows) {
+    const id = meta(r, 'registrationId');
+    if (!id) continue;
+    const g = byId.get(id);
+    if (!g) { out.set(r.id, said(W.withdrawGone)); continue; }
+    out.set(r.id, g.status === 'declined' || g.status === 'withdrawn' ? said(W.withdrawDone, { at: g.ended_at }) : 'waiting');
+  }
+  return out;
+};
+
 /** A free coach's payment reminder — waits while the registration still owes (part-payment keeps it). */
 const paymentReminder: Resolver = async rows => {
   const out = new Map<string, Verdict>();
@@ -516,6 +534,7 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   payouts_need_attention: payoutsNeedAttention,
   online_payment_not_recorded: onlinePaymentNotRecorded,
   card_refund_failed: cardRefundFailed,
+  house_league_withdraw_request: withdrawRequest,
 };
 
 const isNeedsAttention = (eventType: string): eventType is NeedsAttentionKind => (NEEDS_ATTENTION_KINDS as readonly string[]).includes(eventType);

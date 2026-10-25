@@ -4,16 +4,8 @@
     "face": 5,
     "heavy": 1
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx": {
-    "caps": 1,
-    "heavy": 1
-  },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx": {
     "caps": 1
-  },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx": {
-    "caps": 2,
-    "face": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "face": 1

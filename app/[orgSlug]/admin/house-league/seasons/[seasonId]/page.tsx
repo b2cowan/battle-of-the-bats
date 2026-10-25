@@ -43,6 +43,9 @@ import { JAN_1, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
 import { pluralize } from '@/lib/utils';
 import type { LeagueSeason } from '@/lib/types';
+import Link from 'next/link';
+import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
+import { TILE_WORDS } from '@/lib/house-league-money-words';
 
 interface SeasonDetail {
   season: LeagueSeason;
@@ -57,6 +60,8 @@ interface SeasonDetail {
     unplacedCount: number;
     unpaidFeeCount: number;
   };
+  /** The season's money band (9b-2, lib/league-money.ts seasonMoney): the Owed · Still owing tiles. */
+  money?: SeasonMoney;
 }
 
 export default function SeasonOverviewPage() {
@@ -259,6 +264,29 @@ export default function SeasonOverviewPage() {
             <span className={s.tileValue}>{teams}</span>
             {summary.unplacedCount > 0 && <span className={s.tileHint}>{pluralize(summary.unplacedCount, 'player')} unplaced</span>}
           </div>
+          {/* The two money tiles 9b-1 left out (copy §11): each opens the Money page; absent on a free season. */}
+          {charges && detail.money && access?.readMoney && (
+            <>
+              <Link
+                href={`/${orgSlug}/admin/house-league/seasons/${season.id}/money`}
+                className={`${s.tile} ${s.tileLink}`}
+                aria-label={TILE_WORDS.aria(TILE_WORDS.owed, formatLeagueMoney(detail.money.owed), detail.money.owedPlayers)}
+              >
+                <span className={s.tileLabel}>{TILE_WORDS.owed}</span>
+                <span className={s.tileValue}>{formatLeagueMoney(detail.money.owed)}</span>
+                <span className={s.tileHint}>{pluralize(detail.money.owedPlayers, 'player')}</span>
+              </Link>
+              <Link
+                href={`/${orgSlug}/admin/house-league/seasons/${season.id}/money`}
+                className={`${s.tile} ${s.tileLink}`}
+                aria-label={TILE_WORDS.aria(TILE_WORDS.owing, formatLeagueMoney(detail.money.owing), detail.money.owingPlayers)}
+              >
+                <span className={s.tileLabel}>{TILE_WORDS.owing}</span>
+                <span className={`${s.tileValue}${detail.money.owing > 0 ? ` ${s.amber}` : ''}`}>{formatLeagueMoney(detail.money.owing)}</span>
+                <span className={s.tileHint}>{pluralize(detail.money.owingPlayers, 'player')}</span>
+              </Link>
+            </>
+          )}
         </div>
       )}
 

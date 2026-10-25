@@ -7119,6 +7119,24 @@
     "ordinal_position": 33
   },
   {
+    "table_name": "league_registrations",
+    "column_name": "withdraw_requested_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
+  },
+  {
+    "table_name": "league_registrations",
+    "column_name": "withdraw_request_note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 35
+  },
+  {
     "table_name": "league_seasons",
     "column_name": "id",
     "data_type": "uuid",

@@ -15,11 +15,13 @@ import {
   leagueWaitlistPromotedHtml,
   leagueRegistrationDeclinedHtml,
   leagueSpotReleasedHtml,
+  leagueRegistrationWithdrawnHtml,
   type EndedMoneyLine,
 } from '@/lib/email';
 import { loadRegistrationMoneyLines } from '@/lib/league-money-read';
 import { formatLeagueMoney, receivedOf } from '@/lib/league-money';
 import { possessive } from '@/lib/utils';
+import { clearSettled } from '@/lib/needs-attention';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { systemMailFace } from '@/lib/club-email-context';
 import type { LeagueRegistrationStatus } from '@/lib/types';
@@ -57,6 +59,8 @@ function mapRow(row: any) {
     spotReleased:        row.spot_released ?? false,
     endMoney:            row.end_money ?? null,
     endMoneyReason:      row.end_money_reason ?? null,
+    withdrawRequestedAt: row.withdraw_requested_at ?? null,
+    withdrawRequestNote: row.withdraw_request_note ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };
@@ -440,6 +444,8 @@ export const PATCH = withObservability(async (req: Request,
     });
     if ('refused' in ended) return moveRefused(ended.refused);
     if ('refusal' in ended) return moneyRefusal(ended.refusal, reg, season, true);
+    // A family's ask to withdraw this child is answered: its Needs-attention notice clears now (it also clears on read).
+    await clearSettled({ orgIds: [ctx!.org.id], kinds: ['house_league_withdraw_request'] });
 
     // What the family is told about their money: the refund line just written, or the fee the club keeps.
     let mailMoney: EndedMoneyLine | null = null;
@@ -450,10 +456,28 @@ export const PATCH = withObservability(async (req: Request,
       else if (money.answer === 'kept' && receivedOf(lines) > 0) mailMoney = { answer: 'kept', amount: receivedOf(lines), reason: money.reason };
     }
 
-    if (newStatus === 'declined' || released) {
+    // Decline and Release always tell the family; a Withdraw only when money moved (owner 2026-10-25, plan §0e).
+    if (newStatus === 'declined' || released || mailMoney) {
       void (async () => {
         try {
           const face = await faceOnce();
+          if (newStatus === 'withdrawn' && !released && mailMoney) {
+            await sendTransactionalEmail({
+              key: 'league_registration_withdrawn',
+              to: reg.guardianEmail,
+              vars: {
+                guardianFirstName: reg.guardianFirstName,
+                playerFirstName:   reg.playerFirstName,
+                playerLastName:    reg.playerLastName,
+                seasonName:        season.name,
+                divisionName,
+              },
+              defaultSubject: `Registration update — ${season.name}`,
+              defaultHtml: leagueRegistrationWithdrawnHtml({ ...emailBase, divisionName, face, money: mailMoney }),
+              family: familyOf(face, reg.playerFirstName),
+            });
+            return;
+          }
           if (released) {
             await sendTransactionalEmail({
               key: 'league_spot_released',

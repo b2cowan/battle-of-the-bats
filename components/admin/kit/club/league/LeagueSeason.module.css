@@ -18,7 +18,9 @@
 /* ── The figures band: tiles CONNECTED (money figures = one joined band), never cards with gaps ── */
 .band {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Four tiles, or six with the money pair (9b-2): one row of equal columns, however many there are. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   border: 1px solid var(--home-line);
   border-radius: 8px;
   overflow: hidden;
@@ -31,10 +33,13 @@
 .tileValue { display: block; margin-top: 0.15rem; font-size: 1.35rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text-primary); }
 .tileValue.amber { color: var(--badge-warning-ink); }
 .tileHint { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+/* A money tile opens the Money page: the whole tile is the door. */
+.tileLink { color: inherit; text-decoration: none; }
+.tileLink:hover .tileLabel, .tileLink:focus-visible .tileLabel { color: var(--text-primary); text-decoration: underline; }
 @media (max-width: 640px) {
-  .band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .band { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile:nth-child(2n) { border-right: 0; }
-  .tile:nth-child(-n + 2) { border-bottom: 1px solid var(--home-line); }
+  .tile:not(:nth-last-child(-n + 2)) { border-bottom: 1px solid var(--home-line); }
 }
 
 /* ── A getting-ready season's checklist (9a·4): ticks are states, not controls ── */
@@ -192,3 +197,7 @@ td .amberText { display: inline; font-size: inherit; }
 .stepTitle { font-weight: 650; color: var(--text-primary); }
 .stepLine { font-size: var(--type-support); color: var(--text-secondary); overflow-wrap: anywhere; }
 .tickOptional { border-style: dashed; color: var(--text-tertiary); }
+
+/* The owing threshold's box and its "days" (9b-2, the Registration block). */
+.daysField { display: inline-flex; align-items: center; gap: 0.5rem; }
+.daysField input { width: 6rem; }

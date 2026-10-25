@@ -1,262 +1,224 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { useOrg } from '@/lib/org-context';
-import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
-import styles from '../../../house-league.module.css';
-import type { AccountingEntry, AccountingLedger, LedgerSummary } from '@/lib/types';
-import LoadingState from '@/components/shared/LoadingState';
-import { LoadFailed } from '@/components/admin/kit/club/RepKit';
-
-interface AnnotatedEntry extends AccountingEntry {
-  playerFirstName: string | null;
-  playerLastName:  string | null;
-  divisionId:      string | null;
-  registrationId:  string | null;
-}
-
-interface LedgerData {
-  ledger:        AccountingLedger;
-  summary:       LedgerSummary;
-  entries:       AnnotatedEntry[];
-  expectedTotal: number;
-  /** The one price every active registrant owes; null when their recorded prices differ. */
-  feePerReg:     number | null;
-  activeCount:   number;
-}
-
-interface SeasonInfo { id: string; name: string; }
-
-function fmt(n: number): string {
-  return n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 2 });
-}
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
 /**
- * The season's Money (Club Tier Stage 9a, Q18 — today's Ledger, renamed; `/ledger` redirects here). Read by everyone who
- * opens house league AND by the treasurer through Accounting (Q17), so it asks the one gate's `readMoney`, and it does not
- * need the season's own read (a treasurer has none): the season's name comes from its book when the season can't be read.
- * Its contents are 9b-2's (the Money band); this part only names it and opens it to the treasurer.
+ * THE SEASON'S MONEY — its book (Club Tier Stage 9b-2 Part 4; owner Q15, Q16, Q17, Q18, 9b·10; drawing 9b-2 §4; words
+ * HOUSE_LEAGUE_STAGE9B2_COPY.md §10).
+ *
+ *   the band — Owed · Received (net of refunds) · Still owing, the portal's one joined money band (MoneySummaryBand);
+ *   the tabs — Every line (newest first: fees in, refunds out in red, voided lines struck through, and the history lines
+ *     that move no money: a corrected price, a fee the club kept), Still owing (players, not lines: owing since · days,
+ *     amber past the club's threshold), Refunds;
+ *   the hint — where the fees file (Club plan: the Budget vs. Actual row) or that this page IS the book (League Plus).
+ * Nobody types money here: it is written by Mark received, a refund on an ending, and Correct the price on Registrations.
+ * Read by everyone who opens house league and by the club's Accounting (the treasurer, Q17) through the one gate's
+ * `readMoney`; open after Complete (Q16). The figures are the server's (lib/league-money.ts `seasonMoney`), the same ones
+ * the Overview's tiles show.
  */
+import { useCallback, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useOrg } from '@/lib/org-context';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import ExportMenu from '@/components/admin/ExportMenu';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
+import { EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
+import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import s from '@/components/admin/kit/club/league/SeasonMoney.module.css';
+import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
+import { MONEY_PAGE_WORDS as W, methodWord } from '@/lib/house-league-money-words';
+import { formatStoredDate } from '@/lib/timezone';
+import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib/export';
+
+interface BookLine {
+  id: string; regId: string; player: string | null; day: string; amount: number; method: string | null;
+  kind: 'fee' | 'refund' | 'voided'; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
+}
+interface HistoryLine { kind: 'corrected' | 'kept'; regId: string; player: string | null; at: string; oldAmount: number | null; newAmount: number; reason: string }
+interface OwingRow { regId: string; player: string; division: string | null; owing: number; acceptedDay: string | null; days: number | null; late: boolean }
+interface MoneyRead {
+  season: { id: string; name: string; status: string; owingAmberDays: number };
+  free: boolean; filesToStatement: boolean; band: SeasonMoney;
+  lines: BookLine[]; history: HistoryLine[]; owing: OwingRow[]; today: string;
+}
+
+type Tab = 'all' | 'owing' | 'refunds';
+type Row = { key: string; day: string; player: string; what: string; how: string; amount: string; tone: 'in' | 'out' | 'voided' | 'history' };
+
 export default function MoneyPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, user } = useOrg();
-  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
-  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-
   const access = useHouseLeagueAccess();
   const canView = !!access?.readMoney;
-  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
-  const kit = useAdminKit();
-
-  const [season,  setSeason]  = useState<SeasonInfo | null>(null);
-  const [data,    setData]    = useState<LedgerData | null>(null);
+  const [read, setRead] = useState<MoneyRead | null>(null);
+  const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [failed,  setFailed]  = useState(false);
+  const [tab, setTab] = useState<Tab>('all');
 
+  const slug = currentOrg?.slug;
   const load = useCallback(async () => {
-    if (!canView) return;
-    setLoading(true);
-    setFailed(false);
+    if (!slug || !canView) return;
     try {
-      const [seasonRes, ledgerRes] = await Promise.all([
-        fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`),
-        fetch(`/api/admin/house-league/seasons/${seasonId}/ledger${orgQuery}`),
-      ]);
-      const [sd, ld] = await Promise.all([seasonRes.json().catch(() => ({})), ledgerRes.json()]);
-      if (!ledgerRes.ok) throw new Error(ld.error ?? 'Failed to load the season’s money');
-      setSeason(sd.season ? { id: sd.season.id, name: sd.season.name } : { id: seasonId, name: ld.ledger?.name ?? '' });
-      setData(ld);
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/ledger?orgSlug=${encodeURIComponent(slug)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'load failed');
+      setRead(data as MoneyRead);
+      setFailed(false);
     } catch {
-      // A failed read is said, never drawn as a calm $0.00 (the money kit's rule).
+      // A failed read is said, never drawn as a calm $0 (the money kit's rule).
       setFailed(true);
     } finally {
       setLoading(false);
     }
-  }, [seasonId, canView, orgQuery]);
+  }, [slug, seasonId, canView]);
+  useDeferredLoad(!!currentOrg && canView, load);
 
-  useEffect(() => { load(); }, [load]);
+  const header = (actions?: React.ReactNode) => (
+    <AdminPageHeader
+      eyebrow={read ? W.eyebrow(read.season.name) : 'House league'}
+      title={W.title}
+      backTo={read && access?.read ? { href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: read.season.name } : undefined}
+      inlineActions
+      actions={actions}
+    />
+  );
 
   if (!user) return null;
-  if (!canView) {
+  if (access && !canView) return <div className={repKit.page}>{header()}<EmptyCard title={W.noAccess} /></div>;
+  if (loading && !failed) return <PageLoading header={header()} label={W.loading} />;
+  if (failed || !read) return <div className={repKit.page}>{header()}<LoadFailed title={W.failed} onRetry={() => { setLoading(true); void load(); }} /></div>;
+
+  const { band } = read;
+  const money = formatLeagueMoney;
+  const day = (d: string) => formatStoredDate(d);
+  const finished = read.season.status === 'completed' || read.season.status === 'archived';
+
+  const lineRows: Row[] = [
+    ...read.lines.map((l): Row => ({
+      key: l.id, day: l.day, player: l.player ?? '—',
+      what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy) : W.what.fee(l.priceKind),
+      how: methodWord(l.method),
+      amount: l.kind === 'refund' ? money(-l.amount) : money(l.amount),
+      tone: l.kind === 'voided' ? 'voided' : l.kind === 'refund' ? 'out' : 'in',
+    })),
+    ...read.history.map((h): Row => ({
+      key: `${h.kind}-${h.regId}-${h.at}`, day: h.at.slice(0, 10), player: h.player ?? '—',
+      what: h.kind === 'corrected' ? W.what.corrected(money(h.oldAmount ?? 0), money(h.newAmount), h.reason) : W.what.kept(h.reason),
+      how: '', amount: '—', tone: 'history',
+    })),
+  ].sort((a, b) => b.day.localeCompare(a.day));
+  const refundRows = lineRows.filter(r => r.tone === 'out');
+  const shown = tab === 'refunds' ? refundRows : lineRows;
+
+  const exportRows = () => lineRows.map(r => [r.day, r.player, r.what, r.how, r.amount]);
+  const headers = [W.col.date, W.col.player, W.col.what, W.col.how, W.col.amount];
+  const file = (ext: 'xlsx' | 'csv') => buildFilename({ org: currentOrg?.slug, dataset: 'house-league-money', scope: read.season.name }, ext);
+  const exportButton = !read.free && lineRows.length > 0 ? (
+    <ExportMenu
+      formats={['xlsx', 'csv']}
+      onExportXLSX={() => downloadXLSX(file('xlsx'), headers, exportRows(), W.title)}
+      onExportCSV={() => downloadCSVBlob(generateCSV(headers, exportRows()), file('csv'))}
+    />
+  ) : undefined;
+
+  if (read.free) {
     return (
-      <div className={styles.page}>
-        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>You don&apos;t have access to this page.</p>
-      </div>
-    );
-  }
-  if (loading) {
-    return (
-      <div className={styles.page}>
-        <LoadingState label="Loading the season’s money…" />
+      <div className={repKit.page}>
+        {header()}
+        <EmptyCard title={W.empty.free.title}>{W.empty.free.body}</EmptyCard>
       </div>
     );
   }
 
-  if (failed || !data) {
-    return (
-      <div className={styles.page}>
-        <LoadFailed title="We couldn’t load the season’s money." onRetry={() => void load()} />
-      </div>
-    );
-  }
-
-  const collected   = data?.summary.postedIncome   ?? 0;
-  const outstanding = data?.summary.pendingIncome  ?? 0;
-  const expected    = data?.expectedTotal          ?? 0;
-  const entries     = data?.entries                ?? [];
+  const toneClass = (t: Row['tone']) => (t === 'out' ? s.out : t === 'voided' ? s.voided : t === 'history' ? s.history : '');
+  const counts: Record<Tab, number> = { all: lineRows.length, owing: read.owing.length, refunds: refundRows.length };
+  const empty = W.empty[tab];
 
   return (
-    <div className={styles.page}>
-      {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
-          eyebrow (still a link to House league) and the way up to the season (F3). */}
-      <AdminPageHeader
-        // The way up only for people who can open house league (a treasurer reads Money alone, Q17).
-        crumbs={access?.read ? [{ href: `/${orgSlug}/admin/house-league`, label: 'House league' }] : undefined}
-        title="Money"
-        backTo={season?.name && access?.read ?{ href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
+    <div className={repKit.page}>
+      {header(exportButton)}
+      <MoneySummaryBand
+        ariaLabel={W.band.aria(money(band.owed), money(band.received), money(band.owing))}
+        tiles={[
+          { key: 'owed', label: W.band.owed, figure: money(band.owed), caption: W.band.players(band.owedPlayers) },
+          {
+            key: 'received', label: W.band.received, figure: money(band.received),
+            caption: band.refunded > 0 ? `${W.band.players(band.receivedPlayers)} · ${W.band.afterRefunds(money(band.refunded))}` : W.band.players(band.receivedPlayers),
+          },
+          { key: 'owing', label: W.band.owing, figure: money(band.owing), tone: band.owing > 0 ? 'warn' : 'plain', caption: W.band.players(band.owingPlayers) },
+        ]}
       />
+      {finished && <p className={s.hint}>{W.finished}</p>}
 
-      {/* Summary tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '2rem' }}>
-        <SummaryTile label="Expected" value={fmt(expected)} sub={data?.feePerReg === null ? `${data.activeCount} active` : `${data?.activeCount ?? 0} active × ${fmt(data?.feePerReg ?? 0)}`} color="var(--info-light)" />
-        <SummaryTile label="Collected" value={fmt(collected)} sub="Posted entries" color="var(--success-light)" />
-        <SummaryTile label="Outstanding" value={fmt(outstanding)} sub="Pending entries" color="var(--warning-light)" />
+      <div className={s.tabs} role="group" aria-label={W.title}>
+        {(['all', 'owing', 'refunds'] as const).map(t => (
+          <button key={t} type="button" className={s.tab} aria-pressed={tab === t} onClick={() => setTab(t)}>
+            {W.tabs[t]}<span className={s.count}>{counts[t]}</span>
+          </button>
+        ))}
       </div>
 
-      {/* No fee configured */}
-      {data?.feePerReg !== null && (data?.feePerReg ?? 0) === 0 && (
-        <div style={kx({
-          padding: '1rem 1.25rem',
-          borderRadius: '2px',
-          background: 'var(--white-03)',
-          border: '1px solid var(--white-8)',
-          fontSize: '0.875rem',
-          color: 'var(--white-40)',
-          marginBottom: '1.5rem',
-        }, { ...KIT_SURFACE.card, ...KIT_INK.secondary })}>
-          No registration fee is configured for this season. Set a fee amount in the season settings to track payments here.
-        </div>
-      )}
-
-      {/* Entries table */}
-      {entries.length === 0 ? (
-        <div style={kx({
-          padding: '2.5rem 1.5rem',
-          textAlign: 'center',
-          border: '1px dashed var(--white-10)',
-          borderRadius: '2px',
-          color: 'var(--white-35)',
-          fontSize: '0.9rem',
-        }, KIT_SURFACE.empty)}>
-          No fees received yet. A fee is entered here when it is marked received on Registrations.
-        </div>
-      ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className={styles.scheduleTable}>
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th style={{ textAlign: 'right' }}>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map(e => {
-                const isPaid = e.status === 'posted';
-                const isVoid = e.status === 'void';
-                const playerName = e.playerFirstName
-                  ? `${e.playerFirstName} ${e.playerLastName}`
-                  : e.description;
-                return (
-                  <tr
-                    key={e.id}
-                    style={{ opacity: isVoid ? 0.4 : 1 }}
-                  >
-                    <td style={kx({ fontWeight: 600, color: '#f0f0f0' }, KIT_INK.primary)}>
-                      {e.registrationId ? (
-                        <Link
-                          href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`}
-                          style={kx({ color: '#f0f0f0', textDecoration: 'none' }, KIT_INK.primary)}
-                        >
-                          {playerName}
-                        </Link>
-                      ) : playerName}
-                    </td>
-                    <td className={styles.scoreCell} style={{ textAlign: 'right' }}>
-                      {fmt(e.amount)}
-                    </td>
-                    <td>
-                      <span
-                        className={kit ? `badge ${isPaid ? 'badge-success' : isVoid ? 'badge-neutral' : 'badge-warning'}` : styles.statusBadge}
-                        style={
-                          kit ? undefined
-                          : isPaid
-                            ? { background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.25)' }
-                            : isVoid
-                              ? { background: 'var(--white-5)', color: 'var(--white-30)' }
-                              : { background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }
-                        }
-                      >
-                        {isPaid ? 'Paid' : isVoid ? 'Void' : 'Pending'}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--white-50)', whiteSpace: 'nowrap' }}>
-                      {fmtDate(e.updatedAt)}
-                    </td>
-                    <td style={kx({ color: 'var(--white-40)', fontSize: '0.8rem' }, KIT_INK.tertiary)}>
-                      {e.description}
-                    </td>
+      {tab === 'owing' ? (
+        read.owing.length === 0 ? <EmptyCard title={empty.title}>{empty.body}</EmptyCard> : (
+          <>
+            <div className={`${repKit.tableFrame} ${s.deskTable}`}>
+              <table className={repKit.table}>
+                <thead><tr><th>{W.col.player}</th><th>{W.col.division}</th><th>{W.col.since}</th><th className={repKit.num}>{W.col.owing}</th></tr></thead>
+                <tbody>
+                  {read.owing.map(o => (
+                    <tr key={o.regId}>
+                      <td>{o.player}</td>
+                      <td>{o.division ?? '—'}</td>
+                      <td>{o.acceptedDay ? W.since(day(o.acceptedDay), o.days) : W.sinceUnknown}</td>
+                      <td className={`${repKit.num}${o.late ? ` ${s.late}` : ''}`}>{money(o.owing)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ul className={s.phoneList}>
+              {read.owing.map(o => (
+                <li key={o.regId} className={s.phoneRow}>
+                  <span className={s.phoneMain}>
+                    <span className={s.phoneName}>{o.player}</span>
+                    <span className={s.sub}>{[o.division, o.acceptedDay ? W.since(day(o.acceptedDay), o.days) : W.sinceUnknown].filter(Boolean).join(' · ')}</span>
+                  </span>
+                  <span className={`${s.phoneAmount}${o.late ? ` ${s.late}` : ''}`}>{money(o.owing)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      ) : shown.length === 0 ? <EmptyCard title={empty.title}>{empty.body}</EmptyCard> : (
+        <>
+          <div className={`${repKit.tableFrame} ${s.deskTable}`}>
+            <table className={repKit.table}>
+              <thead><tr><th>{W.col.date}</th><th>{W.col.player}</th><th>{W.col.what}</th><th>{W.col.how}</th><th className={repKit.num}>{W.col.amount}</th></tr></thead>
+              <tbody>
+                {shown.map(r => (
+                  <tr key={r.key} className={r.tone === 'history' ? s.history : undefined}>
+                    <td>{day(r.day)}</td>
+                    <td>{r.player}</td>
+                    <td>{r.what}</td>
+                    <td>{r.how}</td>
+                    <td className={`${repKit.num} ${toneClass(r.tone)}`}>{r.amount}</td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ul className={s.phoneList}>
+            {shown.map(r => (
+              <li key={r.key} className={s.phoneRow}>
+                <span className={s.phoneMain}>
+                  <span className={s.phoneName}>{r.player}</span>
+                  <span className={s.sub}>{[day(r.day), r.what, r.how].filter(Boolean).join(' · ')}</span>
+                </span>
+                <span className={`${s.phoneAmount} ${toneClass(r.tone)}`}>{r.amount}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
-      <p style={kx({ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
-        Fee status is managed from the{' '}
-        <Link
-          href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`}
-          style={{ color: 'var(--white-50)', textDecoration: 'underline' }}
-        >
-          Registrations
-        </Link>
-        {' '}page.
-      </p>
-    </div>
-  );
-}
-
-function SummaryTile({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
-  const kx = useKitStyle();
-  return (
-    <div style={kx({
-      padding: '1rem 1.25rem',
-      borderRadius: '2px',
-      background: 'var(--white-03)',
-      border: '1px solid var(--white-8)',
-    }, KIT_SURFACE.card)}>
-      <div style={kx({ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-35)', marginBottom: '0.4rem' }, KIT_INK.eyebrow)}>
-        {label}
-      </div>
-      <div style={{ fontSize: '1.5rem', fontWeight: 800, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginBottom: '0.25rem' }}>
-        {value}
-      </div>
-      <div style={kx({ fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
-        {sub}
-      </div>
+      <p className={s.hint}>{read.filesToStatement ? W.hintClub : W.hintLeague} {W.registrations}</p>
     </div>
   );
 }

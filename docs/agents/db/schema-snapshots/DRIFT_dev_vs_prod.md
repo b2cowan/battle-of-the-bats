@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 420 divergence(s)** across dev/prod.
+**⚠️ 423 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 14 | 0 | — |
-| Columns | 224 | 1 | 0 |
+| Columns | 226 | 1 | 0 |
 | Indexes | 58 | 0 | 2 |
 | Constraints | 57 | 0 | — |
-| RLS / CHECK | 64 | 0 | 0 (RLS state) |
+| RLS / CHECK | 65 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (14)
@@ -33,7 +33,7 @@
 _none_
 
 ## Columns
-### Only in DEV (224)
+### Only in DEV (226)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -74,6 +74,8 @@ _none_
 - `league_registrations.signup_position`
 - `league_registrations.signup_ref`
 - `league_registrations.spot_released`
+- `league_registrations.withdraw_request_note`
+- `league_registrations.withdraw_requested_at`
 - `league_seasons.ask_email_consent`
 - `league_seasons.early_bird_until`
 - `league_seasons.how_to_pay`
@@ -331,10 +333,10 @@ _none_
 
 ### Definition changed (2)
 - `notifications_org_needs_attention_idx`
-  - dev: `CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
+  - dev: `CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
   - prod: `CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 - `notifications_user_needs_attention_idx`
-  - dev: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
+  - dev: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
@@ -404,7 +406,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (64)
+### CHECK only in DEV (65)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -422,6 +424,7 @@ _none_
 - `league_registration_price_changes.league_registration_price_changes_reason_chk`
 - `league_registrations.league_registrations_end_money_check`
 - `league_registrations.league_registrations_fee_amount_check`
+- `league_registrations.league_registrations_withdraw_note_check`
 - `league_seasons.league_seasons_how_to_pay_check`
 - `league_seasons.league_seasons_owing_amber_days_check`
 - `online_payment_refunds.online_payment_refunds_amount_chk`

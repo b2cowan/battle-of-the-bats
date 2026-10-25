@@ -816,6 +816,14 @@ A batch refused for a closed year records nothing and says so: `err.closed.batch
 
 ## 18. Open word questions
 
+**All four RULED by the owner 2026-10-25, as recommended (plan §0e):** 1 · nothing picked, `end.foot.choose` shows until a choice
+is made; 2 · Withdraw emails when money moved — subject `Registration update — {season}`, heading **Registration update**, lead
+`mail.withdrawn.lead` = **{possessive(Henry Kim)} registration for {season} — {division} has been withdrawn.**, then the money line
+(`mail.declined.refunded` / `mail.declined.kept`) and the contact line; `end.hint.refunded` / `end.hint.kept` for Withdraw become
+**The family is emailed that {name} was withdrawn and that {$150} was refunded on {Oct 24} ({E-Transfer}).** / **…and that the club
+is keeping the {$150}, with your reason.**, and the kept reason hint reads **The family reads this in their email.**; 3 · no refund
+reason field; 4 · a raised price tells nobody this stage. The questions as asked:
+
 1. **A pre-picked "Refunded".** The drawing starts the money question on Refunded. A refund is a line in the book going out; a mis-click records money that never went. **Recommendation:** start with neither picked and show `end.foot.choose` in the foot, the primary absent until a choice is made (absent beats disabled). One string, `end.foot.choose`, is already written for it. The owner's call; the drawing's default is built until then.
 2. **Withdraw sends no email.** A family that asked to withdraw learns from the club's e-Transfer, but a family whose child the club withdrew learns from the status page. **Recommendation:** Withdraw emails the family when money was handled (a refund, or a kept fee with its reason) and stays silent otherwise, using `mail.declined.refunded` / `mail.declined.kept` under a "Registration update" heading. Not written: it changes what Withdraw does, not only what it says.
 3. **A raised price tells nobody.** `price.hint.noEmail` says so and points to Email this family. **Recommendation:** accept it for 9b-2; a "tell the family" tick on a raise is a drawing, not a word.

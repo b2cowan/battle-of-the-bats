@@ -9,6 +9,7 @@ import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import { registrationDay, seasonDates } from '@/lib/house-league-season';
 import { clubDay, registrationDatesRow } from '@/lib/league-registration-state';
 import type { LeagueSeason } from '@/lib/types';
+import { OWING_WORDS } from '@/lib/house-league-money-words';
 import s from './LeagueSeason.module.css';
 
 /**
@@ -163,19 +164,24 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
   // A block open for editing closes the moment its season can no longer be edited (finished, or the access changed).
   const [editOpen, setEditing] = useState(false);
   const editing = editOpen && canEdit;
-  const [draft, setDraft] = useState({ registrationOpenAt: '', registrationCloseAt: '', earlyBirdUntil: '', waiverText: '', howToPay: '' });
+  const [draft, setDraft] = useState({ registrationOpenAt: '', registrationCloseAt: '', earlyBirdUntil: '', waiverText: '', howToPay: '', owingAmberDays: '' });
   const q = useSeasonSave(season.id, orgSlug, onSaved);
   // Registration can't close before it opens: the date that makes it so is held, said, and not sent.
   const windowBackwards = !!draft.registrationOpenAt && !!draft.registrationCloseAt && draft.registrationCloseAt < draft.registrationOpenAt;
+  // The amber threshold (9b·8): a whole number of days, 1–365, said under the box and not sent otherwise.
+  const owingN = Number(draft.owingAmberDays);
+  const owingBad = editing && draft.owingAmberDays !== '' && !(Number.isInteger(owingN) && owingN >= 1 && owingN <= 365);
   const payCleared = charges && season.status === 'registration_open' && !draft.howToPay.trim();
   const held = !editing ? null
     : windowBackwards ? 'The form can’t close before it opens. Change a date to save it.'
     : payCleared ? 'Registration is open and a division has a price, so how to pay can’t be empty.'
+    : owingBad ? OWING_WORDS.err
     : null;
   const start = () => {
     setDraft({
       registrationOpenAt: local(season.registrationOpenAt), registrationCloseAt: local(season.registrationCloseAt),
       earlyBirdUntil: season.earlyBirdUntil?.slice(0, 10) ?? '', waiverText: season.waiverText ?? '', howToPay: season.howToPay ?? '',
+      owingAmberDays: String(season.owingAmberDays ?? 14),
     });
     setEditing(true);
   };
@@ -234,6 +240,12 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
               : pay ? quoted(pay)
               : <span className={s.amberText}>Required before registration can open.</span>}
           </Fact>
+          {charges && (
+            <Fact label={OWING_WORDS.label}>
+              {OWING_WORDS.value(season.owingAmberDays)}
+              <Sub>{OWING_WORDS.sub}</Sub>
+            </Fact>
+          )}
           <Fact label="New registrations">
             {season.autoApproveUnderCapacity
               ? 'Approved while a division has room. A full division starts a waitlist.'
@@ -281,6 +293,24 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
               onBlur={() => draft.howToPay.trim() !== (season.howToPay ?? '') && commit({ howToPay: draft.howToPay.trim() || null })} />
             <span className={ck.hint}>Shown to families once a child is accepted, and in their email. For example: “e-Transfer to treasurer@yourclub.ca within 14 days of acceptance, with your child’s name in the message.”</span>
           </label>
+          {charges && (
+            <label className={ck.field}>
+              <span className={ck.label}>{OWING_WORDS.editLabel}</span>
+              <span className={s.daysField}>
+                <input className={ck.input} type="number" inputMode="numeric" min={1} max={365} step={1} value={draft.owingAmberDays}
+                  aria-describedby="owing-days-hint"
+                  onChange={e => setDraft(d => ({ ...d, owingAmberDays: e.target.value }))}
+                  onBlur={() => {
+                    const n = Number(draft.owingAmberDays);
+                    if (Number.isInteger(n) && n >= 1 && n <= 365 && n !== season.owingAmberDays) commit({ owingAmberDays: n });
+                  }} />
+                <span aria-hidden>{OWING_WORDS.suffix}</span>
+              </span>
+              {owingBad
+                ? <span className={s.amberText}>{OWING_WORDS.err}</span>
+                : <span id="owing-days-hint" className={ck.hint}>{OWING_WORDS.hint}</span>}
+            </label>
+          )}
           <label className={repKit.carryRow}>
             <input type="checkbox" checked={season.autoApproveUnderCapacity} onChange={e => commit({ autoApproveUnderCapacity: e.target.checked })} />
             <span className={repKit.carryText}><b>Approve new registrations while a division has room</b><span className={repKit.carryNote}>Off: every registration waits for your review, and a child waiting for review holds a spot.</span></span>

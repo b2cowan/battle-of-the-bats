@@ -9,6 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { loadSeasonMoneyLines } from '@/lib/league-money-read';
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -46,7 +47,23 @@ export const GET = withObservability(async (req: Request,
 
   const registrations = (data ?? []).map(mapRegistration);
 
-  return NextResponse.json({ registrations });
+  // The money on every row (Club Tier 9b-2): each registration's book lines and its price history, read one way — the
+  // screen turns them into the Fee cell through lib/league-money.ts. Readers of the season read the fee as before.
+  const [lines, changes] = await Promise.all([
+    loadSeasonMoneyLines(ctx!.org.id, seasonId),
+    supabaseAdmin.from('league_registration_price_changes')
+      .select('registration_id, kind, old_amount, new_amount, reason, changed_by, changed_at')
+      .eq('org_id', ctx!.org.id).eq('season_id', seasonId).order('changed_at', { ascending: true }),
+  ]);
+  if (changes.error) return NextResponse.json({ error: changes.error.message }, { status: 500 });
+  const money = Object.fromEntries([...lines].filter(([id]) => registrations.some(r => r.id === id)));
+  const priceChanges = (changes.data ?? []).map(c => ({
+    registrationId: c.registration_id as string, kind: c.kind as 'corrected' | 'moved',
+    oldAmount: c.old_amount != null ? Number(c.old_amount) : null, newAmount: Number(c.new_amount),
+    reason: (c.reason as string | null) ?? null, changedBy: (c.changed_by as string | null) ?? null, changedAt: c.changed_at as string,
+  }));
+
+  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday() });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
 // Camel-case mapping (mirrors mapLeagueRegistration in lib/db.ts)
@@ -81,6 +98,8 @@ function mapRegistration(row: any) {
     spotReleased:        row.spot_released ?? false,
     endMoney:            row.end_money ?? null,
     endMoneyReason:      row.end_money_reason ?? null,
+    withdrawRequestedAt: row.withdraw_requested_at ?? null,
+    withdrawRequestNote: row.withdraw_request_note ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };

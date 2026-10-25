@@ -408,7 +408,8 @@ export async function buildDocuments() {
   doc({
     id: 'house-league-registrations',
     label: 'House league season registrations',
-    screens: ['app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx'],
+    // Club Tier 9b-2 Part 3: the route is thin; the screen and its export module draw the register.
+    screens: ['app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx', 'components/admin/kit/club/league/registrations/RegistrationsScreen.tsx', 'components/admin/kit/club/league/registrations/registrationsExport.ts'],
     headings: HL_HEADERS,
     render: (name, settings) => downloadPDF(
       name, 'Season Registrations', `Fall House League ${SEASON}`, HL_HEADERS,

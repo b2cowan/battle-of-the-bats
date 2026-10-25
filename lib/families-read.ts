@@ -15,6 +15,7 @@ import { isCurrentLeagueSeason, isCurrentRepYear, isLiveRegStatus, type Audience
 import { listsByPerson } from './families-lists';
 import { registrationOwes } from './league-price';
 import { loadOrgLeagueReceivedCents } from './league-money-read';
+import { orgDayKey } from './timezone';
 
 /**
  * lib/families-read.ts — server-side assembly for the Families area (P2 chunks C–E; Club Tier Stage 5a).
@@ -210,14 +211,19 @@ const toCents = (n: unknown): number => Math.round(Number(n ?? 0) * 100);
  *  received for it (Club Tier 9b-2: posted in − posted out, so a part payment after a price rise, or a refund, reads true —
  *  `receivedCents` from `loadOrgLeagueReceivedCents`); only an ACCEPTED child owes (Q1), so a child in review or on the
  *  waitlist has no balance yet. Null figures when no price is set (nothing is owed on it). */
-export interface LeagueFeeLine { feeCents: number | null; paidCents: number; balanceCents: number }
+export interface LeagueFeeLine {
+  feeCents: number | null; paidCents: number; balanceCents: number;
+  /** The club's day the price was fixed (the sign-up), for "Price fixed at sign-up, Oct 24" (9b-2 copy §13). */
+  fixedOn: string | null;
+}
 export function leagueFeeLine(r: any): LeagueFeeLine {
   const fee = leagueRegOwes(r);
-  if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0 };
+  const fixedOn = r.registered_at ? orgDayKey(r.registered_at) : null;
+  if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0, fixedOn };
   const feeCents = toCents(fee);
   const paidCents = typeof r.__receivedCents === 'number' ? r.__receivedCents : r.registration_fee_paid === true ? feeCents : 0;
   const owes = r.status === undefined || r.status === 'active';
-  return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0 };
+  return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0, fixedOn };
 }
 
 /** What a raw league_registrations row (with its league_seasons join) owes, in dollars: the one rule. */

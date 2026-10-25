@@ -1,6 +1,11 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import type { LeagueMoneyLine } from './league-money';
+import { hasModuleEntitlement, type EntitlementOrg } from './module-entitlements';
+
+/** Does this club file its house-league fees on the Budget vs. Actual Statement? The Club plan does (it carries the club's
+ *  Accounting); on League Plus the season's Money page is the book (Q15). A page-wording fact, never a gate. */
+export const filesToClubStatement = (org: EntitlementOrg): boolean => hasModuleEntitlement(org, 'module_accounting');
 
 /**
  * A house-league registration's book lines, read one way (Club Tier 9b-2). Every line the one writer writes carries
