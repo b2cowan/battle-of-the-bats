@@ -265,7 +265,7 @@ const familiesHelp: HelpPageContent = {
             <>
               <p>Anyone given <strong>Families</strong> can open Record a payment. A treasurer without Families sees nothing new, and a member limited to some teams never has Families.</p>
               <ul>
-                <li>A <strong>house-league line</strong> also needs the fee permission: only the owner, a league admin or a league registrar marks a house-league fee paid.</li>
+                <li>A <strong>house-league line</strong> also needs the fee permission: only the owner, a club admin, a league admin or a league registrar marks a house-league fee paid.</li>
                 <li>A line that can&rsquo;t go stays on the list and says why: the team&rsquo;s season is closed, the team has no head coach to send it to, you are that team&rsquo;s head coach (record it on the team&rsquo;s Player dues), or you lack the fee permission.</li>
                 <li>More than a child owes is allowed. The team&rsquo;s book turns the extra into a credit when the coach records it.</li>
               </ul>

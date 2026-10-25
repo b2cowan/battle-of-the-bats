@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { LEAGUE_FEE_ROLES, canMarkLeagueFeePaid, setLeagueFeePaid, voidLeagueRegistrationFee } from '@/lib/league-fee-paid';
+import { getAuthContextWithRole, forbidden } from '@/lib/api-auth';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
+import { canMarkLeagueFeePaid, setLeagueFeePaid, voidLeagueRegistrationFee } from '@/lib/league-fee-paid';
 import { moveRefused } from '@/lib/club-money-route';
 import {
   getLeagueSeasonById,
@@ -23,13 +22,6 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { systemMailFace } from '@/lib/club-email-context';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
-  return null;
-}
 
 function mapRow(row: any) {
   return {
@@ -94,7 +86,7 @@ export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string; regId: string }> },) => {
   const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'read');
   if (err) return err;
 
   const { seasonId, regId } = await params;
@@ -111,7 +103,7 @@ export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string; regId: string }> },) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'read');
   if (err) return err;
 
   const { seasonId, regId } = await params;
@@ -122,13 +114,10 @@ export const PATCH = withObservability(async (req: Request,
   if (!reg) return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
 
   const body = await req.json();
-  const role = ctx!.role;
-  const isAdminOrOwner = role === 'owner' || role === 'league_admin';
-  const canManageRegs  = (LEAGUE_FEE_ROLES as readonly string[]).includes(role);
 
   // ── feePaid ──────────────────────────────────────────────────────────────────
   // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c, Part A — lib/league-fee-paid.ts):
-  // who may, the fiscal year's lock, the flip and the fee line all live there.
+  // who may, the fiscal year's lock, the flip and the fee line all live there. It stays open on a finished season (Q16).
   if ('feePaid' in body) {
     if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
     const refused = await setLeagueFeePaid(ctx!, { season, reg }, Boolean(body.feePaid));
@@ -139,7 +128,8 @@ export const PATCH = withObservability(async (req: Request,
 
   // ── adminNotes only ──────────────────────────────────────────────────────────
   if ('adminNotes' in body && !('status' in body) && !('divisionId' in body) && !('teamId' in body)) {
-    if (!canManageRegs) return forbidden();
+    const refused = houseLeagueRefusal(ctx, 'register', season);
+    if (refused) return refused;
     await supabaseAdmin
       .from('league_registrations')
       .update({ admin_notes: body.adminNotes ?? null, updated_at: new Date().toISOString() })
@@ -150,7 +140,9 @@ export const PATCH = withObservability(async (req: Request,
 
   // ── divisionId / teamId reassignment ────────────────────────────────────────
   if ('divisionId' in body || 'teamId' in body) {
-    if (!isAdminOrOwner) return forbidden();
+    // Placing a player is running the league (divisions, teams), not working the desk: the registrar reads it (Q17).
+    const refused = houseLeagueRefusal(ctx, 'run', season);
+    if (refused) return refused;
     // Ownership: null clears; anything else must be this season's division / team (plan I01).
     if (body.divisionId != null && !(await divisionInSeason(seasonId, body.divisionId))) {
       return NextResponse.json({ error: 'Division not found' }, { status: 404 });
@@ -170,7 +162,8 @@ export const PATCH = withObservability(async (req: Request,
   if (!('status' in body)) {
     return NextResponse.json({ error: 'No recognized fields to update' }, { status: 400 });
   }
-  if (!canManageRegs) return forbidden();
+  const statusRefused = houseLeagueRefusal(ctx, 'register', season);
+  if (statusRefused) return statusRefused;
 
   const newStatus = body.status as LeagueRegistrationStatus;
   const VALID: LeagueRegistrationStatus[] = ['pending_review', 'active', 'waitlisted', 'declined', 'withdrawn'];

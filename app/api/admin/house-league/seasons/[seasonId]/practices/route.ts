@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { getAuthContextWithRole } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, getPracticesForTeam, createPractices } from '@/lib/db';
 import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -32,11 +31,8 @@ export const GET = withObservability(async (req: NextRequest,
   const { seasonId } = await params;
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league'))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league'))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const err = houseLeagueRefusal(ctx, 'read');
+  if (err || !ctx) return err!; // a signed-out ctx is always refused
 
   // Season + team ownership: previously unchecked, so any authenticated league admin could
   // read practices for a team id belonging to another org. Now scoped like the game routes.
@@ -57,16 +53,13 @@ export const POST = withObservability(async (req: NextRequest,
   const { seasonId } = await params;
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league'))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league'))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  if (ctx.role !== 'owner' && ctx.role !== 'league_admin')
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const err = houseLeagueRefusal(ctx, 'run');
+  if (err || !ctx) return err!; // a signed-out ctx is always refused
 
   const season = await getLeagueSeasonById(seasonId, ctx.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+  const refused = houseLeagueRefusal(ctx, 'run', season);
+  if (refused) return refused;
 
   const body = await req.json();
   const {

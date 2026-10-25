@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getAuthContextWithRole } from '@/lib/api-auth';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -29,9 +28,8 @@ export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
+  const err = houseLeagueRefusal(ctx, 'read');
+  if (err || !ctx) return err!; // a signed-out ctx is always refused
 
   const { seasonId } = await params;
   const season = await getLeagueSeasonById(seasonId, ctx.org.id);

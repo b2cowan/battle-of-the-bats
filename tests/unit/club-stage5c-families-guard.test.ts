@@ -39,8 +39,9 @@ describe('1 · one house-league-fee write, two doors', () => {
   });
   it('the one write holds the role, the module and the closed fiscal year', () => {
     const lib = readCode('lib/league-fee-paid.ts');
-    assert.match(lib, /LEAGUE_FEE_ROLES = \['owner', 'league_admin', 'league_registrar'\]/);
-    assert.match(lib, /canOpenModule\(ctx, ctx\.org, 'module_house_league'\)/);
+    // Who may: the one house-league gate (Club Tier Stage 9a Part 1, Q17), never a role list of its own.
+    assert.match(lib, /canHouseLeague\(ctx, ctx\.org, 'takeFees'\)/);
+    assert.doesNotMatch(lib, /'league_admin'|'league_registrar'/, 'the fee write names a role again; ask lib/house-league-access.ts');
     assert.match(lib, /refuseIfClosed\(setting, \[line\.entry_date\]/);
     assert.match(lib, /\.rpc\('club_league_fee_set'/);
   });

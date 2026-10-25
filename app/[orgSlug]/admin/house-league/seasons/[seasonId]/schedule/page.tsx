@@ -1097,7 +1097,8 @@ export default function SchedulePage() {
     if (!res.ok) {
       const data = await res.json();
       showError(
-        res.status === 409 ? `That ${noun.toLowerCase()} is already booked` : 'Could not save game',
+        // A finished season's refusal is a 409 too (Stage 9a): only a booking clash is "already booked".
+        res.status === 409 && !data.finished ? `That ${noun.toLowerCase()} is already booked` : 'Could not save game',
         data.error ?? 'Unknown error',
       );
       return;
@@ -1182,7 +1183,7 @@ export default function SchedulePage() {
     if (!res.ok) {
       const data = await res.json();
       showError(
-        res.status === 409 ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice',
+        res.status === 409 && !data.finished ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice',
         data.error ?? 'Unknown error',
       );
       return;

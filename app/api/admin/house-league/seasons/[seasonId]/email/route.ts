@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getAuthContextWithRole } from '@/lib/api-auth';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, getRegistrationsForSeason, insertLeagueEmailLog, getLeagueEmailLog } from '@/lib/db';
 import { sendFamilyEmail, getFamilySuppressionList } from '@/lib/family-email';
 import { clubEmailFacts } from '@/lib/club-email-context';
@@ -10,20 +9,13 @@ import { senderName } from '@/lib/families-coach-ask';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
-  return null;
-}
-
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  // The sent log lists families' messages: read by the people who email them, not by every reader of the season.
+  const err = houseLeagueRefusal(ctx, 'readEmail');
   if (err) return err;
-  if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const { seasonId } = await params;
   // Ownership: the log is read by season id alone — the season must be this org's.
@@ -41,14 +33,14 @@ export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'email');
   if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const { seasonId } = await params;
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+  const refused = houseLeagueRefusal(ctx, 'email', season);
+  if (refused) return refused;
 
   const body = await req.json();
   const { subject, message, scope, divisionId, teamId, status } = body as {

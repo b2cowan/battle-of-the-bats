@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getAuthContextWithRole } from '@/lib/api-auth';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById } from '@/lib/db';
 import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -43,14 +42,15 @@ export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
-  if (ctx.role !== 'owner' && ctx.role !== 'league_admin') return forbidden();
+  // Read-only, but asked only by the schedule's own windows: the same permission as the writers it serves.
+  const err = houseLeagueRefusal(ctx, 'run');
+  if (err || !ctx) return err!; // a signed-out ctx is always refused
 
   const { seasonId } = await params;
   const season = await getLeagueSeasonById(seasonId, ctx.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+  const refused = houseLeagueRefusal(ctx, 'run', season);
+  if (refused) return refused;
 
   const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const kind: 'game' | 'practice' = body.kind === 'practice' ? 'practice' : 'game';

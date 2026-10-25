@@ -26,7 +26,8 @@ describe('1. the route\'s DELETE removes the game', () => {
     assert.ok(del.length > 0, 'the DELETE handler is gone');
     assert.match(del, /\.from\('league_games'\)\.delete\(\)\.eq\('id', gameId\)\.eq\('season_id', seasonId\)/);
     assert.doesNotMatch(del, /updateLeagueGame\(/, 'DELETE went back to a soft cancel');
-    assert.match(del, /if \(ctx!\.role !== 'owner' && ctx!\.role !== 'league_admin'\) return forbidden\(\);/);
+    // Who may: the one house-league gate (Stage 9a Part 1), on this season — a finished season's games are locked (Q16).
+    assert.match(del, /houseLeagueRefusal\(ctx, 'run', season\)/);
   });
 });
 

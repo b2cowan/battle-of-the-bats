@@ -490,7 +490,7 @@ export const FAMILY_PAYMENT_WORDS = {
   reasonClosed: (team: string) => `${possessive(team)} season is closed, so its book takes no payment here. Speak to the coach.`,
   reasonNoHead: (team: string) => `${team} has no head coach to send it to.`,
   reasonOnlyYou: (team: string) => `You are ${possessive(team)} head coach: record it on the team’s Player dues.`,
-  reasonNoFeePermission: 'Only the owner, a league admin or a league registrar marks a house-league fee paid.',
+  reasonNoFeePermission: 'Only the owner, a club admin, a league admin or a league registrar marks a house-league fee paid.',
   /** More than a child owes: explained, not refused. */
   over: (extra: string, child: string) => `That is ${extra} more than ${child} owes. The team’s book turns it into a credit when the coach records it.`,
   date: 'Date received',

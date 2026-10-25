@@ -1,26 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getAuthContextWithRole } from '@/lib/api-auth';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasonById, updateDivision, deleteDivision } from '@/lib/db';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import type { BornYears } from '@/lib/born-years';
 import { bornYearsFromBody } from '@/lib/program-year-patch';
+import type { LeagueSeason } from '@/lib/types';
 
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
-  return null;
-}
-
-/** The division's stored birth years when it belongs to the org's season, else null (the PATCH keeps a side the body leaves out). */
+/** The division's stored birth years (and its season) when it belongs to the org's season, else null (the PATCH keeps a side the body leaves out). */
 async function verifyDivisionBelongsToOrg(
   divisionId: string,
   seasonId: string,
   orgId: string,
-): Promise<{ born: BornYears } | null> {
+): Promise<{ born: BornYears; season: LeagueSeason } | null> {
   const season = await getLeagueSeasonById(seasonId, orgId);
   if (!season) return null;
   const { data } = await supabaseAdmin
@@ -30,21 +23,21 @@ async function verifyDivisionBelongsToOrg(
     .eq('season_id', seasonId)
     .maybeSingle();
   if (!data) return null;
-  return { born: { from: (data.born_from_year as number | null) ?? null, to: (data.born_to_year as number | null) ?? null } };
+  return { season, born: { from: (data.born_from_year as number | null) ?? null, to: (data.born_to_year as number | null) ?? null } };
 }
 
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string; divisionId: string }> },) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'run');
   if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const { seasonId, divisionId } = await params;
   const stored = await verifyDivisionBelongsToOrg(divisionId, seasonId, ctx!.org.id);
   if (!stored) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  const refused = houseLeagueRefusal(ctx, 'run', stored.season);
+  if (refused) return refused;
 
   const body = await req.json();
   const patch: Parameters<typeof updateDivision>[1] = {};
@@ -86,14 +79,14 @@ export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string; divisionId: string }> },) => {
   const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'run');
   if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const { seasonId, divisionId } = await params;
   const exists = await verifyDivisionBelongsToOrg(divisionId, seasonId, ctx!.org.id);
   if (!exists) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  const refused = houseLeagueRefusal(ctx, 'run', exists.season);
+  if (refused) return refused;
 
   // Guard: refuse if any registrations are assigned to this division
   const { count, error: countErr } = await supabaseAdmin

@@ -2,7 +2,7 @@ import 'server-only';
 import { tournamentToday } from './timezone';
 import type { Refused } from './club-money-route';
 import { closedYearFromError, isClosedYearError, loadFiscalSetting, refuseIfClosed } from './club-fiscal-year-server';
-import { canOpenModule } from './member-access';
+import { canHouseLeague } from './house-league-access';
 import { supabaseAdmin } from './supabase-admin';
 import type { AuthContextWithRole } from './api-auth';
 
@@ -14,7 +14,9 @@ import type { AuthContextWithRole } from './api-auth';
  * record's Record a payment both land here — never a second copy. `tests/unit/club-stage5c-families-guard.test.ts`
  * fails the build if either door writes the fee itself.
  *
- * Who: the owner, a league admin or a league registrar, holding the house league (the member's capability AND the plan).
+ * Who: the one house-league gate's `takeFees` (lib/house-league-access.ts, Q17): the owner, a club admin, a league admin
+ * or a league registrar, holding the house league (the member's capability AND the plan). It stays open on a finished
+ * season (Q16): money arrives after the last game.
  * What, in order:
  *   1. The club's fiscal year is checked before writing. The database lock also protects the atomic write.
  *   2. `club_league_fee_set` holds the registration row, voids any old line on undo or correction,
@@ -24,12 +26,9 @@ import type { AuthContextWithRole } from './api-auth';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-export const LEAGUE_FEE_ROLES = ['owner', 'league_admin', 'league_registrar'] as const;
-
-/** May this member mark a house-league fee paid? The role, and the house league itself (capability + plan). */
+/** May this member mark a house-league fee paid? The one house-league gate decides (role, capability and plan). */
 export function canMarkLeagueFeePaid(ctx: Pick<AuthContextWithRole, 'role' | 'capabilities' | 'org'>): boolean {
-  return (LEAGUE_FEE_ROLES as readonly string[]).includes(ctx.role)
-    && canOpenModule(ctx, ctx.org, 'module_house_league');
+  return canHouseLeague(ctx, ctx.org, 'takeFees');
 }
 
 export interface LeagueFeeTarget {

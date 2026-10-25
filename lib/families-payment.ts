@@ -39,8 +39,8 @@ import { FAMILY_COACH_ASK_WORDS, FAMILY_HANDOFF_COACH_WORDS as CW, FAMILY_PAYMEN
  * replies to the sender, a "Your club" bell — never `sendFamilyEmail`: nothing in 5c reaches a family). The coach's own
  * Record money writes the payment, carrying the hand-off's id (`claimHandoffForPayment` below).
  *
- * Who: whoever can open Families (the route's gate). A house-league line also needs the fee permission (owner, league
- * admin, league registrar — `canMarkLeagueFeePaid`); a rep line is a send and needs Families alone (Ask 27).
+ * Who: whoever can open Families (the route's gate). A house-league line also needs the fee permission (owner, club
+ * admin, league admin, league registrar — `canMarkLeagueFeePaid`, the house-league gate's `takeFees`); a rep line is a send and needs Families alone (Ask 27).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 

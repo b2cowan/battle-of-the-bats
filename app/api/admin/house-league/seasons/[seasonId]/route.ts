@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getAuthContextWithRole } from '@/lib/api-auth';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import {
   getLeagueSeasonById,
@@ -14,27 +13,23 @@ import type { LeagueSeasonStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { cutoffFor } from '@/lib/born-years';
 
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
-  return null;
-}
-
+// Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
+// has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
+// through the one gate (Q16), so without the way back that lock would be permanent.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:                ['registration_open'],
   registration_open:    ['registration_closed'],
-  registration_closed:  ['active'],
+  registration_closed:  ['active', 'registration_open'],
   active:               ['completed'],
-  completed:            ['archived'],
-  archived:             [],
+  completed:            ['archived', 'active'],
+  archived:             ['active'],
 };
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'read');
   if (err) return err;
 
   const { seasonId } = await params;
@@ -87,16 +82,17 @@ export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'changeStatus');
   if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const { seasonId } = await params;
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+  }
   const patch: Parameters<typeof updateLeagueSeason>[2] = {};
 
   // Field updates
@@ -116,6 +112,13 @@ export const PATCH = withObservability(async (req: Request,
   if ('seasonStartDate'        in body)      patch.seasonStartDate = body.seasonStartDate ?? null;
   if ('seasonEndDate'          in body)      patch.seasonEndDate   = body.seasonEndDate   ?? null;
   if ('waiverText'             in body)      patch.waiverText      = body.waiverText      ?? null;
+
+  // A status move is its own permission (it stays open on a finished season, to reopen or archive it); a field edit is a
+  // season edit, refused once the season is finished (Q16). Decided on the fields this route writes, not the body's keys.
+  if (Object.keys(patch).length > 0) {
+    const refused = houseLeagueRefusal(ctx, 'run', season);
+    if (refused) return refused;
+  }
 
   // Lifecycle transition
   if (typeof body.status === 'string') {

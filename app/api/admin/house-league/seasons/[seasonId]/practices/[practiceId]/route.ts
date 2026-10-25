@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, cancelPractice } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -11,19 +10,16 @@ export const PATCH = withObservability(async (req: NextRequest,
   const { seasonId, practiceId } = await params;
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league'))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league'))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  if (ctx.role !== 'owner' && ctx.role !== 'league_admin')
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const err = houseLeagueRefusal(ctx, 'run');
+  if (err || !ctx) return err!; // a signed-out ctx is always refused
 
   // Ownership: the practice must live in THIS org's season. This route used to trust the
   // raw id — and scope 'all' cancels an entire recurring series, which makes a guessed
   // foreign UUID a destructive cross-org write. Same rails as the sibling routes now.
   const season = await getLeagueSeasonById(seasonId, ctx.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+  const refused = houseLeagueRefusal(ctx, 'run', season);
+  if (refused) return refused;
   const { data: practice } = await supabaseAdmin
     .from('league_practices')
     .select('id')

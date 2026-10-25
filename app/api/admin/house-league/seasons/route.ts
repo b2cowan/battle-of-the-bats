@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getAuthContextWithRole } from '@/lib/api-auth';
+import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasons, getLeagueSeasonSummary } from '@/lib/db';
 import { houseLeagueSeasonCap, isFreeFloorLeague, leagueCapHit } from '@/lib/free-floor';
@@ -9,17 +8,10 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { DEFAULT_SPORT } from '@/lib/sports';
 
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
-  return null;
-}
-
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'read');
   if (err) return err;
 
   const seasons = await getLeagueSeasons(ctx!.org.id);
@@ -30,10 +22,8 @@ export const GET = withObservability(async (req: Request) => {
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
+  const err = houseLeagueRefusal(ctx, 'run');
   if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const body = await req.json();
 
