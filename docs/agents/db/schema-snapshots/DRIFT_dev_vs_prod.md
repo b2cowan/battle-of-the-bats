@@ -2,12 +2,12 @@
 
 **Generated:** 2026-10-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 371 divergence(s)** across dev/prod.
+**⚠️ 372 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 12 | 0 | — |
-| Columns | 200 | 1 | 0 |
+| Columns | 201 | 1 | 0 |
 | Indexes | 49 | 0 | 2 |
 | Constraints | 50 | 0 | — |
 | RLS / CHECK | 57 | 0 | 0 (RLS state) |
@@ -31,7 +31,7 @@
 _none_
 
 ## Columns
-### Only in DEV (200)
+### Only in DEV (201)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -59,6 +59,7 @@ _none_
 - `league_seasons.ask_email_consent`
 - `league_seasons.early_bird_until`
 - `league_seasons.how_to_pay`
+- `league_seasons.registration_closed_at`
 - `online_payment_refunds.amount`
 - `online_payment_refunds.created_at`
 - `online_payment_refunds.created_by`

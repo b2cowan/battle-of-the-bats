@@ -1,5 +1,6 @@
 import { formatStoredDate, tournamentToday } from './timezone';
 import { registrationDay } from './house-league-season';
+import { clubDay, type RegState } from './league-registration-state';
 import type { LeagueSeasonStatus } from './types';
 
 /**
@@ -28,11 +29,14 @@ export const MOVE_TO: Record<StatusMove, LeagueSeasonStatus> = {
   reopen: 'active',
 };
 
-/** The moves a season in this status offers (its doors), in the order the page shows them. */
-export function movesFrom(status: LeagueSeasonStatus | string): StatusMove[] {
+/**
+ * The moves a season in this status offers (its doors), in the order the page shows them. An opened season whose close
+ * date has passed (9b-1 Part 4: the dates run the form) is closed already: it offers Start season and "Reopen until…".
+ */
+export function movesFrom(status: LeagueSeasonStatus | string, regState?: RegState): StatusMove[] {
   switch (status) {
     case 'draft': return ['open'];
-    case 'registration_open': return ['close'];
+    case 'registration_open': return regState === 'closedByDate' ? ['start', 'reopenRegistration'] : ['close'];
     case 'registration_closed': return ['start', 'reopenRegistration'];
     case 'active': return ['complete'];
     case 'completed': return ['archive', 'reopen'];
@@ -44,6 +48,8 @@ export function movesFrom(status: LeagueSeasonStatus | string): StatusMove[] {
 /** What a window needs to know to say what changes, and its loose ends. */
 export type MoveFacts = {
   seasonName: string;
+  /** When the form opens (the Open window says "goes live on {date}" while it is ahead). */
+  registrationOpenAt?: string | null;
   seasonStartDate: string | null;
   seasonEndDate: string | null;
   registrationCloseAt: string | null;
@@ -90,10 +96,12 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
         lead: 'Families will be able to register as soon as you open it.',
         changes: [
           'The season appears on your public site and on the House league page.',
-          'The sign-up form goes live, and the season shows under Open now.',
+          f.registrationOpenAt && registrationDay(f.registrationOpenAt)! > today
+            ? `The sign-up form goes live on ${clubDay(f.registrationOpenAt, today)}.`
+            : 'The sign-up form goes live, and the season shows under Open now.',
           f.autoApproveUnderCapacity
             ? 'New registrations are approved while a division has room, and a full division starts a waitlist.'
-            : 'New registrations wait for your review, and a full division starts a waitlist.',
+            : 'New registrations wait for your review and hold a spot. A full division starts a waitlist.',
           'Families are not emailed when you open registration.',
         ],
         looseEnds: [],
@@ -109,7 +117,8 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
         title: `Close registration for ${name}?`, phoneTitle: 'Close registration?',
         lead: 'Families will no longer be able to register.',
         changes: [
-          'The sign-up form closes. The season page says "Registration for this season has closed."',
+          'The sign-up form closes now, whatever the close date says.',
+          'The season page says “Registration for this season has closed.”',
           'Nobody new can join a waitlist. Families already on it keep their place.',
           'You can still approve, waitlist and add registrations by hand.',
           'Families who already registered can still look up their status.',
@@ -120,23 +129,20 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
         button: 'Close registration', busy: 'Closing…',
       };
     }
-    case 'reopenRegistration': {
-      const closePassed = f.registrationCloseAt && dayOf(f.registrationCloseAt) < today;
+    // "Reopen until…" (S2·b): the window asks for the new close date (SeasonStatusWindow's field).
+    case 'reopenRegistration':
       return {
         title: `Reopen registration for ${name}?`, phoneTitle: 'Reopen registration?',
-        lead: 'The sign-up form goes live again.',
+        lead: 'The sign-up form opens again now and stays open until the date you pick.',
         changes: [
-          'Families can register again, and the season shows under Open now.',
+          'Families can sign up again, and the season shows under Open now.',
           'People already on the waitlist keep their place.',
           NOT_EMAILED,
         ],
-        looseEnds: closePassed
-          ? [`Your close date, ${label(f.registrationCloseAt!)}, has already passed. Until the dates run the form, it does not close registration by itself, so close it again when you are ready.`]
-          : [],
+        looseEnds: [],
         foot: 'You can close it again at any time.',
         button: 'Reopen registration', busy: 'Reopening…',
       };
-    }
     case 'start': {
       const end = looseEndSentence(f.pendingReviewCount ? [waiting(f.pendingReviewCount)] : []);
       return {

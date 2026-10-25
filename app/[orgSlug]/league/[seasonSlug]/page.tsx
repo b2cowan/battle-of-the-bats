@@ -9,6 +9,10 @@ import { orgLinks } from '@/lib/org-links';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LeagueDivision } from '@/lib/types';
 import { bornFactsOf } from '@/lib/club-born-public';
+import { formatStoredDate } from '@/lib/timezone';
+import { clubDay, publicRegistrationLine, registrationChip, takesSignups } from '@/lib/league-registration-state';
+import { dollarsLine } from '@/lib/house-league-season';
+import { seasonPriceRange } from '@/lib/league-price';
 import column from '../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -32,11 +36,11 @@ const STATUS_LABEL: Record<string, string> = {
   archived:             'Archived',
 };
 
+/** A stored day, read as stored (9b-1 Part 4): registration times are kept as the club typed them, so the first ten
+ *  characters ARE the club's day — re-zoning them showed an early-morning close as the day before. */
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-CA', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  });
+  return formatStoredDate(iso.slice(0, 10), { longMonth: true });
 }
 
 interface DivisionWithCount extends LeagueDivision {
@@ -73,12 +77,16 @@ export default async function LeagueSeasonPage({
         .from('league_registrations')
         .select('id', { count: 'exact', head: true })
         .eq('division_id', d.id)
-        .eq('status', 'active');
+        // A spot is held by an accepted or a received child (mig 362).
+        .in('status', ['active', 'pending_review']);
       return { ...d, activeCount: count ?? 0 };
     }),
   );
 
-  const registrationOpen = season.status === 'registration_open';
+  // The dates and the status together (9b-1 Part 4, lib/league-registration-state.ts): the form, the chip and the line agree.
+  const registrationOpen = takesSignups(season);
+  const regLine = publicRegistrationLine(season);
+  const priceRange = seasonPriceRange(divisions, season);
   const finished = season.status === 'completed' || season.status === 'archived';
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
@@ -90,7 +98,7 @@ export default async function LeagueSeasonPage({
         <div className={column.header}>
           <div className={kit.chipRow}>
             <span className={`${kit.chip} ${registrationOpen ? kit.chipOk : kit.chipNeutral}`}>
-              {STATUS_LABEL[season.status] ?? season.status}
+              {registrationChip(season) ?? STATUS_LABEL[season.status] ?? season.status}
             </span>
           </div>
           <h1 className={kit.title}>{season.name}</h1>
@@ -118,12 +126,15 @@ export default async function LeagueSeasonPage({
                 </div>
               </div>
             )}
-            {season.registrationFee != null && (
+            {priceRange && (
               <div>
-                <div className={kit.band} style={factBand}>Registration fee</div>
+                <div className={kit.band} style={factBand}>Price</div>
                 <div style={{ ...factValue, fontWeight: 700 }}>
-                  ${season.registrationFee.toFixed(2)}
+                  {priceRange.low === priceRange.high ? dollarsLine(priceRange.low) : `${dollarsLine(priceRange.low)} – ${dollarsLine(priceRange.high)}`}
                 </div>
+                {season.earlyBirdUntil && divisions.some(d => d.earlyPrice != null) && (
+                  <span className={kit.rowSub}>Early bird through {clubDay(season.earlyBirdUntil)}</span>
+                )}
               </div>
             )}
           </div>
@@ -158,6 +169,7 @@ export default async function LeagueSeasonPage({
                         {d.name}
                       </div>
                       {born && <span className={kit.rowSub}>{born}</span>}
+                      {d.note && <span className={kit.rowSub}>{d.note}</span>}
                     </div>
                     {d.capacity != null ? (
                       <>
@@ -205,10 +217,8 @@ export default async function LeagueSeasonPage({
             >
               Register now
             </Link>
-            {season.registrationCloseAt && (
-              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>
-                Registration closes {formatDate(season.registrationCloseAt)}
-              </p>
+            {regLine && (
+              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>{regLine}</p>
             )}
           </div>
         ) : (
@@ -222,7 +232,7 @@ export default async function LeagueSeasonPage({
                 marginBottom: (finished || season.status === 'active') ? '1.25rem' : 0,
               }}
             >
-              {season.status === 'registration_closed' && 'Registration for this season has closed.'}
+              {regLine}
               {season.status === 'active' && 'This season is currently active. Registration is closed.'}
               {season.status === 'completed' && 'This season has concluded.'}
               {season.status === 'archived' && 'This season has been archived.'}

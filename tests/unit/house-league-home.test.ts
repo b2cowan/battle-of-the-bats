@@ -44,10 +44,11 @@ describe('1 · the row’s words (copy §1)', () => {
     assert.equal(seasonNoteLine({ ...f, seasonEndDate: '2026-12-30' }, true, TODAY), null, 'playing now says nothing more');
     assert.equal(seasonNoteLine({ ...f, status: 'completed' }, true, TODAY), null);
   });
-  it('a close date that passed is said as passed (F08: the dates do not run the form until 9b-1)', () => {
+  it('the dates run the form (9b-1 Part 4): the line says what they are doing', () => {
     const open = { ...base, status: 'registration_open', registrationFee: 150 };
-    assert.equal(seasonNoteLine({ ...open, registrationCloseAt: '2026-08-01' }, true, TODAY), 'Registration was set to close Aug 1, 2026');
-    assert.equal(seasonNoteLine({ ...open, registrationCloseAt: '2026-12-01' }, true, TODAY), 'Registration closes Dec 1, 2026');
+    assert.equal(seasonNoteLine({ ...open, registrationCloseAt: '2026-08-01T17:00:00Z' }, true, TODAY), 'Registration closed Aug 1');
+    assert.equal(seasonNoteLine({ ...open, registrationCloseAt: '2026-12-01T17:00:00Z' }, true, TODAY), 'Registration closes Dec 1');
+    assert.equal(seasonNoteLine({ ...open, registrationOpenAt: '2026-11-01T09:00:00Z', registrationCloseAt: '2026-12-01T17:00:00Z' }, true, TODAY), 'Opens Nov 1');
   });
   it('a draft season counts what is left of its checklist (counted where the divisions are read)', () => {
     const draft = { ...base, status: 'draft', registrationFee: null, spotCount: null };

@@ -36,6 +36,7 @@ import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin
 import { isFreeFloorLeague, type LeagueCapKind } from '@/lib/free-floor';
 import { fireLeagueEvent } from '@/lib/league-events-client';
 import { checklistFoot, checklistLeft, isPastItsEnd, seasonChecklist, seasonDates } from '@/lib/house-league-season';
+import { registrationState } from '@/lib/league-registration-state';
 import { seasonCharges } from '@/lib/league-price';
 import { DELETE_DOOR, movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
 import { JAN_1, type Cutoff } from '@/lib/born-years';
@@ -152,11 +153,14 @@ export default function SeasonOverviewPage() {
     dates: { label: 'Set dates', onClick: editRegistration },
     pay: { label: 'Add instructions', onClick: editRegistration },
   };
-  const moves = movesFrom(season.status);
+  // The dates run the form (9b-1 Part 4): a season its close date closed offers Start season and Reopen until….
+  const regState = registrationState(season);
+  const moves = movesFrom(season.status, regState);
   const facts = {
     seasonName: season.name,
     seasonStartDate: season.seasonStartDate,
     seasonEndDate: season.seasonEndDate,
+    registrationOpenAt: season.registrationOpenAt,
     registrationCloseAt: season.registrationCloseAt,
     autoApproveUnderCapacity: season.autoApproveUnderCapacity,
     pendingReviewCount: summary.pendingReviewCount,
@@ -168,7 +172,7 @@ export default function SeasonOverviewPage() {
   // Close / Reopen registration sit on the Registration block (9a·4); the others are the next step or the rare door.
   const regDoor = canMove && (moves.includes('close') || moves.includes('reopenRegistration')) ? (
     <button type="button" className="btn btn-outline" onClick={() => setMove(moves.includes('close') ? 'close' : 'reopenRegistration')}>
-      {moves.includes('close') ? 'Close registration' : 'Reopen registration'}
+      {moves.includes('close') ? 'Close registration' : 'Reopen until…'}
     </button>
   ) : undefined;
   const pastItsEnd = canMove && moves.includes('complete') && isPastItsEnd(season);
@@ -215,7 +219,7 @@ export default function SeasonOverviewPage() {
           {foot && <p className={s.emptyLine}>{foot}</p>}
         </ClubSection>
       )}
-      {season.status === 'registration_closed' && canMove && (
+      {moves.includes('start') && canMove && (
         <ClubSection
           title="Next step"
           actions={<button type="button" className="btn btn-lime" onClick={() => setMove('start')}>Start season</button>}
@@ -306,6 +310,7 @@ export default function SeasonOverviewPage() {
           seasonId={season.id}
           orgSlug={orgSlug}
           facts={facts}
+          status={season.status}
           onClose={() => setMove(null)}
           onDone={() => { setMove(null); changed(); }}
         />

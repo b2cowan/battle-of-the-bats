@@ -16,13 +16,15 @@ import { cutoffFor } from '@/lib/born-years';
 import { openRegistrationRefusal } from '@/lib/house-league-season';
 import { registrationOwes, seasonCharges } from '@/lib/league-price';
 import { isCalendarDate } from '@/lib/timezone';
+import { clubWallClock, registrationState } from '@/lib/league-registration-state';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
 // has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
 // through the one gate (Q16), so without the way back that lock would be permanent.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft:                ['registration_open'],
-  registration_open:    ['registration_closed'],
+  // An opened season whose close date has passed may start straight away (9b-1 Part 4: the dates closed it; checked below).
+  registration_open:    ['registration_closed', 'active'],
   registration_closed:  ['active', 'registration_open'],
   active:               ['completed'],
   completed:            ['archived', 'active'],
@@ -165,6 +167,19 @@ export const PATCH = withObservability(async (req: Request,
       );
     }
 
+    if (season.status === 'registration_open' && newStatus === 'active' && registrationState(season) !== 'closedByDate') {
+      return NextResponse.json({ error: 'Close registration before you start the season.' }, { status: 422 });
+    }
+    // The convenor closing it is remembered (the page says "You closed registration on Oct 3"); reopening forgets it, and
+    // must leave the form a close date that has not passed (Reopen until…).
+    if (newStatus === 'registration_closed') patch.registrationClosedAt = new Date().toISOString();
+    if (season.status === 'registration_closed' && newStatus === 'registration_open') {
+      patch.registrationClosedAt = null;
+      const closes = 'registrationCloseAt' in patch ? patch.registrationCloseAt : season.registrationCloseAt;
+      if (closes && String(closes).slice(0, 16) < clubWallClock()) {
+        return NextResponse.json({ error: 'Pick the day the form should close.' }, { status: 422 });
+      }
+    }
     // Open registration only once the checklist is done (9b·1): enforced HERE, on the values this save leaves, with the
     // same function the page reads, so the page can never offer what this refuses.
     if (season.status === 'draft' && newStatus === 'registration_open') {

@@ -42,9 +42,12 @@ describe('1 · the windows’ words (copy §4)', () => {
     assert.ok(moveWords('open', F, TODAY).changes.some(c => c.startsWith('New registrations are approved while a division has room')));
     assert.ok(moveWords('open', { ...F, autoApproveUnderCapacity: false }, TODAY).changes.some(c => c.startsWith('New registrations wait for your review')));
   });
-  it('Reopen registration warns when the close date has already passed', () => {
-    assert.match(moveWords('reopenRegistration', F, TODAY).looseEnds[0], /^Your close date, May 15, 2026, has already passed\./);
-    assert.deepEqual(moveWords('reopenRegistration', { ...F, registrationCloseAt: '2026-12-01' }, TODAY).looseEnds, []);
+  it('Reopen until… asks for the new close date instead of warning about the old one (9b-1 Part 4, S2·b)', () => {
+    assert.deepEqual(moveWords('reopenRegistration', F, TODAY).looseEnds, []);
+    assert.match(moveWords('reopenRegistration', F, TODAY).lead, /stays open until the date you pick/);
+    const win = readCode('components/admin/kit/club/league/SeasonStatusWindow.tsx');
+    assert.match(win, /Close date/);
+    assert.match(win, /registrationCloseAt: `\$\{until\}T23:59:00Z`/, 'the form runs to the end of the picked day');
   });
   it('every window says families are not emailed (no status change sends one)', () => {
     for (const m of Object.keys(MOVE_TO) as StatusMove[]) {
@@ -73,7 +76,9 @@ describe('2 · every door is a move the server allows (and Reopen registration o
   };
   for (const from of ['draft', 'registration_open', 'registration_closed', 'active', 'completed', 'archived']) {
     it(`${from}: the page’s doors and the server’s table agree`, () => {
-      assert.deepEqual(movesFrom(from).map(m => MOVE_TO[m]).sort(), allowed(from).sort());
+      // An opened season its close date closed (9b-1 Part 4) adds Start season; its Reopen until… changes the date alone.
+      const doors = [...movesFrom(from), ...movesFrom(from, 'closedByDate')].map(m => MOVE_TO[m]).filter(to => to !== from);
+      assert.deepEqual([...new Set(doors)].sort(), allowed(from).sort());
     });
   }
   it('no door reopens registration once the season is playing', () => {

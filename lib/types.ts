@@ -971,6 +971,8 @@ export interface LeagueSeason {
   autoPromoteWaitlist: boolean;
   registrationOpenAt: string | null;
   registrationCloseAt: string | null;
+  /** When the convenor pressed Close registration (mig 363); null while open, and on seasons closed before it. */
+  registrationClosedAt: string | null;
   seasonStartDate: string | null;
   seasonEndDate: string | null;
   waiverText: string | null;

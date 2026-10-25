@@ -2,6 +2,7 @@ import { formatStoredDate, tournamentToday } from './timezone';
 import { pluralize } from './utils';
 import { isFinishedLeagueSeason, type HouseLeagueAccess } from './house-league-access';
 import { seasonCharges, seasonPriceRange } from './league-price';
+import { clubDay, clubWallClock, registrationChip, registrationState, type RegDated } from './league-registration-state';
 import type { LeagueSeasonStatus } from './types';
 
 /**
@@ -69,7 +70,19 @@ type Dated = {
   status: LeagueSeasonStatus | string;
   seasonStartDate?: string | null;
   seasonEndDate?: string | null;
+  // The form's dates (9b-1, Part 4): when present, an opened season's word follows them (lib/league-registration-state.ts).
+  registrationOpenAt?: string | null;
+  registrationCloseAt?: string | null;
+  registrationClosedAt?: string | null;
 };
+
+/** The registration half of a season, for the one state rule (absent dates read as none). */
+const regOf = (s: Dated): RegDated => ({
+  status: s.status, registrationOpenAt: s.registrationOpenAt ?? null, registrationCloseAt: s.registrationCloseAt ?? null,
+  registrationClosedAt: s.registrationClosedAt ?? null,
+});
+/** The wall clock a "today" stands for: now on the real today, midday on a test's. */
+const wallFor = (today: string) => (today === tournamentToday() ? clubWallClock() : `${today}T12:00`);
 
 const dayLabel = (value: string, today: string) => formatStoredDate(value, { withYear: !value.startsWith(today.slice(0, 4)) });
 /** A stored date's day (date-only, or a timestamp's first ten characters). */
@@ -93,7 +106,11 @@ function phase(season: Dated, today: string): { kind: 'upcoming'; start: string 
 export function seasonState(season: Dated, today: string = tournamentToday()): { label: string; tone: SeasonTone } {
   switch (season.status) {
     case 'draft': return { label: 'Getting ready', tone: 'neutral' };
-    case 'registration_open': return { label: 'Registration open', tone: 'green' };
+    // An opened season follows its dates (S2·b): "Opens Jun 1", "Registration open", "Closed Aug 1".
+    case 'registration_open': {
+      const state = registrationState(regOf(season), wallFor(today));
+      return { label: registrationChip(regOf(season), wallFor(today)) ?? 'Registration open', tone: state === 'open' ? 'green' : 'neutral' };
+    }
     case 'registration_closed': return { label: 'Registration closed', tone: 'neutral' };
     case 'completed':
     case 'archived': return { label: 'Finished', tone: 'neutral' };
@@ -143,8 +160,9 @@ export function liveLeagueSeasons<T extends Dated & { createdAt?: string | null 
  * is the label). The admin's "Ended {date}" is the club's working word; families read "Final standings".
  */
 export function publicSeasonState(season: Dated, today: string = tournamentToday()): { label: string; tone: 'ok' | 'neutral' } | null {
-  if (season.status === 'registration_open') return { label: 'Registration open', tone: 'neutral' };
-  if (season.status === 'registration_closed') return { label: 'Registration closed', tone: 'neutral' };
+  if (season.status === 'registration_open' || season.status === 'registration_closed') {
+    return { label: registrationChip(regOf(season), wallFor(today)) ?? 'Registration closed', tone: 'neutral' };
+  }
   if (season.status !== 'active') return null;
   const p = phase(season, today);
   if (p.kind === 'upcoming') return { label: `Starts ${dayLabel(p.start, today)}`, tone: 'neutral' };
@@ -159,11 +177,12 @@ export type PublicSeasonLink = { label: string; href: string; primary?: boolean 
  * takes sign-ups; the season page while sign-ups are closed; Schedule and Standings once it is under way or done.
  * `seasonHref` is the season's public page; its sub-pages hang off it.
  */
-export function publicSeasonLinks(season: Pick<Dated, 'status'>, seasonHref: string): PublicSeasonLink[] {
-  if (season.status === 'registration_open') {
+export function publicSeasonLinks(season: Dated, seasonHref: string, today: string = tournamentToday()): PublicSeasonLink[] {
+  // Register only while the form takes a sign-up (its dates and its status together, Part 4).
+  if (season.status === 'registration_open' && registrationState(regOf(season), wallFor(today)) === 'open') {
     return [{ label: 'Register', href: `${seasonHref}/register`, primary: true }, { label: 'Season page', href: seasonHref }];
   }
-  if (season.status === 'registration_closed') return [{ label: 'Season page', href: seasonHref }];
+  if (season.status === 'registration_open' || season.status === 'registration_closed') return [{ label: 'Season page', href: seasonHref }];
   const both = [{ label: 'Schedule', href: `${seasonHref}/schedule` }, { label: 'Standings', href: `${seasonHref}/standings` }];
   return season.status === 'active' ? both : [...both, { label: 'Season page', href: seasonHref }];
 }
@@ -292,13 +311,13 @@ export function seasonChecklist(season: ChecklistSeason, divisions: readonly Che
   steps.push({
     key: 'prices', title: 'Prices', optional: false, done: range != null,
     line: priceLine == null ? 'Set a price for each age group. Enter 0 if it is free.'
-      : early ? `${priceLine} · early bird through ${formatStoredDate(dayOf(season.earlyBirdUntil)!)}` : priceLine,
+      : early ? `${priceLine} · early bird through ${clubDay(season.earlyBirdUntil!)}` : priceLine,
   });
 
   const opens = registrationDay(season.registrationOpenAt), closes = registrationDay(season.registrationCloseAt);
   steps.push({
     key: 'dates', title: 'Registration dates', optional: false, done: !!opens && !!closes,
-    line: opens && closes ? `${formatStoredDate(opens)} – ${formatStoredDate(closes)}` : 'Set when the form opens and closes',
+    line: opens && closes ? `${clubDay(opens)} – ${clubDay(closes)}` : 'Set when the form opens and closes',
   });
 
   if (seasonCharges(divisions, season)) {
@@ -361,10 +380,12 @@ export function seasonNoteLine(
   today: string = tournamentToday(),
 ): string | null {
   if (isPastItsEnd(f, today)) return canRun ? 'Past its end date: complete it from the season page' : 'Past its end date';
-  if (f.status === 'registration_open' && f.registrationCloseAt) {
-    const closeDay = registrationDay(f.registrationCloseAt)!;
-    const close = formatStoredDate(closeDay, { withYear: true });
-    return closeDay >= today ? `Registration closes ${close}` : `Registration was set to close ${close}`;
+  if (f.status === 'registration_open') {
+    // The dates run the form (Part 4, copy §5.3): the line says what they are doing.
+    const reg = regOf(f), state = registrationState(reg, wallFor(today));
+    if (state === 'opensAhead') return `Opens ${clubDay(f.registrationOpenAt!, today)}`;
+    if (state === 'closedByDate') return `Registration closed ${clubDay(f.registrationCloseAt!, today)}`;
+    return f.registrationCloseAt ? `Registration closes ${clubDay(f.registrationCloseAt, today)}` : null;
   }
   if (f.status === 'registration_closed') return canRun ? 'Registration is closed. Start the season from its page.' : 'Registration is closed.';
   if (f.status === 'draft') {

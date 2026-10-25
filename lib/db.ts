@@ -2318,6 +2318,7 @@ function mapLeagueSeason(row: any): LeagueSeason {
     autoPromoteWaitlist:       row.auto_promote_waitlist,
     registrationOpenAt:        row.registration_open_at ?? null,
     registrationCloseAt:       row.registration_close_at ?? null,
+    registrationClosedAt:      row.registration_closed_at ?? null,
     seasonStartDate:           row.season_start_date ?? null,
     seasonEndDate:             row.season_end_date ?? null,
     waiverText:                row.waiver_text ?? null,
@@ -2445,7 +2446,7 @@ export async function getLeagueSeasonById(seasonId: string, orgId: string): Prom
 export async function updateLeagueSeason(
   seasonId: string,
   orgId: string,
-  input: Partial<LeagueSeasonInput> & { status?: LeagueSeasonStatus }
+  input: Partial<LeagueSeasonInput> & { status?: LeagueSeasonStatus; registrationClosedAt?: string | null }
 ): Promise<void> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (input.name                      !== undefined) patch.name                        = input.name;
@@ -2464,6 +2465,7 @@ export async function updateLeagueSeason(
   if (input.earlyBirdUntil            !== undefined) patch.early_bird_until            = input.earlyBirdUntil;
   if (input.howToPay                  !== undefined) patch.how_to_pay                  = input.howToPay;
   if (input.askEmailConsent           !== undefined) patch.ask_email_consent           = input.askEmailConsent;
+  if (input.registrationClosedAt      !== undefined) patch.registration_closed_at      = input.registrationClosedAt;
   if (input.status                    !== undefined) patch.status                      = input.status;
   await supabaseAdmin
     .from('league_seasons')

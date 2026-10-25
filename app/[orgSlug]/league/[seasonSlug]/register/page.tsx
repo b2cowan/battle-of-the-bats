@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getDivisionsForSeason } from '@/lib/db';
+import { clubDay, registrationState } from '@/lib/league-registration-state';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -50,7 +51,16 @@ export default async function RegisterPage({
     }),
   );
 
-  const registrationOpen = season.status === 'registration_open';
+  // The dates and the status together (9b-1 Part 4): the form shows only while it takes a sign-up, and a closed form
+  // says why (copy §12).
+  const regState = registrationState(season);
+  const registrationOpen = regState === 'open';
+  const notYet = regState === 'opensAhead' || regState === 'notSet' || regState === 'draft';
+  const closedLine = regState === 'opensAhead' ? `Registration for ${season.name} opens ${clubDay(season.registrationOpenAt!)}.`
+    : regState === 'closedByDate' ? `Registration for ${season.name} closed ${clubDay(season.registrationCloseAt!)}.`
+    : regState === 'closedByYou' ? 'Registration for this season has closed.'
+    : regState === 'ended' ? 'This season is no longer taking registrations.'
+    : 'This season hasn’t opened for registration.';
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   return (
@@ -81,18 +91,14 @@ export default async function RegisterPage({
                 letterSpacing: 0,
               }}
             >
-              Registration is not currently open
+              {notYet ? 'Registration isn’t open yet' : 'Registration is closed'}
             </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 }}>
-              {season.status === 'draft' &&
-                'This season has not yet opened for registration.'}
-              {season.status === 'registration_closed' &&
-                'Registration for this season has closed.'}
-              {(season.status === 'active' ||
-                season.status === 'completed' ||
-                season.status === 'archived') &&
-                'This season is no longer accepting registrations.'}
-            </p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 }}>{closedLine}</p>
+            {!notYet && (
+              <p style={{ fontSize: '0.875rem', color: 'var(--club-soft)', margin: '0.5rem 0 0' }}>
+                Already signed up? <Link href={href(`/league/${seasonSlug}/status`)}>Check your status</Link>.
+              </p>
+            )}
           </div>
         ) : (
           <RegisterForm

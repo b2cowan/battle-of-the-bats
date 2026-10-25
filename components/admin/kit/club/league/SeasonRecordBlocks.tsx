@@ -7,7 +7,7 @@ import DateTimeInput from '@/components/shared/DateTimeInput';
 import { ClubSection, SavePill, repKit } from '../RepKit';
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import { registrationDay, seasonDates } from '@/lib/house-league-season';
-import { formatStoredDate } from '@/lib/timezone';
+import { clubDay, registrationDatesRow } from '@/lib/league-registration-state';
 import type { LeagueSeason } from '@/lib/types';
 import s from './LeagueSeason.module.css';
 
@@ -123,11 +123,6 @@ function Sub({ children }: { children: ReactNode }) {
   return <span className={s.factSub}>{children}</span>;
 }
 
-function regDates(season: LeagueSeason): string {
-  const o = registrationDay(season.registrationOpenAt), c = registrationDay(season.registrationCloseAt);
-  if (!o && !c) return 'Not set';
-  return [o ? formatStoredDate(o) : null, c ? formatStoredDate(c) : null].filter(Boolean).join(' – ');
-}
 
 const quoted = (v: string) => `“${v.length > 60 ? `${v.slice(0, 60).trimEnd()}…` : v}”`;
 
@@ -188,6 +183,8 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
   const waiver = season.waiverText?.trim();
   const pay = season.howToPay?.trim();
   const early = season.earlyBirdUntil?.slice(0, 10);
+  // The dates run the form (Part 4): the row says what they are doing, and whether the date or you closed it.
+  const dates = registrationDatesRow(season);
   const closesDay = registrationDay(season.registrationCloseAt);
 
   return (
@@ -203,9 +200,13 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
     >
       {!editing ? (
         <dl className={s.facts}>
-          <Fact label="Registration dates">{regDates(season)}{regDates(season) === 'Not set' && <Sub>Set when the form opens and closes.</Sub>}</Fact>
+          <Fact label="Registration dates">
+            {dates.value}
+            {dates.sub && <Sub>{dates.sub}</Sub>}
+            {dates.door === 'set' && canEdit && <button type="button" className={repKit.inlineLink} onClick={start}>Set dates</button>}
+          </Fact>
           <Fact label="Early bird">
-            {early ? `Through ${formatStoredDate(early)}.` : 'Not set.'}
+            {early ? `Through ${clubDay(early)}.` : 'Not set.'}
             <Sub>{early ? 'The last day the early-bird price applies, in the club’s time.' : 'Set a date to offer an early-bird price.'}</Sub>
           </Fact>
           <Fact label="Waiver">{waiver ? `On · ${quoted(waiver)}` : <>None<Sub>Families sign up without one.</Sub></>}</Fact>

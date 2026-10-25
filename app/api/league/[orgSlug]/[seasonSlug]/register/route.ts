@@ -6,6 +6,7 @@ import {
 import { placeLeagueRegistration } from '@/lib/league-registration-place';
 import { leaguePrice } from '@/lib/league-price';
 import { isCalendarDate, tournamentToday } from '@/lib/timezone';
+import { registrationRefusal } from '@/lib/league-registration-state';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import {
   leagueRegistrationApprovedHtml,
@@ -50,13 +51,9 @@ export const POST = withObservability(async (req: Request,
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
-  // 2. Verify registration is open
-  if (season.status !== 'registration_open') {
-    return NextResponse.json(
-      { error: 'Registration is not currently open for this season' },
-      { status: 409 },
-    );
-  }
+  // 2. The form takes a sign-up only while its status AND its dates say so (9b-1 Part 4, S2·b); the refusal says why.
+  const closed = registrationRefusal(season);
+  if (closed) return NextResponse.json({ error: closed, code: 'not_open' }, { status: 409 });
 
   // 3. Parse + validate body
   let body: Record<string, unknown>;

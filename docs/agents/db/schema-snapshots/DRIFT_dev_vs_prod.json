@@ -1,9 +1,9 @@
 {
   "generated": "2026-10-25",
-  "total": 371,
+  "total": 372,
   "counts": {
     "tables": 12,
-    "columns": 201,
+    "columns": 202,
     "indexes": 51,
     "constraints": 50,
     "rls": 57
@@ -343,6 +343,10 @@
     },
     {
       "key": "column:only-dev:league_seasons.how_to_pay",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.registration_closed_at",
       "sig": ""
     },
     {

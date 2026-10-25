@@ -66,7 +66,7 @@ describe('2 · the three public surfaces draw the one list', () => {
     assert.match(css, /\.link \{[^}]*min-height: 44px;/);
     assert.match(css, /\.links \{ position: relative; z-index: 1;/, 'the links sit above the row’s own door');
   });
-  it('Open now keeps listing every season taking sign-ups (9a·7)', () => {
-    assert.match(readCode('lib/club-home-data.ts'), /publicLeagueSeasons\.filter\(s => s\.status === 'registration_open'\)\.map/);
+  it('Open now keeps listing every season taking sign-ups (9a·7) — by its dates and status together (9b-1 Part 4)', () => {
+    assert.match(readCode('lib/club-home-data.ts'), /publicLeagueSeasons\.filter\(s => takesSignups\(s\)\)\.map/);
   });
 });

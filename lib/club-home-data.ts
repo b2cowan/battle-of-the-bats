@@ -13,6 +13,7 @@ import { isFollowableOrg } from '@/lib/directory';
 import { clubTeamsAddress } from '@/lib/public-club-access';
 import { clubHomeTournaments, clubTeamBands, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
 import { liveLeagueSeasons, registrationDay } from '@/lib/house-league-season';
+import { takesSignups } from '@/lib/league-registration-state';
 import { isSectionShown } from '@/lib/club-site-sections';
 import { siteSectionCarries } from '@/lib/public-site-editor-facts';
 import { clubAboutPageShows } from '@/lib/club-about';
@@ -114,7 +115,7 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
 
   // Open now: every open house-league registration, then the tryouts (above), nearest deadline first.
   const openNow = orderOpenNow([
-    ...publicLeagueSeasons.filter(s => s.status === 'registration_open').map(s => {
+    ...publicLeagueSeasons.filter(s => takesSignups(s)).map(s => {
       // The admin's form stores the close time as typed, with a Z on the end (house-league page), so its date part is
       // the day the club typed. A day already behind today is not said: "Sign up by" a past date is not a deadline.
       const closes = registrationDay(s.registrationCloseAt);

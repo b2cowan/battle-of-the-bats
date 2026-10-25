@@ -6627,7 +6627,10 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:league_seasons.registration_open_at -->
 <!-- dict:col:league_seasons.registration_close_at -->
-**`registration_open_at` / `registration_close_at`** (timestamptz, nullable) — informational registration window. **No timestamp-driven automation** opens/closes registration off these (status transitions are manual — verified).
+**`registration_open_at` / `registration_close_at`** (timestamptz, nullable) — **the form's dates, and from Club Tier 9b-1 Part 4 they RUN the form** (owner S2·b): a `registration_open` season takes a sign-up only between them; before the open time it reads "Opens Jun 1", after the close time "Closed Aug 1" (and may go straight to Start season). **Stored as the club typed them with a literal `Z`** (the first sixteen characters ARE the club's wall clock) — compared and shown as stored, never re-zoned ([lib/league-registration-state.ts](../../../lib/league-registration-state.ts) `registrationState`, the one answer for the sign-up route, the register page, the public page, the club home's Open now and the season page). "Reopen until…" writes a new `registration_close_at` of `{day}T23:59:00Z`. Required before Open registration (the checklist, enforced by the season route).
+
+<!-- dict:col:league_seasons.registration_closed_at -->
+**`registration_closed_at`** (timestamptz, nullable; mig 363, Club Tier 9b-1 Part 4) — **when the convenor pressed Close registration**, a real moment (`now()` by the season route when the status moves to `registration_closed`; cleared on reopen). The page says "You closed registration on Oct 3" (read as the club's day via `orgDayKey`), as distinct from a close date passing ("Closed Aug 1"). NULL on seasons closed before mig 363 (the page then says "You closed registration.").
 
 <!-- dict:col:league_seasons.season_start_date -->
 <!-- dict:col:league_seasons.season_end_date -->

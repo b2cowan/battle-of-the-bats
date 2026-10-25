@@ -7,6 +7,7 @@ import { seasonPhrase } from './season-phrase';
 import { bornYearsOf } from './born-years';
 import { hasModuleEntitlement } from './module-entitlements';
 import { tournamentToday } from './timezone';
+import { takesSignups } from './league-registration-state';
 import { orgHref } from './club-base';
 import type { Organization } from './types';
 
@@ -90,7 +91,8 @@ export async function readClubLeagueDivisions(org: Organization, orgSlug: string
   if (divisions.length === 0) return null;
   const base = orgHref({ slug: orgSlug, ownHost: !!ownBase?.ownHost }, `/league/${season.slug}`);
   return {
-    href: season.status === 'registration_open' ? `${base}/register` : base,
+    // The register door only while the form takes a sign-up (its dates and status together, 9b-1 Part 4).
+    href: takesSignups(season) ? `${base}/register` : base,
     seasonWords: seasonPhrase(season.name),
     divisions,
   };

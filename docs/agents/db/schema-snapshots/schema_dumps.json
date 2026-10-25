@@ -7175,6 +7175,15 @@
         "column_default": "true"
       },
       {
+        "table_name": "league_seasons",
+        "pos": 24,
+        "column_name": "registration_closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_teams",
         "pos": 1,
         "column_name": "id",

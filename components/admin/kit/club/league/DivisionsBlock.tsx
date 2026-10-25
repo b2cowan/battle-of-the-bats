@@ -8,7 +8,7 @@ import { BornYearsBoxes } from '../BornYears';
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import { bornLine, checkBornYears, cutoffWords, isJan1, type Cutoff } from '@/lib/born-years';
 import { dollarsLine } from '@/lib/house-league-season';
-import { formatStoredDate } from '@/lib/timezone';
+import { clubDay } from '@/lib/league-registration-state';
 import { pluralize } from '@/lib/utils';
 import type { LeagueSeason } from '@/lib/types';
 import s from './LeagueSeason.module.css';
@@ -49,7 +49,7 @@ export default function DivisionsBlock({ season, divisions, cutoff, canEdit, org
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const editing = canEdit ? open : null;
-  const early = season.earlyBirdUntil ? formatStoredDate(season.earlyBirdUntil.slice(0, 10)) : null;
+  const early = season.earlyBirdUntil ? clubDay(season.earlyBirdUntil) : null;
   const cols = canEdit ? 6 : 5;
 
   return (
@@ -225,7 +225,7 @@ function DivisionRecord({ division: d, season, siblings, cutoff, orgSlug, onChan
     ? `The season’s price (${dollarsLine(season.registrationFee)}) unless you change it.`
     : 'A change applies to new sign-ups only.';
   const earlyHint = season.earlyBirdUntil
-    ? `Through ${formatStoredDate(season.earlyBirdUntil.slice(0, 10))}, the season’s early-bird date.`
+    ? `Through ${clubDay(season.earlyBirdUntil)}, the season’s early-bird date.`
     : 'Set the early-bird date under Registration first.';
 
   return (

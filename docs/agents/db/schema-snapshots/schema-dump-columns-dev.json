@@ -7173,6 +7173,15 @@
     "ordinal_position": 23
   },
   {
+    "table_name": "league_seasons",
+    "column_name": "registration_closed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
     "table_name": "league_teams",
     "column_name": "id",
     "data_type": "uuid",
