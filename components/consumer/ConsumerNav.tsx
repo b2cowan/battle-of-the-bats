@@ -21,7 +21,7 @@
  */
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { usePublicPathname, useSignInHref } from '@/lib/use-public-pathname';
 import { Home, Radio, MessageCircle, User, LogIn } from 'lucide-react';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
@@ -34,7 +34,7 @@ import flip from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
-import { isWarmSkinPath, showsTournamentChrome, signInHrefFor } from '@/lib/consumer-routes';
+import { isWarmSkinPath, showsTournamentChrome } from '@/lib/consumer-routes';
 import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
@@ -111,6 +111,7 @@ export default function ConsumerNav({
   variant?: 'consumer' | 'tournament' | 'coach';
 }) {
   const pathname = usePublicPathname();
+  const signInHref = useSignInHref();
   const params = useParams();
   const isActive = (href: string) => underPrefix(pathname, href);
 
@@ -259,7 +260,7 @@ export default function ConsumerNav({
         // family — including /auth/signup, where "already have an account?" is a real door.
         // From a registration page it comes back to the form (signInHrefFor says why only there).
         <Link
-          href={signInHrefFor(pathname)}
+          href={signInHref(pathname)}
           className={`${styles.tab} ${isActive('/auth/login') ? styles.active : ''}`}
           aria-current={isActive('/auth/login') ? 'page' : undefined}
         >
@@ -373,7 +374,7 @@ export default function ConsumerNav({
             case for every visitor). It supersedes top-nav audit §D12's "Sign In" here; the marketing bar and
             the org identity row set it in capitals and move with The public face, warm. */}
         {!signedIn && !pathname.startsWith('/auth') && (
-          <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign in</Link>
+          <Link href={signInHref(pathname)} className={styles.utilCta}>Sign in</Link>
         )}
       </div>
     </>
@@ -444,7 +445,7 @@ export default function ConsumerNav({
                     no theme block (the venue's colors rule here), and signing out keeps the fan on
                     this event rather than throwing them to the sign-in page. */}
                 {signedIn && <AccountMenu className={styles.stripIcon} signOutTo="here" />}
-                {!signedIn && <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign in</Link>}
+                {!signedIn && <Link href={signInHref(pathname)} className={styles.utilCta}>Sign in</Link>}
               </>
             )}
             {/* The operator flip stays. It is the tour's third beat and the demo's whole point. */}

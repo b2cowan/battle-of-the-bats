@@ -9,6 +9,7 @@
  */
 import { useParams, usePathname } from 'next/navigation';
 import { clubBaseFor, internalPath, orgHref, wwwHref, type ClubBase } from './club-base';
+import { signInHrefFor } from './consumer-routes';
 
 export function usePublicPathname(): string {
   const pathname = usePathname();
@@ -47,4 +48,14 @@ const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.
 export function useWwwHref(): (path: string) => string {
   const base = useClubBase();
   return path => wwwHref(base, APP_ORIGIN, path);
+}
+
+/**
+ * The Sign in link for the page the visitor is on. On our own hosts it is `signInHrefFor` as ever; on a club's own address it is
+ * sign-in on FieldLogicHQ that brings the visitor back to this same page (`/auth/login` does not exist there, and the session
+ * cookie is host-only). `pathname` is the club-named path (`usePublicPathname`), which is the page's address on FieldLogicHQ.
+ */
+export function useSignInHref(): (pathname: string) => string {
+  const base = useClubBase();
+  return pathname => wwwHref(base, APP_ORIGIN, base?.ownHost ? `/auth/login?next=${encodeURIComponent(pathname)}` : signInHrefFor(pathname));
 }
